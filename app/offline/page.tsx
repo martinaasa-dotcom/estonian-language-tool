@@ -1,4 +1,5 @@
 import { CloudOff } from "lucide-react";
+import { Mascot } from "@/components/brand";
 
 export const metadata = { title: "Offline — Kodukeel" };
 
@@ -9,7 +10,13 @@ export const metadata = { title: "Offline — Kodukeel" };
 export default function OfflinePage() {
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
-      <CloudOff size={30} aria-hidden style={{ color: "var(--ink-3)" }} />
+      <Mascot size={58} mood="thinking" blink={false} />
+      <span
+        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold"
+        style={{ background: "var(--butter-soft)", color: "var(--butter)" }}
+      >
+        <CloudOff size={13} aria-hidden /> Offline
+      </span>
       <h1 className="est text-[26px] font-bold" style={{ color: "var(--ink)" }}>
         This screen needs a connection
       </h1>
@@ -19,8 +26,8 @@ export default function OfflinePage() {
       </p>
       <a
         href="/review"
-        className="rounded-md border px-4 py-2 text-[14px] font-medium"
-        style={{ borderColor: "var(--accent)", background: "var(--accent)", color: "var(--accent-ink)" }}
+        className="grad-accent press mt-2 rounded-full px-6 py-3 text-[15px] font-semibold"
+        style={{ color: "var(--accent-ink)", boxShadow: "var(--shadow-accent)" }}
       >
         Go to review
       </a>

@@ -82,7 +82,7 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
         <button
           type="button"
           onClick={stop}
-          className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-medium"
+          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
           style={{ borderColor: "var(--again)", background: "var(--again-soft)", color: "var(--again)" }}
         >
           <Square size={14} aria-hidden /> Stop
@@ -92,7 +92,7 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
         <button
           type="button"
           onClick={() => void start()}
-          className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-medium"
+          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
         >
           <Mic size={14} aria-hidden /> {url ? "Record again" : "Record yourself"}
@@ -103,7 +103,7 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
         <button
           type="button"
           onClick={() => { void new Audio(url).play(); }}
-          className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-medium"
+          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink-2)" }}
         >
           <Play size={14} aria-hidden /> Hear yourself

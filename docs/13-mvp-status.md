@@ -61,6 +61,8 @@ add back.
 | Add a word by hand, with principal parts and auto-classified gradation | Complete |
 | Edit an existing entry — corrections rewrite its cards' text but never its FSRS scheduling | Complete |
 | Export — full JSON backup | Complete |
+| Visual design — pastel system, mascot, light/dark | Rebuilt 2026-08; see `14-design-system.md` |
+| Public landing page at `/welcome` | Complete. Its demo reads real dictionary data and derives cases with the app's own code |
 | Restore from a backup — merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
 | Weak-case drill — click a case in the heatmap to review just those cards | Complete |
 | Light and dark themes, keyboard operation, mobile layout | Complete; verified on an iPhone 13 viewport — no sideways scroll, 73×79px rating targets |
@@ -219,3 +221,25 @@ lexicographer wrote (ADR-017).
    offline there. An actual App Store listing needs a native shell (Capacitor or similar) around
    this same web app — that is a packaging and review exercise, not a rewrite, and it has not been
    done.
+
+## 8. The merge: one app, not two
+
+Passes seven (teaching in context) and the visual rebuild described in `14-design-system.md` were
+built at the same time against the same `main`. Merging them was the last step of this round, and
+the rule was that neither side got to win by default: the rebuild owns how the app looks, this
+pass owns what it does.
+
+What that meant in practice:
+
+- The new routes moved into the `(app)` route group, so they get the rail, the mobile bar and the
+  wash from the layout rather than each rendering their own chrome.
+- Sentences and Speaking joined the Today page's quick-practice grid and the Practice hub, each
+  with its own hue — six modes, six colours, no two the same.
+- The screens listed in §7 were restyled onto `components/ui.tsx` (see `14-design-system.md` §9).
+- Two responsive bugs the merge exposed were fixed rather than papered over: the Today hero packed
+  three stat tiles and the goal ring onto one row at 390px, and a grid column without `min-w-0`
+  let a long task title widen the page.
+
+Verified after the merge: unit tests, `tsc --noEmit`, ESLint, all eight browser suites, and a
+screenshot sweep of every route at 1280px and 390px with the console watched and horizontal
+overflow asserted against.

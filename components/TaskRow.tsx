@@ -29,14 +29,17 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
 
   return (
     <li
-      className="flex items-center gap-3 rounded-lg border px-4 py-3"
-      style={{ borderColor: "var(--rule)", background: "var(--surface)", opacity: pending ? 0.5 : 1 }}
+      className="lift flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3.5"
+      style={{
+        borderColor: "var(--rule)", background: "var(--surface)",
+        boxShadow: "var(--shadow-sm)", opacity: pending ? 0.5 : 1,
+      }}
     >
       <button
         type="button"
         onClick={() => start(() => void toggleTask(task.id))}
         aria-label={task.completed ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
-        className="flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors"
+        className="press flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
         style={{
           borderColor: task.completed ? "var(--good)" : "var(--rule)",
           background: task.completed ? "var(--good)" : "transparent",

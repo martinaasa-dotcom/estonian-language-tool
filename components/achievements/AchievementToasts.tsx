@@ -35,7 +35,7 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
           return (
             <div
               key={b.key}
-              className="flex items-start gap-3 rounded-lg border p-3.5"
+              className="flex items-start gap-3 rounded-[var(--r-lg)] border p-4"
               style={{
                 borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)",
                 animation: "toast-in 0.25s ease-out",
@@ -43,7 +43,7 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
             >
               <span
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+                style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
               >
                 <Icon size={18} aria-hidden />
               </span>

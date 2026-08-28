@@ -163,6 +163,17 @@ to set up, both one-time:
 Neither Google credential nor the Supabase service role key is ever needed in this app's own code —
 the OAuth exchange happens entirely inside Supabase.
 
+## The way it looks
+
+A signed-out visitor lands on **/welcome** — a single-page tour with a working flashcard, a live
+case table and an honest comparison against the streak apps. Every Estonian form on that page is
+read from the real dictionary and derived by the app's own code, not typed into marketing copy.
+
+Inside, the app runs on a pastel design system built around the cornflower — *rukkilill*, Estonia's
+national flower — with Fraunces for Estonian words and headings, and a mascot made out of the
+letter **õ**. Light and dark both ship, and the theme toggle sits at the bottom of the rail.
+`docs/14-design-system.md` has the palette, the tokens and the rules colour follows.
+
 ## Backing up
 
 **Settings → Download a backup** writes a JSON file with every word, card and review, and the same
@@ -201,12 +212,15 @@ lib/progress/     the database side of the above, shared by Today, the path and 
 lib/offline/      the queue that lets a review session survive with no network.
 lib/dict/         search.
 lib/tutor/        provider-agnostic chat; keys stay server-side.
-app/              routes; api/ holds the three server proxies.
+app/(app)/        the signed-in app: Today, the path, review, dictionary, Anu, words, tasks.
+app/(chromeless)/ pages that own the whole screen: the landing page, sign-in, first-run setup.
+app/api/          the three server proxies.
+components/       ui primitives, the brand mark and the mascot.
 prisma/data/      the built-in dictionary.
 docs/             the full plan and the decisions behind it.
 ```
 
-Three rules the code holds to, all explained in `docs/`:
+Four rules the code holds to, all explained in `docs/`:
 
 - **Estonian forms are never invented.** Principal parts are stored; the eleven regular cases are
   derived from the genitive at render time. Where a form is unknown, the app shows a gap — an
@@ -215,6 +229,8 @@ Three rules the code holds to, all explained in `docs/`:
 - **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed
   from the append-only review log on each request. There is no score column to increment, so there
   is no way to be awarded something that did not happen — and none of it can be lost in a restore.
+- **Every view has four states.** Empty, loading, error and offline — a view without an empty state
+  is not finished. `docs/08-ux-ia-a11y.md` §4.
 
 ## Credits
 

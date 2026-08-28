@@ -76,19 +76,19 @@ export function InstallPrompt() {
 
   return (
     <div
-      className="fixed bottom-20 left-1/2 z-[85] flex w-[min(94vw,420px)] -translate-x-1/2 items-start gap-3 rounded-xl border p-4 md:bottom-5"
+      className="pop-in fixed bottom-20 left-1/2 z-[85] flex w-[min(94vw,420px)] -translate-x-1/2 items-start gap-3 rounded-[var(--r-lg)] border p-4 md:bottom-5"
       role="dialog"
       aria-label="Install Kodukeel"
-      style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
+      style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}
     >
       <span
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-        style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+        style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
       >
         <Download size={18} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium" style={{ color: "var(--ink)" }}>
+        <p className="est text-[15.5px] font-bold" style={{ color: "var(--ink)" }}>
           Keep Kodukeel on your home screen
         </p>
         <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-2)" }}>
@@ -113,7 +113,13 @@ export function InstallPrompt() {
           </Button>
         )}
       </div>
-      <button type="button" onClick={dismiss} aria-label="Not now" className="shrink-0 rounded p-1" style={{ color: "var(--ink-3)" }}>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Not now"
+        className="press flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
+        style={{ color: "var(--ink-3)" }}
+      >
         <X size={16} aria-hidden />
       </button>
     </div>

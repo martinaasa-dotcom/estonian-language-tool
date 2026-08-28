@@ -1,28 +1,47 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Literata } from "next/font/google";
-import { CommandPalette } from "@/components/CommandPalette";
-import { InstallPrompt } from "@/components/InstallPrompt";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { OfflineStatus } from "@/components/OfflineStatus";
-import { Sidebar } from "@/components/Sidebar";
 import "./globals.css";
 
-const archivo = Archivo({ subsets: ["latin", "latin-ext"], variable: "--font-archivo", display: "swap" });
-const literata = Literata({ subsets: ["latin", "latin-ext"], variable: "--font-literata", display: "swap" });
+/**
+ * Fraunces for anything that should feel written — headings, and every Estonian
+ * word in the app. Plus Jakarta Sans for the interface around it. Both carry
+ * latin-ext, which is not optional here: without it õ ä ö ü š ž fall back to a
+ * different face mid-word.
+ */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["SOFT", "WONK"],
+});
 
 export const metadata: Metadata = {
-  title: "Kodukeel — Estonian study",
+  title: "Kodukeel — Estonian that finally sticks",
   description:
-    "Learn Estonian by its cases: a dictionary with full paradigms, spaced-repetition flashcards, " +
-    "speed rounds and a grammar tutor that never invents a form.",
+    "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that " +
+    "knows when to stop, native audio, and a grammar tutor that explains the rule.",
   icons: { icon: "/icon.svg" },
   applicationName: "Kodukeel",
   appleWebApp: { capable: true, title: "Kodukeel", statusBarStyle: "default" },
+  openGraph: {
+    title: "Kodukeel — Estonian that finally sticks",
+    description:
+      "Real paradigms, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1218" },
+    { media: "(prefers-color-scheme: light)", color: "#fbf9ff" },
+    { media: "(prefers-color-scheme: dark)", color: "#12101d" },
   ],
   // The review screen is thumb-driven; zoom stays enabled because disabling it
   // is an accessibility failure, not a polish detail.
@@ -33,25 +52,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${archivo.variable} ${literata.variable} min-h-screen`}
-        style={{ fontFamily: "var(--font-archivo), system-ui, sans-serif" }}
-      >
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-md focus:border focus:px-3 focus:py-2"
-          style={{ background: "var(--surface)", borderColor: "var(--rule)", color: "var(--ink)" }}
-        >
-          Skip to content
-        </a>
-        <div className="flex min-h-screen flex-col md:flex-row">
-          <Sidebar />
-          <main id="main" className="flex-1 pb-20 md:pb-0">{children}</main>
-        </div>
-        <CommandPalette />
+    // The font variables go on <html>, not <body>: `--font-serif` is declared on
+    // :root and references `--font-fraunces`, and a custom property is
+    // substituted where it is *declared*, so the face has to be in scope there.
+    <html lang="en" className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen">
+        {children}
+        {/* Registers the service worker, so it has to sit above both route
+            groups — the offline fallback is reachable from either. */}
         <OfflineStatus />
-        <InstallPrompt />
       </body>
     </html>
   );
