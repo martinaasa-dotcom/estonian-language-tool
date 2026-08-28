@@ -10,11 +10,14 @@ tracking. Everything runs on your own computer. No account, no bill, no data lea
 
 ## Running it
 
-You need [Node.js](https://nodejs.org) 20 or newer. Then, in this folder:
+You need [Node.js](https://nodejs.org) 20 or newer and a Postgres database — the app is hosted (see
+"Deploying it as a real website" below), so local dev points at the same kind of database rather than
+a zero-setup local file. The free tier of [supabase.com](https://supabase.com) works fine for this;
+use a separate Supabase project from production if you'd rather not develop against live data.
 
 ```bash
 npm install       # fetches the libraries
-npm run setup     # creates the database and loads 360 Estonian words
+npm run setup     # copies .env.example to .env — fill in DATABASE_URL/DIRECT_URL first, then re-run
 npm run dev       # starts the app
 ```
 
@@ -64,6 +67,29 @@ That model costs nothing. If Anu ever feels vague about Estonian, swap the model
 `anthropic/claude-sonnet-5` or `openai/gpt-4o` — a fraction of a cent per question and noticeably
 sharper. An `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` works instead of OpenRouter if you prefer;
 whichever key is present is the one used.
+
+## Deploying it as a real website
+
+The default is still local-only (`file:./dev.db`), but the schema was built Postgres-portable from
+the start (ADR-002), so hosting it is a datasource swap, documented in `docs/03-architecture.md`
+ADR-011:
+
+1. Create a project at [supabase.com](https://supabase.com) → **Project Settings → Database →
+   Connection string**. Copy the pooled string (port 6543) as `DATABASE_URL` and the direct one
+   (port 5432) as `DIRECT_URL`.
+2. In Vercel, import this repo and set the environment variables (Production, and Preview if you
+   want preview deploys to work): `DATABASE_URL`, `DIRECT_URL`, plus whichever of
+   `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` and `EKILEX_API_KEY` you're using.
+   Never prefix any of these `NEXT_PUBLIC_` — they must stay server-side.
+3. Push the schema to the new database once, from your machine, using the direct URL:
+   ```bash
+   DATABASE_URL="<your direct connection string>" npx prisma db push
+   ```
+4. Deploy. Vercel runs `prisma generate && next build` automatically (see `package.json`).
+
+Two things change once it's hosted rather than local: review needs a network path to the database
+(it no longer runs on a train), and the TTS audio cache becomes per-instance instead of permanent,
+since Vercel's filesystem is read-only outside `/tmp`. Both are explained in ADR-011.
 
 ## Backing up
 

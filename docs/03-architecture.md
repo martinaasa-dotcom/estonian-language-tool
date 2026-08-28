@@ -169,6 +169,22 @@ cards, due tasks, next class, one button to start. *Consequences:* Today depends
 and Flashcards (Phase 3), so it ships incrementally rather than all at once — acceptable, because a
 partial Today still answers the question better than a tab bar does.
 
+**ADR-011 — Hosted on Vercel + Supabase (SUPERSEDES ADR-002's "local only" for v1).**
+*Context:* ADR-002 chose SQLite explicitly to avoid a network dependency on the review path and to
+avoid a monthly bill, for a single user on a single machine. That premise changed: the app is now
+meant to be reachable as a real website, not just run locally. *Decision:* deploy to Vercel; move the
+datasource from SQLite to Postgres (Supabase), using the pooled connection (`DATABASE_URL`) at
+runtime and the direct connection (`DIRECT_URL`) for schema changes, per ADR-002's own portability
+guarantee (no SQLite-specific types, UUID string ids, timestamps in UTC) — this was a datasource swap,
+not a data-model change. *Consequences:* "Review must work offline" (`03-architecture.md` §5) is no
+longer true in the literal sense — a hosted app needs a network path to its database — but the local
+dev flow (`file:./dev.db`, `npm run dev`) still works unchanged for anyone running it on their own
+machine. The TTS disk cache (`app/api/tts/route.ts`) now writes to `/tmp` when `VERCEL` is set, since
+Vercel's filesystem is read-only outside it; this makes it a per-instance cache rather than the
+permanent one ADR intended locally — acceptable, since TartuNLP is still hit far less than once per
+request. *Rejected:* keeping SQLite on a host with a persistent volume (Fly.io/Railway) — Vercel was
+the account already in hand.
+
 **ADR-008 — Five noun and five verb principal parts, not three cases and two infinitives.**
 *Context:* v4.0 stores nominative/genitive/partitive and the ma-/da-infinitives (audit B2, B4).
 *Problem:* partitive plural and the short illative cannot be derived, and the present 1sg is in the

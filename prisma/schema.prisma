@@ -1,15 +1,18 @@
 // Lean MVP schema. Deliberately smaller than docs/04-data-model.md:
 // calendar, decks, audio rows and the usage ledger are cut for the MVP.
-// Kept Postgres-portable (no SQLite-specific types) so a hosted move is a
-// datasource swap — see docs/03-architecture.md ADR-002.
+// Kept Postgres-portable (no SQLite-specific types), which is what made this
+// datasource swap possible — see docs/03-architecture.md ADR-002 and ADR-011.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase's pooled (pgbouncer) connection can't run schema changes;
+  // db push/migrate use the direct connection instead.
+  directUrl = env("DIRECT_URL")
 }
 
 /// A dictionary word. The hub of the model: cards and tasks point back here.

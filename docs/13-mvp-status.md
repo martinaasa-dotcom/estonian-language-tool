@@ -7,7 +7,7 @@ the answers to `12-open-questions.md` came back.
 
 | Question | Answer | Effect |
 |---|---|---|
-| Q1 Local or hosted? | **Local only.** No login, no bill, no hosting. | ADR-002 confirmed. SQLite, no auth. Schema stays Postgres-portable for the eventual Google-SSO version |
+| Q1 Local or hosted? | **Local only** at MVP time; **reversed 2026-08** to hosted (Vercel + Supabase). No auth yet. | ADR-002 confirmed for v1, superseded by ADR-011. Schema was already Postgres-portable, so this was a datasource swap, not a rebuild |
 | Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | 147 of 360 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling — C2 words drop in without a schema change |
 | Q3 Digital class materials? | **None.** | The importer stayed generic and cheap. No time spent on a parser for a format that does not exist |
 | Q4 Speakly? | Subscription exists, **not currently used** — "difficult to use" | Confirms ADR-006. Speakly has no public API (audit A3), so the paste importer handles it like any other source. Nothing Speakly-specific was built |
