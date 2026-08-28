@@ -3,6 +3,9 @@
 What was actually built, what was deliberately left out, and which planning decisions changed once
 the answers to `12-open-questions.md` came back.
 
+**§6 is the current state.** Everything above it describes the first MVP; §6 covers the pass that
+turned it from one person's study tool into something a stranger — or a class — can pick up.
+
 ## 1. The answers, and what they changed
 
 | Question | Answer | Effect |
@@ -104,5 +107,60 @@ Each of these is a decision, not an omission.
    follow a correction; a case-form card built from an old genitive keeps the old answer. Deleting
    and re-adding the card fixes it. Regenerating automatically would mean either losing the card's
    scheduling or silently changing what a card asks mid-schedule, and neither is obviously right.
-6. **A review needs the server.** Grading is a server action, so the app must be running. It does not
-   need the internet, but it is not yet an offline PWA.
+6. ~~**A review needs the server.**~~ **Fixed in §6** — the app installs as a PWA and grades made
+   offline are queued on the device and replayed with their real timestamps (ADR-015).
+
+
+## 6. The second pass: usable by someone who is not you
+
+The first MVP was complete for one learner who already knew what to study. Handing it to a stranger
+exposed a different set of gaps — an empty deck with no obvious first move, self-graded flashcards, a
+streak and nothing else to show for six weeks of work, and a promise about offline that the hosted
+deployment had quietly broken. This pass closes those.
+
+### What was added
+
+| Area | What it is | Why it earns its place |
+|---|---|---|
+| **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
+| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. `lib/collections/path.ts` | "Here are 360 words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
+| **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
+| **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
+| **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
+| **Match** (`/review/match`) | Eight pairs against the clock | The only mode that makes you scan a *set* of words at once |
+| **Practice hub** (`/practice`) | Every mode with its live state, plus one-click drills for weak cases | Answers "what should I do with five minutes" instead of listing modes |
+| **XP, levels, quests** | `lib/gamification/` — derived from the review log, never stored (ADR-014) | A streak alone says nothing about six weeks of work. Three quests a day, chosen deterministically from the date |
+| **Progress** (`/progress`) | Six-month heatmap, 14-day forecast, accuracy trend, per-case accuracy, CEFR reach | The forecast in particular is what stops an SRS becoming an unsustainable pile |
+| **Class leaderboard** | Opt-in, name chosen by the learner, weekly XP only | The one feature a class actually asks for. Off by default; no email or history is ever shared |
+| **Offline PWA** | Manifest, service worker, and a localStorage grade queue (ADR-015) | Restores the standing rule that review works with no network |
+| **Local mode** | No Supabase keys → one learner, no sign-in (ADR-013) | `npm run setup && npm run dev` is a complete installation again |
+| **⌘K palette, skip link, loading/error/not-found routes, phone nav sheet** | — | The difference between a demo and something you use on a Tuesday |
+
+### What this pass deliberately did *not* do
+
+- **No new Estonian content was written.** Every word, form and example still comes from the seeded
+  dictionary or Ekilex. The path references lemmas and `lib/collections/path.test.ts` fails if one
+  does not exist — an invented unit word would be an invented Estonian word by the back door.
+- **No cloze or sentence-building mode.** It needs example sentences the dictionary does not carry
+  for every word, and the honest source for those is Ekilex, not a model (ADR-005). Still shelved.
+- **No speech-to-text.** Unverified for Estonian (audit A5). Unchanged.
+- **No hearts, no lost streaks, no punishment mechanics.** Quests only add. The streak shield already
+  covers the anxiety a study app is entitled to create.
+- **No schema change.** Everything above rides on the existing tables plus the `Setting` key/value
+  bag — which is why none of it needed a migration, and why a backup taken before this pass restores
+  into it unchanged.
+
+### Known limitations, still
+
+1. **Match grades on recognition, not production.** A pair found among eight is easier than producing
+   the word cold; it is recorded as Good, which is generous but not dishonest. Sprint has the same
+   shape and always did.
+2. **The leaderboard is a whole-instance board, not per class.** Everyone who opts in on one
+   deployment sees everyone else who opted in. For a single class that is the right behaviour; for a
+   public instance it would need class codes, which is a feature, not a fix.
+3. **Undo trusts the client for the previous card state.** It is range-validated and can only ever be
+   applied to a card the caller already owns, so the worst case is someone rewinding their own
+   scheduling — which the button does anyway.
+4. **The service worker keeps the app openable, not the data fresh.** A screen you have never opened
+   while online shows the offline fallback. Review, the one path that has to work, does not depend on
+   it: the queue does.

@@ -90,3 +90,84 @@ export function Stat({ value, label, tone }: { value: ReactNode; label: string; 
     </div>
   );
 }
+
+/**
+ * A progress ring. Used for the daily goal, unit progress and level progress,
+ * which all want the same shape — a conic gradient rather than an SVG arc,
+ * because it animates cheaply and needs no viewBox arithmetic.
+ */
+export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "var(--accent)" }: {
+  pct: number;
+  size?: number;
+  thickness?: number;
+  /** Screen-reader text. Required: a bare ring says nothing without it. */
+  label: string;
+  children?: ReactNode;
+  tone?: string;
+}) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div
+      className="relative flex shrink-0 items-center justify-center rounded-full"
+      style={{ width: size, height: size, background: `conic-gradient(${tone} ${clamped * 3.6}deg, var(--raised) 0deg)` }}
+      role="img"
+      aria-label={label}
+    >
+      <div
+        className="flex items-center justify-center rounded-full"
+        style={{ width: size - thickness * 2, height: size - thickness * 2, background: "var(--surface)" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** A horizontal progress bar with an accessible value. */
+export function Meter({ pct, label, tone = "var(--accent)", height = 6 }: {
+  pct: number; label: string; tone?: string; height?: number;
+}) {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div
+      className="w-full overflow-hidden rounded-full"
+      style={{ background: "var(--raised)", height }}
+      role="progressbar"
+      aria-label={label}
+      aria-valuenow={Math.round(clamped)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div
+        className="h-full rounded-full transition-all duration-500"
+        style={{ width: `${clamped}%`, background: tone }}
+      />
+    </div>
+  );
+}
+
+/** A short, non-blocking note: a tip, a warning, a confirmation. */
+export function Note({ tone = "neutral", children }: {
+  tone?: "neutral" | "accent" | "good" | "hard" | "again"; children: ReactNode;
+}) {
+  const [bg, fg] = TONES[tone];
+  return (
+    <p className="rounded-md px-4 py-2.5 text-[13.5px]" style={{ background: bg, color: fg }}>
+      {children}
+    </p>
+  );
+}
+
+/**
+ * A loading placeholder with the shape of the thing it stands in for.
+ * Every route gets one — a blank screen while data loads reads as a broken app.
+ */
+export function Skeleton({ className = "", height = 16 }: { className?: string; height?: number }) {
+  return (
+    <div
+      className={`animate-pulse rounded-md ${className}`}
+      style={{ height, background: "var(--raised)" }}
+      aria-hidden
+    />
+  );
+}

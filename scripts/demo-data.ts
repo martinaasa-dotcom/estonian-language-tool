@@ -2,14 +2,28 @@
 import { PrismaClient } from "@prisma/client";
 import { generateCards, type LexemeForCards } from "../lib/srs/cards";
 import { emptyScheduling, grade } from "../lib/srs/scheduler";
+import { LOCAL_USER_ID, supabaseConfigured } from "../lib/auth/mode";
 
 const prisma = new PrismaClient();
+
+/** A spread of plausible review histories — some clean, some with a lapse. */
+const HISTORIES: number[][] = [
+  [3, 3, 2, 3, 4, 3],
+  [3, 1, 3, 3, 2],
+  [],
+  [4, 4, 3],
+  [2, 3, 1, 3, 3, 3],
+  [3],
+];
 
 async function main() {
   // Cards/tasks are per-user now (docs/03-architecture.md ADR-012), so this script
   // only ever touches one account's data — find your user id in the Supabase
   // dashboard (Authentication → Users) and pass it explicitly.
-  const ownerId = process.env.DEMO_OWNER_ID;
+  // Running locally there is only one learner (lib/auth/mode.ts), so the id is
+  // known; with Supabase configured it has to be named explicitly, because
+  // guessing which account to wipe is not a decision a script should make.
+  const ownerId = process.env.DEMO_OWNER_ID ?? (supabaseConfigured() ? undefined : LOCAL_USER_ID);
   if (!ownerId) {
     console.error("Set DEMO_OWNER_ID to your Supabase user id before running this script.");
     await prisma.$disconnect();
@@ -37,7 +51,7 @@ async function main() {
   const lexemes = await prisma.lexeme.findMany({
     where: { pos: { in: ["NOUN", "VERB"] } },
     include: { forms: true },
-    take: 18,
+    take: 30,
     orderBy: { lemma: "asc" },
   });
 
@@ -46,11 +60,14 @@ async function main() {
                         : (["RECOGNITION", "PRODUCTION"] as const);
     const cards = generateCards(lex as LexemeForCards, [...types]);
     for (const c of cards) {
-      let s = emptyScheduling(new Date(Date.now() - 12 * 86400000));
-      const history = i % 3 === 0 ? [3, 3, 2] : i % 3 === 1 ? [3, 1, 3, 3] : [];
+      // Eight weeks of history rather than two, so the heatmap, the forecast and
+      // the accuracy trend on /progress all have something real to draw.
+      let s = emptyScheduling(new Date(Date.now() - 56 * 86400000));
+      const history = HISTORIES[i % HISTORIES.length]!;
       const reviews: { rating: number; at: Date }[] = [];
       history.forEach((r, n) => {
-        const at = new Date(Date.now() - (10 - n * 3) * 86400000);
+        const daysAgo = Math.max(0, 54 - n * 6 - (i % 5));
+        const at = new Date(Date.now() - daysAgo * 86400000 + n * 3600000);
         reviews.push({ rating: r, at });
         s = grade(s, r as 1 | 2 | 3 | 4, at);
       });

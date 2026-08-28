@@ -1,12 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { supabaseConfigured } from "@/lib/auth/mode";
 
 /**
  * Refreshes the Supabase session cookie on every request (required by
  * @supabase/ssr — Server Components can't write cookies themselves) and
  * gates every route except sign-in and its OAuth callback behind a session.
+ *
+ * With no Supabase keys configured the app is a single-learner local install
+ * (lib/auth/mode.ts) and there is no session to refresh or gate — so the
+ * middleware steps aside entirely rather than redirecting to a sign-in page
+ * that could never sign anyone in.
  */
 export async function middleware(request: NextRequest) {
+  if (!supabaseConfigured()) return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -32,7 +40,10 @@ export async function middleware(request: NextRequest) {
 
   const isPublicPath =
     request.nextUrl.pathname.startsWith("/sign-in") ||
-    request.nextUrl.pathname.startsWith("/auth/callback");
+    request.nextUrl.pathname.startsWith("/auth/callback") ||
+    // The offline fallback holds no data and has to render from the service
+    // worker's cache, where there is no session to check.
+    request.nextUrl.pathname.startsWith("/offline");
 
   if (!user && !isPublicPath) {
     if (request.nextUrl.pathname.startsWith("/api/")) {
@@ -56,6 +67,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
