@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { createLexemeWithForms } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/ui";
@@ -27,20 +27,35 @@ const VERB_FIELDS = [
 
 const LEVELS = ["", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
+export interface WordDraft {
+  id: string;
+  lemma: string;
+  translation: string;
+  pos: string;
+  cefr: string | null;
+  government: string | null;
+  forms: { formType: string; value: string }[];
+}
+
 /**
- * Adds a word the built-in dictionary does not have — with its principal parts,
- * which is the whole point. Gradation is worked out from the two stems on save,
- * so the entry behaves exactly like a built-in one.
+ * Adds or corrects a word, with its principal parts — which is the whole point.
+ * Gradation is worked out from the two stems on save, so an entry typed here
+ * behaves exactly like a built-in one.
+ *
+ * Editing matters as much as adding: the built-in dictionary is hand-written and
+ * will contain mistakes, and a wrong form that cannot be fixed gets drilled.
  */
-export function AddWord({ initialLemma = "" }: { initialLemma?: string }) {
+export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; edit?: WordDraft }) {
   const router = useRouter();
   const [open, setOpen] = useState(Boolean(initialLemma));
-  const [pos, setPos] = useState("NOUN");
-  const [lemma, setLemma] = useState(initialLemma);
-  const [translation, setTranslation] = useState("");
-  const [cefr, setCefr] = useState("");
-  const [government, setGovernment] = useState("");
-  const [forms, setForms] = useState<Record<string, string>>({});
+  const [pos, setPos] = useState(edit?.pos ?? "NOUN");
+  const [lemma, setLemma] = useState(edit?.lemma ?? initialLemma);
+  const [translation, setTranslation] = useState(edit?.translation ?? "");
+  const [cefr, setCefr] = useState(edit?.cefr ?? "");
+  const [government, setGovernment] = useState(edit?.government ?? "");
+  const [forms, setForms] = useState<Record<string, string>>(
+    Object.fromEntries((edit?.forms ?? []).map((f) => [f.formType, f.value])),
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -60,20 +75,22 @@ export function AddWord({ initialLemma = "" }: { initialLemma?: string }) {
       if (fields.length && !filled[first]) filled[first] = lemma;
 
       const result = await createLexemeWithForms({
-        lemma, translation, pos, cefr, government, forms: filled,
+        id: edit?.id, lemma, translation, pos, cefr, government, forms: filled,
       });
       if (!result.ok) { setError(result.error); return; }
       setOpen(false);
-      setForms({});
-      setTranslation("");
+      if (!edit) { setForms({}); setTranslation(""); }
       router.push(`/dictionary?q=${encodeURIComponent(result.lemma)}`);
+      router.refresh();
     });
   };
 
   if (!open) {
     return (
       <Button onClick={() => setOpen(true)}>
-        <Plus size={15} aria-hidden /> Add a word
+        {edit
+          ? <><Pencil size={14} aria-hidden /> Edit</>
+          : <><Plus size={15} aria-hidden /> Add a word</>}
       </Button>
     );
   }
@@ -81,7 +98,9 @@ export function AddWord({ initialLemma = "" }: { initialLemma?: string }) {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="est text-[19px] font-semibold" style={{ color: "var(--ink)" }}>Add a word</h2>
+        <h2 className="est text-[19px] font-semibold" style={{ color: "var(--ink)" }}>
+          {edit ? `Edit ${edit.lemma}` : "Add a word"}
+        </h2>
         <button type="button" onClick={() => setOpen(false)} className="text-[13px]" style={{ color: "var(--ink-3)" }}>
           Cancel
         </button>
@@ -169,7 +188,7 @@ export function AddWord({ initialLemma = "" }: { initialLemma?: string }) {
 
       <div className="flex flex-wrap items-center gap-4">
         <Button variant="primary" onClick={submit} disabled={pending || !lemma.trim() || !translation.trim()}>
-          {pending ? "Saving…" : "Save word"}
+          {pending ? "Saving…" : edit ? "Save changes" : "Save word"}
         </Button>
         <DiacriticBar label="Insert an Estonian character into the field you are typing in" />
       </div>

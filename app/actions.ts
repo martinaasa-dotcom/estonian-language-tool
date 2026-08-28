@@ -154,6 +154,9 @@ export async function createLexeme(input: {
  * carry — without it, "add it yourself" is a promise the app cannot keep.
  */
 export async function createLexemeWithForms(input: {
+  /** Present when correcting an existing entry. Without it, editing the Estonian
+   *  word itself would create a second lexeme and orphan the cards made from it. */
+  id?: string;
   lemma: string;
   translation: string;
   pos: string;
@@ -182,9 +185,9 @@ export async function createLexemeWithForms(input: {
     : infMa && pres1 ? classifyVerbGradation(infMa, pres1)
     : { type: "NONE" as const, note: undefined };
 
-  const existing = await prisma.lexeme.findUnique({
-    where: { lemma_pos: { lemma, pos: input.pos } },
-  });
+  const existing = input.id
+    ? await prisma.lexeme.findUnique({ where: { id: input.id } })
+    : await prisma.lexeme.findUnique({ where: { lemma_pos: { lemma, pos: input.pos } } });
 
   const data = {
     lemma, translation, pos: input.pos,
@@ -205,8 +208,23 @@ export async function createLexemeWithForms(input: {
     await prisma.form.createMany({ data: forms.map((f) => ({ ...f, lexemeId: lexeme.id })) });
   }
 
+  // Correcting a word must correct the cards made from it, or she keeps being
+  // drilled on the mistake she just fixed. Only the text is rewritten — the FSRS
+  // scheduling is untouched, so a correction never costs her progress.
+  if (existing && (existing.lemma !== lemma || existing.translation !== translation)) {
+    await prisma.card.updateMany({
+      where: { lexemeId: lexeme.id, cardType: "RECOGNITION" },
+      data: { front: lemma, back: translation },
+    });
+    await prisma.card.updateMany({
+      where: { lexemeId: lexeme.id, cardType: "PRODUCTION" },
+      data: { front: translation, back: lemma },
+    });
+  }
+
   revalidatePath("/dictionary");
   revalidatePath("/words");
+  revalidatePath("/");
   return { ok: true as const, id: lexeme.id, lemma, updated: Boolean(existing) };
 }
 

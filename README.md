@@ -66,8 +66,8 @@ try restoring it once while nothing is at stake. A backup you have never restore
 ```
 npm run dev        # development server
 npm run build      # production build
-npm run test       # unit tests (56)
-npm run test:e2e   # browser checks (39) — needs the server running
+npm run test       # unit tests (65)
+npm run test:e2e   # browser checks (51) — needs the server running
 npm run demo       # fill the deck with sample data to look around
 npm run typecheck  # tsc --noEmit
 npm run db:seed    # reload the built-in dictionary

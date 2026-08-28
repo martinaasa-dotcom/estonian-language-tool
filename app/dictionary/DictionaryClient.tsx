@@ -11,7 +11,7 @@ import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { SearchHit } from "@/lib/dict/search";
-import { AddWord } from "./AddWord";
+import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
 
 export interface EntryView {
@@ -193,8 +193,20 @@ function Entry({ entry }: { entry: EntryView }) {
             {entry.provenance === "AI" && <Chip tone="again">AI — verify</Chip>}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <StarButton id={entry.id} />
+          <AddWord
+            key={entry.id}
+            edit={{
+              id: entry.id,
+              lemma: entry.lemma,
+              translation: entry.translation,
+              pos: entry.pos,
+              cefr: entry.cefr,
+              government: entry.government,
+              forms: entry.forms,
+            } satisfies WordDraft}
+          />
           <AddToDeck entry={entry} />
         </div>
       </header>

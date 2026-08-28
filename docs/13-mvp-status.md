@@ -54,6 +54,7 @@ add back.
 | Tasks — tagged, week, due dates | Complete |
 | Import — paste TSV/CSV/dash/semicolon lines, with dedupe | Complete |
 | Add a word by hand, with principal parts and auto-classified gradation | Complete |
+| Edit an existing entry — corrections rewrite its cards' text but never its FSRS scheduling | Complete |
 | Export — full JSON backup | Complete |
 | Restore from a backup — merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
 | Weak-case drill — click a case in the heatmap to review just those cards | Complete |
@@ -93,5 +94,9 @@ Each of these is a decision, not an omission.
 4. **Anu's Estonian is only as good as the model behind it.** The free model is decent, not
    authoritative. Everything it suggests is tagged `AI · verify`, and it never supplies a dictionary
    form — that boundary is enforced in the data model, not just in the prompt.
-5. **A review needs the server.** Grading is a server action, so the app must be running. It does not
+5. **Editing a word does not regenerate its case-form cards.** Recognition and production cards
+   follow a correction; a case-form card built from an old genitive keeps the old answer. Deleting
+   and re-adding the card fixes it. Regenerating automatically would mean either losing the card's
+   scheduling or silently changing what a card asks mid-schedule, and neither is obviously right.
+6. **A review needs the server.** Grading is a server action, so the app must be running. It does not
    need the internet, but it is not yet an offline PWA.
