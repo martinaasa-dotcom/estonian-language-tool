@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
@@ -144,6 +145,68 @@ export async function createLexeme(input: {
   });
   revalidatePath("/dictionary");
   return { ok: true as const, id: lexeme.id, existed: false };
+}
+
+/**
+ * Creates a word with its principal parts, and classifies the gradation from the
+ * two stems given. This is the path for anything the built-in dictionary does not
+ * carry — without it, "add it yourself" is a promise the app cannot keep.
+ */
+export async function createLexemeWithForms(input: {
+  lemma: string;
+  translation: string;
+  pos: string;
+  cefr?: string;
+  government?: string;
+  notes?: string;
+  forms: Record<string, string>;
+}) {
+  const lemma = input.lemma.trim();
+  const translation = input.translation.trim();
+  if (!lemma || !translation) {
+    return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
+  }
+
+  const forms = Object.entries(input.forms)
+    .map(([formType, value]) => ({ formType, value: value.trim() }))
+    .filter((f) => f.value);
+
+  const nomSg = forms.find((f) => f.formType === "NOM_SG")?.value;
+  const genSg = forms.find((f) => f.formType === "GEN_SG")?.value;
+  const infMa = forms.find((f) => f.formType === "INF_MA")?.value;
+  const pres1 = forms.find((f) => f.formType === "PRES_1SG")?.value;
+
+  const gradation =
+    nomSg && genSg ? classifyGradation(nomSg, genSg)
+    : infMa && pres1 ? classifyVerbGradation(infMa, pres1)
+    : { type: "NONE" as const, note: undefined };
+
+  const existing = await prisma.lexeme.findUnique({
+    where: { lemma_pos: { lemma, pos: input.pos } },
+  });
+
+  const data = {
+    lemma, translation, pos: input.pos,
+    cefr: input.cefr || null,
+    government: input.government?.trim() || null,
+    notes: input.notes?.trim() || null,
+    gradation: gradation.type,
+    gradationNote: gradation.note ?? null,
+    provenance: "USER",
+  };
+
+  const lexeme = existing
+    ? await prisma.lexeme.update({ where: { id: existing.id }, data })
+    : await prisma.lexeme.create({ data });
+
+  await prisma.form.deleteMany({ where: { lexemeId: lexeme.id } });
+  if (forms.length) {
+    await prisma.form.createMany({ data: forms.map((f) => ({ ...f, lexemeId: lexeme.id })) });
+  }
+
+  revalidatePath("/dictionary");
+  revalidatePath("/words");
+  return { ok: true as const, id: lexeme.id, lemma, updated: Boolean(existing) };
 }
 
 export async function toggleStar(lexemeId: string) {

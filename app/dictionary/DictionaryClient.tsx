@@ -11,6 +11,7 @@ import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { SearchHit } from "@/lib/dict/search";
+import { AddWord } from "./AddWord";
 
 export interface EntryView {
   id: string;
@@ -55,6 +56,8 @@ export function DictionaryClient({
   const [query, setQuery] = useState(initialQuery);
   const [pending, start] = useTransition();
 
+  const showingEntry = entry !== null;
+
   const go = (q: string) => {
     setQuery(q);
     start(() => router.push(q.trim() ? `/dictionary?q=${encodeURIComponent(q.trim())}` : "/dictionary"));
@@ -79,6 +82,8 @@ export function DictionaryClient({
         </Button>
       </div>
 
+      {!showingEntry && initialQuery === "" && <AddWord />}
+
       {!initialQuery && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>Try</span>
@@ -97,10 +102,13 @@ export function DictionaryClient({
       )}
 
       {initialQuery && hits.length === 0 && (
-        <Empty
-          title={`Nothing found for "${initialQuery}"`}
-          body="The built-in dictionary covers about 250 common words. Connect an Ekilex API key in Settings to search the full Estonian lexicon, or add this word yourself from My words."
-        />
+        <div className="flex flex-col gap-4">
+          <Empty
+            title={`Nothing found for "${initialQuery}"`}
+            body="The built-in dictionary covers common words up to B2. Add this one yourself — put in the genitive and you get the whole case table, audio and cards, exactly like a built-in word."
+          />
+          <AddWord initialLemma={initialQuery} />
+        </div>
       )}
 
       {entry && <Entry entry={entry} />}

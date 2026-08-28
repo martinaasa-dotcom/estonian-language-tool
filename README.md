@@ -14,7 +14,7 @@ You need [Node.js](https://nodejs.org) 20 or newer. Then, in this folder:
 
 ```bash
 npm install       # fetches the libraries
-npm run setup     # creates the database and loads 250+ Estonian words
+npm run setup     # creates the database and loads 360 Estonian words
 npm run dev       # starts the app
 ```
 
@@ -26,8 +26,9 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 Everything except the tutor:
 
-- **Dictionary** — 250+ words with checked principal parts, consonant gradation, and the full case
-  table worked out from the genitive.
+- **Dictionary** — 360 words (A1 to C1) with checked principal parts, consonant gradation and the
+  full case table worked out from the genitive. Anything missing can be added by hand, principal
+  parts and all.
 - **Audio** — real Estonian speech from the University of Tartu's neural voice. No key, no setup.
 - **Flashcards** — FSRS scheduling, seven card types, keyboard-only review.
 - **Tasks, import, export** — all local.

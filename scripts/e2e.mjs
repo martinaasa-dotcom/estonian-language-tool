@@ -60,12 +60,22 @@ check("task is created and persists", (await page.getByText("Revise the comitati
 
 // 5 — Import
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
-await page.getByLabel("Paste word list").fill("kirjutuslaud - desk\nkohvik - cafe");
+const stamp = Date.now();
+const list = `testsona${stamp} - test word\ntestverb${stamp}ma - to test`;
+await page.getByLabel("Paste word list").fill(list);
 await page.waitForTimeout(500);
 check("import preview parses pasted lines", (await page.getByText(/2 words found/).count()) > 0);
 await page.getByRole("button", { name: /Add 2 words/ }).click();
 await page.waitForTimeout(2500);
 check("import writes words and cards", (await page.getByText(/Added 2 words/).count()) > 0);
+
+// Re-importing the same list must not duplicate anything.
+await page.getByLabel("Paste word list").fill(list);
+await page.waitForTimeout(400);
+await page.getByRole("button", { name: /Add 2 words/ }).click();
+await page.waitForTimeout(2500);
+check("re-importing the same words does not duplicate them",
+  (await page.getByText(/already in your deck/).count()) > 0);
 
 // 6 — Export
 const res = await page.request.get(`${B}/api/export`);
@@ -83,6 +93,36 @@ const tts = await page.request.post(`${B}/api/tts`, { data: { text: "tere" } });
 const buf = await tts.body();
 check("Estonian audio comes back as a WAV", tts.ok() && buf.subarray(0, 4).toString() === "RIFF",
   `${buf.length} bytes`);
+
+// 9 — Adding a word the built-in dictionary does not carry
+const word = `proovisona${Date.now()}`;
+await page.goto(`${B}/dictionary?q=${word}`, { waitUntil: "networkidle" });
+check("a failed search offers an add form, not a dead end", (await page.getByText("Add a word").count()) > 0);
+await page.getByPlaceholder("word").fill("trial word");
+await page.getByPlaceholder("toa").fill(`${word}u`);
+await page.getByRole("button", { name: "Save word" }).click();
+await page.waitForTimeout(2500);
+check("the new word opens as a full entry", (await page.getByText("trial word").count()) > 0);
+check("its case table is derived from the genitive I typed",
+  (await page.getByText(`${word}us`, { exact: true }).count()) > 0);
+check("and it can go straight into the deck",
+  (await page.getByRole("button", { name: /Add to deck/ }).count()) > 0);
+
+// The shared diacritic bar must type into whichever field has focus, and React
+// must see the change — a direct .value write would be silently discarded.
+await page.goto(`${B}/dictionary?q=zzznotaword`, { waitUntil: "networkidle" });
+const genField = page.getByPlaceholder("toa");
+await genField.click();
+await genField.fill("s");
+await page.getByLabel("Insert an Estonian character into the field you are typing in").getByLabel("Insert ä").click();
+await page.waitForTimeout(300);
+check("shared diacritic bar types into the focused field",
+  (await genField.inputValue()) === "sä", `got "${await genField.inputValue()}"`);
+
+// 10 — B1+ coverage, with verb government
+await page.goto(`${B}/dictionary?q=sõltuma`, { waitUntil: "networkidle" });
+check("B1 verb carries its government", (await page.getByText(/elative — see sõltub sinust/).count()) > 0);
+
 
 console.log(errors.length ? `\nconsole/page errors:\n  ${errors.join("\n  ")}` : "\nno console errors");
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);

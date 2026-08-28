@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { NOUNS } from "./data/nouns";
 import { VERBS } from "./data/verbs";
 import { ADJECTIVES, PHRASES } from "./data/other";
+import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/advanced";
 import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
 
 const prisma = new PrismaClient();
@@ -13,7 +14,7 @@ const prisma = new PrismaClient();
 async function main() {
   let count = 0;
 
-  for (const [lemma, translation, cefr, nomSg, genSg, partSg, partPl, genPl, illShort] of NOUNS) {
+  for (const [lemma, translation, cefr, nomSg, genSg, partSg, partPl, genPl, illShort] of [...NOUNS, ...ADVANCED_NOUNS]) {
     const g = classifyGradation(nomSg, genSg);
     await upsert({
       lemma, pos: "NOUN", translation, cefr,
@@ -26,7 +27,7 @@ async function main() {
     count++;
   }
 
-  for (const [lemma, translation, cefr, infMa, infDa, pres1sg, past1sg, partTud, government] of VERBS) {
+  for (const [lemma, translation, cefr, infMa, infDa, pres1sg, past1sg, partTud, government] of [...VERBS, ...ADVANCED_VERBS]) {
     const g = classifyVerbGradation(infMa, pres1sg);
     await upsert({
       lemma, pos: "VERB", translation, cefr,
@@ -36,7 +37,7 @@ async function main() {
     count++;
   }
 
-  for (const [lemma, translation, cefr, nomSg, genSg, partSg] of ADJECTIVES) {
+  for (const [lemma, translation, cefr, nomSg, genSg, partSg] of [...ADJECTIVES, ...ADVANCED_ADJECTIVES]) {
     const g = classifyGradation(nomSg, genSg);
     await upsert({
       lemma, pos: "ADJECTIVE", translation, cefr,

@@ -8,7 +8,7 @@ the answers to `12-open-questions.md` came back.
 | Question | Answer | Effect |
 |---|---|---|
 | Q1 Local or hosted? | **Local only.** No login, no bill, no hosting. | ADR-002 confirmed. SQLite, no auth. Schema stays Postgres-portable for the eventual Google-SSO version |
-| Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | Seed dictionary is CEFR-tagged A1–B2 today; the level model has no ceiling, so C1–C2 words drop in without a schema change |
+| Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | 147 of 360 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling — C2 words drop in without a schema change |
 | Q3 Digital class materials? | **None.** | The importer stayed generic and cheap. No time spent on a parser for a format that does not exist |
 | Q4 Speakly? | Subscription exists, **not currently used** — "difficult to use" | Confirms ADR-006. Speakly has no public API (audit A3), so the paste importer handles it like any other source. Nothing Speakly-specific was built |
 | Q5 AI budget? | **No cap — but free for now.** OpenRouter/OpenAI, and later "whatever works best" | ADR-004 reversed, see §2 |
@@ -44,14 +44,15 @@ add back.
 |---|---|
 | `lib/estonian/` — cases, principal parts, gradation, derivation | Complete, 56 unit tests |
 | Dictionary — search, paradigm, gradation, derived case table, audio | Complete over the built-in dictionary |
-| Built-in dictionary — 131 nouns, 71 verbs, 30 adjectives, 20 phrases | Complete, hand-checked, CEFR-tagged |
+| Built-in dictionary — 360 entries, 1 568 stored forms | Complete, hand-checked, CEFR-tagged A1–C1 (162 / 51 / 75 / 66 / 6). 70 carry gradation, 24 verbs carry government |
 | Speech — TartuNLP, server-proxied, cached to disk forever | Complete and verified end to end |
 | Flashcards — FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
 | Today — due counts, streak, tasks, weak-word pick | Complete |
 | My words — deck management, filters, weak-case breakdown | Complete |
 | Anu — streaming chat, prompt chips, vocabulary bridge with AI provenance | Complete; needs a key |
 | Tasks — tagged, week, due dates | Complete |
-| Import — paste TSV/CSV/dash/semicolon lines | Complete |
+| Import — paste TSV/CSV/dash/semicolon lines, with dedupe | Complete |
+| Add a word by hand, with principal parts and auto-classified gradation | Complete |
 | Export — full JSON backup | Complete |
 | Light and dark themes, keyboard operation, mobile layout | Complete |
 
@@ -75,8 +76,10 @@ Each of these is a decision, not an omission.
 
 ## 5. Known limitations, stated plainly
 
-1. **The dictionary is 252 words.** Anything outside it must be added by hand or pasted in. This is
-   the single biggest gap, and an Ekilex key closes it.
+1. **The dictionary is 360 words.** Enough for A1–B2 and the start of C1, but far short of the full
+   lexicon. Anything outside it can be added by hand — the add-word form takes principal parts and
+   classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
+   key would close the gap properly.
 2. **Gradation detection is orthographic.** Quantitative gradation (*vältevaheldus*) is a change in
    duration that Estonian spelling does not record, so it cannot be detected from text. The app only
    ever reports the qualitative kind, and says so rather than implying a word does not alternate.
