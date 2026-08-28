@@ -81,11 +81,11 @@ ADR-011:
    want preview deploys to work): `DATABASE_URL`, `DIRECT_URL`, plus whichever of
    `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` and `EKILEX_API_KEY` you're using.
    Never prefix any of these `NEXT_PUBLIC_` — they must stay server-side.
-3. Push the schema to the new database once, from your machine, using the direct URL:
-   ```bash
-   DATABASE_URL="<your direct connection string>" npx prisma db push
-   ```
-4. Deploy. Vercel runs `prisma generate && next build` automatically (see `package.json`).
+3. Deploy. Vercel's build runs `prisma generate && prisma db push && next build` (see
+   `package.json`), so the schema is created/updated against `DIRECT_URL` automatically on every
+   deploy — no manual push step. `prisma db push` fails the build rather than silently applying a
+   destructive change, so an unusual schema change (e.g. dropping a column with data in it) shows up
+   as a failed deploy asking you to confirm, not as quiet data loss.
 
 Two things change once it's hosted rather than local: review needs a network path to the database
 (it no longer runs on a train), and the TTS audio cache becomes per-instance instead of permanent,
