@@ -1,10 +1,10 @@
-import { Compass } from "lucide-react";
 import { ButtonLink } from "@/components/Button";
+import { Mascot } from "@/components/brand";
 
 export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
-      <Compass size={28} aria-hidden style={{ color: "var(--ink-3)" }} />
+      <Mascot size={62} mood="thinking" className="float" />
       <h1 className="est text-[26px] font-bold" style={{ color: "var(--ink)" }}>
         Seda lehte pole
       </h1>
