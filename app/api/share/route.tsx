@@ -27,10 +27,13 @@ export async function GET() {
   ]);
 
   const name = settings[SETTING_KEYS.displayName]?.trim();
-  const stats: [string, string][] = [
-    [String(summary.streak), summary.streak === 1 ? "day streak" : "day streak"],
-    [String(snapshot.knownCards), "cards known"],
-    [String(summary.level.totalXp), "XP earned"],
+  // Each figure keeps the hue it has inside the app — butter for the streak,
+  // mint for what is known, cornflower for XP — so a shared card reads as the
+  // same product, not a generic stat graphic.
+  const stats: [string, string, string][] = [
+    [String(summary.streak), "day streak", "#cf9114"],
+    [String(snapshot.knownCards), "cards known", "#1fb894"],
+    [String(summary.level.totalXp), "XP earned", "#7a6bf0"],
   ];
 
   return new ImageResponse(
@@ -42,7 +45,7 @@ export async function GET() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#f6f7f9",
+          background: "#fbf9ff",
           padding: 64,
           fontFamily: "sans-serif",
         }}
@@ -54,8 +57,8 @@ export async function GET() {
                 display: "flex",
                 width: 56,
                 height: 56,
-                borderRadius: 14,
-                background: "#3e6ba8",
+                borderRadius: 16,
+                backgroundImage: "linear-gradient(135deg, #7a6bf0 0%, #e2559a 100%)",
                 color: "#fff",
                 fontSize: 36,
                 fontWeight: 700,
@@ -66,21 +69,21 @@ export async function GET() {
               õ
             </div>
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#161a21" }}>Kodukeel</div>
-              <div style={{ display: "flex", fontSize: 17, color: "#6b7684", letterSpacing: 2 }}>ESTONIAN STUDY</div>
+              <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#241f35" }}>Kodukeel</div>
+              <div style={{ display: "flex", fontSize: 17, color: "#8b84a3", letterSpacing: 2 }}>ESTONIAN, DAILY</div>
             </div>
           </div>
 
-          <div style={{ display: "flex", marginTop: 44, fontSize: 54, fontWeight: 700, color: "#161a21", lineHeight: 1.1 }}>
+          <div style={{ display: "flex", marginTop: 44, fontSize: 54, fontWeight: 700, color: "#241f35", lineHeight: 1.1 }}>
             {name ? `${name} is learning Estonian` : "Learning Estonian"}
           </div>
-          <div style={{ display: "flex", marginTop: 14, fontSize: 27, color: "#464f5d" }}>
+          <div style={{ display: "flex", marginTop: 14, fontSize: 27, color: "#5b5470" }}>
             {`Level ${summary.level.level} · ${summary.level.title}`}
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 24 }}>
-          {stats.map(([value, label]) => (
+          {stats.map(([value, label, tone]) => (
             <div
               key={label}
               style={{
@@ -88,18 +91,18 @@ export async function GET() {
                 flexDirection: "column",
                 flex: 1,
                 background: "#ffffff",
-                border: "1px solid #d8dee6",
-                borderRadius: 18,
+                border: "1px solid #e8e3f7",
+                borderRadius: 22,
                 padding: "28px 32px",
               }}
             >
-              <div style={{ display: "flex", fontSize: 62, fontWeight: 700, color: "#3e6ba8", lineHeight: 1 }}>{value}</div>
-              <div style={{ display: "flex", marginTop: 10, fontSize: 21, color: "#6b7684" }}>{label}</div>
+              <div style={{ display: "flex", fontSize: 62, fontWeight: 700, color: tone, lineHeight: 1 }}>{value}</div>
+              <div style={{ display: "flex", marginTop: 10, fontSize: 21, color: "#8b84a3" }}>{label}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: "flex", fontSize: 20, color: "#6b7684" }}>
+        <div style={{ display: "flex", fontSize: 20, color: "#8b84a3" }}>
           Every number here is counted from reviews actually done.
         </div>
       </div>
