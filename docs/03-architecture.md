@@ -123,7 +123,7 @@ FSRS via `ts-fsrs`. *Rationale:* fewer reviews for the same retention, a tunable
 actively maintained, MIT. *Consequences:* store FSRS state per card (stability, difficulty, state,
 lapses) rather than an SM-2 ease factor; a review log enables later parameter optimisation.
 
-**ADR-004 — `claude-opus-5` with adaptive thinking, streaming and prompt caching.**
+**ADR-004 — Provider-agnostic tutor (SUPERSEDED the original `claude-opus-5` pin — see `13-mvp-status.md` §2).**
 *Context:* v4.0 pins `claude-3-5-sonnet`, which is not a current model identifier (audit C2).
 *Decision:* `claude-opus-5`; `thinking: { type: "adaptive" }`; stream every response; a
 `cache_control` breakpoint on the static Estonian system prompt. *Consequences:* grammar explanations

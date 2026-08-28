@@ -1,0 +1,71 @@
+"use client";
+
+import { useRef, type ChangeEvent, type KeyboardEvent } from "react";
+
+const DIACRITICS = ["õ", "ä", "ö", "ü", "š", "ž"] as const;
+
+/**
+ * Estonian text input with a diacritic bar.
+ *
+ * Typing õäöü on a US keyboard is slow enough that a learner will quietly avoid
+ * any feature that needs it, so every Estonian field gets click-to-insert.
+ */
+export function EstonianInput({
+  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+  onEnter?: () => void;
+  id?: string;
+  ariaLabel?: string;
+  large?: boolean;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  const insert = (ch: string) => {
+    const el = ref.current;
+    if (!el) return onChange(value + ch);
+    const start = el.selectionStart ?? value.length;
+    const end = el.selectionEnd ?? value.length;
+    onChange(value.slice(0, start) + ch + value.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + ch.length, start + ch.length);
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <input
+        ref={ref}
+        id={id}
+        aria-label={ariaLabel}
+        value={value}
+        autoFocus={autoFocus}
+        placeholder={placeholder}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+          if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
+        }}
+        className={`est w-full rounded-md border px-3.5 outline-none ${large ? "py-3 text-[20px]" : "py-2.5 text-[16px]"}`}
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+      />
+      <div className="flex gap-1.5" role="group" aria-label="Insert Estonian character">
+        {DIACRITICS.map((ch) => (
+          <button
+            key={ch}
+            type="button"
+            onClick={() => insert(ch)}
+            aria-label={`Insert ${ch}`}
+            className="est h-8 w-8 rounded border text-[15px] transition-opacity hover:opacity-70"
+            style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink-2)" }}
+          >
+            {ch}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

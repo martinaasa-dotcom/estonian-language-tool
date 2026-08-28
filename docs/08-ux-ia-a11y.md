@@ -42,7 +42,8 @@ Anu. For a power tool used daily by one person, the palette is faster than any n
 | `n` | New task (context-dependent) |
 | `?` | Keyboard shortcut help |
 
-Review-session keys are in `07-srs.md` §3.
+Review-session keys are in `07-srs.md` §3. Undo (`u`) is specified there but is not in
+the MVP — see `13-mvp-status.md` §4.
 
 ## 3. Estonian text input (audit C9)
 

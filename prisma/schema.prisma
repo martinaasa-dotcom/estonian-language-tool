@@ -1,0 +1,126 @@
+// Lean MVP schema. Deliberately smaller than docs/04-data-model.md:
+// calendar, decks, audio rows and the usage ledger are cut for the MVP.
+// Kept Postgres-portable (no SQLite-specific types) so a hosted move is a
+// datasource swap — see docs/03-architecture.md ADR-002.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A dictionary word. The hub of the model: cards and tasks point back here.
+model Lexeme {
+  id            String   @id @default(uuid())
+  lemma         String
+  pos           String   // NOUN | VERB | ADJECTIVE | ADVERB | PHRASE | OTHER
+  translation   String
+  cefr          String?  // A1 A2 B1 B2 C1 C2
+  gradation     String   @default("NONE") // NONE | QUALITATIVE | QUANTITATIVE
+  gradationNote String?  // e.g. "b : ∅"
+  government    String?  // verb case government, e.g. "partitive — aitan sind"
+  examples      String   @default("[]")   // JSON: [{ et, en }]
+  notes         String?
+  provenance    String   @default("SEED") // SEED | EKILEX | AI | USER
+  ekilexWordId  Int?
+  starred       Boolean  @default(false)
+
+  forms     Form[]
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([lemma, pos])
+  @@index([lemma])
+  @@index([cefr])
+}
+
+/// A principal part. Only unpredictable forms are stored; the ten regular
+/// cases are derived from the genitive stem at render time (ADR-005, CLAUDE.md).
+model Form {
+  id       String @id @default(uuid())
+  lexemeId String
+  lexeme   Lexeme @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  formType String // NOM_SG GEN_SG PART_SG ILL_SG_SHORT PART_PL | INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD
+  value    String
+
+  @@unique([lexemeId, formType])
+  @@index([lexemeId])
+}
+
+model Card {
+  id         String  @id @default(uuid())
+  lexemeId   String?
+  lexeme     Lexeme? @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  cardType   String  // RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT
+  front      String
+  back       String
+  hint       String?
+  targetCase String? // for CASE_FORM cards — powers the weak-case breakdown
+  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT
+  suspended  Boolean @default(false)
+
+  // FSRS state (ts-fsrs) — ADR-003
+  due           DateTime @default(now())
+  stability     Float    @default(0)
+  difficulty    Float    @default(0)
+  elapsedDays   Int      @default(0)
+  scheduledDays Int      @default(0)
+  reps          Int      @default(0)
+  lapses        Int      @default(0)
+  state         Int      @default(0) // 0 New 1 Learning 2 Review 3 Relearning
+  learningSteps Int      @default(0) // FSRS learning-step index; must round-trip
+  lastReview    DateTime?
+
+  reviews   Review[]
+  createdAt DateTime @default(now())
+
+  @@index([due, suspended])
+  @@index([lexemeId])
+}
+
+/// Append-only. Never updated, never deleted — the one irreplaceable table.
+model Review {
+  id         String   @id @default(uuid())
+  cardId     String
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  rating     Int      // 1 Again · 2 Hard · 3 Good · 4 Easy
+  reviewedAt DateTime @default(now())
+  durationMs Int      @default(0)
+  stateBefore Int     @default(0)
+  targetCase String?
+
+  @@index([reviewedAt])
+  @@index([cardId])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  notes       String?
+  tag         String    @default("HOMEWORK") // HOMEWORK GRAMMAR VOCABULARY LISTENING SPEAKING
+  classWeek   Int?
+  dueAt       DateTime?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([completed, dueAt])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  role      String   // user | assistant
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Setting {
+  key   String @id
+  value String
+}

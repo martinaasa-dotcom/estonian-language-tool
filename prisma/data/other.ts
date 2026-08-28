@@ -1,0 +1,61 @@
+/** Adjectives: [lemma, english, cefr, nomSg, genSg, partSg]. They decline like nouns. */
+export type AdjSeed = readonly [string, string, string, string, string, string];
+
+export const ADJECTIVES: readonly AdjSeed[] = [
+  ["suur", "big, large", "A1", "suur", "suure", "suurt"],
+  ["väike", "small", "A1", "väike", "väikese", "väikest"],
+  ["hea", "good", "A1", "hea", "hea", "head"],
+  ["halb", "bad", "A1", "halb", "halva", "halba"],
+  ["uus", "new", "A1", "uus", "uue", "uut"],
+  ["vana", "old", "A1", "vana", "vana", "vana"],
+  ["noor", "young", "A1", "noor", "noore", "noort"],
+  ["pikk", "long, tall", "A1", "pikk", "pika", "pikka"],
+  ["lühike", "short", "A1", "lühike", "lühikese", "lühikest"],
+  ["kiire", "fast, quick", "A1", "kiire", "kiire", "kiiret"],
+  ["aeglane", "slow", "A1", "aeglane", "aeglase", "aeglast"],
+  ["kallis", "expensive, dear", "A1", "kallis", "kalli", "kallist"],
+  ["odav", "cheap", "A1", "odav", "odava", "odavat"],
+  ["ilus", "beautiful", "A1", "ilus", "ilusa", "ilusat"],
+  ["tore", "nice, lovely", "A1", "tore", "toreda", "toredat"],
+  ["raske", "difficult, heavy", "A1", "raske", "raske", "rasket"],
+  ["kerge", "easy, light", "A1", "kerge", "kerge", "kerget"],
+  ["lihtne", "simple", "A1", "lihtne", "lihtsa", "lihtsat"],
+  ["keeruline", "complicated", "B1", "keeruline", "keerulise", "keerulist"],
+  ["tähtis", "important", "A2", "tähtis", "tähtsa", "tähtsat"],
+  ["huvitav", "interesting", "A1", "huvitav", "huvitava", "huvitavat"],
+  ["igav", "boring", "A2", "igav", "igava", "igavat"],
+  ["külm", "cold", "A1", "külm", "külma", "külma"],
+  ["soe", "warm", "A1", "soe", "sooja", "sooja"],
+  ["kuum", "hot", "A1", "kuum", "kuuma", "kuuma"],
+  ["õnnelik", "happy", "A2", "õnnelik", "õnneliku", "õnnelikku"],
+  ["kurb", "sad", "A2", "kurb", "kurva", "kurba"],
+  ["terve", "healthy, whole", "A2", "terve", "terve", "tervet"],
+  ["vajalik", "necessary", "B1", "vajalik", "vajaliku", "vajalikku"],
+  ["võimalik", "possible", "B1", "võimalik", "võimaliku", "võimalikku"],
+] as const;
+
+/** Fixed expressions: [estonian, english, cefr, note?]. No paradigm to store. */
+export type PhraseSeed = readonly [string, string, string, string?];
+
+export const PHRASES: readonly PhraseSeed[] = [
+  ["Tere!", "Hello!", "A1"],
+  ["Tere hommikust!", "Good morning!", "A1", "Elative case — literally 'from the morning'"],
+  ["Head aega!", "Goodbye!", "A1", "Partitive — literally 'good time'"],
+  ["Nägemist!", "See you!", "A1"],
+  ["Aitäh!", "Thank you!", "A1"],
+  ["Palun", "Please / You're welcome / Here you are", "A1", "Does all three jobs"],
+  ["Vabandust!", "Sorry! / Excuse me!", "A1", "Partitive of vabandus"],
+  ["Kuidas läheb?", "How's it going?", "A1"],
+  ["Mul on hea meel", "I'm glad", "A1", "Adessive 'mul' — Estonian has no verb 'to have'"],
+  ["Ma ei saa aru", "I don't understand", "A1"],
+  ["Kas sa räägid inglise keelt?", "Do you speak English?", "A1", "keelt is partitive — the object of rääkima"],
+  ["Mis kell on?", "What time is it?", "A1"],
+  ["Kui palju see maksab?", "How much does it cost?", "A1"],
+  ["Mulle meeldib see", "I like it", "A1", "Allative 'mulle' — literally 'to me it pleases'"],
+  ["Head isu!", "Enjoy your meal!", "A1"],
+  ["Palju õnne!", "Congratulations!", "A1"],
+  ["Ma õpin eesti keelt", "I am learning Estonian", "A1", "Partitive object — the learning is ongoing"],
+  ["Kas ma võin küsida?", "May I ask?", "A2"],
+  ["Ma ei tea veel", "I don't know yet", "A1"],
+  ["See on väga hea mõte", "That's a very good idea", "A2"],
+] as const;

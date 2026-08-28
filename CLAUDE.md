@@ -2,9 +2,9 @@
 
 ## What this is
 
-A personal Estonian learning dashboard. Currently **planning only — no application code exists yet**.
-`docs/` holds the complete specification and implementation plan; `docs/09-roadmap.md` is the build
-order. Start at Phase 0.
+A personal Estonian learning dashboard — a working MVP. `docs/` holds the plan it was built from;
+`docs/13-mvp-status.md` says what is built, what is deliberately not, and the known limitations.
+Read that first.
 
 ## Read before writing code
 
@@ -48,19 +48,18 @@ API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 
 ## Model configuration
 
-`claude-opus-5`, `thinking: { type: "adaptive" }`, streaming, with a `cache_control` breakpoint on
-the static system prompt and volatile learner context placed **after** it. Details and the cost model
-in `docs/06-anu-tutor.md`.
+**Provider-agnostic** — `lib/tutor/provider.ts` uses whichever key is in `.env`: OpenRouter
+(default, free model), Anthropic, or OpenAI. Do not re-pin a single provider. The Anthropic path
+keeps a `cache_control` breakpoint on the static Estonian system prompt. This supersedes the
+original ADR-004; see `docs/13-mvp-status.md` §2.
 
 ## Commands
 
-Not yet scaffolded — Phase 0 creates these. Intended surface:
-
 ```
+npm run setup        # install + create db + seed (first run)
 npm run dev          # dev server
-npm run test         # unit + contract (Vitest)
-npm run test:live    # hits real external APIs — NOT in CI
-npm run test:e2e     # Playwright
+npm run test         # unit tests (Vitest)
 npm run typecheck    # tsc --noEmit
-npm run db:migrate   # prisma migrate dev
+npm run db:seed      # reload the built-in dictionary
+node scripts/e2e.mjs # browser smoke tests — needs the server running
 ```

@@ -1,0 +1,79 @@
+import { prisma } from "@/lib/db";
+import { buildSystemPrompt } from "@/lib/tutor/prompt";
+import { resolveProvider, streamReply, TutorError, type ChatMessage } from "@/lib/tutor/provider";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 120;
+
+const MAX_HISTORY = 20;
+
+export async function POST(request: Request) {
+  const config = resolveProvider();
+  if (!config) {
+    return Response.json(
+      { error: "No AI key configured yet. Add one in .env — see Settings for the two-minute version." },
+      { status: 503 },
+    );
+  }
+
+  let messages: ChatMessage[];
+  let level = "B1";
+  try {
+    const body = (await request.json()) as { messages?: unknown; level?: unknown };
+    if (!Array.isArray(body.messages) || body.messages.length === 0) {
+      return Response.json({ error: "Nothing to ask." }, { status: 400 });
+    }
+    messages = body.messages
+      .slice(-MAX_HISTORY)
+      .filter((m): m is ChatMessage =>
+        typeof m === "object" && m !== null &&
+        (("role" in m && (m.role === "user" || m.role === "assistant"))) &&
+        "content" in m && typeof (m as ChatMessage).content === "string")
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
+    if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
+  } catch {
+    return Response.json({ error: "Malformed request." }, { status: 400 });
+  }
+
+  // The learner's text is user content, never spliced into the system prompt.
+  // The importer exists to paste text from elsewhere, so that boundary matters.
+  const system = buildSystemPrompt(level);
+  const encoder = new TextEncoder();
+  let full = "";
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of streamReply(config, system, messages)) {
+          full += chunk;
+          controller.enqueue(encoder.encode(chunk));
+        }
+      } catch (error) {
+        const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
+        controller.enqueue(encoder.encode(`\n\n⚠ ${message}`));
+      } finally {
+        controller.close();
+        void persist(messages, full);
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+  });
+}
+
+async function persist(messages: ChatMessage[], reply: string) {
+  const last = messages[messages.length - 1];
+  try {
+    if (last?.role === "user") {
+      await prisma.message.create({ data: { role: "user", content: last.content } });
+    }
+    if (reply.trim()) {
+      await prisma.message.create({ data: { role: "assistant", content: reply } });
+    }
+  } catch {
+    // Chat history is a convenience, not the irreplaceable data. Losing a row
+    // must never break the conversation the learner is having.
+  }
+}

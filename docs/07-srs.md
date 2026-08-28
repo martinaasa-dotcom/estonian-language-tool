@@ -61,7 +61,7 @@ The learner can always override.
 |---|---|
 | `Space` / `Enter` | Show answer |
 | `1` `2` `3` `4` | Again · Hard · Good · Easy |
-| `u` | Undo last grade (restores prior FSRS state from the review log) |
+| `u` | Undo last grade — **specified, not yet built** (`13-mvp-status.md` §4) |
 | `e` | Edit card inline |
 | `a` | Replay audio |
 | `s` | Suspend |

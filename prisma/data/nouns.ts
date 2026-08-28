@@ -1,0 +1,166 @@
+/**
+ * Noun seed data: [lemma, english, cefr, nomSg, genSg, partSg, partPl?, genPl?]
+ *
+ * These are the app's dictionary until an Ekilex key is configured. Every entry
+ * is a principal-part set: unpredictable forms that must be stored. The eleven
+ * regular cases are derived from the genitive at render time, never stored.
+ *
+ * Where a plural form is genuinely uncertain it is left out rather than guessed —
+ * a gap is honest, an invented form gets drilled into memory (ADR-005).
+ */
+export type NounSeed = readonly [
+  lemma: string, english: string, cefr: string,
+  nomSg: string, genSg: string, partSg: string,
+  partPl?: string, genPl?: string, illSgShort?: string,
+];
+
+export const NOUNS: readonly NounSeed[] = [
+  // ── People ──────────────────────────────────────────────────────────────
+  ["inimene", "person, human", "A1", "inimene", "inimese", "inimest", "inimesi", "inimeste"],
+  ["naine", "woman, wife", "A1", "naine", "naise", "naist", "naisi", "naiste"],
+  ["mees", "man, husband", "A1", "mees", "mehe", "meest", "mehi", "meeste"],
+  ["laps", "child", "A1", "laps", "lapse", "last", "lapsi", "laste"],
+  ["sõber", "friend", "A1", "sõber", "sõbra", "sõpra", "sõpru", "sõprade"],
+  ["ema", "mother", "A1", "ema", "ema", "ema", "emasid", "emade"],
+  ["isa", "father", "A1", "isa", "isa", "isa", "isasid", "isade"],
+  ["pere", "family", "A1", "pere", "pere", "peret", "peresid", "perede"],
+  ["õpetaja", "teacher", "A1", "õpetaja", "õpetaja", "õpetajat", "õpetajaid", "õpetajate"],
+  ["õpilane", "pupil, student", "A1", "õpilane", "õpilase", "õpilast", "õpilasi", "õpilaste"],
+  ["arst", "doctor", "A1", "arst", "arsti", "arsti", "arste", "arstide"],
+  ["klient", "client, customer", "B1", "klient", "kliendi", "klienti", "kliente", "klientide"],
+
+  // ── Home and objects ────────────────────────────────────────────────────
+  ["maja", "house", "A1", "maja", "maja", "maja", "maju", "majade", "majja"],
+  ["tuba", "room", "A1", "tuba", "toa", "tuba", "tube", "tubade", "tuppa"],
+  ["köök", "kitchen", "A1", "köök", "köögi", "kööki", "kööke", "köökide"],
+  ["korter", "flat, apartment", "A1", "korter", "korteri", "korterit", "kortereid", "korterite"],
+  ["uks", "door", "A1", "uks", "ukse", "ust", "uksi", "uste"],
+  ["aken", "window", "A1", "aken", "akna", "akent", "aknaid", "akende"],
+  ["laud", "table", "A1", "laud", "laua", "lauda", "laudu", "laudade"],
+  ["tool", "chair", "A1", "tool", "tooli", "tooli", "toole", "toolide"],
+  ["voodi", "bed", "A1", "voodi", "voodi", "voodit", "voodeid", "voodite"],
+  ["raamat", "book", "A1", "raamat", "raamatu", "raamatut", "raamatuid", "raamatute"],
+  ["arvuti", "computer", "A1", "arvuti", "arvuti", "arvutit", "arvuteid", "arvutite"],
+  ["telefon", "telephone", "A1", "telefon", "telefoni", "telefoni", "telefone", "telefonide"],
+  ["võti", "key", "A2", "võti", "võtme", "võtit", "võtmeid", "võtmete"],
+  ["klaas", "glass", "A1", "klaas", "klaasi", "klaasi", "klaase", "klaaside"],
+  ["tass", "cup", "A1", "tass", "tassi", "tassi", "tasse", "tasside"],
+  ["nuga", "knife", "A2", "nuga", "noa", "nuga", "nuge", "nugade"],
+  ["pilt", "picture", "A1", "pilt", "pildi", "pilti", "pilte", "piltide"],
+  ["pilet", "ticket", "A1", "pilet", "pileti", "piletit", "pileteid", "piletite"],
+  ["särk", "shirt", "A1", "särk", "särgi", "särki", "särke", "särkide"],
+
+  // ── Body ────────────────────────────────────────────────────────────────
+  ["käsi", "hand, arm", "A1", "käsi", "käe", "kätt", "käsi", "käte", "kätte"],
+  ["jalg", "leg, foot", "A1", "jalg", "jala", "jalga", "jalgu", "jalgade", "jalga"],
+  ["silm", "eye", "A1", "silm", "silma", "silma", "silmi", "silmade", "silma"],
+  ["pea", "head", "A1", "pea", "pea", "pead", "päid", "peade", "pähe"],
+  ["keha", "body", "A2", "keha", "keha", "keha", "kehasid", "kehade"],
+  ["tervis", "health", "A2", "tervis", "tervise", "tervist"],
+  ["haigus", "illness", "B1", "haigus", "haiguse", "haigust", "haigusi", "haiguste"],
+  ["ravim", "medicine", "B1", "ravim", "ravimi", "ravimit", "ravimeid", "ravimite"],
+
+  // ── Time ────────────────────────────────────────────────────────────────
+  ["aeg", "time", "A1", "aeg", "aja", "aega", "aegu", "aegade"],
+  ["päev", "day", "A1", "päev", "päeva", "päeva", "päevi", "päevade"],
+  ["öö", "night", "A1", "öö", "öö", "ööd", "öid", "öude"],
+  ["hommik", "morning", "A1", "hommik", "hommiku", "hommikut", "hommikuid", "hommikute"],
+  ["õhtu", "evening", "A1", "õhtu", "õhtu", "õhtut", "õhtuid", "õhtute"],
+  ["nädal", "week", "A1", "nädal", "nädala", "nädalat", "nädalaid", "nädalate"],
+  ["kuu", "month, moon", "A1", "kuu", "kuu", "kuud", "kuid", "kuude"],
+  ["aasta", "year", "A1", "aasta", "aasta", "aastat", "aastaid", "aastate"],
+  ["tund", "hour, lesson", "A1", "tund", "tunni", "tundi", "tunde", "tundide"],
+
+  // ── Language and school ─────────────────────────────────────────────────
+  ["sõna", "word", "A1", "sõna", "sõna", "sõna", "sõnu", "sõnade"],
+  ["keel", "language, tongue", "A1", "keel", "keele", "keelt", "keeli", "keelte", "keelde"],
+  ["kool", "school", "A1", "kool", "kooli", "kooli", "koole", "koolide", "kooli"],
+  ["töö", "work", "A1", "töö", "töö", "tööd", "töid", "tööde"],
+  ["küsimus", "question", "A2", "küsimus", "küsimuse", "küsimust", "küsimusi", "küsimuste"],
+  ["vastus", "answer", "A2", "vastus", "vastuse", "vastust", "vastuseid", "vastuste"],
+  ["raamatukogu", "library", "A2", "raamatukogu", "raamatukogu", "raamatukogu", "raamatukogusid", "raamatukogude"],
+  ["lugu", "story", "A2", "lugu", "loo", "lugu", "lugusid", "lugude"],
+  ["ajaleht", "newspaper", "A2", "ajaleht", "ajalehe", "ajalehte", "ajalehti", "ajalehtede"],
+  ["uudis", "news item", "B1", "uudis", "uudise", "uudist", "uudiseid", "uudiste"],
+
+  // ── Food ────────────────────────────────────────────────────────────────
+  ["toit", "food", "A1", "toit", "toidu", "toitu", "toite", "toitude"],
+  ["leib", "bread (rye)", "A1", "leib", "leiva", "leiba", "leibu", "leibade"],
+  ["kohv", "coffee", "A1", "kohv", "kohvi", "kohvi", "kohve", "kohvide"],
+  ["vesi", "water", "A1", "vesi", "vee", "vett", "vesi", "vete", "vette"],
+  ["liha", "meat", "A1", "liha", "liha", "liha"],
+  ["kala", "fish", "A1", "kala", "kala", "kala", "kalu", "kalade"],
+  ["õun", "apple", "A1", "õun", "õuna", "õuna", "õunu", "õunade"],
+  ["kartul", "potato", "A1", "kartul", "kartuli", "kartulit", "kartuleid", "kartulite"],
+  ["juust", "cheese", "A1", "juust", "juustu", "juustu", "juuste", "juustude"],
+  ["sool", "salt", "A1", "sool", "soola", "soola"],
+  ["söök", "meal, food", "A2", "söök", "söögi", "sööki", "sööke", "söökide"],
+  ["jook", "drink", "A2", "jook", "joogi", "jooki", "jooke", "jookide"],
+
+  // ── Nature ──────────────────────────────────────────────────────────────
+  ["mets", "forest", "A1", "mets", "metsa", "metsa", "metsi", "metsade", "metsa"],
+  ["meri", "sea", "A1", "meri", "mere", "merd", "meresid", "merede", "merre"],
+  ["järv", "lake", "A1", "järv", "järve", "järve", "järvi", "järvede"],
+  ["jõgi", "river", "A2", "jõgi", "jõe", "jõge", "jõgesid", "jõgede"],
+  ["mägi", "mountain, hill", "A2", "mägi", "mäe", "mäge", "mägesid", "mägede"],
+  ["maa", "land, country", "A1", "maa", "maa", "maad", "maid", "maade"],
+  ["puu", "tree", "A1", "puu", "puu", "puud", "puid", "puude"],
+  ["lill", "flower", "A1", "lill", "lille", "lille", "lilli", "lillede"],
+  ["loom", "animal", "A1", "loom", "looma", "looma", "loomi", "loomade"],
+  ["koer", "dog", "A1", "koer", "koera", "koera", "koeri", "koerte"],
+  ["kass", "cat", "A1", "kass", "kassi", "kassi", "kasse", "kasside"],
+  ["lind", "bird", "A1", "lind", "linnu", "lindu", "linde", "lindude"],
+  ["tuul", "wind", "A2", "tuul", "tuule", "tuult", "tuuli", "tuulte"],
+  ["vihm", "rain", "A2", "vihm", "vihma", "vihma", "vihmu", "vihmade"],
+
+  // ── Town and travel ─────────────────────────────────────────────────────
+  ["linn", "city, town", "A1", "linn", "linna", "linna", "linnu", "linnade", "linna"],
+  ["tänav", "street", "A1", "tänav", "tänava", "tänavat", "tänavaid", "tänavate"],
+  ["tee", "road, way, tea", "A1", "tee", "tee", "teed", "teid", "teede"],
+  ["pood", "shop", "A1", "pood", "poe", "poodi", "poode", "poodide"],
+  ["turg", "market", "A2", "turg", "turu", "turgu", "turge", "turgude"],
+  ["haigla", "hospital", "A2", "haigla", "haigla", "haiglat", "haiglaid", "haiglate"],
+  ["buss", "bus", "A1", "buss", "bussi", "bussi", "busse", "busside"],
+  ["rong", "train", "A1", "rong", "rongi", "rongi", "ronge", "rongide"],
+  ["lennuk", "aeroplane", "A1", "lennuk", "lennuki", "lennukit", "lennukeid", "lennukite"],
+  ["auto", "car", "A1", "auto", "auto", "autot", "autosid", "autode"],
+  ["jalgratas", "bicycle", "A2", "jalgratas", "jalgratta", "jalgratast", "jalgrattaid", "jalgrataste"],
+  ["reis", "journey, trip", "A2", "reis", "reisi", "reisi", "reise", "reiside"],
+  ["puhkus", "holiday, leave", "A2", "puhkus", "puhkuse", "puhkust", "puhkusi", "puhkuste"],
+  ["riik", "state, country", "A2", "riik", "riigi", "riiki", "riike", "riikide"],
+
+  // ── Abstract (B1–C1) ────────────────────────────────────────────────────
+  ["elu", "life", "A1", "elu", "elu", "elu", "elusid", "elude"],
+  ["mõte", "thought, idea", "B1", "mõte", "mõtte", "mõtet", "mõtteid", "mõtete"],
+  ["tunne", "feeling", "B1", "tunne", "tunde", "tunnet", "tundeid", "tunnete"],
+  ["rõõm", "joy", "A2", "rõõm", "rõõmu", "rõõmu", "rõõme", "rõõmude"],
+  ["mure", "worry, concern", "B1", "mure", "mure", "muret", "muresid", "murede"],
+  ["armastus", "love", "A2", "armastus", "armastuse", "armastust"],
+  ["võimalus", "possibility, opportunity", "B1", "võimalus", "võimaluse", "võimalust", "võimalusi", "võimaluste"],
+  ["otsus", "decision", "B1", "otsus", "otsuse", "otsust", "otsuseid", "otsuste"],
+  ["kogemus", "experience", "B1", "kogemus", "kogemuse", "kogemust", "kogemusi", "kogemuste"],
+  ["eesmärk", "goal, aim", "B1", "eesmärk", "eesmärgi", "eesmärki", "eesmärke", "eesmärkide"],
+  ["vajadus", "need", "B1", "vajadus", "vajaduse", "vajadust", "vajadusi", "vajaduste"],
+  ["probleem", "problem", "A2", "probleem", "probleemi", "probleemi", "probleeme", "probleemide"],
+  ["lahendus", "solution", "B1", "lahendus", "lahenduse", "lahendust", "lahendusi", "lahenduste"],
+  ["õigus", "right, justice", "B1", "õigus", "õiguse", "õigust", "õigusi", "õiguste"],
+  ["kohustus", "obligation, duty", "B2", "kohustus", "kohustuse", "kohustust", "kohustusi", "kohustuste"],
+  ["areng", "development", "B2", "areng", "arengu", "arengut", "arenguid", "arengute"],
+  ["mõju", "influence, effect", "B2", "mõju", "mõju", "mõju", "mõjusid", "mõjude"],
+  ["ühiskond", "society", "B2", "ühiskond", "ühiskonna", "ühiskonda", "ühiskondi", "ühiskondade"],
+  ["valitsus", "government", "B2", "valitsus", "valitsuse", "valitsust", "valitsusi", "valitsuste"],
+  ["seadus", "law, statute", "B2", "seadus", "seaduse", "seadust", "seadusi", "seaduste"],
+  ["ettevõte", "enterprise, company", "B2", "ettevõte", "ettevõtte", "ettevõtet", "ettevõtteid", "ettevõtete"],
+  ["leping", "contract, treaty", "B2", "leping", "lepingu", "lepingut", "lepinguid", "lepingute"],
+  ["teenus", "service", "B1", "teenus", "teenuse", "teenust", "teenuseid", "teenuste"],
+  ["toode", "product", "B1", "toode", "toote", "toodet", "tooteid", "toodete"],
+  ["hind", "price", "A2", "hind", "hinna", "hinda", "hindu", "hindade"],
+  ["palk", "salary, wage", "B1", "palk", "palga", "palka", "palku", "palkade"],
+  ["koosolek", "meeting", "B1", "koosolek", "koosoleku", "koosolekut", "koosolekuid", "koosolekute"],
+  ["number", "number", "A1", "number", "numbri", "numbrit", "numbreid", "numbrite"],
+  ["raha", "money", "A1", "raha", "raha", "raha"],
+  ["film", "film", "A1", "film", "filmi", "filmi", "filme", "filmide"],
+  ["laul", "song", "A1", "laul", "laulu", "laulu", "laule", "laulude"],
+  ["hääl", "voice, vote", "A2", "hääl", "hääle", "häält", "hääli", "häälte"],
+  ["meel", "mind, sense", "B1", "meel", "meele", "meelt", "meeli", "meelte"],
+] as const;

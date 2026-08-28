@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+/*
+  Palette: birch and cornflower.
+  Cornflower (rukkilill) is Estonia's national flower — a grounded accent that
+  isn't the flag rendered literally. Neutrals carry a slight cool-blue bias so
+  they read as chosen rather than inherited.
+*/
+@theme {
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Literata", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-ground: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-raised: #eef1f5;
+  --color-ink: #161a21;
+  --color-ink-2: #464f5d;
+  --color-ink-3: #6b7684;
+  --color-rule: #d8dee6;
+  --color-rule-soft: #e6eaf0;
+
+  --color-accent: #3e6ba8;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #e4ebf5;
+
+  --color-again: #a8422f;
+  --color-hard: #8a6516;
+  --color-good: #2f6b4f;
+  --color-easy: #3e6ba8;
+
+  --color-again-soft: #f7e7e3;
+  --color-hard-soft: #f5ecd9;
+  --color-good-soft: #e2efe8;
+  --color-easy-soft: #e4ebf5;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --ground: #f6f7f9;
+    --surface: #ffffff;
+    --raised: #eef1f5;
+    --ink: #161a21;
+    --ink-2: #464f5d;
+    --ink-3: #6b7684;
+    --rule: #d8dee6;
+    --rule-soft: #e6eaf0;
+    --accent: #3e6ba8;
+    --accent-ink: #ffffff;
+    --accent-soft: #e4ebf5;
+    --again: #a8422f;
+    --hard: #8a6516;
+    --good: #2f6b4f;
+    --easy: #3e6ba8;
+    --again-soft: #f7e7e3;
+    --hard-soft: #f5ecd9;
+    --good-soft: #e2efe8;
+    --easy-soft: #e4ebf5;
+    --shadow: 0 1px 2px rgb(22 26 33 / 0.05), 0 8px 24px -16px rgb(22 26 33 / 0.28);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #0f1218;
+      --surface: #161b23;
+      --raised: #1d242e;
+      --ink: #e8ecf2;
+      --ink-2: #afb9c6;
+      --ink-3: #7f8a99;
+      --rule: #2a323d;
+      --rule-soft: #222933;
+      --accent: #7ea6dc;
+      --accent-ink: #0f1218;
+      --accent-soft: #1b2735;
+      --again: #e08972;
+      --hard: #d9ae5f;
+      --good: #7cc3a0;
+      --easy: #7ea6dc;
+      --again-soft: #2e1d18;
+      --hard-soft: #2a2216;
+      --good-soft: #152720;
+      --easy-soft: #1b2735;
+      --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #0f1218;
+    --surface: #161b23;
+    --raised: #1d242e;
+    --ink: #e8ecf2;
+    --ink-2: #afb9c6;
+    --ink-3: #7f8a99;
+    --rule: #2a323d;
+    --rule-soft: #222933;
+    --accent: #7ea6dc;
+    --accent-ink: #0f1218;
+    --accent-soft: #1b2735;
+    --again: #e08972;
+    --hard: #d9ae5f;
+    --good: #7cc3a0;
+    --easy: #7ea6dc;
+    --again-soft: #2e1d18;
+    --hard-soft: #2a2216;
+    --good-soft: #152720;
+    --easy-soft: #1b2735;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Every interactive element gets a visible focus ring — docs/08 §5. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .est { font-family: var(--font-serif); }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .label-xs {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+}
