@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Award, BookOpen, Sparkles, Zap } from "lucide-react";
 import { checkAchievements } from "@/app/actions";
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { BADGES, computeStreak } from "@/lib/achievements/badges";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 const DEFAULT_DAILY_GOAL = 15;
 
 export default async function TodayPage() {
+  const ownerId = await requireUserId();
   const now = new Date();
   const endOfDay = new Date(now); endOfDay.setHours(23, 59, 59, 999);
   const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
@@ -24,23 +26,23 @@ export default async function TodayPage() {
     dueCount, newCount, totalCards, tasks, reviewsThisWeek, streakRows, wordOfDay,
     reviewedToday, dailyGoalSetting, achievementCount,
   ] = await Promise.all([
-    prisma.card.count({ where: { suspended: false, due: { lte: now }, state: { not: 0 } } }),
-    prisma.card.count({ where: { suspended: false, state: 0 } }),
-    prisma.card.count(),
+    prisma.card.count({ where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } } }),
+    prisma.card.count({ where: { ownerId, suspended: false, state: 0 } }),
+    prisma.card.count({ where: { ownerId } }),
     prisma.task.findMany({
-      where: { completed: false },
+      where: { ownerId, completed: false },
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
       take: 5,
     }),
-    prisma.review.count({ where: { reviewedAt: { gte: weekAgo } } }),
+    prisma.review.count({ where: { reviewedAt: { gte: weekAgo }, card: { ownerId } } }),
     prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(now.getTime() - 30 * 86400000) } },
+      where: { reviewedAt: { gte: new Date(now.getTime() - 30 * 86400000) }, card: { ownerId } },
       select: { reviewedAt: true },
     }),
-    pickWordOfDay(),
-    prisma.review.count({ where: { reviewedAt: { gte: startOfToday } } }),
-    prisma.setting.findUnique({ where: { key: "dailyGoal" } }),
-    prisma.achievement.count(),
+    pickWordOfDay(ownerId),
+    prisma.review.count({ where: { reviewedAt: { gte: startOfToday }, card: { ownerId } } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
+    prisma.achievement.count({ where: { ownerId } }),
   ]);
 
   const tutorReady = resolveProvider() !== null;
@@ -220,9 +222,9 @@ function greeting(): string {
 }
 
 /** Prefers a word the learner has actually struggled with over a random one. */
-async function pickWordOfDay() {
+async function pickWordOfDay(ownerId: string) {
   const lapsed = await prisma.card.findFirst({
-    where: { lapses: { gt: 0 }, lexemeId: { not: null } },
+    where: { ownerId, lapses: { gt: 0 }, lexemeId: { not: null } },
     orderBy: { lapses: "desc" },
     include: { lexeme: true },
   });

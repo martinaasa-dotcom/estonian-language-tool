@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { buildSystemPrompt } from "@/lib/tutor/prompt";
 import { resolveProvider, streamReply, TutorError, type ChatMessage } from "@/lib/tutor/provider";
 
@@ -8,6 +9,7 @@ export const maxDuration = 120;
 const MAX_HISTORY = 20;
 
 export async function POST(request: Request) {
+  const ownerId = await requireUserId();
   const config = resolveProvider();
   if (!config) {
     return Response.json(
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode(`\n\n⚠ ${message}`));
       } finally {
         controller.close();
-        void persist(messages, full);
+        void persist(ownerId, messages, full);
       }
     },
   });
@@ -63,14 +65,14 @@ export async function POST(request: Request) {
   });
 }
 
-async function persist(messages: ChatMessage[], reply: string) {
+async function persist(ownerId: string, messages: ChatMessage[], reply: string) {
   const last = messages[messages.length - 1];
   try {
     if (last?.role === "user") {
-      await prisma.message.create({ data: { role: "user", content: last.content } });
+      await prisma.message.create({ data: { ownerId, role: "user", content: last.content } });
     }
     if (reply.trim()) {
-      await prisma.message.create({ data: { role: "assistant", content: reply } });
+      await prisma.message.create({ data: { ownerId, role: "assistant", content: reply } });
     }
   } catch {
     // Chat history is a convenience, not the irreplaceable data. Losing a row

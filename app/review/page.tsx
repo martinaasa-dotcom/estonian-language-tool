@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
@@ -13,6 +14,7 @@ export default async function ReviewPage({
 }: {
   searchParams: Promise<{ case?: string }>;
 }) {
+  const ownerId = await requireUserId();
   const { case: targetCase } = await searchParams;
   const now = new Date();
 
@@ -20,7 +22,7 @@ export default async function ReviewPage({
   // weakness the heatmap found, not to review what happens to be due.
   if (targetCase) {
     const drill = await prisma.card.findMany({
-      where: { suspended: false, targetCase },
+      where: { ownerId, suspended: false, targetCase },
       orderBy: [{ lapses: "desc" }, { due: "asc" }],
       take: 30,
       include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
@@ -40,14 +42,14 @@ export default async function ReviewPage({
   // Due first, then a capped trickle of new cards. Uncapped new cards is the
   // classic way an SRS becomes an unsustainable workload three weeks in.
   const due = await prisma.card.findMany({
-    where: { suspended: false, due: { lte: now }, state: { not: 0 } },
+    where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
     orderBy: { due: "asc" },
     take: MAX_SESSION,
     include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
   });
 
   const fresh = await prisma.card.findMany({
-    where: { suspended: false, state: 0 },
+    where: { ownerId, suspended: false, state: 0 },
     orderBy: { createdAt: "asc" },
     take: Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)),
     include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
@@ -55,7 +57,7 @@ export default async function ReviewPage({
 
   const cards: ReviewCard[] = [...due, ...fresh].map(toReviewCard);
 
-  const totalCards = await prisma.card.count();
+  const totalCards = await prisma.card.count({ where: { ownerId } });
 
   if (cards.length === 0) {
     return (

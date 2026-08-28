@@ -185,6 +185,25 @@ permanent one ADR intended locally — acceptable, since TartuNLP is still hit f
 request. *Rejected:* keeping SQLite on a host with a persistent volume (Fly.io/Railway) — Vercel was
 the account already in hand.
 
+**ADR-012 — Supabase Auth (Google) for multi-user; dictionary stays shared, decks are per-user.**
+*Context:* ADR-011 made the app reachable as a real website; the next question was whether "shared
+wider" means several trusted people behind one login, or independent learners with their own
+progress. *Decision:* independent learners. Sign-in is Supabase Auth with the Google provider
+(`@supabase/ssr`), gated by `middleware.ts` on every route except `/sign-in` and `/auth/callback`.
+Ownership splits along the same line ADR-009's data model already drew: `Lexeme`/`Form` are the
+dictionary — shared reference data, exactly like a printed dictionary is shared — while `Card`,
+`Task`, `Message` and the new `StarredWord` join table carry an `ownerId` (a Supabase `auth.users`
+id) and are filtered by it in every query. Prisma connects with full privileges and bypasses
+Postgres RLS, so this scoping is enforced in application code (`lib/auth/session.ts`'s
+`requireUserId()`), not in the database — consistent with this codebase's existing
+Prisma-everywhere convention, at the cost of needing every query site to remember the filter.
+*Consequences:* `toggleStar` moved off a `Lexeme.starred` boolean (which had no owner) onto
+`StarredWord`; `restoreBackup`'s `replace` mode now deletes only the restoring user's own cards,
+reviews and tasks, never the shared dictionary; `importWords` reuses an existing shared lexeme
+instead of skipping it, since "already exists" no longer means "already yours". *Rejected:*
+Auth.js/NextAuth — Supabase Auth pairs with the Postgres project already in hand and needs no
+separate provider setup beyond Google's own OAuth client.
+
 **ADR-008 — Five noun and five verb principal parts, not three cases and two infinitives.**
 *Context:* v4.0 stores nominative/genitive/partitive and the ma-/da-infinitives (audit B2, B4).
 *Problem:* partitive plural and the short illative cannot be derived, and the present 1sg is in the

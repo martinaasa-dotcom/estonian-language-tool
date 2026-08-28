@@ -1,17 +1,21 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Full export. Months of review history is the one thing in this app that cannot
  * be reconstructed from anywhere, so getting it out must never be more than a click.
+ * The dictionary (lexemes/forms) is shared reference data, exported in full so a
+ * restore works standalone; cards, reviews and tasks are this user's own only.
  */
 export async function GET() {
+  const ownerId = await requireUserId();
   const [lexemes, cards, reviews, tasks] = await Promise.all([
     prisma.lexeme.findMany({ include: { forms: true } }),
-    prisma.card.findMany(),
-    prisma.review.findMany({ orderBy: { reviewedAt: "asc" } }),
-    prisma.task.findMany(),
+    prisma.card.findMany({ where: { ownerId } }),
+    prisma.review.findMany({ where: { card: { ownerId } }, orderBy: { reviewedAt: "asc" } }),
+    prisma.task.findMany({ where: { ownerId } }),
   ]);
 
   const payload = {

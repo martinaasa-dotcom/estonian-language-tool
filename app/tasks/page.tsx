@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { Empty, Page, SectionTitle } from "@/components/ui";
 import { TaskRow } from "@/components/TaskRow";
 import { NewTaskForm } from "./NewTaskForm";
@@ -6,7 +7,9 @@ import { NewTaskForm } from "./NewTaskForm";
 export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
+  const ownerId = await requireUserId();
   const tasks = await prisma.task.findMany({
+    where: { ownerId },
     orderBy: [{ completed: "asc" }, { dueAt: "asc" }, { createdAt: "desc" }],
     take: 200,
   });

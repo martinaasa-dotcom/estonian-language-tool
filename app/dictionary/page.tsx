@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
 import { enrichFromEkilex, lookupAndStore } from "@/lib/dict/lookup";
 import { ekilexConfigured } from "@/lib/ekilex/client";
@@ -12,6 +13,7 @@ export default async function DictionaryPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  const ownerId = await requireUserId();
   const { q = "" } = await searchParams;
   let hits = q ? await searchLexemes(q) : [];
 
@@ -34,7 +36,7 @@ export default async function DictionaryPage({
     if (upgraded) fetched = true;
   }
 
-  const entry = hits[0] ? await loadEntry(hits[0].id) : null;
+  const entry = hits[0] ? await loadEntry(hits[0].id, ownerId) : null;
   const matchedAs = hits[0]?.matchedAs ?? null;
 
   const [total, suggestions] = await Promise.all([
@@ -69,10 +71,13 @@ export default async function DictionaryPage({
   );
 }
 
-async function loadEntry(id: string): Promise<EntryView | null> {
+async function loadEntry(id: string, ownerId: string): Promise<EntryView | null> {
   const lex = await prisma.lexeme.findUnique({
     where: { id },
-    include: { forms: { orderBy: { orderIndex: "asc" } }, cards: { select: { id: true } } },
+    include: {
+      forms: { orderBy: { orderIndex: "asc" } },
+      cards: { where: { ownerId }, select: { id: true } },
+    },
   });
   if (!lex) return null;
   return {

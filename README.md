@@ -91,6 +91,29 @@ Two things change once it's hosted rather than local: review needs a network pat
 (it no longer runs on a train), and the TTS audio cache becomes per-instance instead of permanent,
 since Vercel's filesystem is read-only outside `/tmp`. Both are explained in ADR-011.
 
+### Adding Google sign-in (multi-user)
+
+Every route is gated behind sign-in (`middleware.ts`); each Google account gets its own dictionary
+deck, tasks and review history, while the dictionary itself stays shared — see ADR-012. Two accounts
+to set up, both one-time:
+
+1. **Google Cloud Console** → [console.cloud.google.com](https://console.cloud.google.com) →
+   create a project (or pick an existing one) → **APIs & Services → OAuth consent screen**: fill in
+   an app name and your email, external user type is fine for a small group. Then
+   **Credentials → Create Credentials → OAuth client ID** → type **Web application** → add an
+   **Authorized redirect URI**: `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase's
+   callback, not Vercel's — find the exact URL in the next step). Save; copy the **Client ID** and
+   **Client Secret**.
+2. **Supabase dashboard** → your project → **Authentication → Providers → Google** → toggle it on,
+   paste the Client ID and Client Secret from step 1, save. The callback URL to put in Google Cloud
+   is shown right there on this page.
+3. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API — the
+   anon/publishable key, safe to be public) in both your local `.env` and Vercel's environment
+   variables.
+
+Neither Google credential nor the Supabase service role key is ever needed in this app's own code —
+the OAuth exchange happens entirely inside Supabase.
+
 ## Backing up
 
 **Settings → Download a backup** writes a JSON file with every word, card and review, and the same

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, CalendarCheck, GraduationCap, Layers, MessageCircleQuestion,
+  BookOpen, CalendarCheck, GraduationCap, Layers, LogOut, MessageCircleQuestion,
   Settings, Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV = [
   { href: "/", label: "Today", icon: Sun },
@@ -66,6 +67,7 @@ export function Sidebar() {
             Settings
           </Link>
           <ThemeToggle />
+          <SignOutButton />
         </div>
       </nav>
 
@@ -89,6 +91,26 @@ export function Sidebar() {
         ))}
       </nav>
     </>
+  );
+}
+
+function SignOutButton() {
+  const router = useRouter();
+  const signOut = async () => {
+    await createClient().auth.signOut();
+    router.push("/sign-in");
+    router.refresh();
+  };
+  return (
+    <button
+      type="button"
+      onClick={signOut}
+      aria-label="Sign out"
+      className="rounded-md p-2"
+      style={{ color: "var(--ink-3)" }}
+    >
+      <LogOut size={16} strokeWidth={1.9} aria-hidden />
+    </button>
   );
 }
 

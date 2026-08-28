@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { BADGES } from "@/lib/achievements/badges";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
@@ -12,13 +13,14 @@ export const dynamic = "force-dynamic";
 const DEFAULT_DAILY_GOAL = 15;
 
 export default async function SettingsPage() {
+  const ownerId = await requireUserId();
   const provider = resolveProvider();
   const [words, cards, reviews, earned, dailyGoalSetting] = await Promise.all([
     prisma.lexeme.count(),
-    prisma.card.count(),
-    prisma.review.count(),
-    prisma.achievement.findMany({ select: { key: true } }),
-    prisma.setting.findUnique({ where: { key: "dailyGoal" } }),
+    prisma.card.count({ where: { ownerId } }),
+    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
   ]);
   const earnedKeys = new Set(earned.map((a) => a.key));
   const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { SprintSession, type SprintCard } from "./SprintSession";
@@ -14,10 +15,11 @@ const POOL_SIZE = 40;
  * a timer earns its keep.
  */
 export default async function SprintPage() {
+  const ownerId = await requireUserId();
   const now = new Date();
 
   const due = await prisma.card.findMany({
-    where: { suspended: false, due: { lte: now }, state: { not: 0 } },
+    where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
     orderBy: { due: "asc" },
     take: POOL_SIZE,
     include: { lexeme: { select: { lemma: true, translation: true } } },
@@ -27,7 +29,7 @@ export default async function SprintPage() {
   if (cards.length < POOL_SIZE) {
     const seenIds = new Set(cards.map((c) => c.id));
     const weak = await prisma.card.findMany({
-      where: { suspended: false, lapses: { gt: 0 }, id: { notIn: [...seenIds] } },
+      where: { ownerId, suspended: false, lapses: { gt: 0 }, id: { notIn: [...seenIds] } },
       orderBy: { lapses: "desc" },
       take: POOL_SIZE - cards.length,
       include: { lexeme: { select: { lemma: true, translation: true } } },
@@ -57,7 +59,7 @@ export default async function SprintPage() {
     cardType: c.cardType,
   }));
 
-  const bestSetting = await prisma.setting.findUnique({ where: { key: "sprintBest" } });
+  const bestSetting = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "sprintBest" } } });
   const best = bestSetting ? Number(bestSetting.value) || 0 : 0;
 
   return <SprintSession cards={sprintCards} best={best} />;
