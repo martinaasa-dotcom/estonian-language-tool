@@ -16,11 +16,21 @@ import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "
  * Cards are per-user (`ownerId`) even though the Lexeme they're generated from is the shared
  * dictionary — see docs/03-architecture.md ADR-012.
  */
-export async function addToDeck(
-  lexemeId: string, types: CardType[], source = "DICTIONARY", ownerId?: string,
-) {
-  const owner = ownerId ?? await requireUserId();
+export async function addToDeck(lexemeId: string, types: CardType[], source = "DICTIONARY") {
+  return addCardsFor(await requireUserId(), lexemeId, types, source);
+}
 
+/**
+ * The body of `addToDeck`, for callers that have already established the owner.
+ *
+ * Deliberately not exported: this file is `"use server"`, so every export is an
+ * endpoint any signed-in user can call with arguments of their choosing. An
+ * exported `ownerId` parameter would therefore let one learner write cards into
+ * another's deck. Owner comes from the session, never from the caller.
+ */
+async function addCardsFor(
+  owner: string, lexemeId: string, types: CardType[], source: string,
+) {
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     include: { forms: true },
@@ -279,7 +289,7 @@ export async function importWords(rows: { lemma: string; translation: string; po
       });
       created++;
     }
-    const result = await addToDeck(lexeme.id, ["RECOGNITION", "PRODUCTION"], "IMPORT", ownerId);
+    const result = await addCardsFor(ownerId, lexeme.id, ["RECOGNITION", "PRODUCTION"], "IMPORT");
     if (result.ok) cards += result.added ?? 0;
   }
 
@@ -303,7 +313,11 @@ const SHIELD_AWARD_BADGES = new Set(["streak_7", "streak_30", "streak_100"]);
  * and persists any newly-spent shields so a bridged day is never re-charged
  * on a later call (computeStreakWithShields is pure; this is its DB shell).
  */
-export async function resolveStreak(ownerId: string) {
+export async function resolveStreak() {
+  // Owner comes from the session, never from an argument: this file is
+  // `"use server"`, so an `ownerId` parameter here would be a public endpoint
+  // letting any signed-in user read and rewrite another learner's streak.
+  const ownerId = await requireUserId();
   const [reviews, shieldSetting, datesSetting] = await Promise.all([
     prisma.review.findMany({
       where: { reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) }, card: { ownerId } },
@@ -356,7 +370,7 @@ export async function resolveStreak(ownerId: string) {
 export async function checkAchievements(session?: { count: number; accuracy: number }) {
   const ownerId = await requireUserId();
   const [streakResult, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
-    resolveStreak(ownerId),
+    resolveStreak(),
     prisma.review.count({ where: { card: { ownerId } } }),
     prisma.card.count({ where: { ownerId, state: 2 } }),
     prisma.lexeme.count(),

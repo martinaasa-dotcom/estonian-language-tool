@@ -35,7 +35,7 @@ export default async function TodayPage() {
       take: 5,
     }),
     prisma.review.count({ where: { reviewedAt: { gte: weekAgo }, card: { ownerId } } }),
-    resolveStreak(ownerId),
+    resolveStreak(),
     pickWordOfDay(ownerId),
     prisma.review.count({ where: { reviewedAt: { gte: startOfToday }, card: { ownerId } } }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
