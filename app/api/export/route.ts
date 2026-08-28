@@ -16,7 +16,7 @@ export async function GET() {
 
   const payload = {
     exportedAt: new Date().toISOString(),
-    format: "sonasepp-v1",
+    format: "kodukeel-v1",
     counts: {
       words: lexemes.length, cards: cards.length,
       reviews: reviews.length, tasks: tasks.length,
@@ -28,7 +28,7 @@ export async function GET() {
   return new Response(JSON.stringify(payload, null, 2), {
     headers: {
       "content-type": "application/json",
-      "content-disposition": `attachment; filename="estonian-backup-${date}.json"`,
+      "content-disposition": `attachment; filename="kodukeel-backup-${date}.json"`,
     },
   });
 }

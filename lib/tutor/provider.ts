@@ -114,7 +114,7 @@ async function callOpenAiCompatible(config: ProviderConfig, system: string, mess
       "content-type": "application/json",
       authorization: `Bearer ${key}`,
       ...(isOpenRouter
-        ? { "HTTP-Referer": "http://localhost:3000", "X-Title": "Sonasepp Estonian study" }
+        ? { "HTTP-Referer": "http://localhost:3000", "X-Title": "Kodukeel Estonian study" }
         : {}),
     },
     body: JSON.stringify({

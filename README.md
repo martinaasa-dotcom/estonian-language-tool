@@ -1,8 +1,8 @@
-# Sõnasepp — Estonian learning dashboard
+# Kodukeel — Estonian learning dashboard
 
-A personal Estonian study workspace: a dictionary that shows the forms you actually have to
-memorise, spaced-repetition flashcards, an AI grammar tutor, and homework tracking. Everything runs
-on your own computer. No account, no bill, no data leaving the machine.
+*Kodukeel* — "home language". A personal Estonian study workspace: a dictionary that shows the forms
+you actually have to memorise, spaced-repetition flashcards, an AI grammar tutor, and homework
+tracking. Everything runs on your own computer. No account, no bill, no data leaving the machine.
 
 > **Status: working MVP.** The daily loop is complete — look a word up, add it to your deck, review
 > it, ask about the grammar. Built from the plan in `docs/`; `docs/13-mvp-status.md` says what is in

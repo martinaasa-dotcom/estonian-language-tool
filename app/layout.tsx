@@ -7,7 +7,7 @@ const archivo = Archivo({ subsets: ["latin", "latin-ext"], variable: "--font-arc
 const literata = Literata({ subsets: ["latin", "latin-ext"], variable: "--font-literata", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Sõnasepp — Estonian study",
+  title: "Kodukeel — Estonian study",
   description: "A personal Estonian learning dashboard: dictionary, flashcards and a grammar tutor.",
   icons: { icon: "/icon.svg" },
 };

@@ -308,7 +308,8 @@ export async function deleteTask(id: string) {
 // ────────────────────────────── Backup restore ─────────────────────────────
 
 const BackupSchema = z.object({
-  format: z.literal("sonasepp-v1"),
+  // Accepts the pre-rename id too: a backup written yesterday must still restore.
+  format: z.union([z.literal("kodukeel-v1"), z.literal("sonasepp-v1")]),
   lexemes: z.array(z.record(z.unknown())),
   cards: z.array(z.record(z.unknown())),
   reviews: z.array(z.record(z.unknown())),
@@ -334,7 +335,7 @@ export async function inspectBackup(json: string): Promise<
   }
   const result = BackupSchema.safeParse(parsed);
   if (!result.success) {
-    return { ok: false, error: "That doesn't look like a Sõnasepp backup. It should be the file downloaded from Settings." };
+    return { ok: false, error: "That doesn't look like a Kodukeel backup. It should be the file downloaded from Settings." };
   }
   const b = result.data;
   return {

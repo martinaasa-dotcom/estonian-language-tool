@@ -31,7 +31,7 @@ export function Sidebar() {
       >
         <Link href="/" className="mb-6 block px-2 pt-2">
           <span lang="et" className="est block text-[22px] font-bold leading-none" style={{ color: "var(--ink)" }}>
-            Sõnasepp
+            Kodukeel
           </span>
           <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>
             Estonian study
