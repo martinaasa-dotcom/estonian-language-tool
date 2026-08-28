@@ -58,6 +58,8 @@ add back.
 | Add a word by hand, with principal parts and auto-classified gradation | Complete |
 | Edit an existing entry — corrections rewrite its cards' text but never its FSRS scheduling | Complete |
 | Export — full JSON backup | Complete |
+| Visual design — pastel system, mascot, light/dark | Rebuilt 2026-08; see `14-design-system.md` |
+| Public landing page at `/welcome` | Complete. Its demo reads real dictionary data and derives cases with the app's own code |
 | Restore from a backup — merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
 | Weak-case drill — click a case in the heatmap to review just those cards | Complete |
 | Light and dark themes, keyboard operation, mobile layout | Complete; verified on an iPhone 13 viewport — no sideways scroll, 73×79px rating targets |

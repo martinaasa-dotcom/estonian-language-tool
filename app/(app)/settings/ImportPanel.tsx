@@ -70,7 +70,7 @@ export function ImportPanel() {
         rows={6}
         placeholder={EXAMPLE}
         aria-label="Paste word list"
-        className="est mt-3 w-full rounded-md border px-3.5 py-3 text-[15px]"
+        className="est mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-[15px] outline-none"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
 
@@ -79,7 +79,7 @@ export function ImportPanel() {
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
             {rows.length} word{rows.length === 1 ? "" : "s"} found — check before adding
           </p>
-          <ul className="max-h-40 overflow-y-auto rounded-md border" style={{ borderColor: "var(--rule)" }}>
+          <ul className="max-h-40 overflow-y-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
             {rows.slice(0, 40).map((r, i) => (
               <li
                 key={i}

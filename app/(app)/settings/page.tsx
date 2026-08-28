@@ -1,4 +1,4 @@
-import { Shield } from "lucide-react";
+import { Download, Shield } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
@@ -42,10 +42,10 @@ export default async function SettingsPage() {
               </p>
               <a
                 href="/api/export"
-                className="inline-flex items-center gap-2 rounded-md border px-3.5 py-2 text-[14px] font-medium"
-                style={{ borderColor: "var(--rule)", color: "var(--ink)", background: "var(--surface)" }}
+                className="press inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[14px] font-semibold transition-all hover:-translate-y-px"
+                style={{ borderColor: "var(--rule)", color: "var(--ink)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
               >
-                Download a backup
+                <Download size={15} aria-hidden /> Download a backup
               </a>
             </div>
             <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>

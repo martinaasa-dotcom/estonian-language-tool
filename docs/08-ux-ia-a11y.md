@@ -91,6 +91,9 @@ Target **WCAG 2.2 AA**. Not aspiration — this app is used for an hour a day.
 
 ## 6. Visual design
 
+> Superseded in detail by `14-design-system.md` (2026-08). The principles below still hold; the
+> palette, type and shape they are implemented with now live there.
+
 - Light and dark themes, following the OS by default.
 - One accent colour; grammatical case colour-coding is **consistent app-wide** — the same case is the
   same colour in the dictionary table, the heatmap and the flashcards. Learners build spatial memory

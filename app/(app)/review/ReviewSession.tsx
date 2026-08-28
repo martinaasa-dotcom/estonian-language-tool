@@ -6,7 +6,8 @@ import Link from "next/link";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Empty, Page, Stat } from "@/components/ui";
+import { Chip, Empty, Page, StatTile } from "@/components/ui";
+import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { previewIntervals, RATINGS, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
@@ -168,25 +169,27 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
     const accuracy = done > 0 ? Math.round((correct / done) * 100) : 0;
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-          Session complete
-        </h1>
-        <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          {drillCase
-            ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done — these cards keep their normal schedule too.</>
-            : <>Tubli töö. That&rsquo;s everything due right now.</>}
-        </p>
-        <div
-          className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
-          style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
-        >
-          <Stat value={done} label="Reviewed" />
-          <Stat value={`${accuracy}%`} label="Recalled" tone={accuracy >= 85 ? "var(--good)" : "var(--hard)"} />
-          <Stat value={`${minutes}m`} label="Time" />
+        <div className="pop-in text-center">
+          <Mascot size={72} mood="cheer" className="float mx-auto" />
+          <h1 className="est mt-5 text-[34px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+            Session complete
+          </h1>
+          <p className="mx-auto mt-2 max-w-[46ch] text-[15px]" style={{ color: "var(--ink-2)" }}>
+            {drillCase
+              ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done — these cards keep their normal schedule too.</>
+              : <>Tubli töö. That&rsquo;s everything due right now.</>}
+          </p>
         </div>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
-          <ButtonLink href="/dictionary">Add new words</ButtonLink>
+
+        <div className="mt-8 grid grid-cols-3 gap-3">
+          <StatTile value={done} label="Reviewed" tone="accent" />
+          <StatTile value={`${accuracy}%`} label="Recalled" tone={accuracy >= 85 ? "mint" : "butter"} />
+          <StatTile value={`${minutes}m`} label="Time" tone="sky" />
+        </div>
+
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <ButtonLink href="/" variant="primary" size="lg">Back to Today</ButtonLink>
+          <ButtonLink href="/dictionary" size="lg">Add new words</ButtonLink>
         </div>
         <AchievementToasts badges={newBadges} />
       </div>
@@ -198,14 +201,19 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="End session" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
-          <X size={19} aria-hidden />
+      <div className="mb-7 flex items-center gap-4">
+        <Link
+          href="/"
+          aria-label="End session"
+          className="press flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
+          style={{ color: "var(--ink-3)" }}
+        >
+          <X size={18} aria-hidden />
         </Link>
-        <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
           <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${progress}%`, background: "var(--accent)" }}
+            className="grad-accent h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.max(progress, 2)}%` }}
             role="progressbar"
             aria-valuenow={index}
             aria-valuemin={0}
@@ -213,21 +221,26 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
             aria-label="Session progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>{remaining} left</span>
+        <span
+          className="tnum label-xs rounded-full px-2.5 py-1"
+          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        >
+          {remaining} left
+        </span>
       </div>
 
       <div
-        className="flex flex-col rounded-xl border"
-        style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
+        className="flex flex-col overflow-hidden rounded-[var(--r-xl)] border"
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}
       >
-        <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="flex flex-wrap items-center gap-2 border-b px-5 py-3.5" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent">{TYPE_LABEL[card.cardType] ?? card.cardType}</Chip>
           {card.isNew && <Chip tone="good">New</Chip>}
           {drillCase && <Chip tone="hard">{drillCase.toLowerCase()} drill</Chip>}
           {card.lemma && (
             <Link
               href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
-              className="ml-auto flex items-center gap-1.5 text-[12.5px]"
+              className="ml-auto flex items-center gap-1.5 text-[12.5px] font-semibold transition-opacity hover:opacity-60"
               style={{ color: "var(--ink-3)" }}
             >
               <BookOpen size={13} aria-hidden /> Full entry
@@ -236,13 +249,14 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
         </div>
 
         <div
-          className="flex min-h-[300px] flex-col items-center justify-center gap-4 px-6 py-12 text-center md:min-h-[340px]"
+          key={`${card.id}-${revealed}`}
+          className="pop-in flex min-h-[300px] flex-col items-center justify-center gap-4 px-6 py-12 text-center md:min-h-[340px]"
           aria-live="polite"
         >
           <div className="flex items-center gap-2">
             <p
               lang={estonianSide(card.cardType, "front") ? "et" : "en"}
-              className="est text-[34px] font-semibold leading-tight md:text-[40px]"
+              className="est text-[36px] font-bold leading-tight tracking-tight md:text-[44px]"
               style={{ color: "var(--ink)" }}
             >
               {card.front}
@@ -255,11 +269,11 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
 
           {revealed && (
             <>
-              <div className="my-1 h-px w-16" style={{ background: "var(--rule)" }} />
+              <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
               <div className="flex items-center gap-2">
                 <p
                   lang={estonianSide(card.cardType, "back") ? "et" : "en"}
-                  className="est text-[30px] font-semibold md:text-[34px]"
+                  className="est text-[30px] font-bold md:text-[36px]"
                   style={{ color: "var(--accent)" }}
                 >
                   {card.back}
@@ -273,8 +287,14 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!revealed ? (
-            <Button variant="primary" className="w-full py-3" onClick={() => setRevealed(true)}>
-              Show answer <kbd className="ml-1 opacity-70">Space</kbd>
+            <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
+              Show answer
+              <kbd
+                className="ml-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold"
+                style={{ background: "rgb(255 255 255 / 0.22)" }}
+              >
+                Space
+              </kbd>
             </Button>
           ) : (
             <div className="grid grid-cols-4 gap-2">
@@ -285,14 +305,10 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
                   disabled={busy}
                   onClick={() => void submit(r.value as RatingValue)}
                   aria-label={`${r.label} — next in ${intervals?.[r.value as RatingValue] ?? ""}`}
-                  className="flex flex-col items-center gap-0.5 rounded-md border px-2 py-2.5 transition-opacity hover:opacity-80 disabled:opacity-40"
-                  style={{
-                    borderColor: "transparent",
-                    background: TONE_SOFT[r.value],
-                    color: TONE[r.value],
-                  }}
+                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-all hover:-translate-y-0.5 disabled:opacity-40"
+                  style={{ background: TONE_SOFT[r.value], color: TONE[r.value] }}
                 >
-                  <span className="text-[14px] font-semibold">{r.label}</span>
+                  <span className="text-[14.5px] font-bold">{r.label}</span>
                   <span className="tnum text-[11px] opacity-80">{intervals?.[r.value as RatingValue]}</span>
                   <kbd className="text-[10px] opacity-60">{r.key}</kbd>
                 </button>
@@ -302,8 +318,8 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
         </div>
       </div>
 
-      <p className="mt-4 flex items-center justify-center gap-4 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
-        <span className="flex items-center gap-1"><Check size={12} aria-hidden /> {correct} recalled</span>
+      <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+        <span className="flex items-center gap-1"><Check size={12} aria-hidden style={{ color: "var(--good)" }} /> {correct} recalled</span>
         <span className="flex items-center gap-1"><RotateCcw size={12} aria-hidden /> {done} graded</span>
         <span className="hidden md:inline">Space to flip · 1–4 to grade</span>
       </p>

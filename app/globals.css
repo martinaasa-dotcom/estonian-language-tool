@@ -1,113 +1,188 @@
 @import "tailwindcss";
 
 /*
-  Palette: birch and cornflower.
-  Cornflower (rukkilill) is Estonia's national flower — a grounded accent that
-  isn't the flag rendered literally. Neutrals carry a slight cool-blue bias so
-  they read as chosen rather than inherited.
+  Palette: "rukkilill sunrise" — a pastel system built around the cornflower
+  (rukkilill, Estonia's national flower) rather than the flag rendered literally.
+
+  Five hues carry meaning and never drift: cornflower is the app's voice and the
+  primary action, mint means "you got it", butter means "nearly", peach means
+  "again", sky means "easy". Everything else is a warm near-white so the colour
+  that does appear is the colour that means something.
+
+  Tokens are duplicated into @theme (so Tailwind utilities like `bg-mint` work)
+  and into :root (so the inline `style` props the views use can read them). The
+  :root copy is the one that flips in dark mode.
 */
 @theme {
-  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Literata", Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  --color-ground: #f6f7f9;
+  --color-ground: #fbf9ff;
   --color-surface: #ffffff;
-  --color-raised: #eef1f5;
-  --color-ink: #161a21;
-  --color-ink-2: #464f5d;
-  --color-ink-3: #6b7684;
-  --color-rule: #d8dee6;
-  --color-rule-soft: #e6eaf0;
+  --color-raised: #f4f1fe;
+  --color-ink: #241f35;
+  --color-ink-2: #5b5470;
+  --color-ink-3: #8b84a3;
+  --color-rule: #e8e3f7;
+  --color-rule-soft: #f2effb;
 
-  --color-accent: #3e6ba8;
+  --color-accent: #7a6bf0;
   --color-accent-ink: #ffffff;
-  --color-accent-soft: #e4ebf5;
+  --color-accent-soft: #ece9ff;
 
-  --color-again: #a8422f;
-  --color-hard: #8a6516;
-  --color-good: #2f6b4f;
-  --color-easy: #3e6ba8;
+  --color-mint: #1fb894;
+  --color-mint-soft: #dcf7ee;
+  --color-peach: #ef6f52;
+  --color-peach-soft: #ffe6df;
+  --color-butter: #cf9114;
+  --color-butter-soft: #fff0d4;
+  --color-sky: #2b93d8;
+  --color-sky-soft: #ddeffd;
+  --color-blush: #e2559a;
+  --color-blush-soft: #ffe2f0;
 
-  --color-again-soft: #f7e7e3;
-  --color-hard-soft: #f5ecd9;
-  --color-good-soft: #e2efe8;
-  --color-easy-soft: #e4ebf5;
+  --color-again: #ef6f52;
+  --color-hard: #cf9114;
+  --color-good: #1fb894;
+  --color-easy: #2b93d8;
+
+  --color-again-soft: #ffe6df;
+  --color-hard-soft: #fff0d4;
+  --color-good-soft: #dcf7ee;
+  --color-easy-soft: #ddeffd;
 }
 
 @layer base {
   :root {
     color-scheme: light;
-    --ground: #f6f7f9;
+
+    --ground: #fbf9ff;
     --surface: #ffffff;
-    --raised: #eef1f5;
-    --ink: #161a21;
-    --ink-2: #464f5d;
-    --ink-3: #6b7684;
-    --rule: #d8dee6;
-    --rule-soft: #e6eaf0;
-    --accent: #3e6ba8;
+    --raised: #f4f1fe;
+    --ink: #241f35;
+    --ink-2: #5b5470;
+    --ink-3: #8b84a3;
+    --rule: #e8e3f7;
+    --rule-soft: #f2effb;
+
+    --accent: #7a6bf0;
     --accent-ink: #ffffff;
-    --accent-soft: #e4ebf5;
-    --again: #a8422f;
-    --hard: #8a6516;
-    --good: #2f6b4f;
-    --easy: #3e6ba8;
-    --again-soft: #f7e7e3;
-    --hard-soft: #f5ecd9;
-    --good-soft: #e2efe8;
-    --easy-soft: #e4ebf5;
-    --shadow: 0 1px 2px rgb(22 26 33 / 0.05), 0 8px 24px -16px rgb(22 26 33 / 0.28);
+    --accent-soft: #ece9ff;
+    --accent-deep: #5b4bd6;
+
+    --mint: #1fb894;
+    --mint-soft: #dcf7ee;
+    --peach: #ef6f52;
+    --peach-soft: #ffe6df;
+    --butter: #cf9114;
+    --butter-soft: #fff0d4;
+    --sky: #2b93d8;
+    --sky-soft: #ddeffd;
+    --blush: #e2559a;
+    --blush-soft: #ffe2f0;
+
+    --again: var(--peach);
+    --hard: var(--butter);
+    --good: var(--mint);
+    --easy: var(--sky);
+    --again-soft: var(--peach-soft);
+    --hard-soft: var(--butter-soft);
+    --good-soft: var(--mint-soft);
+    --easy-soft: var(--sky-soft);
+
+    /* Pastel washes for the decorative blobs behind the page. */
+    --wash-1: #ded9ff;
+    --wash-2: #ffe4ef;
+    --wash-3: #d9f4ea;
+
+    --r-sm: 10px;
+    --r: 16px;
+    --r-lg: 22px;
+    --r-xl: 30px;
+
+    --shadow-sm: 0 1px 2px rgb(36 31 53 / 0.04), 0 4px 12px -8px rgb(66 48 150 / 0.18);
+    --shadow: 0 1px 2px rgb(36 31 53 / 0.04), 0 14px 34px -18px rgb(66 48 150 / 0.28);
+    --shadow-lg: 0 2px 4px rgb(36 31 53 / 0.04), 0 30px 60px -28px rgb(66 48 150 / 0.38);
+    --shadow-accent: 0 10px 24px -12px rgb(122 107 240 / 0.65);
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --ground: #0f1218;
-      --surface: #161b23;
-      --raised: #1d242e;
-      --ink: #e8ecf2;
-      --ink-2: #afb9c6;
-      --ink-3: #7f8a99;
-      --rule: #2a323d;
-      --rule-soft: #222933;
-      --accent: #7ea6dc;
-      --accent-ink: #0f1218;
-      --accent-soft: #1b2735;
-      --again: #e08972;
-      --hard: #d9ae5f;
-      --good: #7cc3a0;
-      --easy: #7ea6dc;
-      --again-soft: #2e1d18;
-      --hard-soft: #2a2216;
-      --good-soft: #152720;
-      --easy-soft: #1b2735;
-      --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+
+      --ground: #12101d;
+      --surface: #1a1729;
+      --raised: #221e36;
+      --ink: #f2eeff;
+      --ink-2: #c2bade;
+      --ink-3: #8f87ad;
+      --rule: #2e2848;
+      --rule-soft: #241f39;
+
+      --accent: #a99bff;
+      --accent-ink: #171229;
+      --accent-soft: #2a2350;
+      --accent-deep: #c3b7ff;
+
+      --mint: #5fe3bc;
+      --mint-soft: #10332a;
+      --peach: #ff9f86;
+      --peach-soft: #38211b;
+      --butter: #ffcd6e;
+      --butter-soft: #372c14;
+      --sky: #7cc6f5;
+      --sky-soft: #132a3d;
+      --blush: #ff9cc7;
+      --blush-soft: #371c2c;
+
+      --wash-1: #2b2358;
+      --wash-2: #3b1f36;
+      --wash-3: #123a33;
+
+      --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -8px rgb(0 0 0 / 0.6);
+      --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
+      --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
+      --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
     }
   }
 
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --ground: #0f1218;
-    --surface: #161b23;
-    --raised: #1d242e;
-    --ink: #e8ecf2;
-    --ink-2: #afb9c6;
-    --ink-3: #7f8a99;
-    --rule: #2a323d;
-    --rule-soft: #222933;
-    --accent: #7ea6dc;
-    --accent-ink: #0f1218;
-    --accent-soft: #1b2735;
-    --again: #e08972;
-    --hard: #d9ae5f;
-    --good: #7cc3a0;
-    --easy: #7ea6dc;
-    --again-soft: #2e1d18;
-    --hard-soft: #2a2216;
-    --good-soft: #152720;
-    --easy-soft: #1b2735;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+
+    --ground: #12101d;
+    --surface: #1a1729;
+    --raised: #221e36;
+    --ink: #f2eeff;
+    --ink-2: #c2bade;
+    --ink-3: #8f87ad;
+    --rule: #2e2848;
+    --rule-soft: #241f39;
+
+    --accent: #a99bff;
+    --accent-ink: #171229;
+    --accent-soft: #2a2350;
+    --accent-deep: #c3b7ff;
+
+    --mint: #5fe3bc;
+    --mint-soft: #10332a;
+    --peach: #ff9f86;
+    --peach-soft: #38211b;
+    --butter: #ffcd6e;
+    --butter-soft: #372c14;
+    --sky: #7cc6f5;
+    --sky-soft: #132a3d;
+    --blush: #ff9cc7;
+    --blush-soft: #371c2c;
+
+    --wash-1: #2b2358;
+    --wash-2: #3b1f36;
+    --wash-3: #123a33;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -8px rgb(0 0 0 / 0.6);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
+    --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
+    --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
   }
 
   * { box-sizing: border-box; }
@@ -117,32 +192,102 @@
     color: var(--ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   /* Every interactive element gets a visible focus ring — docs/08 §5. */
   :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 3px;
+    outline: 2.5px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 8px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+
+  /* Scrollbars, kept quiet and in-palette. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule) transparent;
   }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+    html { scroll-behavior: auto !important; }
+    /* A scroll-driven reveal has no duration to shorten, so it needs turning
+       off outright — otherwise the content stays tied to the scrollbar. */
+    .reveal { animation: none !important; }
   }
 }
 
 @layer utilities {
-  .est { font-family: var(--font-serif); }
+  .est { font-family: var(--font-serif); font-optical-sizing: auto; }
   .tnum { font-variant-numeric: tabular-nums; }
+
   .label-xs {
     font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.11em;
     text-transform: uppercase;
   }
+
+  /* The one gradient in the system. Used for the primary action and for the
+     single word a headline leans on — never for body text. */
+  .grad-accent {
+    background-image: linear-gradient(112deg, var(--accent) 0%, #9a72f2 45%, var(--blush) 100%);
+  }
+  .grad-text {
+    background-image: linear-gradient(112deg, var(--accent) 0%, #9a72f2 40%, var(--blush) 92%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Soft pastel light behind a section, so the ground never reads as flat grey. */
+  .wash {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(64px);
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  .lift {
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .press:active { transform: translateY(1px) scale(0.985); }
+
+  .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+  /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
+     script. Browsers without scroll timelines simply get the finished state. */
+  .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% cover 20%; }
+  @supports not (animation-timeline: view()) { .reveal { animation: none; } }
+  .float { animation: float 6s ease-in-out infinite; }
+  .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(var(--float-tilt, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--float-tilt, 0deg)); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes confetti-fall {
@@ -151,6 +296,22 @@
 }
 
 @keyframes toast-in {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(10px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* The mascot's slow blink and the card flip, both used on the landing page. */
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+
+@keyframes flip-in {
+  from { opacity: 0; transform: rotateX(-35deg); }
+  to { opacity: 1; transform: rotateX(0); }
 }

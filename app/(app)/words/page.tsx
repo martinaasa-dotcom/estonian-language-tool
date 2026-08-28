@@ -3,7 +3,7 @@ import { Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
-import { Card, Empty, Page, Stat } from "@/components/ui";
+import { Card, Empty, Page, SectionTitle, StatTile } from "@/components/ui";
 import { STATE_LABELS } from "@/lib/srs/scheduler";
 import { WordsTable, type CardRow } from "./WordsTable";
 
@@ -53,18 +53,26 @@ export default async function WordsPage() {
         />
       ) : (
         <div className="flex flex-col gap-6">
-          <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+          <div className="grid items-start gap-4 md:grid-cols-[2fr_1fr]">
             <Card>
-              <div className="flex flex-wrap gap-8">
-                <Stat value={rows.length} label="Cards" />
-                <Stat value={byState[0] ?? 0} label="New" />
-                <Stat value={(byState[1] ?? 0) + (byState[3] ?? 0)} label="Learning" />
-                <Stat value={byState[2] ?? 0} label="Known" tone="var(--good)" />
+              <SectionTitle hint="how the deck is settling">Where your cards are</SectionTitle>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatTile value={rows.length} label="Cards" tone="accent" />
+                <StatTile value={byState[0] ?? 0} label="New" tone="sky" />
+                <StatTile value={(byState[1] ?? 0) + (byState[3] ?? 0)} label="Learning" tone="butter" />
+                <StatTile value={byState[2] ?? 0} label="Known" tone="mint" />
               </div>
+              <DeckBar
+                segments={[
+                  { label: "New", value: byState[0] ?? 0, color: "var(--sky)" },
+                  { label: "Learning", value: (byState[1] ?? 0) + (byState[3] ?? 0), color: "var(--butter)" },
+                  { label: "Known", value: byState[2] ?? 0, color: "var(--mint)" },
+                ]}
+              />
             </Card>
 
             <Card>
-              <h2 className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>Weakest cases</h2>
+              <SectionTitle hint="click to drill">Weakest cases</SectionTitle>
               {caseStats.length === 0 ? (
                 <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>
                   Add some case-form cards and this will show which cases you keep missing.
@@ -76,12 +84,12 @@ export default async function WordsPage() {
                       <li key={c.case}>
                         <Link
                           href={`/review?case=${c.case}`}
-                          className="flex items-center justify-between gap-3 rounded px-1.5 py-1 text-[13.5px] transition-opacity hover:opacity-70"
+                          className="flex items-center justify-between gap-3 rounded-full px-2.5 py-1.5 text-[13.5px] transition-colors hover:bg-[var(--raised)]"
                           aria-label={`Drill the ${c.case.toLowerCase()}, currently ${c.accuracy} percent`}
                         >
                           <span style={{ color: "var(--ink-2)" }}>{c.case.toLowerCase()}</span>
                           <span className="flex items-center gap-2">
-                            <span className="h-1.5 w-16 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
+                            <span className="h-2 w-16 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
                               <span
                                 className="block h-full rounded-full"
                                 style={{
@@ -117,6 +125,39 @@ export default async function WordsPage() {
         </div>
       )}
     </Page>
+  );
+}
+
+/**
+ * One bar showing how the deck splits between new, learning and known.
+ *
+ * The four numbers above it are the facts; this is the shape of them — whether
+ * the deck is mostly still ahead of you or mostly behind you, at a glance.
+ */
+function DeckBar({ segments }: { segments: { label: string; value: number; color: string }[] }) {
+  const total = segments.reduce((sum, s) => sum + s.value, 0);
+  if (total === 0) return null;
+
+  return (
+    <div className="mt-5">
+      <div className="flex h-3 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
+        {segments.map((s) => (
+          <div
+            key={s.label}
+            style={{ width: `${(s.value / total) * 100}%`, background: s.color }}
+            title={`${s.label}: ${s.value}`}
+          />
+        ))}
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
+        {segments.map((s) => (
+          <span key={s.label} className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+            {s.label} <span className="tnum" style={{ color: "var(--ink-2)" }}>{Math.round((s.value / total) * 100)}%</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

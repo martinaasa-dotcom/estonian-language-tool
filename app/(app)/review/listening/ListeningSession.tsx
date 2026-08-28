@@ -6,7 +6,8 @@ import Link from "next/link";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Empty, Page, Stat } from "@/components/ui";
+import { Chip, Empty, Page, StatTile } from "@/components/ui";
+import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 
@@ -106,23 +107,23 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
     const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-          Session complete
-        </h1>
-        <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Tubli töö. That&rsquo;s every word in this round.
-        </p>
-        <div
-          className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
-          style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
-        >
-          <Stat value={correct} label="Correct" tone="var(--accent)" />
-          <Stat value={`${accuracy}%`} label="Accuracy" tone={accuracy >= 85 ? "var(--good)" : "var(--hard)"} />
-          <Stat value={attempted} label="Attempted" />
+        <div className="pop-in text-center">
+          <Mascot size={68} mood="cheer" className="float mx-auto" />
+          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+            Session complete
+          </h1>
+          <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
+            Tubli töö. That&rsquo;s every word in this round.
+          </p>
         </div>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/review/listening" variant="primary">Listen again</ButtonLink>
-          <ButtonLink href="/">Back to Today</ButtonLink>
+        <div className="mt-8 grid grid-cols-3 gap-3">
+          <StatTile value={correct} label="Correct" tone="accent" />
+          <StatTile value={`${accuracy}%`} label="Accuracy" tone={accuracy >= 85 ? "mint" : "butter"} />
+          <StatTile value={attempted} label="Attempted" tone="sky" />
+        </div>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <ButtonLink href="/review/listening" variant="primary" size="lg">Listen again</ButtonLink>
+          <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
         <AchievementToasts badges={newBadges} />
       </div>
@@ -134,13 +135,18 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="End session" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
-          <X size={19} aria-hidden />
+        <Link
+          href="/"
+          aria-label="End session"
+          className="press flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
+          style={{ color: "var(--ink-3)" }}
+        >
+          <X size={18} aria-hidden />
         </Link>
-        <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
           <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${(index / cards.length) * 100}%`, background: "var(--accent)" }}
+            className="grad-accent h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.max((index / cards.length) * 100, 2)}%` }}
             role="progressbar"
             aria-valuenow={index}
             aria-valuemin={0}
@@ -148,12 +154,17 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
             aria-label="Session progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>{remaining} left</span>
+        <span
+          className="tnum label-xs rounded-full px-2.5 py-1"
+          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        >
+          {remaining} left
+        </span>
       </div>
 
       <div
-        className="flex flex-col rounded-xl border"
-        style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
+        className="flex flex-col overflow-hidden rounded-[var(--r-xl)] border"
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}
       >
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><Headphones size={12} aria-hidden /> Listening</Chip>
@@ -166,7 +177,8 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
               <Speak
                 text={card.lemma}
                 size={30}
-                className="flex h-20 w-20 items-center justify-center rounded-full transition-opacity hover:opacity-80"
+                className="press flex h-24 w-24 items-center justify-center rounded-full transition-all hover:-translate-y-0.5"
+                style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
               />
               <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap to hear the word — tap again to replay</p>
             </>
@@ -195,8 +207,8 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                 type="button"
                 disabled={answered || busy}
                 onClick={() => void pick(choice)}
-                className="flex items-center gap-2 rounded-md border px-3.5 py-2.5 text-left text-[14px] font-medium transition-opacity disabled:cursor-default"
-                style={{ borderColor: "transparent", ...tone }}
+                className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-[14.5px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
+                style={tone}
               >
                 <kbd className="text-[10.5px] opacity-60">{i + 1}</kbd>
                 <span className="flex-1">{choice}</span>
@@ -209,8 +221,9 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
 
         {answered && (
           <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
-            <Button variant="primary" className="w-full py-2.5" onClick={next}>
-              Continue <kbd className="ml-1 opacity-70">Space</kbd>
+            <Button variant="primary" size="lg" className="w-full" onClick={next}>
+              Continue
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-[11px]" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
             </Button>
           </div>
         )}

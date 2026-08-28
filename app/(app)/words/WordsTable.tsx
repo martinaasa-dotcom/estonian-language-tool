@@ -49,12 +49,13 @@ export function WordsTable({ rows }: { rows: CardRow[] }) {
             type="button"
             onClick={() => setFilter(f)}
             aria-pressed={filter === f}
-            className="rounded-full border px-3 py-1 text-[13px]"
+            className="press rounded-full border px-3.5 py-1.5 text-[13px] transition-all"
             style={{
               borderColor: filter === f ? "transparent" : "var(--rule)",
-              background: filter === f ? "var(--accent-soft)" : "transparent",
-              color: filter === f ? "var(--accent)" : "var(--ink-2)",
-              fontWeight: filter === f ? 600 : 400,
+              background: filter === f ? "var(--accent)" : "var(--surface)",
+              color: filter === f ? "var(--accent-ink)" : "var(--ink-2)",
+              fontWeight: filter === f ? 700 : 500,
+              boxShadow: filter === f ? "var(--shadow-accent)" : "none",
             }}
           >
             {f}
@@ -65,14 +66,17 @@ export function WordsTable({ rows }: { rows: CardRow[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter…"
           aria-label="Filter cards"
-          className="ml-auto rounded-md border px-3 py-1.5 text-[13.5px]"
+          className="ml-auto rounded-full border px-4 py-2 text-[13.5px] outline-none"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>
 
       {visible.length === 0 ? (
-        <p className="rounded-lg border border-dashed px-4 py-8 text-center text-[14px]" style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}>
-          No cards match that.
+        <p
+          className="rounded-[var(--r-lg)] border border-dashed px-4 py-10 text-center text-[14px]"
+          style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}
+        >
+          No cards match that. Try another filter.
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -94,10 +98,11 @@ function Row({ row }: { row: CardRow }) {
 
   return (
     <li
-      className="flex items-center gap-3 rounded-lg border px-4 py-2.5"
+      className="flex items-center gap-3 rounded-[var(--r)] border px-4 py-3 transition-colors hover:border-[var(--accent-soft)]"
       style={{
         borderColor: "var(--rule)",
         background: "var(--surface)",
+        boxShadow: "var(--shadow-sm)",
         opacity: pending ? 0.5 : suspended ? 0.55 : 1,
       }}
     >

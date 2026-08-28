@@ -1,28 +1,47 @@
 import type { Metadata } from "next";
-import { Archivo, Literata } from "next/font/google";
-import { Sidebar } from "@/components/Sidebar";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const archivo = Archivo({ subsets: ["latin", "latin-ext"], variable: "--font-archivo", display: "swap" });
-const literata = Literata({ subsets: ["latin", "latin-ext"], variable: "--font-literata", display: "swap" });
+/**
+ * Fraunces for anything that should feel written — headings, and every Estonian
+ * word in the app. Plus Jakarta Sans for the interface around it. Both carry
+ * latin-ext, which is not optional here: without it õ ä ö ü š ž fall back to a
+ * different face mid-word.
+ */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["SOFT", "WONK"],
+});
 
 export const metadata: Metadata = {
-  title: "Kodukeel — Estonian study",
-  description: "A personal Estonian learning dashboard: dictionary, flashcards and a grammar tutor.",
+  title: "Kodukeel — Estonian that finally sticks",
+  description:
+    "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that knows when to stop, native audio, and a grammar tutor that explains the rule.",
   icons: { icon: "/icon.svg" },
+  openGraph: {
+    title: "Kodukeel — Estonian that finally sticks",
+    description:
+      "Real paradigms, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${archivo.variable} ${literata.variable} min-h-screen`}
-        style={{ fontFamily: "var(--font-archivo), system-ui, sans-serif" }}
-      >
-        <div className="flex min-h-screen flex-col md:flex-row">
-          <Sidebar />
-          <main className="flex-1 pb-20 md:pb-0">{children}</main>
-        </div>
+    // The font variables go on <html>, not <body>: `--font-serif` is declared on
+    // :root and references `--font-fraunces`, and a custom property is
+    // substituted where it is *declared*, so the face has to be in scope there.
+    <html lang="en" className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen">
+        {children}
       </body>
     </html>
   );

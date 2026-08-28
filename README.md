@@ -122,6 +122,17 @@ to set up, both one-time:
 Neither Google credential nor the Supabase service role key is ever needed in this app's own code —
 the OAuth exchange happens entirely inside Supabase.
 
+## The way it looks
+
+A signed-out visitor lands on **/welcome** — a single-page tour with a working flashcard, a live
+case table and an honest comparison against the streak apps. Every Estonian form on that page is
+read from the real dictionary and derived by the app's own code, not typed into marketing copy.
+
+Inside, the app runs on a pastel design system built around the cornflower — *rukkilill*, Estonia's
+national flower — with Fraunces for Estonian words and headings, and a mascot made out of the
+letter **õ**. Light and dark both ship, and the theme toggle sits at the bottom of the rail.
+`docs/14-design-system.md` has the palette, the tokens and the rules colour follows.
+
 ## Backing up
 
 **Settings → Download a backup** writes a JSON file with every word, card and review, and the same
@@ -153,7 +164,10 @@ lib/estonian/   the language model — cases, principal parts, gradation. No Rea
 lib/srs/        FSRS scheduling and card generation.
 lib/dict/       search.
 lib/tutor/      provider-agnostic chat; keys stay server-side.
-app/            routes; api/ holds the three server proxies.
+app/(app)/      the signed-in app: rail, review, dictionary, tutor, words, tasks, settings.
+app/(marketing)/ the public landing page and sign-in — no app chrome.
+app/api/        the three server proxies.
+components/     ui primitives, the brand mark and the mascot.
 prisma/data/    the built-in dictionary.
 docs/           the full plan and the decisions behind it.
 ```
@@ -164,6 +178,8 @@ Two rules the code holds to, both explained in `docs/`:
   derived from the genitive at render time. Where a form is unknown, the app shows a gap — an
   invented form gets drilled into memory by the SRS, which is worse than a blank.
 - **No key ever reaches the browser.** The AI and speech services are called from server routes only.
+- **Every view has four states.** Empty, loading, error and offline — a view without an empty state
+  is not finished. `docs/08-ux-ia-a11y.md` §4.
 
 ## Credits
 

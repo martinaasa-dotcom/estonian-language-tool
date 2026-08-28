@@ -67,13 +67,13 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
           accept="application/json,.json"
           aria-label="Choose a backup file"
           onChange={(e) => void pick(e.target.files?.[0])}
-          className="text-[13.5px]"
+          className="text-[13.5px] file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-[var(--accent-deep)]"
           style={{ color: "var(--ink-2)" }}
         />
       </div>
 
       {summary && (
-        <div className="mt-4 rounded-md border p-4" style={{ borderColor: "var(--rule)", background: "var(--raised)" }}>
+        <div className="mt-4 rounded-[var(--r-lg)] p-5" style={{ background: "var(--raised)" }}>
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             <span style={{ color: "var(--ink)" }}>{filename}</span> holds{" "}
             <span className="tnum">{summary.words}</span> words,{" "}
@@ -108,7 +108,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
 
           {mode === "replace" && (
             <div
-              className="mt-4 rounded-md px-3 py-3"
+              className="mt-4 rounded-[var(--r)] px-4 py-3.5"
               style={{ background: "var(--again-soft)", color: "var(--again)" }}
             >
               <p className="flex items-start gap-2 text-[13px]">

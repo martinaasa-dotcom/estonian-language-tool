@@ -3,19 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, CalendarCheck, GraduationCap, Layers, LogOut, MessageCircleQuestion,
-  Settings, Sun,
+  BookOpen, CalendarCheck, GraduationCap, Layers, LogOut, Moon, MessageCircleQuestion,
+  Settings, Sun, Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Wordmark } from "@/components/brand";
 
 const NAV = [
-  { href: "/", label: "Today", icon: Sun },
-  { href: "/review", label: "Review", icon: GraduationCap },
-  { href: "/dictionary", label: "Dictionary", icon: BookOpen },
-  { href: "/tutor", label: "Anu", icon: MessageCircleQuestion },
-  { href: "/words", label: "My words", icon: Layers },
-  { href: "/tasks", label: "Tasks", icon: CalendarCheck },
+  { href: "/", label: "Today", icon: Sun, tone: "var(--butter)" },
+  { href: "/review", label: "Review", icon: GraduationCap, tone: "var(--accent)" },
+  { href: "/dictionary", label: "Dictionary", icon: BookOpen, tone: "var(--sky)" },
+  { href: "/tutor", label: "Anu", icon: MessageCircleQuestion, tone: "var(--blush)" },
+  { href: "/words", label: "My words", icon: Layers, tone: "var(--mint)" },
+  { href: "/tasks", label: "Tasks", icon: CalendarCheck, tone: "var(--peach)" },
 ] as const;
 
 export function Sidebar() {
@@ -27,43 +28,57 @@ export function Sidebar() {
       {/* Desktop rail */}
       <nav
         aria-label="Main"
-        className="hidden md:flex w-56 shrink-0 flex-col gap-1 border-r p-4"
-        style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-1 p-4 md:flex"
       >
-        <Link href="/" className="mb-6 block px-2 pt-2">
-          <span lang="et" className="est block text-[22px] font-bold leading-none" style={{ color: "var(--ink)" }}>
-            Kodukeel
-          </span>
-          <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>
-            Estonian study
-          </span>
+        <Link href="/" className="mb-7 block rounded-[var(--r)] px-2 pt-3">
+          <Wordmark subtitle="Estonian, daily" />
         </Link>
 
-        {NAV.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            aria-current={isActive(href) ? "page" : undefined}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-[14.5px] transition-colors"
-            style={{
-              background: isActive(href) ? "var(--accent-soft)" : "transparent",
-              color: isActive(href) ? "var(--accent)" : "var(--ink-2)",
-              fontWeight: isActive(href) ? 600 : 400,
-            }}
-          >
-            <Icon size={17} strokeWidth={1.9} aria-hidden />
-            {label}
-          </Link>
-        ))}
+        {NAV.map(({ href, label, icon: Icon, tone }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className="group relative flex items-center gap-3 rounded-full px-3 py-2.5 text-[14.5px] transition-all duration-200"
+              style={{
+                background: active ? "var(--surface)" : "transparent",
+                color: active ? "var(--ink)" : "var(--ink-2)",
+                fontWeight: active ? 700 : 500,
+                boxShadow: active ? "var(--shadow-sm)" : "none",
+              }}
+            >
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-full transition-colors"
+                style={{
+                  background: active ? tone : "var(--raised)",
+                  color: active ? "var(--surface)" : "var(--ink-3)",
+                }}
+              >
+                <Icon size={15} strokeWidth={2.2} aria-hidden />
+              </span>
+              {label}
+            </Link>
+          );
+        })}
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+        <Link
+          href="/review/sprint"
+          className="lift mt-3 flex items-center gap-2.5 rounded-full px-3 py-2.5 text-[13.5px] font-semibold"
+          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        >
+          <Zap size={15} strokeWidth={2.4} aria-hidden /> 60-second sprint
+        </Link>
+
+        <div className="mt-auto flex items-center gap-1 pt-4">
           <Link
             href="/settings"
             aria-current={isActive("/settings") ? "page" : undefined}
-            className="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-[14.5px]"
+            className="flex flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-[13.5px] font-medium"
             style={{ color: isActive("/settings") ? "var(--accent)" : "var(--ink-3)" }}
           >
-            <Settings size={17} strokeWidth={1.9} aria-hidden />
+            <Settings size={16} strokeWidth={2} aria-hidden />
             Settings
           </Link>
           <ThemeToggle />
@@ -71,26 +86,54 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Mobile bar */}
+      {/* Mobile bar — floating, so it reads as a control and not a page edge. */}
       <nav
         aria-label="Main"
-        className="fixed bottom-0 left-0 right-0 z-40 flex border-t md:hidden"
-        style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+        className="fixed bottom-3 left-3 right-3 z-40 flex justify-around rounded-full border px-1.5 py-1.5 md:hidden"
+        style={{
+          borderColor: "var(--rule)",
+          background: "color-mix(in oklab, var(--surface) 88%, transparent)",
+          backdropFilter: "blur(14px)",
+          boxShadow: "var(--shadow)",
+        }}
       >
-        {NAV.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            aria-current={isActive(href) ? "page" : undefined}
-            className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px]"
-            style={{ color: isActive(href) ? "var(--accent)" : "var(--ink-3)" }}
-          >
-            <Icon size={19} strokeWidth={1.9} aria-hidden />
-            {label}
-          </Link>
-        ))}
+        {NAV.map(({ href, label, icon: Icon, tone }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              aria-label={label}
+              className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[9.5px] font-semibold transition-colors"
+              style={{ color: active ? "var(--ink)" : "var(--ink-3)" }}
+            >
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-full"
+                style={{ background: active ? tone : "transparent", color: active ? "var(--surface)" : "var(--ink-3)" }}
+              >
+                <Icon size={16} strokeWidth={2.2} aria-hidden />
+              </span>
+              {label}
+            </Link>
+          );
+        })}
       </nav>
     </>
+  );
+}
+
+function IconButton({ onClick, label, children }: { onClick: () => void; label: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="press rounded-full p-2 transition-colors hover:bg-[var(--raised)]"
+      style={{ color: "var(--ink-3)" }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -98,19 +141,13 @@ function SignOutButton() {
   const router = useRouter();
   const signOut = async () => {
     await createClient().auth.signOut();
-    router.push("/sign-in");
+    router.push("/welcome");
     router.refresh();
   };
   return (
-    <button
-      type="button"
-      onClick={signOut}
-      aria-label="Sign out"
-      className="rounded-md p-2"
-      style={{ color: "var(--ink-3)" }}
-    >
-      <LogOut size={16} strokeWidth={1.9} aria-hidden />
-    </button>
+    <IconButton onClick={() => void signOut()} label="Sign out">
+      <LogOut size={16} strokeWidth={2} aria-hidden />
+    </IconButton>
   );
 }
 
@@ -122,7 +159,11 @@ function ThemeToggle() {
     if (stored === "light" || stored === "dark") {
       setTheme(stored);
       document.documentElement.dataset.theme = stored;
+      return;
     }
+    // Nothing stored: follow the system, but still record which way it went so
+    // the button offers the opposite of what is actually on screen.
+    setTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   }, []);
 
   const toggle = () => {
@@ -134,14 +175,10 @@ function ThemeToggle() {
   };
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label="Switch between light and dark theme"
-      className="rounded-md p-2"
-      style={{ color: "var(--ink-3)" }}
-    >
-      <Sun size={16} strokeWidth={1.9} aria-hidden />
-    </button>
+    <IconButton onClick={toggle} label="Switch between light and dark theme">
+      {theme === "dark"
+        ? <Sun size={16} strokeWidth={2} aria-hidden />
+        : <Moon size={16} strokeWidth={2} aria-hidden />}
+    </IconButton>
   );
 }

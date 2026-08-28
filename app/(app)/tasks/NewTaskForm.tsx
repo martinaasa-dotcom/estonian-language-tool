@@ -39,6 +39,7 @@ export function NewTaskForm() {
   const field = {
     borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)",
   } as const;
+  const control = "rounded-full border px-4 py-2.5 text-[13.5px] outline-none";
 
   return (
     <Card>
@@ -49,7 +50,7 @@ export function NewTaskForm() {
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
           placeholder="What needs doing? e.g. Exercise 4B, partitive plural"
           aria-label="Task title"
-          className="w-full rounded-md border px-3.5 py-2.5 text-[15px]"
+          className="w-full rounded-[var(--r-lg)] border px-5 py-3 text-[15px] outline-none"
           style={field}
         />
         <div className="flex flex-wrap gap-2">
@@ -57,7 +58,7 @@ export function NewTaskForm() {
             value={tag}
             onChange={(e) => setTag(e.target.value)}
             aria-label="Task type"
-            className="rounded-md border px-3 py-2 text-[13.5px]"
+            className={control}
             style={field}
           >
             {TAGS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -67,7 +68,7 @@ export function NewTaskForm() {
             value={dueAt}
             onChange={(e) => setDueAt(e.target.value)}
             aria-label="Due date"
-            className="rounded-md border px-3 py-2 text-[13.5px]"
+            className={control}
             style={field}
           />
           <input
@@ -78,7 +79,7 @@ export function NewTaskForm() {
             onChange={(e) => setWeek(e.target.value)}
             placeholder="Week"
             aria-label="Class week"
-            className="w-24 rounded-md border px-3 py-2 text-[13.5px]"
+            className={`w-24 ${control}`}
             style={field}
           />
           <Button variant="primary" onClick={submit} disabled={pending || !title.trim()}>

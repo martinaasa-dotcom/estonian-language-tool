@@ -6,6 +6,7 @@ import { createLexeme, addToDeck } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Chip, Empty } from "@/components/ui";
+import { Mascot } from "@/components/brand";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
@@ -89,15 +90,18 @@ export function TutorChat({
   return (
     <div className="flex flex-col gap-4">
       {messages.length === 0 ? (
-        <Card>
-          <div className="flex items-center gap-2">
-            <Sparkles size={17} style={{ color: "var(--accent)" }} aria-hidden />
-            <p className="est text-[19px] font-semibold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
+        <Card tone="blush" className="flex items-start gap-4">
+          <Mascot size={46} className="float shrink-0" />
+          <div>
+            <p className="est text-[21px] font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
+            <p className="mt-1.5 max-w-[62ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              Ask me anything about Estonian grammar. I&rsquo;ll always tell you the rule, not just the
+              answer — and I&rsquo;ll say so if I&rsquo;m not sure of a form rather than guessing.
+            </p>
+            <p className="mt-3 flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--blush)" }}>
+              <Sparkles size={13} aria-hidden /> Pick a starter below, or just type.
+            </p>
           </div>
-          <p className="mt-2 text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-            Ask me anything about Estonian grammar. I&rsquo;ll always tell you the rule, not just the
-            answer — and I&rsquo;ll say so if I&rsquo;m not sure of a form rather than guessing.
-          </p>
         </Card>
       ) : (
         <div className="flex flex-col gap-4" role="log" aria-live="polite" aria-label="Conversation with Anu">
@@ -112,8 +116,8 @@ export function TutorChat({
             key={c.label}
             type="button"
             onClick={() => setInput(c.prompt)}
-            className="rounded-full border px-3 py-1.5 text-[13px] transition-opacity hover:opacity-70"
-            style={{ borderColor: "var(--rule)", color: "var(--ink-2)", background: "var(--surface)" }}
+            className="press rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all hover:-translate-y-px"
+            style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
           >
             {c.label}
           </button>
@@ -132,9 +136,9 @@ export function TutorChat({
         </div>
         <Button
           variant="primary"
+          size="lg"
           onClick={() => void send(input)}
           disabled={streaming || !input.trim()}
-          className="py-2.5"
         >
           <Send size={15} aria-hidden /> {streaming ? "Thinking…" : "Ask"}
         </Button>
@@ -155,23 +159,28 @@ function Bubble({ message, streaming }: { message: Msg; streaming: boolean }) {
   const { body, vocab } = splitVocab(message.content);
 
   return (
-    <div
-      className="rounded-lg border px-4 py-3"
-      style={{
-        borderColor: isUser ? "transparent" : "var(--rule)",
-        background: isUser ? "var(--accent-soft)" : "var(--surface)",
-        marginLeft: isUser ? "auto" : 0,
-        maxWidth: isUser ? "85%" : "100%",
-      }}
-    >
-      <p className="label-xs mb-1.5" style={{ color: isUser ? "var(--accent)" : "var(--ink-3)" }}>
-        {isUser ? "You" : "Anu"}
-      </p>
-      <div className="whitespace-pre-wrap text-[14.5px] leading-relaxed" style={{ color: "var(--ink)" }}>
-        {body}
-        {streaming && <span className="ml-0.5 inline-block animate-pulse">▍</span>}
+    <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
+      {!isUser && <Mascot size={34} className="mt-1 shrink-0" blink={false} />}
+      <div
+        className="rounded-[var(--r-lg)] border px-4 py-3.5"
+        style={{
+          borderColor: isUser ? "transparent" : "var(--rule)",
+          background: isUser ? "var(--accent-soft)" : "var(--surface)",
+          boxShadow: isUser ? "none" : "var(--shadow-sm)",
+          borderBottomRightRadius: isUser ? 8 : undefined,
+          borderBottomLeftRadius: isUser ? undefined : 8,
+          maxWidth: isUser ? "85%" : "100%",
+        }}
+      >
+        <p className="label-xs mb-1.5" style={{ color: isUser ? "var(--accent-deep)" : "var(--blush)" }}>
+          {isUser ? "You" : "Anu"}
+        </p>
+        <div className="whitespace-pre-wrap text-[14.5px] leading-relaxed" style={{ color: "var(--ink)" }}>
+          {body}
+          {streaming && <span className="ml-0.5 inline-block animate-pulse">▍</span>}
+        </div>
+        {vocab.length > 0 && <VocabBridge vocab={vocab} />}
       </div>
-      {vocab.length > 0 && <VocabBridge vocab={vocab} />}
     </div>
   );
 }

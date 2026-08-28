@@ -6,7 +6,8 @@ import Link from "next/link";
 import { checkAchievements, gradeCard, recordSprintScore } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Empty, Page, Stat } from "@/components/ui";
+import { Chip, Empty, Page, StatTile } from "@/components/ui";
+import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 
@@ -115,16 +116,33 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
     }
     return (
       <div className="mx-auto max-w-xl px-5 py-16 text-center md:px-10">
-        <Timer size={34} className="mx-auto" aria-hidden style={{ color: "var(--accent)" }} />
-        <h1 className="est mt-3 text-[30px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-          Case Sprint
-        </h1>
-        <p className="mx-auto mt-2 max-w-[46ch] text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-          {cards.length} cards loaded. Flip and answer as fast as you can for {DURATION_S} seconds — Space to
-          flip, Enter for correct, Backspace for missed.
-        </p>
-        <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>Personal best: {best}</p>
-        <Button variant="primary" className="mt-6 px-8 py-3" onClick={start}>Start</Button>
+        <div
+          className="pop-in rounded-[var(--r-xl)] px-6 py-12"
+          style={{ background: "var(--butter-soft)" }}
+        >
+          <span
+            className="float mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+            style={{ background: "var(--surface)", color: "var(--butter)", boxShadow: "var(--shadow)" }}
+          >
+            <Timer size={30} aria-hidden />
+          </span>
+          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+            Case Sprint
+          </h1>
+          <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            {cards.length} cards loaded. Flip and answer as fast as you can for {DURATION_S} seconds — Space to
+            flip, Enter for correct, Backspace for missed.
+          </p>
+          <p
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold"
+            style={{ background: "var(--surface)", color: "var(--butter)" }}
+          >
+            <Trophy size={14} aria-hidden /> Personal best: {best}
+          </p>
+          <div className="mt-7">
+            <Button variant="primary" size="lg" className="px-10" onClick={start}>Start the clock</Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -133,24 +151,24 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
     const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-          Time&rsquo;s up!
-        </h1>
-        <p className="mt-2 flex items-center gap-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          {isNewBest && <Trophy size={17} aria-hidden style={{ color: "var(--hard)" }} />}
-          {isNewBest ? "New personal best." : `Best so far: ${best}.`}
-        </p>
-        <div
-          className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
-          style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
-        >
-          <Stat value={correct} label="Score" tone="var(--accent)" />
-          <Stat value={`${accuracy}%`} label="Accuracy" />
-          <Stat value={attempted} label="Attempted" />
+        <div className="pop-in text-center">
+          <Mascot size={68} mood={isNewBest ? "cheer" : "happy"} className="float mx-auto" />
+          <h1 className="est mt-5 text-[34px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+            Time&rsquo;s up!
+          </h1>
+          <p className="mt-2 flex items-center justify-center gap-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
+            {isNewBest && <Trophy size={17} aria-hidden style={{ color: "var(--butter)" }} />}
+            {isNewBest ? "New personal best." : `Best so far: ${best}.`}
+          </p>
         </div>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/review/sprint" variant="primary">Sprint again</ButtonLink>
-          <ButtonLink href="/">Back to Today</ButtonLink>
+        <div className="mt-8 grid grid-cols-3 gap-3">
+          <StatTile value={correct} label="Score" tone="accent" />
+          <StatTile value={`${accuracy}%`} label="Accuracy" tone={accuracy >= 85 ? "mint" : "butter"} />
+          <StatTile value={attempted} label="Attempted" tone="sky" />
+        </div>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <ButtonLink href="/review/sprint" variant="primary" size="lg">Sprint again</ButtonLink>
+          <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
         <AchievementToasts badges={newBadges} />
       </div>
@@ -162,11 +180,16 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="End sprint" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
-          <X size={19} aria-hidden />
+        <Link
+          href="/"
+          aria-label="End sprint"
+          className="press flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
+          style={{ color: "var(--ink-3)" }}
+        >
+          <X size={18} aria-hidden />
         </Link>
         <div
-          className="tnum flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
+          className="tnum flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[14px] font-bold"
           style={{ background: secondsLeft <= 10 ? "var(--again-soft)" : "var(--raised)", color: secondsLeft <= 10 ? "var(--again)" : "var(--ink-2)" }}
         >
           <Timer size={14} aria-hidden /> {secondsLeft}s
@@ -175,8 +198,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
       </div>
 
       <div
-        className="flex flex-col rounded-xl border"
-        style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
+        className="flex flex-col overflow-hidden rounded-[var(--r-xl)] border"
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}
       >
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent">Sprint</Chip>
@@ -214,8 +237,9 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!revealed ? (
-            <Button variant="primary" className="w-full py-3" onClick={() => setRevealed(true)}>
-              Show answer <kbd className="ml-1 opacity-70">Space</kbd>
+            <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
+              Show answer
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-[11px]" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
             </Button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -223,8 +247,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 type="button"
                 disabled={busy}
                 onClick={() => void answer(1)}
-                className="rounded-md border px-3 py-2.5 text-[14px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-40"
-                style={{ background: "var(--again-soft)", color: "var(--again)", borderColor: "transparent" }}
+                className="press rounded-[var(--r)] px-3 py-3 text-[14.5px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40"
+                style={{ background: "var(--again-soft)", color: "var(--again)" }}
               >
                 Missed it <kbd className="ml-1 opacity-70">⌫</kbd>
               </button>
@@ -232,8 +256,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 type="button"
                 disabled={busy}
                 onClick={() => void answer(3)}
-                className="rounded-md border px-3 py-2.5 text-[14px] font-semibold transition-opacity hover:opacity-80 disabled:opacity-40"
-                style={{ background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }}
+                className="press rounded-[var(--r)] px-3 py-3 text-[14.5px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40"
+                style={{ background: "var(--good-soft)", color: "var(--good)" }}
               >
                 Got it <kbd className="ml-1 opacity-70">Enter</kbd>
               </button>

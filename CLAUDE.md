@@ -12,6 +12,8 @@ Read that first.
 2. `docs/02-estonian-domain.md` — the linguistic model. Non-obvious and load-bearing.
 3. `docs/04-data-model.md` — the schema.
 4. `docs/03-architecture.md` §6 — the ADRs. Do not silently reverse one.
+5. `docs/14-design-system.md` — the visual language: palette, tokens, motion, and what each colour
+   is allowed to mean. Read it before adding a colour, a radius or a shadow.
 
 ## Rules that are not negotiable
 
@@ -45,6 +47,11 @@ API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
   offline). A view without an empty state is not finished.
+- Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
+  meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
+  free for decoration.
+- Signed-in routes live in `app/(app)/`, public ones in `app/(marketing)/`. A new public page has
+  to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring.
 - Estonian text inputs get the diacritic bar.
 

@@ -107,8 +107,8 @@ export function DictionaryClient({
               type="button"
               onClick={() => go(s)}
               lang="et"
-              className="est rounded-full border px-3 py-1 text-[14px] transition-opacity hover:opacity-70"
-              style={{ borderColor: "var(--rule)", color: "var(--ink-2)" }}
+              className="est press rounded-full px-4 py-1.5 text-[15px] transition-all hover:-translate-y-px"
+              style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
             >
               {s}
             </button>
@@ -130,7 +130,7 @@ export function DictionaryClient({
         <>
           {justFetched && (
             <p
-              className="rounded-md px-4 py-2.5 text-[13.5px]"
+              className="rounded-[var(--r)] px-4 py-3 text-[13.5px] font-medium"
               style={{ background: "var(--good-soft)", color: "var(--good)" }}
             >
               Fetched from Ekilex and saved — this word now works offline too.
@@ -138,8 +138,8 @@ export function DictionaryClient({
           )}
           {matchedAs && (
             <p
-              className="rounded-md px-4 py-2.5 text-[14px]"
-              style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+              className="rounded-[var(--r)] px-4 py-3 text-[14px]"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
               <Et serif={false} className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
             </p>
@@ -159,8 +159,8 @@ export function DictionaryClient({
                 <button
                   type="button"
                   onClick={() => go(h.lemma)}
-                  className="flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left transition-opacity hover:opacity-70"
-                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                  className="press flex items-baseline gap-2 rounded-full border px-4 py-2 text-left transition-all hover:-translate-y-px"
+                  style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
                 >
                   <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{h.lemma}</span>
                   <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
@@ -236,7 +236,7 @@ function Entry({ entry }: { entry: EntryView }) {
       </header>
 
       {entry.notes && (
-        <p className="rounded-md px-4 py-3 text-[14px]" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
+        <p className="rounded-[var(--r)] px-4 py-3.5 text-[14px]" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
           {entry.notes}
         </p>
       )}
@@ -246,7 +246,7 @@ function Entry({ entry }: { entry: EntryView }) {
           <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
             Government · rektsioon
           </h3>
-          <p className="rounded-md px-4 py-3 text-[14.5px]" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+          <p className="rounded-[var(--r)] px-4 py-3.5 text-[14.5px]" style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}>
             {entry.government}
           </p>
         </div>
@@ -257,14 +257,18 @@ function Entry({ entry }: { entry: EntryView }) {
           <h3 className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
             Principal parts — the forms you have to memorise
           </h3>
-          <div className="grid gap-px overflow-hidden rounded-md border" style={{ borderColor: "var(--rule)", background: "var(--rule)", gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))" }}>
+          <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))" }}>
             {parts.map(([type, label, et]) => {
               const value = form(type);
               return (
-                <div key={type} className="px-3 py-3 text-center" style={{ background: value ? "var(--surface)" : "var(--raised)" }}>
+                <div
+                  key={type}
+                  className="rounded-[var(--r)] px-3 py-3.5 text-center"
+                  style={{ background: value ? "var(--accent-soft)" : "var(--raised)" }}
+                >
                   {value ? (
                     <>
-                      <span lang="et" className="est block text-[19px] font-semibold" style={{ color: "var(--ink)" }}>{value}</span>
+                      <span lang="et" className="est block text-[20px] font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
                       <Speak text={value} />
                     </>
                   ) : (
@@ -289,7 +293,7 @@ function Entry({ entry }: { entry: EntryView }) {
           <p className="mb-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
             Learn <Et className="text-[15px]" >{form("GEN_SG")}</Et> and these eleven follow as regular endings.
           </p>
-          <div className="overflow-x-auto rounded-md border" style={{ borderColor: "var(--rule)" }}>
+          <div className="overflow-x-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
             <table className="w-full min-w-[440px] text-[14px]">
               <thead>
                 <tr>
@@ -387,7 +391,7 @@ function RetrievedParadigm({ forms }: { forms: EntryForm[] }) {
           const rows = merge(forms.filter((f) => test(f.morphCode!)));
           if (rows.length === 0) return null;
           return (
-            <div key={label} className="overflow-hidden rounded-md border" style={{ borderColor: "var(--rule)" }}>
+            <div key={label} className="overflow-hidden rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
               <div className="label-xs px-3 py-2" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
                 {label}
               </div>
@@ -470,7 +474,7 @@ function AddToDeck({ entry }: { entry: EntryView }) {
   }
 
   return (
-    <div className="w-full rounded-md border p-4 md:w-72" style={{ borderColor: "var(--rule)", background: "var(--raised)" }}>
+    <div className="w-full rounded-[var(--r-lg)] p-5 md:w-80" style={{ background: "var(--raised)" }}>
       <p className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>Which cards?</p>
       <div className="flex flex-col gap-2">
         {CARD_TYPES.filter((t) => available.includes(t.type)).map((t) => (
