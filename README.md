@@ -53,8 +53,12 @@ whichever key is present is the one used.
 
 ## Backing up
 
-**Settings → Download a backup** writes a JSON file with every word, card and review. Your review
-history is the one thing here that cannot be recreated — grab a copy now and then.
+**Settings → Download a backup** writes a JSON file with every word, card and review, and the same
+panel restores one. Merge is the default and cannot delete anything, so restoring the same file twice
+is harmless; replacing everything is behind a typed confirmation.
+
+Your review history is the one thing here that cannot be recreated — grab a copy now and then, and
+try restoring it once while nothing is at stake. A backup you have never restored is a hypothesis.
 
 ## Commands
 
@@ -62,6 +66,8 @@ history is the one thing here that cannot be recreated — grab a copy now and t
 npm run dev        # development server
 npm run build      # production build
 npm run test       # unit tests (56)
+npm run test:e2e   # browser checks (39) — needs the server running
+npm run demo       # fill the deck with sample data to look around
 npm run typecheck  # tsc --noEmit
 npm run db:seed    # reload the built-in dictionary
 ```

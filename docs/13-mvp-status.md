@@ -54,7 +54,10 @@ add back.
 | Import — paste TSV/CSV/dash/semicolon lines, with dedupe | Complete |
 | Add a word by hand, with principal parts and auto-classified gradation | Complete |
 | Export — full JSON backup | Complete |
-| Light and dark themes, keyboard operation, mobile layout | Complete |
+| Restore from a backup — merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
+| Weak-case drill — click a case in the heatmap to review just those cards | Complete |
+| Light and dark themes, keyboard operation, mobile layout | Complete; verified on an iPhone 13 viewport — no sideways scroll, 73×79px rating targets |
+| Estonian text marked `lang="et"` so screen readers do not read it with English phonics | Complete |
 
 ## 4. What is deliberately not built
 
@@ -66,7 +69,8 @@ Each of these is a decision, not an omission.
   the contract for when a key arrives.
 - **Calendar / iCal.** No digital class schedule exists (Q3), so it would sync nothing.
 - **Speech-to-text.** Unverified for Estonian (audit A5). Still a spike, not a feature.
-- **Anki export.** JSON export ships; the Anki format is a nice-to-have, not a data-safety need.
+- **Anki export.** JSON export and restore both ship; the Anki format is a nice-to-have, not a
+  data-safety need.
 - **Object-case and listening card types.** Defined in the model; not generated yet. They need
   example sentences the built-in dictionary does not carry for every word.
 - **Auth, multi-user, sync.** Explicitly deferred to the Google-SSO version (Q7).

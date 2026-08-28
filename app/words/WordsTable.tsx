@@ -103,7 +103,7 @@ function Row({ row }: { row: CardRow }) {
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14.5px]" style={{ color: "var(--ink)" }}>
-          <span className="est">{row.front}</span>
+          <span lang="et" className="est">{row.front}</span>
           <span style={{ color: "var(--ink-3)" }}> → {row.back}</span>
         </p>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11.5px]" style={{ color: "var(--ink-3)" }}>

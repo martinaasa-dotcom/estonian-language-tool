@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
@@ -284,4 +285,124 @@ export async function deleteTask(id: string) {
   revalidatePath("/tasks");
   revalidatePath("/");
   return { ok: true as const };
+}
+
+// ────────────────────────────── Backup restore ─────────────────────────────
+
+const BackupSchema = z.object({
+  format: z.literal("sonasepp-v1"),
+  lexemes: z.array(z.record(z.unknown())),
+  cards: z.array(z.record(z.unknown())),
+  reviews: z.array(z.record(z.unknown())),
+  tasks: z.array(z.record(z.unknown())),
+});
+
+export interface RestoreSummary {
+  words: number;
+  cards: number;
+  reviews: number;
+  tasks: number;
+}
+
+/** Reads a backup file and reports what is in it, without writing anything. */
+export async function inspectBackup(json: string): Promise<
+  { ok: true; summary: RestoreSummary } | { ok: false; error: string }
+> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return { ok: false, error: "That file isn't valid JSON. Pick the .json file you downloaded from Settings." };
+  }
+  const result = BackupSchema.safeParse(parsed);
+  if (!result.success) {
+    return { ok: false, error: "That doesn't look like a Sõnasepp backup. It should be the file downloaded from Settings." };
+  }
+  const b = result.data;
+  return {
+    ok: true,
+    summary: { words: b.lexemes.length, cards: b.cards.length, reviews: b.reviews.length, tasks: b.tasks.length },
+  };
+}
+
+/**
+ * Restores a backup.
+ *
+ * `merge` is the default and never deletes: rows are written by their original id,
+ * so restoring the same file twice changes nothing and restoring onto a live deck
+ * cannot lose work. `replace` wipes first, and is the only path that can destroy
+ * review history — so it is behind an explicit choice in the UI.
+ *
+ * A backup you have never restored is a hypothesis, which is why this exists at all.
+ */
+export async function restoreBackup(json: string, mode: "merge" | "replace") {
+  const check = await inspectBackup(json);
+  if (!check.ok) return { ok: false as const, error: check.error };
+
+  const backup = BackupSchema.parse(JSON.parse(json));
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (mode === "replace") {
+        // Order matters: reviews reference cards, forms reference lexemes.
+        await tx.review.deleteMany();
+        await tx.card.deleteMany();
+        await tx.form.deleteMany();
+        await tx.lexeme.deleteMany();
+        await tx.task.deleteMany();
+      }
+
+      for (const raw of backup.lexemes) {
+        const { forms, ...lex } = raw as Record<string, unknown> & { forms?: unknown[] };
+        const data = revive(lex, ["createdAt", "updatedAt"]);
+        await tx.lexeme.upsert({
+          where: { id: String(data.id) },
+          create: data as never,
+          update: data as never,
+        });
+        await tx.form.deleteMany({ where: { lexemeId: String(data.id) } });
+        if (Array.isArray(forms) && forms.length) {
+          await tx.form.createMany({ data: forms.map((f) => revive(f as Record<string, unknown>, [])) as never });
+        }
+      }
+
+      for (const raw of backup.cards) {
+        const data = revive(raw, ["due", "lastReview", "createdAt"]);
+        await tx.card.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
+      }
+
+      // Reviews are append-only, so they are created if absent and never updated.
+      for (const raw of backup.reviews) {
+        const data = revive(raw, ["reviewedAt"]);
+        const exists = await tx.review.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (!exists) await tx.review.create({ data: data as never });
+      }
+
+      for (const raw of backup.tasks) {
+        const data = revive(raw, ["dueAt", "completedAt", "createdAt"]);
+        await tx.task.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
+      }
+    }, { timeout: 120_000 });
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: `The restore did not finish, and nothing was changed. ${error instanceof Error ? error.message : ""}`.trim(),
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/words");
+  revalidatePath("/tasks");
+  revalidatePath("/dictionary");
+  return { ok: true as const, summary: check.summary };
+}
+
+/** JSON has no dates; turn the ISO strings back into Date objects Prisma will accept. */
+function revive(row: Record<string, unknown>, dateFields: string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...row };
+  for (const key of dateFields) {
+    const value = out[key];
+    if (typeof value === "string") out[key] = new Date(value);
+  }
+  return out;
 }

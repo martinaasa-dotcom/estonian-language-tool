@@ -12,6 +12,7 @@ import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord } from "./AddWord";
+import { Et } from "@/components/Et";
 
 export interface EntryView {
   id: string;
@@ -92,6 +93,7 @@ export function DictionaryClient({
               key={s}
               type="button"
               onClick={() => go(s)}
+              lang="et"
               className="est rounded-full border px-3 py-1 text-[14px] transition-opacity hover:opacity-70"
               style={{ borderColor: "var(--rule)", color: "var(--ink-2)" }}
             >
@@ -127,7 +129,7 @@ export function DictionaryClient({
                   className="flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left transition-opacity hover:opacity-70"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
                 >
-                  <span className="est text-[15px]" style={{ color: "var(--ink)" }}>{h.lemma}</span>
+                  <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{h.lemma}</span>
                   <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{h.translation}</span>
                 </button>
               </li>
@@ -157,7 +159,7 @@ function Entry({ entry }: { entry: EntryView }) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="est text-[34px] font-bold leading-none" style={{ color: "var(--ink)" }}>
+            <h2 lang="et" className="est text-[34px] font-bold leading-none" style={{ color: "var(--ink)" }}>
               {entry.lemma}
             </h2>
             <Speak text={entry.lemma} />
@@ -210,14 +212,14 @@ function Entry({ entry }: { entry: EntryView }) {
                 <div key={type} className="px-3 py-3 text-center" style={{ background: value ? "var(--surface)" : "var(--raised)" }}>
                   {value ? (
                     <>
-                      <span className="est block text-[19px] font-semibold" style={{ color: "var(--ink)" }}>{value}</span>
+                      <span lang="et" className="est block text-[19px] font-semibold" style={{ color: "var(--ink)" }}>{value}</span>
                       <Speak text={value} />
                     </>
                   ) : (
                     <span className="est block text-[19px]" style={{ color: "var(--ink-3)" }}>—</span>
                   )}
                   <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
-                  <span className="mt-0.5 block text-[10.5px] italic" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  <span lang="et" className="mt-0.5 block text-[10.5px] italic" style={{ color: "var(--ink-3)" }}>{et}</span>
                 </div>
               );
             })}
@@ -231,7 +233,7 @@ function Entry({ entry }: { entry: EntryView }) {
             The rest, worked out from the genitive
           </h3>
           <p className="mb-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
-            Learn <span className="est" style={{ color: "var(--ink-2)" }}>{form("GEN_SG")}</span> and these eleven follow as regular endings.
+            Learn <Et className="text-[15px]" >{form("GEN_SG")}</Et> and these eleven follow as regular endings.
           </p>
           <div className="overflow-x-auto rounded-md border" style={{ borderColor: "var(--rule)" }}>
             <table className="w-full min-w-[440px] text-[14px]">
@@ -249,15 +251,15 @@ function Entry({ entry }: { entry: EntryView }) {
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                       {spec.en}
-                      <span className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
+                      <span lang="et" className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
                     </td>
-                    <td className="est px-3 py-2 text-[15px]" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
+                    <td lang="et" className="est px-3 py-2 text-[15px]" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
                       {singular ?? "—"}
                     </td>
-                    <td className="est px-3 py-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
+                    <td lang="et" className="est px-3 py-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>—</span>}
                     </td>
-                    <td className="px-3 py-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
+                    <td lang="et" className="px-3 py-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
                   </tr>
                 ))}
               </tbody>

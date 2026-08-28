@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { resolveProvider } from "@/lib/tutor/provider";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Page, SectionTitle, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
@@ -30,6 +31,7 @@ export default async function TodayPage() {
     pickWordOfDay(),
   ]);
 
+  const tutorReady = resolveProvider() !== null;
   const toReview = Math.min(dueCount + Math.min(newCount, 10), 60);
   const streak = computeStreak(streakRows.map((r) => r.reviewedAt));
   const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
@@ -103,7 +105,7 @@ export default async function TodayPage() {
             <Card>
               <SectionTitle hint="from your weakest cards">Word to revisit</SectionTitle>
               <div className="flex items-center gap-2">
-                <p className="est text-[26px] font-semibold" style={{ color: "var(--ink)" }}>{wordOfDay.lemma}</p>
+                <p lang="et" className="est text-[26px] font-semibold" style={{ color: "var(--ink)" }}>{wordOfDay.lemma}</p>
                 <Speak text={wordOfDay.lemma} />
               </div>
               <p className="mt-1 text-[14px]" style={{ color: "var(--ink-2)" }}>{wordOfDay.translation}</p>
@@ -130,13 +132,14 @@ export default async function TodayPage() {
           </Card>
 
           <Card>
-            <SectionTitle>Stuck on something?</SectionTitle>
+            <SectionTitle hint={tutorReady ? undefined : "needs a key"}>Stuck on something?</SectionTitle>
             <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
-              Anu explains Estonian grammar — which case to use, why a stem changed, whether your
-              sentence is right.
+              {tutorReady
+                ? "Anu explains Estonian grammar — which case to use, why a stem changed, whether your sentence is right."
+                : "Anu can explain which case to use and why a stem changed. She needs a free API key first — it takes about two minutes."}
             </p>
-            <ButtonLink href="/tutor" className="mt-4 w-full">
-              <Sparkles size={15} aria-hidden /> Ask Anu
+            <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">
+              <Sparkles size={15} aria-hidden /> {tutorReady ? "Ask Anu" : "Set Anu up"}
             </ButtonLink>
           </Card>
         </div>

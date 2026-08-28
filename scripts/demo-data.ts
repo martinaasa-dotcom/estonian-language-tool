@@ -6,6 +6,20 @@ import { emptyScheduling, grade } from "../lib/srs/scheduler";
 const prisma = new PrismaClient();
 
 async function main() {
+  // This script wipes cards, reviews and tasks. The review log is the one thing
+  // in this app that cannot be reconstructed, so it refuses to run against a deck
+  // that looks real unless you say so explicitly.
+  const existingReviews = await prisma.review.count();
+  if (existingReviews > 20 && !process.argv.includes("--force")) {
+    console.error(
+      `Refusing to run: this database has ${existingReviews} reviews in it.\n` +
+      `That history cannot be recreated. Take a backup from Settings first, then\n` +
+      `re-run with --force if you really want to replace it with demo data.`,
+    );
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+
   await prisma.review.deleteMany();
   await prisma.card.deleteMany();
   await prisma.task.deleteMany();

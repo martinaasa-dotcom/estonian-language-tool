@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
 import { ImportPanel } from "./ImportPanel";
+import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,9 @@ export default async function SettingsPage() {
               Your review history is the one thing here that can&rsquo;t be recreated. Downloading a
               copy now and then is worth the ten seconds.
             </p>
+            <div className="mt-5 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
+              <RestorePanel currentReviews={reviews} />
+            </div>
           </Card>
         </section>
 

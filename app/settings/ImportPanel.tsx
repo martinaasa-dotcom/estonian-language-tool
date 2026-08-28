@@ -86,7 +86,7 @@ export function ImportPanel() {
                 className="flex justify-between gap-4 px-3 py-1.5 text-[13.5px]"
                 style={{ borderTop: i ? "1px solid var(--rule-soft)" : undefined }}
               >
-                <span className="est" style={{ color: "var(--ink)" }}>{r.lemma}</span>
+                <span lang="et" className="est" style={{ color: "var(--ink)" }}>{r.lemma}</span>
                 <span style={{ color: "var(--ink-3)" }}>{r.translation}</span>
               </li>
             ))}

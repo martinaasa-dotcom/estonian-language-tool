@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, RotateCcw, X } from "lucide-react";
+import { BookOpen, Check, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
@@ -40,7 +40,7 @@ const TYPE_LABEL: Record<string, string> = {
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front" ? type !== "PRODUCTION" : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION";
 
-export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
+export function ReviewSession({ cards, drillCase }: { cards: ReviewCard[]; drillCase?: string }) {
   const [queue, setQueue] = useState(cards);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -123,7 +123,9 @@ export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
           Session complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Tubli töö. That&rsquo;s everything due right now.
+          {drillCase
+            ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done — these cards keep their normal schedule too.</>
+            : <>Tubli töö. That&rsquo;s everything due right now.</>}
         </p>
         <div
           className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
@@ -168,14 +170,31 @@ export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
         className="flex flex-col rounded-xl border"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
       >
-        <div className="flex items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent">{TYPE_LABEL[card.cardType] ?? card.cardType}</Chip>
           {card.isNew && <Chip tone="good">New</Chip>}
+          {drillCase && <Chip tone="hard">{drillCase.toLowerCase()} drill</Chip>}
+          {card.lemma && (
+            <Link
+              href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
+              className="ml-auto flex items-center gap-1.5 text-[12.5px]"
+              style={{ color: "var(--ink-3)" }}
+            >
+              <BookOpen size={13} aria-hidden /> Full entry
+            </Link>
+          )}
         </div>
 
-        <div className="flex min-h-[300px] flex-col items-center justify-center gap-4 px-6 py-12 text-center md:min-h-[340px]">
+        <div
+          className="flex min-h-[300px] flex-col items-center justify-center gap-4 px-6 py-12 text-center md:min-h-[340px]"
+          aria-live="polite"
+        >
           <div className="flex items-center gap-2">
-            <p className="est text-[34px] font-semibold leading-tight md:text-[40px]" style={{ color: "var(--ink)" }}>
+            <p
+              lang={estonianSide(card.cardType, "front") ? "et" : "en"}
+              className="est text-[34px] font-semibold leading-tight md:text-[40px]"
+              style={{ color: "var(--ink)" }}
+            >
               {card.front}
             </p>
             {estonianSide(card.cardType, "front") && <Speak text={card.lemma ?? card.front} />}
@@ -188,7 +207,11 @@ export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
             <>
               <div className="my-1 h-px w-16" style={{ background: "var(--rule)" }} />
               <div className="flex items-center gap-2">
-                <p className="est text-[30px] font-semibold md:text-[34px]" style={{ color: "var(--accent)" }}>
+                <p
+                  lang={estonianSide(card.cardType, "back") ? "et" : "en"}
+                  className="est text-[30px] font-semibold md:text-[34px]"
+                  style={{ color: "var(--accent)" }}
+                >
                   {card.back}
                 </p>
                 {estonianSide(card.cardType, "back") && <Speak text={card.back} />}

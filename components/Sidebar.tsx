@@ -30,7 +30,7 @@ export function Sidebar() {
         style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
       >
         <Link href="/" className="mb-6 block px-2 pt-2">
-          <span className="est block text-[22px] font-bold leading-none" style={{ color: "var(--ink)" }}>
+          <span lang="et" className="est block text-[22px] font-bold leading-none" style={{ color: "var(--ink)" }}>
             Sõnasepp
           </span>
           <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>

@@ -8,8 +8,34 @@ export const dynamic = "force-dynamic";
 const NEW_PER_SESSION = 10;
 const MAX_SESSION = 60;
 
-export default async function ReviewPage() {
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string }>;
+}) {
+  const { case: targetCase } = await searchParams;
   const now = new Date();
+
+  // A drill on one grammatical case ignores scheduling: the point is to attack a
+  // weakness the heatmap found, not to review what happens to be due.
+  if (targetCase) {
+    const drill = await prisma.card.findMany({
+      where: { suspended: false, targetCase },
+      orderBy: [{ lapses: "desc" }, { due: "asc" }],
+      take: 30,
+      include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
+    });
+    if (drill.length > 0) return <ReviewSession cards={drill.map(toReviewCard)} drillCase={targetCase} />;
+    return (
+      <Page title="Review" lead="Spaced repetition, scheduled by FSRS.">
+        <Empty
+          title={`No ${targetCase.toLowerCase()} cards yet`}
+          body="Case-form cards are optional when you add a word — tick 'Case form' in the dictionary and they will show up here."
+          action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
+        />
+      </Page>
+    );
+  }
 
   // Due first, then a capped trickle of new cards. Uncapped new cards is the
   // classic way an SRS becomes an unsustainable workload three weeks in.
@@ -27,28 +53,7 @@ export default async function ReviewPage() {
     include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
   });
 
-  const cards: ReviewCard[] = [...due, ...fresh].map((c) => ({
-    id: c.id,
-    cardType: c.cardType,
-    front: c.front,
-    back: c.back,
-    hint: c.hint,
-    targetCase: c.targetCase,
-    lemma: c.lexeme?.lemma ?? null,
-    isNew: c.state === 0,
-    scheduling: {
-      due: c.due.toISOString(),
-      stability: c.stability,
-      difficulty: c.difficulty,
-      elapsedDays: c.elapsedDays,
-      scheduledDays: c.scheduledDays,
-      reps: c.reps,
-      lapses: c.lapses,
-      state: c.state,
-      lastReview: c.lastReview?.toISOString() ?? null,
-      learningSteps: c.learningSteps,
-    },
-  }));
+  const cards: ReviewCard[] = [...due, ...fresh].map(toReviewCard);
 
   const totalCards = await prisma.card.count();
 
@@ -73,4 +78,33 @@ export default async function ReviewPage() {
   }
 
   return <ReviewSession cards={cards} />;
+}
+
+type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
+  lexeme: { lemma: string; translation: string; pos: string } | null;
+};
+
+function toReviewCard(c: CardRow): ReviewCard {
+  return {
+    id: c.id,
+    cardType: c.cardType,
+    front: c.front,
+    back: c.back,
+    hint: c.hint,
+    targetCase: c.targetCase,
+    lemma: c.lexeme?.lemma ?? null,
+    isNew: c.state === 0,
+    scheduling: {
+      due: c.due.toISOString(),
+      stability: c.stability,
+      difficulty: c.difficulty,
+      elapsedDays: c.elapsedDays,
+      scheduledDays: c.scheduledDays,
+      reps: c.reps,
+      lapses: c.lapses,
+      state: c.state,
+      lastReview: c.lastReview?.toISOString() ?? null,
+      learningSteps: c.learningSteps,
+    },
+  };
 }
