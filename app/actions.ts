@@ -21,11 +21,21 @@ import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "
  * Cards are per-user (`ownerId`) even though the Lexeme they're generated from is the shared
  * dictionary — see docs/03-architecture.md ADR-012.
  */
-export async function addToDeck(
-  lexemeId: string, types: CardType[], source = "DICTIONARY", ownerId?: string,
-) {
-  const owner = ownerId ?? await requireUserId();
+export async function addToDeck(lexemeId: string, types: CardType[], source = "DICTIONARY") {
+  return addCardsFor(await requireUserId(), lexemeId, types, source);
+}
 
+/**
+ * The body of `addToDeck`, for callers that have already established the owner.
+ *
+ * Deliberately not exported: this file is `"use server"`, so every export is an
+ * endpoint any signed-in user can call with arguments of their choosing. An
+ * exported `ownerId` parameter would therefore let one learner write cards into
+ * another's deck. Owner comes from the session, never from the caller.
+ */
+async function addCardsFor(
+  owner: string, lexemeId: string, types: CardType[], source: string,
+) {
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     include: { forms: true },
@@ -385,7 +395,7 @@ export async function importWords(rows: { lemma: string; translation: string; po
       });
       created++;
     }
-    const result = await addToDeck(lexeme.id, ["RECOGNITION", "PRODUCTION"], "IMPORT", ownerId);
+    const result = await addCardsFor(ownerId, lexeme.id, ["RECOGNITION", "PRODUCTION"], "IMPORT");
     if (result.ok) cards += result.added ?? 0;
   }
 
@@ -566,9 +576,12 @@ export async function addUnitToDeck(unitId: string) {
   const order = new Map(unit.lemmas.map((l, i) => [l, i]));
   lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
 
+  // addCardsFor rather than addToDeck: the owner is already resolved here, and
+  // re-resolving it per word would validate the session with Supabase 20 times
+  // for one click.
   let added = 0;
   for (const lexeme of lexemes) {
-    const result = await addToDeck(lexeme.id, unit.cardTypes, "DICTIONARY", ownerId);
+    const result = await addCardsFor(ownerId, lexeme.id, unit.cardTypes, "DICTIONARY");
     if (result.ok) added += result.added ?? 0;
   }
 

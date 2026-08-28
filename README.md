@@ -103,9 +103,17 @@ Local mode needs nothing but a Postgres URL; hosting it for a class needs two mo
 was built Postgres-portable from the start (ADR-002), so this was a datasource swap rather than a
 rebuild — documented in `docs/03-architecture.md` ADR-011:
 
-1. Create a project at [supabase.com](https://supabase.com) → **Project Settings → Database →
-   Connection string**. Copy the pooled string (port 6543) as `DATABASE_URL` and the direct one
-   (port 5432) as `DIRECT_URL`.
+1. Create a project at [supabase.com](https://supabase.com) → **Connect** (or Project Settings →
+   Database → Connection string). Take **both** strings from the `pooler.supabase.com` host:
+   the **transaction pooler** (port 6543) as `DATABASE_URL`, with `?pgbouncer=true` appended, and
+   the **session pooler** (port 5432) as `DIRECT_URL`. Percent-encode any special characters in
+   the password.
+
+   Do *not* use the direct `db.<project-ref>.supabase.co` host that the dashboard shows first: it
+   resolves to IPv6 only, and Vercel has no IPv6 route to it, so every build dies with
+   `P1001: Can't reach database server`. The poolers are IPv4. `DIRECT_URL` wants the *session*
+   pooler specifically — it is a full Postgres session, so `prisma db push` can run schema changes
+   through it, which the transaction pooler cannot.
 2. In Vercel, import this repo and set the environment variables (Production, and Preview if you
    want preview deploys to work): `DATABASE_URL`, `DIRECT_URL`, plus whichever of
    `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` and `EKILEX_API_KEY` you're using.
