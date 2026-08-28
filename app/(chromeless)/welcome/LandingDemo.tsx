@@ -42,7 +42,11 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
   const [revealed, setRevealed] = useState(false);
   const [graded, setGraded] = useState(0);
 
-  const word = words[i % words.length]!;
+  // The page must render with an empty dictionary behind it — this is a
+  // public page, and a database that has not been seeded yet is not a reason
+  // to serve a 500.
+  const word = words.length > 0 ? words[i % words.length]! : null;
+  if (!word) return null;
 
   const grade = () => {
     setGraded((g) => g + 1);
@@ -163,7 +167,8 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
  */
 export function CaseExplorer({ words }: { words: DemoWord[] }) {
   const [active, setActive] = useState(0);
-  const word = words[active]!;
+  const word = words[active] ?? words[0];
+  if (!word) return null;
 
   return (
     <div

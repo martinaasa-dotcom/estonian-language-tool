@@ -278,6 +278,9 @@ function Problem() {
 /* ───────────────────────────────────────────────────────── cases ── */
 
 function Cases({ words }: { words: DemoWord[] }) {
+  const derivable = words.filter((w) => w.cases.some((c) => !c.principal && c.singular));
+  if (derivable.length === 0) return null;
+
   return (
     <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
@@ -294,7 +297,7 @@ function Cases({ words }: { words: DemoWord[] }) {
       </Reveal>
       <Reveal>
         <div className="mt-9">
-          <CaseExplorer words={words.filter((w) => w.cases.length > 0)} />
+          <CaseExplorer words={derivable} />
         </div>
       </Reveal>
     </section>
@@ -785,19 +788,47 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
     // when the database behind it is having a bad day.
   }
 
-  return { words: FALLBACK_WORDS, stats: { words: 360, forms: 1568 } };
+  // The counts describe the built-in dictionary that `npm run db:seed` loads —
+  // the right thing to claim when the database behind this page is unreachable
+  // or has not been seeded yet, since that is exactly what a visitor would get.
+  return { words: FALLBACK_WORDS, stats: SEED_SET_SIZE };
 }
 
-/** Principal parts copied verbatim from the checked seed set — never derived here. */
-const FALLBACK_WORDS: DemoWord[] = [
-  {
-    lemma: "tuba", translation: "room", cefr: "A1", gradationNote: "b : ∅", genitive: "toa",
-    principal: [{ label: "nominative", value: "tuba" }, { label: "genitive", value: "toa" }, { label: "partitive", value: "tuba" }],
-    cases: [],
-  },
-  {
-    lemma: "raamat", translation: "book", cefr: "A1", gradationNote: null, genitive: "raamatu",
-    principal: [{ label: "nominative", value: "raamat" }, { label: "genitive", value: "raamatu" }, { label: "partitive", value: "raamatut" }],
-    cases: [],
-  },
-];
+/**
+ * The set the page falls back to when the database is unreachable or has not
+ * been seeded yet — which is the state a fresh deployment builds in, so this
+ * path is load-bearing rather than theoretical.
+ *
+ * The principal parts are copied verbatim from the checked seed data; the rest
+ * is derived by `buildCaseTable()`, exactly as the live path does it. Nothing
+ * here is a hand-written Estonian form.
+ */
+const SEED_SET_SIZE = { words: 360, forms: 1568 };
+
+const FALLBACK_STEMS = [
+  { lemma: "tuba", translation: "room", cefr: "A1", gradationNote: "b : ∅",
+    nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
+  { lemma: "raamat", translation: "book", cefr: "A1", gradationNote: null,
+    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
+] as const;
+
+const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
+  lemma: w.lemma,
+  translation: w.translation,
+  cefr: w.cefr,
+  gradationNote: w.gradationNote,
+  genitive: w.genSg,
+  principal: [
+    { label: "nominative", value: w.nomSg },
+    { label: "genitive", value: w.genSg },
+    { label: "partitive", value: w.partSg },
+  ],
+  cases: buildCaseTable(w).map((row) => ({
+    en: row.spec.en,
+    et: row.spec.et,
+    question: row.spec.question,
+    singular: row.singular ?? null,
+    plural: row.plural ?? null,
+    principal: row.spec.principal,
+  })),
+}));
