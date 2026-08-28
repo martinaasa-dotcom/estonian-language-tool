@@ -10,8 +10,23 @@ const prisma = new PrismaClient();
 /**
  * Seeds the built-in dictionary. Idempotent: re-running updates entries in place
  * and never touches Card or Review rows, so a reseed cannot cost review history.
+ *
+ * With `--only-if-empty` it does nothing unless the dictionary is genuinely
+ * empty. That is the mode the deploy runs in (see package.json `build`): a
+ * brand-new database gets the dictionary it cannot function without, and one
+ * that already has words — including words the learner added by hand or that
+ * Ekilex cached — is left alone rather than re-upserted on every deploy.
  */
 async function main() {
+  if (process.argv.includes("--only-if-empty")) {
+    const existing = await prisma.lexeme.count();
+    if (existing > 0) {
+      console.log(`Dictionary already has ${existing} entries — leaving it alone.`);
+      return;
+    }
+    console.log("Dictionary is empty — seeding it.");
+  }
+
   let count = 0;
 
   for (const [lemma, translation, cefr, nomSg, genSg, partSg, partPl, genPl, illShort] of [...NOUNS, ...ADVANCED_NOUNS]) {
