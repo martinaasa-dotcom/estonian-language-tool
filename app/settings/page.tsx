@@ -1,4 +1,4 @@
-import { Keyboard, Shield, Smartphone } from "lucide-react";
+import { Bell, Keyboard, Shield, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -177,6 +177,38 @@ export default async function SettingsPage() {
                     </div>
                   ))}
                 </dl>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle hint="a calendar event, not a notification">Daily reminder</SectionTitle>
+          <Card>
+            <div className="flex items-start gap-3">
+              <Bell size={18} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <div>
+                <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+                  Add a repeating reminder to the calendar you already use. It fires on your phone
+                  whether or not this app is open, needs no account and no permission from us, and
+                  you can delete it like any other event.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {["08:00", "12:30", "18:00", "20:30"].map((time) => (
+                    <a
+                      key={time}
+                      href={`/api/reminder?at=${time}`}
+                      className="rounded-md border px-3 py-1.5 text-[13.5px]"
+                      style={{ borderColor: "var(--rule)", color: "var(--ink-2)", background: "var(--surface)" }}
+                    >
+                      {time}
+                    </a>
+                  ))}
+                </div>
+                <p className="mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  Web push was the alternative. It needs a server that stays awake and still does
+                  nothing on an iPhone unless the app is installed — a calendar entry just works.
+                </p>
               </div>
             </div>
           </Card>

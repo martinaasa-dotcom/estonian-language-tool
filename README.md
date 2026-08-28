@@ -38,19 +38,31 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **A learning path.** Eighteen units from *Tervitused* to *Akadeemiline eesti keel*, each a
   sitting's worth of words. Adding a unit builds real flashcards — full paradigm, audio, both
   directions — and a unit only reads as finished when the scheduler agrees the words are retained.
+- **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
+  with audio and a translation on request. Those same sentences become gap-fill cards
+  ("Hotelli ____ on näha vanalinna.") and a word-order builder. Nothing is generated: the app only
+  ever hides or reorders attested Estonian.
 - **Review that asks properly.** Type the answer and it is checked: a dropped `õ` is told apart from
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **Four practice modes over one deck** — the daily review, a 60-second Case Sprint, a Match round
-  against the clock, and Listening, plus a one-click drill for whichever case you keep missing.
-  Everything writes to the same review log, so a game still moves the schedule forward.
+- **Six practice modes over one deck** — the daily review, a 60-second Case Sprint, a Match round
+  against the clock, Sentences, Speaking and Listening, plus a one-click drill for whichever case
+  you keep missing. Everything writes to the same review log, so a game still moves the schedule
+  forward.
+- **Speaking that does not lie to you.** Say the word, then hear a native voice and your own
+  recording back to back. It is not scored: there is no verified Estonian speech recogniser this app
+  can use, and an invented confidence number would be believed.
+- **Classes.** A six-character join code, a roster showing who is keeping up, the cases the group
+  keeps missing, and a unit set as homework into each student's own task list. A class is a view
+  over what learners already own — joining shares progress, never your deck, and leaving stops it.
 - **Progress worth looking at.** XP, levels, a streak with shields, three daily quests, badges, a
   six-month heatmap, a two-week forecast, per-case accuracy and vocabulary reach by CEFR — all
   computed live from the review log, never stored, so none of it can drift from what you actually
   did. An opt-in weekly leaderboard exists for classes; it is off until you set a name and join.
 - **Offline.** Installable as an app; reviewing works with no connection and every grade is kept on
-  the device with the time you actually answered, then sent when you are back.
+  the device with the time you actually answered, then sent when you are back. A daily reminder is
+  offered as a calendar event, which fires whether or not the app is open.
 - **⌘K** to jump to any screen or look a word up from anywhere.
 
 ## The dictionary
@@ -182,6 +194,7 @@ lib/estonian/     the language model — cases, principal parts, gradation, answ
                   No React, no Prisma, fully tested.
 lib/srs/          FSRS scheduling and card generation.
 lib/collections/  the learning path: units as references into the dictionary.
+lib/classroom/    join codes and the roster a teacher sees — and only that.
 lib/gamification/ XP, levels and the daily quests. Pure functions over stats.
 lib/stats/        heatmap, forecast and accuracy aggregation.
 lib/progress/     the database side of the above, shared by Today, the path and /progress.

@@ -76,7 +76,13 @@ for (const mode of ["Review", "Case Sprint", "Match", "Listening"]) {
 await page.goto(`${B}/progress`, { waitUntil: "networkidle" });
 check("progress shows a level", (await page.getByText(/XP total/).count()) > 0);
 check("progress shows the study heatmap", (await page.getByText(/reviews on \d+ days/).count()) > 0);
-check("leaderboard is opt-in, not on by default", (await page.getByText(/Off by default/).count()) > 0);
+// Either the instance-wide board is offered opt-in, or a class board is shown
+// because this learner is in a class — both are correct, and which one depends
+// on the deck this suite happens to be run against.
+const optInOffered = (await page.getByText(/Off by default/).count()) > 0;
+const classBoardShown = (await page.getByText(/Open the class/).count()) > 0;
+check("the leaderboard is either a class you joined or an explicit opt-in",
+  optInOffered !== classBoardShown, optInOffered ? "opt-in offered" : "class board");
 
 // 4 — Review: a typed answer is checked, not self-graded.
 // Typing is only asked of a card that has been seen before — a brand-new card

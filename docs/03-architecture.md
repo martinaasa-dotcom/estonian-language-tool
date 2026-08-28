@@ -270,3 +270,49 @@ wrong guess as Hard — recognising a word among seven others under time pressur
 and pretending otherwise would be as dishonest as pretending it is a full production test.
 *Consequences:* games count towards the daily goal and the quests, which is the point; an abandoned
 round writes nothing, because nothing was answered.
+
+**ADR-017 — Example sentences come from Ekilex usages; exercises rearrange them, never write them.**
+*Context:* `13-mvp-status.md` §4 shelved cloze and sentence work because "the dictionary does not
+carry example sentences for every word", and generating them was never an option (ADR-005).
+*Discovery:* Ekilex's `/word/details` response carries `usages` — attested sentences recorded by
+lexicographers against each meaning ("Jõin tassi kohvi.", "Kitsed olid ojal joomas."), flagged
+`public` for what may be shown. *Decision:* store them on `Lexeme.examples` (the JSON column the
+schema already had), and build every sentence exercise by *hiding* or *reordering* that text —
+`lib/estonian/cloze.ts` blanks a form we already hold out of a sentence, and the sentence builder
+shuffles its words. English translations are fetched per sentence from the tutor, which is
+translation *into* English and therefore inside what ADR-005 permits; they are stored tagged `AI`.
+*Consequences:* the app can finally teach a word in context — the single biggest gap a vocabulary
+tool has — while every Estonian character on screen is still either attested or the learner's own.
+Words already in a deck get their gap-fill cards backfilled when their entry is next opened
+(`lib/srs/backfill.ts`), because the sentences arrive after the cards do. *Rejected:* writing a
+corpus of our own example sentences, and asking the model for them — both reintroduce exactly the
+failure ADR-005 exists to prevent, one of them with a straight face.
+
+**ADR-018 — Speaking practice compares; it does not score.**
+*Context:* Speakly and Duolingo both grade pronunciation, and it is the obvious next mode.
+*Problem:* scoring needs speech recognition for Estonian. TartuNLP publish the text-to-speech
+service this app already uses and nothing comparable in the other direction; the browser's own
+`SpeechRecognition` has no dependable `et-EE`. A score invented on top of that would be believed.
+*Decision:* `/review/speaking` is shadowing — say it, then play a native rendering and your own
+recording back to back and judge for yourself. The audio is a blob URL that never leaves the
+browser. The card is graded by the learner on the same 1–4 scale as any flip, because the prompt is
+a meaning and the answer is Estonian, which is a production test whatever the microphone does.
+*Consequences:* the app has a speaking mode without a lie in it. If a verified Estonian recogniser
+appears, this is where it plugs in. *Rejected:* comparing waveforms or durations locally — it
+measures the wrong thing and dresses it as a score.
+
+**ADR-019 — A class is a view over what learners already own.**
+*Context:* the app is used in real Estonian courses, where the teacher's actual question is "who is
+keeping up" and the students' is "where is this week's homework". *Decision:* `Classroom` +
+`ClassroomMember` hold a name, a join code and a membership — nothing else. Every figure a teacher
+sees is computed from the learner's own rows at request time (`lib/classroom/roster.ts`); no cards,
+reviews or tasks are copied into a class, and leaving deletes one membership row and nothing more.
+Assigning a unit writes a `Task` into each member's own list rather than inventing a parallel
+assignments system. *What a teacher may see is deliberately bounded:* reviews this week, streak,
+words known, how long since the last review, and the cases the class is weakest at **in aggregate**.
+Never an individual's searches, deck contents or answer-by-answer mistakes. *Consequences:* the
+privacy promise is enforceable by reading one file, joining is the only consent needed and it is
+revocable, and the feature adds no new failure mode to the daily loop — with no class, nothing about
+the app changes. *Rejected:* a teacher-owned deck pushed to students (it makes the teacher the owner
+of everyone's scheduling, which is exactly what FSRS must not have) and per-student answer logs (a
+study tool that becomes surveillance stops being used honestly).

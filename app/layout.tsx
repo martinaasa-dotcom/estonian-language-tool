@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Literata } from "next/font/google";
 import { CommandPalette } from "@/components/CommandPalette";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { OfflineStatus } from "@/components/OfflineStatus";
 import { Sidebar } from "@/components/Sidebar";
 import "./globals.css";
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <CommandPalette />
         <OfflineStatus />
+        <InstallPrompt />
       </body>
     </html>
   );

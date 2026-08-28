@@ -3,8 +3,8 @@
 What was actually built, what was deliberately left out, and which planning decisions changed once
 the answers to `12-open-questions.md` came back.
 
-**§6 is the current state.** Everything above it describes the first MVP; §6 covers the pass that
-turned it from one person's study tool into something a stranger — or a class — can pick up.
+**§7 is the current state.** §1–5 describe the first MVP, §6 the pass that made it usable by a
+stranger, and §7 the pass that made it teach in context — sentences, speaking and classes.
 
 ## 1. The answers, and what they changed
 
@@ -164,3 +164,58 @@ deployment had quietly broken. This pass closes those.
 4. **The service worker keeps the app openable, not the data fresh.** A screen you have never opened
    while online shows the offline fallback. Review, the one path that has to work, does not depend on
    it: the queue does.
+
+
+## 7. The third pass: teaching in context
+
+§6 ended with a working daily loop and one obvious hole: every exercise asked about a word in
+isolation. You could know all fourteen forms of `raamat` and still not know where it goes in a
+sentence.
+
+### What changed the picture
+
+Ekilex's `/word/details` response carries **usages** — attested sentences recorded against each
+meaning, `public`-flagged for display. That single fact is behind most of this pass: the app can
+teach in context without writing a word of Estonian, because it only ever hides or reorders text a
+lexicographer wrote (ADR-017).
+
+| Area | What it is |
+|---|---|
+| **Example sentences** | Stored per word, shown on the entry with audio, translated one at a time on request and tagged `AI`. A learner can add one of their own from class |
+| **Gap-fill cards** (`CLOZE`) | A form we hold, hidden inside a sentence Ekilex recorded. The lemma is the hint, so it asks for the *form*; the case it drills feeds the weak-case breakdown |
+| **Sentence builder** (`/review/sentences`) | The word bank, over real Estonian. With a translation it is "say this in Estonian"; without one it shows the sentence, then scrambles it — and says which it is doing |
+| **Speaking** (`/review/speaking`) | Shadowing: say it, then hear a native voice and your own recording back to back. No score — see below |
+| **Classes** (`/class`) | A join code, a roster of effort, the group's weakest cases, and units set as homework into each student's own task list (ADR-019) |
+| **Conjugation** | The verb paradigm as a table — persons down, present/past/conditional across — plus a `CONJUGATION` card type over stored forms |
+| **Share card** (`/api/share`) | A 1200×630 PNG of streak, cards known and XP, generated per request for the signed-in learner |
+| **Install and remind** | Apple touch icon, safe-area insets, 16px inputs (iOS zoom), a one-time install prompt, and a daily reminder as a calendar file rather than a push subscription |
+| **Anu: check a sentence** | A structured check that names the rule before the fix, and boxes the corrected sentence as the model's own work rather than letting it read as dictionary data |
+
+### Things this pass refused to do
+
+- **Score pronunciation.** No verified Estonian speech recogniser is available to this app —
+  TartuNLP publish TTS and nothing comparable the other way, and the browser's own recogniser has no
+  dependable `et-EE`. A number invented on top of that would be trusted, so speaking compares
+  instead of grading (ADR-018).
+- **Write example sentences.** Not by hand, not with the model. Every sentence is attested.
+- **Let a teacher see inside a student's deck.** A class exposes effort and aggregate weakness, and
+  the boundary is one file (`lib/classroom/roster.ts`), not a policy paragraph (ADR-019).
+- **Push notifications.** They need a server that stays awake and still do nothing on an unin­stalled
+  iPhone. A recurring calendar event fires on the device the learner already trusts.
+
+### Known limitations, still
+
+1. **Sentences depend on Ekilex.** Without a key, the built-in dictionary carries no usages, so the
+   gap-fill and sentence modes stay empty and say so. A free reader key fills them in as words are
+   looked up.
+2. **Translations of examples are machine-made.** Tagged `AI`, stored so they are fetched once, and
+   overwritable — but they are not a translator's work and the app does not claim otherwise.
+3. **A class is per instance, not per school.** One deployment, many classes; there is no
+   organisation layer, no roles beyond teacher and student, and no way to move a class between
+   instances.
+4. **Classes need sign-in.** In local mode there is one learner, so `/class` explains that rather
+   than offering forms that could not work.
+5. **Installable, but not in the App Store.** Kodukeel installs to a home screen as a PWA and works
+   offline there. An actual App Store listing needs a native shell (Capacitor or similar) around
+   this same web app — that is a packaging and review exercise, not a rewrite, and it has not been
+   done.

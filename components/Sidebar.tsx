@@ -105,7 +105,11 @@ export function Sidebar() {
       <nav
         aria-label="Main"
         className="fixed bottom-0 left-0 right-0 z-40 flex border-t md:hidden"
-        style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+        style={{
+          borderColor: "var(--rule)",
+          background: "var(--surface)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
       >
         {primary.map(({ href, label, icon: Icon }) => (
           <Link
@@ -142,7 +146,11 @@ export function Sidebar() {
           />
           <div
             className="rounded-t-xl border-t p-4 pb-6"
-            style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+            style={{
+              borderColor: "var(--rule)",
+              background: "var(--surface)",
+              paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))",
+            }}
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="label-xs" style={{ color: "var(--ink-3)" }}>More</span>

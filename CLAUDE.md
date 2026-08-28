@@ -20,6 +20,12 @@ is the current state.
 Route Handlers and server actions. Nothing gets a `NEXT_PUBLIC_` prefix unless it is genuinely
 public. CI greps the build output for key patterns.
 
+**Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
+seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
+*reordered* to make an exercise (`lib/estonian/cloze.ts`). The model may translate into English and
+explain grammar; anything Estonian it produces in chat is boxed and tagged, and never stored as a
+form. (ADR-005, ADR-017.)
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
@@ -76,6 +82,13 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 (default, free model), Anthropic, or OpenAI. Do not re-pin a single provider. The Anthropic path
 keeps a `cache_control` breakpoint on the static Estonian system prompt. This supersedes the
 original ADR-004; see `docs/13-mvp-status.md` §2.
+
+**A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
+this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
+individual's deck, searches or answer history. Do not widen it. (ADR-019.)
+
+**Never score pronunciation.** There is no verified Estonian speech recogniser available here.
+Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 
 ## Commands
 

@@ -12,6 +12,7 @@ import {
 } from "@/lib/stats/history";
 import { ButtonLink } from "@/components/Button";
 import { Heatmap } from "@/components/Heatmap";
+import { ShareProgress } from "@/components/ShareProgress";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stat } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -114,13 +115,14 @@ export default async function ProgressPage() {
               <Meter pct={summary.level.pct} label="Level progress" />
             </div>
           </div>
-          <div className="flex flex-wrap gap-7">
+          <div className="flex flex-wrap items-center gap-7">
             <Stat
               value={<span className="inline-flex items-center gap-1.5">{summary.streak}<Flame size={18} aria-hidden style={{ color: "var(--hard)" }} /></span>}
               label="Day streak"
             />
             <Stat value={snapshot.knownCards} label="Cards known" tone="var(--good)" />
             <Stat value={breakdown.accuracy === null ? "—" : `${breakdown.accuracy}%`} label="Recall rate" />
+            <ShareProgress />
           </div>
         </Card>
 
