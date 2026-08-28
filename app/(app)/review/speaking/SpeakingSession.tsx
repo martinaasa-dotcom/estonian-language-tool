@@ -179,12 +179,14 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 px-6 py-10 text-center" aria-live="polite">
           <div>
             <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Say this in Estonian</p>
-            <p className="text-[22px] leading-snug" style={{ color: "var(--ink)" }}>{card.prompt}</p>
+            <p className="est text-[30px] font-bold leading-snug tracking-tight md:text-[34px]" style={{ color: "var(--ink)" }}>
+              {card.prompt}
+            </p>
           </div>
 
           {revealed && (
             <>
-              <div className="h-px w-16" style={{ background: "var(--rule)" }} />
+              <div className="h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
               <div
                 className="pop-in flex flex-wrap items-center justify-center gap-2 rounded-[var(--r-lg)] px-5 py-4"
                 style={{ background: "var(--accent-soft)" }}
