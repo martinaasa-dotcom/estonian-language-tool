@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { ButtonLink } from "@/components/Button";
 import { Card, Empty, Page, Stat } from "@/components/ui";
@@ -93,7 +94,10 @@ export default async function WordsPage() {
                     ))}
                   </ul>
                   <p className="mt-3 text-[12px]" style={{ color: "var(--ink-3)" }}>
-                    Click a case to drill just those cards.
+                    Click a case to drill just those cards, or{" "}
+                    <Link href="/review/sprint" className="inline-flex items-center gap-1" style={{ color: "var(--accent)" }}>
+                      <Zap size={12} aria-hidden /> try a 60-second sprint
+                    </Link>.
                   </p>
                 </>
               )}

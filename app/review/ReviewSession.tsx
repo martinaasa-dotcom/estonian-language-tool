@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, Check, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
-import { gradeCard } from "@/app/actions";
+import { checkAchievements, gradeCard } from "@/app/actions";
+import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import type { Badge } from "@/lib/achievements/badges";
 import { previewIntervals, RATINGS, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
 export interface ReviewCard {
@@ -47,11 +49,22 @@ export function ReviewSession({ cards, drillCase }: { cards: ReviewCard[]; drill
   const [done, setDone] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
+  const checkedAchievements = useRef(false);
 
   const card = queue[index];
   const finished = !card;
+
+  useEffect(() => {
+    if (!finished || checkedAchievements.current) return;
+    checkedAchievements.current = true;
+    const accuracy = done > 0 ? Math.round((correct / done) * 100) : 0;
+    void checkAchievements({ count: done, accuracy }).then((r) => {
+      if (r.ok) setNewBadges(r.newBadges);
+    });
+  }, [finished, done, correct]);
 
   useEffect(() => {
     shownAt.current = Date.now();
@@ -139,6 +152,7 @@ export function ReviewSession({ cards, drillCase }: { cards: ReviewCard[]; drill
           <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
           <ButtonLink href="/dictionary">Add new words</ButtonLink>
         </div>
+        <AchievementToasts badges={newBadges} />
       </div>
     );
   }

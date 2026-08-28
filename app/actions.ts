@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
+import { BADGES, type BadgeStats, computeStreak, earnedBadgeKeys } from "@/lib/achievements/badges";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
@@ -263,6 +264,104 @@ export async function importWords(rows: { lemma: string; translation: string; po
   revalidatePath("/words");
   revalidatePath("/");
   return { ok: true as const, created, cards, skipped };
+}
+
+// ────────────────────────────── Achievements ───────────────────────────────
+
+const SPRINT_BEST_KEY = "sprintBest";
+
+/**
+ * Computes current stats from the review log and decks, then awards any badge
+ * whose condition is newly met. Idempotent and safe to call often: an already
+ * -earned key is never re-awarded or removed, so a badge earned once is kept
+ * forever even if the underlying stat later dips (e.g. a streak breaks).
+ */
+export async function checkAchievements(session?: { count: number; accuracy: number }) {
+  const [recentReviews, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
+    prisma.review.findMany({
+      where: { reviewedAt: { gte: new Date(Date.now() - 30 * 86_400_000) } },
+      select: { reviewedAt: true },
+    }),
+    prisma.review.count(),
+    prisma.card.count({ where: { state: 2 } }),
+    prisma.lexeme.count(),
+    prisma.setting.findUnique({ where: { key: SPRINT_BEST_KEY } }),
+    prisma.review.findMany({
+      where: { targetCase: { not: null } },
+      select: { targetCase: true, rating: true },
+      take: 5000,
+    }),
+  ]);
+
+  const tally = new Map<string, { ok: number; total: number }>();
+  for (const r of caseReviews) {
+    if (!r.targetCase) continue;
+    const entry = tally.get(r.targetCase) ?? { ok: 0, total: 0 };
+    entry.total++;
+    if (r.rating >= 3) entry.ok++;
+    tally.set(r.targetCase, entry);
+  }
+  const bestCaseAccuracy = [...tally.entries()]
+    .filter(([, v]) => v.total >= 10)
+    .map(([grammCase, v]) => ({ grammCase, accuracy: Math.round((v.ok / v.total) * 100) }))
+    .sort((a, b) => b.accuracy - a.accuracy)[0] ?? null;
+
+  const stats: BadgeStats = {
+    streak: computeStreak(recentReviews.map((r) => r.reviewedAt)),
+    totalReviews,
+    cardsKnown,
+    totalWords,
+    bestCaseAccuracy,
+    sprintBest: sprintSetting ? Number(sprintSetting.value) || 0 : 0,
+    session,
+  };
+
+  const earnedKeys = earnedBadgeKeys(stats);
+  if (earnedKeys.length === 0) return { ok: true as const, newBadges: [] };
+
+  const already = await prisma.achievement.findMany({
+    where: { key: { in: earnedKeys } },
+    select: { key: true },
+  });
+  const alreadySet = new Set(already.map((a) => a.key));
+  const newKeys = earnedKeys.filter((k) => !alreadySet.has(k));
+  if (newKeys.length === 0) return { ok: true as const, newBadges: [] };
+
+  await prisma.achievement.createMany({ data: newKeys.map((key) => ({ key })) });
+  // No revalidatePath here: this is called from a Server Component render (Today)
+  // as well as from actual actions, and revalidating during render is an error.
+  // Settings reads achievements fresh on every load anyway (force-dynamic).
+  return { ok: true as const, newBadges: BADGES.filter((b) => newKeys.includes(b.key)) };
+}
+
+const DAILY_GOAL_KEY = "dailyGoal";
+
+/** Sets the review count that fills the daily-goal ring on Today. */
+export async function setDailyGoal(goal: number) {
+  const clamped = Math.min(200, Math.max(5, Math.round(goal)));
+  await prisma.setting.upsert({
+    where: { key: DAILY_GOAL_KEY },
+    create: { key: DAILY_GOAL_KEY, value: String(clamped) },
+    update: { value: String(clamped) },
+  });
+  revalidatePath("/");
+  revalidatePath("/settings");
+  return { ok: true as const, goal: clamped };
+}
+
+/** Records a Case Sprint score, keeping only the personal best. */
+export async function recordSprintScore(score: number) {
+  const current = await prisma.setting.findUnique({ where: { key: SPRINT_BEST_KEY } });
+  const best = current ? Number(current.value) || 0 : 0;
+  const isNewBest = score > best;
+  if (isNewBest) {
+    await prisma.setting.upsert({
+      where: { key: SPRINT_BEST_KEY },
+      create: { key: SPRINT_BEST_KEY, value: String(score) },
+      update: { value: String(score) },
+    });
+  }
+  return { ok: true as const, best: Math.max(score, best), isNewBest };
 }
 
 // ─────────────────────────────── Tasks ────────────────────────────────────

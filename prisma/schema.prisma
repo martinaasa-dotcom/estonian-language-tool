@@ -139,3 +139,11 @@ model Setting {
   key   String @id
   value String
 }
+
+/// A badge the learner has earned. Append-mostly: a key is written once, the
+/// moment its condition is first met, and never removed — losing a badge you
+/// already earned would be a worse surprise than never having shown it.
+model Achievement {
+  key      String   @id
+  earnedAt DateTime @default(now())
+}

@@ -1,19 +1,27 @@
 import { prisma } from "@/lib/db";
 import { resolveProvider } from "@/lib/tutor/provider";
+import { BADGES } from "@/lib/achievements/badges";
+import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
+import { DailyGoalPanel } from "./DailyGoalPanel";
 import { ImportPanel } from "./ImportPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 
 export const dynamic = "force-dynamic";
+const DEFAULT_DAILY_GOAL = 15;
 
 export default async function SettingsPage() {
   const provider = resolveProvider();
-  const [words, cards, reviews] = await Promise.all([
+  const [words, cards, reviews, earned, dailyGoalSetting] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count(),
     prisma.review.count(),
+    prisma.achievement.findMany({ select: { key: true } }),
+    prisma.setting.findUnique({ where: { key: "dailyGoal" } }),
   ]);
+  const earnedKeys = new Set(earned.map((a) => a.key));
+  const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;
 
   return (
     <Page title="Settings" lead="Everything is stored on this computer. Nothing is uploaded anywhere.">
@@ -67,6 +75,24 @@ export default async function SettingsPage() {
             ) : (
               <SetupGuide />
             )}
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle hint={`${dailyGoal} reviews/day`}>Daily goal</SectionTitle>
+          <Card>
+            <p className="mb-4 text-[14px]" style={{ color: "var(--ink-2)" }}>
+              Sets how full the ring on Today fills up. Purely motivational — it never caps or
+              blocks a session.
+            </p>
+            <DailyGoalPanel currentGoal={dailyGoal} />
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
+          <Card>
+            <BadgeShelf earnedKeys={earnedKeys} />
           </Card>
         </section>
 
