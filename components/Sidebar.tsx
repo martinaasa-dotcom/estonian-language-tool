@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, CalendarCheck, ChartNoAxesColumn, GraduationCap, Layers, LogOut, Map,
+  BookOpen, CalendarCheck, ChartNoAxesColumn, GraduationCap, Languages, Layers, LogOut, Map,
   MessageCircleQuestion, MoreHorizontal, Moon, School, Settings, Sun, Swords, X, Zap,
 } from "lucide-react";
 import { useEffect, useState, type ComponentType } from "react";
@@ -27,6 +27,7 @@ const NAV: NavItem[] = [
   { href: "/review", label: "Review", icon: GraduationCap, tone: "var(--accent)", primary: true },
   { href: "/practice", label: "Practice", icon: Swords, tone: "var(--peach)" },
   { href: "/dictionary", label: "Dictionary", icon: BookOpen, tone: "var(--sky)", primary: true },
+  { href: "/grammar", label: "Grammar", icon: Languages, tone: "var(--butter)" },
   { href: "/tutor", label: "Anu", icon: MessageCircleQuestion, tone: "var(--blush)" },
   { href: "/words", label: "My words", icon: Layers, tone: "var(--mint)" },
   { href: "/progress", label: "Progress", icon: ChartNoAxesColumn, tone: "var(--accent)" },
@@ -108,7 +109,14 @@ export function Sidebar() {
           >
             ⌘K
           </kbd>{" "}
-          to jump anywhere or look a word up.
+          to jump anywhere or look a word up,{" "}
+          <kbd
+            className="rounded-md px-1.5 py-0.5 font-semibold"
+            style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+          >
+            ?
+          </kbd>{" "}
+          for every shortcut.
         </p>
 
         <div className="mt-auto flex items-center gap-1 pt-4">

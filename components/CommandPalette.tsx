@@ -4,13 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { PATH } from "@/lib/collections/path";
+import { SHORTCUTS_EVENT } from "@/components/Shortcuts";
 
 interface Command {
   id: string;
   label: string;
   hint: string;
+  /** Where it goes. Empty for a command that acts instead of navigating. */
   href: string;
   keywords: string;
+  /** Run instead of navigating. Used by the one command that opens a dialog. */
+  run?: () => void;
 }
 
 const COMMANDS: Command[] = [
@@ -23,13 +27,23 @@ const COMMANDS: Command[] = [
   { id: "sentences", label: "Sentences", hint: "Rebuild a real sentence word by word", href: "/review/sentences", keywords: "word order build tiles grammar" },
   { id: "speaking", label: "Speaking", hint: "Say it out loud, compare with a native voice", href: "/review/speaking", keywords: "pronounce record microphone shadowing accent" },
   { id: "listening", label: "Listening", hint: "Hear a word, pick the meaning", href: "/review/listening", keywords: "audio ear sound" },
+  { id: "dictation", label: "Dictation", hint: "Hear a sentence, write it down", href: "/review/dictation", keywords: "audio typing spelling listening transcribe" },
   { id: "dictionary", label: "Dictionary", hint: "Search any word or inflected form", href: "/dictionary", keywords: "search lookup paradigm cases" },
+  { id: "grammar", label: "Grammar", hint: "What each of the fourteen cases is for", href: "/grammar", keywords: "cases reference explanation partitive genitive inessive endings rules" },
   { id: "tutor", label: "Ask Anu", hint: "Grammar questions, explained", href: "/tutor", keywords: "ai chat grammar help" },
   { id: "words", label: "My words", hint: "Your deck, card by card", href: "/words", keywords: "deck cards suspend delete" },
   { id: "progress", label: "Progress", hint: "Heatmap, forecast, weak cases", href: "/progress", keywords: "stats charts history leaderboard" },
   { id: "tasks", label: "Tasks", hint: "Homework and class work", href: "/tasks", keywords: "homework todo class" },
   { id: "class", label: "Classes", hint: "Teach or join a class", href: "/class", keywords: "classroom teacher students join code school homework" },
   { id: "settings", label: "Settings", hint: "Goal, review mode, backup", href: "/settings", keywords: "backup export import goal preferences" },
+  {
+    id: "shortcuts",
+    label: "Keyboard shortcuts",
+    hint: "Everything you can do without the mouse",
+    href: "",
+    keywords: "keys hotkeys bindings help question mark",
+    run: () => window.dispatchEvent(new Event(SHORTCUTS_EVENT)),
+  },
 ];
 
 const UNIT_COMMANDS: Command[] = PATH.map((u) => ({
@@ -96,9 +110,10 @@ export function CommandPalette() {
 
   if (!open) return null;
 
-  const go = (href: string) => {
+  const go = (command: Command) => {
     setOpen(false);
-    router.push(href);
+    if (command.run) { command.run(); return; }
+    router.push(command.href);
   };
 
   return (
@@ -127,7 +142,7 @@ export function CommandPalette() {
               if (e.key === "Enter") {
                 e.preventDefault();
                 const target = results[active];
-                if (target) go(target.href);
+                if (target) go(target);
               }
             }}
             placeholder="Jump to a screen, or type a word to look up…"
@@ -145,7 +160,7 @@ export function CommandPalette() {
               <button
                 type="button"
                 onMouseEnter={() => setActive(i)}
-                onClick={() => go(c.href)}
+                onClick={() => go(c)}
                 className="flex w-full items-baseline gap-3 px-4 py-2.5 text-left"
                 style={{ background: i === active ? "var(--accent-soft)" : "transparent" }}
               >

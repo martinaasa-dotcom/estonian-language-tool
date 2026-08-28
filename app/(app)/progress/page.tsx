@@ -9,6 +9,7 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { classRoster } from "@/lib/classroom/roster";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
+  retentionReading,
 } from "@/lib/stats/history";
 import { ButtonLink } from "@/components/Button";
 import { Heatmap } from "@/components/Heatmap";
@@ -31,7 +32,7 @@ export default async function ProgressPage() {
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
       where: { card: { ownerId }, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
-      select: { reviewedAt: true, rating: true, targetCase: true },
+      select: { reviewedAt: true, rating: true, targetCase: true, stateBefore: true },
       orderBy: { reviewedAt: "asc" },
     }),
     prisma.card.findMany({
@@ -49,6 +50,9 @@ export default async function ProgressPage() {
   const forecast = buildForecast(dueDates.map((c) => c.due), FORECAST_DAYS, now);
   const trend = dailyLoad(reviews, TREND_DAYS, now);
   const breakdown = ratingBreakdown(reviews);
+  // The narrower, more useful number: how often a card the scheduler believed
+  // you knew actually came back. The recall rate above counts first sights too.
+  const retention = retentionReading(reviews);
   const cases = caseAccuracy(reviews);
   const hour = bestStudyHour(reviews);
   const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
@@ -125,6 +129,48 @@ export default async function ProgressPage() {
             <ShareProgress />
           </div>
         </Card>
+
+        {/* The number FSRS is actually steering, and what it means. Placed
+            above the charts because it is the one that changes what to do. */}
+        <section>
+          <SectionTitle hint="cards the scheduler thought you knew">True retention</SectionTitle>
+          <Card tone={
+            retention.verdict === "below" ? "peach"
+              : retention.verdict === "above" ? "butter"
+                : retention.verdict === "on-target" ? "mint" : "plain"
+          }>
+            <div className="flex flex-wrap items-center gap-6">
+              <Ring
+                pct={retention.retention ?? 0}
+                size={78}
+                tone={
+                  retention.verdict === "below" ? "var(--again)"
+                    : retention.verdict === "above" ? "var(--hard)" : "var(--good)"
+                }
+                label={
+                  retention.retention === null
+                    ? "Not enough mature reviews to measure retention yet"
+                    : `${retention.retention}% of mature cards recalled, against a ${retention.target}% target`
+                }
+              >
+                <span className="est tnum text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+                  {retention.retention === null ? "—" : `${retention.retention}%`}
+                </span>
+              </Ring>
+              <div className="min-w-0 flex-1">
+                <p className="est text-[18px] font-bold" style={{ color: "var(--ink)" }}>
+                  {retention.headline}
+                </p>
+                <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                  {retention.advice}
+                </p>
+                <p className="tnum mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  {retention.recalled} recalled of {retention.reviews} mature reviews · target {retention.target}%
+                </p>
+              </div>
+            </div>
+          </Card>
+        </section>
 
         <section>
           <SectionTitle hint={`last ${HEATMAP_DAYS} days`}>Study history</SectionTitle>
@@ -232,6 +278,15 @@ export default async function ProgressPage() {
                         <span className="tnum w-16 text-right text-[12px]" style={{ color: "var(--ink-3)" }}>
                           {c.accuracy}% · {c.total}
                         </span>
+                      </Link>
+                      {/* Drilling a case you do not understand yet just fails
+                          faster, so the explanation sits next to the drill. */}
+                      <Link
+                        href={`/grammar/${c.grammCase.toLowerCase()}`}
+                        className="ml-1 text-[11.5px] underline"
+                        style={{ color: "var(--ink-3)" }}
+                      >
+                        what is the {c.grammCase.toLowerCase()} for?
                       </Link>
                     </li>
                   ))}

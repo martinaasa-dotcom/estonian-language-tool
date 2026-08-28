@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowRight, BookOpen, Flame, Grid2x2, Headphones, Mic, Puzzle, Shield, Sparkles, Zap,
+  ArrowRight, BookOpen, Ear, Flame, Grid2x2, Headphones, Mic, Puzzle, Shield, Sparkles, Zap,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
@@ -303,9 +303,18 @@ export default async function TodayPage() {
                 title="Speaking" body="Say it, then compare" />
               <PracticeTile href="/review/listening" tone="sky" icon={<Headphones size={17} aria-hidden />}
                 title="Listening" body="Hear it, then answer" />
-              <PracticeTile href="/practice" tone="peach" icon={<ArrowRight size={17} aria-hidden />}
-                title="All modes" body="Everything in one place" />
+              <PracticeTile href="/review/dictation" tone="peach" icon={<Ear size={17} aria-hidden />}
+                title="Dictation" body="Hear it, then write it" />
             </div>
+            {/* The hub rather than a seventh tile: six hues, six modes, and the
+                grid stays a grid. */}
+            <Link
+              href="/practice"
+              className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold"
+              style={{ color: "var(--accent)" }}
+            >
+              Every mode, and a drill for your weakest case <ArrowRight size={13} aria-hidden />
+            </Link>
           </Card>
 
           {wordOfDay && (

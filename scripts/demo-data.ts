@@ -64,11 +64,14 @@ async function main() {
       // the accuracy trend on /progress all have something real to draw.
       let s = emptyScheduling(new Date(Date.now() - 56 * 86400000));
       const history = HISTORIES[i % HISTORIES.length]!;
-      const reviews: { rating: number; at: Date }[] = [];
+      const reviews: { rating: number; at: Date; stateBefore: number }[] = [];
       history.forEach((r, n) => {
         const daysAgo = Math.max(0, 54 - n * 6 - (i % 5));
         const at = new Date(Date.now() - daysAgo * 86400000 + n * 3600000);
-        reviews.push({ rating: r, at });
+        // The FSRS state the card was in when the question was asked, exactly as
+        // gradeCard records it. Without it the demo's retention reading has
+        // nothing mature to measure and the chart it feeds looks broken.
+        reviews.push({ rating: r, at, stateBefore: s.state });
         s = grade(s, r as 1 | 2 | 3 | 4, at);
       });
       const card = await prisma.card.create({
@@ -83,7 +86,10 @@ async function main() {
       });
       for (const r of reviews) {
         await prisma.review.create({
-          data: { cardId: card.id, rating: r.rating, reviewedAt: r.at, durationMs: 4200, targetCase: c.targetCase },
+          data: {
+            cardId: card.id, rating: r.rating, reviewedAt: r.at, durationMs: 4200,
+            stateBefore: r.stateBefore, targetCase: c.targetCase,
+          },
         });
       }
     }

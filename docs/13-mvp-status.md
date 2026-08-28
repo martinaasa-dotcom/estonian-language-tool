@@ -243,3 +243,48 @@ What that meant in practice:
 Verified after the merge: unit tests, `tsc --noEmit`, ESLint, all eight browser suites, and a
 screenshot sweep of every route at 1280px and 390px with the console watched and horizontal
 overflow asserted against.
+
+## 9. The fourth pass: the teaching layer
+
+Three passes built an app that tests. This one built the half that teaches — the parts a learner
+reaches for when a flashcard has stopped helping, and the part a teacher reaches for when the
+lesson is not on a screen at all.
+
+| Area | What it is |
+|---|---|
+| **Grammar reference** (`/grammar`, `/grammar/[case]`) | One page per case: what it is for, where it turns up, the mistake an English speaker makes, and the case shown on real words with the provenance of every form. Linked from the dictionary's case table, the weak-case drills and the Progress breakdown |
+| **Dictation** (`/review/dictation`) | Hear an attested sentence, write it down. Marked word by word — green for exact, butter for a word heard but misspelled, peach for one missed — so the learner sees *which* ending they lost |
+| **Printable worksheet** (`/learn/[unitId]/worksheet`) | A unit as paper: vocabulary, gap-fills from attested sentences, a principal-parts table, and an answer key on its own sheet. The rail and the wash come off in print |
+| **True retention** (on `/progress`) | Of the cards FSRS believed you had learned, how many came back — measured from `Review.stateBefore`, compared with the 90% the scheduler targets, and turned into one instruction |
+| **Shortcut sheet** (`?`) | Every binding the app implements, grouped by where it works |
+
+### Why the grammar page is allowed to exist
+
+ADR-005 forbids the app from writing Estonian. A grammar reference is the obvious place to break
+that rule by accident — one "for example, *majas*" and the page is presenting an unattested form
+next to real ones. So the split is structural:
+
+- `lib/estonian/grammar.ts` is English prose and holds no Estonian at all. A test keeps a tripwire
+  on it (Estonian of any length reaches for its own letters), and says in as many words that a
+  regex is not a proof.
+- `lib/progress/caseExamples.ts` supplies every Estonian word on the page, out of the dictionary,
+  each tagged with where it came from: an Ekilex form, a stored principal part, or the regular
+  ending on a stored genitive. The page prints that tag next to the form.
+
+The same rule shapes the worksheet: a gap-fill is a real sentence with one of its own words hidden,
+and a case table is a table with cells left out. Neither invents anything, which is also why an
+exercise simply does not appear when the material for it is missing.
+
+### Known limitations, still
+
+1. **Oblique-case examples depend on Ekilex.** The seeded dictionary holds principal parts, so the
+   grammar pages for the inside/outside cases derive their forms and often have no attested
+   sentence to show. Looking those words up once fills both in.
+2. **Dictation needs short sentences.** Only sentences of three to nine words are used; a longer
+   one tests memory rather than listening. A deck whose words have no short attested sentence gets
+   an empty state that says so.
+3. **Retention needs history.** Below thirty mature reviews the reading refuses to give a number,
+   because one bad evening would swing it twenty points.
+4. **The worksheet is one sheet per unit.** No question banks, no randomised variants, no per-class
+   sets. It is deterministic on purpose: a class comparing answers has to be comparing the same
+   sheet.

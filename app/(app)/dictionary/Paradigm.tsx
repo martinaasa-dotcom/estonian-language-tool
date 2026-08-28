@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { CASES } from "@/lib/estonian/cases";
 import { caseFromMorphCode, VERB_GROUP_LABELS, verbSlot, type VerbSlot } from "@/lib/estonian/morph";
@@ -109,7 +110,11 @@ function CaseTable({ forms }: { forms: ParadigmForm[] }) {
             {rows.map((spec) => (
               <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                 <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                  {spec.en}
+                  {/* The case name is the way into the reference page: this table
+                      says what the form is, that page says when to use it. */}
+                  <Link href={`/grammar/${spec.key.toLowerCase()}`} className="hover:underline">
+                    {spec.en}
+                  </Link>
                   <span lang="et" className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>
                     {spec.et}
                   </span>

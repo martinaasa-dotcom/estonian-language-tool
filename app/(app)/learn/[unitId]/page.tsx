@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, GraduationCap } from "lucide-react";
+import { ArrowLeft, Check, GraduationCap, Printer } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/path";
@@ -83,6 +83,10 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
                 <GraduationCap size={15} aria-hidden /> Drill this unit
               </ButtonLink>
             )}
+            {/* For the half of a class that happens on paper. */}
+            <ButtonLink href={`/learn/${unit.id}/worksheet`} variant="ghost" size="sm" className="justify-center">
+              <Printer size={14} aria-hidden /> Printable worksheet
+            </ButtonLink>
           </div>
         </Card>
 

@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { GraduationCap, Grid2x2, Headphones, Mic, Puzzle, Target, Zap } from "lucide-react";
+import { Ear, GraduationCap, Grid2x2, Headphones, Mic, Puzzle, Target, Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { caseAccuracy } from "@/lib/stats/history";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
+import { dictationWords } from "@/lib/estonian/dictation";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Meter, Page, SectionTitle } from "@/components/ui";
@@ -40,6 +41,13 @@ export default async function PracticePage() {
   // How many of the learner's own words carry a sentence worth rebuilding.
   const sentenceCount = sentenceReady.filter((c) =>
     usableExamples(parseExamples(c.lexeme?.examples)).some((e) => isBuildable(e.et)),
+  ).length;
+  // Dictation is stricter: only sentences short enough to hold in your head.
+  const dictationCount = sentenceReady.filter((c) =>
+    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => {
+      const count = dictationWords(e.et).length;
+      return count >= 3 && count <= 9 && e.et.length <= 80;
+    }),
   ).length;
   const matchBest = numberSetting(settings[SETTING_KEYS.matchBest], 0);
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
@@ -107,12 +115,22 @@ export default async function PracticePage() {
       meta: "Audio from TartuNLP",
       primary: false,
     },
+    {
+      href: "/review/dictation",
+      icon: Ear,
+      tone: "peach",
+      title: "Dictation",
+      subtitle: "Hear it, write it",
+      body: "A whole sentence, played and typed back. Marked word by word, so you see which ending you missed.",
+      meta: dictationCount > 0 ? `${dictationCount} ready` : "Needs sentences",
+      primary: false,
+    },
   ];
 
   return (
     <Page
       title="Practice"
-      lead="Six ways to work the same deck, plus a drill for whichever case you keep missing. They all write to the same review log, so anything you do here moves the same schedule forward."
+      lead="Seven ways to work the same deck, plus a drill for whichever case you keep missing. They all write to the same review log, so anything you do here moves the same schedule forward."
     >
       {snapshot.totalCards === 0 ? (
         <Empty
@@ -191,6 +209,13 @@ export default async function PracticePage() {
                         <span className="tnum w-20 text-right text-[12.5px]" style={{ color: "var(--ink-3)" }}>
                           {c.accuracy}% · {c.total}
                         </span>
+                      </Link>
+                      <Link
+                        href={`/grammar/${c.grammCase.toLowerCase()}`}
+                        className="ml-8 text-[11.5px] underline"
+                        style={{ color: "var(--ink-3)" }}
+                      >
+                        what it is for
                       </Link>
                     </li>
                   ))}

@@ -13,10 +13,17 @@ const cache = new Map<string, string>();
  * reads Estonian in an English accent. If the proxy cannot produce audio the button
  * disappears rather than sitting there doing nothing.
  */
-export function Speak({ text, slow, label, size = 15, className, style }: {
+export function Speak({ text, slow, label, size = 15, className, style, onUnavailable }: {
   text: string; slow?: boolean; label?: string;
   /** Icon size in px, plus className/style overrides for a bigger tap target (e.g. Listening mode). */
   size?: number; className?: string; style?: CSSProperties;
+  /**
+   * Called when the audio could not be produced and this button is about to
+   * remove itself. Most screens can lose a pronunciation button silently; the
+   * ones built *on* the audio (Listening, Dictation) cannot, and need to offer
+   * something else instead of a dead end.
+   */
+  onUnavailable?: () => void;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
 
@@ -41,6 +48,7 @@ export function Speak({ text, slow, label, size = 15, className, style }: {
       setState("idle");
     } catch {
       setState("gone");
+      onUnavailable?.();
     }
   };
 

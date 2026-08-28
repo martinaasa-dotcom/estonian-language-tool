@@ -87,7 +87,13 @@ Target **WCAG 2.2 AA**. Not aspiration — this app is used for an hour a day.
   or text label as well as a colour.
 - **`prefers-reduced-motion`** respected — card flip animations become instant.
 - **Text scaling** to 200% without loss of function.
-- **Audio never required.** Listening cards always offer a text alternative.
+- **Audio never required.** Listening cards always offer a text alternative — and when the TTS
+  proxy cannot produce any, Listening and Dictation say so and show the word rather than leaving a
+  silent exercise with no question in it.
+- **Shortcuts are documented, not folklore.** `?` anywhere opens the shortcut sheet
+  (`components/Shortcuts.tsx`), which lists every binding the app actually implements. It stays out
+  of the way while a field has focus, because `?` is a character before it is a command. Nothing is
+  keyboard-only: the sheet is a shortcut to what the tab order already reaches.
 
 ## 6. Visual design
 

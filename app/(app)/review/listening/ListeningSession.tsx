@@ -34,6 +34,9 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
   const [correct, setCorrect] = useState(0);
   const [attempted, setAttempted] = useState(0);
   const [busy, setBusy] = useState(false);
+  // The whole exercise is the audio. If the proxy cannot produce any, the word
+  // is shown rather than leaving four choices and no question.
+  const [noAudio, setNoAudio] = useState(false);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
   const checkedAchievements = useRef(false);
@@ -173,15 +176,28 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
 
         <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 px-6 py-10 text-center" aria-live="polite">
           {!answered ? (
-            <>
-              <Speak
-                text={card.lemma}
-                size={30}
-                className="press flex h-24 w-24 items-center justify-center rounded-full transition-all hover:-translate-y-0.5"
-                style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
-              />
-              <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap to hear the word — tap again to replay</p>
-            </>
+            noAudio ? (
+              <>
+                <p lang="et" className="est text-[30px] font-semibold" style={{ color: "var(--ink)" }}>
+                  {card.lemma}
+                </p>
+                <p className="max-w-[40ch] text-[13px]" style={{ color: "var(--ink-3)" }}>
+                  No audio right now — the pronunciation service could not be reached, so the word is
+                  shown instead. Still worth answering; come back for the listening part.
+                </p>
+              </>
+            ) : (
+              <>
+                <Speak
+                  text={card.lemma}
+                  size={30}
+                  onUnavailable={() => setNoAudio(true)}
+                  className="press flex h-24 w-24 items-center justify-center rounded-full transition-all hover:-translate-y-0.5"
+                  style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
+                />
+                <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap to hear the word — tap again to replay</p>
+              </>
+            )
           ) : (
             <div className="flex items-center gap-2">
               <p lang="et" className="est text-[30px] font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>

@@ -92,3 +92,27 @@ export function mergeExamples(existing: Example[], incoming: Example[]): Example
   }
   return usableExamples([...byText.values()]);
 }
+
+/**
+ * The first sentence that contains a form as a whole word.
+ *
+ * Whole-word, not substring, and that is the entire point: `toa` sits inside
+ * `toas`, so a substring match would happily present a sentence as an example
+ * of a case it does not contain — teaching the opposite of the lesson. A
+ * sentence with a translation wins, because a learner can check their reading
+ * against it.
+ */
+export function sentenceContaining(examples: Example[], form: string): Example | null {
+  const wanted = form.trim().toLocaleLowerCase("et");
+  if (!wanted) return null;
+  const matches = usableExamples(examples).filter((e) => sentenceWords(e.et).includes(wanted));
+  return matches.find((e) => e.en) ?? matches[0] ?? null;
+}
+
+/**
+ * A sentence split into lowercased words, with Estonian's own letters kept and
+ * punctuation dropped. Hyphens stay inside a word: `üle-eestiline` is one word.
+ */
+export function sentenceWords(sentence: string): string[] {
+  return sentence.toLocaleLowerCase("et").split(/[^\p{L}\p{M}-]+/u).filter(Boolean);
+}

@@ -105,8 +105,8 @@ forms at all.
 
 ## 8. Session screens
 
-Every practice mode — review, sprint, match, listening, sentences, speaking — wears the same
-chrome, because they are the same activity seen from different angles and a learner should not
+Every practice mode — review, sprint, match, listening, sentences, speaking, dictation — wears the
+same chrome, because they are the same activity seen from different angles and a learner should not
 have to re-learn the frame:
 
 - a top row of **close · progress · counter**: an `X` back to Today in a round hover target, a
@@ -133,3 +133,13 @@ One rule came out of that merge and is worth keeping: **a flex or grid item that
 `min-w-0`**. Without it the item refuses to shrink below its own content, and a single long task
 title widens the whole page on a phone. The mobile sweep in `scripts/` checks for exactly this —
 no horizontal overflow at 390px on any route.
+
+## 10. Paper
+
+`@media print` lives in `app/globals.css`, not on the one page that prints, because it is true of
+every page: the rail, the mobile bar, the pastel wash and anything marked `no-print` come off, and
+`page-break` starts a new sheet. A worksheet printed with a navigation rail down the side is not a
+worksheet.
+
+Two classes are the whole contract: `no-print` on screen-only controls, `page-break` where a new
+sheet begins. `avoid-break` keeps an exercise from splitting across a page.

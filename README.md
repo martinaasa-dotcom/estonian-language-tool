@@ -2,8 +2,9 @@
 
 *Kodukeel* — "home language". An Estonian study workspace built around the thing that actually makes
 the language hard: the cases. A dictionary that answers with the whole paradigm, a course you can
-work through, flashcards scheduled by FSRS, four practice modes, and a grammar tutor that is never
-allowed to invent an Estonian form.
+work through, flashcards scheduled by FSRS, seven practice modes, a grammar reference written in
+English, printable worksheets for a real class, and a tutor that is never allowed to invent an
+Estonian form.
 
 > **Status: usable by someone who is not you.** First run walks a new learner through a setup wizard
 > and builds them a real deck; the daily loop — path, review, practice, progress — is complete, works
@@ -46,10 +47,14 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **Six practice modes over one deck** — the daily review, a 60-second Case Sprint, a Match round
-  against the clock, Sentences, Speaking and Listening, plus a one-click drill for whichever case
-  you keep missing. Everything writes to the same review log, so a game still moves the schedule
-  forward.
+- **Seven practice modes over one deck** — the daily review, a 60-second Case Sprint, a Match round
+  against the clock, Sentences, Speaking, Listening and Dictation, plus a one-click drill for
+  whichever case you keep missing. Everything writes to the same review log, so a game still moves
+  the schedule forward.
+- **Dictation, marked word by word.** A real sentence is played and you write it down; the marking
+  shows which word you missed and whether you only lost its Estonian letters. Estonian welds its
+  case endings onto the stem, so hearing a sentence perfectly and writing the wrong ending is a
+  specific failure worth naming.
 - **Speaking that does not lie to you.** Say the word, then hear a native voice and your own
   recording back to back. It is not scored: there is no verified Estonian speech recogniser this app
   can use, and an invented confidence number would be believed.
@@ -63,7 +68,17 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **Offline.** Installable as an app; reviewing works with no connection and every grade is kept on
   the device with the time you actually answered, then sent when you are back. A daily reminder is
   offered as a calendar event, which fires whether or not the app is open.
-- **⌘K** to jump to any screen or look a word up from anywhere.
+- **A grammar reference in English.** One page per case: what it is for, when Estonian reaches for
+  it, and the mistake an English speaker makes — with the case shown on real words from your own
+  deck, each form labelled with where it came from. The explanations are the only part of those
+  pages this app wrote.
+- **Worksheets you can print.** Any unit becomes a sheet — vocabulary, gap-fills built from attested
+  sentences, a principal-parts table — with the answer key on its own page. For the half of a class
+  that happens in a room.
+- **True retention.** Not the raw recall rate, which counts first sights of new cards, but how often
+  a card the scheduler *thought* you knew actually came back — against the 90% FSRS is steering for,
+  with one instruction rather than a chart to interpret.
+- **⌘K** to jump to any screen or look a word up from anywhere, and **?** for every shortcut.
 
 ## The dictionary
 
@@ -88,7 +103,8 @@ Everything except the tutor:
   Anything missing can be added by hand, principal parts and all.
 - **Audio** — real Estonian speech from the University of Tartu's neural voice. No key, no setup.
 - **Flashcards** — FSRS scheduling, five card types, typed or flipped, keyboard-only review.
-- **The learning path, all four practice modes, XP, quests, badges and the progress charts.**
+- **The learning path, every practice mode, the grammar reference, printable worksheets, XP, quests,
+  badges and the progress charts.**
 - **Tasks, import, export** — all local.
 
 ## Turning on Anu, the tutor

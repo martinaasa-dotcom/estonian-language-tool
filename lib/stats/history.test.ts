@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
+  retentionReading, RETENTION_MINIMUM, RETENTION_TARGET, REVIEW_STATE,
 } from "./history";
 import { dayKey, daysBetween, recentDayKeys, shiftDay, startOfDay } from "@/lib/time/day";
 
@@ -154,5 +155,77 @@ describe("bestStudyHour", () => {
       ...Array(10).fill(0).map(() => ({ reviewedAt: daysAgo(1, 8), rating: 3 })),
     ];
     expect(bestStudyHour(reviews)).toBe(21);
+  });
+});
+
+describe("retentionReading", () => {
+  /** `count` mature reviews, `recalled` of them rated Good or better. */
+  const mature = (count: number, recalled: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      rating: i < recalled ? 3 : 1,
+      stateBefore: REVIEW_STATE,
+    }));
+
+  it("says so, rather than guessing, before there is enough data", () => {
+    const reading = retentionReading(mature(10, 9));
+    expect(reading.verdict).toBe("unknown");
+    expect(reading.retention).toBeNull();
+    expect(reading.reviews).toBe(10);
+    expect(reading.advice).toContain(String(RETENTION_MINIMUM));
+  });
+
+  it("ignores answers on cards that were still being learned", () => {
+    // A first sight of a new card is not a memory test, and counting it would
+    // drag the number down for exactly the learner who is working hardest.
+    const learning = Array.from({ length: 100 }, () => ({ rating: 1, stateBefore: 0 }));
+    const reading = retentionReading([...mature(40, 36), ...learning]);
+    expect(reading.reviews).toBe(40);
+    expect(reading.retention).toBe(90);
+  });
+
+  it("calls the schedule healthy when retention sits on the target", () => {
+    const reading = retentionReading(mature(100, 90));
+    expect(reading.verdict).toBe("on-target");
+    expect(reading.retention).toBe(RETENTION_TARGET);
+    expect(reading.advice).toMatch(/nothing to change/i);
+  });
+
+  it("treats a few points either way as noise, not a diagnosis", () => {
+    expect(retentionReading(mature(100, 93)).verdict).toBe("on-target");
+    expect(retentionReading(mature(100, 87)).verdict).toBe("on-target");
+  });
+
+  it("says there is room for more new words when recall runs high", () => {
+    const reading = retentionReading(mature(100, 98));
+    expect(reading.verdict).toBe("above");
+    expect(reading.headline).toMatch(/more than the schedule/i);
+    expect(reading.advice).toMatch(/daily goal/i);
+  });
+
+  it("says to ease off when recall runs low", () => {
+    const reading = retentionReading(mature(100, 70));
+    expect(reading.verdict).toBe("below");
+    expect(reading.retention).toBe(70);
+    expect(reading.advice).toMatch(/ease off/i);
+  });
+
+  it("counts Hard as forgotten and Easy as recalled", () => {
+    const reviews = [
+      ...Array.from({ length: 50 }, () => ({ rating: 4, stateBefore: REVIEW_STATE })),
+      ...Array.from({ length: 50 }, () => ({ rating: 2, stateBefore: REVIEW_STATE })),
+    ];
+    expect(retentionReading(reviews).retention).toBe(50);
+  });
+
+  it("takes a different target when one is given", () => {
+    const reading = retentionReading(mature(100, 80), 80);
+    expect(reading.verdict).toBe("on-target");
+    expect(reading.target).toBe(80);
+  });
+
+  it("copes with an empty log", () => {
+    const reading = retentionReading([]);
+    expect(reading.verdict).toBe("unknown");
+    expect(reading.reviews).toBe(0);
   });
 });

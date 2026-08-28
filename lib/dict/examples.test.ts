@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mergeExamples, parseExamples, serialiseExamples, usableExamples, type Example } from "./examples";
+import {
+  mergeExamples, parseExamples, sentenceContaining, sentenceWords, serialiseExamples, usableExamples,
+  type Example,
+} from "./examples";
 
 const ek = (et: string, en?: string): Example => ({ et, source: "EKILEX", ...(en ? { en } : {}) });
 
@@ -74,5 +77,53 @@ describe("mergeExamples", () => {
   it("does not duplicate a sentence that only differs by case", () => {
     const merged = mergeExamples([ek("Jõin tassi kohvi.")], [ek("JÕIN TASSI KOHVI.")]);
     expect(merged).toHaveLength(1);
+  });
+});
+
+describe("sentenceWords", () => {
+  it("keeps Estonian letters and drops punctuation", () => {
+    expect(sentenceWords("Jõin tassi kohvi.")).toEqual(["jõin", "tassi", "kohvi"]);
+  });
+
+  it("keeps a hyphenated word whole", () => {
+    expect(sentenceWords("üle-eestiline võistlus")).toEqual(["üle-eestiline", "võistlus"]);
+  });
+
+  it("copes with quotes, dashes and numbers between words", () => {
+    expect(sentenceWords("«Tere!» — ütles ta 2007. aastal")).toEqual([
+      "tere", "ütles", "ta", "aastal",
+    ]);
+  });
+});
+
+describe("sentenceContaining", () => {
+  const ex = (et: string, en?: string): Example => ({ et, en: en ?? null, source: "EKILEX" });
+
+  it("finds a sentence holding the form as a whole word", () => {
+    const found = sentenceContaining([ex("Ta istub toas ja loeb.")], "toas");
+    expect(found?.et).toBe("Ta istub toas ja loeb.");
+  });
+
+  it("does not match a form that is only a substring of another word", () => {
+    // `toa` is inside `toas`. Offering this sentence as an example of the
+    // genitive would be teaching the inessive by accident.
+    expect(sentenceContaining([ex("Ta istub toas ja loeb.")], "toa")).toBeNull();
+  });
+
+  it("ignores case, including Estonian letters", () => {
+    expect(sentenceContaining([ex("Õues sajab vihma.")], "õues")?.et).toBe("Õues sajab vihma.");
+  });
+
+  it("prefers a sentence that has been translated", () => {
+    const found = sentenceContaining(
+      [ex("Ma ootan bussi peatuses."), ex("Bussi ei tulnud.", "The bus did not come.")],
+      "bussi",
+    );
+    expect(found?.en).toBe("The bus did not come.");
+  });
+
+  it("returns nothing for an empty form or an empty list", () => {
+    expect(sentenceContaining([ex("Ta istub toas.")], "  ")).toBeNull();
+    expect(sentenceContaining([], "toas")).toBeNull();
   });
 });

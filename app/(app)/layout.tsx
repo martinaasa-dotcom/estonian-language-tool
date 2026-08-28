@@ -1,5 +1,6 @@
 import { CommandPalette } from "@/components/CommandPalette";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { Shortcuts } from "@/components/Shortcuts";
 import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
 
@@ -26,6 +27,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main id="main" className="flex-1 pb-28 md:pb-0">{children}</main>
       </div>
       <CommandPalette />
+      {/* `?` anywhere. Documentation with a keyboard binding — see the component. */}
+      <Shortcuts />
       {/* Offered once, inside the app only: someone still reading the landing
           page has not decided they want this on their home screen. */}
       <InstallPrompt />

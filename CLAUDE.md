@@ -26,7 +26,9 @@ public. CI greps the build output for key patterns.
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
 *reordered* to make an exercise (`lib/estonian/cloze.ts`). The model may translate into English and
 explain grammar; anything Estonian it produces in chat is boxed and tagged, and never stored as a
-form. (ADR-005, ADR-017.)
+form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
+`lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
+the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
@@ -112,3 +114,6 @@ npm run test:e2e     # every browser suite — needs the server running
 
 `scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo, the command
 palette and — the one worth keeping green — reviewing with the network switched off.
+`scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar reference
+(including that every form on it says where it came from), dictation, the printable worksheet and
+its answer key, the retention reading, and the shortcut sheet.

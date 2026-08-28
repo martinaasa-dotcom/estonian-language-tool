@@ -183,3 +183,90 @@ export function bestStudyHour(reviews: ReviewPoint[], minReviews = 20): number |
   for (let h = 1; h < 24; h++) if (hours[h]! > hours[best]!) best = h;
   return hours[best]! > 0 ? best : null;
 }
+
+/**
+ * True retention, and what it says about the schedule.
+ *
+ * The recall rate shown elsewhere on the Progress page counts every answer,
+ * including the first sight of a brand-new card — which nobody is expected to
+ * know, and which therefore drags the number down and means nothing. FSRS asks a
+ * narrower question: of the cards it believed you had *learned* and scheduled to
+ * come back today, how many did you actually recall? That is the number the
+ * scheduler is steering, and the only one worth comparing to its target.
+ *
+ * `stateBefore` on the review log is what makes this answerable at all: it
+ * records the FSRS state the card was in when the question was asked, so a
+ * mature review can be told apart from a learning step after the fact. It is one
+ * of the reasons the log is append-only.
+ */
+export const REVIEW_STATE = 2;
+
+/** The target the scheduler is configured for — see lib/srs/scheduler.ts. */
+export const RETENTION_TARGET = 90;
+
+/** Below this many mature reviews the number is noise, and says so. */
+export const RETENTION_MINIMUM = 30;
+
+export interface RetentionReading {
+  /** Mature reviews counted. Learning and relearning answers are excluded. */
+  reviews: number;
+  recalled: number;
+  /** Percent recalled, 0–100. `null` until there is enough to say. */
+  retention: number | null;
+  target: number;
+  verdict: "unknown" | "on-target" | "above" | "below";
+  headline: string;
+  advice: string;
+}
+
+export function retentionReading(
+  reviews: { rating: number; stateBefore: number }[],
+  target = RETENTION_TARGET,
+  minimum = RETENTION_MINIMUM,
+): RetentionReading {
+  const mature = reviews.filter((r) => r.stateBefore === REVIEW_STATE);
+  const recalled = mature.filter((r) => r.rating >= 3).length;
+  const count = mature.length;
+
+  if (count < minimum) {
+    return {
+      reviews: count,
+      recalled,
+      retention: null,
+      target,
+      verdict: "unknown",
+      headline: "Not enough mature reviews yet",
+      advice: `This compares how often you recall a card the scheduler thought you knew against the ${target}% it aims for. It needs about ${minimum} such reviews to mean anything — you have ${count}.`,
+    };
+  }
+
+  const retention = Math.round((recalled / count) * 100);
+  // Four points either way is inside the noise for a few hundred reviews, and a
+  // number that twitches between verdicts every session teaches nothing.
+  const drift = retention - target;
+
+  if (drift > 4) {
+    return {
+      reviews: count, recalled, retention, target,
+      verdict: "above",
+      headline: "Recalling more than the schedule expects",
+      advice: `You are getting ${retention}% of mature cards right where the scheduler plans for ${target}%. That is comfortable rather than wrong — it usually means there is room to take on more new words each day. Raise the daily goal in Settings before adding another mode.`,
+    };
+  }
+
+  if (drift < -4) {
+    return {
+      reviews: count, recalled, retention, target,
+      verdict: "below",
+      headline: "Forgetting more than the schedule expects",
+      advice: `You are recalling ${retention}% of mature cards where the scheduler plans for ${target}%. Usually that is too many new cards arriving at once, or cards added before the grammar behind them made sense. Ease off new words for a week, and read up on whichever case the breakdown below keeps flagging.`,
+    };
+  }
+
+  return {
+    reviews: count, recalled, retention, target,
+    verdict: "on-target",
+    headline: "The schedule is working",
+    advice: `${retention}% of mature cards recalled against a ${target}% target — which is exactly what FSRS is steering for. Nothing to change.`,
+  };
+}

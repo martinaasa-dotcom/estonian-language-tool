@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, LogOut, Plus } from "lucide-react";
+import Link from "next/link";
+import { Check, Copy, LogOut, Plus, Printer } from "lucide-react";
 import { archiveClassroom, assignUnit, createClassroom, joinClassroom, leaveClassroom } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { CODE_LENGTH } from "@/lib/classroom/code";
@@ -233,6 +234,14 @@ export function AssignUnit({ classroomId, units }: {
       >
         {pending ? "Sending…" : "Assign"}
       </Button>
+      {/* The same unit, on paper. A class that meets in a room wants both. */}
+      <Link
+        href={`/learn/${unitId}/worksheet`}
+        className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition-all hover:-translate-y-px"
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
+      >
+        <Printer size={14} aria-hidden /> Worksheet
+      </Link>
       {message && <p role="status" className="w-full text-[12.5px]" style={{ color: "var(--ink-3)" }}>{message}</p>}
     </div>
   );
