@@ -124,24 +124,39 @@ export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number
   if (phase === "ready") {
     return (
       <div className="mx-auto max-w-xl px-5 py-16 text-center md:px-10">
-        <Timer size={34} className="mx-auto" aria-hidden style={{ color: "var(--accent)" }} />
-        <h1 className="est mt-3 text-[30px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-          Match
-        </h1>
-        <p className="mx-auto mt-2 max-w-[46ch] text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-          {pairs.length} pairs. Tap an Estonian word, then its meaning — as fast as you can. Pairs you
-          get first time count as a clean review.
-        </p>
-        {best > 0 && (
-          <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>Personal best: {best}s</p>
-        )}
-        <Button
-          variant="primary"
-          className="mt-6 px-8 py-3"
-          onClick={() => { startedAt.current = Date.now(); setPhase("playing"); }}
-        >
-          Start
-        </Button>
+        <div className="pop-in rounded-[var(--r-xl)] px-6 py-12" style={{ background: "var(--mint-soft)" }}>
+          <span
+            className="float mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+            style={{ background: "var(--surface)", color: "var(--mint)", boxShadow: "var(--shadow)" }}
+          >
+            <Timer size={30} aria-hidden />
+          </span>
+          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+            Match
+          </h1>
+          <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            {pairs.length} pairs. Tap an Estonian word, then its meaning — as fast as you can. Pairs you
+            get first time count as a clean review.
+          </p>
+          {best > 0 && (
+            <p
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold"
+              style={{ background: "var(--surface)", color: "var(--mint)" }}
+            >
+              <Trophy size={14} aria-hidden /> Personal best: {best}s
+            </p>
+          )}
+          <div className="mt-7">
+            <Button
+              variant="primary"
+              size="lg"
+              className="px-10"
+              onClick={() => { startedAt.current = Date.now(); setPhase("playing"); }}
+            >
+              Start the clock
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -159,7 +174,7 @@ export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number
           {isNewBest ? "New personal best." : best > 0 ? `Best so far: ${best}s.` : "First round recorded."}
         </p>
         <div
-          className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
+          className="mt-8 grid grid-cols-3 gap-6 rounded-[var(--r-lg)] border p-6"
           style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
         >
           <Stat value={`${seconds}s`} label="Time" tone="var(--accent)" />
@@ -179,12 +194,17 @@ export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="End round" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
-          <X size={19} aria-hidden />
+        <Link
+          href="/"
+          aria-label="End round"
+          className="press flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
+          style={{ color: "var(--ink-3)" }}
+        >
+          <X size={18} aria-hidden />
         </Link>
         <div
-          className="tnum flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
-          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+          className="tnum flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[14px] font-bold"
+          style={{ background: "var(--mint-soft)", color: "var(--mint)" }}
         >
           <Timer size={14} aria-hidden /> {seconds}s
         </div>
@@ -206,14 +226,27 @@ export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number
               disabled={isMatched}
               lang={tile.side === "et" ? "et" : "en"}
               aria-pressed={isSelected}
-              className={`${tile.side === "et" ? "est " : ""}flex min-h-[76px] items-center justify-center rounded-lg border px-3 py-3 text-center text-[15px] transition-all`}
+              className={`${tile.side === "et" ? "est text-[17px] font-semibold " : "text-[15px] "}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-all hover:-translate-y-0.5 disabled:hover:translate-y-0`}
               style={{
-                borderColor: isWrong ? "var(--again)" : isSelected ? "var(--accent)" : "var(--rule)",
                 background: isMatched
-                  ? "var(--good-soft)"
-                  : isWrong ? "var(--again-soft)" : isSelected ? "var(--accent-soft)" : "var(--surface)",
-                color: isMatched ? "var(--good)" : isWrong ? "var(--again)" : "var(--ink)",
-                opacity: isMatched ? 0.45 : 1,
+                  ? "var(--mint-soft)"
+                  : isWrong
+                    ? "var(--again-soft)"
+                    : isSelected
+                      ? "var(--accent)"
+                      : tile.side === "et" ? "var(--accent-soft)" : "var(--surface)",
+                color: isMatched
+                  ? "var(--good)"
+                  : isWrong
+                    ? "var(--again)"
+                    : isSelected
+                      ? "var(--accent-ink)"
+                      : tile.side === "et" ? "var(--accent-deep)" : "var(--ink)",
+                boxShadow: isMatched || isSelected ? "none" : "var(--shadow-sm)",
+                outline: isWrong ? "2px solid var(--again)" : "none",
+                outlineOffset: -2,
+                opacity: isMatched ? 0.5 : 1,
+                transform: isSelected ? "scale(0.97)" : undefined,
               }}
             >
               {tile.text}
@@ -223,7 +256,8 @@ export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number
       </div>
 
       <p className="mt-5 text-center text-[12px]" style={{ color: "var(--ink-3)" }}>
-        Estonian on one tile, its meaning on another. Wrong taps just cost you time.
+        <span style={{ color: "var(--accent-deep)" }}>Estonian</span> on the lilac tiles, its meaning
+        on the white ones. Wrong taps just cost you time.
       </p>
     </div>
   );

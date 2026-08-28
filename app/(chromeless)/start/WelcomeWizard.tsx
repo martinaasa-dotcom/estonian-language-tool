@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { completeOnboarding, skipOnboarding } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { Meter } from "@/components/ui";
 
@@ -85,12 +86,24 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-5 py-10 md:px-8">
-      <div className="mb-8">
-        <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-          Step {step + 1} of {STEPS.length} · {STEPS[step]}
-        </p>
-        <Meter pct={((step + 1) / STEPS.length) * 100} label={`Setup progress, step ${step + 1} of ${STEPS.length}`} />
+    <div className="relative flex min-h-screen flex-col justify-center px-5 py-10 md:px-8">
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <span className="wash" style={{ background: "var(--wash-1)", width: 560, height: 560, top: -220, left: -160 }} />
+        <span className="wash" style={{ background: "var(--wash-2)", width: 480, height: 480, bottom: -240, right: -160, opacity: 0.6 }} />
+      </div>
+
+      <div
+        className="pop-in relative mx-auto w-full max-w-2xl rounded-[var(--r-xl)] border p-7 md:p-10"
+        style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-lg)" }}
+      >
+      <div className="mb-8 flex items-center gap-4">
+        <Mascot size={44} className="float shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>
+            Step {step + 1} of {STEPS.length} · {STEPS[step]}
+          </p>
+          <Meter pct={((step + 1) / STEPS.length) * 100} label={`Setup progress, step ${step + 1} of ${STEPS.length}`} />
+        </div>
       </div>
 
       {step === 0 && (
@@ -112,7 +125,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             onChange={(e) => setName(e.target.value)}
             maxLength={32}
             placeholder="Your name or a nickname"
-            className="mt-2 w-full rounded-md border px-4 py-3 text-[16px]"
+            className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3.5 text-[16px] outline-none"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           />
           <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
@@ -137,7 +150,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
                 type="button"
                 onClick={() => chooseLevel(l.key)}
                 aria-pressed={level === l.key}
-                className="flex items-center gap-4 rounded-lg border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
+                className="flex items-center gap-4 rounded-[var(--r-lg)] border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
                 style={{
                   borderColor: level === l.key ? "var(--accent)" : "var(--rule)",
                   background: level === l.key ? "var(--accent-soft)" : "var(--surface)",
@@ -171,7 +184,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
                 type="button"
                 onClick={() => setGoal(g.value)}
                 aria-pressed={goal === g.value}
-                className="rounded-lg border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
+                className="rounded-[var(--r-lg)] border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
                 style={{
                   borderColor: goal === g.value ? "var(--accent)" : "var(--rule)",
                   background: goal === g.value ? "var(--accent-soft)" : "var(--surface)",
@@ -206,7 +219,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
                   type="button"
                   onClick={() => toggleUnit(u.id)}
                   aria-pressed={on}
-                  className="flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-opacity hover:opacity-80"
+                  className="flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left transition-opacity hover:opacity-80"
                   style={{
                     borderColor: on ? "var(--accent)" : "var(--rule)",
                     background: on ? "var(--accent-soft)" : "var(--surface)",
@@ -243,28 +256,32 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
         {step < STEPS.length - 1 ? (
           <Button
             variant="primary"
-            className="ml-auto px-6 py-2.5"
+            size="lg"
+            className="ml-auto"
             onClick={() => setStep((s) => s + 1)}
             disabled={pending || (step === 0 && name.trim().length === 0)}
           >
             Continue <ArrowRight size={15} aria-hidden />
           </Button>
         ) : (
-          <Button variant="primary" className="ml-auto px-6 py-2.5" onClick={finish} disabled={pending}>
+          <Button variant="primary" size="lg" className="ml-auto" onClick={finish} disabled={pending}>
             {pending ? <><Loader2 size={15} className="animate-spin" aria-hidden /> Building your deck…</> : <>Start learning <ArrowRight size={15} aria-hidden /></>}
           </Button>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={skip}
-        disabled={pending}
-        className="mt-6 self-center text-[13px] underline"
-        style={{ color: "var(--ink-3)" }}
-      >
-        Skip setup and go straight to the dictionary
-      </button>
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={skip}
+          disabled={pending}
+          className="text-[13px] underline underline-offset-2 transition-opacity hover:opacity-70"
+          style={{ color: "var(--ink-3)" }}
+        >
+          Skip setup and go straight to the dictionary
+        </button>
+      </div>
+      </div>
     </div>
   );
 }

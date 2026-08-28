@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight, BookOpen, Check, Download, Flame, Headphones, Minus, Sparkles, Timer, Volume2, WifiOff,
+  ArrowRight, BookOpen, ChartNoAxesColumn, Check, Download, Flame, Headphones, Minus,
+  Map as MapIcon, Sparkles, Timer, Trophy, Volume2, WifiOff,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { buildCaseTable } from "@/lib/estonian/derive";
@@ -309,7 +310,7 @@ function Features() {
         <div className="mx-auto max-w-[44ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush)" }}>What you actually get</p>
           <h2 className="est mt-3 text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
-            Six things, each doing one job well
+            Eight things, each doing one job well
           </h2>
         </div>
       </Reveal>
@@ -317,27 +318,26 @@ function Features() {
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <Reveal>
           <Feature
+            tone="mint"
+            icon={<MapIcon size={18} aria-hidden />}
+            title="A path from A1 to C1"
+            body="Eighteen units, each a sitting's worth of words. Adding one builds real cards — full paradigm, audio, both directions — in a single click."
+          />
+        </Reveal>
+        <Reveal>
+          <Feature
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
             title="A dictionary that shows the whole word"
             body="Search an inflected form you met in class — toas, lugesin — and it finds the word, tells you which form you typed, and lays out the full paradigm with gradation marked."
-            className="md:min-h-[240px]"
           />
         </Reveal>
         <Reveal>
           <Feature
-            tone="mint"
+            tone="butter"
             icon={<Flame size={18} aria-hidden />}
             title="Repetition that knows when to stop"
             body="FSRS schedules every card for the day you were about to forget it — then tells you you're done. New cards are capped, so week three never becomes an hour."
-          />
-        </Reveal>
-        <Reveal>
-          <Feature
-            tone="sky"
-            icon={<Volume2 size={18} aria-hidden />}
-            title="Hear every single form"
-            body="Estonian neural speech from the University of Tartu, on every word and every form, at normal or slow speed. No key, no account, no per-word charge."
           />
         </Reveal>
 
@@ -366,19 +366,44 @@ function Features() {
         <Reveal>
           <div className="flex h-full flex-col gap-4">
             <Feature
-              tone="butter"
-              icon={<Timer size={18} aria-hidden />}
-              title="A 60-second sprint"
-              body="For the days you have one minute. Weak and overdue cards only, scored, with a personal best to beat."
+              tone="sky"
+              icon={<Volume2 size={18} aria-hidden />}
+              title="Hear every single form"
+              body="Estonian neural speech from the University of Tartu, on every word and every form, at normal or slow speed. No key, no per-word charge."
             />
             <Feature
               tone="peach"
-              icon={<WifiOff size={18} aria-hidden />}
-              title="Yours, and portable"
-              body="Reviewing works offline, and your whole history exports as JSON whenever you want it."
-              icon2={<Download size={15} aria-hidden />}
+              icon={<Timer size={18} aria-hidden />}
+              title="Four ways to practise"
+              body="A 60-second sprint, a match round, listening, and a drill for whichever case you keep missing. All of it feeds the same schedule."
             />
           </div>
+        </Reveal>
+
+        <Reveal>
+          <Feature
+            tone="accent"
+            icon={<ChartNoAxesColumn size={18} aria-hidden />}
+            title="Progress you can audit"
+            body="A heatmap of every day you showed up, a forecast of what is coming, and accuracy per grammatical case. All computed from the review log — there is no score to inflate."
+          />
+        </Reveal>
+        <Reveal>
+          <Feature
+            tone="butter"
+            icon={<Trophy size={18} aria-hidden />}
+            title="XP, quests and a streak"
+            body="Ten levels with Estonian names, three quests a day, and streak shields for the evening life gets in the way. Motivation that is earned, never bought."
+          />
+        </Reveal>
+        <Reveal>
+          <Feature
+            tone="mint"
+            icon={<WifiOff size={18} aria-hidden />}
+            title="Yours, and portable"
+            body="Reviewing works on a train with no signal — grades queue up and send themselves later. Your whole history exports as JSON whenever you want it."
+            icon2={<Download size={15} aria-hidden />}
+          />
         </Reveal>
       </div>
     </section>
@@ -417,13 +442,13 @@ function Feature({ tone, icon, icon2, title, body, className = "" }: {
 
 const STEPS = [
   {
-    title: "Look a word up",
-    body: "Type anything — Estonian, English, or a form you half-remember from class. You get the paradigm, the gradation pattern and audio.",
+    title: "Pick a unit, or look a word up",
+    body: "Eighteen units from greetings to argument, or type anything — Estonian, English, or a form you half-remember from class.",
     tone: "sky",
   },
   {
     title: "Add it in one click",
-    body: "Two cards by default, one each direction. Add a case-form or gradation card when a word deserves the extra attention.",
+    body: "Real cards with the full paradigm and audio, both directions. Add a case-form or gradation card when a word deserves the extra attention.",
     tone: "accent",
   },
   {
@@ -480,8 +505,8 @@ function Numbers({ stats }: { stats: { words: number; forms: number } }) {
   const items = [
     [stats.words.toLocaleString("en-GB"), "words, hand-checked", "A1 up into C1"],
     [stats.forms.toLocaleString("en-GB"), "stored forms", "never generated"],
+    ["18", "units, A1 to C1", "greetings to argument"],
     ["14", "cases covered", "3 memorised, 11 derived"],
-    ["5", "card types", "including case and gradation"],
   ] as const;
 
   return (
@@ -513,6 +538,7 @@ const ROWS = [
   ["Tells you when to stop for the day", true, false],
   ["Explains why, not just wrong", true, false],
   ["Your history is yours to export", true, false],
+  ["Works with no signal at all", true, false],
 ] as const;
 
 function Comparison() {

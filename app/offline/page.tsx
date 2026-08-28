@@ -19,7 +19,7 @@ export default function OfflinePage() {
       </p>
       <a
         href="/review"
-        className="rounded-md border px-4 py-2 text-[14px] font-medium"
+        className="rounded-[var(--r)] border px-4 py-2 text-[14px] font-medium"
         style={{ borderColor: "var(--accent)", background: "var(--accent)", color: "var(--accent-ink)" }}
       >
         Go to review

@@ -39,7 +39,7 @@ export function ReviewModePanel({ current }: { current: ReviewMode }) {
           disabled={pending}
           onClick={() => pick(m.value)}
           aria-pressed={mode === m.value}
-          className="rounded-lg border p-4 text-left transition-opacity hover:opacity-85"
+          className="rounded-[var(--r-lg)] border p-4 text-left transition-opacity hover:opacity-85"
           style={{
             borderColor: mode === m.value ? "var(--accent)" : "var(--rule)",
             background: mode === m.value ? "var(--accent-soft)" : "var(--surface)",
@@ -90,7 +90,7 @@ export function LeaderboardPanel({ currentName, optedIn }: { currentName: string
           maxLength={32}
           onChange={(e) => setName(e.target.value)}
           placeholder="Whatever your class calls you"
-          className="min-w-0 flex-1 rounded-md border px-3.5 py-2.5 text-[15px]"
+          className="min-w-0 flex-1 rounded-[var(--r)] border px-3.5 py-2.5 text-[15px]"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
         <Button

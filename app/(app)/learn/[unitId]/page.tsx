@@ -97,7 +97,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
               return (
                 <li
                   key={l.id}
-                  className="flex items-center gap-3 rounded-lg border px-4 py-2.5"
+                  className="flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-2.5"
                   style={{
                     borderColor: "var(--rule)",
                     background: known ? "var(--good-soft)" : "var(--surface)",

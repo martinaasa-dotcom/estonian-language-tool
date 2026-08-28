@@ -29,7 +29,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         works; if it keeps happening, the message below is the useful part.
       </p>
       <code
-        className="max-w-full overflow-x-auto rounded-md px-3 py-2 text-left text-[12px]"
+        className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-[12px]"
         style={{ background: "var(--raised)", color: "var(--ink-2)" }}
       >
         {error.message || "Unknown error"}

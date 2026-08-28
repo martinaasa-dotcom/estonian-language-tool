@@ -36,6 +36,7 @@ export default async function PracticePage() {
     {
       href: "/review",
       icon: GraduationCap,
+      tone: "accent",
       title: "Review",
       subtitle: "The daily loop",
       body: "Everything due, scheduled by FSRS. Type the answer or flip the card — your choice in Settings.",
@@ -47,6 +48,7 @@ export default async function PracticePage() {
     {
       href: "/review/sprint",
       icon: Zap,
+      tone: "butter",
       title: "Case Sprint",
       subtitle: "60 seconds",
       body: "As many cards as you can in a minute, weighted towards the ones you keep slipping on.",
@@ -56,6 +58,7 @@ export default async function PracticePage() {
     {
       href: "/review/match",
       icon: Grid2x2,
+      tone: "mint",
       title: "Match",
       subtitle: "Eight pairs",
       body: "Pair each word with its meaning against the clock. Clean pairs count as a review.",
@@ -65,6 +68,7 @@ export default async function PracticePage() {
     {
       href: "/review/listening",
       icon: Headphones,
+      tone: "sky",
       title: "Listening",
       subtitle: "Ear first",
       body: "Hear an Estonian word and pick the meaning — the one skill reading practice never builds.",
@@ -91,25 +95,25 @@ export default async function PracticePage() {
               <Link
                 key={m.href}
                 href={m.href}
-                className="flex flex-col gap-2 rounded-lg border p-5 transition-opacity hover:opacity-85"
+                className="lift flex flex-col gap-2 rounded-[var(--r-lg)] border p-5"
                 style={{
                   borderColor: m.primary ? "var(--accent)" : "var(--rule)",
                   background: "var(--surface)",
-                  boxShadow: "var(--shadow)",
+                  boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <span className="flex items-center gap-3">
                   <span
-                    className="flex h-10 w-10 items-center justify-center rounded-full"
+                    className="flex h-11 w-11 items-center justify-center rounded-full"
                     style={{
-                      background: m.primary ? "var(--accent)" : "var(--accent-soft)",
-                      color: m.primary ? "var(--accent-ink)" : "var(--accent)",
+                      background: `var(--${m.tone})`,
+                      color: "var(--surface)",
                     }}
                   >
                     <m.icon size={19} aria-hidden />
                   </span>
                   <span>
-                    <span className="est block text-[18px] font-semibold" style={{ color: "var(--ink)" }}>
+                    <span className="est block text-[19px] font-bold" style={{ color: "var(--ink)" }}>
                       {m.title}
                     </span>
                     <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>{m.subtitle}</span>
@@ -137,7 +141,7 @@ export default async function PracticePage() {
                     <li key={c.grammCase}>
                       <Link
                         href={`/review?case=${c.grammCase}`}
-                        className="flex items-center gap-3 rounded-md px-2 py-1.5 transition-opacity hover:opacity-75"
+                        className="flex items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
                         aria-label={`Drill the ${c.grammCase.toLowerCase()}, currently ${c.accuracy} percent over ${c.total} reviews`}
                       >
                         <Target size={15} aria-hidden style={{ color: "var(--ink-3)" }} />

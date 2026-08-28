@@ -35,7 +35,7 @@ export default async function LearnPage() {
       lead="The built-in dictionary, arranged into units. Each one is a sitting's worth of words, and adding a unit builds real flashcards with audio and full paradigms."
     >
       <div
-        className="mb-7 flex flex-wrap items-center gap-5 rounded-lg border p-5"
+        className="mb-7 flex flex-wrap items-center gap-5 rounded-[var(--r-lg)] border p-5"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
       >
         <Ring pct={overall} size={72} label={`${overall}% of the path learned`}>
@@ -72,19 +72,20 @@ export default async function LearnPage() {
           return (
             <li
               key={u.unit.id}
-              className="relative flex flex-wrap items-center gap-4 rounded-lg border p-4 sm:pl-5"
+              className={`relative flex flex-wrap items-center gap-4 rounded-[var(--r-lg)] border p-4 sm:pl-5 ${locked ? "" : "lift"}`}
               style={{
-                borderColor: complete ? "var(--good)" : u.state === "learning" ? "var(--accent)" : "var(--rule)",
+                borderColor: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--rule)",
                 background: "var(--surface)",
-                opacity: locked ? 0.6 : 1,
+                boxShadow: "var(--shadow-sm)",
+                opacity: locked ? 0.55 : 1,
               }}
             >
               <span
                 className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                 style={{
-                  background: complete ? "var(--good-soft)" : u.state === "learning" ? "var(--accent-soft)" : "var(--raised)",
-                  color: complete ? "var(--good)" : u.state === "learning" ? "var(--accent)" : "var(--ink-3)",
-                  outline: "3px solid var(--surface)",
+                  background: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--raised)",
+                  color: complete || u.state === "learning" ? "var(--surface)" : "var(--ink-3)",
+                  outline: "4px solid var(--ground)",
                 }}
               >
                 {locked ? <Lock size={18} aria-hidden /> : complete ? <Check size={20} aria-hidden /> : <Icon size={19} aria-hidden />}
@@ -95,13 +96,13 @@ export default async function LearnPage() {
                   <Link
                     href={`/learn/${u.unit.id}`}
                     lang="et"
-                    className="est text-[18px] font-semibold hover:underline"
+                    className="est text-[19px] font-bold hover:underline"
                     style={{ color: "var(--ink)" }}
                   >
                     {u.unit.title}
                   </Link>
                   <span className="text-[13px]" style={{ color: "var(--ink-3)" }}>{u.unit.subtitle}</span>
-                  <Chip tone={complete ? "good" : "neutral"}>{u.unit.cefr}</Chip>
+                  <Chip tone={complete ? "good" : u.state === "learning" ? "accent" : "sky"}>{u.unit.cefr}</Chip>
                 </div>
                 <p className="mt-1 max-w-[62ch] text-[13.5px]" style={{ color: "var(--ink-2)" }}>{u.unit.blurb}</p>
                 <div className="mt-2.5 flex items-center gap-3">
@@ -110,7 +111,7 @@ export default async function LearnPage() {
                       pct={u.pct}
                       label={`${u.unit.title}: ${u.known} of ${u.available} words known`}
                       tone={complete ? "var(--good)" : "var(--accent)"}
-                      height={5}
+                      height={7}
                     />
                   </span>
                   <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>

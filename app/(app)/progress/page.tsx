@@ -279,7 +279,7 @@ export default async function ProgressPage() {
                 {leaderboard.map((row, i) => (
                   <li
                     key={row.ownerId}
-                    className="flex items-center gap-3 rounded-md px-3 py-2"
+                    className="flex items-center gap-3 rounded-[var(--r)] px-3 py-2"
                     style={{
                       background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
                       color: row.ownerId === ownerId ? "var(--accent)" : "var(--ink-2)",

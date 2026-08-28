@@ -488,10 +488,15 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                   key={choice}
                   type="button"
                   onClick={() => pickChoice(choice)}
-                  className="flex items-center gap-3 rounded-md border px-4 py-3 text-left text-[15px] transition-opacity hover:opacity-80"
-                  style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+                  className="press flex items-center gap-3 rounded-[var(--r)] px-4 py-3.5 text-left text-[15px] font-medium transition-all hover:-translate-y-0.5"
+                  style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow-sm)" }}
                 >
-                  <span className="tnum text-[11px]" style={{ color: "var(--ink-3)" }}>{i + 1}</span>
+                  <span
+                    className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                    style={{ background: "var(--surface)", color: "var(--accent-deep)" }}
+                  >
+                    {i + 1}
+                  </span>
                   {choice}
                 </button>
               ))}
@@ -506,11 +511,12 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                 return (
                   <div
                     key={choice}
-                    className="rounded-md border px-4 py-3 text-left text-[15px]"
+                    className="rounded-[var(--r)] px-4 py-3.5 text-left text-[15px] font-medium"
                     style={{
-                      borderColor: isAnswer ? "var(--good)" : picked ? "var(--again)" : "var(--rule)",
-                      background: isAnswer ? "var(--good-soft)" : picked ? "var(--again-soft)" : "var(--surface)",
+                      background: isAnswer ? "var(--good-soft)" : picked ? "var(--again-soft)" : "var(--raised)",
                       color: isAnswer ? "var(--good)" : picked ? "var(--again)" : "var(--ink-3)",
+                      outline: isAnswer ? "2px solid var(--good)" : "none",
+                      outlineOffset: -2,
                     }}
                   >
                     {choice}
