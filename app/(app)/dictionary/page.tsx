@@ -39,7 +39,7 @@ export default async function DictionaryPage({
   const entry = hits[0] ? await loadEntry(hits[0].id, ownerId) : null;
   const matchedAs = hits[0]?.matchedAs ?? null;
 
-  const [total, suggestions] = await Promise.all([
+  const [total, suggestions, starred] = await Promise.all([
     prisma.lexeme.count(),
     q ? Promise.resolve([]) : prisma.lexeme.findMany({
       where: { pos: { in: ["NOUN", "VERB"] } },
@@ -47,6 +47,14 @@ export default async function DictionaryPage({
       take: 12,
       skip: Math.floor(Date.now() / 86400000) % 40,
       select: { lemma: true },
+    }),
+    // Starred words are only worth fetching for the landing view, which is the
+    // one place they can be shown; a star that is never surfaced is a dead feature.
+    q ? Promise.resolve([]) : prisma.starredWord.findMany({
+      where: { ownerId },
+      orderBy: { createdAt: "desc" },
+      take: 24,
+      select: { lexeme: { select: { lemma: true, translation: true } } },
     }),
   ]);
 
@@ -66,6 +74,7 @@ export default async function DictionaryPage({
         entry={entry}
         matchedAs={matchedAs}
         suggestions={suggestions.map((s) => s.lemma)}
+        starred={starred.map((s) => ({ lemma: s.lexeme.lemma, translation: s.lexeme.translation }))}
       />
     </Page>
   );
@@ -77,6 +86,7 @@ async function loadEntry(id: string, ownerId: string): Promise<EntryView | null>
     include: {
       forms: { orderBy: { orderIndex: "asc" } },
       cards: { where: { ownerId }, select: { id: true } },
+      stars: { where: { ownerId }, select: { ownerId: true } },
     },
   });
   if (!lex) return null;
@@ -92,6 +102,7 @@ async function loadEntry(id: string, ownerId: string): Promise<EntryView | null>
     notes: lex.notes,
     provenance: lex.provenance,
     inDeck: lex.cards.length > 0,
+    starred: lex.stars.length > 0,
     forms: lex.forms.map((f) => ({
       formType: f.formType,
       value: f.value,

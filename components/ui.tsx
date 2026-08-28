@@ -176,25 +176,83 @@ export function StatTile({ value, label, tone = "accent", icon, hint }: {
   );
 }
 
-/** A progress bar. Rounded, gradient-filled, and always labelled for a screen reader. */
-export function Meter({ value, max = 100, label, tone = "var(--accent)", height = 8 }: {
-  value: number; max?: number; label: string; tone?: string; height?: number;
+/**
+ * A progress ring. Used for the daily goal, unit progress and level progress,
+ * which all want the same shape — a conic gradient rather than an SVG arc,
+ * because it animates cheaply and needs no viewBox arithmetic.
+ */
+export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "var(--accent)" }: {
+  pct: number;
+  size?: number;
+  thickness?: number;
+  /** Screen-reader text. Required: a bare ring says nothing without it. */
+  label: string;
+  children?: ReactNode;
+  tone?: string;
 }) {
-  const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <div
+      className="relative flex shrink-0 items-center justify-center rounded-full"
+      style={{ width: size, height: size, background: `conic-gradient(${tone} ${clamped * 3.6}deg, var(--raised) 0deg)` }}
+      role="img"
+      aria-label={label}
+    >
+      <div
+        className="flex items-center justify-center rounded-full"
+        style={{ width: size - thickness * 2, height: size - thickness * 2, background: "var(--surface)" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** A horizontal progress bar with an accessible value. */
+export function Meter({ pct, label, tone = "var(--accent)", height = 8 }: {
+  pct: number; label: string; tone?: string; height?: number;
+}) {
+  const clamped = Math.max(0, Math.min(100, pct));
   return (
     <div
       className="w-full overflow-hidden rounded-full"
       style={{ background: "var(--raised)", height }}
       role="progressbar"
-      aria-valuenow={Math.round(value)}
-      aria-valuemin={0}
-      aria-valuemax={max}
       aria-label={label}
+      aria-valuenow={Math.round(clamped)}
+      aria-valuemin={0}
+      aria-valuemax={100}
     >
       <div
         className="h-full rounded-full transition-all duration-500"
-        style={{ width: `${pct}%`, background: tone }}
+        style={{ width: `${clamped}%`, background: tone }}
       />
     </div>
+  );
+}
+
+/** A short, non-blocking note: a tip, a warning, a confirmation. */
+export function Note({ tone = "neutral", children }: {
+  tone?: keyof typeof TONES; children: ReactNode;
+}) {
+  const [bg, fg] = TONES[tone];
+  return (
+    <p className="rounded-[var(--r)] px-4 py-3 text-[13.5px]" style={{ background: bg, color: fg }}>
+      {children}
+    </p>
+  );
+}
+
+/**
+ * A loading placeholder with the shape of the thing it stands in for.
+ * Every route gets one — a blank screen while data loads reads as a broken app.
+ */
+export function Skeleton({ className = "", height = 16 }: { className?: string; height?: number }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[var(--r)] ${className}`}
+      style={{ height, background: "var(--raised)" }}
+      aria-hidden
+    />
   );
 }

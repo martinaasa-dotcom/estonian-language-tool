@@ -7,6 +7,8 @@
  * does: a badge is either honestly earned from real review history or it isn't).
  */
 
+import { dayKey, shiftDay } from "@/lib/time/day";
+
 export interface Badge {
   key: string;
   title: string;
@@ -31,6 +33,14 @@ export const BADGES: Badge[] = [
   { key: "case_master", title: "Käänded selged", description: "Reach 90% accuracy on a grammatical case, with at least 10 reviews of it.", icon: "Target" },
   { key: "perfect_session", title: "Laitmatu seanss", description: "Finish a review session of 10+ cards with 100% recalled.", icon: "Trophy" },
   { key: "sprint_ace", title: "Kiire keel", description: "Score 15 or more in one 60-second Case Sprint.", icon: "Zap" },
+  { key: "match_ace", title: "Paarid paigas", description: "Clear a match round of 8 pairs in under 45 seconds.", icon: "Grid2x2" },
+  { key: "unit_done", title: "Esimene peatükk", description: "Finish a unit on the learning path.", icon: "Map" },
+  { key: "units_5", title: "Viis peatükki", description: "Finish five units on the learning path.", icon: "Map" },
+  { key: "level_5", title: "Viies tase", description: "Reach level 5.", icon: "TrendingUp" },
+  { key: "level_10", title: "Kümnes tase", description: "Reach level 10.", icon: "TrendingUp" },
+  { key: "all_quests", title: "Päev tehtud", description: "Finish all three daily quests in one day.", icon: "CheckCheck" },
+  { key: "early_bird", title: "Varajane lind", description: "Review before 7am.", icon: "Sunrise" },
+  { key: "night_owl", title: "Öökull", description: "Review after 11pm.", icon: "Moon" },
 ];
 
 const BADGE_BY_KEY = new Map(BADGES.map((b) => [b.key, b]));
@@ -47,8 +57,18 @@ export interface BadgeStats {
   /** The single highest-accuracy grammatical case with at least 10 reviews, if any. */
   bestCaseAccuracy: { grammCase: string; accuracy: number } | null;
   sprintBest: number;
+  /** Best (lowest) time in seconds for a completed match round, 0 if never played. */
+  matchBestSeconds: number;
+  /** Units on the learning path whose every word has reached the Known state. */
+  unitsCompleted: number;
+  /** Current XP level. */
+  level: number;
+  /** Daily quests finished today. */
+  questsDoneToday: number;
   /** The session that just ended, if this check runs at the end of one. */
   session?: { count: number; accuracy: number };
+  /** Local hour a review happened at, when this check runs right after one. */
+  reviewHour?: number;
 }
 
 /** Every badge key whose condition `stats` currently satisfies. */
@@ -69,20 +89,33 @@ export function earnedBadgeKeys(stats: BadgeStats): string[] {
   if (stats.bestCaseAccuracy && stats.bestCaseAccuracy.accuracy >= 90) earned.push("case_master");
   if (stats.session && stats.session.count >= 10 && stats.session.accuracy >= 100) earned.push("perfect_session");
   if (stats.sprintBest >= 15) earned.push("sprint_ace");
+  if (stats.matchBestSeconds > 0 && stats.matchBestSeconds <= 45) earned.push("match_ace");
+  if (stats.unitsCompleted >= 1) earned.push("unit_done");
+  if (stats.unitsCompleted >= 5) earned.push("units_5");
+  if (stats.level >= 5) earned.push("level_5");
+  if (stats.level >= 10) earned.push("level_10");
+  if (stats.questsDoneToday >= 3) earned.push("all_quests");
+  if (stats.reviewHour !== undefined && stats.reviewHour < 7) earned.push("early_bird");
+  if (stats.reviewHour !== undefined && stats.reviewHour >= 23) earned.push("night_owl");
   return earned;
 }
 
-/** Consecutive-day streak from review timestamps, counting from today or yesterday. */
-export function computeStreak(dates: Date[]): number {
+/**
+ * Consecutive-day streak from review timestamps, counting from today or yesterday.
+ *
+ * Days are the learner's own calendar days (lib/time/day.ts), not UTC ones — a
+ * streak that breaks at the wrong midnight is worse than no streak at all.
+ */
+export function computeStreak(dates: Date[], now: Date = new Date()): number {
   if (dates.length === 0) return 0;
-  const days = new Set(dates.map((d) => d.toISOString().slice(0, 10)));
+  const days = new Set(dates.map((d) => dayKey(d)));
   let streak = 0;
-  const cursor = new Date();
+  let cursor = now;
   // Today not yet reviewed does not break a streak that is alive from yesterday.
-  if (!days.has(cursor.toISOString().slice(0, 10))) cursor.setDate(cursor.getDate() - 1);
-  while (days.has(cursor.toISOString().slice(0, 10))) {
+  if (!days.has(dayKey(cursor))) cursor = shiftDay(cursor, 1);
+  while (days.has(dayKey(cursor))) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = shiftDay(cursor, 1);
   }
   return streak;
 }
@@ -112,8 +145,9 @@ export function computeStreakWithShields(
   reviewDates: Date[],
   shieldsAvailable: number,
   previouslyShieldedDates: string[] = [],
+  now: Date = new Date(),
 ): StreakShieldResult {
-  const reviewed = new Set(reviewDates.map((d) => d.toISOString().slice(0, 10)));
+  const reviewed = new Set(reviewDates.map((d) => dayKey(d)));
   const shielded = new Set(previouslyShieldedDates);
   const newlyShieldedDates: string[] = [];
   let shieldsLeft = shieldsAvailable;
@@ -123,13 +157,13 @@ export function computeStreakWithShields(
   const known = [...reviewed, ...shielded];
   const earliestKnownDay = known.length > 0 ? known.reduce((a, b) => (a < b ? a : b)) : null;
 
-  const cursor = new Date();
-  const today = cursor.toISOString().slice(0, 10);
+  let cursor = now;
+  const today = dayKey(cursor);
   // Today not yet reviewed does not break a streak that is alive from yesterday.
-  if (!reviewed.has(today) && !shielded.has(today)) cursor.setDate(cursor.getDate() - 1);
+  if (!reviewed.has(today) && !shielded.has(today)) cursor = shiftDay(cursor, 1);
 
   for (;;) {
-    const day = cursor.toISOString().slice(0, 10);
+    const day = dayKey(cursor);
     if (earliestKnownDay === null || day < earliestKnownDay) break;
     if (reviewed.has(day) || shielded.has(day)) {
       streak++;
@@ -140,7 +174,7 @@ export function computeStreakWithShields(
     } else {
       break;
     }
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = shiftDay(cursor, 1);
   }
 
   return { streak, newlyShieldedDates, shieldsRemaining: shieldsLeft };

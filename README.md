@@ -1,29 +1,57 @@
 # Kodukeel — Estonian learning dashboard
 
-*Kodukeel* — "home language". A personal Estonian study workspace: a dictionary that shows the forms
-you actually have to memorise, spaced-repetition flashcards, an AI grammar tutor, and homework
-tracking. Everything runs on your own computer. No account, no bill, no data leaving the machine.
+*Kodukeel* — "home language". An Estonian study workspace built around the thing that actually makes
+the language hard: the cases. A dictionary that answers with the whole paradigm, a course you can
+work through, flashcards scheduled by FSRS, four practice modes, and a grammar tutor that is never
+allowed to invent an Estonian form.
 
-> **Status: working MVP.** The daily loop is complete — look a word up, add it to your deck, review
-> it, ask about the grammar. Built from the plan in `docs/`; `docs/13-mvp-status.md` says what is in
-> and what is deliberately not.
+> **Status: usable by someone who is not you.** First run walks a new learner through a setup wizard
+> and builds them a real deck; the daily loop — path, review, practice, progress — is complete, works
+> on a phone, installs as an app and keeps working with the network off. Built from the plan in
+> `docs/`; `docs/13-mvp-status.md` says what is in and what is deliberately not.
 
 ## Running it
 
-You need [Node.js](https://nodejs.org) 20 or newer and a Postgres database — the app is hosted (see
-"Deploying it as a real website" below), so local dev points at the same kind of database rather than
-a zero-setup local file. The free tier of [supabase.com](https://supabase.com) works fine for this;
-use a separate Supabase project from production if you'd rather not develop against live data.
+You need [Node.js](https://nodejs.org) 20 or newer and a Postgres database.
 
 ```bash
 npm install       # fetches the libraries
-npm run setup     # copies .env.example to .env — fill in DATABASE_URL/DIRECT_URL first, then re-run
+npm run setup     # writes .env, creates the schema, loads the built-in dictionary
 npm run dev       # starts the app
 ```
 
-Open **http://localhost:3000**. That is the whole installation.
+Open **http://localhost:3000** and the setup wizard takes it from there.
+
+`DATABASE_URL` and `DIRECT_URL` in `.env` are the only settings that are not optional. Any Postgres
+will do — a local one, or the free tier of [supabase.com](https://supabase.com).
+
+**Sign-in is optional.** With no Supabase keys configured the app runs in *local mode*: one learner,
+no accounts, everything in the database on your machine. Add `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` and it becomes multi-user with Google sign-in, every route gated and
+each person's deck their own. That switch is the only thing that decides it — a deployment with the
+keys set can never fall back to the open local mode.
 
 To stop it, press Ctrl-C in the terminal. To start again later, just `npm run dev`.
+
+## What it does
+
+- **A learning path.** Eighteen units from *Tervitused* to *Akadeemiline eesti keel*, each a
+  sitting's worth of words. Adding a unit builds real flashcards — full paradigm, audio, both
+  directions — and a unit only reads as finished when the scheduler agrees the words are retained.
+- **Review that asks properly.** Type the answer and it is checked: a dropped `õ` is told apart from
+  a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
+  words are introduced with their answer rather than guessed at, and multiple choice covers
+  recognition. `u` undoes the last grade without touching the review log.
+- **Four practice modes over one deck** — the daily review, a 60-second Case Sprint, a Match round
+  against the clock, and Listening, plus a one-click drill for whichever case you keep missing.
+  Everything writes to the same review log, so a game still moves the schedule forward.
+- **Progress worth looking at.** XP, levels, a streak with shields, three daily quests, badges, a
+  six-month heatmap, a two-week forecast, per-case accuracy and vocabulary reach by CEFR — all
+  computed live from the review log, never stored, so none of it can drift from what you actually
+  did. An opt-in weekly leaderboard exists for classes; it is off until you set a name and join.
+- **Offline.** Installable as an app; reviewing works with no connection and every grade is kept on
+  the device with the time you actually answered, then sent when you are back.
+- **⌘K** to jump to any screen or look a word up from anywhere.
 
 ## The dictionary
 
@@ -47,7 +75,8 @@ Everything except the tutor:
   `toas`, `lugesin`, `tubadega` — and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
 - **Audio** — real Estonian speech from the University of Tartu's neural voice. No key, no setup.
-- **Flashcards** — FSRS scheduling, seven card types, keyboard-only review.
+- **Flashcards** — FSRS scheduling, five card types, typed or flipped, keyboard-only review.
+- **The learning path, all four practice modes, XP, quests, badges and the progress charts.**
 - **Tasks, import, export** — all local.
 
 ## Turning on Anu, the tutor
@@ -70,9 +99,9 @@ whichever key is present is the one used.
 
 ## Deploying it as a real website
 
-The default is still local-only (`file:./dev.db`), but the schema was built Postgres-portable from
-the start (ADR-002), so hosting it is a datasource swap, documented in `docs/03-architecture.md`
-ADR-011:
+Local mode needs nothing but a Postgres URL; hosting it for a class needs two more steps. The schema
+was built Postgres-portable from the start (ADR-002), so this was a datasource swap rather than a
+rebuild — documented in `docs/03-architecture.md` ADR-011:
 
 1. Create a project at [supabase.com](https://supabase.com) → **Connect** (or Project Settings →
    Database → Connection string). Take **both** strings from the `pooler.supabase.com` host:
@@ -147,37 +176,46 @@ try restoring it once while nothing is at stake. A backup you have never restore
 ```
 npm run dev        # development server
 npm run build      # production build
-npm run test       # unit tests (65)
-npm run test:e2e   # browser checks (51) — needs the server running
-npm run demo       # fill the deck with sample data to look around
+npm run test       # unit tests (171) — no database needed; DB-backed tests skip themselves
+npm run test:e2e   # browser checks (73) — needs the server running
+npm run demo       # fill the deck with two months of sample history to look around
 npm run typecheck  # tsc --noEmit
 npm run db:seed    # reload the built-in dictionary
 ```
 
 ## How it is put together
 
-Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Prisma + SQLite · `ts-fsrs` ·
+Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Prisma + Postgres · `ts-fsrs` ·
 TartuNLP speech · any OpenAI-compatible or Anthropic model.
 
 ```
-lib/estonian/   the language model — cases, principal parts, gradation. No React, fully tested.
-lib/srs/        FSRS scheduling and card generation.
-lib/dict/       search.
-lib/tutor/      provider-agnostic chat; keys stay server-side.
-app/(app)/      the signed-in app: rail, review, dictionary, tutor, words, tasks, settings.
-app/(marketing)/ the public landing page and sign-in — no app chrome.
-app/api/        the three server proxies.
-components/     ui primitives, the brand mark and the mascot.
-prisma/data/    the built-in dictionary.
-docs/           the full plan and the decisions behind it.
+lib/estonian/     the language model — cases, principal parts, gradation, answer checking.
+                  No React, no Prisma, fully tested.
+lib/srs/          FSRS scheduling and card generation.
+lib/collections/  the learning path: units as references into the dictionary.
+lib/gamification/ XP, levels and the daily quests. Pure functions over stats.
+lib/stats/        heatmap, forecast and accuracy aggregation.
+lib/progress/     the database side of the above, shared by Today, the path and /progress.
+lib/offline/      the queue that lets a review session survive with no network.
+lib/dict/         search.
+lib/tutor/        provider-agnostic chat; keys stay server-side.
+app/(app)/        the signed-in app: Today, the path, review, dictionary, Anu, words, tasks.
+app/(chromeless)/ pages that own the whole screen: the landing page, sign-in, first-run setup.
+app/api/          the three server proxies.
+components/       ui primitives, the brand mark and the mascot.
+prisma/data/      the built-in dictionary.
+docs/             the full plan and the decisions behind it.
 ```
 
-Two rules the code holds to, both explained in `docs/`:
+Four rules the code holds to, all explained in `docs/`:
 
 - **Estonian forms are never invented.** Principal parts are stored; the eleven regular cases are
   derived from the genitive at render time. Where a form is unknown, the app shows a gap — an
   invented form gets drilled into memory by the SRS, which is worse than a blank.
 - **No key ever reaches the browser.** The AI and speech services are called from server routes only.
+- **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed
+  from the append-only review log on each request. There is no score column to increment, so there
+  is no way to be awarded something that did not happen — and none of it can be lost in a restore.
 - **Every view has four states.** Empty, loading, error and offline — a view without an empty state
   is not finished. `docs/08-ux-ia-a11y.md` §4.
 

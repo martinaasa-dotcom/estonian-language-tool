@@ -5,7 +5,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
-import { BADGES, type BadgeStats, computeStreakWithShields, earnedBadgeKeys } from "@/lib/achievements/badges";
+import { unitById } from "@/lib/collections/path";
+import { checkAchievementsFor } from "@/lib/progress/achievements";
+import { resolveStreakFor } from "@/lib/progress/summary";
+import {
+  numberSetting, readSetting, readSettings, SETTING_KEYS, writeSetting, type ReviewMode,
+} from "@/lib/settings/store";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
@@ -75,19 +80,48 @@ async function addCardsFor(
   return { ok: true as const, added: generated.length };
 }
 
+/** The scheduling fields a client hands back to undo a grade. */
+const SchedulingSchema = z.object({
+  due: z.string(),
+  stability: z.number().min(0).max(100_000),
+  difficulty: z.number().min(0).max(20),
+  elapsedDays: z.number().int().min(0).max(100_000),
+  scheduledDays: z.number().int().min(0).max(100_000),
+  reps: z.number().int().min(0).max(100_000),
+  lapses: z.number().int().min(0).max(100_000),
+  state: z.number().int().min(0).max(3),
+  learningSteps: z.number().int().min(0).max(20),
+  lastReview: z.string().nullable(),
+});
+
+export type SchedulingSnapshot = z.infer<typeof SchedulingSchema>;
+
 /**
  * Records a grade. Writes the Review row first: the review log is append-only and
  * is the one thing we cannot reconstruct, so it must never be lost to a later failure.
+ *
+ * `reviewedAt` is accepted so a grade made offline can be logged at the moment it
+ * actually happened rather than whenever the connection came back — otherwise a
+ * whole evening of offline review would land in one second the next morning and
+ * quietly lie to the streak, the heatmap and the daily goal. It is clamped to the
+ * past: a client cannot book reviews into the future.
  */
-export async function gradeCard(cardId: string, rating: RatingValue, durationMs: number) {
+export async function gradeCard(
+  cardId: string, rating: RatingValue, durationMs: number, reviewedAt?: string,
+) {
   const ownerId = await requireUserId();
   const card = await prisma.card.findFirst({ where: { id: cardId, ownerId } });
   if (!card) return { ok: false as const, error: "Card not found." };
+
+  const now = new Date();
+  const when = reviewedAt ? new Date(reviewedAt) : now;
+  const at = Number.isNaN(when.getTime()) || when > now ? now : when;
 
   await prisma.review.create({
     data: {
       cardId,
       rating,
+      reviewedAt: at,
       durationMs: Math.min(Math.max(durationMs, 0), 600_000),
       stateBefore: card.state,
       targetCase: card.targetCase,
@@ -106,7 +140,7 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
     lastReview: card.lastReview,
     learningSteps: card.learningSteps,
   };
-  const next = grade(current, rating);
+  const next = grade(current, rating, at);
 
   await prisma.card.update({
     where: { id: cardId },
@@ -126,6 +160,78 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
 
   revalidatePath("/");
   return { ok: true as const, due: next.due };
+}
+
+/**
+ * Flushes a batch of grades recorded while offline.
+ *
+ * Each one is applied in the order it was answered, through the same path as a
+ * live grade, so FSRS sees the same sequence it would have seen online. Failures
+ * are reported per card rather than aborting the batch: one card deleted on
+ * another device must not cost the learner an evening's reviews.
+ */
+export async function gradeCards(
+  batch: { cardId: string; rating: RatingValue; durationMs: number; reviewedAt: string }[],
+) {
+  await requireUserId();
+  const ordered = [...batch].sort((a, b) => a.reviewedAt.localeCompare(b.reviewedAt));
+
+  let applied = 0;
+  const failed: string[] = [];
+  for (const item of ordered.slice(0, 500)) {
+    const result = await gradeCard(item.cardId, item.rating, item.durationMs, item.reviewedAt);
+    if (result.ok) applied++;
+    else failed.push(item.cardId);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/words");
+  return { ok: true as const, applied, failed };
+}
+
+/**
+ * Puts a card back the way it was before the last grade.
+ *
+ * The Review row stays. `Review` is append-only and is the input to FSRS
+ * parameter optimisation, so deleting a row to make a mistake disappear would
+ * corrupt the one table we cannot rebuild — and it would also be a lie: the
+ * card really was shown, and really was answered. What undo restores is the
+ * *scheduling*, which is derived state and safe to rewind.
+ *
+ * The previous state comes from the client because that is the only place it
+ * still exists; it is validated and range-clamped on the way in, and can only
+ * ever be applied to a card the caller already owns.
+ */
+export async function undoGrade(cardId: string, previous: SchedulingSnapshot) {
+  const ownerId = await requireUserId();
+  const parsed = SchedulingSchema.safeParse(previous);
+  if (!parsed.success) return { ok: false as const, error: "That card state isn't valid." };
+
+  const card = await prisma.card.findFirst({ where: { id: cardId, ownerId }, select: { id: true } });
+  if (!card) return { ok: false as const, error: "Card not found." };
+
+  const p = parsed.data;
+  const due = new Date(p.due);
+  if (Number.isNaN(due.getTime())) return { ok: false as const, error: "That card state isn't valid." };
+
+  await prisma.card.update({
+    where: { id: cardId },
+    data: {
+      due,
+      stability: p.stability,
+      difficulty: p.difficulty,
+      elapsedDays: p.elapsedDays,
+      scheduledDays: p.scheduledDays,
+      reps: p.reps,
+      lapses: p.lapses,
+      state: p.state,
+      learningSteps: p.learningSteps,
+      lastReview: p.lastReview ? new Date(p.lastReview) : null,
+    },
+  });
+
+  revalidatePath("/");
+  return { ok: true as const };
 }
 
 export async function setCardSuspended(cardId: string, suspended: boolean) {
@@ -300,62 +406,19 @@ export async function importWords(rows: { lemma: string; translation: string; po
 
 // ────────────────────────────── Achievements ───────────────────────────────
 
-const SPRINT_BEST_KEY = "sprintBest";
-const STREAK_SHIELDS_KEY = "streakShields";
-const STREAK_SHIELD_DATES_KEY = "streakShieldDates";
-const SHIELD_AWARD_BADGES = new Set(["streak_7", "streak_30", "streak_100"]);
-
 /**
- * Resolves the current streak, applying any banked streak shields (Duolingo's
- * "streak freeze") to bridge missed days. Reads the review log over a wide
- * window — long enough for the streak_100 badge to actually be reachable,
- * unlike the 30-day window a shield-unaware streak used to be limited to —
- * and persists any newly-spent shields so a bridged day is never re-charged
- * on a later call (computeStreakWithShields is pure; this is its DB shell).
+ * Resolves the current streak for whoever is signed in, applying any banked
+ * streak shields (Duolingo's "streak freeze") to bridge missed days.
+ *
+ * The logic lives in lib/progress/summary.ts so a Server Component can reach it
+ * without importing this whole action module. This wrapper takes no owner id on
+ * purpose: an exported Server Action is a public endpoint, and one that read a
+ * streak for any id passed to it would happily report on someone else's.
  */
 export async function resolveStreak() {
-  // Owner comes from the session, never from an argument: this file is
-  // `"use server"`, so an `ownerId` parameter here would be a public endpoint
-  // letting any signed-in user read and rewrite another learner's streak.
   const ownerId = await requireUserId();
-  const [reviews, shieldSetting, datesSetting] = await Promise.all([
-    prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) }, card: { ownerId } },
-      select: { reviewedAt: true },
-    }),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } }),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } } }),
-  ]);
-
-  const shieldsAvailable = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
-  let shieldedDates: string[] = [];
-  if (datesSetting) {
-    try {
-      const parsed: unknown = JSON.parse(datesSetting.value);
-      if (Array.isArray(parsed)) shieldedDates = parsed.filter((d): d is string => typeof d === "string");
-    } catch {
-      shieldedDates = [];
-    }
-  }
-
-  const result = computeStreakWithShields(reviews.map((r) => r.reviewedAt), shieldsAvailable, shieldedDates);
-
-  if (result.newlyShieldedDates.length > 0) {
-    await Promise.all([
-      prisma.setting.upsert({
-        where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
-        create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(result.shieldsRemaining) },
-        update: { value: String(result.shieldsRemaining) },
-      }),
-      prisma.setting.upsert({
-        where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } },
-        create: { ownerId, key: STREAK_SHIELD_DATES_KEY, value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
-        update: { value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
-      }),
-    ]);
-  }
-
-  return { ok: true as const, streak: result.streak, shieldsAvailable: result.shieldsRemaining };
+  const result = await resolveStreakFor(ownerId);
+  return { ok: true as const, ...result };
 }
 
 /**
@@ -364,88 +427,24 @@ export async function resolveStreak() {
  * -earned key is never re-awarded or removed, so a badge earned once is kept
  * forever even if the underlying stat later dips (e.g. a streak breaks).
  *
- * Reaching a streak_7/30/100 badge for the first time also banks a streak
- * shield — the milestone worth protecting is exactly the one just reached.
+ * The work itself lives in lib/progress/achievements.ts, so a page that has
+ * already loaded the learner's deck and day can award badges from what it
+ * holds instead of asking the database all over again.
+ *
+ * No revalidatePath here: this is called from a Server Component render (Today)
+ * as well as from actual actions, and revalidating during render is an error.
  */
 export async function checkAchievements(session?: { count: number; accuracy: number }) {
   const ownerId = await requireUserId();
-  const [streakResult, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
-    resolveStreak(),
-    prisma.review.count({ where: { card: { ownerId } } }),
-    prisma.card.count({ where: { ownerId, state: 2 } }),
-    prisma.lexeme.count(),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } }),
-    prisma.review.findMany({
-      where: { targetCase: { not: null }, card: { ownerId } },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
-  ]);
-
-  const tally = new Map<string, { ok: number; total: number }>();
-  for (const r of caseReviews) {
-    if (!r.targetCase) continue;
-    const entry = tally.get(r.targetCase) ?? { ok: 0, total: 0 };
-    entry.total++;
-    if (r.rating >= 3) entry.ok++;
-    tally.set(r.targetCase, entry);
-  }
-  const bestCaseAccuracy = [...tally.entries()]
-    .filter(([, v]) => v.total >= 10)
-    .map(([grammCase, v]) => ({ grammCase, accuracy: Math.round((v.ok / v.total) * 100) }))
-    .sort((a, b) => b.accuracy - a.accuracy)[0] ?? null;
-
-  const stats: BadgeStats = {
-    streak: streakResult.streak,
-    totalReviews,
-    cardsKnown,
-    totalWords,
-    bestCaseAccuracy,
-    sprintBest: sprintSetting ? Number(sprintSetting.value) || 0 : 0,
-    session,
-  };
-
-  const earnedKeys = earnedBadgeKeys(stats);
-  if (earnedKeys.length === 0) return { ok: true as const, newBadges: [] };
-
-  const already = await prisma.achievement.findMany({
-    where: { ownerId, key: { in: earnedKeys } },
-    select: { key: true },
-  });
-  const alreadySet = new Set(already.map((a) => a.key));
-  const newKeys = earnedKeys.filter((k) => !alreadySet.has(k));
-  if (newKeys.length === 0) return { ok: true as const, newBadges: [] };
-
-  await prisma.achievement.createMany({ data: newKeys.map((key) => ({ ownerId, key })) });
-
-  const shieldsEarned = newKeys.filter((k) => SHIELD_AWARD_BADGES.has(k)).length;
-  if (shieldsEarned > 0) {
-    const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } });
-    const currentShields = current ? Number(current.value) || 0 : 0;
-    await prisma.setting.upsert({
-      where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
-      create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(currentShields + shieldsEarned) },
-      update: { value: String(currentShields + shieldsEarned) },
-    });
-  }
-
-  // No revalidatePath here: this is called from a Server Component render (Today)
-  // as well as from actual actions, and revalidating during render is an error.
-  // Settings reads achievements fresh on every load anyway (force-dynamic).
-  return { ok: true as const, newBadges: BADGES.filter((b) => newKeys.includes(b.key)) };
+  const newBadges = await checkAchievementsFor(ownerId, session);
+  return { ok: true as const, newBadges };
 }
-
-const DAILY_GOAL_KEY = "dailyGoal";
 
 /** Sets the review count that fills the daily-goal ring on Today. */
 export async function setDailyGoal(goal: number) {
   const ownerId = await requireUserId();
   const clamped = Math.min(200, Math.max(5, Math.round(goal)));
-  await prisma.setting.upsert({
-    where: { ownerId_key: { ownerId, key: DAILY_GOAL_KEY } },
-    create: { ownerId, key: DAILY_GOAL_KEY, value: String(clamped) },
-    update: { value: String(clamped) },
-  });
+  await writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(clamped));
   revalidatePath("/");
   revalidatePath("/settings");
   return { ok: true as const, goal: clamped };
@@ -454,17 +453,142 @@ export async function setDailyGoal(goal: number) {
 /** Records a Case Sprint score, keeping only the personal best. */
 export async function recordSprintScore(score: number) {
   const ownerId = await requireUserId();
-  const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } });
-  const best = current ? Number(current.value) || 0 : 0;
+  const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.sprintBest), 0);
   const isNewBest = score > best;
-  if (isNewBest) {
-    await prisma.setting.upsert({
-      where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } },
-      create: { ownerId, key: SPRINT_BEST_KEY, value: String(score) },
-      update: { value: String(score) },
-    });
-  }
+  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.sprintBest, String(score));
   return { ok: true as const, best: Math.max(score, best), isNewBest };
+}
+
+/**
+ * Records a finished match round, keeping the fastest time.
+ *
+ * Lower is better here, which is the opposite of every other score in the app —
+ * hence the explicit "0 means never played" rather than a plain `Math.min`,
+ * which would leave a first-ever round competing against zero and always losing.
+ */
+export async function recordMatchTime(seconds: number) {
+  const ownerId = await requireUserId();
+  const rounded = Math.max(1, Math.round(seconds));
+  const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.matchBest), 0);
+  const isNewBest = best === 0 || rounded < best;
+  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.matchBest, String(rounded));
+  return { ok: true as const, best: isNewBest ? rounded : best, isNewBest };
+}
+
+// ──────────────────────────── Learner preferences ──────────────────────────
+
+/** How review sessions ask their questions: type the answer, or flip the card. */
+export async function setReviewMode(mode: ReviewMode) {
+  const ownerId = await requireUserId();
+  await writeSetting(ownerId, SETTING_KEYS.reviewMode, mode === "flip" ? "flip" : "type");
+  revalidatePath("/settings");
+  revalidatePath("/review");
+  return { ok: true as const, mode };
+}
+
+/**
+ * The name shown on the class leaderboard, and whether to appear on it at all.
+ *
+ * Opt-in, and off by default: a study app should never publish who studied how
+ * much without being asked. The name is the learner's own text rather than
+ * their Google account name, so appearing on a class board never means
+ * publishing an email address or a legal name they did not choose to share.
+ */
+export async function setLeaderboardPreferences(input: { displayName: string; optIn: boolean }) {
+  const ownerId = await requireUserId();
+  const name = input.displayName.trim().slice(0, 32);
+  if (input.optIn && !name) {
+    return { ok: false as const, error: "Pick a name to show before joining the leaderboard." };
+  }
+  await Promise.all([
+    writeSetting(ownerId, SETTING_KEYS.displayName, name),
+    writeSetting(ownerId, SETTING_KEYS.leaderboard, input.optIn ? "1" : "0"),
+  ]);
+  revalidatePath("/progress");
+  revalidatePath("/settings");
+  return { ok: true as const, displayName: name, optIn: input.optIn };
+}
+
+// ───────────────────────────────── Onboarding ──────────────────────────────
+
+/**
+ * First run: record who this is, how hard they want to work, and put a real
+ * deck in front of them.
+ *
+ * The starter units matter more than they look. An empty deck is the single
+ * most likely place for a new learner to give up — everything the app can do is
+ * behind "add some words first", and a stranger has no idea which words. So
+ * onboarding finishes by actually building a deck from the path, at the level
+ * they said they were.
+ */
+export async function completeOnboarding(input: {
+  displayName: string;
+  cefr: string;
+  dailyGoal: number;
+  unitIds: string[];
+}) {
+  const ownerId = await requireUserId();
+  const goal = Math.min(200, Math.max(5, Math.round(input.dailyGoal)));
+
+  await Promise.all([
+    writeSetting(ownerId, SETTING_KEYS.displayName, input.displayName.trim().slice(0, 32)),
+    writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
+    writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
+    writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
+  ]);
+
+  let added = 0;
+  for (const unitId of input.unitIds.slice(0, 6)) {
+    const result = await addUnitToDeck(unitId);
+    if (result.ok) added += result.added;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/learn");
+  return { ok: true as const, added };
+}
+
+/** Marks onboarding as seen without changing anything else. */
+export async function skipOnboarding() {
+  const ownerId = await requireUserId();
+  await writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString());
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/**
+ * Adds every word of a path unit to the deck, with the card types that unit is
+ * actually about — the rektsioon unit adds government cards, a noun unit adds
+ * case-form cards. Already-present cards are skipped, so re-adding a unit after
+ * finishing half of it costs nothing and loses no scheduling.
+ */
+export async function addUnitToDeck(unitId: string) {
+  const ownerId = await requireUserId();
+  const unit = unitById(unitId);
+  if (!unit) return { ok: false as const, error: "That unit does not exist." };
+
+  const lexemes = await prisma.lexeme.findMany({
+    where: { lemma: { in: unit.lemmas } },
+    select: { id: true, lemma: true },
+  });
+  // Keep the unit's own order: the first cards someone sees should be the ones
+  // the unit leads with, not whatever order Postgres returned.
+  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
+  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
+
+  // addCardsFor rather than addToDeck: the owner is already resolved here, and
+  // re-resolving it per word would validate the session with Supabase 20 times
+  // for one click.
+  let added = 0;
+  for (const lexeme of lexemes) {
+    const result = await addCardsFor(ownerId, lexeme.id, unit.cardTypes, "DICTIONARY");
+    if (result.ok) added += result.added ?? 0;
+  }
+
+  revalidatePath("/learn");
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, added, words: lexemes.length };
 }
 
 // ─────────────────────────────── Tasks ────────────────────────────────────

@@ -1,35 +1,62 @@
-import { Download, Shield } from "lucide-react";
+import { Download, Keyboard, Shield, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUserId } from "@/lib/auth/session";
+import { currentLearner, requireUserId } from "@/lib/auth/session";
+import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { BADGES } from "@/lib/achievements/badges";
+import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
 import { ImportPanel } from "./ImportPanel";
+import { LeaderboardPanel, ReviewModePanel } from "./PreferencesPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 
 export const dynamic = "force-dynamic";
-const DEFAULT_DAILY_GOAL = 15;
+
+const SHORTCUTS: [string, string][] = [
+  ["⌘K / Ctrl-K", "Jump to any screen, or look a word up"],
+  ["Space", "Show the answer"],
+  ["Enter", "Check a typed answer, then grade it"],
+  ["1 – 4", "Again · Hard · Good · Easy"],
+  ["u", "Undo the last grade"],
+  ["1 – 4 (listening, choice)", "Pick an option"],
+];
 
 export default async function SettingsPage() {
   const ownerId = await requireUserId();
   const provider = resolveProvider();
-  const [words, cards, reviews, earned, dailyGoalSetting, shieldSetting] = await Promise.all([
+  const hosted = supabaseConfigured();
+
+  const [words, cards, reviews, earned, settings, learner] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { card: { ownerId } } }),
     prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "streakShields" } } }),
+    readSettings(ownerId, [
+      SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,
+      SETTING_KEYS.displayName, SETTING_KEYS.leaderboard,
+    ]),
+    currentLearner(),
   ]);
+
   const earnedKeys = new Set(earned.map((a) => a.key));
-  const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;
-  const shields = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
+  const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
+  const shields = numberSetting(settings[SETTING_KEYS.streakShields], 0);
+  const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
+  const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
+  const optedIn = settings[SETTING_KEYS.leaderboard] === "1";
 
   return (
-    <Page title="Settings" lead="Everything is stored on this computer. Nothing is uploaded anywhere.">
+    <Page
+      title="Settings"
+      lead={
+        hosted
+          ? "Your deck, reviews and tasks belong to your account and are visible only to you."
+          : "This copy runs locally: everything is stored in the database on this machine, and nothing is uploaded anywhere."
+      }
+    >
       <div className="flex flex-col gap-8">
         <section>
           <SectionTitle>Your data</SectionTitle>
@@ -59,16 +86,39 @@ export default async function SettingsPage() {
         </section>
 
         <section>
+          <SectionTitle hint={mode === "type" ? "typing" : "flipping"}>How review asks</SectionTitle>
+          <ReviewModePanel current={mode} />
+          <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            Either way, brand-new cards are shown with their answer first — being asked to produce a
+            word you have never seen teaches nothing.
+          </p>
+        </section>
+
+        <section>
+          <SectionTitle hint={`${dailyGoal} reviews/day`}>Daily goal</SectionTitle>
+          <Card>
+            <p className="mb-4 text-[14px]" style={{ color: "var(--ink-2)" }}>
+              Sets how full the ring on Today fills up, and the target of your first daily quest.
+              Purely motivational — it never caps or blocks a session.
+            </p>
+            <DailyGoalPanel currentGoal={dailyGoal} />
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle hint={optedIn ? "you're on it" : "off"}>Class leaderboard</SectionTitle>
+          <Card>
+            <LeaderboardPanel currentName={displayName} optedIn={optedIn} />
+          </Card>
+        </section>
+
+        <section>
           <SectionTitle>Import words</SectionTitle>
           <ImportPanel />
         </section>
 
         <section>
-          <SectionTitle
-            hint={provider ? undefined : "Anu is off until you add a key"}
-          >
-            AI tutor
-          </SectionTitle>
+          <SectionTitle hint={provider ? undefined : "Anu is off until you add a key"}>AI tutor</SectionTitle>
           <Card>
             {provider ? (
               <div className="flex flex-wrap items-center gap-3">
@@ -80,17 +130,6 @@ export default async function SettingsPage() {
             ) : (
               <SetupGuide />
             )}
-          </Card>
-        </section>
-
-        <section>
-          <SectionTitle hint={`${dailyGoal} reviews/day`}>Daily goal</SectionTitle>
-          <Card>
-            <p className="mb-4 text-[14px]" style={{ color: "var(--ink-2)" }}>
-              Sets how full the ring on Today fills up. Purely motivational — it never caps or
-              blocks a session.
-            </p>
-            <DailyGoalPanel currentGoal={dailyGoal} />
           </Card>
         </section>
 
@@ -115,6 +154,56 @@ export default async function SettingsPage() {
         </section>
 
         <section>
+          <SectionTitle>Keyboard</SectionTitle>
+          <Card>
+            <div className="flex items-start gap-3">
+              <Keyboard size={18} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                  A whole session can be done without touching the mouse.
+                </p>
+                <dl className="mt-3 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                  {SHORTCUTS.map(([keys, what]) => (
+                    <div key={keys} className="flex items-baseline gap-3">
+                      <dt>
+                        <kbd
+                          className="rounded border px-1.5 py-0.5 text-[11.5px]"
+                          style={{ borderColor: "var(--rule)", color: "var(--ink-2)" }}
+                        >
+                          {keys}
+                        </kbd>
+                      </dt>
+                      <dd className="text-[13px]" style={{ color: "var(--ink-3)" }}>{what}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle>Install it</SectionTitle>
+          <Card>
+            <div className="flex items-start gap-3">
+              <Smartphone size={18} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <div>
+                <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+                  Kodukeel installs as an app — &ldquo;Add to Home Screen&rdquo; on iOS, &ldquo;Install&rdquo;
+                  in the address bar on desktop Chrome. Installed, it opens straight into review and
+                  keeps working without a connection.
+                </p>
+                <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  Anything you grade offline is saved on the device and sent as soon as you are back
+                  online, with the time you actually answered — so an offline session still counts
+                  towards the right day&rsquo;s streak.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section>
           <SectionTitle>Dictionary</SectionTitle>
           <Card>
             <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
@@ -125,8 +214,8 @@ export default async function SettingsPage() {
               needs no key.
             </p>
             <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
-              A free Ekilex API key from the Institute of the Estonian Language would extend search to
-              the full Estonian lexicon. It is not needed for anything you can do today.
+              A free Ekilex API key from the Institute of the Estonian Language extends search to the
+              full Estonian lexicon, and stores each word it fetches so the next lookup is local.
             </p>
           </Card>
         </section>

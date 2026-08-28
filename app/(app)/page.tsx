@@ -1,132 +1,234 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
-  ArrowRight, Award, BookOpen, Flame, Headphones, Layers, Shield, Sparkles, Zap,
+  ArrowRight, BookOpen, Flame, Grid2x2, Headphones, Shield, Sparkles, Zap,
 } from "lucide-react";
-import { checkAchievements, resolveStreak } from "@/app/actions";
 import { prisma } from "@/lib/db";
-import { requireUserId } from "@/lib/auth/session";
+import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
-import { BADGES } from "@/lib/achievements/badges";
+import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
+import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
+import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { dayKey, recentDayKeys } from "@/lib/time/day";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
-import { badgeIcon } from "@/components/achievements/icons";
 import { ButtonLink } from "@/components/Button";
-import { Card, Chip, Empty, Page, SectionTitle, StatTile } from "@/components/ui";
+import { icon } from "@/components/icons";
+import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_DAILY_GOAL = 15;
-const ACTIVITY_DAYS = 14;
-
 export default async function TodayPage() {
   const ownerId = await requireUserId();
   const now = new Date();
-  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
-  const weekAgo = new Date(now.getTime() - 7 * 86400000);
-  const activityFrom = new Date(startOfToday.getTime() - (ACTIVITY_DAYS - 1) * 86400000);
 
-  const [
-    dueCount, newCount, totalCards, tasks, reviewsThisWeek, streakResult, wordOfDay,
-    reviewedToday, dailyGoalSetting, earnedBadges, activityRows,
-  ] = await Promise.all([
-    prisma.card.count({ where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } } }),
-    prisma.card.count({ where: { ownerId, suspended: false, state: 0 } }),
-    prisma.card.count({ where: { ownerId } }),
+  const snapshot = await deckSnapshot(ownerId, now);
+  const settings = await readSettings(ownerId, [SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName]);
+
+  // A brand-new learner gets the wizard instead of an empty dashboard. Anyone
+  // with a deck or a finished setup never sees it again.
+  if (!settings[SETTING_KEYS.onboardedAt] && snapshot.totalCards === 0) redirect("/start");
+
+  const [summary, units, tasks, weekReviews, wordOfDay, learner] = await Promise.all([
+    dailySummary(ownerId, snapshot, now),
+    pathWithProgress(ownerId, snapshot),
     prisma.task.findMany({
       where: { ownerId, completed: false },
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
-      take: 5,
+      take: 4,
     }),
-    prisma.review.count({ where: { reviewedAt: { gte: weekAgo }, card: { ownerId } } }),
-    resolveStreak(),
-    pickWordOfDay(ownerId),
-    prisma.review.count({ where: { reviewedAt: { gte: startOfToday }, card: { ownerId } } }),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
-    prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     prisma.review.findMany({
-      where: { reviewedAt: { gte: activityFrom }, card: { ownerId } },
+      where: { card: { ownerId }, reviewedAt: { gte: new Date(now.getTime() - 7 * 86_400_000) } },
       select: { reviewedAt: true },
     }),
+    pickWordOfDay(ownerId),
+    currentLearner(),
   ]);
 
-  const tutorReady = resolveProvider() !== null;
-  const toReview = Math.min(dueCount + Math.min(newCount, 10), 60);
-  const streak = streakResult.streak;
-  const shieldsAvailable = streakResult.shieldsAvailable;
-  const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
-  const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;
-  const goalPct = Math.min(100, Math.round((reviewedToday / dailyGoal) * 100));
-  const goalMet = reviewedToday >= dailyGoal;
-  const earnedKeys = new Set(earnedBadges.map((b) => b.key));
-  const activity = bucketByDay(activityRows.map((r) => r.reviewedAt), startOfToday, ACTIVITY_DAYS);
-
   // Streak and deck-size badges can be earned just by reaching a milestone, so
-  // Today checks on every load — checkAchievements() is idempotent, and a badge
-  // already earned is never re-awarded.
-  const { newBadges } = await checkAchievements();
+  // Today checks on every load. Idempotent, and it reuses the data this page
+  // already loaded rather than asking for it all over again.
+  const stats = await buildBadgeStats(ownerId, { snapshot, summary, units });
+  const newBadges = await awardBadges(ownerId, stats);
+
+  const tutorReady = resolveProvider() !== null;
+  const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
+  const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
+  const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
+  const nextUnit = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "new");
+
+  const reviewedDays = new Set(weekReviews.map((r) => dayKey(r.reviewedAt)));
+  const week = recentDayKeys(7, now).map((day) => ({
+    day,
+    done: reviewedDays.has(day),
+    isToday: day === summary.dayKey,
+  }));
 
   return (
     <Page
       eyebrow={now.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
-      title={greeting()}
+      title={name ? `${greeting()}, ${name}` : greeting()}
       lead={
         toReview > 0
           ? `${toReview} card${toReview === 1 ? "" : "s"} waiting — about ${Math.max(1, Math.round(toReview / 6))} minutes of your day.`
-          : "Nothing due right now. A good moment to add a word you met this week."
+          : "Nothing due right now. A good moment to meet some new words."
       }
     >
       <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
         <div className="flex flex-col gap-5">
-          {/* The one thing the app exists to get her to do. */}
+          {/* The one thing the app exists to get you to do. */}
           <Card className="flex flex-col gap-5">
-            <div className="grid grid-cols-3 gap-3">
-              <StatTile value={dueCount} label="Due now" tone="accent" />
-              <StatTile value={Math.min(newCount, 10)} label="New today" tone="sky" />
-              <StatTile
-                value={streak}
-                label="Day streak"
-                tone="butter"
-                icon={<Flame size={15} aria-hidden />}
-              />
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="grid flex-1 grid-cols-3 gap-3">
+                <StatTile value={snapshot.dueCount} label="Due now" tone="accent" />
+                <StatTile value={Math.min(snapshot.newCount, 10)} label="New today" tone="sky" />
+                <StatTile
+                  value={summary.streak}
+                  label="Day streak"
+                  tone="butter"
+                  icon={<Flame size={15} aria-hidden />}
+                />
+              </div>
+              <Ring
+                pct={summary.goalPct}
+                size={74}
+                thickness={8}
+                label={`${summary.reviewsToday} of ${summary.dailyGoal} reviews toward today's goal`}
+              >
+                <span
+                  className="est tnum text-[15px] font-bold"
+                  style={{ color: summary.goalPct >= 100 ? "var(--good)" : "var(--ink)" }}
+                >
+                  {summary.goalPct}%
+                </span>
+              </Ring>
             </div>
 
-            {shieldsAvailable > 0 && (
-              <p className="flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-                <Shield size={13} aria-hidden style={{ color: "var(--accent)" }} />
-                {shieldsAvailable} streak shield{shieldsAvailable === 1 ? "" : "s"} banked — one missed day won&rsquo;t break your streak.
-              </p>
-            )}
-
-            {totalCards === 0 ? (
+            {snapshot.totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
-                body="Search a word in the dictionary and add it — you get the full paradigm, audio, and two cards in one click."
-                action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
+                body="Start a unit on the path and you get real cards — full paradigm, audio, and both directions — in one click."
+                action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
               />
             ) : toReview > 0 ? (
               <ButtonLink href="/review" variant="primary" size="lg" className="w-full">
                 Start reviewing <ArrowRight size={17} aria-hidden />
               </ButtonLink>
             ) : (
-              <p
-                className="rounded-[var(--r)] px-4 py-3.5 text-[14px]"
-                style={{ background: "var(--good-soft)", color: "var(--good)" }}
-              >
-                Caught up. Reviewing early doesn&rsquo;t help memory — come back tomorrow.
+              <Note tone="good">
+                Caught up. Reviewing early doesn&rsquo;t help memory — try a game below, or add new
+                words for tomorrow.
+              </Note>
+            )}
+
+            <div>
+              <div className="mb-2 flex items-baseline justify-between gap-3">
+                <span className="label-xs" style={{ color: "var(--ink-3)" }}>
+                  Level {summary.level.level} · <span lang="et">{summary.level.title}</span>
+                </span>
+                <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  {summary.level.into}/{summary.level.span} XP
+                </span>
+              </div>
+              <Meter
+                pct={summary.level.pct}
+                label={`Level ${summary.level.level}, ${summary.level.remaining} XP to the next level`}
+              />
+              <p className="mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                {summary.xpToday > 0 ? `+${summary.xpToday} XP today. ` : ""}
+                {summary.level.remaining} XP to level {summary.level.level + 1}.
+              </p>
+            </div>
+
+            {/* A week at a glance — the streak, made concrete. */}
+            <div className="flex items-center justify-between gap-2">
+              {week.map((d) => (
+                <div key={d.day} className="flex flex-1 flex-col items-center gap-1.5">
+                  <span
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-bold"
+                    style={{
+                      background: d.done ? "var(--mint)" : "var(--raised)",
+                      color: d.done ? "var(--surface)" : "var(--ink-3)",
+                      outline: d.isToday ? "2px solid var(--accent)" : "none",
+                      outlineOffset: 2,
+                    }}
+                    aria-hidden
+                  >
+                    {d.done ? "✓" : "·"}
+                  </span>
+                  <span className="sr-only">
+                    {d.day}: {d.done ? "reviewed" : "no reviews"}
+                  </span>
+                  <span className="text-[10px] font-semibold" style={{ color: "var(--ink-3)" }}>
+                    {weekdayLetter(d.day)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {summary.shieldsAvailable > 0 && (
+              <p className="flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                <Shield size={13} aria-hidden style={{ color: "var(--accent)" }} />
+                {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked — one
+                missed day won&rsquo;t break your streak.
               </p>
             )}
           </Card>
 
-          <Card>
-            <SectionTitle hint={`${reviewsThisWeek} reviews in the last 7 days`}>
-              Your fortnight
+          <section>
+            <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
+              Today&rsquo;s quests
             </SectionTitle>
-            <ActivityStrip days={activity} goal={dailyGoal} />
-          </Card>
+            <ul className="flex flex-col gap-2">
+              {summary.quests.map((q) => {
+                const Icon = icon(q.icon);
+                return (
+                  <li
+                    key={q.key}
+                    className="flex items-center gap-3.5 rounded-[var(--r-lg)] border px-4 py-3.5"
+                    style={{
+                      borderColor: q.done ? "transparent" : "var(--rule)",
+                      background: q.done ? "var(--mint-soft)" : "var(--surface)",
+                      boxShadow: q.done ? "none" : "var(--shadow-sm)",
+                    }}
+                  >
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      style={{
+                        background: q.done ? "var(--surface)" : "var(--accent-soft)",
+                        color: q.done ? "var(--good)" : "var(--accent-deep)",
+                      }}
+                    >
+                      <Icon size={17} aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="text-[14.5px] font-semibold" style={{ color: "var(--ink)" }}>{q.title}</span>
+                        <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+                          {q.progress}/{q.target}
+                        </span>
+                      </span>
+                      <span className="mt-1.5 block">
+                        <Meter
+                          pct={(q.progress / q.target) * 100}
+                          label={`${q.title}: ${q.progress} of ${q.target}`}
+                          tone={q.done ? "var(--good)" : "var(--accent)"}
+                          height={5}
+                        />
+                      </span>
+                      <span className="mt-1.5 block text-[12px]" style={{ color: "var(--ink-3)" }}>
+                        {q.detail} · +{q.reward} XP
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
 
           <section>
-            <SectionTitle hint={overdue > 0 ? `${overdue} overdue` : `${tasks.length} open`}>Tasks</SectionTitle>
+            <SectionTitle hint={overdue > 0 ? `${overdue} overdue` : undefined}>Tasks</SectionTitle>
             {tasks.length === 0 ? (
               <Card>
                 <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
@@ -152,53 +254,43 @@ export default async function TodayPage() {
               </ul>
             )}
           </section>
-
-          <Card>
-            <SectionTitle>Deck</SectionTitle>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <StatTile value={totalCards} label="Cards" tone="mint" icon={<Layers size={15} aria-hidden />} />
-              <StatTile value={reviewsThisWeek} label="Reviews / 7d" tone="accent" />
-              <StatTile value={dueCount + newCount} label="In the queue" tone="peach" />
-              <StatTile value={`${earnedKeys.size}/${BADGES.length}`} label="Badges" tone="blush" />
-            </div>
-          </Card>
         </div>
 
         <div className="flex flex-col gap-5">
-          <Card className="flex items-center gap-5">
-            <GoalRing pct={goalPct} />
-            <div className="min-w-0 flex-1">
-              <SectionTitle>Daily goal</SectionTitle>
-              <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
-                {goalMet ? (
-                  <>Goal met — <strong style={{ color: "var(--good)" }}>{reviewedToday}</strong> of {dailyGoal} reviews today.</>
-                ) : (
-                  <><strong style={{ color: "var(--ink)" }}>{reviewedToday}</strong> of {dailyGoal} reviews today.</>
-                )}
-              </p>
-              <Link href="/settings" className="mt-1.5 inline-block text-[12.5px] font-semibold" style={{ color: "var(--accent)" }}>
-                Change goal
-              </Link>
-            </div>
-          </Card>
+          {nextUnit && (
+            <Card>
+              <SectionTitle hint={nextUnit.unit.cefr}>Next on the path</SectionTitle>
+              <div className="flex items-center gap-3">
+                <NextUnitIcon name={nextUnit.unit.icon} />
+                <div className="min-w-0">
+                  <p lang="et" className="est text-[20px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                    {nextUnit.unit.title}
+                  </p>
+                  <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>{nextUnit.unit.subtitle}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{nextUnit.unit.blurb}</p>
+              <div className="mt-3.5">
+                <Meter pct={nextUnit.pct} label={`${nextUnit.unit.title}: ${nextUnit.pct}% complete`} />
+              </div>
+              <ButtonLink href="/learn" className="mt-4 w-full">
+                {nextUnit.state === "new" ? "Start this unit" : "Continue the path"}
+                <ArrowRight size={15} aria-hidden />
+              </ButtonLink>
+            </Card>
+          )}
 
           <Card>
-            <SectionTitle hint="one minute each">Quick practice</SectionTitle>
+            <SectionTitle hint="a minute each">Quick practice</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
-              <PracticeTile
-                href="/review/sprint"
-                tone="butter"
-                icon={<Zap size={17} aria-hidden />}
-                title="Case Sprint"
-                body="60 seconds, weak cards"
-              />
-              <PracticeTile
-                href="/review/listening"
-                tone="sky"
-                icon={<Headphones size={17} aria-hidden />}
-                title="Listening"
-                body="Hear it, then answer"
-              />
+              <PracticeTile href="/review/sprint" tone="butter" icon={<Zap size={17} aria-hidden />}
+                title="Sprint" body="60 seconds, weak cards" />
+              <PracticeTile href="/review/match" tone="mint" icon={<Grid2x2 size={17} aria-hidden />}
+                title="Match" body="Pair word to meaning" />
+              <PracticeTile href="/review/listening" tone="sky" icon={<Headphones size={17} aria-hidden />}
+                title="Listening" body="Hear it, then answer" />
+              <PracticeTile href="/practice" tone="peach" icon={<ArrowRight size={17} aria-hidden />}
+                title="All modes" body="Everything in one place" />
             </div>
           </Card>
 
@@ -226,38 +318,6 @@ export default async function TodayPage() {
             </Card>
           )}
 
-          <Card>
-            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Badges</SectionTitle>
-            <div className="flex flex-wrap gap-2">
-              {BADGES.map((b) => {
-                const Icon = badgeIcon(b.icon);
-                const earned = earnedKeys.has(b.key);
-                return (
-                  <span
-                    key={b.key}
-                    title={earned ? `${b.title} — earned` : `${b.title} — ${b.description}`}
-                    className="flex h-9 w-9 items-center justify-center rounded-full"
-                    style={{
-                      background: earned ? "var(--accent-soft)" : "var(--raised)",
-                      color: earned ? "var(--accent-deep)" : "var(--ink-3)",
-                      opacity: earned ? 1 : 0.5,
-                    }}
-                  >
-                    <Icon size={16} aria-hidden />
-                    <span className="sr-only">{b.title}{earned ? " (earned)" : ""}</span>
-                  </span>
-                );
-              })}
-            </div>
-            <Link
-              href="/settings"
-              className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold"
-              style={{ color: "var(--accent)" }}
-            >
-              <Award size={14} aria-hidden /> See what&rsquo;s left to earn
-            </Link>
-          </Card>
-
           <Card tone="blush">
             <div className="flex items-center gap-2">
               <Sparkles size={16} aria-hidden style={{ color: "var(--blush)" }} />
@@ -281,79 +341,12 @@ export default async function TodayPage() {
   );
 }
 
-/**
- * Fourteen days of reviews as a bar per day.
- *
- * The point is not the count — it is seeing the gaps. A row of bars is the only
- * thing on Today that shows a week going wrong while there is still time to fix it.
- */
-function ActivityStrip({ days, goal }: { days: { date: Date; count: number }[]; goal: number }) {
-  const peak = Math.max(goal, ...days.map((d) => d.count));
-
-  return (
-    <div>
-      <div className="flex items-end gap-2" style={{ height: 78 }}>
-        {days.map(({ date, count }) => {
-          const pct = peak > 0 ? Math.min(100, (count / peak) * 100) : 0;
-          const met = count >= goal;
-          return (
-            <div
-              key={date.toISOString()}
-              className="flex h-full flex-1 items-end justify-center"
-              title={`${date.toLocaleDateString(undefined, { day: "numeric", month: "short" })}: ${count} review${count === 1 ? "" : "s"}`}
-            >
-              <div
-                className="flex h-full w-full max-w-[22px] items-end overflow-hidden rounded-full"
-                style={{ background: "var(--raised)" }}
-              >
-                <div
-                  className="w-full rounded-full transition-all duration-500"
-                  style={{
-                    height: `${count > 0 ? Math.max(12, pct) : 0}%`,
-                    background: met ? "var(--mint)" : "var(--accent)",
-                    opacity: met ? 1 : 0.7,
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-2 flex justify-between text-[11px]" style={{ color: "var(--ink-3)" }}>
-        <span>{days[0]?.date.toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full" style={{ background: "var(--mint)" }} /> goal met
-        </span>
-        <span>today</span>
-      </div>
-    </div>
-  );
-}
-
-function GoalRing({ pct }: { pct: number }) {
-  return (
-    <div
-      className="relative flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-full"
-      style={{
-        background: `conic-gradient(var(--accent) ${pct * 3.6}deg, var(--raised) 0deg)`,
-      }}
-      role="img"
-      aria-label={`${pct} percent of today's review goal`}
-    >
-      <div
-        className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
-        style={{ background: "var(--surface)" }}
-      >
-        <span className="tnum est text-[16px] font-bold" style={{ color: pct >= 100 ? "var(--good)" : "var(--ink)" }}>
-          {pct}%
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function PracticeTile({ href, tone, icon, title, body }: {
-  href: string; tone: "butter" | "sky"; icon: React.ReactNode; title: string; body: string;
+function PracticeTile({ href, tone, icon: glyph, title, body }: {
+  href: string;
+  tone: "butter" | "sky" | "mint" | "peach";
+  icon: React.ReactNode;
+  title: string;
+  body: string;
 }) {
   return (
     <Link
@@ -361,11 +354,31 @@ function PracticeTile({ href, tone, icon, title, body }: {
       className="lift flex flex-col gap-1 rounded-[var(--r)] p-4"
       style={{ background: `var(--${tone}-soft)` }}
     >
-      <span style={{ color: `var(--${tone})` }}>{icon}</span>
+      <span style={{ color: `var(--${tone})` }}>{glyph}</span>
       <span className="est mt-1 text-[15.5px] font-bold" style={{ color: "var(--ink)" }}>{title}</span>
       <span className="text-[11.5px]" style={{ color: "var(--ink-3)" }}>{body}</span>
     </Link>
   );
+}
+
+function NextUnitIcon({ name }: { name: string }) {
+  const Icon = icon(name);
+  return (
+    <span
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+      style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+    >
+      <Icon size={20} aria-hidden />
+    </span>
+  );
+}
+
+function weekdayLetter(day: string): string {
+  // Estonian weekday initials — E T K N R L P, the ones on every timetable here.
+  const letters = ["P", "E", "T", "K", "N", "R", "L"];
+  const [y, m, d] = day.split("-").map(Number);
+  const date = new Date(y ?? 2000, (m ?? 1) - 1, d ?? 1);
+  return letters[date.getDay()] ?? "?";
 }
 
 function greeting(): string {
@@ -374,21 +387,6 @@ function greeting(): string {
   if (h < 11) return "Tere hommikust";
   if (h < 18) return "Tere päevast";
   return "Tere õhtust";
-}
-
-/** Counts reviews into one bucket per local day, oldest first. */
-function bucketByDay(timestamps: Date[], startOfToday: Date, days: number) {
-  const buckets = Array.from({ length: days }, (_, i) => ({
-    date: new Date(startOfToday.getTime() - (days - 1 - i) * 86400000),
-    count: 0,
-  }));
-  for (const t of timestamps) {
-    const day = new Date(t); day.setHours(0, 0, 0, 0);
-    const index = days - 1 - Math.round((startOfToday.getTime() - day.getTime()) / 86400000);
-    const bucket = buckets[index];
-    if (bucket) bucket.count++;
-  }
-  return buckets;
 }
 
 /** Prefers a word the learner has actually struggled with over a random one. */

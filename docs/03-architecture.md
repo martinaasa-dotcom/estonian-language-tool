@@ -181,10 +181,10 @@ runtime have no IPv6 route to it, so it fails every deploy with `P1001: Can't re
 server`. This was verified against a real deploy, not assumed. `DATABASE_URL` is the transaction
 pooler (6543, `?pgbouncer=true`, required or Prisma's prepared statements break); `DIRECT_URL` is
 the *session* pooler (5432), which is a full Postgres session and so can run the schema changes
-the transaction pooler cannot. *Consequences:* "Review must work offline" (`03-architecture.md` §5) is no
-longer true in the literal sense — a hosted app needs a network path to its database — but the local
-dev flow (`file:./dev.db`, `npm run dev`) still works unchanged for anyone running it on their own
-machine. The TTS disk cache (`app/api/tts/route.ts`) now writes to `/tmp` when `VERCEL` is set, since
+the transaction pooler cannot. *Consequences:* "Review must work offline" (`03-architecture.md` §5) stopped being
+literally true — a hosted app needs a network path to its database. ADR-015 restores it by queuing
+grades on the device and replaying them, rather than by pretending the network is there; ADR-013
+keeps a no-account local install working for anyone running it on their own machine. The TTS disk cache (`app/api/tts/route.ts`) now writes to `/tmp` when `VERCEL` is set, since
 Vercel's filesystem is read-only outside it; this makes it a per-instance cache rather than the
 permanent one ADR intended locally — acceptable, since TartuNLP is still hit far less than once per
 request. *Rejected:* keeping SQLite on a host with a persistent volume (Fly.io/Railway) — Vercel was
@@ -217,3 +217,56 @@ paradigm. *Decision:* store five principal parts per part of speech; `ILL_SG_SHO
 because it genuinely does not exist for every noun. *Consequences:* the Ekilex mapper must find ten
 `FormType`s rather than five, which is what the Phase 0 spike verifies before any UI is built on the
 assumption.
+
+**ADR-013 — Sign-in is optional: no Supabase keys means single-learner local mode.**
+*Context:* ADR-012 gated every route behind Google sign-in, which is right for a hosted class but is
+a wall in front of the first flashcard for anyone who clones the repo — a student on their own
+laptop, or a teacher trying it before a lesson. *Decision:* `lib/auth/mode.ts` decides from the
+environment alone. With `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` present,
+nothing changes: the middleware gates every route and `requireUserId()` reads the session. With
+both absent, the middleware steps aside and every row is owned by one fixed local id. *Consequences:*
+`npm run setup && npm run dev` is a complete installation again, and the browser tests can drive the
+whole app without an OAuth round trip. The fallback is keyed on the *absence* of configuration, so a
+deployment that has the keys can never be talked into the open mode — it is a deployment shape, not
+an auth bypass. *Rejected:* a `DISABLE_AUTH` flag — a flag can be set on a hosted deployment by
+mistake, and a mistake there is everyone's data.
+
+**ADR-014 — Progress is derived from the review log, never stored.**
+*Context:* XP, levels, daily quests and every chart on `/progress` are the kind of thing normally
+kept in counter columns. *Problem:* a counter is a second source of truth for something the append
+-only `Review` table already knows, and the two drift — a failed write, a restored backup, a replayed
+offline batch, and the number on screen no longer describes anything that happened. *Decision:* XP is
+a pure function of the rating tally (`lib/gamification/xp.ts`); quests, streaks, heatmaps, forecasts
+and case accuracy are all recomputed per request from `Review` rows and card state
+(`lib/progress/summary.ts`, `lib/stats/history.ts`). Nothing about progress is written anywhere.
+*Consequences:* progress applies retroactively to reviews done before the feature existed, survives a
+restore for free, and cannot be awarded for something that did not happen; the cost is a handful of
+aggregate queries per page, which is why Today and the achievement check share one snapshot rather
+than each loading their own. The only progress-shaped values that *are* stored are the ones no log
+can reconstruct: a personal best, and the streak-shield days already spent.
+
+**ADR-015 — Offline grades queue in the page, not in the service worker.**
+*Context:* "Review must work offline" is a standing rule, and ADR-011 quietly broke it by putting the
+database behind the network. *Decision:* the service worker (`public/sw.js`) only keeps the app
+*openable* — cache-first for hashed build output, network-first for navigations with an offline
+fallback, and it never touches a non-GET request. Grades are queued by the page instead
+(`lib/offline/queue.ts`): one synchronous localStorage write per answer, stamped with the moment it
+was answered, replayed through the ordinary `gradeCard` path when the connection returns.
+*Consequences:* an offline evening lands in the log with its real timestamps, so the streak, heatmap
+and daily goal describe the day that actually happened; a tab closed mid-session loses nothing; and
+the parts that are genuinely hard — auth, ordering, a card deleted on another device — stay in server
+code that can be read and tested. *Rejected:* Background Sync in the worker (replaying an
+authenticated Server Action from a worker means reimplementing the session, for a browser API Safari
+still does not have) and IndexedDB (asynchronous writes can be lost by a closing tab; the payload is
+tiny).
+
+**ADR-016 — Games write to the same review log as review does.**
+*Context:* Case Sprint, Listening and Match are there to make practice enjoyable, which invites the
+usual arrangement where a game keeps its own score and touches nothing real. *Problem:* a mode whose
+results evaporate is a mode nobody plays twice, and worse, it splits "what I studied" from "what the
+scheduler knows". *Decision:* every mode grades through `gradeCard`, so FSRS sees the same evidence
+from a match round as from a review. Match rates a pair found first time as Good and one that took a
+wrong guess as Hard — recognising a word among seven others under time pressure is genuine recall,
+and pretending otherwise would be as dishonest as pretending it is a full production test.
+*Consequences:* games count towards the daily goal and the quests, which is the point; an abandoned
+round writes nothing, because nothing was answered.

@@ -41,8 +41,12 @@ await page.waitForURL(/\/review\?case=/, { timeout: 10000 });
 await page.waitForSelector("text=Full entry", { timeout: 10000 });
 check("the drill opens and says what it is",
   (await page.getByText(/drill/i).count()) > 0, href);
+// Derived from the link rather than hard-coded: which case is weakest depends
+// on the review history, so pinning one name here makes the test fail on data
+// rather than on behaviour.
+const drilledCase = new URL(href, B).searchParams.get("case")?.toLowerCase() ?? "";
 check("the drill only contains that case's cards",
-  (await page.getByText(/→ (inessive|elative|illative|allative|adessive|comitative|translative)/i).count()) > 0);
+  (await page.getByText(new RegExp(`→ ${drilledCase}`, "i")).count()) > 0, drilledCase);
 
 // A card you are struggling with should reach its full entry in one click.
 check("a review card links to the full dictionary entry",

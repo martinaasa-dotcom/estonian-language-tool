@@ -35,6 +35,7 @@ export interface EntryView {
   notes: string | null;
   provenance: string;
   inDeck: boolean;
+  starred: boolean;
   forms: EntryForm[];
 }
 
@@ -55,7 +56,7 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, entry, matchedAs, suggestions, justFetched,
+  initialQuery, hits, entry, matchedAs, suggestions, starred, justFetched,
 }: {
   initialQuery: string;
   /** True when this word was pulled from Ekilex on this request. */
@@ -65,6 +66,8 @@ export function DictionaryClient({
   /** Set when the query was an inflected form — "inessive (seesütlev) of tuba". */
   matchedAs: string | null;
   suggestions: string[];
+  /** Words this learner has starred — shown on the landing view. */
+  starred: { lemma: string; translation: string }[];
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -95,6 +98,29 @@ export function DictionaryClient({
           <Search size={16} aria-hidden /> Search
         </Button>
       </div>
+
+      {!showingEntry && initialQuery === "" && starred.length > 0 && (
+        <div>
+          <p className="label-xs mb-2 flex items-center gap-1.5" style={{ color: "var(--ink-3)" }}>
+            <Star size={12} aria-hidden /> Starred
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {starred.map((s) => (
+              <li key={s.lemma}>
+                <button
+                  type="button"
+                  onClick={() => go(s.lemma)}
+                  className="flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left transition-opacity hover:opacity-70"
+                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                >
+                  <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{s.lemma}</span>
+                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{s.translation}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!showingEntry && initialQuery === "" && <AddWord />}
 
@@ -218,7 +244,7 @@ function Entry({ entry }: { entry: EntryView }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <StarButton id={entry.id} />
+          <StarButton id={entry.id} starred={entry.starred} />
           <AddWord
             key={entry.id}
             edit={{
@@ -431,16 +457,28 @@ function RetrievedParadigm({ forms }: { forms: EntryForm[] }) {
   );
 }
 
-function StarButton({ id }: { id: string }) {
+/**
+ * Starring a word.
+ *
+ * The state is shown, not just sent: a toggle that looks identical before and
+ * after leaves you clicking it twice to find out what it did.
+ */
+function StarButton({ id, starred }: { id: string; starred: boolean }) {
+  const [on, setOn] = useState(starred);
   const [pending, start] = useTransition();
   return (
     <Button
       variant="ghost"
-      aria-label="Star this word"
+      aria-pressed={on}
+      aria-label={on ? "Remove this word from your starred list" : "Star this word"}
       disabled={pending}
-      onClick={() => start(() => void toggleStar(id))}
+      onClick={() => start(async () => {
+        const result = await toggleStar(id);
+        if (result.ok) setOn(result.starred);
+      })}
+      style={{ color: on ? "var(--hard)" : undefined }}
     >
-      <Star size={16} aria-hidden />
+      <Star size={16} aria-hidden fill={on ? "currentColor" : "none"} />
     </Button>
   );
 }

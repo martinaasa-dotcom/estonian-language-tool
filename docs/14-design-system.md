@@ -71,7 +71,7 @@ scroll-driven animation has no duration to shorten, so it needs removing rather 
 ## 5. Components
 
 `components/ui.tsx` holds the primitives: `Page`, `Card` (with pastel `tone`s), `SectionTitle`,
-`Chip`, `Empty`, `Stat`, `StatTile`, `Meter`, `Wash`. `components/Button.tsx` has one gradient
+`Chip`, `Empty`, `Stat`, `StatTile`, `Ring`, `Meter`, `Note`, `Skeleton`, `Wash`. `components/Button.tsx` has one gradient
 variant (`primary`) and four quiet ones; one loud action per screen.
 
 `components/brand.tsx` holds **Õ**, the mascot: Estonian's most recognisable letter is already a
@@ -84,7 +84,9 @@ component rather than an asset so it inherits the theme and can change mood.
 Two route groups:
 
 - `app/(app)/` — the signed-in shell: rail, floating mobile bar, pastel wash.
-- `app/(marketing)/` — `/welcome` and `/sign-in`, which get none of that chrome.
+- `app/(chromeless)/` — `/welcome`, `/sign-in` and `/start` (first-run setup), which own the
+  whole screen and get none of that chrome. Being in this group is what decides it: the rail is
+  rendered by `(app)/layout.tsx` and never has a path list to keep in sync.
 
 `/welcome` is public (see `middleware.ts`) and is the front door for a signed-out visitor
 arriving at `/`. Every Estonian form on it is read from the real dictionary and run through

@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { OfflineStatus } from "@/components/OfflineStatus";
 import "./globals.css";
 
 /**
@@ -24,14 +25,29 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Kodukeel — Estonian that finally sticks",
   description:
-    "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that knows when to stop, native audio, and a grammar tutor that explains the rule.",
+    "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that " +
+    "knows when to stop, native audio, and a grammar tutor that explains the rule.",
   icons: { icon: "/icon.svg" },
+  applicationName: "Kodukeel",
+  appleWebApp: { capable: true, title: "Kodukeel", statusBarStyle: "default" },
   openGraph: {
     title: "Kodukeel — Estonian that finally sticks",
     description:
       "Real paradigms, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf9ff" },
+    { media: "(prefers-color-scheme: dark)", color: "#12101d" },
+  ],
+  // The review screen is thumb-driven; zoom stays enabled because disabling it
+  // is an accessibility failure, not a polish detail.
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,6 +58,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <body className="min-h-screen">
         {children}
+        {/* Registers the service worker, so it has to sit above both route
+            groups — the offline fallback is reachable from either. */}
+        <OfflineStatus />
       </body>
     </html>
   );
