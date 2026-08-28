@@ -17,6 +17,19 @@ check("case-table forms are marked as Estonian",
   (await page.locator('td[lang="et"]').count()) >= 14,
   `${await page.locator('td[lang="et"]').count()} cells`);
 
+// Searching an inflected form — what a learner actually meets in class.
+for (const [query, lemma, why] of [
+  ["toas", "tuba", /inessive/i],
+  ["lugesin", "lugema", /past 1sg/i],
+  ["tubadega", "tuba", /comitative plural/i],
+]) {
+  await page.goto(`${B}/dictionary?q=${encodeURIComponent(query)}`, { waitUntil: "networkidle" });
+  const heading = await page.locator('h2[lang="et"]').innerText().catch(() => "");
+  const note = await page.getByText(/ is the /).innerText().catch(() => "");
+  check(`"${query}" resolves to ${lemma} and says why`,
+    heading === lemma && why.test(note), note || "no explanation shown");
+}
+
 // The weak-case heatmap is an action, not a readout.
 await page.goto(`${B}/words`, { waitUntil: "networkidle" });
 const drillLink = page.locator('a[href^="/review?case="]').first();

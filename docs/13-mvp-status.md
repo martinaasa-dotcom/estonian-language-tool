@@ -44,6 +44,7 @@ add back.
 |---|---|
 | `lib/estonian/` — cases, principal parts, gradation, derivation | Complete, 56 unit tests |
 | Dictionary — search, paradigm, gradation, derived case table, audio | Complete over the built-in dictionary |
+| Inflected-form search — `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
 | Built-in dictionary — 360 entries, 1 568 stored forms | Complete, hand-checked, CEFR-tagged A1–C1 (162 / 51 / 75 / 66 / 6). 70 carry gradation, 24 verbs carry government |
 | Speech — TartuNLP, server-proxied, cached to disk forever | Complete and verified end to end |
 | Flashcards — FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |

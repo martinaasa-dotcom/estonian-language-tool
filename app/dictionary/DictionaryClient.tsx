@@ -46,11 +46,13 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, entry, suggestions,
+  initialQuery, hits, entry, matchedAs, suggestions,
 }: {
   initialQuery: string;
   hits: SearchHit[];
   entry: EntryView | null;
+  /** Set when the query was an inflected form — "inessive (seesütlev) of tuba". */
+  matchedAs: string | null;
   suggestions: string[];
 }) {
   const router = useRouter();
@@ -113,7 +115,19 @@ export function DictionaryClient({
         </div>
       )}
 
-      {entry && <Entry entry={entry} />}
+      {entry && (
+        <>
+          {matchedAs && (
+            <p
+              className="rounded-md px-4 py-2.5 text-[14px]"
+              style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+            >
+              <Et serif={false} className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
+            </p>
+          )}
+          <Entry entry={entry} />
+        </>
+      )}
 
       {hits.length > 1 && (
         <div>
@@ -130,7 +144,9 @@ export function DictionaryClient({
                   style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
                 >
                   <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{h.lemma}</span>
-                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{h.translation}</span>
+                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                    {h.matchedAs ? h.matchedAs : h.translation}
+                  </span>
                 </button>
               </li>
             ))}

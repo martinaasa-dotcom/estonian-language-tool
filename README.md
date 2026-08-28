@@ -27,8 +27,9 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 Everything except the tutor:
 
 - **Dictionary** — 360 words (A1 to C1) with checked principal parts, consonant gradation and the
-  full case table worked out from the genitive. Anything missing can be added by hand, principal
-  parts and all.
+  full case table worked out from the genitive. Search an inflected form you met in class —
+  `toas`, `lugesin`, `tubadega` — and it finds the word *and* tells you which form you typed.
+  Anything missing can be added by hand, principal parts and all.
 - **Audio** — real Estonian speech from the University of Tartu's neural voice. No key, no setup.
 - **Flashcards** — FSRS scheduling, seven card types, keyboard-only review.
 - **Tasks, import, export** — all local.

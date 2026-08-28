@@ -16,6 +16,7 @@ export default async function DictionaryPage({
   // Open the first hit straight away — searching a word and then having to click it
   // again is a wasted step when you already know what you looked up.
   const entry = hits[0] ? await loadEntry(hits[0].id) : null;
+  const matchedAs = hits[0]?.matchedAs ?? null;
 
   const [total, suggestions] = await Promise.all([
     prisma.lexeme.count(),
@@ -37,6 +38,7 @@ export default async function DictionaryPage({
         initialQuery={q}
         hits={hits}
         entry={entry}
+        matchedAs={matchedAs}
         suggestions={suggestions.map((s) => s.lemma)}
       />
     </Page>
