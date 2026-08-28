@@ -14,6 +14,15 @@ import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
 
+export interface EntryForm {
+  formType: string;
+  value: string;
+  isPrincipal: boolean;
+  morphCode: string | null;
+  morphName: string | null;
+  orderIndex: number;
+}
+
 export interface EntryView {
   id: string;
   lemma: string;
@@ -26,7 +35,7 @@ export interface EntryView {
   notes: string | null;
   provenance: string;
   inDeck: boolean;
-  forms: { formType: string; value: string }[];
+  forms: EntryForm[];
 }
 
 const NOUN_PARTS = [
@@ -46,9 +55,11 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, entry, matchedAs, suggestions,
+  initialQuery, hits, entry, matchedAs, suggestions, justFetched,
 }: {
   initialQuery: string;
+  /** True when this word was pulled from Ekilex on this request. */
+  justFetched?: boolean;
   hits: SearchHit[];
   entry: EntryView | null;
   /** Set when the query was an inflected form — "inessive (seesütlev) of tuba". */
@@ -117,6 +128,14 @@ export function DictionaryClient({
 
       {entry && (
         <>
+          {justFetched && (
+            <p
+              className="rounded-md px-4 py-2.5 text-[13.5px]"
+              style={{ background: "var(--good-soft)", color: "var(--good)" }}
+            >
+              Fetched from Ekilex and saved — this word now works offline too.
+            </p>
+          )}
           {matchedAs && (
             <p
               className="rounded-md px-4 py-2.5 text-[14px]"
@@ -162,6 +181,11 @@ function Entry({ entry }: { entry: EntryView }) {
   const isVerb = entry.pos === "VERB";
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
   const form = (t: string) => entry.forms.find((f) => f.formType === t)?.value;
+
+  // Ekilex hands over the whole paradigm, so when we have it there is nothing to
+  // derive — we show the authoritative forms, including irregular plurals and the
+  // parallel forms Estonian genuinely has (raamatutes / raamatuis).
+  const retrieved = entry.forms.filter((f) => !f.isPrincipal && f.morphCode);
 
   const table = isNoun
     ? buildCaseTable({
@@ -255,7 +279,9 @@ function Entry({ entry }: { entry: EntryView }) {
         </div>
       )}
 
-      {isNoun && form("GEN_SG") && (
+      {retrieved.length > 0 ? (
+        <RetrievedParadigm forms={retrieved} />
+      ) : isNoun && form("GEN_SG") && (
         <div>
           <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
             The rest, worked out from the genitive
@@ -302,6 +328,102 @@ function Entry({ entry }: { entry: EntryView }) {
         </div>
       )}
     </Card>
+  );
+}
+
+/** Ekilex morph codes → the English case name, so an English speaker can scan the table. */
+const MORPH_EN: Record<string, string> = {
+  SgN: "Nominative", SgG: "Genitive", SgP: "Partitive", SgAdt: "Short illative",
+  SgIll: "Illative", SgIn: "Inessive", SgEl: "Elative", SgAll: "Allative",
+  SgAd: "Adessive", SgAbl: "Ablative", SgTr: "Translative", SgTer: "Terminative",
+  SgEs: "Essive", SgAb: "Abessive", SgKom: "Comitative",
+  PlN: "Nominative", PlG: "Genitive", PlP: "Partitive",
+  PlIll: "Illative", PlIn: "Inessive", PlEl: "Elative", PlAll: "Allative",
+  PlAd: "Adessive", PlAbl: "Ablative", PlTr: "Translative", PlTer: "Terminative",
+  PlEs: "Essive", PlAb: "Abessive", PlKom: "Comitative",
+  Sup: "ma-infinitive", Inf: "da-infinitive",
+  IndPrSg1: "Present 1sg", IndPrSg2: "Present 2sg", IndPrSg3: "Present 3sg",
+  IndPrPl1: "Present 1pl", IndPrPl2: "Present 2pl", IndPrPl3: "Present 3pl",
+  IndIpfSg1: "Past 1sg", IndIpfSg3: "Past 3sg",
+  PtsPtIps: "tud-participle", PtsPtPs: "nud-participle", IndPrIps: "Impersonal present",
+};
+
+/** Groups Ekilex's morph codes into the singular / plural / verb blocks a table needs. */
+function RetrievedParadigm({ forms }: { forms: EntryForm[] }) {
+  const groups: { label: string; test: (code: string) => boolean }[] = [
+    { label: "Singular", test: (c) => c.startsWith("Sg") },
+    { label: "Plural", test: (c) => c.startsWith("Pl") },
+    { label: "Verb forms", test: (c) => !c.startsWith("Sg") && !c.startsWith("Pl") },
+  ];
+
+  // Estonian has real parallel forms; collapse them onto one row rather than
+  // showing the case twice.
+  const merge = (list: EntryForm[]) => {
+    const rows = new Map<string, { en: string | null; et: string; values: string[] }>();
+    for (const f of list) {
+      const key = f.morphCode!;
+      const row = rows.get(key) ?? {
+        en: MORPH_EN[key] ?? null,
+        et: f.morphName ?? key,
+        values: [],
+      };
+      if (!row.values.includes(f.value)) row.values.push(f.value);
+      rows.set(key, row);
+    }
+    return [...rows.values()];
+  };
+
+  return (
+    <div>
+      <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
+        The full paradigm, from Ekilex
+      </h3>
+      <p className="mb-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+        These are the authoritative forms, not worked out from a stem — irregular
+        plurals and parallel forms included.
+      </p>
+      <div className="grid gap-4 md:grid-cols-2">
+        {groups.map(({ label, test }) => {
+          const rows = merge(forms.filter((f) => test(f.morphCode!)));
+          if (rows.length === 0) return null;
+          return (
+            <div key={label} className="overflow-hidden rounded-md border" style={{ borderColor: "var(--rule)" }}>
+              <div className="label-xs px-3 py-2" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
+                {label}
+              </div>
+              <ul>
+                {rows.map((r) => (
+                  <li
+                    key={r.et}
+                    className="flex items-baseline justify-between gap-3 px-3 py-1.5"
+                    style={{ borderTop: "1px solid var(--rule-soft)" }}
+                  >
+                    <span className="text-[12px]" style={{ color: "var(--ink-2)" }}>
+                      {r.en ?? r.et}
+                      {r.en && (
+                        <span lang="et" className="ml-1.5 text-[11px] italic" style={{ color: "var(--ink-3)" }}>
+                          {r.et.replace(/^(ainsuse|mitmuse)\s+/, "")}
+                        </span>
+                      )}
+                    </span>
+                    <span lang="et" className="est text-[15px] text-right" style={{ color: "var(--ink)" }}>
+                      {r.values.join(" / ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+        Forms from{" "}
+        <a href="https://ekilex.ee" target="_blank" rel="noreferrer" style={{ color: "var(--ink-3)" }}>
+          Ekilex
+        </a>
+        , Institute of the Estonian Language · CC BY 4.0
+      </p>
+    </div>
   );
 }
 

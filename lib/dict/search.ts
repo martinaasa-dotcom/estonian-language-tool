@@ -36,7 +36,33 @@ const CASE_SUFFIXES = CASES
 interface Candidate {
   id: string; lemma: string; translation: string; pos: string;
   cefr: string | null; gradationNote: string | null;
-  forms: { formType: string; value: string }[];
+  forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
+}
+
+/** Ekilex morph codes → a readable English name, for the "you typed the X of Y" note. */
+const MORPH_LABELS: Record<string, string> = {
+  SgN: "nominative", SgG: "genitive", SgP: "partitive", SgAdt: "short illative",
+  SgIll: "illative", SgIn: "inessive", SgEl: "elative", SgAll: "allative",
+  SgAd: "adessive", SgAbl: "ablative", SgTr: "translative", SgTer: "terminative",
+  SgEs: "essive", SgAb: "abessive", SgKom: "comitative",
+  PlN: "nominative plural", PlG: "genitive plural", PlP: "partitive plural",
+  PlIll: "illative plural", PlIn: "inessive plural", PlEl: "elative plural",
+  PlAll: "allative plural", PlAd: "adessive plural", PlAbl: "ablative plural",
+  PlTr: "translative plural", PlTer: "terminative plural", PlEs: "essive plural",
+  PlAb: "abessive plural", PlKom: "comitative plural",
+  Sup: "ma-infinitive", Inf: "da-infinitive",
+  IndPrSg1: "present 1sg", IndPrSg2: "present 2sg", IndPrSg3: "present 3sg",
+  IndPrPl1: "present 1pl", IndPrPl2: "present 2pl", IndPrPl3: "present 3pl",
+  IndIpfSg1: "past 1sg", IndIpfSg3: "past 3sg",
+  PtsPtIps: "tud-participle", PtsPtPs: "nud-participle",
+};
+
+/** Never shows an internal formType to the reader — that leaked as "EKILEX:SgIn" once. */
+function formLabel(form: { formType: string; morphCode: string | null; morphName: string | null }): string {
+  if (form.morphCode && MORPH_LABELS[form.morphCode]) return MORPH_LABELS[form.morphCode]!;
+  if (FORM_LABELS[form.formType]) return FORM_LABELS[form.formType]!;
+  if (form.morphName) return form.morphName;
+  return form.formType.replace(/^EKILEX:/, "");
 }
 
 /**
@@ -61,7 +87,7 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
     select: {
       id: true, lemma: true, translation: true, pos: true,
       cefr: true, gradationNote: true,
-      forms: { select: { formType: true, value: true } },
+      forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
     },
     take: 4000,
   });
@@ -96,9 +122,7 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
 
   // A stored principal part: `loen` should find `lugema`.
   const stored = c.forms.find((f) => fold(f.value) === folded);
-  if (stored) {
-    return { score: 88, matchedAs: `${FORM_LABELS[stored.formType] ?? stored.formType} of ${c.lemma}` };
-  }
+  if (stored) return { score: 88, matchedAs: `${formLabel(stored)} of ${c.lemma}` };
 
   // A regular case form built on a genitive stem: `toas` → `toa` + -s, and
   // `tubadega` → `tubade` + -ga on the plural stem.

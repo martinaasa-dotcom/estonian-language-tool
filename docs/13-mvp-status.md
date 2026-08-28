@@ -43,7 +43,9 @@ add back.
 | Area | State |
 |---|---|
 | `lib/estonian/` — cases, principal parts, gradation, derivation | Complete, 56 unit tests |
-| Dictionary — search, paradigm, gradation, derived case table, audio | Complete over the built-in dictionary |
+| Dictionary — search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the 360-word built-in set |
+| Ekilex integration — live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
+| English translations — layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
 | Inflected-form search — `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
 | Built-in dictionary — 360 entries, 1 568 stored forms | Complete, hand-checked, CEFR-tagged A1–C1 (162 / 51 / 75 / 66 / 6). 70 carry gradation, 24 verbs carry government |
 | Speech — TartuNLP, server-proxied, cached to disk forever | Complete and verified end to end |
@@ -65,10 +67,8 @@ add back.
 
 Each of these is a decision, not an omission.
 
-- **Ekilex live search.** Requires a key we do not have, and the response shape cannot be verified
-  without one. Writing a mapper against a guessed schema would be speculative code. The dictionary
-  runs on 252 hand-checked words instead, which is enough for A1–B2. `docs/05-integrations.md` holds
-  the contract for when a key arrives.
+- ~~Ekilex live search.~~ **Now built** — the key arrived, the response shape was read from real
+  data rather than guessed, and the mapper is covered by contract tests.
 - **Calendar / iCal.** No digital class schedule exists (Q3), so it would sync nothing.
 - **Speech-to-text.** Unverified for Estonian (audit A5). Still a spike, not a feature.
 - **Anki export.** JSON export and restore both ship; the Anki format is a nice-to-have, not a
@@ -82,7 +82,13 @@ Each of these is a decision, not an omission.
 
 ## 5. Known limitations, stated plainly
 
-1. **The dictionary is 360 words.** Enough for A1–B2 and the start of C1, but far short of the full
+0. **Anu's Estonian depends entirely on the model.** Measured with `npm run eval:anu` against six
+   grammar questions with known answers: `openai/gpt-4o` 6/6, `anthropic/claude-sonnet-5` 5/6,
+   `openai/gpt-4o-mini` 5/6 — but the mini model invented "Ma söön aitamat", which is not Estonian.
+   Free models are rate-limited hard enough upstream that they cannot be evaluated reliably, let
+   alone relied on. This is exactly why the model is never allowed to supply an inflected form.
+
+1. **Without an Ekilex key the dictionary is 360 words.** Enough for A1–B2 and the start of C1, but far short of the full
    lexicon. Anything outside it can be added by hand — the add-word form takes principal parts and
    classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
    key would close the gap properly.

@@ -23,7 +23,7 @@ export function resolveProvider(): ProviderConfig | null {
   if (process.env.OPENROUTER_API_KEY) {
     return {
       name: "openrouter",
-      model: process.env.OPENROUTER_MODEL || "z-ai/glm-5.2:free",
+      model: process.env.OPENROUTER_MODEL || "openai/gpt-4o",
       label: "OpenRouter",
     };
   }
@@ -101,6 +101,22 @@ function extractText(provider: ProviderName, frame: unknown): string {
   return f.choices?.[0]?.delta?.content ?? "";
 }
 
+/**
+ * OpenRouter's free models are aggressively rate-limited upstream, so a single 429
+ * is normal rather than fatal. Retrying twice with a short backoff turns most of
+ * them into an answer; a persistent 429 still surfaces as a clear message.
+ */
+async function withRetry(send: () => Promise<Response>): Promise<Response> {
+  let last: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await send();
+    if (res.status !== 429) return res;
+    last = res;
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+  }
+  return last!;
+}
+
 async function callOpenAiCompatible(config: ProviderConfig, system: string, messages: ChatMessage[]) {
   const isOpenRouter = config.name === "openrouter";
   const key = isOpenRouter ? process.env.OPENROUTER_API_KEY! : process.env.OPENAI_API_KEY!;
@@ -108,7 +124,7 @@ async function callOpenAiCompatible(config: ProviderConfig, system: string, mess
     ? "https://openrouter.ai/api/v1/chat/completions"
     : "https://api.openai.com/v1/chat/completions";
 
-  const res = await fetch(url, {
+  const res = await withRetry(() => fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -124,7 +140,7 @@ async function callOpenAiCompatible(config: ProviderConfig, system: string, mess
       messages: [{ role: "system", content: system }, ...messages],
     }),
     signal: AbortSignal.timeout(90_000),
-  });
+  }));
 
   await assertOk(res, config);
   return res;
@@ -162,7 +178,9 @@ async function assertOk(res: Response, config: ProviderConfig) {
   }
   if (res.status === 429) {
     throw new TutorError(
-      `${config.label} is rate-limiting the free tier. Wait a minute, or switch to a paid model in .env.`,
+      `${config.label} is rate-limiting this model. Free models are throttled hard upstream — ` +
+      `wait a moment, or set OPENROUTER_MODEL to a paid one in .env (openai/gpt-4o is about ` +
+      `half a cent per question).`,
       429,
     );
   }

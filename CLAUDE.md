@@ -19,9 +19,11 @@ Read that first.
 Route Handlers and server actions. Nothing gets a `NEXT_PUBLIC_` prefix unless it is genuinely
 public. CI greps the build output for key patterns.
 
-**Never generate Estonian morphology.** Authoritative inflected forms come from Ekilex. AI output is
-tagged `provenance: AI` and requires explicit user confirmation before it can become a flashcard
-answer. An unverified form does not just sit there being wrong — the SRS drills it in. (ADR-005.)
+**Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
+is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
+explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
+is tagged and needs confirmation before becoming a flashcard answer — an unverified form does not
+just sit there being wrong, the SRS drills it in. (ADR-005.)
 
 **Never store derived case forms.** Only principal parts are persisted (five per lexeme). The ten
 regular cases

@@ -144,6 +144,23 @@ paste-and-parse importer handling TSV/CSV/JSON/dash-separated lines, with Ekilex
 *Consequences:* works with Speakly, Quizlet, a class handout or a photo transcription; depends on no
 third party's continued goodwill; no terms-of-service exposure.
 
+**ADR-009 — Store retrieved paradigms; derive only what we cannot retrieve.**
+*Context:* the original plan stored five principal parts and derived the rest, to avoid a second
+source of truth. With an Ekilex key we can retrieve the entire paradigm authoritatively — 30–37
+forms including irregular plurals and the parallel forms Estonian genuinely has (`raamatutes` /
+`raamatuis`), which derivation cannot produce. *Decision:* store the full retrieved paradigm and
+render it directly; derive only for words held as principal parts alone (user-added, or seeded and
+not yet enriched). *Consequences:* `Form` gains `isPrincipal`, `morphCode` and `orderIndex`, and its
+uniqueness key includes the value so parallel forms coexist. The no-stale-duplication rule is intact:
+retrieved data is the authority, not a copy of a computation.
+
+**ADR-010 — English comes from a layered resolver, not one source.**
+*Context:* Ekilex is authoritative for Estonian but carries no English on a reader key; its `ing`
+dataset is not public. *Decision:* resolve a translation in order — a translation the learner has
+already accepted, then Wiktionary, then the AI tutor, then an honest blank inviting her to type one.
+Each layer records where it came from. *Consequences:* coverage is near-complete without any layer
+pretending to an authority it does not have, and the learner can always overwrite.
+
 **ADR-007 — Today is the default route, not Tasks.**
 *Context:* v4.0 specifies a sidebar of six tabs and no landing view (audit D2). *Problem:* a tab bar
 makes the user decide what to study before they have done anything, which is the single most likely

@@ -22,6 +22,19 @@ Open **http://localhost:3000**. That is the whole installation.
 
 To stop it, press Ctrl-C in the terminal. To start again later, just `npm run dev`.
 
+## The dictionary
+
+With a free **Ekilex** key (see `.env.example`) the dictionary reaches the whole Estonian lexicon:
+search any word and you get the authoritative paradigm from the Institute of the Estonian Language —
+every case, both numbers, irregular plurals and the parallel forms Estonian really has — plus its
+CEFR level, verb government and an Estonian definition. Each word is stored on first lookup, so the
+second time is instant and works offline. Words from the built-in set are upgraded to the
+authoritative paradigm the first time you open them.
+
+Ekilex carries no English on a reader key, so translations are resolved in layers: one you have
+already accepted, then Wiktionary, then Anu, then an honest blank for you to fill. Every layer says
+where it came from, and you can always overwrite it.
+
 ## What works without any API key
 
 Everything except the tutor:

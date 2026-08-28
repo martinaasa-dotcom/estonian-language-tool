@@ -26,6 +26,7 @@ model Lexeme {
   notes         String?
   provenance    String   @default("SEED") // SEED | EKILEX | AI | USER
   ekilexWordId  Int?
+  fetchedAt     DateTime? // when Ekilex was last consulted, for cache freshness
   starred       Boolean  @default(false)
 
   forms     Form[]
@@ -38,16 +39,27 @@ model Lexeme {
   @@index([cefr])
 }
 
-/// A principal part. Only unpredictable forms are stored; the ten regular
-/// cases are derived from the genitive stem at render time (ADR-005, CLAUDE.md).
+/// An inflected form.
+///
+/// Two kinds live here. Principal parts (isPrincipal) are the unpredictable forms
+/// a learner must memorise. Everything else is a full paradigm form retrieved from
+/// Ekilex — authoritative, not derived, so storing it does not create a second
+/// source of truth (ADR-009). Words we hold only principal parts for still get
+/// their regular cases derived at render time.
 model Form {
-  id       String @id @default(uuid())
-  lexemeId String
-  lexeme   Lexeme @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  formType String // NOM_SG GEN_SG PART_SG ILL_SG_SHORT PART_PL | INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD
-  value    String
+  id          String  @id @default(uuid())
+  lexemeId    String
+  lexeme      Lexeme  @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  formType    String  // NOM_SG GEN_SG PART_SG ILL_SG_SHORT PART_PL GEN_PL | INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD | EKILEX:<morphCode>
+  value       String
+  isPrincipal Boolean @default(true)
+  morphCode   String? // Ekilex code, e.g. SgIn, PlKom, IndIpfSg1
+  morphName   String? // Estonian label, e.g. "ainsuse seesütlev"
+  orderIndex  Int     @default(0)
 
-  @@unique([lexemeId, formType])
+  // Estonian has genuine parallel forms (raamatutes / raamatuis), so the value
+  // is part of the key — otherwise the second one silently overwrites the first.
+  @@unique([lexemeId, formType, value])
   @@index([lexemeId])
 }
 
