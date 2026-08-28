@@ -53,7 +53,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
     void checkAchievements({ count: attempted, accuracy }).then((r) => {
       if (r.ok) setNewBadges(r.newBadges);
     });
-  }, [finished, attempted, correct]);
+  }, [finished, attempted, correct, wasEmptyAtStart]);
 
   const pick = useCallback(async (choice: string) => {
     if (!card || answered || busy) return;

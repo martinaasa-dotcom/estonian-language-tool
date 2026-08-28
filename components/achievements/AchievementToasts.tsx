@@ -22,7 +22,6 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
     setBurst(true);
     const t = setTimeout(() => setBurst(false), 2000);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [badges]);
 
   if (queue.length === 0) return null;

@@ -92,8 +92,24 @@ export async function* streamReply(
   }
 }
 
+/**
+ * The parts of a streaming frame we actually read.
+ *
+ * Both shapes in one type rather than `any`: Anthropic sends
+ * `content_block_delta` frames with a `delta.text`, and every OpenAI-compatible
+ * provider sends `choices[0].delta.content`. Everything else in a frame is
+ * ignored, so describing only these fields is both honest and enough — and it
+ * means a typo in one of these paths is a compile error rather than a silently
+ * empty stream.
+ */
+interface StreamFrame {
+  type?: string;
+  delta?: { type?: string; text?: string };
+  choices?: { delta?: { content?: string } }[];
+}
+
 function extractText(provider: ProviderName, frame: unknown): string {
-  const f = frame as Record<string, any>;
+  const f = frame as StreamFrame;
   if (provider === "anthropic") {
     if (f.type === "content_block_delta" && f.delta?.type === "text_delta") return f.delta.text ?? "";
     return "";

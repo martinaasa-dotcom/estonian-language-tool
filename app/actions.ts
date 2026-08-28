@@ -9,7 +9,7 @@ import { unitById } from "@/lib/collections/path";
 import { checkAchievementsFor } from "@/lib/progress/achievements";
 import { resolveStreakFor } from "@/lib/progress/summary";
 import {
-  numberSetting, readSetting, readSettings, SETTING_KEYS, writeSetting, type ReviewMode,
+  numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
