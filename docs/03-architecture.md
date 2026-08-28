@@ -173,10 +173,15 @@ partial Today still answers the question better than a tab bar does.
 *Context:* ADR-002 chose SQLite explicitly to avoid a network dependency on the review path and to
 avoid a monthly bill, for a single user on a single machine. That premise changed: the app is now
 meant to be reachable as a real website, not just run locally. *Decision:* deploy to Vercel; move the
-datasource from SQLite to Postgres (Supabase), using the pooled connection (`DATABASE_URL`) at
-runtime and the direct connection (`DIRECT_URL`) for schema changes, per ADR-002's own portability
-guarantee (no SQLite-specific types, UUID string ids, timestamps in UTC) — this was a datasource swap,
-not a data-model change. *Consequences:* "Review must work offline" (`03-architecture.md` §5) is no
+datasource from SQLite to Postgres (Supabase), per ADR-002's own portability guarantee (no
+SQLite-specific types, UUID string ids, timestamps in UTC) — this was a datasource swap, not a
+data-model change. *Both* connection URLs point at Supabase's shared poolers, never at the direct
+`db.<project-ref>.supabase.co` host: that host resolves to IPv6 only, and Vercel's build and
+runtime have no IPv6 route to it, so it fails every deploy with `P1001: Can't reach database
+server`. This was verified against a real deploy, not assumed. `DATABASE_URL` is the transaction
+pooler (6543, `?pgbouncer=true`, required or Prisma's prepared statements break); `DIRECT_URL` is
+the *session* pooler (5432), which is a full Postgres session and so can run the schema changes
+the transaction pooler cannot. *Consequences:* "Review must work offline" (`03-architecture.md` §5) is no
 longer true in the literal sense — a hosted app needs a network path to its database — but the local
 dev flow (`file:./dev.db`, `npm run dev`) still works unchanged for anyone running it on their own
 machine. The TTS disk cache (`app/api/tts/route.ts`) now writes to `/tmp` when `VERCEL` is set, since
