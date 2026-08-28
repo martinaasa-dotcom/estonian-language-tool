@@ -125,7 +125,7 @@ export default async function GrammarIndexPage() {
                         </span>
                         <span className="ml-auto">
                           {ref.spec.principal
-                            ? <Chip tone="blush">memorised</Chip>
+                            ? <Chip tone="hard">memorised</Chip>
                             : <Chip tone="accent" caseSensitive>{`-${ref.spec.suffix}`}</Chip>}
                         </span>
                       </span>

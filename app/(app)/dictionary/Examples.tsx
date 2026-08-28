@@ -125,7 +125,7 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
       {example.en ? (
         <p className="mt-1 flex items-center gap-2 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
           {example.en}
-          <Chip tone="blush" title="Machine translation — the Estonian above is authoritative, this is not">
+          <Chip tone="again" title="Machine translation — the Estonian above is authoritative, this is not">
             AI
           </Chip>
         </p>

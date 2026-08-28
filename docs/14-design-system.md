@@ -29,6 +29,17 @@ of pastel light behind everything so the ground never reads as grey.
 Grading colours are aliases (`--again` → `--peach`), so the rating scale and the rest of the UI
 can never drift apart.
 
+Two uses of colour, and only one of them carries meaning:
+
+- **A chip's hue is a claim.** `again` on a chip says "this is not authoritative" — it is what
+  every AI-written translation wears, in the dictionary, in Anu's replies, on the grammar pages
+  and in dictation. `hard` says "there is an irregularity here to learn", which is what gradation
+  notes and the memorised principal parts wear. Reach for a hue on a chip only when you mean the
+  thing that hue means.
+- **A tile in a set of tiles is just telling itself apart from its neighbours.** The four figures
+  in a session summary, and the practice modes on Today, cycle the palette so they can be scanned
+  — XP is blush there because it is the fifth tile, not because Anu is involved.
+
 ## 2. Tokens
 
 Defined twice in `app/globals.css`, deliberately:

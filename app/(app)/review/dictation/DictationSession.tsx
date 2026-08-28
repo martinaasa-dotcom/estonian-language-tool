@@ -254,7 +254,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
           {result && task.en && (
             <p className="text-center text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {task.en}
-              <Chip tone="blush" title="Machine translation — the Estonian is authoritative, this is not">
+              <Chip tone="again" title="Machine translation — the Estonian is authoritative, this is not">
                 AI
               </Chip>
             </p>
