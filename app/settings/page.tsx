@@ -1,19 +1,32 @@
+import { Shield } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
+import { BADGES } from "@/lib/achievements/badges";
+import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
+import { DailyGoalPanel } from "./DailyGoalPanel";
 import { ImportPanel } from "./ImportPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 
 export const dynamic = "force-dynamic";
+const DEFAULT_DAILY_GOAL = 15;
 
 export default async function SettingsPage() {
+  const ownerId = await requireUserId();
   const provider = resolveProvider();
-  const [words, cards, reviews] = await Promise.all([
+  const [words, cards, reviews, earned, dailyGoalSetting, shieldSetting] = await Promise.all([
     prisma.lexeme.count(),
-    prisma.card.count(),
-    prisma.review.count(),
+    prisma.card.count({ where: { ownerId } }),
+    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "streakShields" } } }),
   ]);
+  const earnedKeys = new Set(earned.map((a) => a.key));
+  const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;
+  const shields = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
 
   return (
     <Page title="Settings" lead="Everything is stored on this computer. Nothing is uploaded anywhere.">
@@ -67,6 +80,37 @@ export default async function SettingsPage() {
             ) : (
               <SetupGuide />
             )}
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle hint={`${dailyGoal} reviews/day`}>Daily goal</SectionTitle>
+          <Card>
+            <p className="mb-4 text-[14px]" style={{ color: "var(--ink-2)" }}>
+              Sets how full the ring on Today fills up. Purely motivational — it never caps or
+              blocks a session.
+            </p>
+            <DailyGoalPanel currentGoal={dailyGoal} />
+          </Card>
+        </section>
+
+        <section>
+          <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
+          <Card>
+            <BadgeShelf earnedKeys={earnedKeys} />
+            <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
+              <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent)" }} />
+              <div>
+                <p className="text-[13.5px] font-medium" style={{ color: "var(--ink)" }}>
+                  {shields} streak shield{shields === 1 ? "" : "s"} banked
+                </p>
+                <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
+                  through a single day you miss entirely — no action needed, it is spent
+                  automatically the next time you&rsquo;re back.
+                </p>
+              </div>
+            </div>
           </Card>
         </section>
 

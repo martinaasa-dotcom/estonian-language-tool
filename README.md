@@ -10,11 +10,14 @@ tracking. Everything runs on your own computer. No account, no bill, no data lea
 
 ## Running it
 
-You need [Node.js](https://nodejs.org) 20 or newer. Then, in this folder:
+You need [Node.js](https://nodejs.org) 20 or newer and a Postgres database — the app is hosted (see
+"Deploying it as a real website" below), so local dev points at the same kind of database rather than
+a zero-setup local file. The free tier of [supabase.com](https://supabase.com) works fine for this;
+use a separate Supabase project from production if you'd rather not develop against live data.
 
 ```bash
 npm install       # fetches the libraries
-npm run setup     # creates the database and loads 360 Estonian words
+npm run setup     # copies .env.example to .env — fill in DATABASE_URL/DIRECT_URL first, then re-run
 npm run dev       # starts the app
 ```
 
@@ -64,6 +67,60 @@ That model costs nothing. If Anu ever feels vague about Estonian, swap the model
 `anthropic/claude-sonnet-5` or `openai/gpt-4o` — a fraction of a cent per question and noticeably
 sharper. An `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` works instead of OpenRouter if you prefer;
 whichever key is present is the one used.
+
+## Deploying it as a real website
+
+The default is still local-only (`file:./dev.db`), but the schema was built Postgres-portable from
+the start (ADR-002), so hosting it is a datasource swap, documented in `docs/03-architecture.md`
+ADR-011:
+
+1. Create a project at [supabase.com](https://supabase.com) → **Connect** (or Project Settings →
+   Database → Connection string). Take **both** strings from the `pooler.supabase.com` host:
+   the **transaction pooler** (port 6543) as `DATABASE_URL`, with `?pgbouncer=true` appended, and
+   the **session pooler** (port 5432) as `DIRECT_URL`. Percent-encode any special characters in
+   the password.
+
+   Do *not* use the direct `db.<project-ref>.supabase.co` host that the dashboard shows first: it
+   resolves to IPv6 only, and Vercel has no IPv6 route to it, so every build dies with
+   `P1001: Can't reach database server`. The poolers are IPv4. `DIRECT_URL` wants the *session*
+   pooler specifically — it is a full Postgres session, so `prisma db push` can run schema changes
+   through it, which the transaction pooler cannot.
+2. In Vercel, import this repo and set the environment variables (Production, and Preview if you
+   want preview deploys to work): `DATABASE_URL`, `DIRECT_URL`, plus whichever of
+   `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` and `EKILEX_API_KEY` you're using.
+   Never prefix any of these `NEXT_PUBLIC_` — they must stay server-side.
+3. Deploy. Vercel's build runs `prisma generate && prisma db push && next build` (see
+   `package.json`), so the schema is created/updated against `DIRECT_URL` automatically on every
+   deploy — no manual push step. `prisma db push` fails the build rather than silently applying a
+   destructive change, so an unusual schema change (e.g. dropping a column with data in it) shows up
+   as a failed deploy asking you to confirm, not as quiet data loss.
+
+Two things change once it's hosted rather than local: review needs a network path to the database
+(it no longer runs on a train), and the TTS audio cache becomes per-instance instead of permanent,
+since Vercel's filesystem is read-only outside `/tmp`. Both are explained in ADR-011.
+
+### Adding Google sign-in (multi-user)
+
+Every route is gated behind sign-in (`middleware.ts`); each Google account gets its own dictionary
+deck, tasks and review history, while the dictionary itself stays shared — see ADR-012. Two accounts
+to set up, both one-time:
+
+1. **Google Cloud Console** → [console.cloud.google.com](https://console.cloud.google.com) →
+   create a project (or pick an existing one) → **APIs & Services → OAuth consent screen**: fill in
+   an app name and your email, external user type is fine for a small group. Then
+   **Credentials → Create Credentials → OAuth client ID** → type **Web application** → add an
+   **Authorized redirect URI**: `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase's
+   callback, not Vercel's — find the exact URL in the next step). Save; copy the **Client ID** and
+   **Client Secret**.
+2. **Supabase dashboard** → your project → **Authentication → Providers → Google** → toggle it on,
+   paste the Client ID and Client Secret from step 1, save. The callback URL to put in Google Cloud
+   is shown right there on this page.
+3. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API — the
+   anon/publishable key, safe to be public) in both your local `.env` and Vercel's environment
+   variables.
+
+Neither Google credential nor the Supabase service role key is ever needed in this app's own code —
+the OAuth exchange happens entirely inside Supabase.
 
 ## Backing up
 

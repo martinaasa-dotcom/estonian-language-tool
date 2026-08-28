@@ -3,14 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
+import { BADGES, type BadgeStats, computeStreakWithShields, earnedBadgeKeys } from "@/lib/achievements/badges";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
-/** Adds a word to the deck. Skips card types that already exist, so it is safe to click twice. */
+/**
+ * Adds a word to the deck. Skips card types that already exist, so it is safe to click twice.
+ * Cards are per-user (`ownerId`) even though the Lexeme they're generated from is the shared
+ * dictionary — see docs/03-architecture.md ADR-012.
+ */
 export async function addToDeck(lexemeId: string, types: CardType[], source = "DICTIONARY") {
+  return addCardsFor(await requireUserId(), lexemeId, types, source);
+}
+
+/**
+ * The body of `addToDeck`, for callers that have already established the owner.
+ *
+ * Deliberately not exported: this file is `"use server"`, so every export is an
+ * endpoint any signed-in user can call with arguments of their choosing. An
+ * exported `ownerId` parameter would therefore let one learner write cards into
+ * another's deck. Owner comes from the session, never from the caller.
+ */
+async function addCardsFor(
+  owner: string, lexemeId: string, types: CardType[], source: string,
+) {
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     include: { forms: true },
@@ -18,7 +38,7 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
   if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
 
   const existing = await prisma.card.findMany({
-    where: { lexemeId },
+    where: { lexemeId, ownerId: owner },
     select: { front: true, cardType: true },
   });
   const seen = new Set(existing.map((c) => `${c.cardType}|${c.front}`));
@@ -34,6 +54,7 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
   const scheduling = emptyScheduling(now);
   await prisma.card.createMany({
     data: generated.map((c) => ({
+      ownerId: owner,
       lexemeId,
       cardType: c.cardType,
       front: c.front,
@@ -59,7 +80,8 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
  * is the one thing we cannot reconstruct, so it must never be lost to a later failure.
  */
 export async function gradeCard(cardId: string, rating: RatingValue, durationMs: number) {
-  const card = await prisma.card.findUnique({ where: { id: cardId } });
+  const ownerId = await requireUserId();
+  const card = await prisma.card.findFirst({ where: { id: cardId, ownerId } });
   if (!card) return { ok: false as const, error: "Card not found." };
 
   await prisma.review.create({
@@ -107,14 +129,16 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
 }
 
 export async function setCardSuspended(cardId: string, suspended: boolean) {
-  await prisma.card.update({ where: { id: cardId }, data: { suspended } });
+  const ownerId = await requireUserId();
+  await prisma.card.updateMany({ where: { id: cardId, ownerId }, data: { suspended } });
   revalidatePath("/words");
   revalidatePath("/");
   return { ok: true as const };
 }
 
 export async function deleteCard(cardId: string) {
-  await prisma.card.delete({ where: { id: cardId } });
+  const ownerId = await requireUserId();
+  await prisma.card.deleteMany({ where: { id: cardId, ownerId } });
   revalidatePath("/words");
   revalidatePath("/");
   return { ok: true as const };
@@ -229,15 +253,22 @@ export async function createLexemeWithForms(input: {
 }
 
 export async function toggleStar(lexemeId: string) {
-  const lexeme = await prisma.lexeme.findUnique({ where: { id: lexemeId }, select: { starred: true } });
-  if (!lexeme) return { ok: false as const };
-  await prisma.lexeme.update({ where: { id: lexemeId }, data: { starred: !lexeme.starred } });
+  const ownerId = await requireUserId();
+  const existing = await prisma.starredWord.findUnique({
+    where: { ownerId_lexemeId: { ownerId, lexemeId } },
+  });
+  if (existing) {
+    await prisma.starredWord.delete({ where: { ownerId_lexemeId: { ownerId, lexemeId } } });
+  } else {
+    await prisma.starredWord.create({ data: { ownerId, lexemeId } });
+  }
   revalidatePath("/dictionary");
-  return { ok: true as const, starred: !lexeme.starred };
+  return { ok: true as const, starred: !existing };
 }
 
 /** Bulk import from pasted text. Returns per-row outcomes so nothing fails silently. */
 export async function importWords(rows: { lemma: string; translation: string; pos: string }[]) {
+  const ownerId = await requireUserId();
   let created = 0;
   let cards = 0;
   const skipped: string[] = [];
@@ -247,16 +278,18 @@ export async function importWords(rows: { lemma: string; translation: string; po
     const translation = row.translation.trim();
     if (!lemma || !translation) continue;
 
-    const existing = await prisma.lexeme.findUnique({
+    let lexeme = await prisma.lexeme.findUnique({
       where: { lemma_pos: { lemma, pos: row.pos } },
     });
-    if (existing) { skipped.push(lemma); continue; }
-
-    const lexeme = await prisma.lexeme.create({
-      data: { lemma, translation, pos: row.pos, provenance: "USER" },
-    });
-    created++;
-    const result = await addToDeck(lexeme.id, ["RECOGNITION", "PRODUCTION"], "IMPORT");
+    if (lexeme) {
+      skipped.push(lemma);
+    } else {
+      lexeme = await prisma.lexeme.create({
+        data: { lemma, translation, pos: row.pos, provenance: "USER" },
+      });
+      created++;
+    }
+    const result = await addCardsFor(ownerId, lexeme.id, ["RECOGNITION", "PRODUCTION"], "IMPORT");
     if (result.ok) cards += result.added ?? 0;
   }
 
@@ -265,15 +298,186 @@ export async function importWords(rows: { lemma: string; translation: string; po
   return { ok: true as const, created, cards, skipped };
 }
 
+// ────────────────────────────── Achievements ───────────────────────────────
+
+const SPRINT_BEST_KEY = "sprintBest";
+const STREAK_SHIELDS_KEY = "streakShields";
+const STREAK_SHIELD_DATES_KEY = "streakShieldDates";
+const SHIELD_AWARD_BADGES = new Set(["streak_7", "streak_30", "streak_100"]);
+
+/**
+ * Resolves the current streak, applying any banked streak shields (Duolingo's
+ * "streak freeze") to bridge missed days. Reads the review log over a wide
+ * window — long enough for the streak_100 badge to actually be reachable,
+ * unlike the 30-day window a shield-unaware streak used to be limited to —
+ * and persists any newly-spent shields so a bridged day is never re-charged
+ * on a later call (computeStreakWithShields is pure; this is its DB shell).
+ */
+export async function resolveStreak() {
+  // Owner comes from the session, never from an argument: this file is
+  // `"use server"`, so an `ownerId` parameter here would be a public endpoint
+  // letting any signed-in user read and rewrite another learner's streak.
+  const ownerId = await requireUserId();
+  const [reviews, shieldSetting, datesSetting] = await Promise.all([
+    prisma.review.findMany({
+      where: { reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) }, card: { ownerId } },
+      select: { reviewedAt: true },
+    }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } } }),
+  ]);
+
+  const shieldsAvailable = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
+  let shieldedDates: string[] = [];
+  if (datesSetting) {
+    try {
+      const parsed: unknown = JSON.parse(datesSetting.value);
+      if (Array.isArray(parsed)) shieldedDates = parsed.filter((d): d is string => typeof d === "string");
+    } catch {
+      shieldedDates = [];
+    }
+  }
+
+  const result = computeStreakWithShields(reviews.map((r) => r.reviewedAt), shieldsAvailable, shieldedDates);
+
+  if (result.newlyShieldedDates.length > 0) {
+    await Promise.all([
+      prisma.setting.upsert({
+        where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
+        create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(result.shieldsRemaining) },
+        update: { value: String(result.shieldsRemaining) },
+      }),
+      prisma.setting.upsert({
+        where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } },
+        create: { ownerId, key: STREAK_SHIELD_DATES_KEY, value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
+        update: { value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
+      }),
+    ]);
+  }
+
+  return { ok: true as const, streak: result.streak, shieldsAvailable: result.shieldsRemaining };
+}
+
+/**
+ * Computes current stats from the review log and decks, then awards any badge
+ * whose condition is newly met. Idempotent and safe to call often: an already
+ * -earned key is never re-awarded or removed, so a badge earned once is kept
+ * forever even if the underlying stat later dips (e.g. a streak breaks).
+ *
+ * Reaching a streak_7/30/100 badge for the first time also banks a streak
+ * shield — the milestone worth protecting is exactly the one just reached.
+ */
+export async function checkAchievements(session?: { count: number; accuracy: number }) {
+  const ownerId = await requireUserId();
+  const [streakResult, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
+    resolveStreak(),
+    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.card.count({ where: { ownerId, state: 2 } }),
+    prisma.lexeme.count(),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } }),
+    prisma.review.findMany({
+      where: { targetCase: { not: null }, card: { ownerId } },
+      select: { targetCase: true, rating: true },
+      take: 5000,
+    }),
+  ]);
+
+  const tally = new Map<string, { ok: number; total: number }>();
+  for (const r of caseReviews) {
+    if (!r.targetCase) continue;
+    const entry = tally.get(r.targetCase) ?? { ok: 0, total: 0 };
+    entry.total++;
+    if (r.rating >= 3) entry.ok++;
+    tally.set(r.targetCase, entry);
+  }
+  const bestCaseAccuracy = [...tally.entries()]
+    .filter(([, v]) => v.total >= 10)
+    .map(([grammCase, v]) => ({ grammCase, accuracy: Math.round((v.ok / v.total) * 100) }))
+    .sort((a, b) => b.accuracy - a.accuracy)[0] ?? null;
+
+  const stats: BadgeStats = {
+    streak: streakResult.streak,
+    totalReviews,
+    cardsKnown,
+    totalWords,
+    bestCaseAccuracy,
+    sprintBest: sprintSetting ? Number(sprintSetting.value) || 0 : 0,
+    session,
+  };
+
+  const earnedKeys = earnedBadgeKeys(stats);
+  if (earnedKeys.length === 0) return { ok: true as const, newBadges: [] };
+
+  const already = await prisma.achievement.findMany({
+    where: { ownerId, key: { in: earnedKeys } },
+    select: { key: true },
+  });
+  const alreadySet = new Set(already.map((a) => a.key));
+  const newKeys = earnedKeys.filter((k) => !alreadySet.has(k));
+  if (newKeys.length === 0) return { ok: true as const, newBadges: [] };
+
+  await prisma.achievement.createMany({ data: newKeys.map((key) => ({ ownerId, key })) });
+
+  const shieldsEarned = newKeys.filter((k) => SHIELD_AWARD_BADGES.has(k)).length;
+  if (shieldsEarned > 0) {
+    const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } });
+    const currentShields = current ? Number(current.value) || 0 : 0;
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
+      create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(currentShields + shieldsEarned) },
+      update: { value: String(currentShields + shieldsEarned) },
+    });
+  }
+
+  // No revalidatePath here: this is called from a Server Component render (Today)
+  // as well as from actual actions, and revalidating during render is an error.
+  // Settings reads achievements fresh on every load anyway (force-dynamic).
+  return { ok: true as const, newBadges: BADGES.filter((b) => newKeys.includes(b.key)) };
+}
+
+const DAILY_GOAL_KEY = "dailyGoal";
+
+/** Sets the review count that fills the daily-goal ring on Today. */
+export async function setDailyGoal(goal: number) {
+  const ownerId = await requireUserId();
+  const clamped = Math.min(200, Math.max(5, Math.round(goal)));
+  await prisma.setting.upsert({
+    where: { ownerId_key: { ownerId, key: DAILY_GOAL_KEY } },
+    create: { ownerId, key: DAILY_GOAL_KEY, value: String(clamped) },
+    update: { value: String(clamped) },
+  });
+  revalidatePath("/");
+  revalidatePath("/settings");
+  return { ok: true as const, goal: clamped };
+}
+
+/** Records a Case Sprint score, keeping only the personal best. */
+export async function recordSprintScore(score: number) {
+  const ownerId = await requireUserId();
+  const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } });
+  const best = current ? Number(current.value) || 0 : 0;
+  const isNewBest = score > best;
+  if (isNewBest) {
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } },
+      create: { ownerId, key: SPRINT_BEST_KEY, value: String(score) },
+      update: { value: String(score) },
+    });
+  }
+  return { ok: true as const, best: Math.max(score, best), isNewBest };
+}
+
 // ─────────────────────────────── Tasks ────────────────────────────────────
 
 export async function createTask(input: {
   title: string; tag: string; classWeek?: number | null; dueAt?: string | null; notes?: string;
 }) {
+  const ownerId = await requireUserId();
   const title = input.title.trim();
   if (!title) return { ok: false as const, error: "A task needs a title." };
   await prisma.task.create({
     data: {
+      ownerId,
       title,
       tag: input.tag,
       classWeek: input.classWeek ?? null,
@@ -287,7 +491,8 @@ export async function createTask(input: {
 }
 
 export async function toggleTask(id: string) {
-  const task = await prisma.task.findUnique({ where: { id }, select: { completed: true } });
+  const ownerId = await requireUserId();
+  const task = await prisma.task.findFirst({ where: { id, ownerId }, select: { completed: true } });
   if (!task) return { ok: false as const };
   await prisma.task.update({
     where: { id },
@@ -299,7 +504,8 @@ export async function toggleTask(id: string) {
 }
 
 export async function deleteTask(id: string) {
-  await prisma.task.delete({ where: { id } });
+  const ownerId = await requireUserId();
+  await prisma.task.deleteMany({ where: { id, ownerId } });
   revalidatePath("/tasks");
   revalidatePath("/");
   return { ok: true as const };
@@ -355,6 +561,7 @@ export async function inspectBackup(json: string): Promise<
  * A backup you have never restored is a hypothesis, which is why this exists at all.
  */
 export async function restoreBackup(json: string, mode: "merge" | "replace") {
+  const ownerId = await requireUserId();
   const check = await inspectBackup(json);
   if (!check.ok) return { ok: false as const, error: check.error };
 
@@ -363,17 +570,18 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
   try {
     await prisma.$transaction(async (tx) => {
       if (mode === "replace") {
-        // Order matters: reviews reference cards, forms reference lexemes.
-        await tx.review.deleteMany();
-        await tx.card.deleteMany();
-        await tx.form.deleteMany();
-        await tx.lexeme.deleteMany();
-        await tx.task.deleteMany();
+        // Scoped to this user's own data only — Lexeme/Form are the shared
+        // dictionary and must never be wiped by one person's restore.
+        await tx.review.deleteMany({ where: { card: { ownerId } } });
+        await tx.card.deleteMany({ where: { ownerId } });
+        await tx.task.deleteMany({ where: { ownerId } });
       }
 
+      // Shared dictionary: upserted as-is, benefits every user, never deleted here.
       for (const raw of backup.lexemes) {
         const { forms, ...lex } = raw as Record<string, unknown> & { forms?: unknown[] };
         const data = revive(lex, ["createdAt", "updatedAt"]);
+        delete data.starred; // dropped field from a pre-multi-user backup
         await tx.lexeme.upsert({
           where: { id: String(data.id) },
           create: data as never,
@@ -385,20 +593,31 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         }
       }
 
+      // Cards/tasks are always attributed to the person restoring them, regardless
+      // of what the backup file says — restoring "my backup" always means "my data".
       for (const raw of backup.cards) {
         const data = revive(raw, ["due", "lastReview", "createdAt"]);
+        data.ownerId = ownerId;
+        const existing = await tx.card.findUnique({ where: { id: String(data.id) }, select: { ownerId: true } });
+        if (existing && existing.ownerId !== ownerId) continue; // id collision with another user's card — skip
         await tx.card.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
       }
 
       // Reviews are append-only, so they are created if absent and never updated.
+      // Only restored when the card they belong to is this user's own.
       for (const raw of backup.reviews) {
         const data = revive(raw, ["reviewedAt"]);
         const exists = await tx.review.findUnique({ where: { id: String(data.id) }, select: { id: true } });
-        if (!exists) await tx.review.create({ data: data as never });
+        if (exists) continue;
+        const card = await tx.card.findUnique({ where: { id: String(data.cardId) }, select: { ownerId: true } });
+        if (card?.ownerId === ownerId) await tx.review.create({ data: data as never });
       }
 
       for (const raw of backup.tasks) {
         const data = revive(raw, ["dueAt", "completedAt", "createdAt"]);
+        data.ownerId = ownerId;
+        const existing = await tx.task.findUnique({ where: { id: String(data.id) }, select: { ownerId: true } });
+        if (existing && existing.ownerId !== ownerId) continue;
         await tx.task.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
       }
     }, { timeout: 120_000 });

@@ -7,13 +7,13 @@ the answers to `12-open-questions.md` came back.
 
 | Question | Answer | Effect |
 |---|---|---|
-| Q1 Local or hosted? | **Local only.** No login, no bill, no hosting. | ADR-002 confirmed. SQLite, no auth. Schema stays Postgres-portable for the eventual Google-SSO version |
+| Q1 Local or hosted? | **Local only** at MVP time; **reversed 2026-08** to hosted (Vercel + Supabase). No auth yet. | ADR-002 confirmed for v1, superseded by ADR-011. Schema was already Postgres-portable, so this was a datasource swap, not a rebuild |
 | Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | 147 of 360 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling — C2 words drop in without a schema change |
 | Q3 Digital class materials? | **None.** | The importer stayed generic and cheap. No time spent on a parser for a format that does not exist |
 | Q4 Speakly? | Subscription exists, **not currently used** — "difficult to use" | Confirms ADR-006. Speakly has no public API (audit A3), so the paste importer handles it like any other source. Nothing Speakly-specific was built |
 | Q5 AI budget? | **No cap — but free for now.** OpenRouter/OpenAI, and later "whatever works best" | ADR-004 reversed, see §2 |
 | Q6 Browser extension? | **Gone.** | Confirmed out of scope |
-| Q7 Other users? | **Just one for now**, but the app is intended to reach the wider Estonian-learning community later | No auth built. Everything user-owned is already keyed by row, not hardcoded, so adding an owner column later is additive |
+| Q7 Other users? | **Reversed 2026-08**: real multi-user, Google sign-in via Supabase Auth | ADR-012. Cards/Tasks/Messages gained `ownerId` and are scoped per query; the dictionary (Lexeme/Form) stays shared, as anticipated |
 
 ## 2. ADR-004 reversed — provider-agnostic, not Anthropic-only
 

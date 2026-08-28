@@ -6,13 +6,23 @@ import { emptyScheduling, grade } from "../lib/srs/scheduler";
 const prisma = new PrismaClient();
 
 async function main() {
-  // This script wipes cards, reviews and tasks. The review log is the one thing
-  // in this app that cannot be reconstructed, so it refuses to run against a deck
-  // that looks real unless you say so explicitly.
-  const existingReviews = await prisma.review.count();
+  // Cards/tasks are per-user now (docs/03-architecture.md ADR-012), so this script
+  // only ever touches one account's data — find your user id in the Supabase
+  // dashboard (Authentication → Users) and pass it explicitly.
+  const ownerId = process.env.DEMO_OWNER_ID;
+  if (!ownerId) {
+    console.error("Set DEMO_OWNER_ID to your Supabase user id before running this script.");
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+
+  // This script wipes that user's cards, reviews and tasks. The review log is the
+  // one thing in this app that cannot be reconstructed, so it refuses to run
+  // against a deck that looks real unless you say so explicitly.
+  const existingReviews = await prisma.review.count({ where: { card: { ownerId } } });
   if (existingReviews > 20 && !process.argv.includes("--force")) {
     console.error(
-      `Refusing to run: this database has ${existingReviews} reviews in it.\n` +
+      `Refusing to run: this account has ${existingReviews} reviews in it.\n` +
       `That history cannot be recreated. Take a backup from Settings first, then\n` +
       `re-run with --force if you really want to replace it with demo data.`,
     );
@@ -20,9 +30,9 @@ async function main() {
     process.exit(1);
   }
 
-  await prisma.review.deleteMany();
-  await prisma.card.deleteMany();
-  await prisma.task.deleteMany();
+  await prisma.review.deleteMany({ where: { card: { ownerId } } });
+  await prisma.card.deleteMany({ where: { ownerId } });
+  await prisma.task.deleteMany({ where: { ownerId } });
 
   const lexemes = await prisma.lexeme.findMany({
     where: { pos: { in: ["NOUN", "VERB"] } },
@@ -46,7 +56,7 @@ async function main() {
       });
       const card = await prisma.card.create({
         data: {
-          lexemeId: lex.id, cardType: c.cardType, front: c.front, back: c.back,
+          ownerId, lexemeId: lex.id, cardType: c.cardType, front: c.front, back: c.back,
           hint: c.hint, targetCase: c.targetCase, source: "DICTIONARY",
           due: history.length ? s.due : new Date(Date.now() - 3600000),
           stability: s.stability, difficulty: s.difficulty, reps: s.reps,
@@ -64,14 +74,14 @@ async function main() {
 
   await prisma.task.createMany({
     data: [
-      { title: "Exercise 4B — partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
-      { title: "Learn week 6 vocabulary (24 words)", tag: "VOCABULARY", classWeek: 6, dueAt: new Date(Date.now() - 86400000) },
-      { title: "Listen to Vikerraadio for 20 minutes", tag: "LISTENING", classWeek: 6 },
-      { title: "Write 5 sentences using the comitative", tag: "HOMEWORK", classWeek: 5, completed: true, completedAt: new Date() },
+      { ownerId, title: "Exercise 4B — partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
+      { ownerId, title: "Learn week 6 vocabulary (24 words)", tag: "VOCABULARY", classWeek: 6, dueAt: new Date(Date.now() - 86400000) },
+      { ownerId, title: "Listen to Vikerraadio for 20 minutes", tag: "LISTENING", classWeek: 6 },
+      { ownerId, title: "Write 5 sentences using the comitative", tag: "HOMEWORK", classWeek: 5, completed: true, completedAt: new Date() },
     ],
   });
 
-  console.log("cards:", await prisma.card.count(), "reviews:", await prisma.review.count());
+  console.log("cards:", await prisma.card.count({ where: { ownerId } }), "reviews:", await prisma.review.count({ where: { card: { ownerId } } }));
   await prisma.$disconnect();
 }
 main();

@@ -1,7 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
+import { ArrowRight, Award, BookOpen, Headphones, Shield, Sparkles, Zap } from "lucide-react";
+import { checkAchievements, resolveStreak } from "@/app/actions";
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
+import { BADGES } from "@/lib/achievements/badges";
+import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Page, SectionTitle, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
@@ -9,32 +13,48 @@ import { TaskRow } from "@/components/TaskRow";
 
 export const dynamic = "force-dynamic";
 
+const DEFAULT_DAILY_GOAL = 15;
+
 export default async function TodayPage() {
+  const ownerId = await requireUserId();
   const now = new Date();
   const endOfDay = new Date(now); endOfDay.setHours(23, 59, 59, 999);
+  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
   const weekAgo = new Date(now.getTime() - 7 * 86400000);
 
-  const [dueCount, newCount, totalCards, tasks, reviewsThisWeek, streakRows, wordOfDay] = await Promise.all([
-    prisma.card.count({ where: { suspended: false, due: { lte: now }, state: { not: 0 } } }),
-    prisma.card.count({ where: { suspended: false, state: 0 } }),
-    prisma.card.count(),
+  const [
+    dueCount, newCount, totalCards, tasks, reviewsThisWeek, streakResult, wordOfDay,
+    reviewedToday, dailyGoalSetting, achievementCount,
+  ] = await Promise.all([
+    prisma.card.count({ where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } } }),
+    prisma.card.count({ where: { ownerId, suspended: false, state: 0 } }),
+    prisma.card.count({ where: { ownerId } }),
     prisma.task.findMany({
-      where: { completed: false },
+      where: { ownerId, completed: false },
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
       take: 5,
     }),
-    prisma.review.count({ where: { reviewedAt: { gte: weekAgo } } }),
-    prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(now.getTime() - 30 * 86400000) } },
-      select: { reviewedAt: true },
-    }),
-    pickWordOfDay(),
+    prisma.review.count({ where: { reviewedAt: { gte: weekAgo }, card: { ownerId } } }),
+    resolveStreak(),
+    pickWordOfDay(ownerId),
+    prisma.review.count({ where: { reviewedAt: { gte: startOfToday }, card: { ownerId } } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
+    prisma.achievement.count({ where: { ownerId } }),
   ]);
 
   const tutorReady = resolveProvider() !== null;
   const toReview = Math.min(dueCount + Math.min(newCount, 10), 60);
-  const streak = computeStreak(streakRows.map((r) => r.reviewedAt));
+  const streak = streakResult.streak;
+  const shieldsAvailable = streakResult.shieldsAvailable;
   const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
+  const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;
+  const goalPct = Math.min(100, Math.round((reviewedToday / dailyGoal) * 100));
+  const goalMet = reviewedToday >= dailyGoal;
+
+  // Streak and deck-size badges can be earned just by reaching a milestone, so
+  // Today checks on every load — checkAchievements() is idempotent, and a badge
+  // already earned is never re-awarded.
+  const { newBadges } = await checkAchievements();
 
   return (
     <Page
@@ -56,6 +76,12 @@ export default async function TodayPage() {
                 <Stat value={streak} label="Day streak" />
               </div>
             </div>
+            {shieldsAvailable > 0 && (
+              <p className="flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                <Shield size={13} aria-hidden style={{ color: "var(--accent)" }} />
+                {shieldsAvailable} streak shield{shieldsAvailable === 1 ? "" : "s"} banked — one missed day won&rsquo;t break your streak.
+              </p>
+            )}
             {totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
@@ -101,6 +127,51 @@ export default async function TodayPage() {
         </div>
 
         <div className="flex flex-col gap-5">
+          <Card className="flex items-center gap-4">
+            <div
+              className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full"
+              style={{ background: `conic-gradient(var(--accent) ${goalPct * 3.6}deg, var(--raised) 0deg)` }}
+              role="img"
+              aria-label={`${reviewedToday} of ${dailyGoal} reviews toward today's goal`}
+            >
+              <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full" style={{ background: "var(--surface)" }}>
+                <span className="tnum text-[13px] font-bold" style={{ color: "var(--ink)" }}>{goalPct}%</span>
+              </div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <SectionTitle>Daily goal</SectionTitle>
+              <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                {goalMet
+                  ? `Goal met — ${reviewedToday} of ${dailyGoal} reviews today.`
+                  : `${reviewedToday} of ${dailyGoal} reviews today.`}
+              </p>
+              <Link href="/settings" className="mt-1 inline-block text-[12px]" style={{ color: "var(--accent)" }}>
+                Change goal
+              </Link>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <SectionTitle>Badges</SectionTitle>
+                <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                  {achievementCount} of {BADGES.length} earned.
+                </p>
+              </div>
+              <Award size={22} aria-hidden style={{ color: "var(--accent)" }} />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <ButtonLink href="/review/sprint" className="flex-1">
+                <Zap size={15} aria-hidden /> Case Sprint
+              </ButtonLink>
+              <ButtonLink href="/review/listening" className="flex-1">
+                <Headphones size={15} aria-hidden /> Listening
+              </ButtonLink>
+              <ButtonLink href="/settings" className="flex-1">See all badges</ButtonLink>
+            </div>
+          </Card>
+
           {wordOfDay && (
             <Card>
               <SectionTitle hint="from your weakest cards">Word to revisit</SectionTitle>
@@ -144,6 +215,7 @@ export default async function TodayPage() {
           </Card>
         </div>
       </div>
+      <AchievementToasts badges={newBadges} />
     </Page>
   );
 }
@@ -157,9 +229,9 @@ function greeting(): string {
 }
 
 /** Prefers a word the learner has actually struggled with over a random one. */
-async function pickWordOfDay() {
+async function pickWordOfDay(ownerId: string) {
   const lapsed = await prisma.card.findFirst({
-    where: { lapses: { gt: 0 }, lexemeId: { not: null } },
+    where: { ownerId, lapses: { gt: 0 }, lexemeId: { not: null } },
     orderBy: { lapses: "desc" },
     include: { lexeme: true },
   });
@@ -171,18 +243,4 @@ async function pickWordOfDay() {
   const seed = Math.floor(Date.now() / 86400000) % count;
   const [word] = await prisma.lexeme.findMany({ skip: seed, take: 1, orderBy: { lemma: "asc" } });
   return word ?? null;
-}
-
-function computeStreak(dates: Date[]): number {
-  if (dates.length === 0) return 0;
-  const days = new Set(dates.map((d) => d.toISOString().slice(0, 10)));
-  let streak = 0;
-  const cursor = new Date();
-  // Today not yet reviewed does not break a streak that is alive from yesterday.
-  if (!days.has(cursor.toISOString().slice(0, 10))) cursor.setDate(cursor.getDate() - 1);
-  while (days.has(cursor.toISOString().slice(0, 10))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
 }

@@ -13,7 +13,11 @@ const cache = new Map<string, string>();
  * reads Estonian in an English accent. If the proxy cannot produce audio the button
  * disappears rather than sitting there doing nothing.
  */
-export function Speak({ text, slow, label }: { text: string; slow?: boolean; label?: string }) {
+export function Speak({ text, slow, label, size = 15, className }: {
+  text: string; slow?: boolean; label?: string;
+  /** Icon size in px and an optional className override, for a bigger tap target (e.g. Listening mode). */
+  size?: number; className?: string;
+}) {
   const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
 
   if (state === "gone") return null;
@@ -46,12 +50,12 @@ export function Speak({ text, slow, label }: { text: string; slow?: boolean; lab
       onClick={play}
       disabled={state === "loading"}
       aria-label={label ?? `Hear "${text}"${slow ? " slowly" : ""} in Estonian`}
-      className="inline-flex h-7 w-7 items-center justify-center rounded transition-opacity hover:opacity-60"
+      className={className ?? "inline-flex h-7 w-7 items-center justify-center rounded transition-opacity hover:opacity-60"}
       style={{ color: "var(--ink-3)" }}
     >
       {state === "loading"
-        ? <Loader2 size={15} className="animate-spin" aria-hidden />
-        : <Volume2 size={15} strokeWidth={2} aria-hidden />}
+        ? <Loader2 size={size} className="animate-spin" aria-hidden />
+        : <Volume2 size={size} strokeWidth={2} aria-hidden />}
     </button>
   );
 }

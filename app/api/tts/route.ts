@@ -1,18 +1,24 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
-const CACHE_DIR = join(process.cwd(), ".data", "audio");
+// Vercel's filesystem is read-only outside /tmp, which is wiped on every cold
+// start — so this is a real cache locally, and a per-instance cache when hosted.
+const CACHE_DIR = process.env.VERCEL
+  ? join(tmpdir(), "kodukeel-audio")
+  : join(process.cwd(), ".data", "audio");
 const MAX_CHARS = 400;
 
 /**
  * Server-side proxy and cache for Estonian speech.
  *
- * A word's pronunciation never changes, so each clip is fetched exactly once and
- * then served from disk. That also keeps review sessions working with audio when
- * the network is gone, and keeps us a polite consumer of a free academic service.
+ * A word's pronunciation never changes, so each clip is fetched once per
+ * cache lifetime and then served from disk. That also keeps review sessions
+ * working with audio when the network is gone, and keeps us a polite
+ * consumer of a free academic service.
  */
 export async function POST(request: Request) {
   let text: string;

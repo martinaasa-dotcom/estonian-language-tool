@@ -1,18 +1,23 @@
 // Lean MVP schema. Deliberately smaller than docs/04-data-model.md:
 // calendar, decks, audio rows and the usage ledger are cut for the MVP.
-// Kept Postgres-portable (no SQLite-specific types) so a hosted move is a
-// datasource swap — see docs/03-architecture.md ADR-002.
+// Kept Postgres-portable (no SQLite-specific types), which is what made this
+// datasource swap possible — see docs/03-architecture.md ADR-002 and ADR-011.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase's pooled (pgbouncer) connection can't run schema changes;
+  // db push/migrate use the direct connection instead.
+  directUrl = env("DIRECT_URL")
 }
 
-/// A dictionary word. The hub of the model: cards and tasks point back here.
+/// A dictionary word. Shared across every user — the dictionary is reference
+/// data (built-in set plus the Ekilex cache), not anyone's personal deck.
+/// See docs/03-architecture.md ADR-012. Cards, not Lexeme, are user-owned.
 model Lexeme {
   id            String   @id @default(uuid())
   lemma         String
@@ -27,16 +32,27 @@ model Lexeme {
   provenance    String   @default("SEED") // SEED | EKILEX | AI | USER
   ekilexWordId  Int?
   fetchedAt     DateTime? // when Ekilex was last consulted, for cache freshness
-  starred       Boolean  @default(false)
 
   forms     Form[]
   cards     Card[]
+  stars     StarredWord[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([lemma, pos])
   @@index([lemma])
   @@index([cefr])
+}
+
+/// A user bookmarking a dictionary word. Per-user, unlike the word itself.
+model StarredWord {
+  ownerId   String
+  lexemeId  String
+  lexeme    Lexeme   @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([ownerId, lexemeId])
+  @@index([ownerId])
 }
 
 /// An inflected form.
@@ -65,6 +81,7 @@ model Form {
 
 model Card {
   id         String  @id @default(uuid())
+  ownerId    String
   lexemeId   String?
   lexeme     Lexeme? @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
   cardType   String  // RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT
@@ -90,7 +107,7 @@ model Card {
   reviews   Review[]
   createdAt DateTime @default(now())
 
-  @@index([due, suspended])
+  @@index([ownerId, due, suspended])
   @@index([lexemeId])
 }
 
@@ -111,6 +128,7 @@ model Review {
 
 model Task {
   id          String    @id @default(uuid())
+  ownerId     String
   title       String
   notes       String?
   tag         String    @default("HOMEWORK") // HOMEWORK GRAMMAR VOCABULARY LISTENING SPEAKING
@@ -120,19 +138,34 @@ model Task {
   completedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  @@index([completed, dueAt])
+  @@index([ownerId, completed, dueAt])
 }
 
 model Message {
   id        String   @id @default(uuid())
+  ownerId   String
   role      String   // user | assistant
   content   String
   createdAt DateTime @default(now())
 
-  @@index([createdAt])
+  @@index([ownerId, createdAt])
 }
 
 model Setting {
-  key   String @id
-  value String
+  ownerId String
+  key     String
+  value   String
+
+  @@id([ownerId, key])
+}
+
+/// A badge the learner has earned. Append-mostly: a key is written once, the
+/// moment its condition is first met, and never removed — losing a badge you
+/// already earned would be a worse surprise than never having shown it.
+model Achievement {
+  ownerId  String
+  key      String
+  earnedAt DateTime @default(now())
+
+  @@id([ownerId, key])
 }
