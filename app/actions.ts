@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireUserId } from "@/lib/auth/session";
+import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import { unitById } from "@/lib/collections/path";
+import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
+import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
+import { translateSentenceWithAnu } from "@/lib/tutor/translate";
 import { checkAchievementsFor } from "@/lib/progress/achievements";
 import { resolveStreakFor } from "@/lib/progress/summary";
 import {
@@ -247,6 +250,74 @@ export async function deleteCard(cardId: string) {
   await prisma.card.deleteMany({ where: { id: cardId, ownerId } });
   revalidatePath("/words");
   revalidatePath("/");
+  return { ok: true as const };
+}
+
+// ────────────────────────────── Examples ──────────────────────────────────
+
+/**
+ * Translates one attested example sentence into English, and keeps it.
+ *
+ * Ekilex has no English on a reader key, so a learner meeting "Kitsed olid ojal
+ * joomas." has the grammar in front of them and no way in. Anu translates *into*
+ * English — the direction ADR-005 permits — and the result is stored on the
+ * sentence so it is fetched once, not on every render, and is tagged AI so the
+ * page can say where it came from.
+ */
+export async function translateExample(lexemeId: string, sentence: string) {
+  await requireUserId();
+  const lexeme = await prisma.lexeme.findUnique({
+    where: { id: lexemeId },
+    select: { id: true, examples: true },
+  });
+  if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
+
+  const examples = parseExamples(lexeme.examples);
+  const target = examples.find((e) => e.et === sentence);
+  if (!target) return { ok: false as const, error: "That sentence is not on this word." };
+  if (target.en) return { ok: true as const, en: target.en };
+
+  const en = await translateSentenceWithAnu(sentence);
+  if (!en) return { ok: false as const, error: "Anu could not translate that one." };
+
+  await prisma.lexeme.update({
+    where: { id: lexeme.id },
+    data: {
+      examples: serialiseExamples(
+        examples.map((e) => (e.et === sentence ? { ...e, en } : e)),
+      ),
+    },
+  });
+  revalidatePath("/dictionary");
+  return { ok: true as const, en };
+}
+
+/**
+ * Adds a sentence of the learner's own to a word.
+ *
+ * Their sentence, their word — a line from class, or one Anu just corrected.
+ * Stored with `source: "USER"` so the entry can distinguish it from the
+ * lexicographers' examples rather than quietly passing it off as attested.
+ */
+export async function addExample(lexemeId: string, sentence: string, translation?: string) {
+  await requireUserId();
+  const et = sentence.trim();
+  if (et.length < 4) return { ok: false as const, error: "That is too short to be a sentence." };
+
+  const lexeme = await prisma.lexeme.findUnique({
+    where: { id: lexemeId },
+    select: { id: true, examples: true },
+  });
+  if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
+
+  const merged = mergeExamples(parseExamples(lexeme.examples), [
+    { et, en: translation?.trim() || null, source: "USER" },
+  ]);
+  await prisma.lexeme.update({
+    where: { id: lexeme.id },
+    data: { examples: serialiseExamples(merged) },
+  });
+  revalidatePath("/dictionary");
   return { ok: true as const };
 }
 
@@ -589,6 +660,159 @@ export async function addUnitToDeck(unitId: string) {
   revalidatePath("/words");
   revalidatePath("/");
   return { ok: true as const, added, words: lexemes.length };
+}
+
+// ────────────────────────────── Classrooms ─────────────────────────────────
+
+/** How many attempts to find an unused join code before giving up. */
+const CODE_ATTEMPTS = 8;
+
+/**
+ * Creates a class and makes the caller its teacher.
+ *
+ * The display name is copied onto the membership at join time rather than
+ * looked up live, so a learner changing what they call themselves later does
+ * not silently rename someone halfway through a term.
+ */
+export async function createClassroom(name: string) {
+  const ownerId = await requireUserId();
+  const trimmed = name.trim().slice(0, 60);
+  if (trimmed.length < 2) return { ok: false as const, error: "Give the class a name." };
+
+  let code = "";
+  for (let attempt = 0; attempt < CODE_ATTEMPTS; attempt++) {
+    const candidate = generateCode();
+    const taken = await prisma.classroom.findUnique({ where: { code: candidate }, select: { id: true } });
+    if (!taken) { code = candidate; break; }
+  }
+  if (!code) return { ok: false as const, error: "Could not allocate a join code. Try again." };
+
+  const displayName = await resolveDisplayName(ownerId);
+  const classroom = await prisma.classroom.create({
+    data: {
+      name: trimmed,
+      code,
+      ownerId,
+      members: { create: { ownerId, role: "TEACHER", displayName } },
+    },
+  });
+
+  revalidatePath("/class");
+  return { ok: true as const, id: classroom.id, code };
+}
+
+/**
+ * Joins a class by its code.
+ *
+ * Joining is the consent: from here the teacher and classmates can see this
+ * learner's name, streak, weekly XP and how many words they know. The screen
+ * says so before the button is pressed — nothing about a class is retroactive
+ * or hidden, and leaving removes the membership and nothing else.
+ */
+export async function joinClassroom(code: string, displayName?: string) {
+  const ownerId = await requireUserId();
+  if (!isValidCode(code)) {
+    return { ok: false as const, error: "That is not a valid join code." };
+  }
+
+  const classroom = await prisma.classroom.findUnique({
+    where: { code: normaliseCode(code) },
+    select: { id: true, name: true, archived: true },
+  });
+  if (!classroom || classroom.archived) {
+    return { ok: false as const, error: "No class with that code." };
+  }
+
+  const name = displayName?.trim().slice(0, 32) || await resolveDisplayName(ownerId);
+  if (!name) return { ok: false as const, error: "Pick a name your class will recognise." };
+
+  await prisma.classroomMember.upsert({
+    where: { classroomId_ownerId: { classroomId: classroom.id, ownerId } },
+    create: { classroomId: classroom.id, ownerId, displayName: name },
+    update: { displayName: name },
+  });
+  // The name they chose here becomes their name elsewhere too, rather than
+  // keeping two that can disagree.
+  await writeSetting(ownerId, SETTING_KEYS.displayName, name);
+
+  revalidatePath("/class");
+  revalidatePath("/progress");
+  return { ok: true as const, id: classroom.id, name: classroom.name };
+}
+
+/** Leaves a class. Removes the membership row and nothing else — no deck, no history. */
+export async function leaveClassroom(classroomId: string) {
+  const ownerId = await requireUserId();
+  const classroom = await prisma.classroom.findUnique({
+    where: { id: classroomId },
+    select: { ownerId: true },
+  });
+  if (classroom?.ownerId === ownerId) {
+    return { ok: false as const, error: "You teach this class — archive it instead of leaving." };
+  }
+  await prisma.classroomMember.deleteMany({ where: { classroomId, ownerId } });
+  revalidatePath("/class");
+  return { ok: true as const };
+}
+
+/** Archives a class the caller teaches: the code stops working, the data stays. */
+export async function archiveClassroom(classroomId: string) {
+  const ownerId = await requireUserId();
+  const updated = await prisma.classroom.updateMany({
+    where: { id: classroomId, ownerId },
+    data: { archived: true },
+  });
+  if (updated.count === 0) return { ok: false as const, error: "That is not your class." };
+  revalidatePath("/class");
+  return { ok: true as const };
+}
+
+/**
+ * Sets a unit as homework for everyone in the class.
+ *
+ * This writes a Task into each member's own list rather than inventing a
+ * separate assignments system: the learner already has one place where work
+ * they owe lives, and homework from class belongs in it. Nobody's deck is
+ * touched — the task says what to do, the student decides when.
+ */
+export async function assignUnit(classroomId: string, unitId: string, dueAt?: string) {
+  const ownerId = await requireUserId();
+  const classroom = await prisma.classroom.findFirst({
+    where: { id: classroomId, ownerId },
+    select: { id: true, name: true },
+  });
+  if (!classroom) return { ok: false as const, error: "That is not your class." };
+
+  const unit = unitById(unitId);
+  if (!unit) return { ok: false as const, error: "That unit does not exist." };
+
+  const members = await prisma.classroomMember.findMany({
+    where: { classroomId },
+    select: { ownerId: true },
+  });
+
+  const due = dueAt ? new Date(dueAt) : null;
+  await prisma.task.createMany({
+    data: members.map((m) => ({
+      ownerId: m.ownerId,
+      title: `${unit.title} — ${unit.subtitle}`,
+      notes: `Set by ${classroom.name}. Open the unit on the learning path, add its words and review them.`,
+      tag: "VOCABULARY",
+      dueAt: due && !Number.isNaN(due.getTime()) ? due : null,
+    })),
+  });
+
+  revalidatePath("/class");
+  revalidatePath("/tasks");
+  return { ok: true as const, assigned: members.length };
+}
+
+/** The name to show in a class: their chosen one, else their account's. */
+async function resolveDisplayName(ownerId: string): Promise<string> {
+  const stored = await readSetting(ownerId, SETTING_KEYS.displayName);
+  if (stored?.trim()) return stored.trim().slice(0, 32);
+  const learner = await currentLearner();
+  return learner.name === "you" ? "A learner" : learner.name.slice(0, 32);
 }
 
 // ─────────────────────────────── Tasks ────────────────────────────────────

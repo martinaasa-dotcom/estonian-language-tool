@@ -37,9 +37,15 @@ export interface PathUnit {
   lemmas: string[];
 }
 
-const RECALL: CardType[] = ["RECOGNITION", "PRODUCTION"];
-const RECALL_AND_CASES: CardType[] = ["RECOGNITION", "PRODUCTION", "CASE_FORM"];
-const RECALL_AND_GOVERNMENT: CardType[] = ["RECOGNITION", "PRODUCTION", "GOVERNMENT"];
+/*
+ * Every unit asks for gap-fill cards as well. They are produced only for words
+ * that actually have an attested sentence to build one from, and backfilled
+ * later for the rest (lib/srs/backfill.ts) — so listing CLOZE here costs
+ * nothing for a word that cannot support it.
+ */
+const RECALL: CardType[] = ["RECOGNITION", "PRODUCTION", "CLOZE"];
+const RECALL_AND_CASES: CardType[] = ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"];
+const RECALL_AND_GOVERNMENT: CardType[] = ["RECOGNITION", "PRODUCTION", "GOVERNMENT", "CLOZE"];
 
 export const PATH: readonly PathUnit[] = [
   {

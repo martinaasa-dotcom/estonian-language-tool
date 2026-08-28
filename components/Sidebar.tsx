@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen, CalendarCheck, ChartNoAxesColumn, GraduationCap, Layers, LogOut, Map,
-  MessageCircleQuestion, MoreHorizontal, Settings, Sun, Swords, X,
+  MessageCircleQuestion, MoreHorizontal, School, Settings, Sun, Swords, X,
 } from "lucide-react";
 import { useEffect, useState, type ComponentType } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { href: "/words", label: "My words", icon: Layers },
   { href: "/progress", label: "Progress", icon: ChartNoAxesColumn },
   { href: "/tasks", label: "Tasks", icon: CalendarCheck },
+  { href: "/class", label: "Classes", icon: School },
 ];
 
 /** Routes that own the whole screen: setting up, or signing in. */

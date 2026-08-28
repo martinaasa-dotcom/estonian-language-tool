@@ -1,4 +1,5 @@
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
+import { usableExamples, type Example } from "@/lib/dict/examples";
 import type { EkilexDetails } from "./client";
 
 /**
@@ -69,6 +70,8 @@ export interface MappedLexeme {
   government: string | null;
   /** Estonian explanatory definition. Ekilex gives no English on a reader key. */
   notes: string | null;
+  /** Attested sentences using the word — the source of every cloze exercise. */
+  examples: Example[];
   forms: MappedForm[];
 }
 
@@ -116,6 +119,7 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     gradationNote: gradation.note ?? null,
     government: formatGovernment(details.governments),
     notes: details.definitions[0] ?? null,
+    examples: usableExamples(details.usages.map((et) => ({ et, source: "EKILEX" as const }))),
     forms: forms.sort((a, b) => a.orderIndex - b.orderIndex),
   };
 }

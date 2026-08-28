@@ -40,6 +40,13 @@ export interface EkilexDetails {
   definitions: string[];
   /** Question words encoding a verb's case government, e.g. "mida", "kellele". */
   governments: string[];
+  /**
+   * Real Estonian sentences using the word, as lexicographers recorded them —
+   * "Jõin tassi kohvi." These are the only source of example sentences the app
+   * has, and the reason it can offer cloze and sentence-building exercises at
+   * all: every character is attested Estonian, not generated (ADR-005).
+   */
+  usages: string[];
   cefr: string | null;
 }
 
@@ -77,6 +84,7 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
 
   const definitions: string[] = [];
   const governments: string[] = [];
+  const usages: string[] = [];
   let cefr: string | null = null;
 
   for (const lexeme of data.lexemes ?? []) {
@@ -88,6 +96,13 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
       if (def.lang === "est" && def.value && !definitions.includes(def.value)) {
         definitions.push(def.value);
       }
+    }
+    for (const u of lexeme.usages ?? []) {
+      // `public` is Ekilex's own flag for what may be shown; a non-public usage
+      // is editorial working material and is not ours to display.
+      if (u.lang !== "est" || u.public === false) continue;
+      const value = u.value?.trim();
+      if (value && !usages.includes(value)) usages.push(value);
     }
   }
 
@@ -106,6 +121,7 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
     })),
     definitions,
     governments,
+    usages,
     cefr,
   };
 }
@@ -123,6 +139,7 @@ interface RawDetails {
   lexemes?: {
     lexemeProficiencyLevelCode?: string | null;
     governments?: { value?: string }[];
+    usages?: { value?: string; lang?: string; public?: boolean }[];
     meaning?: { definitions?: { value?: string; lang?: string }[] };
   }[];
 }

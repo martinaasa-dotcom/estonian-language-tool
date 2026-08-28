@@ -2,7 +2,10 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
 import { enrichFromEkilex, lookupAndStore } from "@/lib/dict/lookup";
+import { backfillClozeCards } from "@/lib/srs/backfill";
 import { ekilexConfigured } from "@/lib/ekilex/client";
+import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { resolveProvider } from "@/lib/tutor/provider";
 import { Page } from "@/components/ui";
 import { DictionaryClient, type EntryView } from "./DictionaryClient";
 
@@ -33,7 +36,12 @@ export default async function DictionaryPage({
   // A seeded word we are about to display: upgrade it to the real paradigm first.
   if (hits[0] && ekilexConfigured()) {
     const upgraded = await enrichFromEkilex(hits[0].id);
-    if (upgraded) fetched = true;
+    if (upgraded) {
+      fetched = true;
+      // The sentences that just arrived can support a gap-fill card this word
+      // could not have had when it was added to the deck.
+      await backfillClozeCards(ownerId, hits[0].id);
+    }
   }
 
   const entry = hits[0] ? await loadEntry(hits[0].id, ownerId) : null;
@@ -68,6 +76,7 @@ export default async function DictionaryPage({
       }
     >
       <DictionaryClient
+        tutorReady={resolveProvider() !== null}
         justFetched={fetched}
         initialQuery={q}
         hits={hits}
@@ -103,6 +112,7 @@ async function loadEntry(id: string, ownerId: string): Promise<EntryView | null>
     provenance: lex.provenance,
     inDeck: lex.cards.length > 0,
     starred: lex.stars.length > 0,
+    examples: usableExamples(parseExamples(lex.examples)),
     forms: lex.forms.map((f) => ({
       formType: f.formType,
       value: f.value,

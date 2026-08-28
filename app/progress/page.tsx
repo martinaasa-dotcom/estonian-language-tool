@@ -6,6 +6,7 @@ import { CEFR_LEVELS } from "@/lib/estonian/types";
 import { xpFromRatingCounts } from "@/lib/gamification/xp";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { classRoster } from "@/lib/classroom/roster";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
 } from "@/lib/stats/history";
@@ -50,7 +51,16 @@ export default async function ProgressPage() {
   const cases = caseAccuracy(reviews);
   const hour = bestStudyHour(reviews);
   const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
-  const leaderboard = optedIn ? await weeklyLeaderboard(now) : [];
+  // A class you have joined is the leaderboard that means something: real people
+  // you sit next to, and joining was itself the consent. The instance-wide
+  // opt-in board is the fallback for someone studying alone.
+  const membership = await prisma.classroomMember.findFirst({
+    where: { ownerId, classroom: { archived: false } },
+    include: { classroom: { select: { id: true, name: true } } },
+    orderBy: { joinedAt: "desc" },
+  });
+  const classBoard = membership ? await classRoster(membership.classroomId, now) : null;
+  const leaderboard = !membership && optedIn ? await weeklyLeaderboard(now) : [];
 
   // Vocabulary reach by CEFR: known words per level, against what the deck holds.
   const byLevel = new Map<string, { total: Set<string>; known: Set<string> }>();
@@ -258,9 +268,40 @@ export default async function ProgressPage() {
         </div>
 
         <section>
-          <SectionTitle hint="this week">Class leaderboard</SectionTitle>
+          <SectionTitle hint="this week">
+            {classBoard ? membership?.classroom.name : "Class leaderboard"}
+          </SectionTitle>
           <Card>
-            {!optedIn ? (
+            {classBoard && membership ? (
+              <>
+                <ol className="flex flex-col gap-1.5">
+                  {classBoard.entries.slice(0, 8).map((row, i) => (
+                    <li
+                      key={row.ownerId}
+                      className="flex items-center gap-3 rounded-md px-3 py-2"
+                      style={{
+                        background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
+                        color: row.ownerId === ownerId ? "var(--accent)" : "var(--ink-2)",
+                      }}
+                    >
+                      <span className="tnum w-6 text-[13px]">{i + 1}</span>
+                      {i === 0 && row.weeklyXp > 0
+                        ? <Trophy size={15} aria-hidden style={{ color: "var(--hard)" }} />
+                        : <Users size={15} aria-hidden style={{ opacity: 0.5 }} />}
+                      <span className="min-w-0 flex-1 truncate text-[14px]">{row.displayName}</span>
+                      <span className="tnum text-[13px]">{row.weeklyXp} XP</span>
+                    </li>
+                  ))}
+                </ol>
+                <Link
+                  href={`/class/${membership.classroomId}`}
+                  className="mt-3 inline-block text-[13px]"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Open the class
+                </Link>
+              </>
+            ) : !optedIn ? (
               <>
                 <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
                   Off by default. Turn it on and everyone else who has opted in — your class, say —

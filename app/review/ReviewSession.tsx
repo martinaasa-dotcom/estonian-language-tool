@@ -11,6 +11,7 @@ import { Chip, Empty, Meter, Page, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
+import { BLANK } from "@/lib/estonian/cloze";
 import { xpForRating } from "@/lib/gamification/xp";
 import { enqueueGrade, flushQueue, queueSize } from "@/lib/offline/queue";
 import type { ReviewMode } from "@/lib/settings/store";
@@ -43,11 +44,14 @@ const TYPE_LABEL: Record<string, string> = {
   CASE_FORM: "Case form",
   GRADATION: "Gradation",
   GOVERNMENT: "Verb government",
+  CLOZE: "Fill the gap",
 };
 
 /** Cards whose front or back is Estonian and therefore worth hearing. */
 const estonianSide = (type: string, side: "front" | "back") =>
-  side === "front" ? type !== "PRODUCTION" : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION";
+  side === "front"
+    ? type !== "PRODUCTION"
+    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE";
 
 /**
  * Card types whose answer is a single Estonian form, and so can be typed and
@@ -55,7 +59,7 @@ const estonianSide = (type: string, side: "front" | "back") =>
  * sentence-ish gloss ("partitive — aitan sind"), and marking that wrong on a
  * word order difference would be punishing the learner for the card's format.
  */
-const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION"]);
+const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 
@@ -415,12 +419,21 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           <div className="flex items-center gap-2">
             <p
               lang={frontLang}
-              className="est text-[32px] font-semibold leading-tight md:text-[38px]"
+              className={
+                card.cardType === "CLOZE"
+                  ? "est text-[23px] font-medium leading-snug md:text-[27px]"
+                  : "est text-[32px] font-semibold leading-tight md:text-[38px]"
+              }
               style={{ color: "var(--ink)" }}
             >
               {card.front}
             </p>
-            {estonianSide(card.cardType, "front") && <Speak text={card.lemma ?? card.front} />}
+            {/* No audio on a gap-fill prompt: reading a sentence with a hole in
+                it aloud is not a thing, and the reveal below plays the whole
+                sentence once the answer is in. */}
+            {estonianSide(card.cardType, "front") && card.cardType !== "CLOZE" && (
+              <Speak text={card.lemma ?? card.front} />
+            )}
           </div>
 
           {card.hint && !revealed && ask !== "intro" && (
@@ -507,16 +520,30 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           {(revealed || ask === "intro") && ask !== "choice" && (
             <>
               <div className="my-1 h-px w-16" style={{ background: "var(--rule)" }} />
-              <div className="flex items-center gap-2">
-                <p
-                  lang={backLang}
-                  className="est text-[28px] font-semibold md:text-[32px]"
-                  style={{ color: "var(--accent)" }}
-                >
-                  {card.back}
-                </p>
-                {estonianSide(card.cardType, "back") && <Speak text={card.back} />}
-              </div>
+              {card.cardType === "CLOZE" ? (
+                /* A gap-fill is answered by a word but *learned* as a sentence,
+                   so the reveal puts the word back where it came from and reads
+                   the whole thing aloud. */
+                <div className="flex flex-col items-center gap-2">
+                  <p lang="et" className="est text-[24px] leading-snug md:text-[27px]" style={{ color: "var(--ink)" }}>
+                    {card.front.split(BLANK)[0]}
+                    <span style={{ color: "var(--accent)", fontWeight: 600 }}>{card.back}</span>
+                    {card.front.split(BLANK)[1]}
+                  </p>
+                  <Speak text={card.front.replace(BLANK, card.back)} label="Hear the whole sentence" />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p
+                    lang={backLang}
+                    className="est text-[28px] font-semibold md:text-[32px]"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    {card.back}
+                  </p>
+                  {estonianSide(card.cardType, "back") && <Speak text={card.back} />}
+                </div>
+              )}
               {card.hint && <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>{card.hint}</p>}
             </>
           )}

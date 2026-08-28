@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { GraduationCap, Grid2x2, Headphones, Target, Zap } from "lucide-react";
+import { GraduationCap, Grid2x2, Headphones, Mic, Puzzle, Target, Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { caseAccuracy } from "@/lib/stats/history";
+import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { isBuildable } from "@/lib/estonian/cloze";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Meter, Page, SectionTitle } from "@/components/ui";
@@ -18,7 +20,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function PracticePage() {
   const ownerId = await requireUserId();
-  const [snapshot, settings, caseReviews] = await Promise.all([
+  const [snapshot, settings, caseReviews, sentenceReady] = await Promise.all([
     deckSnapshot(ownerId),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     prisma.review.findMany({
@@ -26,9 +28,19 @@ export default async function PracticePage() {
       select: { targetCase: true, rating: true },
       take: 5000,
     }),
+    prisma.card.findMany({
+      where: { ownerId, suspended: false, lexemeId: { not: null } },
+      distinct: ["lexemeId"],
+      take: 300,
+      select: { lexeme: { select: { examples: true } } },
+    }),
   ]);
 
   const sprintBest = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
+  // How many of the learner's own words carry a sentence worth rebuilding.
+  const sentenceCount = sentenceReady.filter((c) =>
+    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => isBuildable(e.et)),
+  ).length;
   const matchBest = numberSetting(settings[SETTING_KEYS.matchBest], 0);
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
 
@@ -63,6 +75,24 @@ export default async function PracticePage() {
       primary: false,
     },
     {
+      href: "/review/sentences",
+      icon: Puzzle,
+      title: "Sentences",
+      subtitle: "Word order",
+      body: "Rebuild a real Estonian sentence from its words. The part a flashcard cannot teach.",
+      meta: sentenceCount > 0 ? `${sentenceCount} ready` : "Needs sentences",
+      primary: false,
+    },
+    {
+      href: "/review/speaking",
+      icon: Mic,
+      title: "Speaking",
+      subtitle: "Out loud",
+      body: "Say the word, then hear a native voice and your own recording back to back.",
+      meta: "Shadowing",
+      primary: false,
+    },
+    {
       href: "/review/listening",
       icon: Headphones,
       title: "Listening",
@@ -76,7 +106,7 @@ export default async function PracticePage() {
   return (
     <Page
       title="Practice"
-      lead="Four ways to work the same deck, plus a drill for whichever case you keep missing. They all write to the same review log, so anything you do here moves the same schedule forward."
+      lead="Six ways to work the same deck, plus a drill for whichever case you keep missing. They all write to the same review log, so anything you do here moves the same schedule forward."
     >
       {snapshot.totalCards === 0 ? (
         <Empty
