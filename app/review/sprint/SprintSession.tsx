@@ -6,7 +6,7 @@ import Link from "next/link";
 import { checkAchievements, gradeCard, recordSprintScore } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, Empty, Page, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 
@@ -23,7 +23,14 @@ const DURATION_S = 60;
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front" ? type !== "PRODUCTION" : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION";
 
-export function SprintSession({ cards, best }: { cards: SprintCard[]; best: number }) {
+export function SprintSession({ cards: initialCards, best }: { cards: SprintCard[]; best: number }) {
+  // Snapshotted once on mount, and never updated from later props. gradeCard()
+  // is a Server Action, and Next.js refreshes this route's Server Component
+  // after every call — which would hand down a shrinking `cards` prop as
+  // graded cards drop out of the due pool, ending the sprint early or (on the
+  // very last card) swapping to an empty-state render mid-session. The pool
+  // the page found on first load is the only one this sprint should ever see.
+  const [cards] = useState(initialCards);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [correct, setCorrect] = useState(0);
@@ -35,10 +42,8 @@ export function SprintSession({ cards, best }: { cards: SprintCard[]; best: numb
   const [isNewBest, setIsNewBest] = useState(false);
   const shownAt = useRef(Date.now());
 
-  // The page never renders SprintSession with an empty pool, and the index is
-  // always taken modulo the (non-zero) length, so this index is always in range.
-  const card = cards[index % cards.length]!;
-  const exhausted = attempted >= cards.length;
+  const card = cards.length > 0 ? cards[index % cards.length]! : null;
+  const exhausted = cards.length > 0 && attempted >= cards.length;
 
   useEffect(() => {
     if (phase !== "running") return;
@@ -65,7 +70,7 @@ export function SprintSession({ cards, best }: { cards: SprintCard[]; best: numb
   };
 
   const answer = useCallback(async (rating: 1 | 3) => {
-    if (busy || phase !== "running") return;
+    if (!card || busy || phase !== "running") return;
     setBusy(true);
     const duration = Date.now() - shownAt.current;
     try {
@@ -97,6 +102,17 @@ export function SprintSession({ cards, best }: { cards: SprintCard[]; best: numb
   }, [phase, revealed, answer]);
 
   if (phase === "ready") {
+    if (cards.length === 0) {
+      return (
+        <Page title="Case Sprint" lead="A 60-second speed round through your deck.">
+          <Empty
+            title="Nothing to sprint through yet"
+            body="Case Sprint draws from cards that are due or that you've slipped on before. Review a little first, or add some words."
+            action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
+          />
+        </Page>
+      );
+    }
     return (
       <div className="mx-auto max-w-xl px-5 py-16 text-center md:px-10">
         <Timer size={34} className="mx-auto" aria-hidden style={{ color: "var(--accent)" }} />
@@ -140,6 +156,8 @@ export function SprintSession({ cards, best }: { cards: SprintCard[]; best: numb
       </div>
     );
   }
+
+  if (!card) return null; // unreachable: "ready" already gated on a non-empty pool
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">

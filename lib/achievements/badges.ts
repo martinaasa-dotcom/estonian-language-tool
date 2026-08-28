@@ -86,3 +86,62 @@ export function computeStreak(dates: Date[]): number {
   }
   return streak;
 }
+
+export interface StreakShieldResult {
+  streak: number;
+  /** Gap days bridged by a shield on *this* call — the caller persists these. */
+  newlyShieldedDates: string[];
+  /** Shields left after this call's newly-shielded days are spent. */
+  shieldsRemaining: number;
+}
+
+/**
+ * Like computeStreak, but a missed day is bridged by a streak shield instead
+ * of breaking the streak — Duolingo's "streak freeze". Each shield covers
+ * exactly one missed day; with several in stock, several missed days —
+ * even consecutive ones — can each be bridged, until shields run out.
+ *
+ * `previouslyShieldedDates` are days a shield has already covered on an
+ * earlier call; they count toward the streak like a real review and never
+ * spend another shield. The walk back through history stops at the earliest
+ * date `reviewDates` or `previouslyShieldedDates` actually knows about —
+ * without that bound, an idle account with shields banked would have them
+ * silently bridge years of pre-history that was never really a streak.
+ */
+export function computeStreakWithShields(
+  reviewDates: Date[],
+  shieldsAvailable: number,
+  previouslyShieldedDates: string[] = [],
+): StreakShieldResult {
+  const reviewed = new Set(reviewDates.map((d) => d.toISOString().slice(0, 10)));
+  const shielded = new Set(previouslyShieldedDates);
+  const newlyShieldedDates: string[] = [];
+  let shieldsLeft = shieldsAvailable;
+  let streak = 0;
+
+  // Lexicographic comparison works directly on YYYY-MM-DD strings.
+  const known = [...reviewed, ...shielded];
+  const earliestKnownDay = known.length > 0 ? known.reduce((a, b) => (a < b ? a : b)) : null;
+
+  const cursor = new Date();
+  const today = cursor.toISOString().slice(0, 10);
+  // Today not yet reviewed does not break a streak that is alive from yesterday.
+  if (!reviewed.has(today) && !shielded.has(today)) cursor.setDate(cursor.getDate() - 1);
+
+  for (;;) {
+    const day = cursor.toISOString().slice(0, 10);
+    if (earliestKnownDay === null || day < earliestKnownDay) break;
+    if (reviewed.has(day) || shielded.has(day)) {
+      streak++;
+    } else if (shieldsLeft > 0) {
+      shieldsLeft--;
+      newlyShieldedDates.push(day);
+      streak++;
+    } else {
+      break;
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return { streak, newlyShieldedDates, shieldsRemaining: shieldsLeft };
+}

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
-import { BADGES, type BadgeStats, computeStreak, earnedBadgeKeys } from "@/lib/achievements/badges";
+import { BADGES, type BadgeStats, computeStreakWithShields, earnedBadgeKeys } from "@/lib/achievements/badges";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
@@ -291,20 +291,72 @@ export async function importWords(rows: { lemma: string; translation: string; po
 // ────────────────────────────── Achievements ───────────────────────────────
 
 const SPRINT_BEST_KEY = "sprintBest";
+const STREAK_SHIELDS_KEY = "streakShields";
+const STREAK_SHIELD_DATES_KEY = "streakShieldDates";
+const SHIELD_AWARD_BADGES = new Set(["streak_7", "streak_30", "streak_100"]);
+
+/**
+ * Resolves the current streak, applying any banked streak shields (Duolingo's
+ * "streak freeze") to bridge missed days. Reads the review log over a wide
+ * window — long enough for the streak_100 badge to actually be reachable,
+ * unlike the 30-day window a shield-unaware streak used to be limited to —
+ * and persists any newly-spent shields so a bridged day is never re-charged
+ * on a later call (computeStreakWithShields is pure; this is its DB shell).
+ */
+export async function resolveStreak(ownerId: string) {
+  const [reviews, shieldSetting, datesSetting] = await Promise.all([
+    prisma.review.findMany({
+      where: { reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) }, card: { ownerId } },
+      select: { reviewedAt: true },
+    }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } }),
+    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } } }),
+  ]);
+
+  const shieldsAvailable = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
+  let shieldedDates: string[] = [];
+  if (datesSetting) {
+    try {
+      const parsed: unknown = JSON.parse(datesSetting.value);
+      if (Array.isArray(parsed)) shieldedDates = parsed.filter((d): d is string => typeof d === "string");
+    } catch {
+      shieldedDates = [];
+    }
+  }
+
+  const result = computeStreakWithShields(reviews.map((r) => r.reviewedAt), shieldsAvailable, shieldedDates);
+
+  if (result.newlyShieldedDates.length > 0) {
+    await Promise.all([
+      prisma.setting.upsert({
+        where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
+        create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(result.shieldsRemaining) },
+        update: { value: String(result.shieldsRemaining) },
+      }),
+      prisma.setting.upsert({
+        where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } },
+        create: { ownerId, key: STREAK_SHIELD_DATES_KEY, value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
+        update: { value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
+      }),
+    ]);
+  }
+
+  return { ok: true as const, streak: result.streak, shieldsAvailable: result.shieldsRemaining };
+}
 
 /**
  * Computes current stats from the review log and decks, then awards any badge
  * whose condition is newly met. Idempotent and safe to call often: an already
  * -earned key is never re-awarded or removed, so a badge earned once is kept
  * forever even if the underlying stat later dips (e.g. a streak breaks).
+ *
+ * Reaching a streak_7/30/100 badge for the first time also banks a streak
+ * shield — the milestone worth protecting is exactly the one just reached.
  */
 export async function checkAchievements(session?: { count: number; accuracy: number }) {
   const ownerId = await requireUserId();
-  const [recentReviews, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
-    prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(Date.now() - 30 * 86_400_000) }, card: { ownerId } },
-      select: { reviewedAt: true },
-    }),
+  const [streakResult, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
+    resolveStreak(ownerId),
     prisma.review.count({ where: { card: { ownerId } } }),
     prisma.card.count({ where: { ownerId, state: 2 } }),
     prisma.lexeme.count(),
@@ -330,7 +382,7 @@ export async function checkAchievements(session?: { count: number; accuracy: num
     .sort((a, b) => b.accuracy - a.accuracy)[0] ?? null;
 
   const stats: BadgeStats = {
-    streak: computeStreak(recentReviews.map((r) => r.reviewedAt)),
+    streak: streakResult.streak,
     totalReviews,
     cardsKnown,
     totalWords,
@@ -351,6 +403,18 @@ export async function checkAchievements(session?: { count: number; accuracy: num
   if (newKeys.length === 0) return { ok: true as const, newBadges: [] };
 
   await prisma.achievement.createMany({ data: newKeys.map((key) => ({ ownerId, key })) });
+
+  const shieldsEarned = newKeys.filter((k) => SHIELD_AWARD_BADGES.has(k)).length;
+  if (shieldsEarned > 0) {
+    const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } });
+    const currentShields = current ? Number(current.value) || 0 : 0;
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
+      create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(currentShields + shieldsEarned) },
+      update: { value: String(currentShields + shieldsEarned) },
+    });
+  }
+
   // No revalidatePath here: this is called from a Server Component render (Today)
   // as well as from actual actions, and revalidating during render is an error.
   // Settings reads achievements fresh on every load anyway (force-dynamic).

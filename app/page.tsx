@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Award, BookOpen, Sparkles, Zap } from "lucide-react";
-import { checkAchievements } from "@/app/actions";
+import { ArrowRight, Award, BookOpen, Headphones, Shield, Sparkles, Zap } from "lucide-react";
+import { checkAchievements, resolveStreak } from "@/app/actions";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
-import { BADGES, computeStreak } from "@/lib/achievements/badges";
+import { BADGES } from "@/lib/achievements/badges";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Page, SectionTitle, Stat } from "@/components/ui";
@@ -23,7 +23,7 @@ export default async function TodayPage() {
   const weekAgo = new Date(now.getTime() - 7 * 86400000);
 
   const [
-    dueCount, newCount, totalCards, tasks, reviewsThisWeek, streakRows, wordOfDay,
+    dueCount, newCount, totalCards, tasks, reviewsThisWeek, streakResult, wordOfDay,
     reviewedToday, dailyGoalSetting, achievementCount,
   ] = await Promise.all([
     prisma.card.count({ where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } } }),
@@ -35,10 +35,7 @@ export default async function TodayPage() {
       take: 5,
     }),
     prisma.review.count({ where: { reviewedAt: { gte: weekAgo }, card: { ownerId } } }),
-    prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(now.getTime() - 30 * 86400000) }, card: { ownerId } },
-      select: { reviewedAt: true },
-    }),
+    resolveStreak(ownerId),
     pickWordOfDay(ownerId),
     prisma.review.count({ where: { reviewedAt: { gte: startOfToday }, card: { ownerId } } }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
@@ -47,7 +44,8 @@ export default async function TodayPage() {
 
   const tutorReady = resolveProvider() !== null;
   const toReview = Math.min(dueCount + Math.min(newCount, 10), 60);
-  const streak = computeStreak(streakRows.map((r) => r.reviewedAt));
+  const streak = streakResult.streak;
+  const shieldsAvailable = streakResult.shieldsAvailable;
   const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
   const dailyGoal = dailyGoalSetting ? Number(dailyGoalSetting.value) || DEFAULT_DAILY_GOAL : DEFAULT_DAILY_GOAL;
   const goalPct = Math.min(100, Math.round((reviewedToday / dailyGoal) * 100));
@@ -78,6 +76,12 @@ export default async function TodayPage() {
                 <Stat value={streak} label="Day streak" />
               </div>
             </div>
+            {shieldsAvailable > 0 && (
+              <p className="flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                <Shield size={13} aria-hidden style={{ color: "var(--accent)" }} />
+                {shieldsAvailable} streak shield{shieldsAvailable === 1 ? "" : "s"} banked — one missed day won&rsquo;t break your streak.
+              </p>
+            )}
             {totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
@@ -160,6 +164,9 @@ export default async function TodayPage() {
             <div className="mt-4 flex flex-wrap gap-2">
               <ButtonLink href="/review/sprint" className="flex-1">
                 <Zap size={15} aria-hidden /> Case Sprint
+              </ButtonLink>
+              <ButtonLink href="/review/listening" className="flex-1">
+                <Headphones size={15} aria-hidden /> Listening
               </ButtonLink>
               <ButtonLink href="/settings" className="flex-1">See all badges</ButtonLink>
             </div>

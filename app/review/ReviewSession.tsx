@@ -6,7 +6,7 @@ import Link from "next/link";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, Empty, Page, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { previewIntervals, RATINGS, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
@@ -42,8 +42,18 @@ const TYPE_LABEL: Record<string, string> = {
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front" ? type !== "PRODUCTION" : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION";
 
-export function ReviewSession({ cards, drillCase }: { cards: ReviewCard[]; drillCase?: string }) {
-  const [queue, setQueue] = useState(cards);
+export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
+  cards: ReviewCard[]; drillCase?: string; totalCards: number;
+}) {
+  // Snapshotted once on mount, and never updated from later props. gradeCard()
+  // is a Server Action, and Next.js refreshes this route's Server Component
+  // after every call — which would hand down a shrinking `cards` prop as
+  // graded cards drop out of the due pool. Without a frozen snapshot, the
+  // *last* grade of a session would see an empty prop and render "nothing
+  // due" instead of the session summary — the pool the page found on the
+  // very first load is the only one this session should ever know about.
+  const [queue, setQueue] = useState(initialCards);
+  const [wasEmptyAtStart] = useState(initialCards.length === 0);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(0);
@@ -58,7 +68,7 @@ export function ReviewSession({ cards, drillCase }: { cards: ReviewCard[]; drill
   const finished = !card;
 
   useEffect(() => {
-    if (!finished || checkedAchievements.current) return;
+    if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
     checkedAchievements.current = true;
     const accuracy = done > 0 ? Math.round((correct / done) * 100) : 0;
     void checkAchievements({ count: done, accuracy }).then((r) => {
@@ -126,6 +136,32 @@ export function ReviewSession({ cards, drillCase }: { cards: ReviewCard[]; drill
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [revealed, submit, finished]);
+
+  if (wasEmptyAtStart) {
+    return (
+      <Page title="Review" lead="Spaced repetition, scheduled by FSRS.">
+        {drillCase ? (
+          <Empty
+            title={`No ${drillCase.toLowerCase()} cards yet`}
+            body="Case-form cards are optional when you add a word — tick 'Case form' in the dictionary and they will show up here."
+            action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
+          />
+        ) : totalCards === 0 ? (
+          <Empty
+            title="No cards yet"
+            body="Add words from the dictionary, or paste a list you already have. Two cards are made per word — one each direction."
+            action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
+          />
+        ) : (
+          <Empty
+            title="Nothing due — you're caught up"
+            body={`All ${totalCards} cards are scheduled for later. Reviewing early doesn't help memory, so this is the app telling you to stop.`}
+            action={<ButtonLink href="/dictionary" variant="secondary">Add a few new words</ButtonLink>}
+          />
+        )}
+      </Page>
+    );
+  }
 
   if (finished) {
     const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));

@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { ButtonLink } from "@/components/Button";
-import { Empty, Page } from "@/components/ui";
 import { SprintSession, type SprintCard } from "./SprintSession";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +11,13 @@ const POOL_SIZE = 40;
  * cards already in the deck rather than inventing new content. Weak (high-lapse)
  * and overdue cards are favoured, since fast repetition on exactly those is where
  * a timer earns its keep.
+ *
+ * Always renders SprintSession, even with an empty pool: SprintSession decides
+ * for itself, once on mount, whether to show its own empty state. Server
+ * Actions like gradeCard() refresh this route's Server Component on every
+ * call, so a conditional Empty-vs-Session choice made *here* would keep
+ * re-evaluating as the pool is graded away — and swap to Empty right as the
+ * final card is graded, right before the session summary would show.
  */
 export default async function SprintPage() {
   const ownerId = await requireUserId();
@@ -35,18 +40,6 @@ export default async function SprintPage() {
       include: { lexeme: { select: { lemma: true, translation: true } } },
     });
     cards = [...cards, ...weak];
-  }
-
-  if (cards.length === 0) {
-    return (
-      <Page title="Case Sprint" lead="A 60-second speed round through your deck.">
-        <Empty
-          title="Nothing to sprint through yet"
-          body="Case Sprint draws from cards that are due or that you've slipped on before. Review a little first, or add some words."
-          action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
-        />
-      </Page>
-    );
   }
 
   // Shuffled so the same session doesn't always open on the same word.

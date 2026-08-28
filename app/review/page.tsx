@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { ButtonLink } from "@/components/Button";
-import { Empty, Page } from "@/components/ui";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
 
 export const dynamic = "force-dynamic";
@@ -27,16 +25,11 @@ export default async function ReviewPage({
       take: 30,
       include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
     });
-    if (drill.length > 0) return <ReviewSession cards={drill.map(toReviewCard)} drillCase={targetCase} />;
-    return (
-      <Page title="Review" lead="Spaced repetition, scheduled by FSRS.">
-        <Empty
-          title={`No ${targetCase.toLowerCase()} cards yet`}
-          body="Case-form cards are optional when you add a word — tick 'Case form' in the dictionary and they will show up here."
-          action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
-        />
-      </Page>
-    );
+    // ReviewSession decides for itself, once, whether an empty pool means "show
+    // the empty state" — never the server on a later grade-triggered refresh.
+    // See app/review/sprint/ and app/review/listening/ for the same pattern,
+    // and the shared reasoning in ReviewSession.tsx.
+    return <ReviewSession cards={drill.map(toReviewCard)} drillCase={targetCase} totalCards={0} />;
   }
 
   // Due first, then a capped trickle of new cards. Uncapped new cards is the
@@ -56,30 +49,9 @@ export default async function ReviewPage({
   });
 
   const cards: ReviewCard[] = [...due, ...fresh].map(toReviewCard);
-
   const totalCards = await prisma.card.count({ where: { ownerId } });
 
-  if (cards.length === 0) {
-    return (
-      <Page title="Review" lead="Spaced repetition, scheduled by FSRS.">
-        {totalCards === 0 ? (
-          <Empty
-            title="No cards yet"
-            body="Add words from the dictionary, or paste a list you already have. Two cards are made per word — one each direction."
-            action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
-          />
-        ) : (
-          <Empty
-            title="Nothing due — you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early doesn't help memory, so this is the app telling you to stop.`}
-            action={<ButtonLink href="/dictionary" variant="secondary">Add a few new words</ButtonLink>}
-          />
-        )}
-      </Page>
-    );
-  }
-
-  return <ReviewSession cards={cards} />;
+  return <ReviewSession cards={cards} totalCards={totalCards} />;
 }
 
 type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
