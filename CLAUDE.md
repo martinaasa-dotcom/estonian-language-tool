@@ -236,8 +236,12 @@ atomic: one URL that will not fetch throws away the batch, and `/offline` is in 
 **A unit test states a machine, it does not run on one.** The provider suite cleared three
 provider keys and inherited the rest from whoever ran it. CI carries none, so it passed; a machine
 with `GROQ_API_KEY` exported failed thirteen of them, and the failures read as chain bugs rather
-than as the suite reporting its host. `PROVIDER_KEY_ENV` is the one list, and the suite clears all
-of it in a `beforeEach`. If you add a provider, add its key there.
+than as the suite reporting its host. A test whose answer depends on the machine is not a test.
+`PROVIDER_KEY_ENV` is the one list and it is **exported by `provider.ts`, not retyped in the test**:
+the fault was a list in the test falling behind the chain, so a copy living there is the same fault
+waiting to happen. Two sessions fixed this within the hour and the other kept its list in the test;
+that copy was deleted rather than left beside this one. If you add a provider, add its key to
+`PROVIDER_KEY_ENV`, three lines above the function that reads it.
 
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only —
