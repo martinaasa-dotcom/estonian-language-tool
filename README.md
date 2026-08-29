@@ -1,12 +1,17 @@
 # Kodukeel — Estonian learning dashboard
 
-*Kodukeel* — "home language". A personal Estonian study workspace: a dictionary that shows the forms
-you actually have to memorise, spaced-repetition flashcards, an AI grammar tutor, and homework
-tracking. Everything runs on your own computer. No account, no bill, no data leaving the machine.
+*Kodukeel* — "home language". An Estonian study workspace: a dictionary that shows the forms you
+actually have to memorise, spaced-repetition flashcards that work without a connection, seven kinds
+of practice, an AI tutor that is structurally prevented from inventing Estonian, and homework
+tracking that follows your course week by week.
 
-> **Status: working MVP.** The daily loop is complete — look a word up, add it to your deck, review
-> it, ask about the grammar. Built from the plan in `docs/`; `docs/13-mvp-status.md` says what is in
-> and what is deliberately not.
+It runs locally or hosted. Hosted, it uses Google sign-in and each account keeps its own deck; what
+is stored and what leaves the site is on the [privacy page](app/privacy/page.tsx), written from the
+schema rather than from a template.
+
+> **Status: in use.** The daily loop is complete and the operational shell is real — CI, spend caps,
+> offline review, error reporting. `docs/13-mvp-status.md` says what is in, what is deliberately
+> not, and what is still known to be weak.
 
 ## Running it
 
@@ -47,8 +52,37 @@ Everything except the tutor:
   `toas`, `lugesin`, `tubadega` — and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
 - **Audio** — real Estonian speech from the University of Tartu's neural voice. No key, no setup.
-- **Flashcards** — FSRS scheduling, seven card types, keyboard-only review.
-- **Tasks, import, export** — all local.
+- **Flashcards** — FSRS scheduling, seven card types, keyboard-only review, and it keeps working
+  with the network gone: grades queue on the device and replay in order when you are back. The
+  review log is append-only, which is what makes that sync conflict-free.
+- **Verb government** — which case a verb demands (`aitan sind`, `helistan sulle`). The error
+  English speakers never stop making, and the one thing nothing else drills systematically.
+- **Minimal pairs** — the length contrasts Estonian spelling only half records, found automatically
+  wherever two forms in the dictionary differ by a doubled letter. Needs the speech service.
+- **From your reading** — paste real Estonian; words already in your deck are blanked out. The
+  answer is the form a native writer used, so nothing is generated.
+- **Diagnosis** — not "you are weak at the partitive" but "you are fine at the partitive except on
+  gradating stems", which names something you can go and study.
+- **Leech clinic** — the cards you keep failing, with what their history actually says about *how*
+  they are failing, instead of quietly burying them.
+- **Tasks, import, export, week view** — the course week ties vocabulary and homework together.
+
+## Writing practice, and why the AI can be trusted with it
+
+The one exercise where you produce Estonian of your own: *write a sentence using `tuba` in the
+inessive*. It is marked in two visibly separate parts, because they have different authorities
+behind them.
+
+Whether you produced the required form is decided by string comparison against Ekilex, **before any
+model is called**. That verdict is certain, it costs nothing, and it still works with no API key.
+Only the rest — is the sentence idiomatic, is the object case right — goes to the tutor, which is
+what a language model is genuinely good at.
+
+The model is then held to it in code, not in the prompt: every Estonian word in its feedback must be
+one the dictionary supplied, one you wrote, or the English gloss. Anything else is a form it made up,
+and the note is withheld rather than shown with a caveat. See `lib/tutor/verify.ts`. (The open-ended
+chat with Anu is not restricted this way — it is a conversation, everything it suggests is tagged
+`AI · verify`, and nothing becomes a flashcard answer without your confirmation.)
 
 ## Turning on Anu, the tutor
 
@@ -95,9 +129,16 @@ ADR-011:
    destructive change, so an unusual schema change (e.g. dropping a column with data in it) shows up
    as a failed deploy asking you to confirm, not as quiet data loss.
 
-Two things change once it's hosted rather than local: review needs a network path to the database
-(it no longer runs on a train), and the TTS audio cache becomes per-instance instead of permanent,
-since Vercel's filesystem is read-only outside `/tmp`. Both are explained in ADR-011.
+Two things that used to change when hosted have since been fixed. Review works on a train again —
+it is a PWA, grades go to a device-local outbox and replay when the connection returns. And the
+audio cache is durable rather than per-instance: set `SUPABASE_SERVICE_ROLE_KEY` and clips are
+content-addressed in Supabase Storage, fetched once for everyone rather than once per cold start.
+Without that key it falls back to local disk, and Settings says so plainly.
+
+**Set a spend cap.** The tutor is metered per user per day with a global ceiling on top
+(`AI_DAILY_USD_GLOBAL`, default $20). The defaults are live whether or not you configure anything —
+there is no way to turn metering off, because sign-up is open by default. If you would rather run a
+private instance, `ALLOWED_EMAILS` or `ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
 
 ### Adding Google sign-in (multi-user)
 
@@ -134,36 +175,59 @@ try restoring it once while nothing is at stake. A backup you have never restore
 ## Commands
 
 ```
-npm run dev        # development server
-npm run build      # production build
-npm run test       # unit tests (65)
-npm run test:e2e   # browser checks (51) — needs the server running
-npm run demo       # fill the deck with sample data to look around
-npm run typecheck  # tsc --noEmit
-npm run db:seed    # reload the built-in dictionary
+npm run dev            # development server
+npm run build          # production build
+npm run typecheck      # tsc --noEmit
+npm run test           # unit tests — hermetic, no database, under two seconds
+npm run test:db        # integration tests — needs a Postgres in DATABASE_URL
+npm run check:secrets  # fails if a credential reached the client bundle
+npm run demo           # fill the deck with sample data to look around
+npm run db:seed        # reload the built-in dictionary
 ```
+
+Browser tests need the server running with a stand-in session, which only works outside a
+production build:
+
+```
+E2E_TEST_USER_ID=me npm run dev          # in one shell
+node scripts/smoke-new.mjs               # every route renders, no console errors
+node scripts/smoke-interact.mjs          # each mode does what it claims
+```
+
+CI runs typecheck, unit tests, integration tests against a real Postgres, the production build, and
+the credential scan on every push.
 
 ## How it is put together
 
-Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Prisma + SQLite · `ts-fsrs` ·
-TartuNLP speech · any OpenAI-compatible or Anthropic model.
+Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Prisma + Postgres · `ts-fsrs` ·
+Supabase Auth · TartuNLP speech · any OpenAI-compatible or Anthropic model.
 
 ```
 lib/estonian/   the language model — cases, principal parts, gradation. No React, fully tested.
 lib/srs/        FSRS scheduling and card generation.
 lib/dict/       search.
-lib/tutor/      provider-agnostic chat; keys stay server-side.
-app/            routes; api/ holds the three server proxies.
+lib/tutor/      provider-agnostic chat and the writing grader; keys stay server-side.
+lib/analysis/   diagnosis and leech classification over the review log.
+lib/usage/      the spend ledger and the quota policy.
+lib/offline/    the grade outbox and its replay rules.
+app/            routes; api/ holds the server proxies.
 prisma/data/    the built-in dictionary.
 docs/           the full plan and the decisions behind it.
 ```
 
-Two rules the code holds to, both explained in `docs/`:
+Four rules the code holds to, each enforced by something other than good intentions:
 
 - **Estonian forms are never invented.** Principal parts are stored; the eleven regular cases are
-  derived from the genitive at render time. Where a form is unknown, the app shows a gap — an
-  invented form gets drilled into memory by the SRS, which is worse than a blank.
-- **No key ever reaches the browser.** The AI and speech services are called from server routes only.
+  derived from the genitive at render time. Where a form is unknown the app shows a gap — an
+  invented form gets drilled into memory by the SRS, which is worse than a blank. In the writing
+  grader this is a code check over the model's output, not a line in the prompt.
+- **No key ever reaches the browser.** Server routes only, and CI greps the built client bundle for
+  key shapes on every push. It knows a public Supabase anon JWT from a `service_role` one.
+- **The review log is append-only.** No foreign key ties it to a card, so deleting a card — or
+  restoring a backup over the top of your deck — cannot destroy the history. There is an
+  integration test for exactly that.
+- **AI spending is capped.** Per user, per day, and globally. The ledger fails closed, and an
+  unrecognised model is priced at the dearest rate in the table rather than at zero.
 
 ## Credits
 
