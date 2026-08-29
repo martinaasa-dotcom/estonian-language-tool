@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 
 const OUT = process.argv[2];
 const PAGES = [
@@ -11,7 +11,7 @@ const PAGES = [
   ["tutor", "/tutor"],
 ];
 
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 for (const theme of ["light", "dark"]) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: theme });
   const page = await ctx.newPage();

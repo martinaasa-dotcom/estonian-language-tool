@@ -636,6 +636,160 @@ check("an empty cell goes through NO_VALUE, never a literal", () => {
   assert.deepEqual(offenders, [], "a placeholder is typed in rather than read from NO_VALUE");
 });
 
+// ── The browser suites, and the two ways one can lie ─────────────────────────
+
+check("no browser suite hardcodes one machine's Chromium", () => {
+  /*
+    Every one of these was written inside a sandbox that ships Chromium at a
+    fixed path, so every one of them said `executablePath:
+    "/opt/pw-browsers/chromium"` and every one was correct exactly there.
+    Anywhere else, CI included, Playwright reports a missing executable rather
+    than a wrong assumption, and `npm run test:e2e` was a command one machine
+    could run. `scripts/lib/browser.mjs` keeps that path as a fallback and puts
+    Playwright's own resolution first.
+
+    Asserted because the fix is invisible once it works, and because a new
+    script gets written by copying an old one.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    if (file === "scripts/lib/browser.mjs") continue;
+    assert.equal(
+      /executablePath/.test(read(file)),
+      false,
+      `${file} names a browser path instead of using launchChromium()`,
+    );
+  }
+});
+
+check("every browser suite can be pointed at a different server", () => {
+  /*
+    `test-design.mjs` hardcoded localhost:3000, so it threw on its first
+    navigation anywhere else, before check one, and printed no FAIL line. That
+    is what a pass looks like to anything reading the output.
+  */
+  for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
+    const source = read(file);
+    if (!/newPage|goto\(/.test(source)) continue;
+    assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
+    assert.equal(
+      /"http:\/\/localhost:3000"/.test(source.replace(/baseUrl[\s\S]*?\n/, "")),
+      false,
+      `${file} still carries a hardcoded server`,
+    );
+  }
+});
+
+check("every browser suite says how many checks it reached", () => {
+  /*
+    Counting failures alone cannot tell a suite that passed from one that ran
+    nothing, and cannot show that five checks behind a failed gate were never
+    looked at. Both happened here. The floor is the count CI reaches.
+  */
+  for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
+    const source = read(file);
+    if (!/newPage|goto\(/.test(source)) continue;
+    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
+    assert.ok(floor, `${file} does not declare a check floor`);
+    assert.ok(Number(floor![1]) > 0, `${file} declares a floor of zero, which asserts nothing`);
+    assert.equal(
+      /let failures = 0/.test(source),
+      false,
+      `${file} still counts failures on its own instead of using suite()`,
+    );
+  }
+
+  /*
+    And any other script that keeps its own tally, whatever it is called. The
+    rule above matched `test-*` and `e2e` because those were all there were;
+    `load-test.mjs` arrived as a CI gate with its own `let failures = 0`, and
+    the name is the only reason it slipped through. What makes a script one of
+    these is that it counts checks, so that is what this asks about.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    const source = read(file);
+    if (!/\bcheck\(/.test(source)) continue;
+    assert.equal(
+      /let failures = 0/.test(source),
+      false,
+      `${file} counts failures on its own instead of using suite() from lib/checks.mjs`,
+    );
+  }
+});
+
+check("a check a state cannot reach is waived by number, never by a printed word", () => {
+  /*
+    A floor is only honest while the count is a property of the code rather
+    than of the machine. `test-teaching.mjs` was measured with an Ekilex key
+    behind it, so dictation built a real round and Anu had a text box; CI has
+    neither, ran the same correct code, and came in four checks short, which
+    the floor read as a block having stopped running.
+
+    `absent(n, why)` is the answer: it lowers the target by exactly n and says
+    what is missing. What it replaces is the shape this asserts against, a
+    `console.log` with the word SKIP in it, which is what `test-modes.mjs` did
+    for three checks. That prints the same word to a person and nothing at all
+    to the tally, so the block reads as handled and the floor never notices.
+  */
+  for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
+    const source = read(file);
+    if (!/newPage|goto\(/.test(source)) continue;
+    assert.equal(
+      /console\.log\(\s*[`"'][^`"']*SKIP/.test(source),
+      false,
+      `${file} prints a skip instead of waiving it with absent()`,
+    );
+    // A waiver with no number, or with a zero, is a comment wearing a
+    // function's clothes: it would leave the target where it was.
+    for (const waiver of source.matchAll(/\babsent\(\s*([^,]+),/g)) {
+      assert.match((waiver[1] ?? "").trim(), /^[1-9]\d*$/, `${file} waives a count that is not a positive number`);
+    }
+  }
+});
+
+check("every type size in the tree is a step on the scale", () => {
+  /*
+    `test-design.mjs` measures what is rendered, and it can only measure the
+    sixteen pages it visits. Forty-four literal sizes were sitting in states
+    those pages do not reach, in modals, empty states and the review modes:
+    twenty-three of them 13px, half a pixel off the 13.5px step, which is the
+    exact fault the scale was introduced to end. The suite passed the whole
+    time, honestly, on its route list.
+
+    So this one reads the source instead. A route list cannot go stale against
+    it and a state does not have to be reachable to be checked. The named step
+    is what the design system defines (docs/14-design-system.md §3), so a
+    literal that happens to land on a step is still worth turning into
+    `text-sm`; what fails here is a size that is not a step at all.
+  */
+  // The one thing off the scale on purpose, as §3 says in as many words: a
+  // numeral set large enough to read as a shape behind a card, aria-hidden,
+  // ornament rather than type. Listed rather than pattern-matched, and the
+  // check below fails if it stops being there, so it cannot quietly become a
+  // place to park a size somebody could not be bothered to fit.
+  const ORNAMENT = { file: "app/(chromeless)/welcome/page.tsx", size: "92px" };
+  const STEPS = new Set([
+    "11.5px", "12.5px", "13.5px", "15px", "17px", "19px",
+    "22px", "27px", "32px", "40px", "52px", "68px",
+  ]);
+
+  const offScale: string[] = [];
+  let ornamentSeen = false;
+  for (const file of [...sourceFiles("app", /\.tsx$/), ...sourceFiles("components", /\.tsx$/)]) {
+    const source = read(file);
+    for (const found of source.matchAll(/text-\[([0-9.]+px)\]/g)) {
+      const size = found[1] ?? "";
+      if (STEPS.has(size)) continue;
+      if (file === ORNAMENT.file && size === ORNAMENT.size) { ornamentSeen = true; continue; }
+      offScale.push(`${file} ${size}`);
+    }
+  }
+  assert.deepEqual(offScale, [], "type sizes that are not a step on the scale");
+  assert.ok(
+    ornamentSeen,
+    `${ORNAMENT.file} no longer carries the ${ORNAMENT.size} ornament, so the exception for it is dead and should go`,
+  );
+});
+
 // ── The phone, and the faults that were measured on it ───────────────────────
 
 check("the root declares no overflow", () => {

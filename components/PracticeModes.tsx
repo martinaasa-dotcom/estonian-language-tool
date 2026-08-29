@@ -84,10 +84,10 @@ export function PracticeModes({ unavailable = {} }: {
                   style={{ color: why ? "var(--ink-3)" : "var(--accent)" }}
                 />
                 <span className="min-w-0">
-                  <span className="block text-[14.5px] font-medium" style={{ color: why ? "var(--ink-3)" : "var(--ink)" }}>
+                  <span className="block text-base font-medium" style={{ color: why ? "var(--ink-3)" : "var(--ink)" }}>
                     {label}
                   </span>
-                  <span className="block text-[13px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="block text-sm" style={{ color: "var(--ink-3)" }}>
                     {why ?? blurb}
                   </span>
                 </span>

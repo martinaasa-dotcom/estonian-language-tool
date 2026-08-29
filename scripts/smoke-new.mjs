@@ -14,21 +14,17 @@
  *   node scripts/smoke-new.mjs
  */
 import { mkdirSync } from "node:fs";
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const BASE = process.env.BASE_URL ?? "http://localhost:3000";
+const BASE = baseUrl();
 const SHOTS = "/tmp/shots";
 mkdirSync(SHOTS, { recursive: true });
 
-const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-});
+const browser = await launchChromium();
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
-};
+// Floor: measured 45 in dev mode, which is the mode its header documents.
+const { check, done } = suite("The new routes, rendered", { floor: 45 });
 
 const ROUTES = [
   ["/", "today"],
@@ -155,7 +151,6 @@ check("mobile nav labels fit their cells", navOverflow === 0, `${navOverflow} cl
 
 console.log(`\nScreenshots in ${SHOTS}`);
 console.log(errors.length ? `\nConsole errors:\n${errors.join("\n")}` : "\nNo console errors.");
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

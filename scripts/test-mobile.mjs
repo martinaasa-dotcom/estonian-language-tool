@@ -11,8 +11,9 @@
  *   node scripts/test-mobile.mjs
  */
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const B = process.env.BASE_URL ?? "http://localhost:3000";
+const B = baseUrl();
 
 /** The widths of phones people are actually holding, plus the two breakpoints. */
 const PHONES = [360, 390, 430];
@@ -20,11 +21,8 @@ const WIDE = [768, 1280];
 
 const browser = await launchChromium();
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+// Floor: 34, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("The phone", { floor: 34 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -202,5 +200,4 @@ for (const path of ["/", "/review", "/dictionary", "/scan"]) {
 }
 
 await browser.close();
-console.log(failures === 0 ? "\nAll mobile checks passed." : `\n${failures} check(s) failed.`);
-process.exit(failures === 0 ? 0 : 1);
+done();

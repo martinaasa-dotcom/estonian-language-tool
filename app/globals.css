@@ -504,7 +504,19 @@
     `grad-text` is the text, so every stop clears 4.5:1 against the page.
   */
   .grad-accent {
-    background-image: linear-gradient(112deg, #6a5ae8 0%, #7a4fdc 45%, #c33a7e 100%);
+    /*
+      Horizontal, and that is load-bearing. At 112deg the ramp tilted
+      downward, so on a wide pill the bottom of the left cap sat about an
+      eighth of the way along it and the top of the right cap the same
+      distance short of the end: a fleck of pink on the left edge, a fleck
+      of blue on the right, on the one button a screen is built around.
+      No tilt escapes that, because the vertical spread of the gradient
+      line is set by the element's height and a button is short and wide.
+      At 90deg every column is a single colour, so each cap is the pure
+      endpoint. `grad-text` keeps its tilt: it is clipped to letterforms,
+      which have no caps to discolour.
+    */
+    background-image: linear-gradient(90deg, #6a5ae8 0%, #7a4fdc 45%, #c33a7e 100%);
   }
   .grad-text {
     background-image: linear-gradient(112deg, var(--accent-deep) 0%, #7b3fd0 40%, var(--blush-ink) 92%);

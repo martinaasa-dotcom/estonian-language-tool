@@ -111,10 +111,10 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   if (audioFailed) {
     return (
       <div className="mx-auto max-w-lg px-5 py-20 text-center">
-        <h1 className="est text-[24px] font-bold" style={{ color: "var(--ink)" }}>
+        <h1 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
           No audio, no drill
         </h1>
-        <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px]" style={{ color: "var(--ink-2)" }}>
+        <p className="mx-auto mt-2 max-w-[44ch] text-base" style={{ color: "var(--ink-2)" }}>
           This exercise is entirely about what a word sounds like, so without the speech service
           there is nothing honest to show. It runs on TartuNLP and needs a connection.
         </p>
@@ -171,7 +171,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             aria-label="Round progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-sm" style={{ color: "var(--ink-3)" }}>
           {questions.length - index} left
         </span>
       </div>
@@ -198,7 +198,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
               ? <Loader2 size={30} className="animate-spin" aria-hidden />
               : <Volume2 size={30} aria-hidden />}
           </button>
-          <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="text-sm" style={{ color: "var(--ink-3)" }}>
             Play again <kbd>R</kbd> · or hear it{" "}
             <span className="inline-flex items-center align-middle">
               <Speak text={question.heard} slow label="Hear it slowly" />
@@ -229,7 +229,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                   className="flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left transition-opacity hover:opacity-85 disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-[11px] opacity-60">{i + 1}</kbd>
+                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
                   <span className="min-w-0">
                     <span lang="et" className="est block text-[19px] font-semibold">{option.value}</span>
                     <span className="block text-[12.5px] opacity-80">

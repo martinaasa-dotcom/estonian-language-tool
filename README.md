@@ -149,11 +149,12 @@ That model costs nothing. If Anu ever feels vague about Estonian, swap the model
 sharper. An `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` works instead of OpenRouter if you prefer;
 whichever key is present is the one used.
 
-The same key turns on **Scan a page**, with one caveat: reading a photograph needs a model that can
-see, and most free ones cannot. Scanning uses whatever model is configured above, so switching it on
-can never move a free deployment onto a paid one by itself. If the model you chose is text-only, add
+**Scan a page** needs the same key and one more line, because reading a photograph needs a model
+that can look at one and the free chain above cannot. Scanning uses whatever model is configured
+above unless you say otherwise, deliberately: switching the camera on must never move a free
+deployment onto a paid model by itself. So add
 `OPENROUTER_VISION_MODEL="openai/gpt-4o"` (or `ANTHROPIC_VISION_MODEL` / `OPENAI_VISION_MODEL`) and
-it will be used for scanning and nothing else.
+it is used for scanning and nothing else. A page is roughly a third of a cent.
 
 ## Deploying it as a real website
 

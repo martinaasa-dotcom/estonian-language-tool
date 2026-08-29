@@ -25,6 +25,7 @@
  *   node scripts/load-test.mjs --budget-only     # CI: assert, do not explore
  */
 import { performance } from "node:perf_hooks";
+import { suite } from "./lib/checks.mjs";
 
 const BASE = process.env.BASE_URL ?? "http://127.0.0.1:3000";
 
@@ -43,11 +44,16 @@ const BUDGETS = {
   route: { p95: 1500 },
 };
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
-};
+/*
+  Floor: ten, which is the five queries plus the five routes. On the shared
+  harness for the same reason every other suite here is: this job is a CI gate
+  now, and a benchmark that measures nothing exits zero and prints an
+  encouraging line. Both ways that happens are real. `measureRoutes` returns
+  early when there is no server, which is five checks gone with a `console.log`
+  in their place, and `--budget-only` skips them on purpose. Neither is a
+  failure, so both say how many they cost by name.
+*/
+const { check, absent, done } = suite("The derived queries", { floor: 10 });
 
 function stats(samples) {
   const sorted = [...samples].sort((a, b) => a - b);
@@ -181,6 +187,7 @@ async function measureRoutes() {
     if (!probe.ok) throw new Error(String(probe.status));
   } catch {
     console.log(`No server at ${BASE}. Start one to measure the routes.\n`);
+    absent(5, "a server to measure the routes against");
     return;
   }
 
@@ -196,7 +203,10 @@ async function measureRoutes() {
 
 console.log("Measuring the queries that run on every page load.\n");
 await measureQueries();
-if (!process.argv.includes("--budget-only")) await measureRoutes();
+if (process.argv.includes("--budget-only")) {
+  absent(5, "the routes, which --budget-only asks it to skip");
+} else {
+  await measureRoutes();
+}
 
-console.log(failures === 0 ? "Everything inside budget." : `${failures} over budget.`);
-process.exit(failures === 0 ? 0 : 1);
+done();

@@ -1,6 +1,6 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 const OUT = process.argv[2];
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const b = await launchChromium();
 
 const shots = [
   ["01-today",      "/",                        "light", 1000],

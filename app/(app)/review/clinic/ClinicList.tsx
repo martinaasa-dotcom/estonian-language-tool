@@ -59,7 +59,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
                   {leech.front}
                 </p>
                 <ArrowRight size={14} aria-hidden style={{ color: "var(--ink-3)" }} />
-                <p className="est text-[20px]" style={{ color: "var(--accent)" }}>{leech.back}</p>
+                <p className="est text-lg" style={{ color: "var(--accent)" }}>{leech.back}</p>
                 {leech.lemma && <Speak text={leech.lemma} />}
               </div>
 

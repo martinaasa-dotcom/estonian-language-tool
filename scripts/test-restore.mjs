@@ -1,4 +1,5 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -19,12 +20,12 @@ import { requireLocalDatabase } from "./lib/local-db.mjs";
  *    happened twice while this was being written — the data is still on disk
  *    and `Settings → Restore` puts it back.
  */
-const B = "http://localhost:3000";
+const B = baseUrl();
 const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("delete every word, card, task and review row"),
 });
-let failures = 0;
-const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
+// Floor: ten checks, all unconditional.
+const { check, done } = suite("Backup and restore", { floor: 10 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext()).newPage();
@@ -121,9 +122,10 @@ check("restoring twice does not duplicate anything",
   (await prisma.review.count()) === before.reviews && (await prisma.card.count()) === before.cards,
   `${await prisma.card.count()} cards, ${await prisma.review.count()} reviews`);
 
-console.log(failures === 0
-  ? "\nRestore verified end to end."
-  : `\n${failures} failed. If the database is short of data, restore ${safety} via Settings.`);
+// The one suite that empties the database to prove a backup brings it back,
+// so a failure here needs its own sentence: the data is in the file it wrote
+// before it deleted anything.
+console.log(`\nIf anything above failed, restore ${safety} via Settings.`);
 await browser.close();
 await prisma.$disconnect();
-process.exit(failures ? 1 : 0);
+done();

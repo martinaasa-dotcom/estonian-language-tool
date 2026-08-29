@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+import { launchChromium, eventually } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
+import { PrismaClient } from "@prisma/client";
+import { requireLocalDatabase } from "./lib/local-db.mjs";
+
 /**
  * The paper-to-deck path, driven for real.
  *
@@ -8,10 +13,10 @@
  * inflected-form resolution against a real dictionary in
  * `lib/dict/resolveScan.itest.ts`. What none of those can see is the half a
  * learner actually touches: the picture leaving the device, the confirmation
- * list, and a ticked word turning into a card that the review session then
- * asks about.
+ * list, and a ticked word turning into a card the review session then asks
+ * about.
  *
- * So the model is the one thing stubbed here. `**\/api\/scan` is intercepted and
+ * So the model is the one thing stubbed here. `/api/scan` is intercepted and
  * answered with a fixed page: one word the dictionary vouches for, and one it
  * has never seen. Everything after that point is the real app, the real server
  * actions and the real database.
@@ -23,22 +28,21 @@
  * The key may be nonsense: the route it would authenticate is never reached.
  * It has to be *present*, because with no provider configured at all the page
  * correctly offers no camera to point at anything.
+ *
+ * It writes two rows and deletes them again, scoped to the two words it
+ * touches, so `requireLocalDatabase` guards it like every other script here
+ * that deletes anything.
  */
-import { chromium } from "playwright";
-import { PrismaClient } from "@prisma/client";
-
-const BASE = process.env.BASE_URL ?? "http://localhost:3000";
+const B = baseUrl();
 const OWNER = "local-single-user";
 /** A word no dictionary has, so the unverified path is exercised honestly. */
 const UNKNOWN = "kodukeeltestsona";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: requireLocalDatabase("write and delete a scanned page and its cards"),
+});
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
-};
+const { check, done } = suite("The paper path", { floor: 15 });
 
 /** A word the seed definitely holds, with its real id, for the matched row. */
 const known = await prisma.lexeme.findFirst({
@@ -47,8 +51,8 @@ const known = await prisma.lexeme.findFirst({
   select: { id: true, lemma: true, translation: true, cefr: true },
 });
 if (!known) {
-  console.log("FAIL  the dictionary is empty, so there is nothing to match against");
-  process.exit(1);
+  check("the dictionary has something to match against", false, "no seeded words: npm run db:seed");
+  done();
 }
 
 /**
@@ -69,9 +73,7 @@ async function cleanUp() {
 
 await cleanUp();
 
-const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-});
+const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
 const page = await ctx.newPage();
 
@@ -105,10 +107,10 @@ await page.route("**/api/scan", async (route) => {
   });
 });
 
-await page.goto(`${BASE}/scan`, { waitUntil: "networkidle" });
+await page.goto(`${B}/scan`, { waitUntil: "networkidle" });
 
 // A label wrapping its own file input, not a button that clicks a hidden one:
-// see PickFile in ScanCapture.tsx for why.
+// see PickFile in app/(app)/scan/ScanCapture.tsx for why.
 const hasCapture = await page.getByLabel(/take a photo/i).count();
 check(
   "the page offers a camera",
@@ -118,7 +120,7 @@ check(
 if (!hasCapture) {
   await browser.close();
   await prisma.$disconnect();
-  process.exit(1);
+  done();
 }
 
 // A real image, so the browser's own decode and downscale run rather than being
@@ -139,10 +141,10 @@ check(
 
 // Exact, because the warning further down the page contains the phrase "not in
 // the dictionary" and a substring match would count that as a second chip.
-const known_chip = await page.getByText("In the dictionary", { exact: true }).count();
-const unknown_chip = await page.getByText("Read from the photo", { exact: true }).count();
-check("a matched word says the dictionary vouched for it", known_chip === 1, `${known_chip}`);
-check("an unmatched word says where it really came from", unknown_chip === 1, `${unknown_chip}`);
+const knownChip = await page.getByText("In the dictionary", { exact: true }).count();
+const unknownChip = await page.getByText("Read from the photo", { exact: true }).count();
+check("a matched word says the dictionary vouched for it", knownChip === 1, `${knownChip}`);
+check("an unmatched word says where it really came from", unknownChip === 1, `${unknownChip}`);
 
 const warning = await page.getByText(/not in the dictionary/i).count();
 check("the page says plainly which words nobody has checked", warning > 0);
@@ -167,9 +169,7 @@ check(
 const madeCards = await prisma.card.count({ where: { ownerId: OWNER, source: "SCAN" } });
 check("ticking a word makes cards", madeCards >= 2, `${madeCards} cards`);
 
-const invented = await prisma.form.count({
-  where: { lexeme: { lemma: UNKNOWN } },
-});
+const invented = await prisma.form.count({ where: { lexeme: { lemma: UNKNOWN } } });
 check(
   "a word the dictionary never vouched for gets no forms invented for it",
   invented === 0,
@@ -177,8 +177,8 @@ check(
 );
 
 await page.getByRole("button", { name: /open the page/i }).click();
-await page.waitForURL(/\/scan\/[0-9a-f-]{36}/, { timeout: 20_000 });
-check("the saved page opens as a set", /\/scan\/[0-9a-f-]{36}/.test(page.url()), page.url());
+const opened = await eventually(async () => /\/scan\/[0-9a-f-]{36}/.test(page.url()));
+check("the saved page opens as a set", opened, page.url());
 
 const unverifiedChip = await page.getByText("Unverified", { exact: false }).count();
 check("the set still marks the word nobody checked", unverifiedChip > 0);
@@ -187,8 +187,6 @@ await page.getByRole("link", { name: /drill the page/i }).click();
 await page.waitForURL(/\/review\?scan=/, { timeout: 20_000 });
 // The ordinary session, not a private quiz: the same four ratings, which is
 // what writes to the same append-only log as everything else (ADR-016).
-// The accessible name carries the interval and the key too ("Again 1m 1"), so
-// this matches the start of it rather than the whole string.
 const ratings = page.getByRole("button", { name: /^(again|hard|good|easy)\b/i });
 await ratings.first().waitFor({ timeout: 20_000 });
 const rated = await ratings.count();
@@ -201,6 +199,4 @@ check("no console errors anywhere in that", errors.length === 0, errors.slice(0,
 await cleanUp();
 await browser.close();
 await prisma.$disconnect();
-
-console.log(failures === 0 ? "\nThe paper path holds." : `\n${failures} failed.`);
-process.exit(failures === 0 ? 0 : 1);
+done();
