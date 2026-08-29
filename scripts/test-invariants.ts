@@ -152,11 +152,33 @@ check("no code path updates a review", () => {
   }
 });
 
-check("the only path that deletes reviews is a restore the learner asked for", () => {
-  const deleters = ALL.filter((f) => /review\.delete/.test(read(f)));
-  assert.deepEqual(deleters, ["app/actions.ts"], "a review is deleted outside the restore path");
+check("a review is only ever deleted by something the learner asked for", () => {
+  /*
+    Two paths, and no more. A restore in replace mode no longer touches reviews
+    at all — the deck is rebuilt, the history is not — so the only deletion left
+    in product code is somebody erasing their own account, which the privacy
+    page promises and which outranks the append-only rule.
+
+    Tests are excluded: they set up and tear down their own rows, and are not a
+    path anything reaches in production.
+  */
+  const deleters = ALL
+    .filter((f) => !/\.(test|itest)\.tsx?$/.test(f))
+    .filter((f) => /review\.delete/.test(read(f)));
+  assert.deepEqual(deleters, ["app/actions.ts"], "a review is deleted outside the paths that may");
+
   const actions = read("app/actions.ts");
-  assert.match(actions, /mode === "replace"/, "the restore no longer guards its delete on an explicit replace");
+  assert.match(
+    actions,
+    /confirmation\.trim\(\)\.toLowerCase\(\) !== "delete"/,
+    "account deletion no longer asks the learner to confirm",
+  );
+  assert.match(actions, /mode === "replace"/, "the restore no longer guards on an explicit replace");
+  assert.equal(
+    /mode === "replace"[\s\S]{0,600}?review\.deleteMany/.test(actions),
+    false,
+    "a replace-mode restore has gone back to deleting the review log",
+  );
 });
 
 check("a grade made offline keeps the time it was actually answered", () => {
@@ -165,13 +187,19 @@ check("a grade made offline keeps the time it was actually answered", () => {
     reviews all happened at breakfast, which is worse than losing them: FSRS
     would fit its intervals to a history that never happened.
   */
-  const queue = read("lib/offline/queue.ts");
-  assert.match(queue, /reviewedAt|answeredAt|timestamp/, "the queue no longer records when a grade was made");
+  const outbox = read("lib/offline/outbox.ts");
+  assert.match(outbox, /reviewedAt/, "the queue no longer records when a grade was made");
+  // Clamped in *both* directions: a device clock set ahead would schedule a card
+  // into the past, and one set years back would blow up the card's stability.
+  assert.match(outbox, /clampReviewedAt/, "the queue no longer clamps a device clock");
+
+  const replay = read("lib/srs/replay.ts");
   assert.equal(
-    /reviewedAt:\s*new Date\(\)/.test(queue),
+    /reviewedAt:\s*new Date\(\)/.test(replay),
     false,
-    "the queue re-stamps a grade on replay",
+    "the replay re-stamps a grade",
   );
+  assert.match(replay, /orderForReplay/, "the replay no longer applies grades in the order they happened");
 });
 
 // ── Progress is derived, never stored (ADR-014) ──────────────────────────────
@@ -361,7 +389,9 @@ check("colour comes from a token, never a raw hex", () => {
   for (const file of [...COMPONENTS, ...APP]) {
     // The social card and the app icons are painted outside the browser,
     // where a CSS custom property does not resolve.
-    if (/api\/share|apple-icon|icon\.tsx|manifest\.ts|layout\.tsx/.test(file)) continue;
+    // global-error renders when the root layout itself failed, so globals.css
+    // may never have loaded and a custom property would resolve to nothing.
+    if (/api\/share|apple-icon|icon\.tsx|manifest\.ts|layout\.tsx|global-error/.test(file)) continue;
     for (const [i, line] of read(file).split("\n").entries()) {
       if (!hex.test(line)) continue;
       if (line.trim().startsWith("*") || line.trim().startsWith("//")) continue;
@@ -545,7 +575,7 @@ check("nothing fixed over content carries a backdrop filter", () => {
 
 check("a notice pinned to the bottom clears a measured dock, not a typed guess", () => {
   assert.match(CSS, /:root\[data-dock\]\s*\.bottom-notice/, "the measured clearance rule is gone");
-  for (const file of ["components/OfflineStatus.tsx", "components/InstallPrompt.tsx", "components/achievements/AchievementToasts.tsx"]) {
+  for (const file of ["components/OfflineProvider.tsx", "components/InstallPrompt.tsx", "components/achievements/AchievementToasts.tsx"]) {
     const source = read(file);
     assert.match(source, /bottom-notice/, `${file} no longer uses the shared rule`);
     assert.equal(

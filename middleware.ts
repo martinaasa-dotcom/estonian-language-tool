@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { isAllowedEmail, safeNext } from "@/lib/auth/access";
 import { buildContentSecurityPolicy } from "@/lib/security/headers";
 import { isMutatingRequest, isSameOriginMutation } from "@/lib/security/sameOrigin";
 
@@ -83,9 +84,24 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/sign-in") ||
     request.nextUrl.pathname.startsWith("/welcome") ||
     request.nextUrl.pathname.startsWith("/auth/callback") ||
+    // What the app stores has to be readable before anyone signs in to it.
+    request.nextUrl.pathname.startsWith("/privacy") ||
+    request.nextUrl.pathname.startsWith("/terms") ||
     // The offline fallback holds no data and has to render from the service
     // worker's cache, where there is no session to check.
     request.nextUrl.pathname.startsWith("/offline");
+
+  // A signed-in address that is no longer on the allowlist is signed out here
+  // rather than only in the OAuth callback, so revoking access takes effect on
+  // the next request somebody makes instead of whenever their session expires.
+  if (user && !isAllowedEmail(user.email)) {
+    await supabase.auth.signOut();
+    const denied = request.nextUrl.clone();
+    denied.pathname = "/sign-in";
+    denied.search = "";
+    denied.searchParams.set("denied", "1");
+    return withCsp(NextResponse.redirect(denied));
+  }
 
   if (!user && !isPublicPath) {
     if (request.nextUrl.pathname.startsWith("/api/")) {
@@ -100,7 +116,12 @@ export async function middleware(request: NextRequest) {
       target.search = "";
     } else {
       target.pathname = "/sign-in";
-      target.searchParams.set("next", request.nextUrl.pathname);
+      target.search = "";
+      // `next` is attacker-controllable and is consumed at the moment a fresh
+      // session cookie exists, so it is narrowed to a same-origin path.
+      target.searchParams.set(
+        "next", safeNext(request.nextUrl.pathname + request.nextUrl.search),
+      );
     }
     return withCsp(NextResponse.redirect(target));
   }

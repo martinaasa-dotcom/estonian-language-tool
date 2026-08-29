@@ -1,17 +1,11 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForRequest, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
+import { recordUsage } from "@/lib/usage/ledger";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
-// Vercel's filesystem is read-only outside /tmp, which is wiped on every cold
-// start — so this is a real cache locally, and a per-instance cache when hosted.
-const CACHE_DIR = process.env.VERCEL
-  ? join(tmpdir(), "kodukeel-audio")
-  : join(process.cwd(), ".data", "audio");
 const MAX_CHARS = 400;
 
 /*
@@ -85,10 +79,12 @@ export async function POST(request: Request) {
 
   const speaker = process.env.TTS_SPEAKER ?? "mari";
   const hash = createHash("sha256").update(`${text}|${speaker}|${speed}`).digest("hex");
-  const file = join(CACHE_DIR, `${hash}.wav`);
-
-  const cached = await readFile(file).catch(() => null);
-  if (cached) return wav(cached, "hit");
+  // Content-addressed and shared across instances and users: a clip fetched
+  // once is available to everybody, forever. Writing to /tmp instead, as this
+  // did, is per-instance and wiped on every cold start — not a cache, just a
+  // comment claiming to be one. See lib/audio/store.ts.
+  const cached = await readAudio(hash).catch(() => null);
+  if (cached) return wav(cached.body, cached.from);
 
   const joined = inFlight.get(hash);
   if (joined) {
@@ -101,11 +97,24 @@ export async function POST(request: Request) {
     }
   }
 
-  const work = speak(text, speaker, speed, file).finally(() => inFlight.delete(hash));
+  const work = speak(text, speaker, speed, hash).finally(() => inFlight.delete(hash));
   inFlight.set(hash, work);
 
   try {
-    return wav(await work, "miss");
+    const audio = await work;
+    // TartuNLP is free, so this costs nothing — it is recorded to show how
+    // heavily the app leans on somebody else's goodwill. Passing an explicit
+    // zero matters: the speaker name would otherwise price as an unknown model.
+    // Anonymous callers are possible here (the bucket falls back to the
+    // request), and the ledger is per learner, so an unattributed clip is
+    // simply not recorded rather than filed under nobody.
+    if (ownerId) {
+      void recordUsage({
+        ownerId, kind: "TTS", provider: "tartunlp", model: speaker,
+        inputTokens: text.length, outputTokens: 0, costMicros: 0,
+      });
+    }
+    return wav(audio, "upstream");
   } catch (error) {
     const status = error instanceof SpeechError ? error.status : 503;
     const message =
@@ -125,7 +134,7 @@ async function speak(
   text: string,
   speaker: string,
   speed: number,
-  file: string,
+  hash: string,
 ): Promise<Buffer> {
   let upstream: Response;
   try {
@@ -142,12 +151,11 @@ async function speak(
   if (!upstream.ok) throw new SpeechError(502);
 
   const audio = Buffer.from(await upstream.arrayBuffer());
-  await mkdir(CACHE_DIR, { recursive: true }).catch(() => {});
-  await writeFile(file, audio).catch(() => {}); // A failed cache write must not fail playback.
+  await writeAudio(hash, audio); // Never throws: a failed cache write is a slower next play.
   return audio;
 }
 
-function wav(body: Buffer, cache: "hit" | "miss" | "joined") {
+function wav(body: Buffer, cache: AudioSource | "joined") {
   return new NextResponse(new Uint8Array(body), {
     headers: {
       "content-type": "audio/wav",

@@ -96,8 +96,10 @@ function sourceFiles(dir: string): string[] {
     if (statSync(full).isDirectory()) out.push(...sourceFiles(full));
     // Test files are exempt on purpose: no test renders to anybody, so a dash
     // in one is source. Excluding them is also what lets this file, which has
-    // to name the character, stay out of the exception list.
-    else if (/\.(ts|tsx)$/.test(entry) && !/\.test\.tsx?$/.test(entry)) out.push(full);
+    // to name the character, stay out of the exception list. `.itest.ts` is
+    // the database-backed half of the same suite and is exempt for the same
+    // reason, not because it was easier than fixing one.
+    else if (/\.(ts|tsx)$/.test(entry) && !/\.i?test\.tsx?$/.test(entry)) out.push(full);
   }
   return out;
 }
@@ -178,6 +180,26 @@ describe("the code that reads a dash still reads every one of them", () => {
       expect(`tuba ${dash} room`.split(separator)).toEqual(["tuba", "room"]);
     }
     expect(separator.test("tuba, room")).toBe(false);
+  });
+
+  it("cuts a stored government string at any dash the dictionary carries", async () => {
+    const { parseGovernment } = await import("@/lib/estonian/government");
+    for (const dash of [EM, EN, "-"]) {
+      const parsed = parseGovernment(`Partitive ${dash} aitan sind (I help you)`);
+      expect(parsed?.caseKey, `a ${dash} separator stopped parsing`).toBe("PARTITIVE");
+      expect(parsed?.example).toBe("aitan sind");
+      expect(parsed?.gloss).toBe("I help you");
+    }
+  });
+
+  it("strips a dash off a word before checking the learner used the form", async () => {
+    const { checkForm } = await import("@/lib/estonian/writing");
+    // Without the dash in the punctuation class the token stays "toas-see",
+    // the whole-word match fails, and a correct sentence is marked wrong.
+    const task = { targetForm: "toas" } as Parameters<typeof checkForm>[1];
+    for (const dash of [EM, EN]) {
+      expect(checkForm(`Ma olen toas${dash}see on hea`, task, []).used).toBe(true);
+    }
   });
 
   it("strips a dash standing on its own out of a dictated sentence", async () => {

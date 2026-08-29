@@ -5,6 +5,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Card, Empty, Page, SectionTitle, StatTile } from "@/components/ui";
 import { STATE_LABELS } from "@/lib/srs/scheduler";
+import { Diagnosis } from "@/components/Diagnosis";
 import { WordsTable, type CardRow } from "./WordsTable";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +116,8 @@ export default async function WordsPage() {
             </Card>
           </div>
 
+          <Diagnosis ownerId={ownerId} />
+
           <WordsTable rows={rows} />
           {totalCards > rows.length && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>
@@ -164,7 +167,7 @@ function DeckBar({ segments }: { segments: { label: string; value: number; color
 /** Accuracy per grammatical case — the diagnostic that turns a card box into a study plan. */
 async function weakestCases(ownerId: string) {
   const reviews = await prisma.review.findMany({
-    where: { targetCase: { not: null }, card: { ownerId } },
+    where: { ownerId, targetCase: { not: null } },
     select: { targetCase: true, rating: true },
     take: 5000,
   });

@@ -63,7 +63,13 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
  * insert, by the column default — a word the cache has since upgraded to
  * `EKILEX` must not be demoted back to `SEED` by a reseed.
  */
-export const PRESERVED_COLUMNS = ["examples", "provenance", "ekilexWordId", "fetchedAt"] as const;
+export const PRESERVED_COLUMNS = [
+  "examples", "provenance", "ekilexWordId", "fetchedAt",
+  // Who corrected an entry by hand, and when. The dictionary is shared, so an
+  // edit is everybody's — which is exactly why a reseed must not quietly erase
+  // the record of who made it.
+  "editedBy", "editedAt",
+] as const;
 
 /** Written by the database or by the statement itself, not from an entry. */
 export const MANAGED_COLUMNS = ["id", "createdAt", "updatedAt"] as const;

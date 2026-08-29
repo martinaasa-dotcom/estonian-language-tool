@@ -29,7 +29,7 @@ export default async function GrammarIndexPage() {
   const ownerId = await requireUserId();
 
   const caseReviews = await prisma.review.findMany({
-    where: { targetCase: { not: null }, card: { ownerId } },
+    where: { targetCase: { not: null }, ownerId },
     select: { targetCase: true, rating: true },
     take: 5000,
   });

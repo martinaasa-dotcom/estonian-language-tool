@@ -160,23 +160,45 @@ if (rateable) {
   check("u undoes the last grade", gradedBefore !== gradedAfter, `${gradedBefore?.trim()} -> ${gradedAfter?.trim()}`);
 }
 
+/**
+ * How many grades are waiting on the device.
+ *
+ * The queue moved from localStorage to IndexedDB when replay became ordered and
+ * idempotent (lib/offline/db.ts). A test that keeps reading the old key does not
+ * fail loudly — it reads zero and quietly stops testing anything.
+ */
+const queuedGrades = () => page.evaluate(() => new Promise((resolve) => {
+  const req = indexedDB.open("kodukeel", 1);
+  req.onsuccess = () => {
+    const db = req.result;
+    if (!db.objectStoreNames.contains("outbox")) return resolve(0);
+    const count = db.transaction("outbox", "readonly").objectStore("outbox").count();
+    count.onsuccess = () => resolve(count.result);
+    count.onerror = () => resolve(-1);
+  };
+  req.onerror = () => resolve(-1);
+}));
+
 // 6 — Reviewing offline: grades are kept, then sent on reconnect
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });
 await page.waitForTimeout(600);
 await ctx.setOffline(true);
 await answerCurrentCard();
 await page.waitForTimeout(2500);
-const queued = await page.evaluate(() =>
-  JSON.parse(window.localStorage.getItem("kodukeel:pending-grades") ?? "[]").length);
+const queued = await queuedGrades();
 check("a grade made offline is kept on the device", queued > 0, `${queued} queued`);
 check("the session says so rather than failing silently",
   (await page.getByText(/Offline/).count()) > 0);
 
 await ctx.setOffline(false);
 await page.evaluate(() => window.dispatchEvent(new Event("online")));
-await page.waitForTimeout(4000);
-const stillQueued = await page.evaluate(() =>
-  JSON.parse(window.localStorage.getItem("kodukeel:pending-grades") ?? "[]").length);
+// Poll rather than sleep: the replay is a Server Action round trip.
+let stillQueued = await queuedGrades();
+for (let i = 0; i < 20 && stillQueued !== 0; i++) {
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  stillQueued = await queuedGrades();
+}
 check("the queue is sent once the connection is back", stillQueued === 0, `${stillQueued} left`);
 
 // 7 — Command palette

@@ -41,6 +41,16 @@ explain grammar and suggest an English translation; it may never supply an Eston
 is tagged and needs confirmation before becoming a flashcard answer — an unverified form does not
 just sit there being wrong, the SRS drills it in. (ADR-005.)
 
+In the writing grader this is *enforced*, not requested: `lib/tutor/verify.ts` checks every Estonian
+word in the model's feedback against the forms it was given and withholds the note otherwise. A live
+test showed a model reaching for forms unprompted despite the instruction, which is the whole
+argument for checking rather than asking. If you add another path where a model discusses Estonian
+the learner will act on, put it behind that check too.
+
+**Never let the correctness of a form be decided by a model.** The writing exercise checks the
+required form by string comparison against the dictionary *before* any call, so a hallucination
+cannot mark a right answer wrong and a missing key does not break the exercise. Keep that ordering.
+
 **Never store derived case forms.** Only principal parts are persisted (five per lexeme). The ten
 regular cases
 are computed from the genitive stem at render time. Storing them creates a second source of truth
@@ -49,12 +59,37 @@ that goes stale.
 **`Review` is append-only.** No updates, no deletes. It is the one table whose loss is unrecoverable
 and it is the input to FSRS parameter optimisation.
 
+This is now a property rather than a hope: `Review` has *no foreign key* to `Card`. It carries its
+own `ownerId` and `lexemeId` and keeps `cardId` as a plain column, so deleting a card or restoring a
+backup over a deck cannot cascade the history away. Do not re-add the relation for the convenience
+of a join — `lib/srs/replay.itest.ts` will fail, which is the point. The same property is what makes
+offline sync conflict-free: grades are facts with timestamps, and replaying them in order reproduces
+the state exactly, because `grade()` takes `now` as a parameter.
+
 **Never re-add the iframes.** Sõnaveeb and Ekilex send `X-Frame-Options: DENY`; Speakly has no public
 API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 
-**Review must work offline.** It is the daily path. A grade that cannot reach the server goes into
-`lib/offline/queue.ts` and is replayed later with the timestamp it was actually answered at — never
-dropped, never re-stamped. (ADR-015.)
+**Review must work offline.** It is the daily path, and it may not depend on any network call.
+A grade that cannot reach the server goes into the IndexedDB outbox (`lib/offline/db.ts`) and is
+replayed in order by `replayGrades` with the timestamp it was actually answered at — never dropped,
+never re-stamped. Replay is idempotent because the client generates each grade's id. Anything added
+to the review path must survive `navigator.onLine === false`, and `scripts/smoke-offline.mjs`
+checks that in a browser. (ADR-015.)
+
+**AI spending is always metered.** `lib/usage` has no off switch and fails closed, because sign-up
+is open by default. Any new path that calls a paid provider goes through `authoriseCall` before the
+call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table — a
+cap that fails open is not a cap.
+
+**Nothing in a `"use server"` file may take an owner id from its caller.** Every export there is a
+public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
+belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
+
+**The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
+learner sees, so an edit to one is an edit for everybody — it is attributed (`editedBy`), it may
+replace only the principal parts, and it must never touch a retrieved Ekilex paradigm. Anything
+scoped to a person — cards, reviews, tasks — is always filtered by `ownerId`, including in an
+`updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
@@ -102,6 +137,9 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
   offline). A view without an empty state is not finished.
+- Unit tests stay hermetic: no database, no network, no clock you do not control. Anything needing
+  Postgres is an `*.itest.ts` under `npm run test:db`. The unit suite gates every commit and must
+  stay fast enough that nobody is tempted to skip it.
 - **No em dash or en dash in anything a person reads**, anywhere in `app/`, `lib/`, `components/`
   or the README. A dash used as a clause break is the loudest single tell that a sentence was
   generated, and every screen here is one person explaining Estonian to another.
@@ -228,16 +266,22 @@ have an invariant behind them; that list is what to check when adding one.
 ## Commands
 
 ```
-npm run setup        # install + create db + seed (first run)
-npm run dev          # dev server
-npm run test         # unit tests (Vitest) — DB-backed tests skip themselves without a database
-npm run typecheck    # tsc --noEmit
-npm run db:seed      # reload the built-in dictionary
-npm run demo         # two months of sample history, for looking at the charts
-npm run test:e2e     # every browser suite, needs the server running
-npm run test:invariants  # the rules in CLAUDE.md, asserted
+npm run setup            # install + create db + seed (first run)
+npm run dev              # dev server
+npm run typecheck        # tsc --noEmit
+npm run test             # unit tests (Vitest), hermetic: no database, no network
+npm run test:db          # integration tests, needs Postgres in DATABASE_URL
+npm run test:invariants  # the rules in this file, asserted
+npm run check:secrets    # fails if a credential reached the client bundle
+npm run db:seed          # reload the built-in dictionary
+npm run demo             # two months of sample history, for looking at the charts
+npm run test:e2e         # every browser suite, needs the server running
+npm run test:browser     # the newer browser suites: routes, modes, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
 ```
+
+With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the
+browser suites possible without driving a Google sign-in from Playwright.
 
 **A suite that ran nothing looks exactly like one that passed, so every suite
 counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
@@ -262,8 +306,13 @@ real. `scripts/test-invariants.ts` asserts the rules above, and CI runs it, whic
 reason it will stay green: Upside Lab kept one that nothing ran and it drifted to twenty-three
 failures before anybody counted. Assert the rule, not today's markup.
 
-`scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo, the command
-palette and — the one worth keeping green — reviewing with the network switched off.
-`scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar reference
-(including that every form on it says where it came from), dictation, the printable worksheet and
-its answer key, the retention reading, and the shortcut sheet.
+`scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo and the command
+palette. `scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar
+reference (including that every form on it says where it came from), dictation, the printable
+worksheet and its answer key, the retention reading, and the shortcut sheet.
+`scripts/smoke-offline.mjs` is the one worth keeping green above all: it pulls the plug, grades,
+reloads with the network still down, and checks the queue drains when it comes back.
+
+CI runs typecheck, lint, the unit suite, the invariants, integration tests against a real
+Postgres, the production build, the credential scan and the phone. It is the enforcement behind
+the rules above: do not add a rule without one.

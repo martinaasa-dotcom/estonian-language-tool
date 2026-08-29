@@ -30,11 +30,11 @@ export interface BadgeContext {
 /** Everything a badge condition can depend on, gathered for one learner. */
 export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promise<BadgeStats> {
   const [totalReviews, totalWords, settings, caseReviews] = await Promise.all([
-    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.review.count({ where: { ownerId } }),
     prisma.lexeme.count(),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     prisma.review.findMany({
-      where: { targetCase: { not: null }, card: { ownerId } },
+      where: { targetCase: { not: null }, ownerId },
       select: { targetCase: true, rating: true },
       take: 5000,
     }),

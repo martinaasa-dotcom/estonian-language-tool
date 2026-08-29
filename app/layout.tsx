@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
-import { OfflineStatus } from "@/components/OfflineStatus";
+import { OfflineProvider } from "@/components/OfflineProvider";
 import "./globals.css";
 
 /**
@@ -83,10 +83,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="min-h-screen">
-        {children}
-        {/* Registers the service worker, so it has to sit above both route
-            groups — the offline fallback is reachable from either. */}
-        <OfflineStatus />
+        {/* Registers the service worker and drains the offline grade queue, so
+            it has to sit above both route groups — the offline fallback is
+            reachable from either. */}
+        <OfflineProvider>{children}</OfflineProvider>
       </body>
     </html>
   );

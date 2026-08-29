@@ -11,6 +11,10 @@ Estonian form.
 > on a phone, installs as an app and keeps working with the network off. Built from the plan in
 > `docs/`; `docs/13-mvp-status.md` says what is in and what is deliberately not.
 
+It runs locally or hosted. Hosted, it uses Google sign-in and each account keeps its own deck; what
+is stored and what leaves the site is on the privacy page, written from the schema rather than from
+a template. AI spending is metered per person per day with a global cap, because sign-up is open.
+
 ## Running it
 
 You need [Node.js](https://nodejs.org) 20 or newer and a Postgres database.
@@ -105,7 +109,19 @@ Everything except the tutor:
 - **Flashcards**. FSRS scheduling, five card types, typed or flipped, keyboard-only review.
 - **The learning path, every practice mode, the grammar reference, printable worksheets, XP, quests,
   badges and the progress charts.**
-- **Tasks, import, export**, all local.
+- **Writing**. Write your own sentence using a word in a named case. The form is checked against
+  the dictionary *before* any model runs, so the verdict is certain and works with no API key.
+- **Verb government**. Which case a verb demands (`aitan sind`, `helistan sulle`). The error
+  English speakers never stop making, and the one nothing else drills systematically.
+- **Minimal pairs**. The length contrasts Estonian spelling only half records, found automatically
+  wherever two forms in the dictionary differ by a doubled letter.
+- **From your reading**. Paste real Estonian; words already in your deck are blanked out.
+- **Diagnosis and the leech clinic**. Not "you are weak at the partitive" but "you are fine at the
+  partitive except on gradating stems", and the cards you keep failing taken apart properly.
+- **Offline review**. Grades queue on the device and replay in order when you are back. The review
+  log is append-only, which is what makes that sync conflict-free.
+- **Tasks, import, export, week view**, all local. The course week ties vocabulary and homework
+  together.
 
 ## Turning on Anu, the tutor
 
@@ -161,9 +177,16 @@ rebuild, documented in `docs/03-architecture.md` ADR-011:
    ever touches `Card` or `Review`. To force a reseed after correcting the seed data, run
    `npm run db:seed` against the hosted database yourself.
 
-Two things change once it's hosted rather than local: review needs a network path to the database
-(it no longer runs on a train), and the TTS audio cache becomes per-instance instead of permanent,
-since Vercel's filesystem is read-only outside `/tmp`. Both are explained in ADR-011.
+Two things that used to change when hosted have since been fixed. Review works on a train again:
+it is a PWA, grades go to a device-local outbox and replay when the connection returns. And the
+audio cache is durable rather than per-instance: set `SUPABASE_SERVICE_ROLE_KEY` and clips are
+content-addressed in Supabase Storage, fetched once for everyone rather than once per cold start.
+Without that key it falls back to local disk, and Settings says so plainly.
+
+**Set a spend cap.** The tutor is metered per user per day with a global ceiling on top
+(`AI_DAILY_USD_GLOBAL`, default $20). The defaults are live whether or not you configure anything.
+There is no way to turn metering off, because sign-up is open by default. If you would rather run a
+private instance, `ALLOWED_EMAILS` or `ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
 
 ### Adding Google sign-in (multi-user)
 
@@ -211,16 +234,19 @@ try restoring it once while nothing is at stake. A backup you have never restore
 ## Commands
 
 ```
-npm run dev        # development server
-npm run build      # production build
-npm run test       # unit tests, no database needed; DB-backed tests skip themselves
-npm run test:e2e   # browser checks, needs the server running and a local database
+npm run dev              # development server
+npm run build            # production build
+npm run typecheck        # tsc --noEmit
+npm run test             # unit tests, hermetic: no database, no network
+npm run test:db          # integration tests, needs a Postgres in DATABASE_URL
 npm run test:invariants  # the rules in CLAUDE.md, asserted
+npm run check:secrets    # fails if a credential reached the client bundle
+npm run test:e2e         # the browser suites, needs the server running
+npm run test:browser     # routes, modes, offline and accessibility
 npm run test:mobile      # the phone, measured; needs the server running
-npm run demo       # fill the deck with two months of sample history to look around
-npm run typecheck  # tsc --noEmit
-npm run db:seed    # reload the built-in dictionary (always)
-npm run db:seed:ensure  # load it only if the dictionary is empty, what the deploy runs
+npm run demo             # two months of sample history, to look around
+npm run db:seed          # reload the built-in dictionary (always)
+npm run db:seed:ensure   # load it only if the dictionary is empty, what the deploy runs
 ```
 
 The end-to-end suite and `npm run demo` refuse to run against anything but a local database, and
@@ -239,7 +265,10 @@ TartuNLP speech · any OpenAI-compatible or Anthropic model.
 ```
 lib/estonian/     the language model: cases, principal parts, gradation, answer checking.
                   No React, no Prisma, fully tested.
-lib/srs/          FSRS scheduling and card generation.
+lib/srs/          FSRS scheduling, card generation, and offline grade replay.
+lib/analysis/     diagnosis and leech classification over the review log.
+lib/usage/        the AI spend ledger and the quota policy.
+lib/offline/      the grade outbox and its replay rules.
 lib/collections/  the learning path: units as references into the dictionary.
 lib/classroom/    join codes and the roster a teacher sees, and only that.
 lib/gamification/ XP, levels and the daily quests. Pure functions over stats.

@@ -33,7 +33,12 @@ const CASE_SUFFIXES = CASES
   .map((c) => ({ suffix: c.suffix, en: c.en.toLowerCase(), et: c.et }))
   .sort((a, b) => b.suffix.length - a.suffix.length);
 
-interface Candidate {
+/**
+ * A dictionary row as the ranker needs to see it. Exported so the ranking can be
+ * exercised over fixtures: `searchLexemes` is a database read plus `rankCandidates`,
+ * and only the second half carries the linguistic logic worth testing.
+ */
+export interface Candidate {
   id: string; lemma: string; translation: string; pos: string;
   cefr: string | null; gradationNote: string | null;
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
@@ -81,7 +86,6 @@ function formLabel(form: { formType: string; morphCode: string | null; morphName
 export async function searchLexemes(query: string, limit = 40): Promise<SearchHit[]> {
   const q = query.trim();
   if (!q) return [];
-  const folded = fold(q);
 
   const candidates: Candidate[] = await prisma.lexeme.findMany({
     select: {
@@ -91,6 +95,19 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
     },
     take: 4000,
   });
+
+  return rankCandidates(candidates, q, limit);
+}
+
+/**
+ * The half of the search that knows about Estonian. Pure — no Prisma, no I/O —
+ * so the inflected-form behaviour can be tested over fixtures rather than
+ * against whatever happens to be seeded in a developer's database.
+ */
+export function rankCandidates(candidates: Candidate[], query: string, limit = 40): SearchHit[] {
+  const q = query.trim();
+  if (!q) return [];
+  const folded = fold(q);
 
   const scored = candidates
     .map((c) => ({ hit: c, ...rank(c, q, folded) }))

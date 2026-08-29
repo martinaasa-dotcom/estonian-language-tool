@@ -9,6 +9,8 @@ import {
   TutorError,
   type ChatMessage,
 } from "@/lib/tutor/provider";
+import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { reportError } from "@/lib/observability/report";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -31,6 +33,26 @@ export async function POST(request: Request) {
   const limit = checkRateLimit(`tutor:${bucketForOwner(ownerId)}`, QUESTIONS_PER_MINUTE, 60_000);
   if (!limit.ok) {
     return rateLimited(limit, "Anu is still catching up with your last few questions.");
+  }
+
+  /*
+    Two limits, because they stop different things. The per-minute bucket above
+    stops a runaway client; this stops a bill. It is durable rather than
+    in-memory — a per-instance counter on serverless caps nothing across a cold
+    start — and it fails closed, because "the database hiccuped" is not a reason
+    to start spending without a ceiling.
+  */
+  const decision = await authoriseCall(ownerId, "TUTOR");
+  if (!decision.allowed) {
+    return Response.json(
+      { error: decision.message, reason: decision.reason },
+      {
+        status: 429,
+        headers: decision.retryAfterSeconds
+          ? { "retry-after": String(decision.retryAfterSeconds) }
+          : undefined,
+      },
+    );
   }
 
   const chain = resolveProviders();
@@ -80,7 +102,14 @@ export async function POST(request: Request) {
   */
   let open;
   try {
-    open = await openWithFallback(chain, system, messages);
+    open = await openWithFallback(chain, system, messages, (usage, config) => {
+      // Charged to the provider that actually answered, not the head of the
+      // chain: falling back to a dearer model must not go unmetered.
+      void recordUsage({
+        ownerId, kind: "TUTOR", provider: config.name, model: config.model,
+        inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+      });
+    });
   } catch (error) {
     const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
     const status = error instanceof TutorError ? error.status : 502;
@@ -107,6 +136,11 @@ export async function POST(request: Request) {
         for await (const chunk of open.chunks) say(prose.push(chunk));
         say(prose.end());
       } catch (error) {
+        // A TutorError is an upstream condition already explained to the learner
+        // (a bad key, a 429, an unknown model). Anything else is ours.
+        if (!(error instanceof TutorError)) {
+          reportError(error, { at: "api/tutor", ownerId, extra: { model: open.config.model } });
+        }
         // Whatever was held back still belongs to the learner: losing the last
         // few words of an answer to report an error is losing both.
         say(prose.end());

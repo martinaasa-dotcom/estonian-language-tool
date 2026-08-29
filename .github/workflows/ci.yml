@@ -122,6 +122,12 @@ jobs:
             exit 1
           fi
           echo "Nothing key-shaped in .next/static."
+      # The same sweep, widened: server chunks as well as static, AWS and Google
+      # key shapes, a Postgres URL carrying a password, and — the one a grep for
+      # "sk-" cannot see — a Supabase service_role JWT, told apart from the anon
+      # key that is public by design by decoding the role claim.
+      - name: Scan every built file for credential shapes
+        run: npm run check:secrets
 
   build:
     name: Build against a real database
@@ -160,6 +166,11 @@ jobs:
       - run: npm run build
       # The database-backed tests have a database now, so they no longer skip.
       - run: npm test
+      # And the ones that only exist to check claims about the database:
+      # replay idempotency, that a review outlives its card, that a restore in
+      # replace mode leaves the log alone, and that deleting an account leaves
+      # nothing of that person behind.
+      - run: npm run test:db
 
   mobile:
     name: The browser suites

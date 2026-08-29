@@ -32,7 +32,7 @@ export default async function SettingsPage() {
   const [words, cards, reviews, earned, settings, learner] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
-    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.review.count({ where: { ownerId } }),
     prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     readSettings(ownerId, [
       SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,

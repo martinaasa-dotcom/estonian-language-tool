@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { CircleHelp, Ear, GraduationCap, Grid2x2, Headphones, Mic, Puzzle, Target, Zap } from "lucide-react";
+import {
+  CircleHelp, Ear, GraduationCap, Grid2x2, Headphones, Mic, PenLine, Puzzle, Scale,
+  ScissorsLineDashed, Stethoscope, Target, Zap,
+} from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
@@ -25,7 +28,7 @@ export default async function PracticePage() {
     deckSnapshot(ownerId),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     prisma.review.findMany({
-      where: { targetCase: { not: null }, card: { ownerId } },
+      where: { targetCase: { not: null }, ownerId },
       select: { targetCase: true, rating: true },
       take: 5000,
     }),
@@ -64,6 +67,66 @@ export default async function PracticePage() {
         ? `${snapshot.dueCount} due now`
         : snapshot.newCount > 0 ? `${Math.min(snapshot.newCount, 10)} new waiting` : "Nothing due",
       primary: snapshot.dueCount > 0,
+    },
+    {
+      href: "/review/write",
+      icon: PenLine,
+      tone: "mint",
+      title: "Writing",
+      subtitle: "Your own sentence",
+      body:
+        "Use a word in a named case and write a whole sentence. The form is checked against the " +
+        "dictionary before Anu ever sees it, so the verdict is certain even when the AI is off.",
+      meta: "Free production",
+      primary: false,
+    },
+    {
+      href: "/review/government",
+      icon: Scale,
+      tone: "peach",
+      title: "Verb government",
+      subtitle: "Which case?",
+      body:
+        "Aitan sind, but helistan sulle. English gives you no clue, so rektsioon has to be learned " +
+        "per verb, and nothing else drills it systematically.",
+      meta: "Multiple choice",
+      primary: false,
+    },
+    {
+      href: "/review/pairs",
+      icon: Ear,
+      tone: "sky",
+      title: "Minimal pairs",
+      subtitle: "Long or short",
+      body:
+        "Maja or majja? The length distinction Estonian spelling only half records, and the one " +
+        "thing reading practice can never teach you.",
+      meta: "Needs audio",
+      primary: false,
+    },
+    {
+      href: "/review/cloze",
+      icon: ScissorsLineDashed,
+      tone: "butter",
+      title: "From your reading",
+      subtitle: "Paste real Estonian",
+      body:
+        "Bring an article or your homework. Words already in your deck get blanked out, and the " +
+        "answer is the form a native writer actually chose.",
+      meta: "Your own text",
+      primary: false,
+    },
+    {
+      href: "/review/clinic",
+      icon: Stethoscope,
+      tone: "blush",
+      title: "Leech clinic",
+      subtitle: "What keeps failing",
+      body:
+        "The handful of cards you keep getting wrong, with what their history says about how they " +
+        "are failing, instead of quietly burying them.",
+      meta: "From your review log",
+      primary: false,
     },
     {
       href: "/review/sprint",

@@ -17,6 +17,10 @@ import {
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
+import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
+import { MAX_PASSAGE_CHARS, buildPassageCloze, type KnownForm } from "@/lib/estonian/passage";
+import { PRINCIPAL_FORM_TYPES, isPrincipalFormType } from "@/lib/estonian/types";
+
 // ─────────────────────────────── Cards ────────────────────────────────────
 
 /**
@@ -122,7 +126,9 @@ export async function gradeCard(
 
   await prisma.review.create({
     data: {
+      ownerId,
       cardId,
+      lexemeId: card.lexemeId,
       rating,
       reviewedAt: at,
       durationMs: Math.min(Math.max(durationMs, 0), 600_000),
@@ -166,30 +172,25 @@ export async function gradeCard(
 }
 
 /**
- * Flushes a batch of grades recorded while offline.
+ * Applies grades taken while the connection was down.
  *
- * Each one is applied in the order it was answered, through the same path as a
- * live grade, so FSRS sees the same sequence it would have seen online. Failures
- * are reported per card rather than aborting the batch: one card deleted on
- * another device must not cost the learner an evening's reviews.
+ * A thin authentication wrapper: the owner comes from the session, never from
+ * the caller, and the work lives in `lib/srs/replay` where it can be tested
+ * against a real database without one.
+ *
+ * Idempotent by construction — the client generates each grade's id, so a
+ * replay interrupted after the commit but before the client heard about it
+ * re-sends rows that already exist and gets them back as settled. That is only
+ * safe because `Review` is append-only: there is no prior state to reconcile,
+ * only facts that either landed or did not.
  */
-export async function gradeCards(
-  batch: { cardId: string; rating: RatingValue; durationMs: number; reviewedAt: string }[],
-) {
-  await requireUserId();
-  const ordered = [...batch].sort((a, b) => a.reviewedAt.localeCompare(b.reviewedAt));
-
-  let applied = 0;
-  const failed: string[] = [];
-  for (const item of ordered.slice(0, 500)) {
-    const result = await gradeCard(item.cardId, item.rating, item.durationMs, item.reviewedAt);
-    if (result.ok) applied++;
-    else failed.push(item.cardId);
-  }
-
+export async function replayGrades(batch: ReplayItem[]) {
+  const ownerId = await requireUserId();
+  const result = await applyGradeBatch(ownerId, batch);
+  if (!result.ok) return { ok: false as const, error: result.error ?? "Replay failed." };
   revalidatePath("/");
   revalidatePath("/words");
-  return { ok: true as const, applied, failed };
+  return { ok: true as const, settled: result.settled };
 }
 
 /**
@@ -324,11 +325,42 @@ export async function addExample(lexemeId: string, sentence: string, translation
 
 // ─────────────────────────────── Words ────────────────────────────────────
 
+/**
+ * Length caps on anything a person types into shared or stored text.
+ *
+ * Not a formatting preference — without them a single request can push
+ * megabytes into the database, and a lemma is a word. Truncating rather than
+ * rejecting: over-long input is almost always a paste accident, and losing the
+ * whole entry to a stray clipboard is the worse outcome.
+ */
+const LIMITS = {
+  lemma: 80,
+  translation: 200,
+  form: 80,
+  government: 300,
+  notes: 2000,
+  taskTitle: 200,
+  taskNotes: 2000,
+} as const;
+
+const capped = (value: string | undefined | null, max: number): string =>
+  (value ?? "").trim().slice(0, max);
+
+
+/**
+ * Adds a word to the shared dictionary.
+ *
+ * Requires a session even though the row is shared rather than personal: every
+ * export of this file is a public endpoint, and "the middleware will have caught
+ * it" is the assumption that turns a gap in the middleware into a data breach.
+ * It also establishes who to attribute the entry to.
+ */
 export async function createLexeme(input: {
   lemma: string; translation: string; pos: string; cefr?: string; notes?: string;
 }) {
-  const lemma = input.lemma.trim();
-  const translation = input.translation.trim();
+  const ownerId = await requireUserId();
+  const lemma = capped(input.lemma, LIMITS.lemma);
+  const translation = capped(input.translation, LIMITS.translation);
   if (!lemma || !translation) {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
@@ -342,8 +374,10 @@ export async function createLexeme(input: {
     data: {
       lemma, translation, pos: input.pos,
       cefr: input.cefr || null,
-      notes: input.notes || null,
+      notes: capped(input.notes, LIMITS.notes) || null,
       provenance: "USER",
+      editedBy: ownerId,
+      editedAt: new Date(),
     },
   });
   revalidatePath("/dictionary");
@@ -367,15 +401,18 @@ export async function createLexemeWithForms(input: {
   notes?: string;
   forms: Record<string, string>;
 }) {
-  const lemma = input.lemma.trim();
-  const translation = input.translation.trim();
+  const ownerId = await requireUserId();
+  const lemma = capped(input.lemma, LIMITS.lemma);
+  const translation = capped(input.translation, LIMITS.translation);
   if (!lemma || !translation) {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
 
   const forms = Object.entries(input.forms)
-    .map(([formType, value]) => ({ formType, value: value.trim() }))
-    .filter((f) => f.value);
+    // Only the principal parts are user-managed. Everything else on this lexeme
+    // came from Ekilex and is authoritative; a hand edit must not submit one.
+    .map(([formType, value]) => ({ formType, value: capped(value, LIMITS.form) }))
+    .filter((f) => f.value && isPrincipalFormType(f.formType));
 
   const nomSg = forms.find((f) => f.formType === "NOM_SG")?.value;
   const genSg = forms.find((f) => f.formType === "GEN_SG")?.value;
@@ -394,18 +431,29 @@ export async function createLexemeWithForms(input: {
   const data = {
     lemma, translation, pos: input.pos,
     cefr: input.cefr || null,
-    government: input.government?.trim() || null,
-    notes: input.notes?.trim() || null,
+    government: capped(input.government, LIMITS.government) || null,
+    notes: capped(input.notes, LIMITS.notes) || null,
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
-    provenance: "USER",
+    // An entry Ekilex supplied stays marked as Ekilex's after a correction —
+    // relabelling it USER would quietly discard where the paradigm came from.
+    ...(existing && (existing.provenance === "SEED" || existing.provenance === "EKILEX")
+      ? {}
+      : { provenance: "USER" }),
+    editedBy: ownerId,
+    editedAt: new Date(),
   };
 
   const lexeme = existing
     ? await prisma.lexeme.update({ where: { id: existing.id }, data })
     : await prisma.lexeme.create({ data });
 
-  await prisma.form.deleteMany({ where: { lexemeId: lexeme.id } });
+  // Replace only the principal parts. Deleting every row for the lexeme threw
+  // away the retrieved Ekilex paradigm — the one thing on an entry that cannot
+  // be reconstructed — whenever anybody corrected a typo.
+  await prisma.form.deleteMany({
+    where: { lexemeId: lexeme.id, formType: { in: [...PRINCIPAL_FORM_TYPES] } },
+  });
   if (forms.length) {
     await prisma.form.createMany({ data: forms.map((f) => ({ ...f, lexemeId: lexeme.id })) });
   }
@@ -413,13 +461,16 @@ export async function createLexemeWithForms(input: {
   // Correcting a word must correct the cards made from it, or she keeps being
   // drilled on the mistake she just fixed. Only the text is rewritten — the FSRS
   // scheduling is untouched, so a correction never costs her progress.
+  // Scoped to this learner's own cards. The dictionary is shared, but a deck is
+  // not: rewriting every user's cards because one of them fixed a spelling
+  // reaches into strangers' data, and they would have no idea why a card changed.
   if (existing && (existing.lemma !== lemma || existing.translation !== translation)) {
     await prisma.card.updateMany({
-      where: { lexemeId: lexeme.id, cardType: "RECOGNITION" },
+      where: { ownerId, lexemeId: lexeme.id, cardType: "RECOGNITION" },
       data: { front: lemma, back: translation },
     });
     await prisma.card.updateMany({
-      where: { lexemeId: lexeme.id, cardType: "PRODUCTION" },
+      where: { ownerId, lexemeId: lexeme.id, cardType: "PRODUCTION" },
       data: { front: translation, back: lemma },
     });
   }
@@ -445,15 +496,19 @@ export async function toggleStar(lexemeId: string) {
 }
 
 /** Bulk import from pasted text. Returns per-row outcomes so nothing fails silently. */
+/** One paste. Each row is a round trip, and the dictionary it writes to is shared. */
+const MAX_IMPORT_ROWS = 500;
+
 export async function importWords(rows: { lemma: string; translation: string; pos: string }[]) {
   const ownerId = await requireUserId();
   let created = 0;
   let cards = 0;
   const skipped: string[] = [];
+  const truncated = rows.length > MAX_IMPORT_ROWS;
 
-  for (const row of rows) {
-    const lemma = row.lemma.trim();
-    const translation = row.translation.trim();
+  for (const row of rows.slice(0, MAX_IMPORT_ROWS)) {
+    const lemma = capped(row.lemma, LIMITS.lemma);
+    const translation = capped(row.translation, LIMITS.translation);
     if (!lemma || !translation) continue;
 
     let lexeme = await prisma.lexeme.findUnique({
@@ -463,7 +518,10 @@ export async function importWords(rows: { lemma: string; translation: string; po
       skipped.push(lemma);
     } else {
       lexeme = await prisma.lexeme.create({
-        data: { lemma, translation, pos: row.pos, provenance: "USER" },
+        data: {
+          lemma, translation, pos: row.pos, provenance: "USER",
+          editedBy: ownerId, editedAt: new Date(),
+        },
       });
       created++;
     }
@@ -473,7 +531,7 @@ export async function importWords(rows: { lemma: string; translation: string; po
 
   revalidatePath("/words");
   revalidatePath("/");
-  return { ok: true as const, created, cards, skipped };
+  return { ok: true as const, created, cards, skipped, truncated, limit: MAX_IMPORT_ROWS };
 }
 
 // ────────────────────────────── Achievements ───────────────────────────────
@@ -822,7 +880,7 @@ export async function createTask(input: {
   title: string; tag: string; classWeek?: number | null; dueAt?: string | null; notes?: string;
 }) {
   const ownerId = await requireUserId();
-  const title = input.title.trim();
+  const title = capped(input.title, LIMITS.taskTitle);
   if (!title) return { ok: false as const, error: "A task needs a title." };
   await prisma.task.create({
     data: {
@@ -860,6 +918,194 @@ export async function deleteTask(id: string) {
   return { ok: true as const };
 }
 
+// ─────────────────────────────── The course week ──────────────────────────
+
+// Not exported: every export of a "use server" file is a public endpoint, and a
+// constant is not an endpoint.
+const CURRENT_WEEK_KEY = "currentWeek";
+
+/** The course week the learner says they are in. Null until they set one. */
+async function currentClassWeek(ownerId: string): Promise<number | null> {
+  const setting = await prisma.setting.findUnique({
+    where: { ownerId_key: { ownerId, key: CURRENT_WEEK_KEY } },
+  });
+  if (!setting) return null;
+  const week = Number(setting.value);
+  return Number.isInteger(week) && week > 0 ? week : null;
+}
+
+export async function getCurrentWeek() {
+  return currentClassWeek(await requireUserId());
+}
+
+/**
+ * Sets the course week. Everything added from now on is filed under it, which is
+ * what turns `classWeek` from a stored column into a lens over the whole app.
+ */
+export async function setCurrentWeek(week: number | null) {
+  const ownerId = await requireUserId();
+  if (week === null) {
+    await prisma.setting.deleteMany({ where: { ownerId, key: CURRENT_WEEK_KEY } });
+  } else {
+    const clamped = Math.max(1, Math.min(60, Math.round(week)));
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key: CURRENT_WEEK_KEY } },
+      create: { ownerId, key: CURRENT_WEEK_KEY, value: String(clamped) },
+      update: { value: String(clamped) },
+    });
+  }
+  revalidatePath("/");
+  revalidatePath("/week");
+  return { ok: true as const };
+}
+
+/** Files (or unfiles) every card of one word under a week. */
+export async function setWordWeek(lexemeId: string, week: number | null) {
+  const ownerId = await requireUserId();
+  const classWeek = week === null ? null : Math.max(1, Math.min(60, Math.round(week)));
+  await prisma.card.updateMany({ where: { ownerId, lexemeId }, data: { classWeek } });
+  revalidatePath("/week");
+  revalidatePath("/words");
+  return { ok: true as const };
+}
+
+// ──────────────────────── Gap-fill from pasted reading ─────────────────────
+
+const PASSAGE_FORM_LABELS: Record<string, string> = {
+  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
+  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
+  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
+  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
+};
+
+/**
+ * Turns a passage the learner pasted into gap-fill exercises.
+ *
+ * Only words already in their deck are blanked, which makes this practice
+ * rather than a comprehension test: every gap is a word they chose to learn,
+ * now in a sentence a native writer actually produced. The answer comes out of
+ * their own text, so nothing is generated.
+ *
+ * The passage is never stored. It is somebody's homework, a news article or a
+ * private message, and the app has no reason to keep it.
+ */
+export async function buildClozeFromText(text: string) {
+  const ownerId = await requireUserId();
+  const passage = text.slice(0, MAX_PASSAGE_CHARS);
+  if (!passage.trim()) return { ok: false as const, error: "Paste some Estonian first." };
+
+  const cards = await prisma.card.findMany({
+    where: { ownerId, lexemeId: { not: null } },
+    select: { id: true, lexemeId: true, cardType: true },
+    take: 4000,
+  });
+  const lexemeIds = [...new Set(cards.map((c) => c.lexemeId).filter((id): id is string => !!id))];
+
+  // ADR-016: filling a gap is evidence about the word, so the round grades the
+  // same card the daily loop would rather than scoring itself.
+  const cardFor = new Map<string, string>();
+  for (const c of cards) {
+    if (!c.lexemeId) continue;
+    const better = c.cardType === "CASE_FORM" || c.cardType === "PRODUCTION";
+    if (!cardFor.has(c.lexemeId) || better) cardFor.set(c.lexemeId, c.id);
+  }
+
+  if (lexemeIds.length === 0) {
+    return {
+      ok: false as const,
+      error: "Your deck is empty, so there is nothing to look for in that text yet.",
+    };
+  }
+
+  const lexemes = await prisma.lexeme.findMany({
+    where: { id: { in: lexemeIds } },
+    select: {
+      id: true, lemma: true, translation: true,
+      forms: { select: { value: true, formType: true, morphName: true } },
+    },
+  });
+
+  const known: KnownForm[] = [];
+  for (const lexeme of lexemes) {
+    // The headword counts: meeting it in a real sentence is worth drilling even
+    // when it is not inflected.
+    known.push({
+      value: lexeme.lemma, lexemeId: lexeme.id, lemma: lexeme.lemma,
+      translation: lexeme.translation, formLabel: "dictionary form",
+    });
+    for (const form of lexeme.forms) {
+      known.push({
+        value: form.value,
+        lexemeId: lexeme.id,
+        lemma: lexeme.lemma,
+        translation: lexeme.translation,
+        formLabel: PASSAGE_FORM_LABELS[form.formType] ?? form.morphName ?? "form",
+      });
+    }
+  }
+
+  const items = buildPassageCloze(passage, known)
+    .map((item) => ({ ...item, cardId: cardFor.get(item.lexemeId) ?? null }))
+    .filter((item) => item.cardId !== null);
+  if (items.length === 0) {
+    return {
+      ok: false as const,
+      error:
+        "No words from your deck turned up in that text. Try a longer passage, or add some of " +
+        "its vocabulary from the dictionary first.",
+    };
+  }
+
+  return { ok: true as const, items };
+}
+
+// ─────────────────────────────── Account ──────────────────────────────────
+
+/**
+ * Deletes everything belonging to this account.
+ *
+ * The privacy page promises this, so it has to exist — a promise about data the
+ * software cannot keep is worse than no promise.
+ *
+ * The review log is deleted here and only here. Append-only means no updates and
+ * no incidental deletes, not that a person cannot ask for their own history to
+ * be erased, which is the one request that outranks the invariant. It all goes
+ * in one transaction, so a half-deleted account is not a reachable state.
+ *
+ * The shared dictionary stays: removing a word other learners hold cards for
+ * would delete *their* data to satisfy this request. The attribution on anything
+ * this person edited is cleared instead.
+ */
+export async function deleteMyAccount(confirmation: string) {
+  const ownerId = await requireUserId();
+  if (confirmation.trim().toLowerCase() !== "delete") {
+    return { ok: false as const, error: 'Type "delete" to confirm.' };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.review.deleteMany({ where: { ownerId } });
+      await tx.card.deleteMany({ where: { ownerId } });
+      await tx.task.deleteMany({ where: { ownerId } });
+      await tx.message.deleteMany({ where: { ownerId } });
+      await tx.starredWord.deleteMany({ where: { ownerId } });
+      await tx.achievement.deleteMany({ where: { ownerId } });
+      await tx.setting.deleteMany({ where: { ownerId } });
+      await tx.usageEvent.deleteMany({ where: { ownerId } });
+      await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
+    }, { timeout: 120_000 });
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: `Nothing was deleted. The operation did not complete. ${
+        error instanceof Error ? error.message : ""
+      }`.trim(),
+    };
+  }
+
+  return { ok: true as const };
+}
+
 // ────────────────────────────── Backup restore ─────────────────────────────
 
 const BackupSchema = z.object({
@@ -879,9 +1125,14 @@ export interface RestoreSummary {
 }
 
 /** Reads a backup file and reports what is in it, without writing anything. */
+/**
+ * Reads a backup file without writing anything. Requires a session: it is a
+ * public endpoint that parses JSON supplied by whoever called it.
+ */
 export async function inspectBackup(json: string): Promise<
   { ok: true; summary: RestoreSummary } | { ok: false; error: string }
 > {
+  await requireUserId();
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
@@ -921,7 +1172,12 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
       if (mode === "replace") {
         // Scoped to this user's own data only — Lexeme/Form are the shared
         // dictionary and must never be wiped by one person's restore.
-        await tx.review.deleteMany({ where: { card: { ownerId } } });
+        //
+        // Reviews are deliberately untouched. They are append-only facts about
+        // what happened, they are the input to FSRS optimisation, and they are
+        // the one thing a restore cannot recreate. A replace rebuilds the deck;
+        // it does not rewrite history. Rows whose card is gone stay as orphans,
+        // which is why Review carries its own ownerId and no foreign key.
         await tx.card.deleteMany({ where: { ownerId } });
         await tx.task.deleteMany({ where: { ownerId } });
       }
@@ -953,13 +1209,14 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
       }
 
       // Reviews are append-only, so they are created if absent and never updated.
-      // Only restored when the card they belong to is this user's own.
+      // Always attributed to the person restoring: a backup is your own history,
+      // and the file cannot be allowed to name someone else as its owner.
       for (const raw of backup.reviews) {
         const data = revive(raw, ["reviewedAt"]);
         const exists = await tx.review.findUnique({ where: { id: String(data.id) }, select: { id: true } });
         if (exists) continue;
-        const card = await tx.card.findUnique({ where: { id: String(data.cardId) }, select: { ownerId: true } });
-        if (card?.ownerId === ownerId) await tx.review.create({ data: data as never });
+        data.ownerId = ownerId;
+        await tx.review.create({ data: data as never });
       }
 
       for (const raw of backup.tasks) {

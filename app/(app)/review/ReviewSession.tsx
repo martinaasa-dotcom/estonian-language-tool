@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Check, Compass, Keyboard, MessageCircleQuestion, RotateCcw, Undo2, X, Zap } from "lucide-react";
-import { checkAchievements, gradeCard, gradeCards, undoGrade } from "@/app/actions";
+import { checkAchievements, gradeCard, undoGrade } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
@@ -14,7 +14,8 @@ import type { Badge } from "@/lib/achievements/badges";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { BLANK } from "@/lib/estonian/cloze";
 import { xpForRating } from "@/lib/gamification/xp";
-import { enqueueGrade, flushQueue, queueSize } from "@/lib/offline/queue";
+import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
+import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, RATINGS, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
@@ -150,6 +151,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Done[]>([]);
   const [pendingOffline, setPendingOffline] = useState(0);
+  const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
@@ -159,18 +161,25 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
   const finished = !card;
   const ask = card ? askFor(card, mode) : "flip";
 
-  // Anything queued while offline goes out as soon as there is a connection —
-  // including from an earlier session that was closed before it could send.
+  // Draining the queue is the provider's job, not this screen's — it has to keep
+  // happening on pages that are not a review session. Here we only report it.
+  useEffect(() => { setPendingOffline(outboxPending); }, [outboxPending]);
+
+  // Two halves of offline review. When the server handed cards down, keep them:
+  // a later visit with no connection needs something real to work through. When
+  // it handed nothing down *and* the browser says it is offline, the empty state
+  // is a lie — the page came from the service worker cache and the server never
+  // ran — so fall back to what was stashed.
   useEffect(() => {
-    setPendingOffline(queueSize());
-    const flush = async () => {
-      const { remaining } = await flushQueue((batch) => gradeCards(batch));
-      setPendingOffline(remaining);
-    };
-    void flush();
-    window.addEventListener("online", flush);
-    return () => window.removeEventListener("online", flush);
-  }, []);
+    if (initialCards.length > 0) {
+      void stashSession(initialCards);
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.onLine) return;
+    void readStashedSession().then((stashed) => {
+      if (stashed.length > 0) setQueue(stashed);
+    });
+  }, [initialCards]);
 
   useEffect(() => {
     if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
@@ -219,10 +228,18 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
       const result = await gradeCard(card.id, rating, duration, answeredAt);
       if (!result.ok) throw new Error(result.error);
     } catch {
-      // No connection, or the write failed. Keep the grade rather than losing
-      // the review that was genuinely done — it is replayed on reconnect.
-      enqueueGrade({ cardId: card.id, rating, durationMs: duration, reviewedAt: answeredAt });
-      setPendingOffline(queueSize());
+      // No connection, or the write failed. The grade is still a fact about
+      // something the learner did, so it goes to the durable outbox and is
+      // replayed in order with this timestamp once there is a connection —
+      // which, because Review is append-only, lands exactly where it would have.
+      await enqueueGrade({
+        id: crypto.randomUUID(),
+        cardId: card.id,
+        rating,
+        durationMs: duration,
+        reviewedAt: Date.parse(answeredAt),
+      });
+      refreshOutbox();
     }
 
     setDone((d) => d + 1);
@@ -247,7 +264,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
       setIndex((i) => i + 1);
     }
     setBusy(false);
-  }, [card, busy, index]);
+  }, [card, busy, index, refreshOutbox]);
 
   /**
    * Puts the last graded card back.

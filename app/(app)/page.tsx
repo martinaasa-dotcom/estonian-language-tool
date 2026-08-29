@@ -39,7 +39,7 @@ export default async function TodayPage() {
       take: 4,
     }),
     prisma.review.findMany({
-      where: { card: { ownerId }, reviewedAt: { gte: new Date(now.getTime() - 7 * 86_400_000) } },
+      where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - 7 * 86_400_000) } },
       select: { reviewedAt: true },
     }),
     pickWordOfDay(ownerId),

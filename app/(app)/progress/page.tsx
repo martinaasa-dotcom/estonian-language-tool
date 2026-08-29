@@ -35,7 +35,7 @@ export default async function ProgressPage() {
     dailySummary(ownerId, snapshot, now),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
-      where: { card: { ownerId }, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
+      where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
       select: { reviewedAt: true, rating: true, targetCase: true, stateBefore: true, cardId: true },
       orderBy: { reviewedAt: "asc" },
     }),
@@ -466,15 +466,15 @@ async function weeklyLeaderboard(now: Date) {
       select: { ownerId: true, value: true },
     }),
     prisma.review.findMany({
-      where: { reviewedAt: { gte: since }, card: { ownerId: { in: ids } } },
-      select: { rating: true, card: { select: { ownerId: true } } },
+      where: { reviewedAt: { gte: since }, ownerId: { in: ids } },
+      select: { rating: true, ownerId: true },
     }),
   ]);
 
   const nameByOwner = new Map(names.map((n) => [n.ownerId, n.value]));
   const tally = new Map<string, Record<number, number>>();
   for (const r of reviews) {
-    const owner = r.card.ownerId;
+    const owner = r.ownerId;
     const counts = tally.get(owner) ?? {};
     counts[r.rating] = (counts[r.rating] ?? 0) + 1;
     tally.set(owner, counts);

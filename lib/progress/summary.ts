@@ -143,14 +143,14 @@ export async function dailySummary(
 
   const [allRatings, todayRatings, todayReviews, cardsAddedToday, tasksDoneToday, settings, streakInfo] =
     await Promise.all([
-      prisma.review.groupBy({ by: ["rating"], where: { card: { ownerId } }, _count: true }),
+      prisma.review.groupBy({ by: ["rating"], where: { ownerId }, _count: true }),
       prisma.review.groupBy({
         by: ["rating"],
-        where: { card: { ownerId }, reviewedAt: { gte: startToday } },
+        where: { ownerId, reviewedAt: { gte: startToday } },
         _count: true,
       }),
       prisma.review.findMany({
-        where: { card: { ownerId }, reviewedAt: { gte: startToday } },
+        where: { ownerId, reviewedAt: { gte: startToday } },
         select: { rating: true, stateBefore: true },
       }),
       prisma.card.count({ where: { ownerId, createdAt: { gte: startToday } } }),
@@ -204,11 +204,23 @@ export async function dailySummary(
  * now a thin wrapper over it.
  */
 export async function resolveStreakFor(ownerId: string, now = new Date()) {
-  const [reviews, settings] = await Promise.all([
-    prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(now.getTime() - 400 * 86_400_000) }, card: { ownerId } },
-      select: { reviewedAt: true },
-    }),
+  // Distinct *days*, not every review. The streak only cares whether a day had
+  // any activity, and loading a year of rows to answer that meant somebody doing
+  // sixty reviews a day pulled twenty thousand rows into memory on every render
+  // — a query that gets slower the more the app is used, which is the worst
+  // shape a query can have. At most 400 rows come back now.
+  //
+  // Returned as text, not as a date: the driver parses a Postgres `date` at
+  // *local* midnight, so `toISOString()` on it reports the previous day anywhere
+  // east of UTC, silently breaking the streak for a learner in Tallinn.
+  const [days, settings] = await Promise.all([
+    prisma.$queryRaw<{ day: string }[]>`
+      SELECT DISTINCT TO_CHAR("reviewedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
+      FROM "Review"
+      WHERE "ownerId" = ${ownerId}
+        AND "reviewedAt" >= ${new Date(now.getTime() - 400 * 86_400_000)}
+      ORDER BY day DESC
+    `,
     readSettings(ownerId, [SETTING_KEYS.streakShields, SETTING_KEYS.streakShieldDates]),
   ]);
 
@@ -225,7 +237,7 @@ export async function resolveStreakFor(ownerId: string, now = new Date()) {
   }
 
   const result = computeStreakWithShields(
-    reviews.map((r) => r.reviewedAt), shieldsAvailable, shieldedDates, now,
+    days.map((d) => new Date(`${d.day}T00:00:00.000Z`)), shieldsAvailable, shieldedDates, now,
   );
 
   if (result.newlyShieldedDates.length > 0) {

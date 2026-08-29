@@ -54,8 +54,8 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
 
   const [reviews, known] = await Promise.all([
     prisma.review.findMany({
-      where: { reviewedAt: { gte: historyStart }, card: { ownerId: { in: ids } } },
-      select: { reviewedAt: true, rating: true, targetCase: true, card: { select: { ownerId: true } } },
+      where: { reviewedAt: { gte: historyStart }, ownerId: { in: ids } },
+      select: { reviewedAt: true, rating: true, targetCase: true, ownerId: true },
     }),
     prisma.card.groupBy({
       by: ["ownerId"],
@@ -69,7 +69,7 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
   for (const id of ids) byOwner.set(id, { dates: [], weekRatings: {}, weekCount: 0 });
 
   for (const review of reviews) {
-    const entry = byOwner.get(review.card.ownerId);
+    const entry = byOwner.get(review.ownerId);
     if (!entry) continue;
     entry.dates.push(review.reviewedAt);
     if (review.reviewedAt >= weekAgo) {
