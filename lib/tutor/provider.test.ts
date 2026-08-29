@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  completeWithImage, FREE_OPENROUTER_MODELS, openWithFallback, resolveProviders,
+  completeWithImage, FREE_GEMINI_MODELS, FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS,
+  openWithFallback, providerResilience, resolveProviders,
   TutorError, visionProviders,
 } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
@@ -21,6 +22,143 @@ function only(name: "openrouter" | "anthropic" | "openai") {
   vi.stubEnv("ANTHROPIC_API_KEY", name === "anthropic" ? "k" : "");
   vi.stubEnv("OPENAI_API_KEY", name === "openai" ? "k" : "");
 }
+
+/*
+  A chain that looks redundant and is not.
+
+  OpenRouter contributes one link per free model, so the chain can be four long
+  and still be a single account with a single balance. When that balance ran out
+  on the live deployment every link answered 402 within the same second and the
+  tutor went down, which is the exact failure a fallback is supposed to absorb.
+  Settings now says so, and this is what keeps that warning honest.
+*/
+/*
+  A second provider that does not need a credit card.
+
+  The availability lesson from the live deployment was that one account is one
+  point of failure however many models hang off it. The fix cannot be "add a
+  paid key" for somebody running this for free, so Groq and Gemini are in the
+  chain: both hand out a real free tier with no card, both speak the OpenAI
+  wire format, and neither shares a balance with OpenRouter.
+*/
+describe("the free providers that are not OpenRouter", () => {
+  it("puts every free provider ahead of every paid one", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("GROQ_API_KEY", "k");
+    vi.stubEnv("GEMINI_API_KEY", "k");
+    vi.stubEnv("ANTHROPIC_API_KEY", "k");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    const order: string[] = [];
+    for (const { name } of resolveProviders()) if (order[order.length - 1] !== name) order.push(name);
+    expect(order).toEqual(["openrouter", "groq", "gemini", "anthropic", "openai"]);
+  });
+
+  it("counts a free second provider as real redundancy", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("GROQ_API_KEY", "k");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    // The whole point: no card, and the warning goes away because it should.
+    expect(providerResilience().singlePointOfFailure).toBe(false);
+  });
+
+  it("offers more than one model per free provider, so a retired name is survivable", () => {
+    // A model that no longer exists is walkable within a provider and fatal if
+    // it is that provider's only link.
+    expect(FREE_GROQ_MODELS.length).toBeGreaterThan(1);
+    expect(FREE_GEMINI_MODELS.length).toBeGreaterThan(1);
+  });
+
+  it("charges nothing for the models these tiers give away", async () => {
+    const { priceFor } = await import("@/lib/usage/pricing");
+    for (const model of [...FREE_GROQ_MODELS, ...FREE_GEMINI_MODELS]) {
+      expect(priceFor(model), `${model} is not priced as free`).toEqual({
+        inputPerMTok: 0,
+        outputPerMTok: 0,
+      });
+    }
+  });
+
+  it("still charges the dearest rate for a model nobody listed", async () => {
+    const { priceFor, UNKNOWN_MODEL } = await import("@/lib/usage/pricing");
+    // Pinning some other model on an upgraded account must keep failing closed.
+    expect(priceFor("groq/some-paid-model-we-never-heard-of")).toEqual(UNKNOWN_MODEL);
+  });
+
+  it("sends each provider to its own endpoint with its own key", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("GROQ_API_KEY", "groq-key");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const calls: { url: string; auth: string; body: string }[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({
+        url: String(url),
+        auth: String((init.headers as Record<string, string>).authorization),
+        body: String(init.body),
+      });
+      return sse("tere");
+    });
+    const chain = resolveProviders();
+    await openWithFallback([chain[0]!], "system", [{ role: "user", content: "hi" }]);
+    expect(calls[0]?.url).toContain("api.groq.com");
+    expect(calls[0]?.auth).toBe("Bearer groq-key");
+  });
+
+  it("does not ask Gemini for a usage frame it never agreed to accept", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("GROQ_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "gem-key");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    let body = "";
+    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+      body = String(init.body);
+      return sse("tere");
+    });
+    const chain = resolveProviders();
+    await openWithFallback([chain[0]!], "system", [{ role: "user", content: "hi" }]);
+    /*
+      An unrecognised field is rejected outright rather than ignored, and this
+      codebase has already lost a provider to exactly that: stream_options was
+      added to the Anthropic call and every request 400'd. Gemini's OpenAI
+      layer does not document the field, so it is not sent, and the ledger
+      estimates from characters instead, which over-counts and so keeps the cap
+      failing closed.
+    */
+    expect(body).not.toContain("stream_options");
+    expect(body).toContain(FREE_GEMINI_MODELS[0]);
+  });
+});
+
+describe("how many things can actually answer", () => {
+  it("counts one provider as one, however many models it offers", () => {
+    only("openrouter");
+    const state = providerResilience();
+    expect(state.providers).toEqual(["OpenRouter"]);
+    expect(state.models).toBeGreaterThan(1);
+    expect(state.singlePointOfFailure).toBe(true);
+  });
+
+  it("stops warning once a second provider is configured", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("ANTHROPIC_API_KEY", "k");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const state = providerResilience();
+    expect(state.providers).toEqual(["OpenRouter", "Anthropic"]);
+    expect(state.singlePointOfFailure).toBe(false);
+  });
+
+  it("does not call an unconfigured app a single point of failure", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    // Nothing configured is a different message, shown elsewhere.
+    expect(providerResilience().singlePointOfFailure).toBe(false);
+  });
+});
 
 describe("the chain", () => {
   it("is empty with no key at all, so nothing above it has to guess", () => {

@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
-import { resolveOneWord, resolveScannedItems } from "./resolveScan";
+import { candidatesFor, resolveOneWord, resolveScannedItems } from "./resolveScan";
 
 /**
  * The gate between a photograph and the deck, run against a real dictionary.
@@ -14,6 +14,7 @@ import { resolveOneWord, resolveScannedItems } from "./resolveScan";
  */
 
 const LEMMA = "itest-scan-tuba";
+const DECOY = "itest-scan-mitteseotud";
 
 async function wipe() {
   const lexemes = await prisma.lexeme.findMany({
@@ -42,6 +43,11 @@ beforeEach(async () => {
         ],
       },
     },
+  });
+  // A word with nothing to do with the one being looked for, so that "the
+  // query narrows" can be asserted rather than assumed.
+  await prisma.lexeme.create({
+    data: { lemma: DECOY, pos: "NOUN", translation: "decoy", cefr: "A1", provenance: "EKILEX" },
   });
 });
 
@@ -99,5 +105,36 @@ describe("resolveOneWord", () => {
 
   it("has nothing to say about an empty correction", async () => {
     expect(await resolveOneWord("   ")).toBeNull();
+  });
+});
+
+describe("candidatesFor", () => {
+  /*
+    The narrowing is the test, not an optimisation detail.
+
+    This used to read the whole dictionary with `take: 4000` and no ordering,
+    which is the same fault `searchLexemes` was fixed for: past four thousand
+    entries the cap dropped words, and nothing said which, so a page printing a
+    word the dictionary holds came back unrecognised depending on where its row
+    happened to sit in the heap. Asserting "the right word resolves" cannot
+    catch that, because it passes on a small dictionary and on a large one
+    whenever the row lands early. Asserting that an unrelated word is *not*
+    fetched fails immediately on any version that pulls the table.
+  */
+  it("fetches only what could match, never the table", async () => {
+    const lemmas = (await candidatesFor([LEMMA])).map((c) => c.lemma);
+    expect(lemmas).toContain(LEMMA);
+    expect(lemmas).not.toContain(DECOY);
+  });
+
+  it("narrows a whole page in one pass, inflected forms included", async () => {
+    const lemmas = (await candidatesFor([LEMMA, "itest-scan-toas", "itest-scan-puudub"]))
+      .map((c) => c.lemma);
+    expect(lemmas).toContain(LEMMA);
+    expect(lemmas).not.toContain(DECOY);
+  });
+
+  it("asks nothing of the database for an empty page", async () => {
+    expect(await candidatesFor([])).toEqual([]);
   });
 });

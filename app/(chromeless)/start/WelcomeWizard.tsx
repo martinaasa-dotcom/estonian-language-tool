@@ -11,6 +11,7 @@ import { Button } from "@/components/Button";
 import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { Card, Chip, Meter, Note, SectionTitle } from "@/components/ui";
+import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
 import { CAN, CANNOT, TOUR, WHAT_IT_IS } from "@/lib/copy/tour";
@@ -26,11 +27,19 @@ export interface WizardUnit {
 }
 
 /** The self-rated ladder, for a learner who would rather not sit the check now. */
+/*
+  All six, because the course now runs to C2 and stopping the list at B2 told
+  anybody above it that the app was not for them. Each is described by what a
+  person can already do rather than by its code, since somebody who needs to
+  pick a level is exactly somebody who does not know what B2 means.
+*/
 const LEVELS = [
   { key: "A1", label: "Just starting", detail: "Tere, aitäh, and not much else yet." },
-  { key: "A2", label: "I get by", detail: "Shopping, ordering, simple past tense." },
+  { key: "A2", label: "I get by", detail: "Shopping, ordering, the past tense." },
   { key: "B1", label: "Conversational", detail: "I can hold a conversation and read the news slowly." },
-  { key: "B2", label: "Confident", detail: "I want vocabulary and precision, not basics." },
+  { key: "B2", label: "Confident", detail: "I follow a debate and want precision, not basics." },
+  { key: "C1", label: "Fluent", detail: "I work in Estonian and want to write it well." },
+  { key: "C2", label: "Near-native", detail: "I want register, idiom and the last few percent." },
 ] as const;
 
 const GOALS = [
@@ -40,12 +49,21 @@ const GOALS = [
   { value: 40, label: "Intense", detail: "about 13 minutes a day" },
 ] as const;
 
-/** Units suggested for each starting level, which is where that learner's next work is. */
+/**
+ * Units suggested for each starting level, which is where that learner's next
+ * work is.
+ *
+ * Derived from the syllabus rather than hand-listed. The list it replaced named
+ * unit ids in a string literal and stopped at B2, so it could rot silently when
+ * a unit was renamed and had nothing at all to offer the C1 and C2 levels the
+ * course now covers. `pre-A1` shares A1's opening units, because the first
+ * thing to do is the same either way.
+ */
 const SUGGESTED: Record<string, string[]> = {
-  A1: ["tervitused", "inimesed", "kodu"],
-  A2: ["sook-ja-jook", "aeg", "iga-paev"],
-  B1: ["rektsioon", "tunded", "too-ja-raha"],
-  B2: ["uhiskond", "too-ja-raha", "akadeemiline"],
+  ...Object.fromEntries(
+    CEFR_LEVELS.map((level) => [level, unitsAtLevel(level).slice(0, 3).map((u) => u.id)]),
+  ),
+  [PRE_A1]: unitsAtLevel("A1").slice(0, 3).map((u) => u.id),
 };
 
 const STEPS = ["You", "Why", "Goal", "Level", "Pace", "Plan", "Tour", "Deck"] as const;
@@ -563,7 +581,12 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               paradigms, and you can add or drop units later on the path.
             </p>
             <div className="scroll-host mt-5 flex max-h-[46vh] flex-col gap-2">
-              {units.map((u) => {
+              {/*
+                This level's units only. The course is eighty-three of them
+                across six levels, and a first-run picker listing all of them is
+                a wall rather than a choice.
+              */}
+              {units.filter((u) => u.cefr === startBand || u.cefr === level).map((u) => {
                 const Icon = icon(u.icon);
                 const on = picked.includes(u.id);
                 return (

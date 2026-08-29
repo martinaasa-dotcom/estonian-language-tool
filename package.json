@@ -25,6 +25,7 @@
     "test:invariants": "tsx scripts/test-invariants.ts",
     "audit:glosses": "tsx scripts/audit-glosses.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
+    "harvest": "tsx scripts/harvest-ekilex.ts",
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts"
   },

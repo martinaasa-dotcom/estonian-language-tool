@@ -16,7 +16,7 @@
  *   npx tsx scripts/test-invariants.ts
  */
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { extractEstonianSenses } from "../lib/dict/wiktionary";
@@ -52,6 +52,17 @@ const LIB = sourceFiles("lib");
 const COMPONENTS = sourceFiles("components");
 const ALL = [...APP, ...LIB, ...COMPONENTS];
 const read = (file: string) => readFileSync(file, "utf8");
+/**
+ * A file with its comments removed.
+ *
+ * Several checks below ask whether a file *calls* something. Matching the raw
+ * text answers a different question — whether it mentions it — and a doc comment
+ * explaining how a component grades was enough to satisfy the grading check on a
+ * component that had stopped grading entirely. Prose about a rule is not
+ * compliance with it.
+ */
+const code = (file: string) =>
+  read(file).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
 /**
  * One exported function's body, from its signature to the next export.
@@ -236,19 +247,79 @@ check("no counter column exists for anything the review log can reconstruct", ()
 
 // ── Every mode grades through gradeCard (ADR-016) ────────────────────────────
 
+/**
+ * Sessions that measure rather than practise.
+ *
+ * The placement test asks about words the learner may never have had a card for,
+ * to decide where to start them. Writing those answers to the review log would
+ * put grades against cards that do not exist and tell the scheduler somebody had
+ * practised material they have not yet met.
+ */
+const MEASURES_RATHER_THAN_PRACTISES = [
+  "app/(app)/placement/PlacementSession.tsx",
+];
+
+
 check("every practice mode writes to the same review log", () => {
   /*
-    Sprint, Listening, Match, Dictation and Sentences are not side games with
-    scores of their own. They grade through the same action, so the scheduler
-    sees what was actually practised.
+    Sprint, Listening, Match, Dictation, Sentences and the unit lessons are not
+    side games with scores of their own. They grade through the same actions, so
+    the scheduler sees what was actually practised.
+
+    The lesson runner is why this names more than one action. It sits under
+    /learn/ rather than /review/ and submits a whole finished lesson at once
+    through completeLesson, which maps each step to the card it is evidence
+    about and hands the batch to applyGradeBatch, the same append-only log
+    reached by a different door. Matching only the /review/ path and only
+    gradeCard would have declared the rule satisfied while the newest and
+    busiest mode sat outside it, which is the failure this file exists to catch.
+
+    submitExam is the third such door and arrived from another branch, which is
+    how the point got proved twice. A paper is marked on the server and the
+    marks go to applyGradeBatch, so the exam is under this rule rather than
+    exempt from it; the invariant below on submitExam is what holds that door
+    to applyGradeBatch rather than to Review rows of its own.
   */
-  const sessions = COMPONENTS.concat(APP).filter((f) => /\/(review)\/.*Session\.tsx$/.test(f));
-  assert.ok(sessions.length >= 5, `expected the review sessions, found ${sessions.length}`);
+  const sessions = SESSION_FILES().filter((f) => !MEASURES_RATHER_THAN_PRACTISES.includes(f));
+  assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
-    assert.match(read(file), /gradeCards?\b/, `${file} does not grade through gradeCard`);
+    assert.match(
+      code(file),
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/,
+      `${file} does not write to the shared review log`,
+    );
+  }
+
+  /*
+    The exemption is checked, so it cannot become a parking space. A file listed
+    below has to still be there, and has to still write no grades at all: the
+    moment one starts grading it is a practice mode, belongs under the rule, and
+    this fails until it is taken off the list. Same shape as the ALLOWED list in
+    lib/copy/readerCopy.test.ts, and for the same reason — an unexamined
+    exemption is how a rule quietly stops applying to anything.
+  */
+  for (const file of MEASURES_RATHER_THAN_PRACTISES) {
+    assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
+    assert.doesNotMatch(
+      code(file),
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/,
+      `${file} now grades, so it is a practice mode and must come off the exemption list`,
+    );
   }
 });
 
+
+/**
+ * Every screen that runs a graded session, wherever it lives.
+ *
+ * A path-shaped rule ages badly: the modes were all under /review/ when these
+ * checks were written, and the first one added somewhere else inherited none of
+ * them. The shape that matters is "a component that runs a session", so that is
+ * what is matched.
+ */
+function SESSION_FILES(): string[] {
+  return COMPONENTS.concat(APP).filter((f) => /Session\.tsx$/.test(f));
+}
 check("a mock exam is marked by the server, never by the client", () => {
   /*
     `buildPaper` is deterministic in (level, seed, pool), which is what lets the
@@ -340,17 +411,23 @@ check("a session never lets its questions change under the learner", () => {
     and takes a list prop must pass that prop through useState rather than
     index into it directly.
   */
-  const sessions = COMPONENTS.concat(APP).filter((f) => /\/(review|exam)\/.*Session\.tsx$/.test(f));
-  assert.ok(sessions.length >= 6, `expected the review and exam sessions, found ${sessions.length}`);
+  const sessions = SESSION_FILES();
+  assert.ok(sessions.length >= 6, `expected the practice and exam sessions, found ${sessions.length}`);
   for (const file of sessions) {
-    const source = read(file);
+    const source = code(file);
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/gradeCards?\b|submitExam\b/.test(source)) continue;
-    // Only the ones actually handed a list by the page can be caught out.
+    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/.test(source)) continue;
+    // Only the ones actually handed a list by the page can be caught out. The
+    // `initial` naming convention is the reliable signal: a prop called
+    // initialSteps or initialCards exists precisely because it is meant to be
+    // snapshotted. The name list after it is the older spelling, kept for the
+    // sessions that predate the convention — and `steps` had to be added to it
+    // after the lesson runner slipped through both arms of this check.
     const props = source.match(/export function \w+\(\{([^}]*)\}/)?.[1] ?? "";
-    const listProp = props.match(/\b(\w+)\s*:\s*initial\w+/) ?? props.match(/\b(cards|prompts|questions|items|gaps|pairs|paper)\b/);
+    const listProp = /\binitial[A-Z]\w*/.test(props)
+      || /\b(cards|prompts|questions|items|gaps|pairs|steps|paper)\b/.test(props);
     if (!listProp) continue;
     assert.match(
       source,

@@ -40,7 +40,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A learning path.** Eighteen units from *Tervitused* to *Akadeemiline eesti keel*, each a
+- **A course.** Eighty-three units across all six CEFR levels, from *Tervitused* to *Vaba valdamine*, each a
   sitting's worth of words. Adding a unit builds real flashcards, full paradigm, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
@@ -136,7 +136,7 @@ where it came from, and you can always overwrite it.
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
 
-- **Dictionary**, about 5,400 words (A1 to C1) with principal parts, consonant gradation and the
+- **Dictionary**, about 5,970 words (A1 to C2) with principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class, 
   `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
@@ -321,7 +321,7 @@ lib/srs/          FSRS scheduling, card generation, and offline grade replay.
 lib/analysis/     diagnosis and leech classification over the review log.
 lib/usage/        the AI spend ledger and the quota policy.
 lib/offline/      the grade outbox and its replay rules.
-lib/collections/  the learning path: units as references into the dictionary.
+lib/collections/  the course: syllabus, lessons, placement and checkpoints, as references into the dictionary.
 lib/classroom/    join codes and the roster a teacher sees, and only that.
 lib/gamification/ XP, levels and the daily quests. Pure functions over stats.
 lib/stats/        heatmap, forecast and accuracy aggregation.

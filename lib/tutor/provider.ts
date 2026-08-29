@@ -23,7 +23,7 @@
 import { reportError } from "@/lib/observability/report";
 import { estimateTokens } from "@/lib/usage/pricing";
 
-export type ProviderName = "openrouter" | "openai" | "anthropic";
+export type ProviderName = "openrouter" | "groq" | "gemini" | "openai" | "anthropic";
 
 export interface ProviderConfig {
   name: ProviderName;
@@ -43,11 +43,54 @@ export interface ChatMessage {
  * what this app has always done; a deployment with two gets somewhere to go
  * when the first is throttled.
  */
+/**
+ * How many *independent* things can answer, which is not the length of the
+ * chain.
+ *
+ * OpenRouter contributes one link per free model, so a chain of four can still
+ * be a single account with a single balance. When that balance ran out here
+ * every link returned 402 together and Anu went down, which is exactly the
+ * failure a fallback chain is supposed to absorb. What protects availability
+ * is a second *provider*, not a fifth model.
+ *
+ * Pure, so Settings can say this without asking anything upstream.
+ */
+export function providerResilience(chain = resolveProviders()): {
+  providers: string[];
+  models: number;
+  singlePointOfFailure: boolean;
+} {
+  const providers = [...new Set(chain.map((c) => c.label))];
+  return {
+    providers,
+    models: chain.length,
+    // Nothing configured is its own problem, reported elsewhere; this flag is
+    // about a chain that looks redundant and is not.
+    singlePointOfFailure: providers.length === 1,
+  };
+}
+
 export function resolveProviders(): ProviderConfig[] {
   const chain: ProviderConfig[] = [];
   if (process.env.OPENROUTER_API_KEY) {
     for (const model of openRouterModels()) {
       chain.push({ name: "openrouter", model, label: "OpenRouter" });
+    }
+  }
+  /*
+    Free providers before paid ones, and independent of OpenRouter.
+
+    The order is the policy: everything a stranger can set up without a card is
+    tried first, and a paid key is only ever reached once all of it has failed.
+  */
+  if (process.env.GROQ_API_KEY) {
+    for (const model of configuredModels(process.env.GROQ_MODEL, FREE_GROQ_MODELS)) {
+      chain.push({ name: "groq", model, label: "Groq" });
+    }
+  }
+  if (process.env.GEMINI_API_KEY) {
+    for (const model of configuredModels(process.env.GEMINI_MODEL, FREE_GEMINI_MODELS)) {
+      chain.push({ name: "gemini", model, label: "Google Gemini" });
     }
   }
   if (process.env.ANTHROPIC_API_KEY) {
@@ -95,6 +138,48 @@ export const FREE_OPENROUTER_MODELS = [
   "minimax/minimax-m3:free",
   "nvidia/nemotron-3-super-120b-a12b:free",
 ] as const;
+
+/**
+ * Free-tier providers other than OpenRouter, and the models they give away.
+ *
+ * These exist so that a second provider does not mean a credit card. Both hand
+ * out a real free tier with no card, both speak the OpenAI wire format, and
+ * neither shares an account with OpenRouter, which is the entire point: when
+ * the OpenRouter balance ran out here, every free model behind it answered 402
+ * in the same second because they were one account wearing several hats.
+ *
+ * Two models each, because a model name that has been retired is walkable
+ * within a provider but ends the chain if it is that provider's only link.
+ * Both lists are overridable, and the console's own model list is the thing to
+ * check if a name here has moved on.
+ */
+export const FREE_GROQ_MODELS = [
+  "openai/gpt-oss-120b",
+  "qwen/qwen3.8-27b",
+] as const;
+
+/*
+  An alias first, deliberately.
+
+  The first names written here were `llama-3.3-70b-versatile` and
+  `gemini-2.0-flash`, both plausible and both already retired: the accounts
+  answered 404 for them within a day of the list being written. Google publish
+  `gemini-flash-latest`, which follows whatever the current flash model is, so
+  it cannot go stale the way a pinned version does. The pinned name behind it
+  is the fallback for the day the alias itself moves.
+
+  Groq publish no alias, so both of theirs are pinned and both were checked
+  against the account's own model list rather than guessed.
+*/
+export const FREE_GEMINI_MODELS = [
+  "gemini-flash-latest",
+  "gemini-3.6-flash",
+] as const;
+
+function configuredModels(raw: string | undefined, fallback: readonly string[]): string[] {
+  const configured = (raw ?? "").split(",").map((m) => m.trim()).filter(Boolean);
+  return configured.length > 0 ? configured : [...fallback];
+}
 
 function openRouterModels(): string[] {
   const configured = (process.env.OPENROUTER_MODEL ?? "")
@@ -380,24 +465,68 @@ async function withRetry(send: () => Promise<Response>, patient: boolean): Promi
   return last!;
 }
 
+/**
+ * The OpenAI-compatible providers, and what differs between them.
+ *
+ * One table rather than a ternary that grew a third branch. Everything here
+ * speaks the same wire format; only the address, the key and one quirk differ.
+ *
+ * `usageFrames` is that quirk. Asking for `stream_options: {include_usage:true}`
+ * is how the ledger gets exact token counts instead of estimating from
+ * characters, and a provider that does not recognise the field rejects the
+ * whole request rather than ignoring it. Anthropic already cost this codebase
+ * that bug once. Gemini's compatibility layer is not documented to accept it,
+ * so it is not sent, and the ledger falls back to its estimate, which
+ * over-counts on purpose and so keeps the cap failing closed.
+ */
+const OPENAI_COMPATIBLE: Record<
+  "openrouter" | "groq" | "gemini" | "openai",
+  { url: string; keyEnv: string; usageFrames: boolean }
+> = {
+  openrouter: {
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    keyEnv: "OPENROUTER_API_KEY",
+    usageFrames: true,
+  },
+  groq: {
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    keyEnv: "GROQ_API_KEY",
+    usageFrames: true,
+  },
+  gemini: {
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    keyEnv: "GEMINI_API_KEY",
+    usageFrames: false,
+  },
+  openai: {
+    url: "https://api.openai.com/v1/chat/completions",
+    keyEnv: "OPENAI_API_KEY",
+    usageFrames: true,
+  },
+};
+
+/** The wire details for a provider that is not Anthropic. */
+function openAiCompatible(config: ProviderConfig) {
+  const entry = OPENAI_COMPATIBLE[config.name as keyof typeof OPENAI_COMPATIBLE];
+  if (!entry) throw new TutorError(`${config.label} has no endpoint configured.`, 500);
+  return entry;
+}
+
 async function callOpenAiCompatible(
   config: ProviderConfig,
   system: string,
   messages: ChatMessage[],
   patient = true,
 ) {
-  const isOpenRouter = config.name === "openrouter";
-  const key = isOpenRouter ? process.env.OPENROUTER_API_KEY! : process.env.OPENAI_API_KEY!;
-  const url = isOpenRouter
-    ? "https://openrouter.ai/api/v1/chat/completions"
-    : "https://api.openai.com/v1/chat/completions";
+  const { url, keyEnv, usageFrames } = openAiCompatible(config);
+  const key = process.env[keyEnv]!;
 
   const res = await withRetry(() => fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${key}`,
-      ...(isOpenRouter
+      ...(config.name === "openrouter"
         ? { "HTTP-Referer": "http://localhost:3000", "X-Title": "Kodukeel Estonian study" }
         : {}),
     },
@@ -406,7 +535,7 @@ async function callOpenAiCompatible(
       stream: true,
       // Without this the stream carries no usage frame and the ledger has to
       // fall back to estimating from character counts.
-      stream_options: { include_usage: true },
+      ...(usageFrames ? { stream_options: { include_usage: true } } : {}),
       max_tokens: 1200,
       messages: [{ role: "system", content: system }, ...messages],
     }),
@@ -528,6 +657,8 @@ export interface CompletedReply {
 export function visionProviders(): ProviderConfig[] {
   const override: Record<ProviderName, string | undefined> = {
     openrouter: process.env.OPENROUTER_VISION_MODEL,
+    groq: process.env.GROQ_VISION_MODEL,
+    gemini: process.env.GEMINI_VISION_MODEL,
     anthropic: process.env.ANTHROPIC_VISION_MODEL,
     openai: process.env.OPENAI_VISION_MODEL,
   };
@@ -605,11 +736,11 @@ async function readImageOpenAiCompatible(
   prompt: string,
   image: ImageAttachment,
 ): Promise<CompletedReply> {
+  // Same table as the chat path, so a provider cannot be reachable for one and
+  // silently pointed at OpenAI for the other.
+  const { url, keyEnv } = openAiCompatible(config);
+  const key = process.env[keyEnv]!;
   const isOpenRouter = config.name === "openrouter";
-  const key = isOpenRouter ? process.env.OPENROUTER_API_KEY! : process.env.OPENAI_API_KEY!;
-  const url = isOpenRouter
-    ? "https://openrouter.ai/api/v1/chat/completions"
-    : "https://api.openai.com/v1/chat/completions";
 
   const res = await fetch(url, {
     method: "POST",

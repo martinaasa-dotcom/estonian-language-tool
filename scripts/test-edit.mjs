@@ -63,7 +63,9 @@ const renamedCards = data.cards.filter(c => c.lexemeId === kohvEntries[0]?.id);
 
   So the rule, stated properly: no card is left showing the old headword, and
   the new one is actually on the cards that carry a headword. Exact equality
-  rather than a substring, because "kohvi" contains "kohv".
+  rather than a substring, because "kohvi" contains "kohv". The second check
+  states the other half explicitly, so that "leaves the gap-fill alone" is
+  asserted rather than merely implied by the first one passing.
 */
 const headword = (c) => [c.front, c.back];
 check("its cards were rewritten to match, not left stale",
@@ -71,6 +73,10 @@ check("its cards were rewritten to match, not left stale",
     renamedCards.some(c => headword(c).includes("kohvjook")) &&
     !renamedCards.some(c => headword(c).includes("kohv")),
   renamedCards.map(c => `${c.front}→${c.back}`).join(" | ").slice(0, 90));
+const attestedCards = renamedCards.filter(c => c.cardType === "CLOZE");
+check("and the attested sentence behind a gap-fill was left exactly as recorded",
+  attestedCards.every(c => !`${c.front}${c.back}`.includes("kohvjook")),
+  `${attestedCards.length} gap-fill card(s)`);
 check("scheduling was not reset by the correction",
   renamedCards.every(c => typeof c.stability === "number"), `${renamedCards.length} cards`);
 

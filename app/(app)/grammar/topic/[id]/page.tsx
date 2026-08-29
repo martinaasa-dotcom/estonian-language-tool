@@ -1,0 +1,140 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, BookOpen, TriangleAlert } from "lucide-react";
+import { requireUserId } from "@/lib/auth/session";
+import { TOPIC_NOTES, grammarTopic } from "@/lib/estonian/grammar";
+import { SYLLABUS } from "@/lib/collections/syllabus";
+import { Card, Chip, Note, Page, SectionTitle } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
+
+export function generateStaticParams() {
+  return TOPIC_NOTES.map((t) => ({ id: t.id }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const topic = grammarTopic(id);
+  return topic
+    ? { title: `Grammar · ${topic.title}`, description: topic.summary }
+    : { title: "Grammar" };
+}
+
+/**
+ * One grammar point that is not a case.
+ *
+ * Deliberately sparser than the case pages, and the difference is honest rather
+ * than unfinished. A case page can show the case on real words, because every
+ * form on it is read out of the dictionary with its provenance. There is no
+ * equally safe way to illustrate the quotative: picking sentences whose words
+ * end in the right letters would be the app asserting a grammatical analysis it
+ * has not verified, which is the same failure as generating a form, wearing a
+ * different hat.
+ *
+ * So this page explains in English and then hands over to the units that teach
+ * the point, where the examples are attested and in context.
+ */
+export default async function TopicPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const topic = grammarTopic(id);
+  if (!topic) notFound();
+
+  await requireUserId();
+
+  const units = SYLLABUS.filter((u) => u.grammar.includes(id));
+
+  return (
+    <Page
+      eyebrow="Reference"
+      title={topic.title}
+      lead={topic.summary}
+      actions={
+        <Link href="/grammar" className="flex items-center gap-1.5 text-sm" style={{ color: "var(--accent-deep)" }}>
+          <ArrowLeft size={14} aria-hidden /> All grammar
+        </Link>
+      }
+    >
+      <div className="flex flex-col gap-7">
+        {topic.marker && (
+          <Card tone="accent">
+            <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+              The ending that carries it
+            </p>
+            <p lang="et" className="est mt-1 text-2xl font-bold" style={{ color: "var(--ink)" }}>
+              {topic.marker}
+            </p>
+            <p className="mt-2 max-w-[62ch] text-sm" style={{ color: "var(--ink-2)" }}>
+              Named here as terminology. The forms themselves live on the dictionary entries, where
+              every one of them came from Ekilex rather than from this app.
+            </p>
+          </Card>
+        )}
+
+        <section>
+          <SectionTitle>What it is for</SectionTitle>
+          <ul className="mt-2 flex flex-col gap-2">
+            {topic.points.map((point) => (
+              <li
+                key={point}
+                className="rounded-[var(--r-md)] border p-3 text-base leading-relaxed"
+                style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
+              >
+                {point}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <Note tone="hard">
+          <span className="flex items-start gap-2">
+            <TriangleAlert size={17} aria-hidden className="mt-0.5 shrink-0" />
+            <span>{topic.watchOut}</span>
+          </span>
+        </Note>
+
+        <section>
+          <SectionTitle hint={`${units.length} unit${units.length === 1 ? "" : "s"}`}>
+            Where the course teaches it
+          </SectionTitle>
+          {units.length === 0 ? (
+            <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
+              No unit names this point yet. It is here as reference rather than as a lesson.
+            </p>
+          ) : (
+            <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+              {units.map((unit) => (
+                <li
+                  key={unit.id}
+                  className="rounded-[var(--r-md)] border p-3"
+                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                >
+                  <span className="flex flex-wrap items-baseline gap-2">
+                    <Link
+                      href={`/learn/${unit.id}`}
+                      lang="et"
+                      className="est text-md font-bold hover:underline"
+                      style={{ color: "var(--ink)" }}
+                    >
+                      {unit.title}
+                    </Link>
+                    <Chip tone="sky">{unit.level}</Chip>
+                  </span>
+                  <span className="mt-1 block text-sm" style={{ color: "var(--ink-2)" }}>
+                    {unit.canDo}
+                  </span>
+                  <Link
+                    href={`/learn/${unit.id}/lesson`}
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm underline"
+                    style={{ color: "var(--accent-deep)" }}
+                  >
+                    <BookOpen size={14} aria-hidden /> Take the lesson
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </Page>
+  );
+}

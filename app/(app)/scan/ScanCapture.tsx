@@ -182,7 +182,26 @@ export function ScanCapture() {
                 : ". Nothing has been added to your deck yet."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="primary" onClick={() => router.push(`/scan/${saved.id}`)}>
+              {/*
+                A DOCUMENT LOAD, NOT `router.push`. `AddWord` records the same
+                finding at length and reached it first: a push issued next to a
+                Server Action's own `revalidatePath` is dropped often enough to
+                measure, and the browser stays on the screen it was already on.
+
+                Measured here rather than assumed. The handler was instrumented
+                with a counter and, on a failing run, it had run exactly once:
+                React dispatched the click, the component called the router, and
+                the navigation never happened. Three times in ten runs against a
+                warm server the learner tapped "Open the page", stayed on the
+                capture screen, and had to tap again. Moving the neighbouring
+                `router.refresh()`, and removing `revalidatePath("/scan")` from
+                the action, each left it failing at the same rate.
+
+                This is the tap that finishes the whole paper-to-deck path, so it
+                may not be best-effort. The destination is `force-dynamic` and
+                renders fresh on arrival.
+              */}
+              <Button variant="primary" onClick={() => window.location.assign(`/scan/${saved.id}`)}>
                 Open the page
               </Button>
               <Button variant="secondary" onClick={reset}>

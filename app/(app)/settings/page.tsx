@@ -17,6 +17,7 @@ import { InstallPanel } from "./InstallPanel";
 import { LeaderboardPanel, ReviewModePanel } from "./PreferencesPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
+import { providerResilience } from "@/lib/tutor/provider";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ const SHORTCUTS: [string, string][] = [
 export default async function SettingsPage() {
   const ownerId = await requireUserId();
   const provider = resolveProvider();
+  const resilience = providerResilience();
   const hosted = supabaseConfigured();
 
   const [words, cards, reviews, earned, settings, learner, goals, latestCheck] = await Promise.all([
@@ -154,11 +156,37 @@ export default async function SettingsPage() {
           <SectionTitle hint={provider ? undefined : "Anu is off until you add a key"}>AI tutor</SectionTitle>
           <Card>
             {provider ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <Chip tone="good">Connected</Chip>
-                <span className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  {provider.label} · <code className="text-xs">{provider.model}</code>
-                </span>
+              <div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Chip tone="good">Connected</Chip>
+                  <span className="text-sm" style={{ color: "var(--ink-2)" }}>
+                    {provider.label} · <code className="text-xs">{provider.model}</code>
+                  </span>
+                </div>
+                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                  {resilience.models === 1
+                    ? "One model is configured."
+                    : `${resilience.models} models are tried in order, across ${resilience.providers.join(" and ")}.`}
+                </p>
+                {/*
+                  Said plainly because it is invisible otherwise. A chain of
+                  several OpenRouter models reads as redundancy and is not: they
+                  share one account and one balance, so when it ran out here
+                  every link answered 402 at the same moment and the tutor went
+                  down. A second provider is the only thing that changes that.
+                */}
+                {resilience.singlePointOfFailure && (
+                  <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                    Everything above is {resilience.providers[0]}, on one account. If that key stops
+                    answering, whether it runs out of credit or has a bad minute, Anu stops with it.
+                    Adding <code className="text-xs">GROQ_API_KEY</code> or{" "}
+                    <code className="text-xs">GEMINI_API_KEY</code> to <code className="text-xs">.env</code>{" "}
+                    gives the chain somewhere to fall through to. Both have a free tier and neither
+                    asks for a card. Read the note beside them in{" "}
+                    <code className="text-xs">.env.example</code> first: a free tier is usually free
+                    because the provider may look at what goes through it.
+                  </p>
+                )}
               </div>
             ) : (
               <SetupGuide />
