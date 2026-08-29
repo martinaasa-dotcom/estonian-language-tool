@@ -10,11 +10,24 @@ const MAX_SESSION = 60;
 export default async function ReviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string }>;
+  searchParams: Promise<{ case?: string; week?: string }>;
 }) {
   const ownerId = await requireUserId();
-  const { case: targetCase } = await searchParams;
+  const { case: targetCase, week: weekParam } = await searchParams;
   const now = new Date();
+
+  // A week drill, like a case drill, ignores scheduling: the learner is revising
+  // a specific lesson, not clearing a queue.
+  const week = Number(weekParam);
+  if (Number.isInteger(week) && week > 0) {
+    const lesson = await prisma.card.findMany({
+      where: { ownerId, suspended: false, classWeek: week },
+      orderBy: [{ due: "asc" }],
+      take: 60,
+      include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
+    });
+    return <ReviewSession cards={lesson.map(toReviewCard)} drillWeek={week} totalCards={0} />;
+  }
 
   // A drill on one grammatical case ignores scheduling: the point is to attack a
   // weakness the heatmap found, not to review what happens to be due.

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Card, Empty, Page, Stat } from "@/components/ui";
+import { Diagnosis } from "@/components/Diagnosis";
 import { STATE_LABELS } from "@/lib/srs/scheduler";
 import { WordsTable, type CardRow } from "./WordsTable";
 
@@ -106,6 +107,8 @@ export default async function WordsPage() {
               )}
             </Card>
           </div>
+
+          <Diagnosis ownerId={ownerId} />
 
           <WordsTable rows={rows} />
           {totalCards > rows.length && (

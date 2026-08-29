@@ -3,19 +3,24 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, CalendarCheck, GraduationCap, Layers, LogOut, MessageCircleQuestion,
-  Settings, Sun,
+  BookOpen, CalendarCheck, CalendarRange, GraduationCap, Layers, LogOut,
+  MessageCircleQuestion, Settings, Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * `short` is what the mobile bar shows. Seven full labels at 10px overflow a
+ * 375px viewport, and the rule in CLAUDE.md is no sideways scroll on a phone.
+ */
 const NAV = [
-  { href: "/", label: "Today", icon: Sun },
-  { href: "/review", label: "Review", icon: GraduationCap },
-  { href: "/dictionary", label: "Dictionary", icon: BookOpen },
-  { href: "/tutor", label: "Anu", icon: MessageCircleQuestion },
-  { href: "/words", label: "My words", icon: Layers },
-  { href: "/tasks", label: "Tasks", icon: CalendarCheck },
+  { href: "/", label: "Today", short: "Today", icon: Sun },
+  { href: "/review", label: "Review", short: "Review", icon: GraduationCap },
+  { href: "/dictionary", label: "Dictionary", short: "Dict", icon: BookOpen },
+  { href: "/tutor", label: "Anu", short: "Anu", icon: MessageCircleQuestion },
+  { href: "/words", label: "My words", short: "Cards", icon: Layers },
+  { href: "/tasks", label: "Tasks", short: "Tasks", icon: CalendarCheck },
+  { href: "/week", label: "This week", short: "Week", icon: CalendarRange },
 ] as const;
 
 /** Routes reachable without a session, where an app nav would be noise. */
@@ -84,16 +89,17 @@ export function Sidebar() {
         className="fixed bottom-0 left-0 right-0 z-40 flex border-t md:hidden"
         style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
       >
-        {NAV.map(({ href, label, icon: Icon }) => (
+        {NAV.map(({ href, label, short, icon: Icon }) => (
           <Link
             key={href}
             href={href}
+            aria-label={label}
             aria-current={isActive(href) ? "page" : undefined}
-            className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px]"
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 py-2.5 text-[10px]"
             style={{ color: isActive(href) ? "var(--accent)" : "var(--ink-3)" }}
           >
             <Icon size={19} strokeWidth={1.9} aria-hidden />
-            {label}
+            <span className="truncate">{short}</span>
           </Link>
         ))}
       </nav>

@@ -9,6 +9,7 @@ import { BADGES, type BadgeStats, computeStreakWithShields, earnedBadgeKeys } fr
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
+import { MAX_PASSAGE_CHARS, buildCloze, type KnownForm } from "@/lib/estonian/cloze";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -32,6 +33,9 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
 async function addCardsFor(
   owner: string, lexemeId: string, types: CardType[], source: string,
 ) {
+  // Words are stamped with the course week they were added in, so "week 6
+  // vocabulary" is a real query later rather than something to reconstruct.
+  const classWeek = await currentClassWeek(owner);
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     include: { forms: true },
@@ -57,6 +61,7 @@ async function addCardsFor(
     data: generated.map((c) => ({
       ownerId: owner,
       lexemeId,
+      classWeek,
       cardType: c.cardType,
       front: c.front,
       back: c.back,
@@ -455,6 +460,54 @@ export async function checkAchievements(session?: { count: number; accuracy: num
 }
 
 const DAILY_GOAL_KEY = "dailyGoal";
+// Not exported: every export of a "use server" file is a public endpoint, and a
+// constant is not an endpoint.
+const CURRENT_WEEK_KEY = "currentWeek";
+
+/** The course week the learner says they are in. Null until they set one. */
+async function currentClassWeek(ownerId: string): Promise<number | null> {
+  const setting = await prisma.setting.findUnique({
+    where: { ownerId_key: { ownerId, key: CURRENT_WEEK_KEY } },
+  });
+  if (!setting) return null;
+  const week = Number(setting.value);
+  return Number.isInteger(week) && week > 0 ? week : null;
+}
+
+export async function getCurrentWeek() {
+  return currentClassWeek(await requireUserId());
+}
+
+/**
+ * Sets the course week. Everything added from now on is filed under it, and the
+ * week view becomes a lens over the whole app.
+ */
+export async function setCurrentWeek(week: number | null) {
+  const ownerId = await requireUserId();
+  if (week === null) {
+    await prisma.setting.deleteMany({ where: { ownerId, key: CURRENT_WEEK_KEY } });
+  } else {
+    const clamped = Math.max(1, Math.min(60, Math.round(week)));
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key: CURRENT_WEEK_KEY } },
+      create: { ownerId, key: CURRENT_WEEK_KEY, value: String(clamped) },
+      update: { value: String(clamped) },
+    });
+  }
+  revalidatePath("/");
+  revalidatePath("/week");
+  return { ok: true as const };
+}
+
+/** Files (or unfiles) every card of one word under a week. */
+export async function setWordWeek(lexemeId: string, week: number | null) {
+  const ownerId = await requireUserId();
+  const classWeek = week === null ? null : Math.max(1, Math.min(60, Math.round(week)));
+  await prisma.card.updateMany({ where: { ownerId, lexemeId }, data: { classWeek } });
+  revalidatePath("/week");
+  revalidatePath("/words");
+  return { ok: true as const };
+}
 
 /** Sets the review count that fills the daily-goal ring on Today. */
 export async function setDailyGoal(goal: number) {
@@ -485,6 +538,86 @@ export async function recordSprintScore(score: number) {
   }
   return { ok: true as const, best: Math.max(score, best), isNewBest };
 }
+
+// ─────────────────────────────── Cloze ────────────────────────────────────
+
+/**
+ * Turns a passage the learner pasted into gap-fill exercises.
+ *
+ * Only words already in their deck are blanked, which is what makes this a
+ * *practice* exercise rather than a comprehension test: every gap is something
+ * they have chosen to learn and have seen before, now in a sentence a native
+ * writer actually produced.
+ *
+ * The passage is never stored. It is somebody's homework, a news article, or a
+ * private message, and the app has no reason to keep it.
+ */
+export async function buildClozeFromText(text: string) {
+  const ownerId = await requireUserId();
+  const passage = text.slice(0, MAX_PASSAGE_CHARS);
+  if (!passage.trim()) return { ok: false as const, error: "Paste some Estonian first." };
+
+  const cards = await prisma.card.findMany({
+    where: { ownerId, lexemeId: { not: null } },
+    select: { lexemeId: true },
+    distinct: ["lexemeId"],
+    take: 2000,
+  });
+  const lexemeIds = cards.map((c) => c.lexemeId).filter((id): id is string => !!id);
+
+  if (lexemeIds.length === 0) {
+    return {
+      ok: false as const,
+      error: "Your deck is empty, so there is nothing to look for in that text yet.",
+    };
+  }
+
+  const lexemes = await prisma.lexeme.findMany({
+    where: { id: { in: lexemeIds } },
+    select: {
+      id: true, lemma: true, translation: true,
+      forms: { select: { value: true, formType: true, morphName: true } },
+    },
+  });
+
+  const known: KnownForm[] = [];
+  for (const lexeme of lexemes) {
+    // The headword itself counts: meeting it in a real sentence is worth drilling
+    // even when it is not inflected.
+    known.push({
+      value: lexeme.lemma, lexemeId: lexeme.id, lemma: lexeme.lemma,
+      translation: lexeme.translation, formLabel: "dictionary form",
+    });
+    for (const form of lexeme.forms) {
+      known.push({
+        value: form.value,
+        lexemeId: lexeme.id,
+        lemma: lexeme.lemma,
+        translation: lexeme.translation,
+        formLabel: CLOZE_FORM_LABELS[form.formType] ?? form.morphName ?? "form",
+      });
+    }
+  }
+
+  const items = buildCloze(passage, known);
+  if (items.length === 0) {
+    return {
+      ok: false as const,
+      error:
+        "No words from your deck turned up in that text. Try a longer passage, or add some of " +
+        "its vocabulary from the dictionary first.",
+    };
+  }
+
+  return { ok: true as const, items };
+}
+
+const CLOZE_FORM_LABELS: Record<string, string> = {
+  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
+  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
+  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
+  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
+};
 
 // ─────────────────────────────── Tasks ────────────────────────────────────
 

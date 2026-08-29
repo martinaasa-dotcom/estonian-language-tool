@@ -19,14 +19,16 @@ const CHIPS = [
 ];
 
 export function TutorChat({
-  configured, providerLabel, history,
+  configured, providerLabel, history, prefill,
 }: {
   configured: boolean;
   providerLabel: string | null;
   history: Msg[];
+  /** A question another view wants asked. Filled in, never sent automatically. */
+  prefill?: string | undefined;
 }) {
   const [messages, setMessages] = useState<Msg[]>(history);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(prefill ?? "");
   const [streaming, setStreaming] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Award, BookOpen, Headphones, Shield, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Award, BookOpen, Shield, Sparkles } from "lucide-react";
 import { checkAchievements, resolveStreak } from "@/app/actions";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
@@ -7,6 +7,7 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { BADGES } from "@/lib/achievements/badges";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
+import { PracticeModes } from "@/components/PracticeModes";
 import { Card, Chip, Empty, Page, SectionTitle, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
@@ -161,16 +162,12 @@ export default async function TodayPage() {
               </div>
               <Award size={22} aria-hidden style={{ color: "var(--accent)" }} />
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <ButtonLink href="/review/sprint" className="flex-1">
-                <Zap size={15} aria-hidden /> Case Sprint
-              </ButtonLink>
-              <ButtonLink href="/review/listening" className="flex-1">
-                <Headphones size={15} aria-hidden /> Listening
-              </ButtonLink>
-              <ButtonLink href="/settings" className="flex-1">See all badges</ButtonLink>
+            <div className="mt-4">
+              <ButtonLink href="/settings">See all badges</ButtonLink>
             </div>
           </Card>
+
+          <PracticeModes />
 
           {wordOfDay && (
             <Card>

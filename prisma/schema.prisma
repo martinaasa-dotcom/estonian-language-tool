@@ -92,6 +92,13 @@ model Card {
   source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT
   suspended  Boolean @default(false)
 
+  /// The course week this word belongs to, mirroring Task.classWeek.
+  ///
+  /// On Card rather than Lexeme because it is a fact about one learner's course,
+  /// not about the word: the same noun is week 3 for one person and week 11 for
+  /// another, and Lexeme is the shared dictionary (ADR-012).
+  classWeek Int?
+
   // FSRS state (ts-fsrs) — ADR-003
   due           DateTime  @default(now())
   stability     Float     @default(0)
@@ -107,6 +114,7 @@ model Card {
   createdAt DateTime @default(now())
 
   @@index([ownerId, due, suspended])
+  @@index([ownerId, classWeek])
   @@index([lexemeId])
 }
 

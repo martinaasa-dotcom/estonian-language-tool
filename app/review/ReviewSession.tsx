@@ -44,8 +44,8 @@ const TYPE_LABEL: Record<string, string> = {
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front" ? type !== "PRODUCTION" : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION";
 
-export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
-  cards: ReviewCard[]; drillCase?: string; totalCards: number;
+export function ReviewSession({ cards: initialCards, drillCase, drillWeek, totalCards }: {
+  cards: ReviewCard[]; drillCase?: string; drillWeek?: number; totalCards: number;
 }) {
   // Snapshotted once on mount, and never updated from later props. gradeCard()
   // is a Server Action, and Next.js refreshes this route's Server Component
@@ -171,7 +171,13 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
   if (wasEmptyAtStart) {
     return (
       <Page title="Review" lead="Spaced repetition, scheduled by FSRS.">
-        {drillCase ? (
+        {drillWeek ? (
+          <Empty
+            title={`Nothing filed under week ${drillWeek}`}
+            body="Words are filed under the week you added them in. Set your current week, then add this lesson's vocabulary from the dictionary."
+            action={<ButtonLink href={`/week/${drillWeek}`} variant="primary">Open week {drillWeek}</ButtonLink>}
+          />
+        ) : drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}
             body="Case-form cards are optional when you add a word — tick 'Case form' in the dictionary and they will show up here."
@@ -203,9 +209,11 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
           Session complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          {drillCase
-            ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done — these cards keep their normal schedule too.</>
-            : <>Tubli töö. That&rsquo;s everything due right now.</>}
+          {drillWeek
+            ? <>Tubli töö. That&rsquo;s week {drillWeek} revised — these cards keep their normal schedule too.</>
+            : drillCase
+              ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done — these cards keep their normal schedule too.</>
+              : <>Tubli töö. That&rsquo;s everything due right now.</>}
         </p>
         <div
           className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
@@ -255,6 +263,7 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
           <Chip tone="accent">{TYPE_LABEL[card.cardType] ?? card.cardType}</Chip>
           {card.isNew && <Chip tone="good">New</Chip>}
           {drillCase && <Chip tone="hard">{drillCase.toLowerCase()} drill</Chip>}
+          {drillWeek && <Chip tone="hard">week {drillWeek}</Chip>}
           {card.lemma && (
             <Link
               href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
