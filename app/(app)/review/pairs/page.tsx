@@ -75,8 +75,8 @@ export default async function PairsPage() {
       <Page title="Minimal pairs" lead="The length distinctions spelling half-records.">
         <Empty
           title="No length contrasts in the dictionary yet"
-          body="These are found automatically wherever two forms differ only in how long a sound is, as in maja against majja. The built-in set is small; an Ekilex key in Settings finds many more."
-          action={<ButtonLink href="/settings" variant="primary">Open Settings</ButtonLink>}
+          body="These are found automatically wherever two forms differ only in how long a sound is, as in maja against majja. Add a few more words to your deck and pairs will start appearing."
+          action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
     );
