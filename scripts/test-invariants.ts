@@ -626,6 +626,50 @@ check("a check a state cannot reach is waived by number, never by a printed word
   }
 });
 
+check("every type size in the tree is a step on the scale", () => {
+  /*
+    `test-design.mjs` measures what is rendered, and it can only measure the
+    sixteen pages it visits. Forty-four literal sizes were sitting in states
+    those pages do not reach, in modals, empty states and the review modes:
+    twenty-three of them 13px, half a pixel off the 13.5px step, which is the
+    exact fault the scale was introduced to end. The suite passed the whole
+    time, honestly, on its route list.
+
+    So this one reads the source instead. A route list cannot go stale against
+    it and a state does not have to be reachable to be checked. The named step
+    is what the design system defines (docs/14-design-system.md §3), so a
+    literal that happens to land on a step is still worth turning into
+    `text-sm`; what fails here is a size that is not a step at all.
+  */
+  // The one thing off the scale on purpose, as §3 says in as many words: a
+  // numeral set large enough to read as a shape behind a card, aria-hidden,
+  // ornament rather than type. Listed rather than pattern-matched, and the
+  // check below fails if it stops being there, so it cannot quietly become a
+  // place to park a size somebody could not be bothered to fit.
+  const ORNAMENT = { file: "app/(chromeless)/welcome/page.tsx", size: "92px" };
+  const STEPS = new Set([
+    "11.5px", "12.5px", "13.5px", "15px", "17px", "19px",
+    "22px", "27px", "32px", "40px", "52px", "68px",
+  ]);
+
+  const offScale: string[] = [];
+  let ornamentSeen = false;
+  for (const file of [...sourceFiles("app", /\.tsx$/), ...sourceFiles("components", /\.tsx$/)]) {
+    const source = read(file);
+    for (const found of source.matchAll(/text-\[([0-9.]+px)\]/g)) {
+      const size = found[1] ?? "";
+      if (STEPS.has(size)) continue;
+      if (file === ORNAMENT.file && size === ORNAMENT.size) { ornamentSeen = true; continue; }
+      offScale.push(`${file} ${size}`);
+    }
+  }
+  assert.deepEqual(offScale, [], "type sizes that are not a step on the scale");
+  assert.ok(
+    ornamentSeen,
+    `${ORNAMENT.file} no longer carries the ${ORNAMENT.size} ornament, so the exception for it is dead and should go`,
+  );
+});
+
 // ── The phone, and the faults that were measured on it ───────────────────────
 
 check("the root declares no overflow", () => {

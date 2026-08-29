@@ -88,12 +88,12 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     from {finding.sample} reviews
                   </span>
                   <Link
                     href={finding.href}
-                    className="flex items-center gap-1.5 text-[13px]"
+                    className="flex items-center gap-1.5 text-sm"
                     style={{ color: "var(--accent)" }}
                   >
                     Drill it <ArrowRight size={13} aria-hidden />
@@ -112,8 +112,8 @@ function Bar({ label, pct, tone }: { label: string; pct: number; tone: string })
   return (
     <div className="min-w-0 flex-1">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>{label}</span>
-        <span className="tnum text-[13px] font-semibold" style={{ color: tone }}>{pct}%</span>
+        <span className="text-xs" style={{ color: "var(--ink-3)" }}>{label}</span>
+        <span className="tnum text-sm font-semibold" style={{ color: tone }}>{pct}%</span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: tone }} />
