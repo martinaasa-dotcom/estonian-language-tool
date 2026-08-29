@@ -13,3 +13,4 @@ tsconfig.tsbuildinfo
 
 # Scratch scripts used while driving the app in a browser.
 *.tmp.mjs
+.backups/

@@ -45,14 +45,16 @@ function sentenceCheckPrompt(estonian: string, meaning: string): string {
 }
 
 export function TutorChat({
-  configured, providerLabel, history,
+  configured, providerLabel, history, initialQuestion,
 }: {
   configured: boolean;
   providerLabel: string | null;
   history: Msg[];
+  /** A question handed over from elsewhere — written into the box, not sent. */
+  initialQuestion?: string;
 }) {
   const [messages, setMessages] = useState<Msg[]>(history);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialQuestion ?? "");
   const [checkOpen, setCheckOpen] = useState(false);
   const [checkEt, setCheckEt] = useState("");
   const [checkEn, setCheckEn] = useState("");
@@ -177,6 +179,7 @@ export function TutorChat({
             onEnter={() => void send(input)}
             placeholder="Why is it raamatut and not raamatu?"
             ariaLabel="Ask Anu a question"
+            autoFocus={Boolean(initialQuestion)}
           />
         </div>
         <Button

@@ -241,6 +241,7 @@ export async function setCardSuspended(cardId: string, suspended: boolean) {
   const ownerId = await requireUserId();
   await prisma.card.updateMany({ where: { id: cardId, ownerId }, data: { suspended } });
   revalidatePath("/words");
+  revalidatePath("/progress"); // the sticking-points list lives there
   revalidatePath("/");
   return { ok: true as const };
 }

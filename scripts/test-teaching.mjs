@@ -127,6 +127,64 @@ const reading = await page.locator("text=/mature review/").first().innerText();
 check("it counts only the cards the scheduler thought were known",
   /mature review/.test(reading), reading.trim().slice(0, 80));
 
+// ─── "Why?", at the moment it is asked ────────────────────────────────────────
+
+// A case drill, so the card carries a target case and can offer the page that
+// explains it. A reference nobody can find from the exercise is a reference
+// nobody reads.
+await page.goto(`${B}/review?case=INESSIVE`, { waitUntil: "networkidle" });
+let revealed = false;
+for (let i = 0; i < 6 && !revealed; i++) {
+  if (await page.getByLabel("Type your answer").count()) {
+    await page.getByLabel("Type your answer").fill("vale");
+    await page.getByRole("button", { name: /Check/ }).first().click();
+  } else if (await page.getByRole("button", { name: /Show answer/ }).count()) {
+    await page.getByRole("button", { name: /Show answer/ }).first().click();
+  }
+  await page.waitForTimeout(450);
+  revealed = (await page.getByRole("link", { name: /Why the/ }).count()) > 0;
+  if (!revealed) { await page.keyboard.press("3"); await page.waitForTimeout(650); }
+}
+check("a revealed case card offers the rule behind it", revealed);
+check("and offers Anu as well", (await page.getByRole("link", { name: /Ask Anu/ }).count()) > 0);
+
+const anuHref = await page.getByRole("link", { name: /Ask Anu/ }).first().getAttribute("href");
+await page.goto(B + anuHref, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+const prefilled = await page.getByLabel("Ask Anu a question").inputValue();
+check("Anu opens with the question already written", prefilled.length > 20, prefilled.slice(0, 60));
+// Written, not sent: spending a model call the learner did not ask for would be
+// rude, and they may want to reword it first.
+check("but not sent on their behalf",
+  (await page.locator("text=/keep getting this form wrong/").count()) <= 1);
+
+// ─── Sticking points ──────────────────────────────────────────────────────────
+
+await page.goto(`${B}/progress`, { waitUntil: "networkidle" });
+const hasSticking = (await page.getByText("Sticking points").count()) > 0;
+check("the deck's sticking points are named", hasSticking);
+
+if (hasSticking) {
+  const row = page.locator("li", { hasText: /lapses|never really settled/ }).first();
+  check("each one says what is wrong with it",
+    /lapses|settled/.test(await row.innerText()));
+  // The argument this section makes is in the order of its actions: understand
+  // it, look it up, and only then set it aside.
+  check("and offers the explanation before the off switch",
+    (await row.getByRole("link").count()) >= 1 &&
+    (await row.getByRole("button", { name: /Set aside/ }).count()) === 1);
+
+  await row.getByRole("button", { name: /Set aside/ }).click();
+  await page.waitForTimeout(1200);
+  check("setting one aside says so rather than making it vanish",
+    (await page.getByText(/it will not come up until you put it back/i).count()) > 0);
+
+  await page.getByRole("button", { name: /Put it back/ }).first().click();
+  await page.waitForTimeout(1200);
+  check("and it can be put straight back",
+    (await page.getByText(/it will not come up until you put it back/i).count()) === 0);
+}
+
 // ─── The shortcut sheet ───────────────────────────────────────────────────────
 
 await page.goto(`${B}/`, { waitUntil: "networkidle" });

@@ -1,10 +1,35 @@
 import { chromium } from "playwright";
 import { PrismaClient } from "@prisma/client";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 
+/**
+ * The backup-and-restore round trip, tested against the real database.
+ *
+ * This suite deletes everything and puts it back, which is the only honest way
+ * to test a restore — and also the most dangerous thing in this repository. Two
+ * guards, because the review log is the one table whose loss is unrecoverable:
+ *
+ * 1. It refuses to run against anything but a local database unless forced. A
+ *    stray `DATABASE_URL` pointing at a deployment must not be wiped by a test.
+ * 2. It writes the export to disk *before* deleting, and stops if that fails.
+ *    If the suite then crashes half way — a dev server hiccup is enough — the
+ *    data is still on disk and `Settings → Restore` puts it back.
+ */
 const B = "http://localhost:3000";
 const prisma = new PrismaClient();
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
+
+const url = process.env.DATABASE_URL ?? "";
+const isLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url) || url.startsWith("file:");
+if (!isLocal && !process.argv.includes("--force")) {
+  console.error(
+    "Refusing to run: this suite deletes every card, review and task, and DATABASE_URL\n" +
+    "does not look local. Point it at a local database, or pass --force if you are certain.",
+  );
+  process.exit(1);
+}
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const page = await (await browser.newContext()).newPage();
@@ -18,6 +43,22 @@ const before = {
 };
 const backup = await (await page.request.get(`${B}/api/export`)).text();
 check("export produced a backup", backup.length > 1000, `${Math.round(backup.length / 1024)} KB`);
+
+// On disk before anything is deleted. If the suite dies from here on, this file
+// is the way back — Settings → Restore takes it as it stands.
+const safety = resolve(".backups", `test-restore-${Date.now()}.json`);
+try {
+  mkdirSync(resolve(".backups"), { recursive: true });
+  writeFileSync(safety, backup);
+} catch (error) {
+  console.error(`Refusing to delete anything: could not write the safety copy (${error}).`);
+  process.exit(1);
+}
+if (backup.length <= 1000) {
+  console.error("Refusing to delete anything: the export came back empty or truncated.");
+  process.exit(1);
+}
+console.log(`      safety copy: ${safety}`);
 
 // Destroy everything, exactly as a disk failure would.
 await prisma.review.deleteMany();
