@@ -721,6 +721,140 @@ export async function addUnitToDeck(unitId: string) {
   return { ok: true as const, added, words: lexemes.length };
 }
 
+/**
+ * Which card a lesson step is evidence about.
+ *
+ * A lesson is not a separate scoring system bolted onto the side of the app
+ * (ADR-016): each step is a real question about a real card, so the answer
+ * belongs in the same review log as everything else. Mapping the step kind to
+ * the card type is what keeps that log honest — a gap-fill answered right is
+ * evidence about the cloze card, not about recognition, and the weak-case
+ * breakdown reads case steps as case practice because that is what they were.
+ *
+ * Listening maps to recognition: hearing a word and knowing what it means is
+ * recognition, through the ear rather than the eye. There is no listening card
+ * type to write to, and inventing one here to make the mapping prettier would
+ * put a card type in the schema that nothing else generates.
+ */
+const STEP_CARD_TYPE: Record<string, CardType> = {
+  choose: "RECOGNITION",
+  listen: "RECOGNITION",
+  produce: "PRODUCTION",
+  type: "PRODUCTION",
+  gap: "CLOZE",
+  build: "CLOZE",
+  case: "CASE_FORM",
+  govern: "GOVERNMENT",
+};
+
+const LessonResultSchema = z.object({
+  /** Client-generated, so a double submit settles rather than double-counts. */
+  id: z.string().min(8).max(64),
+  lemma: z.string().min(1).max(80),
+  kind: z.string().min(1).max(16),
+  correct: z.boolean(),
+  durationMs: z.number().int().min(0).max(600_000),
+});
+
+const LESSON_RESULT_LIMIT = 80;
+
+/**
+ * Records a finished lesson.
+ *
+ * Called once, at the end. An abandoned lesson writes nothing at all, which is
+ * the same rule the other modes follow (ADR-016) and the reason the session
+ * holds its answers in memory rather than grading as it goes: a learner who
+ * closes the tab halfway has not proved anything, and half a lesson's worth of
+ * grades would tell the scheduler otherwise.
+ *
+ * It also adds the lesson's words to the deck. That ordering matters — the cards
+ * have to exist before there is anything to grade — and it is why the lesson is
+ * the natural way into a unit: finishing one leaves the words in the SRS with
+ * their first real review already recorded, instead of leaving the learner to
+ * press "add to deck" and then meet the words cold tomorrow.
+ */
+export async function completeLesson(
+  unitId: string,
+  results: z.input<typeof LessonResultSchema>[],
+) {
+  const ownerId = await requireUserId();
+  const unit = unitById(unitId);
+  if (!unit) return { ok: false as const, error: "That unit does not exist." };
+
+  const parsed = z.array(LessonResultSchema).max(LESSON_RESULT_LIMIT).safeParse(results);
+  if (!parsed.success) return { ok: false as const, error: "That lesson could not be recorded." };
+
+  // Only words this unit actually teaches. The unit id and the lemmas both come
+  // from the caller, and this file is "use server", so every export is an
+  // endpoint: without this, a crafted call could grade any word in the
+  // dictionary as though a lesson had asked about it.
+  const taught = new Set(unit.lemmas);
+  const answers = parsed.data.filter((r) => taught.has(r.lemma) && STEP_CARD_TYPE[r.kind]);
+  if (answers.length === 0) return { ok: true as const, graded: 0, added: 0 };
+
+  const lemmas = [...new Set(answers.map((r) => r.lemma))];
+  const lexemes = await prisma.lexeme.findMany({
+    where: { lemma: { in: lemmas } },
+    select: { id: true, lemma: true },
+  });
+
+  let added = 0;
+  for (const lexeme of lexemes) {
+    const result = await addCardsFor(ownerId, lexeme.id, [...unit.cardTypes], "DICTIONARY");
+    if (result.ok) added += result.added ?? 0;
+  }
+
+  const cards = await prisma.card.findMany({
+    where: { ownerId, lexemeId: { in: lexemes.map((l) => l.id) }, suspended: false },
+    select: { id: true, cardType: true, lexemeId: true },
+  });
+  const lemmaOf = new Map(lexemes.map((l) => [l.id, l.lemma]));
+  const cardFor = new Map<string, string>();
+  for (const card of cards) {
+    const lemma = card.lexemeId ? lemmaOf.get(card.lexemeId) : undefined;
+    // First card of a type wins: a word can have two cloze cards built from two
+    // different sentences, and the lesson asked about the word, not about one of
+    // them in particular.
+    if (lemma && !cardFor.has(`${lemma}|${card.cardType}`)) {
+      cardFor.set(`${lemma}|${card.cardType}`, card.id);
+    }
+  }
+
+  // One grade per card, from every step that asked about it. Two wrong answers
+  // about the same card is an Again; one is a Hard; none is a Good. Easy is
+  // deliberately never awarded here — a lesson has just taught the word, so
+  // getting it right is expected rather than evidence of a long interval.
+  const perCard = new Map<string, { wrong: number; total: number; ms: number; id: string }>();
+  for (const answer of answers) {
+    const cardType = STEP_CARD_TYPE[answer.kind]!;
+    const cardId = cardFor.get(`${answer.lemma}|${cardType}`);
+    if (!cardId) continue;
+    const entry = perCard.get(cardId) ?? { wrong: 0, total: 0, ms: 0, id: answer.id };
+    entry.wrong += answer.correct ? 0 : 1;
+    entry.total += 1;
+    entry.ms += answer.durationMs;
+    perCard.set(cardId, entry);
+  }
+
+  const batch: ReplayItem[] = [...perCard.entries()].map(([cardId, e]) => ({
+    id: e.id,
+    cardId,
+    rating: (e.wrong === 0 ? 3 : e.wrong === 1 ? 2 : 1) as RatingValue,
+    durationMs: e.ms,
+    reviewedAt: Date.now(),
+  }));
+
+  const applied = await applyGradeBatch(ownerId, batch);
+  if (!applied.ok) return { ok: false as const, error: applied.error ?? "Could not record the lesson." };
+
+  await checkAchievementsFor(ownerId);
+  revalidatePath("/learn");
+  revalidatePath(`/learn/${unitId}`);
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, graded: batch.length, added };
+}
+
 // ────────────────────────────── Classrooms ─────────────────────────────────
 
 /** How many attempts to find an unused join code before giving up. */

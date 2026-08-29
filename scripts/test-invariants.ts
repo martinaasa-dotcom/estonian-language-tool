@@ -50,6 +50,17 @@ const LIB = sourceFiles("lib");
 const COMPONENTS = sourceFiles("components");
 const ALL = [...APP, ...LIB, ...COMPONENTS];
 const read = (file: string) => readFileSync(file, "utf8");
+/**
+ * A file with its comments removed.
+ *
+ * Several checks below ask whether a file *calls* something. Matching the raw
+ * text answers a different question — whether it mentions it — and a doc comment
+ * explaining how a component grades was enough to satisfy the grading check on a
+ * component that had stopped grading entirely. Prose about a rule is not
+ * compliance with it.
+ */
+const code = (file: string) =>
+  read(file).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 const SCHEMA = read("prisma/schema.prisma");
 const CSS = read("app/globals.css");
 
@@ -221,16 +232,40 @@ check("no counter column exists for anything the review log can reconstruct", ()
 
 check("every practice mode writes to the same review log", () => {
   /*
-    Sprint, Listening, Match, Dictation and Sentences are not side games with
-    scores of their own. They grade through the same action, so the scheduler
-    sees what was actually practised.
+    Sprint, Listening, Match, Dictation, Sentences and the unit lessons are not
+    side games with scores of their own. They grade through the same actions, so
+    the scheduler sees what was actually practised.
+
+    The lesson runner is why this names more than one action. It sits under
+    /learn/ rather than /review/ and submits a whole finished lesson at once
+    through completeLesson, which maps each step to the card it is evidence
+    about and hands the batch to applyGradeBatch — the same append-only log,
+    reached by a different door. Matching only the /review/ path and only
+    gradeCard would have declared the rule satisfied while the newest and
+    busiest mode sat outside it, which is the failure this file exists to catch.
   */
-  const sessions = COMPONENTS.concat(APP).filter((f) => /\/(review)\/.*Session\.tsx$/.test(f));
-  assert.ok(sessions.length >= 5, `expected the review sessions, found ${sessions.length}`);
+  const sessions = SESSION_FILES();
+  assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
-    assert.match(read(file), /gradeCards?\b/, `${file} does not grade through gradeCard`);
+    assert.match(
+      code(file),
+      /\b(gradeCards?|replayGrades|completeLesson)\b/,
+      `${file} does not write to the shared review log`,
+    );
   }
 });
+
+/**
+ * Every screen that runs a graded session, wherever it lives.
+ *
+ * A path-shaped rule ages badly: the modes were all under /review/ when these
+ * checks were written, and the first one added somewhere else inherited none of
+ * them. The shape that matters is "a component that runs a session", so that is
+ * what is matched.
+ */
+function SESSION_FILES(): string[] {
+  return COMPONENTS.concat(APP).filter((f) => /Session\.tsx$/.test(f));
+}
 
 check("a session never lets its questions change under the learner", () => {
   /*
@@ -247,14 +282,20 @@ check("a session never lets its questions change under the learner", () => {
     and takes a list prop must pass that prop through useState rather than
     index into it directly.
   */
-  const sessions = COMPONENTS.concat(APP).filter((f) => /\/review\/.*Session\.tsx$/.test(f));
-  assert.ok(sessions.length >= 5, `expected the review sessions, found ${sessions.length}`);
+  const sessions = SESSION_FILES();
+  assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
-    const source = read(file);
-    if (!/gradeCards?\b/.test(source)) continue;
-    // Only the ones actually handed a list by the page can be caught out.
+    const source = code(file);
+    if (!/\b(gradeCards?|replayGrades|completeLesson)\b/.test(source)) continue;
+    // Only the ones actually handed a list by the page can be caught out. The
+    // `initial` naming convention is the reliable signal: a prop called
+    // initialSteps or initialCards exists precisely because it is meant to be
+    // snapshotted. The name list after it is the older spelling, kept for the
+    // sessions that predate the convention — and `steps` had to be added to it
+    // after the lesson runner slipped through both arms of this check.
     const props = source.match(/export function \w+\(\{([^}]*)\}/)?.[1] ?? "";
-    const listProp = props.match(/\b(\w+)\s*:\s*initial\w+/) ?? props.match(/\b(cards|prompts|questions|items|gaps|pairs)\b/);
+    const listProp = /\binitial[A-Z]\w*/.test(props)
+      || /\b(cards|prompts|questions|items|gaps|pairs|steps)\b/.test(props);
     if (!listProp) continue;
     assert.match(
       source,

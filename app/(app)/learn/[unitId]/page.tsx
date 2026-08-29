@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, GraduationCap, Printer } from "lucide-react";
+import { ArrowLeft, Check, GraduationCap, PlayCircle, Printer } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { unitProgress } from "@/lib/collections/syllabus";
+import { splitIntoLessons } from "@/lib/collections/lesson";
 import { AddUnitButton } from "@/components/AddUnitButton";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
@@ -15,8 +16,12 @@ import { Speak } from "@/components/Speak";
 export const dynamic = "force-dynamic";
 
 /**
- * One unit: what is in it, how much of it is learned, and the two things worth
- * doing next — add the rest of it, or drill just this unit.
+ * One unit: what it lets you do, how much of it is learned, and the lesson that
+ * teaches it.
+ *
+ * The can-do statement leads, because it is the only honest unit of progress in
+ * a language course. "19 words, 40% learned" is a fact about the app; "you can
+ * describe your home and say where things are in it" is a fact about the learner.
  */
 export default async function UnitPage({ params }: { params: Promise<{ unitId: string }> }) {
   const { unitId } = await params;
@@ -43,6 +48,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
 
   const Icon = icon(unit.icon);
   const missing = unit.lemmas.length - lexemes.length;
+  const lessons = splitIntoLessons(lexemes).length;
 
   return (
     <Page
@@ -65,8 +71,10 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
               <Chip tone="accent">{unit.cefr}</Chip>
               {progress.state === "done" && <Chip tone="good">Finished</Chip>}
             </div>
+            <p className="mt-1.5 text-md" style={{ color: "var(--ink)" }}>{unit.canDo}</p>
             <p className="mt-1.5 text-sm" style={{ color: "var(--ink-2)" }}>
               {progress.known} of {progress.available} words known · {progress.started} started
+              {lessons > 1 && ` · ${lessons} lessons`}
             </p>
             <div className="mt-2 max-w-sm">
               <Meter
@@ -77,12 +85,24 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
             </div>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-52">
-            <AddUnitButton unitId={unit.id} words={progress.available} started={progress.started > 0} />
+            {/*
+              The lesson leads, and adding the words raw is the secondary action
+              now. Before this, a unit's only two doors were "put 19 words into
+              your deck" and "drill them", so meeting a word for the first time
+              and being tested on it were the same screen.
+            */}
+            {progress.available > 0 && (
+              <ButtonLink href={`/learn/${unit.id}/lesson`} className="justify-center">
+                <PlayCircle size={15} aria-hidden />
+                {progress.started > 0 ? "Continue the lesson" : "Start the lesson"}
+              </ButtonLink>
+            )}
             {progress.started > 0 && (
-              <ButtonLink href={`/review?unit=${unit.id}`} className="justify-center">
+              <ButtonLink href={`/review?unit=${unit.id}`} variant="ghost" className="justify-center">
                 <GraduationCap size={15} aria-hidden /> Drill this unit
               </ButtonLink>
             )}
+            <AddUnitButton unitId={unit.id} words={progress.available} started={progress.started > 0} />
             {/* For the half of a class that happens on paper. */}
             <ButtonLink href={`/learn/${unit.id}/worksheet`} variant="ghost" size="sm" className="justify-center">
               <Printer size={14} aria-hidden /> Printable worksheet
