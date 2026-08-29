@@ -83,6 +83,51 @@ describe("falling back", () => {
     expect(calls).toEqual(["openrouter.ai"]);
   });
 
+  it("walks past a key with no credit left, and says so in a sentence", async () => {
+    /*
+      A 402 is where a free key ends up, and it is not a rejected key: this
+      account cannot pay, and the next one in the chain may well be able to.
+
+      What it used to produce was the catch-all, which pasted 180 characters of
+      the provider's own JSON into a line a learner reads, cut off mid-word:
+      `OpenRouter returned 402. {"error":{"message":"This request requires more
+      credits, or fewer max_tokens. You reques`. Found by running test-anu.mjs,
+      which had never been run, against a key that had run out.
+    */
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      calls.push(new URL(url).host);
+      if (url.includes("openrouter")) {
+        return new Response('{"error":{"message":"This request requires more credits"}}', { status: 402 });
+      }
+      return sse("Partitive.");
+    });
+
+    const open = await openWithFallback(resolveProviders(), "system", [{ role: "user", content: "why?" }]);
+    expect(calls).toEqual(["openrouter.ai", "api.openai.com"]);
+    expect(open.config.name).toBe("openai");
+  });
+
+  it("never puts a provider's raw body in front of a learner", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    const bodies = [
+      { status: 402, body: '{"error":{"message":"This request requires more credits"}}' },
+      { status: 400, body: '{"error":{"message":"messages[0].content: expected string"}}' },
+      { status: 500, body: "<html><body>upstream is having a moment</body></html>" },
+    ];
+    for (const { status, body } of bodies) {
+      vi.stubGlobal("fetch", async () => new Response(body, { status }));
+      const failed = await openWithFallback(resolveProviders(), "s", [{ role: "user", content: "q" }])
+        .then(() => null, (error: Error) => error);
+      expect(failed).toBeInstanceOf(TutorError);
+      // Nothing of the provider's own format reaches the sentence.
+      expect(failed!.message).not.toMatch(/[{}<>]|error"|max_tokens/);
+      expect(failed!.message.length).toBeLessThan(220);
+    }
+  });
+
   it("waits on a 429 only when there is nowhere else to ask", async () => {
     /*
       The retry loop and the chain want opposite things from a 429, and the

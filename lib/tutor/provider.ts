@@ -409,8 +409,25 @@ async function assertOk(res: Response, config: ProviderConfig) {
   if (res.status === 404) {
     throw new TutorError(`${config.label} does not have a model called "${config.model}".`, 404);
   }
+  // Out of credit, which is where a free key ends up rather than an unusual
+  // accident, and it is not the same answer as a rejected key: this account
+  // cannot pay and the next one in the chain may well be able to, so it is
+  // worth walking past. It arrives as JSON, and 180 characters of a provider's
+  // JSON truncated mid-word is not a sentence anybody can act on.
+  if (res.status === 402) {
+    throw new TutorError(
+      `${config.label} says this key is out of credit. Top it up, switch the model in .env to a ` +
+      `cheaper one, or add another provider's key: Anu asks whichever ones are set, free first.`,
+      502,
+    );
+  }
+  // The detail goes to the log rather than to the learner. It is somebody
+  // else's error format, in JSON, cut off wherever 180 characters happened to
+  // land, and the one thing a reader can do with it is not understand it.
+  if (detail) console.error(`[tutor] ${config.label} returned ${res.status}: ${detail.slice(0, 400)}`);
   throw new TutorError(
-    `${config.label} returned ${res.status}. ${detail.slice(0, 180)}`.trim(),
+    `${config.label} could not answer just now, and said only that it was a ${res.status}. ` +
+    `Try again in a moment.`,
     502,
   );
 }
