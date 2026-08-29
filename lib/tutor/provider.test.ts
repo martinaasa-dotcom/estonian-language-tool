@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   completeWithImage, FREE_GEMINI_MODELS, FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS,
   openWithFallback, providerResilience, resolveProviders,
@@ -17,10 +17,32 @@ function sse(text: string): Response {
   return new Response(body, { status: 200 });
 }
 
-function only(name: "openrouter" | "anthropic" | "openai") {
-  vi.stubEnv("OPENROUTER_API_KEY", name === "openrouter" ? "k" : "");
-  vi.stubEnv("ANTHROPIC_API_KEY", name === "anthropic" ? "k" : "");
-  vi.stubEnv("OPENAI_API_KEY", name === "openai" ? "k" : "");
+/** Every provider key the chain reads, so a test can speak about all of them. */
+const PROVIDER_KEYS = [
+  "OPENROUTER_API_KEY",
+  "GROQ_API_KEY",
+  "GEMINI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+] as const;
+
+/*
+  Cleared before every test, because the suite has to say the same thing on a
+  machine that has keys and one that does not.
+
+  It did not. `.env` gained real Groq and Gemini keys, the tests stubbed only
+  the three providers that existed when they were written, and thirteen of them
+  failed at once: "the chain is empty with no key at all" is not empty when the
+  developer's own environment quietly adds two more links. A test whose answer
+  depends on the machine is not a test.
+*/
+beforeEach(() => {
+  for (const key of PROVIDER_KEYS) vi.stubEnv(key, "");
+});
+
+function only(name: "openrouter" | "groq" | "gemini" | "anthropic" | "openai") {
+  for (const key of PROVIDER_KEYS) vi.stubEnv(key, "");
+  vi.stubEnv(`${name.toUpperCase()}_API_KEY`, "k");
 }
 
 /*
