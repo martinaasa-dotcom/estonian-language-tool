@@ -541,6 +541,36 @@ check("every browser suite says how many checks it reached", () => {
   }
 });
 
+check("a check a state cannot reach is waived by number, never by a printed word", () => {
+  /*
+    A floor is only honest while the count is a property of the code rather
+    than of the machine. `test-teaching.mjs` was measured with an Ekilex key
+    behind it, so dictation built a real round and Anu had a text box; CI has
+    neither, ran the same correct code, and came in four checks short, which
+    the floor read as a block having stopped running.
+
+    `absent(n, why)` is the answer: it lowers the target by exactly n and says
+    what is missing. What it replaces is the shape this asserts against, a
+    `console.log` with the word SKIP in it, which is what `test-modes.mjs` did
+    for three checks. That prints the same word to a person and nothing at all
+    to the tally, so the block reads as handled and the floor never notices.
+  */
+  for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
+    const source = read(file);
+    if (!/newPage|goto\(/.test(source)) continue;
+    assert.equal(
+      /console\.log\(\s*[`"'][^`"']*SKIP/.test(source),
+      false,
+      `${file} prints a skip instead of waiving it with absent()`,
+    );
+    // A waiver with no number, or with a zero, is a comment wearing a
+    // function's clothes: it would leave the target where it was.
+    for (const waiver of source.matchAll(/\babsent\(\s*([^,]+),/g)) {
+      assert.match((waiver[1] ?? "").trim(), /^[1-9]\d*$/, `${file} waives a count that is not a positive number`);
+    }
+  }
+});
+
 // ── The phone, and the faults that were measured on it ───────────────────────
 
 check("the root declares no overflow", () => {

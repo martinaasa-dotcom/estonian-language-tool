@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check, Plus, Search, Star } from "lucide-react";
@@ -349,7 +350,14 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 {table.map(({ spec, singular, plural, origin }) => (
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                      {spec.en}
+                      {/* The same way in the retrieved paradigm gives: this
+                          table says what the form is, that page says when to
+                          use it. It has to be here too, because a deployment
+                          with no Ekilex key only ever renders this one, and
+                          without the link its case table is a dead end. */}
+                      <Link href={`/grammar/${spec.key.toLowerCase()}`} className="hover:underline">
+                        {spec.en}
+                      </Link>
                       <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
                     </td>
                     <td lang="et" className="est px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>

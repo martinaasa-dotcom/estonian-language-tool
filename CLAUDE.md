@@ -299,6 +299,31 @@ block and watching a floor of 30 wave 34 checks through. Against a thin local
 database a suite now says so, which is worth hearing. Raise a floor when you
 add checks; never lower one to make a run pass.
 
+**A floor is only honest while the count is a property of the code rather than
+of the machine.** It was not. `test-teaching.mjs` was measured on a box whose
+environment carried `EKILEX_API_KEY` and `OPENROUTER_API_KEY`, so dictation
+built a real round and Anu had a text box, and its floor of 38 counted both.
+CI has neither key, ran the same correct code, came in at 34, and the floor
+read that as a block having stopped running. Lowering it was not available:
+the number that lets CI through is the same number that lets a deleted block
+through, which is the fault the floor exists for. `absent(n, why)` is the
+third outcome beside pass and fail: it lowers the target by exactly n, prints
+the reason and the arithmetic, and leaves a block that stops running still
+tripping the floor, because nothing waived it. Waiving more than half a suite
+fails outright whatever the reasons say. It replaced a `console.log` with the
+word SKIP in it, which said the same thing to a person and nothing at all to
+the tally, and an invariant now fails on that shape and on a waiver with no
+number behind it.
+
+Both of the checks that failed there were **real gaps that only a keyless
+deployment reaches**, which is the default one. The dictionary's case table
+linked to the grammar reference from the retrieved Ekilex paradigm and not
+from the derived table, so without a key that table was a dead end; and Anu's
+no-key empty state dropped the question a review card had just handed her, so
+the key was the price of even seeing what you were about to ask. Neither was
+reachable on a machine with the keys set, which is the argument for running a
+suite in the state a stranger installs into.
+
 `scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
 1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on
 phones and gone above the breakpoint, every target clear of 44px, and the pull gesture driven for

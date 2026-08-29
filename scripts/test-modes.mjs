@@ -24,7 +24,7 @@ page.on("console", (m) => {
 });
 
 // Floor: 23, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Practice modes", { floor: 23 });
+const { check, absent, done } = suite("Practice modes", { floor: 23 });
 
 /**
  * Answers whatever kind of card is on screen and grades it Good.
@@ -132,7 +132,10 @@ for (let i = 0; i < 30 && !typedReached; i++) {
   await answerCurrentCard();
 }
 if (!typedReached && everyCardIsNew) {
-  console.log("SKIP  typed answers — every card in this deck is new. Run `npm run demo` first.");
+  // A `console.log` saying SKIP was all this used to be, which is the exact
+  // shape the floor exists to catch: three checks not run and nothing counting
+  // them. Waived by name and by number now, so the arithmetic is on screen.
+  absent(3, "a deck with a card past its first sitting: run `npm run demo`");
 } else {
   check("a typed card is reached within a session", typedReached);
 }
@@ -158,6 +161,8 @@ if (rateable) {
   await page.waitForTimeout(1500);
   const gradedAfter = await page.getByText(/\d+ graded/).textContent();
   check("u undoes the last grade", gradedBefore !== gradedAfter, `${gradedBefore?.trim()} -> ${gradedAfter?.trim()}`);
+} else {
+  absent(1, "a card that reached its rating buttons, which none did here");
 }
 
 /**

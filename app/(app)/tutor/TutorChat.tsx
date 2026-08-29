@@ -131,7 +131,20 @@ export function TutorChat({
       <Empty
         title="Anu needs an API key"
         body="Everything else in the app works without one, the dictionary, your cards and audio are all local. Settings has a two-minute walkthrough for getting a free key."
-        action={<Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>}
+        action={
+          <div className="flex flex-col items-center gap-4">
+            {/* A question handed over by the card the learner just got wrong.
+                Dropping it because this deployment has no key throws away the
+                one thing they came here with, and the wording is gone by the
+                time they get back. Shown, so it can be read and copied. */}
+            {initialQuestion && (
+              <p className="max-w-[48ch] text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                You arrived with a question: <span style={{ color: "var(--ink)" }}>{initialQuestion}</span>
+              </p>
+            )}
+            <Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>
+          </div>
+        }
       />
     );
   }

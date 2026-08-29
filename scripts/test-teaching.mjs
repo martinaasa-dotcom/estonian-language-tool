@@ -14,7 +14,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 38, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Teaching layer", { floor: 38 });
+const { check, absent, done } = suite("Teaching layer", { floor: 38 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
@@ -80,6 +80,9 @@ if (hasRound) {
     /No sentences/i.test(empty) && /Ekilex/i.test(empty));
   check("and points somewhere that would fill them in",
     (await page.locator('main a[href*="/dictionary"], main a[href*="/learn"]').count()) > 0);
+  // The round itself is six checks and this state reaches two of them. Said
+  // out loud, with the number, so the floor still means what it says.
+  absent(4, "sentences from Ekilex, which this database has none of");
 }
 
 if (hasRound) {
@@ -164,12 +167,24 @@ check("and offers Anu as well", (await page.getByRole("link", { name: /Ask Anu/ 
 const anuHref = await page.getByRole("link", { name: /Ask Anu/ }).first().getAttribute("href");
 await page.goto(B + anuHref, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
-const prefilled = await page.getByLabel("Ask Anu a question").inputValue();
-check("Anu opens with the question already written", prefilled.length > 20, prefilled.slice(0, 60));
-// Written, not sent: spending a model call the learner did not ask for would be
-// rude, and they may want to reword it first.
-check("but not sent on their behalf",
-  (await page.locator("text=/keep getting this form wrong/").count()) <= 1);
+const asked = decodeURIComponent(new URL(B + anuHref).searchParams.get("q") ?? "");
+const box = page.getByLabel("Ask Anu a question");
+if (await box.count()) {
+  const prefilled = await box.inputValue();
+  check("Anu opens with the question already written", prefilled.length > 20, prefilled.slice(0, 60));
+  // Written, not sent: spending a model call the learner did not ask for would
+  // be rude, and they may want to reword it first.
+  check("but not sent on their behalf",
+    (await page.locator("text=/keep getting this form wrong/").count()) <= 1);
+} else {
+  // No model key on this deployment, so there is no box. The question is the
+  // one thing the learner arrived with, and an empty state that drops it makes
+  // the key the price of even seeing what they were about to ask.
+  const shown = await page.locator("main").innerText();
+  check("with no key, Anu still shows the question that was handed over",
+    asked.length > 20 && shown.includes(asked.slice(0, 40)), asked.slice(0, 60));
+  absent(1, "a model key, so there is no box to prefill");
+}
 
 // ─── Sticking points ──────────────────────────────────────────────────────────
 
@@ -199,6 +214,8 @@ if (hasSticking) {
   await page.waitForTimeout(1200);
   check("and it can be put straight back",
     (await page.getByText(/it will not come up until you put it back/i).count()) === 0);
+} else {
+  absent(5, "a card with enough lapses to flag, which this deck has none of");
 }
 
 // ─── The shortcut sheet ───────────────────────────────────────────────────────
