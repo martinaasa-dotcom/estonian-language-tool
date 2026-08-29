@@ -46,11 +46,9 @@ export interface ChatMessage {
 export function resolveProviders(): ProviderConfig[] {
   const chain: ProviderConfig[] = [];
   if (process.env.OPENROUTER_API_KEY) {
-    chain.push({
-      name: "openrouter",
-      model: process.env.OPENROUTER_MODEL || "openai/gpt-4o",
-      label: "OpenRouter",
-    });
+    for (const model of openRouterModels()) {
+      chain.push({ name: "openrouter", model, label: "OpenRouter" });
+    }
   }
   if (process.env.ANTHROPIC_API_KEY) {
     chain.push({
@@ -69,6 +67,43 @@ export function resolveProviders(): ProviderConfig[] {
   return chain;
 }
 
+/**
+ * The free models Anu asks first, in order, and why there is more than one.
+ *
+ * This default used to be `openai/gpt-4o`, which is a paid model at
+ * OpenRouter's full rate, three lines under a comment saying the default
+ * provider is a free one. A key with no credit on it therefore got a 402 and
+ * Anu could not answer at all, which is what a new install looks like:
+ * somebody follows the setup, pastes a free key, and the tutor is dead.
+ *
+ * A free model is rate-limited hard upstream by design, so one of them is a
+ * name rather than a plan. Measured on 2026-08-29 against Anu's own system
+ * prompt and a real question ("Why is it 'Lugesin raamatut' and not 'Lugesin
+ * raamatu'?"), two of the five free models tried answered 429 in the same
+ * minute, and these three answered in six to seven seconds, each naming the
+ * partitive and the Estonian term beside it, with the minimal pair the prompt
+ * asks for. They are ordered by how cleanly they wrote it: the third reaches
+ * for a dash, which `humanize.ts` then has to take back out.
+ *
+ * `OPENROUTER_MODEL` still overrides, and takes a comma-separated list, so a
+ * deployment with credit can point the whole chain at a paid model without
+ * touching this. `priceFor` already charges a `:free` slug nothing, so the
+ * spend cap is not confused by any of it.
+ */
+export const FREE_OPENROUTER_MODELS = [
+  "google/gemma-4-31b-it:free",
+  "minimax/minimax-m3:free",
+  "nvidia/nemotron-3-super-120b-a12b:free",
+] as const;
+
+function openRouterModels(): string[] {
+  const configured = (process.env.OPENROUTER_MODEL ?? "")
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+  return configured.length > 0 ? configured : [...FREE_OPENROUTER_MODELS];
+}
+
 /** The head of the chain, for the places that only need to say whether Anu is set up at all. */
 export function resolveProvider(): ProviderConfig | null {
   return resolveProviders()[0] ?? null;
@@ -82,8 +117,14 @@ export function resolveProvider(): ProviderConfig | null {
  * provider in the chain would give the same answer for its own reasons and
  * trying them all just turns one clear message into a slower one.
  */
-function worthFallingBackFrom(error: unknown): boolean {
+function worthFallingBackFrom(error: unknown, sameProviderNext = false): boolean {
   if (!(error instanceof TutorError)) return true;
+  // A model that does not exist is fatal across providers, for the reason
+  // above, and is exactly what to walk past within one: the defaults here are
+  // free models, and a free model is retired the moment it stops being worth
+  // somebody's money. Reaching the next one costs a request; refusing costs
+  // the learner their answer over a slug that went stale in a constant.
+  if (error.status === 404) return sameProviderNext;
   // 402 belongs here for the same reason as 429: one provider being out of
   // credit says nothing about the next one's balance, so falling through costs
   // a request and keeps the tutor answering.
@@ -203,7 +244,8 @@ export async function openWithFallback(
       // of the chain — falling back to a dearer model must not go unmetered.
       return { config, chunks: readStream(config, upstream, system, messages, onUsage) };
     } catch (error) {
-      if (i === chain.length - 1 || !worthFallingBackFrom(error)) throw error;
+      const next = chain[i + 1];
+      if (!next || !worthFallingBackFrom(error, next.name === config.name)) throw error;
     }
   }
 

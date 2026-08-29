@@ -10,12 +10,11 @@
  * network, and the point of the design is that the mechanical half stands on
  * its own. That is what this checks.
  */
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const BASE = process.env.BASE_URL ?? "http://localhost:3000";
-const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-});
+const BASE = baseUrl();
+const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
 /**
@@ -24,11 +23,8 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
  */
 const app = page.locator("main");
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
-};
+// Floor: measured 13 in dev mode. It cannot run against a production build at all: `page.waitForFunction` evaluates a string, which the production Content Security Policy refuses.
+const { check, done } = suite("The new modes, driven", { floor: 13 });
 
 /**
  * Wait from Node, by polling, rather than with `page.waitForFunction`.
@@ -154,6 +150,5 @@ check("diagnosis reports a finding or explains its silence",
     .test(wordsBody),
   wordsBody.match(/Not enough case reviews|Nothing stands out|until the stem changes|weakest case|plural stem/i)?.[0] ?? "");
 
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

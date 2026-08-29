@@ -1,7 +1,8 @@
 import { launchChromium } from "./lib/browser.mjs";
-const B = "http://localhost:3000";
-let failures = 0;
-const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
+import { baseUrl, suite } from "./lib/checks.mjs";
+const B = baseUrl();
+// Floor: 11, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Polish", { floor: 11 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
@@ -60,6 +61,5 @@ await page.goto(`${B}/review`, { waitUntil: "networkidle" });
 check("the card face is a live region", (await page.locator('[aria-live="polite"]').count()) > 0);
 
 console.log(errors.length ? `\nerrors:\n  ${errors.join("\n  ")}` : "\nno console errors");
-console.log(failures === 0 ? "\nAll polish checks passed." : `\n${failures} failed.`);
 await browser.close();
-process.exit(failures ? 1 : 0);
+done();
