@@ -288,3 +288,39 @@ exercise simply does not appear when the material for it is missing.
 4. **The worksheet is one sheet per unit.** No question banks, no randomised variants, no per-class
    sets. It is deterministic on purpose: a class comparing answers has to be comparing the same
    sheet.
+
+## 10. The fifth pass: diagnosis, and the rule at the moment it is wanted
+
+§9 built the teaching layer. This pass connects it to the daily loop, and adds the one diagnostic a
+spaced-repetition deck cannot do without.
+
+| Area | What it is |
+|---|---|
+| **Sticking points** (on `/progress`) | The handful of cards that keep lapsing, one row per word, each saying what is wrong with it. Actions in order of what usually helps: the case explanation, the dictionary entry, and only then setting it aside — reversibly |
+| **"Why?" on a revealed card** | A review card that has just shown its answer offers the grammar page for the case it drills, and Anu with the question already written |
+| **Print from dark mode** | Fixed: the dark palette followed the page onto paper, so a teacher reading in dark mode printed white ink on white paper |
+| **Two guards on the restore suite** | It refuses to run against a non-local database, and writes the export to disk before deleting anything |
+
+### Why sticking points are named rather than scored
+
+Anki's leech handling suspends a card after eight lapses. The instinct is right and the number is
+wrong for a language course: by the eighth lapse the learner has spent twenty minutes on one word
+and drawn a conclusion about themselves rather than about the card. So the threshold is four, and
+the framing is diagnostic — a card that keeps lapsing after being learned is usually a grammar
+problem wearing a vocabulary costume, which is why the explanation is the first action offered and
+the off switch is the last.
+
+One row per word, too. A noun with four card types produces four rows otherwise, burying every
+other word behind the one the learner already knows they are stuck on; the worst card stands for
+the rest and says how many.
+
+### Known limitations, still
+
+1. **Setting a card aside is per card, not per word.** The row that offers it stands for several
+   cards; the button suspends the one it names. Suspending everything for a word is still done from
+   My words.
+2. **The undo is only good for the visit.** The list is built from unsuspended cards, so a
+   suspended one is gone on the next load — `Put it back` is offered while the page is open, and
+   after that the card lives in My words like any other suspended card.
+3. **Anu is handed the question, not the card.** She gets a sentence naming the case and the word;
+   she does not see the learner's answer, their history, or the rest of the deck.

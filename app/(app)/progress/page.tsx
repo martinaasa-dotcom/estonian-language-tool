@@ -11,9 +11,11 @@ import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading,
 } from "@/lib/stats/history";
+import { stickingPoints } from "@/lib/stats/sticking";
 import { ButtonLink } from "@/components/Button";
 import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
+import { StickingPoints } from "@/components/StickingPoints";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stat } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +34,7 @@ export default async function ProgressPage() {
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
       where: { card: { ownerId }, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
-      select: { reviewedAt: true, rating: true, targetCase: true, stateBefore: true },
+      select: { reviewedAt: true, rating: true, targetCase: true, stateBefore: true, cardId: true },
       orderBy: { reviewedAt: "asc" },
     }),
     prisma.card.findMany({
@@ -45,6 +47,25 @@ export default async function ProgressPage() {
     }),
     readSettings(ownerId, [SETTING_KEYS.leaderboard, SETTING_KEYS.displayName]),
   ]);
+
+  // The cards that keep coming back. Lapses live on the card's own FSRS state;
+  // the accuracy beside them is counted from the log above.
+  const deck = await prisma.card.findMany({
+    where: { ownerId },
+    select: {
+      id: true, front: true, back: true, cardType: true, targetCase: true,
+      lapses: true, reps: true, suspended: true,
+      lexeme: { select: { lemma: true } },
+    },
+  });
+  const sticking = stickingPoints(
+    deck.map((c) => ({
+      id: c.id, lemma: c.lexeme?.lemma ?? null, front: c.front, back: c.back,
+      cardType: c.cardType, targetCase: c.targetCase,
+      lapses: c.lapses, reps: c.reps, suspended: c.suspended,
+    })),
+    reviews,
+  );
 
   const heatmap = buildHeatmap(reviews.map((r) => r.reviewedAt), HEATMAP_DAYS, now);
   const forecast = buildForecast(dueDates.map((c) => c.due), FORECAST_DAYS, now);
@@ -247,6 +268,18 @@ export default async function ProgressPage() {
             </Card>
           </section>
         </div>
+
+        {sticking.length > 0 && (
+          <section>
+            <SectionTitle hint="worst first">Sticking points</SectionTitle>
+            <p className="mb-3 max-w-[68ch] text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+              Cards you have learned and forgotten more than once. A card that keeps lapsing is
+              usually a grammar problem wearing a vocabulary costume — so the explanation comes
+              first, and setting it aside is the last resort rather than the first.
+            </p>
+            <StickingPoints points={sticking} />
+          </section>
+        )}
 
         <div className="grid gap-5 md:grid-cols-2">
           <section>

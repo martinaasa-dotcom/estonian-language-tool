@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Check, Keyboard, RotateCcw, Undo2, X, Zap } from "lucide-react";
+import { BookOpen, Check, Compass, Keyboard, MessageCircleQuestion, RotateCcw, Undo2, X, Zap } from "lucide-react";
 import { checkAchievements, gradeCard, gradeCards, undoGrade } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
@@ -38,6 +38,45 @@ const TONE: Record<number, string> = {
 const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
 };
+
+/**
+ * "Why?", at the only moment anyone asks it.
+ *
+ * A reference page nobody can find is a reference page nobody reads, and the
+ * moment a learner wants the rule is the second after the answer appears and
+ * does not match what they thought. Both links are one tap and neither leaves
+ * the answer behind: the grammar page explains the case this card drills, and
+ * Anu opens with the question already written so it can be sent or edited.
+ */
+function WhyRow({ card }: { card: ReviewCard }) {
+  const question = card.targetCase
+    ? `Why is the ${card.targetCase.toLowerCase()} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
+    : `Explain "${card.lemma ?? card.front}" to me — what does it mean and when would an Estonian use it?`;
+
+  const pill =
+    "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px";
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      {card.targetCase && (
+        <Link
+          href={`/grammar/${card.targetCase.toLowerCase()}`}
+          className={pill}
+          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+        >
+          <Compass size={12} aria-hidden /> Why the {card.targetCase.toLowerCase()}?
+        </Link>
+      )}
+      <Link
+        href={`/tutor?q=${encodeURIComponent(question)}`}
+        className={pill}
+        style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+      >
+        <MessageCircleQuestion size={12} aria-hidden /> Ask Anu
+      </Link>
+    </div>
+  );
+}
 
 const TYPE_LABEL: Record<string, string> = {
   RECOGNITION: "Estonian → English",
@@ -592,6 +631,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
               First time seeing this one — read it, say it, then tell the scheduler how well it stuck.
             </p>
           )}
+
+          {(revealed || chosen) && <WhyRow card={card} />}
         </div>
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
