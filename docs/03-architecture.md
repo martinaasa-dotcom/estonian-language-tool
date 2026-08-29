@@ -330,6 +330,23 @@ newer model when one appears. The bar it prints is a 5% word error rate, which i
 which a transcript could be shown with its caveat stated; anything above that stays out of the
 learner's way. Nothing about this decision needs to be taken on trust again.
 
+*A general multimodal model is the open question, and it is open rather than answered.* Gemini
+takes audio directly and is a different architecture reaching the same task from the other side,
+so `--backend gemini` exists to measure it on byte-identical audio. On the handful of sentences
+that got through before the free tier's quota stopped the run, it transcribed `Poiss ronis üle
+aia.` exactly, which is one of the sentences Whisper turned into `Pois`. That is interesting and
+it is not a result: the sample was too small to be one. **No number for Gemini is recorded here on
+purpose.** The quota is twenty requests a minute and tighter in practice, which is also a finding
+in itself, since a recogniser that cannot be called more than that is not one a class of learners
+could share. Finish the measurement on a paid key, or when the quota resets, before believing
+anything about it.
+
+*The script refuses to flatter a recogniser, because the first version did.* A run whose sentences
+were mostly refused reported a 2.0% word error rate over the three that survived and read as a
+fifteenfold improvement. It now names how many sentences were actually measured and exits without
+a verdict below two thirds of them, on the same reasoning as the browser suites' counting harness:
+a measurement that silently shrinks its own sample is worse than no measurement.
+
 **ADR-019 — A class is a view over what learners already own.**
 *Context:* the app is used in real Estonian courses, where the teacher's actual question is "who is
 keeping up" and the students' is "where is this week's homework". *Decision:* `Classroom` +

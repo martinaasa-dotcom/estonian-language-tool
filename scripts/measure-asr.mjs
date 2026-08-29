@@ -19,22 +19,63 @@
  * The sentences come from the dictionary's own attested Ekilex usages, so this
  * measures the recogniser against the exact Estonian the app teaches.
  *
- *   GROQ_API_KEY=... node scripts/measure-asr.mjs [--limit 20]
+ *   node scripts/measure-asr.mjs --backend groq   [--model whisper-large-v3]
+ *   node scripts/measure-asr.mjs --backend gemini [--model gemini-flash-latest]
  */
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
-const KEY = process.env.GROQ_API_KEY;
-const MODEL = process.env.ASR_MODEL ?? "whisper-large-v3";
 const TTS = "https://api.tartunlp.ai/text-to-speech/v2";
-const ASR = "https://api.groq.com/openai/v1/audio/transcriptions";
 
-if (!KEY) {
-  console.error("Set GROQ_API_KEY to run this.");
+const arg = (name, fallback) => {
+  const at = process.argv.indexOf(`--${name}`);
+  return at > 0 ? process.argv[at + 1] : fallback;
+};
+const LIMIT = Number(arg("limit", 20));
+const BACKEND = arg("backend", "groq");
+const MODEL = arg("model", undefined);
+/** Milliseconds between requests, to stay under a free tier rather than fight it. */
+const PACE_MS = Number(arg("pace", 5000));
+
+/*
+  The recognisers worth comparing, and they are not the same kind of thing.
+
+  Whisper is a dedicated speech model. Gemini is a general multimodal model
+  that happens to accept audio, which is a different architecture reaching the
+  same task from the other side, and the reason it is worth measuring rather
+  than assuming: a bigger model trained on more of the web may simply know more
+  Estonian than a speech model does.
+
+  Both hear byte-identical audio, from the same cache, so the only difference
+  between two runs is the recogniser.
+*/
+const BACKENDS = {
+  groq: {
+    label: "Groq",
+    key: () => process.env.GROQ_API_KEY,
+    keyName: "GROQ_API_KEY",
+    defaultModel: "whisper-large-v3",
+    hear: hearGroq,
+  },
+  gemini: {
+    label: "Google Gemini",
+    key: () => process.env.GEMINI_API_KEY,
+    keyName: "GEMINI_API_KEY",
+    defaultModel: "gemini-flash-latest",
+    hear: hearGemini,
+  },
+};
+
+const backend = BACKENDS[BACKEND];
+if (!backend) {
+  console.error(`Unknown backend "${BACKEND}". Try: ${Object.keys(BACKENDS).join(", ")}`);
   process.exit(1);
 }
-
-const limitAt = process.argv.indexOf("--limit");
-const LIMIT = limitAt > 0 ? Number(process.argv[limitAt + 1]) : 20;
+if (!backend.key()) {
+  console.error(`Set ${backend.keyName} to measure ${backend.label}.`);
+  process.exit(1);
+}
+const model = MODEL ?? backend.defaultModel;
 
 /** Attested sentences from the built dictionary, shortest first so they are sayable. */
 function sentences() {
@@ -85,7 +126,20 @@ function errors(said, heard) {
   return { distance: d[a.length][b.length], length: a.length };
 }
 
+/*
+  Synthesised once and kept on disk.
+
+  Two recognisers being compared have to hear the same waveform, or the
+  comparison measures the voice as much as the model. It also stops a rerun
+  asking a public service to say the same twenty-five sentences again.
+*/
+const AUDIO_CACHE = "prisma/data/.cache/asr-audio";
+
 async function speak(text) {
+  const name = createHash("sha256").update(text).digest("hex").slice(0, 24);
+  const path = `${AUDIO_CACHE}/${name}.wav`;
+  if (existsSync(path)) return readFileSync(path);
+
   const res = await fetch(TTS, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "audio/wav" },
@@ -93,18 +147,22 @@ async function speak(text) {
     signal: AbortSignal.timeout(60_000),
   });
   if (!res.ok) throw new Error(`TTS ${res.status}`);
-  return Buffer.from(await res.arrayBuffer());
+  const wav = Buffer.from(await res.arrayBuffer());
+  mkdirSync(AUDIO_CACHE, { recursive: true });
+  writeFileSync(path, wav);
+  return wav;
 }
 
-async function hear(wav) {
+/** A dedicated speech model, over the OpenAI-shaped transcription endpoint. */
+async function hearGroq(wav) {
   const form = new FormData();
   form.append("file", new Blob([wav], { type: "audio/wav" }), "speech.wav");
-  form.append("model", MODEL);
+  form.append("model", model);
   form.append("language", "et");
   form.append("response_format", "json");
-  const res = await fetch(ASR, {
+  const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
     method: "POST",
-    headers: { authorization: `Bearer ${KEY}` },
+    headers: { authorization: `Bearer ${process.env.GROQ_API_KEY}` },
     body: form,
     signal: AbortSignal.timeout(120_000),
   });
@@ -112,22 +170,79 @@ async function hear(wav) {
   return ((await res.json()).text ?? "").trim();
 }
 
+/**
+ * A general multimodal model, asked to transcribe.
+ *
+ * The instruction is deliberately bare. Asking it to "correct" or "clean up"
+ * anything would measure how well it guesses at Estonian rather than how well
+ * it heard, and guessing is the failure this whole exercise is trying to avoid.
+ */
+async function hearGemini(wav) {
+  const body = {
+    contents: [{
+      parts: [
+        { text: "Transcribe this Estonian audio exactly as spoken. Output only the transcription." },
+        { inline_data: { mime_type: "audio/wav", data: wav.toString("base64") } },
+      ],
+    }],
+  };
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent` +
+    `?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(180_000),
+    },
+  );
+  if (!res.ok) throw new Error(`ASR ${res.status}`);
+  const data = await res.json();
+  return (data.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim();
+}
+
 const pool = sentences();
 const chosen = pool.slice(0, LIMIT);
-console.log(`${MODEL} against ${chosen.length} attested Estonian sentences,`);
+console.log(`${backend.label} ${model} against ${chosen.length} attested Estonian sentences,`);
 console.log("spoken by a native synthetic voice: clean audio, no accent, no noise.\n");
 
 let totalErrors = 0;
 let totalWords = 0;
 let exact = 0;
 const wrong = [];
+const skipped = [];
+
+/**
+ * A free tier will rate-limit a run like this, and a refusal is not a result.
+ *
+ * The first version of this script counted a 429 as "skipped" and carried on,
+ * which produced the worst possible outcome: a run where almost every sentence
+ * was refused reported a 2% word error rate over the three that got through,
+ * and looked like the recogniser had improved fifteenfold. A measurement that
+ * silently shrinks its own sample flatters whatever it is measuring.
+ */
+async function withRetry(hear) {
+  let last;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      return await hear();
+    } catch (error) {
+      last = error;
+      if (!String(error.message).includes("429")) throw error;
+      await new Promise((r) => setTimeout(r, 4000 * 2 ** attempt));
+    }
+  }
+  throw last;
+}
 
 for (const said of chosen) {
   let heard;
   try {
-    heard = await hear(await speak(said));
+    const wav = await speak(said);
+    heard = await withRetry(() => backend.hear(wav));
   } catch (error) {
-    console.log(`  skipped (${error.message}): ${said}`);
+    skipped.push(`${said}  (${error.message})`);
+    process.stdout.write("?");
     continue;
   }
   const { distance, length } = errors(said, heard);
@@ -136,11 +251,40 @@ for (const said of chosen) {
   if (distance === 0) exact += 1;
   else wrong.push({ said, heard });
   process.stdout.write(distance === 0 ? "." : "x");
+  /*
+    Paced rather than hammered. A free tier allows a handful of requests a
+    minute, and riding into its limit turns a five minute measurement into
+    twenty of exponential backoff. Waiting between requests is faster than
+    being refused and then waiting anyway.
+  */
+  await new Promise((r) => setTimeout(r, PACE_MS));
 }
 
+const measured = chosen.length - skipped.length;
 const wer = totalWords === 0 ? 0 : (totalErrors / totalWords) * 100;
-console.log(`\n\n  sentences transcribed exactly: ${exact}/${chosen.length}`);
+
+console.log(`\n\n  sentences measured: ${measured}/${chosen.length}`);
+if (skipped.length) {
+  console.log(`  refused by the service: ${skipped.length}`);
+  for (const line of skipped.slice(0, 3)) console.log(`    ${line}`);
+}
+console.log(`  sentences transcribed exactly: ${exact}/${measured}`);
 console.log(`  word error rate: ${wer.toFixed(1)}%\n`);
+
+/*
+  Refuse to conclude from a sample that shrank. Two thirds is the floor: below
+  that the survivors are whichever sentences the service happened to allow,
+  which is not a random sample of anything.
+*/
+const FLOOR = Math.ceil(chosen.length * (2 / 3));
+if (measured < FLOOR) {
+  console.log(
+    `  NOT A RESULT. Only ${measured} of ${chosen.length} sentences were measured, ` +
+    `below the floor of ${FLOOR}.\n  Re-run when the rate limit has cleared; ` +
+    `a smaller --limit is the usual fix.`,
+  );
+  process.exit(2);
+}
 
 if (wrong.length) {
   console.log("  what it got wrong:");

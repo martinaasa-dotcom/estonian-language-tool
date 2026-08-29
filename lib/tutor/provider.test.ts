@@ -39,10 +39,16 @@ function sse(text: string): Response {
 /**
  * Exactly one provider configured, whichever the case is about.
  *
- * Driven off `PROVIDER_KEY_ENV` rather than a list retyped here, so a provider
- * added to the chain cannot be left out of the clearing. That is the fault this
- * helper actually had: it named three keys, the chain grew to five, and the two
- * it did not name were whatever the machine happened to export.
+ * Driven off `PROVIDER_KEY_ENV`, which is exported by the module that reads
+ * those keys, rather than a list retyped here. That is the whole fix and not a
+ * tidying: the fault was a list in this file falling behind the chain, so a
+ * second copy of the list living here is the same fault waiting to happen. A
+ * provider added to `resolveProviders` is now three lines from the list that
+ * has to name it.
+ *
+ * Two sessions fixed this within the hour and the other one kept its list in
+ * this file. Its sentence is worth keeping though, because it is the rule:
+ * a test whose answer depends on the machine is not a test.
  */
 function only(name: "openrouter" | "groq" | "gemini" | "anthropic" | "openai") {
   const wanted = `${name.toUpperCase()}_API_KEY`;
