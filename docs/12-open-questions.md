@@ -59,3 +59,25 @@ should be planned as one after v1, not smuggled into a table cell.
 Currently designed for exactly one user, which permits no auth, no onboarding and no multi-tenancy.
 If classmates or a teacher might use it, that assumption needs revisiting **before** Phase 1, not
 after — it changes the data model, not just the UI.
+
+### Q8 — Around 30 adjectives in the built dictionary are labelled `NOUN`
+
+Found during the A1 to B1 gloss review (`docs/17-gloss-audit.md` §4) and left alone there, because
+their glosses are right and the review was about glosses.
+
+`scripts/expand-seed.ts` draws candidates from four Wiktionary categories in order and keeps the
+first one a word appears in. Nouns are first, so a word listed as both a noun and an adjective
+comes out a noun: `lilla`, `kallis`, `valge`, `sinine`, `noor`, `tark`, `paks`, `magus`, `kuiv`,
+`vana`, `vale`, `võõras` and about twenty more. Ekilex cannot settle it either; it calls every
+nominal a "noomen", which is why the builder asks Wiktionary in the first place.
+
+Nothing visibly breaks today, because an Estonian adjective declines like a noun and the paradigm
+is therefore right. It matters wherever the part of speech is the point rather than the shape:
+which practice modes a word is eligible for, and any future rule that reads `pos`.
+
+**Needed:** decide whether the fix is to prefer the more specific category (adjective over noun,
+as the builder already does for adverbs), or to keep both and let a word carry more than one part
+of speech. The second is truer and is a schema change.
+
+**Default if unanswered:** leave it. It is wrong metadata rather than wrong teaching, and the
+gloss review deliberately did not widen into it.
