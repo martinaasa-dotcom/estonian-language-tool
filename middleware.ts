@@ -89,7 +89,11 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/terms") ||
     // The offline fallback holds no data and has to render from the service
     // worker's cache, where there is no session to check.
-    request.nextUrl.pathname.startsWith("/offline");
+    request.nextUrl.pathname.startsWith("/offline") ||
+    // Aggregate metrics carry their own bearer token and are read by whoever
+    // runs the deployment, not by a signed-in learner. Past this gate it
+    // authenticates itself, and with no token configured it 404s.
+    request.nextUrl.pathname.startsWith("/api/metrics");
 
   // A signed-in address that is no longer on the allowlist is signed out here
   // rather than only in the OAuth callback, so revoking access takes effect on

@@ -37,6 +37,15 @@ export default function PrivacyPage() {
           <strong>What is not stored.</strong> No analytics, no advertising identifiers, no
           third-party trackers, no cookies beyond the one that keeps you signed in.
         </P>
+        <P>
+          <strong>How we tell whether the app works.</strong> We count, from the review log
+          described above, how many people come back after a day, a week and a month. It is
+          worked out from what is already there rather than collected separately, which is why
+          there is still no tracker on this site. Only totals ever leave that page: no name, no
+          address, no word you looked up, and a group of fewer than five people is reported as a
+          size with no percentage, because &ldquo;one of two people came back&rdquo; is a fact
+          about a person rather than a statistic.
+        </P>
       </S>
 
       <S title="What leaves this site">
