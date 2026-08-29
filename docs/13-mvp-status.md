@@ -738,6 +738,34 @@ the course dictionary replaced the shorter seeded glosses, so the markup had
 been right about everything except how long a real gloss is. `Chip` takes an
 explicit `wrap` now, and nothing else in the app asks for it.
 
+### The offline promise, which was not being kept on the first journey
+
+`smoke-offline.mjs` had been failing one check on main, and the reason it went
+unnoticed is that CI did not run it. It runs it now, which is the half of this
+that matters: the suite `CLAUDE.md` calls the one worth keeping green above all
+was the only one nothing watched.
+
+The fault behind it was real and had the worst possible shape. `/review` is
+served network-first and cached as a *side effect* of the worker serving that
+navigation, and a worker never serves the navigation that installs it. So on a
+first visit the page was fetched, the worker installed behind it, and
+`clients.claim()` took over a client whose own page had never passed through it.
+Pull the plug at that point and there is nothing to match, so the fallback goes
+to /offline. Somebody opening the app for the first time on the way to the bus
+stop got "this screen needs a connection" for the whole journey, and a working
+app on the way home.
+
+Measured rather than reasoned about: at the moment of the offline reload the
+page cache did not exist at all, only the two-entry shell cache the install
+step writes.
+
+`warmOpenPages` caches the pages already open at the moment the worker takes
+over. Every open window rather than a hardcoded `/review`, because the promise
+is "the page you were last on opens again" and not "one route is special", and
+failures are swallowed per client because a page that will not fetch is exactly
+the page with nothing to cache. Not `install`, where `cache.addAll` is atomic
+and one redirecting URL would take the offline page down with it.
+
 ### Known limitations, stated plainly
 
 1. **C2 is named, not delivered.** Its ten units cover the specialised registers,

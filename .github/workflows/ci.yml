@@ -248,6 +248,13 @@ jobs:
       - run: node scripts/test-assess.mjs
       - run: node scripts/test-exam.mjs
       - run: node scripts/a11y-check.mjs
+      # CLAUDE.md calls this the one worth keeping green above all, and until
+      # now nothing ran it. It was red on main for an unknown length of time
+      # with a real fault behind it: the page cache is filled as a side effect
+      # of the worker serving a navigation, and the worker never serves the
+      # navigation that installs it, so a first visit had nothing to fall back
+      # on. A suite nobody runs cannot tell you that.
+      - run: node scripts/smoke-offline.mjs
 
   load:
     name: The derived queries, at a size somebody reaches
