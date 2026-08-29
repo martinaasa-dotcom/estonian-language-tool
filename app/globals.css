@@ -302,7 +302,44 @@
   that reads like paper.
 */
 @media print {
-  body { background: #fff; }
+  /*
+    Paper is white whatever the screen was.
+
+    Dark mode swaps --ink to near-white, and a browser keeps those values when
+    it prints — so a teacher reading in dark mode who hits Print got a blank
+    sheet with invisible ink on it. These rules sit outside `@layer base`, so
+    they win over the dark overrides inside it without a specificity fight.
+  */
+  :root {
+    color-scheme: light;
+    --ground: #fbf9ff;
+    --surface: #ffffff;
+    --raised: #f4f1fe;
+    --ink: #241f35;
+    --ink-2: #5b5470;
+    --ink-3: #8b84a3;
+    --rule: #e8e3f7;
+    --rule-soft: #f2effb;
+    --accent: #7a6bf0;
+    --accent-soft: #ece9ff;
+    --accent-deep: #5b4bd6;
+    --mint: #1fb894;
+    --mint-soft: #dcf7ee;
+    --peach: #ef6f52;
+    --peach-soft: #ffe6df;
+    --butter: #cf9114;
+    --butter-soft: #fff0d4;
+    --sky: #2b93d8;
+    --sky-soft: #ddeffd;
+    --blush: #e2559a;
+    --blush-soft: #ffe2f0;
+    --shadow-sm: none;
+    --shadow: none;
+    --shadow-lg: none;
+    --shadow-accent: none;
+  }
+
+  body { background: #fff; color: var(--ink); }
 
   /* The rail, the phone bar, and anything a page marks as screen-only. */
   nav[aria-label="Main"], .no-print { display: none !important; }

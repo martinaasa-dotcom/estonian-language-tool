@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Check, Keyboard, RotateCcw, Undo2, X, Zap } from "lucide-react";
+import { BookOpen, Check, Compass, Keyboard, MessageCircleQuestion, RotateCcw, Undo2, X, Zap } from "lucide-react";
 import { checkAchievements, gradeCard, gradeCards, undoGrade } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
@@ -38,6 +38,45 @@ const TONE: Record<number, string> = {
 const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
 };
+
+/**
+ * "Why?", at the only moment anyone asks it.
+ *
+ * A reference page nobody can find is a reference page nobody reads, and the
+ * moment a learner wants the rule is the second after the answer appears and
+ * does not match what they thought. Both links are one tap and neither leaves
+ * the answer behind: the grammar page explains the case this card drills, and
+ * Anu opens with the question already written so it can be sent or edited.
+ */
+function WhyRow({ card }: { card: ReviewCard }) {
+  const question = card.targetCase
+    ? `Why is the ${card.targetCase.toLowerCase()} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
+    : `Explain "${card.lemma ?? card.front}" to me — what does it mean and when would an Estonian use it?`;
+
+  const pill =
+    "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px";
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      {card.targetCase && (
+        <Link
+          href={`/grammar/${card.targetCase.toLowerCase()}`}
+          className={pill}
+          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+        >
+          <Compass size={12} aria-hidden /> Why the {card.targetCase.toLowerCase()}?
+        </Link>
+      )}
+      <Link
+        href={`/tutor?q=${encodeURIComponent(question)}`}
+        className={pill}
+        style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+      >
+        <MessageCircleQuestion size={12} aria-hidden /> Ask Anu
+      </Link>
+    </div>
+  );
+}
 
 const TYPE_LABEL: Record<string, string> = {
   RECOGNITION: "Estonian → English",
@@ -264,9 +303,23 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (finished) return;
-      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+      const field = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
+        ? e.target
+        : null;
+      const typing = field !== null;
 
-      if (e.key.toLowerCase() === "u" && !typing && history.length > 0) {
+      // `u` has to reach undo from inside the answer box, because that is where
+      // focus already is: grading a typed card advances to the next one, whose
+      // input takes focus on mount — and the moment just after a grade is
+      // exactly when you notice you hit the wrong key. Requiring focus to be
+      // outside the field meant the shortcut silently did nothing there, and
+      // quietly dropped a `u` into the next answer instead.
+      //
+      // Only while that box is still empty, though. Estonian is full of u —
+      // tuba, kuu, muusika — so once there is anything typed, u is a letter.
+      const startedAnswering = field !== null && field.value.length > 0;
+
+      if (e.key.toLowerCase() === "u" && !startedAnswering && history.length > 0) {
         e.preventDefault();
         void undo();
         return;
@@ -578,6 +631,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
               First time seeing this one — read it, say it, then tell the scheduler how well it stuck.
             </p>
           )}
+
+          {(revealed || chosen) && <WhyRow card={card} />}
         </div>
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
@@ -646,7 +701,18 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
         </button>
         <span className="hidden items-center gap-1 md:flex">
           <Keyboard size={12} aria-hidden />
-          {ask === "type" ? "Enter to check · 1–4 to grade" : "Space to flip · 1–4 to grade"}
+          {/* Mirrors the footer button's own branches, so the hint cannot promise a
+              key the card in front of you does not answer to. It had two arms for
+              four shapes, which told anyone on a multiple-choice card to press
+              Space to flip and 1–4 to grade — where nothing flips and 1–4 picks
+              an option instead. */}
+          {ask === "type"
+            ? (verdict ? "1–4 to grade" : "Enter to check")
+            : ask === "choice" && !chosen
+              ? `1–${card?.choices?.length ?? 4} to pick`
+              : !revealed && ask !== "intro"
+                ? "Space to flip · 1–4 to grade"
+                : "1–4 to grade"}
         </span>
       </div>
 
