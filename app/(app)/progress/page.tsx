@@ -223,7 +223,7 @@ export default async function ProgressPage() {
                       }}
                       title={`${f.day}: ${f.count} card${f.count === 1 ? "" : "s"} due`}
                     />
-                    <span className="text-[9px]" style={{ color: "var(--ink-3)" }}>
+                    <span className="tnum text-[10.5px]" style={{ color: "var(--ink-3)" }}>
                       {f.offset === 0 ? "now" : f.offset % 2 === 0 ? f.offset : ""}
                     </span>
                   </div>

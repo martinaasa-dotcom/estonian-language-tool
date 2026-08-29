@@ -198,7 +198,7 @@ export function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[9.5px] font-semibold transition-colors"
+              className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[11px] font-semibold transition-colors"
               style={{ color: active ? "var(--ink)" : "var(--ink-3)" }}
             >
               <span
@@ -215,7 +215,7 @@ export function Sidebar() {
           type="button"
           onClick={() => setMoreOpen(true)}
           aria-expanded={moreOpen}
-          className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[9.5px] font-semibold"
+          className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[11px] font-semibold"
           style={{ color: secondaryActive ? "var(--ink)" : "var(--ink-3)" }}
         >
           <span

@@ -170,7 +170,7 @@ export default async function TodayPage() {
                   <span className="sr-only">
                     {d.day}: {d.done ? "reviewed" : "no reviews"}
                   </span>
-                  <span className="text-[10px] font-semibold" style={{ color: "var(--ink-3)" }}>
+                  <span className="label-xs" style={{ color: "var(--ink-3)" }}>
                     {weekdayLetter(d.day)}
                   </span>
                 </div>
