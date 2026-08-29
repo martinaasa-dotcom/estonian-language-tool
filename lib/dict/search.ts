@@ -193,6 +193,58 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
 }
 
 /**
+ * The candidates a set of words could be *vouched for* by, narrowed in the
+ * database.
+ *
+ * `matchEstonianForm` only ever vouches on an exact condition: the lemma
+ * spelled the same way, the lemma with its diacritics folded, a stored form,
+ * or a regular case built on a genitive stem. There is no substring tier above
+ * the confidence line, so unlike the search box this needs no `LIKE` at all,
+ * and the three branches below are a deliberate superset of exactly those
+ * tiers.
+ *
+ * It exists because reading a photograph used to pull the whole dictionary with
+ * `take: 4000` and no ordering, which is the same fault `searchLexemes` above
+ * had and for the same reason: past four thousand entries the cap silently
+ * dropped words, and nothing said which. A page printing a word the dictionary
+ * holds came back "not in the dictionary" depending on where the row happened
+ * to sit in the heap. A whole page of sixty words is one query now, and it
+ * costs the same at six thousand entries as at six hundred thousand.
+ */
+export async function vouchableCandidates(words: string[]): Promise<Candidate[]> {
+  const folded = [...new Set(words.map(fold).filter(Boolean))];
+  if (folded.length === 0) return [];
+
+  const stems = [...new Set(folded.flatMap(possibleStems))];
+
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM (
+      SELECT l.id FROM "Lexeme" l
+        WHERE translate(lower(l.lemma), ${FOLD_FROM}, ${FOLD_TO}) IN (${Prisma.join(folded)})
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO}) IN (${Prisma.join(folded)})
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE f."formType" IN ('GEN_SG', 'GEN_PL')
+          AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
+              IN (${Prisma.join(stems.length ? stems : [""])})
+    ) AS candidates
+  `;
+
+  if (rows.length === 0) return [];
+
+  return prisma.lexeme.findMany({
+    where: { id: { in: rows.map((r) => r.id) } },
+    select: {
+      id: true, lemma: true, translation: true, pos: true,
+      cefr: true, gradationNote: true,
+      forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
+    },
+  });
+}
+
+/**
  * The half of the search that knows about Estonian. Pure — no Prisma, no I/O —
  * so the inflected-form behaviour can be tested over fixtures rather than
  * against whatever happens to be seeded in a developer's database.
@@ -265,4 +317,68 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
 
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * How confident a match has to be before the app will vouch for it.
+ *
+ * The ranker's tiers, from `rank` above: 100 is the lemma spelled exactly,
+ * 90 is the lemma with the diacritics folded away, 88 is a stored form and 85
+ * is a regular case built on a genitive stem. Below that it is a prefix or a
+ * substring, which is the right thing to *offer* somebody typing in a search
+ * box and the wrong thing to hand a word to silently.
+ *
+ * The English tier (95) is excluded on purpose by `matchEstonianForm`, which
+ * only ever looks at Estonian: a scanned page's `kalender` must not resolve
+ * through some entry whose translation happens to read "kalender".
+ */
+export const VOUCHED_SCORE = 85;
+
+/** A match confident enough to build a flashcard from, or nothing at all. */
+export interface FormMatch {
+  id: string;
+  lemma: string;
+  translation: string;
+  pos: string;
+  cefr: string | null;
+  /** Set when the word given was an inflected form rather than the headword. */
+  matchedAs?: string;
+}
+
+/**
+ * Resolves one Estonian word, as written, to the dictionary entry it belongs to.
+ *
+ * This is the check that stands between a photograph and a flashcard. A word
+ * read off a page by a model is a guess until something the app trusts
+ * recognises it, and the dictionary recognising the exact spelling, one of its
+ * stored forms, or a regular case of its stem is that something. Anything
+ * vaguer is not a match: `tuba` must not quietly become `tubli` because the
+ * two share three letters.
+ *
+ * Pure, like `rankCandidates`, so the boundary can be tested over fixtures.
+ */
+export function matchEstonianForm(candidates: Candidate[], word: string): FormMatch | null {
+  const raw = word.trim();
+  if (!raw) return null;
+  const folded = fold(raw);
+  const lower = raw.toLowerCase();
+
+  let best: { hit: Candidate; score: number; matchedAs?: string } | null = null;
+  for (const candidate of candidates) {
+    const scored = rank(candidate, raw, folded);
+    // The English tier: right for a search box, wrong here.
+    if (scored.score === 95 && candidate.translation.toLowerCase() === lower) continue;
+    if (scored.score < VOUCHED_SCORE) continue;
+    if (!best || scored.score > best.score) best = { hit: candidate, ...scored };
+  }
+  if (!best) return null;
+
+  return {
+    id: best.hit.id,
+    lemma: best.hit.lemma,
+    translation: best.hit.translation,
+    pos: best.hit.pos,
+    cefr: best.hit.cefr,
+    ...(best.matchedAs ? { matchedAs: best.matchedAs } : {}),
+  };
 }

@@ -136,7 +136,7 @@ for (const width of PHONES) {
 //     scrolled sideways, so the only thing that would have caught it was a
 //     person looking, or a check that ran here.
 for (const path of [
-  "/", "/review", "/dictionary", "/assess", "/guide",
+  "/", "/review", "/dictionary", "/scan", "/assess", "/guide",
   "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
 ]) {
   const { ctx, page } = await open(390, 844, path);

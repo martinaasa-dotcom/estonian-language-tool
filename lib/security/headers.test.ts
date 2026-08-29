@@ -24,12 +24,14 @@ describe("the policy says what the app actually needs", () => {
     expect(header("X-Frame-Options")).toBe("DENY");
   });
 
-  it("keeps the microphone, because speaking practice records", () => {
-    // camera=() and geolocation=() are denials. microphone=(self) is not one:
-    // components/Recorder.tsx needs it, and denying it here would switch
-    // speaking practice off with no error a learner could act on.
+  it("keeps the microphone and the camera, because two features need them", () => {
+    // geolocation=() is a denial. The other two are not: components/Recorder.tsx
+    // needs the microphone for speaking practice, and scanning a page needs the
+    // camera, because `<input capture>` is governed by this policy and a phone
+    // silently opens the photo library instead when it is denied. Either
+    // denial switches a feature off with no error a learner could act on.
     expect(header("Permissions-Policy")).toContain("microphone=(self)");
-    expect(header("Permissions-Policy")).toContain("camera=()");
+    expect(header("Permissions-Policy")).toContain("camera=(self)");
     expect(header("Permissions-Policy")).toContain("geolocation=()");
   });
 

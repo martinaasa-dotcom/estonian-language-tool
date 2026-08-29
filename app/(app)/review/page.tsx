@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
+import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
+import { parseItems } from "@/lib/scan/items";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
 
@@ -13,10 +15,10 @@ const CHOICES = 4;
 export default async function ReviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string; unit?: string }>;
+  searchParams: Promise<{ case?: string; unit?: string; scan?: string }>;
 }) {
   const ownerId = await requireUserId();
-  const { case: targetCase, unit: unitId } = await searchParams;
+  const { case: targetCase, unit: unitId, scan: scanId } = await searchParams;
   const now = new Date();
 
   const settings = await readSettings(ownerId, [SETTING_KEYS.reviewMode]);
@@ -61,6 +63,43 @@ export default async function ReviewPage({
       <ReviewSession
         cards={await withChoices(drill.map(toReviewCard))}
         drillUnit={unitId}
+        totalCards={0}
+        mode={mode}
+      />
+    );
+  }
+
+  /*
+    A photographed page, drilled on its own.
+
+    Read by lexeme id rather than by lemma, unlike the unit drill above: a page
+    can carry a word the learner added themselves, and matching those by lemma
+    would sweep in a homograph that belongs to a different part of speech. The
+    page is looked up scoped to its owner, so a guessed id in the query string
+    reaches nothing.
+  */
+  if (scanId) {
+    const scan = await prisma.scan.findFirst({
+      where: { id: scanId, ownerId },
+      select: { id: true, title: true, items: true },
+    });
+    const lexemeIds = scan
+      ? parseItems(scan.items, MAX_SCAN_ITEMS)
+          .map((i) => i.lexemeId)
+          .filter((id): id is string => id !== null)
+      : [];
+    const drill = lexemeIds.length
+      ? await prisma.card.findMany({
+          where: { ownerId, suspended: false, lexemeId: { in: lexemeIds } },
+          orderBy: [{ due: "asc" }, { lapses: "desc" }],
+          take: 60,
+          include,
+        })
+      : [];
+    return (
+      <ReviewSession
+        cards={await withChoices(drill.map(toReviewCard))}
+        drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
         mode={mode}
       />

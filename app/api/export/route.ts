@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
  * Full export. Months of review history is the one thing in this app that cannot
  * be reconstructed from anywhere, so getting it out must never be more than a click.
  * The dictionary (lexemes/forms) is shared reference data, exported in full so a
- * restore works standalone; cards, reviews and tasks are this user's own only.
+ * restore works standalone; cards, reviews, tasks and scanned pages are this
+ * user's own only.
  */
 export async function GET() {
   const ownerId = await requireUserId();
@@ -30,11 +31,14 @@ export async function GET() {
     );
   }
 
-  const [lexemes, cards, reviews, tasks] = await Promise.all([
+  const [lexemes, cards, reviews, tasks, scans] = await Promise.all([
     prisma.lexeme.findMany({ include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
     prisma.review.findMany({ where: { ownerId }, orderBy: { reviewedAt: "asc" } }),
     prisma.task.findMany({ where: { ownerId } }),
+    // The word lists off photographed pages. The pictures were never kept, so
+    // there is nothing here but what the learner confirmed.
+    prisma.scan.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
   ]);
 
   const payload = {
@@ -42,9 +46,9 @@ export async function GET() {
     format: "kodukeel-v1",
     counts: {
       words: lexemes.length, cards: cards.length,
-      reviews: reviews.length, tasks: tasks.length,
+      reviews: reviews.length, tasks: tasks.length, scans: scans.length,
     },
-    lexemes, cards, reviews, tasks,
+    lexemes, cards, reviews, tasks, scans,
   };
 
   const date = new Date().toISOString().slice(0, 10);

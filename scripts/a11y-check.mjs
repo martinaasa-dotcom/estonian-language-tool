@@ -14,7 +14,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
 const BASE = baseUrl();
 const ROUTES = [
   "/", "/review/write", "/review/government", "/review/cloze",
-  "/review/clinic", "/words", "/week", "/settings", "/privacy", "/terms",
+  "/review/clinic", "/words", "/week", "/scan", "/settings", "/privacy", "/terms",
   "/assess", "/assess?take=1", "/guide",
 ];
 
@@ -41,6 +41,10 @@ for (const route of ROUTES) {
         el.getAttribute("title") ||
         el.textContent?.trim() ||
         (el.id && document.querySelector(`label[for="${el.id}"]`)?.textContent?.trim()) ||
+        // A wrapping label names its control too, and is the only way to name a
+        // file input that has to be visually hidden behind the thing a person
+        // actually clicks. See PickFile in app/(app)/scan/ScanCapture.tsx.
+        el.closest("label")?.textContent?.trim() ||
         ""
       ).trim();
       if (!name) bad.unnamed.push(el.tagName + (el.className ? `.${String(el.className).slice(0, 30)}` : ""));
