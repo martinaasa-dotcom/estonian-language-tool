@@ -65,10 +65,10 @@ export default function PrivacyPage() {
           restores into a fresh installation. Nothing is held back from it.
         </P>
         <P>
-          Deleting your account deletes your cards, reviews, tasks, messages, stars, badges and
-          settings. The shared dictionary stays, because it is reference data rather than
-          anything of yours. Ask the person who runs this installation, or use the delete
-          control in Settings where one is offered.
+          <strong>Settings → Deleting your data</strong> removes your cards, reviews, tasks,
+          messages, stars, badges, settings and usage records, in one transaction, immediately.
+          The shared dictionary stays — other learners have cards built on it — but any entry you
+          edited stops being attributed to you. Take an export first: this keeps no copy.
         </P>
       </S>
 

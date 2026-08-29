@@ -10,6 +10,7 @@ import { ImportPanel } from "./ImportPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 import { UsagePanel } from "./UsagePanel";
+import { DangerZone } from "./DangerZone";
 
 export const dynamic = "force-dynamic";
 const DEFAULT_DAILY_GOAL = 15;
@@ -137,6 +138,7 @@ export default async function SettingsPage() {
             </p>
           </Card>
         </section>
+        <DangerZone counts={{ cards, reviews }} />
       </div>
     </Page>
   );

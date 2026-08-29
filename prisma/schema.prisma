@@ -33,6 +33,14 @@ model Lexeme {
   ekilexWordId  Int?
   fetchedAt     DateTime? // when Ekilex was last consulted, for cache freshness
 
+  /// Who last changed this entry by hand, when anyone did.
+  ///
+  /// The dictionary is shared (ADR-012), so a correction one learner makes is a
+  /// correction everybody sees. That is the point — but it means an edit has to
+  /// be attributable, or a bad one is untraceable.
+  editedBy String?
+  editedAt DateTime?
+
   forms     Form[]
   cards     Card[]
   stars     StarredWord[]

@@ -10,6 +10,7 @@ import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/car
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
 import { MAX_PASSAGE_CHARS, buildCloze, type KnownForm } from "@/lib/estonian/cloze";
+import { PRINCIPAL_FORM_TYPES, isPrincipalFormType } from "@/lib/estonian/types";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -170,9 +171,18 @@ export async function deleteCard(cardId: string) {
 
 // ─────────────────────────────── Words ────────────────────────────────────
 
+/**
+ * Adds a word to the shared dictionary.
+ *
+ * Requires a session even though it writes shared rather than personal data:
+ * every export of this file is a public endpoint, and "the middleware will have
+ * caught it" is the assumption that makes a gap in the middleware a data breach.
+ * It also establishes who to attribute the entry to.
+ */
 export async function createLexeme(input: {
   lemma: string; translation: string; pos: string; cefr?: string; notes?: string;
 }) {
+  const ownerId = await requireUserId();
   const lemma = input.lemma.trim();
   const translation = input.translation.trim();
   if (!lemma || !translation) {
@@ -190,6 +200,8 @@ export async function createLexeme(input: {
       cefr: input.cefr || null,
       notes: input.notes || null,
       provenance: "USER",
+      editedBy: ownerId,
+      editedAt: new Date(),
     },
   });
   revalidatePath("/dictionary");
@@ -213,15 +225,18 @@ export async function createLexemeWithForms(input: {
   notes?: string;
   forms: Record<string, string>;
 }) {
+  const ownerId = await requireUserId();
   const lemma = input.lemma.trim();
   const translation = input.translation.trim();
   if (!lemma || !translation) {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
 
+  // Only the principal parts are user-managed. Anything else on this lexeme came
+  // from Ekilex and is authoritative; a hand edit must not be able to submit one.
   const forms = Object.entries(input.forms)
     .map(([formType, value]) => ({ formType, value: value.trim() }))
-    .filter((f) => f.value);
+    .filter((f) => f.value && isPrincipalFormType(f.formType));
 
   const nomSg = forms.find((f) => f.formType === "NOM_SG")?.value;
   const genSg = forms.find((f) => f.formType === "GEN_SG")?.value;
@@ -244,14 +259,28 @@ export async function createLexemeWithForms(input: {
     notes: input.notes?.trim() || null,
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
-    provenance: "USER",
+    // An entry Ekilex supplied stays marked as Ekilex's even after a correction —
+    // relabelling it USER would quietly discard the fact that a paradigm came
+    // from the Institute. The edit is recorded alongside instead.
+    ...(existing && existing.provenance !== "SEED" && existing.provenance !== "EKILEX"
+      ? { provenance: "USER" }
+      : existing
+        ? {}
+        : { provenance: "USER" }),
+    editedBy: ownerId,
+    editedAt: new Date(),
   };
 
   const lexeme = existing
     ? await prisma.lexeme.update({ where: { id: existing.id }, data })
     : await prisma.lexeme.create({ data });
 
-  await prisma.form.deleteMany({ where: { lexemeId: lexeme.id } });
+  // Replace only the principal parts. The previous version deleted every row for
+  // the lexeme, which threw away the full Ekilex paradigm — the one thing on the
+  // entry that cannot be reconstructed — whenever anybody corrected a typo.
+  await prisma.form.deleteMany({
+    where: { lexemeId: lexeme.id, formType: { in: [...PRINCIPAL_FORM_TYPES] } },
+  });
   if (forms.length) {
     await prisma.form.createMany({ data: forms.map((f) => ({ ...f, lexemeId: lexeme.id })) });
   }
@@ -259,13 +288,17 @@ export async function createLexemeWithForms(input: {
   // Correcting a word must correct the cards made from it, or she keeps being
   // drilled on the mistake she just fixed. Only the text is rewritten — the FSRS
   // scheduling is untouched, so a correction never costs her progress.
+  // Scoped to this learner's own cards. The dictionary is shared, but a deck is
+  // not: rewriting every user's cards because one of them corrected a spelling
+  // would reach into strangers' data, and they would have no idea why their card
+  // changed. Their own copy follows when they next edit or re-add the word.
   if (existing && (existing.lemma !== lemma || existing.translation !== translation)) {
     await prisma.card.updateMany({
-      where: { lexemeId: lexeme.id, cardType: "RECOGNITION" },
+      where: { ownerId, lexemeId: lexeme.id, cardType: "RECOGNITION" },
       data: { front: lemma, back: translation },
     });
     await prisma.card.updateMany({
-      where: { lexemeId: lexeme.id, cardType: "PRODUCTION" },
+      where: { ownerId, lexemeId: lexeme.id, cardType: "PRODUCTION" },
       data: { front: translation, back: lemma },
     });
   }
@@ -663,6 +696,56 @@ export async function deleteTask(id: string) {
   return { ok: true as const };
 }
 
+// ─────────────────────────────── Account ──────────────────────────────────
+
+/**
+ * Deletes everything belonging to this account.
+ *
+ * The privacy page promises this, so it has to exist — a promise about data that
+ * the software cannot keep is worse than no promise. It removes cards, reviews,
+ * tasks, messages, stars, badges, settings and the usage ledger.
+ *
+ * The review log is deleted here and only here. Append-only means no updates and
+ * no incidental deletes — not that a person cannot ask for their own history to
+ * be erased, which is the one request that outranks the invariant. It all goes in
+ * one transaction, so a half-deleted account is not a reachable state.
+ *
+ * The shared dictionary stays. It is reference data rather than anything of
+ * theirs, and removing a word other learners hold cards for would delete *their*
+ * data to satisfy this request. `Lexeme.editedBy` is cleared instead, so nothing
+ * points back at the person afterwards.
+ */
+export async function deleteMyAccount(confirmation: string) {
+  const ownerId = await requireUserId();
+  if (confirmation.trim().toLowerCase() !== "delete") {
+    return { ok: false as const, error: 'Type "delete" to confirm.' };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.review.deleteMany({ where: { ownerId } });
+      await tx.card.deleteMany({ where: { ownerId } });
+      await tx.task.deleteMany({ where: { ownerId } });
+      await tx.message.deleteMany({ where: { ownerId } });
+      await tx.starredWord.deleteMany({ where: { ownerId } });
+      await tx.achievement.deleteMany({ where: { ownerId } });
+      await tx.setting.deleteMany({ where: { ownerId } });
+      await tx.usageEvent.deleteMany({ where: { ownerId } });
+      // Un-attribute rather than delete: the entries stay, the person does not.
+      await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
+    }, { timeout: 120_000 });
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: `Nothing was deleted — the operation did not complete. ${
+        error instanceof Error ? error.message : ""
+      }`.trim(),
+    };
+  }
+
+  return { ok: true as const };
+}
+
 // ────────────────────────────── Backup restore ─────────────────────────────
 
 const BackupSchema = z.object({
@@ -682,9 +765,12 @@ export interface RestoreSummary {
 }
 
 /** Reads a backup file and reports what is in it, without writing anything. */
+/** Reads a backup file without writing anything. Requires a session: it is a
+ *  public endpoint that parses attacker-supplied JSON. */
 export async function inspectBackup(json: string): Promise<
   { ok: true; summary: RestoreSummary } | { ok: false; error: string }
 > {
+  await requireUserId();
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
