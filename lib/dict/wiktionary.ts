@@ -57,14 +57,101 @@ export function extractEstonianSenses(wikitext: string): string[] {
   const section = /==\s*Estonian\s*==([\s\S]*?)(?:\n==[^=]|$)/.exec(wikitext);
   if (!section?.[1]) return [];
 
+  /*
+    Sense order is the page's own, deliberately.
+
+    Demoting the senses Wiktionary marks `rare`, `obsolete` or `dialectal` was
+    tried and reverted. It corrected `kõrb`, whose everyday "desert" sits under
+    a later etymology than a `rare` sense meaning a large uninhabited forest,
+    and it broke more than it fixed: `soldat` is tagged `obsolete` on "soldier"
+    and would have been drilled as "jack", `vats` is `dialectal` on "belly" and
+    became "rumen", `raisk` is `dated` on "carrion" and landed on a vulgar
+    usage note. Which sense a learner needs is a lexical judgement, and the
+    labels do not carry it. Entries like `kõrb` are for a person to correct,
+    which the dictionary is editable for.
+  */
   const senses: string[] = [];
   for (const line of section[1].split("\n")) {
     if (!line.startsWith("# ")) continue;
-    const cleaned = cleanWikitext(line.slice(2));
+    const raw = line.slice(2);
+    if (NOT_A_DEFINITION.test(raw)) continue;
+    const cleaned = cleanWikitext(raw);
     if (cleaned && !senses.includes(cleaned)) senses.push(cleaned);
     if (senses.length >= 5) break;
   }
   return senses;
+}
+
+/**
+ * Sense lines Wiktionary marks as not being a definition yet.
+ *
+ * `{{rfdef}}` is an editor asking somebody to write the definition, and the
+ * text beside it is a placeholder rather than a gloss. `müristama` shipped as
+ * "to make a certain noise." from one of these, which is what a request for a
+ * definition looks like once the request itself has been stripped out. The
+ * word's real sense sat on the next line.
+ */
+const NOT_A_DEFINITION = /\{\{\s*rfdef\s*[|}]/i;
+
+/**
+ * Splits a template's parameters on `|`, leaving the pipes inside a wikilink
+ * alone. `{{l|en|dressing#Noun|dressing}}` and `{{l|en|[[a|b]]}}` both have to
+ * come apart in the right place.
+ */
+function templateParams(body: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (let i = 0; i < body.length; i++) {
+    const two = body.slice(i, i + 2);
+    if (two === "[[") { depth++; current += two; i++; continue; }
+    if (two === "]]") { depth = Math.max(0, depth - 1); current += two; i++; continue; }
+    const char = body[i]!;
+    if (char === "|" && depth === 0) { parts.push(current); current = ""; continue; }
+    current += char;
+  }
+  parts.push(current);
+  return parts;
+}
+
+/**
+ * Templates whose visible output *is* the gloss, unwrapped rather than removed.
+ *
+ * This is the fault that cost the most. `{{l|en|lamp}}` renders as the word
+ * "lamp", and the sweep below deletes balanced templates wholesale, so the
+ * line went empty and the picker moved on to the next one. That next line is
+ * frequently a different sense, and on a page with more than one etymology it
+ * is a different word: `lamp` shipped as "random", `oktoober` as "hard hat",
+ * `ooper` as "opera house", `rida` as "many, much". Where the template sat
+ * mid-line the gloss survived with a hole in it, which is worse, because
+ * nothing about "to , to , to" (`segama`) looks like missing data to the
+ * checks that were watching. `vana` reached a learner as "an person".
+ *
+ * The language matters and is checked. `{{m|et|kohta}}` is an Estonian word
+ * quoted inside an English note, and unwrapping it would write Estonian into
+ * a gloss, which is the one thing this file may never do (ADR-005). Only an
+ * English-tagged link is unwrapped; anything else is removed as before.
+ */
+function unwrapLinkTemplates(text: string): string {
+  return text.replace(/\{\{\s*([a-zA-Z-]+)\s*\|([^{}]*)\}\}/g, (whole, rawName: string, body: string) => {
+    const name = rawName.trim().toLowerCase();
+    const params = templateParams(body).filter((p) => !/^[a-zA-Z0-9_-]+\s*=/.test(p.trim()));
+
+    // {{l|en|target|display}} and its aliases: second language-tagged form.
+    if (name === "l" || name === "ll" || name === "link" || name === "m" || name === "mention") {
+      if ((params[0] ?? "").trim().toLowerCase() !== "en") return whole;
+      const shown = (params[2] ?? "").trim() || (params[1] ?? "").trim();
+      return shown;
+    }
+    // {{tcl|et|October}}: the Estonian word's English translation, categorised.
+    if (name === "tcl") return (params[1] ?? "").trim();
+    // {{vern|common magpie}}: an English vernacular name.
+    if (name === "vern") return (params[0] ?? "").trim();
+    // {{w|Grammatical particle|particle}}: a Wikipedia link, shown as its
+    // second parameter when it has one.
+    if (name === "w") return ((params[1] ?? "").trim() || (params[0] ?? "").trim());
+    return whole;
+  });
 }
 
 /**
@@ -87,6 +174,12 @@ function cleanWikitext(raw: string): string {
   */
   text = text.replace(/\s*\{\{[^}]*$/, "").replace(/\s*\[\[[^\]]*$/, "");
 
+  // Gloss-bearing templates first, innermost-first for the same reason.
+  let unwrapped: string;
+  do {
+    unwrapped = text;
+    text = unwrapLinkTemplates(text);
+  } while (text !== unwrapped);
 
   let previous: string;
   do {
@@ -100,6 +193,25 @@ function cleanWikitext(raw: string): string {
     .replace(/'{2,}/g, "")
     .replace(/<[^>]*>/g, "")
     .replace(/\s*\([^)]*\)\s*$/, "")   // trailing parenthetical qualifiers
+    /*
+      The gap a removed template leaves behind.
+
+      Everything above deletes markup in place, so a template sitting in the
+      middle of a list takes its slot's contents and leaves the separators:
+      `sort` shipped as "kind, , brand" and `esimees` as "chairman,
+      chairperson, , president". A hole reads as a typo rather than as missing
+      data, which is why neither was noticed. Repaired here rather than at each
+      template, so a kind of markup nobody has met yet cannot open a new one.
+
+      `{{taxfmt}}` is the reason this is a repair and not another unwrapping.
+      Its contents are a scientific name, and putting it back turned "sprat"
+      into "sprat, Sprattus sprattus". A binomial belongs in the entry, not on
+      the answer side of a flashcard.
+    */
+    .replace(/\s*\(\s*\)/g, "")
+    .replace(/\s+([,;.])/g, "$1")
+    .replace(/([,;])(?:\s*[,;])+/g, "$1")
+    .replace(/[,;]\s*\./g, ".")
     .replace(/\s{2,}/g, " ")
     .replace(/^[\s,;:]+|[\s,;:]+$/g, "")
     .trim();
