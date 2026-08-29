@@ -1,0 +1,116 @@
+# The gloss review, A1 to B1
+
+A spot check of 25 words put gloss precision at about 96% across A1 and A2. That is a good
+number and it is not an audited one, and the difference matters here more than it usually does:
+a gloss is the answer side of a flashcard, so a wrong one is not shown once and forgotten. The
+scheduler repeats it until the learner has learned it.
+
+This is the full pass over the band, and what it found.
+
+## 1. Method
+
+Every one of the 2,164 entries at A1, A2 and B1 was re-derived from its own Wiktionary page and
+compared with what ships in `prisma/data/expanded.json`. The parser reproduced all 2,164 stored
+glosses exactly before anything was changed, which is what makes the rest of it evidence: every
+disagreement found afterwards is a fault in the parser rather than a difference of method.
+
+`npm run audit:glosses` is that pass, kept. It caches every page, so re-running it is free.
+
+Sampling could not have found what this did. The faults are not noise spread evenly through the
+data; they are four mechanisms, each firing on a particular shape of markup, and each producing
+a perfectly ordinary English phrase on the way out. There is nothing on the screen to notice.
+
+## 2. What was wrong
+
+**25 of 2,164 in the band, 41 across the whole dictionary.** Four of the 25 were not a different
+shade of the same meaning. They were a different word:
+
+| word | shipped as | should be |
+| --- | --- | --- |
+| `lamp` | random | lamp |
+| `oktoober` | hard hat | October |
+| `ooper` | opera house | opera |
+| `rida` | many, much | row |
+| `mark` | tally mark | mark |
+| `moment` | aspect, side, point | moment |
+
+One cause under all of them. Wiktionary writes some definitions as `{{l|en|lamp}}`, a template
+that renders as the word "lamp". `cleanWikitext` removed balanced templates wholesale, so the
+line went empty, and the picker moved on to the next numbered sense. On a page with more than one
+etymology the next sense belongs to a different word, and `lamp`'s is a colloquial adjective
+meaning "random".
+
+Where the same template sat in the middle of a line the gloss survived with a hole in it, which
+is worse, because a hole reads as a typo and not as missing data:
+
+| word | shipped as | should be |
+| --- | --- | --- |
+| `segama` | to , to , to | to mix, to stir, to mingle |
+| `vana` | an person | old |
+| `neiu` | a unmarried , a , or a slightly older | a young unmarried woman, a teenager, or a slightly older girl |
+| `sort` | kind, , brand | kind, sort, brand |
+| `esimees` | chairman, chairperson, , president | chairman, chairperson, chair, president |
+
+A third group lost only their first synonym, so they were never obviously broken and were still
+teaching less than they should: `käsk` "command" for "order, command", `norm` "quota, standard"
+for "norm, quota, standard", `trahv` "penalty, citation" for "fine, penalty, citation",
+`variant`, `avalik`, `eesmärk`.
+
+A fourth group carried a space before their punctuation from a different template being removed
+in the same way: `kartma` "to be afraid , to fear", `kesklinn`, `lavastama`, `riiklik`,
+`varblane`, `veoauto`.
+
+And one, `müristama`, shipped as "to make a certain noise." That is a `{{rfdef}}` line, which is
+an editor asking somebody to write the definition. With the request stripped out, what is left
+looks like a definition. The word means "to thunder", on the next line down.
+
+## 3. What was changed
+
+`lib/dict/wiktionary.ts`, in three places, and then the data:
+
+1. **Templates whose output is the gloss are unwrapped, not deleted** — `{{l|en|…}}` and its
+   aliases, `{{tcl}}`, `{{vern}}`, `{{w}}`. **Only when the language is English.** `{{m|et|kohta}}`
+   is an Estonian word quoted inside an English note, and unwrapping it by a language-blind rule
+   would write Estonian into a gloss, which is the one thing this file may never do (ADR-005).
+2. **The gap a removed template leaves is closed** — repaired once at the end rather than at each
+   template, so a kind of markup nobody has met yet cannot open a new hole.
+3. **A sense Wiktionary has asked somebody to define is skipped.**
+
+Both shapes are invariants now, and both were made to fail before being trusted. The language
+guard took two attempts: the first version of that check quoted an Estonian word with no
+diacritic in it, inside a trailing parenthetical the parser strips anyway, so deleting the guard
+left the check passing.
+
+`müdistama` was dropped. Its only Wiktionary sense is a request for a definition, so there is no
+gloss to ship, and the builder would not have written it in the first place.
+
+## 4. What was deliberately not changed
+
+**Sense order stays the page's own.** Demoting the senses Wiktionary marks `rare`, `obsolete` or
+`dialectal` looked obviously right and was reverted after measuring it. It corrects `kõrb`, whose
+everyday "desert" sits under a later etymology than a `rare` sense meaning a large uninhabited
+forest. It also breaks `soldat`, tagged `obsolete` on "soldier", which would have been drilled as
+"jack"; `vats`, `dialectal` on "belly", which became "rumen"; and `raisk`, `dated` on "carrion",
+which landed on a vulgar usage note. The structure of the good case and the bad ones is
+identical, so no rule separates them. Which sense a learner needs is a lexical judgement, and
+this pipeline does not get to make it.
+
+`kõrb` is therefore still glossed "a large uninhabited forest" and is wrong. It is left for a
+person, which is what the dictionary is editable for.
+
+**Part of speech was not touched, and is a separate fault.** `lilla`, `kallis`, `valge`, `sinine`,
+`noor`, `tark` and around 30 others are adjectives labelled `NOUN`. The seed builder draws
+candidates from Wiktionary's categories in order and keeps the first, and nouns are first, so any
+word that is both comes out a noun. Their glosses are right, so it is out of scope here; it is
+recorded in `docs/12-open-questions.md`.
+
+## 5. Where it stands
+
+25 corrections in 2,164 is a defect rate of 1.2%, so measured precision across A1 to B1 is 98.8%
+against Wiktionary as the reference. Six of the 25 were a wrong word rather than a thin gloss,
+which is 1 in 360.
+
+The three residual known-wrong entries are `kõrb` (above), `krõps`, glossed "freezing, bitter"
+from its adjective sense where the noun is a crisp, and `talguline`, "participant at.", truncated
+because the Estonian word it pointed at was correctly refused. All three need a person, not a
+rule.

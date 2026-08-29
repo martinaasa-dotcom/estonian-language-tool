@@ -19,6 +19,8 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
+import { extractEstonianSenses } from "../lib/dict/wiktionary";
+
 let failures = 0;
 let checks = 0;
 
@@ -1030,6 +1032,73 @@ check("the goal a learner states is stored through the settings store", () => {
   }
 });
 
+/*
+  The built dictionary's glosses.
+
+  These are the answer side of a flashcard, so a wrong one is drilled rather
+  than merely displayed. Both checks assert the shape of a fault rather than a
+  word list: naming today's twenty-five corrections would pass for ever and
+  defend nothing.
+*/
+check("no built gloss carries the marks of markup that was removed badly", () => {
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as
+    { lemma: string; translation: string }[];
+  /*
+    A template deleted out of the middle of a line takes its slot's contents
+    and leaves the separators around it. `sort` shipped as "kind, , brand",
+    `esimees` as "chairman, chairperson, , president", `segama` as
+    "to , to , to". A hole reads as a typo rather than as missing data, which
+    is exactly why none of them was noticed: every check watching this file
+    was happy with a plausible English string.
+  */
+  const damaged = [
+    { shape: /[,;]\s*[,;]/, why: "an empty slot in a list" },
+    { shape: /\s+[,;.]/, why: "a space before punctuation" },
+    { shape: /\(\s*\)/, why: "parentheses left empty" },
+    { shape: /[{}]|\[\[|\]\]/, why: "wiki markup" },
+  ];
+  for (const entry of entries) {
+    for (const { shape, why } of damaged) {
+      assert.ok(
+        !shape.test(entry.translation),
+        `"${entry.lemma}" is glossed ${JSON.stringify(entry.translation)}, which has ${why}`,
+      );
+    }
+    /*
+      A gloss with nothing in it but punctuation. `päiline` and `suiline` both
+      reached the dictionary as the single character ".", and a card cannot be
+      answered with a full stop.
+    */
+    assert.ok(
+      entry.translation.replace(/[^\p{L}\p{N}]/gu, "").length >= 2,
+      `"${entry.lemma}" is glossed ${JSON.stringify(entry.translation)}, which is not a word`,
+    );
+  }
+});
+
+check("the gloss parser unwraps an English link and never an Estonian one", () => {
+  /*
+    ADR-005, at the one place an English gloss touches Estonian source text.
+    `{{l|en|lamp}}` renders as the word "lamp" and has to survive; `{{m|et|
+    kohta}}` is an Estonian word quoted inside an English note and may not.
+    Deleting both was how `lamp` came to be drilled as "random". Asserted
+    against the parser rather than the data, because the data is a snapshot
+    and the rule is not.
+  */
+  const senses = extractEstonianSenses(
+    "==Estonian==\n\n===Noun===\n\n# {{l|en|lamp}}\n# to [[depend]] on {{m|et|kõrb}}\n",
+  );
+  assert.equal(senses[0], "lamp", "an English link template is no longer unwrapped");
+  /*
+    Both halves matter and the second one is easy to assert too weakly. An
+    earlier version of this check quoted `{{m|et|kohta}}` inside a trailing
+    parenthetical and looked for Estonian letters: the parenthetical is
+    stripped anyway and "kohta" has no diacritic in it, so removing the
+    language guard left the check passing. The mention sits mid-line now and
+    the whole sense is compared.
+  */
+  assert.equal(senses[1], "to depend on", "an Estonian mention reached an English gloss");
+});
 
 console.log(
   failures === 0
