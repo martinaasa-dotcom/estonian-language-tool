@@ -118,7 +118,7 @@ export function ClozeSession() {
           </div>
 
           {error && (
-            <p role="alert" className="mt-3 text-[13.5px]" style={{ color: "var(--again)" }}>{error}</p>
+            <p role="alert" className="mt-3 text-sm" style={{ color: "var(--again-ink)" }}>{error}</p>
           )}
 
           <div className="mt-4 flex flex-wrap gap-3">
