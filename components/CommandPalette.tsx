@@ -28,6 +28,7 @@ const COMMANDS: Command[] = [
   { id: "speaking", label: "Speaking", hint: "Say it out loud, compare with a native voice", href: "/review/speaking", keywords: "pronounce record microphone shadowing accent" },
   { id: "listening", label: "Listening", hint: "Hear a word, pick the meaning", href: "/review/listening", keywords: "audio ear sound" },
   { id: "dictation", label: "Dictation", hint: "Hear a sentence, write it down", href: "/review/dictation", keywords: "audio typing spelling listening transcribe" },
+  { id: "scan", label: "Scan a page", hint: "Photograph a word list and study what is on it", href: "/scan", keywords: "camera photo picture ocr homework textbook handout import paper digitise digitize" },
   { id: "dictionary", label: "Dictionary", hint: "Search any word or inflected form", href: "/dictionary", keywords: "search lookup paradigm cases" },
   { id: "grammar", label: "Grammar", hint: "What each of the fourteen cases is for", href: "/grammar", keywords: "cases reference explanation partitive genitive inessive endings rules" },
   { id: "tutor", label: "Ask Anu", hint: "Grammar questions, explained", href: "/tutor", keywords: "ai chat grammar help" },

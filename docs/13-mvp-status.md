@@ -416,3 +416,62 @@ deadline would look like, rather than a streak.
    the deployment.
 5. **A level check every fortnight measures the questions.** The history screen says so; nothing
    stops anybody doing it anyway.
+
+## 12. The seventh pass: the half of the course that is on paper
+
+Everything before this assumed the vocabulary was already digital: seeded, fetched from Ekilex,
+typed in, or pasted. In a real Estonian course most of it is not. It is a handout, a page of a
+textbook, a list copied off a whiteboard, last night's exercise sheet. The gap between that and the
+app was a person retyping thirty words with diacritics on a phone keyboard, which is where somebody
+stops using a study app.
+
+### What was added
+
+| Area | What it is | Why it earns its place |
+|---|---|---|
+| **Scan a page** (`/scan`) | Photograph a word list or your homework; the words on it come back matched against the dictionary | The importer that needs no typing. It is the only path into the app that starts with the thing the learner is already holding |
+| **The confirmation step** | Every word arrives ticked, editable, and labelled "in the dictionary" or "read from the photo" | This is the feature, not an obstacle in front of it. A model read the picture; the only person who can say what is printed on the paper is the one holding it |
+| **Inflected forms traced to headwords** | `toas` on an exercise sheet resolves to `tuba` and says it was the inessive | A textbook exercise is written in cases, not in citation forms. The inflected-form search the dictionary already had turns that from a problem into the lesson |
+| **A page as a set** (`/scan/[id]`) | A named group of words with its own progress, drilled by `/review?scan=` | The same shape as a learning-path unit, and references rather than copies for the same reason: correct a word once and it is corrected on every page it appears on |
+| **`lib/usage` kind `SCAN`** | A photograph is metered like anything else that costs money | A picture is a few thousand input tokens where a question is a few hundred. An unmetered path is one stranger away from an unbounded invoice, which is the whole argument of §2 |
+
+### The one decision worth arguing about
+
+Reading a page needs a model to look at Estonian and say what it sees, and ADR-005 says a model may
+never supply an Estonian form. Transcription is not authorship, but a misread `ö` and an invented
+word are indistinguishable by the time either becomes a flashcard, and the scheduler does not just
+leave a wrong card sitting there being wrong, it drills it in for six weeks.
+
+So the model's claim and the app's belief were separated. `lib/scan/extract.ts` transcribes and is
+pure; `matchEstonianForm` decides, and only accepts an exact lemma, a folded lemma, a stored form or
+a regular case on a genitive stem. A vouched word brings its own principal parts, so nothing the
+model wrote is in the card. An unvouched word is shown as exactly that and needs a person to tick
+it. See ADR-021, and `scripts/test-invariants.ts`, where both halves are asserted and were made to
+fail on purpose before being made to pass.
+
+### What this pass deliberately did *not* do
+
+- **No new practice mode.** A page drills through the ordinary review session with the page as its
+  filter. A private quiz over scanned words would keep a score the scheduler never sees, which is
+  the thing ADR-016 exists to prevent.
+- **No stored photograph.** The image is decoded, sent once and dropped. `Scan` holds the confirmed
+  word list and has no column an image could go in, and the invariant suite fails if one appears.
+- **No handwriting claims.** It reads clear handwriting about as well as the model behind it does,
+  which is why every word is editable and none is added without a tick.
+- **No new provider pin.** Scanning uses whatever model the deployment already configured, so
+  turning the camera on cannot quietly move a free-model deployment onto a paid one. The
+  `*_VISION_MODEL` variables exist for the case where that model is text-only.
+
+### Known limitations, stated plainly
+
+1. **A word outside the dictionary arrives with no verified forms.** It gets a recognition and a
+   production card and nothing else, because there is no paradigm to build a case-form card from.
+   With an Ekilex key the row's "look this up again" button fetches the real paradigm; without one,
+   the honest answer is two cards.
+2. **The English on an unmatched word is the photograph's, not the dictionary's.** It is shown as
+   unverified wherever it appears, and correcting the entry corrects it for everyone.
+3. **Sixty words a page.** A double-page spread of a vocabulary list will need two photographs. The
+   limit is there because a reply longer than that is a mistake rather than a page.
+4. **Quality is the model's.** A bad photograph produces a short list, not a wrong deck, which is
+   the failure mode this was designed to have.
+

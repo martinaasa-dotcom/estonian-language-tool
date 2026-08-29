@@ -8,13 +8,20 @@ import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradati
 import { unitById } from "@/lib/collections/path";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
+import { lookupAndStore } from "@/lib/dict/lookup";
+import { NEEDS_TRANSLATION } from "@/lib/copy/values";
+import { resolveOneWord } from "@/lib/dict/resolveScan";
+import { guessPos, MAX_ITEMS as SCAN_MAX_ITEMS } from "@/lib/scan/extract";
+import { parseItems, sanitiseItems, serialiseItems } from "@/lib/scan/items";
 import { translateSentenceWithAnu } from "@/lib/tutor/translate";
 import { checkAchievementsFor } from "@/lib/progress/achievements";
 import { resolveStreakFor } from "@/lib/progress/summary";
 import {
   numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
-import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
+import {
+  availableCardTypes, generateCards, type CardType, type LexemeForCards,
+} from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
@@ -1113,6 +1120,7 @@ export async function deleteMyAccount(confirmation: string) {
       await tx.achievement.deleteMany({ where: { ownerId } });
       await tx.setting.deleteMany({ where: { ownerId } });
       await tx.usageEvent.deleteMany({ where: { ownerId } });
+      await tx.scan.deleteMany({ where: { ownerId } });
       /*
         Append-only means never edited, not never erased on request. A level
         check is a measurement of this person and it goes with the rest of
@@ -1142,6 +1150,13 @@ const BackupSchema = z.object({
   cards: z.array(z.record(z.unknown())),
   reviews: z.array(z.record(z.unknown())),
   tasks: z.array(z.record(z.unknown())),
+  /*
+    Optional, because a backup written before scanned pages existed has no such
+    key and must still restore. A missing key is an empty list, never a refusal:
+    the whole point of the restore path is that a file you saved months ago
+    still works.
+  */
+  scans: z.array(z.record(z.unknown())).optional(),
 });
 
 export interface RestoreSummary {
@@ -1149,6 +1164,8 @@ export interface RestoreSummary {
   cards: number;
   reviews: number;
   tasks: number;
+  /** Photographed pages. Absent from a backup written before they existed. */
+  scans: number;
 }
 
 /** Reads a backup file and reports what is in it, without writing anything. */
@@ -1173,7 +1190,10 @@ export async function inspectBackup(json: string): Promise<
   const b = result.data;
   return {
     ok: true,
-    summary: { words: b.lexemes.length, cards: b.cards.length, reviews: b.reviews.length, tasks: b.tasks.length },
+    summary: {
+      words: b.lexemes.length, cards: b.cards.length, reviews: b.reviews.length,
+      tasks: b.tasks.length, scans: b.scans?.length ?? 0,
+    },
   };
 }
 
@@ -1207,6 +1227,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         // which is why Review carries its own ownerId and no foreign key.
         await tx.card.deleteMany({ where: { ownerId } });
         await tx.task.deleteMany({ where: { ownerId } });
+        await tx.scan.deleteMany({ where: { ownerId } });
       }
 
       // Shared dictionary: upserted as-is, benefits every user, never deleted here.
@@ -1253,6 +1274,23 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         if (existing && existing.ownerId !== ownerId) continue;
         await tx.task.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
       }
+
+      // Photographed pages, on the same terms as everything else here: written
+      // by their original id so a second restore changes nothing, and always
+      // attributed to whoever is restoring. The item list is re-checked on the
+      // way in rather than trusted, because the file is supplied by its caller.
+      for (const raw of backup.scans ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        data.items = serialiseItems(parseItems(
+          typeof data.items === "string" ? data.items : null, SCAN_MAX_ITEMS,
+        ));
+        data.title = capped(typeof data.title === "string" ? data.title : "", MAX_SCAN_TITLE);
+        if (!data.title) data.title = "A page";
+        const existing = await tx.scan.findUnique({ where: { id: String(data.id) }, select: { ownerId: true } });
+        if (existing && existing.ownerId !== ownerId) continue;
+        await tx.scan.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
+      }
     }, { timeout: 120_000 });
   } catch (error) {
     return {
@@ -1265,7 +1303,216 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
   revalidatePath("/words");
   revalidatePath("/tasks");
   revalidatePath("/dictionary");
+  revalidatePath("/scan");
   return { ok: true as const, summary: check.summary };
+}
+
+// ───────────────────────────── Scanned pages ──────────────────────────────
+
+/**
+ * A photographed page, once a person has looked at what came back.
+ *
+ * WHAT MAKES THIS SAFE IS THE TICK, not the transcription. A model read the
+ * picture and the dictionary vouched for the words it recognised, but the
+ * confirmation screen is where somebody holding the actual paper agrees that
+ * this is what is on it. That is the same standard the paste importer has
+ * always met (a human copied the list), and it is why a word the dictionary
+ * has never heard of can still become a card: not because the model said so,
+ * but because the learner did.
+ *
+ * A word that matched the dictionary brings its own principal parts and
+ * paradigm, so its cards are built from attested forms and nothing the model
+ * wrote survives into them. A word that did not becomes a plain USER entry
+ * with recognition and production cards only, exactly like a pasted line: no
+ * case-form card, because there are no forms to derive one from.
+ */
+const MAX_SCAN_TITLE = 80;
+
+export async function saveScan(input: {
+  title: string;
+  items: unknown;
+  /** Whether to build flashcards now, or just keep the page. */
+  addCards: boolean;
+}) {
+  const ownerId = await requireUserId();
+  const items = sanitiseItems(input.items, SCAN_MAX_ITEMS);
+  if (items.length === 0) {
+    return { ok: false as const, error: "Nothing on that page was ticked." };
+  }
+
+  const title = capped(input.title, MAX_SCAN_TITLE) || "A page";
+
+  /*
+    An id from the client is an id the client chose, and this file is
+    "use server", so every argument is attacker-controllable. Resolving the
+    ids against the dictionary here means a row can only ever point at a
+    Lexeme that exists, and a row whose id has gone stale falls back to being
+    treated as a new word rather than silently attaching cards to whatever now
+    holds that id.
+  */
+  const claimed = items.map((i) => i.lexemeId).filter((id): id is string => id !== null);
+  const known = claimed.length
+    ? await prisma.lexeme.findMany({
+        where: { id: { in: claimed } },
+        select: { id: true, lemma: true, translation: true },
+      })
+    : [];
+  const byId = new Map(known.map((l) => [l.id, l]));
+
+  const stored: typeof items = [];
+  let cards = 0;
+  let created = 0;
+
+  for (const item of items) {
+    const match = item.lexemeId ? byId.get(item.lexemeId) : undefined;
+    let lexemeId = match?.id ?? null;
+    let lemma = match?.lemma ?? null;
+    let translation = match?.translation ?? null;
+
+    if (!lexemeId) {
+      // Not in the dictionary, and ticked anyway. Stored as the learner's own
+      // entry, attributed to them, with the page's gloss as its English.
+      const lemmaText = capped(item.et, LIMITS.lemma);
+      const pos = guessPos(lemmaText);
+      const existing = await prisma.lexeme.findUnique({
+        where: { lemma_pos: { lemma: lemmaText, pos } },
+        select: { id: true, lemma: true, translation: true },
+      });
+      const row = existing ?? await prisma.lexeme.create({
+        data: {
+          lemma: lemmaText,
+          pos,
+          translation: capped(item.en, LIMITS.translation) || NEEDS_TRANSLATION,
+          provenance: "USER",
+          editedBy: ownerId,
+          editedAt: new Date(),
+        },
+        select: { id: true, lemma: true, translation: true },
+      });
+      if (!existing) created += 1;
+      lexemeId = row.id;
+      lemma = row.lemma;
+      translation = row.translation;
+    }
+
+    stored.push({ ...item, lexemeId, lemma, translation });
+
+    if (input.addCards) {
+      // Only what the word can actually support. A hand-added entry has no
+      // forms, so asking for a case-form card would produce nothing; a matched
+      // one may carry a full paradigm and deserves the lot.
+      const lexeme = await prisma.lexeme.findUnique({
+        where: { id: lexemeId },
+        include: { forms: true },
+      });
+      const types = lexeme
+        ? availableCardTypes(lexeme as LexemeForCards)
+        : (["RECOGNITION", "PRODUCTION"] as CardType[]);
+      const result = await addCardsFor(ownerId, lexemeId, types, "SCAN");
+      if (result.ok) cards += result.added ?? 0;
+    }
+  }
+
+  const scan = await prisma.scan.create({
+    data: { ownerId, title, items: serialiseItems(stored) },
+    select: { id: true },
+  });
+
+  revalidatePath("/scan");
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, id: scan.id, words: stored.length, cards, created };
+}
+
+/** Adds every word on a saved page that is not in the deck yet. */
+export async function addScanToDeck(scanId: string) {
+  const ownerId = await requireUserId();
+  const scan = await prisma.scan.findFirst({
+    where: { id: scanId, ownerId },
+    select: { items: true },
+  });
+  if (!scan) return { ok: false as const, error: "That page is not here any more." };
+
+  const items = parseItems(scan.items, SCAN_MAX_ITEMS);
+  let added = 0;
+  for (const item of items) {
+    if (!item.lexemeId) continue;
+    const lexeme = await prisma.lexeme.findUnique({
+      where: { id: item.lexemeId },
+      include: { forms: true },
+    });
+    if (!lexeme) continue;
+    const result = await addCardsFor(
+      ownerId, lexeme.id, availableCardTypes(lexeme as LexemeForCards), "SCAN",
+    );
+    if (result.ok) added += result.added ?? 0;
+  }
+
+  revalidatePath(`/scan/${scanId}`);
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, added, words: items.length };
+}
+
+export async function renameScan(scanId: string, title: string) {
+  const ownerId = await requireUserId();
+  const trimmed = capped(title, MAX_SCAN_TITLE);
+  if (!trimmed) return { ok: false as const, error: "Give the page a name." };
+
+  // Scoped by owner in the filter, not only in the lookup: an updateMany that
+  // matched on id alone would rename somebody else's page.
+  const changed = await prisma.scan.updateMany({
+    where: { id: scanId, ownerId },
+    data: { title: trimmed },
+  });
+  if (changed.count === 0) return { ok: false as const, error: "That page is not here any more." };
+
+  revalidatePath("/scan");
+  revalidatePath(`/scan/${scanId}`);
+  return { ok: true as const, title: trimmed };
+}
+
+/**
+ * Forgets a page.
+ *
+ * The cards it produced stay, and so does every review of them. A page is a
+ * record of where some words came from, not a container they live in: deleting
+ * it must not quietly take a fortnight of scheduling with it.
+ */
+export async function deleteScan(scanId: string) {
+  const ownerId = await requireUserId();
+  const deleted = await prisma.scan.deleteMany({ where: { id: scanId, ownerId } });
+  if (deleted.count === 0) return { ok: false as const, error: "That page is not here any more." };
+
+  revalidatePath("/scan");
+  return { ok: true as const };
+}
+
+/**
+ * Looks one word up again, after the learner corrected what the camera read.
+ *
+ * A phone photograph in a kitchen at nine in the evening turns `ö` into `o`
+ * often enough that the confirmation rows are editable, and an edit that did
+ * not re-check the dictionary would leave a now-correct word still marked as
+ * unrecognised. With an Ekilex key this also reaches the full lexicon, so a
+ * word outside the built-in 360 arrives with its real paradigm rather than as
+ * a bare string.
+ */
+export async function resolveScannedWord(word: string) {
+  await requireUserId();
+  const trimmed = capped(word, LIMITS.lemma);
+  if (!trimmed) return { ok: false as const, error: "Type the word first." };
+
+  const local = await resolveOneWord(trimmed);
+  if (local?.lexemeId) return { ok: true as const, item: local, source: "LOCAL" as const };
+
+  // Not held locally. Ekilex is authoritative and stores what it returns, so
+  // the second look at this word, by anyone, is instant.
+  const found = await lookupAndStore(trimmed);
+  if (!found) {
+    return { ok: true as const, item: local, source: "NONE" as const };
+  }
+  return { ok: true as const, item: await resolveOneWord(trimmed), source: "EKILEX" as const };
 }
 
 /** JSON has no dates; turn the ISO strings back into Date objects Prisma will accept. */

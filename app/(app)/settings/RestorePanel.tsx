@@ -117,8 +117,14 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
             <span style={{ color: "var(--ink)" }}>{filename}</span> holds{" "}
             <span className="tnum">{summary.words}</span> words,{" "}
             <span className="tnum">{summary.cards}</span> cards,{" "}
-            <span className="tnum">{summary.reviews}</span> reviews and{" "}
-            <span className="tnum">{summary.tasks}</span> tasks.
+            <span className="tnum">{summary.reviews}</span> reviews,{" "}
+            {summary.scans > 0 && (
+              <>
+                <span className="tnum">{summary.scans}</span> scanned page
+                {summary.scans === 1 ? "" : "s"},{" "}
+              </>
+            )}
+            and <span className="tnum">{summary.tasks}</span> tasks.
           </p>
 
           <fieldset className="mt-4">

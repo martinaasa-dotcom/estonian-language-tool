@@ -346,3 +346,28 @@ so the check measures their Estonian rather than their revision. *Rejected:* mar
 this app has), a single number rather than a profile (it hides which skill is behind, which is the
 one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest
 recogniser did not change because a test wanted one).
+
+**ADR-021 — A photograph is read by a model; whether it is *believed* is decided by the dictionary.**
+*Context:* half of an Estonian course is on paper — a handout, a textbook page, a list copied off a
+whiteboard — and typing it back in is the step where a learner stops. Reading it needs optical
+character recognition, and the only recogniser available here is a model, which is the one thing
+ADR-005 says may never supply an Estonian form. *Decision:* separate the two claims. The model
+transcribes and nothing more (`lib/scan/extract.ts`, pure, no database, no network); every string it
+returns is then resolved against the dictionary by `matchEstonianForm`, which accepts only an exact
+lemma, a diacritic-folded lemma, a stored form or a regular case built on a genitive stem, and
+rejects everything below that. A word the dictionary vouches for becomes cards from its own
+principal parts and paradigm, so nothing the model wrote survives into the card. A word it does not
+recognise is shown as exactly that, editable beside the paper, and reaches the deck only once a
+person has ticked it — the same standard the paste importer has always met, since there too a human
+vouched for the list. *The picture is never stored:* it is decoded in a Route Handler, sent once, and
+dropped, exactly as the cloze exercise treats a pasted passage. A photograph of homework has a name
+at the top of it. *Consequences:* a homework page full of inflected forms resolves to headwords and
+says which case each was (`toas` → the inessive of `tuba`), which is the feature rather than a
+side effect; a page becomes a named set that drills through the ordinary review session rather than
+a private quiz (ADR-016); and the failure mode of a bad photograph is a short list, never a wrong
+flashcard. *Rejected:* trusting the transcription because reading is not writing (a misread and an
+invention are indistinguishable by the time either reaches the scheduler), a fuzzy match to rescue
+more words (a prefix match hands somebody a card for a word that is not on their paper), and keeping
+the image to re-read later (it buys a retry and costs the one promise worth making about somebody's
+homework).
+

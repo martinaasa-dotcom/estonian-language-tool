@@ -39,6 +39,14 @@ export default function PrivacyPage() {
           replies are stored so the conversation survives a page reload.
         </P>
         <P>
+          <strong>Pages you photograph.</strong> When you scan a page, what is kept is the word
+          list you confirmed: the Estonian, the English, and which dictionary entry each word
+          matched. <strong>The photograph itself is never stored.</strong> It is read once,
+          on the way through, and dropped. It is not written to a database, not put in file
+          storage, and not written to a log. A picture of your homework has your name at the
+          top of it.
+        </P>
+        <P>
           <strong>What is not stored.</strong> No analytics, no advertising identifiers, no
           third-party trackers, no cookies beyond the one that keeps you signed in.
         </P>
@@ -68,6 +76,11 @@ export default function PrivacyPage() {
           bare phrase with no account attached.
         </P>
         <P>
+          <strong>A page you photograph</strong> goes to the same AI provider as your tutor
+          messages, once, so the words on it can be read back. Nothing about your account goes
+          with it, and no copy is kept at either end of ours.
+        </P>
+        <P>
           Your deck, your review history and your tasks are never sent anywhere.
         </P>
       </S>
@@ -75,12 +88,14 @@ export default function PrivacyPage() {
       <S title="Your data, in your hands">
         <P>
           Settings has an <strong>Export</strong> button that gives you the whole thing as a
-          JSON file: every card, review, task and setting. It is a real backup, and the same file
+          JSON file: every card, review, task, scanned page and setting. It is a real backup, and
+          the same file
           restores into a fresh installation. Nothing is held back from it.
         </P>
         <P>
           <strong>Settings → Deleting your data</strong> removes your cards, reviews, tasks,
-          messages, stars, badges, settings, level checks and usage records, in one transaction,
+          messages, stars, badges, settings, scanned pages, level checks and usage records, in one
+          transaction,
           immediately.
           The shared dictionary stays (other learners have cards built on it) but any entry you
           edited stops being attributed to you. Take an export first: this keeps no copy.

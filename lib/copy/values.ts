@@ -19,3 +19,13 @@
  * can assert on the constant rather than on a string somebody retyped.
  */
 export const NO_VALUE = "n/a";
+
+/**
+ * What a word's English says when nothing has supplied one yet.
+ *
+ * An instruction rather than a marker, because the person reading it is the
+ * person who can fix it. It lives here rather than beside the lookup that
+ * writes it, since a scanned page now writes it too, and two spellings of the
+ * same gap is how `isPlaceholder` starts missing one of them.
+ */
+export const NEEDS_TRANSLATION = `${NO_VALUE} · add a translation`;

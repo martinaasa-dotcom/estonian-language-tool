@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Candidate, fold, rankCandidates } from "./search";
+import { type Candidate, fold, matchEstonianForm, rankCandidates } from "./search";
 
 describe("fold", () => {
   it.each([
@@ -98,5 +98,55 @@ describe("rankCandidates — inflected forms", () => {
 
   it("does not let a regex metacharacter in the query throw", () => {
     expect(() => rankCandidates(DICT, "read (")).not.toThrow();
+  });
+});
+
+/*
+  The gate a photographed page has to get through.
+
+  `rankCandidates` is built for a search box, where a prefix match is a helpful
+  suggestion. `matchEstonianForm` is built for the moment a word read off a
+  photo is about to become a flashcard, where a helpful suggestion is a wrong
+  answer drilled in for six weeks.
+*/
+describe("matchEstonianForm", () => {
+  it("takes the headword spelled exactly", () => {
+    expect(matchEstonianForm(DICT, "raamat")?.lemma).toBe("raamat");
+  });
+
+  it("takes a stored principal part and says which one it was", () => {
+    const match = matchEstonianForm(DICT, "lugesin");
+    expect(match?.lemma).toBe("lugema");
+    expect(match?.matchedAs).toContain("past 1sg");
+  });
+
+  it("takes a regular case built on the genitive stem, which is most of a homework page", () => {
+    const match = matchEstonianForm(DICT, "toas");
+    expect(match?.lemma).toBe("tuba");
+    expect(match?.matchedAs).toContain("inessive");
+  });
+
+  it("refuses a prefix, however plausible", () => {
+    // "raama" would rank in a search box. Handing somebody a card for `raamat`
+    // because a camera dropped the last letter is the failure this exists for.
+    expect(matchEstonianForm(DICT, "raama")).toBeNull();
+  });
+
+  it("refuses a word the dictionary has never seen", () => {
+    expect(matchEstonianForm(DICT, "kirjutuslaud")).toBeNull();
+  });
+
+  it("never resolves through the English side", () => {
+    // A page printing the English word "book" must not silently become the
+    // Estonian entry `raamat`: this function only ever reads Estonian.
+    expect(matchEstonianForm(DICT, "book")).toBeNull();
+  });
+
+  it("still matches when a diacritic was lost to the light", () => {
+    expect(matchEstonianForm(DICT, "room")?.lemma).toBe("rõõm");
+  });
+
+  it("has nothing to say about an empty string", () => {
+    expect(matchEstonianForm(DICT, "   ")).toBeNull();
   });
 });

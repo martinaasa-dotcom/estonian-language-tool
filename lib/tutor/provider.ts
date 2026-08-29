@@ -493,3 +493,257 @@ async function assertOk(res: Response, config: ProviderConfig) {
     502,
   );
 }
+
+// ─────────────────────────── Looking at a picture ──────────────────────────
+
+/**
+ * A photograph on its way to a model, decoded and ready to send.
+ *
+ * Kept as base64 rather than bytes because that is the shape both wire formats
+ * want, and re-encoding it twice for one request is work for nothing.
+ */
+export interface ImageAttachment {
+  mediaType: string;
+  base64: string;
+}
+
+/** One complete answer, and who wrote it. */
+export interface CompletedReply {
+  config: ProviderConfig;
+  text: string;
+  usage: UsageReport;
+}
+
+/**
+ * Which model each provider is asked to look at pictures with.
+ *
+ * It defaults to whatever the deployment already configured for chat, because
+ * the operator picked that model and picking a different one behind their back
+ * is how a deployment that chose a free model ends up with an invoice. The
+ * override exists for the case that default cannot serve: a text-only model
+ * cannot read a photograph, and `OPENROUTER_VISION_MODEL` and friends are how
+ * a free-model deployment points the one feature that needs eyes at something
+ * that has them.
+ */
+export function visionProviders(): ProviderConfig[] {
+  const override: Record<ProviderName, string | undefined> = {
+    openrouter: process.env.OPENROUTER_VISION_MODEL,
+    anthropic: process.env.ANTHROPIC_VISION_MODEL,
+    openai: process.env.OPENAI_VISION_MODEL,
+  };
+
+  /*
+    Collapsed to one entry per model, because the chat chain is no longer one
+    entry per provider: OpenRouter contributes a link per free model, so an
+    override would otherwise ask the same model the same question three times
+    and call the third refusal a fallback. Order is kept, first occurrence wins.
+  */
+  const seen = new Set<string>();
+  const chain: ProviderConfig[] = [];
+  for (const config of resolveProviders()) {
+    const model = override[config.name]?.trim() || config.model;
+    const key = `${config.name}:${model}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    chain.push({ ...config, model });
+  }
+  return chain;
+}
+
+/**
+ * Asks the chain to read one image, and returns the whole answer at once.
+ *
+ * NOT STREAMED, DELIBERATELY. The reply is a JSON object that means nothing
+ * until its last brace arrives, so streaming it would buy a spinner that
+ * flickers and cost the ability to fall back once text has started. Since
+ * nothing is shown until the answer is complete, this can keep trying
+ * providers for as long as the chain lasts.
+ *
+ * WHY IT FALLS BACK MORE READILY THAN THE CHAT PATH DOES. `openWithFallback`
+ * refuses to walk past a 400 or a 404, because a malformed request or a
+ * missing model would be answered the same way by everybody and trying them
+ * all turns one clear message into a slower one. That reasoning does not hold
+ * for a picture: whether a model can see is a fact about that one model, and
+ * "this model does not accept images" is exactly the case where the next
+ * provider in the chain is worth asking. Only a rejected key stops the walk,
+ * because that is a configuration mistake no amount of retrying fixes.
+ */
+export async function completeWithImage(
+  chain: ProviderConfig[],
+  system: string,
+  prompt: string,
+  image: ImageAttachment,
+  onUsage?: (usage: UsageReport, config: ProviderConfig) => void,
+): Promise<CompletedReply> {
+  if (chain.length === 0) throw new TutorError("No AI provider is configured.", 503);
+
+  let last: unknown = null;
+  for (let i = 0; i < chain.length; i += 1) {
+    const config = chain[i]!;
+    try {
+      const reply = config.name === "anthropic"
+        ? await readImageAnthropic(config, system, prompt, image)
+        : await readImageOpenAiCompatible(config, system, prompt, image);
+      onUsage?.(reply.usage, config);
+      return reply;
+    } catch (error) {
+      last = error;
+      const fatal = error instanceof TutorError && error.status === 401;
+      if (fatal || i === chain.length - 1) throw error;
+    }
+  }
+
+  throw last instanceof Error ? last : new TutorError("No AI provider could read that.", 502);
+}
+
+/** Output ceiling for a page of vocabulary. Sixty pairs is well inside this. */
+const IMAGE_REPLY_TOKENS = 1500;
+
+async function readImageOpenAiCompatible(
+  config: ProviderConfig,
+  system: string,
+  prompt: string,
+  image: ImageAttachment,
+): Promise<CompletedReply> {
+  const isOpenRouter = config.name === "openrouter";
+  const key = isOpenRouter ? process.env.OPENROUTER_API_KEY! : process.env.OPENAI_API_KEY!;
+  const url = isOpenRouter
+    ? "https://openrouter.ai/api/v1/chat/completions"
+    : "https://api.openai.com/v1/chat/completions";
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${key}`,
+      ...(isOpenRouter
+        ? { "HTTP-Referer": "http://localhost:3000", "X-Title": "Kodukeel Estonian study" }
+        : {}),
+    },
+    body: JSON.stringify({
+      model: config.model,
+      max_tokens: IMAGE_REPLY_TOKENS,
+      messages: [
+        { role: "system", content: system },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${image.mediaType};base64,${image.base64}` },
+            },
+            { type: "text", text: prompt },
+          ],
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(90_000),
+  });
+
+  await assertOk(res, config);
+  const body = (await res.json()) as {
+    choices?: { message?: { content?: unknown } }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+
+  const raw = body.choices?.[0]?.message?.content;
+  // Some OpenAI-compatible gateways answer with the parts array rather than a
+  // string, even when every part is text. Both mean the same thing.
+  const text = typeof raw === "string"
+    ? raw
+    : Array.isArray(raw)
+      ? raw.map((p) => (typeof p === "object" && p && "text" in p ? String((p as { text: unknown }).text ?? "") : "")).join("")
+      : "";
+
+  return {
+    config,
+    text,
+    usage: usageFrom(body.usage?.prompt_tokens, body.usage?.completion_tokens, system + prompt, text),
+  };
+}
+
+async function readImageAnthropic(
+  config: ProviderConfig,
+  system: string,
+  prompt: string,
+  image: ImageAttachment,
+): Promise<CompletedReply> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY!,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      max_tokens: IMAGE_REPLY_TOKENS,
+      // The instruction is identical for every scan, so it is worth caching
+      // exactly as the Estonian system prompt is. The picture never is.
+      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: image.mediaType, data: image.base64 },
+            },
+            { type: "text", text: prompt },
+          ],
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(90_000),
+  });
+
+  await assertOk(res, config);
+  const body = (await res.json()) as {
+    content?: { type?: string; text?: string }[];
+    usage?: {
+      input_tokens?: number;
+      output_tokens?: number;
+      cache_creation_input_tokens?: number;
+      cache_read_input_tokens?: number;
+    };
+  };
+
+  const text = (body.content ?? [])
+    .filter((block) => block.type === "text")
+    .map((block) => block.text ?? "")
+    .join("");
+
+  const input =
+    (body.usage?.input_tokens ?? 0) +
+    (body.usage?.cache_creation_input_tokens ?? 0) +
+    (body.usage?.cache_read_input_tokens ?? 0);
+
+  return {
+    config,
+    text,
+    usage: usageFrom(input || undefined, body.usage?.output_tokens, system + prompt, text),
+  };
+}
+
+/**
+ * Token counts as reported, or estimated over the text when they were not.
+ *
+ * An estimate over text alone undercounts a request carrying a photograph by
+ * the entire cost of the photograph, so the caller adds the image's share on
+ * top. `measured` is what tells it whether to.
+ */
+function usageFrom(
+  input: number | undefined,
+  output: number | undefined,
+  sent: string,
+  received: string,
+): UsageReport {
+  if (input != null || output != null) {
+    return { inputTokens: input ?? 0, outputTokens: output ?? 0, measured: true };
+  }
+  return {
+    inputTokens: estimateTokens(sent),
+    outputTokens: estimateTokens(received),
+    measured: false,
+  };
+}

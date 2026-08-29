@@ -28,10 +28,16 @@ export const STATIC_SECURITY_HEADERS: { key: string; value: string }[] = [
   /*
     The microphone is `self`, not `()`: speaking practice records the learner
     reading a word back (components/Recorder.tsx). Denying it here would
-    switch that feature off with no error anybody could act on. The camera and
-    location are denied, because nothing in this app has ever wanted either.
+    switch that feature off with no error anybody could act on.
+
+    THE CAMERA JOINED IT, and the failure it prevents is a silent one. Scanning
+    a page is `<input type="file" capture="environment">`, and the capture
+    attribute is governed by this very policy: with `camera=()` a phone quietly
+    ignores it and opens the photo library instead. Nothing errors, nothing is
+    logged, and the button simply does not do what it says. Location stays
+    denied, because nothing here has ever wanted it.
   */
-  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
