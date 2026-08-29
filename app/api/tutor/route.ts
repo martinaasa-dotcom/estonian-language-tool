@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { buildSystemPrompt } from "@/lib/tutor/prompt";
 import { resolveProvider, streamReply, TutorError, type ChatMessage } from "@/lib/tutor/provider";
 import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { reportError } from "@/lib/observability/report";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -76,6 +77,11 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(chunk));
         }
       } catch (error) {
+        // A TutorError is an upstream condition already explained to the learner
+        // (a bad key, a 429, an unknown model). Anything else is ours.
+        if (!(error instanceof TutorError)) {
+          reportError(error, { at: "api/tutor", ownerId, extra: { model: config.model } });
+        }
         const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
         controller.enqueue(encoder.encode(`\n\n⚠ ${message}`));
       } finally {
@@ -99,8 +105,10 @@ async function persist(ownerId: string, messages: ChatMessage[], reply: string) 
     if (reply.trim()) {
       await prisma.message.create({ data: { ownerId, role: "assistant", content: reply } });
     }
-  } catch {
+  } catch (error) {
     // Chat history is a convenience, not the irreplaceable data. Losing a row
-    // must never break the conversation the learner is having.
+    // must never break the conversation the learner is having — but it should
+    // not be silent either, since it means the database is unhappy.
+    reportError(error, { at: "api/tutor/persist", ownerId });
   }
 }

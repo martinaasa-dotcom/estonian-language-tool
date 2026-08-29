@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { reportError } from "@/lib/observability/report";
 import { estimateCostMicros } from "./pricing";
 import {
   type QuotaDecision, type UsageSnapshot, checkQuota, readLimits, utcDay,
@@ -69,7 +70,8 @@ export async function authoriseCall(
       dailyCallsPerUser: limits.dailyCallsPerUser * BURST_MULTIPLIER[kind],
     };
     return checkQuota(await snapshotUsage(ownerId, kind, now), scaled, now);
-  } catch {
+  } catch (error) {
+    reportError(error, { at: "usage/authoriseCall", ownerId, extra: { kind } });
     return {
       allowed: false,
       reason: "GLOBAL_SPEND",
@@ -119,9 +121,12 @@ export async function recordUsage(input: {
       },
     });
   } catch (error) {
-    console.error("[usage] failed to record a metered call — the cap is now under-counting", {
-      kind: input.kind, model: input.model,
-      error: error instanceof Error ? error.message : String(error),
+    // Loud on purpose: a lost row means the spend cap is measuring less than
+    // was actually spent, which is the one failure mode the cap exists to stop.
+    reportError(error, {
+      at: "usage/recordUsage",
+      ownerId: input.ownerId,
+      extra: { kind: input.kind, model: input.model },
     });
   }
 }

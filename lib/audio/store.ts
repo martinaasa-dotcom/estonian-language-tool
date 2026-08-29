@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { reportError } from "@/lib/observability/report";
 
 /**
  * Content-addressed storage for synthesised speech.
@@ -92,9 +93,7 @@ export async function writeAudio(hash: string, body: Buffer): Promise<void> {
       upsert: true,
       cacheControl: "31536000",
     });
-    if (error) {
-      console.warn("[audio] could not cache a clip in the object store", error.message);
-    }
+    if (error) reportError(error, { at: "audio/writeAudio", extra: { bucket: BUCKET } });
     return;
   }
 
