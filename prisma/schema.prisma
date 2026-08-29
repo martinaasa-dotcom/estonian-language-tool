@@ -39,7 +39,22 @@ model Lexeme {
   /// be attributable, or a bad one is untraceable.
   editedBy  String?
   editedAt  DateTime?
-  fetchedAt DateTime? // when Ekilex was last consulted, for cache freshness
+  fetchedAt DateTime? // when Ekilex was last consulted *and answered*, for cache freshness
+
+  /// When Ekilex was last asked about this word and had nothing to say.
+  ///
+  /// Separate from `fetchedAt` rather than folded into it, and the reason is
+  /// `lib/progress/exam.ts`: the exam pool orders by `fetchedAt` as a proxy for
+  /// "words the dictionary knows most about", so stamping a miss there would
+  /// sort the least known words to the front of a mock paper. Two different
+  /// facts had been sharing one column and only one of them was ever written.
+  ///
+  /// Nothing was written at all before this, which is the fault it fixes: a
+  /// word Ekilex cannot answer for was re-asked, twice over, on every render of
+  /// the page it appears on, for ever. The same class of bug as the one that
+  /// cost four fifths of the dictionary on the seed's first run, and the same
+  /// fix: a source that will not answer is written down as a miss.
+  lookupMissAt DateTime?
 
   forms     Form[]
   cards     Card[]

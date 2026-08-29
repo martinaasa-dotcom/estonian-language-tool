@@ -70,6 +70,28 @@ export function providerResilience(chain = resolveProviders()): {
   };
 }
 
+/**
+ * Every environment variable that can put a provider into the chain.
+ *
+ * One list rather than five reads scattered through `resolveProviders`, and it
+ * exists for the test suite rather than for the chain: a unit test here must
+ * describe a machine, not run on one. `provider.test.ts` clears exactly these
+ * before each case, so a machine that happens to carry a real key in its
+ * environment measures the same chain CI does.
+ *
+ * That is not hypothetical. `GROQ_API_KEY` and `GEMINI_API_KEY` were added to
+ * the chain without being added to the test helper that cleared keys, so the
+ * whole suite passed on CI, which has none, and failed thirteen ways on any
+ * machine that had either. The suite was reporting the machine.
+ */
+export const PROVIDER_KEY_ENV = [
+  "OPENROUTER_API_KEY",
+  "GROQ_API_KEY",
+  "GEMINI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+] as const;
+
 export function resolveProviders(): ProviderConfig[] {
   const chain: ProviderConfig[] = [];
   if (process.env.OPENROUTER_API_KEY) {

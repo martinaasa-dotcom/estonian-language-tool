@@ -13,6 +13,7 @@ import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
+import { eraseAuthIdentity, remainingIdentityNote } from "@/lib/auth/erase";
 import { NEEDS_TRANSLATION } from "@/lib/copy/values";
 import { resolveOneWord } from "@/lib/dict/resolveScan";
 import { guessPos, MAX_ITEMS as SCAN_MAX_ITEMS } from "@/lib/scan/extract";
@@ -1405,7 +1406,23 @@ export async function deleteMyAccount(confirmation: string) {
     };
   }
 
-  return { ok: true as const };
+  /*
+    AND THEN THE IDENTITY, WHICH IS NOT IN ANY OF THOSE TABLES.
+
+    Everything above is this app's schema. The email address, the Google
+    subject id and the sign-in history live in Supabase Auth, and deleting the
+    rows left all of it behind with no route to remove it and nothing on the
+    page saying so. An email address is personal data wherever it is kept, so
+    "delete everything" that keeps it is not the promise /privacy makes.
+
+    Deliberately after the transaction and outside it: the rows are already
+    gone and must stay gone whatever the auth store answers. A failure here is
+    reported to the learner as what is left rather than as a failed deletion,
+    because those are different facts and only one of them needs following up.
+  */
+  const identity = await eraseAuthIdentity(ownerId);
+
+  return { ok: true as const, remaining: remainingIdentityNote(identity) };
 }
 
 // ────────────────────────────── Backup restore ─────────────────────────────
@@ -1424,6 +1441,18 @@ const BackupSchema = z.object({
     still works.
   */
   scans: z.array(z.record(z.unknown())).optional(),
+  /*
+    Optional for the same reason `scans` is: a file written before the export
+    carried them has no such key and must still restore. Every one of these is
+    personal data the export is now required to contain, so a restore that
+    ignored them would hand somebody a complete copy of their data and then
+    refuse to put most of it back.
+  */
+  settings: z.array(z.record(z.unknown())).optional(),
+  messages: z.array(z.record(z.unknown())).optional(),
+  assessments: z.array(z.record(z.unknown())).optional(),
+  stars: z.array(z.record(z.unknown())).optional(),
+  achievements: z.array(z.record(z.unknown())).optional(),
 });
 
 export interface RestoreSummary {
@@ -1433,6 +1462,8 @@ export interface RestoreSummary {
   tasks: number;
   /** Photographed pages. Absent from a backup written before they existed. */
   scans: number;
+  /** Settings, tutor messages, level checks, stars and badges, counted together. */
+  personal: number;
 }
 
 /** Reads a backup file and reports what is in it, without writing anything. */
@@ -1460,6 +1491,10 @@ export async function inspectBackup(json: string): Promise<
     summary: {
       words: b.lexemes.length, cards: b.cards.length, reviews: b.reviews.length,
       tasks: b.tasks.length, scans: b.scans?.length ?? 0,
+      personal:
+        (b.settings?.length ?? 0) + (b.messages?.length ?? 0) +
+        (b.assessments?.length ?? 0) + (b.stars?.length ?? 0) +
+        (b.achievements?.length ?? 0),
     },
   };
 }
@@ -1558,6 +1593,78 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         if (existing && existing.ownerId !== ownerId) continue;
         await tx.scan.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
       }
+
+      /*
+        THE FIVE THAT USED TO BE EXPORTED NOWHERE AND RESTORED NOWHERE.
+
+        Settings, the conversations with Anu, the level checks, the starred
+        words and the badges. All of them are keyed by the owner, so all of
+        them are attributed to whoever is restoring rather than to whatever the
+        file claims, exactly like cards and reviews above.
+
+        A level check is append-only, like a review: created if absent and
+        never updated, so restoring the same file twice leaves the history it
+        measured alone. The other four are upserts, because a setting or a star
+        is a current value rather than a fact about a moment.
+      */
+      for (const raw of backup.settings ?? []) {
+        const data = revive(raw, []);
+        const key = String(data.key ?? "");
+        if (!key) continue;
+        const value = String(data.value ?? "");
+        await tx.setting.upsert({
+          where: { ownerId_key: { ownerId, key } },
+          create: { ownerId, key, value },
+          update: { value },
+        });
+      }
+
+      for (const raw of backup.messages ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.message.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.message.create({ data: data as never });
+      }
+
+      for (const raw of backup.assessments ?? []) {
+        const data = revive(raw, ["takenAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.assessment.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.assessment.create({ data: data as never });
+      }
+
+      for (const raw of backup.stars ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        const lexemeId = String(data.lexemeId ?? "");
+        if (!lexemeId) continue;
+        /*
+          A star points at a dictionary entry with a real foreign key, and a
+          merge onto a database that does not hold that entry would abort the
+          whole transaction over a bookmark. The backup carries the dictionary,
+          so this normally finds it; when it does not, one lost star is the
+          right price for the rest of the restore completing.
+        */
+        const lexeme = await tx.lexeme.findUnique({ where: { id: lexemeId }, select: { id: true } });
+        if (!lexeme) continue;
+        await tx.starredWord.upsert({
+          where: { ownerId_lexemeId: { ownerId, lexemeId } },
+          create: { ownerId, lexemeId, ...(data.createdAt ? { createdAt: data.createdAt as Date } : {}) },
+          update: {},
+        });
+      }
+
+      for (const raw of backup.achievements ?? []) {
+        const data = revive(raw, ["earnedAt"]);
+        const key = String(data.key ?? "");
+        if (!key) continue;
+        await tx.achievement.upsert({
+          where: { ownerId_key: { ownerId, key } },
+          create: { ownerId, key, ...(data.earnedAt ? { earnedAt: data.earnedAt as Date } : {}) },
+          update: {},
+        });
+      }
     }, { timeout: 120_000 });
   } catch (error) {
     return {
@@ -1571,6 +1678,8 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
   revalidatePath("/tasks");
   revalidatePath("/dictionary");
   revalidatePath("/scan");
+  revalidatePath("/settings");
+  revalidatePath("/progress");
   return { ok: true as const, summary: check.summary };
 }
 

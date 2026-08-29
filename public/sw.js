@@ -30,11 +30,48 @@ const AUDIO = `${VERSION}-audio`;
 /** The page shown when a navigation cannot be served any other way. */
 const OFFLINE_URL = "/offline";
 
+/** Files with no session in them, needed whatever happens. */
+const SHELL_URLS = [OFFLINE_URL, "/app-icon.svg"];
+
+/*
+  THE DAILY PATH, WARMED AT INSTALL, BECAUSE OTHERWISE IT IS WARMED BY LUCK.
+
+  The page cache below fills as a side effect of a navigation the worker
+  intercepts. The first navigation to a page is never one of those: the worker
+  installs *during* it, so it is not controlling the client yet and does not
+  see it. The page is therefore cached on the second online visit and not the
+  first, and nothing in the app guarantees a second visit.
+
+  Which made the offline promise conditional in exactly the case it is for.
+  Install the app, open review, get on the bus: the worker is installed, the
+  cache is empty, and /review answers with the offline screen. Measured, not
+  reasoned about. After one visit the page cache held nothing; after two it
+  held /review, and the same reload that had shown the offline screen showed
+  the session.
+
+  So the two pages a review session starts from are fetched at install. They
+  are stale the moment they are stored, which is fine and is already the
+  design: the cached copy of /review is a shell, and the queue is rebuilt from
+  IndexedDB on mount rather than read out of the HTML.
+*/
+const WARM_URLS = ["/", "/review"];
+
+/**
+ * One at a time rather than `addAll`, which is atomic: a single URL that
+ * cannot be fetched would throw away the whole batch, and the offline page is
+ * in that batch. A warm page that does not arrive costs a slower first
+ * offline session; the offline page not arriving costs the fallback itself.
+ */
+function cacheEach(cache, urls) {
+  return Promise.all(urls.map((url) => cache.add(url).catch(() => undefined)));
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(SHELL)
-      .then((cache) => cache.addAll([OFFLINE_URL, "/app-icon.svg"]))
-      .catch(() => undefined),
+    Promise.all([
+      caches.open(SHELL).then((cache) => cacheEach(cache, SHELL_URLS)),
+      caches.open(PAGES).then((cache) => cacheEach(cache, WARM_URLS)),
+    ]).catch(() => undefined),
   );
   self.skipWaiting();
 });

@@ -1108,6 +1108,240 @@ check("the goal a learner states is stored through the settings store", () => {
 });
 
 
+
+// ── What a person has to be told, and who is answerable (GDPR, IKS) ──────────
+
+check("the policy pages name whoever is answerable, and never invent them", () => {
+  /*
+    Kodukeel is software somebody installs rather than a service with one
+    address, so the controller is the person or school running the copy. That
+    is a real answer and it used to be the whole answer, which left the pages
+    saying "ask whoever runs this" with no way to find out who that is.
+    Article 13(1)(a) wants a name and a contact at the point of collection, and
+    the Information Society Services Act wants the same of a provider.
+
+    So the identity is configuration, and both pages render it. What this
+    guards is the second half: an unset deployment must say it is unset. A
+    placeholder would read as an answered question and would be worse than the
+    sentence it replaced.
+  */
+  for (const file of ["app/privacy/page.tsx", "app/terms/page.tsx"]) {
+    const source = read(file);
+    assert.match(source, /resolveOperator/, `${file} does not name the operator`);
+    assert.match(source, /operator\.identified/, `${file} does not branch on whether it is set`);
+    assert.match(
+      source,
+      /has not filled their name in/,
+      `${file} does not say out loud when the operator is unnamed`,
+    );
+    // Read per request: a notice baked in at build time describes the build
+    // machine's environment, which is nobody's.
+    assert.match(source, /dynamic = "force-dynamic"/, `${file} is rendered at build time`);
+  }
+});
+
+check("the privacy notice carries what Article 13 requires", () => {
+  /*
+    Not a copy check and not a word count: each of these is a distinct thing a
+    reader is entitled to be told, and each was missing. A page that describes
+    what is stored and stops is the shape this one had.
+  */
+  const privacy = read("app/privacy/page.tsx");
+  const required: [RegExp, string][] = [
+    [/SUPERVISORY_AUTHORITY/, "who to complain to (13(2)(d))"],
+    [/transfersOutsideEea|leavesTheUnion/, "whether anything leaves the EEA (13(1)(f))"],
+    [/resolveRecipients/, "who else sees it (13(1)(e))"],
+    [/How long it is kept/, "how long it is kept (13(2)(a))"],
+    [/What you can demand/, "the rights (13(2)(b))"],
+    [/decides anything about you/, "that nothing here decides anything (13(2)(f))"],
+    [/age of\s*\n?\s*13|from the age\s*\n?\s*of 13/, "the age of consent Estonia sets"],
+  ];
+  for (const [pattern, what] of required) {
+    assert.match(privacy, pattern, `the privacy page no longer states ${what}`);
+  }
+});
+
+check("a deletion that leaves something behind says so", () => {
+  /*
+    `deleteMyAccount` empties every table this app owns. The identity is not in
+    any of them: the email address and the sign-in history live in Supabase
+    Auth, and deleting the rows left all of it with no route to remove it and
+    nothing on screen admitting it. Erasure is erasure wherever the data sits.
+
+    Two halves, and the second is the one that rots. Where the key that can
+    erase an identity is not configured, the learner has to be told what is
+    left rather than shown a success. A button that reports a deletion it did
+    not entirely do is worse than one that refuses.
+  */
+  const actions = read("app/actions.ts");
+  assert.match(
+    actions,
+    /deleteMyAccount[\s\S]*?eraseAuthIdentity/,
+    "account deletion no longer erases the sign-in identity",
+  );
+  assert.match(
+    actions,
+    /deleteMyAccount[\s\S]*?remainingIdentityNote/,
+    "account deletion no longer reports what it could not reach",
+  );
+  const danger = read("app/(app)/settings/DangerZone.tsx");
+  assert.match(danger, /result\.remaining/, "the screen ignores what the deletion left behind");
+});
+
+check("an export holds every category the account holds", () => {
+  /*
+    Article 20 is a right to receive the personal data concerning you, and
+    /privacy says in as many words that nothing is held back. It was: settings,
+    tutor conversations, level checks, starred words and badges were all
+    absent, and two of those cannot be reconstructed from anything.
+
+    Asserted against the schema rather than against a list typed here, so a new
+    owner-scoped table is a failure until somebody decides about it. UsageEvent
+    is the one deliberate exclusion and it is named on the page: it is the
+    deployment's spending record, not the learner's work.
+  */
+  const owned = [...SCHEMA.matchAll(/model (\w+) \{([^}]*)\}/g)]
+    .filter(([, , body]) => /^\s*ownerId\s/m.test(body ?? ""))
+    .map(([, name]) => name!)
+    .filter((name) => !["UsageEvent", "ClassroomMember", "ExamAttempt", "Classroom"].includes(name));
+  assert.ok(owned.length >= 8, `expected the owner-scoped models, found ${owned.length}`);
+
+  const route = read("app/api/export/route.ts");
+  for (const model of owned) {
+    const accessor = model.charAt(0).toLowerCase() + model.slice(1);
+    assert.match(
+      route,
+      new RegExp(`prisma\\.${accessor}\\.findMany`),
+      `the export leaves ${model} out, and the privacy page promises it does not`,
+    );
+  }
+});
+
+check("nothing is stored on a device that would need asking first", () => {
+  /*
+    Estonian law wants agreement before something is stored on somebody's
+    device unless it is strictly necessary for the service they asked for. The
+    theme, the install prompt's memory and the offline outbox all clear that
+    bar, which is why this app has no cookie banner and why /privacy explains
+    the reasoning rather than asserting the conclusion.
+
+    That stays true only while the list stays short. An analytics or
+    advertising library reaching for storage would need consent, a banner and a
+    withdrawal path, none of which exist here.
+  */
+  const storage = ALL.filter((f) => /localStorage|sessionStorage|indexedDB|document\.cookie/.test(read(f)))
+    .filter((f) => !/\.(test|itest)\.tsx?$/.test(f));
+  const allowed = [
+    "components/InstallPrompt.tsx",
+    "components/Sidebar.tsx",
+    "app/layout.tsx",
+    "lib/offline/db.ts",
+  ];
+  for (const file of storage) {
+    assert.ok(
+      allowed.includes(file),
+      `${file} stores something on the reader's device, which /privacy does not account for`,
+    );
+  }
+  assert.match(
+    read("app/privacy/page.tsx"),
+    /What is kept on your own device/,
+    "the privacy page stopped saying what is kept on the device",
+  );
+});
+
+
+// ── Not asking the same question twice (cache) ───────────────────────────────
+
+check("a source that will not answer is written down as a miss", () => {
+  /*
+    The seed learned this the expensive way: a source that would not answer was
+    never recorded as a miss, the run looked clean, and four fifths of the
+    dictionary was absent. The live path had the same bug and nobody had
+    noticed, because its symptom is not an absence but a cost. A word Ekilex
+    cannot answer for was re-asked, twice over, on every render of the page it
+    appeared on, for ever, against a free academic service.
+
+    `lookupMissAt` is deliberately not `fetchedAt`: the exam pool orders by
+    `fetchedAt` to mean "words the dictionary knows most about", so writing a
+    miss there would have sorted the least known words to the front of a mock
+    paper.
+  */
+  assert.match(SCHEMA, /lookupMissAt\s+DateTime\?/, "the miss marker is gone from the schema");
+  const lookup = read("lib/dict/lookup.ts");
+  assert.match(lookup, /lookupMissAt: new Date\(\)/, "a miss is no longer recorded");
+  assert.match(lookup, /lookupMissAt: null/, "an answer no longer clears an earlier miss");
+  assert.equal(
+    /fetchedAt: new Date\(\)[\s\S]{0,80}recordMiss/.test(lookup),
+    false,
+    "a miss is being written to fetchedAt, which the exam pool reads as a ranking",
+  );
+});
+
+check("the daily path is cached before it is needed, not by luck", () => {
+  /*
+    The page cache fills as a side effect of a navigation the worker
+    intercepts, and the first navigation to a page is never one of those: the
+    worker installs during it and is not controlling the client yet. So a page
+    was cached on the second online visit and not the first, and nothing makes
+    a second visit happen.
+
+    That made the offline promise conditional in the one case it exists for.
+    Install the app, open review, get on the bus: worker installed, cache
+    empty, offline screen. Measured rather than reasoned about, and
+    `smoke-offline.mjs` had been failing on exactly this.
+  */
+  const sw = read("public/sw.js");
+  const warm = /WARM_URLS\s*=\s*\[([^\]]*)\]/.exec(sw)?.[1] ?? "";
+  assert.match(warm, /"\/review"/, "a review session is no longer warmed at install");
+  assert.match(warm, /"\/"/, "the home page is no longer warmed at install");
+  /*
+    And warmed one at a time. `addAll` is atomic, so one URL that will not
+    fetch throws away the whole batch, and the offline page is in a batch.
+  */
+  assert.equal(
+    /cache\.addAll\(/.test(sw),
+    false,
+    "the worker warms its cache atomically, so one bad URL loses the offline page too",
+  );
+});
+
+check("one upstream request per thing, however many callers ask at once", () => {
+  /*
+    A cache consulted before a call and written after it has a gap exactly as
+    wide as the call, and a class of twenty-five starting the same unit lands
+    in it. Speech worked this out first; the dictionary needed the same thing.
+
+    What this guards is that there is one implementation. A second copy is
+    where the `finally` gets dropped, and a bad minute upstream is then
+    remembered as a failure until the next deploy.
+  */
+  const owners = ALL.filter((f) => /new Map<string, Promise</.test(read(f)));
+  assert.deepEqual(
+    owners,
+    ["lib/cache/singleFlight.ts"],
+    "somebody wrote a second in-flight map instead of using lib/cache/singleFlight.ts",
+  );
+  for (const file of ["app/api/tts/route.ts", "lib/dict/lookup.ts"]) {
+    const source = read(file);
+    // Both halves, because the import path alone is not evidence of a call:
+    // the first version of this check matched the string "singleFlight" inside
+    // `@/lib/cache/singleFlight` and passed happily on a file that had stopped
+    // calling it.
+    assert.match(
+      source,
+      /from "@\/lib\/cache\/singleFlight"/,
+      `${file} does not use the shared in-flight map`,
+    );
+    assert.match(
+      source,
+      /\bsingleFlight(Tagged)?\(/,
+      `${file} imports the deduplication and then does not call it`,
+    );
+  }
+});
+
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

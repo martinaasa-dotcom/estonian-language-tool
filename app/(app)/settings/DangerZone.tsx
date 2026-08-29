@@ -21,6 +21,16 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+    What the deletion could not reach, when it could not reach something.
+
+    Only ever the sign-in record, which is held by the sign-in provider rather
+    than by this app and needs a key some deployments do not configure. It is
+    shown instead of the redirect, not alongside it: a sentence that matters is
+    a sentence somebody has to be able to read, and this one disappears if the
+    page navigates out from under it.
+  */
+  const [remaining, setRemaining] = useState<string | null>(null);
 
   async function remove() {
     setBusy(true);
@@ -29,6 +39,10 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
       const result = await deleteMyAccount(confirmation);
       if (!result.ok) {
         setError(result.error);
+        return;
+      }
+      if (result.remaining) {
+        setRemaining(result.remaining);
         return;
       }
       // Signing out here as well: the data is gone, so a session pointing at it
@@ -57,7 +71,25 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
           cannot be recreated, and this does not keep a copy.
         </p>
 
-        {!open ? (
+        {remaining ? (
+          <div
+            className="mt-4 rounded-md px-3.5 py-3.5"
+            style={{ background: "var(--again-soft)", color: "var(--again)" }}
+          >
+            <p role="status" className="text-[13.5px]">{remaining}</p>
+            <div className="mt-3">
+              <Button
+                onClick={() => {
+                  void createClient().auth.signOut().catch(() => {});
+                  router.push("/sign-in");
+                  router.refresh();
+                }}
+              >
+                Sign out
+              </Button>
+            </div>
+          </div>
+        ) : !open ? (
           <div className="mt-4">
             <Button variant="danger" onClick={() => setOpen(true)}>
               Delete everything

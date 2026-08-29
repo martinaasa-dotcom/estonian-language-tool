@@ -1,10 +1,29 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   completeWithImage, FREE_GEMINI_MODELS, FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS,
-  openWithFallback, providerResilience, resolveProviders,
+  openWithFallback, PROVIDER_KEY_ENV, providerResilience, resolveProviders,
   TutorError, visionProviders,
 } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
+
+/*
+  EVERY CASE STARTS ON A MACHINE WITH NO KEYS, WHATEVER MACHINE IT IS ON.
+
+  A test here describes a chain, so it has to state the whole environment the
+  chain is read from. It did not: each case stubbed the keys it cared about
+  and inherited the rest from whoever was running it. CI carries no provider
+  keys, so it passed; a developer machine with `GROQ_API_KEY` exported failed
+  thirteen of these, and the failures read as chain bugs rather than as the
+  suite reporting its own host.
+
+  Clearing `PROVIDER_KEY_ENV` here fixes both halves at once. A case that
+  names a key still names it, and a case that forgets one now inherits an
+  empty string rather than somebody's real credential, which is also the only
+  version of this file that is safe to run with a `.env` loaded.
+*/
+beforeEach(() => {
+  for (const key of PROVIDER_KEY_ENV) vi.stubEnv(key, "");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -17,10 +36,17 @@ function sse(text: string): Response {
   return new Response(body, { status: 200 });
 }
 
-function only(name: "openrouter" | "anthropic" | "openai") {
-  vi.stubEnv("OPENROUTER_API_KEY", name === "openrouter" ? "k" : "");
-  vi.stubEnv("ANTHROPIC_API_KEY", name === "anthropic" ? "k" : "");
-  vi.stubEnv("OPENAI_API_KEY", name === "openai" ? "k" : "");
+/**
+ * Exactly one provider configured, whichever the case is about.
+ *
+ * Driven off `PROVIDER_KEY_ENV` rather than a list retyped here, so a provider
+ * added to the chain cannot be left out of the clearing. That is the fault this
+ * helper actually had: it named three keys, the chain grew to five, and the two
+ * it did not name were whatever the machine happened to export.
+ */
+function only(name: "openrouter" | "groq" | "gemini" | "anthropic" | "openai") {
+  const wanted = `${name.toUpperCase()}_API_KEY`;
+  for (const key of PROVIDER_KEY_ENV) vi.stubEnv(key, key === wanted ? "k" : "");
 }
 
 /*
