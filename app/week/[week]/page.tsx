@@ -108,15 +108,30 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
               <Stat value={known} label="Known" tone="var(--good)" />
               <Stat value={`${doneTasks}/${tasks.length}`} label="Tasks done" />
             </div>
-            {cards.length > 0 && (
-              <div className="mt-5 flex flex-wrap gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
-                <ButtonLink href={`/review?week=${week}`} variant="primary">
-                  <GraduationCap size={15} aria-hidden />
-                  {due > 0 ? `Review week ${week} (${due} due)` : `Drill week ${week}`}
-                </ButtonLink>
-                <ButtonLink href={`/words?week=${week}`}>See the cards</ButtonLink>
-              </div>
-            )}
+            <div className="mt-5 flex flex-wrap items-center gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
+              {cards.length > 0 ? (
+                <>
+                  <ButtonLink href={`/review?week=${week}`} variant="primary">
+                    <GraduationCap size={15} aria-hidden />
+                    {due > 0 ? `Review week ${week} (${due} due)` : `Drill week ${week}`}
+                  </ButtonLink>
+                  <ButtonLink href={`/words?week=${week}`}>See the cards</ButtonLink>
+                </>
+              ) : (
+                <>
+                  {/* Homework filed here but no vocabulary: the obvious next
+                      action is adding it, and offering nothing was a dead end. */}
+                  <ButtonLink href="/dictionary" variant="primary">
+                    Add week {week} vocabulary
+                  </ButtonLink>
+                  <span className="text-[13px]" style={{ color: "var(--ink-3)" }}>
+                    {week === current
+                      ? "Words you add now are filed here."
+                      : `Make week ${week} current first, so new words land here.`}
+                  </span>
+                </>
+              )}
+            </div>
           </Card>
 
           {words.size > 0 && (

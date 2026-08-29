@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { testUserId } from "./testSession";
 
 /**
  * The signed-in user's id, for scoping every query to their own data.
@@ -17,6 +18,10 @@ import { createClient } from "@/lib/supabase/server";
  * read or write their data.
  */
 export const requireUserId = cache(async (): Promise<string> => {
+  // Local browser tests only; impossible in a production build. See testSession.
+  const stub = testUserId();
+  if (stub) return stub;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not signed in.");

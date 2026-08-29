@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowedEmail, safeNext } from "@/lib/auth/access";
+import { testUserId } from "@/lib/auth/testSession";
 
 /**
  * Refreshes the Supabase session cookie on every request (required by
@@ -13,6 +14,9 @@ import { isAllowedEmail, safeNext } from "@/lib/auth/access";
  * makes, not whenever their session happens to expire.
  */
 export async function middleware(request: NextRequest) {
+  // Local browser tests only; impossible in a production build. See testSession.
+  if (testUserId()) return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

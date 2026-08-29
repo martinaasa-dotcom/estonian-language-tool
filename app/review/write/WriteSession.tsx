@@ -26,6 +26,8 @@ interface Marked {
   graded: GradedSentence | null;
   aiAvailable: boolean;
   quotaMessage?: string;
+  /** Forms Anu used that the dictionary could not vouch for. Its note is dropped. */
+  withheld?: string[];
 }
 
 /**
@@ -226,7 +228,7 @@ export function WriteSession({ prompts, aiAvailable }: {
  * would borrow the dictionary's authority for the model's guess.
  */
 function Feedback({ marked }: { marked: Marked }) {
-  const { formCheck, graded, quotaMessage } = marked;
+  const { formCheck, graded, quotaMessage, withheld } = marked;
 
   return (
     <div className="mt-6 flex flex-col gap-3" aria-live="polite">
@@ -249,7 +251,20 @@ function Feedback({ marked }: { marked: Marked }) {
         </p>
       </div>
 
-      {graded && (
+      {withheld && withheld.length > 0 && (
+        <div
+          className="rounded-md border px-3.5 py-3"
+          style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
+        >
+          <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+            Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give it,
+            and an unverified form is exactly what this app will not show you. The verdict above
+            comes from the dictionary and stands.
+          </p>
+        </div>
+      )}
+
+      {graded && graded.comment && (
         <div
           className="rounded-md border px-3.5 py-3"
           style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
