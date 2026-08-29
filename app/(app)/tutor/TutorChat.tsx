@@ -45,9 +45,11 @@ function sentenceCheckPrompt(estonian: string, meaning: string): string {
 }
 
 export function TutorChat({
-  configured, plannedLabel, history, initialQuestion,
+  configured, readerCanConfigure, plannedLabel, history, initialQuestion,
 }: {
   configured: boolean;
+  /** Whether this reader could set the key, or is a visitor to a site that has none. */
+  readerCanConfigure: boolean;
   /**
    * The provider this deployment is set up to ask first. Replaced by the one
    * that actually answered as soon as a reply arrives, which is the whole
@@ -129,8 +131,10 @@ export function TutorChat({
   if (!configured) {
     return (
       <Empty
-        title="Anu needs an API key"
-        body="Everything else in the app works without one, the dictionary, your cards and audio are all local. Settings has a two-minute walkthrough for getting a free key."
+        title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
+        body={readerCanConfigure
+          ? "Everything else in the app works without one, the dictionary, your cards and audio are all local. Settings has a two-minute walkthrough for getting a free key."
+          : "Anu is not switched on for this site yet. Everything else here works without her: the dictionary, your cards and audio are all local."}
         action={
           <div className="flex flex-col items-center gap-4">
             {/* A question handed over by the card the learner just got wrong.
@@ -142,7 +146,9 @@ export function TutorChat({
                 You arrived with a question: <span style={{ color: "var(--ink)" }}>{initialQuestion}</span>
               </p>
             )}
-            <Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>
+            {readerCanConfigure && (
+              <Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>
+            )}
           </div>
         }
       />
