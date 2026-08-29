@@ -287,6 +287,31 @@ check("a backup arrives as a request body, never as an action argument", () => {
   );
 });
 
+check("nothing about an individual survives into the metrics", () => {
+  /*
+    Retention is derived from the review log rather than collected, which is
+    what lets the privacy page keep saying there is no analytics and no
+    tracker. That claim holds only while identity stops at the route: the
+    module that computes cohorts is handed activity, never owners, so there is
+    no code path in which a person's id can reach an aggregate or a response.
+
+    Asserting the shape rather than one field name: whatever the numbers grow
+    into, the pure module must not learn who anybody is.
+  */
+  const retention = read("lib/stats/retention.ts");
+  assert.doesNotMatch(retention, /ownerId|email|userId/, "the retention module learned who somebody is");
+
+  const route = read("app/api/metrics/route.ts");
+  // The route groups by owner and must, so what is checked is that it never
+  // hands one onward: the grouped rows are reduced to activity before use.
+  assert.match(route, /MIN_COHORT|cohortRetention/, "the metrics route no longer aggregates");
+  assert.doesNotMatch(
+    route,
+    /NextResponse\.json\([^)]*ownerId/s,
+    "the metrics route puts an owner id in its response",
+  );
+});
+
 // ── Local mode is a deployment shape, not a switch (ADR-013) ─────────────────
 
 check("nothing can turn auth off on a deployment that has it", () => {

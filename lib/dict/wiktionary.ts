@@ -44,8 +44,16 @@ export async function fetchEnglishGloss(lemma: string): Promise<WiktionaryGloss 
   return { short: senses[0]!, senses: senses.slice(0, 3) };
 }
 
-/** Pulls the numbered definitions out of the page's `==Estonian==` section. */
-function extractEstonianSenses(wikitext: string): string[] {
+/**
+ * Pulls the numbered definitions out of the page's `==Estonian==` section.
+ *
+ * Exported because the seed builder fetches these pages itself: it has to tell
+ * a page with no Estonian section from a request that was rate-limited, and
+ * `fetchEnglishGloss` deliberately answers null to both. Reusing the parser
+ * rather than writing a second one keeps the two paths reading the same
+ * markup the same way.
+ */
+export function extractEstonianSenses(wikitext: string): string[] {
   const section = /==\s*Estonian\s*==([\s\S]*?)(?:\n==[^=]|$)/.exec(wikitext);
   if (!section?.[1]) return [];
 
