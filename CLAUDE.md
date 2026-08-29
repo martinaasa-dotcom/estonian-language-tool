@@ -282,7 +282,14 @@ is now decided when it opens and carried until it ends.
 this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
 individual's deck, searches or answer history. Do not widen it. (ADR-019.)
 
-**Never score pronunciation.** There is no verified Estonian speech recogniser available here.
+**Never score pronunciation.** Not because none is reachable, which stopped being true, but
+because the reachable one is not good enough and that was measured rather than assumed.
+`scripts/measure-asr.mjs` runs `whisper-large-v3` over sentences the dictionary already carries,
+spoken by a native synthetic voice: clean audio, no accent, no noise, which is easier than any
+learner's recording. It comes back at a 14.6% word error rate, and its mistakes land on consonant
+length (`Poiss` as `Pois`), voicing (`abikaasaga` as `abigaasaga`) and word boundaries, which is
+precisely where an Estonian learner is weakest. Showing that transcript would report correct
+pronunciation as an error four times in five. Re-run the script before re-opening the question.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 The level check has a speaking section for the same reason it has the other three, and it obeys the
 same rule: it collects the learner's own rating, reports it as theirs, and contributes **nothing**
