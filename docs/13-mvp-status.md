@@ -11,7 +11,7 @@ stranger, and §7 the pass that made it teach in context — sentences, speaking
 | Question | Answer | Effect |
 |---|---|---|
 | Q1 Local or hosted? | **Local only** at MVP time; **reversed 2026-08** to hosted (Vercel + Supabase), with Google sign-in. | ADR-002 confirmed for v1, superseded by ADR-011. Schema was already Postgres-portable, so this was a datasource swap, not a rebuild |
-| Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | 147 of 360 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling — C2 words drop in without a schema change |
+| Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | 2,271 of about 5,400 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling: C2 words drop in without a schema change |
 | Q3 Digital class materials? | **None.** | The importer stayed generic and cheap. No time spent on a parser for a format that does not exist |
 | Q4 Speakly? | Subscription exists, **not currently used** — "difficult to use" | Confirms ADR-006. Speakly has no public API (audit A3), so the paste importer handles it like any other source. Nothing Speakly-specific was built |
 | Q5 AI budget? | **No cap — but free for now.** OpenRouter/OpenAI, and later "whatever works best" | ADR-004 reversed, see §2 |
@@ -55,7 +55,7 @@ because a cap that fails open is not a cap.
 | Ekilex integration — live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
 | English translations — layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
 | Inflected-form search — `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
-| Built-in dictionary — 360 entries, 1 568 stored forms | Complete, hand-checked, CEFR-tagged A1–C1 (162 / 51 / 75 / 66 / 6). 70 carry gradation, 24 verbs carry government |
+| Built-in dictionary, about 5,400 entries and 32,000 stored forms | 360 hand-checked entries, plus the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C1 (433 / 636 / 1,095 / 1,071 / 105). 285 verbs carry government, up from 24, and 4,614 entries carry an attested Estonian sentence |
 | Speech — TartuNLP, server-proxied, content-addressed cache | Complete and verified end to end. Now durable in object storage rather than per-instance; see §4b |
 | Flashcards — FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
 | Today — due counts, streak, tasks, weak-word pick | Complete |
@@ -118,7 +118,7 @@ Each of these is a decision, not an omission.
    Free models are rate-limited hard enough upstream that they cannot be evaluated reliably, let
    alone relied on. This is exactly why the model is never allowed to supply an inflected form.
 
-1. **Without an Ekilex key the dictionary is 360 words.** Enough for A1–B2 and the start of C1, but far short of the full
+1. **The built-in dictionary is about 5,400 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary, it covers A1 to C1 and works offline, but it is short of the full
    lexicon. Anything outside it can be added by hand — the add-word form takes principal parts and
    classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
    key would close the gap properly.
@@ -157,7 +157,7 @@ deployment had quietly broken. This pass closes those.
 | Area | What it is | Why it earns its place |
 |---|---|---|
 | **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
-| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. `lib/collections/path.ts` | "Here are 360 words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
+| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. `lib/collections/path.ts` | "Here are five thousand words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
 | **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
 | **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
 | **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
@@ -417,7 +417,66 @@ deadline would look like, rather than a streak.
 5. **A level check every fortnight measures the questions.** The history screen says so; nothing
    stops anybody doing it anyway.
 
-## 12. The seventh pass: the paper people are actually learning for
+## 12. The seventh pass: the half of the course that is on paper
+
+Everything before this assumed the vocabulary was already digital: seeded, fetched from Ekilex,
+typed in, or pasted. In a real Estonian course most of it is not. It is a handout, a page of a
+textbook, a list copied off a whiteboard, last night's exercise sheet. The gap between that and the
+app was a person retyping thirty words with diacritics on a phone keyboard, which is where somebody
+stops using a study app.
+
+### What was added
+
+| Area | What it is | Why it earns its place |
+|---|---|---|
+| **Scan a page** (`/scan`) | Photograph a word list or your homework; the words on it come back matched against the dictionary | The importer that needs no typing. It is the only path into the app that starts with the thing the learner is already holding |
+| **The confirmation step** | Every word arrives ticked, editable, and labelled "in the dictionary" or "read from the photo" | This is the feature, not an obstacle in front of it. A model read the picture; the only person who can say what is printed on the paper is the one holding it |
+| **Inflected forms traced to headwords** | `toas` on an exercise sheet resolves to `tuba` and says it was the inessive | A textbook exercise is written in cases, not in citation forms. The inflected-form search the dictionary already had turns that from a problem into the lesson |
+| **A page as a set** (`/scan/[id]`) | A named group of words with its own progress, drilled by `/review?scan=` | The same shape as a learning-path unit, and references rather than copies for the same reason: correct a word once and it is corrected on every page it appears on |
+| **`lib/usage` kind `SCAN`** | A photograph is metered like anything else that costs money | A picture is a few thousand input tokens where a question is a few hundred. An unmetered path is one stranger away from an unbounded invoice, which is the whole argument of §2 |
+
+### The one decision worth arguing about
+
+Reading a page needs a model to look at Estonian and say what it sees, and ADR-005 says a model may
+never supply an Estonian form. Transcription is not authorship, but a misread `ö` and an invented
+word are indistinguishable by the time either becomes a flashcard, and the scheduler does not just
+leave a wrong card sitting there being wrong, it drills it in for six weeks.
+
+So the model's claim and the app's belief were separated. `lib/scan/extract.ts` transcribes and is
+pure; `matchEstonianForm` decides, and only accepts an exact lemma, a folded lemma, a stored form or
+a regular case on a genitive stem. A vouched word brings its own principal parts, so nothing the
+model wrote is in the card. An unvouched word is shown as exactly that and needs a person to tick
+it. See ADR-021, and `scripts/test-invariants.ts`, where both halves are asserted and were made to
+fail on purpose before being made to pass.
+
+### What this pass deliberately did *not* do
+
+- **No new practice mode.** A page drills through the ordinary review session with the page as its
+  filter. A private quiz over scanned words would keep a score the scheduler never sees, which is
+  the thing ADR-016 exists to prevent.
+- **No stored photograph.** The image is decoded, sent once and dropped. `Scan` holds the confirmed
+  word list and has no column an image could go in, and the invariant suite fails if one appears.
+- **No handwriting claims.** It reads clear handwriting about as well as the model behind it does,
+  which is why every word is editable and none is added without a tick.
+- **No new provider pin.** Scanning uses whatever model the deployment already configured, so
+  turning the camera on cannot quietly move a free-model deployment onto a paid one. The
+  `*_VISION_MODEL` variables exist for the case where that model is text-only.
+
+### Known limitations, stated plainly
+
+1. **A word outside the dictionary arrives with no verified forms.** It gets a recognition and a
+   production card and nothing else, because there is no paradigm to build a case-form card from.
+   With an Ekilex key the row's "look this up again" button fetches the real paradigm; without one,
+   the honest answer is two cards.
+2. **The English on an unmatched word is the photograph's, not the dictionary's.** It is shown as
+   unverified wherever it appears, and correcting the entry corrects it for everyone.
+3. **Sixty words a page.** A double-page spread of a vocabulary list will need two photographs. The
+   limit is there because a reply longer than that is a mistake rather than a page.
+4. **Quality is the model's.** A bad photograph produces a short list, not a wrong deck, which is
+   the failure mode this was designed to have.
+
+
+## 13. The eighth pass: the paper people are actually learning for
 
 Most people learning Estonian are learning for a specific paper. The state examines at **A2, B1, B2
 and C1**, sixty percent to pass, and a zero in any one of the four parts fails the whole thing

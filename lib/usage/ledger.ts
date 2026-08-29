@@ -5,7 +5,7 @@ import {
   type QuotaDecision, type UsageSnapshot, checkQuota, readLimits, utcDay,
 } from "./quota";
 
-export type UsageKind = "TUTOR" | "GRADER" | "TTS";
+export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN";
 
 /**
  * The metered side of the app: what has been spent, and whether the next call
@@ -36,6 +36,11 @@ export type UsageKind = "TUTOR" | "GRADER" | "TTS";
  *           here at all. A listening round legitimately meets a dozen new
  *           words in a minute, so a tight cap would break a real session to
  *           solve a problem that does not exist.
+ *   SCAN     one photograph read once. It is the dearest single call in the
+ *           app, because a picture is a few thousand input tokens where a
+ *           question is a few hundred, but it is also the least repeated: a
+ *           page is scanned once and then studied for weeks. Twice the base
+ *           covers a whole workbook chapter in a sitting.
  *
  * Everything stays free at every one of these numbers. They exist so that one
  * enthusiastic person cannot spend the day's budget before anyone else arrives.
@@ -44,6 +49,7 @@ const ALLOWANCE: Record<UsageKind, { burst: number; daily: number }> = {
   TUTOR: { burst: 1, daily: 1 },
   GRADER: { burst: 1, daily: 3 },
   TTS: { burst: 6, daily: 30 },
+  SCAN: { burst: 1, daily: 2 },
 };
 
 /** What this user and the site as a whole have used, for `checkQuota`. */

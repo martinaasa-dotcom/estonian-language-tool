@@ -22,7 +22,7 @@ const WIDE = [768, 1280];
 const browser = await launchChromium();
 
 // Floor: 34, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 40 });
+const { check, done } = suite("The phone", { floor: 41 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -132,7 +132,7 @@ for (const width of PHONES) {
 //     `/exam` is on this list because it is the densest screen in the app: six
 //     level cards, each with four meters, a ring and a button, and a whole
 //     column of advice links under them.
-for (const path of ["/", "/review", "/dictionary", "/assess", "/guide", "/exam"]) {
+for (const path of ["/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam"]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     [...document.querySelectorAll("button, [role=button], a[role=button]")]

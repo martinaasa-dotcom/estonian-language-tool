@@ -310,8 +310,17 @@ was answered under a clock, in a paper of four parts, with the answers withheld 
 holds the level, the seed the paper was built from (so the same questions can be rebuilt), the
 weighted percentage, whether it passed, and the marked paper as JSON. The percentage is
 denormalised out of that JSON so the exam hub can rank six levels without parsing six blobs. Written
-once, when the paper is handed in; an abandoned paper writes no row at all (ADR-016). See ADR-021.
+once, when the paper is handed in; an abandoned paper writes no row at all (ADR-016). See ADR-022.
 
 The goal it is read against lives in `Setting`, under `goalReason`, `goalTarget`, `goalDeadline`,
 `goalDays` and `goalNote`, all through `lib/settings/store.ts`. Five keys rather than one JSON blob
 so one answer can change without rewriting the rest.
+
+**`Scan` holds a word list and never a photograph.** A page somebody photographed is stored as the
+items they confirmed: the Estonian as it was read, the English, and the `lexemeId` of the dictionary
+entry that vouched for it, which is null for a word nothing vouched for. There is no column an image
+could go in, and the invariant suite fails if one appears or if the scan route writes to the database
+at all. The picture is decoded in a Route Handler, sent to one model, and dropped, exactly as
+`lib/estonian/passage.ts` treats a pasted reading: a photograph of somebody's homework has their name
+at the top of it. Words are held as references to `Lexeme` rather than as copies, like a learning-path
+unit, so correcting a word corrects it on every page it appears on. See ADR-021.

@@ -21,7 +21,7 @@
     "build:ci": "prisma generate && next build",
     "check:secrets": "node scripts/check-secrets.mjs",
     "test:db": "vitest run --config vitest.integration.config.ts",
-    "test:browser": "node scripts/smoke-new.mjs && node scripts/smoke-interact.mjs && node scripts/smoke-offline.mjs && node scripts/test-assess.mjs && node scripts/test-exam.mjs && node scripts/a11y-check.mjs",
+    "test:browser": "node scripts/smoke-new.mjs && node scripts/smoke-interact.mjs && node scripts/smoke-offline.mjs && node scripts/test-assess.mjs && node scripts/test-scan.mjs && node scripts/test-exam.mjs && node scripts/a11y-check.mjs",
     "test:invariants": "tsx scripts/test-invariants.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
     "test:load": "tsx scripts/load-test.mjs",

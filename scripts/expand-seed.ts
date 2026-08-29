@@ -44,8 +44,8 @@ const UA = "Kodukeel/0.1 (Estonian learning tool; seed builder)";
 const CATEGORIES: { category: string; pos: string }[] = [
   { category: "Estonian_nouns", pos: "NOUN" },
   { category: "Estonian_verbs", pos: "VERB" },
-  { category: "Estonian_adjectives", pos: "OTHER" },
-  { category: "Estonian_adverbs", pos: "OTHER" },
+  { category: "Estonian_adjectives", pos: "ADJECTIVE" },
+  { category: "Estonian_adverbs", pos: "ADVERB" },
 ];
 
 /**
@@ -58,7 +58,7 @@ const CATEGORIES: { category: string; pos: string }[] = [
  * a little more pressure is self-correcting. The run reports how often a
  * source would not answer, and if that number climbs this is the knob.
  */
-const CONCURRENCY = 5;
+const CONCURRENCY = 8;
 
 export interface ExpandedEntry {
   lemma: string;
@@ -209,7 +209,22 @@ async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> 
 
   return {
     lemma,
-    pos: mapped.pos === "OTHER" ? pos : mapped.pos,
+    /*
+      Wiktionary's category is more specific than Ekilex's word class and wins
+      where it disagrees.
+
+      Ekilex calls a word a "noomen", which is every nominal: `punane` (red) and
+      `raamat` (book) come back identically, so the mapper reports both as
+      NOUN. That is fine for the paradigm, since an Estonian adjective declines
+      like a noun, and wrong everywhere the part of speech is the point. The
+      first full run labelled every adjective a noun and produced no adverbs at
+      all.
+
+      Ekilex still decides between a nominal and a verb, which is the
+      distinction it actually draws and the one that changes which principal
+      parts a word has.
+    */
+    pos: mapped.pos === "VERB" ? "VERB" : pos,
     translation: short,
     cefr: mapped.cefr,
     gradation: mapped.gradation,
@@ -310,7 +325,7 @@ async function main() {
           `no entry ${skipped}, source unavailable ${failed}`,
         );
       }
-      await sleep(120);
+      await sleep(60);
     }
   }
 

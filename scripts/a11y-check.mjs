@@ -14,7 +14,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
 const BASE = baseUrl();
 const ROUTES = [
   "/", "/review/write", "/review/government", "/review/cloze",
-  "/review/clinic", "/words", "/week", "/settings", "/privacy", "/terms",
+  "/review/clinic", "/words", "/week", "/scan", "/settings", "/privacy", "/terms",
   "/assess", "/assess?take=1", "/guide", "/exam",
 ];
 
@@ -22,7 +22,7 @@ const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
 /*
-  Floor: 58, which is what this list reaches: fourteen routes at four checks
+  Floor: 62, which is what this list reaches: fifteen routes at four checks
   each, plus the two that run once at the end.
 
   It was 42 for ten routes, and stayed 42 when the level check added three and
@@ -30,7 +30,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, done } = suite("Accessibility", { floor: 58 });
+const { check, done } = suite("Accessibility", { floor: 62 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -49,6 +49,10 @@ for (const route of ROUTES) {
         el.getAttribute("title") ||
         el.textContent?.trim() ||
         (el.id && document.querySelector(`label[for="${el.id}"]`)?.textContent?.trim()) ||
+        // A wrapping label names its control too, and is the only way to name a
+        // file input that has to be visually hidden behind the thing a person
+        // actually clicks. See PickFile in app/(app)/scan/ScanCapture.tsx.
+        el.closest("label")?.textContent?.trim() ||
         ""
       ).trim();
       if (!name) bad.unnamed.push(el.tagName + (el.className ? `.${String(el.className).slice(0, 30)}` : ""));

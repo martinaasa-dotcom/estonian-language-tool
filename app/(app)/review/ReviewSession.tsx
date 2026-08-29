@@ -124,10 +124,12 @@ interface Done {
   before: ReviewCard["scheduling"];
 }
 
-export function ReviewSession({ cards: initialCards, drillCase, drillUnit, totalCards, mode }: {
+export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode }: {
   cards: ReviewCard[];
   drillCase?: string;
   drillUnit?: string;
+  /** A photographed page being drilled on its own: its id, and what it is called. */
+  drillScan?: { id: string; title: string };
   totalCards: number;
   mode: ReviewMode;
 }) {
@@ -392,6 +394,14 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
             body="Add the unit first and its words become cards you can drill here."
             action={<ButtonLink href={`/learn/${drillUnit}`} variant="primary">Open the unit</ButtonLink>}
           />
+        ) : drillScan ? (
+          <Empty
+            title="Nothing from this page in your deck"
+            body="The words are saved, they just have no cards yet. Add them and they turn up here."
+            action={
+              <ButtonLink href={`/scan/${drillScan.id}`} variant="primary">Open the page</ButtonLink>
+            }
+          />
         ) : totalCards === 0 ? (
           <Empty
             title="No cards yet"
@@ -424,7 +434,9 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
               ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done, these cards keep their normal schedule too.</>
               : drillUnit
                 ? <>Tubli töö. That&rsquo;s this unit drilled, the cards keep their normal schedule too.</>
-                : <>Tubli töö. That&rsquo;s everything due right now.</>}
+                : drillScan
+                  ? <>Tubli töö. That&rsquo;s the whole page drilled, the cards keep their normal schedule too.</>
+                  : <>Tubli töö. That&rsquo;s everything due right now.</>}
           </p>
         </div>
 
@@ -488,6 +500,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           <Chip tone="accent">{TYPE_LABEL[card.cardType] ?? card.cardType}</Chip>
           {card.isNew && <Chip tone="good">New word</Chip>}
           {drillCase && <Chip tone="hard">{drillCase.toLowerCase()} drill</Chip>}
+          {drillScan && <Chip tone="sky">{drillScan.title}</Chip>}
           {card.lemma && (
             <Link
               href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}

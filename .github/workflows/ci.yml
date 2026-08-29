@@ -209,6 +209,11 @@ jobs:
       # A shell loop rather than a `wait-on` dependency: this is the only
       # place anything would wait for a port, and it is four lines.
       - name: Start the server
+        # A provider key has to be *present* or the scan page correctly offers
+        # no camera. It may be nonsense: scripts/test-scan.mjs intercepts the
+        # route it would authenticate, so no request ever leaves the runner.
+        env:
+          OPENROUTER_API_KEY: stubbed-by-the-test
         run: |
           npm start &
           for _ in $(seq 1 60); do
@@ -231,6 +236,10 @@ jobs:
       - run: node scripts/test-modes.mjs
       - run: node scripts/test-teaching.mjs
       - run: node scripts/test-polish.mjs
+      # Paper to deck, driven end to end with only the model stubbed: the
+      # picture leaving the device, the confirmation list, a ticked word
+      # becoming a card, and the review session asking about it.
+      - run: node scripts/test-scan.mjs
       # The two newest suites. This list is written out rather than deferring to
       # `npm run test:browser`, so a suite added to that script alone is a suite
       # CI never runs: `test-exam.mjs` sat here unrun for its first two builds,

@@ -103,6 +103,14 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   it, and the mistake an English speaker makes, with the case shown on real words from your own
   deck, each form labelled with where it came from. The explanations are the only part of those
   pages this app wrote.
+- **Photograph a page.** Point the camera at a vocabulary list, a page of your textbook or last
+  night's homework, and the words on it come back matched against the dictionary. An exercise sheet
+  is written in cases rather than in citation forms, so `toas` is traced back to `tuba` and told
+  you as the inessive. Every word arrives ticked, editable, and labelled either "in the dictionary"
+  or "read from the photo", because the only person who can say what is printed on the paper is the
+  one holding it. Nothing becomes a flashcard until you say so, a word the dictionary vouches for
+  brings its own principal parts, and the picture itself is read once and never stored. The page
+  then becomes a set you can drill on its own.
 - **Worksheets you can print.** Any unit becomes a sheet, vocabulary, gap-fills built from attested
   sentences, a principal-parts table, with the answer key on its own page. For the half of a class
   that happens in a room.
@@ -126,9 +134,9 @@ where it came from, and you can always overwrite it.
 
 ## What works without any API key
 
-Everything except the tutor:
+Everything except the two things that need a model, Anu and reading a photograph of a page:
 
-- **Dictionary**, 360 words (A1 to C1) with checked principal parts, consonant gradation and the
+- **Dictionary**, about 5,400 words (A1 to C1) with principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class, 
   `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
@@ -152,7 +160,7 @@ Everything except the tutor:
 
 ## Turning on Anu, the tutor
 
-Anu needs one API key. **Settings** in the app walks through it, but in short:
+Anu needs one API key, and so does scanning a page. **Settings** in the app walks through it, but in short:
 
 1. Sign in at [openrouter.ai](https://openrouter.ai) with Google, free, no card.
 2. Avatar (top right) → **Keys** → **Create Key**. Copy it; you only see it once.
@@ -167,6 +175,13 @@ That model costs nothing. If Anu ever feels vague about Estonian, swap the model
 `anthropic/claude-sonnet-5` or `openai/gpt-4o`, a fraction of a cent per question and noticeably
 sharper. An `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` works instead of OpenRouter if you prefer;
 whichever key is present is the one used.
+
+**Scan a page** needs the same key and one more line, because reading a photograph needs a model
+that can look at one and the free chain above cannot. Scanning uses whatever model is configured
+above unless you say otherwise, deliberately: switching the camera on must never move a free
+deployment onto a paid model by itself. So add
+`OPENROUTER_VISION_MODEL="openai/gpt-4o"` (or `ANTHROPIC_VISION_MODEL` / `OPENAI_VISION_MODEL`) and
+it is used for scanning and nothing else. A page is roughly a third of a cent.
 
 ## Deploying it as a real website
 
@@ -192,7 +207,7 @@ rebuild, documented in `docs/03-architecture.md` ADR-011:
 3. Deploy. Vercel's build runs `prisma generate && prisma db push && npm run db:seed:ensure &&
    next build` (see `package.json`), so a hosted deployment sets itself up: the schema is
    created/updated against `DIRECT_URL`, and a database with an empty dictionary gets the built-in
-   360 words loaded before the build renders anything. The seed writes them in six statements
+   the whole dictionary loaded before the build renders anything. The seed writes it in six statements
    rather than three per word, which is what keeps that first deploy to a few seconds instead of
    the several minutes a thousand sequential round trips to another region used to cost.
 
@@ -279,7 +294,7 @@ npm run test:db          # integration tests, needs a Postgres in DATABASE_URL
 npm run test:invariants  # the rules in CLAUDE.md, asserted
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run test:e2e         # the browser suites, needs the server running
-npm run test:browser     # routes, modes, offline, the level check and accessibility
+npm run test:browser     # routes, modes, offline, the level check, scanning and accessibility
 npm run test:mobile      # the phone, measured; needs the server running
 npm run demo             # two months of sample history, to look around
 npm run db:seed          # reload the built-in dictionary (always)
