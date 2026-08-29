@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
-import { PATH } from "@/lib/collections/path";
+import { PATH } from "@/lib/collections/syllabus";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { WelcomeWizard, type WizardUnit } from "./WelcomeWizard";
 

@@ -16,3 +16,6 @@ tsconfig.tsbuildinfo
 .backups/
 prisma/data/.cache/
 prisma/data/expanded.json
+
+# Cached Ekilex responses, so a re-harvest costs the service nothing
+.ekilex-cache/

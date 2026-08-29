@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
-import { unitById } from "@/lib/collections/path";
+import { unitById } from "@/lib/collections/syllabus";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { translateSentenceWithAnu } from "@/lib/tutor/translate";
@@ -698,7 +698,7 @@ export async function addUnitToDeck(unitId: string) {
   if (!unit) return { ok: false as const, error: "That unit does not exist." };
 
   const lexemes = await prisma.lexeme.findMany({
-    where: { lemma: { in: unit.lemmas } },
+    where: { lemma: { in: [...unit.lemmas] } },
     select: { id: true, lemma: true },
   });
   // Keep the unit's own order: the first cards someone sees should be the ones
@@ -711,7 +711,7 @@ export async function addUnitToDeck(unitId: string) {
   // for one click.
   let added = 0;
   for (const lexeme of lexemes) {
-    const result = await addCardsFor(ownerId, lexeme.id, unit.cardTypes, "DICTIONARY");
+    const result = await addCardsFor(ownerId, lexeme.id, [...unit.cardTypes], "DICTIONARY");
     if (result.ok) added += result.added ?? 0;
   }
 

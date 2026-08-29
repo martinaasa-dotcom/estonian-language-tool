@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { unitById } from "@/lib/collections/path";
+import { unitById } from "@/lib/collections/syllabus";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
 
@@ -51,7 +51,7 @@ export default async function ReviewPage({
     const unit = unitById(unitId);
     const drill = unit
       ? await prisma.card.findMany({
-          where: { ownerId, suspended: false, lexeme: { lemma: { in: unit.lemmas } } },
+          where: { ownerId, suspended: false, lexeme: { lemma: { in: [...unit.lemmas] } } },
           orderBy: [{ due: "asc" }, { lapses: "desc" }],
           take: 40,
           include,

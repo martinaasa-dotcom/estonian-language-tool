@@ -7,7 +7,7 @@ import {
 
 /**
  * One place where an icon *name* — stored in framework-free data like
- * lib/achievements/badges.ts, lib/collections/path.ts and
+ * lib/achievements/badges.ts, lib/collections/syllabus/ and
  * lib/gamification/quests.ts — becomes a React component.
  *
  * Those modules deliberately hold no JSX (they are unit-tested without a DOM),

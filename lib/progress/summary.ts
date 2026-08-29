@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { PATH, unitProgress, type PathUnit, type UnitProgress } from "@/lib/collections/path";
+import { PATH, unitProgress, type PathUnit, type UnitProgress } from "@/lib/collections/syllabus";
 import { computeStreakWithShields } from "@/lib/achievements/badges";
 import { levelFromXp, xpFromRatingCounts, type LevelInfo } from "@/lib/gamification/xp";
 import { questsForDay, type Quest, type QuestStats } from "@/lib/gamification/quests";

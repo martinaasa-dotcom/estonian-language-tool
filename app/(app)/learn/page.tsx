@@ -27,7 +27,7 @@ export default async function LearnPage() {
   const totalWords = units.reduce((sum, u) => sum + u.available, 0);
   const knownWords = units.reduce((sum, u) => sum + u.known, 0);
   const overall = totalWords > 0 ? Math.round((knownWords / totalWords) * 100) : 0;
-  const next = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "new");
+  const next = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "available");
 
   return (
     <Page
@@ -53,7 +53,7 @@ export default async function LearnPage() {
         </div>
         {next && (
           <ButtonLink href={`/learn/${next.unit.id}`} variant="primary">
-            {next.state === "new" ? "Start" : "Continue"}: {next.unit.title}
+            {next.state === "available" ? "Start" : "Continue"}: {next.unit.title}
           </ButtonLink>
         )}
       </div>
@@ -121,7 +121,7 @@ export default async function LearnPage() {
               </div>
 
               <div className="flex w-full shrink-0 gap-2 sm:w-auto">
-                {u.state === "new" ? (
+                {u.state === "available" ? (
                   <AddUnitButton unitId={u.unit.id} words={u.available} started={false} className="flex-1 sm:w-44" />
                 ) : (
                   <ButtonLink href={`/learn/${u.unit.id}`} className="flex-1 justify-center sm:w-44">

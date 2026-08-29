@@ -56,7 +56,7 @@ export default async function TodayPage() {
   const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
   const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
-  const nextUnit = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "new");
+  const nextUnit = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "available");
 
   const reviewedDays = new Set(weekReviews.map((r) => dayKey(r.reviewedAt)));
   const week = recentDayKeys(7, now).map((day) => ({
@@ -284,7 +284,7 @@ export default async function TodayPage() {
                 <Meter pct={nextUnit.pct} label={`${nextUnit.unit.title}: ${nextUnit.pct}% complete`} />
               </div>
               <ButtonLink href="/learn" className="mt-4 w-full">
-                {nextUnit.state === "new" ? "Start this unit" : "Continue the path"}
+                {nextUnit.state === "available" ? "Start this unit" : "Continue the path"}
                 <ArrowRight size={15} aria-hidden />
               </ButtonLink>
             </Card>

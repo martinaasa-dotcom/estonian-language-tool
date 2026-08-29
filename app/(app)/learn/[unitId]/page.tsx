@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Check, GraduationCap, Printer } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { unitById } from "@/lib/collections/path";
+import { unitById } from "@/lib/collections/syllabus";
 import { deckSnapshot } from "@/lib/progress/summary";
-import { unitProgress } from "@/lib/collections/path";
+import { unitProgress } from "@/lib/collections/syllabus";
 import { AddUnitButton } from "@/components/AddUnitButton";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
@@ -27,7 +27,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
   const [snapshot, lexemes] = await Promise.all([
     deckSnapshot(ownerId),
     prisma.lexeme.findMany({
-      where: { lemma: { in: unit.lemmas } },
+      where: { lemma: { in: [...unit.lemmas] } },
       select: { id: true, lemma: true, translation: true, pos: true, cefr: true, gradationNote: true, government: true },
     }),
   ]);

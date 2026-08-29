@@ -3,8 +3,10 @@ import { NOUNS } from "./data/nouns";
 import { VERBS } from "./data/verbs";
 import { ADJECTIVES, PHRASES } from "./data/other";
 import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/advanced";
+import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
+import { courseWords } from "../lib/collections/syllabus/index";
 
 const prisma = new PrismaClient();
 
@@ -68,9 +70,50 @@ async function main() {
     });
   }
 
-  const written = await write(dedupe(entries));
-  console.log(`Seeded ${written.lexemes} entries and ${written.forms} forms.`);
+  // The harvested words go in last, and that ordering is the point: where a word
+  // appears in both the hand-typed lists above and in what Ekilex sent back,
+  // Ekilex wins. `dedupe` keeps the last entry for a key, so the authoritative
+  // paradigm supersedes the transcribed one rather than racing it.
+  //
+  // The legacy entries it supersedes are dropped here rather than left to
+  // `dedupe`, because a warning printed 700 times is not a warning. What is left
+  // for dedupe to shout about is a genuine editing mistake: one word listed
+  // twice inside the hand-written files.
+  const harvestedKeys = new Set(HARVESTED.map((w) => `${w.lemma} ${w.pos}`));
+  const legacy = entries.filter((e) => !harvestedKeys.has(key(e)));
+  const superseded = entries.length - legacy.length;
+
+  for (const word of HARVESTED) {
+    const p = word.parts;
+    const gradation =
+      word.pos === "VERB"
+        ? classifyVerbGradation(p.INF_MA ?? word.lemma, p.PRES_1SG ?? "")
+        : classifyGradation(p.NOM_SG ?? word.lemma, p.GEN_SG ?? "");
+    legacy.push({
+      lemma: word.lemma,
+      pos: word.pos,
+      translation: word.gloss,
+      // Ekilex's own proficiency code where it records one, and the level of the
+      // unit that introduces the word where it does not. Both are honest; the
+      // first is the authority's, and it wins.
+      cefr: word.cefr ?? courseLevel.get(`${word.lemma}|${word.pos}`) ?? "B1",
+      gradation: gradation.type,
+      gradationNote: gradation.note ?? null,
+      government: word.government,
+      examples: JSON.stringify(word.usages.map((et) => ({ et, source: "EKILEX" }))),
+      forms: forms(p),
+    });
+  }
+
+  const written = await write(dedupe(legacy));
+  console.log(
+    `Seeded ${written.lexemes} entries and ${written.forms} forms ` +
+    `(${HARVESTED.length} from Ekilex, superseding ${superseded} hand-typed ones).`,
+  );
 }
+
+/** The level of the unit that introduces each course word, as a CEFR fallback. */
+const courseLevel = new Map(courseWords().map((w) => [`${w.lemma}|${w.pos}`, w.level]));
 
 /**
  * Writes the whole dictionary in six statements rather than three per entry.
