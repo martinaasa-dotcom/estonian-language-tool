@@ -16,7 +16,9 @@
     "predev": "node scripts/setup-env.mjs",
     "test:e2e": "node scripts/e2e.mjs && node scripts/test-polish.mjs && node scripts/test-edit.mjs && node scripts/test-rename.mjs && node scripts/test-ekilex.mjs && node scripts/test-restore.mjs",
     "demo": "tsx scripts/demo-data.ts",
-    "eval:anu": "node scripts/eval-anu.mjs"
+    "eval:anu": "node scripts/eval-anu.mjs",
+    "build:ci": "prisma generate && next build",
+    "check:secrets": "node scripts/check-secrets.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
