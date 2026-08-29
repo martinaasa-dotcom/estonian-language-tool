@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
+import { parseExamples, sentenceContaining, usableExamples } from "@/lib/dict/examples";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { GovernmentSession, type GovernmentQuestion } from "./GovernmentSession";
@@ -29,7 +30,7 @@ export default async function GovernmentPage() {
   const [governed, inDeck] = await Promise.all([
     prisma.lexeme.findMany({
       where: { pos: "VERB", government: { not: null } },
-      select: { id: true, lemma: true, translation: true, government: true, cefr: true },
+      select: { id: true, lemma: true, translation: true, government: true, cefr: true, examples: true },
       take: 200,
     }),
     prisma.card.findMany({
@@ -86,8 +87,8 @@ export default async function GovernmentPage() {
     answer: g.caseKey,
     answerEn: g.caseEn,
     answerEt: g.caseEt,
-    example: g.example,
-    maskedExample: maskExample(g.example),
+    example: exampleFor(v, g),
+    maskedExample: maskExample(exampleFor(v, g)),
     gloss: g.gloss,
     experiencer: g.experiencer,
     inDeck: mine.has(v.id),
@@ -95,4 +96,24 @@ export default async function GovernmentPage() {
   }));
 
   return <GovernmentSession questions={questions} />;
+}
+
+/**
+ * The sentence shown once the case is answered.
+ *
+ * The seed carries its own example inside the government string. An entry that
+ * came from Ekilex does not: its governments are question words, and its
+ * sentences are stored separately as usages. Both are attested Estonian, so
+ * the drill reads whichever it has rather than showing nothing for every verb
+ * the dictionary fetched. Nothing here composes a sentence (ADR-005): if there
+ * is no attested one, the question is answered without an example.
+ */
+function exampleFor(
+  lexeme: { lemma: string; examples: string | null },
+  government: { example: string | null },
+): string | null {
+  if (government.example) return government.example;
+  const attested = usableExamples(parseExamples(lexeme.examples));
+  const containing = sentenceContaining(attested, lexeme.lemma);
+  return (containing ?? attested[0])?.et ?? null;
 }

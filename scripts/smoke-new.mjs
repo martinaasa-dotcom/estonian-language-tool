@@ -87,8 +87,15 @@ for (const [route, name] of ROUTES) {
 await page.goto(`${BASE}/review/government`, { waitUntil: "networkidle" });
 check("government drill has real questions",
   (await page.getByText(/Which case does it take/i).count()) > 0);
+// Assert the rule, not three case names. The distractors are drawn from the
+// cases the learner's own deck actually governs, so a legitimate round can
+// offer inessive, illative, adessive and comitative and name none of the three
+// that used to be hard-coded here. That failed about one run in four, on an
+// app that was working.
+const CASE_NAMES =
+  /nominative|genitive|partitive|illative|inessive|elative|allative|adessive|ablative|translative|terminative|essive|abessive|comitative/i;
 check("government drill offers case options",
-  (await page.getByRole("button", { name: /partitive|allative|elative/i }).count()) >= 2);
+  (await page.getByRole("button", { name: CASE_NAMES }).count()) >= 3);
 
 await page.goto(`${BASE}/review/pairs`, { waitUntil: "networkidle" });
 const pairsBody = await page.textContent("body");

@@ -38,6 +38,13 @@ const BY_NAME = CASES
   .sort((a, b) => b.en.length - a.en.length);
 
 /**
+ * Does this text name a case at all? Used only to decide whether the seed's
+ * head is informative, or whether the whole string has to be read because the
+ * entry came from Ekilex and names its cases in brackets further along.
+ */
+const EARLIEST_CASE_NAME = new RegExp(BY_NAME.map((c) => c.en).join("|"));
+
+/**
  * The separator between the case name and the example in a stored government
  * string.
  *
@@ -60,12 +67,40 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
   const text = raw.trim();
   if (!text) return null;
 
-  // The case name is always at the front, before the separator.
+  /*
+    Two shapes reach here, and only one of them was designed.
+
+    The seed writes the case name at the front, before a separator:
+      "partitive - aitan sind (I help you)"
+
+    Ekilex writes the question words it records, each annotated with the case
+    they signal, most important first:
+      "kellele (allative) - mida (partitive)"
+
+    Reading the second with a rule written for the first picked whichever case
+    came first in *the app's own list*, not in the entry: `aitama` survived
+    that by luck, and a verb governing the allative was drilled as partitive.
+    A drill that states the wrong rektsioon is worse than no drill, because
+    the learner memorises it.
+
+    So the case is whichever one is named earliest in the text. That is the
+    front for the seed shape and the primary government for the Ekilex shape,
+    which is the same answer both times without either format having to know
+    about the other.
+  */
   const cut = text.search(GOVERNMENT_SEPARATOR);
   const head = cut < 0 ? text : text.slice(0, cut);
   const headLower = head.toLowerCase();
+  const searchIn = headLower.match(EARLIEST_CASE_NAME) ? headLower : text.toLowerCase();
 
-  const match = BY_NAME.find((c) => headLower.includes(c.en));
+  let match: (typeof BY_NAME)[number] | undefined;
+  let at = Number.POSITIVE_INFINITY;
+  for (const candidate of BY_NAME) {
+    const where = searchIn.indexOf(candidate.en);
+    // Ties go to BY_NAME's order, which is longest name first, so "ablative"
+    // cannot be claimed by a shorter name sitting at the same index.
+    if (where >= 0 && where < at) { at = where; match = candidate; }
+  }
   if (!match) return null;
 
   const body = cut < 0 ? "" : text.slice(cut + 1).trim();

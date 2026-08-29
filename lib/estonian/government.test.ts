@@ -64,6 +64,51 @@ describe("parseGovernment", () => {
   );
 });
 
+/*
+  Ekilex writes government differently from the seed, and the difference was
+  silently wrong rather than loudly broken.
+
+  The seed puts the case name at the front. Ekilex records the question words a
+  lexicographer noted, each annotated with the case it signals, ordered with
+  the primary government first. Read with the rule written for the seed, the
+  case came out of the app's own list order instead of the entry's, so a verb
+  governing the allative was drilled as taking the partitive. The learner
+  memorises whatever the drill says, which makes a confidently wrong answer
+  the worst thing this screen can do.
+*/
+describe("parseGovernment, on the shape Ekilex writes", () => {
+  it("takes the government Ekilex lists first, not the one the app lists first", () => {
+    const g = parseGovernment("kellele (allative) · mida (partitive)");
+    expect(g?.caseKey).toBe("ALLATIVE");
+  });
+
+  it("reads a single government", () => {
+    expect(parseGovernment("millest (elative)")?.caseKey).toBe("ELATIVE");
+  });
+
+  it("reads the real aitama entry", () => {
+    // As returned by Ekilex for `aitama`, question words and all.
+    const g = parseGovernment("keda/mida* (partitive) · kellel + mida teha · millest (elative)");
+    expect(g?.caseKey).toBe("PARTITIVE");
+  });
+
+  it("offers no example rather than inventing one", () => {
+    // Ekilex keeps its sentences separately, as usages. The drill reads those;
+    // this parser never composes one (ADR-005).
+    expect(parseGovernment("kellele (allative) · mida (partitive)")?.example).toBeNull();
+  });
+
+  it("still reads the seed shape, which puts the case first", () => {
+    const g = parseGovernment("partitive — aitan sind (I help you)");
+    expect(g?.caseKey).toBe("PARTITIVE");
+    expect(g?.example).toBe("aitan sind");
+  });
+
+  it("returns null when nothing in the entry names a case", () => {
+    expect(parseGovernment("kellel + mida teha")).toBeNull();
+  });
+});
+
 describe("buildOptions", () => {
   const pool: CaseKey[] = ["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE"];
   // Deterministic "random" so option order is assertable.
