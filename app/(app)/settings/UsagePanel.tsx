@@ -21,7 +21,7 @@ export async function UsagePanel({ ownerId }: { ownerId: string }) {
       <SectionTitle hint="resets at midnight UTC">Anu today</SectionTitle>
       <Card>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+          <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             <span className="tnum" style={{ color: "var(--ink)" }}>{calls}</span>
             {" of "}
             <span className="tnum">{limits.dailyCallsPerUser}</span> questions

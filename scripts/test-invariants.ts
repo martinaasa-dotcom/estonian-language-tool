@@ -232,6 +232,61 @@ check("every practice mode writes to the same review log", () => {
   }
 });
 
+check("a session never lets its questions change under the learner", () => {
+  /*
+    gradeCard is a Server Action, and Next refreshes the route's Server
+    Component after every one. A session that reads its questions straight off
+    a prop gets a freshly computed set handed down mid-answer: the word under
+    the feedback changes while the learner is still reading it, and the last
+    grade of a session sees an empty list and renders "nothing due" instead of
+    the summary. ReviewSession froze its queue for exactly this. The four modes
+    added later started grading and inherited the hazard with it, which is how
+    this became a rule rather than a comment in one file.
+
+    The shape of the fix, not one spelling of it: a session that both grades
+    and takes a list prop must pass that prop through useState rather than
+    index into it directly.
+  */
+  const sessions = COMPONENTS.concat(APP).filter((f) => /\/review\/.*Session\.tsx$/.test(f));
+  assert.ok(sessions.length >= 5, `expected the review sessions, found ${sessions.length}`);
+  for (const file of sessions) {
+    const source = read(file);
+    if (!/gradeCards?\b/.test(source)) continue;
+    // Only the ones actually handed a list by the page can be caught out.
+    const props = source.match(/export function \w+\(\{([^}]*)\}/)?.[1] ?? "";
+    const listProp = props.match(/\b(\w+)\s*:\s*initial\w+/) ?? props.match(/\b(cards|prompts|questions|items|gaps|pairs)\b/);
+    if (!listProp) continue;
+    assert.match(
+      source,
+      /useState\(\s*initial\w+\s*\)/,
+      `${file} indexes a list prop directly; snapshot it with useState so a refresh cannot swap it mid-session`,
+    );
+  }
+});
+
+check("a backup arrives as a request body, never as an action argument", () => {
+  /*
+    A backup grows with the deck, and a Server Action is the wrong transport
+    for it: the encoding has a 1 MB body limit and, past that, React's own
+    guard over the decoded payload. A 990 KB export, two months of one
+    learner's history, was refused by both. Neither limit is a fact about the
+    data, and the person with the most history to lose is always the first to
+    meet them, which is the worst possible order to fail in.
+
+    So the file goes to a Route Handler as the request body. This asserts the
+    rule rather than today's fetch call: the panel that uploads a backup must
+    not call the restore or inspect actions directly, whatever they end up
+    being named.
+  */
+  const panel = read("app/(app)/settings/RestorePanel.tsx");
+  assert.match(panel, /\/api\/restore/, "RestorePanel no longer posts the backup to a route");
+  assert.doesNotMatch(
+    panel,
+    /\b(await\s+)?(restoreBackup|inspectBackup)\s*\(/,
+    "RestorePanel calls a Server Action with the whole backup; send it as a request body instead",
+  );
+});
+
 // ── Local mode is a deployment shape, not a switch (ADR-013) ─────────────────
 
 check("nothing can turn auth off on a deployment that has it", () => {

@@ -52,7 +52,14 @@ const WORD_TONE: Record<WordStatus, { background: string; color: string; title: 
  * a sentence that was all there bar its diacritics does not get punished like a
  * blank.
  */
-export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
+export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask[] }) {
+  /*
+    Snapshotted once on mount. gradeCard refreshes this route's Server
+    Component, which would hand down a task list shrinking as graded cards leave the
+    due pool, changing what is on screen mid-session. Same rule as
+    ReviewSession's frozen queue.
+  */
+  const [tasks] = useState(initialTasks);
   // Snapshotted on mount: grading refreshes the Server Component above, and a
   // shrinking prop mid-round would swap the last sentence out from under the
   // summary (the same trap ListeningSession documents).

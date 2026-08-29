@@ -36,7 +36,14 @@ interface Tile {
  * nobody plays twice. What it never does is grade something you did not answer:
  * abandoning a round writes nothing.
  */
-export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number }) {
+export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]; best: number }) {
+  /*
+    Snapshotted once on mount. This round grades every pair at the end, and the
+    refresh that follows hands down a smaller `pairs` prop as those cards leave
+    the due pool: the summary would then report the round against a denominator
+    that changed after it finished. Same rule as ReviewSession's frozen queue.
+  */
+  const [pairs] = useState(initialPairs);
   const [phase, setPhase] = useState<"ready" | "playing" | "done">("ready");
   const [selected, setSelected] = useState<Tile | null>(null);
   const [matched, setMatched] = useState<Set<string>>(new Set());

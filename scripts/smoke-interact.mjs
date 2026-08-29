@@ -26,6 +26,27 @@ const app = page.locator("main");
 // Floor: measured 13 in dev mode. It cannot run against a production build at all: `page.waitForFunction` evaluates a string, which the production Content Security Policy refuses.
 const { check, done } = suite("The new modes, driven", { floor: 13 });
 
+/**
+ * Wait from Node, by polling, rather than with `page.waitForFunction`.
+ *
+ * Two reasons, both learned here. The app sends a real Content Security Policy
+ * with no `unsafe-eval`, and `waitForFunction` injects its predicate as a
+ * string, so under that policy it throws rather than waiting. And an async
+ * predicate passed to it resolves on the returned Promise, which is truthy, so
+ * it succeeds instantly and proves nothing. Polling from this side has neither
+ * problem, and `page.textContent` goes over the protocol rather than through
+ * the page's own evaluator.
+ */
+async function waitForText(page, pattern, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const body = (await page.textContent("body").catch(() => "")) ?? "";
+    if (pattern.test(body)) return true;
+    await page.waitForTimeout(250);
+  }
+  return false;
+}
+
 // ── Writing: the mechanical form check, with no AI in play ───────────────────
 await page.goto(`${BASE}/review/write`, { waitUntil: "networkidle" });
 
@@ -39,8 +60,11 @@ check("writing sets a task", lemma.length > 0 && caseName.length > 0, `${lemma} 
 // mechanical check must catch that without any model.
 await page.locator("#sentence").fill(`Ma näen ${lemma} praegu siin.`);
 await app.getByRole("button", { name: /Check it/ }).click();
-// Wait for the verdict, not for a guess at how long the route takes to compile.
-await page.waitForSelector("[aria-live='polite']", { timeout: 30000 });
+// Wait for the verdict itself. The live region is in the markup from the
+// first render, so waiting for the *selector* returns immediately and the
+// body gets read before the route has answered: the check then reports "no
+// verdict" against an app that renders one correctly a second later.
+await waitForText(page, /right form|wrong case|not in that sentence/i, 30000);
 
 const feedback = (await page.textContent("body")) ?? "";
 check(
@@ -93,10 +117,7 @@ const passage =
   "Tuba on väga soe ja valge täna hommikul.";
 await page.locator("#passage").fill(passage);
 await app.getByRole("button", { name: /Make exercises/ }).click();
-await page.waitForFunction(
-  () => /Fill the gap|No words from your deck|deck is empty/i.test(document.body.textContent ?? ""),
-  null, { timeout: 30000 },
-);
+await waitForText(page, /Fill the gap|No words from your deck|deck is empty/i, 30000);
 
 const clozeBody = (await page.textContent("body")) ?? "";
 const madeExercises = /Fill the gap/i.test(clozeBody);

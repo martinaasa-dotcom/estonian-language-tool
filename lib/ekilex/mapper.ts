@@ -135,14 +135,56 @@ function verbGradation(inf: string | undefined, pres: string | undefined) {
 }
 
 /**
+ * The case a single Ekilex government pattern signals, or null when it does not
+ * signal one cleanly.
+ *
+ * Ekilex records government as the question word a verb answers, and it very
+ * rarely writes a bare one. `tänama` comes back as `keda/mida*`, `hoolima` as
+ * `millest/kellest`: alternatives separated by a slash, sometimes with a
+ * trailing asterisk. An exact lookup missed every one of those, so the case
+ * went unnamed, the drill could not parse the entry, and the verb was dropped
+ * silently. That is why verb government stood at the twenty-five verbs somebody
+ * had typed by hand while Ekilex knew thousands.
+ *
+ * The rule is deliberately conservative, because the alternative to a missing
+ * question is a wrong one:
+ *
+ *   `keda/mida*`        both alternatives are partitive, so partitive.
+ *   `millest/kellest`   both elative, so elative.
+ *   `mille eest`        genitive, but governed by a postposition rather than by
+ *                       the verb. A different phenomenon, so it is left alone.
+ *   `mida tegemast`     an infinitive complement, not a case. Left alone.
+ *   `kellel + mida teha`  two complements at once. Left alone.
+ *
+ * So: only a pattern that is one question word, or a slash-separated set of
+ * question words that all agree, names a case. Anything with another word in
+ * it is shown as Ekilex wrote it and named as nothing.
+ */
+function caseOf(pattern: string): string | null {
+  const cleaned = pattern.toLowerCase().replace(/\*/g, "").trim();
+  if (!cleaned || /\s/.test(cleaned)) return null;
+
+  const alternatives = cleaned.split("/").map((a) => a.trim()).filter(Boolean);
+  if (alternatives.length === 0) return null;
+
+  const cases = alternatives.map((a) => GOVERNMENT_CASES[a]);
+  const first = cases[0];
+  if (!first) return null;
+  return cases.every((c) => c === first) ? first : null;
+}
+
+/**
  * Ekilex records government as the question word a verb answers — `mida`, `kellele`.
  * Naming the case alongside it is what makes it learnable: "mida" on its own does
  * not tell an English speaker that the object is partitive.
+ *
+ * Ordered as Ekilex ordered it, primary government first, because that is the
+ * order the drill reads the case out of.
  */
 function formatGovernment(governments: string[]): string | null {
   if (governments.length === 0) return null;
   const parts = governments.slice(0, 4).map((g) => {
-    const c = GOVERNMENT_CASES[g.toLowerCase().trim()];
+    const c = caseOf(g);
     return c ? `${g} (${c})` : g;
   });
   return parts.join(" · ");

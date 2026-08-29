@@ -103,15 +103,33 @@ const stashed = await page.evaluate(() => new Promise((resolve) => {
 }));
 check("the session is stashed for offline use", stashed > 0, `${stashed} cards`);
 
+/**
+ * Wait from Node, by polling, rather than with `page.waitForFunction`.
+ *
+ * Two reasons, both learned here. The app sends a real Content Security Policy
+ * with no `unsafe-eval`, and `waitForFunction` injects its predicate as a
+ * string, so under that policy it throws rather than waiting. And an async
+ * predicate passed to it resolves on the returned Promise, which is truthy, so
+ * it succeeds instantly and proves nothing. Polling from this side has neither
+ * problem, and `page.textContent` goes over the protocol rather than through
+ * the page's own evaluator.
+ */
+async function waitForText(page, pattern, timeoutMs = 30000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const body = (await page.textContent("body").catch(() => "")) ?? "";
+    if (pattern.test(body)) return true;
+    await page.waitForTimeout(250);
+  }
+  return false;
+}
+
 // ── Pull the plug ────────────────────────────────────────────────────────────
 await ctx.setOffline(true);
 
 await answerOneCard();
 // The server action has to fail and the grade has to reach IndexedDB.
-await page.waitForFunction(
-  () => /saved on this device|Offline/i.test(document.body.textContent ?? ""),
-  null, { timeout: 20000 },
-).catch(() => {});
+await waitForText(page, /saved on this device|Offline/i, 20000);
 await page.waitForTimeout(1500);
 
 const queuedAfterOne = await outboxSize();
