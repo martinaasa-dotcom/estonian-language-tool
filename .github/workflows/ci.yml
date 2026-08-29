@@ -246,26 +246,29 @@ jobs:
       # blocks. This step never fails: it is the record.
       - name: Advisories, high and above
         run: npm audit --omit=dev --audit-level=high || true
-      # THE GATE IS `critical`, AND THAT NUMBER WAS ARGUED RATHER THAN PICKED.
+      # THE GATE IS `high`, AND IT GOT THERE BY THE CHAIN BEING CLEARED
+      # RATHER THAN BY THE BAR BEING MOVED.
       #
-      # It was `high` on the first run of this workflow and failed, on four
-      # advisories that no change in this repository can clear:
+      # It was `high` on the first run of this workflow and failed, on five
+      # advisories, and stopped at `critical` with the argument that no change
+      # in this repository could clear them and that a blocking check which
+      # cannot pass is the one people learn to click past. The first half of
+      # that was wrong, and the note said so itself by naming the fix as
+      # next@16: both chains are resolved by `overrides` in package.json, and
+      # neither needs a major upgrade.
       #
-      #   postcss <=8.5.22, reached only through `next`. XSS via an unescaped
-      #   </style> in stringify output, and arbitrary .map file reads via an
-      #   attacker-controlled sourceMappingURL. Both need attacker-controlled
-      #   CSS. PostCSS runs here at build time over this repository's own
-      #   Tailwind input; nothing a learner types reaches it. Clearing it means
-      #   next@16, a major upgrade, which is its own change and its own risk.
+      #   postcss. Every other consumer in the tree was already on the patched
+      #   8.5.26 and only Next's own pin held 8.4.31, so one override deduped
+      #   it onto what was already installed. The proof it changed nothing is
+      #   the build output: Next names a stylesheet by the hash of its
+      #   contents, and it is the same file, 313a9df4d86383e6.css, to the byte.
       #
-      #   deepmerge-ts <8.0.0, reached through @prisma/config and the Prisma
-      #   CLI. Stack exhaustion on a recursive object graph, while reading our
-      #   own schema at build time.
+      #   deepmerge-ts, reached through @prisma/config. Overridden to 8.0.2,
+      #   and `prisma generate`, `prisma db push` and the seed all run.
       #
-      # A blocking check that cannot pass is worse than no check: it is the one
-      # people learn to click past, and then it is not read at all on the day
-      # it matters. So the gate stops at `critical`, the step above keeps every
-      # high visible, and the reasoning is here rather than in somebody's head.
-      # Lower it back to `high` the day the postcss chain can actually be
-      # cleared.
-      - run: npm audit --omit=dev --audit-level=critical
+      # `npm audit --omit=dev` reports zero. Dev-only advisories are read by
+      # the step above and do not block, because they do not ship.
+      #
+      # If this ever cannot pass again, fix the dependency or say here, in
+      # writing, why it is unreachable. Do not lower the number.
+      - run: npm audit --omit=dev --audit-level=high
