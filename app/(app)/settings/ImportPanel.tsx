@@ -79,7 +79,7 @@ export function ImportPanel() {
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
             {rows.length} word{rows.length === 1 ? "" : "s"} found — check before adding
           </p>
-          <ul className="max-h-40 overflow-y-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
+          <ul className="scroll-host max-h-40 rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
             {rows.slice(0, 40).map((r, i) => (
               <li
                 key={i}

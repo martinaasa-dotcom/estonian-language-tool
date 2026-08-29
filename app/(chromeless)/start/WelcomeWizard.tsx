@@ -209,7 +209,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             Picked for {level}. Each unit becomes real flashcards with audio and full paradigms — you
             can add or drop units later on the path.
           </p>
-          <div className="mt-5 flex max-h-[46vh] flex-col gap-2 overflow-y-auto pr-1">
+          <div className="scroll-host mt-5 flex max-h-[46vh] flex-col gap-2">
             {units.map((u) => {
               const Icon = icon(u.icon);
               const on = picked.includes(u.id);

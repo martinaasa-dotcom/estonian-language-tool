@@ -11,7 +11,7 @@ import { chromium } from "playwright";
  * Estonian, a dead end with no audio, a worksheet with no answer key, a
  * confident number computed from six reviews.
  */
-const B = "http://localhost:3000";
+const B = process.env.BASE_URL ?? "http://localhost:3000";
 let failures = 0;
 const check = (label, ok, extra = "") => {
   if (!ok) failures++;

@@ -29,7 +29,11 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
   return (
     <>
       {burst && <Confetti />}
-      <div className="fixed bottom-5 right-5 z-[90] flex w-[min(92vw,340px)] flex-col gap-2" role="status" aria-live="polite">
+      <div
+        className="bottom-notice fixed right-5 z-[90] flex w-[min(92vw,340px)] flex-col gap-2"
+        role="status"
+        aria-live="polite"
+      >
         {queue.map((b) => {
           const Icon = badgeIcon(b.icon);
           return (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { gradeCards } from "@/app/actions";
+import { PULL_REFRESH_EVENT } from "@/components/PullToRefresh";
 import { flushQueue, queueSize } from "@/lib/offline/queue";
 
 /**
@@ -43,12 +44,24 @@ export function OfflineStatus() {
 
     window.addEventListener("online", flush);
     window.addEventListener("offline", sync);
+    /*
+      A pull on the page is a learner asking for this to be tried again.
+
+      Until the gesture existed, the banner reporting "3 grades saved here"
+      offered nothing to do about it: the queue drains on the `online` event
+      and on a fifteen-second timer, and neither of those is something a
+      person can reach. A phone that has come back onto a network without
+      firing `online`, which happens often enough on a train, left somebody
+      watching a count that would not move.
+    */
+    window.addEventListener(PULL_REFRESH_EVENT, flush);
     const timer = window.setInterval(sync, 15_000);
     void flush();
 
     return () => {
       window.removeEventListener("online", flush);
       window.removeEventListener("offline", sync);
+      window.removeEventListener(PULL_REFRESH_EVENT, flush);
       window.clearInterval(timer);
     };
   }, []);
@@ -57,7 +70,7 @@ export function OfflineStatus() {
 
   return (
     <div
-      className="fixed bottom-16 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-[12.5px] md:bottom-4"
+      className="bottom-notice fixed left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-[12.5px]"
       role="status"
       style={{
         borderColor: "var(--rule)",

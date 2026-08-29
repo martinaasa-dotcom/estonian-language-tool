@@ -110,7 +110,7 @@ export function Shortcuts() {
       aria-label="Keyboard shortcuts"
     >
       <div
-        className="pop-in max-h-full w-full max-w-2xl overflow-y-auto rounded-[var(--r-xl)] border"
+        className="scroll-host pop-in max-h-full w-full max-w-2xl rounded-[var(--r-xl)] border"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}
         onClick={(e) => e.stopPropagation()}
       >

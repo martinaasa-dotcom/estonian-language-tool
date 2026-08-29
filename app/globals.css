@@ -187,7 +187,28 @@
 
   * { box-sizing: border-box; }
 
+  /*
+    NO OVERFLOW ON THE ROOT, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
+
+    Setting either axis on `html` makes it a scroll container, and every
+    library that positions a floating element asks exactly that question
+    before it places one: when the root is an overflow element the maths
+    happens in document coordinates instead of viewport ones. For anything
+    laid out in the page the two agree and nothing looks wrong. For the
+    chrome they do not, because the chrome is the one thing that stays put
+    while the page moves, and the gap between the two is the scroll offset.
+    A menu hung off a sticky bar is then drawn that far above where it
+    belongs, which on a scrolled phone means open, focused and entirely off
+    the top of the screen.
+
+    Sideways is still clipped, on `body` alone: with nothing set on the root
+    the viewport takes its overflow from the body instead, so the page still
+    cannot be dragged sideways. `lib/layout/rootOverflow.test.ts` fails if
+    an overflow goes back on `html`, and fails the other way if `body` loses
+    its clip.
+  */
   body {
+    overflow-x: clip;
     background: var(--ground);
     color: var(--ink);
     font-family: var(--font-sans);
@@ -198,6 +219,58 @@
        and this keeps content out of both. */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+
+  /*
+    NO RUBBER BAND ON THE DOCUMENT.
+
+    WebKit translates the whole visual viewport during an overscroll bounce
+    and fixed and sticky elements ride along with it, so a pull at the top
+    drags the desktop rail down and a push past the bottom slides the phone
+    tab bar half off the screen. It is the same bounce from two ends, and on
+    the review screen, which is thumb-driven and pressed hundreds of times a
+    session, it is the difference between a control being where the thumb
+    expects it and not.
+
+    Root scroller only; anything inside the page keeps its own behaviour. Set
+    on both elements because which of the two is the root scroller differs
+    between engines and the property does not inherit.
+
+    THIS IS ALSO THE SWITCH THAT TAKES THE BROWSER'S OWN PULL TO REFRESH
+    AWAY, and there is no setting that keeps one and not the other. That
+    matters here more than it looks: this app is installed to a home screen,
+    so it runs with no address bar and therefore no reload button anywhere in
+    it, and the offline banner tells a learner that grades are still waiting
+    to be sent while giving them no way to ask for that to be tried again. So
+    the gesture is drawn by hand instead, in components/PullToRefresh.tsx,
+    which moves the page and leaves the chrome where it is. That component
+    needs this line rather than fighting it: with the bounce gone, a downward
+    drag at the top of the page scrolls nothing, which is what lets every
+    touch listener in it be passive.
+  */
+  html, body {
+    overscroll-behavior-y: none;
+  }
+
+  /*
+    A thumb is about 9mm across and a mouse pointer is one pixel, so the
+    floor is applied only where there is a thumb. Under a coarse pointer
+    every control clears 44px in both directions, which is the smallest
+    target Apple and Google both agree on.
+
+    Deliberately not on table rows or on the rating buttons' own layout: both
+    already carry their own height, and a min-height on an element that
+    centres its content pushes the content away from where it was drawn.
+  */
+  @media (pointer: coarse) {
+    button:not(.inline-edit),
+    [role="button"]:not(.inline-edit),
+    a[role="button"],
+    summary,
+    .touch-target {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+    }
   }
 
   /* A tap is a tap: no grey flash, and none of the 300ms double-tap-to-zoom
@@ -231,6 +304,24 @@
     scrollbar-color: var(--rule) transparent;
   }
 
+  .scroll-host::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+  .scroll-host::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 0.25rem;
+  }
+  .scroll-host::-webkit-scrollbar-thumb {
+    background-clip: padding-box;
+    background-color: var(--rule);
+    border: 2px solid transparent;
+    border-radius: 999px;
+  }
+  .scroll-host::-webkit-scrollbar-thumb:hover,
+  .scroll-host::-webkit-scrollbar-thumb:active {
+    background-color: var(--ink-3);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -245,6 +336,72 @@
 }
 
 @layer utilities {
+  /*
+    ANYTHING PINNED TO THE BOTTOM OF THE WINDOW SITS CLEAR OF WHAT IS
+    ACTUALLY DOWN THERE, AND NEVER TYPES ITS OWN GUESS AT THAT.
+
+    The offline banner, the install prompt and the achievement toasts all
+    used to carry their own offset: `bottom-16`, `bottom-20`, `bottom-5`.
+    Three guesses at one measurement, none of which knew whether the phone
+    tab bar was on the screen. On the landing page, sign-in and first-run
+    setup there is no tab bar at all, and every one of them floated a
+    notice most of an inch up an empty page.
+
+    `--dock-clearance` is published on <html> from a real measurement by
+    lib/layout/dockClearance.ts, and only while a dock is drawn. With no
+    dock the notice sits on the safe area, which on a phone with a home
+    indicator is where the indicator is not.
+  */
+  .bottom-notice {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  :root[data-dock] .bottom-notice {
+    bottom: calc(var(--dock-clearance, 5.5rem) + 0.5rem);
+  }
+
+  /*
+    The same measurement, spent as padding under the page so the last card in
+    a list is not hidden behind the bar. The media query is the value before
+    anything has been measured, so the first paint is right too; the measured
+    one takes over on the frame after that and cannot be wrong when the bar
+    grows a row.
+  */
+  .dock-pad { padding-bottom: 1.5rem; }
+  @media (max-width: 767px) { .dock-pad { padding-bottom: 7rem; } }
+  :root[data-dock] .dock-pad { padding-bottom: calc(var(--dock-clearance) + 1.5rem); }
+
+  /*
+    A SCROLLER INSIDE A PANEL, WITH A TRACK THAT DOES NOT SIT ON THE CONTENT.
+
+    Overlay scrollbars, which is what macOS and iOS draw, paint on top of
+    whatever is under them. Classic bars eat the box instead. Either way,
+    content that runs to the scroller's own edge ends up under the bar: in the
+    ⌘K palette that is the right-hand end of a word's translation, and in the
+    first-run unit picker it is the tick that says a unit is selected.
+
+    A non-zero `::-webkit-scrollbar` width is what forces a classic track on
+    WebKit, and `--scroll-clearance` is the air between the content and it.
+    The clearance is declared here in `@layer base` rather than as a utility,
+    so a `p-6` on the same element still wins.
+
+    Only a panel's own scroller is a host. The page scroller is not, and
+    neither is a nested well.
+  */
+  .scroll-host {
+    --scroll-clearance: 0.75rem;
+    min-width: 0;
+    overflow-y: auto;
+    /* A scroll that reaches the end of this list must not then start
+       scrolling the page behind it. */
+    overscroll-behavior: contain;
+    padding-inline-end: var(--scroll-clearance);
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--rule) transparent;
+    touch-action: pan-y;
+  }
+
   .est { font-family: var(--font-serif); font-optical-sizing: auto; }
   .tnum { font-variant-numeric: tabular-nums; }
 
@@ -393,4 +550,62 @@
 @keyframes flip-in {
   from { opacity: 0; transform: rotateX(-35deg); }
   to { opacity: 1; transform: rotateX(0); }
+}
+
+/*
+  THE PULL TO REFRESH RING.
+
+  `position: fixed` and no backdrop filter, and those two facts belong
+  together: a pull is by definition content moving under something pinned to
+  the window, which is the one pairing this app does not allow (see the phone
+  bar in components/Sidebar.tsx). Fixed on its own is free.
+
+  It sits below the phone bar's z-index and above the page, so it passes under
+  the chrome rather than over it, and it is `pointer-events: none` throughout:
+  it is a readout, and a full-width strip that swallowed taps along the top of
+  every page would be a much worse bug than the one it reports on.
+*/
+.ptr {
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0) scale(0.86);
+}
+
+/*
+  The arc starts at twelve o'clock, which is where a thumb dragging downward
+  expects a circle to begin filling. Its dash offset is the one thing in this
+  gesture that is a paint rather than a composite, and it is a 22px box once
+  a frame.
+*/
+.ptr-arc {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* A quarter of the circle, turning, for as long as the answer takes. */
+@keyframes ptr-working {
+  to { transform: rotate(360deg); }
+}
+
+.ptr-ring { transform-origin: 50% 50%; }
+.ptr-ring[data-working] { animation: ptr-working 720ms linear infinite; }
+
+/*
+  The ring does not turn for somebody who has asked for less motion.
+
+  The component never sets the attribute in that case; this is here so the
+  intent is written down beside the animation. What that reader gets instead
+  is the whole circle, drawn and held still, which is a state rather than a
+  performance. The pull itself is untouched: it is their own finger moving the
+  page, and direct manipulation is not the motion that setting is about.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .ptr-ring[data-working] { animation: none; }
 }

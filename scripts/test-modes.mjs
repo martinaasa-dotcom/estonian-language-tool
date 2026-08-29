@@ -9,7 +9,7 @@
  */
 import { chromium } from "playwright";
 
-const B = "http://localhost:3000";
+const B = process.env.BASE_URL ?? "http://localhost:3000";
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 950 } });
 const page = await ctx.newPage();
