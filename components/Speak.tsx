@@ -1,7 +1,7 @@
 "use client";
 
 import { Volume2, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 const cache = new Map<string, string>();
 
@@ -13,10 +13,17 @@ const cache = new Map<string, string>();
  * reads Estonian in an English accent. If the proxy cannot produce audio the button
  * disappears rather than sitting there doing nothing.
  */
-export function Speak({ text, slow, label, size = 15, className }: {
+export function Speak({ text, slow, label, size = 15, className, style, onUnavailable }: {
   text: string; slow?: boolean; label?: string;
-  /** Icon size in px and an optional className override, for a bigger tap target (e.g. Listening mode). */
-  size?: number; className?: string;
+  /** Icon size in px, plus className/style overrides for a bigger tap target (e.g. Listening mode). */
+  size?: number; className?: string; style?: CSSProperties;
+  /**
+   * Called when the audio could not be produced and this button is about to
+   * remove itself. Most screens can lose a pronunciation button silently; the
+   * ones built *on* the audio (Listening, Dictation) cannot, and need to offer
+   * something else instead of a dead end.
+   */
+  onUnavailable?: () => void;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
 
@@ -41,6 +48,7 @@ export function Speak({ text, slow, label, size = 15, className }: {
       setState("idle");
     } catch {
       setState("gone");
+      onUnavailable?.();
     }
   };
 
@@ -50,8 +58,8 @@ export function Speak({ text, slow, label, size = 15, className }: {
       onClick={play}
       disabled={state === "loading"}
       aria-label={label ?? `Hear "${text}"${slow ? " slowly" : ""} in Estonian`}
-      className={className ?? "inline-flex h-7 w-7 items-center justify-center rounded transition-opacity hover:opacity-60"}
-      style={{ color: "var(--ink-3)" }}
+      className={className ?? "press inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"}
+      style={{ color: "var(--ink-3)", ...style }}
     >
       {state === "loading"
         ? <Loader2 size={size} className="animate-spin" aria-hidden />

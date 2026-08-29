@@ -1,0 +1,116 @@
+import { prisma } from "@/lib/db";
+import { BADGES, earnedBadgeKeys, type Badge, type BadgeStats } from "@/lib/achievements/badges";
+import { caseAccuracy } from "@/lib/stats/history";
+import { numberSetting, readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
+import {
+  dailySummary, deckSnapshot, pathWithProgress, unitsCompleted,
+  type DailySummary, type DeckSnapshot, type UnitView,
+} from "@/lib/progress/summary";
+
+/**
+ * Awarding badges, split from the action that calls it.
+ *
+ * Today already knows the learner's deck, day and path progress by the time it
+ * renders — recomputing all of it inside the achievement check would double the
+ * page's queries for numbers it is holding in a variable. So the check takes
+ * what the caller has, and only fetches what is genuinely missing.
+ */
+
+const SHIELD_AWARD_BADGES = new Set(["streak_7", "streak_30", "streak_100"]);
+
+export interface BadgeContext {
+  snapshot: DeckSnapshot;
+  summary: DailySummary;
+  units: UnitView[];
+  session?: { count: number; accuracy: number };
+  /** Local hour of the session that just ended, for the early-bird/night-owl pair. */
+  reviewHour?: number;
+}
+
+/** Everything a badge condition can depend on, gathered for one learner. */
+export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promise<BadgeStats> {
+  const [totalReviews, totalWords, settings, caseReviews] = await Promise.all([
+    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.lexeme.count(),
+    readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
+    prisma.review.findMany({
+      where: { targetCase: { not: null }, card: { ownerId } },
+      select: { targetCase: true, rating: true },
+      take: 5000,
+    }),
+  ]);
+
+  const bestCase = caseAccuracy(caseReviews, 10)
+    .sort((a, b) => b.accuracy - a.accuracy)[0];
+
+  return {
+    streak: ctx.summary.streak,
+    totalReviews,
+    cardsKnown: ctx.snapshot.knownCards,
+    totalWords,
+    bestCaseAccuracy: bestCase ? { grammCase: bestCase.grammCase, accuracy: bestCase.accuracy } : null,
+    sprintBest: numberSetting(settings[SETTING_KEYS.sprintBest], 0),
+    matchBestSeconds: numberSetting(settings[SETTING_KEYS.matchBest], 0),
+    unitsCompleted: unitsCompleted(ctx.units),
+    level: ctx.summary.level.level,
+    questsDoneToday: ctx.summary.questsDone,
+    ...(ctx.session ? { session: ctx.session } : {}),
+    ...(ctx.reviewHour !== undefined ? { reviewHour: ctx.reviewHour } : {}),
+  };
+}
+
+/**
+ * Writes any newly-earned badge and returns just the new ones.
+ *
+ * Idempotent: an already-earned key is never re-awarded, and no badge is ever
+ * removed — losing a badge because a streak later broke would be a worse
+ * surprise than never having shown it.
+ */
+export async function awardBadges(ownerId: string, stats: BadgeStats): Promise<Badge[]> {
+  const earnedKeys = earnedBadgeKeys(stats);
+  if (earnedKeys.length === 0) return [];
+
+  const already = await prisma.achievement.findMany({
+    where: { ownerId, key: { in: earnedKeys } },
+    select: { key: true },
+  });
+  const alreadySet = new Set(already.map((a) => a.key));
+  const newKeys = earnedKeys.filter((k) => !alreadySet.has(k));
+  if (newKeys.length === 0) return [];
+
+  await prisma.achievement.createMany({ data: newKeys.map((key) => ({ ownerId, key })) });
+
+  // Reaching a streak milestone banks a shield: the streak worth protecting is
+  // exactly the one just reached.
+  const shieldsEarned = newKeys.filter((k) => SHIELD_AWARD_BADGES.has(k)).length;
+  if (shieldsEarned > 0) {
+    const current = await readSettings(ownerId, [SETTING_KEYS.streakShields]);
+    const shields = numberSetting(current[SETTING_KEYS.streakShields], 0);
+    await writeSetting(ownerId, SETTING_KEYS.streakShields, String(shields + shieldsEarned));
+  }
+
+  return BADGES.filter((b) => newKeys.includes(b.key));
+}
+
+/**
+ * The whole check, for callers that hold none of the context — a review session
+ * that has just finished, for instance.
+ */
+export async function checkAchievementsFor(
+  ownerId: string,
+  session?: { count: number; accuracy: number },
+  now = new Date(),
+): Promise<Badge[]> {
+  const snapshot = await deckSnapshot(ownerId, now);
+  const [summary, units] = await Promise.all([
+    dailySummary(ownerId, snapshot, now),
+    pathWithProgress(ownerId, snapshot),
+  ]);
+  const stats = await buildBadgeStats(ownerId, {
+    snapshot,
+    summary,
+    units,
+    ...(session ? { session, reviewHour: now.getHours() } : {}),
+  });
+  return awardBadges(ownerId, stats);
+}

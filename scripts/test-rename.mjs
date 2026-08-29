@@ -1,5 +1,4 @@
 import { chromium } from "playwright";
-import { readFileSync } from "node:fs";
 const B = "http://localhost:3000";
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
@@ -9,11 +8,25 @@ const page = await (await browser.newContext()).newPage();
 await page.goto(`${B}/`, { waitUntil: "networkidle" });
 check("the app is branded Kodukeel", (await page.title()).startsWith("Kodukeel"), await page.title());
 
-const dir = "/tmp/claude-0/-home-user-estonian-language-tool/e6a89ec2-b175-5722-948f-31d2417eb1d4/scratchpad";
+/**
+ * A minimal backup in the *pre-rename* format, built here rather than read from
+ * a file left behind on one machine — the fixture is the format itself, and a
+ * test that depends on a path in someone's temp directory can only ever pass
+ * for them.
+ */
+const oldFormat = JSON.stringify({
+  format: "sonasepp-v1",
+  exportedAt: new Date().toISOString(),
+  counts: { words: 0, cards: 0, reviews: 0, tasks: 0 },
+  lexemes: [],
+  cards: [],
+  reviews: [],
+  tasks: [],
+});
+
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
 await page.getByLabel("Choose a backup file").setInputFiles({
-  name: "old.json", mimeType: "application/json",
-  buffer: Buffer.from(readFileSync(`${dir}/old-format.json`)),
+  name: "old.json", mimeType: "application/json", buffer: Buffer.from(oldFormat),
 });
 await page.waitForTimeout(1500);
 check("a backup written before the rename is still accepted",

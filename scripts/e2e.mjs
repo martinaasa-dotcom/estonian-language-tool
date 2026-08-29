@@ -40,12 +40,23 @@ await page.getByLabel("Insert õ").click();
 await page.waitForTimeout(300);
 check("diacritic bar inserts õ", (await page.getByLabel("Search the dictionary").inputValue()) === "sõ");
 
-// 3 — Keyboard-only review
+// 3 — Keyboard-only review.
+// Review asks in three shapes now — type it, pick it, flip it (see
+// app/review/ReviewSession.tsx) — so this reaches the rating buttons the way
+// the shape in front of it allows, then grades with a number key.
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });
 const before = await page.getByText(/\d+ left/).textContent();
-await page.keyboard.press("Space");
-await page.waitForTimeout(400);
-check("space reveals the answer", (await page.getByRole("button", { name: /^Good/ }).count()) > 0);
+const answerBox = page.getByLabel("Type your answer");
+if (await answerBox.count()) {
+  await answerBox.fill("ükskõik");
+  await page.keyboard.press("Enter");
+} else if (await page.getByText(/Pick the meaning/).count()) {
+  await page.keyboard.press("1");
+} else {
+  await page.keyboard.press("Space");
+}
+await page.waitForTimeout(700);
+check("the answer is reachable from the keyboard", (await page.getByRole("button", { name: /^Good/ }).count()) > 0);
 await page.keyboard.press("3");
 await page.waitForTimeout(2000);
 const after = await page.getByText(/\d+ left/).textContent();

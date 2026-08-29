@@ -1,0 +1,152 @@
+import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/auth/session";
+import { unitById } from "@/lib/collections/path";
+import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
+import { ReviewSession, type ReviewCard } from "./ReviewSession";
+
+export const dynamic = "force-dynamic";
+
+const NEW_PER_SESSION = 10;
+const MAX_SESSION = 60;
+const CHOICES = 4;
+
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string; unit?: string }>;
+}) {
+  const ownerId = await requireUserId();
+  const { case: targetCase, unit: unitId } = await searchParams;
+  const now = new Date();
+
+  const settings = await readSettings(ownerId, [SETTING_KEYS.reviewMode]);
+  const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
+
+  const include = { lexeme: { select: { lemma: true, translation: true, pos: true } } } as const;
+
+  // A drill ignores scheduling: the point is to attack one weakness — a case the
+  // heatmap found, or the unit just added — not to review whatever is due.
+  // ReviewSession decides for itself, once, whether an empty pool means "show
+  // the empty state" — never the server on a later grade-triggered refresh.
+  // See app/review/sprint/ and app/review/listening/ for the same pattern,
+  // and the shared reasoning in ReviewSession.tsx.
+  if (targetCase) {
+    const drill = await prisma.card.findMany({
+      where: { ownerId, suspended: false, targetCase },
+      orderBy: [{ lapses: "desc" }, { due: "asc" }],
+      take: 30,
+      include,
+    });
+    return (
+      <ReviewSession
+        cards={await withChoices(drill.map(toReviewCard))}
+        drillCase={targetCase}
+        totalCards={0}
+        mode={mode}
+      />
+    );
+  }
+
+  if (unitId) {
+    const unit = unitById(unitId);
+    const drill = unit
+      ? await prisma.card.findMany({
+          where: { ownerId, suspended: false, lexeme: { lemma: { in: unit.lemmas } } },
+          orderBy: [{ due: "asc" }, { lapses: "desc" }],
+          take: 40,
+          include,
+        })
+      : [];
+    return (
+      <ReviewSession
+        cards={await withChoices(drill.map(toReviewCard))}
+        drillUnit={unitId}
+        totalCards={0}
+        mode={mode}
+      />
+    );
+  }
+
+  // Due first, then a capped trickle of new cards. Uncapped new cards is the
+  // classic way an SRS becomes an unsustainable workload three weeks in.
+  const due = await prisma.card.findMany({
+    where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
+    orderBy: { due: "asc" },
+    take: MAX_SESSION,
+    include,
+  });
+
+  const fresh = await prisma.card.findMany({
+    where: { ownerId, suspended: false, state: 0 },
+    orderBy: { createdAt: "asc" },
+    take: Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)),
+    include,
+  });
+
+  const cards = await withChoices([...due, ...fresh].map(toReviewCard));
+  const totalCards = await prisma.card.count({ where: { ownerId } });
+
+  return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
+}
+
+type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
+  lexeme: { lemma: string; translation: string; pos: string } | null;
+};
+
+function toReviewCard(c: CardRow): ReviewCard {
+  return {
+    id: c.id,
+    cardType: c.cardType,
+    front: c.front,
+    back: c.back,
+    hint: c.hint,
+    targetCase: c.targetCase,
+    lemma: c.lexeme?.lemma ?? null,
+    isNew: c.state === 0,
+    choices: null,
+    scheduling: {
+      due: c.due.toISOString(),
+      stability: c.stability,
+      difficulty: c.difficulty,
+      elapsedDays: c.elapsedDays,
+      scheduledDays: c.scheduledDays,
+      reps: c.reps,
+      lapses: c.lapses,
+      state: c.state,
+      lastReview: c.lastReview?.toISOString() ?? null,
+      learningSteps: c.learningSteps,
+    },
+  };
+}
+
+/**
+ * Attaches multiple-choice options to recognition cards.
+ *
+ * Wrong answers are real translations of other words rather than invented text
+ * — nothing here writes Estonian, and a decoy that is obviously nonsense makes
+ * the question free. They are drawn once for the whole session, so the pool is
+ * one query rather than one per card.
+ */
+async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
+  const needs = cards.some((c) => c.cardType === "RECOGNITION" && !c.isNew);
+  if (!needs) return cards;
+
+  const pool = await prisma.lexeme.findMany({ select: { translation: true }, take: 2000 });
+  const translations = [...new Set(pool.map((l) => l.translation))];
+  if (translations.length < CHOICES) return cards;
+
+  return cards.map((card) => {
+    if (card.cardType !== "RECOGNITION" || card.isNew) return card;
+    const decoys = shuffle(translations.filter((t) => t !== card.back)).slice(0, CHOICES - 1);
+    return { ...card, choices: shuffle([...decoys, card.back]) };
+  });
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}

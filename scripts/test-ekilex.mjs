@@ -22,11 +22,17 @@ check("it comes back with an English translation",
   !(await page.getByText("— add a translation").count()));
 check("the authoritative paradigm is shown, not a derived one",
   (await page.getByText(/The full paradigm, from Ekilex/i).count()) > 0);
-// The label pairs English with Estonian inside one element, so match the pair.
-const labels = await page.locator("li span").allInnerTexts();
+// The retrieved paradigm is a table now (app/dictionary/Paradigm.tsx): one row
+// per case, naming it in both languages. Asserted on the row's text rather than
+// on the element it happens to be built from.
+const comitativeRow = await page
+  .locator("tr", { hasText: "Comitative" })
+  .first()
+  .innerText()
+  .catch(() => "");
 check("case names are given in English as well as Estonian",
-  labels.some((t) => t.includes("Comitative") && t.includes("kaasaütlev")),
-  labels.find((t) => t.includes("Comitative")) ?? "no comitative label");
+  comitativeRow.includes("Comitative") && comitativeRow.includes("kaasaütlev"),
+  comitativeRow.replace(/\s+/g, " ").trim() || "no comitative row");
 check("Ekilex is credited, as CC BY requires",
   (await page.getByText(/Institute of the Estonian Language · CC BY 4.0/).count()) > 0);
 

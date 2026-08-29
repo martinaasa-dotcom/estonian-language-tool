@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BADGES, badgeByKey, computeStreak, computeStreakWithShields, earnedBadgeKeys, type BadgeStats } from "./badges";
+import { dayKey as localDayKey } from "@/lib/time/day";
 
 const base: BadgeStats = {
   streak: 0,
@@ -8,6 +9,10 @@ const base: BadgeStats = {
   totalWords: 0,
   bestCaseAccuracy: null,
   sprintBest: 0,
+  matchBestSeconds: 0,
+  unitsCompleted: 0,
+  level: 1,
+  questsDoneToday: 0,
 };
 
 describe("BADGES", () => {
@@ -64,6 +69,37 @@ describe("earnedBadgeKeys", () => {
     expect(earnedBadgeKeys({ ...base, sprintBest: 14 })).not.toContain("sprint_ace");
     expect(earnedBadgeKeys({ ...base, sprintBest: 15 })).toContain("sprint_ace");
   });
+
+  it("earns match_ace only for a round that was actually finished quickly", () => {
+    expect(earnedBadgeKeys({ ...base, matchBestSeconds: 0 })).not.toContain("match_ace");
+    expect(earnedBadgeKeys({ ...base, matchBestSeconds: 46 })).not.toContain("match_ace");
+    expect(earnedBadgeKeys({ ...base, matchBestSeconds: 45 })).toContain("match_ace");
+  });
+
+  it("earns path badges as units are finished", () => {
+    expect(earnedBadgeKeys({ ...base, unitsCompleted: 1 })).toContain("unit_done");
+    expect(earnedBadgeKeys({ ...base, unitsCompleted: 1 })).not.toContain("units_5");
+    expect(earnedBadgeKeys({ ...base, unitsCompleted: 5 })).toContain("units_5");
+  });
+
+  it("earns level badges at their thresholds", () => {
+    expect(earnedBadgeKeys({ ...base, level: 4 })).not.toContain("level_5");
+    expect(earnedBadgeKeys({ ...base, level: 5 })).toContain("level_5");
+    expect(earnedBadgeKeys({ ...base, level: 10 })).toContain("level_10");
+  });
+
+  it("earns all_quests only when every daily quest is done", () => {
+    expect(earnedBadgeKeys({ ...base, questsDoneToday: 2 })).not.toContain("all_quests");
+    expect(earnedBadgeKeys({ ...base, questsDoneToday: 3 })).toContain("all_quests");
+  });
+
+  it("earns the hour badges only when an hour is actually reported", () => {
+    expect(earnedBadgeKeys(base)).not.toContain("early_bird");
+    expect(earnedBadgeKeys({ ...base, reviewHour: 6 })).toContain("early_bird");
+    expect(earnedBadgeKeys({ ...base, reviewHour: 7 })).not.toContain("early_bird");
+    expect(earnedBadgeKeys({ ...base, reviewHour: 23 })).toContain("night_owl");
+    expect(earnedBadgeKeys({ ...base, reviewHour: 22 })).not.toContain("night_owl");
+  });
 });
 
 describe("computeStreak", () => {
@@ -96,7 +132,7 @@ describe("computeStreakWithShields", () => {
     d.setDate(d.getDate() + offset);
     return d;
   };
-  const dayKey = (offset: number) => day(offset).toISOString().slice(0, 10);
+  const dayKey = (offset: number) => localDayKey(day(offset));
 
   it("matches computeStreak with zero shields available", () => {
     const dates = [day(0), day(-1), day(-2)];

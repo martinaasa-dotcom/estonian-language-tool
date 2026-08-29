@@ -16,10 +16,24 @@ describe("fold", () => {
   });
 });
 
+import { prisma } from "@/lib/db";
 import { searchLexemes } from "./search";
 
-// These run against the seeded development database.
-describe("searchLexemes — inflected forms", () => {
+/**
+ * These exercise the real query path, so they need the seeded development
+ * database. Without one they are skipped rather than failed: `npm test` should
+ * stay runnable on a fresh clone — where the pure logic above is exactly what a
+ * contributor wants to check — and a red suite that only means "no DATABASE_URL"
+ * trains people to ignore red suites.
+ */
+const seeded = await prisma.lexeme
+  .count()
+  .then((n) => n > 0)
+  .catch(() => false);
+
+const describeWithDb = seeded ? describe : describe.skip;
+
+describeWithDb("searchLexemes — inflected forms", () => {
   it.each([
     ["loen", "lugema", /present 1sg/],
     ["lugesin", "lugema", /past 1sg/],

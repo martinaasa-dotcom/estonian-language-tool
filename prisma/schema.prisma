@@ -169,3 +169,40 @@ model Achievement {
 
   @@id([ownerId, key])
 }
+
+/// A class: one teacher, a join code, and the learners who used it.
+///
+/// Deliberately thin. A classroom here is a *view* over data the learners
+/// already own — nobody's cards, reviews or tasks move into it, and leaving a
+/// class removes the membership row and nothing else. That keeps the promise
+/// the app can actually make to a student: your deck is yours, and joining your
+/// teacher's class shares your progress, not your data.
+model Classroom {
+  id        String   @id @default(uuid())
+  name      String
+  /// Six characters, shown to students to join with. Unique across the instance.
+  code      String   @unique
+  /// The teacher's user id.
+  ownerId   String
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  members ClassroomMember[]
+
+  @@index([ownerId])
+}
+
+/// One learner's membership of one class.
+model ClassroomMember {
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  ownerId     String
+  role        String    @default("STUDENT") // TEACHER | STUDENT
+  /// The name they chose to be known by here, copied at join time so a later
+  /// change to their own display name does not silently rename them mid-term.
+  displayName String
+  joinedAt    DateTime  @default(now())
+
+  @@id([classroomId, ownerId])
+  @@index([ownerId])
+}
