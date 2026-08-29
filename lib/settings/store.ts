@@ -20,6 +20,17 @@ export const SETTING_KEYS = {
   reviewMode: "reviewMode",
   onboardedAt: "onboardedAt",
   cefrGoal: "cefrGoal",
+  /**
+   * The level the learner is at, as opposed to the one they are aiming for.
+   *
+   * Separate from cefrGoal on purpose: what somebody wants to reach and where
+   * they are now are different facts, and the course needs the second one to
+   * decide what to open and where to send them next. Written by the placement
+   * ladder, by a level checkpoint when one is passed, and by the fuller
+   * assessment at /assess, which is the better instrument of the three.
+   */
+  cefrPlacement: "cefrPlacement",
+
   /*
     Why this person is here, what they want to reach, and by when. Asked once
     at first run and editable in Settings. Five keys rather than one JSON blob

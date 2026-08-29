@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { unitById } from "@/lib/collections/path";
+import { unitById } from "@/lib/collections/syllabus";
 import { buildWorksheet, type WorksheetWord } from "@/lib/collections/worksheet";
 import { parseExamples } from "@/lib/dict/examples";
 import { Empty, Note } from "@/components/ui";
@@ -55,7 +55,7 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
   await requireUserId();
 
   const lexemes = await prisma.lexeme.findMany({
-    where: { lemma: { in: unit.lemmas } },
+    where: { lemma: { in: [...unit.lemmas] } },
     select: {
       lemma: true,
       translation: true,

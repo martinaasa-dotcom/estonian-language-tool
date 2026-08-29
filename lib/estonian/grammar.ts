@@ -235,3 +235,620 @@ export const CASE_GROUPS: readonly { title: string; blurb: string; keys: readonl
     keys: ["TRANSLATIVE", "TERMINATIVE", "ESSIVE", "ABESSIVE", "COMITATIVE"],
   },
 ];
+
+/**
+ * The grammar the course teaches beyond the cases.
+ *
+ * Every unit in the syllabus names the grammar it carries, and before this those
+ * names pointed at nothing: a B2 unit could say it taught the impersonal and the
+ * app had no page that said what the impersonal was. A course that can only
+ * mark an answer wrong is a test with a syllabus attached.
+ *
+ * The same two rules as the case notes above, with one addition. `marker` names
+ * an ending, because the quotative cannot be explained in English without
+ * naming the ending that makes it, and a learner who has met the word "quotative"
+ * has not met the thing. A marker is grammatical terminology, not an example: it
+ * is never a word, never drilled as an answer, and the page shows real forms out
+ * of the dictionary beside it. `grammar.test.ts` holds it to that, so the field
+ * cannot quietly become somewhere to write Estonian.
+ */
+export interface TopicNote {
+  readonly id: string;
+  readonly title: string;
+  /** One line: what it does, in the plainest English available. */
+  readonly summary: string;
+  /** The ending that carries it, where one does. Terminology, not an example. */
+  readonly marker?: string;
+  /** What it is for. Each entry is a use, not an example sentence. */
+  readonly points: readonly string[];
+  /** The mistake an English speaker actually makes. */
+  readonly watchOut: string;
+}
+
+export const TOPIC_NOTES: readonly TopicNote[] = [
+  // ── The verb, tense and mood ─────────────────────────────────────────────
+  {
+    id: "olema",
+    title: "The verb to be, and having things",
+    summary: "Estonian has no verb for to have. Possession is said with a location case instead.",
+    points: [
+      "The one verb you cannot avoid, and one of the few genuinely irregular ones",
+      "Having something is expressed as it being at you, using the adessive",
+      "The same pattern carries age, feelings and obligations",
+    ],
+    watchOut:
+      "There is no verb to have to reach for, so a sentence built on the English shape will not translate word for word. The owner goes into a case and the thing owned stays in the nominative.",
+  },
+  {
+    id: "present-tense",
+    title: "The present tense",
+    summary: "One present tense, doing the work English splits between I write and I am writing.",
+    points: [
+      "Personal endings for the six persons, attached to a stem",
+      "Covers both the simple and the continuous English present",
+      "Also does duty for the future, since Estonian has no future tense",
+    ],
+    watchOut:
+      "The present stem is not always readable from the dictionary form, which is why the first person present is one of the parts stored for every verb rather than worked out.",
+  },
+  {
+    id: "negation",
+    title: "Negation",
+    summary: "A single negating word plus one unchanging verb form, whoever is doing the not-doing.",
+    points: [
+      "The verb loses its personal ending entirely when negated",
+      "One negation word covers every person, unlike English do not and does not",
+      "The past is negated differently from the present",
+    ],
+    watchOut:
+      "The temptation is to negate the conjugated form. The verb goes back to a bare stem instead, so the person is carried only by the pronoun.",
+  },
+  {
+    id: "imperfect",
+    title: "The simple past",
+    summary: "The tense for anything that happened and finished, and the backbone of any story.",
+    points: [
+      "Formed from a past stem that is often unpredictable",
+      "Used for completed events, however recent",
+      "Distinct from the perfect, which is about present relevance",
+    ],
+    watchOut:
+      "The past stem is not derivable from the present one, which is why the first person past is stored as a principal part. Guessing it is the single most common source of invented verbs.",
+  },
+  {
+    id: "perfect",
+    title: "The perfect",
+    summary: "Have done: the auxiliary plus a participle, for a past that still matters now.",
+    marker: "-nud",
+    points: [
+      "Built from the verb to be plus the past active participle",
+      "Used where the result rather than the event is the point",
+      "The participle does not change for person",
+    ],
+    watchOut:
+      "Estonian builds this on to be, not on to have, so the English auxiliary is the wrong model. The choice between this and the simple past is looser than in English.",
+  },
+  {
+    id: "pluperfect",
+    title: "The pluperfect",
+    summary: "Had done: the same participle, with the auxiliary itself in the past.",
+    marker: "-nud",
+    points: [
+      "For an event completed before another past event",
+      "Common in narrative and in reported speech",
+      "Uses exactly the participle the perfect uses",
+    ],
+    watchOut:
+      "Only the auxiliary moves into the past. Putting the participle into a past form as well is the usual overcorrection.",
+  },
+  {
+    id: "future",
+    title: "Talking about the future",
+    summary: "There is no future tense. The present plus a time word does the whole job.",
+    points: [
+      "A time expression is what marks a sentence as future",
+      "Verbs of intending and planning carry the rest",
+      "A perfective particle can imply completion to come",
+    ],
+    watchOut:
+      "Looking for a future tense to conjugate is looking for something that does not exist. The work is done by vocabulary and context rather than by morphology.",
+  },
+  {
+    id: "conditional",
+    title: "The conditional",
+    summary: "Would, could, should. One suffix that makes a sentence hypothetical or polite.",
+    marker: "-ksi-",
+    points: [
+      "Hypothetical situations and their consequences",
+      "Softening a request into something a stranger will not find blunt",
+      "Giving advice without issuing an instruction",
+    ],
+    watchOut:
+      "This is the politeness register, not just the grammar of hypotheticals. An imperative that would be normal between friends can land badly with a stranger, and the conditional is the usual repair.",
+  },
+  {
+    id: "imperative",
+    title: "The imperative",
+    summary: "Instructions and invitations, with a separate form for one person and for several.",
+    points: [
+      "Distinct singular and plural forms, unlike English",
+      "The plural doubles as the polite form for one person",
+      "Negated with its own dedicated word",
+    ],
+    watchOut:
+      "Using the singular imperative on somebody you have just met reads as an order. The plural is the safe default with a stranger.",
+  },
+  {
+    id: "quotative",
+    title: "The quotative",
+    summary: "A whole mood for information you are passing on rather than vouching for.",
+    marker: "-vat",
+    points: [
+      "Reported speech, rumour and hearsay",
+      "Common in news writing, where the source matters",
+      "Can carry scepticism, depending on how it is delivered",
+    ],
+    watchOut:
+      "English needs a word like apparently or a whole clause. Estonian does it with a verb ending, so it is easy to read straight past and take a rumour as a statement of fact.",
+  },
+  {
+    id: "impersonal",
+    title: "The impersonal",
+    summary: "It is done, with nobody named. Not the passive, and worth keeping separate from it.",
+    marker: "-takse",
+    points: [
+      "Notices, instructions, official prose and news",
+      "Says an action happened without naming or implying an agent",
+      "Has its own forms across the tenses",
+    ],
+    watchOut:
+      "The English passive lets you add by whom. The impersonal does not, because it is not demoting an agent, it is declining to have one. Translating it as a passive and then looking for the doer is the standard confusion.",
+  },
+  {
+    id: "participles",
+    title: "Participles",
+    summary: "Verb forms that behave like adjectives, and the building blocks of the compound tenses.",
+    marker: "-nud",
+    points: [
+      "Active and impersonal, present and past, four in all",
+      "Used to describe a noun the way an adjective would",
+      "Carry the perfect and pluperfect with the auxiliary",
+    ],
+    watchOut:
+      "These are everywhere in written Estonian and rare in beginner courses, which is why intermediate reading suddenly feels much harder than intermediate speaking.",
+  },
+  {
+    id: "past-participle",
+    title: "The past participle",
+    summary: "The form the perfect tenses are built from, and an adjective in its own right.",
+    marker: "-nud",
+    points: [
+      "Combines with the auxiliary for have done and had done",
+      "Describes a noun as having done something",
+      "Has an impersonal counterpart for things done to something",
+    ],
+    watchOut:
+      "It does not agree with anything when it is part of a tense, but it does decline when it is used as an adjective. Which job it is doing decides whether it changes.",
+  },
+  {
+    id: "converb",
+    title: "The des-form",
+    summary: "While doing: one clause folded into another without a conjunction.",
+    marker: "-des",
+    points: [
+      "Two simultaneous actions in one sentence",
+      "Strongly preferred in writing over two joined clauses",
+      "Its subject is understood to be the main clause's",
+    ],
+    watchOut:
+      "Because the subject is implied rather than stated, giving the two halves different subjects produces a sentence that is grammatical and means something you did not intend.",
+  },
+  {
+    id: "infinitives",
+    title: "The two infinitives",
+    summary: "Estonian has two, and which one a verb takes is a fact about that verb.",
+    marker: "-ma",
+    points: [
+      "One is the dictionary form and follows verbs of starting and going",
+      "The other follows verbs of wanting, being able and having to",
+      "Both are stored, because neither is derivable from the other",
+    ],
+    watchOut:
+      "English has one infinitive, so there is no intuition to fall back on. The pairing has to be learned with the verb, which is why both are principal parts.",
+  },
+  {
+    id: "particle-verbs",
+    title: "Verbs with a particle",
+    summary: "A small word in front of a verb can change its meaning completely.",
+    points: [
+      "The particle usually adds completion or direction",
+      "Often the difference between doing and finishing something",
+      "The particle moves around the sentence rather than staying put",
+    ],
+    watchOut:
+      "These are Estonian's phrasal verbs, and like English ones the meaning is frequently not the sum of the parts. Looking up only the verb gives the wrong answer.",
+  },
+  {
+    id: "aspect",
+    title: "Finished or not",
+    summary: "Whether an action completed is carried by the object's case and by particles, not by tense.",
+    points: [
+      "A completed action takes a whole object",
+      "An ongoing or partial one takes a partitive object",
+      "Particles reinforce completion",
+    ],
+    watchOut:
+      "English marks this with tense and Estonian marks it with case, so the two systems do not line up anywhere. This is the single hardest transfer for an English speaker.",
+  },
+
+  // ── The noun phrase ──────────────────────────────────────────────────────
+  {
+    id: "object",
+    title: "The object: whole or partial",
+    summary: "The choice between a total and a partial object, and the hardest rule in the language.",
+    points: [
+      "A completed action on a whole thing takes the genitive or nominative",
+      "An unfinished action, or part of a thing, takes the partitive",
+      "Negation always takes the partitive, whatever else is true",
+    ],
+    watchOut:
+      "This is not about politeness or emphasis and it is not optional. It is the main thing that marks out a B1 speaker from an A2 one, and getting it wrong changes what the sentence means rather than just how it sounds.",
+  },
+  {
+    id: "adjective-agreement",
+    title: "Adjectives agree",
+    summary: "An adjective takes the same case and number as the noun it describes.",
+    points: [
+      "Agreement in case and in number",
+      "So an adjective declines exactly like a noun",
+      "A few borrowed adjectives do not decline at all",
+    ],
+    watchOut:
+      "Every adjective learned is therefore worth a whole paradigm, not one word. Leaving an adjective in the dictionary form beside a declined noun is the commonest beginner tell.",
+  },
+  {
+    id: "comparative",
+    title: "Comparing things",
+    summary: "One ending makes an adjective comparative, built on the stem the cases use.",
+    marker: "-m",
+    points: [
+      "Formed from the genitive stem, like almost everything else",
+      "The thing compared against goes into a case rather than after a word like than",
+      "A handful of common adjectives are irregular",
+    ],
+    watchOut:
+      "There is no separate word for than to reach for. The comparison is carried by the case of the other thing, which English speakers routinely leave in the nominative.",
+  },
+  {
+    id: "superlative",
+    title: "The most",
+    summary: "Two ways of saying it, one analytic and one a single ending.",
+    points: [
+      "A helper word plus the comparative, which always works",
+      "A single-word form, shorter and more literary",
+      "Both are common and neither is wrong",
+    ],
+    watchOut:
+      "The single-word form is not derivable for every adjective, so the two-word version is the safe one when you are unsure.",
+  },
+  {
+    id: "numerals",
+    title: "Numbers and what follows them",
+    summary: "Counting looks simple until you notice what case the counted thing goes into.",
+    points: [
+      "Anything after two takes the partitive singular",
+      "Numerals decline like nouns when the phrase itself is in a case",
+      "Ordinals are formed regularly and decline too",
+    ],
+    watchOut:
+      "The counted noun stays singular after a number, which reads as wrong to an English speaker for a long time. It is the partitive singular, not a plural.",
+  },
+  {
+    id: "gradation",
+    title: "Gradation",
+    summary: "The stem itself changes between forms, and only some of that change is written down.",
+    points: [
+      "The qualitative kind shows in spelling and can be detected",
+      "The quantitative kind is a change in length that spelling does not record",
+      "Which words gradate is a property of the word",
+    ],
+    watchOut:
+      "Because the app can only see what is written, it reports the qualitative kind and says nothing about the quantitative. A word can alternate audibly while looking identical on the page.",
+  },
+  {
+    id: "derivation",
+    title: "Building words from words",
+    summary: "A handful of suffixes turn verbs into nouns, nouns into adjectives and back.",
+    marker: "-mine",
+    points: [
+      "An action noun from any verb, entirely regular",
+      "A quality noun from an adjective",
+      "Adjectives meaning like something, and meaning without it",
+    ],
+    watchOut:
+      "Learning six suffixes makes thousands of words readable without looking them up, which is the fastest single gain available at B2. The trap is assuming a derived word means exactly the sum of its parts.",
+  },
+  {
+    id: "nominalisation",
+    title: "Nominalisation",
+    summary: "Turning a clause into a noun phrase, which is what makes formal Estonian dense.",
+    marker: "-mine",
+    points: [
+      "An action noun replaces a whole subordinate clause",
+      "The doer becomes a genitive in front of it",
+      "Standard in academic, legal and official writing",
+    ],
+    watchOut:
+      "This is the biggest single difference between B2 prose and C1 prose. Overdoing it produces the bureaucratic register Estonians complain about as loudly as English speakers do.",
+  },
+
+  // ── The sentence ─────────────────────────────────────────────────────────
+  {
+    id: "government",
+    title: "Verbs that demand a case",
+    summary: "Many verbs require a particular case of whatever follows, and it is rarely the English one.",
+    points: [
+      "The required case is a fact about the verb, learned with it",
+      "Verbs of helping, calling, liking and thinking are the usual traps",
+      "The dictionary records it as the question word the verb answers",
+    ],
+    watchOut:
+      "This is the mistake English speakers keep making for years, because the English preposition suggests the wrong case and nothing about the verb hints at the right one.",
+  },
+  {
+    id: "word-order",
+    title: "Word order",
+    summary: "Freer than English, but not free: the order is what carries emphasis.",
+    points: [
+      "Cases mark who did what, so order is available for other work",
+      "The verb tends to hold second position in a main clause",
+      "New information tends to go last",
+    ],
+    watchOut:
+      "Because almost any order is grammatical, a learner can produce sentences that are correct and subtly wrong-footed. This is a C1 skill rather than a rule to memorise.",
+  },
+  {
+    id: "subordination",
+    title: "Subordinate clauses",
+    summary: "Joining clauses, and the comma rules that go with it.",
+    points: [
+      "A conjunction introduces the clause and a comma is compulsory",
+      "Word order shifts inside a subordinate clause",
+      "Chains of clauses are normal in writing and rare in speech",
+    ],
+    watchOut:
+      "Estonian commas follow grammar rather than the pause you would make reading aloud, so English comma instincts produce errors in both directions.",
+  },
+  {
+    id: "relative-clause",
+    title: "Relative clauses",
+    summary: "Which and who: the relative pronoun declines to match its job in its own clause.",
+    points: [
+      "Different pronouns for people and for things",
+      "The pronoun takes the case its own clause needs, not the noun's",
+      "Always separated by a comma",
+    ],
+    watchOut:
+      "The case of the relative pronoun is decided inside the relative clause. Matching it to the noun it refers back to is the reliable mistake.",
+  },
+  {
+    id: "reported-speech",
+    title: "Reporting what somebody said",
+    summary: "Either a subordinate clause, or the quotative mood with no clause at all.",
+    points: [
+      "A conjunction plus a clause, closest to the English shape",
+      "Or the quotative, which needs no reporting verb",
+      "Tense does not shift back the way English tense does",
+    ],
+    watchOut:
+      "There is no sequence-of-tenses rule to apply. Backshifting the tense the way English does produces a sentence that says something different.",
+  },
+  {
+    id: "concession",
+    title: "Concession",
+    summary: "Although, nevertheless, even so: granting a point before disagreeing with it.",
+    points: [
+      "Conjunctions that subordinate a concession",
+      "Adverbs that carry it across a sentence boundary",
+      "The core move of any argued essay",
+    ],
+    watchOut:
+      "Concessive words look interchangeable in a dictionary and are not: some subordinate a clause and some only join sentences, and mixing them up breaks the punctuation.",
+  },
+  {
+    id: "hedging",
+    title: "Hedging",
+    summary: "Saying something is probable rather than certain, precisely and without waffling.",
+    points: [
+      "Adverbs and adjectives of likelihood",
+      "The conditional, which softens a claim as well as a request",
+      "The quotative, which attributes a claim elsewhere",
+    ],
+    watchOut:
+      "Academic Estonian hedges more than academic English and in different places. Translating an English hedge directly usually lands somewhere between vague and evasive.",
+  },
+  {
+    id: "cohesion",
+    title: "Holding a text together",
+    summary: "The connectives and pointers that turn a pile of sentences into a text.",
+    points: [
+      "Ordering and adding: first, in addition, finally",
+      "Contrast and consequence",
+      "Referring back without simply repeating the noun",
+    ],
+    watchOut:
+      "A text can be correct sentence by sentence and unreadable as a whole. This is what separates a C1 essay from a B2 one far more than vocabulary does.",
+  },
+  {
+    id: "emphasis",
+    title: "Emphasis",
+    summary: "Where a word sits, and which particle it takes, decides what the sentence insists on.",
+    points: [
+      "Fronting a word to stress it",
+      "Small particles that mark focus",
+      "Intonation, which the written language has to encode in word order",
+    ],
+    watchOut:
+      "English stresses with the voice and keeps the order fixed. Estonian moves the words instead, so an English-shaped sentence read aloud with English stress emphasises nothing.",
+  },
+  {
+    id: "rhetorical-questions",
+    title: "Questions that are not questions",
+    summary: "Asking in order to make a point, and the particles that signal it.",
+    points: [
+      "A question particle marks a genuine yes or no question",
+      "Its absence, with question intonation, reads differently",
+      "Common in speeches and opinion writing",
+    ],
+    watchOut:
+      "The question particle is easy to drop, and dropping it turns a plain question into something that can sound incredulous.",
+  },
+  {
+    id: "punctuation",
+    title: "Punctuation",
+    summary: "Commas are grammatical here, not rhetorical, and the rules are stricter than English ones.",
+    points: [
+      "A comma before every subordinate clause, without exception",
+      "Rules for lists and for parenthetical material",
+      "Quotation marks are shaped differently from English ones",
+    ],
+    watchOut:
+      "Placing commas where you would pause is an English habit that produces consistent errors, because Estonian places them where the grammar changes.",
+  },
+
+  // ── Register and use ─────────────────────────────────────────────────────
+  {
+    id: "politeness",
+    title: "Politeness",
+    summary: "Carried by mood and by which plural you use, rather than by please.",
+    points: [
+      "The plural as a polite singular with strangers",
+      "The conditional to soften a request",
+      "Directness is less rude here than an English speaker expects",
+    ],
+    watchOut:
+      "Estonian is more direct than English and adding English-style softeners can read as insincere. The conditional does the work that a pile of qualifiers does in English.",
+  },
+  {
+    id: "register",
+    title: "Register",
+    summary: "The same thing said formally, neutrally or familiarly, and knowing which the room wants.",
+    points: [
+      "A written standard that differs noticeably from speech",
+      "Officialese, which is its own recognisable and much-mocked style",
+      "Colloquial forms that are correct but wrong in an essay",
+    ],
+    watchOut:
+      "This has nothing to do with knowing more words. A C1 speaker knows three ways to say something and picks one; a B2 speaker knows one and uses it everywhere.",
+  },
+  {
+    id: "collocation",
+    title: "Words that go together",
+    summary: "Which verb goes with which noun, where no rule decides it and usage does.",
+    points: [
+      "Verb and noun pairings that are fixed by convention",
+      "Near-synonyms that are not interchangeable in context",
+      "The last thing acquired and the first thing noticed",
+    ],
+    watchOut:
+      "Every word can be correct and the sentence still sound translated. This is what dictionaries are worst at showing, which is why attested example sentences matter more here than anywhere else.",
+  },
+  {
+    id: "idiom",
+    title: "Idiom",
+    summary: "Fixed expressions whose meaning is not the sum of their words.",
+    points: [
+      "Sayings and proverbs still in daily use",
+      "Fixed verb phrases that resist literal reading",
+      "Figurative senses of ordinary words",
+    ],
+    watchOut:
+      "Translating an idiom word by word produces something between baffling and comic. They have to be met whole, in context, which is why they sit at C1 rather than earlier.",
+  },
+  {
+    id: "irony",
+    title: "Irony",
+    summary: "Meaning the opposite on purpose, and hearing it done to you.",
+    points: [
+      "Carried by intonation, understatement and context",
+      "Understatement is the commonest form of it here",
+      "Rarely flagged, so it has to be inferred",
+    ],
+    watchOut:
+      "This is the last thing a learner hears and the easiest to get wrong in production. Attempted irony that is not recognised as irony reads as rudeness or as an error.",
+  },
+  {
+    id: "nuance",
+    title: "Nuance",
+    summary: "Choosing between two words a dictionary glosses identically.",
+    points: [
+      "Near-synonyms separated by register, strength or connotation",
+      "Shades a bilingual dictionary flattens",
+      "Best settled by reading real usage rather than by definition",
+    ],
+    watchOut:
+      "A dictionary that gives two words the same English gloss is telling you about English, not about Estonian. The difference is usually visible in what each one collocates with.",
+  },
+  {
+    id: "variation",
+    title: "Variation",
+    summary: "The language is not uniform: region, age and setting all show in how people speak.",
+    points: [
+      "Regional dialects, some quite distant from the standard",
+      "The gap between written standard and everyday speech",
+      "Older and literary forms still met in reading",
+    ],
+    watchOut:
+      "Textbook Estonian is one variety among several. Hearing a form that is not in the book does not mean somebody has made a mistake.",
+  },
+  {
+    id: "time-expressions",
+    title: "Saying when",
+    summary: "Time is expressed with cases, and which case depends on the unit of time.",
+    points: [
+      "Days and parts of the day take one case, months and years another",
+      "Duration is expressed differently again",
+      "From and until each have their own case",
+    ],
+    watchOut:
+      "There are no prepositions to lean on, so an English time phrase gives no clue which case to use. These are learned as patterns per unit of time.",
+  },
+];
+
+const TOPICS_BY_ID = new Map(TOPIC_NOTES.map((t) => [t.id, t]));
+
+export function grammarTopic(id: string): TopicNote | undefined {
+  return TOPICS_BY_ID.get(id);
+}
+
+/**
+ * Everything the course can name as a grammar point, cases included.
+ *
+ * A unit names its grammar with one flat list of ids, so a case and a mood have
+ * to be resolvable the same way. Cases keep their own richer note; this is the
+ * shared shape a link and a heading need.
+ */
+export interface GrammarPoint {
+  id: string;
+  title: string;
+  summary: string;
+  /** Where the reference page for it lives. */
+  href: string;
+}
+
+export function grammarPoint(id: string): GrammarPoint | undefined {
+  const topic = TOPICS_BY_ID.get(id);
+  if (topic) return { id, title: topic.title, summary: topic.summary, href: `/grammar/topic/${id}` };
+
+  const spec = CASES.find((c) => c.key.toLowerCase() === id.toLowerCase());
+  const note = spec && CASE_NOTES.find((n) => n.key === spec.key);
+  if (spec && note) {
+    return {
+      id,
+      title: `${spec.en} case`,
+      summary: note.summary,
+      href: `/grammar/${spec.key.toLowerCase()}`,
+    };
+  }
+  return undefined;
+}

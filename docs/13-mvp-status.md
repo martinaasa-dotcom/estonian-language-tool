@@ -3,8 +3,13 @@
 What was actually built, what was deliberately left out, and which planning decisions changed once
 the answers to `12-open-questions.md` came back.
 
-**§7 is the current state.** §1–5 describe the first MVP, §6 the pass that made it usable by a
-stranger, and §7 the pass that made it teach in context — sentences, speaking and classes.
+**§11 to §14 are the current state.** §1–5 describe the first MVP, §6 the pass that made it usable
+by a stranger, §7 the pass that made it teach in context, §9 and §10 the teaching and diagnostic
+layers, §11 the pass that measured the learner and stated what the app costs, §12 the pass that let
+a photographed page become a set of words, §13 the mock state examination, and §14 the pass that
+turned the path into a course covering A1 to C2. Those four were built at the same time against the
+same main and landed one after another. Word counts in §1–7 are the numbers of their own time and
+§14 supersedes them.
 
 ## 1. The answers, and what they changed
 
@@ -51,11 +56,11 @@ because a cap that fails open is not a cap.
 | Area | State |
 |---|---|
 | `lib/estonian/` — cases, principal parts, gradation, derivation | Complete, 56 unit tests |
-| Dictionary — search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the 360-word built-in set |
+| Dictionary — search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,970 words |
 | Ekilex integration — live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
 | English translations — layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
 | Inflected-form search — `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
-| Built-in dictionary, about 5,400 entries and 32,000 stored forms | 360 hand-checked entries, plus the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C1 (433 / 636 / 1,095 / 1,071 / 105). 285 verbs carry government, up from 24, and 4,614 entries carry an attested Estonian sentence |
+| Built-in dictionary, about 5,970 entries and 34,500 stored forms | Grown twice over by two pipelines that turned out to be complements: 360 hand-checked entries, 1,248 fetched against the syllabus by `scripts/harvest-ekilex.ts` with authored English glosses, and the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C2 (478 / 693 / 1,226 / 1,243 / 180 / 76, the rest ungraded by either source). 461 verbs carry government, up from 24, and 5,405 entries carry an attested Estonian sentence |
 | Speech — TartuNLP, server-proxied, content-addressed cache | Complete and verified end to end. Now durable in object storage rather than per-instance; see §4b |
 | Flashcards — FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
 | Today — due counts, streak, tasks, weak-word pick | Complete |
@@ -118,7 +123,7 @@ Each of these is a decision, not an omission.
    Free models are rate-limited hard enough upstream that they cannot be evaluated reliably, let
    alone relied on. This is exactly why the model is never allowed to supply an inflected form.
 
-1. **The built-in dictionary is about 5,400 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary, it covers A1 to C1 and works offline, but it is short of the full
+1. **The built-in dictionary is about 5,970 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary and by the course harvest, it works offline, but it is short of the full
    lexicon. Anything outside it can be added by hand — the add-word form takes principal parts and
    classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
    key would close the gap properly.
@@ -157,7 +162,7 @@ deployment had quietly broken. This pass closes those.
 | Area | What it is | Why it earns its place |
 |---|---|---|
 | **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
-| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. `lib/collections/path.ts` | "Here are five thousand words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
+| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. Rebuilt in §14 as `lib/collections/syllabus/`: 83 units, A1 to C2 | "Here are five thousand words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
 | **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
 | **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
 | **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
@@ -558,3 +563,208 @@ the part costing you the most marks". They are ranked now and only the worst one
 5. **The confidence figure is a model, and it says so.** It is capped by how many reviews are behind
    it, and a paper actually sat outranks it. Nobody with ninety reviews is told the app is ninety
    percent sure of anything.
+
+## 14. The ninth pass: a course rather than a shelf
+
+§6 added a learning path and §9 a teaching layer, and between them they left one
+honest gap that a direct question exposed: could somebody actually go from A1 to
+C1 with this? No. The path was 18 units and 239 words, three quarters of them
+A1, with **one** B2 unit and **one** C1 unit of fourteen words each. Nothing
+gated anything, no unit named the grammar it taught, and there was no way to
+find out what level a learner was at beyond asking them. It was a shelf of
+themed word lists with a CEFR label on it.
+
+### What the blocker actually was
+
+Vocabulary, and the rule that this project may not write Estonian. The
+dictionary could not grow by anybody sitting down and typing more of it.
+
+`scripts/harvest-ekilex.ts` is the way round that, and the direction of
+authority is the whole design. The syllabus names lemmas and glosses them in
+English — the one language this project is allowed to write — and Ekilex
+supplies every Estonian character that follows: principal parts, CEFR level,
+verb government, and attested sentences. A lemma in a unit is a *request*, not a
+fact. If Ekilex does not know it, or knows it with a paradigm that does not match
+the part of speech asked for, it is dropped and reported. A misspelled or
+imagined word cannot reach the dictionary; it can only fail to arrive, loudly.
+
+The first run dropped 38, and every one was a real mistake: a genitive written
+where a lemma belonged, a plurale tantum, a typo, and three nouns ending in `-ma`
+that the part-of-speech heuristic had confidently called verbs.
+
+### What is there now
+
+| | Before | After |
+|---|---|---|
+| Units | 18 | 83 |
+| Levels with real coverage | A1–B1 | A1–C2 |
+| Distinct course words | 239 | 1 266 |
+| Dictionary entries seeded | 360 | 1 315 |
+| Stored forms | 1 568 | 6 927 |
+| Attested sentences | almost none | 4 325 |
+| Verbs with recorded government | 24 | 206 |
+
+Words per level, which is where the old path fell apart:
+
+| | A1 | A2 | B1 | B2 | C1 | C2 |
+|---|---|---|---|---|---|---|
+| Before | 138 | 45 | 28 | 14 | 14 | 0 |
+| After | 229 | 219 | 188 | 215 | 245 | 170 |
+
+| Area | What it is |
+|---|---|
+| **The syllabus** (`lib/collections/syllabus/`) | Six levels, one file each, 83 units. Every unit carries a CEFR can-do statement, the grammar it teaches, the units it builds on, and its word list |
+| **Lessons** (`/learn/[unit]/lesson`) | A unit is taught, not handed over. See below |
+| **Placement** (`/placement`) | Four words per level from A1 up, stopping the moment a level is failed |
+| **Checkpoints** (`/learn/checkpoint/[level]`) | Twenty production questions at the end of a level. No multiple choice, no feedback until the end |
+| **Grammar topics** (`/grammar/topic/[id]`) | 44 notes covering the moods, voice, participles, derivation, register and idiom the syllabus names |
+
+### Why a lesson is not a pile of flashcards
+
+Three rules shape `lib/collections/lesson.ts`, and they are the whole answer to
+"why is this not tedious":
+
+1. **Nothing is asked before it is taught.** A word is met with its gloss and a
+   real sentence, recognised, practised on its own material, and only then
+   produced cold.
+2. **No two *questions* of the same kind in a row.** Teaching cards are exempt on
+   purpose: meeting three new words one after another is a presentation, not a
+   grind.
+3. **Words come back inside the lesson.** Each rung is emitted a round later than
+   the last, so a word met at the start is typed several minutes on.
+
+Getting rule 2 to hold took three attempts, and the two failures are worth
+recording. A shuffle-and-repair pass could hoist a question in front of the step
+that teaches its word, and could do nothing about the run of identical steps at
+the end of a plan because there was nothing past them to swap with. Interleaving
+lanes by construction fixed both. The tail needed a structural fix rather than a
+repair: listening now runs one-to-one alongside production, because the final
+round has nothing else left and no later step to borrow.
+
+A long unit is several lessons of six words rather than one lesson of nineteen.
+The step budget used to run out and quietly drop the last rung for the last
+words.
+
+### What merging the parallel passes found, and what happened to the fix
+
+§12 and this pass were built against the same main and neither could see the
+other's effect. Reading a page narrowed the dictionary with `take: 4000` and no
+ordering, which is the fault `searchLexemes` had been fixed for one pass
+earlier and which nothing had carried across to `lib/dict/resolveScan.ts`. On
+its own branch that was invisible, because the dictionary it ran against was
+smaller than the ceiling. Against the course dictionary it is a third of the
+words: probing twelve real entries from beyond row 4000 came back with five of
+them unrecognised, all of them sitting in the table with their forms intact,
+and *which* five depended on where Postgres happened to keep the rows.
+
+**Two sessions found it within the hour and fixed it the same way**, which is
+the hazard `CLAUDE.md` describes at the end: a clean three-way merge is exactly
+what two correct answers to one question produce, and you end up with two of
+everything. So one was kept and the other deleted outright rather than left
+alongside it. The one on main is kept, because it had already been through CI
+there and because putting the narrowing in `resolveScan.ts` keeps `fold` and
+`possibleStems` where they were; this branch's `vouchableCandidates` in
+`search.ts` was equivalent and is gone.
+
+What survives from this side is the part the other had no equivalent of. That
+fix was verified by hand, against real words from the far end of the table, and
+carried no test. **The regression test asserts the narrowing rather than the
+outcome, and that distinction is the whole lesson.** "The right word resolves"
+passes on a small dictionary, and on a large one whenever the row happens to
+land early, which is precisely why the existing tests were green on both
+branches while the scanner was losing a quarter of the dictionary. "An
+unrelated word is not fetched" fails on any version that reads the table, and
+was made to fail before it was made to pass. `candidatesFor` is exported for
+that and nothing else.
+
+### The tap that did nothing
+
+`scripts/test-scan.mjs` had been failing about a third of the time on "the
+saved page opens as a set", on main as much as here: 4 runs in 10 against
+`origin/main` itself. It was worth chasing rather than re-running, because the
+thing the suite was reporting is a thing a learner does. They tap "Open the
+page" on the card that has just told them their photograph is saved, and stay
+on the capture screen. A second tap always works.
+
+Five explanations were measured and all five were wrong: the card's spring
+animation (a Playwright stability trap by reputation, still failing 2 in 10
+under `reducedMotion`), a network race, `ScanCapture`'s own `router.refresh()`,
+the Server Action's `revalidatePath("/scan")`, and the router dropping the
+navigation. The last of those was right and had been measured wrong, which is
+the part worth writing down: the run was scored on whether the whole suite
+passed, and this suite has two independent faults, so a fix for one kept being
+marked a failure by the other. Score the check, not the suite.
+
+What settled it was instrumenting the handler with a counter. On a failing run
+it had run exactly once: React dispatched the click, the component called
+`router.push`, and no navigation happened. `AddWord` had already reached the
+same conclusion from the other end and written it down, which nothing in the
+scan path had read.
+
+So the same answer: `window.location.assign`. This is the tap that finishes the
+paper-to-deck path and it may not be best-effort. Falsified both ways, on one
+build each: `router.push` fails 3 in 12 with everything else in place, the
+document load passes 18 in 18 and then 15 in 15.
+
+Two more faults in the same suite were in the harness and are fixed there, with
+the reasons in the file. A document load commits the address *before* the body
+arrives, where a router push swaps it only once the tree is applied, so two
+lines that counted chips immediately after the URL changed had been reading a
+page that had not rendered.
+
+The third only ever failed in CI, and what it was really about is worth the
+paragraph. Drilling a scanned page draws in the learner's existing cards for
+those words, deliberately, because a page is references rather than copies. So
+the first card can be new, or flip, or multiple choice, or typed, and the
+driver waited for the ratings as though it were always the first. Which one you
+get depends on which seeded word the suite picks; it picks the alphabetically
+first, which is a question about the database's collation rather than about the
+app, and the two collations disagree. `smoke-offline.mjs` learned exactly this
+and says so in its own comment, down to the cause: a shape that had never come
+up first started coming up first because the dictionary grew. Nothing had
+carried that across either. Reproduced by giving the local word a reviewed
+card, at which point it failed here every time as well, which is the only way
+a CI-only failure stops being a guess.
+
+None of the three weakens anything. Every assertion is unchanged; only the
+moment each is taken, and the state each can be taken in.
+
+Also here, and found by main's own phone check rather than by anything of ours:
+the exam's composition task puts a full dictionary gloss inside a `Chip`, and a
+`Chip` does not wrap because a chip is a short label. "gymnasium, secondary
+school, high school" is 404px of unbreakable line in a 350px card, and it
+pushed 76px of the paper off the side of a 390px phone. It only appeared once
+the course dictionary replaced the shorter seeded glosses, so the markup had
+been right about everything except how long a real gloss is. `Chip` takes an
+explicit `wrap` now, and nothing else in the app asks for it.
+
+### Known limitations, stated plainly
+
+1. **C2 is named, not delivered.** Its ten units cover the specialised registers,
+   irony, dialect and nuance a C1 speaker still gets wrong, and the last unit
+   says in as many words that C2 is finished by reading, arguing and living in
+   the language rather than by finishing units. An app can name the ground. It
+   cannot walk it for you.
+2. **1 266 words is a real course and not a real vocabulary.** It is over five
+   times what was here before and roughly a fifth of what a C1 reader knows. The gap closes as the learner looks words up, because a live Ekilex
+   key stores every word it fetches, but the *course* stops at what the syllabus
+   names.
+3. **Placement measures recognition only.** So it places at the highest level
+   passed rather than the one above, which biases it low on purpose, and it says
+   so on the result screen. Nothing in twenty questions can test whether somebody
+   can use the partitive.
+4. **Ekilex's own CEFR coding thins out at the top.** 1 078 of the 1 248
+   harvested words carry a level from Ekilex; the rest take the level of the unit
+   that introduces them, which is an editorial judgement rather than an
+   authority's, and they cluster at C1 and C2 where Ekilex grades least.
+5. **A topic page is sparser than a case page, deliberately.** A case page shows
+   the case on real words because every form on it is read from the dictionary
+   with its provenance. There is no equally safe way to illustrate the quotative:
+   picking sentences whose words end in the right letters would be the app
+   asserting a grammatical analysis nobody verified.
+6. **Renaming a word does not rewrite its gap-fill cards.** Recognition and
+   production cards follow a correction because their text *is* the lemma. A
+   gap-fill is an attested sentence with one of its own forms blanked out, and
+   neither half is ours to rewrite because a headword was corrected. Same
+   reasoning as the case-form cards in §5, and it only became visible when
+   seeded words gained attested sentences.

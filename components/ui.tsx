@@ -107,16 +107,30 @@ const TONES = {
   blush: ["var(--blush-soft)", "var(--blush-ink)"],
 } as const;
 
-export function Chip({ children, tone = "neutral", title, caseSensitive }: {
+export function Chip({ children, tone = "neutral", title, caseSensitive, wrap }: {
   children: ReactNode; tone?: keyof typeof TONES; title?: string;
   /** Keeps the label as written — uppercasing mangles forms like `b : ∅`. */
   caseSensitive?: boolean;
+  /**
+   * Lets a chip run onto a second line instead of holding one.
+   *
+   * A chip is a short label, so not wrapping is the right default and stays
+   * the default. It is wrong for the one place a chip carries a dictionary
+   * gloss: those are as long as the word needs, and "gymnasium, secondary
+   * school, high school" is 404px of unbreakable line inside a 350px card. It
+   * pushed 76px of the exam paper off the side of a 390px phone, and only
+   * once the course dictionary replaced the shorter seeded glosses, so the
+   * markup had been correct about everything except how long a real gloss is.
+   */
+  wrap?: boolean;
 }) {
   const [bg, fg] = TONES[tone];
   return (
     <span
       title={title}
-      className="label-xs inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 whitespace-nowrap"
+      className={`label-xs inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
+        wrap ? "max-w-full whitespace-normal" : "whitespace-nowrap"
+      }`}
       style={{ background: bg, color: fg, textTransform: caseSensitive ? "none" : undefined }}
     >
       {children}

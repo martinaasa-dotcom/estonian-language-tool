@@ -22,7 +22,7 @@ const WIDE = [768, 1280];
 const browser = await launchChromium();
 
 // Floor: 34, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 41 });
+const { check, done } = suite("The phone", { floor: 49 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -129,10 +129,18 @@ for (const width of PHONES) {
 }
 
 // 6 — A thumb is not a mouse pointer.
-//     `/exam` is on this list because it is the densest screen in the app: six
-//     level cards, each with four meters, a ring and a button, and a whole
-//     column of advice links under them.
-for (const path of ["/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam"]) {
+//     The course screens are in this list because they are now the busiest ones
+//     in the app, and because the first phone layout of /learn was wrong in a
+//     way no overflow check catches: the ring and the button both held the row
+//     and squeezed the text between them into a column four words wide. Nothing
+//     scrolled sideways, so the only thing that would have caught it was a
+//     person looking, or a check that ran here.
+//     `/exam` is on it for main's own reason: it is the densest screen in the
+//     app, six level cards each with four meters, a ring and a button.
+for (const path of [
+  "/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam",
+  "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
+]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     [...document.querySelectorAll("button, [role=button], a[role=button]")]
@@ -144,7 +152,22 @@ for (const path of ["/", "/review", "/dictionary", "/scan", "/assess", "/guide",
   await ctx.close();
 }
 
-// 6b — The examination paper, which is the densest screen the app has and the
+// 6b — Nothing important is squeezed into a sliver.
+//      A block of prose narrower than about fifteen characters is not a layout
+//      choice, it is a flex row that should have wrapped and did not.
+for (const path of ["/learn", "/learn/kodu", "/placement"]) {
+  const { ctx, page } = await open(390, 844, path);
+  const slivers = await page.evaluate(() =>
+    [...document.querySelectorAll("main p, main h1, main h2")]
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ el, r }) => r.width > 0 && r.width < 120 && (el.textContent || "").trim().length > 40)
+      .map(({ el, r }) => `${(el.textContent || "").trim().slice(0, 24)} ${Math.round(r.width)}px`),
+  );
+  check(`no text is squeezed into a sliver on ${path}`, slivers.length === 0, slivers.join(", "));
+  await ctx.close();
+}
+
+// 6c — The examination paper, which is the densest screen the app has and the
 //      one that caught this out. The diacritic bar's minimum width was one
 //      pixel over what a 390px phone has inside a card, and a grid item's
 //      `min-width: auto` passed that pixel to the document: 23px of sideways

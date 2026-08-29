@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { PATH } from "@/lib/collections/path";
+import { PATH } from "@/lib/collections/syllabus";
 import { SHORTCUTS_EVENT } from "@/components/Shortcuts";
 
 interface Command {

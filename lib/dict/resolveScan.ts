@@ -108,8 +108,15 @@ export async function resolveOneWord(word: string): Promise<ResolvedItem | null>
  * Three branches, unioned rather than ORed for the reason `searchLexemes`
  * measured: as a union each one can take its own index, and `prisma/indexes.ts`
  * gives all three one.
+ *
+ * Exported only so the narrowing itself can be asserted. `resolveScan.itest.ts`
+ * checks that a word with nothing to do with the query is *not* fetched, which
+ * is a thing no test of `resolveScannedItems` can see: "the right word
+ * resolves" passes on a small dictionary, and on a large one whenever the row
+ * happens to land early, which is exactly why the fault above went unnoticed
+ * until it started failing at random.
  */
-async function candidatesFor(words: string[]): Promise<Candidate[]> {
+export async function candidatesFor(words: string[]): Promise<Candidate[]> {
   const folded = [...new Set(
     words.map((w) => fold(w.trim().toLowerCase())).filter(Boolean),
   )];

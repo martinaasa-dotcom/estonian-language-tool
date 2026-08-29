@@ -767,7 +767,9 @@ function ComposeQuestion({ item, text, onWrite }: {
       <p className="mt-2 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
         <span>Use every one of these:</span>
         {item.mustUse.map((word) => (
-          <Chip key={word.lexemeId} caseSensitive>
+          // `wrap`, because this chip carries a full dictionary gloss rather
+          // than a label, and a gloss is as long as the word needs.
+          <Chip key={word.lexemeId} caseSensitive wrap>
             <span className="est" lang="et">{word.lemma}</span>
             <span style={{ opacity: 0.75 }}>{word.translation}</span>
           </Chip>

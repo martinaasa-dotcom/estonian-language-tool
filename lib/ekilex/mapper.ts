@@ -180,8 +180,15 @@ function caseOf(pattern: string): string | null {
  *
  * Ordered as Ekilex ordered it, primary government first, because that is the
  * order the drill reads the case out of.
+ *
+ * Exported because the bulk harvest writes the same column. It stored Ekilex's
+ * raw question word for a while, which looked like the honest thing to do and
+ * was not: `parseGovernment` reads the case out of the annotation, so two
+ * hundred harvested verbs had a government string nothing could parse, no
+ * government card, and no case shown to the learner. One formatter for both
+ * paths means a word's stored shape does not depend on how it arrived.
  */
-function formatGovernment(governments: string[]): string | null {
+export function formatGovernment(governments: string[]): string | null {
   if (governments.length === 0) return null;
   const parts = governments.slice(0, 4).map((g) => {
     const c = caseOf(g);

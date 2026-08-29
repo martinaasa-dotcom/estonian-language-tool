@@ -1,0 +1,526 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Check, Ear, Sparkles, X } from "lucide-react";
+import { completeLesson } from "@/app/actions";
+import { Button, ButtonLink } from "@/components/Button";
+import { Confetti } from "@/components/Confetti";
+import { Et } from "@/components/Et";
+import { EstonianInput } from "@/components/EstonianInput";
+import { Speak } from "@/components/Speak";
+import { Card, Empty, Meter, Page } from "@/components/ui";
+import { BLANK, sentenceMatches } from "@/lib/estonian/cloze";
+import { checkAnswer, countsAsRecalled } from "@/lib/estonian/answer";
+import { isAnswerable, type LessonStep } from "@/lib/collections/lesson";
+import { grammarPoint } from "@/lib/estonian/grammar";
+
+interface Answer {
+  id: string;
+  lemma: string;
+  kind: string;
+  correct: boolean;
+  durationMs: number;
+}
+
+/**
+ * A lesson, one step at a time.
+ *
+ * Two rules from elsewhere in the app shape this component rather than the
+ * markup:
+ *
+ * The step list is snapshotted into state on mount and never read from the prop
+ * again. `completeLesson` is a Server Action, and Next re-runs the page's Server
+ * Component after one; a session that indexed into its prop would have the plan
+ * recomputed underneath it mid-answer.
+ *
+ * Nothing is graded until the last step. An abandoned lesson writes nothing
+ * (ADR-016) — answers accumulate here and go to the server in one call at the
+ * end, which is also what makes the submission idempotent, since each answer
+ * carries an id generated once, here.
+ */
+export function LessonSession({
+  unitId, unitTitle, initialSteps, part, parts,
+}: {
+  unitId: string;
+  unitTitle: string;
+  initialSteps: LessonStep[];
+  part: number;
+  parts: number;
+}) {
+  const [steps] = useState(initialSteps);
+  const [at, setAt] = useState(0);
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [startedAt, setStartedAt] = useState(() => Date.now());
+
+  const step = steps[at];
+  const total = useMemo(() => steps.filter(isAnswerable).length, [steps]);
+  const answered = answers.length;
+  const correct = answers.filter((a) => a.correct).length;
+
+  const record = useCallback((lemma: string, kind: string, ok: boolean) => {
+    setAnswers((prev) => [...prev, {
+      // Generated once per answer so a retried submit settles rather than
+      // double-counting, the same property the offline outbox relies on.
+      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${lemma}-${kind}-${prev.length}-${Date.now()}`,
+      lemma, kind, correct: ok, durationMs: Math.min(Date.now() - startedAt, 600_000),
+    }]);
+  }, [startedAt]);
+
+  const advance = useCallback(() => {
+    setAt((i) => Math.min(i + 1, steps.length - 1));
+    setStartedAt(Date.now());
+  }, [steps.length]);
+
+  const submit = useCallback(async () => {
+    if (saving || saved) return;
+    setSaving(true);
+    const result = await completeLesson(unitId, answers);
+    setSaving(false);
+    setSaved(result.ok ? { ok: true } : { ok: false, error: result.error });
+  }, [answers, saved, saving, unitId]);
+
+  useEffect(() => {
+    if (step?.kind === "recap" && !saved && !saving) void submit();
+  }, [saved, saving, step?.kind, submit]);
+
+  if (steps.length === 0 || !step) {
+    return (
+      <Page title={unitTitle} lead="Nothing to teach here yet.">
+        <Empty
+          title="This unit has no words in the dictionary yet"
+          body="Its words arrive with an Ekilex key, or you can add them by hand. Nothing is missing from your deck in the meantime."
+          action={<ButtonLink href={`/learn/${unitId}`}>Back to the unit</ButtonLink>}
+        />
+      </Page>
+    );
+  }
+
+  const pct = total === 0 ? 0 : Math.round((answered / total) * 100);
+
+  return (
+    <Page
+      title={unitTitle}
+      eyebrow={parts > 1 ? `Lesson ${part} of ${parts}` : "Lesson"}
+      actions={
+        <Link href={`/learn/${unitId}`} className="text-sm" style={{ color: "var(--accent-deep)" }}>
+          Leave
+        </Link>
+      }
+    >
+      <div className="flex flex-col gap-5">
+        <Meter pct={pct} label={`${answered} of ${total} questions answered`} />
+        <StepCard
+          key={step.id}
+          step={step}
+          onAnswer={record}
+          onNext={advance}
+          summary={{ correct, total: answered, saving, saved }}
+        />
+      </div>
+    </Page>
+  );
+}
+
+/** Feedback shown after an answer, in the palette's fixed meanings. */
+function Verdict({ ok, note }: { ok: boolean; note?: string }) {
+  return (
+    <div
+      className="flex items-start gap-2 rounded-[var(--r-md)] p-3 text-sm"
+      role="status"
+      style={{ background: ok ? "var(--mint-soft)" : "var(--peach-soft)", color: "var(--ink)" }}
+    >
+      {ok ? <Check size={18} aria-hidden /> : <X size={18} aria-hidden />}
+      <span>{note ?? (ok ? "Correct." : "Not this time.")}</span>
+    </div>
+  );
+}
+
+function Continue({ onNext, label = "Continue" }: { onNext: () => void; label?: string }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") { e.preventDefault(); onNext(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onNext]);
+  return (
+    <Button onClick={onNext} className="self-start">
+      {label} <ArrowRight size={15} aria-hidden />
+    </Button>
+  );
+}
+
+/**
+ * The options of a multiple choice.
+ *
+ * Number keys select, which is the difference between a lesson you can rattle
+ * through and one that needs a mouse for every answer. Each button clears 44px
+ * under a coarse pointer.
+ */
+function Options({
+  options, answer, chosen, onChoose, lang,
+}: {
+  options: readonly string[];
+  answer: number;
+  chosen: number | null;
+  onChoose: (i: number) => void;
+  lang: "et" | "en";
+}) {
+  useEffect(() => {
+    if (chosen !== null) return;
+    const onKey = (e: KeyboardEvent) => {
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= options.length) {
+        e.preventDefault();
+        onChoose(n - 1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [chosen, onChoose, options.length]);
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {options.map((option, i) => {
+        const isAnswer = i === answer;
+        const picked = chosen === i;
+        const settled = chosen !== null;
+        const tone = settled && isAnswer
+          ? "var(--mint-soft)"
+          : settled && picked ? "var(--peach-soft)" : "var(--surface)";
+        return (
+          <button
+            key={option}
+            type="button"
+            disabled={settled}
+            onClick={() => onChoose(i)}
+            className="flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
+            style={{ borderColor: settled && isAnswer ? "var(--mint)" : "var(--rule)", background: tone }}
+          >
+            <span
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-sm)] text-xs"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+              aria-hidden
+            >
+              {i + 1}
+            </span>
+            {lang === "et" ? <Et>{option}</Et> : <span>{option}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function StepCard({
+  step, onAnswer, onNext, summary,
+}: {
+  step: LessonStep;
+  onAnswer: (lemma: string, kind: string, ok: boolean) => void;
+  onNext: () => void;
+  summary: { correct: number; total: number; saving: boolean; saved: { ok: boolean; error?: string } | null };
+}) {
+  const [chosen, setChosen] = useState<number | null>(null);
+  const [typed, setTyped] = useState("");
+  const [checked, setChecked] = useState<{ ok: boolean; note: string } | null>(null);
+  const [built, setBuilt] = useState<number[]>([]);
+
+  const choose = (i: number, answer: number, lemma: string, kind: string) => {
+    if (chosen !== null) return;
+    setChosen(i);
+    onAnswer(lemma, kind, i === answer);
+  };
+
+  const checkTyped = (expected: string, lemma: string, kind: string) => {
+    if (checked) return;
+    const result = checkAnswer(typed, expected, "et");
+    const ok = countsAsRecalled(result.verdict);
+    setChecked({ ok, note: result.note || (ok ? "Correct." : `It is “${result.expected}”.`) });
+    onAnswer(lemma, kind, ok);
+  };
+
+  switch (step.kind) {
+    case "intro":
+      return (
+        <Card className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--accent-deep)" }}>
+            <Sparkles size={16} aria-hidden /> What this lesson gives you
+          </div>
+          <p className="text-lg">{step.canDo}</p>
+          <p style={{ color: "var(--ink-soft)" }}>{step.blurb}</p>
+          {step.grammar.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Grammar in this lesson</p>
+              <ul className="flex flex-wrap gap-2">
+                {step.grammar.map((id) => {
+                  const point = grammarPoint(id);
+                  if (!point) return null;
+                  return (
+                    <li key={id}>
+                      <Link
+                        href={point.href}
+                        className="inline-block rounded-[var(--r-sm)] px-2.5 py-1 text-sm underline"
+                        style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                      >
+                        {point.title}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          <Continue onNext={onNext} label={`Start ${step.words} words`} />
+        </Card>
+      );
+
+    case "meet":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>A new word</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <Et className="text-3xl">{step.lemma}</Et>
+            <Speak text={step.lemma} size={20} />
+          </div>
+          <p className="text-lg">{step.gloss}</p>
+          {step.example && (
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+              <Et>{step.example}</Et>
+            </p>
+          )}
+          <Continue onNext={onNext} label="Got it" />
+        </Card>
+      );
+
+    case "choose":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>What does this mean?</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <Et className="text-3xl">{step.lemma}</Et>
+            <Speak text={step.lemma} size={18} />
+          </div>
+          <Options options={step.options} answer={step.answer} chosen={chosen} lang="en"
+            onChoose={(i) => choose(i, step.answer, step.lemma, step.kind)} />
+          {chosen !== null && <Verdict ok={chosen === step.answer} />}
+          {chosen !== null && <Continue onNext={onNext} />}
+        </Card>
+      );
+
+    case "produce":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>Which word is this?</span>
+          <p className="text-2xl">{step.gloss}</p>
+          <Options options={step.options} answer={step.answer} chosen={chosen} lang="et"
+            onChoose={(i) => choose(i, step.answer, step.lemma, step.kind)} />
+          {chosen !== null && <Verdict ok={chosen === step.answer} />}
+          {chosen !== null && <Continue onNext={onNext} />}
+        </Card>
+      );
+
+    case "listen":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="flex items-center gap-2 text-sm" style={{ color: "var(--ink-soft)" }}>
+            <Ear size={15} aria-hidden /> Listen, then choose what it means
+          </span>
+          <Speak text={step.lemma} size={30} label="Play the word" className="self-start p-3" />
+          <Options options={step.options} answer={step.answer} chosen={chosen} lang="en"
+            onChoose={(i) => choose(i, step.answer, step.lemma, step.kind)} />
+          {chosen !== null && (
+            <>
+              <Verdict ok={chosen === step.answer} note={`It was “${step.lemma}”.`} />
+              <Continue onNext={onNext} />
+            </>
+          )}
+        </Card>
+      );
+
+    case "type":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>Write it in Estonian</span>
+          <p className="text-2xl">{step.gloss}</p>
+          <EstonianInput
+            value={typed} onChange={setTyped} large autoFocus
+            ariaLabel="Your answer in Estonian"
+            onEnter={() => checkTyped(step.lemma, step.lemma, step.kind)}
+          />
+          {!checked && (
+            <Button onClick={() => checkTyped(step.lemma, step.lemma, step.kind)} className="self-start">
+              Check
+            </Button>
+          )}
+          {checked && <Verdict ok={checked.ok} note={checked.note} />}
+          {checked && <Continue onNext={onNext} />}
+        </Card>
+      );
+
+    case "gap":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Fill the gap. The word is <Et>{step.lemma}</Et> ({step.gloss}), in the form the sentence needs.
+          </span>
+          <p className="text-xl">
+            <Et>{step.text}</Et>
+          </p>
+          <EstonianInput
+            value={typed} onChange={setTyped} large autoFocus
+            ariaLabel="The missing form"
+            placeholder={BLANK}
+            onEnter={() => checkTyped(step.answer, step.lemma, step.kind)}
+          />
+          {!checked && (
+            <Button onClick={() => checkTyped(step.answer, step.lemma, step.kind)} className="self-start">
+              Check
+            </Button>
+          )}
+          {checked && (
+            <>
+              <Verdict ok={checked.ok} note={checked.note} />
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                <Et>{step.full}</Et>
+              </p>
+              <Continue onNext={onNext} />
+            </>
+          )}
+        </Card>
+      );
+
+    case "case":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Put it in the {step.caseName.toLowerCase()} ({step.question})
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <Et className="text-3xl">{step.lemma}</Et>
+            <span style={{ color: "var(--ink-soft)" }}>{step.gloss}</span>
+          </div>
+          <EstonianInput
+            value={typed} onChange={setTyped} large autoFocus
+            ariaLabel={`${step.lemma} in the ${step.caseName}`}
+            onEnter={() => checkTyped(step.answer, step.lemma, step.kind)}
+          />
+          {!checked && (
+            <Button onClick={() => checkTyped(step.answer, step.lemma, step.kind)} className="self-start">
+              Check
+            </Button>
+          )}
+          {checked && <Verdict ok={checked.ok} note={checked.note} />}
+          {checked && <Continue onNext={onNext} />}
+        </Card>
+      );
+
+    case "govern":
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Which question does this verb answer? That is the case it takes.
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <Et className="text-3xl">{step.lemma}</Et>
+            <span style={{ color: "var(--ink-soft)" }}>{step.gloss}</span>
+          </div>
+          <Options options={step.options} answer={step.answer} chosen={chosen} lang="et"
+            onChoose={(i) => choose(i, step.answer, step.lemma, step.kind)} />
+          {chosen !== null && <Verdict ok={chosen === step.answer} />}
+          {chosen !== null && <Continue onNext={onNext} />}
+        </Card>
+      );
+
+    case "build": {
+      const done = checked !== null;
+      const placed = built.map((i) => step.tiles[i] ?? "");
+      const remaining = step.tiles.length - built.length;
+      return (
+        <Card className="flex flex-col gap-4">
+          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            Put the sentence back in order.
+          </span>
+          <div
+            className="min-h-[52px] rounded-[var(--r-md)] border p-3"
+            style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+          >
+            <Et>{placed.join(" ") || " "}</Et>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {/*
+              Tiles are tracked by position, not by their text. A sentence can
+              repeat a word, so "which tile did you tap" is a question only the
+              index answers; the first version encoded both into one string and
+              split it apart again, which needed a separator no tile could
+              contain and was one careless edit away from being wrong.
+            */}
+            {step.tiles.map((tile, i) => {
+              if (built.includes(i)) return null;
+              return (
+                <button
+                  key={i} type="button" disabled={done}
+                  onClick={() => setBuilt((b) => [...b, i])}
+                  className="min-h-[44px] rounded-[var(--r-md)] border px-3"
+                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                >
+                  <Et>{tile}</Et>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {built.length > 0 && !done && (
+              <Button variant="ghost" onClick={() => setBuilt((b) => b.slice(0, -1))}>Undo</Button>
+            )}
+            {!done && (
+              <Button
+                disabled={remaining > 0}
+                onClick={() => {
+                  const ok = sentenceMatches(placed, step.sentence);
+                  setChecked({ ok, note: ok ? "That is the sentence." : "Not the order Estonian uses here." });
+                  onAnswer(step.lemma, step.kind, ok);
+                }}
+              >
+                Check
+              </Button>
+            )}
+          </div>
+          {done && (
+            <>
+              <Verdict ok={checked.ok} note={checked.note} />
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}><Et>{step.sentence}</Et></p>
+              <Continue onNext={onNext} />
+            </>
+          )}
+        </Card>
+      );
+    }
+
+    case "recap": {
+      const pct = summary.total === 0 ? 0 : Math.round((summary.correct / summary.total) * 100);
+      return (
+        <Card className="flex flex-col gap-4">
+          {pct >= 80 && <Confetti />}
+          <h2 className="text-2xl">Lesson done</h2>
+          <p className="text-lg">
+            {summary.correct} of {summary.total} right, and {step.learned} words are now in your deck.
+          </p>
+          <p style={{ color: "var(--ink-soft)" }}>
+            They will come back in review when the scheduler thinks you are about to forget them.
+          </p>
+          {summary.saving && <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Saving your answers…</p>}
+          {summary.saved && !summary.saved.ok && (
+            <Verdict ok={false} note={summary.saved.error ?? "Your answers could not be saved."} />
+          )}
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/learn">Back to the path</ButtonLink>
+            <ButtonLink href="/review" variant="ghost">Review now</ButtonLink>
+          </div>
+        </Card>
+      );
+    }
+  }
+}
