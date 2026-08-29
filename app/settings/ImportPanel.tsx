@@ -48,11 +48,17 @@ export function ImportPanel() {
   const submit = () => {
     start(async () => {
       const r = await importWords(rows);
+      // A paste larger than the limit is handled, not rejected — but silently
+      // dropping the tail would leave someone thinking it all went in.
+      const overflow = r.truncated
+        ? ` Only the first ${r.limit} lines were read; paste the rest separately.`
+        : "";
       setResult(
         r.created === 0
-          ? "Nothing new — every word was already in your deck."
+          ? `Nothing new — every word was already in your deck.${overflow}`
           : `Added ${r.created} word${r.created === 1 ? "" : "s"} and ${r.cards} cards.` +
-            (r.skipped.length ? ` Skipped ${r.skipped.length} you already had.` : ""),
+            (r.skipped.length ? ` Skipped ${r.skipped.length} you already had.` : "") +
+            overflow,
       );
       setText("");
     });

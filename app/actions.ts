@@ -172,6 +172,29 @@ export async function deleteCard(cardId: string) {
 // ─────────────────────────────── Words ────────────────────────────────────
 
 /**
+ * Length caps on anything a person types into shared or stored text.
+ *
+ * Not a formatting preference — without them a single request can push megabytes
+ * into the database, and a lemma is a word. Truncating rather than rejecting:
+ * over-long input is almost always a paste accident, and losing the whole entry
+ * to a stray clipboard is a worse outcome than a trimmed note.
+ */
+const LIMITS = {
+  lemma: 80,
+  translation: 200,
+  form: 80,
+  government: 300,
+  notes: 2000,
+  taskTitle: 200,
+  taskNotes: 2000,
+} as const;
+
+const capped = (value: string | undefined | null, max: number): string =>
+  (value ?? "").trim().slice(0, max);
+
+
+
+/**
  * Adds a word to the shared dictionary.
  *
  * Requires a session even though it writes shared rather than personal data:
@@ -183,8 +206,8 @@ export async function createLexeme(input: {
   lemma: string; translation: string; pos: string; cefr?: string; notes?: string;
 }) {
   const ownerId = await requireUserId();
-  const lemma = input.lemma.trim();
-  const translation = input.translation.trim();
+  const lemma = capped(input.lemma, LIMITS.lemma);
+  const translation = capped(input.translation, LIMITS.translation);
   if (!lemma || !translation) {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
@@ -198,7 +221,7 @@ export async function createLexeme(input: {
     data: {
       lemma, translation, pos: input.pos,
       cefr: input.cefr || null,
-      notes: input.notes || null,
+      notes: capped(input.notes, LIMITS.notes) || null,
       provenance: "USER",
       editedBy: ownerId,
       editedAt: new Date(),
@@ -226,8 +249,8 @@ export async function createLexemeWithForms(input: {
   forms: Record<string, string>;
 }) {
   const ownerId = await requireUserId();
-  const lemma = input.lemma.trim();
-  const translation = input.translation.trim();
+  const lemma = capped(input.lemma, LIMITS.lemma);
+  const translation = capped(input.translation, LIMITS.translation);
   if (!lemma || !translation) {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
@@ -235,7 +258,7 @@ export async function createLexemeWithForms(input: {
   // Only the principal parts are user-managed. Anything else on this lexeme came
   // from Ekilex and is authoritative; a hand edit must not be able to submit one.
   const forms = Object.entries(input.forms)
-    .map(([formType, value]) => ({ formType, value: value.trim() }))
+    .map(([formType, value]) => ({ formType, value: capped(value, LIMITS.form) }))
     .filter((f) => f.value && isPrincipalFormType(f.formType));
 
   const nomSg = forms.find((f) => f.formType === "NOM_SG")?.value;
@@ -255,8 +278,8 @@ export async function createLexemeWithForms(input: {
   const data = {
     lemma, translation, pos: input.pos,
     cefr: input.cefr || null,
-    government: input.government?.trim() || null,
-    notes: input.notes?.trim() || null,
+    government: capped(input.government, LIMITS.government) || null,
+    notes: capped(input.notes, LIMITS.notes) || null,
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
     // An entry Ekilex supplied stays marked as Ekilex's even after a correction —
@@ -324,15 +347,20 @@ export async function toggleStar(lexemeId: string) {
 }
 
 /** Bulk import from pasted text. Returns per-row outcomes so nothing fails silently. */
+/** One paste. Each row is a round trip, and the dictionary it writes to is shared. */
+const MAX_IMPORT_ROWS = 500;
+
 export async function importWords(rows: { lemma: string; translation: string; pos: string }[]) {
   const ownerId = await requireUserId();
   let created = 0;
   let cards = 0;
   const skipped: string[] = [];
 
-  for (const row of rows) {
-    const lemma = row.lemma.trim();
-    const translation = row.translation.trim();
+  const truncated = rows.length > MAX_IMPORT_ROWS;
+
+  for (const row of rows.slice(0, MAX_IMPORT_ROWS)) {
+    const lemma = capped(row.lemma, LIMITS.lemma);
+    const translation = capped(row.translation, LIMITS.translation);
     if (!lemma || !translation) continue;
 
     let lexeme = await prisma.lexeme.findUnique({
@@ -342,7 +370,10 @@ export async function importWords(rows: { lemma: string; translation: string; po
       skipped.push(lemma);
     } else {
       lexeme = await prisma.lexeme.create({
-        data: { lemma, translation, pos: row.pos, provenance: "USER" },
+        data: {
+          lemma, translation, pos: row.pos, provenance: "USER",
+          editedBy: ownerId, editedAt: new Date(),
+        },
       });
       created++;
     }
@@ -352,7 +383,7 @@ export async function importWords(rows: { lemma: string; translation: string; po
 
   revalidatePath("/words");
   revalidatePath("/");
-  return { ok: true as const, created, cards, skipped };
+  return { ok: true as const, created, cards, skipped, truncated, limit: MAX_IMPORT_ROWS };
 }
 
 // ────────────────────────────── Achievements ───────────────────────────────
@@ -375,11 +406,23 @@ export async function resolveStreak() {
   // `"use server"`, so an `ownerId` parameter here would be a public endpoint
   // letting any signed-in user read and rewrite another learner's streak.
   const ownerId = await requireUserId();
-  const [reviews, shieldSetting, datesSetting] = await Promise.all([
-    prisma.review.findMany({
-      where: { ownerId, reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) } },
-      select: { reviewedAt: true },
-    }),
+  // Distinct *days*, not every review. The streak only cares whether a day had
+  // any activity, and loading a year of rows to answer that meant a learner
+  // doing sixty reviews a day pulled twenty thousand rows into memory on every
+  // Today render — a query that gets slower the more someone uses the app, which
+  // is the worst shape a query can have. At most 400 rows come back now.
+  // Returned as text, not as a date. The driver parses a Postgres `date` at
+  // *local* midnight, so `toISOString()` on it shifts the day backwards
+  // anywhere east of UTC — an off-by-one that would silently break a streak for
+  // a learner in Tallinn, which is everybody this app is for.
+  const [days, shieldSetting, datesSetting] = await Promise.all([
+    prisma.$queryRaw<{ day: string }[]>`
+      SELECT DISTINCT TO_CHAR("reviewedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
+      FROM "Review"
+      WHERE "ownerId" = ${ownerId}
+        AND "reviewedAt" >= ${new Date(Date.now() - 400 * 86_400_000)}
+      ORDER BY day DESC
+    `,
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } } }),
   ]);
@@ -395,7 +438,11 @@ export async function resolveStreak() {
     }
   }
 
-  const result = computeStreakWithShields(reviews.map((r) => r.reviewedAt), shieldsAvailable, shieldedDates);
+  const result = computeStreakWithShields(
+    days.map((d) => new Date(`${d.day}T00:00:00.000Z`)),
+    shieldsAvailable,
+    shieldedDates,
+  );
 
   if (result.newlyShieldedDates.length > 0) {
     await Promise.all([
@@ -658,16 +705,28 @@ export async function createTask(input: {
   title: string; tag: string; classWeek?: number | null; dueAt?: string | null; notes?: string;
 }) {
   const ownerId = await requireUserId();
-  const title = input.title.trim();
+  const title = capped(input.title, LIMITS.taskTitle);
   if (!title) return { ok: false as const, error: "A task needs a title." };
+
+  // An unparseable date string yields an Invalid Date, which Prisma rejects at
+  // the driver with an opaque error rather than a message anybody can act on.
+  const dueAt = input.dueAt ? new Date(input.dueAt) : null;
+  if (dueAt && Number.isNaN(dueAt.getTime())) {
+    return { ok: false as const, error: "That due date could not be read." };
+  }
+
+  const classWeek = input.classWeek == null
+    ? null
+    : Math.max(1, Math.min(60, Math.round(input.classWeek)));
+
   await prisma.task.create({
     data: {
       ownerId,
       title,
       tag: input.tag,
-      classWeek: input.classWeek ?? null,
-      dueAt: input.dueAt ? new Date(input.dueAt) : null,
-      notes: input.notes?.trim() || null,
+      classWeek,
+      dueAt,
+      notes: capped(input.notes, LIMITS.taskNotes) || null,
     },
   });
   revalidatePath("/tasks");
