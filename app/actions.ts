@@ -5,7 +5,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
-import { LEVELS, checkpointFor, levelIndex, unitById } from "@/lib/collections/syllabus";
+import {
+  LEVELS, checkpointFor, levelIndex, unitById, wordsAtLevel,
+} from "@/lib/collections/syllabus";
 import { checkpointPassed } from "@/lib/collections/checkpoint";
 import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
@@ -879,14 +881,12 @@ export async function completeLesson(
 
   const applied = await gradeAnswers(ownerId, answers);
   if (!applied.ok) return { ok: false as const, error: applied.error ?? "Could not record the lesson." };
-  const batch = { length: applied.graded };
-
   await checkAchievementsFor(ownerId);
   revalidatePath("/learn");
   revalidatePath(`/learn/${unitId}`);
   revalidatePath("/words");
   revalidatePath("/");
-  return { ok: true as const, graded: batch.length, added };
+  return { ok: true as const, graded: applied.graded, added };
 }
 
 /**
@@ -955,7 +955,16 @@ export async function recordCheckpoint(
   // sitting an exam is not a request to start studying them.
   const graded = z.array(LessonResultSchema).max(LESSON_RESULT_LIMIT).safeParse(answers);
   if (graded.success && graded.data.length > 0) {
-    await gradeAnswers(ownerId, graded.data);
+    // Only words this level actually teaches, the same restriction completeLesson
+    // puts on a unit. Every export here is a public endpoint, so without it a
+    // crafted call could post a Good against any card in the caller's deck and
+    // move its schedule without anybody having answered anything. The damage
+    // would be self-inflicted, but `Review` is append-only and feeds FSRS
+    // optimisation, so a grade for a review that never happened is a lie that
+    // cannot be taken back out.
+    const taughtHere = new Set(wordsAtLevel(parsed.data.level).map((w) => w.lemma));
+    const own = graded.data.filter((a) => taughtHere.has(a.lemma));
+    if (own.length > 0) await gradeAnswers(ownerId, own);
   }
 
   const checkpoint = checkpointFor(parsed.data.level);

@@ -9,6 +9,7 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { LEVELS, nextUnit as pickNextUnit, type Level } from "@/lib/collections/syllabus";
 import { dayKey, recentDayKeys } from "@/lib/time/day";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
@@ -24,7 +25,9 @@ export default async function TodayPage() {
   const now = new Date();
 
   const snapshot = await deckSnapshot(ownerId, now);
-  const settings = await readSettings(ownerId, [SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName]);
+  const settings = await readSettings(ownerId, [
+    SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
+  ]);
 
   // A brand-new learner gets the wizard instead of an empty dashboard. Anyone
   // with a deck or a finished setup never sees it again.
@@ -56,7 +59,24 @@ export default async function TodayPage() {
   const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
   const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
-  const nextUnit = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "available");
+  /*
+    The course decides what comes next, not this page. Its own rule respects
+    where the learner placed: picking the first unfinished unit in order sent a
+    B1 learner back to greetings, which is how somebody decides an app is not
+    for them. `nextUnit` prefers finishing something already started, then the
+    first open unit at or above their level.
+  */
+  const placement: Level = (LEVELS as readonly string[]).includes(settings[SETTING_KEYS.cefrPlacement] ?? "")
+    ? (settings[SETTING_KEYS.cefrPlacement] as Level)
+    : "A1";
+  const nextSyllabusUnit = pickNextUnit({
+    doneUnitIds: new Set(units.filter((u) => u.state === "done").map((u) => u.unit.id)),
+    startedUnitIds: new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id)),
+    placement,
+  });
+  const nextUnit = nextSyllabusUnit
+    ? units.find((u) => u.unit.id === nextSyllabusUnit.id)
+    : undefined;
 
   const reviewedDays = new Set(weekReviews.map((r) => dayKey(r.reviewedAt)));
   const week = recentDayKeys(7, now).map((day) => ({
@@ -279,12 +299,15 @@ export default async function TodayPage() {
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>{nextUnit.unit.subtitle}</p>
                 </div>
               </div>
-              <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>{nextUnit.unit.blurb}</p>
+              {/* The can-do statement, not the blurb: what you will be able to
+                  do is a better reason to press the button than what the unit
+                  is about. */}
+              <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>{nextUnit.unit.canDo}</p>
               <div className="mt-3.5">
                 <Meter pct={nextUnit.pct} label={`${nextUnit.unit.title}: ${nextUnit.pct}% complete`} />
               </div>
-              <ButtonLink href="/learn" className="mt-4 w-full">
-                {nextUnit.state === "available" ? "Start this unit" : "Continue the path"}
+              <ButtonLink href={`/learn/${nextUnit.unit.id}/lesson`} className="mt-4 w-full">
+                {nextUnit.state === "learning" ? "Continue the lesson" : "Start the lesson"}
                 <ArrowRight size={15} aria-hidden />
               </ButtonLink>
             </Card>

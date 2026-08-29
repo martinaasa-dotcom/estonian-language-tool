@@ -226,7 +226,7 @@ function StepCard({
   const [chosen, setChosen] = useState<number | null>(null);
   const [typed, setTyped] = useState("");
   const [checked, setChecked] = useState<{ ok: boolean; note: string } | null>(null);
-  const [built, setBuilt] = useState<string[]>([]);
+  const [built, setBuilt] = useState<number[]>([]);
 
   const choose = (i: number, answer: number, lemma: string, kind: string) => {
     if (chosen !== null) return;
@@ -436,7 +436,8 @@ function StepCard({
 
     case "build": {
       const done = checked !== null;
-      const remaining = step.tiles.filter((t, i) => !built.includes(`${t} ${i}`));
+      const placed = built.map((i) => step.tiles[i] ?? "");
+      const remaining = step.tiles.length - built.length;
       return (
         <Card className="flex flex-col gap-4">
           <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
@@ -446,16 +447,22 @@ function StepCard({
             className="min-h-[52px] rounded-[var(--r-md)] border p-3"
             style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
           >
-            <Et>{built.map((b) => b.split(" ")[0]).join(" ") || " "}</Et>
+            <Et>{placed.join(" ") || " "}</Et>
           </div>
           <div className="flex flex-wrap gap-2">
+            {/*
+              Tiles are tracked by position, not by their text. A sentence can
+              repeat a word, so "which tile did you tap" is a question only the
+              index answers; the first version encoded both into one string and
+              split it apart again, which needed a separator no tile could
+              contain and was one careless edit away from being wrong.
+            */}
             {step.tiles.map((tile, i) => {
-              const key = `${tile} ${i}`;
-              if (built.includes(key)) return null;
+              if (built.includes(i)) return null;
               return (
                 <button
-                  key={key} type="button" disabled={done}
-                  onClick={() => setBuilt((b) => [...b, key])}
+                  key={i} type="button" disabled={done}
+                  onClick={() => setBuilt((b) => [...b, i])}
                   className="min-h-[44px] rounded-[var(--r-md)] border px-3"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
                 >
@@ -470,9 +477,9 @@ function StepCard({
             )}
             {!done && (
               <Button
-                disabled={remaining.length > 0}
+                disabled={remaining > 0}
                 onClick={() => {
-                  const ok = sentenceMatches(built.map((b) => b.split(" ")[0] ?? ""), step.sentence);
+                  const ok = sentenceMatches(placed, step.sentence);
                   setChecked({ ok, note: ok ? "That is the sentence." : "Not the order Estonian uses here." });
                   onAnswer(step.lemma, step.kind, ok);
                 }}

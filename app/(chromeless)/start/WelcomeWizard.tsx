@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { Meter } from "@/components/ui";
+import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus";
 
 export interface WizardUnit {
   id: string;
@@ -19,11 +20,19 @@ export interface WizardUnit {
   words: number;
 }
 
+/*
+  All six, because the course now runs to C2 and stopping the list at B2 told
+  anybody above it that the app was not for them. Each one is described by what
+  a person can already do rather than by its code, since somebody who needs to
+  pick a level is exactly somebody who does not know what B2 means.
+*/
 const LEVELS = [
   { key: "A1", label: "Just starting", detail: "Tere, aitäh, and not much else yet." },
-  { key: "A2", label: "I get by", detail: "Shopping, ordering, simple past tense." },
+  { key: "A2", label: "I get by", detail: "Shopping, ordering, the past tense." },
   { key: "B1", label: "Conversational", detail: "I can hold a conversation and read the news slowly." },
-  { key: "B2", label: "Confident", detail: "I want vocabulary and precision, not basics." },
+  { key: "B2", label: "Confident", detail: "I follow a debate and want precision, not basics." },
+  { key: "C1", label: "Fluent", detail: "I work in Estonian and want to write it well." },
+  { key: "C2", label: "Near-native", detail: "I want register, idiom and the last few percent." },
 ] as const;
 
 const GOALS = [
@@ -33,13 +42,16 @@ const GOALS = [
   { value: 40, label: "Intense", detail: "~13 minutes a day" },
 ] as const;
 
-/** Units suggested for each starting level — where that learner's next work is. */
-const SUGGESTED: Record<string, string[]> = {
-  A1: ["tervitused", "inimesed", "kodu"],
-  A2: ["sook-ja-jook", "aeg", "iga-paev"],
-  B1: ["rektsioon", "tunded", "too-ja-raha"],
-  B2: ["uhiskond", "too-ja-raha", "akadeemiline"],
-};
+/**
+ * Units suggested for each starting level: where that learner's next work is.
+ *
+ * Derived from the syllabus rather than hand-listed, so adding or renaming a
+ * unit cannot leave a level pointing at one that no longer exists. The first
+ * three of the level are the ones the course itself would open with.
+ */
+const SUGGESTED: Record<string, string[]> = Object.fromEntries(
+  CEFR_LEVELS.map((level) => [level, unitsAtLevel(level).slice(0, 3).map((u) => u.id)]),
+);
 
 const STEPS = ["You", "Level", "Pace", "Deck"] as const;
 
@@ -211,11 +223,16 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             Your first units
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
-            Picked for {level}. Each unit becomes real flashcards with audio and full paradigms, you
-            can add or drop units later on the path.
+            The {level} units. Each one becomes real flashcards with audio and full paradigms, and
+            the other five levels are waiting on the course whenever you want them.
           </p>
           <div className="scroll-host mt-5 flex max-h-[46vh] flex-col gap-2">
-            {units.map((u) => {
+            {/*
+              Only this level's units. The course is eighty-four of them across
+              six levels, and a first-run picker that lists all of them is a wall
+              rather than a choice.
+            */}
+            {units.filter((u) => u.cefr === level).map((u) => {
               const Icon = icon(u.icon);
               const on = picked.includes(u.id);
               return (
