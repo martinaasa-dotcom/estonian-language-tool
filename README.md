@@ -149,7 +149,9 @@ rebuild — documented in `docs/03-architecture.md` ADR-011:
 3. Deploy. Vercel's build runs `prisma generate && prisma db push && npm run db:seed:ensure &&
    next build` (see `package.json`), so a hosted deployment sets itself up: the schema is
    created/updated against `DIRECT_URL`, and a database with an empty dictionary gets the built-in
-   360 words loaded before the build renders anything.
+   360 words loaded before the build renders anything. The seed writes them in six statements
+   rather than three per word, which is what keeps that first deploy to a few seconds instead of
+   the several minutes a thousand sequential round trips to another region used to cost.
 
    Both steps are deliberately conservative. `prisma db push` fails the build rather than silently
    applying a destructive change, so an unusual schema change (e.g. dropping a column with data in
