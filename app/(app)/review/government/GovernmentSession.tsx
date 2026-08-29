@@ -131,7 +131,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
             aria-label="Round progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-[13.5px]" style={{ color: "var(--ink-3)" }}>
           {questions.length - index} left
         </span>
       </div>
@@ -215,7 +215,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
             {question.gloss && (
               <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-2)" }}>{question.gloss}</p>
             )}
-            <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-2 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
               {question.experiencer
                 ? `An experiencer construction: the person goes in the ${question.answerEn.toLowerCase()} and the thing is the grammatical subject.`
                 : `${question.lemma} governs the ${question.answerEn.toLowerCase()} (${question.answerEt}). English gives you no clue here, so it has to be learned with the verb.`}

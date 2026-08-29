@@ -35,6 +35,15 @@ form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
 `lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
 the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
+**The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
+`prisma/data/expanded.json` from two sources with a strict division of labour: every Estonian
+form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
+script only joins them. No model writes a character of it. It loads through `prisma/expanded.ts`
+as a cache warm-up with `ON CONFLICT DO NOTHING`, never an update, so a hand-written entry, a
+learner's correction and a live Ekilex fetch all win over it. Regenerating is resumable and
+caches every answer, and a source that will not answer is never written down as a miss: that bug
+cost four fifths of the dictionary on the first run and looked like a clean result.
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output

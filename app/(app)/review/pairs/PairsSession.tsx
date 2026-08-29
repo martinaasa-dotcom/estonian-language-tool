@@ -171,7 +171,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             aria-label="Round progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-[13.5px]" style={{ color: "var(--ink-3)" }}>
           {questions.length - index} left
         </span>
       </div>
@@ -198,7 +198,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
               ? <Loader2 size={30} className="animate-spin" aria-hidden />
               : <Volume2 size={30} aria-hidden />}
           </button>
-          <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>
             Play again <kbd>R</kbd> · or hear it{" "}
             <span className="inline-flex items-center align-middle">
               <Speak text={question.heard} slow label="Hear it slowly" />

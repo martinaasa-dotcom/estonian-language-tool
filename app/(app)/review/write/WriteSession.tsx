@@ -157,7 +157,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             aria-label="Round progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-[13.5px]" style={{ color: "var(--ink-3)" }}>
           {prompts.length - index} left
         </span>
       </div>
@@ -300,7 +300,7 @@ function Feedback({ marked }: { marked: Marked }) {
           </div>
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>{graded.comment}</p>
           {graded.rule && (
-            <p className="mt-1.5 text-[13px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
               Rule: {graded.rule}
             </p>
           )}
@@ -308,7 +308,7 @@ function Feedback({ marked }: { marked: Marked }) {
       )}
 
       {quotaMessage && (
-        <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>{quotaMessage}</p>
+        <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>{quotaMessage}</p>
       )}
     </div>
   );

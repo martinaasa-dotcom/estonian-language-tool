@@ -43,9 +43,26 @@ async function answerOneCard() {
     if (await rate.count()) { await rate.first().click(); return true; }
   }
 
-  // Multiple choice: the options are numbered 1-4.
+  /*
+    Multiple choice: the options are numbered 1 to 4, and picking one only
+    *reveals* the answer. The grade is the second click, on Again/Hard/Good/
+    Easy, exactly as a learner does it.
+
+    Clicking the option and stopping there used to look like a complete answer
+    because the first due card happened to be a "Show answer" card, which the
+    branch above handles end to end. Once the dictionary grew, a multiple
+    choice card came up first and this branch reported success having graded
+    nothing, so the outbox was empty and the offline check failed against an
+    app that was working correctly.
+  */
   const choice = app.locator("button").filter({ hasText: /^[1-4]\S/ });
-  if (await choice.count()) { await choice.first().click(); return true; }
+  if (await choice.count()) {
+    await choice.first().click();
+    await page.waitForTimeout(400);
+    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
+    if (await rate.count()) await rate.first().click();
+    return true;
+  }
 
   // Typed: fill something wrong and submit — a wrong answer still grades.
   const input = page.locator("main input[type='text'], main input:not([type])").first();

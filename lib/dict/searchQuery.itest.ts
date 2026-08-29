@@ -23,6 +23,32 @@ describe("searchLexemes against the seeded dictionary", () => {
     expect(top?.matchedAs).toMatch(/inessive/);
   });
 
+  /*
+    The dictionary is now thousands of words rather than the few hundred
+    somebody typed, and the search that served the small one did not survive
+    the change: it read every lexeme into memory with `take: 4000` and no
+    ordering, so past four thousand entries words silently stopped being
+    findable and which ones was undefined. `lugesin` stopped finding `lugema`
+    while both the verb and its stored past tense sat in the table.
+
+    This is the guard. It asserts against a dictionary big enough for the old
+    cap to have bitten, so a return to filtering in memory fails here rather
+    than in front of a learner.
+  */
+  it("still finds a word when the dictionary is larger than any in-memory cap", async () => {
+    const words = await prisma.lexeme.count();
+    expect(words, "seed the full dictionary before running this").toBeGreaterThan(4000);
+
+    // The last word alphabetically is the one an unordered LIMIT drops first.
+    const last = await prisma.lexeme.findFirst({
+      orderBy: { lemma: "desc" },
+      select: { lemma: true },
+    });
+    expect(last?.lemma).toBeTruthy();
+    const hits = await searchLexemes(last!.lemma);
+    expect(hits.map((h) => h.lemma)).toContain(last!.lemma);
+  });
+
   it("finds a verb by a stored principal part", async () => {
     const [top] = await searchLexemes("lugesin");
     expect(top?.lemma).toBe("lugema");

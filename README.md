@@ -101,7 +101,7 @@ where it came from, and you can always overwrite it.
 
 Everything except the tutor:
 
-- **Dictionary**, 360 words (A1 to C1) with checked principal parts, consonant gradation and the
+- **Dictionary**, about 5,400 words (A1 to C1) with principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class, 
   `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
@@ -165,7 +165,7 @@ rebuild, documented in `docs/03-architecture.md` ADR-011:
 3. Deploy. Vercel's build runs `prisma generate && prisma db push && npm run db:seed:ensure &&
    next build` (see `package.json`), so a hosted deployment sets itself up: the schema is
    created/updated against `DIRECT_URL`, and a database with an empty dictionary gets the built-in
-   360 words loaded before the build renders anything. The seed writes them in six statements
+   the whole dictionary loaded before the build renders anything. The seed writes it in six statements
    rather than three per word, which is what keeps that first deploy to a few seconds instead of
    the several minutes a thousand sequential round trips to another region used to cost.
 

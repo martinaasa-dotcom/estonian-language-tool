@@ -20,11 +20,11 @@ export function Legal({ title, updated, children }: {
       >
         {title}
       </h1>
-      <p className="mt-1.5 text-[13px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
         Last updated {updated}
       </p>
       <div className="mt-8 space-y-8">{children}</div>
-      <p className="mt-14 text-[13px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-14 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
         <Link href="/privacy" className="underline underline-offset-2">Privacy</Link>
         {" · "}
         <Link href="/terms" className="underline underline-offset-2">Terms</Link>

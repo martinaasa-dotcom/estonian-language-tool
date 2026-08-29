@@ -83,18 +83,18 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
                 </p>
 
                 <div className="mt-3 flex items-center gap-4">
-                  <Bar label="in that group" pct={finding.weakPct} tone="var(--again)" />
-                  <Bar label="elsewhere" pct={finding.strongPct} tone="var(--good)" />
+                  <Bar label="in that group" pct={finding.weakPct} fill="var(--again)" ink="var(--again-ink)" />
+                  <Bar label="elsewhere" pct={finding.strongPct} fill="var(--good)" ink="var(--good-ink)" />
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
                     from {finding.sample} reviews
                   </span>
                   <Link
                     href={finding.href}
-                    className="flex items-center gap-1.5 text-[13px]"
-                    style={{ color: "var(--accent)" }}
+                    className="flex items-center gap-1.5 text-[13.5px]"
+                    style={{ color: "var(--accent-deep)" }}
                   >
                     Drill it <ArrowRight size={13} aria-hidden />
                   </Link>
@@ -108,15 +108,26 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
   );
 }
 
-function Bar({ label, pct, tone }: { label: string; pct: number; tone: string }) {
+/**
+ * A labelled percentage over a bar.
+ *
+ * The hue arrives twice on purpose. `fill` is the bar itself, where mint and
+ * peach carry their fixed meanings, recalled and missed. `ink` is the number,
+ * which is small text on a card and has to clear WCAG AA: the fill hues do not
+ * (peach measured 2.97:1 and mint 2.52:1), which is exactly why the design
+ * system defines `--again-ink` and `--good-ink` as the readable versions of
+ * the same colours. Using the fill for both is the mistake this signature
+ * makes hard to repeat.
+ */
+function Bar({ label, pct, fill, ink }: { label: string; pct: number; fill: string; ink: string }) {
   return (
     <div className="min-w-0 flex-1">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>{label}</span>
-        <span className="tnum text-[13px] font-semibold" style={{ color: tone }}>{pct}%</span>
+        <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{label}</span>
+        <span className="tnum text-[13.5px] font-semibold" style={{ color: ink }}>{pct}%</span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: tone }} />
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: fill }} />
       </div>
     </div>
   );

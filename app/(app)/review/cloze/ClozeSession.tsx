@@ -112,7 +112,7 @@ export function ClozeSession() {
           />
           <div className="mt-2 flex items-center justify-between gap-3">
             <DiacriticBar />
-            <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+            <span className="tnum text-[12.5px]" style={{ color: "var(--ink-3)" }}>
               {text.length}/{MAX_PASSAGE_CHARS}
             </span>
           </div>
@@ -191,7 +191,7 @@ export function ClozeSession() {
             aria-label="Passage progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-[13.5px]" style={{ color: "var(--ink-3)" }}>
           {items.length - index} left
         </span>
       </div>
@@ -220,7 +220,7 @@ export function ClozeSession() {
             {after}
           </p>
 
-          <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-3 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
             Hint: the {item.formLabel} of <span lang="et">{item.lemma}</span>
           </p>
 
