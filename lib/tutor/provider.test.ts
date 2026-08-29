@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { openWithFallback, resolveProviders, TutorError } from "@/lib/tutor/provider";
+import {
+  FREE_OPENROUTER_MODELS, openWithFallback, resolveProviders, TutorError,
+} from "@/lib/tutor/provider";
+import { priceFor } from "@/lib/usage/pricing";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -30,7 +33,35 @@ describe("the chain", () => {
     vi.stubEnv("OPENROUTER_API_KEY", "k");
     vi.stubEnv("ANTHROPIC_API_KEY", "k");
     vi.stubEnv("OPENAI_API_KEY", "k");
-    expect(resolveProviders().map((p) => p.name)).toEqual(["openrouter", "anthropic", "openai"]);
+    const seen: string[] = [];
+    for (const { name } of resolveProviders()) if (seen[seen.length - 1] !== name) seen.push(name);
+    expect(seen).toEqual(["openrouter", "anthropic", "openai"]);
+  });
+
+  it("asks free models by default, because the setup a stranger follows has no credit on it", () => {
+    /*
+      This default was `openai/gpt-4o`, a paid model at OpenRouter's full rate,
+      three lines under a comment saying the default provider is a free one. A
+      new key has no credit, so the answer was a 402 and Anu was dead on
+      arrival. Asserted rather than remembered, on both halves: the slug says
+      free, and the ledger agrees it costs nothing.
+    */
+    only("openrouter");
+    const models = resolveProviders().map((p) => p.model);
+    expect(models).toEqual([...FREE_OPENROUTER_MODELS]);
+    expect(models.length).toBeGreaterThan(1);
+    for (const model of models) {
+      expect(model.endsWith(":free")).toBe(true);
+      expect(priceFor(model)).toEqual({ inputPerMTok: 0, outputPerMTok: 0 });
+    }
+  });
+
+  it("takes a list from the environment, so a deployment with credit can point elsewhere", () => {
+    only("openrouter");
+    vi.stubEnv("OPENROUTER_MODEL", "openai/gpt-4o, anthropic/claude-sonnet-5 ");
+    expect(resolveProviders().map((p) => p.model)).toEqual([
+      "openai/gpt-4o", "anthropic/claude-sonnet-5",
+    ]);
   });
 
   it("is a chain of one when only one key is set, which is what it has always been", () => {
@@ -49,6 +80,9 @@ describe("falling back", () => {
   it("walks past a throttled provider and says who actually answered", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "k");
     vi.stubEnv("OPENAI_API_KEY", "k");
+    // One free model, so this test is about walking between providers. The
+    // walk between models of one provider is the test below it.
+    vi.stubEnv("OPENROUTER_MODEL", "free/one:free");
     const calls: string[] = [];
     vi.stubGlobal("fetch", async (url: string) => {
       calls.push(new URL(url).host);
@@ -69,6 +103,7 @@ describe("falling back", () => {
 
   it("does not walk past a rejected key, because every provider would answer the same", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("OPENROUTER_MODEL", "free/one:free");
     vi.stubEnv("OPENAI_API_KEY", "k");
     const calls: string[] = [];
     vi.stubGlobal("fetch", async (url: string) => {
@@ -96,6 +131,7 @@ describe("falling back", () => {
     */
     vi.stubEnv("OPENROUTER_API_KEY", "k");
     vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENROUTER_MODEL", "paid/one");
     const calls: string[] = [];
     vi.stubGlobal("fetch", async (url: string) => {
       calls.push(new URL(url).host);
@@ -112,6 +148,7 @@ describe("falling back", () => {
 
   it("never puts a provider's raw body in front of a learner", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("OPENROUTER_MODEL", "free/one:free");
     const bodies = [
       { status: 402, body: '{"error":{"message":"This request requires more credits"}}' },
       { status: 400, body: '{"error":{"message":"messages[0].content: expected string"}}' },
@@ -139,6 +176,7 @@ describe("falling back", () => {
     */
     vi.stubEnv("OPENROUTER_API_KEY", "k");
     vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENROUTER_MODEL", "free/one:free");
     const calls: string[] = [];
     vi.stubGlobal("fetch", async (url: string) => {
       calls.push(new URL(url).host);
@@ -163,6 +201,44 @@ describe("falling back", () => {
       "api.openai.com",
       "api.openai.com",
     ]);
+  });
+
+  it("walks past a free model that has been retired, but only to its own provider", async () => {
+    /*
+      A free model exists at somebody else's expense, so it is withdrawn the
+      moment it stops being worth paying for, and a slug in a constant here
+      goes stale on its own. Across providers a 404 stays fatal, for the
+      reason above: the model name is wrong, and it is wrong everywhere.
+    */
+    only("openrouter");
+    vi.stubEnv("OPENROUTER_MODEL", "gone/yesterday:free, still/here:free");
+    const models: string[] = [];
+    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+      const model = JSON.parse(String(init.body)).model as string;
+      models.push(model);
+      return model.startsWith("gone/")
+        ? new Response("no such model", { status: 404 })
+        : sse("Partitive.");
+    });
+
+    const open = await openWithFallback(resolveProviders(), "s", [{ role: "user", content: "q" }]);
+    expect(models).toEqual(["gone/yesterday:free", "still/here:free"]);
+    expect(open.config.model).toBe("still/here:free");
+  });
+
+  it("does not walk a missing model across to another provider", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+    vi.stubEnv("OPENROUTER_MODEL", "gone/yesterday:free");
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      calls.push(new URL(url).host);
+      return new Response("no such model", { status: 404 });
+    });
+
+    await expect(openWithFallback(resolveProviders(), "s", [{ role: "user", content: "q" }]))
+      .rejects.toMatchObject({ status: 404 });
+    expect(calls).toEqual(["openrouter.ai"]);
   });
 
   it("refuses an empty chain rather than pretending it asked", async () => {
