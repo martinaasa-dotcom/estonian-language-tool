@@ -81,8 +81,12 @@ check("number key grades and advances", advanced, `${before} -> ${after}`);
 await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });
 await page.getByLabel("Task title").fill("Revise the comitative");
 await page.getByRole("button", { name: /^Add$/ }).click();
-check("task is created and persists",
-  await eventually(async () => (await page.getByText("Revise the comitative").count()) > 0));
+// Same reporting as the word above, and for the same reason: this one failed
+// twice in CI, fifteen seconds each time, and "false" does not say whether the
+// task was never created or created and not shown.
+const taskShown = await eventually(async () => (await page.getByText("Revise the comitative").count()) > 0);
+check("task is created and persists", taskShown,
+  taskShown ? "" : `list says: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 
 // 5 — Import
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
@@ -128,8 +132,14 @@ check("a failed search offers an add form, not a dead end", (await page.getByTex
 await page.getByPlaceholder("word").fill("trial word");
 await page.getByPlaceholder("toa").fill(`${word}u`);
 await page.getByRole("button", { name: "Save word" }).click();
-check("the new word opens as a full entry",
-  await eventually(async () => (await page.getByText("trial word").count()) > 0));
+// What the screen actually said, when it did not say this. A check that
+// reports only false sends the next person to the app looking for a bug that
+// may be in the navigation rather than in the save: this one failed on CI for
+// fifteen seconds over a word the database already had, because the page had
+// been re-rendered back to the add form.
+const opened = await eventually(async () => (await page.getByText("trial word").count()) > 0);
+check("the new word opens as a full entry", opened,
+  opened ? "" : `still on: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 check("its case table is derived from the genitive I typed",
   (await page.getByText(`${word}us`, { exact: true }).count()) > 0);
 check("and it can go straight into the deck",
