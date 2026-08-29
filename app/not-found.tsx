@@ -1,20 +1,21 @@
 import { ButtonLink } from "@/components/Button";
-
-export const metadata = { title: "Not found · Kodukeel" };
+import { Mascot } from "@/components/brand";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-lg px-5 py-20 text-center">
-      <p lang="et" className="est text-[30px] font-bold" style={{ color: "var(--ink)" }}>
-        Ei leidnud
+    <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
+      <Mascot size={62} mood="thinking" className="float" />
+      <h1 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+        Seda lehte pole
+      </h1>
+      <p className="text-base" style={{ color: "var(--ink-2)" }}>
+        There&rsquo;s no page here. If you were after a word, the dictionary takes Estonian or
+        English — and inflected forms, which is usually what you actually have in front of you.
       </p>
-      <p className="mt-1 text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-        Not found — there is no page at that address.
-      </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
-        <ButtonLink href="/" variant="primary">Today</ButtonLink>
-        <ButtonLink href="/dictionary">Dictionary</ButtonLink>
+      <div className="mt-2 flex flex-wrap justify-center gap-3">
+        <ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>
+        <ButtonLink href="/">Back to Today</ButtonLink>
       </div>
-    </div>
+    </main>
   );
 }

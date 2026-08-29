@@ -1,15 +1,44 @@
 /** Populates a few cards, reviews and tasks so the UI can be reviewed with real content. */
 import { PrismaClient } from "@prisma/client";
+// @ts-expect-error - plain JS helper, shared with the .mjs end-to-end scripts.
+import { requireLocalDatabase } from "./lib/local-db.mjs";
 import { generateCards, type LexemeForCards } from "../lib/srs/cards";
 import { emptyScheduling, grade } from "../lib/srs/scheduler";
+import { LOCAL_USER_ID, supabaseConfigured } from "../lib/auth/mode";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: requireLocalDatabase("replace this learner's cards, tasks and review history with invented data"),
+});
+
+/** A spread of plausible review histories — some clean, some with a lapse. */
+/**
+ * The shapes a real deck contains, so every screen has something to show.
+ *
+ * The last one is the point of the list: a word learned, forgotten, relearned
+ * and forgotten again — four lapses by the end, which is what the
+ * sticking-points section on /progress exists to name. It has to graduate back
+ * to Review between failures, because FSRS only counts a lapse against a card
+ * it believed was learned. Without one, that section renders as nothing and
+ * looks broken rather than empty.
+ */
+const HISTORIES: number[][] = [
+  [3, 3, 2, 3, 4, 3],
+  [3, 1, 3, 3, 2],
+  [],
+  [4, 4, 3],
+  [2, 3, 1, 3, 3, 3],
+  [3],
+  [3, 3, 1, 3, 3, 1, 3, 3, 1, 3, 3, 1],
+];
 
 async function main() {
   // Cards/tasks are per-user now (docs/03-architecture.md ADR-012), so this script
   // only ever touches one account's data — find your user id in the Supabase
   // dashboard (Authentication → Users) and pass it explicitly.
-  const ownerId = process.env.DEMO_OWNER_ID;
+  // Running locally there is only one learner (lib/auth/mode.ts), so the id is
+  // known; with Supabase configured it has to be named explicitly, because
+  // guessing which account to wipe is not a decision a script should make.
+  const ownerId = process.env.DEMO_OWNER_ID ?? (supabaseConfigured() ? undefined : LOCAL_USER_ID);
   if (!ownerId) {
     console.error("Set DEMO_OWNER_ID to your Supabase user id before running this script.");
     await prisma.$disconnect();
@@ -30,9 +59,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Demo data is the one place a review may be removed: this script exists to
-  // build a throwaway account, and it has already refused above if the deck
-  // looks like anyone's real history.
   await prisma.review.deleteMany({ where: { ownerId } });
   await prisma.card.deleteMany({ where: { ownerId } });
   await prisma.task.deleteMany({ where: { ownerId } });
@@ -40,7 +66,7 @@ async function main() {
   const lexemes = await prisma.lexeme.findMany({
     where: { pos: { in: ["NOUN", "VERB"] } },
     include: { forms: true },
-    take: 18,
+    take: 30,
     orderBy: { lemma: "asc" },
   });
 
@@ -49,12 +75,18 @@ async function main() {
                         : (["RECOGNITION", "PRODUCTION"] as const);
     const cards = generateCards(lex as LexemeForCards, [...types]);
     for (const c of cards) {
-      let s = emptyScheduling(new Date(Date.now() - 12 * 86400000));
-      const history = i % 3 === 0 ? [3, 3, 2] : i % 3 === 1 ? [3, 1, 3, 3] : [];
-      const reviews: { rating: number; at: Date }[] = [];
+      // Eight weeks of history rather than two, so the heatmap, the forecast and
+      // the accuracy trend on /progress all have something real to draw.
+      let s = emptyScheduling(new Date(Date.now() - 56 * 86400000));
+      const history = HISTORIES[i % HISTORIES.length]!;
+      const reviews: { rating: number; at: Date; stateBefore: number }[] = [];
       history.forEach((r, n) => {
-        const at = new Date(Date.now() - (10 - n * 3) * 86400000);
-        reviews.push({ rating: r, at });
+        const daysAgo = Math.max(0, 54 - n * 6 - (i % 5));
+        const at = new Date(Date.now() - daysAgo * 86400000 + n * 3600000);
+        // The FSRS state the card was in when the question was asked, exactly as
+        // gradeCard records it. Without it the demo's retention reading has
+        // nothing mature to measure and the chart it feeds looks broken.
+        reviews.push({ rating: r, at, stateBefore: s.state });
         s = grade(s, r as 1 | 2 | 3 | 4, at);
       });
       const card = await prisma.card.create({
@@ -70,8 +102,9 @@ async function main() {
       for (const r of reviews) {
         await prisma.review.create({
           data: {
-            ownerId, cardId: card.id, lexemeId: card.lexemeId, rating: r.rating,
-            reviewedAt: r.at, durationMs: 4200, targetCase: c.targetCase,
+            ownerId, cardId: card.id, lexemeId: card.lexemeId,
+            rating: r.rating, reviewedAt: r.at, durationMs: 4200,
+            stateBefore: r.stateBefore, targetCase: c.targetCase,
           },
         });
       }

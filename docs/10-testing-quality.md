@@ -102,6 +102,12 @@ The review log is the irreplaceable asset:
   history survives.
 - An automatic snapshot is taken before any migration runs.
 - **Restore is tested, not just backup.** An untested backup is a hypothesis.
+- **The suite that tests it is the most dangerous file in the repository**, because the only honest
+  way to test a restore is to delete everything first. `scripts/test-restore.mjs` therefore refuses
+  to run unless `DATABASE_URL` looks local (`--force` overrides, deliberately awkwardly), and writes
+  the export to `.backups/` *before* deleting anything. A crash between the delete and the restore
+  — a dev server hiccup is enough, and has happened — then leaves a file that Settings → Restore
+  takes as it stands, instead of an empty review log.
 
 ## 7. CI pipeline
 

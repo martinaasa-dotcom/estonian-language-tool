@@ -19,27 +19,27 @@ datasource db {
 /// data (built-in set plus the Ekilex cache), not anyone's personal deck.
 /// See docs/03-architecture.md ADR-012. Cards, not Lexeme, are user-owned.
 model Lexeme {
-  id            String    @id @default(uuid())
+  id            String  @id @default(uuid())
   lemma         String
   pos           String // NOUN | VERB | ADJECTIVE | ADVERB | PHRASE | OTHER
   translation   String
   cefr          String? // A1 A2 B1 B2 C1 C2
-  gradation     String    @default("NONE") // NONE | QUALITATIVE | QUANTITATIVE
+  gradation     String  @default("NONE") // NONE | QUALITATIVE | QUANTITATIVE
   gradationNote String? // e.g. "b : ∅"
   government    String? // verb case government, e.g. "partitive — aitan sind"
-  examples      String    @default("[]") // JSON: [{ et, en }]
+  examples      String  @default("[]") // JSON: [{ et, en }]
   notes         String?
-  provenance    String    @default("SEED") // SEED | EKILEX | AI | USER
+  provenance    String  @default("SEED") // SEED | EKILEX | AI | USER
   ekilexWordId  Int?
-  fetchedAt     DateTime? // when Ekilex was last consulted, for cache freshness
 
   /// Who last changed this entry by hand, when anyone did.
   ///
   /// The dictionary is shared (ADR-012), so a correction one learner makes is a
   /// correction everybody sees. That is the point — but it means an edit has to
   /// be attributable, or a bad one is untraceable.
-  editedBy String?
-  editedAt DateTime?
+  editedBy  String?
+  editedAt  DateTime?
+  fetchedAt DateTime? // when Ekilex was last consulted, for cache freshness
 
   forms     Form[]
   cards     Card[]
@@ -100,13 +100,6 @@ model Card {
   source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT
   suspended  Boolean @default(false)
 
-  /// The course week this word belongs to, mirroring Task.classWeek.
-  ///
-  /// On Card rather than Lexeme because it is a fact about one learner's course,
-  /// not about the word: the same noun is week 3 for one person and week 11 for
-  /// another, and Lexeme is the shared dictionary (ADR-012).
-  classWeek Int?
-
   // FSRS state (ts-fsrs) — ADR-003
   due           DateTime  @default(now())
   stability     Float     @default(0)
@@ -118,6 +111,13 @@ model Card {
   state         Int       @default(0) // 0 New 1 Learning 2 Review 3 Relearning
   learningSteps Int       @default(0) // FSRS learning-step index; must round-trip
   lastReview    DateTime?
+
+  /// The course week this word belongs to, mirroring Task.classWeek.
+  ///
+  /// On Card rather than Lexeme because it is a fact about one learner's course,
+  /// not about the word: the same noun is week 3 for one person and week 11 for
+  /// another, and Lexeme is the shared dictionary (ADR-012).
+  classWeek Int?
 
   createdAt DateTime @default(now())
 
@@ -131,14 +131,14 @@ model Card {
 /// It has no foreign key to Card, and that is the point. A `Card` relation with
 /// `onDelete: Cascade` meant deleting a card silently deleted its history too,
 /// so the invariant above was a comment rather than a property: suspending a
-/// leech or restoring a backup in replace mode destroyed evidence that cannot be
-/// reconstructed. `cardId` is kept as a plain column so a review still groups
+/// leech, or restoring a backup in replace mode, destroyed evidence that cannot
+/// be reconstructed. `cardId` stays as a plain column so a review still groups
 /// into a per-card sequence — which is what FSRS optimisation reads — while
 /// outliving the card itself.
 ///
-/// `ownerId` and `lexemeId` are denormalised for the same reason: a review has to
-/// stay attributable and analysable once its card is gone. They also turn every
-/// "my reviews" query from a join into an index lookup.
+/// `ownerId` and `lexemeId` are denormalised for the same reason: a review has
+/// to stay attributable and analysable once its card is gone. They also turn
+/// every "my reviews" query from a join into an index lookup.
 model Review {
   id          String   @id @default(uuid())
   ownerId     String
@@ -199,6 +199,43 @@ model Achievement {
   earnedAt DateTime @default(now())
 
   @@id([ownerId, key])
+}
+
+/// A class: one teacher, a join code, and the learners who used it.
+///
+/// Deliberately thin. A classroom here is a *view* over data the learners
+/// already own — nobody's cards, reviews or tasks move into it, and leaving a
+/// class removes the membership row and nothing else. That keeps the promise
+/// the app can actually make to a student: your deck is yours, and joining your
+/// teacher's class shares your progress, not your data.
+model Classroom {
+  id        String   @id @default(uuid())
+  name      String
+  /// Six characters, shown to students to join with. Unique across the instance.
+  code      String   @unique
+  /// The teacher's user id.
+  ownerId   String
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  members ClassroomMember[]
+
+  @@index([ownerId])
+}
+
+/// One learner's membership of one class.
+model ClassroomMember {
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  ownerId     String
+  role        String    @default("STUDENT") // TEACHER | STUDENT
+  /// The name they chose to be known by here, copied at join time so a later
+  /// change to their own display name does not silently rename them mid-term.
+  displayName String
+  joinedAt    DateTime  @default(now())
+
+  @@id([classroomId, ownerId])
+  @@index([ownerId])
 }
 
 /// One metered call to a paid third-party service.

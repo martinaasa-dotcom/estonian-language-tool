@@ -1,8 +1,28 @@
 import { chromium } from "playwright";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { requireLocalDatabase } from "./lib/local-db.mjs";
 
+/**
+ * The backup-and-restore round trip, tested against the real database.
+ *
+ * This suite deletes everything and puts it back, which is the only honest way
+ * to test a restore — and also the most dangerous thing in this repository. Two
+ * guards, because the review log is the one table whose loss is unrecoverable:
+ *
+ * 1. `requireLocalDatabase()` refuses anything but a local database, and hands
+ *    back the URL it approved so the connection that was checked is the one
+ *    that gets opened (see scripts/lib/local-db.mjs).
+ * 2. It writes the export to disk *before* deleting, and stops if that fails.
+ *    If the suite then crashes half way — a dev server hiccup is enough, and it
+ *    happened twice while this was being written — the data is still on disk
+ *    and `Settings → Restore` puts it back.
+ */
 const B = "http://localhost:3000";
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: requireLocalDatabase("delete every word, card, task and review row"),
+});
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
 
@@ -19,6 +39,22 @@ const before = {
 const backup = await (await page.request.get(`${B}/api/export`)).text();
 check("export produced a backup", backup.length > 1000, `${Math.round(backup.length / 1024)} KB`);
 
+// On disk before anything is deleted. If the suite dies from here on, this file
+// is the way back — Settings → Restore takes it as it stands.
+const safety = resolve(".backups", `test-restore-${Date.now()}.json`);
+try {
+  mkdirSync(resolve(".backups"), { recursive: true });
+  writeFileSync(safety, backup);
+} catch (error) {
+  console.error(`Refusing to delete anything: could not write the safety copy (${error}).`);
+  process.exit(1);
+}
+if (backup.length <= 1000) {
+  console.error("Refusing to delete anything: the export came back empty or truncated.");
+  process.exit(1);
+}
+console.log(`      safety copy: ${safety}`);
+
 // Destroy everything, exactly as a disk failure would.
 await prisma.review.deleteMany();
 await prisma.card.deleteMany();
@@ -32,8 +68,19 @@ await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
 await page.getByLabel("Choose a backup file").setInputFiles({
   name: "backup.json", mimeType: "application/json", buffer: Buffer.from(backup),
 });
-await page.waitForTimeout(1200);
-check("the file is recognised and summarised", (await page.getByText(/holds/).count()) > 0);
+// Wait for the summary instead of guessing at a duration. The backup grows with
+// the deck, and a fixed delay that is generous today fails on a bigger database
+// — which, here, fails *after* the delete and so loses the data it was checking.
+const summary = page.getByText(/holds/).first();
+const summarised = await summary.waitFor({ timeout: 30000 }).then(() => true, () => false);
+check("the file is recognised and summarised", summarised);
+if (!summarised) {
+  console.error(`\nThe page never accepted the backup, so the database is still empty.` +
+    `\nRestore it yourself from ${safety} via Settings -> Restore.\n`);
+  await browser.close();
+  await prisma.$disconnect();
+  process.exit(1);
+}
 await page.getByRole("button", { name: /Merge this backup in/ }).click();
 await page.waitForTimeout(6000);
 
@@ -60,14 +107,16 @@ await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
 await page.getByLabel("Choose a backup file").setInputFiles({
   name: "backup.json", mimeType: "application/json", buffer: Buffer.from(backup),
 });
-await page.waitForTimeout(1200);
+await page.getByText(/holds/).first().waitFor({ timeout: 30000 });
 await page.getByRole("button", { name: /Merge this backup in/ }).click();
 await page.waitForTimeout(6000);
 check("restoring twice does not duplicate anything",
   (await prisma.review.count()) === before.reviews && (await prisma.card.count()) === before.cards,
   `${await prisma.card.count()} cards, ${await prisma.review.count()} reviews`);
 
-console.log(failures === 0 ? "\nRestore verified end to end." : `\n${failures} failed.`);
+console.log(failures === 0
+  ? "\nRestore verified end to end."
+  : `\n${failures} failed. If the database is short of data, restore ${safety} via Settings.`);
 await browser.close();
 await prisma.$disconnect();
 process.exit(failures ? 1 : 0);

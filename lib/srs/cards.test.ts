@@ -58,3 +58,120 @@ describe("availableCardTypes", () => {
     expect(availableCardTypes(aitama)).toContain("GOVERNMENT");
   });
 });
+
+describe("generateCards — CLOZE", () => {
+  const drinking: LexemeForCards = {
+    lemma: "kohv",
+    translation: "coffee",
+    pos: "NOUN",
+    gradation: "NONE",
+    gradationNote: null,
+    government: null,
+    examples: JSON.stringify([
+      { et: "Jõin tassi kohvi.", source: "EKILEX" },
+      { et: "Kohv on laual.", source: "EKILEX" },
+      { et: "Ma ei taha täna kohvi juua.", source: "EKILEX" },
+    ]),
+    forms: [
+      { formType: "NOM_SG", value: "kohv", morphCode: "SgN" },
+      { formType: "GEN_SG", value: "kohvi", morphCode: "SgG" },
+      { formType: "PART_SG", value: "kohvi", morphCode: "SgP" },
+    ],
+  };
+
+  it("hides a real form inside a real sentence", () => {
+    const cards = generateCards(drinking, ["CLOZE"]);
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      expect(card.front).toContain("____");
+      // The answer is a form we actually hold, never something invented…
+      expect(["kohv", "kohvi"]).toContain(card.back.toLowerCase());
+      // …and it is no longer visible in the prompt.
+      expect(card.front.toLowerCase()).not.toContain(card.back.toLowerCase());
+    }
+  });
+
+  it("shows the shortest sentence first — a one-liner beats a subtler example", () => {
+    const [first] = generateCards(drinking, ["CLOZE"]);
+    expect(first?.front).toBe("____ on laual.");
+  });
+
+  it("gives the lemma as the hint — it asks for the form, not the vocabulary", () => {
+    const [card] = generateCards(drinking, ["CLOZE"]);
+    expect(card?.hint).toContain("kohv");
+    expect(card?.hint).toContain("coffee");
+  });
+
+  it("tags the case, so a gap-fill counts towards the weak-case breakdown", () => {
+    const cards = generateCards(drinking, ["CLOZE"]);
+    expect(cards.some((c) => c.targetCase !== null)).toBe(true);
+  });
+
+  it("stops at two per word rather than drilling every sentence", () => {
+    expect(generateCards(drinking, ["CLOZE"])).toHaveLength(2);
+  });
+
+  it("produces nothing when the word has no examples", () => {
+    expect(generateCards({ ...drinking, examples: null }, ["CLOZE"])).toEqual([]);
+    expect(generateCards({ ...drinking, examples: "[]" }, ["CLOZE"])).toEqual([]);
+  });
+
+  it("produces nothing when no example actually contains the word", () => {
+    const elsewhere = {
+      ...drinking,
+      examples: JSON.stringify([{ et: "Ilm on täna väga ilus.", source: "EKILEX" }]),
+    };
+    expect(generateCards(elsewhere, ["CLOZE"])).toEqual([]);
+  });
+
+  it("is only offered when it can produce something", () => {
+    expect(availableCardTypes(drinking)).toContain("CLOZE");
+    expect(availableCardTypes({ ...drinking, examples: null })).not.toContain("CLOZE");
+  });
+});
+
+describe("generateCards — CONJUGATION", () => {
+  const lugema: LexemeForCards = {
+    lemma: "lugema",
+    translation: "to read",
+    pos: "VERB",
+    gradation: "QUALITATIVE",
+    gradationNote: "g : ∅",
+    government: null,
+    forms: [
+      { formType: "INF_MA", value: "lugema", morphCode: "Sup" },
+      { formType: "PRES_1SG", value: "loen", morphCode: "IndPrSg1" },
+      { formType: "EKILEX:IndPrSg3", value: "loeb", morphCode: "IndPrSg3" },
+      { formType: "PAST_1SG", value: "lugesin", morphCode: "IndIpfSg1" },
+      { formType: "EKILEX:KndPrSg1", value: "loeksin", morphCode: "KndPrSg1" },
+    ],
+  };
+
+  it("asks for a person and tense, and answers with the stored form", () => {
+    const cards = generateCards(lugema, ["CONJUGATION"]);
+    const third = cards.find((c) => c.front.includes("present · ta"));
+    expect(third?.back).toBe("loeb");
+    expect(cards.every((c) => lugema.forms.some((f) => f.value === c.back))).toBe(true);
+  });
+
+  it("falls back to the seeded principal parts when there are no Ekilex codes", () => {
+    const seeded: LexemeForCards = {
+      ...lugema,
+      forms: [
+        { formType: "PRES_1SG", value: "loen" },
+        { formType: "PAST_1SG", value: "lugesin" },
+      ],
+    };
+    const cards = generateCards(seeded, ["CONJUGATION"]);
+    expect(cards.map((c) => c.back)).toEqual(["loen", "lugesin"]);
+  });
+
+  it("makes nothing for a noun", () => {
+    expect(generateCards({ ...lugema, pos: "NOUN" }, ["CONJUGATION"])).toEqual([]);
+  });
+
+  it("is offered only for a verb whose forms are actually held", () => {
+    expect(availableCardTypes(lugema)).toContain("CONJUGATION");
+    expect(availableCardTypes({ ...lugema, forms: [] })).not.toContain("CONJUGATION");
+  });
+});

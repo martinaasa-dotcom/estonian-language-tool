@@ -56,17 +56,17 @@ describe("the streak day query", () => {
     await reviewsOn([0, 1, 2]);
     const days = await streakDays(OWNER);
     expect(days).toHaveLength(3);
-    expect(computeStreakWithShields(days, 0).streak).toBe(3);
+    expect(computeStreakWithShields(days, 0, []).streak).toBe(3);
   });
 
   it("counts a run of consecutive days", async () => {
     await reviewsOn([0, 1, 2, 3, 4]);
-    expect(computeStreakWithShields(await streakDays(OWNER), 0).streak).toBe(5);
+    expect(computeStreakWithShields(await streakDays(OWNER), 0, []).streak).toBe(5);
   });
 
   it("stops at a gap", async () => {
     await reviewsOn([0, 1, 3, 4]);
-    expect(computeStreakWithShields(await streakDays(OWNER), 0).streak).toBe(2);
+    expect(computeStreakWithShields(await streakDays(OWNER), 0, []).streak).toBe(2);
   });
 
   it("keeps the UTC day for a review late in the evening", async () => {

@@ -3,6 +3,9 @@
 What was actually built, what was deliberately left out, and which planning decisions changed once
 the answers to `12-open-questions.md` came back.
 
+**§7 is the current state.** §1–5 describe the first MVP, §6 the pass that made it usable by a
+stranger, and §7 the pass that made it teach in context — sentences, speaking and classes.
+
 ## 1. The answers, and what they changed
 
 | Question | Answer | Effect |
@@ -63,6 +66,8 @@ because a cap that fails open is not a cap.
 | Add a word by hand, with principal parts and auto-classified gradation | Complete |
 | Edit an existing entry — corrections rewrite its cards' text but never its FSRS scheduling | Complete |
 | Export — full JSON backup | Complete |
+| Visual design — pastel system, mascot, light/dark | Rebuilt 2026-08; see `14-design-system.md` |
+| Public landing page at `/welcome` | Complete. Its demo reads real dictionary data and derives cases with the app's own code |
 | Restore from a backup — merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
 | Weak-case drill — click a case in the heatmap to review just those cards | Complete |
 | Light and dark themes, keyboard operation, mobile layout | Complete; verified on an iPhone 13 viewport — no sideways scroll, 73×79px rating targets |
@@ -133,37 +138,221 @@ Each of these is a decision, not an omission.
    form — that boundary is enforced in the data model, not just in the prompt.
 5. **Editing a word does not regenerate its case-form cards.** Recognition and production cards
    follow a correction; a case-form card built from an old genitive keeps the old answer. Deleting
-   and re-adding the card fixes it — and now costs nothing, since deleting a card no longer destroys
-   its review history. Regenerating automatically would mean either losing the card's scheduling or
-   silently changing what a card asks mid-schedule, and neither is obviously right.
-6. ~~**A review needs the server.**~~ **Fixed.** Review is a PWA: a service worker keeps the shell
-   and the last session, grades go to an IndexedDB outbox, and `replayGrades` applies them in order
-   with their original timestamps when the connection returns. The result is identical to having
-   been online, because `grade()` takes `now` as a parameter and `Review` is append-only — there is
-   no conflict to resolve. That is the payoff for never updating a review row, and it is why the
-   sync is about a hundred lines rather than a subsystem.
+   and re-adding the card fixes it — and now costs nothing, since deleting a card no longer
+   destroys its review history. Regenerating automatically would mean either losing the card's
+   scheduling or silently changing what a card asks mid-schedule, and neither is obviously right.
+6. ~~**A review needs the server.**~~ **Fixed in §6** — the app installs as a PWA and grades made
+   offline are queued on the device and replayed with their real timestamps (ADR-015).
 
 
-## 6. What is still weak
+## 6. The second pass: usable by someone who is not you
 
-Honest, and worth reading before promising anything.
+The first MVP was complete for one learner who already knew what to study. Handing it to a stranger
+exposed a different set of gaps — an empty deck with no obvious first move, self-graded flashcards, a
+streak and nothing else to show for six weeks of work, and a promise about offline that the hosted
+deployment had quietly broken. This pass closes those.
 
-1. **The built-in dictionary is still 360 words.** Everything scales with Ekilex, and the drills
-   that mine the dictionary — minimal pairs especially — get much better with a key. Without one,
-   minimal pairs finds sixteen contrasts. That is a real round, and not many.
-2. **The AI grader's usefulness is model-dependent.** The *safety* is not: the form check is
-   mechanical and the feedback is verified against the dictionary. But a weak model produces
-   feedback that is merely bland, and the app cannot tell bland from insightful. `npm run eval:anu`
-   measures grammar answers; there is no equivalent eval for grading quality yet.
-3. **The verifier is a heuristic on the English side.** It flags any quoted word that is not a
-   supplied form, the learner's own text, the English gloss, or a common grammar term. A model
-   quoting an unusual English word will have its note withheld. The failure is conservative, and
-   visible to the learner, but it is a failure.
-4. **No FSRS parameter optimisation.** The review log has been carefully preserved as the input to
-   it, and nothing consumes it yet. Default parameters are decent, not personal.
-5. **Minimal pairs needs the network.** It is entirely about sound; with the speech service
-   unreachable it says so and stops, which is honest but leaves it as the one mode that does not
-   degrade.
-6. **Object-case and listening card types** remain defined but ungenerated, for the original reason:
-   they need example sentences the built-in dictionary does not carry for every word. The cloze mode
-   is the partial answer — it gets real sentences from the learner instead.
+### What was added
+
+| Area | What it is | Why it earns its place |
+|---|---|---|
+| **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
+| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. `lib/collections/path.ts` | "Here are 360 words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
+| **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
+| **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
+| **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
+| **Match** (`/review/match`) | Eight pairs against the clock | The only mode that makes you scan a *set* of words at once |
+| **Practice hub** (`/practice`) | Every mode with its live state, plus one-click drills for weak cases | Answers "what should I do with five minutes" instead of listing modes |
+| **XP, levels, quests** | `lib/gamification/` — derived from the review log, never stored (ADR-014) | A streak alone says nothing about six weeks of work. Three quests a day, chosen deterministically from the date |
+| **Progress** (`/progress`) | Six-month heatmap, 14-day forecast, accuracy trend, per-case accuracy, CEFR reach | The forecast in particular is what stops an SRS becoming an unsustainable pile |
+| **Class leaderboard** | Opt-in, name chosen by the learner, weekly XP only | The one feature a class actually asks for. Off by default; no email or history is ever shared |
+| **Offline PWA** | Manifest, service worker, and a localStorage grade queue (ADR-015) | Restores the standing rule that review works with no network |
+| **Local mode** | No Supabase keys → one learner, no sign-in (ADR-013) | `npm run setup && npm run dev` is a complete installation again |
+| **⌘K palette, skip link, loading/error/not-found routes, phone nav sheet** | — | The difference between a demo and something you use on a Tuesday |
+
+### What this pass deliberately did *not* do
+
+- **No new Estonian content was written.** Every word, form and example still comes from the seeded
+  dictionary or Ekilex. The path references lemmas and `lib/collections/path.test.ts` fails if one
+  does not exist — an invented unit word would be an invented Estonian word by the back door.
+- **No cloze or sentence-building mode.** It needs example sentences the dictionary does not carry
+  for every word, and the honest source for those is Ekilex, not a model (ADR-005). Still shelved.
+- **No speech-to-text.** Unverified for Estonian (audit A5). Unchanged.
+- **No hearts, no lost streaks, no punishment mechanics.** Quests only add. The streak shield already
+  covers the anxiety a study app is entitled to create.
+- **No schema change.** Everything above rides on the existing tables plus the `Setting` key/value
+  bag — which is why none of it needed a migration, and why a backup taken before this pass restores
+  into it unchanged.
+
+### Known limitations, still
+
+1. **Match grades on recognition, not production.** A pair found among eight is easier than producing
+   the word cold; it is recorded as Good, which is generous but not dishonest. Sprint has the same
+   shape and always did.
+2. **The leaderboard is a whole-instance board, not per class.** Everyone who opts in on one
+   deployment sees everyone else who opted in. For a single class that is the right behaviour; for a
+   public instance it would need class codes, which is a feature, not a fix.
+3. **Undo trusts the client for the previous card state.** It is range-validated and can only ever be
+   applied to a card the caller already owns, so the worst case is someone rewinding their own
+   scheduling — which the button does anyway.
+4. **The service worker keeps the app openable, not the data fresh.** A screen you have never opened
+   while online shows the offline fallback. Review, the one path that has to work, does not depend on
+   it: the queue does.
+
+
+## 7. The third pass: teaching in context
+
+§6 ended with a working daily loop and one obvious hole: every exercise asked about a word in
+isolation. You could know all fourteen forms of `raamat` and still not know where it goes in a
+sentence.
+
+### What changed the picture
+
+Ekilex's `/word/details` response carries **usages** — attested sentences recorded against each
+meaning, `public`-flagged for display. That single fact is behind most of this pass: the app can
+teach in context without writing a word of Estonian, because it only ever hides or reorders text a
+lexicographer wrote (ADR-017).
+
+| Area | What it is |
+|---|---|
+| **Example sentences** | Stored per word, shown on the entry with audio, translated one at a time on request and tagged `AI`. A learner can add one of their own from class |
+| **Gap-fill cards** (`CLOZE`) | A form we hold, hidden inside a sentence Ekilex recorded. The lemma is the hint, so it asks for the *form*; the case it drills feeds the weak-case breakdown |
+| **Sentence builder** (`/review/sentences`) | The word bank, over real Estonian. With a translation it is "say this in Estonian"; without one it shows the sentence, then scrambles it — and says which it is doing |
+| **Speaking** (`/review/speaking`) | Shadowing: say it, then hear a native voice and your own recording back to back. No score — see below |
+| **Classes** (`/class`) | A join code, a roster of effort, the group's weakest cases, and units set as homework into each student's own task list (ADR-019) |
+| **Conjugation** | The verb paradigm as a table — persons down, present/past/conditional across — plus a `CONJUGATION` card type over stored forms |
+| **Share card** (`/api/share`) | A 1200×630 PNG of streak, cards known and XP, generated per request for the signed-in learner |
+| **Install and remind** | Apple touch icon, safe-area insets, 16px inputs (iOS zoom), a one-time install prompt, and a daily reminder as a calendar file rather than a push subscription |
+| **Anu: check a sentence** | A structured check that names the rule before the fix, and boxes the corrected sentence as the model's own work rather than letting it read as dictionary data |
+
+### Things this pass refused to do
+
+- **Score pronunciation.** No verified Estonian speech recogniser is available to this app —
+  TartuNLP publish TTS and nothing comparable the other way, and the browser's own recogniser has no
+  dependable `et-EE`. A number invented on top of that would be trusted, so speaking compares
+  instead of grading (ADR-018).
+- **Write example sentences.** Not by hand, not with the model. Every sentence is attested.
+- **Let a teacher see inside a student's deck.** A class exposes effort and aggregate weakness, and
+  the boundary is one file (`lib/classroom/roster.ts`), not a policy paragraph (ADR-019).
+- **Push notifications.** They need a server that stays awake and still do nothing on an unin­stalled
+  iPhone. A recurring calendar event fires on the device the learner already trusts.
+
+### Known limitations, still
+
+1. **Sentences depend on Ekilex.** Without a key, the built-in dictionary carries no usages, so the
+   gap-fill and sentence modes stay empty and say so. A free reader key fills them in as words are
+   looked up.
+2. **Translations of examples are machine-made.** Tagged `AI`, stored so they are fetched once, and
+   overwritable — but they are not a translator's work and the app does not claim otherwise.
+3. **A class is per instance, not per school.** One deployment, many classes; there is no
+   organisation layer, no roles beyond teacher and student, and no way to move a class between
+   instances.
+4. **Classes need sign-in.** In local mode there is one learner, so `/class` explains that rather
+   than offering forms that could not work.
+5. **Installable, but not in the App Store.** Kodukeel installs to a home screen as a PWA and works
+   offline there. An actual App Store listing needs a native shell (Capacitor or similar) around
+   this same web app — that is a packaging and review exercise, not a rewrite, and it has not been
+   done.
+
+## 8. The merge: one app, not two
+
+Passes seven (teaching in context) and the visual rebuild described in `14-design-system.md` were
+built at the same time against the same `main`. Merging them was the last step of this round, and
+the rule was that neither side got to win by default: the rebuild owns how the app looks, this
+pass owns what it does.
+
+What that meant in practice:
+
+- The new routes moved into the `(app)` route group, so they get the rail, the mobile bar and the
+  wash from the layout rather than each rendering their own chrome.
+- Sentences and Speaking joined the Today page's quick-practice grid and the Practice hub, each
+  with its own hue — six modes, six colours, no two the same.
+- The screens listed in §7 were restyled onto `components/ui.tsx` (see `14-design-system.md` §9).
+- Two responsive bugs the merge exposed were fixed rather than papered over: the Today hero packed
+  three stat tiles and the goal ring onto one row at 390px, and a grid column without `min-w-0`
+  let a long task title widen the page.
+
+Verified after the merge: unit tests, `tsc --noEmit`, ESLint, all eight browser suites, and a
+screenshot sweep of every route at 1280px and 390px with the console watched and horizontal
+overflow asserted against.
+
+## 9. The fourth pass: the teaching layer
+
+Three passes built an app that tests. This one built the half that teaches — the parts a learner
+reaches for when a flashcard has stopped helping, and the part a teacher reaches for when the
+lesson is not on a screen at all.
+
+| Area | What it is |
+|---|---|
+| **Grammar reference** (`/grammar`, `/grammar/[case]`) | One page per case: what it is for, where it turns up, the mistake an English speaker makes, and the case shown on real words with the provenance of every form. Linked from the dictionary's case table, the weak-case drills and the Progress breakdown |
+| **Dictation** (`/review/dictation`) | Hear an attested sentence, write it down. Marked word by word — green for exact, butter for a word heard but misspelled, peach for one missed — so the learner sees *which* ending they lost |
+| **Printable worksheet** (`/learn/[unitId]/worksheet`) | A unit as paper: vocabulary, gap-fills from attested sentences, a principal-parts table, and an answer key on its own sheet. The rail and the wash come off in print |
+| **True retention** (on `/progress`) | Of the cards FSRS believed you had learned, how many came back — measured from `Review.stateBefore`, compared with the 90% the scheduler targets, and turned into one instruction |
+| **Shortcut sheet** (`?`) | Every binding the app implements, grouped by where it works |
+
+### Why the grammar page is allowed to exist
+
+ADR-005 forbids the app from writing Estonian. A grammar reference is the obvious place to break
+that rule by accident — one "for example, *majas*" and the page is presenting an unattested form
+next to real ones. So the split is structural:
+
+- `lib/estonian/grammar.ts` is English prose and holds no Estonian at all. A test keeps a tripwire
+  on it (Estonian of any length reaches for its own letters), and says in as many words that a
+  regex is not a proof.
+- `lib/progress/caseExamples.ts` supplies every Estonian word on the page, out of the dictionary,
+  each tagged with where it came from: an Ekilex form, a stored principal part, or the regular
+  ending on a stored genitive. The page prints that tag next to the form.
+
+The same rule shapes the worksheet: a gap-fill is a real sentence with one of its own words hidden,
+and a case table is a table with cells left out. Neither invents anything, which is also why an
+exercise simply does not appear when the material for it is missing.
+
+### Known limitations, still
+
+1. **Oblique-case examples depend on Ekilex.** The seeded dictionary holds principal parts, so the
+   grammar pages for the inside/outside cases derive their forms and often have no attested
+   sentence to show. Looking those words up once fills both in.
+2. **Dictation needs short sentences.** Only sentences of three to nine words are used; a longer
+   one tests memory rather than listening. A deck whose words have no short attested sentence gets
+   an empty state that says so.
+3. **Retention needs history.** Below thirty mature reviews the reading refuses to give a number,
+   because one bad evening would swing it twenty points.
+4. **The worksheet is one sheet per unit.** No question banks, no randomised variants, no per-class
+   sets. It is deterministic on purpose: a class comparing answers has to be comparing the same
+   sheet.
+
+## 10. The fifth pass: diagnosis, and the rule at the moment it is wanted
+
+§9 built the teaching layer. This pass connects it to the daily loop, and adds the one diagnostic a
+spaced-repetition deck cannot do without.
+
+| Area | What it is |
+|---|---|
+| **Sticking points** (on `/progress`) | The handful of cards that keep lapsing, one row per word, each saying what is wrong with it. Actions in order of what usually helps: the case explanation, the dictionary entry, and only then setting it aside — reversibly |
+| **"Why?" on a revealed card** | A review card that has just shown its answer offers the grammar page for the case it drills, and Anu with the question already written |
+| **Print from dark mode** | Fixed: the dark palette followed the page onto paper, so a teacher reading in dark mode printed white ink on white paper |
+| **Two guards on the restore suite** | It refuses to run against a non-local database, and writes the export to disk before deleting anything |
+
+### Why sticking points are named rather than scored
+
+Anki's leech handling suspends a card after eight lapses. The instinct is right and the number is
+wrong for a language course: by the eighth lapse the learner has spent twenty minutes on one word
+and drawn a conclusion about themselves rather than about the card. So the threshold is four, and
+the framing is diagnostic — a card that keeps lapsing after being learned is usually a grammar
+problem wearing a vocabulary costume, which is why the explanation is the first action offered and
+the off switch is the last.
+
+One row per word, too. A noun with four card types produces four rows otherwise, burying every
+other word behind the one the learner already knows they are stuck on; the worst card stands for
+the rest and says how many.
+
+### Known limitations, still
+
+1. **Setting a card aside is per card, not per word.** The row that offers it stands for several
+   cards; the button suspends the one it names. Suspending everything for a word is still done from
+   My words.
+2. **The undo is only good for the visit.** The list is built from unsuspended cards, so a
+   suspended one is gone on the next load — `Put it back` is offered while the page is open, and
+   after that the card lives in My words like any other suspended card.
+3. **Anu is handed the question, not the card.** She gets a sentence naming the case and the word;
+   she does not see the learner's answer, their history, or the rest of the deck.

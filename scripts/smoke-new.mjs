@@ -6,8 +6,12 @@
  * typecheck while being broken on screen: an empty state where there should be
  * content, a crashed boundary, a console error, a nav that overflows a phone.
  *
- *   E2E_TEST_USER_ID=… npm run dev      # in one shell
- *   node scripts/smoke-new.mjs          # in another
+ * Run the dev server with no Supabase keys — that is local single-learner mode
+ * (ADR-013), which is what makes a browser suite possible without driving a
+ * Google sign-in from Playwright.
+ *
+ *   NEXT_PUBLIC_SUPABASE_URL= NEXT_PUBLIC_SUPABASE_ANON_KEY= npm run dev
+ *   node scripts/smoke-new.mjs
  */
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
@@ -28,6 +32,10 @@ const check = (label, ok, extra = "") => {
 
 const ROUTES = [
   ["/", "today"],
+  ["/practice", "practice"],
+  ["/learn", "learn"],
+  ["/grammar", "grammar"],
+  ["/progress", "progress"],
   ["/review/write", "write"],
   ["/review/government", "government"],
   ["/review/pairs", "pairs"],
@@ -110,7 +118,7 @@ const manifest = await page.goto(`${BASE}/manifest.webmanifest`);
 check("manifest is served", manifest?.status() === 200);
 const sw = await page.goto(`${BASE}/sw.js`);
 check("service worker is served", sw?.status() === 200);
-const offline = await page.goto(`${BASE}/offline.html`);
+const offline = await page.goto(`${BASE}/offline`);
 check("offline page is served", offline?.status() === 200);
 
 // ── Mobile: no sideways scroll, which CLAUDE.md makes a rule ────────────────
@@ -128,7 +136,7 @@ for (const [route, name] of [["/", "today"], ["/review/write", "write"], ["/week
   await mobile.screenshot({ path: `${SHOTS}/mobile-${name}.png`, fullPage: true });
 }
 
-// The bottom bar gained a seventh item; check the labels still fit their cells.
+// The bottom bar carries several items; check the labels still fit their cells.
 await mobile.goto(`${BASE}/`, { waitUntil: "networkidle" });
 const navOverflow = await mobile.evaluate(() => {
   const bar = document.querySelector("nav.fixed");

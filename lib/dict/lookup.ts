@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { ekilexConfigured, fetchEkilexDetails, searchEkilex } from "@/lib/ekilex/client";
 import { mapEkilexDetails } from "@/lib/ekilex/mapper";
+import { mergeExamples, parseExamples, serialiseExamples } from "./examples";
 import { fetchEnglishGloss } from "./wiktionary";
 import { translateWithAnu } from "@/lib/tutor/translate";
 
@@ -41,7 +42,7 @@ export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
     where: { id: lexemeId },
     select: {
       id: true, lemma: true, ekilexWordId: true,
-      translation: true, provenance: true, government: true,
+      translation: true, provenance: true, government: true, examples: true,
       // The marker alone is not proof: re-running the seed rewrites forms with
       // principal parts only while leaving ekilexWordId set, which would strand
       // the word half-upgraded forever.
@@ -73,6 +74,9 @@ export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
       // A worked example we already hold teaches more, so it is not overwritten.
       government: lexeme.government ?? mapped.government ?? undefined,
       notes: mapped.notes,
+      // Sentences are merged rather than replaced: a translation already
+      // resolved for one survives the refetch, exactly as the gloss does.
+      examples: serialiseExamples(mergeExamples(parseExamples(lexeme.examples), mapped.examples)),
       ekilexWordId: mapped.ekilexWordId,
       provenance: "EKILEX",
       fetchedAt: new Date(),
@@ -101,7 +105,7 @@ export async function lookupAndStore(query: string): Promise<LookupResult | null
   // Already stored under this lemma from an earlier lookup or the seed.
   const existing = await prisma.lexeme.findUnique({
     where: { lemma_pos: { lemma: mapped.lemma, pos: mapped.pos } },
-    select: { id: true, translation: true },
+    select: { id: true, translation: true, examples: true },
   });
 
   const { translation, source } = await resolveTranslation(
@@ -118,6 +122,7 @@ export async function lookupAndStore(query: string): Promise<LookupResult | null
     gradationNote: mapped.gradationNote,
     government: mapped.government,
     notes: mapped.notes,
+    examples: serialiseExamples(mergeExamples(parseExamples(existing?.examples), mapped.examples)),
     ekilexWordId: mapped.ekilexWordId,
     provenance: "EKILEX",
     fetchedAt: new Date(),

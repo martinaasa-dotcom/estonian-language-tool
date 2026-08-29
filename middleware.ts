@@ -1,21 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { supabaseConfigured } from "@/lib/auth/mode";
 import { isAllowedEmail, safeNext } from "@/lib/auth/access";
-import { testUserId } from "@/lib/auth/testSession";
 
 /**
  * Refreshes the Supabase session cookie on every request (required by
  * @supabase/ssr — Server Components can't write cookies themselves) and
- * gates every route except sign-in, its OAuth callback and the public policy
- * pages behind a session.
+ * gates every route except the public ones — the landing page, sign-in, the
+ * OAuth callback and the offline fallback — behind a session.
  *
- * Also enforces the sign-in allowlist. That check lives here rather than only in
- * the callback so that revoking access takes effect on the next request a user
- * makes, not whenever their session happens to expire.
+ * With no Supabase keys configured the app is a single-learner local install
+ * (lib/auth/mode.ts) and there is no session to refresh or gate — so the
+ * middleware steps aside entirely rather than redirecting to a sign-in page
+ * that could never sign anyone in.
+ *
+ * It also enforces the optional sign-in allowlist, here rather than only in the
+ * OAuth callback, so revoking access takes effect on the next request somebody
+ * makes instead of whenever their session happens to expire.
  */
 export async function middleware(request: NextRequest) {
-  // Local browser tests only; impossible in a production build. See testSession.
-  if (testUserId()) return NextResponse.next({ request });
+  if (!supabaseConfigured()) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
 
@@ -40,12 +44,15 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
   const isPublicPath =
-    pathname.startsWith("/sign-in") ||
-    pathname.startsWith("/auth/callback") ||
-    pathname.startsWith("/privacy") ||
-    pathname.startsWith("/terms");
+    request.nextUrl.pathname.startsWith("/sign-in") ||
+    request.nextUrl.pathname.startsWith("/welcome") ||
+    request.nextUrl.pathname.startsWith("/auth/callback") ||
+    request.nextUrl.pathname.startsWith("/privacy") ||
+    request.nextUrl.pathname.startsWith("/terms") ||
+    // The offline fallback holds no data and has to render from the service
+    // worker's cache, where there is no session to check.
+    request.nextUrl.pathname.startsWith("/offline");
 
   // A signed-in address that is no longer on the allowlist is signed out here,
   // before any page or server action reads its data.
@@ -59,17 +66,29 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user && !isPublicPath) {
-    if (pathname.startsWith("/api/")) {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     }
-    const signIn = request.nextUrl.clone();
-    signIn.pathname = "/sign-in";
-    signIn.search = "";
-    signIn.searchParams.set("next", safeNext(pathname + request.nextUrl.search));
-    return NextResponse.redirect(signIn);
+    // A first-time visitor has nothing to sign back in to, so the front door is
+    // the landing page rather than an account form. Anywhere deeper keeps the
+    // old behaviour: sign in, then carry on to where they were going.
+    const target = request.nextUrl.clone();
+    if (request.nextUrl.pathname === "/") {
+      target.pathname = "/welcome";
+      target.search = "";
+    } else {
+      target.pathname = "/sign-in";
+      target.search = "";
+      target.searchParams.set(
+        "next", safeNext(request.nextUrl.pathname + request.nextUrl.search),
+      );
+    }
+    return NextResponse.redirect(target);
   }
 
-  if (user && pathname.startsWith("/sign-in")) {
+  // /welcome stays reachable when signed in — it is a page you might want to
+  // show someone. Only the sign-in form itself is pointless once you are in.
+  if (user && request.nextUrl.pathname.startsWith("/sign-in")) {
     const home = request.nextUrl.clone();
     home.pathname = "/";
     home.search = "";
@@ -81,6 +100,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

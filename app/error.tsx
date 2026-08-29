@@ -1,47 +1,44 @@
 "use client";
 
 import { useEffect } from "react";
+import { TriangleAlert } from "lucide-react";
 import { Button, ButtonLink } from "@/components/Button";
 
 /**
- * The error state required of every view by docs/08-ux-ia-a11y.md §4, applied
- * once at the route level so a view cannot ship without one.
+ * Something threw on the server.
  *
- * `digest` is Next.js's server-side correlation id: the real message and stack
- * stay on the server, and this is the only handle a learner can quote. Showing
- * it is the difference between a bug report we can act on and "it broke".
+ * The message is shown rather than hidden: this is a study tool someone is
+ * running for themselves, and "something went wrong" with no detail turns a
+ * fixable configuration problem — usually a missing DATABASE_URL — into a
+ * mystery. It is deliberately calm about it, and never suggests the learner has
+ * lost anything, because they have not: the review log is only ever appended to.
  */
-export default function ErrorBoundary({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    console.error("[ui]", error.message, error.digest ?? "");
+    console.error(error);
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-lg px-5 py-20 text-center">
-      <h1 className="est text-[26px] font-bold" style={{ color: "var(--ink)" }}>
-        That did not load
+    <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
+      <TriangleAlert size={28} aria-hidden style={{ color: "var(--hard-ink)" }} />
+      <h1 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+        That screen didn&rsquo;t load
       </h1>
-      <p className="mx-auto mt-2 max-w-[46ch] text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-        Something on this page failed. Your deck and your review history are untouched — nothing
-        is saved by loading a page.
+      <p className="text-base" style={{ color: "var(--ink-2)" }}>
+        Nothing has been lost — your deck and review history are untouched. Trying again usually
+        works; if it keeps happening, the message below is the useful part.
       </p>
-
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <code
+        className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-xs"
+        style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+      >
+        {error.message || "Unknown error"}
+        {error.digest ? ` (${error.digest})` : ""}
+      </code>
+      <div className="mt-2 flex gap-3">
         <Button variant="primary" onClick={reset}>Try again</Button>
         <ButtonLink href="/">Back to Today</ButtonLink>
       </div>
-
-      {error.digest && (
-        <p className="mt-8 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-          Reference <code className="tnum">{error.digest}</code>
-        </p>
-      )}
-    </div>
+    </main>
   );
 }

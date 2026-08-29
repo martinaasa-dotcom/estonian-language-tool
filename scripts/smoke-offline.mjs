@@ -7,7 +7,7 @@
  * grade is held on the device, restore the network, confirm it lands in the
  * database with the timestamp it was taken at.
  *
- *   E2E_TEST_USER_ID=… NEXT_PUBLIC_ENABLE_SW=1 npm run dev
+ *   NEXT_PUBLIC_SUPABASE_URL= NEXT_PUBLIC_SUPABASE_ANON_KEY= NEXT_PUBLIC_ENABLE_SW=1 npm run dev
  *   node scripts/smoke-offline.mjs
  */
 import { chromium } from "playwright";
@@ -25,6 +25,40 @@ const check = (label, ok, extra = "") => {
   if (!ok) failures++;
   console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
 };
+
+
+/**
+ * Answers whichever kind of card is on screen.
+ *
+ * Review has three shapes — flip, typed, and multiple choice — chosen per card
+ * and per preference, so a test that only knows about "Show answer" silently
+ * stops testing anything the day the default changes. It did.
+ */
+async function answerOneCard() {
+  const show = app.getByRole("button", { name: /Show answer/ });
+  if (await show.count()) {
+    await show.first().click();
+    await page.waitForTimeout(250);
+    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard)/ });
+    if (await rate.count()) { await rate.first().click(); return true; }
+  }
+
+  // Multiple choice: the options are numbered 1-4.
+  const choice = app.locator("button").filter({ hasText: /^[1-4]\S/ });
+  if (await choice.count()) { await choice.first().click(); return true; }
+
+  // Typed: fill something wrong and submit — a wrong answer still grades.
+  const input = page.locator("main input[type='text'], main input:not([type])").first();
+  if (await input.count()) {
+    await input.fill("zzz");
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(250);
+    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
+    if (await rate.count()) { await rate.first().click(); }
+    return true;
+  }
+  return false;
+}
 
 const outboxSize = () => page.evaluate(() => new Promise((resolve) => {
   const req = indexedDB.open("kodukeel", 1);
@@ -49,7 +83,8 @@ const swReady = await page.evaluate(async () => {
 });
 check("the service worker registers", swReady);
 
-const hasCards = (await app.getByRole("button", { name: /Show answer/ }).count()) > 0;
+const hasCards = (await app.locator("button").count()) > 2 &&
+  !/Nothing due|No cards yet/i.test((await page.textContent("body")) ?? "");
 check("a review session is available to work with", hasCards);
 if (!hasCards) {
   console.log("\nNo due cards — run scripts/demo-data.ts first.");
@@ -75,9 +110,7 @@ check("the session is stashed for offline use", stashed > 0, `${stashed} cards`)
 // ── Pull the plug ────────────────────────────────────────────────────────────
 await ctx.setOffline(true);
 
-await app.getByRole("button", { name: /Show answer/ }).click();
-await page.waitForTimeout(200);
-await app.getByRole("button", { name: /^Good/ }).click();
+await answerOneCard();
 // The server action has to fail and the grade has to reach IndexedDB.
 await page.waitForFunction(
   () => /saved on this device|Offline/i.test(document.body.textContent ?? ""),
@@ -93,17 +126,12 @@ check("the learner is told their work is saved locally",
   /saved on this device|Offline/i.test(bannerOffline ?? ""));
 
 // Keep going: a session must not stop at the first failed grade.
-const stillReviewing = (await app.getByRole("button", { name: /Show answer|Again|Good/ }).count()) > 0;
+const stillReviewing = (await app.locator("button").count()) > 2;
 check("the session continues after a failed grade", stillReviewing);
 
 if (stillReviewing) {
-  const show = app.getByRole("button", { name: /Show answer/ });
-  if (await show.count()) {
-    await show.click();
-    await page.waitForTimeout(200);
-    await app.getByRole("button", { name: /^Easy/ }).click();
-    await page.waitForTimeout(1500);
-  }
+  await answerOneCard();
+  await page.waitForTimeout(1500);
 }
 const queuedAfterTwo = await outboxSize();
 check("further offline grades queue too", queuedAfterTwo >= queuedAfterOne, `${queuedAfterTwo} queued`);
@@ -113,7 +141,7 @@ await page.reload({ waitUntil: "domcontentloaded" }).catch(() => {});
 await page.waitForTimeout(2000);
 const offlineBody = (await page.textContent("body")) ?? "";
 check("review still renders with the network gone",
-  /Show answer|left/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
+  /left|Show answer|Pick the meaning/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
   offlineBody.slice(0, 60).replace(/\s+/g, " "));
 
 // The outbox must survive the reload.

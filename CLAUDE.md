@@ -2,9 +2,10 @@
 
 ## What this is
 
-A personal Estonian learning dashboard — a working MVP. `docs/` holds the plan it was built from;
-`docs/13-mvp-status.md` says what is built, what is deliberately not, and the known limitations.
-Read that first.
+An Estonian learning app — dictionary, learning path, spaced-repetition review, practice games and a
+grammar tutor. `docs/` holds the plan it was built from; `docs/13-mvp-status.md` says what is built,
+what is deliberately not, and the known limitations. Read that first, and §6 of it especially — that
+is the current state.
 
 ## Read before writing code
 
@@ -12,12 +13,22 @@ Read that first.
 2. `docs/02-estonian-domain.md` — the linguistic model. Non-obvious and load-bearing.
 3. `docs/04-data-model.md` — the schema.
 4. `docs/03-architecture.md` §6 — the ADRs. Do not silently reverse one.
+5. `docs/14-design-system.md` — the visual language: palette, tokens, motion, and what each colour
+   is allowed to mean. Read it before adding a colour, a radius or a shadow.
 
 ## Rules that are not negotiable
 
 **Never ship a credential to the client.** The Anthropic and Ekilex keys live only in server-side
 Route Handlers and server actions. Nothing gets a `NEXT_PUBLIC_` prefix unless it is genuinely
 public. CI greps the build output for key patterns.
+
+**Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
+seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
+*reordered* to make an exercise (`lib/estonian/cloze.ts`). The model may translate into English and
+explain grammar; anything Estonian it produces in chat is boxed and tagged, and never stored as a
+form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
+`lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
+the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
@@ -53,29 +64,63 @@ the state exactly, because `grade()` takes `now` as a parameter.
 **Never re-add the iframes.** Sõnaveeb and Ekilex send `X-Frame-Options: DENY`; Speakly has no public
 API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 
-**Review must work offline.** It is the daily path. It may not depend on any network call. This is
-built: a service worker, a stashed session, and an IndexedDB outbox that replays through
-`replayGrades`. Anything added to the review path must survive `navigator.onLine === false`.
+**Review must work offline.** It is the daily path, and it may not depend on any network call.
+A grade that cannot reach the server goes into the IndexedDB outbox (`lib/offline/db.ts`) and is
+replayed in order by `replayGrades` with the timestamp it was actually answered at — never dropped,
+never re-stamped. Replay is idempotent because the client generates each grade's id. Anything added
+to the review path must survive `navigator.onLine === false`, and `scripts/smoke-offline.mjs`
+checks that in a browser. (ADR-015.)
 
-**AI spending is always metered.** `lib/usage` has no off switch and fails closed, because sign-up is
-open by default. Any new path that calls a paid provider goes through `authoriseCall` before the
+**AI spending is always metered.** `lib/usage` has no off switch and fails closed, because sign-up
+is open by default. Any new path that calls a paid provider goes through `authoriseCall` before the
 call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table — a
 cap that fails open is not a cap.
 
 **Nothing in a `"use server"` file may take an owner id from its caller.** Every export there is a
-public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter,
-it belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
+public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
+belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
+
+**The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
+learner sees, so an edit to one is an edit for everybody — it is attributed (`editedBy`), it may
+replace only the principal parts, and it must never touch a retrieved Ekilex paradigm. Anything
+scoped to a person — cards, reviews, tasks — is always filtered by `ownerId`, including in an
+`updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
+
+**Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
+the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
+Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
+awarded for something that never happened. The only exceptions are values no log can reconstruct: a
+personal best, and which days a streak shield has already covered. (ADR-014.)
+
+**Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
+own scores — they write to the same review log, so the scheduler sees what was actually practised.
+An abandoned round writes nothing. (ADR-016.)
+
+**Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
+local learner; with them, every route is gated. It keys off the absence of configuration only —
+never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
-- `lib/estonian/` stays free of React, Next.js and Prisma — pure functions, 100% unit tested.
+- `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/` and
+  `lib/offline/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
+  needs the database lives in `lib/progress/` or a route.
+- Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
+  `components/icons.tsx` is the only place that turns one into a component.
+- Settings go through `lib/settings/store.ts`. No new string keys scattered through pages.
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
   offline). A view without an empty state is not finished.
 - Unit tests stay hermetic: no database, no network, no clock you do not control. Anything needing
   Postgres is an `*.itest.ts` under `npm run test:db`. The unit suite gates every commit and must
   stay fast enough that nobody is tempted to skip it.
+- Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
+  meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
+  free for decoration.
+- Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
+  page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
+  to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring.
 - Estonian text inputs get the diacritic bar.
 
@@ -86,25 +131,37 @@ it belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGrade
 keeps a `cache_control` breakpoint on the static Estonian system prompt. This supersedes the
 original ADR-004; see `docs/13-mvp-status.md` §2.
 
+**A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
+this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
+individual's deck, searches or answer history. Do not widen it. (ADR-019.)
+
+**Never score pronunciation.** There is no verified Estonian speech recogniser available here.
+Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
+
 ## Commands
 
 ```
 npm run setup          # install + create db + seed (first run)
 npm run dev            # dev server
 npm run typecheck      # tsc --noEmit
-npm run test           # unit tests (Vitest) — hermetic, no database
+npm run test           # unit tests (Vitest) — hermetic: no database, no network
 npm run test:db        # integration tests — needs Postgres in DATABASE_URL
 npm run check:secrets  # fails if a credential reached the client bundle
 npm run db:seed        # reload the built-in dictionary
+npm run demo           # two months of sample history, for looking at the charts
+npm run test:e2e       # every browser suite — needs the server running
+npm run test:browser   # the newer browser suites: routes, modes, offline, a11y
 ```
 
-Browser tests need a stand-in session, which only works outside a production build:
+With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the
+browser suites possible without driving a Google sign-in from Playwright.
 
-```
-E2E_TEST_USER_ID=me npm run dev     # then, in another shell:
-node scripts/smoke-new.mjs          # every route renders, no console errors
-node scripts/smoke-interact.mjs     # each mode does what it claims
-```
+`scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo and the command
+palette. `scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar
+reference (including that every form on it says where it came from), dictation, the printable
+worksheet and its answer key, the retention reading, and the shortcut sheet.
+`scripts/smoke-offline.mjs` is the one worth keeping green above all: it pulls the plug, grades,
+reloads with the network still down, and checks the queue drains when it comes back.
 
 CI runs typecheck, unit tests, integration tests against a real Postgres, the production build and
 the credential scan. It is the enforcement behind the rules above — do not add a rule without one.

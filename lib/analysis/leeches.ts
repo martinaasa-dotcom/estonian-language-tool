@@ -125,7 +125,6 @@ export function rankLeeches(candidates: LeechCandidate[], limit = 8): Leech[] {
  * request is for a way to tell them apart.
  */
 export function buildClinicQuestion(leech: Leech, confusable: string[]): string {
-  const word = leech.lemma ?? leech.front;
   const parts = [
     `I keep failing this card and I do not know why.`,
     ``,

@@ -1,7 +1,7 @@
 "use client";
 
 import { isValidPending, type PendingGrade } from "./outbox";
-import type { ReviewCard } from "@/app/review/ReviewSession";
+import type { ReviewCard } from "@/app/(app)/review/ReviewSession";
 
 /**
  * The browser side of offline review: a durable outbox of grades, and the last

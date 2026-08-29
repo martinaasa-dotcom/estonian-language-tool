@@ -3,13 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireUserId } from "@/lib/auth/session";
+import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
-import { BADGES, type BadgeStats, computeStreakWithShields, earnedBadgeKeys } from "@/lib/achievements/badges";
+import { unitById } from "@/lib/collections/path";
+import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
+import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
+import { translateSentenceWithAnu } from "@/lib/tutor/translate";
+import { checkAchievementsFor } from "@/lib/progress/achievements";
+import { resolveStreakFor } from "@/lib/progress/summary";
+import {
+  numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
+} from "@/lib/settings/store";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
-import { MAX_PASSAGE_CHARS, buildCloze, type KnownForm } from "@/lib/estonian/cloze";
+import { MAX_PASSAGE_CHARS, buildPassageCloze, type KnownForm } from "@/lib/estonian/passage";
 import { PRINCIPAL_FORM_TYPES, isPrincipalFormType } from "@/lib/estonian/types";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
@@ -34,9 +43,6 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
 async function addCardsFor(
   owner: string, lexemeId: string, types: CardType[], source: string,
 ) {
-  // Words are stamped with the course week they were added in, so "week 6
-  // vocabulary" is a real query later rather than something to reconstruct.
-  const classWeek = await currentClassWeek(owner);
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     include: { forms: true },
@@ -62,7 +68,6 @@ async function addCardsFor(
     data: generated.map((c) => ({
       ownerId: owner,
       lexemeId,
-      classWeek,
       cardType: c.cardType,
       front: c.front,
       back: c.back,
@@ -82,14 +87,42 @@ async function addCardsFor(
   return { ok: true as const, added: generated.length };
 }
 
+/** The scheduling fields a client hands back to undo a grade. */
+const SchedulingSchema = z.object({
+  due: z.string(),
+  stability: z.number().min(0).max(100_000),
+  difficulty: z.number().min(0).max(20),
+  elapsedDays: z.number().int().min(0).max(100_000),
+  scheduledDays: z.number().int().min(0).max(100_000),
+  reps: z.number().int().min(0).max(100_000),
+  lapses: z.number().int().min(0).max(100_000),
+  state: z.number().int().min(0).max(3),
+  learningSteps: z.number().int().min(0).max(20),
+  lastReview: z.string().nullable(),
+});
+
+export type SchedulingSnapshot = z.infer<typeof SchedulingSchema>;
+
 /**
  * Records a grade. Writes the Review row first: the review log is append-only and
  * is the one thing we cannot reconstruct, so it must never be lost to a later failure.
+ *
+ * `reviewedAt` is accepted so a grade made offline can be logged at the moment it
+ * actually happened rather than whenever the connection came back — otherwise a
+ * whole evening of offline review would land in one second the next morning and
+ * quietly lie to the streak, the heatmap and the daily goal. It is clamped to the
+ * past: a client cannot book reviews into the future.
  */
-export async function gradeCard(cardId: string, rating: RatingValue, durationMs: number) {
+export async function gradeCard(
+  cardId: string, rating: RatingValue, durationMs: number, reviewedAt?: string,
+) {
   const ownerId = await requireUserId();
   const card = await prisma.card.findFirst({ where: { id: cardId, ownerId } });
   if (!card) return { ok: false as const, error: "Card not found." };
+
+  const now = new Date();
+  const when = reviewedAt ? new Date(reviewedAt) : now;
+  const at = Number.isNaN(when.getTime()) || when > now ? now : when;
 
   await prisma.review.create({
     data: {
@@ -97,6 +130,7 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
       cardId,
       lexemeId: card.lexemeId,
       rating,
+      reviewedAt: at,
       durationMs: Math.min(Math.max(durationMs, 0), 600_000),
       stateBefore: card.state,
       targetCase: card.targetCase,
@@ -115,7 +149,7 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
     lastReview: card.lastReview,
     learningSteps: card.learningSteps,
   };
-  const next = grade(current, rating);
+  const next = grade(current, rating, at);
 
   await prisma.card.update({
     where: { id: cardId },
@@ -143,6 +177,12 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
  * A thin authentication wrapper: the owner comes from the session, never from
  * the caller, and the work lives in `lib/srs/replay` where it can be tested
  * against a real database without one.
+ *
+ * Idempotent by construction — the client generates each grade's id, so a
+ * replay interrupted after the commit but before the client heard about it
+ * re-sends rows that already exist and gets them back as settled. That is only
+ * safe because `Review` is append-only: there is no prior state to reconcile,
+ * only facts that either landed or did not.
  */
 export async function replayGrades(batch: ReplayItem[]) {
   const ownerId = await requireUserId();
@@ -153,10 +193,56 @@ export async function replayGrades(batch: ReplayItem[]) {
   return { ok: true as const, settled: result.settled };
 }
 
+/**
+ * Puts a card back the way it was before the last grade.
+ *
+ * The Review row stays. `Review` is append-only and is the input to FSRS
+ * parameter optimisation, so deleting a row to make a mistake disappear would
+ * corrupt the one table we cannot rebuild — and it would also be a lie: the
+ * card really was shown, and really was answered. What undo restores is the
+ * *scheduling*, which is derived state and safe to rewind.
+ *
+ * The previous state comes from the client because that is the only place it
+ * still exists; it is validated and range-clamped on the way in, and can only
+ * ever be applied to a card the caller already owns.
+ */
+export async function undoGrade(cardId: string, previous: SchedulingSnapshot) {
+  const ownerId = await requireUserId();
+  const parsed = SchedulingSchema.safeParse(previous);
+  if (!parsed.success) return { ok: false as const, error: "That card state isn't valid." };
+
+  const card = await prisma.card.findFirst({ where: { id: cardId, ownerId }, select: { id: true } });
+  if (!card) return { ok: false as const, error: "Card not found." };
+
+  const p = parsed.data;
+  const due = new Date(p.due);
+  if (Number.isNaN(due.getTime())) return { ok: false as const, error: "That card state isn't valid." };
+
+  await prisma.card.update({
+    where: { id: cardId },
+    data: {
+      due,
+      stability: p.stability,
+      difficulty: p.difficulty,
+      elapsedDays: p.elapsedDays,
+      scheduledDays: p.scheduledDays,
+      reps: p.reps,
+      lapses: p.lapses,
+      state: p.state,
+      learningSteps: p.learningSteps,
+      lastReview: p.lastReview ? new Date(p.lastReview) : null,
+    },
+  });
+
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
 export async function setCardSuspended(cardId: string, suspended: boolean) {
   const ownerId = await requireUserId();
   await prisma.card.updateMany({ where: { id: cardId, ownerId }, data: { suspended } });
   revalidatePath("/words");
+  revalidatePath("/progress"); // the sticking-points list lives there
   revalidatePath("/");
   return { ok: true as const };
 }
@@ -169,15 +255,83 @@ export async function deleteCard(cardId: string) {
   return { ok: true as const };
 }
 
+// ────────────────────────────── Examples ──────────────────────────────────
+
+/**
+ * Translates one attested example sentence into English, and keeps it.
+ *
+ * Ekilex has no English on a reader key, so a learner meeting "Kitsed olid ojal
+ * joomas." has the grammar in front of them and no way in. Anu translates *into*
+ * English — the direction ADR-005 permits — and the result is stored on the
+ * sentence so it is fetched once, not on every render, and is tagged AI so the
+ * page can say where it came from.
+ */
+export async function translateExample(lexemeId: string, sentence: string) {
+  await requireUserId();
+  const lexeme = await prisma.lexeme.findUnique({
+    where: { id: lexemeId },
+    select: { id: true, examples: true },
+  });
+  if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
+
+  const examples = parseExamples(lexeme.examples);
+  const target = examples.find((e) => e.et === sentence);
+  if (!target) return { ok: false as const, error: "That sentence is not on this word." };
+  if (target.en) return { ok: true as const, en: target.en };
+
+  const en = await translateSentenceWithAnu(sentence);
+  if (!en) return { ok: false as const, error: "Anu could not translate that one." };
+
+  await prisma.lexeme.update({
+    where: { id: lexeme.id },
+    data: {
+      examples: serialiseExamples(
+        examples.map((e) => (e.et === sentence ? { ...e, en } : e)),
+      ),
+    },
+  });
+  revalidatePath("/dictionary");
+  return { ok: true as const, en };
+}
+
+/**
+ * Adds a sentence of the learner's own to a word.
+ *
+ * Their sentence, their word — a line from class, or one Anu just corrected.
+ * Stored with `source: "USER"` so the entry can distinguish it from the
+ * lexicographers' examples rather than quietly passing it off as attested.
+ */
+export async function addExample(lexemeId: string, sentence: string, translation?: string) {
+  await requireUserId();
+  const et = sentence.trim();
+  if (et.length < 4) return { ok: false as const, error: "That is too short to be a sentence." };
+
+  const lexeme = await prisma.lexeme.findUnique({
+    where: { id: lexemeId },
+    select: { id: true, examples: true },
+  });
+  if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
+
+  const merged = mergeExamples(parseExamples(lexeme.examples), [
+    { et, en: translation?.trim() || null, source: "USER" },
+  ]);
+  await prisma.lexeme.update({
+    where: { id: lexeme.id },
+    data: { examples: serialiseExamples(merged) },
+  });
+  revalidatePath("/dictionary");
+  return { ok: true as const };
+}
+
 // ─────────────────────────────── Words ────────────────────────────────────
 
 /**
  * Length caps on anything a person types into shared or stored text.
  *
- * Not a formatting preference — without them a single request can push megabytes
- * into the database, and a lemma is a word. Truncating rather than rejecting:
- * over-long input is almost always a paste accident, and losing the whole entry
- * to a stray clipboard is a worse outcome than a trimmed note.
+ * Not a formatting preference — without them a single request can push
+ * megabytes into the database, and a lemma is a word. Truncating rather than
+ * rejecting: over-long input is almost always a paste accident, and losing the
+ * whole entry to a stray clipboard is the worse outcome.
  */
 const LIMITS = {
   lemma: 80,
@@ -193,13 +347,12 @@ const capped = (value: string | undefined | null, max: number): string =>
   (value ?? "").trim().slice(0, max);
 
 
-
 /**
  * Adds a word to the shared dictionary.
  *
- * Requires a session even though it writes shared rather than personal data:
- * every export of this file is a public endpoint, and "the middleware will have
- * caught it" is the assumption that makes a gap in the middleware a data breach.
+ * Requires a session even though the row is shared rather than personal: every
+ * export of this file is a public endpoint, and "the middleware will have caught
+ * it" is the assumption that turns a gap in the middleware into a data breach.
  * It also establishes who to attribute the entry to.
  */
 export async function createLexeme(input: {
@@ -255,9 +408,9 @@ export async function createLexemeWithForms(input: {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
 
-  // Only the principal parts are user-managed. Anything else on this lexeme came
-  // from Ekilex and is authoritative; a hand edit must not be able to submit one.
   const forms = Object.entries(input.forms)
+    // Only the principal parts are user-managed. Everything else on this lexeme
+    // came from Ekilex and is authoritative; a hand edit must not submit one.
     .map(([formType, value]) => ({ formType, value: capped(value, LIMITS.form) }))
     .filter((f) => f.value && isPrincipalFormType(f.formType));
 
@@ -282,14 +435,11 @@ export async function createLexemeWithForms(input: {
     notes: capped(input.notes, LIMITS.notes) || null,
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
-    // An entry Ekilex supplied stays marked as Ekilex's even after a correction —
-    // relabelling it USER would quietly discard the fact that a paradigm came
-    // from the Institute. The edit is recorded alongside instead.
-    ...(existing && existing.provenance !== "SEED" && existing.provenance !== "EKILEX"
-      ? { provenance: "USER" }
-      : existing
-        ? {}
-        : { provenance: "USER" }),
+    // An entry Ekilex supplied stays marked as Ekilex's after a correction —
+    // relabelling it USER would quietly discard where the paradigm came from.
+    ...(existing && (existing.provenance === "SEED" || existing.provenance === "EKILEX")
+      ? {}
+      : { provenance: "USER" }),
     editedBy: ownerId,
     editedAt: new Date(),
   };
@@ -298,9 +448,9 @@ export async function createLexemeWithForms(input: {
     ? await prisma.lexeme.update({ where: { id: existing.id }, data })
     : await prisma.lexeme.create({ data });
 
-  // Replace only the principal parts. The previous version deleted every row for
-  // the lexeme, which threw away the full Ekilex paradigm — the one thing on the
-  // entry that cannot be reconstructed — whenever anybody corrected a typo.
+  // Replace only the principal parts. Deleting every row for the lexeme threw
+  // away the retrieved Ekilex paradigm — the one thing on an entry that cannot
+  // be reconstructed — whenever anybody corrected a typo.
   await prisma.form.deleteMany({
     where: { lexemeId: lexeme.id, formType: { in: [...PRINCIPAL_FORM_TYPES] } },
   });
@@ -312,9 +462,8 @@ export async function createLexemeWithForms(input: {
   // drilled on the mistake she just fixed. Only the text is rewritten — the FSRS
   // scheduling is untouched, so a correction never costs her progress.
   // Scoped to this learner's own cards. The dictionary is shared, but a deck is
-  // not: rewriting every user's cards because one of them corrected a spelling
-  // would reach into strangers' data, and they would have no idea why their card
-  // changed. Their own copy follows when they next edit or re-add the word.
+  // not: rewriting every user's cards because one of them fixed a spelling
+  // reaches into strangers' data, and they would have no idea why a card changed.
   if (existing && (existing.lemma !== lemma || existing.translation !== translation)) {
     await prisma.card.updateMany({
       where: { ownerId, lexemeId: lexeme.id, cardType: "RECOGNITION" },
@@ -355,7 +504,6 @@ export async function importWords(rows: { lemma: string; translation: string; po
   let created = 0;
   let cards = 0;
   const skipped: string[] = [];
-
   const truncated = rows.length > MAX_IMPORT_ROWS;
 
   for (const row of rows.slice(0, MAX_IMPORT_ROWS)) {
@@ -388,78 +536,19 @@ export async function importWords(rows: { lemma: string; translation: string; po
 
 // ────────────────────────────── Achievements ───────────────────────────────
 
-const SPRINT_BEST_KEY = "sprintBest";
-const STREAK_SHIELDS_KEY = "streakShields";
-const STREAK_SHIELD_DATES_KEY = "streakShieldDates";
-const SHIELD_AWARD_BADGES = new Set(["streak_7", "streak_30", "streak_100"]);
-
 /**
- * Resolves the current streak, applying any banked streak shields (Duolingo's
- * "streak freeze") to bridge missed days. Reads the review log over a wide
- * window — long enough for the streak_100 badge to actually be reachable,
- * unlike the 30-day window a shield-unaware streak used to be limited to —
- * and persists any newly-spent shields so a bridged day is never re-charged
- * on a later call (computeStreakWithShields is pure; this is its DB shell).
+ * Resolves the current streak for whoever is signed in, applying any banked
+ * streak shields (Duolingo's "streak freeze") to bridge missed days.
+ *
+ * The logic lives in lib/progress/summary.ts so a Server Component can reach it
+ * without importing this whole action module. This wrapper takes no owner id on
+ * purpose: an exported Server Action is a public endpoint, and one that read a
+ * streak for any id passed to it would happily report on someone else's.
  */
 export async function resolveStreak() {
-  // Owner comes from the session, never from an argument: this file is
-  // `"use server"`, so an `ownerId` parameter here would be a public endpoint
-  // letting any signed-in user read and rewrite another learner's streak.
   const ownerId = await requireUserId();
-  // Distinct *days*, not every review. The streak only cares whether a day had
-  // any activity, and loading a year of rows to answer that meant a learner
-  // doing sixty reviews a day pulled twenty thousand rows into memory on every
-  // Today render — a query that gets slower the more someone uses the app, which
-  // is the worst shape a query can have. At most 400 rows come back now.
-  // Returned as text, not as a date. The driver parses a Postgres `date` at
-  // *local* midnight, so `toISOString()` on it shifts the day backwards
-  // anywhere east of UTC — an off-by-one that would silently break a streak for
-  // a learner in Tallinn, which is everybody this app is for.
-  const [days, shieldSetting, datesSetting] = await Promise.all([
-    prisma.$queryRaw<{ day: string }[]>`
-      SELECT DISTINCT TO_CHAR("reviewedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
-      FROM "Review"
-      WHERE "ownerId" = ${ownerId}
-        AND "reviewedAt" >= ${new Date(Date.now() - 400 * 86_400_000)}
-      ORDER BY day DESC
-    `,
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } }),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } } }),
-  ]);
-
-  const shieldsAvailable = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
-  let shieldedDates: string[] = [];
-  if (datesSetting) {
-    try {
-      const parsed: unknown = JSON.parse(datesSetting.value);
-      if (Array.isArray(parsed)) shieldedDates = parsed.filter((d): d is string => typeof d === "string");
-    } catch {
-      shieldedDates = [];
-    }
-  }
-
-  const result = computeStreakWithShields(
-    days.map((d) => new Date(`${d.day}T00:00:00.000Z`)),
-    shieldsAvailable,
-    shieldedDates,
-  );
-
-  if (result.newlyShieldedDates.length > 0) {
-    await Promise.all([
-      prisma.setting.upsert({
-        where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
-        create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(result.shieldsRemaining) },
-        update: { value: String(result.shieldsRemaining) },
-      }),
-      prisma.setting.upsert({
-        where: { ownerId_key: { ownerId, key: STREAK_SHIELD_DATES_KEY } },
-        create: { ownerId, key: STREAK_SHIELD_DATES_KEY, value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
-        update: { value: JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]) },
-      }),
-    ]);
-  }
-
-  return { ok: true as const, streak: result.streak, shieldsAvailable: result.shieldsRemaining };
+  const result = await resolveStreakFor(ownerId);
+  return { ok: true as const, ...result };
 }
 
 /**
@@ -468,78 +557,369 @@ export async function resolveStreak() {
  * -earned key is never re-awarded or removed, so a badge earned once is kept
  * forever even if the underlying stat later dips (e.g. a streak breaks).
  *
- * Reaching a streak_7/30/100 badge for the first time also banks a streak
- * shield — the milestone worth protecting is exactly the one just reached.
+ * The work itself lives in lib/progress/achievements.ts, so a page that has
+ * already loaded the learner's deck and day can award badges from what it
+ * holds instead of asking the database all over again.
+ *
+ * No revalidatePath here: this is called from a Server Component render (Today)
+ * as well as from actual actions, and revalidating during render is an error.
  */
 export async function checkAchievements(session?: { count: number; accuracy: number }) {
   const ownerId = await requireUserId();
-  const [streakResult, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
-    resolveStreak(),
-    prisma.review.count({ where: { ownerId } }),
-    prisma.card.count({ where: { ownerId, state: 2 } }),
-    prisma.lexeme.count(),
-    prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } }),
-    prisma.review.findMany({
-      where: { ownerId, targetCase: { not: null } },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
-  ]);
-
-  const tally = new Map<string, { ok: number; total: number }>();
-  for (const r of caseReviews) {
-    if (!r.targetCase) continue;
-    const entry = tally.get(r.targetCase) ?? { ok: 0, total: 0 };
-    entry.total++;
-    if (r.rating >= 3) entry.ok++;
-    tally.set(r.targetCase, entry);
-  }
-  const bestCaseAccuracy = [...tally.entries()]
-    .filter(([, v]) => v.total >= 10)
-    .map(([grammCase, v]) => ({ grammCase, accuracy: Math.round((v.ok / v.total) * 100) }))
-    .sort((a, b) => b.accuracy - a.accuracy)[0] ?? null;
-
-  const stats: BadgeStats = {
-    streak: streakResult.streak,
-    totalReviews,
-    cardsKnown,
-    totalWords,
-    bestCaseAccuracy,
-    sprintBest: sprintSetting ? Number(sprintSetting.value) || 0 : 0,
-    session,
-  };
-
-  const earnedKeys = earnedBadgeKeys(stats);
-  if (earnedKeys.length === 0) return { ok: true as const, newBadges: [] };
-
-  const already = await prisma.achievement.findMany({
-    where: { ownerId, key: { in: earnedKeys } },
-    select: { key: true },
-  });
-  const alreadySet = new Set(already.map((a) => a.key));
-  const newKeys = earnedKeys.filter((k) => !alreadySet.has(k));
-  if (newKeys.length === 0) return { ok: true as const, newBadges: [] };
-
-  await prisma.achievement.createMany({ data: newKeys.map((key) => ({ ownerId, key })) });
-
-  const shieldsEarned = newKeys.filter((k) => SHIELD_AWARD_BADGES.has(k)).length;
-  if (shieldsEarned > 0) {
-    const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } });
-    const currentShields = current ? Number(current.value) || 0 : 0;
-    await prisma.setting.upsert({
-      where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } },
-      create: { ownerId, key: STREAK_SHIELDS_KEY, value: String(currentShields + shieldsEarned) },
-      update: { value: String(currentShields + shieldsEarned) },
-    });
-  }
-
-  // No revalidatePath here: this is called from a Server Component render (Today)
-  // as well as from actual actions, and revalidating during render is an error.
-  // Settings reads achievements fresh on every load anyway (force-dynamic).
-  return { ok: true as const, newBadges: BADGES.filter((b) => newKeys.includes(b.key)) };
+  const newBadges = await checkAchievementsFor(ownerId, session);
+  return { ok: true as const, newBadges };
 }
 
-const DAILY_GOAL_KEY = "dailyGoal";
+/** Sets the review count that fills the daily-goal ring on Today. */
+export async function setDailyGoal(goal: number) {
+  const ownerId = await requireUserId();
+  const clamped = Math.min(200, Math.max(5, Math.round(goal)));
+  await writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(clamped));
+  revalidatePath("/");
+  revalidatePath("/settings");
+  return { ok: true as const, goal: clamped };
+}
+
+/** Records a Case Sprint score, keeping only the personal best. */
+export async function recordSprintScore(score: number) {
+  const ownerId = await requireUserId();
+  const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.sprintBest), 0);
+  const isNewBest = score > best;
+  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.sprintBest, String(score));
+  return { ok: true as const, best: Math.max(score, best), isNewBest };
+}
+
+/**
+ * Records a finished match round, keeping the fastest time.
+ *
+ * Lower is better here, which is the opposite of every other score in the app —
+ * hence the explicit "0 means never played" rather than a plain `Math.min`,
+ * which would leave a first-ever round competing against zero and always losing.
+ */
+export async function recordMatchTime(seconds: number) {
+  const ownerId = await requireUserId();
+  const rounded = Math.max(1, Math.round(seconds));
+  const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.matchBest), 0);
+  const isNewBest = best === 0 || rounded < best;
+  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.matchBest, String(rounded));
+  return { ok: true as const, best: isNewBest ? rounded : best, isNewBest };
+}
+
+// ──────────────────────────── Learner preferences ──────────────────────────
+
+/** How review sessions ask their questions: type the answer, or flip the card. */
+export async function setReviewMode(mode: ReviewMode) {
+  const ownerId = await requireUserId();
+  await writeSetting(ownerId, SETTING_KEYS.reviewMode, mode === "flip" ? "flip" : "type");
+  revalidatePath("/settings");
+  revalidatePath("/review");
+  return { ok: true as const, mode };
+}
+
+/**
+ * The name shown on the class leaderboard, and whether to appear on it at all.
+ *
+ * Opt-in, and off by default: a study app should never publish who studied how
+ * much without being asked. The name is the learner's own text rather than
+ * their Google account name, so appearing on a class board never means
+ * publishing an email address or a legal name they did not choose to share.
+ */
+export async function setLeaderboardPreferences(input: { displayName: string; optIn: boolean }) {
+  const ownerId = await requireUserId();
+  const name = input.displayName.trim().slice(0, 32);
+  if (input.optIn && !name) {
+    return { ok: false as const, error: "Pick a name to show before joining the leaderboard." };
+  }
+  await Promise.all([
+    writeSetting(ownerId, SETTING_KEYS.displayName, name),
+    writeSetting(ownerId, SETTING_KEYS.leaderboard, input.optIn ? "1" : "0"),
+  ]);
+  revalidatePath("/progress");
+  revalidatePath("/settings");
+  return { ok: true as const, displayName: name, optIn: input.optIn };
+}
+
+// ───────────────────────────────── Onboarding ──────────────────────────────
+
+/**
+ * First run: record who this is, how hard they want to work, and put a real
+ * deck in front of them.
+ *
+ * The starter units matter more than they look. An empty deck is the single
+ * most likely place for a new learner to give up — everything the app can do is
+ * behind "add some words first", and a stranger has no idea which words. So
+ * onboarding finishes by actually building a deck from the path, at the level
+ * they said they were.
+ */
+export async function completeOnboarding(input: {
+  displayName: string;
+  cefr: string;
+  dailyGoal: number;
+  unitIds: string[];
+}) {
+  const ownerId = await requireUserId();
+  const goal = Math.min(200, Math.max(5, Math.round(input.dailyGoal)));
+
+  await Promise.all([
+    writeSetting(ownerId, SETTING_KEYS.displayName, input.displayName.trim().slice(0, 32)),
+    writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
+    writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
+    writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
+  ]);
+
+  let added = 0;
+  for (const unitId of input.unitIds.slice(0, 6)) {
+    const result = await addUnitToDeck(unitId);
+    if (result.ok) added += result.added;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/learn");
+  return { ok: true as const, added };
+}
+
+/** Marks onboarding as seen without changing anything else. */
+export async function skipOnboarding() {
+  const ownerId = await requireUserId();
+  await writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString());
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/**
+ * Adds every word of a path unit to the deck, with the card types that unit is
+ * actually about — the rektsioon unit adds government cards, a noun unit adds
+ * case-form cards. Already-present cards are skipped, so re-adding a unit after
+ * finishing half of it costs nothing and loses no scheduling.
+ */
+export async function addUnitToDeck(unitId: string) {
+  const ownerId = await requireUserId();
+  const unit = unitById(unitId);
+  if (!unit) return { ok: false as const, error: "That unit does not exist." };
+
+  const lexemes = await prisma.lexeme.findMany({
+    where: { lemma: { in: unit.lemmas } },
+    select: { id: true, lemma: true },
+  });
+  // Keep the unit's own order: the first cards someone sees should be the ones
+  // the unit leads with, not whatever order Postgres returned.
+  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
+  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
+
+  // addCardsFor rather than addToDeck: the owner is already resolved here, and
+  // re-resolving it per word would validate the session with Supabase 20 times
+  // for one click.
+  let added = 0;
+  for (const lexeme of lexemes) {
+    const result = await addCardsFor(ownerId, lexeme.id, unit.cardTypes, "DICTIONARY");
+    if (result.ok) added += result.added ?? 0;
+  }
+
+  revalidatePath("/learn");
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, added, words: lexemes.length };
+}
+
+// ────────────────────────────── Classrooms ─────────────────────────────────
+
+/** How many attempts to find an unused join code before giving up. */
+const CODE_ATTEMPTS = 8;
+
+/**
+ * Creates a class and makes the caller its teacher.
+ *
+ * The display name is copied onto the membership at join time rather than
+ * looked up live, so a learner changing what they call themselves later does
+ * not silently rename someone halfway through a term.
+ */
+export async function createClassroom(name: string) {
+  const ownerId = await requireUserId();
+  const trimmed = name.trim().slice(0, 60);
+  if (trimmed.length < 2) return { ok: false as const, error: "Give the class a name." };
+
+  let code = "";
+  for (let attempt = 0; attempt < CODE_ATTEMPTS; attempt++) {
+    const candidate = generateCode();
+    const taken = await prisma.classroom.findUnique({ where: { code: candidate }, select: { id: true } });
+    if (!taken) { code = candidate; break; }
+  }
+  if (!code) return { ok: false as const, error: "Could not allocate a join code. Try again." };
+
+  const displayName = await resolveDisplayName(ownerId);
+  const classroom = await prisma.classroom.create({
+    data: {
+      name: trimmed,
+      code,
+      ownerId,
+      members: { create: { ownerId, role: "TEACHER", displayName } },
+    },
+  });
+
+  revalidatePath("/class");
+  return { ok: true as const, id: classroom.id, code };
+}
+
+/**
+ * Joins a class by its code.
+ *
+ * Joining is the consent: from here the teacher and classmates can see this
+ * learner's name, streak, weekly XP and how many words they know. The screen
+ * says so before the button is pressed — nothing about a class is retroactive
+ * or hidden, and leaving removes the membership and nothing else.
+ */
+export async function joinClassroom(code: string, displayName?: string) {
+  const ownerId = await requireUserId();
+  if (!isValidCode(code)) {
+    return { ok: false as const, error: "That is not a valid join code." };
+  }
+
+  const classroom = await prisma.classroom.findUnique({
+    where: { code: normaliseCode(code) },
+    select: { id: true, name: true, archived: true },
+  });
+  if (!classroom || classroom.archived) {
+    return { ok: false as const, error: "No class with that code." };
+  }
+
+  const name = displayName?.trim().slice(0, 32) || await resolveDisplayName(ownerId);
+  if (!name) return { ok: false as const, error: "Pick a name your class will recognise." };
+
+  await prisma.classroomMember.upsert({
+    where: { classroomId_ownerId: { classroomId: classroom.id, ownerId } },
+    create: { classroomId: classroom.id, ownerId, displayName: name },
+    update: { displayName: name },
+  });
+  // The name they chose here becomes their name elsewhere too, rather than
+  // keeping two that can disagree.
+  await writeSetting(ownerId, SETTING_KEYS.displayName, name);
+
+  revalidatePath("/class");
+  revalidatePath("/progress");
+  return { ok: true as const, id: classroom.id, name: classroom.name };
+}
+
+/** Leaves a class. Removes the membership row and nothing else — no deck, no history. */
+export async function leaveClassroom(classroomId: string) {
+  const ownerId = await requireUserId();
+  const classroom = await prisma.classroom.findUnique({
+    where: { id: classroomId },
+    select: { ownerId: true },
+  });
+  if (classroom?.ownerId === ownerId) {
+    return { ok: false as const, error: "You teach this class — archive it instead of leaving." };
+  }
+  await prisma.classroomMember.deleteMany({ where: { classroomId, ownerId } });
+  revalidatePath("/class");
+  return { ok: true as const };
+}
+
+/** Archives a class the caller teaches: the code stops working, the data stays. */
+export async function archiveClassroom(classroomId: string) {
+  const ownerId = await requireUserId();
+  const updated = await prisma.classroom.updateMany({
+    where: { id: classroomId, ownerId },
+    data: { archived: true },
+  });
+  if (updated.count === 0) return { ok: false as const, error: "That is not your class." };
+  revalidatePath("/class");
+  return { ok: true as const };
+}
+
+/**
+ * Sets a unit as homework for everyone in the class.
+ *
+ * This writes a Task into each member's own list rather than inventing a
+ * separate assignments system: the learner already has one place where work
+ * they owe lives, and homework from class belongs in it. Nobody's deck is
+ * touched — the task says what to do, the student decides when.
+ */
+export async function assignUnit(classroomId: string, unitId: string, dueAt?: string) {
+  const ownerId = await requireUserId();
+  const classroom = await prisma.classroom.findFirst({
+    where: { id: classroomId, ownerId },
+    select: { id: true, name: true },
+  });
+  if (!classroom) return { ok: false as const, error: "That is not your class." };
+
+  const unit = unitById(unitId);
+  if (!unit) return { ok: false as const, error: "That unit does not exist." };
+
+  const members = await prisma.classroomMember.findMany({
+    where: { classroomId },
+    select: { ownerId: true },
+  });
+
+  const due = dueAt ? new Date(dueAt) : null;
+  await prisma.task.createMany({
+    data: members.map((m) => ({
+      ownerId: m.ownerId,
+      title: `${unit.title} — ${unit.subtitle}`,
+      notes: `Set by ${classroom.name}. Open the unit on the learning path, add its words and review them.`,
+      tag: "VOCABULARY",
+      dueAt: due && !Number.isNaN(due.getTime()) ? due : null,
+    })),
+  });
+
+  revalidatePath("/class");
+  revalidatePath("/tasks");
+  return { ok: true as const, assigned: members.length };
+}
+
+/** The name to show in a class: their chosen one, else their account's. */
+async function resolveDisplayName(ownerId: string): Promise<string> {
+  const stored = await readSetting(ownerId, SETTING_KEYS.displayName);
+  if (stored?.trim()) return stored.trim().slice(0, 32);
+  const learner = await currentLearner();
+  return learner.name === "you" ? "A learner" : learner.name.slice(0, 32);
+}
+
+// ─────────────────────────────── Tasks ────────────────────────────────────
+
+export async function createTask(input: {
+  title: string; tag: string; classWeek?: number | null; dueAt?: string | null; notes?: string;
+}) {
+  const ownerId = await requireUserId();
+  const title = capped(input.title, LIMITS.taskTitle);
+  if (!title) return { ok: false as const, error: "A task needs a title." };
+  await prisma.task.create({
+    data: {
+      ownerId,
+      title,
+      tag: input.tag,
+      classWeek: input.classWeek ?? null,
+      dueAt: input.dueAt ? new Date(input.dueAt) : null,
+      notes: input.notes?.trim() || null,
+    },
+  });
+  revalidatePath("/tasks");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+export async function toggleTask(id: string) {
+  const ownerId = await requireUserId();
+  const task = await prisma.task.findFirst({ where: { id, ownerId }, select: { completed: true } });
+  if (!task) return { ok: false as const };
+  await prisma.task.update({
+    where: { id },
+    data: { completed: !task.completed, completedAt: task.completed ? null : new Date() },
+  });
+  revalidatePath("/tasks");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+export async function deleteTask(id: string) {
+  const ownerId = await requireUserId();
+  await prisma.task.deleteMany({ where: { id, ownerId } });
+  revalidatePath("/tasks");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+// ─────────────────────────────── The course week ──────────────────────────
+
 // Not exported: every export of a "use server" file is a public endpoint, and a
 // constant is not an endpoint.
 const CURRENT_WEEK_KEY = "currentWeek";
@@ -559,8 +939,8 @@ export async function getCurrentWeek() {
 }
 
 /**
- * Sets the course week. Everything added from now on is filed under it, and the
- * week view becomes a lens over the whole app.
+ * Sets the course week. Everything added from now on is filed under it, which is
+ * what turns `classWeek` from a stored column into a lens over the whole app.
  */
 export async function setCurrentWeek(week: number | null) {
   const ownerId = await requireUserId();
@@ -589,47 +969,24 @@ export async function setWordWeek(lexemeId: string, week: number | null) {
   return { ok: true as const };
 }
 
-/** Sets the review count that fills the daily-goal ring on Today. */
-export async function setDailyGoal(goal: number) {
-  const ownerId = await requireUserId();
-  const clamped = Math.min(200, Math.max(5, Math.round(goal)));
-  await prisma.setting.upsert({
-    where: { ownerId_key: { ownerId, key: DAILY_GOAL_KEY } },
-    create: { ownerId, key: DAILY_GOAL_KEY, value: String(clamped) },
-    update: { value: String(clamped) },
-  });
-  revalidatePath("/");
-  revalidatePath("/settings");
-  return { ok: true as const, goal: clamped };
-}
+// ──────────────────────── Gap-fill from pasted reading ─────────────────────
 
-/** Records a Case Sprint score, keeping only the personal best. */
-export async function recordSprintScore(score: number) {
-  const ownerId = await requireUserId();
-  const current = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } });
-  const best = current ? Number(current.value) || 0 : 0;
-  const isNewBest = score > best;
-  if (isNewBest) {
-    await prisma.setting.upsert({
-      where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } },
-      create: { ownerId, key: SPRINT_BEST_KEY, value: String(score) },
-      update: { value: String(score) },
-    });
-  }
-  return { ok: true as const, best: Math.max(score, best), isNewBest };
-}
-
-// ─────────────────────────────── Cloze ────────────────────────────────────
+const PASSAGE_FORM_LABELS: Record<string, string> = {
+  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
+  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
+  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
+  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
+};
 
 /**
  * Turns a passage the learner pasted into gap-fill exercises.
  *
- * Only words already in their deck are blanked, which is what makes this a
- * *practice* exercise rather than a comprehension test: every gap is something
- * they have chosen to learn and have seen before, now in a sentence a native
- * writer actually produced.
+ * Only words already in their deck are blanked, which makes this practice
+ * rather than a comprehension test: every gap is a word they chose to learn,
+ * now in a sentence a native writer actually produced. The answer comes out of
+ * their own text, so nothing is generated.
  *
- * The passage is never stored. It is somebody's homework, a news article, or a
+ * The passage is never stored. It is somebody's homework, a news article or a
  * private message, and the app has no reason to keep it.
  */
 export async function buildClozeFromText(text: string) {
@@ -662,8 +1019,8 @@ export async function buildClozeFromText(text: string) {
 
   const known: KnownForm[] = [];
   for (const lexeme of lexemes) {
-    // The headword itself counts: meeting it in a real sentence is worth drilling
-    // even when it is not inflected.
+    // The headword counts: meeting it in a real sentence is worth drilling even
+    // when it is not inflected.
     known.push({
       value: lexeme.lemma, lexemeId: lexeme.id, lemma: lexeme.lemma,
       translation: lexeme.translation, formLabel: "dictionary form",
@@ -674,12 +1031,12 @@ export async function buildClozeFromText(text: string) {
         lexemeId: lexeme.id,
         lemma: lexeme.lemma,
         translation: lexeme.translation,
-        formLabel: CLOZE_FORM_LABELS[form.formType] ?? form.morphName ?? "form",
+        formLabel: PASSAGE_FORM_LABELS[form.formType] ?? form.morphName ?? "form",
       });
     }
   }
 
-  const items = buildCloze(passage, known);
+  const items = buildPassageCloze(passage, known);
   if (items.length === 0) {
     return {
       ok: false as const,
@@ -692,87 +1049,22 @@ export async function buildClozeFromText(text: string) {
   return { ok: true as const, items };
 }
 
-const CLOZE_FORM_LABELS: Record<string, string> = {
-  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
-  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
-  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
-  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
-};
-
-// ─────────────────────────────── Tasks ────────────────────────────────────
-
-export async function createTask(input: {
-  title: string; tag: string; classWeek?: number | null; dueAt?: string | null; notes?: string;
-}) {
-  const ownerId = await requireUserId();
-  const title = capped(input.title, LIMITS.taskTitle);
-  if (!title) return { ok: false as const, error: "A task needs a title." };
-
-  // An unparseable date string yields an Invalid Date, which Prisma rejects at
-  // the driver with an opaque error rather than a message anybody can act on.
-  const dueAt = input.dueAt ? new Date(input.dueAt) : null;
-  if (dueAt && Number.isNaN(dueAt.getTime())) {
-    return { ok: false as const, error: "That due date could not be read." };
-  }
-
-  const classWeek = input.classWeek == null
-    ? null
-    : Math.max(1, Math.min(60, Math.round(input.classWeek)));
-
-  await prisma.task.create({
-    data: {
-      ownerId,
-      title,
-      tag: input.tag,
-      classWeek,
-      dueAt,
-      notes: capped(input.notes, LIMITS.taskNotes) || null,
-    },
-  });
-  revalidatePath("/tasks");
-  revalidatePath("/");
-  return { ok: true as const };
-}
-
-export async function toggleTask(id: string) {
-  const ownerId = await requireUserId();
-  const task = await prisma.task.findFirst({ where: { id, ownerId }, select: { completed: true } });
-  if (!task) return { ok: false as const };
-  await prisma.task.update({
-    where: { id },
-    data: { completed: !task.completed, completedAt: task.completed ? null : new Date() },
-  });
-  revalidatePath("/tasks");
-  revalidatePath("/");
-  return { ok: true as const };
-}
-
-export async function deleteTask(id: string) {
-  const ownerId = await requireUserId();
-  await prisma.task.deleteMany({ where: { id, ownerId } });
-  revalidatePath("/tasks");
-  revalidatePath("/");
-  return { ok: true as const };
-}
-
 // ─────────────────────────────── Account ──────────────────────────────────
 
 /**
  * Deletes everything belonging to this account.
  *
- * The privacy page promises this, so it has to exist — a promise about data that
- * the software cannot keep is worse than no promise. It removes cards, reviews,
- * tasks, messages, stars, badges, settings and the usage ledger.
+ * The privacy page promises this, so it has to exist — a promise about data the
+ * software cannot keep is worse than no promise.
  *
  * The review log is deleted here and only here. Append-only means no updates and
- * no incidental deletes — not that a person cannot ask for their own history to
- * be erased, which is the one request that outranks the invariant. It all goes in
- * one transaction, so a half-deleted account is not a reachable state.
+ * no incidental deletes, not that a person cannot ask for their own history to
+ * be erased, which is the one request that outranks the invariant. It all goes
+ * in one transaction, so a half-deleted account is not a reachable state.
  *
- * The shared dictionary stays. It is reference data rather than anything of
- * theirs, and removing a word other learners hold cards for would delete *their*
- * data to satisfy this request. `Lexeme.editedBy` is cleared instead, so nothing
- * points back at the person afterwards.
+ * The shared dictionary stays: removing a word other learners hold cards for
+ * would delete *their* data to satisfy this request. The attribution on anything
+ * this person edited is cleared instead.
  */
 export async function deleteMyAccount(confirmation: string) {
   const ownerId = await requireUserId();
@@ -790,7 +1082,6 @@ export async function deleteMyAccount(confirmation: string) {
       await tx.achievement.deleteMany({ where: { ownerId } });
       await tx.setting.deleteMany({ where: { ownerId } });
       await tx.usageEvent.deleteMany({ where: { ownerId } });
-      // Un-attribute rather than delete: the entries stay, the person does not.
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
     }, { timeout: 120_000 });
   } catch (error) {
@@ -824,8 +1115,10 @@ export interface RestoreSummary {
 }
 
 /** Reads a backup file and reports what is in it, without writing anything. */
-/** Reads a backup file without writing anything. Requires a session: it is a
- *  public endpoint that parses attacker-supplied JSON. */
+/**
+ * Reads a backup file without writing anything. Requires a session: it is a
+ * public endpoint that parses JSON supplied by whoever called it.
+ */
 export async function inspectBackup(json: string): Promise<
   { ok: true; summary: RestoreSummary } | { ok: false; error: string }
 > {
@@ -870,11 +1163,11 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         // Scoped to this user's own data only — Lexeme/Form are the shared
         // dictionary and must never be wiped by one person's restore.
         //
-        // Reviews are deliberately not touched. They are append-only facts about
-        // what actually happened, they are the input to FSRS optimisation, and
-        // they are the one thing a restore cannot recreate. A replace rebuilds
-        // the deck; it does not rewrite history. Rows whose card is gone stay as
-        // orphans, which is why Review carries its own ownerId and no foreign key.
+        // Reviews are deliberately untouched. They are append-only facts about
+        // what happened, they are the input to FSRS optimisation, and they are
+        // the one thing a restore cannot recreate. A replace rebuilds the deck;
+        // it does not rewrite history. Rows whose card is gone stay as orphans,
+        // which is why Review carries its own ownerId and no foreign key.
         await tx.card.deleteMany({ where: { ownerId } });
         await tx.task.deleteMany({ where: { ownerId } });
       }
@@ -907,7 +1200,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
 
       // Reviews are append-only, so they are created if absent and never updated.
       // Always attributed to the person restoring: a backup is your own history,
-      // and the file cannot be allowed to name someone else as the owner.
+      // and the file cannot be allowed to name someone else as its owner.
       for (const raw of backup.reviews) {
         const data = revive(raw, ["reviewedAt"]);
         const exists = await tx.review.findUnique({ where: { id: String(data.id) }, select: { id: true } });

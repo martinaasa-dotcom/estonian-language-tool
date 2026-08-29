@@ -22,7 +22,6 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
     setBurst(true);
     const t = setTimeout(() => setBurst(false), 2000);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [badges]);
 
   if (queue.length === 0) return null;
@@ -36,7 +35,7 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
           return (
             <div
               key={b.key}
-              className="flex items-start gap-3 rounded-lg border p-3.5"
+              className="flex items-start gap-3 rounded-[var(--r-lg)] border p-4"
               style={{
                 borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)",
                 animation: "toast-in 0.25s ease-out",
@@ -44,20 +43,20 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
             >
               <span
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+                style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
               >
                 <Icon size={18} aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="label-xs" style={{ color: "var(--ink-3)" }}>Badge earned</p>
-                <p className="est text-[15px] font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
-                <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-2)" }}>{b.description}</p>
+                <p className="est text-base font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>{b.description}</p>
               </div>
               <button
                 type="button"
                 aria-label="Dismiss"
                 onClick={() => setQueue((q) => q.filter((x) => x.key !== b.key))}
-                className="shrink-0 rounded p-1"
+                className="shrink-0 rounded-md p-1"
                 style={{ color: "var(--ink-3)" }}
               >
                 <X size={15} aria-hidden />

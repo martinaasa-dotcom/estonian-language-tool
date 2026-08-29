@@ -1,136 +1,107 @@
 import { describe, expect, it } from "vitest";
-import {
-  BLANK, buildCloze, isClozeCorrect, isDiacriticSlip, splitSentences, type KnownForm,
-} from "./cloze";
-
-const known: KnownForm[] = [
-  { value: "toas", lexemeId: "L1", lemma: "tuba", translation: "room", formLabel: "inessive" },
-  { value: "raamatut", lexemeId: "L2", lemma: "raamat", translation: "book", formLabel: "partitive" },
-  { value: "raamatuid", lexemeId: "L2", lemma: "raamat", translation: "book", formLabel: "partitive plural" },
-  { value: "õppima", lexemeId: "L3", lemma: "õppima", translation: "to learn", formLabel: "ma-infinitive" },
-];
-
-describe("splitSentences", () => {
-  it("splits on terminating punctuation and keeps it", () => {
-    expect(splitSentences("Ma olen toas. Sa loed raamatut!")).toEqual([
-      "Ma olen toas.", "Sa loed raamatut!",
-    ]);
-  });
-
-  it("collapses newlines and runs of space", () => {
-    expect(splitSentences("Üks   lause.\n\nTeine lause.")).toEqual(["Üks lause.", "Teine lause."]);
-  });
-
-  it("returns a single sentence with no terminator", () => {
-    expect(splitSentences("Ma olen toas")).toEqual(["Ma olen toas"]);
-  });
-
-  it("returns nothing for empty input", () => {
-    expect(splitSentences("   ")).toEqual([]);
-  });
-});
+import { BLANK, buildCloze, isBuildable, sentenceMatches, sentenceTiles } from "./cloze";
 
 describe("buildCloze", () => {
-  it("blanks a known form and keeps the rest of the sentence", () => {
-    const [item] = buildCloze("Ma istun praegu toas ja loen.", known);
-    expect(item?.answer).toBe("toas");
-    expect(item?.masked).toContain(BLANK.trim());
-    expect(item?.masked).not.toContain("toas");
-    expect(item?.sentence).toBe("Ma istun praegu toas ja loen.");
-  });
-
-  it("takes the answer from the learner's own text, not from the dictionary", () => {
-    // The point of the feature: a native writer put that form there, so it is
-    // authoritative without anything being generated.
-    const [item] = buildCloze("Ma istun praegu Toas ja loen.", known);
-    expect(item?.answer).toBe("Toas");
-  });
-
-  it("records which word and which form was blanked", () => {
-    const [item] = buildCloze("Ma istun praegu toas ja loen.", known);
-    expect(item).toMatchObject({ lemma: "tuba", translation: "room", formLabel: "inessive" });
-  });
-
-  it("blanks at most one word per sentence", () => {
-    const items = buildCloze("Ma loen toas seda raamatut praegu.", known);
-    expect(items).toHaveLength(1);
-  });
-
-  it("skips a sentence with too little context to use", () => {
-    expect(buildCloze("Olen toas.", known)).toEqual([]);
-  });
-
-  it("skips a sentence containing no known word", () => {
-    expect(buildCloze("Täna on ilus ilm ja päike paistab.", known)).toEqual([]);
-  });
-
-  it("does not match a known form inside a longer word", () => {
-    // "toaseinal" contains "toas" but is a different word.
-    expect(buildCloze("Ma nägin seda toaseinal eile õhtul.", known)).toEqual([]);
+  it("blanks the form that appears in the sentence", () => {
+    const cloze = buildCloze("Jõin tassi kohvi.", ["kohv", "kohvi", "kohvile"]);
+    expect(cloze?.text).toBe(`Jõin tassi ${BLANK}.`);
+    expect(cloze?.answer).toBe("kohvi");
+    expect(cloze?.full).toBe("Jõin tassi kohvi.");
   });
 
   it("prefers the longest matching form", () => {
-    const [item] = buildCloze("Ma lugesin neid raamatuid terve eile õhtu.", known);
-    expect(item?.answer).toBe("raamatuid");
-    expect(item?.formLabel).toBe("partitive plural");
+    // `toa` and `toas` are both real forms of `tuba`; blanking `toa` out of
+    // `toas` would leave "____s", which is unanswerable.
+    const cloze = buildCloze("Ma olen toas ja loen.", ["toa", "toas", "tuba"]);
+    expect(cloze?.answer).toBe("toas");
+    expect(cloze?.text).toContain(`${BLANK} ja`);
   });
 
-  it("finds items across several sentences", () => {
-    const items = buildCloze(
-      "Ma istun praegu toas ja loen. Ta tahab kõike õppima hakata kohe.",
-      known,
+  it("matches regardless of case but keeps the original spelling", () => {
+    const cloze = buildCloze("Tuba on suur ja valge.", ["tuba"]);
+    expect(cloze?.answer).toBe("Tuba");
+  });
+
+  it("matches whole words only", () => {
+    // `on` must not be found inside `sõnad`.
+    expect(buildCloze("Need sõnad olid rasked.", ["on"])).toBeNull();
+  });
+
+  it("handles Estonian letters inside a word", () => {
+    const cloze = buildCloze("Ta sõidab bussiga tööle.", ["sõidab"]);
+    expect(cloze?.answer).toBe("sõidab");
+  });
+
+  it("returns null when no form of the word is present", () => {
+    expect(buildCloze("Ilm on täna ilus.", ["raamat", "raamatu"])).toBeNull();
+  });
+
+  it("refuses a sentence too short to be a question", () => {
+    expect(buildCloze("Tere hommikust!", ["tere"])).toBeNull();
+  });
+
+  it("returns null for empty input rather than throwing", () => {
+    expect(buildCloze("", ["tuba"])).toBeNull();
+    expect(buildCloze("Ma olen toas ja loen.", [])).toBeNull();
+    expect(buildCloze("Ma olen toas ja loen.", ["  "])).toBeNull();
+  });
+
+  it("reports where the blank is, for highlighting the answer", () => {
+    const cloze = buildCloze("Jõin tassi kohvi.", ["kohvi"]);
+    expect(cloze?.full.slice(cloze.index, cloze.index + cloze.answer.length)).toBe("kohvi");
+  });
+});
+
+describe("sentenceTiles", () => {
+  it("splits into words and drops the punctuation that would give it away", () => {
+    expect(sentenceTiles("Jõin tassi kohvi.")).toEqual(["Jõin", "tassi", "kohvi"]);
+    expect(sentenceTiles("Kui palju see maksab?")).toEqual(["Kui", "palju", "see", "maksab"]);
+  });
+
+  it("keeps a hyphenated word whole", () => {
+    expect(sentenceTiles("Eesti-inglise sõnaraamat on laual.")).toEqual(
+      ["Eesti-inglise", "sõnaraamat", "on", "laual"],
     );
-    expect(items).toHaveLength(2);
-    expect(items.map((i) => i.answer)).toEqual(["toas", "õppima"]);
   });
 
-  it("honours the limit", () => {
-    const text = Array.from({ length: 30 }, () => "Ma istun praegu toas ja loen.").join(" ");
-    expect(buildCloze(text, known, { limit: 5 })).toHaveLength(5);
-  });
-
-  it("returns nothing when the learner knows no words yet", () => {
-    expect(buildCloze("Ma istun praegu toas ja loen.", [])).toEqual([]);
-  });
-
-  it("handles a hyphenated compound as one token", () => {
-    const withHyphen: KnownForm[] = [
-      { value: "e-post", lexemeId: "L9", lemma: "e-post", translation: "email", formLabel: "nominative" },
-    ];
-    const [item] = buildCloze("Ma saatsin sulle eile e-post ja ootan vastust.", withHyphen);
-    expect(item?.answer).toBe("e-post");
+  it("is empty for a sentence with no words", () => {
+    expect(sentenceTiles("   ")).toEqual([]);
   });
 });
 
-describe("isClozeCorrect", () => {
-  it("accepts the exact answer", () => {
-    expect(isClozeCorrect("toas", "toas")).toBe(true);
+describe("sentenceMatches", () => {
+  const original = "Kitsed olid ojal joomas.";
+
+  it("accepts the right order, ignoring the stripped punctuation", () => {
+    expect(sentenceMatches(["Kitsed", "olid", "ojal", "joomas"], original)).toBe(true);
   });
 
-  it("forgives case and surrounding space", () => {
-    expect(isClozeCorrect("  Toas ", "toas")).toBe(true);
+  it("ignores capitalisation", () => {
+    expect(sentenceMatches(["kitsed", "olid", "ojal", "joomas"], original)).toBe(true);
   });
 
-  it("rejects a different case form", () => {
-    // The whole exercise is producing the right form, so this must not pass.
-    expect(isClozeCorrect("tuba", "toas")).toBe(false);
+  it("rejects the wrong order", () => {
+    expect(sentenceMatches(["Olid", "kitsed", "ojal", "joomas"], original)).toBe(false);
   });
 
-  it("rejects a missing diacritic", () => {
-    expect(isClozeCorrect("oppima", "õppima")).toBe(false);
+  it("rejects an incomplete sentence", () => {
+    expect(sentenceMatches(["Kitsed", "olid"], original)).toBe(false);
   });
 });
 
-describe("isDiacriticSlip", () => {
-  it("recognises a keyboard problem rather than a knowledge one", () => {
-    expect(isDiacriticSlip("oppima", "õppima")).toBe(true);
+describe("isBuildable", () => {
+  it("wants a sentence with an order worth getting right", () => {
+    expect(isBuildable("Ma olen kodus.")).toBe(false);
+    expect(isBuildable("Kitsed olid ojal joomas.")).toBe(true);
   });
 
-  it("is false when the answer is simply right", () => {
-    expect(isDiacriticSlip("õppima", "õppima")).toBe(false);
+  it("rejects a sentence long enough to be a memory test", () => {
+    expect(isBuildable(
+      "Kui ma hommikul ärkasin siis oli väljas juba päris valge ja linnud laulsid puudel.",
+    )).toBe(false);
   });
 
-  it("is false when the answer is a genuinely different word", () => {
-    expect(isDiacriticSlip("tuba", "toas")).toBe(false);
+  it("rejects a sentence with a repeated word, where wrong order is unfalsifiable", () => {
+    expect(isBuildable("Ta on siin ja ta on rõõmus.")).toBe(false);
   });
 });
