@@ -209,6 +209,11 @@ jobs:
       # A shell loop rather than a `wait-on` dependency: this is the only
       # place anything would wait for a port, and it is four lines.
       - name: Start the server
+        # A provider key has to be *present* or the scan page correctly offers
+        # no camera. It may be nonsense: scripts/test-scan.mjs intercepts the
+        # route it would authenticate, so no request ever leaves the runner.
+        env:
+          OPENROUTER_API_KEY: stubbed-by-the-test
         run: |
           npm start &
           for _ in $(seq 1 60); do
@@ -227,6 +232,10 @@ jobs:
       # a real focus ring. Same server, same browser, so it costs one more
       # command rather than another job.
       - run: node scripts/test-design.mjs
+      # Paper to deck, driven end to end with only the model stubbed: the
+      # picture leaving the device, the confirmation list, a ticked word
+      # becoming a card, and the review session asking about it.
+      - run: node scripts/test-scan.mjs
 
   load:
     name: The derived queries, at a size somebody reaches

@@ -247,7 +247,7 @@ model ClassroomMember {
 model UsageEvent {
   id           String   @id @default(uuid())
   ownerId      String
-  kind         String // TUTOR | GRADER | TTS
+  kind         String // TUTOR | GRADER | TTS | SCAN
   provider     String
   model        String
   inputTokens  Int      @default(0)
@@ -261,5 +261,32 @@ model UsageEvent {
 
   @@index([ownerId, day])
   @@index([day])
+  @@index([ownerId, createdAt])
+}
+
+/// One page somebody photographed, after they confirmed what was on it.
+///
+/// THE PICTURE IS NOT HERE, AND THAT IS THE POINT. A photograph of homework
+/// has a name at the top of it, and the app needs it for the four seconds it
+/// takes to read the words off it. So the image is decoded in a route handler,
+/// sent to one model, and dropped: what survives is the word list a person
+/// looked at and ticked, which is the same thing the paste importer has always
+/// kept. `lib/estonian/passage.ts` treats a pasted reading the same way.
+///
+/// Words are held as lemmas rather than as copies of dictionary rows, exactly
+/// as a learning-path unit is (lib/collections/path.ts). A page is a *reference*
+/// to vocabulary, so correcting a word in the shared dictionary corrects it on
+/// every page it appears on, and a page can never drift out of step.
+model Scan {
+  id      String @id @default(uuid())
+  ownerId String
+  /// What the learner called it: "Page 42", "Tuesday's homework".
+  title   String
+  /// JSON: [{ et, en, lemma, lexemeId, matchedAs }]. `lexemeId` is null for a
+  /// word that was read off the page and had no dictionary entry to vouch for it.
+  items   String @default("[]")
+
+  createdAt DateTime @default(now())
+
   @@index([ownerId, createdAt])
 }

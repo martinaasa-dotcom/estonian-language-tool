@@ -14,7 +14,7 @@ import { launchChromium } from "./lib/browser.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3000";
 const PAGES = ["/", "/practice", "/grammar", "/grammar/partitive", "/progress", "/learn",
   "/learn/kodu", "/dictionary?q=tuba", "/words", "/settings", "/review", "/review/dictation",
-  "/tasks", "/class", "/tutor", "/welcome"];
+  "/tasks", "/class", "/tutor", "/scan", "/welcome"];
 
 // sRGB relative luminance + WCAG contrast.
 const lum = ([r, g, b]) => {

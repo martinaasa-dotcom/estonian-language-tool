@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { openWithFallback, resolveProviders, TutorError } from "@/lib/tutor/provider";
+import {
+  completeWithImage, openWithFallback, resolveProviders, TutorError, visionProviders,
+} from "@/lib/tutor/provider";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -140,5 +142,96 @@ describe("falling back", () => {
       { role: "user", content: "why?" },
     ]);
     expect(await collect(open)).toBe("Osastav.");
+  });
+});
+
+/*
+  Reading a photograph.
+
+  The chain is the same one, with one difference that matters to whoever pays
+  the bill: it uses the model the deployment already configured unless it is
+  told otherwise, so turning on the camera cannot quietly move a free-model
+  deployment onto a paid one.
+*/
+const IMAGE = { mediaType: "image/jpeg", base64: "AAAA" };
+
+function jsonReply(words: { et: string; en: string }[], usage?: object): Response {
+  return new Response(
+    JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ words }) } }],
+      ...(usage ? { usage } : {}),
+    }),
+    { status: 200, headers: { "content-type": "application/json" } },
+  );
+}
+
+describe("the chain that looks at pictures", () => {
+  it("uses whatever model the deployment configured", () => {
+    only("openrouter");
+    vi.stubEnv("OPENROUTER_MODEL", "z-ai/glm-5.2:free");
+    vi.stubEnv("OPENROUTER_VISION_MODEL", "");
+    expect(visionProviders()[0]?.model).toBe("z-ai/glm-5.2:free");
+  });
+
+  it("takes an override, which is how a text-only default gets eyes", () => {
+    only("openrouter");
+    vi.stubEnv("OPENROUTER_MODEL", "z-ai/glm-5.2:free");
+    vi.stubEnv("OPENROUTER_VISION_MODEL", "openai/gpt-4o");
+    expect(visionProviders()[0]?.model).toBe("openai/gpt-4o");
+  });
+
+  it("reports the tokens the provider actually charged", async () => {
+    only("openai");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      jsonReply([{ et: "tuba", en: "room" }], { prompt_tokens: 2100, completion_tokens: 40 })));
+
+    const seen: { input: number; output: number }[] = [];
+    const reply = await completeWithImage(
+      visionProviders(), "system", "prompt", IMAGE,
+      (usage) => seen.push({ input: usage.inputTokens, output: usage.outputTokens }),
+    );
+
+    expect(reply.text).toContain("tuba");
+    expect(seen).toEqual([{ input: 2100, output: 40 }]);
+  });
+
+  it("walks past a model that cannot see, unlike the chat path", async () => {
+    /*
+      A 400 stops `openWithFallback`, because a malformed request would be
+      refused by everybody. Whether a model accepts an image is a fact about
+      that one model, so here the next provider is worth asking.
+    */
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+
+    const fetchMock = vi.fn(async (url: string) =>
+      String(url).includes("openrouter")
+        ? new Response("no image support", { status: 400 })
+        : jsonReply([{ et: "raamat", en: "book" }]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const reply = await completeWithImage(visionProviders(), "system", "prompt", IMAGE);
+    expect(reply.config.name).toBe("openai");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops at a rejected key, because no amount of retrying fixes one", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "k");
+
+    const fetchMock = vi.fn(async () => new Response("nope", { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(completeWithImage(visionProviders(), "s", "p", IMAGE)).rejects.toBeInstanceOf(TutorError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("says so plainly when nothing is configured", async () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    await expect(completeWithImage([], "s", "p", IMAGE)).rejects.toThrow(/No AI provider/);
   });
 });

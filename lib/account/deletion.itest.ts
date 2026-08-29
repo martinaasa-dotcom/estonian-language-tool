@@ -27,6 +27,7 @@ async function wipe() {
     await prisma.achievement.deleteMany({ where: { ownerId: owner } });
     await prisma.setting.deleteMany({ where: { ownerId: owner } });
     await prisma.usageEvent.deleteMany({ where: { ownerId: owner } });
+    await prisma.scan.deleteMany({ where: { ownerId: owner } });
   }
   const lexeme = await prisma.lexeme.findFirst({ where: { lemma: LEMMA } });
   if (lexeme) {
@@ -50,6 +51,7 @@ async function populate(ownerId: string, lexemeId: string) {
   await prisma.usageEvent.create({
     data: { ownerId, kind: "TUTOR", provider: "openrouter", model: "gpt-4o", day: "2026-08-29" },
   });
+  await prisma.scan.create({ data: { ownerId, title: "itest page", items: "[]" } });
 }
 
 /** Exactly what `deleteMyAccount` does, in the same order. */
@@ -63,12 +65,13 @@ async function deleteAccount(ownerId: string) {
     await tx.achievement.deleteMany({ where: { ownerId } });
     await tx.setting.deleteMany({ where: { ownerId } });
     await tx.usageEvent.deleteMany({ where: { ownerId } });
+    await tx.scan.deleteMany({ where: { ownerId } });
     await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
   });
 }
 
 async function countsFor(ownerId: string) {
-  const [cards, reviews, tasks, messages, stars, badges, settings, usage] = await Promise.all([
+  const [cards, reviews, tasks, messages, stars, badges, settings, usage, scans] = await Promise.all([
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
     prisma.task.count({ where: { ownerId } }),
@@ -77,8 +80,9 @@ async function countsFor(ownerId: string) {
     prisma.achievement.count({ where: { ownerId } }),
     prisma.setting.count({ where: { ownerId } }),
     prisma.usageEvent.count({ where: { ownerId } }),
+    prisma.scan.count({ where: { ownerId } }),
   ]);
-  return { cards, reviews, tasks, messages, stars, badges, settings, usage };
+  return { cards, reviews, tasks, messages, stars, badges, settings, usage, scans };
 }
 
 let lexemeId: string;
@@ -103,7 +107,7 @@ describe("deleteMyAccount", () => {
 
     expect(await countsFor(MINE)).toEqual({
       cards: 0, reviews: 0, tasks: 0, messages: 0,
-      stars: 0, badges: 0, settings: 0, usage: 0,
+      stars: 0, badges: 0, settings: 0, usage: 0, scans: 0,
     });
   });
 

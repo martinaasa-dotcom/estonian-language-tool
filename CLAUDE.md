@@ -47,6 +47,23 @@ test showed a model reaching for forms unprompted despite the instruction, which
 argument for checking rather than asking. If you add another path where a model discusses Estonian
 the learner will act on, put it behind that check too.
 
+**A photograph is read by a model; whether it is believed is decided by the dictionary.** Scanning a
+page (`/scan`) is the one path where a model unavoidably looks at Estonian, and it does not get an
+exception. `lib/scan/extract.ts` transcribes and is pure: no database, no network, and every string
+it returns is a *candidate*. `matchEstonianForm` in `lib/dict/search.ts` decides, and accepts only
+an exact lemma, a diacritic-folded lemma, a stored form, or a regular case built on a genitive stem
+(`VOUCHED_SCORE`); a prefix match is right for a search box and wrong here, because it hands
+somebody a card for a word that is not on their paper. A vouched word brings its own principal parts,
+so nothing the model wrote survives into the card. An unvouched word is shown as exactly that,
+editable beside the paper, and reaches the deck only once a person has ticked it, which is the same
+standard the paste importer meets. Do not loosen the match to rescue more words. (ADR-020, asserted
+in `scripts/test-invariants.ts`.)
+
+**The photograph itself is never stored.** It is decoded in a Route Handler, sent once and dropped,
+exactly as the cloze exercise treats a pasted passage. `Scan` holds the confirmed word list and has
+no column an image could go in; the invariant suite fails if one appears, and if the scan route ever
+writes to the database at all. A picture of somebody's homework has their name at the top of it.
+
 **Never let the correctness of a form be decided by a model.** The writing exercise checks the
 required form by string comparison against the dictionary *before* any call, so a hallucination
 cannot mark a right answer wrong and a missing key does not break the exercise. Keep that ordering.
@@ -129,7 +146,7 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/`,
-  `lib/offline/`, `lib/security/` and `lib/copy/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
+  `lib/offline/`, `lib/security/`, `lib/scan/` and `lib/copy/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
@@ -209,6 +226,15 @@ sitting through 4.5 seconds of backoff against a provider that has already said 
 seconds. The Anthropic path keeps a `cache_control` breakpoint on the static Estonian system
 prompt. This supersedes the original ADR-004; see `docs/13-mvp-status.md` §2.
 
+**Reading a picture uses whichever model the deployment already configured.** Not a better one
+chosen behind the operator's back: turning the camera on must not move a free-model deployment onto
+a paid one. `OPENROUTER_VISION_MODEL`, `ANTHROPIC_VISION_MODEL` and `OPENAI_VISION_MODEL` are the
+escape hatch for a text-only default, and they affect scanning and nothing else. The image path
+falls back more readily than the chat path does, and deliberately: `openWithFallback` refuses to
+walk past a 400 because every provider would refuse a malformed request the same way, but whether a
+model can see is a fact about that one model, so `completeWithImage` walks past everything except a
+rejected key.
+
 **Which model answered is a fact about the answer, so it travels with it.** Never the head of the
 chain: a screen naming the wrong model is worse than one naming none. The handshake finishes
 before the response head is written, which is what lets `x-model-provider` and `x-model-id` be
@@ -245,7 +271,7 @@ npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
-npm run test:browser     # the newer browser suites: routes, modes, offline, a11y
+npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, a11y
 npm run test:mobile      # the phone, measured; needs the server running
 ```
 
@@ -258,6 +284,12 @@ phones and gone above the breakpoint, every target clear of 44px, and the pull g
 real. `scripts/test-invariants.ts` asserts the rules above, and CI runs it, which is the only
 reason it will stay green: Upside Lab kept one that nothing ran and it drifted to twenty-three
 failures before anybody counted. Assert the rule, not today's markup.
+
+`scripts/test-scan.mjs` is the paper path driven end to end, with the model the only thing stubbed:
+the picture leaving the device, the confirmation list, a ticked word becoming a card, and the review
+session then asking about it. It needs a provider key to be *present* on the server (any string will
+do, since the route it would authenticate is intercepted), because with none configured the scan
+page correctly offers no camera.
 
 `scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo and the command
 palette. `scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar

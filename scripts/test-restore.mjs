@@ -35,6 +35,7 @@ const before = {
   cards: await prisma.card.count(),
   reviews: await prisma.review.count(),
   tasks: await prisma.task.count(),
+  scans: await prisma.scan.count(),
 };
 const backup = await (await page.request.get(`${B}/api/export`)).text();
 check("export produced a backup", backup.length > 1000, `${Math.round(backup.length / 1024)} KB`);
@@ -61,6 +62,7 @@ await prisma.card.deleteMany();
 await prisma.form.deleteMany();
 await prisma.lexeme.deleteMany();
 await prisma.task.deleteMany();
+await prisma.scan.deleteMany();
 check("data is genuinely gone before the restore", (await prisma.review.count()) === 0);
 
 // Restore through the real UI, not a direct call.
@@ -89,11 +91,16 @@ const after = {
   cards: await prisma.card.count(),
   reviews: await prisma.review.count(),
   tasks: await prisma.task.count(),
+  scans: await prisma.scan.count(),
 };
 check("every word came back", after.words === before.words, `${after.words}/${before.words}`);
 check("every card came back", after.cards === before.cards, `${after.cards}/${before.cards}`);
 check("every review came back", after.reviews === before.reviews, `${after.reviews}/${before.reviews}`);
 check("every task came back", after.tasks === before.tasks, `${after.tasks}/${before.tasks}`);
+// A photographed page is a word list somebody confirmed by hand. Leaving it out
+// of the backup would make a restore quietly lossy in a way nobody would notice
+// until they went looking for a page they scanned in March.
+check("every scanned page came back", after.scans === before.scans, `${after.scans}/${before.scans}`);
 check("forms came back with their words", (await prisma.form.count()) > 1000, `${await prisma.form.count()} forms`);
 
 // Scheduling state must survive, or the restore silently resets everyone's progress.

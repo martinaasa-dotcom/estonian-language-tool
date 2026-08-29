@@ -4,7 +4,7 @@ import { mapEkilexDetails } from "@/lib/ekilex/mapper";
 import { mergeExamples, parseExamples, serialiseExamples } from "./examples";
 import { fetchEnglishGloss } from "./wiktionary";
 import { translateWithAnu } from "@/lib/tutor/translate";
-import { NO_VALUE } from "@/lib/copy/values";
+import { NEEDS_TRANSLATION, NO_VALUE } from "@/lib/copy/values";
 
 /**
  * Fetches a word we do not hold locally, and stores it.
@@ -148,12 +148,6 @@ export async function lookupAndStore(query: string): Promise<LookupResult | null
  * A translation the learner has already accepted always wins — re-fetching would
  * overwrite a correction she made deliberately.
  */
-/**
- * What a word's English says when there is none yet: an instruction, because
- * a learner reading it is the person who can fix it.
- */
-const NEEDS_TRANSLATION = `${NO_VALUE} · add a translation`;
-
 /*
   A translation that is really a gap.
 

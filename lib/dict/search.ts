@@ -173,3 +173,67 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
 function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/**
+ * How confident a match has to be before the app will vouch for it.
+ *
+ * The ranker's tiers, from `rank` above: 100 is the lemma spelled exactly,
+ * 90 is the lemma with the diacritics folded away, 88 is a stored form and 85
+ * is a regular case built on a genitive stem. Below that it is a prefix or a
+ * substring, which is the right thing to *offer* somebody typing in a search
+ * box and the wrong thing to hand a word to silently.
+ *
+ * The English tier (95) is excluded on purpose by `matchEstonianForm`, which
+ * only ever looks at Estonian: a scanned page's `kalender` must not resolve
+ * through some entry whose translation happens to read "kalender".
+ */
+export const VOUCHED_SCORE = 85;
+
+/** A match confident enough to build a flashcard from, or nothing at all. */
+export interface FormMatch {
+  id: string;
+  lemma: string;
+  translation: string;
+  pos: string;
+  cefr: string | null;
+  /** Set when the word given was an inflected form rather than the headword. */
+  matchedAs?: string;
+}
+
+/**
+ * Resolves one Estonian word, as written, to the dictionary entry it belongs to.
+ *
+ * This is the check that stands between a photograph and a flashcard. A word
+ * read off a page by a model is a guess until something the app trusts
+ * recognises it, and the dictionary recognising the exact spelling, one of its
+ * stored forms, or a regular case of its stem is that something. Anything
+ * vaguer is not a match: `tuba` must not quietly become `tubli` because the
+ * two share three letters.
+ *
+ * Pure, like `rankCandidates`, so the boundary can be tested over fixtures.
+ */
+export function matchEstonianForm(candidates: Candidate[], word: string): FormMatch | null {
+  const raw = word.trim();
+  if (!raw) return null;
+  const folded = fold(raw);
+  const lower = raw.toLowerCase();
+
+  let best: { hit: Candidate; score: number; matchedAs?: string } | null = null;
+  for (const candidate of candidates) {
+    const scored = rank(candidate, raw, folded);
+    // The English tier: right for a search box, wrong here.
+    if (scored.score === 95 && candidate.translation.toLowerCase() === lower) continue;
+    if (scored.score < VOUCHED_SCORE) continue;
+    if (!best || scored.score > best.score) best = { hit: candidate, ...scored };
+  }
+  if (!best) return null;
+
+  return {
+    id: best.hit.id,
+    lemma: best.hit.lemma,
+    translation: best.hit.translation,
+    pos: best.hit.pos,
+    cefr: best.hit.cefr,
+    ...(best.matchedAs ? { matchedAs: best.matchedAs } : {}),
+  };
+}

@@ -50,6 +50,21 @@ const LIB = sourceFiles("lib");
 const COMPONENTS = sourceFiles("components");
 const ALL = [...APP, ...LIB, ...COMPONENTS];
 const read = (file: string) => readFileSync(file, "utf8");
+
+/**
+ * One exported function's body, from its signature to the next export.
+ *
+ * Coarse on purpose. A check that parses TypeScript is a check that breaks on
+ * a syntax nobody thought about; this only needs to know which half of a file
+ * a call site is in.
+ */
+function between(source: string, from: string): string {
+  const start = source.indexOf(from);
+  if (start < 0) return "";
+  const rest = source.slice(start + from.length);
+  const end = rest.indexOf("\nexport ");
+  return end < 0 ? rest : rest.slice(0, end);
+}
 const SCHEMA = read("prisma/schema.prisma");
 const CSS = read("app/globals.css");
 
@@ -387,6 +402,7 @@ check("the routes that spend somebody else's quota are capped", () => {
     "app/api/tts/route.ts",
     "app/api/share/route.tsx",
     "app/api/export/route.ts",
+    "app/api/scan/route.ts",
   ]) {
     assert.match(read(route), /checkRateLimit/, `${route} has no cap on it`);
   }
@@ -401,6 +417,68 @@ check("a cap is charged to the learner, never to their address alone", () => {
   */
   const tutor = read("app/api/tutor/route.ts");
   assert.match(tutor, /bucketForOwner/, "the tutor's cap is no longer per learner");
+});
+
+// ── A photograph is read, never believed ─────────────────────────────────────
+
+check("a word read off a photograph reaches a card only through the dictionary", () => {
+  /*
+    THIS IS ADR-005 ON THE ONE PATH WHERE A MODEL UNAVOIDABLY READS ESTONIAN.
+
+    Transcribing a printed page is not authorship, but a misread and an
+    invention are indistinguishable by the time either reaches a flashcard, and
+    an unverified form does not sit there being wrong: the scheduler drills it
+    in. So the route hands what the model saw to the dictionary, and only a
+    confident match (`matchEstonianForm`, at `VOUCHED_SCORE`) carries a
+    lexeme id. Nothing else may mint one.
+  */
+  const route = read("app/api/scan/route.ts");
+  assert.match(route, /resolveScannedItems/, "the scan route no longer consults the dictionary");
+
+  const resolver = read("lib/dict/resolveScan.ts");
+  assert.match(resolver, /matchEstonianForm/, "the resolver stopped using the vouched matcher");
+
+  const search = read("lib/dict/search.ts");
+  assert.match(
+    search,
+    /scored\.score\s*<\s*VOUCHED_SCORE/,
+    "matchEstonianForm no longer holds its confidence floor, so a prefix would resolve",
+  );
+
+  /*
+    And a word the dictionary did not recognise gets no forms invented for it.
+    A page's own entries are principal-part-free by construction, which is why
+    they can only ever produce a recognition and a production card.
+  */
+  const saveScan = between(read("app/actions.ts"), "export async function saveScan");
+  assert.equal(
+    /prisma\.form\.(create|createMany|upsert|update)/.test(saveScan),
+    false,
+    "saving a scanned page writes a form row",
+  );
+});
+
+check("the photograph itself is never stored", () => {
+  /*
+    A picture of somebody's homework has their name at the top of it, and the
+    app needs it for the four seconds it takes to read the words off. The cloze
+    exercise makes the same promise about a pasted passage. Keeping it is a
+    property of the schema and of the route, not a habit.
+  */
+  const scanModel = /model Scan \{[^}]*\}/.exec(SCHEMA)?.[0] ?? "";
+  assert.ok(scanModel, "the Scan model is gone, so this check is watching nothing");
+  assert.equal(
+    /image|photo|base64|dataUrl/i.test(scanModel),
+    false,
+    "the Scan model has grown somewhere to keep the picture",
+  );
+
+  const route = read("app/api/scan/route.ts");
+  assert.equal(
+    /prisma\.\w+\.(create|createMany|update|upsert)/.test(route),
+    false,
+    "the scan route writes to the database, which is where the picture would land",
+  );
 });
 
 // ── The model is named from the run that answered ────────────────────────────
@@ -443,7 +521,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     These are the ones with unit tests around them, and a test is only cheap
     while the module under it can be imported without a framework.
   */
-  const pure = ["estonian", "gamification", "stats", "collections", "time", "offline", "security", "copy"];
+  const pure = ["estonian", "gamification", "stats", "collections", "time", "offline", "security", "copy", "scan"];
   for (const file of LIB) {
     const area = file.split("/")[1];
     if (!pure.includes(area ?? "")) continue;
