@@ -129,7 +129,7 @@ for (const width of PHONES) {
 }
 
 // 6 — A thumb is not a mouse pointer.
-for (const path of ["/", "/review", "/dictionary", "/scan"]) {
+for (const path of ["/", "/review", "/dictionary", "/scan", "/assess", "/guide"]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     [...document.querySelectorAll("button, [role=button], a[role=button]")]

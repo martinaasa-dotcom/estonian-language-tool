@@ -28,6 +28,7 @@ async function wipe() {
     await prisma.setting.deleteMany({ where: { ownerId: owner } });
     await prisma.usageEvent.deleteMany({ where: { ownerId: owner } });
     await prisma.scan.deleteMany({ where: { ownerId: owner } });
+    await prisma.assessment.deleteMany({ where: { ownerId: owner } });
   }
   const lexeme = await prisma.lexeme.findFirst({ where: { lemma: LEMMA } });
   if (lexeme) {
@@ -52,6 +53,9 @@ async function populate(ownerId: string, lexemeId: string) {
     data: { ownerId, kind: "TUTOR", provider: "openrouter", model: "gpt-4o", day: "2026-08-29" },
   });
   await prisma.scan.create({ data: { ownerId, title: "itest page", items: "[]" } });
+  await prisma.assessment.create({
+    data: { ownerId, overall: "A2", ceiling: "B1", confidence: "indicative", answered: 9 },
+  });
 }
 
 /** Exactly what `deleteMyAccount` does, in the same order. */
@@ -66,12 +70,15 @@ async function deleteAccount(ownerId: string) {
     await tx.setting.deleteMany({ where: { ownerId } });
     await tx.usageEvent.deleteMany({ where: { ownerId } });
     await tx.scan.deleteMany({ where: { ownerId } });
+    await tx.assessment.deleteMany({ where: { ownerId } });
     await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
   });
 }
 
 async function countsFor(ownerId: string) {
-  const [cards, reviews, tasks, messages, stars, badges, settings, usage, scans] = await Promise.all([
+  const [
+    cards, reviews, tasks, messages, stars, badges, settings, usage, scans, checks,
+  ] = await Promise.all([
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
     prisma.task.count({ where: { ownerId } }),
@@ -81,8 +88,9 @@ async function countsFor(ownerId: string) {
     prisma.setting.count({ where: { ownerId } }),
     prisma.usageEvent.count({ where: { ownerId } }),
     prisma.scan.count({ where: { ownerId } }),
+    prisma.assessment.count({ where: { ownerId } }),
   ]);
-  return { cards, reviews, tasks, messages, stars, badges, settings, usage, scans };
+  return { cards, reviews, tasks, messages, stars, badges, settings, usage, scans, checks };
 }
 
 let lexemeId: string;
@@ -107,7 +115,7 @@ describe("deleteMyAccount", () => {
 
     expect(await countsFor(MINE)).toEqual({
       cards: 0, reviews: 0, tasks: 0, messages: 0,
-      stars: 0, badges: 0, settings: 0, usage: 0, scans: 0,
+      stars: 0, badges: 0, settings: 0, usage: 0, scans: 0, checks: 0,
     });
   });
 

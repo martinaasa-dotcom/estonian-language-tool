@@ -1,0 +1,209 @@
+import { BANDS, type Band } from "./types";
+
+/**
+ * Why somebody is learning Estonian, and by when.
+ *
+ * Asked once, at the start, and asked properly. "Which level do you want" on
+ * its own is a question most learners cannot answer, because CEFR letters mean
+ * nothing until somebody tells you that B1 is the exam naturalisation asks for
+ * and that B2 is where you stop translating in your head. So the reason comes
+ * first, each reason carries the level it usually implies, and the level is
+ * described by what a person can do at it rather than by its letter.
+ *
+ * The deadline matters more than it looks. It is the only input that turns a
+ * projection from a fact about languages into a fact about this person's year,
+ * and it is what lets the plan screen say "not by then, and here is what would
+ * have to change" instead of a number nobody can act on.
+ *
+ * Pure: constants, and arithmetic on dates.
+ */
+
+export interface Reason {
+  id: string;
+  /** A lucide icon name. components/icons.tsx is the only place that resolves one. */
+  icon: string;
+  label: string;
+  detail: string;
+  /** The level this reason usually needs. Offered, never imposed. */
+  implies: Band;
+}
+
+export const REASONS: readonly Reason[] = [
+  {
+    id: "living",
+    icon: "House",
+    label: "I live in Estonia",
+    detail: "Shops, doctors, the bus, neighbours, forms. Everyday life in the language around you.",
+    implies: "B1",
+  },
+  {
+    id: "citizenship",
+    icon: "Stamp",
+    label: "Citizenship or residence",
+    detail: "There is a state exam at the end of this one, and it sets the level rather than you.",
+    implies: "B1",
+  },
+  {
+    id: "work",
+    icon: "Briefcase",
+    label: "Work",
+    detail: "Meetings, email, colleagues talking at full speed. Precision matters more than politeness.",
+    implies: "B2",
+  },
+  {
+    id: "study",
+    icon: "GraduationCap",
+    label: "School or university",
+    detail: "A course with a syllabus, homework and a mark at the end of the term.",
+    implies: "B2",
+  },
+  {
+    id: "family",
+    icon: "Heart",
+    label: "Family or a partner",
+    detail: "The people you want to understand are not going to slow down for long.",
+    implies: "B1",
+  },
+  {
+    id: "roots",
+    icon: "Trees",
+    label: "Roots and heritage",
+    detail: "A language your family spoke, or a country you keep going back to.",
+    implies: "A2",
+  },
+  {
+    id: "travel",
+    icon: "Plane",
+    label: "Travel",
+    detail: "Enough to order, ask, thank and read a sign without reaching for a phone.",
+    implies: "A2",
+  },
+  {
+    id: "curiosity",
+    icon: "Sparkles",
+    label: "Curiosity",
+    detail: "Fourteen cases and a stem that changes when you look at it. Reason enough.",
+    implies: "A2",
+  },
+];
+
+export function reasonById(id: string | null | undefined): Reason | undefined {
+  return REASONS.find((r) => r.id === id);
+}
+
+export interface TargetLevel {
+  band: Band;
+  label: string;
+  /** What a person can actually do at this level, in plain words. */
+  can: string;
+  /** What is still out of reach at it, which is the half nobody tells you. */
+  cannot: string;
+}
+
+/**
+ * The levels, described by what they let you do.
+ *
+ * Paraphrased from the CEFR global descriptors, with the second half added: a
+ * level is as much about what you still cannot do as what you can, and a
+ * learner choosing a target with only the flattering half in front of them
+ * chooses the wrong one.
+ */
+export const TARGETS: readonly TargetLevel[] = [
+  {
+    band: "A1",
+    label: "Get by",
+    can: "Greet people, introduce yourself, ask for things by name, read a sign or a menu.",
+    cannot: "Follow a conversation between two Estonians. It will sound like one long word.",
+  },
+  {
+    band: "A2",
+    label: "Handle everyday life",
+    can: "Shop, order, book, describe your day, ask directions and understand the answer if it is slow.",
+    cannot: "Hold your side of a conversation that moves, or read the news without a dictionary.",
+  },
+  {
+    band: "B1",
+    label: "Live in the language",
+    can: "Manage most situations that come up, follow a clear conversation, write a straightforward letter. This is the level the naturalisation exam asks for.",
+    cannot: "Keep up with fast speech between natives, or write anything that has to be exactly right.",
+  },
+  {
+    band: "B2",
+    label: "Work in it",
+    can: "Take part in a meeting, argue a point, read an article without stopping, write clear prose.",
+    cannot: "Pass unnoticed. Idiom, register and jokes are still further on.",
+  },
+  {
+    band: "C1",
+    label: "Use it like your own",
+    can: "Follow anything, say what you mean with the shade you meant, write for a real audience.",
+    cannot: "Get here in a year. This is where the hours stop being countable in months.",
+  },
+];
+
+export function targetByBand(band: string | null | undefined): TargetLevel | undefined {
+  return TARGETS.find((t) => t.band === band);
+}
+
+export interface DeadlinePreset {
+  id: string;
+  label: string;
+  months: number | null;
+}
+
+export const DEADLINES: readonly DeadlinePreset[] = [
+  { id: "3m", label: "In three months", months: 3 },
+  { id: "6m", label: "In six months", months: 6 },
+  { id: "1y", label: "In a year", months: 12 },
+  { id: "2y", label: "In two years", months: 24 },
+  { id: "none", label: "No deadline, I am in no hurry", months: null },
+];
+
+/** The date a preset lands on, so a stored deadline is always a real date. */
+export function deadlineFrom(preset: DeadlinePreset, now: Date): string | null {
+  if (preset.months === null) return null;
+  const date = new Date(now.getTime());
+  date.setMonth(date.getMonth() + preset.months);
+  return date.toISOString();
+}
+
+/**
+ * Whole weeks from now until a deadline.
+ *
+ * Null for no deadline, zero for one already passed. Zero rather than a
+ * negative number because a plan screen has nothing useful to say about
+ * negative time, and the copy handles "no weeks left" honestly.
+ */
+export function weeksUntil(deadline: string | null | undefined, now: Date): number | null {
+  if (!deadline) return null;
+  const then = new Date(deadline);
+  if (Number.isNaN(then.getTime())) return null;
+  const days = (then.getTime() - now.getTime()) / 86_400_000;
+  return Math.max(0, Math.round(days / 7));
+}
+
+export interface Goals {
+  reason: string | null;
+  /** What the learner wants to reach. */
+  target: Band | null;
+  /** ISO date, or null for no deadline. */
+  deadline: string | null;
+  /** Days a week they expect to practise. */
+  daysPerWeek: number;
+  /** Their own words, kept verbatim and shown back to them. */
+  note: string;
+}
+
+export const DEFAULT_DAYS_PER_WEEK = 5;
+
+export function normaliseGoals(input: Partial<Goals>): Goals {
+  const target = BANDS.includes(input.target as Band) ? (input.target as Band) : null;
+  const days = Number(input.daysPerWeek);
+  return {
+    reason: reasonById(input.reason)?.id ?? null,
+    target,
+    deadline: input.deadline && !Number.isNaN(new Date(input.deadline).getTime()) ? input.deadline : null,
+    daysPerWeek: Number.isFinite(days) ? Math.min(7, Math.max(1, Math.round(days))) : DEFAULT_DAYS_PER_WEEK,
+    note: (input.note ?? "").trim().slice(0, 280),
+  };
+}

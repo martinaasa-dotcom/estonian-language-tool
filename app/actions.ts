@@ -27,6 +27,10 @@ import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
 import { MAX_PASSAGE_CHARS, buildPassageCloze, type KnownForm } from "@/lib/estonian/passage";
 import { PRINCIPAL_FORM_TYPES, isPrincipalFormType } from "@/lib/estonian/types";
+import { DEFAULT_DAYS_PER_WEEK, normaliseGoals } from "@/lib/assessment/goals";
+import { placement } from "@/lib/assessment/score";
+import type { Band, ItemRef, Response } from "@/lib/assessment/types";
+import { goalsFor, saveGoals, saveResult } from "@/lib/progress/assessment";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -663,6 +667,14 @@ export async function completeOnboarding(input: {
   cefr: string;
   dailyGoal: number;
   unitIds: string[];
+  /** What the learner said they are here for. Absent when they skipped it. */
+  goals?: {
+    reason?: string | null;
+    target?: string | null;
+    deadline?: string | null;
+    daysPerWeek?: number;
+    note?: string;
+  };
 }) {
   const ownerId = await requireUserId();
   const goal = Math.min(200, Math.max(5, Math.round(input.dailyGoal)));
@@ -672,6 +684,15 @@ export async function completeOnboarding(input: {
     writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
+    input.goals
+      ? saveGoals(ownerId, normaliseGoals({
+          reason: input.goals.reason ?? null,
+          target: (input.goals.target ?? null) as Band | null,
+          deadline: input.goals.deadline ?? null,
+          daysPerWeek: input.goals.daysPerWeek ?? DEFAULT_DAYS_PER_WEEK,
+          note: input.goals.note ?? "",
+        }))
+      : Promise.resolve(),
   ]);
 
   let added = 0;
@@ -1100,6 +1121,12 @@ export async function deleteMyAccount(confirmation: string) {
       await tx.setting.deleteMany({ where: { ownerId } });
       await tx.usageEvent.deleteMany({ where: { ownerId } });
       await tx.scan.deleteMany({ where: { ownerId } });
+      /*
+        Append-only means never edited, not never erased on request. A level
+        check is a measurement of this person and it goes with the rest of
+        them, or the deletion promise on /privacy is not one.
+      */
+      await tx.assessment.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
     }, { timeout: 120_000 });
   } catch (error) {
@@ -1496,4 +1523,87 @@ function revive(row: Record<string, unknown>, dateFields: string[]): Record<stri
     if (typeof value === "string") out[key] = new Date(value);
   }
   return out;
+}
+
+// ───────────────────────────── Placement check ─────────────────────────────
+
+const BAND = z.enum(["A1", "A2", "B1", "B2", "C1"]);
+const SKILL = z.enum(["reading", "listening", "writing", "speaking"]);
+
+/**
+ * One sitting of the level check, as it comes back from the browser.
+ *
+ * The paper is marked in the browser, because it has to be: the answers are in
+ * it, feedback appears the instant a question is answered, and a placement
+ * check that needed a round trip per question would be unusable on a train.
+ * Nothing is at stake in it either. It sets nobody's rank, it is not on the
+ * class roster (`lib/classroom/roster.ts` shares effort, never contents), and
+ * the only person a forged result misleads is the person who forged it.
+ *
+ * What the server does *not* delegate is the rule that turns marks into a
+ * level. The credits arrive, `placement()` runs here, and the level comes out
+ * of the same function the tests cover, so a stale browser or a hand-made
+ * request cannot invent its own scale.
+ */
+const ASSESSMENT = z.object({
+  items: z.array(z.object({ id: z.string().min(1).max(120), skill: SKILL, band: BAND })).min(1).max(60),
+  responses: z.array(z.object({
+    itemId: z.string().min(1).max(120),
+    skill: SKILL,
+    band: BAND,
+    credit: z.number().min(0).max(1),
+    selfRating: z.number().int().min(1).max(4).optional(),
+    ms: z.number().int().min(0).max(3_600_000),
+    skipped: z.boolean().optional(),
+  })).max(60),
+});
+
+export async function recordAssessment(input: unknown) {
+  const ownerId = await requireUserId();
+  const parsed = ASSESSMENT.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: "That result could not be read." };
+
+  /*
+    Only the three fields the scale is computed from are carried across, so a
+    response naming an item the paper does not contain cannot vote.
+  */
+  const items: ItemRef[] = parsed.data.items;
+  const known = new Set(items.map((i) => i.id));
+  const responses = parsed.data.responses.filter((r) => known.has(r.itemId)) as Response[];
+
+  const result = placement(items, responses);
+  const stored = await saveResult(ownerId, result);
+
+  revalidatePath("/assess");
+  revalidatePath("/progress");
+  revalidatePath("/");
+  return { ok: true as const, id: stored.id, placement: result };
+}
+
+const GOALS = z.object({
+  reason: z.string().max(40).nullable().optional(),
+  target: z.string().max(4).nullable().optional(),
+  deadline: z.string().max(40).nullable().optional(),
+  daysPerWeek: z.number().min(1).max(7),
+  note: z.string().max(280).optional(),
+});
+
+/** Saves the why, the what and the by when. Editable from Settings for ever. */
+export async function saveLearningGoals(input: unknown) {
+  const ownerId = await requireUserId();
+  const parsed = GOALS.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: "Those goals could not be read." };
+
+  await saveGoals(ownerId, normaliseGoals({
+    reason: parsed.data.reason ?? null,
+    target: (parsed.data.target ?? null) as Band | null,
+    deadline: parsed.data.deadline ?? null,
+    daysPerWeek: parsed.data.daysPerWeek,
+    note: parsed.data.note ?? "",
+  }));
+
+  revalidatePath("/assess");
+  revalidatePath("/settings");
+  revalidatePath("/");
+  return { ok: true as const, goals: await goalsFor(ownerId) };
 }

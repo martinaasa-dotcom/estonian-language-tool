@@ -290,3 +290,43 @@ model Scan {
 
   @@index([ownerId, createdAt])
 }
+
+/// A placement check the learner sat: reading, listening, writing, speaking.
+///
+/// Stored, unlike everything else on the progress side of this app, and it is
+/// worth saying why. XP, streaks and every chart are computed from the
+/// append-only review log because a stored score is a second source of truth
+/// that drifts. A placement result is not derivable from that log at all: it is
+/// a measurement of answers to questions that were never cards and never
+/// scheduled, made at one moment. Recomputing it later is impossible, so it is
+/// kept, exactly like a personal best (ADR-014's stated exception).
+///
+/// Append-only in the same sense as Review: a row is written when the check
+/// ends and never edited. A later check is a new row, which is what makes the
+/// history a history rather than a number that moved.
+model Assessment {
+  id      String   @id @default(uuid())
+  ownerId String
+  takenAt DateTime @default(now())
+
+  /// The weakest measured skill, which is what a CEFR level actually claims.
+  /// "pre-A1" when the first band was not reached. Null if nothing was scored.
+  overall    String?
+  /// The strongest measured skill, so the result can say the true half too.
+  ceiling    String?
+  confidence String // rough | indicative | reasonable
+  /// Scored questions answered. Speaking is not among them, by design.
+  answered   Int     @default(0)
+
+  reading   String?
+  listening String?
+  writing   String?
+  /// The learner's own rating of their speaking, 1 to 4, never a score of ours.
+  /// There is no verified Estonian speech recogniser available here (ADR-018).
+  speakingSelf Float?
+
+  /// JSON: the per band breakdown, for the detail view and the next comparison.
+  detail String @default("{}")
+
+  @@index([ownerId, takenAt])
+}

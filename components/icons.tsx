@@ -1,8 +1,9 @@
 import {
-  Award, BookCheck, BookOpen, Briefcase, CalendarCheck, CheckCheck, Clock, Flame, Footprints,
-  GraduationCap, Grid2x2, Hand, Heart, HeartPulse, House, Landmark, Library, Map, Moon, Palette,
-  Plane, Plus, Repeat, ScrollText, ShoppingBag, Sparkles, Sunrise, Target, Trees, TrendingUp,
-  Trophy, Users, Utensils, Zap, type LucideIcon,
+  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, ChartNoAxesColumn, CheckCheck,
+  Clock, Compass, Flame, Footprints, GraduationCap, Grid2x2, Hand, Headphones, Heart, HeartPulse,
+  Hourglass, House, Landmark, Languages, Library, Map, MessageCircleQuestion, MessagesSquare, Mic,
+  Moon, Palette, PenLine, Plane, Plus, Repeat, School, ScrollText, ShoppingBag, Sparkles, Stamp, Sun,
+  Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap, type LucideIcon,
 } from "lucide-react";
 
 /**
@@ -15,10 +16,11 @@ import {
  * string means, and the fallback keeps a typo from crashing a page.
  */
 export const ICONS: Record<string, LucideIcon> = {
-  Award, BookCheck, BookOpen, Briefcase, CalendarCheck, CheckCheck, Clock, Flame, Footprints,
-  GraduationCap, Grid2x2, Hand, Heart, HeartPulse, House, Landmark, Library, Map, Moon, Palette,
-  Plane, Plus, Repeat, ScrollText, ShoppingBag, Sparkles, Sunrise, Target, Trees, TrendingUp,
-  Trophy, Users, Utensils, Zap,
+  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, ChartNoAxesColumn, CheckCheck,
+  Clock, Compass, Flame, Footprints, GraduationCap, Grid2x2, Hand, Headphones, Heart, HeartPulse,
+  Hourglass, House, Landmark, Languages, Library, Map, MessageCircleQuestion, MessagesSquare, Mic,
+  Moon, Palette, PenLine, Plane, Plus, Repeat, School, ScrollText, ShoppingBag, Sparkles, Stamp, Sun,
+  Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap,
 };
 
 export function icon(name: string): LucideIcon {

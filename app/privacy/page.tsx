@@ -30,6 +30,11 @@ export default function PrivacyPage() {
           It is the app&rsquo;s memory of how well you know each word.
         </P>
         <P>
+          <strong>Your level checks.</strong> Each sitting of the level check is kept: the levels it
+          measured, how many questions it came from, and the rating you gave your own speaking.
+          Nothing you record is uploaded, and no audio is stored anywhere.
+        </P>
+        <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
           replies are stored so the conversation survives a page reload.
         </P>
@@ -89,7 +94,8 @@ export default function PrivacyPage() {
         </P>
         <P>
           <strong>Settings → Deleting your data</strong> removes your cards, reviews, tasks,
-          messages, stars, badges, settings, scanned pages and usage records, in one transaction,
+          messages, stars, badges, settings, scanned pages, level checks and usage records, in one
+          transaction,
           immediately.
           The shared dictionary stays (other learners have cards built on it) but any entry you
           edited stops being attributed to you. Take an export first: this keeps no copy.

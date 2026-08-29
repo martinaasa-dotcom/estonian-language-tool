@@ -293,3 +293,25 @@ be recovered by re-fetching from anywhere, and it is the input to future FSRS op
 
 **`AudioClip` is content-addressed** by `sha256(text + speaker + speed)`, so the same word requested
 from a dictionary entry and from a flashcard hits one cached file.
+
+**`Assessment` is the second append-only table, and the third exception to "progress is derived".**
+A sitting of the level check is a measurement of answers to questions that were never cards and
+were never scheduled, made at one moment against a paper assembled for it. Nothing in the review log
+can reconstruct it, so it is stored rather than computed, and it is written once and never edited:
+a later check is another row, which is what makes the history a history instead of a number that
+moved. It holds the per skill levels, the overall (the weakest measured skill), the confidence, how
+many scored questions it came from, the learner's own speaking rating, and the band breakdown as
+JSON. See ADR-020.
+
+The goal it is read against lives in `Setting`, under `goalReason`, `goalTarget`, `goalDeadline`,
+`goalDays` and `goalNote`, all through `lib/settings/store.ts`. Five keys rather than one JSON blob
+so one answer can change without rewriting the rest.
+
+**`Scan` holds a word list and never a photograph.** A page somebody photographed is stored as the
+items they confirmed: the Estonian as it was read, the English, and the `lexemeId` of the dictionary
+entry that vouched for it, which is null for a word nothing vouched for. There is no column an image
+could go in, and the invariant suite fails if one appears or if the scan route writes to the database
+at all. The picture is decoded in a Route Handler, sent to one model, and dropped, exactly as
+`lib/estonian/passage.ts` treats a pasted reading: a photograph of somebody's homework has their name
+at the top of it. Words are held as references to `Lexeme` rather than as copies, like a learning-path
+unit, so correcting a word corrects it on every page it appears on. See ADR-021.

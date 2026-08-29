@@ -20,6 +20,16 @@ export const SETTING_KEYS = {
   reviewMode: "reviewMode",
   onboardedAt: "onboardedAt",
   cefrGoal: "cefrGoal",
+  /*
+    Why this person is here, what they want to reach, and by when. Asked once
+    at first run and editable in Settings. Five keys rather than one JSON blob
+    so a single answer can be changed without reading and rewriting the rest.
+  */
+  goalReason: "goalReason",
+  goalTarget: "goalTarget",
+  goalDeadline: "goalDeadline",
+  goalDays: "goalDays",
+  goalNote: "goalNote",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
@@ -72,3 +82,12 @@ export function dailyGoalFrom(value: string | undefined | null): number {
 export function reviewModeFrom(value: string | undefined | null): ReviewMode {
   return value === "flip" || value === "type" ? value : DEFAULT_REVIEW_MODE;
 }
+
+/** Every key the goal answers live under, for a single read. */
+export const GOAL_KEYS = [
+  SETTING_KEYS.goalReason,
+  SETTING_KEYS.goalTarget,
+  SETTING_KEYS.goalDeadline,
+  SETTING_KEYS.goalDays,
+  SETTING_KEYS.goalNote,
+] as const;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleHelp, Flame, Trophy, Users } from "lucide-react";
+import { CircleHelp, Compass, Flame, Trophy, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -123,6 +123,11 @@ export default async function ProgressPage() {
     <Page
       title="Progress"
       lead="Computed live from the review log. Nothing here is a stored score, so it cannot drift from what you actually did."
+      actions={
+        <ButtonLink href="/assess">
+          <Compass size={15} aria-hidden /> Level check
+        </ButtonLink>
+      }
     >
       <div className="flex flex-col gap-6">
         <Card className="flex flex-wrap items-center gap-6">
