@@ -75,6 +75,18 @@ export function extractEstonianSenses(wikitext: string): string[] {
  */
 function cleanWikitext(raw: string): string {
   let text = raw;
+  /*
+    An unterminated template, which the balanced-pair sweep below cannot see.
+
+    Wiktionary writes `{{gl|a short explanation}}` after a gloss, and where the
+    closing braces are missing or fall outside the line the pair loop leaves
+    the opening brace and everything after it. The seed builder shipped
+    "dictaphone, dictation machine {{gl|a small portable device for recording"
+    as a flashcard answer before this. Trimmed first, so what follows sees a
+    line that only contains balanced markup.
+  */
+  text = text.replace(/\s*\{\{[^}]*$/, "").replace(/\s*\[\[[^\]]*$/, "");
+
 
   let previous: string;
   do {
