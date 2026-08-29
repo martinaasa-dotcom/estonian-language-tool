@@ -46,9 +46,46 @@ self.addEventListener("activate", (event) => {
         keys.filter((k) => k.startsWith("kodukeel-") && !k.startsWith(VERSION))
           .map((k) => caches.delete(k)),
       ))
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
+      .then(() => warmOpenPages()),
   );
 });
+
+/**
+ * Cache the pages that are already open the moment this worker takes over.
+ *
+ * WITHOUT THIS THE FALLBACK IS EMPTY FOR EXACTLY THE PERSON IT EXISTS FOR.
+ * `navigateWithFallback` fills the page cache as a side effect of serving a
+ * navigation, and a worker does not serve the navigation that installed it: on
+ * a first visit the page is fetched, the worker installs behind it, and
+ * `clients.claim()` takes over a client whose own page was never seen. Go
+ * offline and reload at that point and there is nothing to match, so the
+ * fallback goes to /offline. Someone who opened the app for the first time on
+ * the way to the bus stop got the "you need a connection" screen for the whole
+ * journey, and the second journey worked, which is the worst possible shape for
+ * a bug to have.
+ *
+ * Every open window rather than a hardcoded /review, because the rule is "the
+ * page you were last on opens again", not "one route is special". Failures are
+ * swallowed per client: this is a warm-up, and a page that will not fetch is
+ * exactly the page that has nothing to cache anyway.
+ */
+async function warmOpenPages() {
+  try {
+    const [cache, clients] = await Promise.all([
+      caches.open(PAGES),
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }),
+    ]);
+    await Promise.all(clients.map(async (client) => {
+      const url = new URL(client.url);
+      if (url.origin !== self.location.origin) return;
+      if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) return;
+      await cache.add(new Request(url.href, { credentials: "same-origin" })).catch(() => undefined);
+    }));
+  } catch {
+    // A warm-up that cannot run leaves the worker exactly as it was.
+  }
+}
 
 const isAudio = (url) => url.pathname === "/api/tts";
 

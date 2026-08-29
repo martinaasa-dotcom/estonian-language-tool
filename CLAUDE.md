@@ -490,6 +490,17 @@ offline banner, which is up whether or not anything was graded. It answers with 
 itself advertises now, and asserts a card was answered before asserting anything about the queue,
 because every check after that one reads as an app fault when the answer is no.
 
+**And it now runs in CI, which is the only reason any of that is worth writing down.** It did not,
+and it was red on main for an unknown length of time with a real fault behind it. The page cache is
+filled as a side effect of the worker serving a navigation, and a worker does not serve the
+navigation that installs it: a first visit fetched the page, the worker installed behind it, and
+`clients.claim()` took over a client whose own page had never been seen. Offline and reload at that
+point and there was nothing to match, so somebody who opened the app for the first time on the way
+to the bus stop got "this screen needs a connection" for the whole journey and a working app on the
+way home. `warmOpenPages` caches the pages already open at the moment the worker takes over. Every
+open window rather than a hardcoded `/review`, because the promise is "the page you were last on
+opens again" rather than "one route is special".
+
 CI runs typecheck, lint, the unit suite, the invariants, integration tests against a real
-Postgres, the production build, the credential scan and the phone. It is the enforcement behind
+Postgres, the production build, the credential scan, the phone and the offline smoke test. It is the enforcement behind
 the rules above: do not add a rule without one.
