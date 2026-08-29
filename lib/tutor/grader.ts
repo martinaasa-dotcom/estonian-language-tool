@@ -133,9 +133,26 @@ export async function gradeSentence(
   input: GraderInput,
   formWasUsed: boolean,
 ): Promise<{ graded: GradedSentence | null; usage: UsageReport }> {
-  const system = buildGraderSystemPrompt();
-  const user = buildGraderUserPrompt(input, formWasUsed);
+  const { text, usage } = await callForJson(
+    config, buildGraderSystemPrompt(), buildGraderUserPrompt(input, formWasUsed),
+  );
+  return { graded: parseVerdict(text), usage };
+}
 
+/**
+ * The transport, shared by the two things that ask a model for one JSON object.
+ *
+ * Extracted when the mock examination needed a second grader: the composition
+ * task hands over a whole text rather than one sentence, and duplicating fifty
+ * lines of provider plumbing to say so would have meant two places to fix the
+ * next time a provider changed the shape of its usage block.
+ */
+async function callForJson(
+  config: ProviderConfig,
+  system: string,
+  user: string,
+  maxTokens = 400,
+): Promise<{ text: string; usage: UsageReport }> {
   const usage: UsageReport = { inputTokens: 0, outputTokens: 0, measured: false };
   let text = "";
 
@@ -149,7 +166,7 @@ export async function gradeSentence(
       },
       body: JSON.stringify({
         model: config.model,
-        max_tokens: 400,
+        max_tokens: maxTokens,
         // Identical on every call, so it is worth caching rather than re-reading.
         system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: user }],
@@ -182,7 +199,7 @@ export async function gradeSentence(
       headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: config.model,
-        max_tokens: 400,
+        max_tokens: maxTokens,
         response_format: { type: "json_object" },
         messages: [{ role: "system", content: system }, { role: "user", content: user }],
       }),
@@ -206,5 +223,65 @@ export async function gradeSentence(
     usage.outputTokens = estimateTokens(text);
   }
 
-  return { graded: parseVerdict(text), usage };
+  return { text, usage };
+}
+
+// ── The examination composition ──────────────────────────────────────────────
+
+/**
+ * Reading back a whole text from the mock examination's writing part.
+ *
+ * THE MARKS ARE ALREADY DECIDED BEFORE THIS RUNS, and that is the point. The
+ * composition scores on length and on whether the words the task named were
+ * used, both settled by `lib/exam/score.ts` against the dictionary. Nothing this
+ * returns can move a mark. A model that decided whether somebody's Estonian was
+ * good enough would be deciding whether they are ready to sit a real
+ * examination, which is exactly the judgement it is least qualified to make.
+ *
+ * So the prompt asks for the thing a model is genuinely good at: reading a text
+ * and saying what a teacher would say about it, in English, without spelling a
+ * single Estonian form it was not given. The learner's own words are the
+ * allowlist, and `verifyComment` enforces it after the fact, because a live test
+ * showed a model reaching for forms unprompted despite being told not to.
+ */
+export function buildCompositionSystemPrompt(): string {
+  return `You are Anu, an Estonian teacher, reading back a text a learner wrote in an examination.
+
+WHAT YOU ARE DOING
+Saying what you notice, the way a teacher hands a paper back. Two or three sentences, no more.
+
+WHAT YOU ARE NOT DOING
+Marking it. The marks were awarded before you saw this, mechanically, on length and on whether the required words were used. Do not award, estimate, or mention a score, and do not tell the learner whether they passed.
+
+RULES YOU MUST NOT BREAK
+- Every Estonian word you write must be one the learner themselves wrote. You may not spell a correction. If a word is wrong, name the problem in English: "the second sentence needs the partitive after that verb", never the form itself.
+- If you are unsure whether something is an error, leave it. A confident correction that is wrong is far more damaging than a missed one, because the learner will believe you.
+- Name the pattern, not every instance. One thing to fix beats nine.
+
+TONE
+Direct and brief. Say what works before what does not, when both apply. No praise that carries no information.
+
+OUTPUT
+Reply with a single JSON object and nothing else:
+{"verdict":"correct"|"almost"|"wrong","comment":"two or three sentences","rule":"the one thing to work on, in a few words, or an empty string"}
+
+Do not use an em dash or an en dash anywhere in your comment. Use a comma, a full stop, or a pair of brackets.`;
+}
+
+export function buildCompositionUserPrompt(text: string, level: string): string {
+  return `LEARNER LEVEL: ${level}
+
+THIS IS WHAT THEY WROTE. Every Estonian word you may use is somewhere in it:
+${text}`;
+}
+
+export async function gradeComposition(
+  config: ProviderConfig,
+  text: string,
+  level: string,
+): Promise<{ graded: GradedSentence | null; usage: UsageReport }> {
+  const { text: reply, usage } = await callForJson(
+    config, buildCompositionSystemPrompt(), buildCompositionUserPrompt(text, level), 500,
+  );
+  return { graded: parseVerdict(reply), usage };
 }

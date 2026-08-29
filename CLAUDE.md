@@ -232,6 +232,39 @@ individual's deck, searches or answer history. Do not widen it. (ADR-019.)
 **Never score pronunciation.** There is no verified Estonian speech recogniser available here.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 
+**A mock exam is assembled, marked mechanically, and says where it stops imitating.** The state
+examines at A2, B1, B2 and C1, and `docs/16-exam.md` cites every figure the app repeats about it.
+Three separations hold the feature up and all three have an invariant behind them.
+
+The **paper is assembled, never written**: `lib/exam/paper.ts` hides, shuffles and surrounds
+sentences Ekilex recorded, the same latitude `cloze.ts` takes, and nothing more. It is deterministic
+in (level, seed, pool), which is what lets a reload mid-paper return the same questions and lets the
+server rebuild the paper to mark it.
+
+The **marking is mechanical**: every mark in `lib/exam/score.ts` is a comparison against a form the
+dictionary vouches for, so that module imports no provider and opens no socket. Anu reads a
+composition back afterwards, on request, and her note carries no marks and is withheld whole if it
+quotes a form the learner did not write. A model deciding whether somebody is ready to book a real
+examination is the exact judgement it is least qualified to make.
+
+The **imitation declares itself**. Each task names the official task it stands in for and the
+briefing prints it; the A1 and C2 papers are labelled "not examined" wherever they appear, because
+the state sets neither; and the spoken part says on every screen that the learner is marking
+themselves. **What the dictionary cannot fill is reported, not dropped**: a task states its
+shortfall, a part is marked out of what was actually set, and a part nothing could be set for is
+left out of the total rather than scored zero. Scoring it zero would fail a candidate for a gap in
+the dictionary and would trip the one clause that is supposed to mean "you did not attempt this".
+
+The client never sends a mark, only a level, a seed and the answers. A result anybody can type is
+not a measurement. (ADR-020.)
+
+**A confidence figure carries the evidence behind it.** `lib/exam/readiness.ts` predicts a score per
+part and then a chance of clearing sixty percent, as a logistic whose spread widens as the evidence
+thins, under a ceiling set by how many reviews are behind the claim: 60 under 150 reviews, 85 under
+800, 97 above. A learner with ninety reviews may not be told the app is ninety percent sure of
+anything. The tier is printed beside the number, and a paper actually sat outranks the model for its
+own level.
+
 ## More than one session works this repository at a time
 
 **Read what landed before you merge, not just the conflict status.** On
@@ -274,7 +307,8 @@ passes on that happily: a comma is not a dash. Grep the markers the branch owns
 after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
-`x-model-provider`, `isSameOriginMutation`, `checkRateLimit`. Most of them now
+`x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
+`rawAvailable`, `absentParts`, `standsFor`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -290,7 +324,7 @@ npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
-npm run test:browser     # the newer browser suites: routes, modes, offline, a11y
+npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
 ```
 
@@ -344,6 +378,11 @@ phones and gone above the breakpoint, every target clear of 44px, and the pull g
 real. `scripts/test-invariants.ts` asserts the rules above, and CI runs it, which is the only
 reason it will stay green: Upside Lab kept one that nothing ran and it drifted to twenty-three
 failures before anybody counted. Assert the rule, not today's markup.
+
+`scripts/test-exam.mjs` sits a whole paper end to end at two levels: the briefing's disclosures, the
+per-part clock, one question of every shape, handing in, and the result's per-part breakdown and
+answer list. It also checks the hub's confidence figures carry an evidence tier, because a
+percentage whose basis is not stated is the one thing this feature must not ship.
 
 `scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo and the command
 palette. `scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar

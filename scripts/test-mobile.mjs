@@ -22,7 +22,7 @@ const WIDE = [768, 1280];
 const browser = await launchChromium();
 
 // Floor: 34, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 34 });
+const { check, done } = suite("The phone", { floor: 38 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -129,7 +129,10 @@ for (const width of PHONES) {
 }
 
 // 6 — A thumb is not a mouse pointer.
-for (const path of ["/", "/review", "/dictionary"]) {
+//     `/exam` is on this list because it is the densest screen in the app: six
+//     level cards, each with four meters, a ring and a button, and a whole
+//     column of advice links under them.
+for (const path of ["/", "/review", "/dictionary", "/exam"]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     [...document.querySelectorAll("button, [role=button], a[role=button]")]
@@ -138,6 +141,57 @@ for (const path of ["/", "/review", "/dictionary"]) {
       .map(({ el, r }) => `${(el.textContent || el.getAttribute("aria-label") || "?").trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`),
   );
   check(`every target on ${path} clears 44px`, small.length === 0, small.join(", "));
+  await ctx.close();
+}
+
+// 6b — The examination paper, which is the densest screen the app has and the
+//      one that caught this out. The diacritic bar's minimum width was one
+//      pixel over what a 390px phone has inside a card, and a grid item's
+//      `min-width: auto` passed that pixel to the document: 23px of sideways
+//      scroll, and the phone bar sitting over the button that ends the part.
+//      Measured with the clock running, because the briefing is a simple page
+//      and the fault was two screens further in.
+{
+  const { ctx, page } = await open(390, 844, "/exam/A2?seed=phone");
+  await page.getByRole("button", { name: "Start the clock" }).click();
+  await page.waitForTimeout(600);
+
+  const over = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  check("the paper cannot be dragged sideways", over <= 0, `${over}px of overflow`);
+
+  const small = await page.evaluate(() =>
+    [...document.querySelectorAll("main button, main [role=button], main label")]
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.width > 0 && r.height < 44)
+      .map(({ el, r }) => `${(el.textContent || el.getAttribute("aria-label") || "?").trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`));
+  check("every target on the paper clears 44px", small.length === 0, small.slice(0, 4).join(", "));
+
+  /*
+    Scrolled to the natural end of the page, which is where somebody who has
+    answered the last question ends up. `dock-pad` on `main` is what is supposed
+    to keep the phone bar off the last thing on the screen; this is the check
+    that it does, on the screen where being unable to press the button means
+    being unable to finish the paper.
+
+    Not `scrollIntoView({ block: "end" })`: that pins the button to the bottom
+    edge on purpose, which is under the bar by construction and is a position no
+    scroll can actually leave it in.
+  */
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(400);
+  const covered = await page.evaluate(() => {
+    const button = [...document.querySelectorAll("main button")]
+      .find((b) => /Next part|Hand in/.test(b.textContent || ""));
+    if (!button) return "no button that ends the part";
+    const r = button.getBoundingClientRect();
+    const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return at && (at === button || button.contains(at))
+      ? ""
+      : `${at ? at.tagName + "." + String(at.className).slice(0, 30) : "nothing"} is on top of it`;
+  });
+  check("nothing is drawn over the button that ends the part", covered === "", covered);
+
   await ctx.close();
 }
 

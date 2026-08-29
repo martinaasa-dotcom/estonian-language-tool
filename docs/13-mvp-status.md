@@ -356,3 +356,84 @@ the rest and says how many.
    after that the card lives in My words like any other suspended card.
 3. **Anu is handed the question, not the card.** She gets a sentence naming the case and the word;
    she does not see the learner's answer, their history, or the rest of the deck.
+
+## 8. The fourth pass: the paper people are actually learning for
+
+Most people learning Estonian are learning for a specific paper. The state examines at **A2, B1, B2
+and C1**, sixty percent to pass, and a zero in any one of the four parts fails the whole thing
+however the other three went. B1 is what a citizenship application asks for. An app that teaches
+Estonian and cannot tell somebody which of those they could pass today is answering a smaller
+question than the one being asked.
+
+`docs/16-exam.md` is the full account, including every figure and where it was read from. What
+follows is what it cost and what it does not do.
+
+### What was built
+
+| Piece | State |
+|---|---|
+| The examination as data (`lib/exam/spec.ts`) | Complete. Parts, minutes, points, bands and the pass rule for all six levels, the four real ones cited, asserted by 17 unit tests |
+| Paper assembly (`lib/exam/paper.ts`) | Complete. Eleven task shapes, deterministic in (level, seed, pool), and a stated shortfall wherever the dictionary runs out |
+| Marking (`lib/exam/score.ts`) | Complete. No provider, no socket, no model anywhere in it |
+| Readiness and confidence (`lib/exam/readiness.ts`) | Complete. Per-part prediction, a pass chance with a widening spread, an evidence ceiling, strengths and gaps that link somewhere |
+| The report (`lib/exam/report.ts`) | Complete. Where the marks went, which task did the damage, every wrong answer, the words that caught you twice |
+| The screens | Hub, briefing, sitting, result. `scripts/test-exam.mjs` sits a whole paper at two levels, 39 checks |
+
+### The thing that nearly sank it, and what it changed
+
+**The built-in dictionary carries no example sentences at all.** Not few: none. Every one of the 360
+seeded entries has an empty `examples` array, because sentences arrive from Ekilex `usages` and only
+once a word has been looked at with a key configured.
+
+Three of the task shapes need an attested sentence. Without a key that meant the reading part and
+the listening part came out completely empty, and the honest shortfall machinery dutifully reported
+half a paper as absent. Honest, and useless, on the install a stranger gets by default.
+
+So a task that cannot be set falls back to one built from what the dictionary always holds: words,
+forms, glosses, and a speech synthesiser that needs no key. Listening becomes single words rather
+than sentences, which in Estonian is a harder test than it sounds, since hearing `toas` and writing
+`toa` is exactly the failure the exercise exists to catch. Reading becomes meaning and form
+recognition. The word-order task has no fallback and stays honestly empty, because rebuilding a
+sentence genuinely needs a sentence.
+
+**Every substitution is declared**: on the briefing, per task, before the clock starts. A paper that
+quietly swapped in an easier shape would be worse than a short one.
+
+This is the third fault in this repository's history that only a keyless deployment reaches, after
+the dictionary's dead-end case table and Anu's empty state dropping the learner's question. All
+three were invisible on a machine with the keys set, which is the argument for running the suites in
+the state a stranger installs into.
+
+### Two things the first version got wrong on screen
+
+Both were found by rendering the page rather than by reading the code, and both were the same shape:
+a number and its explanation coming from different places.
+
+**"Reading is at 11 percent, across 143 goes."** Neither half was true of the other. A sat exam part
+replaced the card-based percentage while keeping the card-based count, so a learner with 143
+recognition reviews at 73 percent and one bad paper was shown the paper's percentage over the
+cards' count. The two sources are now a weighted mean, a sitting counting as twenty reviews' worth.
+
+**Four cards each claiming to be the biggest problem.** Every part below the threshold said "this is
+the part costing you the most marks". They are ranked now and only the worst one says it.
+
+### Known limitations
+
+1. **The reading part is not text comprehension.** It cannot be: the app may not write Estonian, and
+   the dictionary holds sentences rather than passages. With an Ekilex key it is gap-fill and
+   matching over attested sentences, which is two of the four official reading tasks; without one it
+   is word level. The briefing says which.
+2. **The spoken part is marked by the learner** (ADR-018), and a paper is a quarter self-marked
+   because of it. The result says so rather than folding it in silently.
+3. **Listening and speaking have no evidence before the first sitting.** A `Review` row carries no
+   note of which mode wrote it, so a dictation and a flip of the same card are indistinguishable in
+   the log. Adding a mode column to the one append-only table for a reporting convenience is a bad
+   trade, so the advice says the app has nothing on those parts rather than claiming they have never
+   been practised.
+4. **Vocabulary coverage is measured against this dictionary, not against the syllabus.** The real
+   B1 vocabulary is several thousand words and the built-in set is 360, so "88 of 100 A2 words have
+   stuck" is a proxy. The gap states the fraction it is working from rather than hiding it behind a
+   percentage.
+5. **The confidence figure is a model, and it says so.** It is capped by how many reviews are behind
+   it, and a paper actually sat outranks it. Nobody with ninety reviews is told the app is ninety
+   percent sure of anything.

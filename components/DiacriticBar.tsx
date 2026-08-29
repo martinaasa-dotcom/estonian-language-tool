@@ -32,7 +32,15 @@ export function DiacriticBar({ label = "Insert Estonian character" }: { label?: 
   };
 
   return (
-    <div className="flex items-center gap-1.5" role="group" aria-label={label}>
+    /*
+      Wrapping, because six 44px targets and a label do not fit across a 390px
+      phone once this sits inside a card's padding. Its minimum width was 351px
+      against 350px of room, and a grid item's `min-width: auto` handed that one
+      pixel straight to the document: the exam paper scrolled sideways by 23px
+      and the phone bar ended up over the button that moves to the next part.
+      One pixel, two visible faults, and both of them only on a phone.
+    */
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={label}>
       <span className="label-xs mr-1" style={{ color: "var(--ink-3)" }}>Insert</span>
       {DIACRITICS.map((ch) => (
         <button

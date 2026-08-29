@@ -15,13 +15,15 @@ const BASE = baseUrl();
 const ROUTES = [
   "/", "/review/write", "/review/government", "/review/cloze",
   "/review/clinic", "/words", "/week", "/settings", "/privacy", "/terms",
+  "/exam",
 ];
 
 const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
-// Floor: measured 42 in dev mode, which is the mode its header documents.
-const { check, done } = suite("Accessibility", { floor: 42 });
+// Floor: measured 42 in dev mode, which is the mode its header documents,
+// plus 4 for the exam hub.
+const { check, done } = suite("Accessibility", { floor: 46 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });

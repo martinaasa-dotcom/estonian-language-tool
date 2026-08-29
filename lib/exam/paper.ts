@@ -1,0 +1,887 @@
+import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
+import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
+import { caseByKey } from "@/lib/estonian/cases";
+import { dictationWords } from "@/lib/estonian/dictation";
+import { writingTasksFor } from "@/lib/estonian/writing";
+import {
+  blueprintFor, lengthsFor, specFor,
+  type ExamLevel, type ExamSpec, type PartSpec, type TaskKind, type TaskSpec,
+} from "./spec";
+import type { SkillKey } from "./types";
+
+/**
+ * Assembling one paper.
+ *
+ * THE WHOLE MODULE EXISTS BECAUSE THE APP MAY NOT WRITE ESTONIAN (ADR-005).
+ * A mock exam is the most tempting place in this codebase to break that rule:
+ * a model would happily produce four reading passages and thirty questions in
+ * a second, and roughly one form in every ten would be invented. So every
+ * Estonian character in a finished paper came out of the dictionary, and this
+ * module only ever hides, shuffles, or surrounds it. The same discipline
+ * `lib/estonian/cloze.ts` already applies to a single exercise, applied to a
+ * three hour paper.
+ *
+ * The consequence is that a paper is only as long as the dictionary can make
+ * it, and the honest thing to do about that is say so. Every task reports a
+ * `shortfall`: how many items it could not fill and why. The exam screen prints
+ * it, and `../exam/score` marks the part out of what was actually asked rather
+ * than out of what the specification wanted. A paper that quietly dropped six
+ * questions would inflate every score built on it.
+ *
+ * DETERMINISTIC. A paper is a pure function of the level, the seed and the
+ * pool, so a reload during a sitting rebuilds the same questions instead of
+ * quietly handing the learner a fresh set halfway through the listening part.
+ *
+ * Pure: no React, no Prisma, no clock, no Math.random.
+ */
+
+export interface PoolExample {
+  et: string;
+  en?: string | null;
+}
+
+/** One dictionary word, with everything a task builder might need from it. */
+export interface PoolWord {
+  lexemeId: string;
+  lemma: string;
+  translation: string;
+  pos: string;
+  cefr: string | null;
+  /** Stored principal parts plus any retrieved Ekilex paradigm. */
+  forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
+  /** Attested sentences. Never generated. */
+  examples: PoolExample[];
+  /** The raw government string, when the entry carries one. */
+  government: string | null;
+  /**
+   * The learner's own card for this word, when they have one.
+   *
+   * Carried so that submitting the paper can grade through the same action
+   * every other mode grades through (ADR-016). A word the learner has no card
+   * for still makes a perfectly good question; it simply tells the scheduler
+   * nothing, because there is nothing of theirs to schedule.
+   */
+  cardId: string | null;
+}
+
+// ── The random number generator ──────────────────────────────────────────────
+
+/**
+ * A seeded generator, so a paper is reproducible.
+ *
+ * mulberry32, thirty lines shorter than pulling in a dependency and more than
+ * good enough to shuffle a word list. The seed is hashed from a string so a
+ * paper can be addressed by something a person can put in a URL.
+ */
+export function seedFrom(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export function rng(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle<T>(items: readonly T[], random: () => number): T[] {
+  return items
+    .map((item) => ({ item, k: random() }))
+    .sort((a, b) => a.k - b.k)
+    .map(({ item }) => item);
+}
+
+// ── Items ────────────────────────────────────────────────────────────────────
+
+interface BaseItem {
+  id: string;
+  /** The word this question was built from, so the report can link to it. */
+  lexemeId: string;
+  lemma: string;
+  translation: string;
+  /** The learner's card, when they have one. Grades reach the log through it. */
+  cardId: string | null;
+}
+
+export interface MatchItem extends BaseItem {
+  kind: "match-usage";
+  /** The sentence, with every form of its own headword blanked out. */
+  sentence: string;
+  /** The choice id that is right: the lexeme's own id. */
+  answer: string;
+}
+
+export interface GapChoiceItem extends BaseItem {
+  kind: "gap-choice";
+  sentence: string;
+  full: string;
+  answer: string;
+  options: string[];
+}
+
+export interface OrderItem extends BaseItem {
+  kind: "order";
+  tiles: string[];
+  answer: string;
+}
+
+export interface CaseFormItem extends BaseItem {
+  kind: "case-form";
+  caseKey: string;
+  caseEn: string;
+  caseEt: string;
+  caseQuestion: string;
+  answer: string;
+  provenance: "ekilex" | "derived";
+}
+
+export interface GovernmentItem extends BaseItem {
+  kind: "government";
+  /** The example with its governed word hidden, when there is one. */
+  cue: string | null;
+  options: { key: string; en: string; et: string }[];
+  answer: string;
+}
+
+export interface DictationItem extends BaseItem {
+  kind: "dictation";
+  /** The sentence or word, which is both the audio and the answer. */
+  answer: string;
+  words: number;
+  unit: "sentence" | "word";
+}
+
+export interface ListenChooseItem extends BaseItem {
+  kind: "listen-choose";
+  answer: string;
+  options: string[];
+  /** Whether the recording is a sentence or a single word. Said on screen. */
+  unit: "sentence" | "word";
+}
+
+export interface GlossChoiceItem extends BaseItem {
+  kind: "gloss-choice";
+  /** The Estonian word, as the dictionary holds it. */
+  word: string;
+  /** English meanings. Written by lexicographers and translators, not by this app. */
+  options: string[];
+  answer: string;
+}
+
+export interface FormChoiceItem extends BaseItem {
+  kind: "form-choice";
+  caseKey: string;
+  caseEn: string;
+  caseEt: string;
+  caseQuestion: string;
+  options: string[];
+  answer: string;
+  provenance: "ekilex" | "derived";
+}
+
+export interface ComposeItem extends BaseItem {
+  kind: "compose";
+  /** The topic, in English. The app teaches in English; only the answer is Estonian. */
+  topic: string;
+  prompt: string;
+  minWords: number;
+  /** Words from the dictionary the text must use, with their glosses. */
+  mustUse: { lemma: string; translation: string; lexemeId: string }[];
+}
+
+export interface SpeakItem extends BaseItem {
+  kind: "speak";
+  topic: string;
+  prompt: string;
+  seconds: number;
+  /** The idea card: words to reach for, from the dictionary. */
+  ideas: { lemma: string; translation: string; lexemeId: string }[];
+}
+
+export type ExamItem =
+  | MatchItem | GapChoiceItem | OrderItem | CaseFormItem | GovernmentItem
+  | DictationItem | ListenChooseItem | ComposeItem | SpeakItem
+  | GlossChoiceItem | FormChoiceItem;
+
+export interface ExamTask {
+  spec: TaskSpec;
+  items: ExamItem[];
+  /** Choices shared by every item of a matching task. */
+  choices?: { id: string; label: string; gloss: string }[];
+  /**
+   * The shape this task was actually set as, when it is not the one the
+   * specification asked for. Null when it is.
+   */
+  fallbackFrom: TaskKind | null;
+  /** Marks the dictionary could not supply a question for. */
+  shortfall: number;
+  /** Why, in one line, when there is a shortfall. Null otherwise. */
+  shortfallReason: string | null;
+  /** Marks actually on offer: the spec's raw marks less the shortfall. */
+  rawAvailable: number;
+}
+
+export interface ExamPart {
+  spec: PartSpec;
+  tasks: ExamTask[];
+}
+
+export interface Paper {
+  level: ExamLevel;
+  spec: ExamSpec;
+  /** The string the paper was built from. Put it in a URL to get it back. */
+  seed: string;
+  parts: ExamPart[];
+  /** True when at least one task could not be filled. */
+  thin: boolean;
+  /** True when at least one task was set in its fallback shape. */
+  substituted: boolean;
+}
+
+// ── Choosing the material ────────────────────────────────────────────────────
+
+const RANK: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5 };
+
+/**
+ * The topics the examination draws on, published with the specification.
+ *
+ * In English, because the app teaches in English and a prompt is not a text to
+ * be understood, it is an instruction. The Estonian is what the learner writes
+ * back.
+ */
+export const TOPICS: readonly string[] = [
+  "yourself and your family",
+  "where you live",
+  "an ordinary day",
+  "free time",
+  "travel",
+  "people you know",
+  "health",
+  "study and school",
+  "shopping",
+  "food and drink",
+  "services you use",
+  "places in your town",
+  "languages",
+  "the weather",
+  "work",
+] as const;
+
+/**
+ * Words this level may be examined on.
+ *
+ * A level examines everything up to and including itself, which is how the real
+ * paper works: a B2 candidate is not excused an A2 word. Sorted so the words at
+ * the level itself come first, then the level below, and so on, and the
+ * builders take from the front. An entry with no CEFR tag is admitted from B1
+ * upwards, where the untagged part of the dictionary mostly sits.
+ */
+export function eligibleWords(pool: readonly PoolWord[], level: ExamLevel): PoolWord[] {
+  const ceiling = RANK[level] ?? 2;
+  const scored: { word: PoolWord; rank: number }[] = [];
+  for (const word of pool) {
+    const rank = word.cefr ? RANK[word.cefr] : undefined;
+    if (rank === undefined) {
+      if (ceiling >= RANK.B1!) scored.push({ word, rank: ceiling });
+      continue;
+    }
+    if (rank <= ceiling) scored.push({ word, rank });
+  }
+  // Closest to the level first, so a C1 paper is not quietly made of A1 nouns.
+  return scored.sort((a, b) => b.rank - a.rank).map(({ word }) => word);
+}
+
+/** Every spelling the dictionary vouches for, for this word. */
+export function formsOf(word: PoolWord): string[] {
+  return [...new Set([word.lemma, ...word.forms.map((f) => f.value)])].filter(Boolean);
+}
+
+/** Letters, plus the marks that live inside an Estonian word. Mirrors cloze.ts. */
+const WORD_RE = /[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu;
+
+export const BLANK = "____";
+
+/**
+ * Hides every form of one word in a sentence.
+ *
+ * Used by the matching task, where the sentence would otherwise name its own
+ * answer. Longest match first, for the same reason `buildCloze` prefers it: a
+ * word list for `tuba` holds `toa` and `toas`, and blanking the shorter inside
+ * the longer leaves `____s`, which asks a question nobody can answer.
+ */
+export function maskForms(sentence: string, forms: readonly string[]): string {
+  const wanted = new Set(forms.map((f) => f.trim().toLowerCase()).filter(Boolean));
+  if (wanted.size === 0) return sentence;
+  let out = "";
+  let cursor = 0;
+  for (const token of sentence.matchAll(WORD_RE)) {
+    const value = token[0];
+    if (!wanted.has(value.toLowerCase())) continue;
+    const start = token.index;
+    out += sentence.slice(cursor, start) + BLANK;
+    cursor = start + value.length;
+  }
+  return out + sentence.slice(cursor);
+}
+
+/** Sentences worth using, shortest first, with the word they came from. */
+interface Sentence {
+  word: PoolWord;
+  text: string;
+}
+
+function sentencesFrom(words: readonly PoolWord[]): Sentence[] {
+  const out: Sentence[] = [];
+  for (const word of words) {
+    for (const example of word.examples) {
+      const text = example.et.trim().replace(/\s+/g, " ");
+      if (text.length >= 8 && text.length <= 140) out.push({ word, text });
+    }
+  }
+  return out;
+}
+
+// ── The builders, one per task shape ─────────────────────────────────────────
+
+interface BuildContext {
+  level: ExamLevel;
+  words: PoolWord[];
+  sentences: Sentence[];
+  random: () => number;
+  /** Words already used for a question, so one word does not carry the paper. */
+  spent: Set<string>;
+}
+
+function base(word: PoolWord, id: string): BaseItem {
+  return {
+    id,
+    lexemeId: word.lexemeId,
+    lemma: word.lemma,
+    translation: word.translation,
+    cardId: word.cardId,
+  };
+}
+
+/** Sentences whose word has not been used yet, in a shuffled order. */
+function freshSentences(ctx: BuildContext): Sentence[] {
+  return shuffle(ctx.sentences.filter((s) => !ctx.spent.has(s.word.lexemeId)), ctx.random);
+}
+
+function buildMatch(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const items: MatchItem[] = [];
+  const choices: { id: string; label: string; gloss: string }[] = [];
+  for (const sentence of freshSentences(ctx)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(sentence.word.lexemeId)) continue;
+    const masked = maskForms(sentence.text, formsOf(sentence.word));
+    // A sentence that never names its own word teaches nothing here: with the
+    // headword absent there is no evidence to match on, only a guess.
+    if (!masked.includes(BLANK)) continue;
+    ctx.spent.add(sentence.word.lexemeId);
+    items.push({
+      ...base(sentence.word, `${spec.id}-${items.length}`),
+      kind: "match-usage",
+      sentence: masked,
+      answer: sentence.word.lexemeId,
+    });
+    choices.push({
+      id: sentence.word.lexemeId,
+      label: sentence.word.lemma,
+      gloss: sentence.word.translation,
+    });
+  }
+  return finish(spec, items, shuffle(choices, ctx.random), "sentences that name their own word");
+}
+
+function buildGapChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const items: GapChoiceItem[] = [];
+  for (const sentence of freshSentences(ctx)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(sentence.word.lexemeId)) continue;
+
+    const forms = formsOf(sentence.word);
+    const cloze = buildCloze(sentence.text, forms);
+    if (!cloze) continue;
+
+    /*
+      The distractors are other real forms of the same word first, and forms of
+      other words only to top up. That is what turns this from a vocabulary
+      question into a grammar one: the learner is choosing an ending, which is
+      what the gapped text on the real paper is testing. Anything already
+      standing in the sentence is excluded, or two options look right at once.
+    */
+    const inSentence = new Set(
+      [...cloze.text.matchAll(WORD_RE)].map((m) => m[0].toLowerCase()),
+    );
+    const answerLower = cloze.answer.toLowerCase();
+    const siblings = forms.filter(
+      (f) => f.toLowerCase() !== answerLower && !inSentence.has(f.toLowerCase()),
+    );
+    const strangers = ctx.words
+      .filter((w) => w.lexemeId !== sentence.word.lexemeId && w.pos === sentence.word.pos)
+      .flatMap(formsOf)
+      .filter((f) => f.toLowerCase() !== answerLower && !inSentence.has(f.toLowerCase()));
+
+    const pool = [...new Set([...shuffle(siblings, ctx.random), ...shuffle(strangers, ctx.random)])];
+    if (pool.length < 3) continue;
+
+    ctx.spent.add(sentence.word.lexemeId);
+    items.push({
+      ...base(sentence.word, `${spec.id}-${items.length}`),
+      kind: "gap-choice",
+      sentence: cloze.text,
+      full: cloze.full,
+      answer: cloze.answer,
+      options: shuffle([cloze.answer, ...pool.slice(0, 3)], ctx.random),
+    });
+  }
+  return finish(spec, items, undefined, "sentences that repeat their own headword");
+}
+
+function buildOrder(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const items: OrderItem[] = [];
+  for (const sentence of freshSentences(ctx)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(sentence.word.lexemeId)) continue;
+    if (!isBuildable(sentence.text)) continue;
+    const tiles = sentenceTiles(sentence.text);
+
+    // Shuffled until the order actually differs. Four attempts, because a
+    // three word sentence can land back on itself and an infinite loop in a
+    // pure function is still an infinite loop.
+    let scrambled = tiles;
+    for (let attempt = 0; attempt < 4 && scrambled.join(" ") === tiles.join(" "); attempt++) {
+      scrambled = shuffle(tiles, ctx.random);
+    }
+    if (scrambled.join(" ") === tiles.join(" ")) continue;
+
+    ctx.spent.add(sentence.word.lexemeId);
+    items.push({
+      ...base(sentence.word, `${spec.id}-${items.length}`),
+      kind: "order",
+      tiles: scrambled,
+      answer: sentence.text,
+    });
+  }
+  return finish(spec, items, undefined, "sentences of four to twelve different words");
+}
+
+function buildCaseForm(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const items: CaseFormItem[] = [];
+  for (const word of shuffle(ctx.words, ctx.random)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(word.lexemeId)) continue;
+    const tasks = writingTasksFor(word);
+    if (tasks.length === 0) continue;
+    const task = tasks[Math.floor(ctx.random() * tasks.length)] ?? tasks[0]!;
+    ctx.spent.add(word.lexemeId);
+    items.push({
+      ...base(word, `${spec.id}-${items.length}`),
+      kind: "case-form",
+      caseKey: task.caseKey,
+      caseEn: task.caseEn,
+      caseEt: task.caseEt,
+      caseQuestion: task.caseQuestion,
+      answer: task.targetForm,
+      provenance: task.provenance,
+    });
+  }
+  return finish(spec, items, undefined, "nouns with a genitive stem to build on");
+}
+
+function buildGovernment(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const governed = ctx.words
+    .map((word) => ({ word, government: parseGovernment(word.government) }))
+    .filter((row): row is { word: PoolWord; government: NonNullable<ReturnType<typeof parseGovernment>> } =>
+      row.government !== null);
+  const casePool = governed.map((row) => row.government.caseKey);
+
+  const items: GovernmentItem[] = [];
+  for (const row of shuffle(governed, ctx.random)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(row.word.lexemeId)) continue;
+    ctx.spent.add(row.word.lexemeId);
+    const options = buildOptions(row.government.caseKey, casePool, 4, ctx.random).map((key) => {
+      const named = caseByKey(key);
+      return { key, en: named?.en ?? key, et: named?.et ?? key };
+    });
+    items.push({
+      ...base(row.word, `${spec.id}-${items.length}`),
+      kind: "government",
+      cue: maskExample(row.government.example),
+      options,
+      answer: row.government.caseKey,
+    });
+  }
+  return finish(spec, items, undefined, "verbs whose government the dictionary records");
+}
+
+function buildDictation(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const items: DictationItem[] = [];
+  for (const sentence of freshSentences(ctx)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(sentence.word.lexemeId)) continue;
+    const words = dictationWords(sentence.text).length;
+    // Short enough to hold in your head after one hearing, long enough to be
+    // more than a word. The same window the dictation mode uses.
+    if (words < 3 || words > 9 || sentence.text.length > 80) continue;
+    ctx.spent.add(sentence.word.lexemeId);
+    items.push({
+      ...base(sentence.word, `${spec.id}-${items.length}`),
+      kind: "dictation",
+      answer: sentence.text,
+      words,
+      unit: "sentence",
+    });
+  }
+
+  /*
+    A keyless install has no recorded sentences at all, and a listening part
+    with nothing in it is not a listening part. A single word is still a
+    listening test, and a harder one than it sounds in Estonian: hearing `toas`
+    and writing `toa` is the exact failure this exercise exists to catch.
+  */
+  for (const word of shuffle(ctx.words, ctx.random)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(word.lexemeId)) continue;
+    const spoken = pickSpokenForm(word, ctx.random);
+    if (!spoken) continue;
+    ctx.spent.add(word.lexemeId);
+    items.push({
+      ...base(word, `${spec.id}-${items.length}`),
+      kind: "dictation",
+      answer: spoken,
+      words: 1,
+      unit: "word",
+    });
+  }
+
+  return finish(spec, items, undefined, "sentences of three to nine words, or words to say");
+}
+
+/**
+ * One form of a word worth playing aloud.
+ *
+ * An inflected form rather than the headword wherever there is one: the
+ * headword is the spelling the learner has already seen most, and a case ending
+ * is what a listening test is actually for.
+ */
+function pickSpokenForm(word: PoolWord, random: () => number): string | null {
+  const forms = formsOf(word).filter((f) => f.length >= 3 && !/\s/.test(f));
+  if (forms.length === 0) return null;
+  const inflected = forms.filter((f) => f.toLowerCase() !== word.lemma.toLowerCase());
+  const pool = inflected.length > 0 ? inflected : forms;
+  return pool[Math.floor(random() * pool.length)] ?? pool[0] ?? null;
+}
+
+function buildListenChoose(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const all = ctx.sentences.map((s) => s.text);
+  const items: ListenChooseItem[] = [];
+  for (const sentence of freshSentences(ctx)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(sentence.word.lexemeId)) continue;
+    if (sentence.text.length > 90) continue;
+
+    // Distractors of a similar length, so the answer is not the odd one out on
+    // the page before the recording has even played.
+    const near = shuffle(
+      all.filter((t) => t !== sentence.text && Math.abs(t.length - sentence.text.length) <= 25),
+      ctx.random,
+    );
+    if (near.length < 3) continue;
+
+    ctx.spent.add(sentence.word.lexemeId);
+    items.push({
+      ...base(sentence.word, `${spec.id}-${items.length}`),
+      kind: "listen-choose",
+      answer: sentence.text,
+      options: shuffle([sentence.text, ...near.slice(0, 3)], ctx.random),
+      unit: "sentence",
+    });
+  }
+
+  // The same fallback the dictation makes, and for the same reason: without an
+  // Ekilex key there are no recorded sentences to hide one among.
+  const spokenPool = ctx.words
+    .map((word) => pickSpokenForm(word, ctx.random))
+    .filter((form): form is string => Boolean(form));
+  for (const word of shuffle(ctx.words, ctx.random)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(word.lexemeId)) continue;
+    const spoken = pickSpokenForm(word, ctx.random);
+    if (!spoken) continue;
+    const near = shuffle(spokenPool.filter((f) => f !== spoken), ctx.random);
+    if (near.length < 3) continue;
+    ctx.spent.add(word.lexemeId);
+    items.push({
+      ...base(word, `${spec.id}-${items.length}`),
+      kind: "listen-choose",
+      answer: spoken,
+      options: shuffle([spoken, ...near.slice(0, 3)], ctx.random),
+      unit: "word",
+    });
+  }
+
+  return finish(spec, items, undefined, "recordings with three near neighbours to hide among");
+}
+
+/** An Estonian word and four English meanings. Needs no sentence and no key. */
+function buildGlossChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const glosses = [...new Set(ctx.words.map((w) => w.translation).filter(Boolean))];
+  const items: GlossChoiceItem[] = [];
+  for (const word of shuffle(ctx.words, ctx.random)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(word.lexemeId) || !word.translation) continue;
+    const near = shuffle(glosses.filter((g) => g !== word.translation), ctx.random);
+    if (near.length < 3) continue;
+    ctx.spent.add(word.lexemeId);
+    items.push({
+      ...base(word, `${spec.id}-${items.length}`),
+      kind: "gloss-choice",
+      word: word.lemma,
+      answer: word.translation,
+      options: shuffle([word.translation, ...near.slice(0, 3)], ctx.random),
+    });
+  }
+  return finish(spec, items, undefined, "words the dictionary has an English meaning for");
+}
+
+/**
+ * A word, a case, and four real forms to choose between.
+ *
+ * The recognition half of the same question `case-form` asks by hand, and the
+ * one the real paper's gapped text actually asks: the distractors are other
+ * forms of the same word, so the ending is what is being chosen.
+ */
+function buildFormChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
+  const items: FormChoiceItem[] = [];
+  for (const word of shuffle(ctx.words, ctx.random)) {
+    if (items.length >= spec.items) break;
+    if (ctx.spent.has(word.lexemeId)) continue;
+    const tasks = writingTasksFor(word);
+    if (tasks.length < 2) continue;
+    const task = tasks[Math.floor(ctx.random() * tasks.length)] ?? tasks[0]!;
+    const siblings = [
+      ...new Set(tasks.map((t) => t.targetForm).filter((f) => f !== task.targetForm)),
+    ];
+    const strangers = ctx.words
+      .filter((w) => w.lexemeId !== word.lexemeId)
+      .flatMap((w) => writingTasksFor(w).map((t) => t.targetForm));
+    const pool = [...new Set([...shuffle(siblings, ctx.random), ...shuffle(strangers, ctx.random)])]
+      .filter((f) => f !== task.targetForm);
+    if (pool.length < 3) continue;
+
+    ctx.spent.add(word.lexemeId);
+    items.push({
+      ...base(word, `${spec.id}-${items.length}`),
+      kind: "form-choice",
+      caseKey: task.caseKey,
+      caseEn: task.caseEn,
+      caseEt: task.caseEt,
+      caseQuestion: task.caseQuestion,
+      answer: task.targetForm,
+      options: shuffle([task.targetForm, ...pool.slice(0, 3)], ctx.random),
+      provenance: task.provenance,
+    });
+  }
+  return finish(spec, items, undefined, "words with more than one case form to tell apart");
+}
+
+function buildCompose(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
+  const { composeWords } = lengthsFor(ctx.level);
+  const topic = TOPICS[Math.floor(ctx.random() * TOPICS.length)] ?? TOPICS[0]!;
+  const mustUse = shuffle(ctx.words, ctx.random)
+    .filter((w) => !ctx.spent.has(w.lexemeId))
+    .slice(0, 4)
+    .map((w) => ({ lemma: w.lemma, translation: w.translation, lexemeId: w.lexemeId }));
+
+  const anchor = ctx.words[0];
+  const items: ComposeItem[] = [{
+    id: `${spec.id}-${index}`,
+    lexemeId: anchor?.lexemeId ?? "",
+    lemma: anchor?.lemma ?? "",
+    translation: anchor?.translation ?? "",
+    cardId: null,
+    kind: "compose",
+    topic,
+    prompt:
+      `Write about ${topic}. Say what happens, why, and what you think about it. ` +
+      `At least ${composeWords} words.`,
+    minWords: composeWords,
+    mustUse,
+  }];
+  return finish(spec, items, undefined, "a topic and four words to build it from");
+}
+
+function buildSpeak(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
+  const { speakSeconds } = lengthsFor(ctx.level);
+  const topic = TOPICS[Math.floor(ctx.random() * TOPICS.length)] ?? TOPICS[0]!;
+  const ideas = shuffle(ctx.words, ctx.random)
+    .slice(0, 6)
+    .map((w) => ({ lemma: w.lemma, translation: w.translation, lexemeId: w.lexemeId }));
+
+  /*
+    One item, marked out of the task's several marks by the learner themselves.
+    ADR-018: there is no verified Estonian speech recogniser available here, so
+    nothing scores a recording. The exam screen says that where it cannot be
+    missed, because a self-marked part sitting silently inside a percentage
+    would make the whole percentage a lie.
+  */
+  const items: SpeakItem[] = [{
+    id: `${spec.id}-${index}`,
+    lexemeId: "",
+    lemma: "",
+    translation: "",
+    cardId: null,
+    kind: "speak",
+    topic,
+    prompt:
+      index === 0
+        ? `Speak about ${topic} for ${speakSeconds} seconds. Describe, then give a reason.`
+        : `Now take the other side of ${topic}. Disagree with what you just said, and explain why.`,
+    seconds: speakSeconds,
+    ideas,
+  }];
+  return finish(spec, items, undefined, "an idea card of six words");
+}
+
+/** Wraps whatever a builder managed to make, with the shortfall stated. */
+function finish(
+  spec: TaskSpec,
+  items: ExamItem[],
+  choices: { id: string; label: string; gloss: string }[] | undefined,
+  needed: string,
+  fallbackFrom: TaskKind | null = null,
+): ExamTask {
+  const shortfall = Math.max(0, spec.items - items.length);
+  // The composition and the spoken tasks are one item carrying many marks, so a
+  // missing item costs all of them; every other task is one mark per item.
+  const perItem = spec.raw / spec.items;
+  return {
+    spec,
+    items,
+    choices,
+    fallbackFrom,
+    shortfall,
+    shortfallReason: shortfall > 0
+      ? `The dictionary could supply ${items.length} of ${spec.items}. This task needs ${needed}.`
+      : null,
+    rawAvailable: Math.round(items.length * perItem),
+  };
+}
+
+// ── The paper ────────────────────────────────────────────────────────────────
+
+/**
+ * Builds one paper.
+ *
+ * Tasks are built in the order the parts are sat, and each one marks the words
+ * it used as spent. That ordering matters: it means the reading part and the
+ * writing part cannot ask about the same six nouns, which is what happens when
+ * every builder helps itself to the front of the same sorted list.
+ */
+export function buildPaper(
+  level: ExamLevel,
+  pool: readonly PoolWord[],
+  seed: string,
+): Paper {
+  const spec = specFor(level);
+  const words = eligibleWords(pool, level);
+  const random = rng(seedFrom(`${level}:${seed}`));
+  const ctx: BuildContext = {
+    level,
+    words,
+    sentences: sentencesFrom(words),
+    random,
+    spent: new Set<string>(),
+  };
+
+  const parts: ExamPart[] = spec.parts.map((partSpec) => ({
+    spec: partSpec,
+    tasks: partSpec.tasks.map((taskSpec, index) => buildTask(taskSpec, ctx, index)),
+  }));
+
+  return {
+    level,
+    spec,
+    seed,
+    parts,
+    thin: parts.some((p) => p.tasks.some((t) => t.shortfall > 0)),
+    substituted: parts.some((p) => p.tasks.some((t) => t.fallbackFrom !== null)),
+  };
+}
+
+/**
+ * One task, in the shape the specification asks for or in its fallback.
+ *
+ * The primary shape is tried first and kept if it produced anything at all: a
+ * task half filled with the real shape is closer to the paper than a full one
+ * built out of word cards. Only a shape the dictionary cannot set *at all*
+ * falls back, and the substitution is recorded rather than hidden.
+ */
+function buildTask(taskSpec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
+  const primary = buildOne(taskSpec.kind, taskSpec, ctx, index);
+  if (primary.items.length > 0 || !taskSpec.fallback) return primary;
+
+  const substitute = buildOne(taskSpec.fallback, taskSpec, ctx, index);
+  if (substitute.items.length === 0) return primary;
+  return {
+    ...substitute,
+    spec: { ...taskSpec, ...blueprintFor(taskSpec.fallback), id: taskSpec.id, items: taskSpec.items, raw: taskSpec.raw },
+    fallbackFrom: taskSpec.kind,
+  };
+}
+
+function buildOne(kind: TaskKind, taskSpec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
+  switch (kind) {
+    case "match-usage": return buildMatch(taskSpec, ctx);
+    case "gap-choice": return buildGapChoice(taskSpec, ctx);
+    case "gap-type": return buildGapChoice(taskSpec, ctx);
+    case "order": return buildOrder(taskSpec, ctx);
+    case "case-form": return buildCaseForm(taskSpec, ctx);
+    case "government": return buildGovernment(taskSpec, ctx);
+    case "dictation": return buildDictation(taskSpec, ctx);
+    case "listen-choose": return buildListenChoose(taskSpec, ctx);
+    case "compose": return buildCompose(taskSpec, ctx, index);
+    case "speak": return buildSpeak(taskSpec, ctx, index);
+    case "gloss-choice": return buildGlossChoice(taskSpec, ctx);
+    case "form-choice": return buildFormChoice(taskSpec, ctx);
+  }
+}
+
+/** Every card the paper touches, so a submission can grade them in one batch. */
+export function cardsInPaper(paper: Paper): string[] {
+  const out = new Set<string>();
+  for (const part of paper.parts) {
+    for (const task of part.tasks) {
+      for (const item of task.items) if (item.cardId) out.add(item.cardId);
+    }
+  }
+  return [...out];
+}
+
+/** How much of the paper the dictionary could actually fill, as a percentage. */
+export function fillRate(paper: Paper): number {
+  let wanted = 0;
+  let got = 0;
+  for (const part of paper.parts) {
+    for (const task of part.tasks) {
+      wanted += task.spec.raw;
+      got += task.rawAvailable;
+    }
+  }
+  return wanted === 0 ? 0 : Math.round((got / wanted) * 100);
+}
+
+/** The parts of the paper, keyed, for a screen that renders one at a time. */
+export function partOf(paper: Paper, skill: SkillKey): ExamPart | undefined {
+  return paper.parts.find((p) => p.spec.skill === skill);
+}
