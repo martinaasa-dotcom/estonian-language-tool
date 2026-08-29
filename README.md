@@ -214,12 +214,22 @@ try restoring it once while nothing is at stake. A backup you have never restore
 npm run dev        # development server
 npm run build      # production build
 npm run test       # unit tests, no database needed; DB-backed tests skip themselves
-npm run test:e2e   # browser checks, needs the server running
+npm run test:e2e   # browser checks, needs the server running and a local database
+npm run test:invariants  # the rules in CLAUDE.md, asserted
+npm run test:mobile      # the phone, measured; needs the server running
 npm run demo       # fill the deck with two months of sample history to look around
 npm run typecheck  # tsc --noEmit
 npm run db:seed    # reload the built-in dictionary (always)
 npm run db:seed:ensure  # load it only if the dictionary is empty, what the deploy runs
 ```
+
+The end-to-end suite and `npm run demo` refuse to run against anything but a local database, and
+say so rather than proceeding. They delete rows on purpose (`test-restore` empties every table to
+prove a backup brings it back) and Prisma reads `DATABASE_URL` from the environment *before* it
+reads `.env`, so a shell that already holds hosted credentials would otherwise point them at real
+data while `.env` sat there saying `localhost`. Set `KODUKEEL_ALLOW_REMOTE_DB=1` if you genuinely
+mean it. `test-restore` also writes the backup to a file before it deletes anything, so a run that
+dies halfway is recoverable rather than final.
 
 ## How it is put together
 

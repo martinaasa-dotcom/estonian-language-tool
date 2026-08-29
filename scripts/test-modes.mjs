@@ -34,6 +34,29 @@ const check = (label, ok, extra = "") => {
  * Review asks in three shapes — type it, pick it, flip it — and a test that
  * assumes one of them silently types "3" into the answer box instead of grading.
  */
+/**
+ * Bring the current card to the point where the rating buttons are showing,
+ * without grading it.
+ *
+ * Typed and flip cards get there deterministically — a deliberately wrong
+ * answer, or Space. A multiple-choice card cannot: any pick reveals, but a
+ * *correct* one grades itself and moves on (ReviewSession.pickChoice), so it is
+ * answered and skipped rather than relied on.
+ */
+async function revealCurrentCard() {
+  const box = page.getByLabel("Type your answer");
+  if (await box.count()) {
+    await box.fill("kindlasti-vale-vastus");
+    await page.keyboard.press("Enter");
+  } else if (await page.getByRole("button", { name: /Show answer/ }).count()) {
+    await page.keyboard.press("Space");
+  } else if (await page.getByText(/Pick the meaning/).count()) {
+    return false;
+  }
+  await page.waitForTimeout(800);
+  return (await page.getByRole("button", { name: /^Good/ }).count()) > 0;
+}
+
 async function answerCurrentCard() {
   const box = page.getByLabel("Type your answer");
   if (await box.count()) {
@@ -116,14 +139,28 @@ if (!typedReached && everyCardIsNew) {
   check("a typed card is reached within a session", typedReached);
 }
 
-// 5 — Undo puts the last grade back
-await page.keyboard.press("3");
-await page.waitForTimeout(1200);
-const gradedBefore = await page.getByText(/\d+ graded/).textContent();
-await page.keyboard.press("u");
-await page.waitForTimeout(1500);
-const gradedAfter = await page.getByText(/\d+ graded/).textContent();
-check("u undoes the last grade", gradedBefore !== gradedAfter, `${gradedBefore?.trim()} -> ${gradedAfter?.trim()}`);
+// 5 — Undo puts the last grade back.
+// Reach a card that is actually asking to be rated before pressing a rating
+// key. On a multiple-choice card the number keys pick an option rather than
+// grade one, so pressing "3" blind can answer a question instead of grading it
+// — leaving undo with nothing to take back and this check failing on the app
+// behaving correctly.
+let rateable = false;
+for (let i = 0; i < 12 && !rateable; i++) {
+  rateable = await revealCurrentCard();
+  if (!rateable) await answerCurrentCard();
+}
+check("a card can be brought to its rating buttons", rateable);
+
+if (rateable) {
+  await page.keyboard.press("3");
+  await page.waitForTimeout(1200);
+  const gradedBefore = await page.getByText(/\d+ graded/).textContent();
+  await page.keyboard.press("u");
+  await page.waitForTimeout(1500);
+  const gradedAfter = await page.getByText(/\d+ graded/).textContent();
+  check("u undoes the last grade", gradedBefore !== gradedAfter, `${gradedBefore?.trim()} -> ${gradedAfter?.trim()}`);
+}
 
 // 6 — Reviewing offline: grades are kept, then sent on reconnect
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });
