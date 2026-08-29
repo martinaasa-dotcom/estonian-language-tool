@@ -130,17 +130,34 @@ Reloading `/review` with the network gone showed the offline screen instead of
 the session.
 
 The page cache fills as a side effect of a navigation the worker intercepts,
-and the first navigation to a page is never one of those: the worker installs
-*during* it and is not yet controlling the client. So a page was cached on the
-second online visit and not the first, and nothing in the app makes a second
-visit happen. Install the app, open review, get on the bus, and the offline
-promise was not kept in the one case it exists for.
+and the worker never serves the navigation that installed it: the page is
+fetched, the worker installs behind it, and `clients.claim()` takes over a
+client whose own page was never seen. So the first journey failed and the
+second worked, which is the worst possible shape for a bug to have.
 
 Measured rather than argued: after one visit the page cache held nothing, after
 two it held `/review`, and the same offline reload that had shown the fallback
-showed the session. The worker now fetches `/` and `/review` at install, one at
-a time rather than through `addAll`, which is atomic and would throw away the
-offline page itself over one URL that would not fetch.
+showed the session.
+
+**Two sessions found this in the same week and the fix here is the other one's**
+(`warmOpenPages`, on activate). It caches whatever window is actually open
+rather than a list of routes written down in advance, which is the better rule:
+"the page you were last on opens again", not "one route is special". The
+version written on this branch warmed `/` and `/review` at install and was
+deleted outright rather than left beside it, because two mechanisms filling one
+cache is how you end up with two of everything.
+
+One clause of it survived, because it was about something the other fix had no
+reason to look at: the shell is warmed one URL at a time rather than through
+`addAll`, which is atomic. A single URL that will not fetch throws away the
+whole batch, and `/offline` is in that batch, which is the one thing in the
+worker with no fallback of its own.
+
+The invariant is what the surviving fix did not come with, and is the reason
+for writing one rather than simply deleting: it asserts that the warm-up runs
+on takeover, that it reaches the client that installed it
+(`includeUncontrolled`), and that the shell is never cached atomically. All
+three were made to fail before being trusted.
 
 ## What this does not measure
 

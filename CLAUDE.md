@@ -224,13 +224,14 @@ needed the same thing; a second copy of the pattern is where the `finally` gets 
 bad minute upstream is remembered as a failure until the next deploy. A joiner is not charged for
 a request it did not make, which is why `singleFlightTagged` reports which caller it was.
 
-**The service worker warms the daily path at install.** The page cache fills as a side effect of
-a navigation the worker intercepts, and the first navigation to a page is never one of those: the
-worker installs during it. So a page was cached on the second online visit and not the first, and
-nothing makes a second visit happen. Install the app, open review, get on the bus, and the offline
-promise was not kept in the one case it exists for. `/` and `/review` are fetched at install, one
-at a time and never through `addAll`, which is atomic and would throw away the offline page itself
-over one URL that would not fetch.
+**The service worker warms the page you were on when it took over.** The page cache fills as a
+side effect of a navigation the worker intercepts, and the worker never serves the navigation
+that installed it: the page is fetched, the worker installs behind it, and `clients.claim()`
+takes over a client whose own page was never seen. So the first journey failed and the second
+worked. `warmOpenPages` on activate is the fix, and it caches whatever window is open rather
+than a list of routes, because the rule is "the page you were last on opens again", not "one
+route is special". The shell is warmed one URL at a time and never through `addAll`, which is
+atomic: one URL that will not fetch throws away the batch, and `/offline` is in it.
 
 **A unit test states a machine, it does not run on one.** The provider suite cleared three
 provider keys and inherited the rest from whoever ran it. CI carries none, so it passed; a machine

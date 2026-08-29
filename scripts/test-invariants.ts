@@ -1347,31 +1347,45 @@ check("a source that will not answer is written down as a miss", () => {
   );
 });
 
-check("the daily path is cached before it is needed, not by luck", () => {
+check("the page you were on is cached before you need it, not by luck", () => {
   /*
     The page cache fills as a side effect of a navigation the worker
-    intercepts, and the first navigation to a page is never one of those: the
-    worker installs during it and is not controlling the client yet. So a page
-    was cached on the second online visit and not the first, and nothing makes
-    a second visit happen.
+    intercepts, and the worker never serves the navigation that installed it:
+    on a first visit the page is fetched, the worker installs behind it, and
+    `clients.claim()` takes over a client whose own page was never seen. Go
+    offline and reload there and the fallback has nothing to match, so it goes
+    to /offline. The first journey failed and the second worked, which is the
+    worst possible shape for a bug to have.
 
-    That made the offline promise conditional in the one case it exists for.
-    Install the app, open review, get on the bus: worker installed, cache
-    empty, offline screen. Measured rather than reasoned about, and
-    `smoke-offline.mjs` had been failing on exactly this.
+    `warmOpenPages` on activate is the fix, and it is somebody else's: two
+    sessions found this in the same week and the other one was better, because
+    it caches whatever window is actually open rather than a hardcoded list of
+    routes. The rule is "the page you were last on opens again", not "one route
+    is special". This invariant is what that fix did not come with, and the
+    reason for writing it here rather than deleting both: a rule in this
+    repository is supposed to have something asserting it.
   */
   const sw = read("public/sw.js");
-  const warm = /WARM_URLS\s*=\s*\[([^\]]*)\]/.exec(sw)?.[1] ?? "";
-  assert.match(warm, /"\/review"/, "a review session is no longer warmed at install");
-  assert.match(warm, /"\/"/, "the home page is no longer warmed at install");
+  assert.match(sw, /function warmOpenPages\(/, "the warm-up on takeover is gone");
+  assert.match(
+    sw,
+    /clients\.claim\(\)\s*\)?\s*\.then\(\(\) => warmOpenPages\(\)\)/,
+    "the warm-up no longer runs when the worker takes over",
+  );
+  assert.match(
+    sw,
+    /matchAll\(\{[^}]*includeUncontrolled:\s*true/,
+    "the warm-up no longer reaches the client that installed it, which is the only one that matters",
+  );
   /*
-    And warmed one at a time. `addAll` is atomic, so one URL that will not
-    fetch throws away the whole batch, and the offline page is in a batch.
+    And the shell is warmed one URL at a time. `addAll` is atomic, so a single
+    URL that will not fetch throws away the batch, and /offline is in that
+    batch: the fallback is the one thing here with no fallback of its own.
   */
   assert.equal(
-    /cache\.addAll\(/.test(sw),
+    /cache\.addAll\(|caches\.open\([^)]*\)\.then\(\(cache\) => cache\.addAll/.test(sw),
     false,
-    "the worker warms its cache atomically, so one bad URL loses the offline page too",
+    "the worker caches its shell atomically, so one bad URL loses the offline page too",
   );
 });
 

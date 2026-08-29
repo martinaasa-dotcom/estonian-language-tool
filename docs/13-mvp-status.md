@@ -867,8 +867,19 @@ expensively, and the live path had the same bug with a symptom nobody looks
 for: a cost rather than an absence.
 
 `Lexeme.lookupMissAt` records it, and is deliberately not `fetchedAt`, which
-the exam pool reads as a ranking. Details, and the offline-cache fault the same
-pass turned up, are in `docs/15-performance.md`.
+the exam pool reads as a ranking. Details are in `docs/15-performance.md`.
+
+### The offline fault two sessions found at once
+
+This pass also found `smoke-offline` failing on a real bug: the worker never
+serves the navigation that installs it, so the page cache was empty for exactly
+the person the fallback exists for. Another session found it in the same week
+and landed the better fix, which caches whatever window is open rather than a
+list of routes written in advance. The version written here was deleted rather
+than left beside it, keeping only the one clause it carried that the other had
+no reason to: the shell is warmed one URL at a time, because `addAll` is atomic
+and `/offline` is in that batch. `docs/15-performance.md` has the measurement,
+and the invariant is what the surviving fix did not come with.
 
 ### Known limitations, stated plainly
 
