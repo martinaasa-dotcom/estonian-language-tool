@@ -34,6 +34,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { courseWords, type CourseWord } from "../lib/collections/syllabus/index";
+import { formatGovernment } from "../lib/ekilex/mapper";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = path.join(ROOT, ".ekilex-cache");
@@ -278,7 +279,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       ekilexWordId: candidate.wordId,
       parts,
       cefr: extra.cefr,
-      government: wantVerb ? (extra.governments[0] ?? null) : null,
+      government: wantVerb ? formatGovernment(extra.governments) : null,
       usages: extra.usages,
       note: extra.definition,
     };

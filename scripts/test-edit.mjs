@@ -49,9 +49,29 @@ check("renaming updates the entry instead of duplicating it",
   kohvEntries.map(l => l.lemma).join(", ") || "none found");
 
 const renamedCards = data.cards.filter(c => c.lexemeId === kohvEntries[0]?.id);
-check("its cards were rewritten to match, not left stale",
-  renamedCards.length > 0 && renamedCards.every(c => `${c.front}${c.back}`.includes("kohvjook")),
-  renamedCards.map(c => `${c.front}→${c.back}`).join(" | ").slice(0, 90));
+/*
+  Only the cards whose text *is* the lemma follow a correction, and the split is
+  the point rather than an omission.
+
+  A recognition or production card is the word and its gloss, so a corrected
+  headword has to reach it or the deck drills the old spelling. A gap-fill card
+  is a sentence a lexicographer recorded with one of its own forms blanked out:
+  neither half is derived from the lemma, and rewriting them because somebody
+  fixed a headword would be the app editing attested Estonian, which is the rule
+  the whole project is built on. Same reasoning as the case-form cards in
+  §5 of docs/13-mvp-status.md.
+
+  This only started mattering when the harvested dictionary gave seeded words
+  attested sentences: before that `kohv` had no gap-fill card to leave alone.
+*/
+const lemmaCards = renamedCards.filter(c => c.cardType === "RECOGNITION" || c.cardType === "PRODUCTION");
+const attestedCards = renamedCards.filter(c => c.cardType === "CLOZE");
+check("its lemma cards were rewritten to match, not left stale",
+  lemmaCards.length > 0 && lemmaCards.every(c => `${c.front}${c.back}`.includes("kohvjook")),
+  lemmaCards.map(c => `${c.front}→${c.back}`).join(" | ").slice(0, 90));
+check("and the attested sentence behind a gap-fill was left exactly as recorded",
+  attestedCards.every(c => !`${c.front}${c.back}`.includes("kohvjook")),
+  `${attestedCards.length} gap-fill card(s)`);
 check("scheduling was not reset by the correction",
   renamedCards.every(c => typeof c.stability === "number"), `${renamedCards.length} cards`);
 

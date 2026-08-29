@@ -40,14 +40,25 @@ export default async function LearnPage() {
   const startedIds = new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id));
   const next = nextUnit({ doneUnitIds: doneIds, startedUnitIds: startedIds, placement });
 
-  const totalWords = units.reduce((sum, u) => sum + u.available, 0);
-  const knownWords = units.reduce((sum, u) => sum + u.known, 0);
+  // Counted over distinct lemmas rather than summed across units. A grammar unit
+  // deliberately drills vocabulary an earlier unit introduced — the object unit
+  // teaches its rule with verbs from A1 — so adding up per-unit totals counted
+  // those words twice and told the learner the course was about seventy words
+  // bigger than it is.
+  const countWords = (rows: typeof units) => {
+    const lemmas = new Set(rows.flatMap((u) => u.lemmas));
+    return {
+      words: lemmas.size,
+      known: [...lemmas].filter((l) => snapshot.knownLemmas.has(l)).length,
+    };
+  };
+
+  const { words: totalWords, known: knownWords } = countWords(units);
   const overall = totalWords > 0 ? Math.round((knownWords / totalWords) * 100) : 0;
 
   const byLevel = LEVELS.map((level) => {
     const rows = units.filter((u) => u.unit.level === level);
-    const words = rows.reduce((sum, u) => sum + u.available, 0);
-    const known = rows.reduce((sum, u) => sum + u.known, 0);
+    const { words, known } = countWords(rows);
     return {
       level,
       rows,
@@ -63,8 +74,15 @@ export default async function LearnPage() {
       title="The course"
       lead="Six levels, A1 to C2. Every unit teaches a lesson first, then puts its words into your review deck with real audio and full paradigms."
     >
+      {/*
+        Stacked on a phone, one row above it. `flex-wrap` alone looked right and
+        was not: at 390px the ring and the button both stayed on the row and
+        squeezed the text between them into a column four words wide. Wrapping
+        only helps when a child is allowed to take a whole line, so the phone
+        layout is a column and the row starts at the small breakpoint.
+      */}
       <div
-        className="mb-7 flex flex-wrap items-center gap-5 rounded-[var(--r-lg)] border p-5"
+        className="mb-7 flex flex-col gap-4 rounded-[var(--r-lg)] border p-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
       >
         <Ring pct={overall} size={72} label={`${overall}% of the course learned`}>
@@ -87,7 +105,11 @@ export default async function LearnPage() {
           </Link>
         </div>
         {next && (
-          <ButtonLink href={`/learn/${next.id}/lesson`} variant="primary">
+          <ButtonLink
+            href={`/learn/${next.id}/lesson`}
+            variant="primary"
+            className="w-full justify-center sm:w-auto"
+          >
             {startedIds.has(next.id) ? "Continue" : "Start"}: {next.title}
           </ButtonLink>
         )}
@@ -107,12 +129,20 @@ export default async function LearnPage() {
               className="rounded-[var(--r-lg)] border"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
             >
-              <summary className="flex min-h-[56px] cursor-pointer flex-wrap items-center gap-4 p-4">
+              <summary className="flex min-h-[56px] cursor-pointer flex-wrap items-center gap-3 p-4 sm:gap-4">
                 <span
                   className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold"
                   style={{
-                    background: finished ? "var(--mint)" : pct > 0 ? "var(--accent)" : "var(--raised)",
-                    color: finished || pct > 0 ? "var(--surface)" : "var(--ink-3)",
+                    // Two contrast fixes live here, and both came from putting
+                    // *text* on backgrounds the app had only ever used behind an
+                    // icon. White on --accent is 4.05:1 and white on --mint is
+                    // 2.30:1, neither of which clears AA for a 13.5px label;
+                    // --accent-deep is 6.25:1 and flips correctly in dark mode.
+                    // --ink-3 on --raised is 4.05:1 too, so the resting badge
+                    // takes --ink-2: the muted token is for a hint beside
+                    // something, not for the only thing in a badge.
+                    background: finished ? "var(--mint)" : pct > 0 ? "var(--accent-deep)" : "var(--raised)",
+                    color: finished || pct > 0 ? "var(--surface)" : "var(--ink-2)",
                   }}
                 >
                   {finished ? <Check size={20} aria-hidden /> : level}

@@ -131,7 +131,13 @@ for (const width of PHONES) {
 }
 
 // 6 — A thumb is not a mouse pointer.
-for (const path of ["/", "/review", "/dictionary"]) {
+//     The course screens are in this list because they are now the busiest ones
+//     in the app, and because the first phone layout of /learn was wrong in a
+//     way no overflow check catches: the ring and the button both held the row
+//     and squeezed the text between them into a column four words wide. Nothing
+//     scrolled sideways, so the only thing that would have caught it was a
+//     person looking, or a check that ran here.
+for (const path of ["/", "/review", "/dictionary", "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar"]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     [...document.querySelectorAll("button, [role=button], a[role=button]")]
@@ -140,6 +146,21 @@ for (const path of ["/", "/review", "/dictionary"]) {
       .map(({ el, r }) => `${(el.textContent || el.getAttribute("aria-label") || "?").trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`),
   );
   check(`every target on ${path} clears 44px`, small.length === 0, small.join(", "));
+  await ctx.close();
+}
+
+// 6b — Nothing important is squeezed into a sliver.
+//      A block of prose narrower than about fifteen characters is not a layout
+//      choice, it is a flex row that should have wrapped and did not.
+for (const path of ["/learn", "/learn/kodu", "/placement"]) {
+  const { ctx, page } = await open(390, 844, path);
+  const slivers = await page.evaluate(() =>
+    [...document.querySelectorAll("main p, main h1, main h2")]
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ el, r }) => r.width > 0 && r.width < 120 && (el.textContent || "").trim().length > 40)
+      .map(({ el, r }) => `${(el.textContent || "").trim().slice(0, 24)} ${Math.round(r.width)}px`),
+  );
+  check(`no text is squeezed into a sliver on ${path}`, slivers.length === 0, slivers.join(", "));
   await ctx.close();
 }
 

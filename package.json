@@ -23,7 +23,8 @@
     "test:db": "vitest run --config vitest.integration.config.ts",
     "test:browser": "node scripts/smoke-new.mjs && node scripts/smoke-interact.mjs && node scripts/smoke-offline.mjs && node scripts/a11y-check.mjs",
     "test:invariants": "tsx scripts/test-invariants.ts",
-    "test:mobile": "node scripts/test-mobile.mjs"
+    "test:mobile": "node scripts/test-mobile.mjs",
+    "harvest": "tsx scripts/harvest-ekilex.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
