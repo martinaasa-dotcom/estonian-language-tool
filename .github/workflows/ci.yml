@@ -173,7 +173,7 @@ jobs:
       - run: npm run test:db
 
   mobile:
-    name: The phone and the design system, measured
+    name: The browser suites
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -221,12 +221,60 @@ jobs:
       # drawn off the top of the screen, a bar over the home indicator, a
       # backdrop filter repainting the bottom of the window on every frame of
       # every scroll, a target smaller than a thumb.
+      # One server and one browser, so each of these costs a command rather
+      # than a job. Every one declares a floor, so a suite that dies early or
+      # quietly stops running a block fails here rather than printing nothing
+      # and being read as a pass. See scripts/lib/checks.mjs.
       - run: node scripts/test-mobile.mjs
-      # The design suite arrived on main while this branch was open and checks
-      # the other half of the same screens: contrast ratios, the type scale and
-      # a real focus ring. Same server, same browser, so it costs one more
-      # command rather than another job.
       - run: node scripts/test-design.mjs
+      - run: node scripts/e2e.mjs
+      - run: node scripts/test-modes.mjs
+      - run: node scripts/test-teaching.mjs
+      - run: node scripts/test-polish.mjs
+
+  load:
+    name: The derived queries, at a size somebody reaches
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: npm run build
+      # Progress is derived from the whole review log on every request
+      # (ADR-014), so the only honest place to measure it is a log the size one
+      # actually becomes. The demo deck is 417 reviews and would report a
+      # missing index as fast.
+      - name: Write a year of history for forty learners
+        run: npx tsx scripts/load-fixture.ts --learners 40 --reviews 5000
+      # Budgets, not records: this fails when a query goes over, and the number
+      # to fix is the query rather than the budget. See docs/15-performance.md.
+      #
+      # Through `tsx`, which is what `npm run test:load` has always used and
+      # what this step needs: the script imports the progress functions
+      # themselves, and those import each other through the `@/lib` alias,
+      # which plain `node` cannot resolve. It threw on the first import,
+      # before check one.
+      - run: npm run test:load -- --budget-only
 
   audit:
     name: Dependency audit
@@ -242,26 +290,29 @@ jobs:
       # blocks. This step never fails: it is the record.
       - name: Advisories, high and above
         run: npm audit --omit=dev --audit-level=high || true
-      # THE GATE IS `critical`, AND THAT NUMBER WAS ARGUED RATHER THAN PICKED.
+      # THE GATE IS `high`, AND IT GOT THERE BY THE CHAIN BEING CLEARED
+      # RATHER THAN BY THE BAR BEING MOVED.
       #
-      # It was `high` on the first run of this workflow and failed, on four
-      # advisories that no change in this repository can clear:
+      # It was `high` on the first run of this workflow and failed, on five
+      # advisories, and stopped at `critical` with the argument that no change
+      # in this repository could clear them and that a blocking check which
+      # cannot pass is the one people learn to click past. The first half of
+      # that was wrong, and the note said so itself by naming the fix as
+      # next@16: both chains are resolved by `overrides` in package.json, and
+      # neither needs a major upgrade.
       #
-      #   postcss <=8.5.22, reached only through `next`. XSS via an unescaped
-      #   </style> in stringify output, and arbitrary .map file reads via an
-      #   attacker-controlled sourceMappingURL. Both need attacker-controlled
-      #   CSS. PostCSS runs here at build time over this repository's own
-      #   Tailwind input; nothing a learner types reaches it. Clearing it means
-      #   next@16, a major upgrade, which is its own change and its own risk.
+      #   postcss. Every other consumer in the tree was already on the patched
+      #   8.5.26 and only Next's own pin held 8.4.31, so one override deduped
+      #   it onto what was already installed. The proof it changed nothing is
+      #   the build output: Next names a stylesheet by the hash of its
+      #   contents, and it is the same file, 313a9df4d86383e6.css, to the byte.
       #
-      #   deepmerge-ts <8.0.0, reached through @prisma/config and the Prisma
-      #   CLI. Stack exhaustion on a recursive object graph, while reading our
-      #   own schema at build time.
+      #   deepmerge-ts, reached through @prisma/config. Overridden to 8.0.2,
+      #   and `prisma generate`, `prisma db push` and the seed all run.
       #
-      # A blocking check that cannot pass is worse than no check: it is the one
-      # people learn to click past, and then it is not read at all on the day
-      # it matters. So the gate stops at `critical`, the step above keeps every
-      # high visible, and the reasoning is here rather than in somebody's head.
-      # Lower it back to `high` the day the postcss chain can actually be
-      # cleared.
-      - run: npm audit --omit=dev --audit-level=critical
+      # `npm audit --omit=dev` reports zero. Dev-only advisories are read by
+      # the step above and do not block, because they do not ship.
+      #
+      # If this ever cannot pass again, fix the dependency or say here, in
+      # writing, why it is unreachable. Do not lower the number.
+      - run: npm audit --omit=dev --audit-level=high

@@ -243,6 +243,51 @@ individual's deck, searches or answer history. Do not widen it. (ADR-019.)
 **Never score pronunciation.** There is no verified Estonian speech recogniser available here.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 
+## More than one session works this repository at a time
+
+**Read what landed before you merge, not just the conflict status.** On
+2026-08-29 three sessions were open at once. Two of them fixed the same bug in
+the same two files twenty minutes apart: the demo fixture produced no card with
+enough lapses to flag, so the sticking-points panel was empty and the checks
+behind it never ran. Both fixes were correct. A clean three-way merge is
+exactly what you get when two people build the same thing in different lines,
+and that is the case that hurts, because nothing fails and you end up with two
+of everything.
+
+When somebody else's work overlaps yours, one of them has to go. Keep the one
+that is safer or more precise and **delete the other outright** rather than
+leaving both: their fixture entry reaches four lapses in twelve reviews and
+says in one entry what two of mine said, and their assertion requires the
+sentence to name a count where mine only asked that a word appear somewhere.
+
+It happened a third time the same day, on `lib/tutor/provider.ts`, and that
+one is worth reading because the rule as written did not fit it. Two sessions
+fixed the same two faults within the hour: a 402 pasting raw OpenRouter JSON
+at the learner, and the catch-all under it doing the same for every other
+status. Theirs was better in two ways, `reportError` with the provider, model
+and status as structured context where mine was a `console.error`, and a 402
+thrown as a 402 rather than laundered into a 502 to make it walkable, so
+theirs was kept and mine deleted. But "keep one and delete the other" is only
+the whole answer when both are the same shape. Mine also carried a clause
+theirs had no reason to: a 404 is walkable between models of one provider,
+which matters only because this branch made the default a chain of free
+models, and a free model is retired without notice. That clause survives on
+top of their version. Read what each side is for, not just which is better.
+
+**Then audit what taking their side reverted.** Resolving thirty-nine
+conflicts in their favour silently undid four things on this branch, and only
+two announced themselves: the typechecker caught the tutor naming the
+configured provider instead of the one that answered, and lint caught a script
+importing the portable launcher and then calling the sandbox path anyway. The
+other two were silent, because a re-run copy sweep turned an em dash meaning
+"no value" into a bare comma in a paradigm cell, and `readerCopy.test.ts`
+passes on that happily: a comma is not a dash. Grep the markers the branch owns
+after any merge that touched its files. `NO_VALUE`, `formatHour`,
+`DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
+`useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
+`x-model-provider`, `isSameOriginMutation`, `checkRateLimit`. Most of them now
+have an invariant behind them; that list is what to check when adding one.
+
 ## Commands
 
 ```
@@ -264,6 +309,47 @@ npm run test:mobile      # the phone, measured; needs the server running
 With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the
 browser suites possible without driving a Google sign-in from Playwright.
 
+**A suite that ran nothing looks exactly like one that passed, so every suite
+counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
+it reached and a `done` that refuses to pass below a declared floor. Two
+faults made that necessary and both are in this repository's history:
+`test-design.mjs` hardcoded a port, so anywhere else it threw on its first
+navigation, before check one, and printed no FAIL line at all; and
+`test-teaching.mjs` gates five checks on the sticking-points panel having
+rows, so when the fixture produced none the gate failed honestly and the five
+behind it were skipped in silence, one reported failure covering six unlooked
+things. The floor is **the count CI reaches**, not the minimum across every
+state a database could be in: a floor low enough never to complain is a floor
+low enough to miss what it was built for, which was measured by deleting a
+block and watching a floor of 30 wave 34 checks through. Against a thin local
+database a suite now says so, which is worth hearing. Raise a floor when you
+add checks; never lower one to make a run pass.
+
+**A floor is only honest while the count is a property of the code rather than
+of the machine.** It was not. `test-teaching.mjs` was measured on a box whose
+environment carried `EKILEX_API_KEY` and `OPENROUTER_API_KEY`, so dictation
+built a real round and Anu had a text box, and its floor of 38 counted both.
+CI has neither key, ran the same correct code, came in at 34, and the floor
+read that as a block having stopped running. Lowering it was not available:
+the number that lets CI through is the same number that lets a deleted block
+through, which is the fault the floor exists for. `absent(n, why)` is the
+third outcome beside pass and fail: it lowers the target by exactly n, prints
+the reason and the arithmetic, and leaves a block that stops running still
+tripping the floor, because nothing waived it. Waiving more than half a suite
+fails outright whatever the reasons say. It replaced a `console.log` with the
+word SKIP in it, which said the same thing to a person and nothing at all to
+the tally, and an invariant now fails on that shape and on a waiver with no
+number behind it.
+
+Both of the checks that failed there were **real gaps that only a keyless
+deployment reaches**, which is the default one. The dictionary's case table
+linked to the grammar reference from the retrieved Ekilex paradigm and not
+from the derived table, so without a key that table was a dead end; and Anu's
+no-key empty state dropped the question a review card had just handed her, so
+the key was the price of even seeing what you were about to ask. Neither was
+reachable on a machine with the keys set, which is the argument for running a
+suite in the state a stranger installs into.
+
 `scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
 1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on
 phones and gone above the breakpoint, every target clear of 44px, and the pull gesture driven for
@@ -276,7 +362,14 @@ palette. `scripts/test-teaching.mjs` covers the half that teaches rather than te
 reference (including that every form on it says where it came from), dictation, the printable
 worksheet and its answer key, the retention reading, and the shortcut sheet.
 `scripts/smoke-offline.mjs` is the one worth keeping green above all: it pulls the plug, grades,
-reloads with the network still down, and checks the queue drains when it comes back.
+reloads with the network still down, and checks the queue drains when it comes back. It was green
+for a while without grading anything. Its driver filtered the multiple-choice options on
+`/^[1-4]\S/`, and an option reads "1", a newline, then the word, so the pattern could not match:
+the function fell through, returned false into a discarded value, and the outbox read 0 at every
+step. Two of the three checks around it are satisfied by 0, and the third is satisfied by the
+offline banner, which is up whether or not anything was graded. It answers with the key the card
+itself advertises now, and asserts a card was answered before asserting anything about the queue,
+because every check after that one reads as an app fault when the answer is no.
 
 CI runs typecheck, lint, the unit suite, the invariants, integration tests against a real
 Postgres, the production build, the credential scan and the phone. It is the enforcement behind

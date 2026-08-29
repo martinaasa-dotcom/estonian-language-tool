@@ -1,18 +1,16 @@
-import { launchChromium } from "./lib/browser.mjs";
+import { eventually, launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const B = "http://localhost:3000";
+const B = baseUrl();
 const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
 const errors = [];
-let failures = 0;
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+// Floor: 21, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("The core flows", { floor: 21 });
 
 // 1 — Dictionary: search, paradigm, add to deck
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
@@ -24,8 +22,9 @@ check("gradation is flagged", (await page.getByText(/gradation b : ∅/i).count(
 await page.getByRole("button", { name: /Add to deck|In deck/ }).click();
 await page.waitForTimeout(400);
 const addBtn = page.getByRole("button", { name: /^Add$/ });
-if (await addBtn.count()) { await addBtn.click(); await page.waitForTimeout(1500); }
-check("add to deck completes", (await page.getByRole("button", { name: /In deck/ }).count()) > 0);
+if (await addBtn.count()) await addBtn.click();
+check("add to deck completes",
+  await eventually(async () => (await page.getByRole("button", { name: /In deck/ }).count()) > 0));
 
 // 2 — Search box drives navigation, and the diacritic bar types Estonian
 await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
@@ -37,8 +36,8 @@ check("English search finds the Estonian word", page.url().includes("q=room"));
 await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
 await page.getByLabel("Search the dictionary").fill("s");
 await page.getByLabel("Insert õ").click();
-await page.waitForTimeout(300);
-check("diacritic bar inserts õ", (await page.getByLabel("Search the dictionary").inputValue()) === "sõ");
+check("diacritic bar inserts õ",
+  await eventually(async () => (await page.getByLabel("Search the dictionary").inputValue()) === "sõ"));
 
 // 3 — Keyboard-only review.
 // Review asks in several shapes — type it, pick it, flip it, or lead with the
@@ -73,35 +72,39 @@ check("the answer is reachable from the keyboard", rateable || alreadyGraded,
   rateable ? "rating offered" : alreadyGraded ? "auto-advanced on a correct pick" : "neither");
 
 if (rateable) await page.keyboard.press("3");
-await page.waitForTimeout(2000);
+const advanced = await eventually(async () =>
+  (await page.getByText(/\d+ left/).textContent()) !== before);
 const after = await page.getByText(/\d+ left/).textContent();
-check("number key grades and advances", before !== after, `${before} -> ${after}`);
+check("number key grades and advances", advanced, `${before} -> ${after}`);
 
 // 4 — Tasks
 await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });
 await page.getByLabel("Task title").fill("Revise the comitative");
 await page.getByRole("button", { name: /^Add$/ }).click();
-await page.waitForTimeout(2000);
-check("task is created and persists", (await page.getByText("Revise the comitative").count()) > 0);
+// Same reporting as the word above, and for the same reason: this one failed
+// twice in CI, fifteen seconds each time, and "false" does not say whether the
+// task was never created or created and not shown.
+const taskShown = await eventually(async () => (await page.getByText("Revise the comitative").count()) > 0);
+check("task is created and persists", taskShown,
+  taskShown ? "" : `list says: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 
 // 5 — Import
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
 const stamp = Date.now();
 const list = `testsona${stamp} - test word\ntestverb${stamp}ma - to test`;
 await page.getByLabel("Paste word list").fill(list);
-await page.waitForTimeout(500);
-check("import preview parses pasted lines", (await page.getByText(/2 words found/).count()) > 0);
+check("import preview parses pasted lines",
+  await eventually(async () => (await page.getByText(/2 words found/).count()) > 0));
 await page.getByRole("button", { name: /Add 2 words/ }).click();
-await page.waitForTimeout(2500);
-check("import writes words and cards", (await page.getByText(/Added 2 words/).count()) > 0);
+check("import writes words and cards",
+  await eventually(async () => (await page.getByText(/Added 2 words/).count()) > 0));
 
 // Re-importing the same list must not duplicate anything.
 await page.getByLabel("Paste word list").fill(list);
 await page.waitForTimeout(400);
 await page.getByRole("button", { name: /Add 2 words/ }).click();
-await page.waitForTimeout(2500);
 check("re-importing the same words does not duplicate them",
-  (await page.getByText(/already in your deck/).count()) > 0);
+  await eventually(async () => (await page.getByText(/already in your deck/).count()) > 0));
 
 // 6 — Export
 const res = await page.request.get(`${B}/api/export`);
@@ -129,8 +132,14 @@ check("a failed search offers an add form, not a dead end", (await page.getByTex
 await page.getByPlaceholder("word").fill("trial word");
 await page.getByPlaceholder("toa").fill(`${word}u`);
 await page.getByRole("button", { name: "Save word" }).click();
-await page.waitForTimeout(2500);
-check("the new word opens as a full entry", (await page.getByText("trial word").count()) > 0);
+// What the screen actually said, when it did not say this. A check that
+// reports only false sends the next person to the app looking for a bug that
+// may be in the navigation rather than in the save: this one failed on CI for
+// fifteen seconds over a word the database already had, because the page had
+// been re-rendered back to the add form.
+const opened = await eventually(async () => (await page.getByText("trial word").count()) > 0);
+check("the new word opens as a full entry", opened,
+  opened ? "" : `still on: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 check("its case table is derived from the genitive I typed",
   (await page.getByText(`${word}us`, { exact: true }).count()) > 0);
 check("and it can go straight into the deck",
@@ -143,9 +152,9 @@ const genField = page.getByPlaceholder("toa");
 await genField.click();
 await genField.fill("s");
 await page.getByLabel("Insert an Estonian character into the field you are typing in").getByLabel("Insert ä").click();
-await page.waitForTimeout(300);
 check("shared diacritic bar types into the focused field",
-  (await genField.inputValue()) === "sä", `got "${await genField.inputValue()}"`);
+  await eventually(async () => (await genField.inputValue()) === "sä"),
+  `got "${await genField.inputValue()}"`);
 
 // 10 — B1+ coverage, with verb government
 await page.goto(`${B}/dictionary?q=sõltuma`, { waitUntil: "networkidle" });
@@ -154,6 +163,5 @@ check("B1 verb carries its government",
 
 
 console.log(errors.length ? `\nconsole/page errors:\n  ${errors.join("\n  ")}` : "\nno console errors");
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

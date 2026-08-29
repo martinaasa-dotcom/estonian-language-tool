@@ -52,7 +52,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
           {counts.reviews} reviews, your tasks, your conversations with Anu, your badges and your
           settings. The shared dictionary stays, because other learners have cards built on it.
         </p>
-        <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
           Download a backup first if there is any chance you will want it. Your review history
           cannot be recreated, and this does not keep a copy.
         </p>
@@ -99,7 +99,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
               </Button>
             </div>
             {error && (
-              <p role="alert" className="mt-2.5 text-[13px]">{error}</p>
+              <p role="alert" className="mt-2.5 text-sm">{error}</p>
             )}
           </div>
         )}

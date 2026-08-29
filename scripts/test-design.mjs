@@ -1,4 +1,5 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
 /**
  * The design system, checked rather than admired.
@@ -11,7 +12,7 @@ import { launchChromium } from "./lib/browser.mjs";
  * Every number here was a real defect at some point — this file is the record
  * of what was fixed, and the thing that stops it coming back.
  */
-const B = process.env.BASE_URL ?? "http://localhost:3000";
+const B = baseUrl();
 const PAGES = ["/", "/practice", "/grammar", "/grammar/partitive", "/progress", "/learn",
   "/learn/kodu", "/dictionary?q=tuba", "/words", "/settings", "/review", "/review/dictation",
   "/tasks", "/class", "/tutor", "/welcome"];
@@ -35,6 +36,8 @@ const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } });
 const p = await ctx.newPage();
 
 const sizes = new Map(), weights = new Map(), radii = new Map();
+/** One example per text size, so an off-scale one says where to look. */
+const where = new Map();
 const contrast = [];
 const small = [];
 let noFocus = [];
@@ -90,6 +93,7 @@ for (const url of PAGES) {
 
   for (const t of data.text) {
     sizes.set(t.size, (sizes.get(t.size) ?? 0) + 1);
+    if (!where.has(t.size)) where.set(t.size, `${url} "${t.text.slice(0, 28)}"`);
     weights.set(t.weight, (weights.get(t.weight) ?? 0) + 1);
     if (t.bg === "gradient") continue;
     const fg = parse(t.color), bg = parse(t.bg);
@@ -128,17 +132,22 @@ for (const url of ["/", "/review", "/progress", "/words"]) {
 }
 noFocus = [...new Set(noFocus)];
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+// Floor: 6, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Design system", { floor: 6 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
 
+/*
+  Name where, not just what. This reported `(14px)` and left whoever saw it to
+  find which of a hundred and sixty pages had it, on which element. `where`
+  carries the first page and the first line of text at each off-scale size,
+  which is enough to grep for.
+*/
 check("every text size is on the scale", offScale.length === 0,
-  offScale.length ? offScale.join(" ") : `${sizes.size} steps in use`);
+  offScale.length
+    ? offScale.map((size) => `${size} ${where.get(size) ?? ""}`).join(" | ")
+    : `${sizes.size} steps in use`);
 check("nothing is set below the 11.5px floor",
   [...sizes.keys()].every((s) => parseFloat(s) >= 11.5),
   [...sizes.keys()].filter((s) => parseFloat(s) < 11.5).join(" "));
@@ -158,5 +167,4 @@ check("every tab stop shows its focus ring immediately", noFocus.length === 0,
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();
-console.log(failures === 0 ? "\nDesign system verified." : `\n${failures} failed.`);
-process.exit(failures ? 1 : 0);
+done();

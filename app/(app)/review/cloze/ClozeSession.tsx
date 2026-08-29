@@ -107,18 +107,18 @@ export function ClozeSession() {
             maxLength={MAX_PASSAGE_CHARS}
             onChange={(e) => setText(e.target.value)}
             placeholder="Kleebi siia artikkel, kodutöö või sõnum…"
-            className="est mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-[15.5px] outline-none"
+            className="est mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-base outline-none"
             style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
           />
           <div className="mt-2 flex items-center justify-between gap-3">
             <DiacriticBar />
-            <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+            <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
               {text.length}/{MAX_PASSAGE_CHARS}
             </span>
           </div>
 
           {error && (
-            <p role="alert" className="mt-3 text-[13.5px]" style={{ color: "var(--again)" }}>{error}</p>
+            <p role="alert" className="mt-3 text-sm" style={{ color: "var(--again-ink)" }}>{error}</p>
           )}
 
           <div className="mt-4 flex flex-wrap gap-3">
@@ -191,7 +191,7 @@ export function ClozeSession() {
             aria-label="Passage progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-sm" style={{ color: "var(--ink-3)" }}>
           {items.length - index} left
         </span>
       </div>
@@ -206,7 +206,7 @@ export function ClozeSession() {
         </div>
 
         <div className="px-6 py-8">
-          <p lang="et" className="est text-[20px] leading-relaxed" style={{ color: "var(--ink)" }}>
+          <p lang="et" className="est text-lg leading-relaxed" style={{ color: "var(--ink)" }}>
             {before}
             <span
               className="mx-1 inline-block min-w-[5ch] rounded px-2 text-center"
@@ -220,7 +220,7 @@ export function ClozeSession() {
             {after}
           </p>
 
-          <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
             Hint: the {item.formLabel} of <span lang="et">{item.lemma}</span>
           </p>
 
@@ -235,7 +235,7 @@ export function ClozeSession() {
               autoFocus
               disabled={checked}
               onChange={(e) => setAttempt(e.target.value)}
-              className="est mt-2 w-full rounded-md border px-3.5 py-2.5 text-[18px] outline-none disabled:opacity-70"
+              className="est mt-2 w-full rounded-md border px-3.5 py-2.5 text-lg outline-none disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
             {!checked && <div className="mt-2"><DiacriticBar /></div>}

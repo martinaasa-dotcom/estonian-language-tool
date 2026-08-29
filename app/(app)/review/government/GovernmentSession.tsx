@@ -131,7 +131,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
             aria-label="Round progress"
           />
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-sm" style={{ color: "var(--ink-3)" }}>
           {questions.length - index} left
         </span>
       </div>
@@ -148,7 +148,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
 
         <div className="px-6 py-8 text-center">
           <div className="flex items-center justify-center gap-2">
-            <p lang="et" className="est text-[34px] font-semibold" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="est text-3xl font-semibold" style={{ color: "var(--ink)" }}>
               {question.lemma}
             </p>
             <Speak text={question.lemma} />
@@ -190,9 +190,9 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   className="flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left transition-opacity hover:opacity-85 disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-[11px] opacity-60">{i + 1}</kbd>
+                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
                   <span className="min-w-0">
-                    <span className="block text-[14.5px] font-medium">{spec?.en}</span>
+                    <span className="block text-base font-medium">{spec?.en}</span>
                     <span lang="et" className="block text-[12.5px] opacity-75">{spec?.et}</span>
                   </span>
                   {revealed && isAnswer && <Check size={16} className="ml-auto shrink-0" aria-hidden />}
@@ -206,7 +206,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             {question.example && (
               <div className="flex flex-wrap items-center gap-2">
-                <p lang="et" className="est text-[20px] font-semibold" style={{ color: "var(--accent)" }}>
+                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent)" }}>
                   {question.example}
                 </p>
                 <Speak text={question.example} />
@@ -215,7 +215,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
             {question.gloss && (
               <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-2)" }}>{question.gloss}</p>
             )}
-            <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
               {question.experiencer
                 ? `An experiencer construction: the person goes in the ${question.answerEn.toLowerCase()} and the thing is the grammatical subject.`
                 : `${question.lemma} governs the ${question.answerEn.toLowerCase()} (${question.answerEt}). English gives you no clue here, so it has to be learned with the verb.`}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { createLexemeWithForms } from "@/app/actions";
@@ -48,6 +48,7 @@ export interface WordDraft {
  */
 export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; edit?: WordDraft }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(Boolean(initialLemma));
   const [pos, setPos] = useState(edit?.pos ?? "NOUN");
   const [lemma, setLemma] = useState(edit?.lemma ?? initialLemma);
@@ -81,8 +82,34 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
       if (!result.ok) { setError(result.error); return; }
       setOpen(false);
       if (!edit) { setForms({}); setTranslation(""); }
-      router.push(`/dictionary?q=${encodeURIComponent(result.lemma)}`);
-      router.refresh();
+
+      /*
+        PUSH OR REFRESH, NEVER BOTH, AND THE ORDER IS WHY.
+
+        `router.refresh()` re-renders the route the reader is on now, and
+        firing it in the same tick as a push to a different URL races the
+        navigation that is already in flight: the refresh can land last and
+        leave them on the page they were on, which here is the "no such word,
+        add it?" screen for a word that was just saved successfully. The save
+        worked, the row is there, and the screen says it is not.
+
+        Waiting longer does not help, which is what makes it look like a bug
+        in whatever is watching. It failed on CI on a tree that had passed
+        eleven minutes earlier, and e2e polled a full fifteen seconds for a
+        word the database already had.
+
+        The destination is `force-dynamic`, so arriving there renders it
+        fresh; there is nothing for a refresh to add.
+
+        The question is whether the URL changes, and not whether this is an
+        edit. Correcting a headword renames the word, so `?q=` no longer names
+        it and a refresh alone leaves the reader looking up a word that is not
+        there any more, which is how the first version of this broke renaming.
+        Correcting anything else keeps the URL, and there the refresh is the
+        whole point and the push would be the no-op.
+      */
+      if (searchParams.get("q") === result.lemma) router.refresh();
+      else router.push(`/dictionary?q=${encodeURIComponent(result.lemma)}`);
     });
   };
 

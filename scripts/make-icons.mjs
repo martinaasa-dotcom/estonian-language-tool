@@ -11,21 +11,8 @@
  *
  *   node scripts/make-icons.mjs
  */
-import { existsSync, writeFileSync } from "node:fs";
-import { chromium } from "playwright";
-
-/**
- * Prefer a Chromium the environment already provides. Playwright only finds a
- * build matching its own pinned revision, so on a machine with a different one
- * installed the default launch fails even though a perfectly good browser is
- * sitting there.
- */
-const SYSTEM_CHROMIUM = [
-  "/opt/pw-browsers/chromium/chrome-linux/chrome",
-  "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-  "/usr/bin/chromium",
-  "/usr/bin/google-chrome",
-].find((path) => existsSync(path));
+import { writeFileSync } from "node:fs";
+import { launchChromium } from "./lib/browser.mjs";
 
 const BLUE = "#3E6BA8";
 
@@ -50,9 +37,7 @@ const TARGETS = [
   { file: "public/icon-maskable.png", size: 512, svg: maskable },
 ];
 
-const browser = await chromium.launch(
-  SYSTEM_CHROMIUM ? { executablePath: SYSTEM_CHROMIUM } : {},
-);
+const browser = await launchChromium();
 const page = await browser.newPage();
 
 for (const { file, size, svg } of TARGETS) {

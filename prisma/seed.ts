@@ -5,6 +5,7 @@ import { ADJECTIVES, PHRASES } from "./data/other";
 import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/advanced";
 import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
+import { writeExpanded } from "./expanded";
 import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
 
@@ -70,18 +71,19 @@ async function main() {
     });
   }
 
-  // The harvested words go in last, and that ordering is the point: where a word
-  // appears in both the hand-typed lists above and in what Ekilex sent back,
-  // Ekilex wins. `dedupe` keeps the last entry for a key, so the authoritative
-  // paradigm supersedes the transcribed one rather than racing it.
+  // The harvested words go in last of the authored sets, and that ordering is
+  // the point: where a word appears both in the hand-typed lists above and in
+  // what Ekilex sent back, Ekilex wins. `dedupe` keeps the last entry for a key,
+  // so the authoritative paradigm supersedes the transcribed one rather than
+  // racing it.
   //
   // The legacy entries it supersedes are dropped here rather than left to
   // `dedupe`, because a warning printed 700 times is not a warning. What is left
   // for dedupe to shout about is a genuine editing mistake: one word listed
   // twice inside the hand-written files.
   const harvestedKeys = new Set(HARVESTED.map((w) => `${w.lemma} ${w.pos}`));
-  const legacy = entries.filter((e) => !harvestedKeys.has(key(e)));
-  const superseded = entries.length - legacy.length;
+  const authored = entries.filter((e) => !harvestedKeys.has(key(e)));
+  const superseded = entries.length - authored.length;
 
   for (const word of HARVESTED) {
     const p = word.parts;
@@ -89,7 +91,7 @@ async function main() {
       word.pos === "VERB"
         ? classifyVerbGradation(p.INF_MA ?? word.lemma, p.PRES_1SG ?? "")
         : classifyGradation(p.NOM_SG ?? word.lemma, p.GEN_SG ?? "");
-    legacy.push({
+    authored.push({
       lemma: word.lemma,
       pos: word.pos,
       translation: word.gloss,
@@ -105,11 +107,29 @@ async function main() {
     });
   }
 
-  const written = await write(dedupe(legacy));
+  const written = await write(dedupe(authored));
   console.log(
     `Seeded ${written.lexemes} entries and ${written.forms} forms ` +
-    `(${HARVESTED.length} from Ekilex, superseding ${superseded} hand-typed ones).`,
+    `(${HARVESTED.length} from the course harvest, superseding ${superseded} hand-typed ones).`,
   );
+
+  /*
+    Then the built dictionary, which is much larger and only ever adds. Two
+    things grew the dictionary at once and they are complements rather than
+    rivals: the harvest above is the *course* vocabulary, fetched against the
+    syllabus and carrying the attested sentences the lessons are built from,
+    while this is a broad cache warm-up for everything a learner might look up.
+
+    It runs last because it inserts with ON CONFLICT DO NOTHING, so anything
+    already present wins by being there: a hand-written gloss chosen for a
+    learner, and a harvested paradigm that came back from Ekilex against a word
+    the course actually teaches. A built gloss is Wiktionary's first sense and
+    is occasionally the wrong homonym, so it is the one that should yield.
+  */
+  const expanded = await writeExpanded(prisma);
+  if (expanded.added > 0) {
+    console.log(`Added ${expanded.added} entries and ${expanded.forms} forms from Ekilex and Wiktionary.`);
+  }
 }
 
 /** The level of the unit that introduces each course word, as a CEFR fallback. */

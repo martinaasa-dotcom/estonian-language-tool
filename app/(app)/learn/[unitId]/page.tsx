@@ -178,7 +178,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
           {missing > 0 && (
             <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
               {missing} word{missing === 1 ? "" : "s"} in this unit {missing === 1 ? "is" : "are"} not in
-              your dictionary yet. Search {missing === 1 ? "it" : "them"} once and, with an Ekilex key,
+              your dictionary yet. Search {missing === 1 ? "it" : "them"} once and
               {missing === 1 ? " it is" : " they are"} fetched and stored for good.
             </p>
           )}

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
+import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
@@ -56,6 +57,15 @@ export default async function TodayPage() {
   const newBadges = await awardBadges(ownerId, stats);
 
   const tutorReady = resolveProvider() !== null;
+  /*
+    Whether the person reading this is the person who could fix it.
+    With no Supabase keys the app is a single local learner (ADR-013), so they
+    run it and the setup walkthrough is addressed to them. Hosted, they are a
+    visitor, and telling them to go and get an API key sends them to a Settings
+    page where the field does not exist, because the key is an environment
+    variable on the deployment.
+  */
+  const readerCanConfigure = !supabaseConfigured();
   const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
   const overdue = tasks.filter((t) => t.dueAt && t.dueAt < now).length;
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
@@ -368,17 +378,21 @@ export default async function TodayPage() {
             <div className="flex items-center gap-2">
               <Sparkles size={16} aria-hidden style={{ color: "var(--blush-ink)" }} />
               <h2 className="label-xs" style={{ color: "var(--blush-ink)" }}>
-                {tutorReady ? "Stuck on something?" : "Anu needs a key"}
+                {tutorReady ? "Stuck on something?" : readerCanConfigure ? "Anu needs a key" : "Anu is not available"}
               </h2>
             </div>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
               {tutorReady
                 ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
-                : "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."}
+                : readerCanConfigure
+                  ? "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."
+                  : "Anu is not switched on for this site yet. Everything else here works without her."}
             </p>
-            <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">
-              {tutorReady ? "Ask Anu" : "Set Anu up"} <ArrowRight size={15} aria-hidden />
-            </ButtonLink>
+            {(tutorReady || readerCanConfigure) && (
+              <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">
+                {tutorReady ? "Ask Anu" : "Set Anu up"} <ArrowRight size={15} aria-hidden />
+              </ButtonLink>
+            )}
           </Card>
         </div>
       </div>
