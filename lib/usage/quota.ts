@@ -23,20 +23,37 @@ export interface QuotaLimits {
   dailyMicrosPerUser: number;
   /** Micro-dollars every user together may spend in a UTC day. */
   dailyMicrosGlobal: number;
+  /**
+   * The tail of the global budget held back for people who have barely used
+   * Anu today. 0.25 means the last quarter is reserved.
+   */
+  globalReserveFraction: number;
+  /** Calls a user may still make once the budget is down to that reserve. */
+  reserveCallsPerUser: number;
 }
 
 /**
- * Defaults sized for a real learner rather than for a load test: about an hour
- * of steady tutoring a day. On gpt-4o a tutor answer runs a little under a cent,
- * so 120 calls is roughly a dollar a day per person and the global cap is the
- * backstop if a hundred people arrive at once.
+ * Sized for an app that is free to everybody and has to stay that way.
+ *
+ * The whole product works with no AI at all: review, the dictionary, every
+ * drill, the writing exercise's actual verdict, offline. Anu is the one part
+ * that costs money per use, so she is the one part with a small allowance. Ten
+ * conversations a day is enough to understand what she is for and not enough
+ * for anyone to run up a bill with. The number is the base; `lib/usage/ledger`
+ * scales it per kind, because a grader note and a cache miss on speech are not
+ * the same thing as a tutoring conversation.
+ *
+ * The per-user spend cap is a backstop rather than the control. At ten tutor
+ * answers and thirty grader notes it should never be the thing that bites.
  */
 export const DEFAULT_LIMITS: QuotaLimits = {
   burstCalls: 8,
   burstWindowSeconds: 60,
-  dailyCallsPerUser: 120,
-  dailyMicrosPerUser: 1_500_000,      // $1.50
+  dailyCallsPerUser: 10,
+  dailyMicrosPerUser: 500_000,        // $0.50
   dailyMicrosGlobal: 20_000_000,      // $20.00
+  globalReserveFraction: 0.25,
+  reserveCallsPerUser: 3,
 };
 
 function num(raw: string | undefined, fallback: number): number {
@@ -50,6 +67,8 @@ export interface QuotaEnv {
   AI_DAILY_CALLS_PER_USER?: string | undefined;
   AI_DAILY_USD_PER_USER?: string | undefined;
   AI_DAILY_USD_GLOBAL?: string | undefined;
+  AI_GLOBAL_RESERVE_FRACTION?: string | undefined;
+  AI_RESERVE_CALLS_PER_USER?: string | undefined;
   [key: string]: string | undefined;
 }
 
@@ -65,6 +84,13 @@ export function readLimits(env: QuotaEnv = process.env): QuotaLimits {
     dailyMicrosGlobal: Math.round(
       num(env.AI_DAILY_USD_GLOBAL, DEFAULT_LIMITS.dailyMicrosGlobal / 1e6) * 1e6,
     ),
+    // Clamped rather than trusted: a fraction above 1 would reserve more than
+    // the budget and refuse the first call of the day.
+    globalReserveFraction: Math.min(
+      0.9,
+      num(env.AI_GLOBAL_RESERVE_FRACTION, DEFAULT_LIMITS.globalReserveFraction),
+    ),
+    reserveCallsPerUser: num(env.AI_RESERVE_CALLS_PER_USER, DEFAULT_LIMITS.reserveCallsPerUser),
   };
 }
 
@@ -83,6 +109,8 @@ export type QuotaDenial =
   | "BURST"
   | "DAILY_CALLS"
   | "DAILY_SPEND"
+  /** The shared budget is into its reserve, and this user has had their share. */
+  | "GLOBAL_BUSY"
   | "GLOBAL_SPEND";
 
 export interface QuotaDecision {
@@ -140,6 +168,37 @@ export function checkQuota(
       reason: "DAILY_SPEND",
       message:
         "You have used today's share of the tutor budget. It resets at midnight UTC.",
+      retryAfterSeconds: secondsUntilUtcMidnight(now),
+    };
+  }
+
+  /*
+    The shared budget, in two steps rather than one cliff.
+
+    A single global cap is first come, first served: whoever arrives early
+    spends it, and everybody after them finds Anu switched off, including
+    somebody opening the app for the first time. The people most likely to be
+    turned away are the ones who have used it least, which is exactly backwards.
+
+    So the last slice of the budget is a reserve. Once spending reaches it,
+    anyone who has already had a few answers today waits, and anyone who has
+    not can still ask. It costs the heavy user their eleventh conversation and
+    buys a newcomer their first, which is the right trade for a free app that
+    strangers are still deciding about.
+  */
+  const reserveFrom = limits.dailyMicrosGlobal * (1 - limits.globalReserveFraction);
+  if (
+    usage.globalMicros >= reserveFrom &&
+    usage.globalMicros < limits.dailyMicrosGlobal &&
+    usage.dailyCalls >= limits.reserveCallsPerUser
+  ) {
+    return {
+      allowed: false,
+      reason: "GLOBAL_BUSY",
+      message:
+        "Anu is busy today. The rest of the shared budget is being kept for people " +
+        "who have not asked anything yet, and it resets at midnight UTC. Everything " +
+        "else (review, the dictionary, your deck) keeps working.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
   }

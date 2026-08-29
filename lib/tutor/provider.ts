@@ -20,6 +20,7 @@
  * the head of the chain, because a screen naming the wrong model is worse
  * than one naming none.
  */
+import { reportError } from "@/lib/observability/report";
 import { estimateTokens } from "@/lib/usage/pricing";
 
 export type ProviderName = "openrouter" | "openai" | "anthropic";
@@ -83,7 +84,15 @@ export function resolveProvider(): ProviderConfig | null {
  */
 function worthFallingBackFrom(error: unknown): boolean {
   if (!(error instanceof TutorError)) return true;
-  return error.status === 429 || error.status === 502 || error.status === 503;
+  // 402 belongs here for the same reason as 429: one provider being out of
+  // credit says nothing about the next one's balance, so falling through costs
+  // a request and keeps the tutor answering.
+  return (
+    error.status === 402 ||
+    error.status === 429 ||
+    error.status === 502 ||
+    error.status === 503
+  );
 }
 
 export class TutorError extends Error {
@@ -409,8 +418,36 @@ async function assertOk(res: Response, config: ProviderConfig) {
   if (res.status === 404) {
     throw new TutorError(`${config.label} does not have a model called "${config.model}".`, 404);
   }
+  /*
+    Out of credit, which is not the same as a rejected key and must not be
+    reported as one. It is worth falling back from, because the next provider
+    in the chain has its own balance, and it is worth saying plainly, because
+    the person who can fix it is whoever runs the deployment rather than the
+    learner reading the message.
+
+    Found on a live deployment: OpenRouter answered 402 and the learner was
+    shown a slice of the raw JSON, "This request requires more credits, or
+    fewer max_tokens. You requested up to 1200 tokens, but can only afford
+    898". Accurate, and addressed to nobody who was there.
+  */
+  if (res.status === 402) {
+    throw new TutorError(
+      `${config.label} is out of credit for this key. Add credit, or set another provider key ` +
+      `in .env so the chain has somewhere to fall through to.`,
+      402,
+    );
+  }
+  /*
+    Everything else. The upstream text goes to the log rather than to the
+    screen: it is provider JSON, it can carry the request back verbatim, and
+    it means nothing to a learner. The status is what the caller needs.
+  */
+  reportError(new Error(`${config.label} returned ${res.status}: ${detail.slice(0, 500)}`), {
+    at: "tutor/provider",
+    extra: { provider: config.label, model: config.model, status: res.status },
+  });
   throw new TutorError(
-    `${config.label} returned ${res.status}. ${detail.slice(0, 180)}`.trim(),
+    `${config.label} could not answer just now (${res.status}).`,
     502,
   );
 }

@@ -183,10 +183,20 @@ audio cache is durable rather than per-instance: set `SUPABASE_SERVICE_ROLE_KEY`
 content-addressed in Supabase Storage, fetched once for everyone rather than once per cold start.
 Without that key it falls back to local disk, and Settings says so plainly.
 
-**Set a spend cap.** The tutor is metered per user per day with a global ceiling on top
-(`AI_DAILY_USD_GLOBAL`, default $20). The defaults are live whether or not you configure anything.
-There is no way to turn metering off, because sign-up is open by default. If you would rather run a
-private instance, `ALLOWED_EMAILS` or `ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
+**Set a spend cap.** The app is free to whoever uses it, and the caps are what make that
+affordable rather than a leap of faith. The tutor is metered per user per day (ten conversations,
+`AI_DAILY_CALLS_PER_USER`) under a global ceiling (`AI_DAILY_USD_GLOBAL`, default $20). The
+writing grader and speech scale off the same number in `lib/usage/ledger.ts`, higher, because they
+cost far less. Nothing a learner does outside the tutor is metered at all.
+
+The last quarter of the day's shared budget is held back for people who have not asked anything
+yet (`AI_GLOBAL_RESERVE_FRACTION`). Without it the cap is first come, first served: an enthusiastic
+morning spends the day and everyone arriving later, newcomers included, finds the tutor switched
+off. The reserve costs a heavy user their eleventh conversation and gives a newcomer their first.
+
+The defaults are live whether or not you configure anything. There is no way to turn metering off,
+because sign-up is open by default. If you would rather run a private instance, `ALLOWED_EMAILS` or
+`ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
 
 ### Adding Google sign-in (multi-user)
 
