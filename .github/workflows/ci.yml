@@ -232,6 +232,44 @@ jobs:
       - run: node scripts/test-teaching.mjs
       - run: node scripts/test-polish.mjs
 
+  load:
+    name: The derived queries, at a size somebody reaches
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: npm run build
+      # Progress is derived from the whole review log on every request
+      # (ADR-014), so the only honest place to measure it is a log the size one
+      # actually becomes. The demo deck is 417 reviews and would report a
+      # missing index as fast.
+      - name: Write a year of history for forty learners
+        run: npx tsx scripts/load-fixture.ts --learners 40 --reviews 5000
+      # Budgets, not records: this fails when a query goes over, and the number
+      # to fix is the query rather than the budget. See docs/15-performance.md.
+      - run: node scripts/load-test.mjs --budget-only
+
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
