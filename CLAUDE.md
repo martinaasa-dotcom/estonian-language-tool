@@ -336,7 +336,14 @@ palette. `scripts/test-teaching.mjs` covers the half that teaches rather than te
 reference (including that every form on it says where it came from), dictation, the printable
 worksheet and its answer key, the retention reading, and the shortcut sheet.
 `scripts/smoke-offline.mjs` is the one worth keeping green above all: it pulls the plug, grades,
-reloads with the network still down, and checks the queue drains when it comes back.
+reloads with the network still down, and checks the queue drains when it comes back. It was green
+for a while without grading anything. Its driver filtered the multiple-choice options on
+`/^[1-4]\S/`, and an option reads "1", a newline, then the word, so the pattern could not match:
+the function fell through, returned false into a discarded value, and the outbox read 0 at every
+step. Two of the three checks around it are satisfied by 0, and the third is satisfied by the
+offline banner, which is up whether or not anything was graded. It answers with the key the card
+itself advertises now, and asserts a card was answered before asserting anything about the queue,
+because every check after that one reads as an app fault when the answer is no.
 
 CI runs typecheck, lint, the unit suite, the invariants, integration tests against a real
 Postgres, the production build, the credential scan and the phone. It is the enforcement behind

@@ -20,7 +20,7 @@ const page = await ctx.newPage();
 const app = page.locator("main");
 
 // Floor: measured 10 in dev mode with NEXT_PUBLIC_ENABLE_SW=1, which its header documents.
-const { check, done } = suite("Offline review", { floor: 10 });
+const { check, done } = suite("Offline review", { floor: 11 });
 
 
 /**
@@ -39,9 +39,20 @@ async function answerOneCard() {
     if (await rate.count()) { await rate.first().click(); return true; }
   }
 
-  // Multiple choice: the options are numbered 1-4.
-  const choice = app.locator("button").filter({ hasText: /^[1-4]\S/ });
-  if (await choice.count()) { await choice.first().click(); return true; }
+  // Multiple choice: the card says "1-4 to pick", so press one. This used to
+  // filter the option buttons on /^[1-4]\S/, and an option reads "1" then a
+  // newline then the word, so the pattern could never match: the function fell
+  // through, returned false into a discarded value, and nothing was graded.
+  // What the reader saw was "a grade taken offline is held on the device" and
+  // "0 queued", which reads as the outbox being broken. The keyboard is what
+  // the app itself offers and is what `test-modes.mjs` drives.
+  if (await page.getByText(/Pick the meaning/).count()) {
+    await page.keyboard.press("1");
+    await page.waitForTimeout(900);
+    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
+    if (await rate.count()) { await rate.first().click(); }
+    return true;
+  }
 
   // Typed: fill something wrong and submit — a wrong answer still grades.
   const input = page.locator("main input[type='text'], main input:not([type])").first();
@@ -127,7 +138,10 @@ async function waitForText(page, pattern, timeoutMs = 30000) {
 // ── Pull the plug ────────────────────────────────────────────────────────────
 await ctx.setOffline(true);
 
-await answerOneCard();
+// Whether a card was answered at all is the first thing to assert, because
+// every check after this one reads as an app fault when the answer is no.
+const answeredOffline = await answerOneCard();
+check("a card can be answered with the network gone", answeredOffline);
 // The server action has to fail and the grade has to reach IndexedDB.
 await waitForText(page, /saved on this device|Offline/i, 20000);
 await page.waitForTimeout(1500);
