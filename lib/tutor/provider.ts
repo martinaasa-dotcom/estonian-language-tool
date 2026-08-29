@@ -154,13 +154,26 @@ export const FREE_OPENROUTER_MODELS = [
  * check if a name here has moved on.
  */
 export const FREE_GROQ_MODELS = [
-  "llama-3.3-70b-versatile",
-  "llama-3.1-8b-instant",
+  "openai/gpt-oss-120b",
+  "qwen/qwen3.8-27b",
 ] as const;
 
+/*
+  An alias first, deliberately.
+
+  The first names written here were `llama-3.3-70b-versatile` and
+  `gemini-2.0-flash`, both plausible and both already retired: the accounts
+  answered 404 for them within a day of the list being written. Google publish
+  `gemini-flash-latest`, which follows whatever the current flash model is, so
+  it cannot go stale the way a pinned version does. The pinned name behind it
+  is the fallback for the day the alias itself moves.
+
+  Groq publish no alias, so both of theirs are pinned and both were checked
+  against the account's own model list rather than guessed.
+*/
 export const FREE_GEMINI_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
+  "gemini-flash-latest",
+  "gemini-3.6-flash",
 ] as const;
 
 function configuredModels(raw: string | undefined, fallback: readonly string[]): string[] {
