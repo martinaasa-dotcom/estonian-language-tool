@@ -1,0 +1,106 @@
+/**
+ * The shape of the course.
+ *
+ * A unit is a *request* against the dictionary, never a copy of it: it names
+ * lemmas and glosses them in English, and every Estonian form, sentence and
+ * level comes from Ekilex through `scripts/harvest-ekilex.ts`. That direction of
+ * authority is the whole reason the course could get wide without anybody
+ * writing Estonian (ADR-005). A lemma this file gets wrong does not become a
+ * wrong word in the dictionary — it fails to arrive, and the harvest says so.
+ *
+ * Framework-free on purpose, like the rest of lib/collections: plain data and
+ * pure functions, unit-tested without a database or a DOM.
+ */
+import type { CardType } from "@/lib/srs/cards";
+
+export type Level = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
+export const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+/**
+ * `PHRASE` is the one part of speech the harvest does not fetch. A multi-word
+ * greeting is not a headword, so Ekilex has no paradigm for it; the phrases in
+ * the course are the hand-checked ones the built-in dictionary already carried,
+ * and no new ones are written here.
+ */
+export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE";
+
+/**
+ * A word the unit teaches: the Estonian lemma, an English gloss, and the part of
+ * speech when it is not inferable.
+ *
+ * The gloss is authored, and it is the only authored column in the whole
+ * pipeline — English is the one language this project is allowed to write. The
+ * part of speech defaults from the lemma: an Estonian verb's citation form is
+ * its `-ma` infinitive, which is unambiguous. Everything else defaults to a noun
+ * and is marked where it is not one.
+ */
+export type WordSpec =
+  | readonly [lemma: string, gloss: string]
+  | readonly [lemma: string, gloss: string, pos: Pos];
+
+export interface UnitSpec {
+  id: string;
+  /** Estonian title. This is a course in Estonian; the titles should be too. */
+  title: string;
+  /** English subtitle, so a beginner is never blocked by the title itself. */
+  subtitle: string;
+  /** Lucide icon name, mapped to a component in components/icons.tsx. */
+  icon: string;
+  level: Level;
+  /** The block of the level this belongs to, for grouping on the path. */
+  module: string;
+  /**
+   * What the learner can do afterwards, phrased as CEFR phrases them.
+   *
+   * This is the honest unit of progress in a language course. "You learned 14
+   * words" is a fact about the app; "you can order a meal and ask what is in it"
+   * is a fact about the learner.
+   */
+  canDo: string;
+  /** One line on why this unit is worth doing now. */
+  blurb: string;
+  /** Grammar topic ids this unit teaches — keys into lib/estonian/grammar.ts. */
+  grammar: readonly string[];
+  /** Card types added when the whole unit goes into the deck. */
+  cardTypes: readonly CardType[];
+  words: readonly WordSpec[];
+  /** Unit ids that should be finished first. Empty means it opens immediately. */
+  requires?: readonly string[];
+}
+
+/** A unit with its word list resolved into lemmas and parts of speech. */
+export interface SyllabusUnit extends UnitSpec {
+  /** Lemmas only, in order. The form every consumer before the rewrite used. */
+  readonly lemmas: readonly string[];
+  readonly vocabulary: readonly { lemma: string; gloss: string; pos: Pos }[];
+  readonly requires: readonly string[];
+  /** Kept for the pre-syllabus consumers that read `unit.cefr`. */
+  readonly cefr: Level;
+}
+
+/**
+ * An Estonian verb is cited by its `-ma` infinitive, so the part of speech is
+ * readable off the lemma. Adjectives and adverbs decline or do not in ways the
+ * spelling cannot show, so they are marked explicitly in the word list.
+ */
+export function inferPos(lemma: string, given?: Pos): Pos {
+  if (given) return given;
+  return lemma.endsWith("ma") && lemma.length > 3 ? "VERB" : "NOUN";
+}
+
+/** Builds a unit, resolving its word list once at module load. */
+export function unit(spec: UnitSpec): SyllabusUnit {
+  const vocabulary = spec.words.map((w) => ({
+    lemma: w[0],
+    gloss: w[1],
+    pos: inferPos(w[0], w[2]),
+  }));
+  return {
+    ...spec,
+    vocabulary,
+    lemmas: vocabulary.map((v) => v.lemma),
+    requires: spec.requires ?? [],
+    cefr: spec.level,
+  };
+}

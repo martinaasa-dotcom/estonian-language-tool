@@ -24,6 +24,7 @@
     "test:browser": "node scripts/smoke-new.mjs && node scripts/smoke-interact.mjs && node scripts/smoke-offline.mjs && node scripts/test-assess.mjs && node scripts/test-scan.mjs && node scripts/test-exam.mjs && node scripts/a11y-check.mjs",
     "test:invariants": "tsx scripts/test-invariants.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
+    "harvest": "tsx scripts/harvest-ekilex.ts",
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts"
   },

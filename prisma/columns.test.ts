@@ -43,6 +43,18 @@ describe("the seed's Lexeme columns", () => {
     for (const preserved of PRESERVED_COLUMNS) expect(written).not.toContain(preserved);
   });
 
+  it("never overwrites example sentences on a reseed", () => {
+    // `examples` is the one column the seed fills on insert and must never touch
+    // on update. A new database needs the attested sentences the harvest
+    // brought back, or gap-fill, dictation and sentence-building all open empty.
+    // An existing row's sentences, though, may have come from the live Ekilex
+    // cache or from a learner typing one in from class, and a reseed that
+    // rewrote them would quietly destroy both.
+    const examples = LEXEME_COLUMNS.find((c) => c.name === "examples");
+    expect(examples, "the seed should write examples on insert").toBeTruthy();
+    expect(examples?.reseeded, "examples must stay out of the DO UPDATE SET").toBe(false);
+  });
+
   it("casts every nullable column", () => {
     // Postgres cannot infer a parameter's type from a column that is null in
     // every row of the VALUES list, so a nullable column without a cast is a

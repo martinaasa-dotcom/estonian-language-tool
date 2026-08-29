@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Flame, GraduationCap, Target, Trophy } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { PATH } from "@/lib/collections/path";
+import { PATH } from "@/lib/collections/syllabus";
 import { classRoster } from "@/lib/classroom/roster";
 import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, StatTile } from "@/components/ui";
 import { ArchiveClass, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";

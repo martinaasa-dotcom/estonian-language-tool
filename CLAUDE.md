@@ -44,6 +44,18 @@ learner's correction and a live Ekilex fetch all win over it. Regenerating is re
 caches every answer, and a source that will not answer is never written down as a miss: that bug
 cost four fifths of the dictionary on the first run and looked like a clean result.
 
+**The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
+the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
+Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
+asked for; anything else is dropped and reported. So a misspelled or imagined word cannot reach
+the dictionary, it can only fail to arrive, loudly. That is what let the vocabulary grow from 360
+to 1,248 words without a single generated form. The English gloss is the only authored column
+in the whole pipeline, and English is the one language this project may write.
+`lib/collections/syllabus/syllabus.test.ts` fails if a unit names a word the harvest did not
+bring back, which is what makes this mechanical rather than aspirational. Re-run the harvest with
+`npm run harvest`; responses are cached, so it costs Ekilex nothing.
+
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
@@ -387,6 +399,7 @@ npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
+npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, a11y

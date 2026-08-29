@@ -180,14 +180,76 @@ await page.getByRole("button", { name: /open the page/i }).click();
 const opened = await eventually(async () => /\/scan\/[0-9a-f-]{36}/.test(page.url()));
 check("the saved page opens as a set", opened, page.url());
 
+/*
+  Wait for the page itself, not just for the address bar.
+
+  "Open the page" is a document load rather than a router push, deliberately:
+  see the comment on the button in ScanCapture. That moves when the URL
+  changes. A client-side push swaps the address only once the new tree has been
+  applied, so reading the DOM straight after was safe; a document load commits
+  the address first and the body arrives after it, so the same two lines were
+  counting chips on a page that had not rendered yet. Measured at two failures
+  in fifteen runs, always on the chip count and never on the navigation above.
+
+  This is not a retry around the assertion, and the assertion is unchanged: if
+  the page renders and marks nothing as unverified, the check below still
+  fails. It only stops the count being taken before there is anything to count.
+*/
+await page.getByRole("heading", { name: "Scan test page" }).waitFor({ timeout: 20_000 });
+
 const unverifiedChip = await page.getByText("Unverified", { exact: false }).count();
 check("the set still marks the word nobody checked", unverifiedChip > 0);
 
 await page.getByRole("link", { name: /drill the page/i }).click();
 await page.waitForURL(/\/review\?scan=/, { timeout: 20_000 });
-// The ordinary session, not a private quiz: the same four ratings, which is
-// what writes to the same append-only log as everything else (ADR-016).
+
+/*
+  Bring the card to its ratings, whichever of the three shapes it is.
+
+  A page can name a word the learner already studies, and drilling the page
+  draws in their existing cards for it on purpose: a page is references rather
+  than copies. Such a card has a history, so it is not new, and it opens the
+  way any review card does. That is one of three shapes, and this waited for
+  the ratings as though it were always the fourth: a card with no answer to
+  turn over at all.
+
+  Which shape you get here depends on which seeded word this suite picks, and
+  it picks the alphabetically first, which is a question about the database's
+  collation rather than about the app. Locally that was a word the demo deck
+  had never seen, so the card was new and opened straight on the ratings; in
+  CI it is one the deck already holds, so it opened as multiple choice and
+  this waited twenty seconds for buttons that were one keypress away.
+  Reproduced by giving the local word a reviewed card, at which point it
+  failed here every time as well.
+
+  `smoke-offline.mjs` learned this first and its comment says why in full: the
+  shapes are chosen per card, so a driver that knows only "Show answer"
+  silently stops testing anything the day another shape comes up first, and
+  what changed there was the dictionary growing. Not shared with it as one
+  helper, because that one goes on to grade and this must stop at the ratings
+  in order to count them.
+
+  Nothing is weakened: the assertion below is unchanged and still wants the
+  ordinary session's four ratings, now in every shape rather than one.
+*/
 const ratings = page.getByRole("button", { name: /^(again|hard|good|easy)\b/i });
+const reveal = page.getByRole("button", { name: /show answer/i });
+const pick = page.getByText(/Pick the meaning/);
+const typed = page.locator("main input[type='text'], main input:not([type])").first();
+
+await eventually(async () =>
+  (await ratings.count()) > 0 || (await reveal.count()) > 0
+  || (await pick.count()) > 0 || (await typed.count()) > 0, { timeoutMs: 20_000 });
+
+if (await reveal.count()) {
+  await reveal.first().click();
+} else if (await pick.count()) {
+  // The keyboard, because it is what the app offers and what test-modes drives.
+  await page.keyboard.press("1");
+} else if ((await ratings.count()) === 0 && (await typed.count())) {
+  await typed.fill("zzz");
+  await page.keyboard.press("Enter");
+}
 await ratings.first().waitFor({ timeout: 20_000 });
 const rated = await ratings.count();
 check("the page drills through the ordinary review session", rated === 4, `${rated} rating buttons`);

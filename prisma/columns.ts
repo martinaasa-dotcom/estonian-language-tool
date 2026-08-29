@@ -26,6 +26,11 @@ export interface SeedEntry {
    * this column, and reloading the built-in words must not erase their work.
    */
   notes?: string | null;
+  /**
+   * `Lexeme.examples` JSON, for the harvested words that arrive with attested
+   * sentences. Written on insert only — see the column's note below.
+   */
+  examples?: string;
   forms: { formType: string; value: string }[];
 }
 
@@ -52,6 +57,14 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
   { name: "gradationNote", cast: "text", value: (e) => e.gradationNote, reseeded: true },
   { name: "government", cast: "text", value: (e) => e.government, reseeded: true },
   { name: "notes", cast: "text", value: (e) => e.notes ?? null, reseeded: true, onlyWhenOwned: true },
+  // Insert-only, and the distinction matters. The built-in dictionary now ships
+  // with the attested sentences the harvest brought back, so a brand-new
+  // database has gap-fill, dictation and sentence-building on day one instead of
+  // four empty modes. But `examples` is also written by the live Ekilex cache and
+  // by a learner adding a sentence from class, and a reseed must not walk over
+  // either — so this is never in the `DO UPDATE SET`. A new row gets its
+  // sentences; an existing row keeps whatever it has grown since.
+  { name: "examples", value: (e) => e.examples ?? "[]", reseeded: false },
 ];
 
 /**
@@ -64,7 +77,7 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
  * `EKILEX` must not be demoted back to `SEED` by a reseed.
  */
 export const PRESERVED_COLUMNS = [
-  "examples", "provenance", "ekilexWordId", "fetchedAt",
+  "provenance", "ekilexWordId", "fetchedAt",
   // Who corrected an entry by hand, and when. The dictionary is shared, so an
   // edit is everybody's — which is exactly why a reseed must not quietly erase
   // the record of who made it.

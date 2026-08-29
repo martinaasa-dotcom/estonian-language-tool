@@ -4,7 +4,7 @@ import { ArrowLeft, Grid2x2, GraduationCap, Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
-import { unitProgress } from "@/lib/collections/path";
+import { unitProgress } from "@/lib/collections/syllabus";
 import { MAX_ITEMS } from "@/lib/scan/extract";
 import { parseItems, summarise } from "@/lib/scan/items";
 import { Speak } from "@/components/Speak";
