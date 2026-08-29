@@ -58,9 +58,23 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
   });
   const ownedIds = new Set(owned.map((c) => c.lexemeId).filter((id): id is string => !!id));
 
+  /*
+    A window into each band, moved by the seed.
+
+    Ordering by lemma and taking the first hundred and twenty is stable, which
+    a test wants, and on a dictionary of a few hundred words it is most of the
+    band anyway. On a real one it is the same slice of the alphabet every
+    sitting: every learner would meet the same words, and a retake would redraw
+    the paper it had just been shown the answers to. So the window starts
+    wherever the seed points, which costs one count per band.
+  */
+  const totals = await Promise.all(BANDS.map((band) => prisma.lexeme.count({ where: { cefr: band } })));
+  const window = PER_BAND * 2;
+
   const perBand = await Promise.all(
-    BANDS.map((band) =>
-      prisma.lexeme.findMany({
+    BANDS.map((band, i) => {
+      const total = totals[i] ?? 0;
+      return prisma.lexeme.findMany({
         where: { cefr: band },
         select: {
           id: true, lemma: true, translation: true, pos: true, cefr: true,
@@ -68,9 +82,10 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
           forms: { select: { formType: true, value: true, morphCode: true } },
         },
         orderBy: { lemma: "asc" },
-        take: PER_BAND * 2,
-      }),
-    ),
+        skip: total > window ? seed % (total - window) : 0,
+        take: window,
+      });
+    }),
   );
 
   const words: WordRow[] = [];

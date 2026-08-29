@@ -1,4 +1,5 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
 /**
  * The level check and the onboarding it sits inside.
@@ -14,19 +15,27 @@ import { launchChromium } from "./lib/browser.mjs";
  * deployment with no key. A result screen that reports a level without saying
  * how few questions it came from.
  */
-const B = process.env.BASE_URL ?? "http://localhost:3000";
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+const B = baseUrl();
+// Floor: 44, measured in the state CI seeds, with first run not yet done.
+const { check, absent, done } = suite("Level check", { floor: 44 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
-page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+page.on("console", (m) => {
+  if (m.type() !== "error") return;
+  /*
+    A refusal from the speech proxy is the state this suite exists to walk
+    through, not a fault in the page: with no speech service configured every
+    play fails, the button removes itself and the listening section abandons
+    itself as unmeasured. Counting the browser's own note about that response
+    would make this check fail on exactly the deployment it is verifying.
+  */
+  if (m.location()?.url?.includes("/api/tts")) return;
+  errors.push(m.text());
+});
 
 // ─── What the app is, kept at a URL ───────────────────────────────────────────
 
@@ -59,6 +68,7 @@ const provenance = [];
 let asked = 0;
 let sawSpeaking = false;
 let sawWriting = false;
+let saidNotScored = false;
 
 for (let step = 0; step < 80; step++) {
   if ((await page.getByText("Skill by skill").count()) > 0) break;
@@ -98,8 +108,7 @@ for (let step = 0; step < 80; step++) {
   // Speaking is rated by the learner and never scored.
   const selfRating = page.getByRole("button", { name: /Recognisable/ });
   if (await selfRating.count()) {
-    check("speaking says out loud that it is not scored",
-      (await page.getByText(/never moves your level/i).count()) > 0);
+    saidNotScored ||= (await page.getByText(/never moves your level/i).count()) > 0;
     await selfRating.click();
     await page.waitForTimeout(150);
     continue;
@@ -136,6 +145,7 @@ check("every question says where its Estonian came from",
   provenance.length > 0 && provenance.every(Boolean), `${provenance.filter(Boolean).length}/${provenance.length}`);
 check("the paper reaches the writing section", sawWriting);
 check("the paper reaches the speaking section", sawSpeaking);
+check("speaking says out loud that it is not scored", saidNotScored);
 
 // ─── The result ───────────────────────────────────────────────────────────────
 
@@ -192,6 +202,7 @@ await page.goto(`${B}/start`, { waitUntil: "networkidle" });
 const onboarded = !page.url().includes("/start");
 
 if (onboarded) {
+  absent(18, "a learner who has not been through first run: this database has");
   /*
     A learner who has already been through it is sent to Today, which is the
     documented behaviour rather than a gap in this run: a wizard that reappears
@@ -256,8 +267,8 @@ if (onboarded) {
     (await page.locator('a[href="/assess"]').count()) > 0);
 }
 
+console.log("");
 check("no page error anywhere in the flow", errors.length === 0, errors.slice(0, 2).join(" | "));
 
 await browser.close();
-console.log(failures === 0 ? "\nLevel check: all good." : `\n${failures} failed.`);
-process.exit(failures === 0 ? 0 : 1);
+done();
