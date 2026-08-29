@@ -1,10 +1,14 @@
 /** Populates a few cards, reviews and tasks so the UI can be reviewed with real content. */
 import { PrismaClient } from "@prisma/client";
+// @ts-expect-error - plain JS helper, shared with the .mjs end-to-end scripts.
+import { requireLocalDatabase } from "./lib/local-db.mjs";
 import { generateCards, type LexemeForCards } from "../lib/srs/cards";
 import { emptyScheduling, grade } from "../lib/srs/scheduler";
 import { LOCAL_USER_ID, supabaseConfigured } from "../lib/auth/mode";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: requireLocalDatabase("replace this learner's cards, tasks and review history with invented data"),
+});
 
 /** A spread of plausible review histories — some clean, some with a lapse. */
 /**

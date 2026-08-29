@@ -67,7 +67,22 @@ check("a case in the dictionary links to its explanation",
 
 await page.goto(`${B}/review/dictation`, { waitUntil: "networkidle" });
 const hasRound = (await page.getByLabel("What you heard").count()) > 0;
-check("a dictation round is built from the deck's own sentences", hasRound);
+
+// Dictation is built from Ekilex usages, which the seeded dictionary does not
+// carry until words have been looked up (13-mvp-status.md §7). A database
+// without them is a documented state, not a failure, so the check is on the
+// app doing the right thing either way: a round when there are sentences, and
+// an empty state that explains itself when there are none. Asserting the round
+// unconditionally just fails on a fresh clone and teaches people to ignore it.
+if (hasRound) {
+  check("a dictation round is built from the deck's own sentences", true);
+} else {
+  const empty = await page.locator("main").innerText();
+  check("with no sentences yet, dictation says so instead of showing an empty round",
+    /No sentences/i.test(empty) && /Ekilex/i.test(empty));
+  check("and points somewhere that would fill them in",
+    (await page.locator('main a[href*="/dictionary"], main a[href*="/learn"]').count()) > 0);
+}
 
 if (hasRound) {
   // Deliberately wrong, and wrong in a specific way: the marking has to show

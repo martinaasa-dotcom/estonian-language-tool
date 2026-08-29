@@ -1,7 +1,8 @@
 import { chromium } from "playwright";
-import { PrismaClient } from "@prisma/client";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { PrismaClient } from "@prisma/client";
+import { requireLocalDatabase } from "./lib/local-db.mjs";
 
 /**
  * The backup-and-restore round trip, tested against the real database.
@@ -17,7 +18,9 @@ import { resolve } from "node:path";
  *    data is still on disk and `Settings → Restore` puts it back.
  */
 const B = "http://localhost:3000";
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: requireLocalDatabase("delete every word, card, task and review row"),
+});
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
 
@@ -73,8 +76,19 @@ await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
 await page.getByLabel("Choose a backup file").setInputFiles({
   name: "backup.json", mimeType: "application/json", buffer: Buffer.from(backup),
 });
-await page.waitForTimeout(1200);
-check("the file is recognised and summarised", (await page.getByText(/holds/).count()) > 0);
+// Wait for the summary instead of guessing at a duration. The backup grows with
+// the deck, and a fixed delay that is generous today fails on a bigger database
+// — which, here, fails *after* the delete and so loses the data it was checking.
+const summary = page.getByText(/holds/).first();
+const summarised = await summary.waitFor({ timeout: 30000 }).then(() => true, () => false);
+check("the file is recognised and summarised", summarised);
+if (!summarised) {
+  console.error(`\nThe page never accepted the backup, so the database is still empty.` +
+    `\nRestore it yourself from ${safety} via Settings -> Restore.\n`);
+  await browser.close();
+  await prisma.$disconnect();
+  process.exit(1);
+}
 await page.getByRole("button", { name: /Merge this backup in/ }).click();
 await page.waitForTimeout(6000);
 
@@ -101,14 +115,16 @@ await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
 await page.getByLabel("Choose a backup file").setInputFiles({
   name: "backup.json", mimeType: "application/json", buffer: Buffer.from(backup),
 });
-await page.waitForTimeout(1200);
+await page.getByText(/holds/).first().waitFor({ timeout: 30000 });
 await page.getByRole("button", { name: /Merge this backup in/ }).click();
 await page.waitForTimeout(6000);
 check("restoring twice does not duplicate anything",
   (await prisma.review.count()) === before.reviews && (await prisma.card.count()) === before.cards,
   `${await prisma.card.count()} cards, ${await prisma.review.count()} reviews`);
 
-console.log(failures === 0 ? "\nRestore verified end to end." : `\n${failures} failed.`);
+console.log(failures === 0
+  ? "\nRestore verified end to end."
+  : `\n${failures} failed. If the database is short of data, restore ${safety} via Settings.`);
 await browser.close();
 await prisma.$disconnect();
 process.exit(failures ? 1 : 0);

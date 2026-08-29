@@ -1,8 +1,11 @@
 import { chromium } from "playwright";
 import { PrismaClient } from "@prisma/client";
+import { requireLocalDatabase } from "./lib/local-db.mjs";
 
 const B = "http://localhost:3000";
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasourceUrl: requireLocalDatabase("delete a dictionary entry and re-fetch it"),
+});
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });

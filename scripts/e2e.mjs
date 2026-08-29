@@ -41,23 +41,38 @@ await page.waitForTimeout(300);
 check("diacritic bar inserts õ", (await page.getByLabel("Search the dictionary").inputValue()) === "sõ");
 
 // 3 — Keyboard-only review.
-// Review asks in three shapes now — type it, pick it, flip it (see
-// app/review/ReviewSession.tsx) — so this reaches the rating buttons the way
-// the shape in front of it allows, then grades with a number key.
+// Review asks in several shapes — type it, pick it, flip it, or lead with the
+// answer on a card you have never seen (app/(app)/review/ReviewSession.tsx) —
+// and which keys carry you through depends on the one in front of you. One
+// path deliberately skips the rating buttons: a *correct* multiple-choice pick
+// auto-advances after 420ms, because a confirmation keystroke on every right
+// answer halves the throughput of the fast mode.
+//
+// So the claim under test is "the keyboard alone gets from a question to a
+// graded card", not "the Good button appears". Asserting the button made this
+// fail about one run in four, on nothing worse than guessing the right option.
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });
 const before = await page.getByText(/\d+ left/).textContent();
+const graded = async () => Number(/(\d+) graded/.exec(await page.locator("main").innerText())?.[1] ?? 0);
+const gradedBefore = await graded();
+
 const answerBox = page.getByLabel("Type your answer");
 if (await answerBox.count()) {
   await answerBox.fill("ükskõik");
   await page.keyboard.press("Enter");
 } else if (await page.getByText(/Pick the meaning/).count()) {
   await page.keyboard.press("1");
-} else {
+} else if (await page.getByRole("button", { name: /Show answer/ }).count()) {
   await page.keyboard.press("Space");
 }
-await page.waitForTimeout(700);
-check("the answer is reachable from the keyboard", (await page.getByRole("button", { name: /^Good/ }).count()) > 0);
-await page.keyboard.press("3");
+await page.waitForTimeout(900);
+
+const rateable = (await page.getByRole("button", { name: /^Good/ }).count()) > 0;
+const alreadyGraded = (await graded()) > gradedBefore;
+check("the answer is reachable from the keyboard", rateable || alreadyGraded,
+  rateable ? "rating offered" : alreadyGraded ? "auto-advanced on a correct pick" : "neither");
+
+if (rateable) await page.keyboard.press("3");
 await page.waitForTimeout(2000);
 const after = await page.getByText(/\d+ left/).textContent();
 check("number key grades and advances", before !== after, `${before} -> ${after}`);
