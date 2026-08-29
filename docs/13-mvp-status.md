@@ -357,7 +357,67 @@ the rest and says how many.
 3. **Anu is handed the question, not the card.** She gets a sentence naming the case and the word;
    she does not see the learner's answer, their history, or the rest of the deck.
 
-## 8. The fourth pass: the paper people are actually learning for
+## 11. The sixth pass: where you are, where you want to be, and what that costs
+
+The app could tell a learner everything about their deck and nothing about their Estonian. Setup
+asked them to place themselves on a CEFR ladder before they had met the app, took the answer as
+fact, and then never mentioned levels again. Nothing anywhere said how long any of this takes, and
+nothing said what the app cannot do.
+
+| Area | What it is |
+|---|---|
+| **Level check** (`/assess`) | Four skills, ten minutes, assembled out of the dictionary. Reading as meanings, case forms, case identification, verb government and recorded sentences; listening as the same with nothing written down, plus dictation; writing as a sentence that must contain a named case; speaking as shadowing. Take it whenever, as often as sensible |
+| **A ladder that stops** | Questions climb the bands and a skill is abandoned as soon as a whole band comes in under half. `lib/assessment/session.ts`, pure, so a test walks a whole sitting without a browser |
+| **A profile, not a number** | Per skill levels with the band breakdown, an overall that follows the weakest measured skill, and a stated confidence that names how few questions it came from |
+| **Goals** | Why you are here, the level you want, the date you want it by, and how many days a week you will really practise. Asked at first run, editable in Settings for ever |
+| **A timeline with sources** (`lib/assessment/plan.ts`) | Hours between two levels, how many of them the stated daily goal covers, and how many are left to find elsewhere. Ranges, with the published estimates they came from named |
+| **What this app is** (`/guide`) | Every screen and when to open it, what the app does, and at the same length what it does not. Shown in first run and kept at a URL |
+| **First run, rewritten** | Eight steps: name, why, how far and by when, measure or estimate, pace, the plan, the walkthrough, the deck |
+
+### Why the speaking section exists at all if it cannot be scored
+
+Because leaving it out would be a different lie. A learner asking "what is my Estonian like" is
+asking about all four skills, and an app that silently measures three and reports a level has
+answered a narrower question than the one asked. So speaking is asked, recorded, compared with a
+native rendering and rated by the only party qualified to rate it here, and that rating is reported
+as theirs and kept out of the level (ADR-018). `scripts/test-invariants.ts` fails if it ever counts.
+
+### Why the overall level is the floor rather than the average
+
+A CEFR level is a claim about what a person can do, not a score to average. A learner who reads at
+B1 and writes at A2 who is told "B1" will sit an exam they fail, and the app that told them will
+have been the reason. The strongest measured skill is reported next to the weakest, because that
+half is true as well and it is the half that says what to work on.
+
+### Why the plan is allowed to be discouraging
+
+Estonian is roughly 1 100 classroom hours for an English speaker by the Foreign Service Institute's
+own budgeting. Fifteen minutes a day in this app is about 90 hours a year. Those two numbers put
+together are the single most useful thing the app can say to somebody on their first evening, and
+saying it costs a few sign-ups and saves the ones who stay from finding out in March. The plan
+screen therefore reports what the app's own pace covers, what is left over, and what a moved
+deadline would look like, rather than a streak.
+
+### Known limitations, still
+
+1. **The paper is marked in the browser.** It has to be: the answers are in it, feedback is
+   immediate, and a round trip per question would be unusable on a train. Nothing is at stake in a
+   forged result, it reaches no roster and no leaderboard, and the server still recomputes the level
+   from the credits with `placement()` so a stale client cannot invent its own scale.
+2. **The hours table is not measured on this app's learners.** It combines published CEFR guided
+   hours with the FSI difficulty scale, both of which are about other people on other courses. It is
+   shown as a range with its sources named, and the copy says the app will use the learner's own
+   pace once there is a log worth reading.
+3. **No sentences without an Ekilex key.** The built-in dictionary carries principal parts and no
+   `usages`, so on a seeded-only deployment there is no dictation and no sentence comprehension. The
+   sections that survive say they are short rather than pretending to be full.
+4. **Listening needs the speech service.** Where it will not answer, the section abandons itself and
+   is reported as not measured rather than as a failure, because a silent speaker is a fact about
+   the deployment.
+5. **A level check every fortnight measures the questions.** The history screen says so; nothing
+   stops anybody doing it anyway.
+
+## 12. The seventh pass: the paper people are actually learning for
 
 Most people learning Estonian are learning for a specific paper. The state examines at **A2, B1, B2
 and C1**, sixty percent to pass, and a zero in any one of the four parts fails the whole thing
@@ -425,11 +485,13 @@ the part costing you the most marks". They are ranked now and only the worst one
    is word level. The briefing says which.
 2. **The spoken part is marked by the learner** (ADR-018), and a paper is a quarter self-marked
    because of it. The result says so rather than folding it in silently.
-3. **Listening and speaking have no evidence before the first sitting.** A `Review` row carries no
+3. **Listening and speaking rest on the placement check or on nothing.** A `Review` row carries no
    note of which mode wrote it, so a dictation and a flip of the same card are indistinguishable in
-   the log. Adding a mode column to the one append-only table for a reporting convenience is a bad
-   trade, so the advice says the app has nothing on those parts rather than claiming they have never
-   been practised.
+   the log, and adding a mode column to the one append-only table for a reporting convenience is a
+   bad trade. The level check of section 11 is the way out: it measures all four skills directly, so
+   where one has been sat its listening and reading levels are folded in at two thirds. Where none
+   has, the advice says the app has nothing on those parts rather than claiming they have never been
+   practised. Its speaking number is the learner's own rating and is never read as a level.
 4. **Vocabulary coverage is measured against this dictionary, not against the syllabus.** The real
    B1 vocabulary is several thousand words and the built-in set is 360, so "88 of 100 A2 words have
    stuck" is a proxy. The gap states the fraction it is working from rather than hiding it behind a

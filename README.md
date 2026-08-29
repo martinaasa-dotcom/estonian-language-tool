@@ -71,6 +71,24 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **Speaking that does not lie to you.** Say the word, then hear a native voice and your own
   recording back to back. It is not scored: there is no verified Estonian speech recogniser this app
   can use, and an invented confidence number would be believed.
+- **A level check that measures rather than asks.** Reading, listening, writing and speaking, about
+  ten minutes, assembled entirely out of the dictionary: meanings, case forms, case identification,
+  verb government, recorded sentences, dictation, and a sentence you write that has to contain a
+  named case. Questions climb the levels and a skill stops as soon as a band is clearly past you.
+  Nothing is marked by an AI. Speaking is not scored, because nothing here honestly can, so it is
+  yours to rate and it is kept out of the level. The result is a profile per skill, not a badge, and
+  the overall figure follows your weakest measured skill because that is what a CEFR level claims.
+  Take it whenever you like, and every sitting is kept.
+- **A plan in hours, and it is not flattering.** Say why you are learning, how far you want to get
+  and by when, and the app does the arithmetic: how many study hours that level usually takes, how
+  many of them your daily goal actually covers, and how many are left to find in a class or a
+  conversation. Estonian is around 1 100 classroom hours for an English speaker by the Foreign
+  Service Institute's own budgeting; fifteen minutes a day here is about 90 hours a year. Both
+  numbers are on the same screen, with their sources named.
+- **Setup that teaches the app.** First run asks what you are here for before it asks which level,
+  offers to measure you rather than making you guess, shows the timeline before you have picked a
+  single word, and walks through every screen along with an equally long list of what this app
+  cannot do. That list is kept at `/guide`.
 - **Classes.** A six-character join code, a roster showing who is keeping up, the cases the group
   keeps missing, and a unit set as homework into each student's own task list. A class is a view
   over what learners already own, joining shares progress, never your deck, and leaving stops it.
@@ -261,7 +279,7 @@ npm run test:db          # integration tests, needs a Postgres in DATABASE_URL
 npm run test:invariants  # the rules in CLAUDE.md, asserted
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run test:e2e         # the browser suites, needs the server running
-npm run test:browser     # routes, modes, offline and accessibility
+npm run test:browser     # routes, modes, offline, the level check and accessibility
 npm run test:mobile      # the phone, measured; needs the server running
 npm run demo             # two months of sample history, to look around
 npm run db:seed          # reload the built-in dictionary (always)

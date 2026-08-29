@@ -34,6 +34,8 @@ const COMMANDS: Command[] = [
   { id: "tutor", label: "Ask Anu", hint: "Grammar questions, explained", href: "/tutor", keywords: "ai chat grammar help" },
   { id: "words", label: "My words", hint: "Your deck, card by card", href: "/words", keywords: "deck cards suspend delete" },
   { id: "progress", label: "Progress", hint: "Heatmap, forecast, weak cases", href: "/progress", keywords: "stats charts history leaderboard" },
+  { id: "assess", label: "Level check", hint: "Measure reading, listening, writing and speaking", href: "/assess", keywords: "assessment placement cefr test level exam a1 a2 b1 b2 c1 goal plan timeline" },
+  { id: "guide", label: "What this app is", hint: "Every screen, and what this app cannot do", href: "/guide", keywords: "tour help onboarding walkthrough limits honest" },
   { id: "tasks", label: "Tasks", hint: "Homework and class work", href: "/tasks", keywords: "homework todo class" },
   { id: "class", label: "Classes", hint: "Teach or join a class", href: "/class", keywords: "classroom teacher students join code school homework" },
   { id: "settings", label: "Settings", hint: "Goal, review mode, backup", href: "/settings", keywords: "backup export import goal preferences" },

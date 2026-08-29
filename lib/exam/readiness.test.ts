@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  CEILING, EVIDENCE_FAIR, assessReadiness, evidenceFrom, passChance, readinessFor,
-  type ReadinessSignals,
+  CEILING, EVIDENCE_FAIR, assessReadiness, evidenceFrom, expectationFromPlacement, passChance,
+  readinessFor, type ReadinessSignals,
 } from "./readiness";
 import { PASS_PCT } from "./spec";
 import { SKILLS } from "./types";
@@ -25,6 +25,7 @@ function signals(over: Partial<ReadinessSignals> = {}): ReadinessSignals {
       speaking: { attempts: 0, pct: 0 },
     },
     attempts: [],
+    placement: null,
     totalReviews: 0,
     ...over,
   };
@@ -258,5 +259,78 @@ describe("naming the worst part", () => {
     const gap = blind.gaps.find((g) => g.id === "unpractised-speaking");
     expect(gap?.title).toMatch(/tells us about/i);
     expect(gap?.title).not.toMatch(/never practised/i);
+  });
+});
+
+
+describe("a placement check, which is the only thing that reaches listening and speaking", () => {
+  /*
+    ADR-020's check measures four skills directly. A `Review` row carries no note
+    of which mode wrote it, so before it existed this module had nothing at all
+    to say about two of the four parts.
+  */
+  const placedAtB1 = signals({
+    ...established(),
+    skills: {
+      writing: { attempts: 300, pct: 84 },
+      listening: { attempts: 0, pct: 0 },
+      reading: { attempts: 900, pct: 90 },
+      speaking: { attempts: 0, pct: 0 },
+    },
+    placement: {
+      at: "2026-08-29",
+      skills: { reading: "B1", listening: "B1", writing: "B1", speaking: null },
+      answered: 24,
+    },
+  });
+
+  it("counts towards the evidence tier, because it measured the skill", () => {
+    const without = { ...placedAtB1, placement: null };
+    expect(evidenceFrom(without)).not.toEqual("good");
+    expect(evidenceFrom(placedAtB1)).toBe("good");
+  });
+
+  it("raises a listening prediction the log could say nothing about", () => {
+    const without = readinessFor({ ...placedAtB1, placement: null }, "A2");
+    const withCheck = readinessFor(placedAtB1, "A2");
+    expect(withCheck.expected.listening).toBeGreaterThan(without.expected.listening);
+  });
+
+  it("expects a pass at the level it placed somebody, and a fail two above", () => {
+    expect(expectationFromPlacement("B1", "B1")).toBe(PASS_PCT);
+    expect(expectationFromPlacement("B1", "A2")).toBeGreaterThan(PASS_PCT);
+    expect(expectationFromPlacement("B1", "C1")).toBeLessThan(PASS_PCT);
+  });
+
+  it("never returns a certainty from a ten minute check", () => {
+    for (const paper of ["A1", "A2", "B1", "B2", "C1", "C2"] as const) {
+      const value = expectationFromPlacement("pre-A1", paper)!;
+      expect(value).toBeGreaterThan(0);
+      expect(value).toBeLessThan(100);
+    }
+  });
+
+  it("says a low placement out loud rather than claiming it knows nothing", () => {
+    const low = assessReadiness(signals({
+      ...placedAtB1,
+      placement: {
+        at: "2026-08-29",
+        skills: { reading: "A1", listening: "A1", writing: "A1", speaking: null },
+        answered: 12,
+      },
+    }));
+    expect(low.gaps.some((g) => g.id === "placed-listening")).toBe(true);
+    expect(low.gaps.some((g) => g.id === "unpractised-listening")).toBe(false);
+  });
+
+  it("still says it has nothing when no check has been sat", () => {
+    const blind = assessReadiness({ ...placedAtB1, placement: null });
+    expect(blind.gaps.some((g) => g.id === "unpractised-listening")).toBe(true);
+  });
+
+  it("never reads the speaking rating as a level, because it is the learner's own", () => {
+    const withSpeaking = readinessFor(placedAtB1, "B1");
+    const withoutAny = readinessFor({ ...placedAtB1, placement: null }, "B1");
+    expect(withSpeaking.expected.speaking).toBe(withoutAny.expected.speaking);
   });
 });

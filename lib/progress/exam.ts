@@ -7,6 +7,7 @@ import type { ExamResult } from "@/lib/exam/score";
 import type { ExamLevel } from "@/lib/exam/spec";
 import type { PastAttempt, ReadinessSignals, SkillEvidence } from "@/lib/exam/readiness";
 import { SKILLS, type SkillKey } from "@/lib/exam/types";
+import { latestFor } from "./assessment";
 import { deckSnapshot } from "./summary";
 
 /**
@@ -96,7 +97,7 @@ const MATURE_STATE = 2;
  * percentage can drift away from the reviews that justify it.
  */
 export async function readinessSignals(ownerId: string): Promise<ReadinessSignals> {
-  const [snapshot, byLevel, knownRows, matureReviews, caseReviews, cardTypeRows, attempts] =
+  const [snapshot, byLevel, knownRows, matureReviews, caseReviews, cardTypeRows, attempts, placed] =
     await Promise.all([
       deckSnapshot(ownerId),
       prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
@@ -116,6 +117,7 @@ export async function readinessSignals(ownerId: string): Promise<ReadinessSignal
         select: { id: true, cardType: true },
       }),
       recentAttempts(ownerId),
+      latestFor(ownerId),
     ]);
 
   const vocabulary = emptyVocabulary();
@@ -147,6 +149,27 @@ export async function readinessSignals(ownerId: string): Promise<ReadinessSignal
     cases,
     skills: await skillEvidence(ownerId, cardTypeRows, attempts),
     attempts,
+    /*
+      The placement check (ADR-020), which is the only thing in this app that
+      measures listening and speaking apart from everything else: a `Review` row
+      carries no note of which mode wrote it, so a dictation and a flip of the
+      same card are indistinguishable in the log. Before it existed the exam hub
+      could only say it had nothing on two of the four parts.
+    */
+    placement: placed
+      ? {
+          at: placed.takenAt.toISOString(),
+          skills: {
+            reading: placed.reading,
+            listening: placed.listening,
+            writing: placed.writing,
+            // The speaking figure the check stores is the learner's own rating,
+            // never a level of ours (ADR-018), so it is not read as one here.
+            speaking: null,
+          },
+          answered: placed.answered,
+        }
+      : null,
     totalReviews: await prisma.review.count({ where: { ownerId } }),
   };
 }

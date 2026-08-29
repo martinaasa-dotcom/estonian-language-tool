@@ -317,7 +317,37 @@ the app changes. *Rejected:* a teacher-owned deck pushed to students (it makes t
 of everyone's scheduling, which is exactly what FSRS must not have) and per-student answer logs (a
 study tool that becomes surveillance stops being used honestly).
 
-**ADR-020 — The mock examination is assembled from the dictionary, marked mechanically, and says
+**ADR-020 — The placement check is assembled from the dictionary, marked without a model, and
+reports a level it refuses to certify.**
+*Context:* onboarding asked a stranger to self-rate as A1 to B2 and used the answer to pick their
+first units. That is the one question a beginner is least able to answer, and every downstream
+number, including the timeline this pass added, inherits the guess. *Decision:* a check that
+measures four skills, at `/assess` and inside first run, built out of `Lexeme`, `Form` and the
+recorded `usages` the dictionary already holds. Reading is asked as meanings, case forms, case
+identification, verb government and, where a translated sentence exists, comprehension; listening
+is the same material with nothing written down, plus dictation; writing is a sentence that has to
+contain a named case of a named word; speaking is shadowing. Questions climb the bands in order and
+a skill stops as soon as a whole band comes in under half, so the paper is about ten minutes rather
+than forty. *Three rules make the result trustworthy.* **No Estonian is written for it** — every
+form is retrieved, stored or derived from the genitive stem by the app's own derivation, and every
+question says which (ADR-005, ADR-017). **No model marks anything** — a choice against a stored
+index, a dictation against the recorded sentence, a written sentence against a form the dictionary
+vouches for, which is the same ordering `/review/write` already uses. **Speaking is never scored**
+(ADR-018): it collects the learner's own rating, reports it as theirs, and is excluded from the
+level entirely, which `scripts/test-invariants.ts` asserts. *The level itself follows the weakest
+measured skill*, because a CEFR level is a claim about everything a person can do at it; the
+strongest is reported beside it so the flattering half is not lost. *Consequences:* the result is
+`Assessment`, the second table after `Review` that is written once and never edited, and the third
+exception to "progress is derived" (ADR-014) after a personal best and a shield date — a
+measurement of answers that were never cards cannot be recomputed from the review log. The questions
+are drawn from words the learner does **not** have in their deck wherever there are enough of them,
+so the check measures their Estonian rather than their revision. *Rejected:* marking with a model
+(a hallucination that marks a right answer wrong on somebody's first day destroys the only trust
+this app has), a single number rather than a profile (it hides which skill is behind, which is the
+one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest
+recogniser did not change because a test wanted one).
+
+**ADR-021 — The mock examination is assembled from the dictionary, marked mechanically, and says
 where it stops imitating.**
 *Context:* the reason most people learn Estonian in the first place is a paper: A2, B1, B2 or C1,
 sat at the Education and Youth Board, sixty percent to pass, and a zero in any one of the four parts

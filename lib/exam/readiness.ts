@@ -63,6 +63,25 @@ export interface CaseSignal {
   reviews: number;
 }
 
+/**
+ * A level the placement check measured, per skill.
+ *
+ * The one source that separates listening and speaking from everything else. A
+ * `Review` row carries no note of which mode wrote it, so a dictation and a
+ * flip of the same card are the same row in the log, and before this existed
+ * the advice here could only say the app had nothing on those two parts. The
+ * placement check asks them directly (ADR-020), so when one has been sat its
+ * per-skill levels are evidence, and better evidence than any card-type proxy.
+ */
+export interface PlacementSignal {
+  /** ISO date it was sat. */
+  at: string;
+  /** Per skill, "A1" to "C1", or "pre-A1" below the first band. Null if unmeasured. */
+  skills: Partial<Record<SkillKey, string | null>>;
+  /** Scored questions behind it. Speaking is deliberately not among them. */
+  answered: number;
+}
+
 export interface ReadinessSignals {
   /** Dictionary words at each level, and how many have stuck. */
   vocabulary: Record<ExamLevel, { known: number; available: number }>;
@@ -73,7 +92,30 @@ export interface ReadinessSignals {
   skills: Record<SkillKey, SkillEvidence>;
   /** Sittings of this app's mock papers, most recent first. */
   attempts: PastAttempt[];
+  /** The most recent placement check, when one has been sat. */
+  placement?: PlacementSignal | null;
   totalReviews: number;
+}
+
+/** "pre-A1" and an unmeasured skill both sit below A1. */
+const PLACEMENT_RANK: Record<string, number> = {
+  "pre-A1": -1, A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5,
+};
+
+/**
+ * What a placement level says about a paper at a given level, as a percentage.
+ *
+ * Not a score, an expectation. Somebody the check placed at B1 should be around
+ * the pass mark on the B1 paper, comfortable on A2, and well short at C1. So the
+ * distance between the two levels is what matters, centred on the pass mark and
+ * moving about twenty points a band: at the level, 60; one band above, 40; one
+ * below, 80. Clamped, because two bands either way is already "no" or "yes".
+ */
+export function expectationFromPlacement(placed: string, paper: ExamLevel): number | null {
+  const from = PLACEMENT_RANK[placed];
+  const to = PLACEMENT_RANK[paper];
+  if (from === undefined || to === undefined) return null;
+  return Math.max(2, Math.min(98, PASS_PCT - (to - from) * 20));
 }
 
 export type Evidence = "thin" | "fair" | "good";
@@ -157,9 +199,16 @@ export const EVIDENCE_GOOD = 800;
 export const CEILING: Record<Evidence, number> = { thin: 60, fair: 85, good: 97 };
 
 export function evidenceFrom(signals: ReadinessSignals): Evidence {
-  const practised = SKILLS.filter((s) => signals.skills[s].attempts > 0).length;
-  if (signals.totalReviews < EVIDENCE_FAIR || practised < 2) return "thin";
-  if (signals.totalReviews < EVIDENCE_GOOD || practised < 3) return "fair";
+  // A placement check measures a skill directly, so it counts as having reached
+  // it. It is the only thing that reaches listening and speaking at all before
+  // a paper has been sat.
+  const measured = new Set<SkillKey>();
+  for (const skill of SKILLS) {
+    if (signals.skills[skill].attempts > 0) measured.add(skill);
+    if (signals.placement?.skills?.[skill]) measured.add(skill);
+  }
+  if (signals.totalReviews < EVIDENCE_FAIR || measured.size < 2) return "thin";
+  if (signals.totalReviews < EVIDENCE_GOOD || measured.size < 3) return "fair";
   return "good";
 }
 
@@ -187,6 +236,7 @@ function expectedPart(
   signals: ReadinessSignals,
   skill: SkillKey,
   coverage: number,
+  level: ExamLevel,
 ): number {
   const evidence = signals.skills[skill];
   const fallback = signals.accuracy.reviews > 0 ? signals.accuracy.pct : 50;
@@ -195,13 +245,30 @@ function expectedPart(
     ? (evidence.pct * Math.min(1, evidence.attempts / 20)) +
       (fallback * (1 - Math.min(1, evidence.attempts / 20)))
     : fallback;
-  return Math.round(Math.max(0, Math.min(100, coverage * quality)));
+  const modelled = Math.round(Math.max(0, Math.min(100, coverage * quality)));
+
+  /*
+    A placement check measured this very skill, against this very set of bands.
+    That outranks a coverage figure multiplied by an accuracy figure, and for
+    listening and speaking it is usually the only thing the app has: a review row
+    carries no note of which mode wrote it, so nothing else in the log tells them
+    apart.
+
+    Blended rather than substituted, two thirds to the measurement. The check is
+    ten minutes long and says so, and its own confidence field exists because it
+    knows it is short; letting it overwrite months of review history would be
+    taking the smaller sample on its own account.
+  */
+  const placed = signals.placement?.skills?.[skill];
+  if (!placed) return modelled;
+  const fromCheck = expectationFromPlacement(placed, level);
+  return fromCheck === null ? modelled : Math.round(0.65 * fromCheck + 0.35 * modelled);
 }
 
 export function readinessFor(signals: ReadinessSignals, level: ExamLevel): LevelReadiness {
   const coverage = coverageAt(signals, level);
   const expected = Object.fromEntries(
-    SKILLS.map((skill) => [skill, expectedPart(signals, skill, coverage)]),
+    SKILLS.map((skill) => [skill, expectedPart(signals, skill, coverage, level)]),
   ) as Record<SkillKey, number>;
 
   const modelled = Math.round(SKILLS.reduce((sum, s) => sum + expected[s], 0) / SKILLS.length);
@@ -385,7 +452,21 @@ function gapsFrom(signals: ReadinessSignals, target: ExamLevel): Feedback[] {
   for (const skill of SKILLS) {
     const evidence = signals.skills[skill];
     const where = PRACTICE[skill];
-    if (evidence.attempts === 0) {
+    const placed = signals.placement?.skills?.[skill];
+    if (evidence.attempts === 0 && placed) {
+      // Measured, just not by anything that leaves a review row.
+      if (PLACEMENT_RANK[placed] !== undefined && PLACEMENT_RANK[placed]! < 2) {
+        out.push({
+          id: `placed-${skill}`,
+          title: `The level check put your ${SKILL_LABEL[skill].toLowerCase()} at ${placed}`,
+          detail:
+            "It is the weakest kind of evidence a paper can rest on and the only kind this part " +
+            "has, because nothing else in your history tells listening and speaking apart.",
+          href: where.href,
+          cta: where.cta,
+        });
+      }
+    } else if (evidence.attempts === 0) {
       out.push({
         id: `unpractised-${skill}`,
         // Not "you have never practised it": a review row carries no note of

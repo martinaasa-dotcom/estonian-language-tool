@@ -129,9 +129,17 @@ make. Under 150 reviews, or with fewer than two skills practised, confidence is 
 800 reviews it is capped at 85. Above that, at 97. The tier is printed beside the number.
 
 **A paper actually sat outranks all of it** for that level: the most recent sitting carries 65
-percent of the weight, and its four part percentages become the only per-skill evidence the app has
-for listening and speaking, which a review row cannot distinguish because it carries no note of which
-mode wrote it.
+percent of the weight, and its four part percentages are folded into the per-skill evidence.
+
+**The placement check reaches the two parts nothing else does.** A review row carries no note of
+which mode wrote it, so a dictation and a flip of the same card are one row: nothing in the log
+separates listening and speaking from anything else. The level check at `/assess` (ADR-020) asks
+them directly, so where one has been sat its per-skill levels are read as an expectation for each
+paper, centred on the pass mark and moving about twenty points a band, and blended in at two thirds.
+Never substituted: the check is ten minutes long and carries its own confidence field for that
+reason, and letting it overwrite months of review history would be taking the smaller sample on its
+own account. Its speaking figure is the learner's own rating rather than a measurement of ours, so
+it is never read as a level (ADR-018).
 
 The level the app "would bet on" is the highest one it puts at or above sixty percent confidence,
 which is deliberately the same threshold as a pass: anything lower and it would be recommending a
