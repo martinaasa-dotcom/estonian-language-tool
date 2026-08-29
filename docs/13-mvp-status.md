@@ -706,11 +706,28 @@ paper-to-deck path and it may not be best-effort. Falsified both ways, on one
 build each: `router.push` fails 3 in 12 with everything else in place, the
 document load passes 18 in 18 and then 15 in 15.
 
-The second fault was in the harness and is fixed there, with the reason in the
-file. A document load commits the address *before* the body arrives, where a
-router push swaps the address only once the tree is applied, so two lines that
-counted chips immediately after the URL changed had been reading a page that
-had not rendered. The assertion is unchanged; only the moment it is taken.
+Two more faults in the same suite were in the harness and are fixed there, with
+the reasons in the file. A document load commits the address *before* the body
+arrives, where a router push swaps it only once the tree is applied, so two
+lines that counted chips immediately after the URL changed had been reading a
+page that had not rendered.
+
+The third only ever failed in CI, and what it was really about is worth the
+paragraph. Drilling a scanned page draws in the learner's existing cards for
+those words, deliberately, because a page is references rather than copies. So
+the first card can be new, or flip, or multiple choice, or typed, and the
+driver waited for the ratings as though it were always the first. Which one you
+get depends on which seeded word the suite picks; it picks the alphabetically
+first, which is a question about the database's collation rather than about the
+app, and the two collations disagree. `smoke-offline.mjs` learned exactly this
+and says so in its own comment, down to the cause: a shape that had never come
+up first started coming up first because the dictionary grew. Nothing had
+carried that across either. Reproduced by giving the local word a reviewed
+card, at which point it failed here every time as well, which is the only way
+a CI-only failure stops being a guess.
+
+None of the three weakens anything. Every assertion is unchanged; only the
+moment each is taken, and the state each can be taken in.
 
 Also here, and found by main's own phone check rather than by anything of ours:
 the exam's composition task puts a full dictionary gloss inside a `Chip`, and a
