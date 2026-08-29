@@ -20,6 +20,7 @@
  * the head of the chain, because a screen naming the wrong model is worse
  * than one naming none.
  */
+import { reportError } from "@/lib/observability/report";
 import { estimateTokens } from "@/lib/usage/pricing";
 
 export type ProviderName = "openrouter" | "openai" | "anthropic";
@@ -119,12 +120,20 @@ export function resolveProvider(): ProviderConfig | null {
 function worthFallingBackFrom(error: unknown, sameProviderNext = false): boolean {
   if (!(error instanceof TutorError)) return true;
   // A model that does not exist is fatal across providers, for the reason
-  // above, and is exactly what to walk past within one: these defaults are
+  // above, and is exactly what to walk past within one: the defaults here are
   // free models, and a free model is retired the moment it stops being worth
   // somebody's money. Reaching the next one costs a request; refusing costs
   // the learner their answer over a slug that went stale in a constant.
   if (error.status === 404) return sameProviderNext;
-  return error.status === 429 || error.status === 502 || error.status === 503;
+  // 402 belongs here for the same reason as 429: one provider being out of
+  // credit says nothing about the next one's balance, so falling through costs
+  // a request and keeps the tutor answering.
+  return (
+    error.status === 402 ||
+    error.status === 429 ||
+    error.status === 502 ||
+    error.status === 503
+  );
 }
 
 export class TutorError extends Error {
@@ -451,25 +460,36 @@ async function assertOk(res: Response, config: ProviderConfig) {
   if (res.status === 404) {
     throw new TutorError(`${config.label} does not have a model called "${config.model}".`, 404);
   }
-  // Out of credit, which is where a free key ends up rather than an unusual
-  // accident, and it is not the same answer as a rejected key: this account
-  // cannot pay and the next one in the chain may well be able to, so it is
-  // worth walking past. It arrives as JSON, and 180 characters of a provider's
-  // JSON truncated mid-word is not a sentence anybody can act on.
+  /*
+    Out of credit, which is not the same as a rejected key and must not be
+    reported as one. It is worth falling back from, because the next provider
+    in the chain has its own balance, and it is worth saying plainly, because
+    the person who can fix it is whoever runs the deployment rather than the
+    learner reading the message.
+
+    Found on a live deployment: OpenRouter answered 402 and the learner was
+    shown a slice of the raw JSON, "This request requires more credits, or
+    fewer max_tokens. You requested up to 1200 tokens, but can only afford
+    898". Accurate, and addressed to nobody who was there.
+  */
   if (res.status === 402) {
     throw new TutorError(
-      `${config.label} says this key is out of credit. Top it up, switch the model in .env to a ` +
-      `cheaper one, or add another provider's key: Anu asks whichever ones are set, free first.`,
-      502,
+      `${config.label} is out of credit for this key. Add credit, or set another provider key ` +
+      `in .env so the chain has somewhere to fall through to.`,
+      402,
     );
   }
-  // The detail goes to the log rather than to the learner. It is somebody
-  // else's error format, in JSON, cut off wherever 180 characters happened to
-  // land, and the one thing a reader can do with it is not understand it.
-  if (detail) console.error(`[tutor] ${config.label} returned ${res.status}: ${detail.slice(0, 400)}`);
+  /*
+    Everything else. The upstream text goes to the log rather than to the
+    screen: it is provider JSON, it can carry the request back verbatim, and
+    it means nothing to a learner. The status is what the caller needs.
+  */
+  reportError(new Error(`${config.label} returned ${res.status}: ${detail.slice(0, 500)}`), {
+    at: "tutor/provider",
+    extra: { provider: config.label, model: config.model, status: res.status },
+  });
   throw new TutorError(
-    `${config.label} could not answer just now, and said only that it was a ${res.status}. ` +
-    `Try again in a moment.`,
+    `${config.label} could not answer just now (${res.status}).`,
     502,
   );
 }

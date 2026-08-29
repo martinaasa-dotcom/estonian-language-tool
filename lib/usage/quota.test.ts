@@ -21,7 +21,10 @@ describe("checkQuota", () => {
       burstCalls: DEFAULT_LIMITS.burstCalls - 1,
       dailyCalls: DEFAULT_LIMITS.dailyCallsPerUser - 1,
       dailyMicros: DEFAULT_LIMITS.dailyMicrosPerUser - 1,
-      globalMicros: DEFAULT_LIMITS.dailyMicrosGlobal - 1,
+      // Under the reserve threshold, not one micro under the hard cap: past
+      // the threshold a user with nine calls behind them is meant to wait, and
+      // that is the rule the block below covers.
+      globalMicros: reserveFrom() - 1,
     };
     expect(checkQuota(usage, DEFAULT_LIMITS, NOON).allowed).toBe(true);
   });
@@ -138,5 +141,65 @@ describe("pricing", () => {
   it("formats micro-dollars for a human", () => {
     expect(formatMicros(1_234_567)).toBe("$1.23");
     expect(formatMicros(0)).toBe("$0.00");
+  });
+});
+
+/** Where the shared budget starts being held back for people who have had none. */
+const reserveFrom = () =>
+  DEFAULT_LIMITS.dailyMicrosGlobal * (1 - DEFAULT_LIMITS.globalReserveFraction);
+
+/*
+  The reserve exists because a single global cap is first come, first served.
+  Whoever arrives early spends the day's budget and everyone after them finds
+  Anu switched off, newcomers included. The people turned away are the ones who
+  have used it least, which is backwards for an app strangers are still
+  deciding about.
+*/
+describe("the reserve at the end of the shared budget", () => {
+  const deepInReserve = DEFAULT_LIMITS.dailyMicrosGlobal - 1;
+
+  it("still answers somebody who has asked nothing today", () => {
+    const usage = { ...clear, globalMicros: deepInReserve };
+    expect(checkQuota(usage, DEFAULT_LIMITS, NOON).allowed).toBe(true);
+  });
+
+  it("asks a heavy user to wait once the budget is into the reserve", () => {
+    const usage = {
+      ...clear,
+      dailyCalls: DEFAULT_LIMITS.reserveCallsPerUser,
+      globalMicros: deepInReserve,
+    };
+    const decision = checkQuota(usage, DEFAULT_LIMITS, NOON);
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toBe("GLOBAL_BUSY");
+  });
+
+  it("says it is not about this person's account", () => {
+    const usage = {
+      ...clear,
+      dailyCalls: DEFAULT_LIMITS.reserveCallsPerUser,
+      globalMicros: deepInReserve,
+    };
+    // The learner did nothing wrong and can do nothing about it, so the message
+    // says what still works rather than implying they overspent.
+    expect(checkQuota(usage, DEFAULT_LIMITS, NOON).message).toMatch(/review, the dictionary/);
+  });
+
+  it("does not hold anyone back while the budget is still comfortable", () => {
+    const usage = { ...clear, dailyCalls: 9, globalMicros: reserveFrom() - 1 };
+    expect(checkQuota(usage, DEFAULT_LIMITS, NOON).allowed).toBe(true);
+  });
+
+  it("stops everybody once the budget is genuinely gone, reserve or not", () => {
+    const usage = { ...clear, globalMicros: DEFAULT_LIMITS.dailyMicrosGlobal };
+    const decision = checkQuota(usage, DEFAULT_LIMITS, NOON);
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toBe("GLOBAL_SPEND");
+  });
+
+  it("keeps the app free: nothing here charges anyone anything", () => {
+    // The allowance is the whole mechanism. There is no plan, no tier and no
+    // paid escape from any of these limits, by design.
+    expect(Object.keys(DEFAULT_LIMITS)).not.toContain("plan");
   });
 });

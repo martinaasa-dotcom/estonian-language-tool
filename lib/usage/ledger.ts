@@ -18,12 +18,33 @@ export type UsageKind = "TUTOR" | "GRADER" | "TTS";
  */
 
 /**
- * Speech is free and, on a miss, one short upstream request. A listening round
- * legitimately meets a dozen new words in a minute, so holding it to the tutor's
- * burst allowance would break a real session to solve a problem it does not
- * have. The generosity is bounded: only cache misses ever get here.
+ * What each kind of call is allowed, as a multiple of the configured base.
+ *
+ * One number for all three was wrong in both directions at once. The base is
+ * the tutor's allowance, ten conversations a day, and applying it unchanged to
+ * the other two would have made the app worse at the things that cost almost
+ * nothing:
+ *
+ *   TUTOR   the expensive one, and the one worth rationing. A full answer over
+ *           a long conversation, at the base allowance.
+ *   GRADER  a few hundred tokens about one sentence. The verdict a learner
+ *           acts on is decided by string comparison against the dictionary
+ *           before any of this runs, so what is rationed here is only the note
+ *           that comes after it. Thirty of those is a real practice session.
+ *   TTS     free, cached on disk and in Supabase Storage, and joined when two
+ *           requests for the same clip are in flight. Only a miss reaches
+ *           here at all. A listening round legitimately meets a dozen new
+ *           words in a minute, so a tight cap would break a real session to
+ *           solve a problem that does not exist.
+ *
+ * Everything stays free at every one of these numbers. They exist so that one
+ * enthusiastic person cannot spend the day's budget before anyone else arrives.
  */
-const BURST_MULTIPLIER: Record<UsageKind, number> = { TUTOR: 1, GRADER: 1, TTS: 6 };
+const ALLOWANCE: Record<UsageKind, { burst: number; daily: number }> = {
+  TUTOR: { burst: 1, daily: 1 },
+  GRADER: { burst: 1, daily: 3 },
+  TTS: { burst: 6, daily: 30 },
+};
 
 /** What this user and the site as a whole have used, for `checkQuota`. */
 export async function snapshotUsage(
@@ -64,10 +85,15 @@ export async function authoriseCall(
 ): Promise<QuotaDecision> {
   try {
     const limits = readLimits();
+    const allowance = ALLOWANCE[kind];
     const scaled = {
       ...limits,
-      burstCalls: limits.burstCalls * BURST_MULTIPLIER[kind],
-      dailyCallsPerUser: limits.dailyCallsPerUser * BURST_MULTIPLIER[kind],
+      burstCalls: limits.burstCalls * allowance.burst,
+      dailyCallsPerUser: limits.dailyCallsPerUser * allowance.daily,
+      // The reserve is counted in the same currency as the daily allowance, so
+      // it scales with it. Otherwise three TTS misses would look like a heavy
+      // user and mute a listening round on a busy day.
+      reserveCallsPerUser: limits.reserveCallsPerUser * allowance.daily,
     };
     return checkQuota(await snapshotUsage(ownerId, kind, now), scaled, now);
   } catch (error) {
