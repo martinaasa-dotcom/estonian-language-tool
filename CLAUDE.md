@@ -194,6 +194,37 @@ individual's deck, searches or answer history. Do not widen it. (ADR-019.)
 **Never score pronunciation.** There is no verified Estonian speech recogniser available here.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 
+## More than one session works this repository at a time
+
+**Read what landed before you merge, not just the conflict status.** On
+2026-08-29 three sessions were open at once. Two of them fixed the same bug in
+the same two files twenty minutes apart: the demo fixture produced no card with
+enough lapses to flag, so the sticking-points panel was empty and the checks
+behind it never ran. Both fixes were correct. A clean three-way merge is
+exactly what you get when two people build the same thing in different lines,
+and that is the case that hurts, because nothing fails and you end up with two
+of everything.
+
+When somebody else's work overlaps yours, one of them has to go. Keep the one
+that is safer or more precise and **delete the other outright** rather than
+leaving both: their fixture entry reaches four lapses in twelve reviews and
+says in one entry what two of mine said, and their assertion requires the
+sentence to name a count where mine only asked that a word appear somewhere.
+
+**Then audit what taking their side reverted.** Resolving thirty-nine
+conflicts in their favour silently undid four things on this branch, and only
+two announced themselves: the typechecker caught the tutor naming the
+configured provider instead of the one that answered, and lint caught a script
+importing the portable launcher and then calling the sandbox path anyway. The
+other two were silent, because a re-run copy sweep turned an em dash meaning
+"no value" into a bare comma in a paradigm cell, and `readerCopy.test.ts`
+passes on that happily: a comma is not a dash. Grep the markers the branch owns
+after any merge that touched its files. `NO_VALUE`, `formatHour`,
+`DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
+`useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
+`x-model-provider`, `isSameOriginMutation`, `checkRateLimit`. Most of them now
+have an invariant behind them; that list is what to check when adding one.
+
 ## Commands
 
 ```
@@ -207,6 +238,22 @@ npm run test:e2e     # every browser suite, needs the server running
 npm run test:invariants  # the rules in CLAUDE.md, asserted
 npm run test:mobile      # the phone, measured; needs the server running
 ```
+
+**A suite that ran nothing looks exactly like one that passed, so every suite
+counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
+it reached and a `done` that refuses to pass below a declared floor. Two
+faults made that necessary and both are in this repository's history:
+`test-design.mjs` hardcoded a port, so anywhere else it threw on its first
+navigation, before check one, and printed no FAIL line at all; and
+`test-teaching.mjs` gates five checks on the sticking-points panel having
+rows, so when the fixture produced none the gate failed honestly and the five
+behind it were skipped in silence, one reported failure covering six unlooked
+things. The floor is **the count CI reaches**, not the minimum across every
+state a database could be in: a floor low enough never to complain is a floor
+low enough to miss what it was built for, which was measured by deleting a
+block and watching a floor of 30 wave 34 checks through. Against a thin local
+database a suite now says so, which is worth hearing. Raise a floor when you
+add checks; never lower one to make a run pass.
 
 `scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
 1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on

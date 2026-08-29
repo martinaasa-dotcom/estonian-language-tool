@@ -1,7 +1,8 @@
 import { launchChromium } from "./lib/browser.mjs";
-const B = "http://localhost:3000";
-let failures = 0;
-const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
+import { baseUrl, suite } from "./lib/checks.mjs";
+const B = baseUrl();
+// Floor: 9, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Editing", { floor: 9 });
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
 const errors = [];
@@ -69,6 +70,5 @@ await page.waitForTimeout(2000);
 check("the entry can be corrected back again",
   (await page.locator('h2[lang="et"]').innerText().catch(() => "")) === "kohv");
 
-console.log(failures === 0 ? "\nEditing verified." : `\n${failures} failed.`);
 await browser.close();
-process.exit(failures ? 1 : 0);
+done();

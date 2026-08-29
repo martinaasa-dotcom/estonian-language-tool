@@ -1,4 +1,5 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
 /**
  * The teaching layer: the grammar reference, dictation, the printable worksheet,
@@ -11,12 +12,9 @@ import { launchChromium } from "./lib/browser.mjs";
  * Estonian, a dead end with no audio, a worksheet with no answer key, a
  * confident number computed from six reviews.
  */
-const B = process.env.BASE_URL ?? "http://localhost:3000";
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+const B = baseUrl();
+// Floor: 38, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Teaching layer", { floor: 38 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
@@ -230,5 +228,4 @@ console.log("");
 check("no console errors", errors.length === 0, errors.slice(0, 3).join(" | "));
 
 await browser.close();
-console.log(failures === 0 ? "\nTeaching layer verified." : `\n${failures} failed.`);
-process.exit(failures ? 1 : 0);
+done();

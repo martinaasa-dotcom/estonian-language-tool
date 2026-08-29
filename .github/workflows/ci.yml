@@ -162,7 +162,7 @@ jobs:
       - run: npm test
 
   mobile:
-    name: The phone and the design system, measured
+    name: The browser suites
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -210,12 +210,16 @@ jobs:
       # drawn off the top of the screen, a bar over the home indicator, a
       # backdrop filter repainting the bottom of the window on every frame of
       # every scroll, a target smaller than a thumb.
+      # One server and one browser, so each of these costs a command rather
+      # than a job. Every one declares a floor, so a suite that dies early or
+      # quietly stops running a block fails here rather than printing nothing
+      # and being read as a pass. See scripts/lib/checks.mjs.
       - run: node scripts/test-mobile.mjs
-      # The design suite arrived on main while this branch was open and checks
-      # the other half of the same screens: contrast ratios, the type scale and
-      # a real focus ring. Same server, same browser, so it costs one more
-      # command rather than another job.
       - run: node scripts/test-design.mjs
+      - run: node scripts/e2e.mjs
+      - run: node scripts/test-modes.mjs
+      - run: node scripts/test-teaching.mjs
+      - run: node scripts/test-polish.mjs
 
   audit:
     name: Dependency audit

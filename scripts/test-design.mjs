@@ -1,4 +1,5 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
 /**
  * The design system, checked rather than admired.
@@ -11,7 +12,7 @@ import { launchChromium } from "./lib/browser.mjs";
  * Every number here was a real defect at some point — this file is the record
  * of what was fixed, and the thing that stops it coming back.
  */
-const B = process.env.BASE_URL ?? "http://localhost:3000";
+const B = baseUrl();
 const PAGES = ["/", "/practice", "/grammar", "/grammar/partitive", "/progress", "/learn",
   "/learn/kodu", "/dictionary?q=tuba", "/words", "/settings", "/review", "/review/dictation",
   "/tasks", "/class", "/tutor", "/welcome"];
@@ -128,11 +129,8 @@ for (const url of ["/", "/review", "/progress", "/words"]) {
 }
 noFocus = [...new Set(noFocus)];
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+// Floor: 6, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Design system", { floor: 6 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
@@ -158,5 +156,4 @@ check("every tab stop shows its focus ring immediately", noFocus.length === 0,
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();
-console.log(failures === 0 ? "\nDesign system verified." : `\n${failures} failed.`);
-process.exit(failures ? 1 : 0);
+done();

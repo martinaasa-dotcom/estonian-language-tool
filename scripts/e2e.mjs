@@ -1,18 +1,16 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const B = "http://localhost:3000";
+const B = baseUrl();
 const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
 const errors = [];
-let failures = 0;
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+// Floor: 21, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("The core flows", { floor: 21 });
 
 // 1 — Dictionary: search, paradigm, add to deck
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
@@ -154,6 +152,5 @@ check("B1 verb carries its government",
 
 
 console.log(errors.length ? `\nconsole/page errors:\n  ${errors.join("\n  ")}` : "\nno console errors");
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

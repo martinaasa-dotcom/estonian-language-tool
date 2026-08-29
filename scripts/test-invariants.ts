@@ -448,6 +448,69 @@ check("an empty cell goes through NO_VALUE, never a literal", () => {
   assert.deepEqual(offenders, [], "a placeholder is typed in rather than read from NO_VALUE");
 });
 
+// ── The browser suites, and the two ways one can lie ─────────────────────────
+
+check("no browser suite hardcodes one machine's Chromium", () => {
+  /*
+    Every one of these was written inside a sandbox that ships Chromium at a
+    fixed path, so every one of them said `executablePath:
+    "/opt/pw-browsers/chromium"` and every one was correct exactly there.
+    Anywhere else, CI included, Playwright reports a missing executable rather
+    than a wrong assumption, and `npm run test:e2e` was a command one machine
+    could run. `scripts/lib/browser.mjs` keeps that path as a fallback and puts
+    Playwright's own resolution first.
+
+    Asserted because the fix is invisible once it works, and because a new
+    script gets written by copying an old one.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    if (file === "scripts/lib/browser.mjs") continue;
+    assert.equal(
+      /executablePath/.test(read(file)),
+      false,
+      `${file} names a browser path instead of using launchChromium()`,
+    );
+  }
+});
+
+check("every browser suite can be pointed at a different server", () => {
+  /*
+    `test-design.mjs` hardcoded localhost:3000, so it threw on its first
+    navigation anywhere else, before check one, and printed no FAIL line. That
+    is what a pass looks like to anything reading the output.
+  */
+  for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
+    const source = read(file);
+    if (!/newPage|goto\(/.test(source)) continue;
+    assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
+    assert.equal(
+      /"http:\/\/localhost:3000"/.test(source.replace(/baseUrl[\s\S]*?\n/, "")),
+      false,
+      `${file} still carries a hardcoded server`,
+    );
+  }
+});
+
+check("every browser suite says how many checks it reached", () => {
+  /*
+    Counting failures alone cannot tell a suite that passed from one that ran
+    nothing, and cannot show that five checks behind a failed gate were never
+    looked at. Both happened here. The floor is the count CI reaches.
+  */
+  for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
+    const source = read(file);
+    if (!/newPage|goto\(/.test(source)) continue;
+    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
+    assert.ok(floor, `${file} does not declare a check floor`);
+    assert.ok(Number(floor![1]) > 0, `${file} declares a floor of zero, which asserts nothing`);
+    assert.equal(
+      /let failures = 0/.test(source),
+      false,
+      `${file} still counts failures on its own instead of using suite()`,
+    );
+  }
+});
+
 // ── The phone, and the faults that were measured on it ───────────────────────
 
 check("the root declares no overflow", () => {
