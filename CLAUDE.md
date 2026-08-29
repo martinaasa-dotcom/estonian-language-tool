@@ -40,7 +40,7 @@ the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-e
 Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
 asked for; anything else is dropped and reported. So a misspelled or imagined word cannot reach
 the dictionary, it can only fail to arrive, loudly. That is what let the vocabulary grow from 360
-to 1,102 words in one pass without a generated form. The English gloss is the only authored column
+to 1,248 words without a single generated form. The English gloss is the only authored column
 in the whole pipeline, and English is the one language this project may write.
 `lib/collections/syllabus/syllabus.test.ts` fails if a unit names a word the harvest did not
 bring back, which is what makes this mechanical rather than aspirational. Re-run the harvest with

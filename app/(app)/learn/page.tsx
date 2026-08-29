@@ -18,7 +18,7 @@ const isLevel = (value: string | null): value is Level =>
 /**
  * The course.
  *
- * Eighty-four units is far too many for one list, so the page is the six CEFR
+ * Eighty-three units is far too many for one list, so the page is the six CEFR
  * levels and each one opens. The learner's own level is open on arrival and the
  * rest are shut — which is also the honest shape of the thing, because a level
  * is the unit of progress a learner actually cares about. "Four units into B1"

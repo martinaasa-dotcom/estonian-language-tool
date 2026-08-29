@@ -228,7 +228,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
           </p>
           <div className="scroll-host mt-5 flex max-h-[46vh] flex-col gap-2">
             {/*
-              Only this level's units. The course is eighty-four of them across
+              Only this level's units. The course is eighty-three of them across
               six levels, and a first-run picker that lists all of them is a wall
               rather than a choice.
             */}

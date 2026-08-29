@@ -53,11 +53,11 @@ because a cap that fails open is not a cap.
 | Area | State |
 |---|---|
 | `lib/estonian/` — cases, principal parts, gradation, derivation | Complete, 56 unit tests |
-| Dictionary — search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which §11 grew to 1 172 words |
+| Dictionary — search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which §11 grew to 1 315 words |
 | Ekilex integration — live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
 | English translations — layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
 | Inflected-form search — `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
-| Built-in dictionary — 360 entries, 1 568 stored forms | Superseded by §11: harvested from Ekilex to 1 172 entries and 6 121 forms, CEFR-tagged A1 to C2, with 3 928 attested sentences and 206 verbs carrying government |
+| Built-in dictionary — 360 entries, 1 568 stored forms | Superseded by §11: harvested from Ekilex to 1 315 entries and 6 927 forms, CEFR-tagged A1 to C2, with 4 325 attested sentences and 206 verbs carrying government |
 | Speech — TartuNLP, server-proxied, content-addressed cache | Complete and verified end to end. Now durable in object storage rather than per-instance; see §4b |
 | Flashcards — FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
 | Today — due counts, streak, tasks, weak-word pick | Complete |
@@ -120,7 +120,7 @@ Each of these is a decision, not an omission.
    Free models are rate-limited hard enough upstream that they cannot be evaluated reliably, let
    alone relied on. This is exactly why the model is never allowed to supply an inflected form.
 
-1. **Without an Ekilex key the dictionary is 1 172 words** (360 before §11). Enough for A1 to B2 and a real start on C1, but far short of the full
+1. **Without an Ekilex key the dictionary is 1 315 words** (360 before §11). Enough for A1 to B2 and a real start on C1, but far short of the full
    lexicon. Anything outside it can be added by hand — the add-word form takes principal parts and
    classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
    key would close the gap properly.
@@ -159,7 +159,7 @@ deployment had quietly broken. This pass closes those.
 | Area | What it is | Why it earns its place |
 |---|---|---|
 | **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
-| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. Rebuilt in §11 as `lib/collections/syllabus/`: 84 units, A1 to C2 | "Here are 360 words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
+| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. Rebuilt in §11 as `lib/collections/syllabus/`: 83 units, A1 to C2 | "Here are 360 words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
 | **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
 | **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
 | **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
@@ -391,17 +391,24 @@ that the part-of-speech heuristic had confidently called verbs.
 
 | | Before | After |
 |---|---|---|
-| Units | 18 | 84 |
+| Units | 18 | 83 |
 | Levels with real coverage | A1–B1 | A1–C2 |
-| Distinct course words | 239 | 1 120 |
-| Dictionary entries seeded | 360 | 1 172 |
-| Stored forms | 1 568 | 6 121 |
-| Attested sentences | almost none | 3 928 |
+| Distinct course words | 239 | 1 266 |
+| Dictionary entries seeded | 360 | 1 315 |
+| Stored forms | 1 568 | 6 927 |
+| Attested sentences | almost none | 4 325 |
 | Verbs with recorded government | 24 | 206 |
+
+Words per level, which is where the old path fell apart:
+
+| | A1 | A2 | B1 | B2 | C1 | C2 |
+|---|---|---|---|---|---|---|
+| Before | 138 | 45 | 28 | 14 | 14 | 0 |
+| After | 229 | 219 | 188 | 215 | 245 | 170 |
 
 | Area | What it is |
 |---|---|
-| **The syllabus** (`lib/collections/syllabus/`) | Six levels, one file each. Every unit carries a CEFR can-do statement, the grammar it teaches, the units it builds on, and its word list |
+| **The syllabus** (`lib/collections/syllabus/`) | Six levels, one file each, 83 units. Every unit carries a CEFR can-do statement, the grammar it teaches, the units it builds on, and its word list |
 | **Lessons** (`/learn/[unit]/lesson`) | A unit is taught, not handed over. See below |
 | **Placement** (`/placement`) | Four words per level from A1 up, stopping the moment a level is failed |
 | **Checkpoints** (`/learn/checkpoint/[level]`) | Twenty production questions at the end of a level. No multiple choice, no feedback until the end |
@@ -440,19 +447,18 @@ words.
    says in as many words that C2 is finished by reading, arguing and living in
    the language rather than by finishing units. An app can name the ground. It
    cannot walk it for you.
-2. **1 120 words is a real course and not a real vocabulary.** It is roughly
-   three times what was here before and roughly a fifth of what a C1 reader
-   knows. The gap closes as the learner looks words up, because a live Ekilex
+2. **1 266 words is a real course and not a real vocabulary.** It is over five
+   times what was here before and roughly a fifth of what a C1 reader knows. The gap closes as the learner looks words up, because a live Ekilex
    key stores every word it fetches, but the *course* stops at what the syllabus
    names.
 3. **Placement measures recognition only.** So it places at the highest level
    passed rather than the one above, which biases it low on purpose, and it says
    so on the result screen. Nothing in twenty questions can test whether somebody
    can use the partitive.
-4. **Ekilex's own CEFR coding thins out at the top.** 1 003 of the 1 102
+4. **Ekilex's own CEFR coding thins out at the top.** 1 078 of the 1 248
    harvested words carry a level from Ekilex; the rest take the level of the unit
    that introduces them, which is an editorial judgement rather than an
-   authority's.
+   authority's, and they cluster at C1 and C2 where Ekilex grades least.
 5. **A topic page is sparser than a case page, deliberately.** A case page shows
    the case on real words because every form on it is read from the dictionary
    with its provenance. There is no equally safe way to illustrate the quotative:

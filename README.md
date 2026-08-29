@@ -40,7 +40,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A course.** Eighty-four units across all six CEFR levels, from *Tervitused* to *Vaba valdamine*, each a
+- **A course.** Eighty-three units across all six CEFR levels, from *Tervitused* to *Vaba valdamine*, each a
   sitting's worth of words. Adding a unit builds real flashcards, full paradigm, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
@@ -101,7 +101,7 @@ where it came from, and you can always overwrite it.
 
 Everything except the tutor:
 
-- **Dictionary**, 1 172 words (A1 to C2) with authoritative principal parts, consonant gradation and the
+- **Dictionary**, 1 315 words (A1 to C2) with authoritative principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class, 
   `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
@@ -165,7 +165,7 @@ rebuild, documented in `docs/03-architecture.md` ADR-011:
 3. Deploy. Vercel's build runs `prisma generate && prisma db push && npm run db:seed:ensure &&
    next build` (see `package.json`), so a hosted deployment sets itself up: the schema is
    created/updated against `DIRECT_URL`, and a database with an empty dictionary gets the built-in
-   1 172 words loaded before the build renders anything. The seed writes them in six statements
+   1 315 words loaded before the build renders anything. The seed writes them in six statements
    rather than three per word, which is what keeps that first deploy to a few seconds instead of
    the several minutes a thousand sequential round trips to another region used to cost.
 

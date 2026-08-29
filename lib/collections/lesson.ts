@@ -2,7 +2,7 @@
  * Turning a unit into a lesson.
  *
  * Before this existed, opening a unit offered two buttons: add its words to the
- * deck, or drill the unit. Both are flashcards, so a "course" of 84 units was 84
+ * deck, or drill the unit. Both are flashcards, so a "course" of 83 units was 83
  * ways to arrive at the same rectangle. This module is the difference between a
  * word list and a lesson.
  *
@@ -14,11 +14,13 @@
  *    for recognition before it is asked for production. Being made to produce a
  *    word you have never seen is a guessing game, and losing it teaches nothing.
  *
- * 2. **No two consecutive steps of the same kind.** Six multiple-choice
+ * 2. **No two consecutive *questions* of the same kind.** Six multiple-choice
  *    questions in a row is the exact texture of tedium, and it is what every
- *    naive generator produces. `varyKinds` reorders the plan until adjacent
- *    steps differ, and gives up gracefully rather than looping when a lesson is
- *    genuinely too small to vary.
+ *    naive generator produces. Variety comes from `interleave`, which merges
+ *    one lane per kind so a cycle through the lanes is a cycle through kinds;
+ *    `repairRuns` then mops up what the lanes could not, which is the tail of a
+ *    lesson where only one lane is still running. Teaching cards are exempt:
+ *    meeting three new words in a row is a presentation, not a grind.
  *
  * 3. **Words come back inside the lesson, not just tomorrow.** A word met in the
  *    first block is asked again several steps later, harder. Spacing is the one
