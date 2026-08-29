@@ -1,10 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAllowedEmail, safeNext } from "@/lib/auth/access";
 
 /**
  * Refreshes the Supabase session cookie on every request (required by
  * @supabase/ssr — Server Components can't write cookies themselves) and
- * gates every route except sign-in and its OAuth callback behind a session.
+ * gates every route except sign-in, its OAuth callback and the public policy
+ * pages behind a session.
+ *
+ * Also enforces the sign-in allowlist. That check lives here rather than only in
+ * the callback so that revoking access takes effect on the next request a user
+ * makes, not whenever their session happens to expire.
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -30,21 +36,36 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  const { pathname } = request.nextUrl;
   const isPublicPath =
-    request.nextUrl.pathname.startsWith("/sign-in") ||
-    request.nextUrl.pathname.startsWith("/auth/callback");
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/auth/callback") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/terms");
+
+  // A signed-in address that is no longer on the allowlist is signed out here,
+  // before any page or server action reads its data.
+  if (user && !isAllowedEmail(user.email)) {
+    await supabase.auth.signOut();
+    const denied = request.nextUrl.clone();
+    denied.pathname = "/sign-in";
+    denied.search = "";
+    denied.searchParams.set("denied", "1");
+    return NextResponse.redirect(denied);
+  }
 
   if (!user && !isPublicPath) {
-    if (request.nextUrl.pathname.startsWith("/api/")) {
+    if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     }
     const signIn = request.nextUrl.clone();
     signIn.pathname = "/sign-in";
-    signIn.searchParams.set("next", request.nextUrl.pathname);
+    signIn.search = "";
+    signIn.searchParams.set("next", safeNext(pathname + request.nextUrl.search));
     return NextResponse.redirect(signIn);
   }
 
-  if (user && request.nextUrl.pathname.startsWith("/sign-in")) {
+  if (user && pathname.startsWith("/sign-in")) {
     const home = request.nextUrl.clone();
     home.pathname = "/";
     home.search = "";

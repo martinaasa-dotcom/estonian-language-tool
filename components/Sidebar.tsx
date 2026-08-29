@@ -18,9 +18,16 @@ const NAV = [
   { href: "/tasks", label: "Tasks", icon: CalendarCheck },
 ] as const;
 
+/** Routes reachable without a session, where an app nav would be noise. */
+const PUBLIC_PATHS = ["/sign-in", "/privacy", "/terms"];
+
 export function Sidebar() {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+  // Sign-in and the policy pages are seen by people who are not signed in; a nav
+  // full of links that would bounce them back here is worse than no nav.
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return null;
 
   return (
     <>
