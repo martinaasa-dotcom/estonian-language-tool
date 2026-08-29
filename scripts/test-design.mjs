@@ -132,8 +132,30 @@ for (const url of ["/", "/review", "/progress", "/words"]) {
 }
 noFocus = [...new Set(noFocus)];
 
-// Floor: 6, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Design system", { floor: 6 });
+/*
+  Nothing may be left faded once a page has run out of scroll.
+
+  The scroll-driven reveal on the landing page ran `entry 0% cover 20%`, and a
+  cover-based range needs scrolling that a page sitting at its own end does not
+  have: at maximum scroll the final call to action measured opacity 0.51 and the
+  three questions above it 0.72, 0.77 and 0.82. Every element in the last
+  screenful was dimmed, permanently, on every visit. It looked like a colour
+  choice, which is why nobody filed it.
+*/
+let faded = [];
+for (const url of ["/welcome"]) {
+  await p.goto(B + url, { waitUntil: "networkidle", timeout: 60000 });
+  await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await p.waitForTimeout(900);
+  faded = await p.evaluate((page) =>
+    [...document.querySelectorAll(".reveal")]
+      .map((el) => ({ o: Number(getComputedStyle(el).opacity), t: (el.textContent || "").trim().slice(0, 30) }))
+      .filter((r) => r.o < 0.99)
+      .map((r) => `${page} ${r.o.toFixed(2)} "${r.t}"`), url);
+}
+
+// Floor: 7, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Design system", { floor: 7 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
@@ -160,6 +182,9 @@ check("weights stay within the four the system defines", weights.size <= 4,
 const ALLOWED_RADII = new Set(["10px", "16px", "22px", "30px", "50%", "2px", "8px", "0px"]);
 const strayRadii = [...radii.keys()].filter((r) => !ALLOWED_RADII.has(r) && parseFloat(r) < 1000);
 check("corners come from the four token radii", strayRadii.length === 0, strayRadii.join(" "));
+
+check("nothing is left half-faded at the bottom of a page", faded.length === 0,
+  faded.slice(0, 4).join(" | "));
 
 // A ring that fades in is a ring a keyboard user does not see land.
 check("every tab stop shows its focus ring immediately", noFocus.length === 0,

@@ -137,12 +137,14 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
-- `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/`,
-  `lib/offline/`, `lib/security/` and `lib/copy/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
+- `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
+  `lib/time/`, `lib/offline/`, `lib/security/` and `lib/copy/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
-- Settings go through `lib/settings/store.ts`. No new string keys scattered through pages.
+- Settings go through `lib/settings/store.ts`. No new string keys scattered through pages. The five
+  goal keys (`goalReason`, `goalTarget`, `goalDeadline`, `goalDays`, `goalNote`) are declared there
+  and nowhere else, and an invariant checks it.
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
   offline). A view without an empty state is not finished.
@@ -240,6 +242,25 @@ individual's deck, searches or answer history. Do not widen it. (ADR-019.)
 
 **Never score pronunciation.** There is no verified Estonian speech recogniser available here.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
+The level check has a speaking section for the same reason it has the other three, and it obeys the
+same rule: it collects the learner's own rating, reports it as theirs, and contributes **nothing**
+to the level. `SCORED_SKILLS` in `lib/assessment/score.ts` names the three that count, and
+`scripts/test-invariants.ts` fails if speaking ever joins them.
+
+**A level is never decided by a model, and never built out of Estonian we wrote.** The placement
+check at `/assess` is assembled from `Lexeme`, `Form` and recorded `usages`; every question says
+which of those its Estonian came from. Marking is a stored index, a recorded sentence, or a string
+comparison against a form the dictionary vouches for, in that order, and no provider is reachable
+from `lib/assessment/`. A learner meeting this app for the first time cannot tell when the machine
+is the one that is confused, so the machine is never the judge. The overall level follows the
+**weakest** measured skill, because a CEFR level is a claim about everything you can do at it.
+(ADR-020.)
+
+**`Assessment` is append-only, like `Review`.** A sitting is written once when it ends; a later
+check is another row, and there is no update path. The one deletion path is the same one `Review`
+has, somebody erasing their own account, because the promise on `/privacy` outranks the append-only
+rule. It is also the third exception to "progress is derived", after a personal best and a shield
+date: a measurement of answers that were never cards cannot be recomputed from the review log.
 
 ## More than one session works this repository at a time
 
@@ -353,6 +374,12 @@ phones and gone above the breakpoint, every target clear of 44px, and the pull g
 real. `scripts/test-invariants.ts` asserts the rules above, and CI runs it, which is the only
 reason it will stay green: Upside Lab kept one that nothing ran and it drifted to twenty-three
 failures before anybody counted. Assert the rule, not today's markup.
+
+`scripts/test-assess.mjs` sits a whole level check in a browser, question by question, and checks
+the things a unit test cannot see: that every question says where its Estonian came from, that the
+listening section abandons itself rather than dead-ending when the speech service is unavailable,
+that the result names how few questions it came from and refuses to call itself a certificate, and
+that first run reaches the plan before it asks anybody to pick a single word.
 
 `scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo and the command
 palette. `scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar
