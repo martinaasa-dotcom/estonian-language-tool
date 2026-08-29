@@ -66,7 +66,11 @@ whose everyday "desert" sits under a later etymology than a `rare` sense, and it
 it fixed: `soldat` is tagged `obsolete` on "soldier" and would have been drilled as "jack",
 `vats` is `dialectal` on "belly" and became "rumen", `raisk` is `dated` on "carrion" and landed
 on a vulgar usage note. Sense order stays the page's own, and the entries the labels get wrong
-are for a person to correct, which the dictionary is editable for.
+are for a person to correct, which the dictionary is editable for. The course's authored glosses
+in `prisma/data/harvested.ts` were checked against the same references and none needed
+correcting: of the 684 with an independent English gloss, 657 agree outright and all 27 that do
+not are a choice between synonyms. Those are authored rather than parsed, so no fault above can
+reach them, which is the argument for the division of labour and not for skipping the check.
 
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks

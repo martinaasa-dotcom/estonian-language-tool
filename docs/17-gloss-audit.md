@@ -104,7 +104,26 @@ candidates from Wiktionary's categories in order and keeps the first, and nouns 
 word that is both comes out a noun. Their glosses are right, so it is out of scope here; it is
 recorded in `docs/12-open-questions.md`.
 
-## 5. Where it stands
+## 5. The other half of the glosses
+
+The course landed while this was in progress, and it brings a second gloss source:
+`prisma/data/harvested.ts`, 1,248 words whose English is **authored** rather than parsed. Every
+fault above is a parser fault, so none of them can reach that file. It is still glosses a learner
+is drilled on, in the same band, so it was checked rather than assumed.
+
+684 of the 1,248 have an independent English reference, either a Wiktionary Estonian entry or an
+entry in `expanded.json`. **657 agree with one. The 27 that share no word with any reference were
+read individually, and all 27 are a choice between synonyms rather than an error**: "native
+language" against "mother tongue", "grey" against "gray", "cheerful" against "happy", "witty"
+against "funny". Several are better than the reference. `meeldima` is glossed "to please, to be
+liked by", where Wiktionary says "to like"; the Estonian verb takes the thing that pleases as its
+subject, so the harvested gloss is the one that will not mislead a beginner about the case
+pattern.
+
+No correction was made to that file, and none appeared to be needed. The remaining 564 words have
+no Estonian Wiktionary entry, so this method says nothing about them either way.
+
+## 6. Where it stands
 
 25 corrections in 2,164 is a defect rate of 1.2%, so measured precision across A1 to B1 is 98.8%
 against Wiktionary as the reference. Six of the 25 were a wrong word rather than a thin gloss,
