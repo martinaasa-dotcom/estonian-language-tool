@@ -11,11 +11,13 @@ import { requireLocalDatabase } from "./lib/local-db.mjs";
  * to test a restore — and also the most dangerous thing in this repository. Two
  * guards, because the review log is the one table whose loss is unrecoverable:
  *
- * 1. It refuses to run against anything but a local database unless forced. A
- *    stray `DATABASE_URL` pointing at a deployment must not be wiped by a test.
+ * 1. `requireLocalDatabase()` refuses anything but a local database, and hands
+ *    back the URL it approved so the connection that was checked is the one
+ *    that gets opened (see scripts/lib/local-db.mjs).
  * 2. It writes the export to disk *before* deleting, and stops if that fails.
- *    If the suite then crashes half way — a dev server hiccup is enough — the
- *    data is still on disk and `Settings → Restore` puts it back.
+ *    If the suite then crashes half way — a dev server hiccup is enough, and it
+ *    happened twice while this was being written — the data is still on disk
+ *    and `Settings → Restore` puts it back.
  */
 const B = "http://localhost:3000";
 const prisma = new PrismaClient({
@@ -23,16 +25,6 @@ const prisma = new PrismaClient({
 });
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
-
-const url = process.env.DATABASE_URL ?? "";
-const isLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url) || url.startsWith("file:");
-if (!isLocal && !process.argv.includes("--force")) {
-  console.error(
-    "Refusing to run: this suite deletes every card, review and task, and DATABASE_URL\n" +
-    "does not look local. Point it at a local database, or pass --force if you are certain.",
-  );
-  process.exit(1);
-}
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
 const page = await (await browser.newContext()).newPage();

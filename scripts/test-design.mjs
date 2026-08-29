@@ -52,7 +52,15 @@ for (const url of PAGES) {
         // A gradient defeats a single-colour comparison; those are checked by eye.
         if (cs.backgroundImage && cs.backgroundImage !== "none") return null;
         const bg = cs.backgroundColor;
-        if (bg && !bg.startsWith("rgba(0, 0, 0, 0)") && bg !== "transparent") return bg;
+        if (bg && !bg.startsWith("rgba(0, 0, 0, 0)") && bg !== "transparent") {
+          // A translucent fill is a tint over whatever is behind it, not a
+          // backdrop of its own — the kbd inside the primary button is white at
+          // 22% over a gradient, and comparing against it reads as white on
+          // white. Keep walking; the parent decides.
+          const parts = bg.match(/[\d.]+/g) ?? [];
+          const alpha = parts.length >= 4 ? Number(parts[3]) : 1;
+          if (alpha >= 0.95) return bg;
+        }
         n = n.parentElement;
       }
       return "rgb(255,255,255)";
@@ -62,7 +70,9 @@ for (const url of PAGES) {
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) continue;
       const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
-      if (own && cs.visibility !== "hidden" && parseFloat(cs.opacity) > 0.1 && !el.closest(".sr-only")) {
+      // `nextjs-portal` is the dev overlay, not the app.
+      if (own && cs.visibility !== "hidden" && parseFloat(cs.opacity) > 0.1
+          && !el.closest(".sr-only") && !el.closest("nextjs-portal")) {
         out.text.push({
           size: cs.fontSize, weight: cs.fontWeight, color: cs.color, bg: bgOf(el) ?? "gradient",
           text: el.textContent.trim().slice(0, 40),
@@ -105,6 +115,8 @@ for (const url of ["/", "/review", "/progress", "/words"]) {
     const info = await p.evaluate(() => {
       const el = document.activeElement;
       if (!el || el === document.body) return null;
+      // The Next.js dev overlay is focusable and is not ours to style.
+      if (el.tagName === "NEXTJS-PORTAL" || el.closest?.("nextjs-portal")) return null;
       const cs = getComputedStyle(el);
       const ring = cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0;
       const shadow = cs.boxShadow && cs.boxShadow !== "none";
