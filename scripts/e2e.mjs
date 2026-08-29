@@ -81,8 +81,12 @@ check("number key grades and advances", advanced, `${before} -> ${after}`);
 await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });
 await page.getByLabel("Task title").fill("Revise the comitative");
 await page.getByRole("button", { name: /^Add$/ }).click();
-check("task is created and persists",
-  await eventually(async () => (await page.getByText("Revise the comitative").count()) > 0));
+// Same reporting as the word above, and for the same reason: this one failed
+// twice in CI, fifteen seconds each time, and "false" does not say whether the
+// task was never created or created and not shown.
+const taskShown = await eventually(async () => (await page.getByText("Revise the comitative").count()) > 0);
+check("task is created and persists", taskShown,
+  taskShown ? "" : `list says: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 
 // 5 — Import
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
