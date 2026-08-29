@@ -13,7 +13,7 @@ interface Msg { role: "user" | "assistant"; content: string }
 const CHIPS = [
   { label: "Break this sentence down", prompt: "Break this Estonian sentence down morpheme by morpheme, labelling each case: " },
   { label: "Which case, and why?", prompt: "Which case should I use here, and what is the rule? " },
-  { label: "Object case check", prompt: "Is the object case right in this sentence — total or partial? Explain the aspect: " },
+  { label: "Object case check", prompt: "Is the object case right in this sentence, total or partial? Explain the aspect: " },
   { label: "Explain this gradation", prompt: "Explain the consonant gradation in this word and name the pattern: " },
   { label: "Correct my Estonian", prompt: "Correct my Estonian and explain each change: " },
   { label: "Quiz me", prompt: "Quiz me with five short B1-level Estonian questions, one at a time." },
@@ -38,7 +38,7 @@ function sentenceCheckPrompt(estonian: string, meaning: string): string {
     "",
     "Please:",
     "1. Say plainly whether it is correct.",
-    "2. For each mistake, name the rule first — which case and why, the gradation pattern, the verb's government, or the word order — and only then the fix.",
+    "2. For each mistake, name the rule first, which case and why, the gradation pattern, the verb's government, or the word order, and only then the fix.",
     "3. Put the corrected sentence on its own final line, starting with FIX:",
     "4. If you are not certain of a form, say so and tell me which word to look up in the dictionary rather than guessing.",
   ].filter(Boolean).join("\n");
@@ -119,7 +119,7 @@ export function TutorChat({
     } catch {
       setMessages((m) => [...m.slice(0, -1), {
         role: "assistant",
-        content: "⚠ Lost the connection to Anu. Your question is still in the box above — try again.",
+        content: "⚠ Lost the connection to Anu. Your question is still in the box above. Try again.",
       }]);
     } finally {
       setStreaming(false);
@@ -130,7 +130,7 @@ export function TutorChat({
     return (
       <Empty
         title="Anu needs an API key"
-        body="Everything else in the app works without one — the dictionary, your cards and audio are all local. Settings has a two-minute walkthrough for getting a free key."
+        body="Everything else in the app works without one, the dictionary, your cards and audio are all local. Settings has a two-minute walkthrough for getting a free key."
         action={<Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>}
       />
     );
@@ -145,7 +145,7 @@ export function TutorChat({
             <p className="est text-[21px] font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
             <p className="mt-1.5 max-w-[62ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
               Ask me anything about Estonian grammar. I&rsquo;ll always tell you the rule, not just the
-              answer — and I&rsquo;ll say so if I&rsquo;m not sure of a form rather than guessing.
+              answer, and I&rsquo;ll say so if I&rsquo;m not sure of a form rather than guessing.
             </p>
             <p className="mt-3 flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--blush)" }}>
               <Sparkles size={13} aria-hidden /> Pick a starter below, or just type.
@@ -274,7 +274,7 @@ function Bubble({ message, streaming }: { message: Msg; streaming: boolean }) {
       >
         <p className="label-xs mb-1.5" style={{ color: isUser ? "var(--accent-deep)" : "var(--blush)" }}>
           {isUser
-            ? message.content.startsWith("Check this sentence for me.") ? "You — sentence to check" : "You"
+            ? message.content.startsWith("Check this sentence for me.") ? "You · sentence to check" : "You"
             : "Anu"}
         </p>
         <div className="whitespace-pre-wrap text-[14.5px] leading-relaxed" style={{ color: "var(--ink)" }}>
@@ -403,7 +403,7 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
   const add = (word: { et: string; en: string }) => {
     start(async () => {
       const created = await createLexeme({
-        lemma: word.et, translation: word.en, pos: "OTHER", notes: "Suggested by Anu — forms unverified",
+        lemma: word.et, translation: word.en, pos: "OTHER", notes: "Suggested by Anu, forms unverified",
       });
       if (created.ok) {
         await addToDeck(created.id, ["RECOGNITION", "PRODUCTION"], "TUTOR");
@@ -416,7 +416,7 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
     <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--rule-soft)" }}>
       <div className="mb-2 flex items-center gap-2">
         <span className="label-xs" style={{ color: "var(--ink-3)" }}>Vocabulary</span>
-        <Chip tone="again" title="Anu's forms are not authoritative — check them in the dictionary">
+        <Chip tone="again" title="Anu's forms are not authoritative, check them in the dictionary">
           AI · verify
         </Chip>
       </div>
@@ -425,7 +425,7 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
           <li key={w.et} className="flex items-center justify-between gap-3">
             <span className="text-[14px]">
               <span className="est font-semibold" style={{ color: "var(--ink)" }}>{w.et}</span>
-              <span style={{ color: "var(--ink-3)" }}> — {w.en}</span>
+              <span style={{ color: "var(--ink-3)" }}>, {w.en}</span>
             </span>
             <Button
               variant="ghost"

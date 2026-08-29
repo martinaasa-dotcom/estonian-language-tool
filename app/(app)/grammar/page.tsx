@@ -9,7 +9,7 @@ import { Card, Chip, Meter, Note, Page, SectionTitle } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Grammar — the fourteen cases",
+  title: "Grammar · the fourteen cases",
   description: "What each Estonian case is for, in English, with real forms from the dictionary.",
 };
 
@@ -39,7 +39,7 @@ export default async function GrammarIndexPage() {
     <Page
       eyebrow="Reference"
       title="The fourteen cases"
-      lead="What each one is for, when Estonian reaches for it, and the mistake an English speaker actually makes. Every Estonian word on these pages comes from the dictionary — the explanations are the only part this app wrote."
+      lead="What each one is for, when Estonian reaches for it, and the mistake an English speaker actually makes. Every Estonian word on these pages comes from the dictionary, the explanations are the only part this app wrote."
     >
       <div className="flex flex-col gap-7">
         <Card tone="accent">
@@ -51,7 +51,7 @@ export default async function GrammarIndexPage() {
               </p>
               <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 Three of the fourteen are unpredictable and have to be memorised word by word. The
-                other eleven are regular endings on the second of those three — the genitive. That
+                other eleven are regular endings on the second of those three, the genitive. That
                 is why the app drills the genitive so hard, and why a case table is mostly
                 arithmetic once you have it.
               </p>
@@ -154,7 +154,7 @@ export default async function GrammarIndexPage() {
           <Link href="/tutor" className="underline" style={{ color: "var(--accent)" }}>
             Ask Anu
           </Link>{" "}
-          — she can take a sentence you wrote and name the rule behind the correction.{" "}
+          and she can take a sentence you wrote and name the rule behind the correction.{" "}
           <ArrowRight size={12} aria-hidden className="inline" />
         </p>
       </div>

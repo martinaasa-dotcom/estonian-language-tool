@@ -55,7 +55,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
   return (
     <div>
       <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
-        Restore from a backup file — after moving to a new computer, or to undo something. A backup
+        Restore from a backup file, after moving to a new computer, or to undo something. A backup
         you have never restored is only a hypothesis, so it is worth trying once while nothing is
         at stake.
       </p>
@@ -88,7 +88,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
               <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px]">
                 <input type="radio" name="mode" checked={mode === "merge"} onChange={() => setMode("merge")} className="mt-1" />
                 <span>
-                  <span style={{ color: "var(--ink)" }}>Merge — nothing is deleted</span>
+                  <span style={{ color: "var(--ink)" }}>Merge · nothing is deleted</span>
                   <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
                     Adds what is missing and leaves everything else alone. Safe to run twice.
                   </span>

@@ -130,7 +130,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
             Case Sprint
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            {cards.length} cards loaded. Flip and answer as fast as you can for {DURATION_S} seconds — Space to
+            {cards.length} cards loaded. Flip and answer as fast as you can for {DURATION_S} seconds. Space to
             flip, Enter for correct, Backspace for missed.
           </p>
           <p

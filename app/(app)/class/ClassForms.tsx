@@ -34,7 +34,7 @@ export function CreateClass() {
         value={name}
         maxLength={60}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Eesti keel A2 — teisipäev"
+        placeholder="Eesti keel A2, teisipäev"
         className="rounded-[var(--r)] border px-3.5 py-2.5 text-[15px] outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
@@ -206,7 +206,7 @@ export function AssignUnit({ classroomId, units }: {
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         >
           {units.map((u) => (
-            <option key={u.id} value={u.id}>{u.title} — {u.subtitle}</option>
+            <option key={u.id} value={u.id}>{u.title}, {u.subtitle}</option>
           ))}
         </select>
       </div>

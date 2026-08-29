@@ -8,6 +8,7 @@ import { caseExamples, type CaseExample } from "@/lib/progress/caseExamples";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Note, Page, SectionTitle } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import { NO_VALUE } from "@/lib/copy/values";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ caseKey: 
   const { caseKey } = await params;
   const ref = caseReference(caseKey.toUpperCase());
   if (!ref) return { title: "Grammar" };
-  return { title: `${ref.spec.en} — Estonian grammar`, description: ref.summary };
+  return { title: `${ref.spec.en} · Estonian grammar`, description: ref.summary };
 }
 
 const ORIGIN_LABEL: Record<CaseExample["origin"], { label: string; title: string }> = {
@@ -34,7 +35,7 @@ const ORIGIN_LABEL: Record<CaseExample["origin"], { label: string; title: string
   },
   DERIVED: {
     label: "from the genitive",
-    title: "The regular ending on the stored genitive stem — the same arithmetic you are learning to do",
+    title: "The regular ending on the stored genitive stem, the same arithmetic you are learning to do",
   },
 };
 
@@ -146,7 +147,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           {examples.length === 0 ? (
             <Empty
               title="No words to show it on yet"
-              body="This page builds its examples out of the dictionary. Look a noun up and it will have something to show — nothing here is written by the app."
+              body="This page builds its examples out of the dictionary. Look a noun up and it will have something to show, nothing here is written by the app."
               action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
             />
           ) : (
@@ -185,7 +186,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                         </span>
                       </td>
                       <td lang="et" className="est px-3 py-2.5" style={{ color: "var(--ink-3)" }}>
-                        {example.genitive ?? "—"}
+                        {example.genitive ?? NO_VALUE}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className="inline-flex items-center gap-1.5">
@@ -227,7 +228,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                     {example.sentence!.en && (
                       <p className="mt-1 flex items-center gap-2 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
-                        <Chip tone="again" title="Machine translation — the Estonian above is authoritative, this is not">
+                        <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
                           AI
                         </Chip>
                       </p>
@@ -235,7 +236,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                     <p className="mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
                       contains{" "}
                       <span lang="et" className="est" style={{ color: "var(--accent)" }}>{example.form}</span>
-                      {" — "}the {ref.spec.en.toLowerCase()} of{" "}
+                      {", "}the {ref.spec.en.toLowerCase()} of{" "}
                       <span lang="et" className="est">{example.lemma}</span>
                     </p>
                   </Card>
@@ -259,7 +260,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
 
         <Note tone="neutral">
           A drill only opens for words in your deck that carry this case. If nothing comes up, add a
-          noun unit from the path — the case cards are generated from the forms the dictionary
+          noun unit from the path, the case cards are generated from the forms the dictionary
           holds, never from a pattern applied blindly.
         </Note>
 

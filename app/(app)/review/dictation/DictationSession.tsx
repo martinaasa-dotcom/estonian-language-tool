@@ -119,7 +119,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
       <Page title="Dictation" lead="Hear a sentence, write it down.">
         <Empty
           title="No sentences short enough yet"
-          body="Dictation uses the sentences Ekilex records against the words in your deck, and only the short ones — a sentence you cannot hold in your head tests memory, not listening. Look a few of your words up in the dictionary, or add a unit from the path."
+          body="Dictation uses the sentences Ekilex records against the words in your deck, and only the short ones, a sentence you cannot hold in your head tests memory, not listening. Look a few of your words up in the dictionary, or add a unit from the path."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -215,7 +215,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
                 <p lang="et" className="est text-[20px]" style={{ color: "var(--ink)" }}>{task.et}</p>
                 <p className="max-w-[42ch] text-[12px]" style={{ color: "var(--ink-2)" }}>
                   The pronunciation service could not be reached, so the sentence is shown instead of
-                  played. Copying it out still drills the spelling — come back for the listening half.
+                  played. Copying it out still drills the spelling. Come back for the listening half.
                 </p>
               </div>
             ) : (
@@ -231,7 +231,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
                 <div className="flex items-center gap-3">
                   <Speak text={task.et} slow label="Play it slowly" size={14} />
                   <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-                    {played ? "Play it as often as you like" : "Tap to hear it — the slow button is next to it"}
+                    {played ? "Play it as often as you like" : "Tap to hear it. The slow button is next to it"}
                   </span>
                 </div>
               </>
@@ -254,7 +254,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
           {result && task.en && (
             <p className="text-center text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {task.en}
-              <Chip tone="again" title="Machine translation — the Estonian is authoritative, this is not">
+              <Chip tone="again" title="Machine translation, the Estonian is authoritative, this is not">
                 AI
               </Chip>
             </p>

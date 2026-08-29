@@ -104,7 +104,7 @@ export default async function ClassIndexPage() {
               <Card tone="accent">
                 <p className="mb-4 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
                   You get a six-character join code to put on the board, a roster showing who is
-                  actually reviewing, and the cases your group keeps missing — which is the useful
+                  actually reviewing, and the cases your group keeps missing, which is the useful
                   half of a progress report.
                 </p>
                 <CreateClass />
@@ -117,7 +117,7 @@ export default async function ClassIndexPage() {
               <School size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
               <div>
                 <p className="text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-                  This copy is running in local mode, where there is one learner and no accounts — so
+                  This copy is running in local mode, where there is one learner and no accounts, so
                   there is nobody to share a class with. Classes need sign-in configured
                   (<code className="text-[13px]">NEXT_PUBLIC_SUPABASE_URL</code> and its anon key);
                   the README has the ten-minute version.
@@ -133,7 +133,7 @@ export default async function ClassIndexPage() {
         <Note tone="neutral">
           A teacher sees effort and progress: reviews this week, streak, words known, and the
           class&rsquo;s weakest cases in aggregate. Never an individual&rsquo;s searches, deck or
-          mistakes. That line is drawn in the code, not in a policy — see{" "}
+          mistakes. That line is drawn in the code, not in a policy, see{" "}
           <code className="text-[12px]">lib/classroom/roster.ts</code>.
         </Note>
       </div>

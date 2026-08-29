@@ -6,7 +6,7 @@ import { Check, Copy } from "lucide-react";
 const STEPS = [
   { text: "Go to ", link: { href: "https://openrouter.ai", label: "openrouter.ai" }, after: " and sign in with Google. It's free and takes no card." },
   { text: "Click your avatar in the top right, then ", strong: "Keys", after: "." },
-  { text: "Click ", strong: "Create Key", after: ". Give it any name. Copy the key it shows you — you only see it once." },
+  { text: "Click ", strong: "Create Key", after: ". Give it any name. Copy the key it shows you: you only see it once." },
   { text: "In this project's folder, open the file called ", code: ".env", after: " and paste the key between the quotes, like the example below." },
   { text: "Stop the app (Ctrl-C in the terminal) and run ", code: "npm run dev", after: " again. Anu will be waiting." },
 ];
@@ -19,8 +19,8 @@ export function SetupGuide() {
   return (
     <div>
       <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
-        Anu needs an API key to answer questions. Everything else — the dictionary, your cards, audio
-        — works without one. Here is the whole process:
+        Anu needs an API key to answer questions. Everything else (the dictionary, your cards,
+        audio) works without one. Here is the whole process:
       </p>
 
       <ol className="mt-4 flex flex-col gap-3">
@@ -74,7 +74,7 @@ export function SetupGuide() {
 
       <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
         That model is free. If Anu ever feels vague about Estonian, a paid model will be noticeably
-        sharper — change the second line to <code>anthropic/claude-sonnet-5</code> or{" "}
+        sharper, change the second line to <code>anthropic/claude-sonnet-5</code> or{" "}
         <code>openai/gpt-4o</code>, which cost a fraction of a cent per question.
       </p>
     </div>

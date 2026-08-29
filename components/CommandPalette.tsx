@@ -48,7 +48,7 @@ const COMMANDS: Command[] = [
 
 const UNIT_COMMANDS: Command[] = PATH.map((u) => ({
   id: `unit-${u.id}`,
-  label: `${u.title} — ${u.subtitle}`,
+  label: `${u.title}, ${u.subtitle}`,
   hint: `Unit · ${u.cefr}`,
   href: `/learn/${u.id}`,
   keywords: `${u.lemmas.join(" ")} unit ${u.cefr}`,

@@ -124,7 +124,7 @@ export function stickingNote(point: StickingPoint): string {
     : "";
 
   if (point.reason === "lapses") {
-    return `Learned and forgotten ${point.lapses} times — ${point.accuracy}% recalled over ${point.reviews} reviews.${also}`;
+    return `Learned and forgotten ${point.lapses} times, ${point.accuracy}% recalled over ${point.reviews} reviews.${also}`;
   }
-  return `${point.accuracy}% recalled over ${point.reviews} reviews — it has never really settled.${also}`;
+  return `${point.accuracy}% recalled over ${point.reviews} reviews, it has never really settled.${also}`;
 }

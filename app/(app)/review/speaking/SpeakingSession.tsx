@@ -199,7 +199,7 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
               </div>
               <Recorder />
               <p className="max-w-[44ch] text-[12px]" style={{ color: "var(--ink-3)" }}>
-                Compare the two, then rate how close you were. Nothing is uploaded — the app has no
+                Compare the two, then rate how close you were. Nothing is uploaded. The app has no
                 Estonian speech recogniser and will not pretend to score you.
               </p>
             </>
@@ -209,7 +209,7 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
-              I said it — show me
+              I said it, show me
             </Button>
           ) : (
             <div className="grid grid-cols-4 gap-2">

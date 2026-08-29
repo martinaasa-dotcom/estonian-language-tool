@@ -16,6 +16,7 @@ import { Paradigm } from "./Paradigm";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
+import { NO_VALUE } from "@/lib/copy/values";
 
 export interface EntryForm {
   formType: string;
@@ -94,7 +95,7 @@ export function DictionaryClient({
             value={query}
             onChange={setQuery}
             onEnter={() => go(query)}
-            placeholder="Search Estonian or English — try tuba, or room"
+            placeholder="Search Estonian or English, try tuba, or room"
             ariaLabel="Search the dictionary"
             large
             autoFocus={!initialQuery}
@@ -152,7 +153,7 @@ export function DictionaryClient({
         <div className="flex flex-col gap-4">
           <Empty
             title={`Nothing found for "${initialQuery}"`}
-            body="The built-in dictionary covers common words up to B2. Add this one yourself — put in the genitive and you get the whole case table, audio and cards, exactly like a built-in word."
+            body="The built-in dictionary covers common words up to B2. Add this one yourself, put in the genitive and you get the whole case table, audio and cards, exactly like a built-in word."
           />
           <AddWord initialLemma={initialQuery} />
         </div>
@@ -165,7 +166,7 @@ export function DictionaryClient({
               className="rounded-[var(--r)] px-4 py-3 text-[13.5px] font-medium"
               style={{ background: "var(--good-soft)", color: "var(--good)" }}
             >
-              Fetched from Ekilex and saved — this word now works offline too.
+              Fetched from Ekilex and saved, this word now works offline too.
             </p>
           )}
           {matchedAs && (
@@ -245,11 +246,11 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
             <Chip>{entry.pos.toLowerCase()}</Chip>
             {entry.cefr && <Chip tone="accent">{entry.cefr}</Chip>}
             {entry.gradationNote && (
-              <Chip tone="hard" caseSensitive title="Consonant gradation — this is why the stem changes">
+              <Chip tone="hard" caseSensitive title="Consonant gradation, this is why the stem changes">
                 gradation {entry.gradationNote}
               </Chip>
             )}
-            {entry.provenance === "AI" && <Chip tone="again">AI — verify</Chip>}
+            {entry.provenance === "AI" && <Chip tone="again">AI · verify</Chip>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -292,7 +293,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       {entry.forms.length > 0 && (
         <div>
           <h3 className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
-            Principal parts — the forms you have to memorise
+            Principal parts, the forms you have to memorise
           </h3>
           <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))" }}>
             {parts.map(([type, label, et]) => {
@@ -309,7 +310,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                       <Speak text={value} />
                     </>
                   ) : (
-                    <span className="est block text-[19px]" style={{ color: "var(--ink-3)" }}>—</span>
+                    <span className="est block text-[19px]" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
                   )}
                   <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
                   <span lang="et" className="mt-0.5 block text-[10.5px] italic" style={{ color: "var(--ink-3)" }}>{et}</span>
@@ -352,10 +353,10 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                       <span lang="et" className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
                     </td>
                     <td lang="et" className="est px-3 py-2 text-[15px]" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
-                      {singular ?? "—"}
+                      {singular ?? NO_VALUE}
                     </td>
                     <td lang="et" className="est px-3 py-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-                      {plural ?? <span style={{ color: "var(--ink-3)" }}>—</span>}
+                      {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
                     </td>
                     <td lang="et" className="px-3 py-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
                   </tr>
@@ -366,7 +367,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           {!form("GEN_PL") && (
             <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
               Plural forms need the genitive plural, which isn&rsquo;t stored for this word. We leave
-              them blank rather than guess — an invented form is worse than a gap.
+              them blank rather than guess, an invented form is worse than a gap.
             </p>
           )}
         </div>

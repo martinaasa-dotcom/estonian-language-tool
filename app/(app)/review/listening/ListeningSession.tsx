@@ -182,7 +182,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                   {card.lemma}
                 </p>
                 <p className="max-w-[40ch] text-[13px]" style={{ color: "var(--ink-3)" }}>
-                  No audio right now — the pronunciation service could not be reached, so the word is
+                  No audio right now. The pronunciation service could not be reached, so the word is
                   shown instead. Still worth answering; come back for the listening part.
                 </p>
               </>
@@ -195,7 +195,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                   className="press flex h-24 w-24 items-center justify-center rounded-full transition-all hover:-translate-y-0.5"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
                 />
-                <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap to hear the word — tap again to replay</p>
+                <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap to hear the word, tap again to replay</p>
               </>
             )
           ) : (

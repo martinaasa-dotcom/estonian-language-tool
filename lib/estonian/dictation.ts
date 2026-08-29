@@ -66,11 +66,24 @@ function fold(text: string): string {
 }
 
 /** Lowercase and strip the punctuation a listener cannot hear. */
+/*
+  Punctuation that is not part of a word, stripped before two spellings are
+  compared.
+
+  Written with escapes rather than the characters themselves. This reads
+  dashes, it never writes one, and a literal em dash sitting in a character
+  class is indistinguishable from copy to the reader-copy guard that walks
+  this file. It was rewritten into a comma once already, which quietly turned
+  a stray dash in a dictated Ekilex sentence into a word the learner had to
+  type.
+*/
+const PUNCTUATION = /[.,!?;:"'`\u00b4\u2019\u201c\u201d\u00ab\u00bb()\u2013\u2014]/g;
+
 function normalise(word: string): string {
   return word
     .toLocaleLowerCase("et")
     .normalize("NFC")
-    .replace(/[.,!?;:"'`´’“”«»()–—]/g, "")
+    .replace(PUNCTUATION, "")
     .trim();
 }
 
@@ -192,8 +205,8 @@ function judge(
       verdict: "diacritics",
       suggestedRating: 2,
       note: slipped === 1
-        ? "Every word heard — one is missing its Estonian letters."
-        : `Every word heard — ${slipped} are missing their Estonian letters.`,
+        ? "Every word heard, one is missing its Estonian letters."
+        : `Every word heard, ${slipped} are missing their Estonian letters.`,
     };
   }
 
@@ -208,6 +221,6 @@ function judge(
   return {
     verdict: "wrong",
     suggestedRating: 1,
-    note: total === right ? "Extra words crept in." : `${right} of ${total} words right — play it again.`,
+    note: total === right ? "Extra words crept in." : `${right} of ${total} words right, play it again.`,
   };
 }

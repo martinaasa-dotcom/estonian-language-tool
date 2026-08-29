@@ -1,7 +1,7 @@
 import { CloudOff } from "lucide-react";
 import { Mascot } from "@/components/brand";
 
-export const metadata = { title: "Offline — Kodukeel" };
+export const metadata = { title: "Offline. Kodukeel" };
 
 /**
  * The service worker's fallback for a page that was never visited while online.
@@ -21,7 +21,7 @@ export default function OfflinePage() {
         This screen needs a connection
       </h1>
       <p className="text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-        Screens you have already opened still work offline, and so does reviewing — anything you
+        Screens you have already opened still work offline, and so does reviewing, anything you
         grade while offline is saved on this device and sent the moment you reconnect.
       </p>
       <a

@@ -25,7 +25,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         That screen didn&rsquo;t load
       </h1>
       <p className="text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-        Nothing has been lost — your deck and review history are untouched. Trying again usually
+        Nothing has been lost, your deck and review history are untouched. Trying again usually
         works; if it keeps happening, the message below is the useful part.
       </p>
       <code

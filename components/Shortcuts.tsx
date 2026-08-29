@@ -37,10 +37,10 @@ const GROUPS: Group[] = [
     keys: [
       { press: ["Space"], does: "Show the answer, then grade it Good" },
       { press: ["Enter"], does: "Check what you typed, then grade it" },
-      { press: ["1"], does: "Again — no idea" },
-      { press: ["2"], does: "Hard — struggled" },
-      { press: ["3"], does: "Good — got it" },
-      { press: ["4"], does: "Easy — instant" },
+      { press: ["1"], does: "Again, no idea" },
+      { press: ["2"], does: "Hard, struggled" },
+      { press: ["3"], does: "Good, got it" },
+      { press: ["4"], does: "Easy, instant" },
       { press: ["U"], does: "Undo the last grade, scheduling and all" },
     ],
   },
@@ -161,7 +161,7 @@ export function Shortcuts() {
         </div>
 
         <p className="border-t px-5 py-3 text-[12px]" style={{ borderColor: "var(--rule-soft)", color: "var(--ink-3)" }}>
-          Every control is reachable by tab as well, with a visible focus ring — the shortcuts are a
+          Every control is reachable by tab as well, with a visible focus ring, the shortcuts are a
           shortcut, never the only way in.
         </p>
       </div>

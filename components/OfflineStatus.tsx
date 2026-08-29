@@ -82,8 +82,8 @@ export function OfflineStatus() {
       {offline ? <CloudOff size={14} aria-hidden /> : <RefreshCw size={14} aria-hidden className={sending ? "animate-spin" : ""} />}
       {offline
         ? pending > 0
-          ? `Offline — ${pending} grade${pending === 1 ? "" : "s"} saved here, review keeps working`
-          : "Offline — reviewing still works, grades are saved on this device"
+          ? `Offline, ${pending} grade${pending === 1 ? "" : "s"} saved here, review keeps working`
+          : "Offline, reviewing still works, grades are saved on this device"
         : `Sending ${pending} saved grade${pending === 1 ? "" : "s"}…`}
     </div>
   );

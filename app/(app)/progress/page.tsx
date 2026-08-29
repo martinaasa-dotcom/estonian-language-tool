@@ -17,6 +17,8 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stat } from "@/components/ui";
+import { NO_VALUE } from "@/lib/copy/values";
+import { formatHour } from "@/lib/time/clock";
 
 export const dynamic = "force-dynamic";
 
@@ -93,7 +95,7 @@ export default async function ProgressPage() {
   for (const card of cefrRows) {
     const lemma = card.lexeme?.lemma;
     if (!lemma) continue;
-    const level = card.lexeme?.cefr ?? "—";
+    const level = card.lexeme?.cefr ?? NO_VALUE;
     const entry = byLevel.get(level) ?? { total: new Set<string>(), known: new Set<string>() };
     entry.total.add(lemma);
     if (snapshot.knownLemmas.has(lemma)) entry.known.add(lemma);
@@ -107,10 +109,10 @@ export default async function ProgressPage() {
 
   if (reviews.length === 0 && snapshot.totalCards === 0) {
     return (
-      <Page title="Progress" lead="Everything here is computed from your review log — nothing is stored, so nothing can drift.">
+      <Page title="Progress" lead="Everything here is computed from your review log, nothing is stored, so nothing can drift.">
         <Empty
           title="No history yet"
-          body="Charts appear after your first review. Start a unit and come back tomorrow — the interesting part is the shape over weeks."
+          body="Charts appear after your first review. Start a unit and come back tomorrow, the interesting part is the shape over weeks."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>
@@ -146,7 +148,7 @@ export default async function ProgressPage() {
               label="Day streak"
             />
             <Stat value={snapshot.knownCards} label="Cards known" tone="var(--good)" />
-            <Stat value={breakdown.accuracy === null ? "—" : `${breakdown.accuracy}%`} label="Recall rate" />
+            <Stat value={breakdown.accuracy === null ? NO_VALUE : `${breakdown.accuracy}%`} label="Recall rate" />
             <ShareProgress />
           </div>
         </Card>
@@ -175,7 +177,7 @@ export default async function ProgressPage() {
                 }
               >
                 <span className="est tnum text-[19px] font-bold" style={{ color: "var(--ink)" }}>
-                  {retention.retention === null ? "—" : `${retention.retention}%`}
+                  {retention.retention === null ? NO_VALUE : `${retention.retention}%`}
                 </span>
               </Ring>
               <div className="min-w-0 flex-1">
@@ -229,7 +231,7 @@ export default async function ProgressPage() {
               </div>
               <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
                 {dueDates.length === 0
-                  ? "Nothing scheduled yet — this fills in as cards graduate out of the learning steps."
+                  ? "Nothing scheduled yet. This fills in as cards graduate out of the learning steps."
                   : "Overdue cards are counted as today, because that is when the work is. A flat-ish shape means the scheduler has settled; a spike means a big day was added at once."}
               </p>
             </Card>
@@ -274,7 +276,7 @@ export default async function ProgressPage() {
             <SectionTitle hint="worst first">Sticking points</SectionTitle>
             <p className="mb-3 max-w-[68ch] text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               Cards you have learned and forgotten more than once. A card that keeps lapsing is
-              usually a grammar problem wearing a vocabulary costume — so the explanation comes
+              usually a grammar problem wearing a vocabulary costume, so the explanation comes
               first, and setting it aside is the last resort rather than the first.
             </p>
             <StickingPoints points={sticking} />
@@ -394,7 +396,7 @@ export default async function ProgressPage() {
             ) : !optedIn ? (
               <>
                 <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
-                  Off by default. Turn it on and everyone else who has opted in — your class, say —
+                  Off by default. Turn it on and everyone else who has opted in (your class, say)
                   sees the name you choose and your XP for the week. Nothing else is shared: no
                   email, no word lists, no history.
                 </p>
@@ -402,7 +404,7 @@ export default async function ProgressPage() {
               </>
             ) : leaderboard.length <= 1 ? (
               <Note tone="accent">
-                You are in. Nobody else has joined yet — share the app with your class and this fills
+                You are in. Nobody else has joined yet. Share the app with your class and this fills
                 up. Your XP this week: {leaderboard[0]?.xp ?? 0}.
               </Note>
             ) : (
@@ -433,11 +435,6 @@ export default async function ProgressPage() {
       </div>
     </Page>
   );
-}
-
-function formatHour(hour: number): string {
-  const h = hour % 12 === 0 ? 12 : hour % 12;
-  return `${h}${hour < 12 ? "am" : "pm"}`;
 }
 
 /**

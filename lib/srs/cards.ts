@@ -164,7 +164,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
             back: cloze.answer,
             // The lemma is given deliberately: this asks for the right *form*,
             // not for the vocabulary, which the recognition card already tests.
-            hint: `${lex.lemma} — ${lex.translation}`,
+            hint: `${lex.lemma}, ${lex.translation}`,
             targetCase: caseFromMorphCode(morphCode),
           });
           built++;

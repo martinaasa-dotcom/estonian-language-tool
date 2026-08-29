@@ -135,7 +135,7 @@ export function MatchSession({ pairs, best }: { pairs: MatchPair[]; best: number
             Match
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            {pairs.length} pairs. Tap an Estonian word, then its meaning — as fast as you can. Pairs you
+            {pairs.length} pairs. Tap an Estonian word, then its meaning, as fast as you can. Pairs you
             get first time count as a clean review.
           </p>
           {best > 0 && (

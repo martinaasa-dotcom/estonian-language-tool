@@ -80,7 +80,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
                   : <Chip tone="hard">{point.accuracy}%</Chip>}
               </p>
               <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-2)" }}>
-                {isSuspended ? "Set aside — it will not come up until you put it back." : stickingNote(point)}
+                {isSuspended ? "Set aside, it will not come up until you put it back." : stickingNote(point)}
               </p>
             </div>
 

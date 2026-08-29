@@ -23,7 +23,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Kodukeel — Estonian that finally sticks",
+  title: "Kodukeel. Estonian that finally sticks",
   description:
     "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that " +
     "knows when to stop, native audio, and a grammar tutor that explains the rule.",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   applicationName: "Kodukeel",
   appleWebApp: { capable: true, title: "Kodukeel", statusBarStyle: "default" },
   openGraph: {
-    title: "Kodukeel — Estonian that finally sticks",
+    title: "Kodukeel. Estonian that finally sticks",
     description:
       "Real paradigms, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
     type: "website",

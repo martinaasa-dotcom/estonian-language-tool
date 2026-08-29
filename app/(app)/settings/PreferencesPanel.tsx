@@ -10,7 +10,7 @@ const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof Pe
   {
     value: "type",
     label: "Type the answer",
-    detail: "Stronger recall, and near misses are explained — a dropped õ is told apart from a wrong word.",
+    detail: "Stronger recall, and near misses are explained: a dropped õ is told apart from a wrong word.",
     icon: PenLine,
   },
   {
@@ -106,7 +106,7 @@ export function LeaderboardPanel({ currentName, optedIn }: { currentName: string
       )}
       <p className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
         Sharing this puts your chosen name and your XP for the week in front of everyone else who has
-        opted in. Nothing else — not your email, not your words, not your history — is visible to
+        opted in. Nothing else, not your email, not your words, not your history, is visible to
         them, and leaving removes you immediately.
       </p>
     </div>
