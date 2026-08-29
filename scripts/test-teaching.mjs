@@ -21,6 +21,19 @@ const page = await (await browser.newContext({ viewport: { width: 1280, height: 
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+/*
+  A failed response says which URL failed; the console message for it does not.
+
+  "Failed to load resource: the server responded with a status of 500" is what
+  the browser prints, and on its own it is unactionable: this suite drives eight
+  screens and every one of them makes requests, so the next person reads that
+  line and still has to guess. This failed once in CI and could not be
+  reproduced against the same data, the same order and the same key, which is
+  precisely the case where the only thing that helps is the URL.
+*/
+page.on("response", (r) => {
+  if (r.status() >= 500) errors.push(`${r.status()} from ${r.request().method()} ${r.url()}`);
+});
 
 // ─── The grammar reference ────────────────────────────────────────────────────
 
