@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 
 /**
  * The teaching layer: the grammar reference, dictation, the printable worksheet,
@@ -18,7 +18,7 @@ const check = (label, ok, extra = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
 };
 
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
@@ -180,9 +180,20 @@ const hasSticking = (await page.getByText("Sticking points").count()) > 0;
 check("the deck's sticking points are named", hasSticking);
 
 if (hasSticking) {
-  const row = page.locator("li", { hasText: /lapses|never really settled/ }).first();
+  /*
+    Case-insensitively, and matching both reasons a card can be flagged.
+
+    This block had never run: the panel was empty on every demo deck, because
+    no history in the fixture ever reached a lapse, so `hasSticking` was false
+    and everything under it was skipped. With the fixture fixed it ran for the
+    first time and failed, on the check rather than on the app. The badge is
+    lowercase in the DOM and uppercased by CSS, so `innerText` hands back
+    "4 LAPSES", and a card flagged for lapses says "Learned and forgotten 4
+    times", which never contained the word this was looking for at all.
+  */
+  const row = page.locator("li", { hasText: /lapses|forgotten|never really settled/i }).first();
   check("each one says what is wrong with it",
-    /lapses|settled/.test(await row.innerText()));
+    /lapses|forgotten|settled/i.test(await row.innerText()));
   // The argument this section makes is in the order of its actions: understand
   // it, look it up, and only then set it aside.
   check("and offers the explanation before the off switch",

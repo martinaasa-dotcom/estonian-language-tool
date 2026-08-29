@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -34,7 +34,7 @@ if (!isLocal && !process.argv.includes("--force")) {
   process.exit(1);
 }
 
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 const page = await (await browser.newContext()).newPage();
 
 // Snapshot the live state, then export it.

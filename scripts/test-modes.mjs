@@ -7,10 +7,10 @@
  *   npm run demo && npm run dev
  *   node scripts/test-modes.mjs
  */
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 
 const B = process.env.BASE_URL ?? "http://localhost:3000";
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 950 } });
 const page = await ctx.newPage();
 

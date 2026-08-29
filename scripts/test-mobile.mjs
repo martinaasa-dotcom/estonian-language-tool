@@ -10,7 +10,7 @@
  *   npm run demo && npm run dev
  *   node scripts/test-mobile.mjs
  */
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 
 const B = process.env.BASE_URL ?? "http://localhost:3000";
 
@@ -18,7 +18,7 @@ const B = process.env.BASE_URL ?? "http://localhost:3000";
 const PHONES = [360, 390, 430];
 const WIDE = [768, 1280];
 
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 
 let failures = 0;
 const check = (label, ok, extra = "") => {

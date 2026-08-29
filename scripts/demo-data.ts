@@ -10,7 +10,24 @@ const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("replace this learner's cards, tasks and review history with invented data"),
 });
 
-/** A spread of plausible review histories — some clean, some with a lapse. */
+/*
+  A spread of plausible review histories: some clean, some hard, and one that
+  is a genuine leech.
+
+  THE LAST TWO ARE NOT DECORATION. Every history here used to settle at zero
+  lapses, because FSRS only counts one when a card is forgotten *after* it has
+  been learned, and none of these ever got that far. So a demo deck two months
+  deep had not one difficult card in it, `stickingNote` had nothing to name,
+  and the Sticking points panel on /progress rendered empty on the only
+  fixture anybody ever looks at it with. That is not what a real deck looks
+  like: everybody has three or four words that will not stay put.
+
+  `LAPSE_THRESHOLD` is 4 (lib/stats/sticking.ts), and reaching it takes a card
+  that graduates and is then forgotten four separate times, which is what the
+  last two spell out. Checked against the scheduler rather than guessed: they
+  settle at exactly 4 lapses over 11 and 10 reviews. Shortening either one
+  drops it under the threshold and empties the panel again.
+*/
 const HISTORIES: number[][] = [
   [3, 3, 2, 3, 4, 3],
   [3, 1, 3, 3, 2],
@@ -18,6 +35,8 @@ const HISTORIES: number[][] = [
   [4, 4, 3],
   [2, 3, 1, 3, 3, 3],
   [3],
+  [3, 3, 3, 1, 3, 1, 3, 1, 3, 1, 3],
+  [3, 3, 1, 3, 1, 3, 1, 3, 1, 3],
 ];
 
 async function main() {

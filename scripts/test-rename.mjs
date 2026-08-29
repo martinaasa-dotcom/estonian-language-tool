@@ -1,8 +1,8 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 const B = "http://localhost:3000";
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 const page = await (await browser.newContext()).newPage();
 
 await page.goto(`${B}/`, { waitUntil: "networkidle" });
