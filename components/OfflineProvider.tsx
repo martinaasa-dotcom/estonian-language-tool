@@ -152,7 +152,7 @@ function OfflineBanner({ online, pending, syncing }: {
       aria-live="polite"
       /* `bottom-notice` clears the mobile dock by a measured height rather than
          a typed offset, so this cannot drift out from under the nav bar. */
-      className="bottom-notice fixed inset-x-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-[13px] md:left-auto md:right-3 md:inset-x-auto md:rounded-md"
+      className="bottom-notice fixed inset-x-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-sm md:left-auto md:right-3 md:inset-x-auto md:rounded-md"
       style={{
         background: online ? "var(--accent-soft)" : "var(--raised)",
         color: online ? "var(--accent)" : "var(--ink-2)",

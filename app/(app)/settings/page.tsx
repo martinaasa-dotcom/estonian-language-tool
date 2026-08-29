@@ -278,8 +278,9 @@ export default async function SettingsPage() {
               needs no key.
             </p>
             <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-              A free Ekilex API key from the Institute of the Estonian Language extends search to the
-              full Estonian lexicon, and stores each word it fetches so the next lookup is local.
+              Words beyond the built-in dictionary are fetched from Ekilex, at the Institute of the
+              Estonian Language, and stored as they arrive so the next lookup is local and works
+              offline. Nothing to set up: it is part of the app.
             </p>
           </Card>
         </section>

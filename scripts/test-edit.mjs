@@ -1,7 +1,8 @@
 import { launchChromium } from "./lib/browser.mjs";
-const B = "http://localhost:3000";
-let failures = 0;
-const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
+import { baseUrl, suite } from "./lib/checks.mjs";
+const B = baseUrl();
+// Floor: 9, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Editing", { floor: 9 });
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
 const errors = [];
@@ -49,8 +50,26 @@ check("renaming updates the entry instead of duplicating it",
   kohvEntries.map(l => l.lemma).join(", ") || "none found");
 
 const renamedCards = data.cards.filter(c => c.lexemeId === kohvEntries[0]?.id);
+/*
+  A rename rewrites the cards that *show the headword*, and only those.
+
+  This used to assert that every card for the entry mentioned the new lemma,
+  which held while a word had two cards, recognition and production, both of
+  which are the headword against its translation. It stopped holding when the
+  dictionary grew example sentences: a cloze card's front is an attested
+  Estonian sentence and its back is an inflected form, and neither names the
+  headword. Rewriting one to match a rename would be the app editing Estonian,
+  which is the rule the whole project is built on.
+
+  So the rule, stated properly: no card is left showing the old headword, and
+  the new one is actually on the cards that carry a headword. Exact equality
+  rather than a substring, because "kohvi" contains "kohv".
+*/
+const headword = (c) => [c.front, c.back];
 check("its cards were rewritten to match, not left stale",
-  renamedCards.length > 0 && renamedCards.every(c => `${c.front}${c.back}`.includes("kohvjook")),
+  renamedCards.length > 0 &&
+    renamedCards.some(c => headword(c).includes("kohvjook")) &&
+    !renamedCards.some(c => headword(c).includes("kohv")),
   renamedCards.map(c => `${c.front}→${c.back}`).join(" | ").slice(0, 90));
 check("scheduling was not reset by the correction",
   renamedCards.every(c => typeof c.stability === "number"), `${renamedCards.length} cards`);
@@ -69,6 +88,5 @@ await page.waitForTimeout(2000);
 check("the entry can be corrected back again",
   (await page.locator('h2[lang="et"]').innerText().catch(() => "")) === "kohv");
 
-console.log(failures === 0 ? "\nEditing verified." : `\n${failures} failed.`);
 await browser.close();
-process.exit(failures ? 1 : 0);
+done();

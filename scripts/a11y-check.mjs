@@ -8,25 +8,21 @@
  * Not a substitute for axe — it is the subset the codebase promised, checked on
  * the pages this branch added, where a promise is easiest to forget.
  */
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const BASE = process.env.BASE_URL ?? "http://localhost:3000";
+const BASE = baseUrl();
 const ROUTES = [
   "/", "/review/write", "/review/government", "/review/cloze",
   "/review/clinic", "/words", "/week", "/settings", "/privacy", "/terms",
   "/assess", "/assess?take=1", "/guide",
 ];
 
-const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-});
+const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
-};
+// Floor: measured 42 in dev mode, which is the mode its header documents.
+const { check, done } = suite("Accessibility", { floor: 42 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -96,6 +92,5 @@ const langMarked = await page.evaluate(() =>
   document.querySelectorAll("main [lang='et']").length);
 check("Estonian text is marked lang=et", langMarked > 0, `${langMarked} elements`);
 
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

@@ -26,7 +26,7 @@ export async function UsagePanel({ ownerId }: { ownerId: string }) {
             {" of "}
             <span className="tnum">{limits.dailyCallsPerUser}</span> questions
           </p>
-          <p className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="tnum text-sm" style={{ color: "var(--ink-3)" }}>
             {formatMicros(micros)} of {formatMicros(limits.dailyMicrosPerUser)}
           </p>
         </div>
@@ -49,13 +49,13 @@ export async function UsagePanel({ ownerId }: { ownerId: string }) {
           />
         </div>
 
-        <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
           Only the tutor is metered. Review, the dictionary and your deck have no limit and keep
           working when this runs out.
         </p>
 
         {!audioCacheIsDurable() && (
-          <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
             Pronunciation audio is cached on local disk. Set{" "}
             <code>SUPABASE_SERVICE_ROLE_KEY</code> to share one cache across every instance and
             stop re-asking TartuNLP for words it has already spoken.

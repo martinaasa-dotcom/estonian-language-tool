@@ -612,7 +612,7 @@ function Comparison() {
 const FAQS = [
   [
     "Do I need to pay for anything?",
-    "No. Sign in with Google and the dictionary, flashcards, audio, sprints and exports are all there. The AI tutor is the one part that needs an API key, and the default provider it is built around has a genuinely free model.",
+    "No, and there is nothing to set up either. Sign in with Google and the dictionary, flashcards, audio, every practice mode and your exports are all there, with no limit on any of them. Anu, the tutor, is the one part that costs this site money to run, so she answers ten questions a day per person. Everything else is unmetered.",
   ],
   [
     "Where do the Estonian forms come from?",

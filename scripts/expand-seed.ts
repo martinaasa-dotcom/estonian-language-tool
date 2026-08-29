@@ -48,8 +48,17 @@ const CATEGORIES: { category: string; pos: string }[] = [
   { category: "Estonian_adverbs", pos: "OTHER" },
 ];
 
-/** How many requests may be in flight. Two public APIs, neither of them ours. */
-const CONCURRENCY = 3;
+/**
+ * How many requests may be in flight. Two public APIs, neither of them ours.
+ *
+ * Five is where this settled. It was three, which was polite and would have
+ * taken four hours; the earlier trouble was never the rate but that a
+ * rate-limited answer was written into the cache as a permanent miss. With
+ * that fixed a refusal costs a backoff and a retry rather than a lost word, so
+ * a little more pressure is self-correcting. The run reports how often a
+ * source would not answer, and if that number climbs this is the knob.
+ */
+const CONCURRENCY = 5;
 
 export interface ExpandedEntry {
   lemma: string;
@@ -301,7 +310,7 @@ async function main() {
           `no entry ${skipped}, source unavailable ${failed}`,
         );
       }
-      await sleep(300);
+      await sleep(120);
     }
   }
 

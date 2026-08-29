@@ -1,13 +1,14 @@
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 import { PrismaClient } from "@prisma/client";
 import { requireLocalDatabase } from "./lib/local-db.mjs";
 
-const B = "http://localhost:3000";
+const B = baseUrl();
 const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("delete a dictionary entry and re-fetch it"),
 });
-let failures = 0;
-const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
+// Floor: ten checks, all unconditional.
+const { check, done } = suite("Ekilex lookup", { floor: 10 });
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1200 } })).newPage();
 const errors = [];
@@ -56,5 +57,4 @@ check("its hand-written English is kept", (await page.getByText(/leg, foot/).cou
 check("no page errors", errors.length === 0, errors.join("; "));
 await browser.close();
 await prisma.$disconnect();
-console.log(failures === 0 ? "\nEkilex integration verified." : `\n${failures} failed.`);
-process.exit(failures ? 1 : 0);
+done();

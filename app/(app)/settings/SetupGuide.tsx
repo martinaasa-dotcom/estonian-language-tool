@@ -11,7 +11,15 @@ const STEPS = [
   { text: "Stop the app (Ctrl-C in the terminal) and run ", code: "npm run dev", after: " again. Anu will be waiting." },
 ];
 
-const SNIPPET = 'OPENROUTER_API_KEY="paste-your-key-here"\nOPENROUTER_MODEL="z-ai/glm-5.2:free"';
+/*
+  The key and nothing else. This used to pin OPENROUTER_MODEL to one free
+  model, which reads as helpful and is the opposite: setting it replaces the
+  whole free chain with that single name, so the learner who follows this
+  guide opts out of the fallback in the act of setting Anu up. Free models are
+  rate-limited hard and retired without notice, and both were true of the one
+  named here within a day of it being written.
+*/
+const SNIPPET = 'OPENROUTER_API_KEY="paste-your-key-here"';
 
 export function SetupGuide() {
   const [copied, setCopied] = useState(false);
@@ -20,7 +28,8 @@ export function SetupGuide() {
     <div>
       <p className="text-sm" style={{ color: "var(--ink-2)" }}>
         Anu needs an API key to answer questions. Everything else (the dictionary, your cards,
-        audio) works without one. Here is the whole process:
+        audio) works without one. The key is free and needs no card: Anu asks free models, and
+        moves to the next one when the first is busy. Here is the whole process:
       </p>
 
       <ol className="mt-4 flex flex-col gap-3">

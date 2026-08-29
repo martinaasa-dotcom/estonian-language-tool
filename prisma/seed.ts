@@ -4,6 +4,7 @@ import { VERBS } from "./data/verbs";
 import { ADJECTIVES, PHRASES } from "./data/other";
 import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/advanced";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
+import { writeExpanded } from "./expanded";
 import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
 
 const prisma = new PrismaClient();
@@ -69,7 +70,19 @@ async function main() {
   }
 
   const written = await write(dedupe(entries));
-  console.log(`Seeded ${written.lexemes} entries and ${written.forms} forms.`);
+  console.log(`Seeded ${written.lexemes} hand-written entries and ${written.forms} forms.`);
+
+  /*
+    Then the built dictionary, which is much larger and only ever adds. It runs
+    second so that a hand-written entry is already present and wins by being
+    there: those glosses were chosen for a learner ("person, human"), while a
+    built one is Wiktionary's first sense and is occasionally the wrong
+    homonym.
+  */
+  const expanded = await writeExpanded(prisma);
+  if (expanded.added > 0) {
+    console.log(`Added ${expanded.added} entries and ${expanded.forms} forms from Ekilex and Wiktionary.`);
+  }
 }
 
 /**
