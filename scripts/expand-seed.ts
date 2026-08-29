@@ -206,6 +206,13 @@ async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> 
   const senses = await englishSenses(lemma);
   const short = senses[0];
   if (!short) return null;
+  /*
+    A "gloss" that is punctuation and nothing else. Two of these reached the
+    dictionary as the single word `.`, from Wiktionary entries whose Estonian
+    definition line was a bare cross reference. A flashcard cannot be answered
+    with a full stop, and the scheduler would have drilled it.
+  */
+  if (short.replace(/[^\p{L}\p{N}]/gu, "").length < 2) return null;
 
   return {
     lemma,
