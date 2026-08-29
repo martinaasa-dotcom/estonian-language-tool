@@ -301,6 +301,35 @@ a meaning and the answer is Estonian, which is a production test whatever the mi
 appears, this is where it plugs in. *Rejected:* comparing waveforms or durations locally — it
 measures the wrong thing and dresses it as a score.
 
+*Re-tested 2026-08-29, and the decision survived on measurement rather than on the old assumption.*
+The availability half of the problem statement above is now out of date: TartuNLP do publish a
+speech-to-text service, and Groq serve `whisper-large-v3` on a free key, which takes Estonian audio
+happily. So the question stopped being "is there a recogniser" and became "is it good enough to
+tell somebody their own pronunciation was wrong", and `scripts/measure-asr.mjs` answers it.
+
+The method is deliberately generous. Every utterance is a sentence the dictionary already carries
+from Ekilex, spoken by the University of Tartu's own Estonian voice: clean, native, correctly
+stressed, no accent and no background noise. A learner's recording is harder than this in every
+respect.
+
+**Result: a 14.6% word error rate, with 5 of 25 sentences transcribed exactly.** Four sentences in
+five came back with at least one word wrong, on audio a native voice produced perfectly. Worse than
+the rate is where the errors fall: `Poiss` heard as `Pois` and `majja` as `maija`, which is
+consonant length, the single thing `/review/pairs` exists to teach; `abikaasaga` as `abigaasaga`
+and `räägin` as `rääkin`, which is voicing; `Nõukogude aeg` as `Nõukogu taeg`, which is a word
+boundary. The recogniser is weakest exactly where the learner is, and a learner cannot tell the
+machine's mistake from their own.
+
+So showing a transcript beside the target would report perfect pronunciation as a mistake most of
+the time, and would do it most often on the distinctions the app exists to teach. That is worse
+than no feature: it teaches a learner to distrust themselves when they were right. The decision is
+unchanged and the mode stays comparison-only.
+
+**This is now re-checkable rather than re-arguable.** Run `node scripts/measure-asr.mjs` against a
+newer model when one appears. The bar it prints is a 5% word error rate, which is the point at
+which a transcript could be shown with its caveat stated; anything above that stays out of the
+learner's way. Nothing about this decision needs to be taken on trust again.
+
 **ADR-019 — A class is a view over what learners already own.**
 *Context:* the app is used in real Estonian courses, where the teacher's actual question is "who is
 keeping up" and the students' is "where is this week's homework". *Decision:* `Classroom` +

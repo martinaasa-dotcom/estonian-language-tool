@@ -44,6 +44,34 @@ learner's correction and a live Ekilex fetch all win over it. Regenerating is re
 caches every answer, and a source that will not answer is never written down as a miss: that bug
 cost four fifths of the dictionary on the first run and looked like a clean result.
 
+**A gloss is the answer side of a flashcard, so a wrong one is drilled rather than displayed.**
+`npm run audit:glosses` re-runs the parser over every entry's own Wiktionary page and prints
+what disagrees; `--write` applies it. The first systematic pass over A1 to B1 corrected 25 of
+2,164, and four of those were a different word rather than a different sense: `lamp` was being
+taught as "random", `oktoober` as "hard hat", `ooper` as "opera house", `rida` as "many, much".
+One cause under all of them. `{{l|en|lamp}}` renders as the word "lamp", `cleanWikitext` deleted
+balanced templates wholesale, and an emptied line sent the picker to the next sense, which on a
+page with more than one etymology belongs to another word. Where the template sat mid-line the
+gloss survived with a hole in it instead, which is worse: `segama` read "to , to , to" and `vana`
+read "an person", and nothing watching this file could tell a hole from a short gloss. Both
+shapes are invariants now. **Only an English-tagged link is ever unwrapped** — `{{m|et|kohta}}`
+is an Estonian word quoted inside an English note, and unwrapping it by a language-blind rule
+would write Estonian into a gloss (ADR-005). That guard has its own invariant, and it took two
+attempts: the first quoted an Estonian word with no diacritic in it inside a trailing
+parenthetical the parser strips anyway, so deleting the guard left the check passing.
+
+**Which sense a learner needs is not a judgement this pipeline makes.** Demoting the senses
+Wiktionary marks `rare`, `obsolete` or `dialectal` was tried and reverted. It corrected `kõrb`,
+whose everyday "desert" sits under a later etymology than a `rare` sense, and it broke more than
+it fixed: `soldat` is tagged `obsolete` on "soldier" and would have been drilled as "jack",
+`vats` is `dialectal` on "belly" and became "rumen", `raisk` is `dated` on "carrion" and landed
+on a vulgar usage note. Sense order stays the page's own, and the entries the labels get wrong
+are for a person to correct, which the dictionary is editable for. The course's authored glosses
+in `prisma/data/harvested.ts` were checked against the same references and none needed
+correcting: of the 684 with an independent English gloss, 657 agree outright and all 27 that do
+not are a choice between synonyms. Those are authored rather than parsed, so no fault above can
+reach them, which is the argument for the division of labour and not for skipping the check.
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
@@ -333,7 +361,14 @@ is now decided when it opens and carried until it ends.
 this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
 individual's deck, searches or answer history. Do not widen it. (ADR-019.)
 
-**Never score pronunciation.** There is no verified Estonian speech recogniser available here.
+**Never score pronunciation.** Not because none is reachable, which stopped being true, but
+because the reachable one is not good enough and that was measured rather than assumed.
+`scripts/measure-asr.mjs` runs `whisper-large-v3` over sentences the dictionary already carries,
+spoken by a native synthetic voice: clean audio, no accent, no noise, which is easier than any
+learner's recording. It comes back at a 14.6% word error rate, and its mistakes land on consonant
+length (`Poiss` as `Pois`), voicing (`abikaasaga` as `abigaasaga`) and word boundaries, which is
+precisely where an Estonian learner is weakest. Showing that transcript would report correct
+pronunciation as an error four times in five. Re-run the script before re-opening the question.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 The level check has a speaking section for the same reason it has the other three, and it obeys the
 same rule: it collects the learner's own rating, reports it as theirs, and contributes **nothing**
@@ -448,6 +483,7 @@ npm run typecheck        # tsc --noEmit
 npm run test             # unit tests (Vitest), hermetic: no database, no network
 npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
+npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
@@ -541,6 +577,17 @@ offline banner, which is up whether or not anything was graded. It answers with 
 itself advertises now, and asserts a card was answered before asserting anything about the queue,
 because every check after that one reads as an app fault when the answer is no.
 
+**And it now runs in CI, which is the only reason any of that is worth writing down.** It did not,
+and it was red on main for an unknown length of time with a real fault behind it. The page cache is
+filled as a side effect of the worker serving a navigation, and a worker does not serve the
+navigation that installs it: a first visit fetched the page, the worker installed behind it, and
+`clients.claim()` took over a client whose own page had never been seen. Offline and reload at that
+point and there was nothing to match, so somebody who opened the app for the first time on the way
+to the bus stop got "this screen needs a connection" for the whole journey and a working app on the
+way home. `warmOpenPages` caches the pages already open at the moment the worker takes over. Every
+open window rather than a hardcoded `/review`, because the promise is "the page you were last on
+opens again" rather than "one route is special".
+
 CI runs typecheck, lint, the unit suite, the invariants, integration tests against a real
-Postgres, the production build, the credential scan and the phone. It is the enforcement behind
+Postgres, the production build, the credential scan, the phone and the offline smoke test. It is the enforcement behind
 the rules above: do not add a rule without one.
