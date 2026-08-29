@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { emptyScheduling, grade, humaniseInterval, previewIntervals } from "./scheduler";
+import {
+  emptyScheduling, grade, humaniseInterval, previewIntervals, type SchedulingState,
+} from "./scheduler";
 
 describe("FSRS scheduling", () => {
   const now = new Date("2026-01-01T10:00:00Z");
@@ -62,5 +64,56 @@ describe("humaniseInterval", () => {
     [90 * 86400 * 1000, "3mo"],
   ])("formats %i ms as %s", (ms, expected) => {
     expect(humaniseInterval(new Date(now.getTime() + ms), now)).toBe(expected);
+  });
+});
+
+describe("a card whose last review is in the future", () => {
+  /*
+    FSRS rejects a negative delta_t outright, and that throw reaches a learner
+    as a Server Action 500 the review screens swallow: the grade is dropped and
+    nothing on screen says so. Once a card has a future `lastReview` every later
+    attempt to grade it fails, permanently. A wrong clock on a device that
+    graded offline, a backup restored across timezones, or a fixture generating
+    history around "now" all produce one.
+  */
+  const future = new Date("2026-08-30T04:00:00.000Z");
+  const now = new Date("2026-08-29T17:00:00.000Z");
+
+  function cardLastReviewedInTheFuture(): SchedulingState {
+    return {
+      ...emptyScheduling(now),
+      state: 2,
+      reps: 12,
+      stability: 8,
+      difficulty: 5,
+      lastReview: future,
+      due: future,
+    };
+  }
+
+  it("grades rather than throwing", () => {
+    expect(() => grade(cardLastReviewedInTheFuture(), 3, now)).not.toThrow();
+  });
+
+  it("treats it as no time having passed, not as negative time", () => {
+    const next = grade(cardLastReviewedInTheFuture(), 3, now);
+    expect(next.elapsedDays).toBe(0);
+    // The next review is scheduled from the later of the two moments, so it
+    // cannot land before the review it follows.
+    expect(next.due.getTime()).toBeGreaterThanOrEqual(future.getTime());
+  });
+
+  it("leaves an ordinary card alone", () => {
+    const past = new Date("2026-08-20T09:00:00.000Z");
+    const ordinary: SchedulingState = {
+      ...emptyScheduling(past), state: 2, reps: 5, stability: 6, difficulty: 5,
+      lastReview: past, due: now,
+    };
+    const next = grade(ordinary, 3, now);
+    expect(next.elapsedDays).toBeGreaterThan(0);
+  });
+
+  it("previews intervals for one instead of throwing", () => {
+    expect(() => previewIntervals(cardLastReviewedInTheFuture(), now)).not.toThrow();
   });
 });

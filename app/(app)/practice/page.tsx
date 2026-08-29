@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  CircleHelp, Ear, GraduationCap, Grid2x2, Headphones, Mic, PenLine, Puzzle, Scale,
+  CircleHelp, ClipboardCheck, Ear, GraduationCap, Grid2x2, Headphones, Mic, PenLine, Puzzle, Scale,
   ScissorsLineDashed, Stethoscope, Target, Zap,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -56,6 +56,18 @@ export default async function PracticePage() {
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
 
   const modes = [
+    {
+      href: "/exam",
+      icon: ClipboardCheck,
+      tone: "blush",
+      title: "Mock exam",
+      subtitle: "The state paper",
+      body:
+        "Four parts, sixty percent to pass, and a zero anywhere fails the whole thing. Sit an " +
+        "imitation of the A2, B1, B2 or C1 paper and find out which one you could pass today.",
+      meta: "Timed, all four skills",
+      primary: false,
+    },
     {
       href: "/review",
       icon: GraduationCap,

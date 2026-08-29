@@ -264,6 +264,48 @@ model UsageEvent {
   @@index([ownerId, createdAt])
 }
 
+/// One sitting of a mock state examination.
+///
+/// PROGRESS IS DERIVED, NEVER STORED, AND THIS IS ONE OF THE FEW EXCEPTIONS
+/// THE RULE ALREADY ALLOWS: a value no log can reconstruct. The review log
+/// records that a card was answered, not that it was answered under a clock, in
+/// a paper of four parts, with the answers withheld until the end. Rebuild the
+/// deck from the log and every one of those facts is gone, along with the only
+/// number a learner deciding whether to book a real sitting actually wants.
+///
+/// Append-only in practice and treated as such: a sitting is written once, when
+/// the paper is submitted, and never edited. An abandoned paper writes nothing
+/// at all (ADR-016), which is why there is no row created at the start.
+///
+/// The grades the paper produced go to `Review` like every other mode's, so the
+/// scheduler sees the sitting even though this table is the only place the
+/// sitting itself is recorded.
+model ExamAttempt {
+  id      String @id @default(uuid())
+  ownerId String
+  /// A1 A2 B1 B2 C1 C2. The four the state examines, and the two this app adds.
+  level   String
+  /// The seed the paper was built from, so the same questions can be rebuilt.
+  seed    String
+
+  /// Weighted percentage, 0 to 100. Denormalised off `result` so the hub can
+  /// rank six levels without parsing six JSON blobs.
+  pct    Int
+  passed Boolean
+
+  /// The marked paper: per part, per task, per item, with what was expected and
+  /// what was given. JSON because its shape belongs to `lib/exam/score.ts` and
+  /// putting it in columns would be a second schema to keep in step with the
+  /// first. Nothing queries inside it.
+  result String
+
+  startedAt  DateTime @default(now())
+  finishedAt DateTime @default(now())
+
+  @@index([ownerId, finishedAt])
+  @@index([ownerId, level])
+}
+
 /// One page somebody photographed, after they confirmed what was on it.
 ///
 /// THE PICTURE IS NOT HERE, AND THAT IS THE POINT. A photograph of homework
@@ -318,9 +360,9 @@ model Assessment {
   /// Scored questions answered. Speaking is not among them, by design.
   answered   Int     @default(0)
 
-  reading   String?
-  listening String?
-  writing   String?
+  reading      String?
+  listening    String?
+  writing      String?
   /// The learner's own rating of their speaking, 1 to 4, never a score of ours.
   /// There is no verified Estonian speech recogniser available here (ADR-018).
   speakingSelf Float?

@@ -93,8 +93,8 @@ function formLabel(form: { formType: string; morphCode: string | null; morphName
  * extension: this needs no extension installed, and it folds exactly the six
  * letters Estonian uses rather than everything with a diacritic.
  */
-const FOLD_FROM = "õäöüšž";
-const FOLD_TO = "oaousz";
+export const FOLD_FROM = "õäöüšž";
+export const FOLD_TO = "oaousz";
 
 /**
  * Finds the words a query could match, in the database.
@@ -131,7 +131,7 @@ const FOLD_TO = "oaousz";
  * cannot miss a form the ranker would have matched. The bare query is included
  * because a genitive typed on its own is its own stem.
  */
-function possibleStems(folded: string): string[] {
+export function possibleStems(folded: string): string[] {
   const stems = new Set<string>([folded]);
   for (const { suffix } of CASE_SUFFIXES) {
     if (suffix && folded.endsWith(suffix)) stems.add(folded.slice(0, folded.length - suffix.length));

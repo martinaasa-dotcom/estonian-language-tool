@@ -31,6 +31,10 @@ import { DEFAULT_DAYS_PER_WEEK, normaliseGoals } from "@/lib/assessment/goals";
 import { placement } from "@/lib/assessment/score";
 import type { Band, ItemRef, Response } from "@/lib/assessment/types";
 import { goalsFor, saveGoals, saveResult } from "@/lib/progress/assessment";
+import { REPLAY_BATCH } from "@/lib/offline/outbox";
+import { paperFor as examPaperFor, recordAttempt } from "@/lib/progress/exam";
+import { gradesFrom, markPaper, type Response as ExamResponse } from "@/lib/exam/score";
+import { isExamLevel } from "@/lib/exam/spec";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -1606,4 +1610,78 @@ export async function saveLearningGoals(input: unknown) {
   revalidatePath("/settings");
   revalidatePath("/");
   return { ok: true as const, goals: await goalsFor(ownerId) };
+}
+
+// ─────────────────────────────── Mock examination ─────────────────────────
+
+const ExamResponseSchema = z.union([
+  z.object({ kind: z.literal("chosen"), value: z.string().max(400) }),
+  z.object({ kind: z.literal("typed"), value: z.string().max(400) }),
+  z.object({ kind: z.literal("ordered"), value: z.array(z.string().max(80)).max(24) }),
+  z.object({ kind: z.literal("composed"), value: z.string().max(6000) }),
+  z.object({
+    kind: z.literal("spoken"),
+    recorded: z.boolean(),
+    criteria: z.array(z.boolean()).max(20),
+  }),
+  z.object({ kind: z.literal("unheard") }),
+  z.object({ kind: z.literal("blank") }),
+]);
+
+const ExamSubmissionSchema = z.object({
+  level: z.string().regex(/^[ABC][12]$/),
+  seed: z.string().min(1).max(64),
+  startedAt: z.number().int().nonnegative(),
+  responses: z.record(z.string().max(40), ExamResponseSchema),
+});
+
+/**
+ * Submits a sat paper.
+ *
+ * THE PAPER IS REBUILT SERVER SIDE BEFORE ANYTHING IS MARKED. The client sends
+ * a level, a seed and what the learner answered; it does not send the questions
+ * and it certainly does not send the marks. `buildPaper` is deterministic in
+ * (level, seed, pool), so the server can reconstruct exactly the paper that was
+ * sat and mark it itself. A submission that carried its own score would be a
+ * result anybody could type, and a mock examination whose result is a claim
+ * rather than a measurement is worth nothing to the person sitting it.
+ *
+ * Grades go through `applyGradeBatch`, which is the path every other mode's
+ * grades take (ADR-016), so the scheduler sees the sitting. Only items built on
+ * a word the learner already has a card for produce one, and a question left
+ * blank produces none: running out of time is not evidence that a word was
+ * forgotten.
+ */
+export async function submitExam(input: unknown) {
+  const ownerId = await requireUserId();
+
+  const parsed = ExamSubmissionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: "That submission was malformed." };
+  const { level, seed, startedAt, responses } = parsed.data;
+  if (!isExamLevel(level)) return { ok: false as const, error: "No paper at that level." };
+
+  const paper = await examPaperFor(ownerId, level, seed);
+  const answered = new Map<string, ExamResponse>(
+    Object.entries(responses) as [string, ExamResponse][],
+  );
+  const result = markPaper(paper, answered);
+
+  const grades = gradesFrom(result).slice(0, REPLAY_BATCH);
+  if (grades.length > 0) {
+    const now = Date.now();
+    await applyGradeBatch(ownerId, grades.map((g) => ({
+      id: crypto.randomUUID(),
+      cardId: g.cardId,
+      rating: g.rating as RatingValue,
+      durationMs: 0,
+      reviewedAt: now,
+    })));
+  }
+
+  const began = new Date(Math.min(startedAt, Date.now()));
+  const id = await recordAttempt({ ownerId, level, seed, startedAt: began, result });
+
+  revalidatePath("/exam");
+  revalidatePath("/");
+  return { ok: true as const, id, pct: result.pct, passed: result.passed };
 }

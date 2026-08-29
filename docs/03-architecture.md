@@ -371,3 +371,35 @@ more words (a prefix match hands somebody a card for a word that is not on their
 the image to re-read later (it buys a retry and costs the one promise worth making about somebody's
 homework).
 
+
+**ADR-022 — The mock examination is assembled from the dictionary, marked mechanically, and says
+where it stops imitating.**
+*Context:* the reason most people learn Estonian in the first place is a paper: A2, B1, B2 or C1,
+sat at the Education and Youth Board, sixty percent to pass, and a zero in any one of the four parts
+fails the whole thing however the other three went. An app that teaches Estonian and cannot tell
+somebody which of those they could pass today is answering a smaller question than the one being
+asked. *Problem:* a mock exam is the single most tempting place in this codebase to break ADR-005. A
+model would produce four reading passages and thirty questions in a second, and roughly one form in
+every ten would be invented, and it would be invented inside the one artefact a learner will treat
+as a measurement rather than as practice. *Decision:* three separations, and each one is asserted.
+**The paper is assembled, never written**: `lib/exam/paper.ts` only hides, shuffles and surrounds
+sentences Ekilex recorded, exactly as `lib/estonian/cloze.ts` already does for a single exercise, and
+what the dictionary cannot fill is reported as a shortfall rather than quietly dropped, with each
+part marked out of what was actually set. **The marking is mechanical**: every mark in
+`lib/exam/score.ts` comes from a comparison with a form the dictionary vouches for, so that module
+imports no provider and makes no request; Anu reads a composition back afterwards, on request, and
+her note carries no marks and is withheld whole if it quotes a form nobody can vouch for. **The
+imitation declares itself**: the frame is real and cited (parts, minutes, points, the pass rule),
+the questions are the app's, each task names the official task it stands in for, and the spoken part
+says on every screen that the learner is marking themselves because ADR-018 still holds. The sitting
+grades through `applyGradeBatch` like every other mode (ADR-016), and `ExamAttempt` is the second
+exception to "progress is derived" (ADR-014) for the same reason as a personal best: a sitting under
+a clock, in four parts, with the answers withheld, is not reconstructible from the review log.
+*Consequences:* a paper is only as long as the dictionary can make it, which is visible rather than
+hidden, and a keyless deployment gets a shorter honest paper instead of a full invented one. The
+confidence figure beside each level carries an evidence tier and a ceiling, so a learner with ninety
+reviews cannot be told the app is ninety percent sure of anything. *Rejected:* generating passages
+and questions with a model (ADR-005, and the failure would be invisible precisely where it matters
+most); scoring an unset part as zero (it fails a candidate for a gap in the dictionary, and trips the
+one clause that is supposed to mean "you did not attempt this"); and letting the client send its own
+marks (a result anybody can type is not a measurement).

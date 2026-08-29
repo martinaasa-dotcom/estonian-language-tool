@@ -15,14 +15,22 @@ const BASE = baseUrl();
 const ROUTES = [
   "/", "/review/write", "/review/government", "/review/cloze",
   "/review/clinic", "/words", "/week", "/scan", "/settings", "/privacy", "/terms",
-  "/assess", "/assess?take=1", "/guide",
+  "/assess", "/assess?take=1", "/guide", "/exam",
 ];
 
 const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
-// Floor: measured 42 in dev mode, which is the mode its header documents.
-const { check, done } = suite("Accessibility", { floor: 42 });
+/*
+  Floor: 62, which is what this list reaches: fifteen routes at four checks
+  each, plus the two that run once at the end.
+
+  It was 42 for ten routes, and stayed 42 when the level check added three and
+  the exam hub added a fourth, which left it slack by twelve. A floor that never
+  complains is a floor low enough to miss the thing it exists for, so it is set
+  to the count rather than to a number that happens to pass.
+*/
+const { check, done } = suite("Accessibility", { floor: 62 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });

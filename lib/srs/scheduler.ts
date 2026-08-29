@@ -70,9 +70,34 @@ export function emptyScheduling(now = new Date()): SchedulingState {
   return fromFsrsCard(createEmptyCard(now));
 }
 
+/**
+ * A review can never have happened before the one before it.
+ *
+ * FSRS computes `delta_t` as the days between a card's `lastReview` and the
+ * moment being graded, and rejects a negative one outright: `FSRSValidationError:
+ * Invalid delta_t "-1"`. That throw comes out of a Server Action as a 500, and
+ * the review screens catch it so the round keeps going, which means the learner
+ * sees nothing at all and their grade is quietly dropped.
+ *
+ * A card whose `lastReview` is in the future is not hypothetical. A clock that
+ * was wrong when a grade was taken offline, a backup restored from a machine in
+ * another timezone, or a fixture that generates history around "now" all produce
+ * one, and once a card has one **every future attempt to grade it fails**, for
+ * good, silently. The demo fixture had eight such cards, which is how this
+ * surfaced.
+ *
+ * Clamping the moment up to `lastReview` makes the elapsed time zero, which is
+ * exactly what the scheduler already does for two reviews in the same instant.
+ * Refusing the grade instead would punish the learner for a clock.
+ */
+function notBefore(now: Date, lastReview: Date | null): Date {
+  return lastReview && lastReview > now ? lastReview : now;
+}
+
 /** Applies a grade and returns the card's next scheduling state. */
 export function grade(current: SchedulingState, rating: RatingValue, now = new Date()): SchedulingState {
-  const result = scheduler.next(toFsrsCard(current), now, rating as Grade);
+  const at = notBefore(now, current.lastReview);
+  const result = scheduler.next(toFsrsCard(current), at, rating as Grade);
   return fromFsrsCard(result.card);
 }
 
@@ -81,7 +106,7 @@ export function previewIntervals(current: SchedulingState, now = new Date()): Re
   const out = {} as Record<RatingValue, string>;
   for (const r of [1, 2, 3, 4] as const) {
     const next = grade(current, r, now);
-    out[r] = humaniseInterval(next.due, now);
+    out[r] = humaniseInterval(next.due, notBefore(now, current.lastReview));
   }
   return out;
 }

@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, Camera, CalendarCheck, CalendarRange, ChartNoAxesColumn, Compass, GraduationCap, Languages,
-  Layers, LogOut, Map, MessageCircleQuestion, MoreHorizontal, Moon, School, Settings, Sun, Swords, X, Zap,
+  BookOpen, Camera, CalendarCheck, CalendarRange, ChartNoAxesColumn, ClipboardCheck, Compass,
+  GraduationCap, Languages, Layers, LogOut, Map, MessageCircleQuestion, MoreHorizontal, Moon,
+  School, Settings, Sun, Swords, X, Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -27,6 +28,7 @@ const NAV: NavItem[] = [
   { href: "/learn", label: "Learn", icon: Map, tone: "var(--mint)", primary: true },
   { href: "/review", label: "Review", icon: GraduationCap, tone: "var(--accent)", primary: true },
   { href: "/practice", label: "Practice", icon: Swords, tone: "var(--peach)" },
+  { href: "/exam", label: "Mock exam", icon: ClipboardCheck, tone: "var(--blush)" },
   { href: "/dictionary", label: "Dictionary", icon: BookOpen, tone: "var(--sky)", primary: true },
   { href: "/grammar", label: "Grammar", icon: Languages, tone: "var(--butter)" },
   { href: "/scan", label: "Scan a page", icon: Camera, tone: "var(--sky)" },

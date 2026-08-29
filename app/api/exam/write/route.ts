@@ -1,0 +1,104 @@
+import { requireUserId } from "@/lib/auth/session";
+import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { resolveProvider, TutorError } from "@/lib/tutor/provider";
+import { gradeComposition } from "@/lib/tutor/grader";
+import { verifyComment } from "@/lib/tutor/verify";
+import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { reportError } from "@/lib/observability/report";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+/** Long enough for a C1 text and its diacritics, short enough to bound the bill. */
+const MAX_CHARS = 6000;
+
+/**
+ * Anu reading back an examination composition.
+ *
+ * NOTHING HERE CAN CHANGE A MARK. The composition was scored when the paper was
+ * handed in, against the dictionary, on length and on the words the task named.
+ * This route is a second opinion the learner asked for, and it is shown beside
+ * the mark rather than instead of it.
+ *
+ * Which is also why the failure modes are all quiet. No provider, no quota, no
+ * connection: the result page already has the score and simply says the reading
+ * is unavailable. A grader that could take a page down would be a grader that
+ * could take a result down.
+ *
+ * Charged to the learner rather than to their address, like every other paid
+ * route here: twenty five students on one school network are one IP.
+ */
+export async function POST(request: Request) {
+  const ownerId = await requireUserId();
+
+  const limit = checkRateLimit(`exam-write:${bucketForOwner(ownerId)}`, 6, 60_000);
+  if (!limit.ok) {
+    return rateLimited(limit, "Anu is still reading the last one.");
+  }
+
+  let text: string;
+  let level = "B1";
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    if (typeof body.text !== "string") {
+      return Response.json({ error: "Malformed request." }, { status: 400 });
+    }
+    text = body.text.trim().slice(0, MAX_CHARS);
+    if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
+  } catch {
+    return Response.json({ error: "Malformed request." }, { status: 400 });
+  }
+
+  if (text.split(/\s+/).filter(Boolean).length < 5) {
+    return Response.json({ error: "There is not enough here to read." }, { status: 400 });
+  }
+
+  const config = resolveProvider();
+  if (!config) {
+    return Response.json({ comment: "", rule: "", aiAvailable: false });
+  }
+
+  const decision = await authoriseCall(ownerId, "GRADER");
+  if (!decision.allowed) {
+    return Response.json({
+      comment: "", rule: "", aiAvailable: false, quotaMessage: decision.message,
+    });
+  }
+
+  try {
+    const { graded, usage } = await gradeComposition(config, text, level);
+    void recordUsage({
+      ownerId, kind: "GRADER", provider: config.name, model: config.model,
+      inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+    });
+
+    if (!graded) return Response.json({ comment: "", rule: "", aiAvailable: true });
+
+    /*
+      ADR-005, enforced rather than requested. The allowlist is the learner's own
+      text and nothing else: there is no target word here and no paradigm to
+      quote, so any Estonian form in the reply that the learner did not write is
+      a form the model reached for on its own. The note is withheld whole in that
+      case, because a correction spelled out of a model's own knowledge is the
+      single failure this codebase is organised to prevent.
+    */
+    const verified = verifyComment(graded.comment, [], text, []);
+    if (verified.comment === null && graded.comment.trim()) {
+      reportError(new Error("composition reader introduced an unverified Estonian form"), {
+        at: "api/exam/write/verify",
+        ownerId,
+        extra: { model: config.model, unverified: verified.unverified },
+      });
+      return Response.json({
+        comment: "", rule: "", aiAvailable: true, withheld: verified.unverified,
+      });
+    }
+
+    return Response.json({ comment: verified.comment ?? "", rule: graded.rule, aiAvailable: true });
+  } catch (error) {
+    if (!(error instanceof TutorError)) {
+      reportError(error, { at: "api/exam/write", ownerId, extra: { model: config.model } });
+    }
+    return Response.json({ comment: "", rule: "", aiAvailable: false });
+  }
+}

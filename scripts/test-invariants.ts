@@ -247,6 +247,82 @@ check("every practice mode writes to the same review log", () => {
   }
 });
 
+check("a mock exam is marked by the server, never by the client", () => {
+  /*
+    `buildPaper` is deterministic in (level, seed, pool), which is what lets the
+    submission carry a level, a seed and the answers, and nothing else. The
+    server rebuilds the same paper and marks it. A client that sent its own
+    marks would be a client that could award itself a pass at C1, and a mock
+    examination whose result is a claim rather than a measurement is worth
+    nothing to the person sitting it.
+
+    The shape of the violation, not one spelling: the sitting screen must not
+    import the marker at all.
+  */
+  const session = "app/(app)/exam/[level]/ExamSession.tsx";
+  const source = read(session);
+  assert.equal(
+    /\bmarkPaper\b|\bmarkItem\b|from ["']@\/lib\/exam\/score["']/.test(
+      source.replace(/import type[^;]*;/g, ""),
+    ),
+    false,
+    "the exam session marks its own paper",
+  );
+  const action = read("app/actions.ts");
+  assert.match(action, /markPaper\(/, "submitExam no longer marks the paper on the server");
+  /*
+    The rule is that the paper is rebuilt on the server from its seed, not the
+    name of the function that does it. The placement check landed with a
+    `paperFor` of its own, so the exam's import is aliased; a pattern matching
+    one spelling failed on a merge that changed nothing about the rule.
+  */
+  assert.match(
+    action,
+    /\w*[Pp]aperFor\(\s*ownerId,\s*level,\s*seed\s*\)/,
+    "submitExam no longer rebuilds the paper from (ownerId, level, seed) before marking",
+  );
+});
+
+check("a mock exam writes to the same review log as every other mode", () => {
+  /*
+    ADR-016. An examination is a mode, so the scheduler has to see it: a word
+    the learner missed under a clock is a word they missed. It grades through
+    `applyGradeBatch`, which is the path the offline outbox already uses, rather
+    than writing Review rows of its own.
+  */
+  const action = read("app/actions.ts");
+  const submit = action.slice(action.indexOf("export async function submitExam"));
+  assert.match(submit, /applyGradeBatch\(/, "submitExam does not grade through the shared batch");
+  assert.equal(
+    /prisma\.review\.create/.test(submit),
+    false,
+    "submitExam writes Review rows directly instead of going through the grade path",
+  );
+});
+
+check("nothing about the mock exam decides an answer with a model", () => {
+  /*
+    The rule the whole codebase turns on, applied where it is most tempting to
+    break: a paper is thirty questions, and a model would happily mark them all.
+    Every mark in `lib/exam/score.ts` comes from a comparison with a form the
+    dictionary vouches for. Anu reads the composition back afterwards and her
+    note carries no marks, which is why the route that asks her lives apart from
+    the marking entirely.
+  */
+  const score = read("lib/exam/score.ts");
+  for (const forbidden of ["@/lib/tutor/provider", "@/lib/tutor/grader", "fetch("]) {
+    assert.equal(
+      score.includes(forbidden),
+      false,
+      `lib/exam/score.ts reaches for ${forbidden}, so a model can move a mark`,
+    );
+  }
+  const reader = read("app/api/exam/write/route.ts");
+  assert.match(reader, /verifyComment\(/, "the composition reader skips the form check");
+  assert.match(reader, /authoriseCall\(/, "the composition reader is not metered");
+  assert.match(reader, /checkRateLimit\(/, "the composition reader is not rate limited");
+});
+
 check("a session never lets its questions change under the learner", () => {
   /*
     gradeCard is a Server Action, and Next refreshes the route's Server
@@ -262,14 +338,17 @@ check("a session never lets its questions change under the learner", () => {
     and takes a list prop must pass that prop through useState rather than
     index into it directly.
   */
-  const sessions = COMPONENTS.concat(APP).filter((f) => /\/review\/.*Session\.tsx$/.test(f));
-  assert.ok(sessions.length >= 5, `expected the review sessions, found ${sessions.length}`);
+  const sessions = COMPONENTS.concat(APP).filter((f) => /\/(review|exam)\/.*Session\.tsx$/.test(f));
+  assert.ok(sessions.length >= 6, `expected the review and exam sessions, found ${sessions.length}`);
   for (const file of sessions) {
     const source = read(file);
-    if (!/gradeCards?\b/.test(source)) continue;
+    // The exam session hands its answers to a Server Action rather than grading
+    // per card, and Next refreshes the route after that call just the same, so
+    // the freeze matters here too.
+    if (!/gradeCards?\b|submitExam\b/.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out.
     const props = source.match(/export function \w+\(\{([^}]*)\}/)?.[1] ?? "";
-    const listProp = props.match(/\b(\w+)\s*:\s*initial\w+/) ?? props.match(/\b(cards|prompts|questions|items|gaps|pairs)\b/);
+    const listProp = props.match(/\b(\w+)\s*:\s*initial\w+/) ?? props.match(/\b(cards|prompts|questions|items|gaps|pairs|paper)\b/);
     if (!listProp) continue;
     assert.match(
       source,
@@ -522,8 +601,8 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     while the module under it can be imported without a framework.
   */
   const pure = [
-    "assessment", "estonian", "gamification", "stats", "collections", "time", "offline",
-    "security", "copy", "scan",
+    "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
+    "scan", "security", "stats", "time",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
