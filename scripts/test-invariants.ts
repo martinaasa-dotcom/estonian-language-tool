@@ -619,6 +619,23 @@ check("every browser suite says how many checks it reached", () => {
       `${file} still counts failures on its own instead of using suite()`,
     );
   }
+
+  /*
+    And any other script that keeps its own tally, whatever it is called. The
+    rule above matched `test-*` and `e2e` because those were all there were;
+    `load-test.mjs` arrived as a CI gate with its own `let failures = 0`, and
+    the name is the only reason it slipped through. What makes a script one of
+    these is that it counts checks, so that is what this asks about.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    const source = read(file);
+    if (!/\bcheck\(/.test(source)) continue;
+    assert.equal(
+      /let failures = 0/.test(source),
+      false,
+      `${file} counts failures on its own instead of using suite() from lib/checks.mjs`,
+    );
+  }
 });
 
 check("a check a state cannot reach is waived by number, never by a printed word", () => {
