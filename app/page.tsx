@@ -34,10 +34,10 @@ export default async function TodayPage() {
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
       take: 5,
     }),
-    prisma.review.count({ where: { reviewedAt: { gte: weekAgo }, card: { ownerId } } }),
+    prisma.review.count({ where: { ownerId, reviewedAt: { gte: weekAgo } } }),
     resolveStreak(),
     pickWordOfDay(ownerId),
-    prisma.review.count({ where: { reviewedAt: { gte: startOfToday }, card: { ownerId } } }),
+    prisma.review.count({ where: { ownerId, reviewedAt: { gte: startOfToday } } }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
     prisma.achievement.count({ where: { ownerId } }),
   ]);

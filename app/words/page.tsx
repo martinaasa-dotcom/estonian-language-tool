@@ -123,7 +123,7 @@ export default async function WordsPage() {
 /** Accuracy per grammatical case — the diagnostic that turns a card box into a study plan. */
 async function weakestCases(ownerId: string) {
   const reviews = await prisma.review.findMany({
-    where: { targetCase: { not: null }, card: { ownerId } },
+    where: { ownerId, targetCase: { not: null } },
     select: { targetCase: true, rating: true },
     take: 5000,
   });

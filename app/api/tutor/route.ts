@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { buildSystemPrompt } from "@/lib/tutor/prompt";
 import { resolveProvider, streamReply, TutorError, type ChatMessage } from "@/lib/tutor/provider";
+import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -15,6 +16,21 @@ export async function POST(request: Request) {
     return Response.json(
       { error: "No AI key configured yet. Add one in .env — see Settings for the two-minute version." },
       { status: 503 },
+    );
+  }
+
+  // Checked before a single token is spent. Everything else in the app keeps
+  // working when this refuses; only the tutor stops.
+  const decision = await authoriseCall(ownerId, "TUTOR");
+  if (!decision.allowed) {
+    return Response.json(
+      { error: decision.message, reason: decision.reason },
+      {
+        status: 429,
+        headers: decision.retryAfterSeconds
+          ? { "retry-after": String(decision.retryAfterSeconds) }
+          : undefined,
+      },
     );
   }
 
@@ -46,7 +62,16 @@ export async function POST(request: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of streamReply(config, system, messages)) {
+        const onUsage = (usage: { inputTokens: number; outputTokens: number }) => {
+          // Deliberately not awaited inside the stream: the learner has their
+          // answer, and the ledger write must not hold the response open.
+          void recordUsage({
+            ownerId, kind: "TUTOR", provider: config.name, model: config.model,
+            inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+          });
+        };
+
+        for await (const chunk of streamReply(config, system, messages, onUsage)) {
           full += chunk;
           controller.enqueue(encoder.encode(chunk));
         }

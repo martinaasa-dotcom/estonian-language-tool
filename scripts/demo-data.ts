@@ -19,7 +19,7 @@ async function main() {
   // This script wipes that user's cards, reviews and tasks. The review log is the
   // one thing in this app that cannot be reconstructed, so it refuses to run
   // against a deck that looks real unless you say so explicitly.
-  const existingReviews = await prisma.review.count({ where: { card: { ownerId } } });
+  const existingReviews = await prisma.review.count({ where: { ownerId } });
   if (existingReviews > 20 && !process.argv.includes("--force")) {
     console.error(
       `Refusing to run: this account has ${existingReviews} reviews in it.\n` +
@@ -30,7 +30,10 @@ async function main() {
     process.exit(1);
   }
 
-  await prisma.review.deleteMany({ where: { card: { ownerId } } });
+  // Demo data is the one place a review may be removed: this script exists to
+  // build a throwaway account, and it has already refused above if the deck
+  // looks like anyone's real history.
+  await prisma.review.deleteMany({ where: { ownerId } });
   await prisma.card.deleteMany({ where: { ownerId } });
   await prisma.task.deleteMany({ where: { ownerId } });
 
@@ -66,7 +69,10 @@ async function main() {
       });
       for (const r of reviews) {
         await prisma.review.create({
-          data: { cardId: card.id, rating: r.rating, reviewedAt: r.at, durationMs: 4200, targetCase: c.targetCase },
+          data: {
+            ownerId, cardId: card.id, lexemeId: card.lexemeId, rating: r.rating,
+            reviewedAt: r.at, durationMs: 4200, targetCase: c.targetCase,
+          },
         });
       }
     }
@@ -81,7 +87,7 @@ async function main() {
     ],
   });
 
-  console.log("cards:", await prisma.card.count({ where: { ownerId } }), "reviews:", await prisma.review.count({ where: { card: { ownerId } } }));
+  console.log("cards:", await prisma.card.count({ where: { ownerId } }), "reviews:", await prisma.review.count({ where: { ownerId } }));
   await prisma.$disconnect();
 }
 main();

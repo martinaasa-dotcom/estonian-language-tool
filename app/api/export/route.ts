@@ -14,7 +14,7 @@ export async function GET() {
   const [lexemes, cards, reviews, tasks] = await Promise.all([
     prisma.lexeme.findMany({ include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
-    prisma.review.findMany({ where: { card: { ownerId } }, orderBy: { reviewedAt: "asc" } }),
+    prisma.review.findMany({ where: { ownerId }, orderBy: { reviewedAt: "asc" } }),
     prisma.task.findMany({ where: { ownerId } }),
   ]);
 

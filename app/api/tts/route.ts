@@ -1,26 +1,24 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { NextResponse } from "next/server";
+import { requireUserId } from "@/lib/auth/session";
+import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
+import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
-// Vercel's filesystem is read-only outside /tmp, which is wiped on every cold
-// start — so this is a real cache locally, and a per-instance cache when hosted.
-const CACHE_DIR = process.env.VERCEL
-  ? join(tmpdir(), "kodukeel-audio")
-  : join(process.cwd(), ".data", "audio");
 const MAX_CHARS = 400;
 
 /**
  * Server-side proxy and cache for Estonian speech.
  *
- * A word's pronunciation never changes, so each clip is fetched once per
- * cache lifetime and then served from disk. That also keeps review sessions
- * working with audio when the network is gone, and keeps us a polite
- * consumer of a free academic service.
+ * TartuNLP is a free academic service, so the contract we owe it is: ask once
+ * per distinct phrase, ever. The cache is content-addressed and shared across
+ * instances and users (see `lib/audio/store`), and only a genuine miss is rate
+ * limited — a cache hit costs the upstream service nothing, so charging a
+ * learner's quota for replaying a word they already heard would be wrong.
  */
 export async function POST(request: Request) {
+  const ownerId = await requireUserId();
+
   let text: string;
   let speed = 1;
   try {
@@ -36,10 +34,23 @@ export async function POST(request: Request) {
 
   const speaker = process.env.TTS_SPEAKER ?? "mari";
   const hash = createHash("sha256").update(`${text}|${speaker}|${speed}`).digest("hex");
-  const file = join(CACHE_DIR, `${hash}.wav`);
 
-  const cached = await readFile(file).catch(() => null);
-  if (cached) return wav(cached, "hit");
+  const cached = await readAudio(hash).catch(() => null);
+  if (cached) return wav(cached.body, cached.from);
+
+  // Only now — a miss is the only thing that reaches TartuNLP.
+  const decision = await authoriseCall(ownerId, "TTS");
+  if (!decision.allowed) {
+    return NextResponse.json(
+      { error: "Too many new words to pronounce at once. Give it a few seconds." },
+      {
+        status: 429,
+        headers: decision.retryAfterSeconds
+          ? { "retry-after": String(decision.retryAfterSeconds) }
+          : undefined,
+      },
+    );
+  }
 
   let upstream: Response;
   try {
@@ -58,17 +69,25 @@ export async function POST(request: Request) {
   }
 
   const audio = Buffer.from(await upstream.arrayBuffer());
-  await mkdir(CACHE_DIR, { recursive: true }).catch(() => {});
-  await writeFile(file, audio).catch(() => {}); // A failed cache write must not fail playback.
-  return wav(audio, "miss");
+  await writeAudio(hash, audio);
+
+  // TartuNLP is free, so this costs nothing — it is recorded to make the rate
+  // limit work and to show how heavily we lean on someone else's goodwill.
+  void recordUsage({
+    ownerId, kind: "TTS", provider: "tartunlp", model: speaker,
+    inputTokens: text.length, outputTokens: 0,
+    costMicros: 0, // TartuNLP is free; without this the speaker name prices as an unknown model.
+  });
+
+  return wav(audio, "upstream");
 }
 
-function wav(body: Buffer, cache: "hit" | "miss") {
+function wav(body: Buffer, from: AudioSource) {
   return new NextResponse(new Uint8Array(body), {
     headers: {
       "content-type": "audio/wav",
       "cache-control": "public, max-age=31536000, immutable",
-      "x-tts-cache": cache,
+      "x-tts-cache": from,
     },
   });
 }

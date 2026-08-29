@@ -9,6 +9,7 @@ import { DailyGoalPanel } from "./DailyGoalPanel";
 import { ImportPanel } from "./ImportPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
+import { UsagePanel } from "./UsagePanel";
 
 export const dynamic = "force-dynamic";
 const DEFAULT_DAILY_GOAL = 15;
@@ -19,7 +20,7 @@ export default async function SettingsPage() {
   const [words, cards, reviews, earned, dailyGoalSetting, shieldSetting] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
-    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.review.count({ where: { ownerId } }),
     prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "dailyGoal" } } }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "streakShields" } } }),
@@ -29,8 +30,12 @@ export default async function SettingsPage() {
   const shields = shieldSetting ? Number(shieldSetting.value) || 0 : 0;
 
   return (
-    <Page title="Settings" lead="Everything is stored on this computer. Nothing is uploaded anywhere.">
+    <Page
+      title="Settings"
+      lead="Your deck, your review history and your tasks are yours — export them any time."
+    >
       <div className="flex flex-col gap-8">
+        {provider && <UsagePanel ownerId={ownerId} />}
         <section>
           <SectionTitle>Your data</SectionTitle>
           <Card>
@@ -50,7 +55,9 @@ export default async function SettingsPage() {
             </div>
             <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
               Your review history is the one thing here that can&rsquo;t be recreated. Downloading a
-              copy now and then is worth the ten seconds.
+              copy now and then is worth the ten seconds. See{" "}
+              <a href="/privacy" className="underline underline-offset-2">privacy</a> for what is
+              stored and what leaves the site.
             </p>
             <div className="mt-5 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
               <RestorePanel currentReviews={reviews} />

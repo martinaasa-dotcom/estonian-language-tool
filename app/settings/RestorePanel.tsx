@@ -43,7 +43,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
       setDone(
         mode === "merge"
           ? `Merged in ${result.summary.words} words, ${result.summary.cards} cards and ${result.summary.reviews} reviews. Nothing was removed.`
-          : `Replaced everything with the backup: ${result.summary.words} words, ${result.summary.cards} cards, ${result.summary.reviews} reviews.`,
+          : `Rebuilt the deck from the backup: ${result.summary.words} words and ${result.summary.cards} cards. Review history was left untouched.`,
       );
       setJson(null); setSummary(null); setConfirmText("");
       if (fileRef.current) fileRef.current.value = "";
@@ -99,7 +99,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
                 <span>
                   <span style={{ color: "var(--ink)" }}>Replace everything</span>
                   <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-                    Wipes the current deck first. Only use this to roll back to the backup exactly.
+                    Rebuilds the deck to match the backup exactly. Your review history is kept.
                   </span>
                 </span>
               </label>
@@ -114,8 +114,9 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
               <p className="flex items-start gap-2 text-[13px]">
                 <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />
                 <span>
-                  This deletes the {currentReviews} review{currentReviews === 1 ? "" : "s"} currently
-                  in the app. Review history cannot be recreated. Type <strong>replace</strong> to confirm.
+                  This removes every card and task not in the backup. Your{" "}
+                  {currentReviews} review{currentReviews === 1 ? "" : "s"} are kept — the review log is
+                  append-only and is never deleted by a restore. Type <strong>replace</strong> to confirm.
                 </span>
               </p>
               <input

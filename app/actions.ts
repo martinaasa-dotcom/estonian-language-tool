@@ -86,7 +86,9 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
 
   await prisma.review.create({
     data: {
+      ownerId,
       cardId,
+      lexemeId: card.lexemeId,
       rating,
       durationMs: Math.min(Math.max(durationMs, 0), 600_000),
       stateBefore: card.state,
@@ -320,7 +322,7 @@ export async function resolveStreak() {
   const ownerId = await requireUserId();
   const [reviews, shieldSetting, datesSetting] = await Promise.all([
     prisma.review.findMany({
-      where: { reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) }, card: { ownerId } },
+      where: { ownerId, reviewedAt: { gte: new Date(Date.now() - 400 * 86_400_000) } },
       select: { reviewedAt: true },
     }),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: STREAK_SHIELDS_KEY } } }),
@@ -371,12 +373,12 @@ export async function checkAchievements(session?: { count: number; accuracy: num
   const ownerId = await requireUserId();
   const [streakResult, totalReviews, cardsKnown, totalWords, sprintSetting, caseReviews] = await Promise.all([
     resolveStreak(),
-    prisma.review.count({ where: { card: { ownerId } } }),
+    prisma.review.count({ where: { ownerId } }),
     prisma.card.count({ where: { ownerId, state: 2 } }),
     prisma.lexeme.count(),
     prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: SPRINT_BEST_KEY } } }),
     prisma.review.findMany({
-      where: { targetCase: { not: null }, card: { ownerId } },
+      where: { ownerId, targetCase: { not: null } },
       select: { targetCase: true, rating: true },
       take: 5000,
     }),
@@ -572,7 +574,12 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
       if (mode === "replace") {
         // Scoped to this user's own data only — Lexeme/Form are the shared
         // dictionary and must never be wiped by one person's restore.
-        await tx.review.deleteMany({ where: { card: { ownerId } } });
+        //
+        // Reviews are deliberately not touched. They are append-only facts about
+        // what actually happened, they are the input to FSRS optimisation, and
+        // they are the one thing a restore cannot recreate. A replace rebuilds
+        // the deck; it does not rewrite history. Rows whose card is gone stay as
+        // orphans, which is why Review carries its own ownerId and no foreign key.
         await tx.card.deleteMany({ where: { ownerId } });
         await tx.task.deleteMany({ where: { ownerId } });
       }
@@ -604,13 +611,14 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
       }
 
       // Reviews are append-only, so they are created if absent and never updated.
-      // Only restored when the card they belong to is this user's own.
+      // Always attributed to the person restoring: a backup is your own history,
+      // and the file cannot be allowed to name someone else as the owner.
       for (const raw of backup.reviews) {
         const data = revive(raw, ["reviewedAt"]);
         const exists = await tx.review.findUnique({ where: { id: String(data.id) }, select: { id: true } });
         if (exists) continue;
-        const card = await tx.card.findUnique({ where: { id: String(data.cardId) }, select: { ownerId: true } });
-        if (card?.ownerId === ownerId) await tx.review.create({ data: data as never });
+        data.ownerId = ownerId;
+        await tx.review.create({ data: data as never });
       }
 
       for (const raw of backup.tasks) {
