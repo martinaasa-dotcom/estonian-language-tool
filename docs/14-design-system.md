@@ -71,6 +71,14 @@ every stop clears 4.5:1 against white; `.grad-text` *is* the text, so every stop
 clears 4.5:1 against the page. The previous ramp ran 4.05 → 3.46 → 3.50, which
 made the app's most-pressed button its least legible surface.
 
+`.grad-accent` also runs *horizontally*, at 90deg. A tilted ramp reaches a
+different point at the top and the bottom of a fully round cap, so on a pill it
+leaves a fleck of the far end's hue at the near end: at 112deg the primary
+button carried a little pink on its left edge and a little blue on its right.
+The vertical spread is set by the element's height, so no angle short of
+horizontal avoids it on something short and wide. `.grad-text` keeps its tilt,
+being clipped to letterforms that have no caps to discolour.
+
 ## 2. Tokens
 
 Defined twice in `app/globals.css`, deliberately:
