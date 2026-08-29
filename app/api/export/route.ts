@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,18 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const ownerId = await requireUserId();
+
+  /*
+    An export reads the whole dictionary and every review this learner has
+    ever made, so it is the most expensive query in the app by a wide margin.
+    Six an hour is more than anybody backing up their own work needs and far
+    less than a loop would ask for.
+  */
+  const limit = checkRateLimit(`export:${bucketForOwner(ownerId)}`, 6, 60 * 60_000);
+  if (!limit.ok) {
+    return rateLimited(limit, "That backup is already on its way. Try again shortly.");
+  }
+
   const [lexemes, cards, reviews, tasks] = await Promise.all([
     prisma.lexeme.findMany({ include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),

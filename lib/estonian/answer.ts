@@ -111,8 +111,8 @@ function diacriticNote(typed: string, expected: string): string {
   }
   const unique = [...new Set(missed)];
   return unique.length > 0
-    ? `Almost — it's ${unique.join(" and ")}.`
-    : "Almost — check the letters with dots and tildes.";
+    ? `Almost, it's ${unique.join(" and ")}.`
+    : "Almost, check the letters with dots and tildes.";
 }
 
 /**
@@ -159,7 +159,7 @@ export function checkAnswer(
       return {
         verdict: "typo",
         expected: answer,
-        note: `So close — the word is “${answer}”.`,
+        note: `So close, the word is “${answer}”.`,
         suggestedRating: 2,
       };
     }
@@ -168,7 +168,7 @@ export function checkAnswer(
   return {
     verdict: "wrong",
     expected: primary,
-    note: `Not quite — it's “${primary}”.`,
+    note: `Not quite, it's “${primary}”.`,
     suggestedRating: 1,
   };
 }

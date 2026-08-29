@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 
 /**
  * The design system, checked rather than admired.
@@ -11,7 +11,7 @@ import { chromium } from "playwright";
  * Every number here was a real defect at some point — this file is the record
  * of what was fixed, and the thing that stops it coming back.
  */
-const B = "http://localhost:3000";
+const B = process.env.BASE_URL ?? "http://localhost:3000";
 const PAGES = ["/", "/practice", "/grammar", "/grammar/partitive", "/progress", "/learn",
   "/learn/kodu", "/dictionary?q=tuba", "/words", "/settings", "/review", "/review/dictation",
   "/tasks", "/class", "/tutor", "/welcome"];
@@ -30,7 +30,7 @@ const parse = (s) => {
   return (s.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
 };
 
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const b = await launchChromium();
 const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } });
 const p = await ctx.newPage();
 

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { resolveProvider } from "@/lib/tutor/provider";
+import { resolveProviders } from "@/lib/tutor/provider";
 import { Page } from "@/components/ui";
 import { TutorChat } from "./TutorChat";
 
@@ -12,7 +12,7 @@ export default async function TutorPage({ searchParams }: {
 }) {
   const { q } = await searchParams;
   const ownerId = await requireUserId();
-  const config = resolveProvider();
+  const chain = resolveProviders();
   const history = await prisma.message.findMany({
     where: { ownerId },
     orderBy: { createdAt: "desc" },
@@ -26,8 +26,10 @@ export default async function TutorPage({ searchParams }: {
       lead="Your Estonian teacher. Ask why a case is what it is, check a sentence, or get a stem explained."
     >
       <TutorChat
-        configured={config !== null}
-        providerLabel={config ? `${config.label} · ${config.model}` : null}
+        configured={chain.length > 0}
+        // What is configured, which is not yet what answered. The chat replaces
+        // this with the model the reply actually came from as soon as one has.
+        plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
         history={history.reverse().map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))}
         // Prefilled, not sent. A review card can hand Anu the question a
         // learner just failed to answer; pressing send is still their call,

@@ -1,0 +1,206 @@
+/**
+ * The phone, measured rather than eyeballed.
+ *
+ * Every check here corresponds to a fault that costs somebody something real
+ * on a device, and each was found the same way: by measuring, at the widths
+ * people actually hold. They are borrowed from Upside Lab, which found them
+ * first and paid for them once already.
+ *
+ * Needs the server running and a deck with something in it:
+ *   npm run demo && npm run dev
+ *   node scripts/test-mobile.mjs
+ */
+import { launchChromium } from "./lib/browser.mjs";
+
+const B = process.env.BASE_URL ?? "http://localhost:3000";
+
+/** The widths of phones people are actually holding, plus the two breakpoints. */
+const PHONES = [360, 390, 430];
+const WIDE = [768, 1280];
+
+const browser = await launchChromium();
+
+let failures = 0;
+const check = (label, ok, extra = "") => {
+  if (!ok) failures++;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
+};
+
+async function open(width, height, path) {
+  const ctx = await browser.newContext({
+    viewport: { width, height },
+    hasTouch: width < 768,
+    isMobile: width < 768,
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${B}${path}`, { waitUntil: "networkidle" });
+  return { ctx, page };
+}
+
+// 1 — The root declares no overflow, or every menu hung off the chrome opens
+//     one scroll offset from where it belongs.
+{
+  const { ctx, page } = await open(390, 844, "/");
+  const style = await page.evaluate(() => ({
+    root: getComputedStyle(document.documentElement).overflowX,
+    body: getComputedStyle(document.body).overflowX,
+    bounce: getComputedStyle(document.body).overscrollBehaviorY,
+  }));
+  check("no overflow on the root", style.root === "visible", `html overflow-x: ${style.root}`);
+  check("the body still clips sideways", style.body === "clip", `body overflow-x: ${style.body}`);
+  check("no rubber band on the document", style.bounce === "none", `overscroll-behavior-y: ${style.bounce}`);
+  await ctx.close();
+}
+
+// 2 — Nothing can be dragged sideways, at any width.
+for (const width of [...PHONES, ...WIDE]) {
+  const { ctx, page } = await open(width, 844, "/review");
+  const over = await page.evaluate(() => {
+    window.scrollTo(400, 0);
+    return { wider: document.documentElement.scrollWidth > window.innerWidth, x: window.scrollX };
+  });
+  check(`no horizontal overflow at ${width}`, !over.wider && over.x === 0, JSON.stringify(over));
+  await ctx.close();
+}
+
+// 3 — The bar's clearance is measured, and it is only published while the bar
+//     is drawn. A selector would answer "yes" for a `md:hidden` bar sitting in
+//     the DOM drawing nothing, which is what put a notice up an empty page.
+for (const width of PHONES) {
+  const { ctx, page } = await open(width, 844, "/");
+  const m = await page.evaluate(() => {
+    const bar = document.querySelector("nav.fixed");
+    const rect = bar?.getBoundingClientRect();
+    const clearance = getComputedStyle(document.documentElement).getPropertyValue("--dock-clearance").trim();
+    return {
+      published: document.documentElement.hasAttribute("data-dock"),
+      clearance: parseFloat(clearance),
+      barHeight: rect ? Math.round(rect.height) : 0,
+      gapBelowBar: rect ? Math.round(window.innerHeight - rect.bottom) : null,
+      mainPad: parseFloat(getComputedStyle(document.querySelector("main")).paddingBottom),
+    };
+  });
+  check(`the bar publishes its own height at ${width}`, m.published && m.clearance >= m.barHeight, JSON.stringify(m));
+  check(`the page clears the bar at ${width}`, m.mainPad > m.barHeight, `${m.mainPad}px of padding under a ${m.barHeight}px bar`);
+  check(`the bar sits above the home indicator at ${width}`, m.gapBelowBar > 0, `${m.gapBelowBar}px`);
+  await ctx.close();
+}
+
+for (const width of WIDE) {
+  const { ctx, page } = await open(width, 900, "/");
+  const published = await page.evaluate(() => document.documentElement.hasAttribute("data-dock"));
+  check(`no clearance published at ${width}, where no bar is drawn`, !published);
+  await ctx.close();
+}
+
+// 4 — A notice pinned to the bottom clears whatever is really down there,
+//     rather than carrying its own guess at it.
+{
+  const { ctx, page } = await open(390, 844, "/");
+  const m = await page.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.className = "bottom-notice fixed left-1/2 z-50";
+    probe.style.cssText = "width:120px;height:40px";
+    document.body.appendChild(probe);
+    const p = probe.getBoundingClientRect();
+    const bar = document.querySelector("nav.fixed").getBoundingClientRect();
+    probe.remove();
+    return { clears: p.bottom <= bar.top, noticeBottom: Math.round(p.bottom), barTop: Math.round(bar.top) };
+  });
+  check("a bottom notice clears the bar", m.clears, JSON.stringify(m));
+  await ctx.close();
+}
+
+// 5 — Nothing fixed over moving content carries a backdrop filter. That
+//     pairing re-filters its backdrop every frame of every scroll, and the
+//     bottom band of the window is exactly where new content arrives.
+for (const width of PHONES) {
+  const { ctx, page } = await open(width, 844, "/review");
+  const offenders = await page.evaluate(() =>
+    [...document.querySelectorAll("body *")]
+      .filter((el) => {
+        const s = getComputedStyle(el);
+        if (s.position !== "fixed") return false;
+        const filter = s.backdropFilter || s.webkitBackdropFilter;
+        return Boolean(filter) && filter !== "none";
+      })
+      .map((el) => el.tagName + "." + String(el.className).slice(0, 40)),
+  );
+  check(`nothing fixed carries a backdrop filter at ${width}`, offenders.length === 0, offenders.join(", "));
+  await ctx.close();
+}
+
+// 6 — A thumb is not a mouse pointer.
+for (const path of ["/", "/review", "/dictionary"]) {
+  const { ctx, page } = await open(390, 844, path);
+  const small = await page.evaluate(() =>
+    [...document.querySelectorAll("button, [role=button], a[role=button]")]
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.width > 0 && (r.height < 44 || r.width < 44))
+      .map(({ el, r }) => `${(el.textContent || el.getAttribute("aria-label") || "?").trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`),
+  );
+  check(`every target on ${path} clears 44px`, small.length === 0, small.join(", "));
+  await ctx.close();
+}
+
+// 7 — The pull gesture, driven for real. This is the app's only reload:
+//     installed to a home screen there is no address bar to offer one.
+{
+  const { ctx, page } = await open(390, 844, "/");
+  const client = await ctx.newCDPSession(page);
+  const touch = (type, y) =>
+    client.send("Input.dispatchTouchEvent", {
+      type,
+      touchPoints: type === "touchEnd" ? [] : [{ x: 195, y }],
+    });
+  const ring = () =>
+    page.evaluate(() => {
+      const el = document.querySelector(".ptr");
+      const main = document.querySelector("main");
+      return {
+        opacity: Number(getComputedStyle(el).opacity),
+        moved: Math.round(new DOMMatrix(getComputedStyle(main).transform).m42),
+        working: document.querySelector(".ptr-ring")?.hasAttribute("data-working") ?? false,
+        said: document.querySelector(".ptr [role=status]")?.textContent ?? "",
+      };
+    });
+
+  check("the ring is invisible at rest", (await ring()).opacity === 0);
+
+  await touch("touchStart", 120);
+  for (const y of [126, 145, 175, 205, 235]) {
+    await touch("touchMove", y);
+    await page.waitForTimeout(30);
+  }
+  const pulling = await ring();
+  check("the page follows the finger", pulling.moved > 0 && pulling.opacity > 0, JSON.stringify(pulling));
+  check("and it follows it by less than the finger moved", pulling.moved < 235 - 120, `${pulling.moved}px of page for 115px of finger`);
+
+  await touch("touchEnd", 235);
+  await page.waitForTimeout(150);
+  const working = await ring();
+  check("releasing an armed pull starts the work", working.working, JSON.stringify(working));
+  check("and says so out loud", working.said === "Refreshing", working.said);
+
+  await page.waitForTimeout(1600);
+  check("everything goes back to where it was found", (await ring()).moved === 0);
+
+  // A twitch is not a pull, and an upward drag belongs to the page.
+  await touch("touchStart", 120);
+  await touch("touchMove", 127);
+  await touch("touchEnd", 127);
+  await page.waitForTimeout(120);
+  check("a twitch does nothing", (await ring()).opacity === 0);
+
+  await touch("touchStart", 400);
+  for (const y of [380, 340, 300]) await touch("touchMove", y);
+  const up = await ring();
+  await touch("touchEnd", 300);
+  check("an upward drag is a scroll, not a pull", up.opacity === 0 && up.moved === 0, JSON.stringify(up));
+
+  await ctx.close();
+}
+
+await browser.close();
+console.log(failures === 0 ? "\nAll mobile checks passed." : `\n${failures} check(s) failed.`);
+process.exit(failures === 0 ? 0 : 1);

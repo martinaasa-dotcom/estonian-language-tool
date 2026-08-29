@@ -1,5 +1,6 @@
 import { CommandPalette } from "@/components/CommandPalette";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Shortcuts } from "@/components/Shortcuts";
 import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
@@ -24,8 +25,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen flex-col md:flex-row">
         <Wash />
         <Sidebar />
-        <main id="main" className="flex-1 pb-28 md:pb-0">{children}</main>
+        {/* `dock-pad` is the phone bar's measured height, so the last card in
+            a list is never left under it. See lib/layout/dockClearance.ts. */}
+        <main id="main" className="dock-pad flex-1">{children}</main>
       </div>
+      {/* The browser's own pull to refresh went with `overscroll-behavior-y:
+          none` in globals.css, and there is no setting that keeps one and not
+          the other. Installed to a home screen there is no address bar and so
+          no reload button anywhere in this app. */}
+      <PullToRefresh />
       <CommandPalette />
       {/* `?` anywhere. Documentation with a keyboard binding — see the component. */}
       <Shortcuts />

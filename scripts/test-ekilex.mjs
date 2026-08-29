@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 import { PrismaClient } from "@prisma/client";
 import { requireLocalDatabase } from "./lib/local-db.mjs";
 
@@ -8,7 +8,7 @@ const prisma = new PrismaClient({
 });
 let failures = 0;
 const check = (l, ok, extra = "") => { if (!ok) failures++; console.log(`${ok ? "PASS" : "FAIL"}  ${l}${extra ? "  (" + extra + ")" : ""}`); };
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1200 } })).newPage();
 const errors = [];
 page.on("pageerror", e => errors.push(String(e)));

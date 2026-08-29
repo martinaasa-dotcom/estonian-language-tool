@@ -59,7 +59,7 @@ export default async function PracticePage() {
       tone: "accent",
       title: "Review",
       subtitle: "The daily loop",
-      body: "Everything due, scheduled by FSRS. Type the answer or flip the card — your choice in Settings.",
+      body: "Everything due, scheduled by FSRS. Type the answer or flip the card, your choice in Settings.",
       meta: snapshot.dueCount > 0
         ? `${snapshot.dueCount} due now`
         : snapshot.newCount > 0 ? `${Math.min(snapshot.newCount, 10)} new waiting` : "Nothing due",
@@ -111,7 +111,7 @@ export default async function PracticePage() {
       tone: "sky",
       title: "Listening",
       subtitle: "Ear first",
-      body: "Hear an Estonian word and pick the meaning — the one skill reading practice never builds.",
+      body: "Hear an Estonian word and pick the meaning, the one skill reading practice never builds.",
       meta: "Audio from TartuNLP",
       primary: false,
     },

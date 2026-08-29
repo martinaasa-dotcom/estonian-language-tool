@@ -71,7 +71,7 @@ export default async function TodayPage() {
       title={name ? `${greeting()}, ${name}` : greeting()}
       lead={
         toReview > 0
-          ? `${toReview} card${toReview === 1 ? "" : "s"} waiting — about ${Math.max(1, Math.round(toReview / 6))} minutes of your day.`
+          ? `${toReview} card${toReview === 1 ? "" : "s"} waiting, about ${Math.max(1, Math.round(toReview / 6))} minutes of your day.`
           : "Nothing due right now. A good moment to meet some new words."
       }
     >
@@ -118,7 +118,7 @@ export default async function TodayPage() {
             {snapshot.totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
-                body="Start a unit on the path and you get real cards — full paradigm, audio, and both directions — in one click."
+                body="Start a unit on the path and you get real cards, full paradigm, audio, and both directions, in one click."
                 action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
               />
             ) : toReview > 0 ? (
@@ -127,7 +127,7 @@ export default async function TodayPage() {
               </ButtonLink>
             ) : (
               <Note tone="good">
-                Caught up. Reviewing early doesn&rsquo;t help memory — try a game below, or add new
+                Caught up. Reviewing early doesn&rsquo;t help memory. Try a game below, or add new
                 words for tomorrow.
               </Note>
             )}
@@ -180,7 +180,7 @@ export default async function TodayPage() {
             {summary.shieldsAvailable > 0 && (
               <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
                 <Shield size={13} aria-hidden style={{ color: "var(--accent-deep)" }} />
-                {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked — one
+                {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked, one
                 missed day won&rsquo;t break your streak.
               </p>
             )}
@@ -350,8 +350,8 @@ export default async function TodayPage() {
             </div>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
               {tutorReady
-                ? "Anu explains Estonian grammar — which case to use, why a stem changed, whether your sentence is right."
-                : "Anu can explain which case to use and why a stem changed. She needs a free API key first — about two minutes."}
+                ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
+                : "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."}
             </p>
             <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">
               {tutorReady ? "Ask Anu" : "Set Anu up"} <ArrowRight size={15} aria-hidden />

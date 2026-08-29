@@ -749,7 +749,7 @@ export async function leaveClassroom(classroomId: string) {
     select: { ownerId: true },
   });
   if (classroom?.ownerId === ownerId) {
-    return { ok: false as const, error: "You teach this class — archive it instead of leaving." };
+    return { ok: false as const, error: "You teach this class. Archive it instead of leaving." };
   }
   await prisma.classroomMember.deleteMany({ where: { classroomId, ownerId } });
   revalidatePath("/class");
@@ -796,7 +796,7 @@ export async function assignUnit(classroomId: string, unitId: string, dueAt?: st
   await prisma.task.createMany({
     data: members.map((m) => ({
       ownerId: m.ownerId,
-      title: `${unit.title} — ${unit.subtitle}`,
+      title: `${unit.title}, ${unit.subtitle}`,
       notes: `Set by ${classroom.name}. Open the unit on the learning path, add its words and review them.`,
       tag: "VOCABULARY",
       dueAt: due && !Number.isNaN(due.getTime()) ? due : null,

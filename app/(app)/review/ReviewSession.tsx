@@ -53,7 +53,7 @@ const TONE_SOFT: Record<number, string> = {
 function WhyRow({ card }: { card: ReviewCard }) {
   const question = card.targetCase
     ? `Why is the ${card.targetCase.toLowerCase()} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
-    : `Explain "${card.lemma ?? card.front}" to me — what does it mean and when would an Estonian use it?`;
+    : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
 
   const pill =
     "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px";
@@ -366,7 +366,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
         {drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}
-            body="Case-form cards are optional when you add a word — tick 'Case form' in the dictionary, or start a noun unit on the path, and they will show up here."
+            body="Case-form cards are optional when you add a word, tick 'Case form' in the dictionary, or start a noun unit on the path, and they will show up here."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : drillUnit ? (
@@ -378,12 +378,12 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
         ) : totalCards === 0 ? (
           <Empty
             title="No cards yet"
-            body="Start a unit on the path, or add words from the dictionary. Two cards are made per word — one each direction."
+            body="Start a unit on the path, or add words from the dictionary. Two cards are made per word, one each direction."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : (
           <Empty
-            title="Nothing due — you're caught up"
+            title="Nothing due, you're caught up"
             body={`All ${totalCards} cards are scheduled for later. Reviewing early doesn't help memory, so this is the app telling you to stop.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
@@ -404,9 +404,9 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             {drillCase
-              ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done — these cards keep their normal schedule too.</>
+              ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done, these cards keep their normal schedule too.</>
               : drillUnit
-                ? <>Tubli töö. That&rsquo;s this unit drilled — the cards keep their normal schedule too.</>
+                ? <>Tubli töö. That&rsquo;s this unit drilled, the cards keep their normal schedule too.</>
                 : <>Tubli töö. That&rsquo;s everything due right now.</>}
           </p>
         </div>
@@ -423,7 +423,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
             style={{ background: "var(--hard-soft)", color: "var(--hard-ink)" }}
           >
             {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved on this device while offline.
-            They will be sent the moment you are back online — you can close the tab.
+            They will be sent the moment you are back online. You can close the tab.
           </p>
         )}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -630,7 +630,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
 
           {ask === "intro" && (
             <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
-              First time seeing this one — read it, say it, then tell the scheduler how well it stuck.
+              First time seeing this one, read it, say it, then tell the scheduler how well it stuck.
             </p>
           )}
 
@@ -647,7 +647,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
             </Button>
           ) : ask === "choice" && !chosen ? (
             <p className="text-center text-xs" style={{ color: "var(--ink-3)" }}>
-              Pick the meaning · keys 1–{card.choices?.length ?? 4}
+              Pick the meaning · keys 1, {card.choices?.length ?? 4}
             </p>
           ) : ask === "choice" && chosen === card.back ? (
             <p className="text-center text-sm font-semibold" style={{ color: "var(--good-ink)" }}>Õige!</p>
@@ -668,7 +668,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                     type="button"
                     disabled={busy}
                     onClick={() => void submit(r.value as RatingValue)}
-                    aria-label={intervals ? `${r.label} — next in ${intervals[r.value as RatingValue]}` : r.label}
+                    aria-label={intervals ? `${r.label}, next in ${intervals[r.value as RatingValue]}` : r.label}
                     className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                     style={{
                       outline: suggested ? `2px solid ${TONE[r.value]!}` : "none",
@@ -706,21 +706,21 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           {/* Mirrors the footer button's own branches, so the hint cannot promise a
               key the card in front of you does not answer to. It had two arms for
               four shapes, which told anyone on a multiple-choice card to press
-              Space to flip and 1–4 to grade — where nothing flips and 1–4 picks
+              Space to flip and 1-4 to grade, where nothing flips and 1-4 picks
               an option instead. */}
           {ask === "type"
-            ? (verdict ? "1–4 to grade" : "Enter to check")
+            ? (verdict ? "1-4 to grade" : "Enter to check")
             : ask === "choice" && !chosen
-              ? `1–${card?.choices?.length ?? 4} to pick`
+              ? `1-${card?.choices?.length ?? 4} to pick`
               : !revealed && ask !== "intro"
-                ? "Space to flip · 1–4 to grade"
-                : "1–4 to grade"}
+                ? "Space to flip · 1-4 to grade"
+                : "1-4 to grade"}
         </span>
       </div>
 
       {pendingOffline > 0 && (
         <p className="mt-3 text-center text-xs" style={{ color: "var(--hard-ink)" }}>
-          Offline — {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here and sent when you reconnect.
+          Offline, {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here and sent when you reconnect.
         </p>
       )}
       {verdict && countsAsRecalled(verdict.verdict) && verdict.verdict !== "correct" && (

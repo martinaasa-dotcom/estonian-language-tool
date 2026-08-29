@@ -10,7 +10,7 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Kodukeel — Estonian study",
+    name: "Kodukeel. Estonian study",
     short_name: "Kodukeel",
     description:
       "Learn Estonian by its cases: a dictionary with full paradigms, spaced-repetition flashcards, speed rounds and a grammar tutor.",

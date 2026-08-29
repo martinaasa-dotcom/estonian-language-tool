@@ -145,7 +145,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
       <Page title="Sentences" lead="Put real Estonian sentences back in order.">
         <Empty
           title="No sentences to build yet"
-          body="Sentences come from Ekilex, attached to the words in your deck. Look a few of your words up in the dictionary — the sentences arrive with the paradigm — or add a unit from the path."
+          body="Sentences come from Ekilex, attached to the words in your deck. Look a few of your words up in the dictionary, the sentences arrive with the paradigm, or add a unit from the path."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -240,7 +240,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
             ) : previewing ? (
               <>
                 <p className="label-xs mb-2 flex items-center justify-center gap-1.5" style={{ color: "var(--ink-3)" }}>
-                  <Eye size={12} aria-hidden /> Read it — the words scramble in a moment
+                  <Eye size={12} aria-hidden /> Read it. The words scramble in a moment
                 </p>
                 <p lang="et" className="est text-xl leading-snug" style={{ color: "var(--ink)" }}>
                   {task.et}
@@ -315,7 +315,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
               style={{ background: checked === "right" ? "var(--good-soft)" : "var(--again-soft)" }}
             >
               <p className="label-xs" style={{ color: checked === "right" ? "var(--good-ink)" : "var(--again-ink)" }}>
-                {checked === "right" ? "Õige — exactly right." : "Not the order Estonian uses. It goes:"}
+                {checked === "right" ? "Õige, exactly right." : "Not the order Estonian uses. It goes:"}
               </p>
               <p className="mt-1 flex items-center justify-center gap-2">
                 <span lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{task.et}</span>

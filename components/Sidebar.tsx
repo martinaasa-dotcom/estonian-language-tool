@@ -6,8 +6,9 @@ import {
   BookOpen, CalendarCheck, ChartNoAxesColumn, GraduationCap, Languages, Layers, LogOut, Map,
   MessageCircleQuestion, MoreHorizontal, Moon, School, Settings, Sun, Swords, X, Zap,
 } from "lucide-react";
-import { useEffect, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { useDockClearance } from "@/lib/layout/dockClearance";
 import { createClient } from "@/lib/supabase/client";
 import { Wordmark } from "@/components/brand";
 
@@ -45,8 +46,26 @@ const NAV: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [bar, setBar] = useState<HTMLElement | null>(null);
+
+  // Published on <html> so the offline banner, the install prompt and the
+  // toasts can sit clear of this bar rather than each guessing its height.
+  useDockClearance(bar);
 
   useEffect(() => setMoreOpen(false), [pathname]);
+
+  // Escape closes the sheet. A sheet with no way out but a small X in its
+  // corner is a sheet somebody taps around the edges of.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [moreOpen]);
+
+  const measure = useCallback((node: HTMLElement | null) => setBar(node), []);
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const primary = NAV.filter((n) => n.primary);
@@ -134,16 +153,41 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Phone bar: four destinations plus everything else behind one button, so
-          no tap target is smaller than a thumb. Floating, so it reads as a
-          control rather than the edge of the page. */}
+      {/*
+        Phone bar: four destinations plus everything else behind one button, so
+        no tap target is smaller than a thumb. Floating, so it reads as a
+        control rather than the edge of the page.
+
+        NO BACKDROP FILTER ON IT, AND THAT IS THE WHOLE REASON IT IS OPAQUE.
+        An element that is `position: fixed`, carries a `backdrop-filter` and
+        sits over content that moves has to re-filter its backdrop on every
+        frame of every scroll, and the bottom band of the window is exactly
+        where new content arrives while somebody is scrolling. Upside Lab
+        measured the same pairing on its landing page at 412x915 with the CPU
+        throttled ten times: one pass down the page presented 42 frames the
+        compositor had to repaint, the worst of them with 38% of the bottom
+        eighth of the screen not yet caught up with where the page actually
+        was. Hiding that one element took the same scroll to 9 frames, every
+        one of them pixel-identical to the settled page.
+
+        So the rule is the pair rather than either half: nothing in this app
+        may be fixed over the content and carry a backdrop filter. The bar
+        reads the same at a solid fill, since what was behind it was a pastel
+        wash rather than anything to be read through.
+
+        The bottom offset is `env(safe-area-inset-bottom)` and not a number:
+        installed to a home screen this app runs under the notch and over the
+        home indicator (`viewport-fit=cover` in app/layout.tsx asks for that),
+        and `bottom-3` put the bar on top of the indicator.
+      */}
       <nav
+        ref={measure}
         aria-label="Main"
-        className="fixed bottom-3 left-3 right-3 z-40 flex justify-around rounded-full border px-1.5 py-1.5 md:hidden"
+        className="fixed left-3 right-3 z-40 flex justify-around rounded-full border px-1.5 py-1.5 md:hidden"
         style={{
+          bottom: "max(0.75rem, env(safe-area-inset-bottom))",
           borderColor: "var(--rule)",
-          background: "color-mix(in oklab, var(--surface) 88%, transparent)",
-          backdropFilter: "blur(14px)",
+          background: "var(--surface)",
           boxShadow: "var(--shadow)",
         }}
       >
@@ -188,7 +232,12 @@ export function Sidebar() {
       </nav>
 
       {moreOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end md:hidden" role="dialog" aria-label="More">
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end md:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="More"
+        >
           <button
             type="button"
             aria-label="Close"
@@ -197,8 +246,13 @@ export function Sidebar() {
             style={{ background: "rgb(20 16 32 / 0.4)" }}
           />
           <div
-            className="rounded-t-[var(--r-xl)] p-5 pb-7"
-            style={{ background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}
+            className="rounded-t-[var(--r-xl)] p-5"
+            style={{
+              background: "var(--surface)",
+              boxShadow: "var(--shadow-lg)",
+              // Over the home indicator otherwise, on every phone that has one.
+              paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))",
+            }}
           >
             <div className="mb-4 flex items-center justify-between">
               <span className="label-xs" style={{ color: "var(--ink-3)" }}>More</span>

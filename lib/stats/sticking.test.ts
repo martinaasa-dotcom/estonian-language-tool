@@ -123,7 +123,7 @@ describe("stickingPoints", () => {
 describe("stickingNote", () => {
   it("counts the lapses when that is what flagged the card", () => {
     const [point] = stickingPoints([card({ lapses: 5 })], log("c1", 10, 5));
-    expect(stickingNote(point!)).toBe("Learned and forgotten 5 times — 50% recalled over 10 reviews.");
+    expect(stickingNote(point!)).toBe("Learned and forgotten 5 times, 50% recalled over 10 reviews.");
   });
 
   it("talks about settling when accuracy is what flagged it", () => {

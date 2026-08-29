@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { CASES } from "@/lib/estonian/cases";
 import { caseFromMorphCode, VERB_GROUP_LABELS, verbSlot, type VerbSlot } from "@/lib/estonian/morph";
 import { Speak } from "@/components/Speak";
+import { NO_VALUE } from "@/lib/copy/values";
 
 export interface ParadigmForm {
   value: string;
@@ -34,7 +35,7 @@ export function Paradigm({ forms, pos }: { forms: ParadigmForm[]; pos: string })
         The full paradigm, from Ekilex
       </h3>
       <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-        These are the authoritative forms, not worked out from a stem — irregular plurals and the
+        These are the authoritative forms, not worked out from a stem, irregular plurals and the
         parallel forms Estonian really has, included.
       </p>
       {isVerb ? <VerbTable forms={forms} /> : <CaseTable forms={forms} />}
@@ -61,7 +62,7 @@ function valuesFor(forms: ParadigmForm[], code: string): string[] {
 
 function Cell({ values }: { values: string[] }) {
   if (values.length === 0) {
-    return <span style={{ color: "var(--ink-3)" }}>—</span>;
+    return <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>;
   }
   return (
     <span className="inline-flex items-center gap-1.5">
@@ -133,7 +134,7 @@ function CaseTable({ forms }: { forms: ParadigmForm[] }) {
                   </span>
                 </td>
                 <td className="px-3 py-2"><Cell values={shortIllative} /></td>
-                <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>—</span></td>
+                <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span></td>
                 <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>kuhu?</td>
               </tr>
             )}

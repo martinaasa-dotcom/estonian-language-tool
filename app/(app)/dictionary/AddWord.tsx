@@ -7,6 +7,7 @@ import { createLexemeWithForms } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/ui";
 import { DiacriticBar } from "@/components/DiacriticBar";
+import { NO_VALUE } from "@/lib/copy/values";
 
 const NOUN_FIELDS = [
   ["NOM_SG", "Nominative sg", "tuba"],
@@ -143,7 +144,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         <label className="flex flex-col gap-1.5">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>Level</span>
           <select value={cefr} onChange={(e) => setCefr(e.target.value)} className="rounded-md border px-3 py-2 text-sm" style={field}>
-            {LEVELS.map((l) => <option key={l} value={l}>{l || "—"}</option>)}
+            {LEVELS.map((l) => <option key={l} value={l}>{l || NO_VALUE}</option>)}
           </select>
         </label>
         {pos === "VERB" && (
@@ -152,7 +153,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
             <input
               value={government}
               onChange={(e) => setGovernment(e.target.value)}
-              placeholder="partitive — aitan sind"
+              placeholder="partitive, aitan sind"
               className="rounded-md border px-3 py-2 text-sm"
               style={field}
             />
@@ -164,7 +165,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         <div>
           <p className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>Principal parts</p>
           <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-            Fill in what you know — the genitive alone unlocks all eleven regular cases. Blanks stay
+            Fill in what you know, the genitive alone unlocks all eleven regular cases. Blanks stay
             blank; nothing is guessed.
           </p>
           <div className="grid gap-2 md:grid-cols-3">
