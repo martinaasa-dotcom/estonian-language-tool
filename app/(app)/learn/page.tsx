@@ -39,14 +39,14 @@ export default async function LearnPage() {
         style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
       >
         <Ring pct={overall} size={72} label={`${overall}% of the path learned`}>
-          <span className="tnum text-[14px] font-bold" style={{ color: "var(--ink)" }}>{overall}%</span>
+          <span className="tnum text-sm font-bold" style={{ color: "var(--ink)" }}>{overall}%</span>
         </Ring>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px]" style={{ color: "var(--ink)" }}>
+          <p className="text-base" style={{ color: "var(--ink)" }}>
             {done} unit{done === 1 ? "" : "s"} finished
             {started > 0 ? `, ${started} in progress` : ""} · {knownWords} of {totalWords} words known
           </p>
-          <p className="mt-1 text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
             A word counts as known once every card made from it has graduated in the scheduler —
             not just answered right once.
           </p>
@@ -96,15 +96,15 @@ export default async function LearnPage() {
                   <Link
                     href={`/learn/${u.unit.id}`}
                     lang="et"
-                    className="est text-[19px] font-bold hover:underline"
+                    className="est text-lg font-bold hover:underline"
                     style={{ color: "var(--ink)" }}
                   >
                     {u.unit.title}
                   </Link>
-                  <span className="text-[13px]" style={{ color: "var(--ink-3)" }}>{u.unit.subtitle}</span>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>{u.unit.subtitle}</span>
                   <Chip tone={complete ? "good" : u.state === "learning" ? "accent" : "sky"}>{u.unit.cefr}</Chip>
                 </div>
-                <p className="mt-1 max-w-[62ch] text-[13.5px]" style={{ color: "var(--ink-2)" }}>{u.unit.blurb}</p>
+                <p className="mt-1 max-w-[62ch] text-sm" style={{ color: "var(--ink-2)" }}>{u.unit.blurb}</p>
                 <div className="mt-2.5 flex items-center gap-3">
                   <span className="max-w-[220px] flex-1">
                     <Meter
@@ -114,7 +114,7 @@ export default async function LearnPage() {
                       height={7}
                     />
                   </span>
-                  <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
                     {u.known}/{u.available} known
                   </span>
                 </div>
@@ -134,10 +134,10 @@ export default async function LearnPage() {
         })}
       </ol>
 
-      <p className="mt-6 text-[13px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-6 text-xs" style={{ color: "var(--ink-3)" }}>
         Units are shortcuts into the same dictionary, not a separate course — everything in them can
         also be found by searching, and anything the dictionary is missing you can{" "}
-        <Link href="/dictionary" className="underline" style={{ color: "var(--accent)" }}>add yourself</Link>.
+        <Link href="/dictionary" className="underline" style={{ color: "var(--accent-deep)" }}>add yourself</Link>.
       </p>
     </Page>
   );

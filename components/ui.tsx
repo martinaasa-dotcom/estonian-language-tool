@@ -26,18 +26,31 @@ export function Page({ title, lead, actions, children, eyebrow }: {
       <header className="fade-up mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           {eyebrow && (
-            <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>{eyebrow}</p>
+            <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>{eyebrow}</p>
           )}
-          <h1 className="est text-[32px] font-bold leading-[1.1] tracking-tight md:text-[38px]" style={{ color: "var(--ink)" }}>
+          <h1 className="est text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             {title}
           </h1>
-          {lead && <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{lead}</p>}
+          {lead && <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{lead}</p>}
         </div>
         {actions}
       </header>
       {children}
     </div>
   );
+}
+
+/**
+ * The text colour for a given hue's tint.
+ *
+ * A trap worth naming: every hue has an `-ink` token meaning "text on this
+ * hue's 8% tint", but `--accent-ink` was already taken — it is the white that
+ * sits on the *solid* accent button. The accent's tint ink is `--accent-deep`.
+ * Anything building a token name from a tone has to come through here, or it
+ * paints white text on a pale lilac tile.
+ */
+export function toneInk(tone: string): string {
+  return tone === "accent" ? "var(--accent-deep)" : `var(--${tone}-ink)`;
 }
 
 const CARD_TONES = {
@@ -79,7 +92,7 @@ export function SectionTitle({ children, hint }: { children: ReactNode; hint?: R
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
       <h2 className="label-xs" style={{ color: "var(--ink-3)" }}>{children}</h2>
-      {hint && <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>{hint}</span>}
+      {hint && <span className="text-xs" style={{ color: "var(--ink-3)" }}>{hint}</span>}
     </div>
   );
 }
@@ -87,11 +100,11 @@ export function SectionTitle({ children, hint }: { children: ReactNode; hint?: R
 const TONES = {
   neutral: ["var(--raised)", "var(--ink-2)"],
   accent: ["var(--accent-soft)", "var(--accent-deep)"],
-  good: ["var(--good-soft)", "var(--good)"],
-  hard: ["var(--hard-soft)", "var(--hard)"],
-  again: ["var(--again-soft)", "var(--again)"],
-  sky: ["var(--sky-soft)", "var(--sky)"],
-  blush: ["var(--blush-soft)", "var(--blush)"],
+  good: ["var(--good-soft)", "var(--good-ink)"],
+  hard: ["var(--hard-soft)", "var(--hard-ink)"],
+  again: ["var(--again-soft)", "var(--again-ink)"],
+  sky: ["var(--sky-soft)", "var(--sky-ink)"],
+  blush: ["var(--blush-soft)", "var(--blush-ink)"],
 } as const;
 
 export function Chip({ children, tone = "neutral", title, caseSensitive }: {
@@ -127,8 +140,8 @@ export function Empty({ title, body, action, mood = "thinking" }: {
       />
       <div className="relative">
         <Mascot size={54} mood={mood} className="mx-auto float" />
-        <p className="est mt-4 text-[21px] font-bold" style={{ color: "var(--ink)" }}>{title}</p>
-        <p className="mx-auto mt-2 max-w-[48ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+        <p className="est mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>{title}</p>
+        <p className="mx-auto mt-2 max-w-[48ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
         {action && <div className="mt-6 flex justify-center">{action}</div>}
       </div>
     </div>
@@ -141,7 +154,7 @@ export function Stat({ value, label, tone, icon }: {
   return (
     <div>
       {icon && <div className="mb-2">{icon}</div>}
-      <div className="est tnum text-[34px] font-bold leading-none tracking-tight" style={{ color: tone ?? "var(--ink)" }}>
+      <div className="est tnum text-3xl font-bold leading-none tracking-tight" style={{ color: tone ?? "var(--ink)" }}>
         {value}
       </div>
       <div className="label-xs mt-2" style={{ color: "var(--ink-3)" }}>{label}</div>
@@ -156,9 +169,11 @@ export function Stat({ value, label, tone, icon }: {
 export function StatTile({ value, label, tone = "accent", icon, hint }: {
   value: ReactNode; label: string; tone?: Exclude<CardTone, "plain">; icon?: ReactNode; hint?: string;
 }) {
+  // The ink, not the hue: a tile's label and figure sit on that hue's own tint,
+  // where the hue itself lands near 2.5:1 (see the token block in globals.css).
   const fg = {
-    accent: "var(--accent-deep)", mint: "var(--mint)", butter: "var(--butter)",
-    peach: "var(--peach)", blush: "var(--blush)", sky: "var(--sky)",
+    accent: "var(--accent-deep)", mint: "var(--mint-ink)", butter: "var(--butter-ink)",
+    peach: "var(--peach-ink)", blush: "var(--blush-ink)", sky: "var(--sky-ink)",
   }[tone];
 
   return (
@@ -167,11 +182,11 @@ export function StatTile({ value, label, tone = "accent", icon, hint }: {
       style={{ background: CARD_TONES[tone].background }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="label-xs min-w-0" style={{ color: fg, opacity: 0.85 }}>{label}</span>
-        {icon && <span className="shrink-0" style={{ color: fg, opacity: 0.7 }}>{icon}</span>}
+        <span className="label-xs min-w-0" style={{ color: fg }}>{label}</span>
+        {icon && <span className="shrink-0" style={{ color: fg, opacity: 0.75 }}>{icon}</span>}
       </div>
-      <span className="est tnum text-[30px] font-bold leading-none" style={{ color: fg }}>{value}</span>
-      {hint && <span className="text-[11.5px]" style={{ color: fg, opacity: 0.8 }}>{hint}</span>}
+      <span className="est tnum text-2xl font-bold leading-none" style={{ color: fg }}>{value}</span>
+      {hint && <span className="text-2xs" style={{ color: fg }}>{hint}</span>}
     </div>
   );
 }
@@ -224,7 +239,7 @@ export function Meter({ pct, label, tone = "var(--accent)", height = 8 }: {
       aria-valuemax={100}
     >
       <div
-        className="h-full rounded-full transition-all duration-500"
+        className="h-full rounded-full transition-[width] duration-500"
         style={{ width: `${clamped}%`, background: tone }}
       />
     </div>
@@ -237,7 +252,7 @@ export function Note({ tone = "neutral", children }: {
 }) {
   const [bg, fg] = TONES[tone];
   return (
-    <p className="rounded-[var(--r)] px-4 py-3 text-[13.5px]" style={{ background: bg, color: fg }}>
+    <p className="rounded-[var(--r)] px-4 py-3 text-sm" style={{ background: bg, color: fg }}>
       {children}
     </p>
   );

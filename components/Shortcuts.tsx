@@ -118,8 +118,8 @@ export function Shortcuts() {
           className="sticky top-0 flex items-center gap-3 border-b px-5 py-3.5"
           style={{ borderColor: "var(--rule-soft)", background: "var(--surface)" }}
         >
-          <Keyboard size={17} aria-hidden style={{ color: "var(--accent)" }} />
-          <h2 className="est text-[17px] font-bold" style={{ color: "var(--ink)" }}>
+          <Keyboard size={17} aria-hidden style={{ color: "var(--accent-deep)" }} />
+          <h2 className="est text-md font-bold" style={{ color: "var(--ink)" }}>
             Keyboard shortcuts
           </h2>
           <button
@@ -137,7 +137,7 @@ export function Shortcuts() {
           {GROUPS.map((group) => (
             <section key={group.title}>
               <h3 className="label-xs" style={{ color: "var(--ink-3)" }}>{group.title}</h3>
-              <p className="mb-2.5 text-[12px]" style={{ color: "var(--ink-3)" }}>{group.hint}</p>
+              <p className="mb-2.5 text-xs" style={{ color: "var(--ink-3)" }}>{group.hint}</p>
               <ul className="flex flex-col gap-1.5">
                 {group.keys.map((row) => (
                   <li key={`${group.title}-${row.press.join("+")}-${row.does}`} className="flex items-baseline gap-3">
@@ -145,14 +145,14 @@ export function Shortcuts() {
                       {row.press.map((key) => (
                         <kbd
                           key={key}
-                          className="rounded-[var(--r-sm)] px-1.5 py-0.5 text-[11.5px] font-semibold"
+                          className="rounded-[var(--r-sm)] px-1.5 py-0.5 text-2xs font-semibold"
                           style={{ background: "var(--raised)", color: "var(--ink-2)" }}
                         >
                           {key}
                         </kbd>
                       ))}
                     </span>
-                    <span className="text-[13px]" style={{ color: "var(--ink-2)" }}>{row.does}</span>
+                    <span className="text-xs" style={{ color: "var(--ink-2)" }}>{row.does}</span>
                   </li>
                 ))}
               </ul>
@@ -160,7 +160,7 @@ export function Shortcuts() {
           ))}
         </div>
 
-        <p className="border-t px-5 py-3 text-[12px]" style={{ borderColor: "var(--rule-soft)", color: "var(--ink-3)" }}>
+        <p className="border-t px-5 py-3 text-xs" style={{ borderColor: "var(--rule-soft)", color: "var(--ink-3)" }}>
           Every control is reachable by tab as well, with a visible focus ring — the shortcuts are a
           shortcut, never the only way in.
         </p>

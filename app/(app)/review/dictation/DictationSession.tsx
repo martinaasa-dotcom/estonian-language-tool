@@ -25,15 +25,15 @@ export interface DictationTask {
 }
 
 const WORD_TONE: Record<WordStatus, { background: string; color: string; title: string }> = {
-  right: { background: "var(--good-soft)", color: "var(--good)", title: "Exactly right" },
+  right: { background: "var(--good-soft)", color: "var(--good-ink)", title: "Exactly right" },
   diacritics: {
     background: "var(--hard-soft)",
-    color: "var(--hard)",
+    color: "var(--hard-ink)",
     title: "The right word, without its Estonian letters",
   },
-  typo: { background: "var(--hard-soft)", color: "var(--hard)", title: "One keystroke out" },
-  wrong: { background: "var(--again-soft)", color: "var(--again)", title: "A different word" },
-  missing: { background: "var(--again-soft)", color: "var(--again)", title: "Left out" },
+  typo: { background: "var(--hard-soft)", color: "var(--hard-ink)", title: "One keystroke out" },
+  wrong: { background: "var(--again-soft)", color: "var(--again-ink)", title: "A different word" },
+  missing: { background: "var(--again-soft)", color: "var(--again-ink)", title: "Left out" },
   extra: { background: "var(--raised)", color: "var(--ink-3)", title: "Not in the sentence" },
 };
 
@@ -133,10 +133,10 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Dictation done
           </h1>
-          <p className="mx-auto mt-2 max-w-[46ch] text-[15px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             Writing down what you hear is the closest thing to using the language. Every sentence in
             this round was recorded by lexicographers, not by this app.
           </p>
@@ -172,7 +172,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
         </Link>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
           <div
-            className="grad-accent h-full rounded-full transition-all duration-500"
+            className="grad-accent h-full rounded-full transition-[width] duration-500"
             style={{ width: `${Math.max(progress, 2)}%` }}
             role="progressbar"
             aria-valuenow={index}
@@ -197,7 +197,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
           <Chip tone="accent"><Ear size={12} aria-hidden /> Write what you hear</Chip>
           <Link
             href={`/dictionary?q=${encodeURIComponent(task.lemma)}`}
-            className="ml-auto text-[12.5px]"
+            className="ml-auto text-xs"
             style={{ color: "var(--ink-3)" }}
           >
             {task.lemma}
@@ -211,9 +211,9 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
                 className="flex flex-col items-center gap-2 rounded-[var(--r-lg)] px-5 py-4 text-center"
                 style={{ background: "var(--hard-soft)" }}
               >
-                <p className="label-xs" style={{ color: "var(--hard)" }}>No audio right now</p>
-                <p lang="et" className="est text-[20px]" style={{ color: "var(--ink)" }}>{task.et}</p>
-                <p className="max-w-[42ch] text-[12px]" style={{ color: "var(--ink-2)" }}>
+                <p className="label-xs" style={{ color: "var(--hard-ink)" }}>No audio right now</p>
+                <p lang="et" className="est text-lg" style={{ color: "var(--ink)" }}>{task.et}</p>
+                <p className="max-w-[42ch] text-xs" style={{ color: "var(--ink-2)" }}>
                   The pronunciation service could not be reached, so the sentence is shown instead of
                   played. Copying it out still drills the spelling — come back for the listening half.
                 </p>
@@ -225,12 +225,12 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
                   size={30}
                   label="Play the sentence"
                   onUnavailable={() => setNoAudio(true)}
-                  className="press flex h-24 w-24 items-center justify-center rounded-full transition-all hover:-translate-y-0.5"
+                  className="press flex h-24 w-24 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
                 />
                 <div className="flex items-center gap-3">
                   <Speak text={task.et} slow label="Play it slowly" size={14} />
-                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {played ? "Play it as often as you like" : "Tap to hear it — the slow button is next to it"}
                   </span>
                 </div>
@@ -252,7 +252,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
           )}
 
           {result && task.en && (
-            <p className="text-center text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+            <p className="text-center text-sm" style={{ color: "var(--ink-2)" }}>
               {task.en}
               <Chip tone="again" title="Machine translation — the Estonian is authoritative, this is not">
                 AI
@@ -280,7 +280,7 @@ export function DictationSession({ tasks }: { tasks: DictationTask[] }) {
         </div>
       </div>
 
-      <p className="mt-4 text-center text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
         {correct} word-perfect of {done} · +{xp} XP · graded from the marking, sentences from Ekilex
       </p>
     </div>
@@ -301,8 +301,8 @@ function Marked({ result }: { result: DictationResult }) {
         className="label-xs text-center"
         style={{
           color: result.verdict === "correct"
-            ? "var(--good)"
-            : result.verdict === "wrong" ? "var(--again)" : "var(--hard)",
+            ? "var(--good-ink)"
+            : result.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)",
         }}
       >
         {result.note}
@@ -320,7 +320,7 @@ function Marked({ result }: { result: DictationResult }) {
             >
               <span
                 lang="et"
-                className="est text-[17px]"
+                className="est text-md"
                 style={{
                   color: tone.color,
                   textDecoration: word.status === "extra" ? "line-through" : undefined,
@@ -331,7 +331,7 @@ function Marked({ result }: { result: DictationResult }) {
               {/* What was typed, only where it differs — repeating a correct
                   word underneath itself is noise. */}
               {word.status !== "right" && word.status !== "extra" && (
-                <span className="text-[11px]" style={{ color: "var(--ink-3)" }}>
+                <span className="text-2xs" style={{ color: "var(--ink-3)" }}>
                   {word.typed ? `you: ${word.typed}` : "left out"}
                 </span>
               )}
@@ -339,7 +339,7 @@ function Marked({ result }: { result: DictationResult }) {
           );
         })}
       </div>
-      <p className="tnum text-center text-[12px]" style={{ color: "var(--ink-3)" }}>
+      <p className="tnum text-center text-xs" style={{ color: "var(--ink-3)" }}>
         {result.right} of {result.total} words exactly right
       </p>
     </div>

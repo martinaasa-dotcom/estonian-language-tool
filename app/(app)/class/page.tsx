@@ -71,10 +71,10 @@ export default async function ClassIndexPage() {
                       {m.role === "TEACHER" ? <GraduationCap size={19} aria-hidden /> : <Users size={19} aria-hidden />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="est block text-[17px] font-semibold" style={{ color: "var(--ink)" }}>
+                      <span className="est block text-md font-semibold" style={{ color: "var(--ink)" }}>
                         {m.classroom.name}
                       </span>
-                      <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                      <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
                         {m.role === "TEACHER" ? "You teach this class" : "You are a student here"} ·{" "}
                         {sizeOf.get(m.classroomId) ?? 1} member{(sizeOf.get(m.classroomId) ?? 1) === 1 ? "" : "s"}
                       </span>
@@ -102,7 +102,7 @@ export default async function ClassIndexPage() {
             <section>
               <SectionTitle hint="teachers">Start a class</SectionTitle>
               <Card tone="accent">
-                <p className="mb-4 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
                   You get a six-character join code to put on the board, a roster showing who is
                   actually reviewing, and the cases your group keeps missing — which is the useful
                   half of a progress report.
@@ -114,15 +114,15 @@ export default async function ClassIndexPage() {
         ) : (
           <Card>
             <div className="flex items-start gap-3">
-              <School size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+              <School size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
               <div>
-                <p className="text-[14.5px]" style={{ color: "var(--ink-2)" }}>
+                <p className="text-base" style={{ color: "var(--ink-2)" }}>
                   This copy is running in local mode, where there is one learner and no accounts — so
                   there is nobody to share a class with. Classes need sign-in configured
-                  (<code className="text-[13px]">NEXT_PUBLIC_SUPABASE_URL</code> and its anon key);
+                  (<code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and its anon key);
                   the README has the ten-minute version.
                 </p>
-                <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+                <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                   Everything else in the app works exactly the same either way.
                 </p>
               </div>
@@ -134,7 +134,7 @@ export default async function ClassIndexPage() {
           A teacher sees effort and progress: reviews this week, streak, words known, and the
           class&rsquo;s weakest cases in aggregate. Never an individual&rsquo;s searches, deck or
           mistakes. That line is drawn in the code, not in a policy — see{" "}
-          <code className="text-[12px]">lib/classroom/roster.ts</code>.
+          <code className="text-xs">lib/classroom/roster.ts</code>.
         </Note>
       </div>
     </Page>

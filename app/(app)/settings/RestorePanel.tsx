@@ -54,7 +54,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
 
   return (
     <div>
-      <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+      <p className="text-sm" style={{ color: "var(--ink-2)" }}>
         Restore from a backup file — after moving to a new computer, or to undo something. A backup
         you have never restored is only a hypothesis, so it is worth trying once while nothing is
         at stake.
@@ -67,14 +67,14 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
           accept="application/json,.json"
           aria-label="Choose a backup file"
           onChange={(e) => void pick(e.target.files?.[0])}
-          className="text-[13.5px] file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-[13px] file:font-semibold file:text-[var(--accent-deep)]"
+          className="text-sm file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-xs file:font-semibold file:text-[var(--accent-deep)]"
           style={{ color: "var(--ink-2)" }}
         />
       </div>
 
       {summary && (
         <div className="mt-4 rounded-[var(--r-lg)] p-5" style={{ background: "var(--raised)" }}>
-          <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+          <p className="text-sm" style={{ color: "var(--ink-2)" }}>
             <span style={{ color: "var(--ink)" }}>{filename}</span> holds{" "}
             <span className="tnum">{summary.words}</span> words,{" "}
             <span className="tnum">{summary.cards}</span> cards,{" "}
@@ -85,20 +85,20 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
           <fieldset className="mt-4">
             <legend className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>How should it go in?</legend>
             <div className="flex flex-col gap-2">
-              <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px]">
+              <label className="flex cursor-pointer items-start gap-2.5 text-sm">
                 <input type="radio" name="mode" checked={mode === "merge"} onChange={() => setMode("merge")} className="mt-1" />
                 <span>
                   <span style={{ color: "var(--ink)" }}>Merge — nothing is deleted</span>
-                  <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
                     Adds what is missing and leaves everything else alone. Safe to run twice.
                   </span>
                 </span>
               </label>
-              <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px]">
+              <label className="flex cursor-pointer items-start gap-2.5 text-sm">
                 <input type="radio" name="mode" checked={mode === "replace"} onChange={() => setMode("replace")} className="mt-1" />
                 <span>
                   <span style={{ color: "var(--ink)" }}>Replace everything</span>
-                  <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
                     Wipes the current deck first. Only use this to roll back to the backup exactly.
                   </span>
                 </span>
@@ -109,9 +109,9 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
           {mode === "replace" && (
             <div
               className="mt-4 rounded-[var(--r)] px-4 py-3.5"
-              style={{ background: "var(--again-soft)", color: "var(--again)" }}
+              style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
             >
-              <p className="flex items-start gap-2 text-[13px]">
+              <p className="flex items-start gap-2 text-xs">
                 <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />
                 <span>
                   This deletes the {currentReviews} review{currentReviews === 1 ? "" : "s"} currently
@@ -123,7 +123,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
                 onChange={(e) => setConfirmText(e.target.value)}
                 aria-label="Type replace to confirm"
                 placeholder="replace"
-                className="mt-2.5 rounded border px-2.5 py-1.5 text-[13.5px]"
+                className="mt-2.5 rounded-md border px-2.5 py-1.5 text-sm"
                 style={{ borderColor: "var(--again)", background: "var(--surface)", color: "var(--ink)" }}
               />
             </div>
@@ -142,8 +142,8 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
         </div>
       )}
 
-      {error && <p className="mt-3 text-[13.5px]" style={{ color: "var(--again)" }}>{error}</p>}
-      {done && <p className="mt-3 text-[13.5px]" style={{ color: "var(--good)" }}>{done}</p>}
+      {error && <p className="mt-3 text-sm" style={{ color: "var(--again-ink)" }}>{error}</p>}
+      {done && <p className="mt-3 text-sm" style={{ color: "var(--good-ink)" }}>{done}</p>}
     </div>
   );
 }

@@ -18,30 +18,30 @@ export function SetupGuide() {
 
   return (
     <div>
-      <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+      <p className="text-sm" style={{ color: "var(--ink-2)" }}>
         Anu needs an API key to answer questions. Everything else — the dictionary, your cards, audio
         — works without one. Here is the whole process:
       </p>
 
       <ol className="mt-4 flex flex-col gap-3">
         {STEPS.map((s, i) => (
-          <li key={i} className="flex gap-3 text-[14px]" style={{ color: "var(--ink-2)" }}>
+          <li key={i} className="flex gap-3 text-sm" style={{ color: "var(--ink-2)" }}>
             <span
-              className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
-              style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+              className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
               {i + 1}
             </span>
             <span>
               {s.text}
               {s.link && (
-                <a href={s.link.href} target="_blank" rel="noreferrer" className="underline" style={{ color: "var(--accent)" }}>
+                <a href={s.link.href} target="_blank" rel="noreferrer" className="underline" style={{ color: "var(--accent-deep)" }}>
                   {s.link.label}
                 </a>
               )}
               {s.strong && <strong style={{ color: "var(--ink)" }}>{s.strong}</strong>}
               {s.code && (
-                <code className="rounded px-1.5 py-0.5 text-[13px]" style={{ background: "var(--raised)", color: "var(--ink)" }}>
+                <code className="rounded-md px-1.5 py-0.5 text-xs" style={{ background: "var(--raised)", color: "var(--ink)" }}>
                   {s.code}
                 </code>
               )}
@@ -61,18 +61,18 @@ export function SetupGuide() {
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
             }}
-            className="flex items-center gap-1.5 text-[12px]"
-            style={{ color: copied ? "var(--good)" : "var(--ink-3)" }}
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: copied ? "var(--good-ink)" : "var(--ink-3)" }}
           >
             {copied ? <><Check size={13} aria-hidden /> Copied</> : <><Copy size={13} aria-hidden /> Copy</>}
           </button>
         </div>
-        <pre className="overflow-x-auto px-3 py-3 text-[12.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        <pre className="overflow-x-auto px-3 py-3 text-xs leading-relaxed" style={{ color: "var(--ink-2)" }}>
 {SNIPPET}
         </pre>
       </div>
 
-      <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
         That model is free. If Anu ever feels vague about Estonian, a paid model will be noticeably
         sharper — change the second line to <code>anthropic/claude-sonnet-5</code> or{" "}
         <code>openai/gpt-4o</code>, which cost a fraction of a cent per question.

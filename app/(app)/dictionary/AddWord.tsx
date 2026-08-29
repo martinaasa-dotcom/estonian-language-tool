@@ -98,10 +98,10 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="est text-[19px] font-semibold" style={{ color: "var(--ink)" }}>
+        <h2 className="est text-lg font-semibold" style={{ color: "var(--ink)" }}>
           {edit ? `Edit ${edit.lemma}` : "Add a word"}
         </h2>
-        <button type="button" onClick={() => setOpen(false)} className="text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <button type="button" onClick={() => setOpen(false)} className="text-xs" style={{ color: "var(--ink-3)" }}>
           Cancel
         </button>
       </div>
@@ -113,7 +113,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
             value={lemma}
             onChange={(e) => setLemma(e.target.value)}
             placeholder="sõna"
-            className="est rounded-md border px-3 py-2 text-[16px]"
+            className="est rounded-md border px-3 py-2 text-md"
             style={field}
           />
         </label>
@@ -123,7 +123,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
             value={translation}
             onChange={(e) => setTranslation(e.target.value)}
             placeholder="word"
-            className="rounded-md border px-3 py-2 text-[16px]"
+            className="rounded-md border px-3 py-2 text-md"
             style={field}
           />
         </label>
@@ -132,7 +132,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1.5">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>Type</span>
-          <select value={pos} onChange={(e) => setPos(e.target.value)} className="rounded-md border px-3 py-2 text-[14px]" style={field}>
+          <select value={pos} onChange={(e) => setPos(e.target.value)} className="rounded-md border px-3 py-2 text-sm" style={field}>
             <option value="NOUN">Noun</option>
             <option value="VERB">Verb</option>
             <option value="ADJECTIVE">Adjective</option>
@@ -142,7 +142,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>Level</span>
-          <select value={cefr} onChange={(e) => setCefr(e.target.value)} className="rounded-md border px-3 py-2 text-[14px]" style={field}>
+          <select value={cefr} onChange={(e) => setCefr(e.target.value)} className="rounded-md border px-3 py-2 text-sm" style={field}>
             {LEVELS.map((l) => <option key={l} value={l}>{l || "—"}</option>)}
           </select>
         </label>
@@ -153,7 +153,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
               value={government}
               onChange={(e) => setGovernment(e.target.value)}
               placeholder="partitive — aitan sind"
-              className="rounded-md border px-3 py-2 text-[14px]"
+              className="rounded-md border px-3 py-2 text-sm"
               style={field}
             />
           </label>
@@ -163,19 +163,19 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
       {fields.length > 0 && (
         <div>
           <p className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>Principal parts</p>
-          <p className="mb-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
             Fill in what you know — the genitive alone unlocks all eleven regular cases. Blanks stay
             blank; nothing is guessed.
           </p>
           <div className="grid gap-2 md:grid-cols-3">
             {fields.map(([key, label, example]) => (
               <label key={key} className="flex flex-col gap-1">
-                <span className="text-[11.5px]" style={{ color: "var(--ink-3)" }}>{label}</span>
+                <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{label}</span>
                 <input
                   value={forms[key] ?? ""}
                   onChange={(e) => setForm(key, e.target.value)}
                   placeholder={example}
-                  className="est rounded-md border px-2.5 py-1.5 text-[15px]"
+                  className="est rounded-md border px-2.5 py-1.5 text-base"
                   style={field}
                 />
               </label>
@@ -184,7 +184,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         </div>
       )}
 
-      {error && <p className="text-[13px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p className="text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
 
       <div className="flex flex-wrap items-center gap-4">
         <Button variant="primary" onClick={submit} disabled={pending || !lemma.trim() || !translation.trim()}>

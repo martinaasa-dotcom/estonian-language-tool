@@ -119,8 +119,8 @@ export function DictionaryClient({
                   className="flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left transition-opacity hover:opacity-70"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
                 >
-                  <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{s.lemma}</span>
-                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{s.translation}</span>
+                  <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>{s.translation}</span>
                 </button>
               </li>
             ))}
@@ -139,7 +139,7 @@ export function DictionaryClient({
               type="button"
               onClick={() => go(s)}
               lang="et"
-              className="est press rounded-full px-4 py-1.5 text-[15px] transition-all hover:-translate-y-px"
+              className="est press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
               style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
             >
               {s}
@@ -162,15 +162,15 @@ export function DictionaryClient({
         <>
           {justFetched && (
             <p
-              className="rounded-[var(--r)] px-4 py-3 text-[13.5px] font-medium"
-              style={{ background: "var(--good-soft)", color: "var(--good)" }}
+              className="rounded-[var(--r)] px-4 py-3 text-sm font-medium"
+              style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
             >
               Fetched from Ekilex and saved — this word now works offline too.
             </p>
           )}
           {matchedAs && (
             <p
-              className="rounded-[var(--r)] px-4 py-3 text-[14px]"
+              className="rounded-[var(--r)] px-4 py-3 text-sm"
               style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
               <Et serif={false} className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
@@ -191,11 +191,11 @@ export function DictionaryClient({
                 <button
                   type="button"
                   onClick={() => go(h.lemma)}
-                  className="press flex items-baseline gap-2 rounded-full border px-4 py-2 text-left transition-all hover:-translate-y-px"
+                  className="press flex items-baseline gap-2 rounded-full border px-4 py-2 text-left transition-ui hover:-translate-y-px"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
                 >
-                  <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{h.lemma}</span>
-                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{h.lemma}</span>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {h.matchedAs ? h.matchedAs : h.translation}
                   </span>
                 </button>
@@ -234,13 +234,13 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 lang="et" className="est text-[34px] font-bold leading-none" style={{ color: "var(--ink)" }}>
+            <h2 lang="et" className="est text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
               {entry.lemma}
             </h2>
             <Speak text={entry.lemma} />
             <Speak text={entry.lemma} slow label={`Hear "${entry.lemma}" slowly`} />
           </div>
-          <p className="mt-2 text-[16px]" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
+          <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Chip>{entry.pos.toLowerCase()}</Chip>
             {entry.cefr && <Chip tone="accent">{entry.cefr}</Chip>}
@@ -271,7 +271,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       </header>
 
       {entry.notes && (
-        <p className="rounded-[var(--r)] px-4 py-3.5 text-[14px]" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
+        <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
           {entry.notes}
         </p>
       )}
@@ -281,7 +281,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
             Government · rektsioon
           </h3>
-          <p className="rounded-[var(--r)] px-4 py-3.5 text-[14.5px]" style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}>
+          <p className="rounded-[var(--r)] px-4 py-3.5 text-base" style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}>
             {entry.government}
           </p>
         </div>
@@ -305,14 +305,14 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 >
                   {value ? (
                     <>
-                      <span lang="et" className="est block text-[20px] font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
+                      <span lang="et" className="est block text-lg font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
                       <Speak text={value} />
                     </>
                   ) : (
-                    <span className="est block text-[19px]" style={{ color: "var(--ink-3)" }}>—</span>
+                    <span className="est block text-lg" style={{ color: "var(--ink-3)" }}>—</span>
                   )}
                   <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
-                  <span lang="et" className="mt-0.5 block text-[10.5px] italic" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  <span lang="et" className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{et}</span>
                 </div>
               );
             })}
@@ -330,11 +330,11 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
             The rest, worked out from the genitive
           </h3>
-          <p className="mb-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
-            Learn <Et className="text-[15px]" >{form("GEN_SG")}</Et> and these eleven follow as regular endings.
+          <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
+            Learn <Et className="text-base" >{form("GEN_SG")}</Et> and these eleven follow as regular endings.
           </p>
           <div className="overflow-x-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
-            <table className="w-full min-w-[440px] text-[14px]">
+            <table className="w-full min-w-[440px] text-sm">
               <thead>
                 <tr>
                   {["Case", "Singular", "Plural", "Answers"].map((h) => (
@@ -349,22 +349,22 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                       {spec.en}
-                      <span lang="et" className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
+                      <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
                     </td>
-                    <td lang="et" className="est px-3 py-2 text-[15px]" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
+                    <td lang="et" className="est px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
                       {singular ?? "—"}
                     </td>
-                    <td lang="et" className="est px-3 py-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
+                    <td lang="et" className="est px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>—</span>}
                     </td>
-                    <td lang="et" className="px-3 py-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
+                    <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           {!form("GEN_PL") && (
-            <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
               Plural forms need the genitive plural, which isn&rsquo;t stored for this word. We leave
               them blank rather than guess — an invented form is worse than a gap.
             </p>
@@ -388,7 +388,7 @@ function StarButton({ id, starred }: { id: string; starred: boolean }) {
         const result = await toggleStar(id);
         if (result.ok) setOn(result.starred);
       })}
-      style={{ color: on ? "var(--hard)" : undefined }}
+      style={{ color: on ? "var(--hard-ink)" : undefined }}
     >
       <Star size={16} aria-hidden fill={on ? "currentColor" : "none"} />
     </Button>
@@ -428,7 +428,7 @@ function AddToDeck({ entry }: { entry: EntryView }) {
       <p className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>Which cards?</p>
       <div className="flex flex-col gap-2">
         {CARD_TYPES.filter((t) => available.includes(t.type)).map((t) => (
-          <label key={t.type} className="flex cursor-pointer items-start gap-2.5 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+          <label key={t.type} className="flex cursor-pointer items-start gap-2.5 text-sm" style={{ color: "var(--ink-2)" }}>
             <input
               type="checkbox"
               checked={selected.includes(t.type)}
@@ -439,7 +439,7 @@ function AddToDeck({ entry }: { entry: EntryView }) {
             />
             <span>
               <span style={{ color: "var(--ink)" }}>{t.label}</span>
-              <span className="block text-[12px]" style={{ color: "var(--ink-3)" }}>{t.description}</span>
+              <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{t.description}</span>
             </span>
           </label>
         ))}

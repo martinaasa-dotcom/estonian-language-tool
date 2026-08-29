@@ -166,8 +166,11 @@ check("the deck's sticking points are named", hasSticking);
 
 if (hasSticking) {
   const row = page.locator("li", { hasText: /lapses|never really settled/ }).first();
+  // Either rule may have flagged it, and each has to say which: a count of
+  // times the card was learned and lost, or an accuracy that never settled.
   check("each one says what is wrong with it",
-    /lapses|settled/.test(await row.innerText()));
+    /forgotten \d+ times|never really settled/i.test(await row.innerText()),
+    (await row.innerText()).replace(/\n/g, " · ").slice(0, 70));
   // The argument this section makes is in the order of its actions: understand
   // it, look it up, and only then set it aside.
   check("and offers the explanation before the off switch",

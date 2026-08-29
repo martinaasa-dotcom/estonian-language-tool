@@ -83,8 +83,8 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
       <div className="no-print mb-8 flex flex-wrap items-center justify-between gap-3">
         <Link
           href={`/learn/${unit.id}`}
-          className="flex items-center gap-1.5 text-[13.5px]"
-          style={{ color: "var(--accent)" }}
+          className="flex items-center gap-1.5 text-sm"
+          style={{ color: "var(--accent-deep)" }}
         >
           <ArrowLeft size={14} aria-hidden /> Back to {unit.title}
         </Link>
@@ -103,10 +103,10 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
             <p className="label-xs" style={{ color: "var(--ink-3)" }}>
               Kodukeel · {unit.cefr} · {unit.subtitle}
             </p>
-            <h1 lang="et" className="est mt-1 text-[30px] font-bold" style={{ color: "var(--ink)" }}>
+            <h1 lang="et" className="est mt-1 text-2xl font-bold" style={{ color: "var(--ink)" }}>
               {unit.title}
             </h1>
-            <p className="mt-3 flex flex-wrap gap-x-8 gap-y-2 text-[13px]" style={{ color: "var(--ink-2)" }}>
+            <p className="mt-3 flex flex-wrap gap-x-8 gap-y-2 text-xs" style={{ color: "var(--ink-2)" }}>
               <span>Nimi / Name: <Rule width={180} /></span>
               <span>Kuupäev / Date: <Rule width={110} /></span>
             </p>
@@ -114,15 +114,15 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
 
           {sheet.vocabulary.length > 0 && (
             <section className="avoid-break mb-9">
-              <h2 className="est mb-1 text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <h2 className="est mb-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 A · Mis see on? — What does it mean?
               </h2>
-              <p className="mb-4 text-[13px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Write the English meaning next to each word.
               </p>
               <ol className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
                 {sheet.vocabulary.map((item, i) => (
-                  <li key={item.lemma} className="flex items-baseline gap-2 text-[14.5px]">
+                  <li key={item.lemma} className="flex items-baseline gap-2 text-base">
                     <span className="tnum w-5 shrink-0" style={{ color: "var(--ink-3)" }}>{i + 1}.</span>
                     <span lang="et" className="est w-32 shrink-0" style={{ color: "var(--ink)" }}>
                       {item.lemma}
@@ -136,24 +136,24 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
 
           {sheet.gaps.length > 0 && (
             <section className="avoid-break mb-9">
-              <h2 className="est mb-1 text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <h2 className="est mb-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 B · Täida lüngad — Fill the gaps
               </h2>
-              <p className="mb-4 text-[13px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Put the word in brackets into the right form. Every sentence here is a real one,
                 recorded by the Institute of the Estonian Language.
               </p>
               <ol className="flex flex-col gap-4">
                 {sheet.gaps.map((gap, i) => (
-                  <li key={gap.text} className="flex items-baseline gap-2 text-[14.5px]">
+                  <li key={gap.text} className="flex items-baseline gap-2 text-base">
                     <span className="tnum w-5 shrink-0" style={{ color: "var(--ink-3)" }}>{i + 1}.</span>
                     <span className="flex-1">
                       <span lang="et" className="est" style={{ color: "var(--ink)" }}>{gap.text}</span>
-                      <span lang="et" className="ml-2 text-[13px] italic" style={{ color: "var(--ink-3)" }}>
+                      <span lang="et" className="ml-2 text-xs italic" style={{ color: "var(--ink-3)" }}>
                         ({gap.hint})
                       </span>
                       {gap.english && (
-                        <span className="mt-0.5 block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                        <span className="mt-0.5 block text-xs" style={{ color: "var(--ink-3)" }}>
                           {gap.english}
                         </span>
                       )}
@@ -166,20 +166,20 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
 
           {sheet.cases.length > 0 && (
             <section className="avoid-break mb-9">
-              <h2 className="est mb-1 text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <h2 className="est mb-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 C · Kääna — Complete the table
               </h2>
-              <p className="mb-4 text-[13px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Fill in the missing principal parts. These three are the ones that have to be
                 memorised; every other case is built on the second of them.
               </p>
-              <table className="w-full text-[14.5px]">
+              <table className="w-full text-base">
                 <thead>
                   <tr>
                     {["Nimetav · nominative", "Omastav · genitive", "Osastav · partitive"].map((h) => (
                       <th
                         key={h}
-                        className="border-b px-2 py-2 text-left text-[12px] font-semibold"
+                        className="border-b px-2 py-2 text-left text-xs font-semibold"
                         style={{ borderColor: "var(--ink-3)", color: "var(--ink-2)" }}
                       >
                         {h}
@@ -206,7 +206,7 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
             </section>
           )}
 
-          <p className="mt-10 text-[11px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-10 text-2xs" style={{ color: "var(--ink-3)" }}>
             Forms and sentences from Ekilex, Institute of the Estonian Language · CC BY 4.0.
             Worksheet generated by Kodukeel — nothing on this sheet was written by software.
           </p>
@@ -214,14 +214,14 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
           {/* The key, on its own sheet, so it can be printed and kept back. */}
           <section className="page-break mt-12 border-t pt-8" style={{ borderColor: "var(--rule)" }}>
             <p className="label-xs" style={{ color: "var(--ink-3)" }}>Answer key</p>
-            <h2 lang="et" className="est mt-1 text-[24px] font-bold" style={{ color: "var(--ink)" }}>
+            <h2 lang="et" className="est mt-1 text-xl font-bold" style={{ color: "var(--ink)" }}>
               {unit.title}
             </h2>
 
             {sheet.vocabulary.length > 0 && (
               <div className="mt-6">
-                <h3 className="est mb-2 text-[16px] font-bold" style={{ color: "var(--ink)" }}>A</h3>
-                <ol className="grid gap-x-8 gap-y-1.5 text-[13.5px] sm:grid-cols-2">
+                <h3 className="est mb-2 text-md font-bold" style={{ color: "var(--ink)" }}>A</h3>
+                <ol className="grid gap-x-8 gap-y-1.5 text-sm sm:grid-cols-2">
                   {sheet.vocabulary.map((item, i) => (
                     <li key={item.lemma} style={{ color: "var(--ink-2)" }}>
                       <span className="tnum mr-1.5" style={{ color: "var(--ink-3)" }}>{i + 1}.</span>
@@ -235,8 +235,8 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
 
             {sheet.gaps.length > 0 && (
               <div className="mt-6">
-                <h3 className="est mb-2 text-[16px] font-bold" style={{ color: "var(--ink)" }}>B</h3>
-                <ol className="flex flex-col gap-1.5 text-[13.5px]">
+                <h3 className="est mb-2 text-md font-bold" style={{ color: "var(--ink)" }}>B</h3>
+                <ol className="flex flex-col gap-1.5 text-sm">
                   {sheet.gaps.map((gap, i) => (
                     <li key={gap.text} style={{ color: "var(--ink-2)" }}>
                       <span className="tnum mr-1.5" style={{ color: "var(--ink-3)" }}>{i + 1}.</span>
@@ -249,8 +249,8 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
 
             {sheet.cases.length > 0 && (
               <div className="mt-6">
-                <h3 className="est mb-2 text-[16px] font-bold" style={{ color: "var(--ink)" }}>C</h3>
-                <ol className="flex flex-col gap-1.5 text-[13.5px]">
+                <h3 className="est mb-2 text-md font-bold" style={{ color: "var(--ink)" }}>C</h3>
+                <ol className="flex flex-col gap-1.5 text-sm">
                   {sheet.cases.map((row) => (
                     <li key={row.lemma} lang="et" className="est" style={{ color: "var(--ink)" }}>
                       {row.nominative} · {row.genitive} · {row.partitive}

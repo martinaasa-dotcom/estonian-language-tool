@@ -49,7 +49,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
       title={unit.title}
       lead={unit.blurb}
       actions={
-        <Link href="/learn" className="flex items-center gap-1.5 text-[13.5px]" style={{ color: "var(--accent)" }}>
+        <Link href="/learn" className="flex items-center gap-1.5 text-sm" style={{ color: "var(--accent-deep)" }}>
           <ArrowLeft size={14} aria-hidden /> Back to the path
         </Link>
       }
@@ -57,15 +57,15 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
       <div className="flex flex-col gap-5">
         <Card className="flex flex-wrap items-center gap-5">
           <Ring pct={progress.pct} size={70} label={`${progress.pct}% of this unit learned`}>
-            <Icon size={22} aria-hidden style={{ color: "var(--accent)" }} />
+            <Icon size={22} aria-hidden style={{ color: "var(--accent-deep)" }} />
           </Ring>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[15px]" style={{ color: "var(--ink)" }}>{unit.subtitle}</span>
+              <span className="text-base" style={{ color: "var(--ink)" }}>{unit.subtitle}</span>
               <Chip tone="accent">{unit.cefr}</Chip>
               {progress.state === "done" && <Chip tone="good">Finished</Chip>}
             </div>
-            <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+            <p className="mt-1.5 text-sm" style={{ color: "var(--ink-2)" }}>
               {progress.known} of {progress.available} words known · {progress.started} started
             </p>
             <div className="mt-2 max-w-sm">
@@ -111,22 +111,22 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
                     <Link
                       href={`/dictionary?q=${encodeURIComponent(l.lemma)}`}
                       lang="et"
-                      className="est text-[16px] font-semibold hover:underline"
+                      className="est text-md font-semibold hover:underline"
                       style={{ color: "var(--ink)" }}
                     >
                       {l.lemma}
                     </Link>
-                    <span className="block truncate text-[13px]" style={{ color: "var(--ink-2)" }}>
+                    <span className="block truncate text-xs" style={{ color: "var(--ink-2)" }}>
                       {l.translation}
                     </span>
                     {l.government && (
-                      <span className="block text-[11.5px]" style={{ color: "var(--accent)" }}>{l.government}</span>
+                      <span className="block text-2xs" style={{ color: "var(--accent-deep)" }}>{l.government}</span>
                     )}
                   </span>
                   {l.gradationNote && <Chip tone="hard" caseSensitive>{l.gradationNote}</Chip>}
                   <Speak text={l.lemma} />
                   {known ? (
-                    <Check size={16} aria-label="Known" style={{ color: "var(--good)" }} />
+                    <Check size={16} aria-label="Known" style={{ color: "var(--good-ink)" }} />
                   ) : started ? (
                     <span className="label-xs" style={{ color: "var(--ink-3)" }}>Learning</span>
                   ) : null}
@@ -135,7 +135,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
             })}
           </ul>
           {missing > 0 && (
-            <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
               {missing} word{missing === 1 ? "" : "s"} in this unit {missing === 1 ? "is" : "are"} not in
               your dictionary yet. Search {missing === 1 ? "it" : "them"} once and, with an Ekilex key,
               {missing === 1 ? " it is" : " they are"} fetched and stored for good.

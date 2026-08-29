@@ -25,7 +25,10 @@ export interface SpeakingCard {
   isSentence: boolean;
 }
 
-const TONE: Record<number, string> = { 1: "var(--again)", 2: "var(--hard)", 3: "var(--good)", 4: "var(--easy)" };
+// Inks, not hues: these colour text on the matching soft tint.
+const TONE: Record<number, string> = {
+  1: "var(--again-ink)", 2: "var(--hard-ink)", 3: "var(--good-ink)", 4: "var(--easy-ink)",
+};
 const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
 };
@@ -107,10 +110,10 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Well spoken
           </h1>
-          <p className="mx-auto mt-2 max-w-[46ch] text-[15px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             Saying a word out loud is what moves it from something you recognise to something you can
             use. Nothing you recorded left this device.
           </p>
@@ -143,7 +146,7 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
         </Link>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
           <div
-            className="grad-accent h-full rounded-full transition-all duration-500"
+            className="grad-accent h-full rounded-full transition-[width] duration-500"
             style={{ width: `${Math.max((index / cards.length) * 100, 2)}%` }}
             role="progressbar"
             aria-valuenow={index}
@@ -169,7 +172,7 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
           {card.isSentence && <Chip>sentence</Chip>}
           <Link
             href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
-            className="ml-auto text-[12.5px]"
+            className="ml-auto text-xs"
             style={{ color: "var(--ink-3)" }}
           >
             Full entry
@@ -179,7 +182,7 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 px-6 py-10 text-center" aria-live="polite">
           <div>
             <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Say this in Estonian</p>
-            <p className="est text-[30px] font-bold leading-snug tracking-tight md:text-[34px]" style={{ color: "var(--ink)" }}>
+            <p className="est text-2xl font-bold leading-snug tracking-tight md:text-3xl" style={{ color: "var(--ink)" }}>
               {card.prompt}
             </p>
           </div>
@@ -191,14 +194,14 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
                 className="pop-in flex flex-wrap items-center justify-center gap-2 rounded-[var(--r-lg)] px-5 py-4"
                 style={{ background: "var(--accent-soft)" }}
               >
-                <p lang="et" className="est text-[26px] font-semibold md:text-[30px]" style={{ color: "var(--accent-deep)" }}>
+                <p lang="et" className="est text-2xl font-semibold md:text-2xl" style={{ color: "var(--accent-deep)" }}>
                   {card.et}
                 </p>
                 <Speak text={card.et} label={`Hear "${card.et}"`} size={17} />
                 <Speak text={card.et} slow label={`Hear "${card.et}" slowly`} size={17} />
               </div>
               <Recorder />
-              <p className="max-w-[44ch] text-[12px]" style={{ color: "var(--ink-3)" }}>
+              <p className="max-w-[44ch] text-xs" style={{ color: "var(--ink-3)" }}>
                 Compare the two, then rate how close you were. Nothing is uploaded — the app has no
                 Estonian speech recogniser and will not pretend to score you.
               </p>
@@ -219,11 +222,11 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
                   type="button"
                   disabled={busy}
                   onClick={() => void submit(r.value as RatingValue)}
-                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-all hover:-translate-y-0.5 disabled:opacity-40"
+                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                   style={{ background: TONE_SOFT[r.value], color: TONE[r.value] }}
                 >
-                  <span className="text-[14.5px] font-bold">{r.label}</span>
-                  <span className="text-[10.5px] opacity-80">{r.hint}</span>
+                  <span className="text-base font-bold">{r.label}</span>
+                  <span className="text-2xs opacity-80">{r.hint}</span>
                 </button>
               ))}
             </div>
@@ -231,7 +234,7 @@ export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
         </div>
       </div>
 
-      <p className="mt-4 text-center text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
         {done} spoken · +{xp} XP · audio from the University of Tartu
       </p>
     </div>

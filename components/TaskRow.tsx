@@ -50,7 +50,7 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
 
       <div className="min-w-0 flex-1">
         <p
-          className="truncate text-[14.5px]"
+          className="truncate text-base"
           style={{
             color: task.completed ? "var(--ink-3)" : "var(--ink)",
             textDecoration: task.completed ? "line-through" : "none",
@@ -58,11 +58,11 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
         >
           {task.title}
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ color: "var(--ink-3)" }}>
           <span>{TAG_LABEL[task.tag] ?? task.tag}</span>
           {task.classWeek !== null && <span>Week {task.classWeek}</span>}
           {due && (
-            <span style={{ color: overdue ? "var(--again)" : undefined }}>
+            <span style={{ color: overdue ? "var(--again-ink)" : undefined }}>
               {overdue ? "Overdue · " : "Due "}
               {due.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
             </span>
@@ -77,7 +77,7 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
           type="button"
           onClick={() => start(() => void deleteTask(task.id))}
           aria-label={`Delete task "${task.title}"`}
-          className="shrink-0 rounded p-1.5 transition-opacity hover:opacity-60"
+          className="shrink-0 rounded-md p-1.5 transition-opacity hover:opacity-60"
           style={{ color: "var(--ink-3)" }}
         >
           <Trash2 size={15} aria-hidden />

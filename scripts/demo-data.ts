@@ -7,6 +7,16 @@ import { LOCAL_USER_ID, supabaseConfigured } from "../lib/auth/mode";
 const prisma = new PrismaClient();
 
 /** A spread of plausible review histories — some clean, some with a lapse. */
+/**
+ * The shapes a real deck contains, so every screen has something to show.
+ *
+ * The last one is the point of the list: a word learned, forgotten, relearned
+ * and forgotten again — four lapses by the end, which is what the
+ * sticking-points section on /progress exists to name. It has to graduate back
+ * to Review between failures, because FSRS only counts a lapse against a card
+ * it believed was learned. Without one, that section renders as nothing and
+ * looks broken rather than empty.
+ */
 const HISTORIES: number[][] = [
   [3, 3, 2, 3, 4, 3],
   [3, 1, 3, 3, 2],
@@ -14,6 +24,7 @@ const HISTORIES: number[][] = [
   [4, 4, 3],
   [2, 3, 1, 3, 3, 3],
   [3],
+  [3, 3, 1, 3, 3, 1, 3, 3, 1, 3, 3, 1],
 ];
 
 async function main() {

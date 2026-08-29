@@ -44,7 +44,7 @@ export function ShareProgress() {
         {busy ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Share2 size={15} aria-hidden />}
         {busy ? "Building…" : "Share your progress"}
       </Button>
-      {error && <p role="alert" className="mt-2 text-[12.5px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p role="alert" className="mt-2 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
     </>
   );
 }

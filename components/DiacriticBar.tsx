@@ -42,7 +42,7 @@ export function DiacriticBar({ label = "Insert Estonian character" }: { label?: 
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => insert(ch)}
           aria-label={`Insert ${ch}`}
-          className="est press h-9 w-9 rounded-full text-[15px] font-semibold transition-all hover:-translate-y-px"
+          className="est press h-9 w-9 rounded-full text-base font-semibold transition-ui hover:-translate-y-px"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
           {ch}

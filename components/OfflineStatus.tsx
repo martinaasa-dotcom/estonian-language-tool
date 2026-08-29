@@ -57,12 +57,12 @@ export function OfflineStatus() {
 
   return (
     <div
-      className="fixed bottom-16 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-[12.5px] md:bottom-4"
+      className="fixed bottom-16 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-xs md:bottom-4"
       role="status"
       style={{
         borderColor: "var(--rule)",
         background: offline ? "var(--hard-soft)" : "var(--accent-soft)",
-        color: offline ? "var(--hard)" : "var(--accent)",
+        color: offline ? "var(--hard-ink)" : "var(--accent-deep)",
         boxShadow: "var(--shadow)",
       }}
     >

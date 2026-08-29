@@ -67,19 +67,19 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
                 <Link
                   href={`/dictionary?q=${encodeURIComponent(word)}`}
                   lang="et"
-                  className="est text-[17px] font-semibold hover:underline"
+                  className="est text-md font-semibold hover:underline"
                   style={{ color: "var(--ink)" }}
                 >
                   {word}
                 </Link>
-                <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                   {TYPE_LABEL[point.cardType] ?? point.cardType}
                 </span>
                 {point.reason === "lapses"
                   ? <Chip tone="again">{point.lapses} lapses</Chip>
                   : <Chip tone="hard">{point.accuracy}%</Chip>}
               </p>
-              <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-2)" }}>
+              <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>
                 {isSuspended ? "Set aside — it will not come up until you put it back." : stickingNote(point)}
               </p>
             </div>
@@ -88,7 +88,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
               {point.targetCase && (
                 <Link
                   href={`/grammar/${point.targetCase.toLowerCase()}`}
-                  className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px"
+                  className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                 >
                   <Compass size={12} aria-hidden /> The {point.targetCase.toLowerCase()}
@@ -96,7 +96,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
               )}
               <Link
                 href={`/dictionary?q=${encodeURIComponent(word)}`}
-                className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px"
+                className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
                 style={{ background: "var(--raised)", color: "var(--ink-2)" }}
               >
                 <BookOpen size={12} aria-hidden /> Entry
@@ -105,7 +105,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
                 type="button"
                 disabled={pending}
                 onClick={() => toggle(point.id, !isSuspended)}
-                className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px disabled:opacity-50"
+                className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px disabled:opacity-50"
                 style={{ background: "transparent", color: "var(--ink-3)" }}
               >
                 {isSuspended

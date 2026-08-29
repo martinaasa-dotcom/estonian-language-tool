@@ -64,9 +64,9 @@ export default async function WordsPage() {
               </div>
               <DeckBar
                 segments={[
-                  { label: "New", value: byState[0] ?? 0, color: "var(--sky)" },
-                  { label: "Learning", value: (byState[1] ?? 0) + (byState[3] ?? 0), color: "var(--butter)" },
-                  { label: "Known", value: byState[2] ?? 0, color: "var(--mint)" },
+                  { label: "New", value: byState[0] ?? 0, color: "var(--sky-ink)" },
+                  { label: "Learning", value: (byState[1] ?? 0) + (byState[3] ?? 0), color: "var(--butter-ink)" },
+                  { label: "Known", value: byState[2] ?? 0, color: "var(--mint-ink)" },
                 ]}
               />
             </Card>
@@ -74,7 +74,7 @@ export default async function WordsPage() {
             <Card>
               <SectionTitle hint="click to drill">Weakest cases</SectionTitle>
               {caseStats.length === 0 ? (
-                <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+                <p className="text-sm" style={{ color: "var(--ink-3)" }}>
                   Add some case-form cards and this will show which cases you keep missing.
                 </p>
               ) : (
@@ -84,7 +84,7 @@ export default async function WordsPage() {
                       <li key={c.case}>
                         <Link
                           href={`/review?case=${c.case}`}
-                          className="flex items-center justify-between gap-3 rounded-full px-2.5 py-1.5 text-[13.5px] transition-colors hover:bg-[var(--raised)]"
+                          className="flex items-center justify-between gap-3 rounded-full px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--raised)]"
                           aria-label={`Drill the ${c.case.toLowerCase()}, currently ${c.accuracy} percent`}
                         >
                           <span style={{ color: "var(--ink-2)" }}>{c.case.toLowerCase()}</span>
@@ -104,9 +104,9 @@ export default async function WordsPage() {
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-3 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                  <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                     Click a case to drill just those cards, or{" "}
-                    <Link href="/review/sprint" className="inline-flex items-center gap-1" style={{ color: "var(--accent)" }}>
+                    <Link href="/review/sprint" className="inline-flex items-center gap-1" style={{ color: "var(--accent-deep)" }}>
                       <Zap size={12} aria-hidden /> try a 60-second sprint
                     </Link>.
                   </p>
@@ -117,7 +117,7 @@ export default async function WordsPage() {
 
           <WordsTable rows={rows} />
           {totalCards > rows.length && (
-            <p className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="text-xs" style={{ color: "var(--ink-3)" }}>
               Showing the {rows.length} cards due soonest, of {totalCards}. Use the filters or the
               search box above to find the rest.
             </p>
@@ -149,7 +149,7 @@ function DeckBar({ segments }: { segments: { label: string; value: number; color
           />
         ))}
       </div>
-      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px]" style={{ color: "var(--ink-3)" }}>
+      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: "var(--ink-3)" }}>
         {segments.map((s) => (
           <span key={s.label} className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />

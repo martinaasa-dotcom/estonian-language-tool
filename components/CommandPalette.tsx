@@ -147,10 +147,10 @@ export function CommandPalette() {
             }}
             placeholder="Jump to a screen, or type a word to look up…"
             aria-label="Search commands and words"
-            className="w-full bg-transparent text-[15px] outline-none"
+            className="w-full bg-transparent text-base outline-none"
             style={{ color: "var(--ink)" }}
           />
-          <kbd className="rounded border px-1.5 py-0.5 text-[11px]" style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}>
+          <kbd className="rounded-md border px-1.5 py-0.5 text-2xs" style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}>
             esc
           </kbd>
         </div>
@@ -164,15 +164,15 @@ export function CommandPalette() {
                 className="flex w-full items-baseline gap-3 px-4 py-2.5 text-left"
                 style={{ background: i === active ? "var(--accent-soft)" : "transparent" }}
               >
-                <span className="text-[14.5px]" style={{ color: i === active ? "var(--accent)" : "var(--ink)" }}>
+                <span className="text-base" style={{ color: i === active ? "var(--accent-deep)" : "var(--ink)" }}>
                   {c.label}
                 </span>
-                <span className="ml-auto truncate text-[12px]" style={{ color: "var(--ink-3)" }}>{c.hint}</span>
+                <span className="ml-auto truncate text-xs" style={{ color: "var(--ink-3)" }}>{c.hint}</span>
               </button>
             </li>
           ))}
           {results.length === 0 && (
-            <li className="px-4 py-6 text-center text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+            <li className="px-4 py-6 text-center text-sm" style={{ color: "var(--ink-3)" }}>
               Nothing matches that.
             </li>
           )}
