@@ -293,3 +293,16 @@ be recovered by re-fetching from anywhere, and it is the input to future FSRS op
 
 **`AudioClip` is content-addressed** by `sha256(text + speaker + speed)`, so the same word requested
 from a dictionary entry and from a flashcard hits one cached file.
+
+**`Assessment` is the second append-only table, and the third exception to "progress is derived".**
+A sitting of the level check is a measurement of answers to questions that were never cards and
+were never scheduled, made at one moment against a paper assembled for it. Nothing in the review log
+can reconstruct it, so it is stored rather than computed, and it is written once and never edited:
+a later check is another row, which is what makes the history a history instead of a number that
+moved. It holds the per skill levels, the overall (the weakest measured skill), the confidence, how
+many scored questions it came from, the learner's own speaking rating, and the band breakdown as
+JSON. See ADR-020.
+
+The goal it is read against lives in `Setting`, under `goalReason`, `goalTarget`, `goalDeadline`,
+`goalDays` and `goalNote`, all through `lib/settings/store.ts`. Five keys rather than one JSON blob
+so one answer can change without rewriting the rest.

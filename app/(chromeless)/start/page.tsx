@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { PATH } from "@/lib/collections/path";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { paperFor } from "@/lib/progress/assessment";
 import { WelcomeWizard, type WizardUnit } from "./WelcomeWizard";
 
 export const dynamic = "force-dynamic";
@@ -46,5 +47,15 @@ export default async function WelcomePage() {
   const suggestedName =
     settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
 
-  return <WelcomeWizard units={units} suggestedName={suggestedName} />;
+  /*
+    The level check, built here rather than behind a click.
+
+    It is a handful of queries and it is the one screen in the app where the
+    learner has nothing else to wait for, so paying for it up front buys an
+    instant start on the step that matters most. A learner who estimates
+    instead has cost the deployment five reads of the dictionary once, ever.
+  */
+  const paper = await paperFor(ownerId, Date.now() % 1_000_000);
+
+  return <WelcomeWizard units={units} suggestedName={suggestedName} paper={paper} />;
 }

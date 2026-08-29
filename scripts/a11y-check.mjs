@@ -15,6 +15,7 @@ const BASE = baseUrl();
 const ROUTES = [
   "/", "/review/write", "/review/government", "/review/cloze",
   "/review/clinic", "/words", "/week", "/settings", "/privacy", "/terms",
+  "/assess", "/assess?take=1", "/guide",
 ];
 
 const browser = await launchChromium();

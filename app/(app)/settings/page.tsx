@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Bell, Download, Keyboard, Shield, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
@@ -5,9 +6,12 @@ import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { BADGES } from "@/lib/achievements/badges";
 import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
+import { goalsFor, latestFor } from "@/lib/progress/assessment";
+import { levelLabel } from "@/components/assessment/PlanPanel";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
+import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
 import { LeaderboardPanel, ReviewModePanel } from "./PreferencesPanel";
@@ -30,7 +34,7 @@ export default async function SettingsPage() {
   const provider = resolveProvider();
   const hosted = supabaseConfigured();
 
-  const [words, cards, reviews, earned, settings, learner] = await Promise.all([
+  const [words, cards, reviews, earned, settings, learner, goals, latestCheck] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
@@ -40,6 +44,8 @@ export default async function SettingsPage() {
       SETTING_KEYS.displayName, SETTING_KEYS.leaderboard,
     ]),
     currentLearner(),
+    goalsFor(ownerId),
+    latestFor(ownerId),
   ]);
 
   const earnedKeys = new Set(earned.map((a) => a.key));
@@ -93,6 +99,32 @@ export default async function SettingsPage() {
             Either way, brand-new cards are shown with their answer first, being asked to produce a
             word you have never seen teaches nothing.
           </p>
+        </section>
+
+        <section id="goals">
+          <SectionTitle
+            hint={latestCheck ? `measured ${levelLabel((latestCheck.overall ?? null) as never)}` : "not measured yet"}
+          >
+            Why you are here
+          </SectionTitle>
+          <Card>
+            <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              These answers build the timeline on the level check screen: how many hours the level you
+              want usually takes, how many of them your daily goal covers, and what is left to find
+              elsewhere. Change them whenever the answer changes.
+            </p>
+            <GoalsPanel current={goals} />
+            <p className="mt-5 text-sm" style={{ color: "var(--ink-3)" }}>
+              <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
+                Take the level check
+              </Link>{" "}
+              to measure where you are, or read{" "}
+              <Link href="/guide" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
+                what this app can and cannot do
+              </Link>
+              .
+            </p>
+          </Card>
         </section>
 
         <section>
