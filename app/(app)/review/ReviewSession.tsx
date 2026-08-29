@@ -264,9 +264,23 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (finished) return;
-      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+      const field = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
+        ? e.target
+        : null;
+      const typing = field !== null;
 
-      if (e.key.toLowerCase() === "u" && !typing && history.length > 0) {
+      // `u` has to reach undo from inside the answer box, because that is where
+      // focus already is: grading a typed card advances to the next one, whose
+      // input takes focus on mount — and the moment just after a grade is
+      // exactly when you notice you hit the wrong key. Requiring focus to be
+      // outside the field meant the shortcut silently did nothing there, and
+      // quietly dropped a `u` into the next answer instead.
+      //
+      // Only while that box is still empty, though. Estonian is full of u —
+      // tuba, kuu, muusika — so once there is anything typed, u is a letter.
+      const startedAnswering = field !== null && field.value.length > 0;
+
+      if (e.key.toLowerCase() === "u" && !startedAnswering && history.length > 0) {
         e.preventDefault();
         void undo();
         return;
@@ -646,7 +660,18 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
         </button>
         <span className="hidden items-center gap-1 md:flex">
           <Keyboard size={12} aria-hidden />
-          {ask === "type" ? "Enter to check · 1–4 to grade" : "Space to flip · 1–4 to grade"}
+          {/* Mirrors the footer button's own branches, so the hint cannot promise a
+              key the card in front of you does not answer to. It had two arms for
+              four shapes, which told anyone on a multiple-choice card to press
+              Space to flip and 1–4 to grade — where nothing flips and 1–4 picks
+              an option instead. */}
+          {ask === "type"
+            ? (verdict ? "1–4 to grade" : "Enter to check")
+            : ask === "choice" && !chosen
+              ? `1–${card?.choices?.length ?? 4} to pick`
+              : !revealed && ask !== "intro"
+                ? "Space to flip · 1–4 to grade"
+                : "1–4 to grade"}
         </span>
       </div>
 
