@@ -21,7 +21,13 @@ export async function GET() {
   */
   const limit = checkRateLimit(`export:${bucketForOwner(ownerId)}`, 6, 60 * 60_000);
   if (!limit.ok) {
-    return rateLimited(limit, "That backup is already on its way. Try again shortly.");
+    return rateLimited(
+      limit,
+      // Says which limit was reached. The old wording, "that backup is already
+      // on its way", describes a request in flight, so somebody who had taken
+      // six today would wait for a download that was never coming.
+      "You have taken six backups in the last hour, which is the limit. Your data is safe and nothing has changed; try again a little later.",
+    );
   }
 
   const [lexemes, cards, reviews, tasks] = await Promise.all([

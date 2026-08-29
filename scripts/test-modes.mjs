@@ -8,14 +8,14 @@
  *   node scripts/test-modes.mjs
  */
 import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const B = process.env.BASE_URL ?? "http://localhost:3000";
+const B = baseUrl();
 const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 950 } });
 const page = await ctx.newPage();
 
 const errors = [];
-let failures = 0;
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => {
   // The offline section below pulls the plug on purpose; the browser's own
@@ -23,10 +23,8 @@ page.on("console", (m) => {
   if (m.type() === "error" && !m.text().includes("ERR_INTERNET_DISCONNECTED")) errors.push(m.text());
 });
 
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? "  (" + extra + ")" : ""}`);
-};
+// Floor: 23, measured in the state CI seeds. A thinner database reads as short.
+const { check, absent, done } = suite("Practice modes", { floor: 23 });
 
 /**
  * Answers whatever kind of card is on screen and grades it Good.
@@ -134,7 +132,10 @@ for (let i = 0; i < 30 && !typedReached; i++) {
   await answerCurrentCard();
 }
 if (!typedReached && everyCardIsNew) {
-  console.log("SKIP  typed answers — every card in this deck is new. Run `npm run demo` first.");
+  // A `console.log` saying SKIP was all this used to be, which is the exact
+  // shape the floor exists to catch: three checks not run and nothing counting
+  // them. Waived by name and by number now, so the arithmetic is on screen.
+  absent(3, "a deck with a card past its first sitting: run `npm run demo`");
 } else {
   check("a typed card is reached within a session", typedReached);
 }
@@ -160,6 +161,8 @@ if (rateable) {
   await page.waitForTimeout(1500);
   const gradedAfter = await page.getByText(/\d+ graded/).textContent();
   check("u undoes the last grade", gradedBefore !== gradedAfter, `${gradedBefore?.trim()} -> ${gradedAfter?.trim()}`);
+} else {
+  absent(1, "a card that reached its rating buttons, which none did here");
 }
 
 /**
@@ -222,6 +225,5 @@ const sw = await page.request.get(`${B}/sw.js`);
 check("the service worker is served", sw.ok());
 
 console.log(errors.length ? `\nconsole/page errors:\n  ${errors.join("\n  ")}` : "\nno console errors");
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

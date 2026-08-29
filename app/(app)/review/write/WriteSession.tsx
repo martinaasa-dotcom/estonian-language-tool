@@ -157,7 +157,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             aria-label="Round progress"
           />
         </div>
-        <span className="tnum text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+        <span className="tnum text-sm" style={{ color: "var(--ink-3)" }}>
           {prompts.length - index} left
         </span>
       </div>
@@ -174,12 +174,12 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
         <div className="px-6 py-8">
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             Use{" "}
-            <strong lang="et" className="est text-[18px]" style={{ color: "var(--ink)" }}>
+            <strong lang="et" className="est text-lg" style={{ color: "var(--ink)" }}>
               {prompt.lemma}
             </strong>{" "}
             <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
           </p>
-          <p className="est mt-1 text-[28px] font-semibold" style={{ color: "var(--accent)" }}>
+          <p className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent)" }}>
             {prompt.caseEn.toLowerCase()}
           </p>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
@@ -210,7 +210,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
           </div>
 
           {error && (
-            <p role="alert" className="mt-3 text-[13.5px]" style={{ color: "var(--again)" }}>{error}</p>
+            <p role="alert" className="mt-3 text-sm" style={{ color: "var(--again-ink)" }}>{error}</p>
           )}
 
           {marked && <Feedback marked={marked} />}
@@ -300,7 +300,7 @@ function Feedback({ marked }: { marked: Marked }) {
           </div>
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>{graded.comment}</p>
           {graded.rule && (
-            <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
               Rule: {graded.rule}
             </p>
           )}
@@ -308,7 +308,7 @@ function Feedback({ marked }: { marked: Marked }) {
       )}
 
       {quotaMessage && (
-        <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>{quotaMessage}</p>
+        <p className="text-sm" style={{ color: "var(--ink-3)" }}>{quotaMessage}</p>
       )}
     </div>
   );

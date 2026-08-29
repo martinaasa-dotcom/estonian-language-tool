@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
-import { enrichFromEkilex, lookupAndStore } from "@/lib/dict/lookup";
+import { enrichWithinDeadline, lookupAndStore } from "@/lib/dict/lookup";
 import { backfillClozeCards } from "@/lib/srs/backfill";
 import { ekilexConfigured } from "@/lib/ekilex/client";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
@@ -35,7 +35,7 @@ export default async function DictionaryPage({
   // again is a wasted step when you already know what you looked up.
   // A seeded word we are about to display: upgrade it to the real paradigm first.
   if (hits[0] && ekilexConfigured()) {
-    const upgraded = await enrichFromEkilex(hits[0].id);
+    const upgraded = await enrichWithinDeadline(hits[0].id);
     if (upgraded) {
       fetched = true;
       // The sentences that just arrived can support a gap-fill card this word

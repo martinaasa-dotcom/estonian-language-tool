@@ -10,21 +10,17 @@
  *   NEXT_PUBLIC_SUPABASE_URL= NEXT_PUBLIC_SUPABASE_ANON_KEY= NEXT_PUBLIC_ENABLE_SW=1 npm run dev
  *   node scripts/smoke-offline.mjs
  */
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
+import { baseUrl, suite } from "./lib/checks.mjs";
 
-const BASE = process.env.BASE_URL ?? "http://localhost:3000";
-const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-});
+const BASE = baseUrl();
+const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
 const page = await ctx.newPage();
 const app = page.locator("main");
 
-let failures = 0;
-const check = (label, ok, extra = "") => {
-  if (!ok) failures++;
-  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
-};
+// Floor: measured 10 in dev mode with NEXT_PUBLIC_ENABLE_SW=1, which its header documents.
+const { check, done } = suite("Offline review", { floor: 11 });
 
 
 /**
@@ -44,23 +40,25 @@ async function answerOneCard() {
   }
 
   /*
-    Multiple choice: the options are numbered 1 to 4, and picking one only
-    *reveals* the answer. The grade is the second click, on Again/Hard/Good/
-    Easy, exactly as a learner does it.
+    Multiple choice: the card says "1-4 to pick", so press one, and then grade.
 
-    Clicking the option and stopping there used to look like a complete answer
-    because the first due card happened to be a "Show answer" card, which the
-    branch above handles end to end. Once the dictionary grew, a multiple
-    choice card came up first and this branch reported success having graded
-    nothing, so the outbox was empty and the offline check failed against an
-    app that was working correctly.
+    Picking an option only *reveals* the answer. The grade is the second
+    interaction, on Again/Hard/Good/Easy, and without it this function reported
+    a completed answer having graded nothing: the outbox was empty and the
+    check read as "a grade taken offline is held on the device: 0 queued",
+    which looks like the offline queue is broken when it is working perfectly.
+    It surfaced when the dictionary grew, because a multiple choice card
+    started coming up first where a "Show answer" card used to, and that branch
+    above does both steps.
+
+    The keyboard rather than a click on the option, because it is what the app
+    itself offers and what test-modes.mjs drives.
   */
-  const choice = app.locator("button").filter({ hasText: /^[1-4]\S/ });
-  if (await choice.count()) {
-    await choice.first().click();
-    await page.waitForTimeout(400);
+  if (await page.getByText(/Pick the meaning/).count()) {
+    await page.keyboard.press("1");
+    await page.waitForTimeout(900);
     const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
-    if (await rate.count()) await rate.first().click();
+    if (await rate.count()) { await rate.first().click(); }
     return true;
   }
 
@@ -148,7 +146,10 @@ async function waitForText(page, pattern, timeoutMs = 30000) {
 // ── Pull the plug ────────────────────────────────────────────────────────────
 await ctx.setOffline(true);
 
-await answerOneCard();
+// Whether a card was answered at all is the first thing to assert, because
+// every check after this one reads as an app fault when the answer is no.
+const answeredOffline = await answerOneCard();
+check("a card can be answered with the network gone", answeredOffline);
 // The server action has to fail and the grade has to reach IndexedDB.
 await waitForText(page, /saved on this device|Offline/i, 20000);
 await page.waitForTimeout(1500);
@@ -200,6 +201,5 @@ for (let i = 0; i < 30; i++) {
 check("the outbox drains once the connection is back", drained,
   `${await outboxSize()} still queued`);
 
-console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 await browser.close();
-process.exit(failures === 0 ? 0 : 1);
+done();

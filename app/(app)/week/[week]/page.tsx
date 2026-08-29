@@ -124,7 +124,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
                   <ButtonLink href="/dictionary" variant="primary">
                     Add week {week} vocabulary
                   </ButtonLink>
-                  <span className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="text-sm" style={{ color: "var(--ink-3)" }}>
                     {week === current
                       ? "Words you add now are filed here."
                       : `Make week ${week} current first, so new words land here.`}
@@ -145,7 +145,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
                         href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}
                         className="min-w-0 flex-1"
                       >
-                        <span lang="et" className="est text-[16px] font-medium" style={{ color: "var(--ink)" }}>
+                        <span lang="et" className="est text-md font-medium" style={{ color: "var(--ink)" }}>
                           {word.lemma}
                         </span>
                         <span className="ml-2 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
@@ -182,7 +182,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
             </section>
           )}
 
-          <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+          <p className="text-sm" style={{ color: "var(--ink-3)" }}>
             <Link href="/tasks" className="inline-flex items-center gap-1.5" style={{ color: "var(--accent)" }}>
               <CalendarCheck size={13} aria-hidden /> All tasks <ArrowRight size={12} aria-hidden />
             </Link>

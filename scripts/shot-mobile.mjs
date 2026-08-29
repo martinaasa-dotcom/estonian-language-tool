@@ -1,6 +1,7 @@
-import { chromium, devices } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
+import { devices } from "playwright";
 const OUT = process.argv[2];
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const b = await launchChromium();
 const ctx = await b.newContext({ ...devices["iPhone 13"] });
 const p = await ctx.newPage();
 const errors = [];

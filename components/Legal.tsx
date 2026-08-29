@@ -15,16 +15,16 @@ export function Legal({ title, updated, children }: {
         Kodukeel
       </Link>
       <h1
-        className="est mt-3 text-[30px] font-bold leading-tight tracking-tight"
+        className="est mt-3 text-3xl font-bold leading-tight tracking-tight"
         style={{ color: "var(--ink)" }}
       >
         {title}
       </h1>
-      <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
         Last updated {updated}
       </p>
       <div className="mt-8 space-y-8">{children}</div>
-      <p className="mt-14 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-14 text-sm" style={{ color: "var(--ink-3)" }}>
         <Link href="/privacy" className="underline underline-offset-2">Privacy</Link>
         {" · "}
         <Link href="/terms" className="underline underline-offset-2">Terms</Link>
@@ -48,7 +48,7 @@ export function S({ title, children }: { title: string; children: ReactNode }) {
 
 export function P({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+    <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
       {children}
     </p>
   );

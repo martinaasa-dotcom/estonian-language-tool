@@ -36,6 +36,53 @@ export interface LookupResult {
  * translation the learner already has. Every word she uses becomes authoritative;
  * words she never opens cost nothing.
  */
+/**
+ * How long a page will wait for an upgrade it does not need.
+ *
+ * `enrichFromEkilex` improves an entry that is already on screen: the word, its
+ * principal parts and every regular case derived from them are in the database
+ * before this runs. So it is worth a moment and not worth a page.
+ *
+ * The Ekilex client allows fifteen seconds per request and the upgrade makes
+ * two of them in sequence, which means a slow minute upstream could hold a
+ * dictionary render for half a minute with nothing on the screen. Measured
+ * here, the upgrade normally takes about 1.4 seconds and every later visit to
+ * the same word takes 35 milliseconds, because the paradigm is then stored.
+ *
+ * Past this deadline the page renders what it has. Nothing is lost: the
+ * request that was in flight still finishes and still writes its cache, and
+ * the next visit either finds it there or tries again.
+ */
+const UPGRADE_DEADLINE_MS = 2_500;
+
+/**
+ * The upgrade, given up on rather than waited for.
+ *
+ * Returns false on a timeout, which is what the caller already does for "there
+ * was nothing to add", and is true in the only sense the caller cares about:
+ * there is nothing new to show this time round.
+ */
+export async function enrichWithinDeadline(
+  lexemeId: string,
+  deadlineMs = UPGRADE_DEADLINE_MS,
+): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const gaveUp = new Promise<boolean>((resolve) => {
+    timer = setTimeout(() => resolve(false), deadlineMs);
+  });
+  try {
+    return await Promise.race([
+      // A failure here is already handled inside enrichFromEkilex; this catch
+      // is so an unexpected one degrades to "not upgraded" rather than to an
+      // error page over a word the reader can already see.
+      enrichFromEkilex(lexemeId).catch(() => false),
+      gaveUp,
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
   if (!ekilexConfigured()) return false;
 

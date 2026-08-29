@@ -83,17 +83,17 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
                 </p>
 
                 <div className="mt-3 flex items-center gap-4">
-                  <Bar label="in that group" pct={finding.weakPct} fill="var(--again)" ink="var(--again-ink)" />
-                  <Bar label="elsewhere" pct={finding.strongPct} fill="var(--good)" ink="var(--good-ink)" />
+                  <Bar label="in that group" pct={finding.weakPct} tone="var(--again)" ink="var(--again-ink)" />
+                  <Bar label="elsewhere" pct={finding.strongPct} tone="var(--good)" ink="var(--good-ink)" />
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     from {finding.sample} reviews
                   </span>
                   <Link
                     href={finding.href}
-                    className="flex items-center gap-1.5 text-[13.5px]"
+                    className="flex items-center gap-1.5 text-sm"
                     style={{ color: "var(--accent-deep)" }}
                   >
                     Drill it <ArrowRight size={13} aria-hidden />
@@ -108,26 +108,28 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
   );
 }
 
-/**
- * A labelled percentage over a bar.
- *
- * The hue arrives twice on purpose. `fill` is the bar itself, where mint and
- * peach carry their fixed meanings, recalled and missed. `ink` is the number,
- * which is small text on a card and has to clear WCAG AA: the fill hues do not
- * (peach measured 2.97:1 and mint 2.52:1), which is exactly why the design
- * system defines `--again-ink` and `--good-ink` as the readable versions of
- * the same colours. Using the fill for both is the mistake this signature
- * makes hard to repeat.
- */
-function Bar({ label, pct, fill, ink }: { label: string; pct: number; fill: string; ink: string }) {
+/*
+  The hue fills the bar; the ink variant of it writes the number.
+
+  Mint and peach are indicator colours, sized to be read as a block of fill,
+  and at 13.5px on a card they measured 2.52:1 and 2.97:1, both under the 3:1
+  that even large text has to clear. `--good-ink` and `--again-ink` are the
+  same meaning at a lightness that can be read, which is what they exist for.
+
+  This panel only draws once a deck has a group the learner is measurably
+  worse at, so the sixteen pages the design suite visits rendered nothing here
+  until a database had enough history behind it. The check was right the whole
+  time and had never been given the state.
+*/
+function Bar({ label, pct, tone, ink }: { label: string; pct: number; tone: string; ink: string }) {
   return (
     <div className="min-w-0 flex-1">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{label}</span>
-        <span className="tnum text-[13.5px] font-semibold" style={{ color: ink }}>{pct}%</span>
+        <span className="text-xs" style={{ color: "var(--ink-3)" }}>{label}</span>
+        <span className="tnum text-sm font-semibold" style={{ color: ink }}>{pct}%</span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: fill }} />
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: tone }} />
       </div>
     </div>
   );
