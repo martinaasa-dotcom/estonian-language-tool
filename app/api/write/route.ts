@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   if (!looksLikeSentence(sentence)) {
     return Response.json(
-      { error: "Write a whole sentence — at least three words." },
+      { error: "Write a whole sentence, at least three words." },
       { status: 400 },
     );
   }

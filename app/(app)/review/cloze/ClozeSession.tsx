@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, CircleAlert, Loader2, ScissorsLineDashed, X } from "lucide-react";
 import Link from "next/link";
-import { buildClozeFromText } from "@/app/actions";
+import { buildClozeFromText, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { Chip, Page, Stat } from "@/components/ui";
@@ -12,12 +12,15 @@ import {
   BLANK, MAX_PASSAGE_CHARS, type ClozeItem, isClozeCorrect, isDiacriticSlip,
 } from "@/lib/estonian/passage";
 
+/** A gap, plus the card it is practising. */
+type Gap = ClozeItem & { cardId: string | null };
+
 type Phase = "paste" | "drill" | "done";
 
 export function ClozeSession() {
   const [phase, setPhase] = useState<Phase>("paste");
   const [text, setText] = useState("");
-  const [items, setItems] = useState<ClozeItem[]>([]);
+  const [items, setItems] = useState<Gap[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -55,7 +58,19 @@ export function ClozeSession() {
   const check = useCallback(() => {
     if (!item || checked || !attempt.trim()) return;
     setChecked(true);
-    if (isClozeCorrect(attempt, item.answer)) setCorrect((c) => c + 1);
+    const right = isClozeCorrect(attempt, item.answer);
+    if (right) setCorrect((c) => c + 1);
+
+    /*
+      ADR-016: every practice mode writes to the same review log, so the
+      scheduler sees what was actually practised rather than treating this as a
+      side game with a score of its own. A missing diacritic is a keyboard slip,
+      not a memory failure, so it grades Hard rather than Again.
+    */
+    if (item.cardId) {
+      const rating = right ? 3 : isDiacriticSlip(attempt, item.answer) ? 2 : 1;
+      void gradeCard(item.cardId, rating, 0).catch(() => {});
+    }
   }, [item, checked, attempt]);
 
   useEffect(() => {
@@ -187,7 +202,7 @@ export function ClozeSession() {
       >
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><ScissorsLineDashed size={12} aria-hidden /> Fill the gap</Chip>
-          <Chip>{item.lemma} — {item.translation}</Chip>
+          <Chip>{item.lemma} · {item.translation}</Chip>
         </div>
 
         <div className="px-6 py-8">
@@ -242,7 +257,7 @@ export function ClozeSession() {
                   {right
                     ? "Exactly the form the writer used."
                     : slip
-                      ? <>Right word, missing diacritic — <strong lang="et">{item.answer}</strong>. Use the bar under the box.</>
+                      ? <>Right word, missing a diacritic. The form is <strong lang="et">{item.answer}</strong>. Use the bar under the box.</>
                       : <>The writer used <strong lang="et">{item.answer}</strong>, the {item.formLabel}.</>}
                 </p>
               </div>

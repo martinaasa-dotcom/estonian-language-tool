@@ -31,7 +31,7 @@ export default async function ClinicPage() {
     return (
       <Page title="Leech clinic" lead="The cards you keep failing, taken apart.">
         <Empty
-          title="No leeches — which is the good outcome"
+          title="No leeches, which is the good outcome"
           body={`A card lands here after ${LEECH_LAPSES} lapses. Nothing in your deck has failed that often, so there is nothing to fix.`}
           action={<ButtonLink href="/review" variant="primary">Carry on reviewing</ButtonLink>}
         />

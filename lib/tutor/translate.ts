@@ -1,5 +1,29 @@
 import { buildSystemPrompt } from "./prompt";
-import { resolveProvider, streamReply } from "./provider";
+import { openWithFallback, resolveProviders } from "./provider";
+
+/**
+ * One short answer from whichever provider will give one.
+ *
+ * These two callers want a handful of words, not a conversation, so they get
+ * the chain's fallback behaviour and none of its streaming: a gloss that
+ * arrives a word at a time is a gloss nobody watches arrive. `cap` stops a
+ * model that has decided to write an essay from being read to the end.
+ */
+async function ask(instruction: string, cap: number): Promise<string | null> {
+  const chain = resolveProviders();
+  if (chain.length === 0) return null;
+
+  const open = await openWithFallback(chain, buildSystemPrompt("B1"), [
+    { role: "user", content: instruction },
+  ]);
+
+  let text = "";
+  for await (const chunk of open.chunks) {
+    text += chunk;
+    if (text.length > cap) break;
+  }
+  return text;
+}
 
 /**
  * Last-resort English gloss for a word neither the seed nor Wiktionary has.
@@ -11,22 +35,14 @@ import { resolveProvider, streamReply } from "./provider";
  * a translation the learner can overwrite.
  */
 export async function translateWithAnu(lemma: string): Promise<string | null> {
-  const config = resolveProvider();
-  if (!config) return null;
-
   const instruction =
     `Give the English translation of the Estonian word "${lemma}". ` +
-    `Reply with the translation only — at most six words, no explanation, no quotes. ` +
+    `Reply with the translation only, at most six words, no explanation, no quotes. ` +
     `If you do not know the word, reply exactly: UNKNOWN`;
 
   try {
-    let text = "";
-    for await (const chunk of streamReply(config, buildSystemPrompt("B1"), [
-      { role: "user", content: instruction },
-    ])) {
-      text += chunk;
-      if (text.length > 200) break;
-    }
+    const text = await ask(instruction, 200);
+    if (text === null) return null;
 
     const cleaned = text
       .replace(/^["'\s]+|["'\s.]+$/g, "")
@@ -50,22 +66,14 @@ export async function translateWithAnu(lemma: string): Promise<string | null> {
  * invented form. What comes back is stored tagged as AI and shown as such.
  */
 export async function translateSentenceWithAnu(sentence: string): Promise<string | null> {
-  const config = resolveProvider();
-  if (!config) return null;
-
   const instruction =
     `Translate this Estonian sentence into natural English: "${sentence}"\n` +
-    `Reply with the English translation only — one sentence, no quotes, no notes. ` +
+    `Reply with the English translation only, one sentence, no quotes, no notes. ` +
     `If you cannot translate it, reply exactly: UNKNOWN`;
 
   try {
-    let text = "";
-    for await (const chunk of streamReply(config, buildSystemPrompt("B1"), [
-      { role: "user", content: instruction },
-    ])) {
-      text += chunk;
-      if (text.length > 400) break;
-    }
+    const text = await ask(instruction, 400);
+    if (text === null) return null;
 
     const cleaned = text.replace(/^["'\s]+|["'\s]+$/g, "").split("\n")[0]?.trim();
     if (!cleaned || /^unknown$/i.test(cleaned) || cleaned.length > 240) return null;

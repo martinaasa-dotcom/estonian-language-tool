@@ -23,10 +23,24 @@ export default async function WritePage() {
 
   const cards = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { not: null } },
-    select: { lexemeId: true, lapses: true },
+    select: { id: true, lexemeId: true, lapses: true, cardType: true },
     orderBy: { lapses: "desc" },
     take: 200,
   });
+
+  /*
+    The card this exercise is really practising.
+    ADR-016: a practice mode is not a side game with a score of its own. Writing
+    a sentence with `tuba` in the inessive is evidence about that word, so it
+    grades the same card the daily loop would, and the scheduler sees it. A
+    case-form card is the closest match; production is the fallback.
+  */
+  const cardFor = new Map<string, string>();
+  for (const c of cards) {
+    if (!c.lexemeId) continue;
+    const better = c.cardType === "CASE_FORM" || c.cardType === "PRODUCTION";
+    if (!cardFor.has(c.lexemeId) || better) cardFor.set(c.lexemeId, c.id);
+  }
 
   const lexemeIds = [...new Set(cards.map((c) => c.lexemeId).filter((id): id is string => !!id))];
 
@@ -51,7 +65,10 @@ export default async function WritePage() {
   const pool: WritingPrompt[] = [];
   for (const lexeme of lexemes) {
     for (const task of writingTasksFor(lexeme)) {
+      const cardId = cardFor.get(lexeme.id);
+      if (!cardId) continue;
       pool.push({
+        cardId,
         lexemeId: lexeme.id,
         lemma: task.lemma,
         translation: task.translation,
@@ -80,7 +97,7 @@ export default async function WritePage() {
       <Page title="Writing" lead="Write your own Estonian, and have it marked.">
         <Empty
           title="No words to write about yet"
-          body="Writing practice draws on nouns and adjectives already in your deck, because the point is producing words you have met — not meeting new ones. Add a few from the dictionary."
+          body="Writing practice draws on nouns and adjectives already in your deck, because the point is producing words you have met, not meeting new ones. Add a few from the dictionary."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

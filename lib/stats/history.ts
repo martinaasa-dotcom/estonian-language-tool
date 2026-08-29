@@ -236,7 +236,7 @@ export function retentionReading(
       target,
       verdict: "unknown",
       headline: "Not enough mature reviews yet",
-      advice: `This compares how often you recall a card the scheduler thought you knew against the ${target}% it aims for. It needs about ${minimum} such reviews to mean anything — you have ${count}.`,
+      advice: `This compares how often you recall a card the scheduler thought you knew against the ${target}% it aims for. It needs about ${minimum} such reviews to mean anything, you have ${count}.`,
     };
   }
 
@@ -250,7 +250,7 @@ export function retentionReading(
       reviews: count, recalled, retention, target,
       verdict: "above",
       headline: "Recalling more than the schedule expects",
-      advice: `You are getting ${retention}% of mature cards right where the scheduler plans for ${target}%. That is comfortable rather than wrong — it usually means there is room to take on more new words each day. Raise the daily goal in Settings before adding another mode.`,
+      advice: `You are getting ${retention}% of mature cards right where the scheduler plans for ${target}%. That is comfortable rather than wrong, it usually means there is room to take on more new words each day. Raise the daily goal in Settings before adding another mode.`,
     };
   }
 
@@ -267,6 +267,6 @@ export function retentionReading(
     reviews: count, recalled, retention, target,
     verdict: "on-target",
     headline: "The schedule is working",
-    advice: `${retention}% of mature cards recalled against a ${target}% target — which is exactly what FSRS is steering for. Nothing to change.`,
+    advice: `${retention}% of mature cards recalled against a ${target}% target, which is exactly what FSRS is steering for. Nothing to change.`,
   };
 }

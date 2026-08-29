@@ -154,7 +154,7 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
 
       <p className="relative mt-9 flex items-center justify-center gap-4 text-2xs" style={{ color: "var(--ink-3)" }}>
         <span className="flex items-center gap-1"><Check size={12} aria-hidden /> real card, real scheduling</span>
-        <span className="flex items-center gap-1"><RotateCcw size={12} aria-hidden /> try it — it works</span>
+        <span className="flex items-center gap-1"><RotateCcw size={12} aria-hidden /> try it, it really works</span>
       </p>
     </div>
   );
@@ -244,7 +244,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
             ))}
           </ul>
           <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
-            Derived live by the same function the app uses — never invented by an AI.
+            Derived live by the same function the app uses, never invented by an AI.
           </p>
         </div>
       </div>
@@ -273,8 +273,8 @@ export function TutorPeek() {
         >
           <span className="label-xs mb-1.5 block" style={{ color: "var(--blush-ink)" }}>Anu</span>
           Because the action is unfinished. <span lang="et" className="est font-semibold">Ma loen raamatut</span>{" "}
-          — “I am reading a book”, partitive, still going. Swap in the genitive and you get{" "}
-          <span lang="et" className="est font-semibold">Ma loen raamatu läbi</span> — a whole book,
+          is “I am reading a book”: partitive, still going. Swap in the genitive and you get{" "}
+          <span lang="et" className="est font-semibold">Ma loen raamatu läbi</span>, a whole book,
           finished. The object case is where Estonian hides its aspect.
         </div>
       ) : (

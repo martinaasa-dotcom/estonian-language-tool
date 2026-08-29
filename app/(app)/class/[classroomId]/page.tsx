@@ -58,7 +58,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
       <div className="flex flex-col gap-6">
         {classroom.archived && (
           <Note tone="hard">
-            This class is archived — the join code no longer works. Everything already here stays.
+            This class is archived. The join code no longer works. Everything already here stays.
           </Note>
         )}
 
@@ -146,7 +146,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
           )}
           {you && leader && you.ownerId !== leader.ownerId && (
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              {leader.weeklyXp - you.weeklyXp} XP behind the top of the class — about{" "}
+              {leader.weeklyXp - you.weeklyXp} XP behind the top of the class, about{" "}
               {Math.max(1, Math.ceil((leader.weeklyXp - you.weeklyXp) / 10))} more cards.
             </p>
           )}
@@ -190,7 +190,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
               <AssignUnit classroomId={classroomId} units={units} />
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                 Lands as a task in each student&rsquo;s own list, with a link to the unit. Nobody&rsquo;s
-                deck is changed — they choose when to add the words.
+                deck is changed, they choose when to add the words.
               </p>
             </Card>
           </section>

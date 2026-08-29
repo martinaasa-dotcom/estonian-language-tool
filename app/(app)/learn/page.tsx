@@ -47,7 +47,7 @@ export default async function LearnPage() {
             {started > 0 ? `, ${started} in progress` : ""} · {knownWords} of {totalWords} words known
           </p>
           <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
-            A word counts as known once every card made from it has graduated in the scheduler —
+            A word counts as known once every card made from it has graduated in the scheduler,
             not just answered right once.
           </p>
         </div>
@@ -135,7 +135,7 @@ export default async function LearnPage() {
       </ol>
 
       <p className="mt-6 text-xs" style={{ color: "var(--ink-3)" }}>
-        Units are shortcuts into the same dictionary, not a separate course — everything in them can
+        Units are shortcuts into the same dictionary, not a separate course, everything in them can
         also be found by searching, and anything the dictionary is missing you can{" "}
         <Link href="/dictionary" className="underline" style={{ color: "var(--accent-deep)" }}>add yourself</Link>.
       </p>

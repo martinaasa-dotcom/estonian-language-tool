@@ -96,7 +96,7 @@ function gradationFindings(facts: ReviewFact[]): Finding[] {
 
     findings.push({
       caseKey: key as CaseKey,
-      headline: `Your ${caseName(key)} is fine — until the stem changes`,
+      headline: `Your ${caseName(key)} is fine until the stem changes`,
       detail:
         `You recall the ${caseName(key)} (${caseNameEt(key)}) ${strong}% of the time on words with a ` +
         `stable stem, but only ${weak}% on words with consonant gradation. The ending is not the ` +
@@ -169,7 +169,7 @@ function pluralFindings(facts: ReviewFact[]): Finding[] {
     headline: "The plural stem is where you lose it",
     detail:
       `${strong}% recall on words whose plural follows the regular pattern, ${weak}% on words that ` +
-      `carry their own genitive plural. Those have to be memorised — the app cannot derive them ` +
+      `carry their own genitive plural. Those have to be memorised, because the app cannot derive them ` +
       `and neither can you.`,
     weakPct: weak,
     strongPct: strong,

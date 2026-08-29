@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Check, CircleAlert, Loader2, PenLine, X } from "lucide-react";
 import Link from "next/link";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { Chip, Stat } from "@/components/ui";
@@ -10,6 +11,8 @@ import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import type { GradedSentence } from "@/lib/tutor/grader";
 
 export interface WritingPrompt {
+  /** The card this exercise practises, so the round feeds the scheduler. */
+  cardId: string;
   lexemeId: string;
   lemma: string;
   translation: string;
@@ -70,8 +73,18 @@ export function WriteSession({ prompts, aiAvailable }: {
         setError(body.error ?? "That could not be marked.");
         return;
       }
-      setMarked(body as Marked);
-      if ((body as Marked).formCheck.used) setCorrect((c) => c + 1);
+      const result = body as Marked;
+      setMarked(result);
+      if (result.formCheck.used) setCorrect((c) => c + 1);
+
+      /*
+        ADR-016: this writes to the same review log as everything else. The
+        dictionary check decides the rating, not the model — a form that is
+        right is Good, a form that is wrong is Again, and Anu's opinion of the
+        surrounding sentence never moves anybody's schedule.
+      */
+      void gradeCard(prompt.cardId, result.formCheck.used ? 3 : 1, Date.now() - startedAt.current)
+        .catch(() => {});
     } catch {
       setError("Marking needs a connection. Your sentence is still here.");
     } finally {
@@ -246,7 +259,7 @@ function Feedback({ marked }: { marked: Marked }) {
           {formCheck.used
             ? "That is the right form."
             : formCheck.usedAnotherForm
-              ? "That is the right word in the wrong case — check the ending."
+              ? "That is the right word in the wrong case. Check the ending."
               : "The word you were asked to use is not in that sentence."}
         </p>
       </div>

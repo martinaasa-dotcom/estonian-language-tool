@@ -49,12 +49,12 @@ export const CASE_NOTES: readonly CaseNote[] = [
       "What a whole, countable thing looks like as an object",
     ],
     watchOut:
-      "A whole object takes the nominative or the genitive, never the partitive — the choice says whether the action finished, not how polite you are being.",
+      "A whole object takes the nominative or the genitive, never the partitive, the choice says whether the action finished, not how polite you are being.",
     englishHook: "Closest to plain English word order: the thing doing the verb.",
   },
   {
     key: "GENITIVE",
-    summary: "Possession — and the stem eleven other cases are built on.",
+    summary: "Possession, and the stem eleven other cases are built on.",
     uses: [
       "Possession, the way English uses ’s or “of”",
       "A completed whole object",
@@ -75,7 +75,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
       "The object of many verbs that simply demand it",
     ],
     watchOut:
-      "The hardest case for English speakers, because English marks none of this. The partitive is not a politeness or a plural — it is aspect and quantity, and it has to be stored per word because it is not predictable.",
+      "The hardest case for English speakers, because English marks none of this. The partitive is not a politeness or a plural, it is aspect and quantity, and it has to be stored per word because it is not predictable.",
     englishHook: "“some water”, “I was reading a book” (and had not finished it).",
   },
   {
@@ -84,7 +84,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: ["Motion into a place or a container", "Entering a state or a period of time"],
     watchOut:
       "Many common words also have a short illative, which is the form a native speaker actually says. It is stored separately, not derived, and the dictionary entry shows it when it exists.",
-    englishHook: "into — into a room, and into a state, a language or a decade.",
+    englishHook: "into, into a room, and into a state, a language or a decade.",
   },
   {
     key: "INESSIVE",
@@ -92,7 +92,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: ["Position inside a place", "Being in a state, a language, or a period of time"],
     watchOut:
       "Estonian draws the inside/outside line where English does not. Cities and rooms take the inside cases; some islands and open places take the outside ones, and the choice is per word rather than per rule.",
-    englishHook: "in — in the house, in March, in a good mood.",
+    englishHook: "in, in the house, in March, in a good mood.",
   },
   {
     key: "ELATIVE",
@@ -103,8 +103,8 @@ export const CASE_NOTES: readonly CaseNote[] = [
       "The topic a text or a conversation is about",
     ],
     watchOut:
-      "This is also the case for “about” — talking about a subject uses the same ending as coming out of a building.",
-    englishHook: "out of, and about — out of the house, or a book about history.",
+      "This is also the case for “about”, talking about a subject uses the same ending as coming out of a building.",
+    englishHook: "out of, and about, out of the house, or a book about history.",
   },
   {
     key: "ALLATIVE",
@@ -112,19 +112,19 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: ["Motion onto a surface", "The person something is given, said or sent to"],
     watchOut:
       "English uses “to” for both a destination and a recipient, so this case and the illative both look like “to” from the English side. Estonian is asking whether you end up inside or on top.",
-    englishHook: "onto, and to — onto the table, or to the person you gave it to.",
+    englishHook: "onto, and to, onto the table, or to the person you gave it to.",
   },
   {
     key: "ADESSIVE",
-    summary: "Being on something — and how Estonian says “have”.",
+    summary: "Being on something, and how Estonian says “have”.",
     uses: [
       "Position on a surface",
       "Possession: the owner goes in this case and the thing owned is the subject",
       "A time when something happens",
     ],
     watchOut:
-      "There is no verb “to have” in Estonian. Ownership is built with this case plus “is”, which means the owner is not the subject of the sentence — the possession is.",
-    englishHook: "on, at — and “I have”, rebuilt as “at me there is”.",
+      "There is no verb “to have” in Estonian. Ownership is built with this case plus “is”, which means the owner is not the subject of the sentence, the possession is.",
+    englishHook: "on, at, and “I have”, rebuilt as “at me there is”.",
   },
   {
     key: "ABLATIVE",
@@ -132,7 +132,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: ["Motion off a surface", "The person something is taken, bought or asked from"],
     watchOut:
       "Pairs with the adessive the way the elative pairs with the inessive: off a surface, not out of a container.",
-    englishHook: "off, and from — off the table, or from the person you bought it from.",
+    englishHook: "off, and from, off the table, or from the person you bought it from.",
   },
   {
     key: "TRANSLATIVE",
@@ -152,27 +152,27 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: ["As far as a place", "Until a moment in time", "Up to an amount"],
     watchOut:
       "Frequently paired with a preposition in speech, but the ending alone already carries “as far as”.",
-    englishHook: "up to, until — as far as the church, or right up until Friday.",
+    englishHook: "up to, until, as far as the church, or right up until Friday.",
   },
   {
     key: "ESSIVE",
     summary: "In the role of something, usually temporarily.",
     uses: ["Acting as, or working as, something", "A temporary state or capacity"],
     watchOut:
-      "Answers “as what?” rather than “into what?” — the translative gets you into the role, the essive keeps you there.",
-    englishHook: "as — working as a teacher, for as long as that lasts.",
+      "Answers “as what?” rather than “into what?”, the translative gets you into the role, the essive keeps you there.",
+    englishHook: "as, working as a teacher, for as long as that lasts.",
   },
   {
     key: "ABESSIVE",
-    summary: "Without something — the opposite of the comitative below it.",
+    summary: "Without something, the opposite of the comitative below it.",
     uses: ["The absence of a thing", "Doing something without a tool, a person or a permission"],
     watchOut:
-      "Rare in speech, where a preposition usually does the job instead, but it turns up in writing and on exams — which is exactly why it is worth recognising rather than producing.",
-    englishHook: "without — without a coat, without asking.",
+      "Rare in speech, where a preposition usually does the job instead, but it turns up in writing and on exams, which is exactly why it is worth recognising rather than producing.",
+    englishHook: "without, without a coat, without asking.",
   },
   {
     key: "COMITATIVE",
-    summary: "With something — company, and the tool you did it with.",
+    summary: "With something, company, and the tool you did it with.",
     uses: [
       "Together with someone",
       "The instrument or means used",
@@ -226,7 +226,7 @@ export const CASE_GROUPS: readonly { title: string; blurb: string; keys: readonl
   },
   {
     title: "Outside: onto, on, off",
-    blurb: "Surfaces, people and times — and the way Estonian says that someone has something.",
+    blurb: "Surfaces, people and times, and the way Estonian says that someone has something.",
     keys: ["ALLATIVE", "ADESSIVE", "ABLATIVE"],
   },
   {

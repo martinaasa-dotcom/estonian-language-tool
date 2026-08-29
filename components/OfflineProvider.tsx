@@ -142,15 +142,17 @@ function OfflineBanner({ online, pending, syncing }: {
 
   const label = !online
     ? pending > 0
-      ? `Offline — ${pending} grade${pending === 1 ? "" : "s"} saved on this device`
-      : "Offline — review still works"
+      ? `Offline · ${pending} grade${pending === 1 ? "" : "s"} saved on this device`
+      : "Offline · review still works"
     : `Syncing ${pending} grade${pending === 1 ? "" : "s"}`;
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-[13px] md:bottom-3 md:left-auto md:right-3 md:inset-x-auto md:rounded-md"
+      /* `bottom-notice` clears the mobile dock by a measured height rather than
+         a typed offset, so this cannot drift out from under the nav bar. */
+      className="bottom-notice fixed inset-x-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-[13px] md:left-auto md:right-3 md:inset-x-auto md:rounded-md"
       style={{
         background: online ? "var(--accent-soft)" : "var(--raised)",
         color: online ? "var(--accent)" : "var(--ink-2)",

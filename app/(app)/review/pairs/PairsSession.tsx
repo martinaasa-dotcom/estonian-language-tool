@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Ear, Loader2, Volume2, X } from "lucide-react";
 import Link from "next/link";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
@@ -10,6 +11,8 @@ import { Speak } from "@/components/Speak";
 export interface PairQuestion {
   /** The form that is actually played. */
   heard: string;
+  /** The card this practises, when the word heard is already in the deck. */
+  cardId: string | null;
   options: { value: string; lemma: string; translation: string; formLabel: string }[];
   sameWord: boolean;
   longer: string;
@@ -71,7 +74,10 @@ export function PairsSession({ questions }: { questions: PairQuestion[] }) {
   const choose = useCallback((value: string) => {
     if (!question || picked) return;
     setPicked(value);
-    if (value.toLowerCase() === question.heard.toLowerCase()) setCorrect((c) => c + 1);
+    const right = value.toLowerCase() === question.heard.toLowerCase();
+    if (right) setCorrect((c) => c + 1);
+    // ADR-016: the same review log as every other mode.
+    if (question.cardId) void gradeCard(question.cardId, right ? 3 : 1, 0).catch(() => {});
   }, [question, picked]);
 
   const next = useCallback(() => {
@@ -217,7 +223,7 @@ export function PairsSession({ questions }: { questions: PairQuestion[] }) {
                   <span className="min-w-0">
                     <span lang="et" className="est block text-[19px] font-semibold">{option.value}</span>
                     <span className="block text-[12.5px] opacity-80">
-                      {option.formLabel} of {option.lemma} — {option.translation}
+                      {option.formLabel} of {option.lemma} · {option.translation}
                     </span>
                   </span>
                   {revealed && isAnswer && <Check size={16} className="ml-auto shrink-0" aria-hidden />}
@@ -232,7 +238,7 @@ export function PairsSession({ questions }: { questions: PairQuestion[] }) {
             <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
               {question.letter
                 ? <>The two differ only in how long the <strong lang="et">{question.letter}</strong> is.
-                    The doubled spelling — <strong lang="et">{question.longer}</strong> — is the longer one.</>
+                    The doubled spelling (<strong lang="et">{question.longer}</strong>) is the longer one.</>
                 : <>The two differ only in length.</>}
               {question.sameWord && " Both are forms of one word, so the length is carrying the grammar here, not the meaning."}
             </p>
@@ -254,7 +260,7 @@ export function PairsSession({ questions }: { questions: PairQuestion[] }) {
       </div>
 
       <p className="mt-4 text-center text-[11.5px]" style={{ color: "var(--ink-3)" }}>
-        {correct}/{index + (revealed ? 1 : 0)} right · 1–2 to answer
+        {correct}/{index + (revealed ? 1 : 0)} right · keys 1 to 2 to answer
       </p>
     </div>
   );

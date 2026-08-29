@@ -76,7 +76,7 @@ export function InstallPrompt() {
 
   return (
     <div
-      className="pop-in fixed bottom-20 left-1/2 z-[85] flex w-[min(94vw,420px)] -translate-x-1/2 items-start gap-3 rounded-[var(--r-lg)] border p-4 md:bottom-5"
+      className="bottom-notice pop-in fixed left-1/2 z-[85] flex w-[min(94vw,420px)] -translate-x-1/2 items-start gap-3 rounded-[var(--r-lg)] border p-4"
       role="dialog"
       aria-label="Install Kodukeel"
       style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-lg)" }}

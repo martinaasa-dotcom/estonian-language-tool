@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Scale, X } from "lucide-react";
 import Link from "next/link";
-import { addToDeck } from "@/app/actions";
+import { addToDeck, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
@@ -11,6 +11,8 @@ import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
 
 export interface GovernmentQuestion {
+  /** The card this question practises, when the verb is already in the deck. */
+  cardId: string | null;
   lexemeId: string;
   lemma: string;
   translation: string;
@@ -48,7 +50,11 @@ export function GovernmentSession({ questions }: { questions: GovernmentQuestion
   const choose = useCallback((option: CaseKey) => {
     if (!question || picked) return;
     setPicked(option);
-    if (option === question.answer) setCorrect((c) => c + 1);
+    const right = option === question.answer;
+    if (right) setCorrect((c) => c + 1);
+    // ADR-016: the same review log as every other mode, so rektsioon practice
+    // moves the schedule instead of scoring itself.
+    if (question.cardId) void gradeCard(question.cardId, right ? 3 : 1, 0).catch(() => {});
   }, [question, picked]);
 
   const next = useCallback(() => {
@@ -79,7 +85,7 @@ export function GovernmentSession({ questions }: { questions: GovernmentQuestion
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Rektsioon is memorised per verb, not derived — so a round every few days beats an hour
+          Rektsioon is memorised per verb, not derived, so a round every few days beats an hour
           once.
         </p>
         <div
@@ -226,7 +232,7 @@ export function GovernmentSession({ questions }: { questions: GovernmentQuestion
       </div>
 
       <p className="mt-4 text-center text-[11.5px]" style={{ color: "var(--ink-3)" }}>
-        {correct}/{index + (revealed ? 1 : 0)} right · 1–4 to answer
+        {correct}/{index + (revealed ? 1 : 0)} right · keys 1 to 4 to answer
       </p>
     </div>
   );

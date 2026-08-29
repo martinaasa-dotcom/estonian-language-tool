@@ -12,7 +12,7 @@ import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo"
 import { toneInk } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Kodukeel — Estonian that finally sticks",
+  title: "Kodukeel · Estonian that finally sticks",
   description:
     "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real paradigms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
 };
@@ -129,13 +129,13 @@ function Hero({ words }: { words: DemoWord[] }) {
           style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
         >
           Fourteen cases. A stem that changes shape when you look at it. Kodukeel turns all of it
-          into fifteen quiet minutes a day — real paradigms, native audio, and a tutor who tells you
+          into fifteen quiet minutes a day, real paradigms, native audio, and a tutor who tells you
           the rule instead of just marking you wrong.
         </p>
 
         <div className="fade-up mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: "210ms" }}>
           <ButtonLink href="/sign-in" variant="primary" size="lg">
-            Start learning — free <ArrowRight size={17} aria-hidden />
+            Start learning, free <ArrowRight size={17} aria-hidden />
           </ButtonLink>
           <a
             href="#cases"
@@ -232,7 +232,7 @@ const PROBLEMS = [
   {
     tone: "butter",
     title: "Textbooks don’t schedule",
-    body: "Week six pushes out week two. Nothing brings a word back on the day you were about to forget it — which is the only day repetition is worth doing.",
+    body: "Week six pushes out week two. Nothing brings a word back on the day you were about to forget it, which is the only day repetition is worth doing.",
   },
   {
     tone: "sky",
@@ -292,7 +292,7 @@ function Cases({ words }: { words: DemoWord[] }) {
           </h2>
           <p className="mt-4 text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             Three principal parts are genuinely unpredictable, so you memorise those. The other
-            eleven are regular endings on the genitive stem — press a word and watch them fall out.
+            eleven are regular endings on the genitive stem. Press a word and watch them fall out.
           </p>
         </div>
       </Reveal>
@@ -325,7 +325,7 @@ function Features() {
             tone="mint"
             icon={<MapIcon size={18} aria-hidden />}
             title="A path from A1 to C1"
-            body="Eighteen units, each a sitting's worth of words. Adding one builds real cards — full paradigm, audio, both directions — in a single click."
+            body="Eighteen units, each a sitting's worth of words. Adding one builds real cards, full paradigm, audio, both directions, in a single click."
           />
         </Reveal>
         <Reveal>
@@ -333,7 +333,7 @@ function Features() {
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
             title="A dictionary that shows the whole word"
-            body="Search an inflected form you met in class — toas, lugesin — and it finds the word, tells you which form you typed, and lays out the full paradigm with gradation marked."
+            body="Search an inflected form you met in class (toas, lugesin) and it finds the word, tells you which form you typed, and lays out the full paradigm with gradation marked."
           />
         </Reveal>
         <Reveal>
@@ -341,7 +341,7 @@ function Features() {
             tone="butter"
             icon={<Flame size={18} aria-hidden />}
             title="Repetition that knows when to stop"
-            body="FSRS schedules every card for the day you were about to forget it — then tells you you're done. New cards are capped, so week three never becomes an hour."
+            body="FSRS schedules every card for the day you were about to forget it, then tells you you're done. New cards are capped, so week three never becomes an hour."
           />
         </Reveal>
 
@@ -358,7 +358,7 @@ function Features() {
             </div>
             <p className="mt-2.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
               A grammar tutor for the questions a textbook answers on page 240. She explains, checks
-              your sentence and names the pattern — and she is never allowed to invent an Estonian
+              your sentence and names the pattern, and she is never allowed to invent an Estonian
               form, because those come from the dictionary.
             </p>
             <div className="mt-5">
@@ -389,7 +389,7 @@ function Features() {
             tone="accent"
             icon={<ChartNoAxesColumn size={18} aria-hidden />}
             title="Progress you can audit"
-            body="A heatmap of every day you showed up, a forecast of what is coming, and accuracy per grammatical case. All computed from the review log — there is no score to inflate."
+            body="A heatmap of every day you showed up, a forecast of what is coming, and accuracy per grammatical case. All computed from the review log, there is no score to inflate."
           />
         </Reveal>
         <Reveal>
@@ -405,7 +405,7 @@ function Features() {
             tone="mint"
             icon={<WifiOff size={18} aria-hidden />}
             title="Yours, and portable"
-            body="Reviewing works on a train with no signal — grades queue up and send themselves later. Your whole history exports as JSON whenever you want it."
+            body="Reviewing works on a train with no signal. Grades queue up and send themselves later. Your whole history exports as JSON whenever you want it."
             icon2={<Download size={15} aria-hidden />}
           />
         </Reveal>
@@ -447,7 +447,7 @@ function Feature({ tone, icon, icon2, title, body, className = "" }: {
 const STEPS = [
   {
     title: "Pick a unit, or look a word up",
-    body: "Eighteen units from greetings to argument, or type anything — Estonian, English, or a form you half-remember from class.",
+    body: "Eighteen units from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class.",
     tone: "sky",
   },
   {
@@ -616,11 +616,11 @@ const FAQS = [
   ],
   [
     "Where do the Estonian forms come from?",
-    "Ekilex, the Institute of the Estonian Language, plus a hand-checked built-in set of common words. The eleven regular cases are worked out from the genitive by a function with its own unit tests. An AI is never allowed to supply an Estonian form — it invents plausible, wrong ones, and a flashcard would then drill the mistake in.",
+    "Ekilex, the Institute of the Estonian Language, plus a hand-checked built-in set of common words. The eleven regular cases are worked out from the genitive by a function with its own unit tests. An AI is never allowed to supply an Estonian form: it invents plausible, wrong ones, and a flashcard would then drill the mistake in.",
   ],
   [
     "Is this only for beginners?",
-    "It covers A1 to C1. The parts that make Estonian hard later — consonant gradation, verb government, total versus partial objects — each get their own card type rather than being left to guesswork.",
+    "It covers A1 to C1. The parts that make Estonian hard later (consonant gradation, verb government, total versus partial objects) each get their own card type rather than being left to guesswork.",
   ],
   [
     "What happens to my data?",
@@ -689,7 +689,7 @@ function FinalCta() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <ButtonLink href="/sign-in" variant="primary" size="lg">
-                Start learning — free <ArrowRight size={17} aria-hidden />
+                Start learning, free <ArrowRight size={17} aria-hidden />
               </ButtonLink>
               <a
                 href="#cases"

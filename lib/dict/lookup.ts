@@ -4,6 +4,7 @@ import { mapEkilexDetails } from "@/lib/ekilex/mapper";
 import { mergeExamples, parseExamples, serialiseExamples } from "./examples";
 import { fetchEnglishGloss } from "./wiktionary";
 import { translateWithAnu } from "@/lib/tutor/translate";
+import { NO_VALUE } from "@/lib/copy/values";
 
 /**
  * Fetches a word we do not hold locally, and stores it.
@@ -147,11 +148,36 @@ export async function lookupAndStore(query: string): Promise<LookupResult | null
  * A translation the learner has already accepted always wins — re-fetching would
  * overwrite a correction she made deliberately.
  */
+/**
+ * What a word's English says when there is none yet: an instruction, because
+ * a learner reading it is the person who can fix it.
+ */
+const NEEDS_TRANSLATION = `${NO_VALUE} · add a translation`;
+
+/*
+  A translation that is really a gap.
+
+  Three spellings, because the marker has changed twice and the dictionary is
+  seeded data that outlives a deploy. Rows written before `NO_VALUE` existed
+  open with an em dash. Matching only today's spelling would leave every one
+  of those looking like a translation somebody had chosen, so this would stop
+  trying to fill it in and the word would keep a dash for its meaning for
+  ever.
+*/
+function isPlaceholder(translation: string): boolean {
+  const trimmed = translation.trim();
+  return (
+    trimmed.startsWith("\u2014") ||
+    trimmed === NO_VALUE ||
+    trimmed === NEEDS_TRANSLATION
+  );
+}
+
 async function resolveTranslation(
   lemma: string,
   existing: string | undefined,
 ): Promise<{ translation: string; source: LookupResult["translationSource"] }> {
-  if (existing && existing.trim() && !existing.startsWith("—")) {
+  if (existing && existing.trim() && !isPlaceholder(existing)) {
     return { translation: existing, source: "NONE" };
   }
 
@@ -163,5 +189,5 @@ async function resolveTranslation(
 
   // Better an honest blank than a wrong word: the entry still carries the full
   // paradigm and the Estonian definition, and the learner can type the English.
-  return { translation: "— add a translation", source: "NONE" };
+  return { translation: NEEDS_TRANSLATION, source: "NONE" };
 }

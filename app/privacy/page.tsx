@@ -26,8 +26,8 @@ export default function PrivacyPage() {
         <P>
           <strong>Your learning.</strong> The cards in your deck, every review you have ever
           done (the grade, the moment, and how long you took), your tasks, your starred words,
-          your badges and your settings. The review log is what makes the scheduling work —
-          it is the app&rsquo;s memory of how well you know each word.
+          your badges and your settings. The review log is what makes the scheduling work.
+          It is the app&rsquo;s memory of how well you know each word.
         </P>
         <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
@@ -61,13 +61,13 @@ export default function PrivacyPage() {
       <S title="Your data, in your hands">
         <P>
           Settings has an <strong>Export</strong> button that gives you the whole thing as a
-          JSON file — every card, review, task and setting. It is a real backup: the same file
+          JSON file: every card, review, task and setting. It is a real backup, and the same file
           restores into a fresh installation. Nothing is held back from it.
         </P>
         <P>
           <strong>Settings → Deleting your data</strong> removes your cards, reviews, tasks,
           messages, stars, badges, settings and usage records, in one transaction, immediately.
-          The shared dictionary stays — other learners have cards built on it — but any entry you
+          The shared dictionary stays (other learners have cards built on it) but any entry you
           edited stops being attributed to you. Take an export first: this keeps no copy.
         </P>
       </S>

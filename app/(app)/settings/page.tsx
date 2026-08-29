@@ -19,9 +19,9 @@ const SHORTCUTS: [string, string][] = [
   ["⌘K / Ctrl-K", "Jump to any screen, or look a word up"],
   ["Space", "Show the answer"],
   ["Enter", "Check a typed answer, then grade it"],
-  ["1 – 4", "Again · Hard · Good · Easy"],
+  ["1-4", "Again · Hard · Good · Easy"],
   ["u", "Undo the last grade"],
-  ["1 – 4 (listening, choice)", "Pick an option"],
+  ["1-4 (listening, choice)", "Pick an option"],
 ];
 
 export default async function SettingsPage() {
@@ -89,7 +89,7 @@ export default async function SettingsPage() {
           <SectionTitle hint={mode === "type" ? "typing" : "flipping"}>How review asks</SectionTitle>
           <ReviewModePanel current={mode} />
           <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-            Either way, brand-new cards are shown with their answer first — being asked to produce a
+            Either way, brand-new cards are shown with their answer first, being asked to produce a
             word you have never seen teaches nothing.
           </p>
         </section>
@@ -99,7 +99,7 @@ export default async function SettingsPage() {
           <Card>
             <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
               Sets how full the ring on Today fills up, and the target of your first daily quest.
-              Purely motivational — it never caps or blocks a session.
+              Purely motivational. It never caps or blocks a session.
             </p>
             <DailyGoalPanel currentGoal={dailyGoal} />
           </Card>
@@ -145,7 +145,7 @@ export default async function SettingsPage() {
                 </p>
                 <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
                   Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
-                  through a single day you miss entirely — no action needed, it is spent
+                  through a single day you miss entirely, no action needed, it is spent
                   automatically the next time you&rsquo;re back.
                 </p>
               </div>
@@ -207,7 +207,7 @@ export default async function SettingsPage() {
                 </div>
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   Web push was the alternative. It needs a server that stays awake and still does
-                  nothing on an iPhone unless the app is installed — a calendar entry just works.
+                  nothing on an iPhone unless the app is installed. A calendar entry just works.
                 </p>
               </div>
             </div>
@@ -221,13 +221,13 @@ export default async function SettingsPage() {
               <Smartphone size={18} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
               <div>
                 <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  Kodukeel installs as an app — &ldquo;Add to Home Screen&rdquo; on iOS, &ldquo;Install&rdquo;
+                  Kodukeel installs as an app, &ldquo;Add to Home Screen&rdquo; on iOS, &ldquo;Install&rdquo;
                   in the address bar on desktop Chrome. Installed, it opens straight into review and
                   keeps working without a connection.
                 </p>
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   Anything you grade offline is saved on the device and sent as soon as you are back
-                  online, with the time you actually answered — so an offline session still counts
+                  online, with the time you actually answered, so an offline session still counts
                   towards the right day&rsquo;s streak.
                 </p>
               </div>
@@ -240,8 +240,8 @@ export default async function SettingsPage() {
           <Card>
             <p className="text-sm" style={{ color: "var(--ink-2)" }}>
               The built-in dictionary has {words} words with checked principal parts, covering A1 up
-              into C1. Search an inflected form you met in class — <span lang="et">toas</span>,{" "}
-              <span lang="et">lugesin</span> — and it will find the word and tell you which form you
+              into C1. Search an inflected form you met in class, <span lang="et">toas</span>,{" "}
+              <span lang="et">lugesin</span>, and it will find the word and tell you which form you
               typed. Audio comes from the University of Tartu&rsquo;s Estonian speech service and
               needs no key.
             </p>

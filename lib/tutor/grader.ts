@@ -48,7 +48,7 @@ Your job is the rest of the sentence:
 - Is the object case right, if there is an object?
 
 RULES YOU MUST NOT BREAK
-- Every Estonian form you mention must be one that appears in KNOWN FORMS below, or a word the learner themselves wrote. You may not introduce an inflected form from your own knowledge. If the sentence needs a word you have not been given, describe it in English instead — "you would need the allative of 'laud' here" — and do not spell it.
+- Every Estonian form you mention must be one that appears in KNOWN FORMS below, or a word the learner themselves wrote. You may not introduce an inflected form from your own knowledge. If the sentence needs a word you have not been given, describe it in English instead ("you would need the allative of 'laud' here") and do not spell it.
 - If you are unsure whether something is an error, say the sentence is acceptable. A confident correction that is wrong is far more damaging than a missed nitpick, because the learner will believe you.
 - Name the rule when you correct something. "Partitive, because the action is ongoing", not "it sounds better".
 
@@ -59,7 +59,9 @@ OUTPUT
 Reply with a single JSON object and nothing else:
 {"verdict":"correct"|"almost"|"wrong","comment":"one or two sentences","rule":"the grammatical rule at issue, or an empty string"}
 
-"correct" — the sentence works. "almost" — understandable but with an error worth naming. "wrong" — it does not mean what they intended, or is not Estonian.`;
+"correct" means the sentence works. "almost" means understandable but with an error worth naming. "wrong" means it does not mean what they intended, or is not Estonian.
+
+Do not use an em dash or an en dash anywhere in your comment. Use a comma, a full stop, or a pair of brackets.`;
 }
 
 export function buildGraderUserPrompt(input: GraderInput, formWasUsed: boolean): string {
@@ -74,7 +76,7 @@ TASK SET: use "${input.task.lemma}" (${input.task.translation}) in the ${input.t
 REQUIRED FORM: ${input.task.targetForm}
 MECHANICAL CHECK: the learner ${formWasUsed ? "DID" : "DID NOT"} use the required form.
 
-KNOWN FORMS of ${input.task.lemma} — these are from the dictionary and are the only forms of this word you may write:
+KNOWN FORMS of ${input.task.lemma}, from the dictionary. These are the only forms of this word you may write:
 ${forms || "  (none beyond the required form)"}
 
 THE LEARNER WROTE:

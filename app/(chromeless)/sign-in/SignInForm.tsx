@@ -31,7 +31,7 @@ export function SignInForm() {
       </Button>
       {error && (
         <p role="alert" className="text-sm" style={{ color: "var(--again-ink)" }}>
-          {error} — if this keeps happening, the Google provider may not be enabled in Supabase yet.
+          {error}, if this keeps happening, the Google provider may not be enabled in Supabase yet.
         </p>
       )}
     </div>

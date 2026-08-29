@@ -1,7 +1,7 @@
-import { chromium } from "playwright";
+import { launchChromium } from "./lib/browser.mjs";
 
 const B = "http://localhost:3000";
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
 const errors = [];

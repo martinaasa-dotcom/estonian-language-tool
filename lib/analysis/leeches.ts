@@ -83,7 +83,7 @@ export function classifyShape(history: { rating: number }[]): LeechShape {
 }
 
 const PATTERNS: Record<LeechShape, string> = {
-  "never-stuck": "has never held — failed consistently from the first review",
+  "never-stuck": "has never held, failing consistently from the first review",
   regressed: "was reliable and then started failing, which usually means a similar word is interfering",
   unstable: "alternates between recalled and forgotten from one review to the next",
   early: "has been failing recently, on only a few reviews so far",
@@ -139,7 +139,7 @@ export function buildClinicQuestion(leech: Leech, confusable: string[]): string 
     ``,
     leech.shape === "regressed"
       ? `Which of those similar words is most likely interfering, and how do I tell them apart?`
-      : `Give me one concrete way to remember this specific word — a cognate, a sound association, or a contrast with something I already know. Not general advice about studying.`,
+      : `Give me one concrete way to remember this specific word: a cognate, a sound association, or a contrast with something I already know. Not general advice about studying.`,
   ];
   return parts.filter(Boolean).join("\n");
 }

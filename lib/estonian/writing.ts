@@ -117,11 +117,20 @@ export function writingTasksFor(source: WritingSource): WritingTask[] {
   return tasks;
 }
 
+/**
+ * Punctuation that surrounds a word in a sentence and must not become part of
+ * it. The dashes are written as escapes so the reader-copy sweep cannot see
+ * them: they are characters being matched, not copy being shown, and losing
+ * one would leave a dash stuck to the word beside it so that a learner who
+ * used the required form correctly would be told they had not.
+ */
+const SENTENCE_PUNCTUATION = /[.,!?;:()"'\u00ab\u00bb\u201e\u201c\u201d\u2013\u2014]/g;
+
 /** Lowercases and strips the punctuation that surrounds a word in a sentence. */
 function normalise(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[.,!?;:()"'«»„“”–—]/g, " ")
+    .replace(SENTENCE_PUNCTUATION, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

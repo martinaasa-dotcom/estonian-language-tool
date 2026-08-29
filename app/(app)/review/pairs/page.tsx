@@ -26,7 +26,7 @@ const FORM_LABELS: Record<string, string> = {
  * arrives.
  */
 export default async function PairsPage() {
-  await requireUserId();
+  const ownerId = await requireUserId();
 
   const lexemes = await prisma.lexeme.findMany({
     select: {
@@ -52,6 +52,22 @@ export default async function PairsPage() {
     }
   }
 
+  // ADR-016: hearing a length contrast correctly is evidence about the word, so
+  // when it is already in the deck this grades the same card the daily loop
+  // would. A contrast between two words the learner has never added scores
+  // nothing, which is honest rather than inventing a card behind them.
+  const deck = await prisma.card.findMany({
+    where: { ownerId, suspended: false, lexemeId: { not: null } },
+    select: { id: true, lexemeId: true, cardType: true },
+    take: 2000,
+  });
+  const cardFor = new Map<string, string>();
+  for (const c of deck) {
+    if (!c.lexemeId) continue;
+    const better = c.cardType === "RECOGNITION";
+    if (!cardFor.has(c.lexemeId) || better) cardFor.set(c.lexemeId, c.id);
+  }
+
   const pairs = findQuantityPairs(refs, 200);
 
   if (pairs.length === 0) {
@@ -59,7 +75,7 @@ export default async function PairsPage() {
       <Page title="Minimal pairs" lead="The length distinctions spelling half-records.">
         <Empty
           title="No length contrasts in the dictionary yet"
-          body="These are found automatically wherever two forms differ only in how long a sound is — maja against majja. The built-in set is small; an Ekilex key in Settings finds many more."
+          body="These are found automatically wherever two forms differ only in how long a sound is, as in maja against majja. The built-in set is small; an Ekilex key in Settings finds many more."
           action={<ButtonLink href="/settings" variant="primary">Open Settings</ButtonLink>}
         />
       </Page>
@@ -74,8 +90,10 @@ export default async function PairsPage() {
       // Which one the learner will hear, chosen here so the server decides and
       // the answer is not sitting in the client before the question is asked.
       const askA = Math.random() < 0.5;
+      const heardRef = askA ? p.a : p.b;
       return {
-        heard: askA ? p.a.value : p.b.value,
+        heard: heardRef.value,
+        cardId: cardFor.get(heardRef.lexemeId) ?? null,
         options: [
           { value: p.a.value, lemma: p.a.lemma, translation: p.a.translation, formLabel: p.a.formLabel },
           { value: p.b.value, lemma: p.b.lemma, translation: p.b.translation, formLabel: p.b.formLabel },

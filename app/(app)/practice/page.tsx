@@ -62,7 +62,7 @@ export default async function PracticePage() {
       tone: "accent",
       title: "Review",
       subtitle: "The daily loop",
-      body: "Everything due, scheduled by FSRS. Type the answer or flip the card — your choice in Settings.",
+      body: "Everything due, scheduled by FSRS. Type the answer or flip the card, your choice in Settings.",
       meta: snapshot.dueCount > 0
         ? `${snapshot.dueCount} due now`
         : snapshot.newCount > 0 ? `${Math.min(snapshot.newCount, 10)} new waiting` : "Nothing due",
@@ -88,7 +88,7 @@ export default async function PracticePage() {
       subtitle: "Which case?",
       body:
         "Aitan sind, but helistan sulle. English gives you no clue, so rektsioon has to be learned " +
-        "per verb — and nothing else drills it systematically.",
+        "per verb, and nothing else drills it systematically.",
       meta: "Multiple choice",
       primary: false,
     },
@@ -124,7 +124,7 @@ export default async function PracticePage() {
       subtitle: "What keeps failing",
       body:
         "The handful of cards you keep getting wrong, with what their history says about how they " +
-        "are failing — instead of quietly burying them.",
+        "are failing, instead of quietly burying them.",
       meta: "From your review log",
       primary: false,
     },
@@ -174,7 +174,7 @@ export default async function PracticePage() {
       tone: "sky",
       title: "Listening",
       subtitle: "Ear first",
-      body: "Hear an Estonian word and pick the meaning — the one skill reading practice never builds.",
+      body: "Hear an Estonian word and pick the meaning, the one skill reading practice never builds.",
       meta: "Audio from TartuNLP",
       primary: false,
     },

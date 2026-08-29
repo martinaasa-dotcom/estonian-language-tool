@@ -75,7 +75,7 @@ export async function authoriseCall(
     return {
       allowed: false,
       reason: "GLOBAL_SPEND",
-      message: "Anu is unavailable for a moment — the usage ledger could not be read.",
+      message: "Anu is unavailable for a moment. The usage ledger could not be read.",
       retryAfterSeconds: 30,
     };
   }

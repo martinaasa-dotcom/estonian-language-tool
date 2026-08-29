@@ -66,7 +66,7 @@ const SPECS: readonly QuestSpec[] = [
   {
     key: "reviews_goal",
     title: (t) => `Review ${t} cards`,
-    detail: "Any mode counts — review, sprint, listening or match.",
+    detail: "Any mode counts, review, sprint, listening or match.",
     icon: "GraduationCap",
     target: (s) => Math.max(5, s.dailyGoal),
     progress: (s) => s.reviewsToday,

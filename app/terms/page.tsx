@@ -21,7 +21,7 @@ export default function TermsPage() {
         <P>
           Anu, the AI tutor, is not authoritative. It may explain grammar and suggest an
           English translation, and it is structurally prevented from supplying an
-          Estonian dictionary form — but its explanations can still be wrong. Anything
+          Estonian dictionary form, but its explanations can still be wrong. Anything
           it suggests is marked <em>AI · verify</em> and needs your confirmation before
           it becomes a card. Do not rely on it for an exam answer without checking.
         </P>
@@ -34,7 +34,7 @@ export default function TermsPage() {
       <S title="What is asked of you">
         <P>
           Use one account, and use it yourself. Do not use the tutor to generate content
-          unrelated to learning Estonian — it runs on a metered key, and a per-day quota
+          unrelated to learning Estonian. It runs on a metered key, and a per-day quota
           applies to every account so that one person cannot exhaust it for everyone.
         </P>
         <P>

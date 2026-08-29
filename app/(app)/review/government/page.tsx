@@ -34,13 +34,22 @@ export default async function GovernmentPage() {
     }),
     prisma.card.findMany({
       where: { ownerId, lexemeId: { not: null } },
-      select: { lexemeId: true },
-      distinct: ["lexemeId"],
-      take: 500,
+      select: { id: true, lexemeId: true, cardType: true },
+      take: 2000,
     }),
   ]);
 
   const mine = new Set(inDeck.map((c) => c.lexemeId));
+
+  // ADR-016: when the verb is already in the deck, answering here is evidence
+  // about it and grades the same card the daily loop would. A verb met for the
+  // first time in this drill has no card yet, and scores nothing until it is
+  // added — which is honest, rather than inventing a card behind the learner.
+  const cardFor = new Map<string, string>();
+  for (const c of inDeck) {
+    if (!c.lexemeId) continue;
+    if (!cardFor.has(c.lexemeId) || c.cardType === "GOVERNMENT") cardFor.set(c.lexemeId, c.id);
+  }
 
   const parsed = governed
     .map((v) => ({ v, g: parseGovernment(v.government) }))
@@ -69,6 +78,7 @@ export default async function GovernmentPage() {
     .slice(0, ROUND);
 
   const questions: GovernmentQuestion[] = ordered.map(({ v, g }) => ({
+    cardId: cardFor.get(v.id) ?? null,
     lexemeId: v.id,
     lemma: v.lemma,
     translation: v.translation,

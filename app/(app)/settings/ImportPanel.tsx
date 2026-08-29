@@ -22,10 +22,10 @@ function parse(text: string): Row[] {
     const line = raw.trim();
     if (!line) continue;
 
-    // Tab, then en/em dash or hyphen with spaces, then comma, then semicolon.
+    // Tab, then a dash with spaces, then comma, then semicolon.
     const parts =
       line.includes("\t") ? line.split("\t")
-      : /\s[–—-]\s/.test(line) ? line.split(/\s[–—-]\s/)
+      : DASH_SEPARATED.test(line) ? line.split(DASH_SEPARATED)
       : line.includes(";") ? line.split(";")
       : line.includes(",") ? line.split(",")
       : [line];
@@ -39,6 +39,16 @@ function parse(text: string): Row[] {
   return rows;
 }
 
+/*
+  A dash used as a separator in somebody else's word list.
+
+  This reads dashes rather than writing one, which is why it is spelled with
+  escapes: the reader-copy guard walks this file, and a literal em dash in it
+  would be indistinguishable from copy. A pasted list from Speakly or a class
+  handout uses whichever of the three its author typed.
+*/
+const DASH_SEPARATED = /\s[\u2013\u2014-]\s/;
+
 export function ImportPanel() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<string | null>(null);
@@ -48,14 +58,14 @@ export function ImportPanel() {
   const submit = () => {
     start(async () => {
       const r = await importWords(rows);
-      // A paste larger than the limit is handled, not rejected — but silently
+      // A paste larger than the limit is handled, not rejected. Silently
       // dropping the tail would leave someone thinking it all went in.
       const overflow = r.truncated
         ? ` Only the first ${r.limit} lines were read; paste the rest separately.`
         : "";
       setResult(
         r.created === 0
-          ? `Nothing new — every word was already in your deck.${overflow}`
+          ? `Nothing new. Every word was already in your deck.${overflow}`
           : `Added ${r.created} word${r.created === 1 ? "" : "s"} and ${r.cards} cards.` +
             (r.skipped.length ? ` Skipped ${r.skipped.length} you already had.` : "") +
             overflow,
@@ -67,7 +77,7 @@ export function ImportPanel() {
   return (
     <Card>
       <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-        Paste a word list — from Speakly, a spreadsheet, or typed off a class handout. One word per
+        Paste a word list, from Speakly, a spreadsheet, or typed off a class handout. One word per
         line, Estonian first. Tabs, dashes, commas and semicolons all work as separators.
       </p>
       <textarea
@@ -83,9 +93,9 @@ export function ImportPanel() {
       {rows.length > 0 && (
         <div className="mt-3">
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            {rows.length} word{rows.length === 1 ? "" : "s"} found — check before adding
+            {rows.length} word{rows.length === 1 ? "" : "s"} found · check before adding
           </p>
-          <ul className="max-h-40 overflow-y-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
+          <ul className="scroll-host max-h-40 rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
             {rows.slice(0, 40).map((r, i) => (
               <li
                 key={i}

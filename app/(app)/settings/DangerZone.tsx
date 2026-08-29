@@ -53,7 +53,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
           settings. The shared dictionary stays, because other learners have cards built on it.
         </p>
         <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
-          Download a backup first if there is any chance you will want it — your review history
+          Download a backup first if there is any chance you will want it. Your review history
           cannot be recreated, and this does not keep a copy.
         </p>
 

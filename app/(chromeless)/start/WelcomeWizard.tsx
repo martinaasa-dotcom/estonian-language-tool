@@ -113,7 +113,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
           </h1>
           <p className="mt-3 max-w-[52ch] text-base" style={{ color: "var(--ink-2)" }}>
             Kodukeel is built around the thing that actually makes Estonian hard: the cases. Learn a
-            word&rsquo;s genitive and eleven more forms follow — so the dictionary, the flashcards and
+            word&rsquo;s genitive and eleven more forms follow, so the dictionary, the flashcards and
             the games are all organised around that one idea.
           </p>
           <label htmlFor="learner-name" className="label-xs mt-8 block" style={{ color: "var(--ink-3)" }}>
@@ -140,7 +140,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             Where are you now?
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
-            This only picks your starting units. Nothing is locked — the whole dictionary is open from
+            This only picks your starting units. Nothing is locked, the whole dictionary is open from
             day one.
           </p>
           <div className="mt-6 flex flex-col gap-2">
@@ -174,7 +174,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             How much a day?
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
-            Sets your daily goal ring. It is motivational only — it never caps a session, and you can
+            Sets your daily goal ring. It is motivational only, it never caps a session, and you can
             change it any time in Settings.
           </p>
           <div className="mt-6 grid gap-2 sm:grid-cols-2">
@@ -206,10 +206,10 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             Your first units
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
-            Picked for {level}. Each unit becomes real flashcards with audio and full paradigms — you
+            Picked for {level}. Each unit becomes real flashcards with audio and full paradigms, you
             can add or drop units later on the path.
           </p>
-          <div className="mt-5 flex max-h-[46vh] flex-col gap-2 overflow-y-auto pr-1">
+          <div className="scroll-host mt-5 flex max-h-[46vh] flex-col gap-2">
             {units.map((u) => {
               const Icon = icon(u.icon);
               const on = picked.includes(u.id);
@@ -241,7 +241,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
           </div>
           <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
             {wordCount === 0
-              ? "Nothing selected — you can also start from the dictionary and add words as you meet them."
+              ? "Nothing selected. You can also start from the dictionary and add words as you meet them."
               : `${wordCount} words, about ${wordCount * 2} cards to start with.`}
           </p>
         </section>

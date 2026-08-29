@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { ProseStream } from "@/lib/tutor/humanize";
 import { buildSystemPrompt } from "@/lib/tutor/prompt";
-import { resolveProvider, streamReply, TutorError, type ChatMessage } from "@/lib/tutor/provider";
+import {
+  openWithFallback,
+  resolveProviders,
+  TutorError,
+  type ChatMessage,
+} from "@/lib/tutor/provider";
 import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
 import { reportError } from "@/lib/observability/report";
 
@@ -10,18 +17,31 @@ export const maxDuration = 120;
 
 const MAX_HISTORY = 20;
 
+/*
+  How many questions one learner may ask in a minute.
+
+  Anu costs either money or a free model's daily allowance, and both are
+  spent by whoever asks. Twelve is far more than a person types and far less
+  than a loop sends. Charged to the learner rather than to their address, so
+  a classroom on one school network is one allowance each.
+*/
+const QUESTIONS_PER_MINUTE = 12;
+
 export async function POST(request: Request) {
   const ownerId = await requireUserId();
-  const config = resolveProvider();
-  if (!config) {
-    return Response.json(
-      { error: "No AI key configured yet. Add one in .env — see Settings for the two-minute version." },
-      { status: 503 },
-    );
+
+  const limit = checkRateLimit(`tutor:${bucketForOwner(ownerId)}`, QUESTIONS_PER_MINUTE, 60_000);
+  if (!limit.ok) {
+    return rateLimited(limit, "Anu is still catching up with your last few questions.");
   }
 
-  // Checked before a single token is spent. Everything else in the app keeps
-  // working when this refuses; only the tutor stops.
+  /*
+    Two limits, because they stop different things. The per-minute bucket above
+    stops a runaway client; this stops a bill. It is durable rather than
+    in-memory — a per-instance counter on serverless caps nothing across a cold
+    start — and it fails closed, because "the database hiccuped" is not a reason
+    to start spending without a ceiling.
+  */
   const decision = await authoriseCall(ownerId, "TUTOR");
   if (!decision.allowed) {
     return Response.json(
@@ -32,6 +52,14 @@ export async function POST(request: Request) {
           ? { "retry-after": String(decision.retryAfterSeconds) }
           : undefined,
       },
+    );
+  }
+
+  const chain = resolveProviders();
+  if (chain.length === 0) {
+    return Response.json(
+      { error: "No AI key configured yet. Add one in .env, and Settings has the two-minute version." },
+      { status: 503 },
     );
   }
 
@@ -60,30 +88,64 @@ export async function POST(request: Request) {
   const encoder = new TextEncoder();
   let full = "";
 
+  /*
+    WHICH MODEL ANSWERED IS A FACT ABOUT THE ANSWER, SO IT TRAVELS WITH IT.
+
+    Not the head of the chain: `openWithFallback` walks past a provider that
+    is throttled, so the model configured first may not have written a word of
+    what the learner is reading, and a screen naming the wrong model is worse
+    than one naming none. The handshake finishes here, before the response
+    head is written, which is what lets the name go in a header at all. Every
+    reason to fall back arrives in the upstream response head, so nothing is
+    lost by settling it this early, and the alternative was a trailer no
+    browser exposes.
+  */
+  let open;
+  try {
+    open = await openWithFallback(chain, system, messages, (usage, config) => {
+      // Charged to the provider that actually answered, not the head of the
+      // chain: falling back to a dearer model must not go unmetered.
+      void recordUsage({
+        ownerId, kind: "TUTOR", provider: config.name, model: config.model,
+        inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+      });
+    });
+  } catch (error) {
+    const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
+    const status = error instanceof TutorError ? error.status : 502;
+    return Response.json({ error: message }, { status });
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
-      try {
-        const onUsage = (usage: { inputTokens: number; outputTokens: number }) => {
-          // Deliberately not awaited inside the stream: the learner has their
-          // answer, and the ledger write must not hold the response open.
-          void recordUsage({
-            ownerId, kind: "TUTOR", provider: config.name, model: config.model,
-            inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
-          });
-        };
+      /*
+        Anu's English is cleaned on its way past: no dashes used as clause
+        breaks, no stock openers. `ProseStream` holds text back only where a
+        rule could still change it, so this costs the learner nothing they
+        would notice, and it never touches a word of Estonian. See
+        lib/tutor/humanize.ts.
+      */
+      const prose = new ProseStream();
+      const say = (text: string) => {
+        if (!text) return;
+        full += text;
+        controller.enqueue(encoder.encode(text));
+      };
 
-        for await (const chunk of streamReply(config, system, messages, onUsage)) {
-          full += chunk;
-          controller.enqueue(encoder.encode(chunk));
-        }
+      try {
+        for await (const chunk of open.chunks) say(prose.push(chunk));
+        say(prose.end());
       } catch (error) {
         // A TutorError is an upstream condition already explained to the learner
         // (a bad key, a 429, an unknown model). Anything else is ours.
         if (!(error instanceof TutorError)) {
-          reportError(error, { at: "api/tutor", ownerId, extra: { model: config.model } });
+          reportError(error, { at: "api/tutor", ownerId, extra: { model: open.config.model } });
         }
+        // Whatever was held back still belongs to the learner: losing the last
+        // few words of an answer to report an error is losing both.
+        say(prose.end());
         const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
-        controller.enqueue(encoder.encode(`\n\n⚠ ${message}`));
+        say(`\n\n\u26a0 ${message}`);
       } finally {
         controller.close();
         void persist(ownerId, messages, full);
@@ -92,7 +154,12 @@ export async function POST(request: Request) {
   });
 
   return new Response(stream, {
-    headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "no-store",
+      "x-model-provider": open.config.label,
+      "x-model-id": open.config.model,
+    },
   });
 }
 
@@ -105,10 +172,8 @@ async function persist(ownerId: string, messages: ChatMessage[], reply: string) 
     if (reply.trim()) {
       await prisma.message.create({ data: { ownerId, role: "assistant", content: reply } });
     }
-  } catch (error) {
+  } catch {
     // Chat history is a convenience, not the irreplaceable data. Losing a row
-    // must never break the conversation the learner is having — but it should
-    // not be silent either, since it means the database is unhappy.
-    reportError(error, { at: "api/tutor/persist", ownerId });
+    // must never break the conversation the learner is having.
   }
 }

@@ -38,6 +38,18 @@ const BY_NAME = CASES
   .sort((a, b) => b.en.length - a.en.length);
 
 /**
+ * The separator between the case name and the example in a stored government
+ * string.
+ *
+ * Written with escapes so the reader-copy sweep cannot see a dash here and
+ * rewrite it: this one is being read, not shown. All three spellings are
+ * accepted because the dictionary is seeded data that outlives a deploy and a
+ * hand-typed entry may carry any of them. The case name comes first, so the
+ * first separator in the string is always the right one to cut at.
+ */
+const GOVERNMENT_SEPARATOR = /[\u2014\u2013-]/;
+
+/**
  * Parses a stored government string.
  *
  * Returns null rather than guessing when no case name is present — a drill
@@ -48,14 +60,15 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
   const text = raw.trim();
   if (!text) return null;
 
-  // The case name is always at the front, before the em dash.
-  const [head = "", ...rest] = text.split("—");
+  // The case name is always at the front, before the separator.
+  const cut = text.search(GOVERNMENT_SEPARATOR);
+  const head = cut < 0 ? text : text.slice(0, cut);
   const headLower = head.toLowerCase();
 
   const match = BY_NAME.find((c) => headLower.includes(c.en));
   if (!match) return null;
 
-  const body = rest.join("—").trim();
+  const body = cut < 0 ? "" : text.slice(cut + 1).trim();
   // "aitan sind (I help you), not 'to you'" → example + gloss.
   const bracket = body.match(/^([^(]+)\(([^)]*)\)/);
   const example = bracket?.[1]?.trim() || (body ? body.split("(")[0]?.trim() ?? null : null);

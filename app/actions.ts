@@ -807,7 +807,7 @@ export async function leaveClassroom(classroomId: string) {
     select: { ownerId: true },
   });
   if (classroom?.ownerId === ownerId) {
-    return { ok: false as const, error: "You teach this class — archive it instead of leaving." };
+    return { ok: false as const, error: "You teach this class. Archive it instead of leaving." };
   }
   await prisma.classroomMember.deleteMany({ where: { classroomId, ownerId } });
   revalidatePath("/class");
@@ -854,7 +854,7 @@ export async function assignUnit(classroomId: string, unitId: string, dueAt?: st
   await prisma.task.createMany({
     data: members.map((m) => ({
       ownerId: m.ownerId,
-      title: `${unit.title} — ${unit.subtitle}`,
+      title: `${unit.title}, ${unit.subtitle}`,
       notes: `Set by ${classroom.name}. Open the unit on the learning path, add its words and review them.`,
       tag: "VOCABULARY",
       dueAt: due && !Number.isNaN(due.getTime()) ? due : null,
@@ -996,11 +996,19 @@ export async function buildClozeFromText(text: string) {
 
   const cards = await prisma.card.findMany({
     where: { ownerId, lexemeId: { not: null } },
-    select: { lexemeId: true },
-    distinct: ["lexemeId"],
-    take: 2000,
+    select: { id: true, lexemeId: true, cardType: true },
+    take: 4000,
   });
-  const lexemeIds = cards.map((c) => c.lexemeId).filter((id): id is string => !!id);
+  const lexemeIds = [...new Set(cards.map((c) => c.lexemeId).filter((id): id is string => !!id))];
+
+  // ADR-016: filling a gap is evidence about the word, so the round grades the
+  // same card the daily loop would rather than scoring itself.
+  const cardFor = new Map<string, string>();
+  for (const c of cards) {
+    if (!c.lexemeId) continue;
+    const better = c.cardType === "CASE_FORM" || c.cardType === "PRODUCTION";
+    if (!cardFor.has(c.lexemeId) || better) cardFor.set(c.lexemeId, c.id);
+  }
 
   if (lexemeIds.length === 0) {
     return {
@@ -1036,7 +1044,9 @@ export async function buildClozeFromText(text: string) {
     }
   }
 
-  const items = buildPassageCloze(passage, known);
+  const items = buildPassageCloze(passage, known)
+    .map((item) => ({ ...item, cardId: cardFor.get(item.lexemeId) ?? null }))
+    .filter((item) => item.cardId !== null);
   if (items.length === 0) {
     return {
       ok: false as const,
@@ -1087,7 +1097,7 @@ export async function deleteMyAccount(confirmation: string) {
   } catch (error) {
     return {
       ok: false as const,
-      error: `Nothing was deleted — the operation did not complete. ${
+      error: `Nothing was deleted. The operation did not complete. ${
         error instanceof Error ? error.message : ""
       }`.trim(),
     };

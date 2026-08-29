@@ -35,7 +35,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
   return (
     <Page
       title="Leech clinic"
-      lead="The cards you keep failing. Burying them is not a plan — here is what the history actually says."
+      lead="The cards you keep failing. Burying them is not a plan. Here is what the history actually says."
     >
       <div className="flex flex-col gap-4">
         {items.map((leech) => {
@@ -115,8 +115,8 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
         <p className="max-w-[62ch] text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
           A spaced-repetition system normally handles a card like this by burying it after a set
           number of lapses. That removes it from your queue and teaches you nothing. The review log
-          already knows how each of these is failing — steadily, or after a good run, or in
-          alternation — and that is usually enough to work out what to do about it. Deleting a card
+          already knows how each of these is failing (steadily, or after a good run, or in
+          alternation) and that is usually enough to work out what to do about it. Deleting a card
           keeps its review history: the log is append-only.
         </p>
       </div>
@@ -135,7 +135,7 @@ function Timeline({ history }: { history: { rating: number; at: string }[] }) {
         {shown.map((h, i) => (
           <span
             key={i}
-            title={`${new Date(h.at).toLocaleDateString()} — ${h.rating <= 2 ? "failed" : "recalled"}`}
+            title={`${new Date(h.at).toLocaleDateString()} · ${h.rating <= 2 ? "failed" : "recalled"}`}
             className="h-2.5 w-2.5 rounded-[2px]"
             style={{ background: h.rating <= 2 ? "var(--again)" : "var(--good)" }}
           />

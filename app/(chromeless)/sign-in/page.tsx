@@ -41,7 +41,7 @@ export default function SignInPage() {
             Tere tulemast tagasi
           </h1>
           <p className="mx-auto mt-2 max-w-[36ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            Learn Estonian the way it is actually taught — by its cases. Sign in to reach your deck,
+            Learn Estonian the way it is actually taught, by its cases. Sign in to reach your deck,
             your dictionary and every review you have ever done.
           </p>
 
@@ -51,7 +51,7 @@ export default function SignInPage() {
             ) : (
               <div className="rounded-[var(--r-lg)] p-5 text-left" style={{ background: "var(--raised)" }}>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                  This copy is running in local mode — no accounts, no sign-in, everything stored in
+                  This copy is running in local mode, no accounts, no sign-in, everything stored in
                   the database on this machine. Add{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your{" "}

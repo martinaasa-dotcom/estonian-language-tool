@@ -128,8 +128,8 @@ export function checkQuota(
       allowed: false,
       reason: "DAILY_CALLS",
       message:
-        "You have reached today's limit for Anu. Everything else — review, the " +
-        "dictionary, your deck — keeps working, and the limit resets at midnight UTC.",
+        "You have reached today's limit for Anu. Everything else (review, the " +
+        "dictionary, your deck) keeps working, and the limit resets at midnight UTC.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
   }
@@ -151,7 +151,7 @@ export function checkQuota(
       allowed: false,
       reason: "GLOBAL_SPEND",
       message:
-        "Anu is resting — the site has reached its shared daily budget for AI. " +
+        "Anu is resting. The site has reached its shared daily budget for AI. " +
         "This is not about your account. It resets at midnight UTC.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
