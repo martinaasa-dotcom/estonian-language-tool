@@ -135,7 +135,10 @@ for (const width of PHONES) {
 //     and squeezed the text between them into a column four words wide. Nothing
 //     scrolled sideways, so the only thing that would have caught it was a
 //     person looking, or a check that ran here.
-for (const path of ["/", "/review", "/dictionary", "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar"]) {
+for (const path of [
+  "/", "/review", "/dictionary", "/assess", "/guide",
+  "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
+]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     [...document.querySelectorAll("button, [role=button], a[role=button]")]

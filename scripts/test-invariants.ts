@@ -515,7 +515,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     These are the ones with unit tests around them, and a test is only cheap
     while the module under it can be imported without a framework.
   */
-  const pure = ["estonian", "gamification", "stats", "collections", "time", "offline", "security", "copy"];
+  const pure = ["assessment", "estonian", "gamification", "stats", "collections", "time", "offline", "security", "copy"];
   for (const file of LIB) {
     const area = file.split("/")[1];
     if (!pure.includes(area ?? "")) continue;
@@ -837,9 +837,116 @@ check("the gesture that replaced the browser's pull to refresh is still mounted"
   assert.match(read("app/(app)/layout.tsx"), /<PullToRefresh \/>/, "the gesture is not mounted");
 });
 
+
+// ── The placement check (ADR-018, ADR-005) ───────────────────────────────────
+
+check("no model decides anybody's level", () => {
+  /*
+    The same rule the writing exercise follows, in the place it would hurt
+    most. Every question is marked against a stored index, a recorded
+    sentence, or a form the dictionary vouches for, and the level comes out of
+    `placement()`. A learner meeting this app for the first time has no way to
+    know when the machine is the one that is confused, so the machine is never
+    allowed to be the judge.
+  */
+  const modules = LIB.filter((f) => f.startsWith("lib/assessment/"));
+  assert.ok(modules.length >= 5, `expected the assessment modules, found ${modules.length}`);
+  for (const file of modules) {
+    const source = read(file);
+    assert.equal(
+      /from ["']@\/lib\/(tutor|usage)\//.test(source),
+      false,
+      `${file} reaches for a model provider`,
+    );
+  }
+  // The routes that run a check may not either.
+  for (const file of APP.filter((f) => f.includes("/assess/"))) {
+    assert.equal(/resolveProvider|openWithFallback/.test(read(file)), false, `${file} calls a model`);
+  }
+});
+
+check("a recording never moves a level", () => {
+  /*
+    ADR-018: there is no verified Estonian speech recogniser available here, so
+    the speaking section is the learner's own judgement and is reported as
+    theirs. A number invented on top of a recogniser that does not handle
+    Estonian would be believed, which is what makes it worse than silence.
+  */
+  const score = read("lib/assessment/score.ts");
+  const scored = /SCORED_SKILLS[^=]*=\s*\[([^\]]*)\]/.exec(score)?.[1] ?? "";
+  assert.ok(scored.includes("reading"), "the scored skills list moved or was renamed");
+  assert.equal(scored.includes("speaking"), false, "speaking counts towards the level");
+
+  // And nothing in the runner may score a recording either.
+  const question = read("components/assessment/Question.tsx");
+  assert.match(question, /selfRating/, "the speaking answer stopped being self reported");
+  assert.equal(
+    /credit:\s*[^0\s]/.test(question.slice(question.indexOf("export function SpeakQuestion"))),
+    false,
+    "a speaking answer carries credit",
+  );
+});
+
+check("a placement check never grades a card", () => {
+  /*
+    Its questions are drawn from words the learner does *not* have in their
+    deck, on purpose: a test made of cards somebody has been drilling measures
+    the deck, not the Estonian. Grading them would write scheduling history
+    against cards that do not exist, and would let a level check inflate the
+    streak it is supposed to be independent of.
+  */
+  for (const file of [...COMPONENTS.filter((f) => f.includes("/assessment/")), ...APP.filter((f) => f.includes("/assess/"))]) {
+    assert.equal(/gradeCards?\(/.test(read(file)), false, `${file} grades a card from the level check`);
+  }
+});
+
+check("a sat check is never edited, and is deleted only on request", () => {
+  /*
+    Append-only for the same reason Review is: it is a measurement made at a
+    moment, it cannot be recomputed from anything, and a history that can be
+    rewritten is not a history. A later check is another row.
+
+    Deletion has exactly one path, the same one Review has: somebody erasing
+    their own account, which the privacy page promises and which outranks the
+    append-only rule. Tests set up and tear down their own rows and are not a
+    path anything reaches in production.
+  */
+  const product = [...ALL, "prisma/seed.ts"].filter((f) => !/\.(test|itest)\.tsx?$/.test(f));
+  for (const file of product) {
+    const hit = /(prisma|tx)\.assessment\.(update|updateMany|upsert)/.exec(read(file));
+    assert.equal(hit, null, `${file} rewrites a stored assessment`);
+  }
+  const deleters = product.filter((f) => /(prisma|tx)\.assessment\.delete/.test(read(f)));
+  assert.deepEqual(deleters, ["app/actions.ts"], "a level check is deleted outside account deletion");
+  assert.match(
+    read("app/actions.ts"),
+    /deleteMyAccount[\s\S]*?tx\.assessment\.deleteMany/,
+    "account deletion no longer removes the level checks it promises to",
+  );
+});
+
+check("the goal a learner states is stored through the settings store", () => {
+  /*
+    Settings go through lib/settings/store.ts, keys included. Five string
+    literals scattered through a wizard is one typo away from a goal that
+    silently reverts to nothing for ever.
+  */
+  const store = read("lib/settings/store.ts");
+  for (const key of ["goalReason", "goalTarget", "goalDeadline", "goalDays", "goalNote"]) {
+    assert.match(store, new RegExp(`${key}:`), `${key} is not declared in the settings store`);
+  }
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    const hit = /["'](goalReason|goalTarget|goalDeadline|goalDays|goalNote)["']/.exec(read(file));
+    assert.equal(hit, null, `${file} writes the ${hit?.[1]} key as a literal`);
+  }
+});
+
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
     : `\n${failures} of ${checks} invariants broken.`,
 );
+
 process.exit(failures === 0 ? 0 : 1);

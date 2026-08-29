@@ -10,7 +10,8 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { LEVELS, nextUnit as pickNextUnit, type Level } from "@/lib/collections/syllabus";
+import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
+import { courseLevelFor } from "@/lib/progress/level";
 import { dayKey, recentDayKeys } from "@/lib/time/day";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
@@ -76,9 +77,7 @@ export default async function TodayPage() {
     for them. `nextUnit` prefers finishing something already started, then the
     first open unit at or above their level.
   */
-  const placement: Level = (LEVELS as readonly string[]).includes(settings[SETTING_KEYS.cefrPlacement] ?? "")
-    ? (settings[SETTING_KEYS.cefrPlacement] as Level)
-    : "A1";
+  const placement = await courseLevelFor(ownerId);
   const nextSyllabusUnit = pickNextUnit({
     doneUnitIds: new Set(units.filter((u) => u.state === "done").map((u) => u.unit.id)),
     startedUnitIds: new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id)),

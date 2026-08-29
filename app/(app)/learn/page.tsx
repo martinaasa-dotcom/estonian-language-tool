@@ -2,18 +2,15 @@ import Link from "next/link";
 import { Check, Compass, Lock } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
-import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import { courseLevelFor } from "@/lib/progress/level";
 import {
-  CHECKPOINTS, LEVELS, LEVEL_INFO, isUnitOpen, nextUnit, type Level,
+  CHECKPOINTS, LEVELS, LEVEL_INFO, isUnitOpen, nextUnit,
 } from "@/lib/collections/syllabus";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Chip, Meter, Page, Ring } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
-
-const isLevel = (value: string | null): value is Level =>
-  value !== null && (LEVELS as readonly string[]).includes(value);
 
 /**
  * The course.
@@ -29,12 +26,11 @@ const isLevel = (value: string | null): value is Level =>
  */
 export default async function LearnPage() {
   const ownerId = await requireUserId();
-  const [snapshot, placementSetting] = await Promise.all([
+  const [snapshot, placement] = await Promise.all([
     deckSnapshot(ownerId),
-    readSetting(ownerId, SETTING_KEYS.cefrPlacement),
+    courseLevelFor(ownerId),
   ]);
   const units = await pathWithProgress(ownerId, snapshot);
-  const placement: Level = isLevel(placementSetting) ? placementSetting : "A1";
 
   const doneIds = new Set(units.filter((u) => u.state === "done").map((u) => u.unit.id));
   const startedIds = new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id));
@@ -97,11 +93,11 @@ export default async function LearnPage() {
             not just answered right once.
           </p>
           <Link
-            href="/placement"
+            href="/assess"
             className="mt-1.5 inline-flex items-center gap-1.5 text-xs underline"
             style={{ color: "var(--accent-deep)" }}
           >
-            <Compass size={13} aria-hidden /> Not sure? Take the placement test
+            <Compass size={13} aria-hidden /> Not sure? Take the level check
           </Link>
         </div>
         {next && (
