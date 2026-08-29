@@ -249,6 +249,20 @@ leaving both: their fixture entry reaches four lapses in twelve reviews and
 says in one entry what two of mine said, and their assertion requires the
 sentence to name a count where mine only asked that a word appear somewhere.
 
+It happened a third time the same day, on `lib/tutor/provider.ts`, and that
+one is worth reading because the rule as written did not fit it. Two sessions
+fixed the same two faults within the hour: a 402 pasting raw OpenRouter JSON
+at the learner, and the catch-all under it doing the same for every other
+status. Theirs was better in two ways, `reportError` with the provider, model
+and status as structured context where mine was a `console.error`, and a 402
+thrown as a 402 rather than laundered into a 502 to make it walkable, so
+theirs was kept and mine deleted. But "keep one and delete the other" is only
+the whole answer when both are the same shape. Mine also carried a clause
+theirs had no reason to: a 404 is walkable between models of one provider,
+which matters only because this branch made the default a chain of free
+models, and a free model is retired without notice. That clause survives on
+top of their version. Read what each side is for, not just which is better.
+
 **Then audit what taking their side reverted.** Resolving thirty-nine
 conflicts in their favour silently undid four things on this branch, and only
 two announced themselves: the typechecker caught the tutor naming the
