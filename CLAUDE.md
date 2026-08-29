@@ -35,6 +35,15 @@ form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
 `lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
 the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
+**The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
+`prisma/data/expanded.json` from two sources with a strict division of labour: every Estonian
+form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
+script only joins them. No model writes a character of it. It loads through `prisma/expanded.ts`
+as a cache warm-up with `ON CONFLICT DO NOTHING`, never an update, so a hand-written entry, a
+learner's correction and a live Ekilex fetch all win over it. Regenerating is resumable and
+caches every answer, and a source that will not answer is never written down as a miss: that bug
+cost four fifths of the dictionary on the first run and looked like a clean result.
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
@@ -45,6 +54,7 @@ in the whole pipeline, and English is the one language this project may write.
 `lib/collections/syllabus/syllabus.test.ts` fails if a unit names a word the harvest did not
 bring back, which is what makes this mechanical rather than aspirational. Re-run the harvest with
 `npm run harvest`; responses are cached, so it costs Ekilex nothing.
+
 
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may

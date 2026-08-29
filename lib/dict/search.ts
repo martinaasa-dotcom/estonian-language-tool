@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CASES } from "@/lib/estonian/cases";
 
@@ -83,17 +84,109 @@ function formLabel(form: { formType: string; morphCode: string | null; morphName
  * few hundred to a few thousand words that is single-digit milliseconds; if the
  * dictionary ever grows past that, this is the one function to revisit.
  */
+/**
+ * The Estonian letters the ranker folds, and what it folds them to, as a pair
+ * of arguments to Postgres `translate`.
+ *
+ * It has to agree with `fold` above, character for character, because the
+ * database now does the first pass. `translate` rather than the `unaccent`
+ * extension: this needs no extension installed, and it folds exactly the six
+ * letters Estonian uses rather than everything with a diacritic.
+ */
+const FOLD_FROM = "õäöüšž";
+const FOLD_TO = "oaousz";
+
+/**
+ * Finds the words a query could match, in the database.
+ *
+ * This used to read the entire dictionary into memory and rank it in
+ * JavaScript, with `take: 4000` and no ordering. That was survivable at 370
+ * hand-written words and became a real fault the moment the dictionary grew:
+ * past four thousand entries the cap silently dropped words, and since nothing
+ * ordered the query, *which* words vanished was undefined. `lugesin` stopped
+ * finding `lugema` and `raamatut` stopped finding `raamat`, both of them still
+ * sitting in the table with their forms intact. It also meant every search
+ * loaded five thousand lexemes and thirty thousand forms to return forty rows.
+ *
+ * So the database narrows, and `rankCandidates` still decides. The SQL is a
+ * deliberate superset of what the ranker can match, so nothing the ranker
+ * would have scored is filtered out before it gets the chance:
+ *
+ *   the lemma contains the query, folded, or the English contains it raw;
+ *   a stored form equals it, which is how `loen` finds `lugema`;
+ *   a genitive stem is a *prefix* of it, which is how `toas` finds `tuba`,
+ *     since a regular case form is that stem plus a suffix.
+ */
+
+/**
+ * The genitive stems a query could be a regular case form of.
+ *
+ * `toas` is the inessive, which is the genitive stem plus `-s`, so one of the
+ * stems worth looking for is `toa`. Stripping each known suffix gives at most a
+ * handful of candidates, and turns the database's job from "find every stem
+ * this query starts with", which no index can answer, into "find these three
+ * exact strings", which is an index lookup.
+ *
+ * The suffix list is the same one the ranker scores with, so the prefilter
+ * cannot miss a form the ranker would have matched. The bare query is included
+ * because a genitive typed on its own is its own stem.
+ */
+function possibleStems(folded: string): string[] {
+  const stems = new Set<string>([folded]);
+  for (const { suffix } of CASE_SUFFIXES) {
+    if (suffix && folded.endsWith(suffix)) stems.add(folded.slice(0, folded.length - suffix.length));
+  }
+  // Nominative plural is the one regular plural: genitive singular plus -d.
+  if (folded.endsWith("d")) stems.add(folded.slice(0, -1));
+  return [...stems].filter(Boolean);
+}
+
 export async function searchLexemes(query: string, limit = 40): Promise<SearchHit[]> {
   const q = query.trim();
   if (!q) return [];
 
+  const folded = fold(q);
+  const raw = q.toLowerCase();
+  const stems = possibleStems(folded);
+
+  /*
+    A union of four branches rather than one WHERE with four ORs.
+
+    They are the same rows either way, and the plans are not close. A single OR
+    across two tables leaves Postgres no choice but to read `Lexeme` end to end
+    and evaluate every branch per row; as a union, each branch is a separate
+    query that can take its own index, and `prisma/indexes.ts` gives all four
+    one. Measured on the full dictionary: 35ms as an OR, 14ms with the form
+    indexes and the OR, and under a millisecond once the branches were split.
+  */
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM (
+      SELECT l.id FROM "Lexeme" l
+        WHERE translate(lower(l.lemma), ${FOLD_FROM}, ${FOLD_TO}) LIKE ${`%${folded}%`}
+      UNION
+      SELECT l.id FROM "Lexeme" l
+        WHERE lower(l.translation) LIKE ${`%${raw}%`}
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO}) = ${folded}
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE f."formType" IN ('GEN_SG', 'GEN_PL')
+          AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
+              IN (${Prisma.join(stems.length ? stems : [""])})
+    ) AS candidates
+    LIMIT 600
+  `;
+
+  if (rows.length === 0) return [];
+
   const candidates: Candidate[] = await prisma.lexeme.findMany({
+    where: { id: { in: rows.map((r) => r.id) } },
     select: {
       id: true, lemma: true, translation: true, pos: true,
       cefr: true, gradationNote: true,
       forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
     },
-    take: 4000,
   });
 
   return rankCandidates(candidates, q, limit);

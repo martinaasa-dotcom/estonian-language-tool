@@ -142,8 +142,13 @@ check("the new word opens as a full entry", opened,
   opened ? "" : `still on: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 check("its case table is derived from the genitive I typed",
   (await page.getByText(`${word}us`, { exact: true }).count()) > 0);
+// Waited for, not sampled. Saving a word now leaves the add form by a real
+// navigation rather than a router refresh, because the refresh dropped the
+// update about a third of the time; the entry's text is in the server HTML
+// immediately, while this button belongs to a client component and arrives a
+// moment later on hydration.
 check("and it can go straight into the deck",
-  (await page.getByRole("button", { name: /Add to deck/ }).count()) > 0);
+  await eventually(async () => (await page.getByRole("button", { name: /Add to deck/ }).count()) > 0));
 
 // The shared diacritic bar must type into whichever field has focus, and React
 // must see the change — a direct .value write would be silently discarded.

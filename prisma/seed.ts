@@ -6,6 +6,7 @@ import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/adva
 import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { writeExpanded } from "./expanded";
+import { ensureSearchIndexes } from "./indexes";
 import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
 
@@ -22,6 +23,14 @@ const prisma = new PrismaClient();
  * Ekilex cached — is left alone rather than re-upserted on every deploy.
  */
 async function main() {
+  /*
+    Before the early return, deliberately. `--only-if-empty` is the mode the
+    deploy runs, and it does nothing when the dictionary already has words, so
+    anything behind that check would never reach an existing deployment. The
+    indexes have to be ensured on every deploy, not only the first.
+  */
+  await ensureSearchIndexes(prisma);
+
   if (process.argv.includes("--only-if-empty")) {
     const existing = await prisma.lexeme.count();
     if (existing > 0) {

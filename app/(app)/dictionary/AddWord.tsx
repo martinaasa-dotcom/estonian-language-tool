@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { createLexemeWithForms } from "@/app/actions";
@@ -47,8 +46,6 @@ export interface WordDraft {
  * will contain mistakes, and a wrong form that cannot be fixed gets drilled.
  */
 export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; edit?: WordDraft }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [open, setOpen] = useState(Boolean(initialLemma));
   const [pos, setPos] = useState(edit?.pos ?? "NOUN");
   const [lemma, setLemma] = useState(edit?.lemma ?? initialLemma);
@@ -84,32 +81,29 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
       if (!edit) { setForms({}); setTranslation(""); }
 
       /*
-        PUSH OR REFRESH, NEVER BOTH, AND THE ORDER IS WHY.
+        GO TO THE WORD, AS A REAL NAVIGATION, AND DO NOT ASK THE ROUTER NICELY.
 
-        `router.refresh()` re-renders the route the reader is on now, and
-        firing it in the same tick as a push to a different URL races the
-        navigation that is already in flight: the refresh can land last and
-        leave them on the page they were on, which here is the "no such word,
-        add it?" screen for a word that was just saved successfully. The save
-        worked, the row is there, and the screen says it is not.
+        The reader has just saved a word and is looking at the screen that says
+        that word does not exist. Getting them to the entry is the whole point
+        of the interaction, so it may not be best-effort.
 
-        Waiting longer does not help, which is what makes it look like a bug
-        in whatever is watching. It failed on CI on a tree that had passed
-        eleven minutes earlier, and e2e polled a full fifteen seconds for a
-        word the database already had.
+        Both softer versions were tried here and both are unreliable. Firing
+        `router.refresh()` in the same tick as a push races the navigation
+        already in flight, which the previous version of this comment
+        described. Removing the refresh and letting the Server Action's own
+        `revalidatePath` refresh the route is no better: measured over eight
+        runs against a warm server, the browser was left on the add form three
+        times, while a plain fetch of the same URL at that exact moment
+        returned the finished entry every single time. The save had worked, the
+        row was there, the server would render it, and only the client had not
+        moved. A hard reload always showed it.
 
-        The destination is `force-dynamic`, so arriving there renders it
-        fresh; there is nothing for a refresh to add.
-
-        The question is whether the URL changes, and not whether this is an
-        edit. Correcting a headword renames the word, so `?q=` no longer names
-        it and a refresh alone leaves the reader looking up a word that is not
-        there any more, which is how the first version of this broke renaming.
-        Correcting anything else keeps the URL, and there the refresh is the
-        whole point and the push would be the no-op.
+        So the reader's word is worth one document load. This is a thing a
+        person does a handful of times, not a keystroke, and a navigation the
+        framework cannot drop is worth more here than staying in the SPA. The
+        destination is `force-dynamic`, so it renders fresh on arrival.
       */
-      if (searchParams.get("q") === result.lemma) router.refresh();
-      else router.push(`/dictionary?q=${encodeURIComponent(result.lemma)}`);
+      window.location.assign(`/dictionary?q=${encodeURIComponent(result.lemma)}`);
     });
   };
 

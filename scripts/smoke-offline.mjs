@@ -39,13 +39,21 @@ async function answerOneCard() {
     if (await rate.count()) { await rate.first().click(); return true; }
   }
 
-  // Multiple choice: the card says "1-4 to pick", so press one. This used to
-  // filter the option buttons on /^[1-4]\S/, and an option reads "1" then a
-  // newline then the word, so the pattern could never match: the function fell
-  // through, returned false into a discarded value, and nothing was graded.
-  // What the reader saw was "a grade taken offline is held on the device" and
-  // "0 queued", which reads as the outbox being broken. The keyboard is what
-  // the app itself offers and is what `test-modes.mjs` drives.
+  /*
+    Multiple choice: the card says "1-4 to pick", so press one, and then grade.
+
+    Picking an option only *reveals* the answer. The grade is the second
+    interaction, on Again/Hard/Good/Easy, and without it this function reported
+    a completed answer having graded nothing: the outbox was empty and the
+    check read as "a grade taken offline is held on the device: 0 queued",
+    which looks like the offline queue is broken when it is working perfectly.
+    It surfaced when the dictionary grew, because a multiple choice card
+    started coming up first where a "Show answer" card used to, and that branch
+    above does both steps.
+
+    The keyboard rather than a click on the option, because it is what the app
+    itself offers and what test-modes.mjs drives.
+  */
   if (await page.getByText(/Pick the meaning/).count()) {
     await page.keyboard.press("1");
     await page.waitForTimeout(900);
