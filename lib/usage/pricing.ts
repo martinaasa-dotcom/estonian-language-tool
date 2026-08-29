@@ -51,10 +51,12 @@ const PRICES: Readonly<Record<string, ModelPrice>> = {
     everybody, which is exactly the fault the TTS speaker name caused once
     before.
   */
-  "llama-3.3-70b-versatile": { inputPerMTok: 0, outputPerMTok: 0 },
-  "llama-3.1-8b-instant": { inputPerMTok: 0, outputPerMTok: 0 },
-  "gemini-2.0-flash": { inputPerMTok: 0, outputPerMTok: 0 },
-  "gemini-1.5-flash": { inputPerMTok: 0, outputPerMTok: 0 },
+  // Keyed the way `normaliseModel` leaves them: the vendor prefix a provider
+  // puts in front of a model, "openai/" or "qwen/", is stripped before lookup.
+  "gpt-oss-120b": { inputPerMTok: 0, outputPerMTok: 0 },
+  "qwen3.8-27b": { inputPerMTok: 0, outputPerMTok: 0 },
+  "gemini-flash-latest": { inputPerMTok: 0, outputPerMTok: 0 },
+  "gemini-3.6-flash": { inputPerMTok: 0, outputPerMTok: 0 },
 };
 
 /** Charged when the model is not in the table. Deliberately the dearest rate. */
