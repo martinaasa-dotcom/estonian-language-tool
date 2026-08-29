@@ -72,13 +72,19 @@ export async function writeExpanded(
   let added = 0;
   let formCount = 0;
 
+  /*
+    `examples` is NOT NULL with a '[]' default. An explicit null overrides a
+    default rather than falling back to it, so a word with no attested sentence
+    has to be given the empty list by name. The whole statement is one insert,
+    so one such word failed the entire batch.
+  */
   for (const batch of chunk(entries, 250)) {
     const values = batch.map(
       (e) => Prisma.sql`(
         ${crypto.randomUUID()}, ${e.lemma}, ${e.pos}, ${e.translation},
         ${e.cefr}::text, ${e.gradation}, ${e.gradationNote}::text,
         ${e.government}::text, ${e.notes}::text,
-        ${e.examples.length ? JSON.stringify(e.examples) : null}::text,
+        ${JSON.stringify(e.examples ?? [])}::text,
         'EKILEX', ${e.ekilexWordId}, NOW(), NOW()
       )`,
     );
