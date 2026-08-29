@@ -13,6 +13,7 @@ import { Card, Empty, Meter, Page } from "@/components/ui";
 import { BLANK, sentenceMatches } from "@/lib/estonian/cloze";
 import { checkAnswer, countsAsRecalled } from "@/lib/estonian/answer";
 import { isAnswerable, type LessonStep } from "@/lib/collections/lesson";
+import { grammarPoint } from "@/lib/estonian/grammar";
 
 interface Answer {
   id: string;
@@ -251,9 +252,26 @@ function StepCard({
           <p className="text-lg">{step.canDo}</p>
           <p style={{ color: "var(--ink-soft)" }}>{step.blurb}</p>
           {step.grammar.length > 0 && (
-            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-              Grammar in this lesson: {step.grammar.join(", ").replace(/-/g, " ")}.
-            </p>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Grammar in this lesson</p>
+              <ul className="flex flex-wrap gap-2">
+                {step.grammar.map((id) => {
+                  const point = grammarPoint(id);
+                  if (!point) return null;
+                  return (
+                    <li key={id}>
+                      <Link
+                        href={point.href}
+                        className="inline-block rounded-[var(--r-sm)] px-2.5 py-1 text-sm underline"
+                        style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                      >
+                        {point.title}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
           <Continue onNext={onNext} label={`Start ${step.words} words`} />
         </Card>

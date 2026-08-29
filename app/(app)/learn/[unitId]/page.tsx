@@ -7,6 +7,7 @@ import { unitById } from "@/lib/collections/syllabus";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { unitProgress } from "@/lib/collections/syllabus";
 import { splitIntoLessons } from "@/lib/collections/lesson";
+import { grammarPoint } from "@/lib/estonian/grammar";
 import { AddUnitButton } from "@/components/AddUnitButton";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
@@ -109,6 +110,26 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
             </ButtonLink>
           </div>
         </Card>
+
+        {unit.grammar.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="label-xs" style={{ color: "var(--ink-3)" }}>Grammar</span>
+            {unit.grammar.map((id) => {
+              const point = grammarPoint(id);
+              if (!point) return null;
+              return (
+                <Link
+                  key={id}
+                  href={point.href}
+                  className="rounded-[var(--r-sm)] px-2.5 py-1 text-sm underline"
+                  style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                >
+                  {point.title}
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         <div>
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>

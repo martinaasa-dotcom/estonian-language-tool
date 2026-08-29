@@ -5,6 +5,7 @@ import {
 } from "./index";
 import { HARVESTED } from "@/prisma/data/harvested";
 import { PHRASES } from "@/prisma/data/other";
+import { grammarPoint } from "@/lib/estonian/grammar";
 
 /**
  * The course references the dictionary by lemma, and a typo would silently
@@ -229,6 +230,33 @@ describe("the harvested dictionary behind the course", () => {
           expect(w.parts[p], `${w.lemma} is missing ${p}`).toBeTruthy();
         }
       }
+    }
+  });
+});
+
+describe("the grammar the course promises", () => {
+  it("names only grammar points the reference can actually explain", () => {
+    // Before the topic notes existed, a B2 unit could say it taught the
+    // impersonal while the app had no page saying what the impersonal was. A
+    // course that can only mark an answer wrong is a test with a syllabus
+    // attached, so every id a unit names has to resolve to something a learner
+    // can go and read.
+    const missing: string[] = [];
+    for (const u of SYLLABUS) {
+      for (const id of u.grammar) {
+        if (!grammarPoint(id)) missing.push(`${u.id}: ${id}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("introduces the grammar of a level somewhere in that level", () => {
+    // A unit may revisit an earlier point, but a level whose grammar is all
+    // borrowed from below is not teaching anything new.
+    for (const level of LEVELS) {
+      const units = unitsAtLevel(level);
+      const points = new Set(units.flatMap((u) => [...u.grammar]));
+      expect(points.size, `${level} teaches too little grammar`).toBeGreaterThanOrEqual(4);
     }
   });
 });

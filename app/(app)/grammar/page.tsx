@@ -2,15 +2,16 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { CASE_GROUPS, caseReference } from "@/lib/estonian/grammar";
+import { CASE_GROUPS, TOPIC_NOTES, caseReference } from "@/lib/estonian/grammar";
 import { caseAccuracy } from "@/lib/stats/history";
 import { Card, Chip, Meter, Note, Page, SectionTitle } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Grammar · the fourteen cases",
-  description: "What each Estonian case is for, in English, with real forms from the dictionary.",
+  title: "Grammar · cases, moods and sentence patterns",
+  description:
+    "What each Estonian case, mood and sentence pattern is for, in English, with real forms from the dictionary.",
 };
 
 /**
@@ -38,7 +39,7 @@ export default async function GrammarIndexPage() {
   return (
     <Page
       eyebrow="Reference"
-      title="The fourteen cases"
+      title="Grammar"
       lead="What each one is for, when Estonian reaches for it, and the mistake an English speaker actually makes. Every Estonian word on these pages comes from the dictionary, the explanations are the only part this app wrote."
     >
       <div className="flex flex-col gap-7">
@@ -142,6 +143,44 @@ export default async function GrammarIndexPage() {
             </ul>
           </section>
         ))}
+
+        <section>
+          <SectionTitle hint={`${TOPIC_NOTES.length} points`}>Beyond the cases</SectionTitle>
+          <p className="mt-1 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
+            The cases are only half of it. These are the moods, tenses and sentence patterns the
+            course teaches from A1 up to C2, each one explained in English and linked to the units
+            that drill it.
+          </p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {TOPIC_NOTES.map((topic) => (
+              <li key={topic.id}>
+                <Link
+                  href={`/grammar/topic/${topic.id}`}
+                  className="lift flex h-full flex-col gap-1.5 rounded-[var(--r-lg)] border p-4"
+                  style={{
+                    borderColor: "var(--rule)",
+                    background: "var(--surface)",
+                    boxShadow: "var(--shadow-sm)",
+                  }}
+                >
+                  <span className="flex flex-wrap items-baseline gap-2">
+                    <span className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                      {topic.title}
+                    </span>
+                    {topic.marker && (
+                      <span className="ml-auto">
+                        <Chip tone="accent" caseSensitive>{topic.marker}</Chip>
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                    {topic.summary}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <Note tone="neutral">
           The endings above attach to the genitive singular, and to the genitive plural for the
