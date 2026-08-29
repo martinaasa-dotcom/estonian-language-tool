@@ -45,12 +45,18 @@ function sentenceCheckPrompt(estonian: string, meaning: string): string {
 }
 
 export function TutorChat({
-  configured, providerLabel, history, initialQuestion,
+  configured, plannedLabel, history, initialQuestion,
 }: {
   configured: boolean;
-  providerLabel: string | null;
+  /**
+   * The provider this deployment is set up to ask first. Replaced by the one
+   * that actually answered as soon as a reply arrives, which is the whole
+   * point: with a fallback chain configured, the model named at the top of
+   * the route may not have written a word of what is on screen.
+   */
+  plannedLabel: string | null;
   history: Msg[];
-  /** A question handed over from elsewhere — written into the box, not sent. */
+  /** A question handed over from elsewhere: written into the box, not sent. */
   initialQuestion?: string;
 }) {
   const [messages, setMessages] = useState<Msg[]>(history);
@@ -59,6 +65,15 @@ export function TutorChat({
   const [checkEt, setCheckEt] = useState("");
   const [checkEn, setCheckEn] = useState("");
   const [streaming, setStreaming] = useState(false);
+  /*
+    The model that wrote the answer on screen, read off the reply itself.
+
+    `null` until one has, and then it stays: a learner who scrolls back to
+    yesterday's answer is reading something a specific model wrote, and the
+    line under the conversation should not quietly go back to naming whichever
+    key happens to be first in the environment today.
+  */
+  const [answeredBy, setAnsweredBy] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,6 +96,10 @@ export function TutorChat({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ messages: next, level: "B1" }),
       });
+
+      const provider = res.headers.get("x-model-provider");
+      const model = res.headers.get("x-model-id");
+      if (provider && model) setAnsweredBy(`${provider} · ${model}`);
 
       if (!res.ok || !res.body) {
         const { error } = await res.json().catch(() => ({ error: "Anu could not be reached." }));
@@ -192,13 +211,29 @@ export function TutorChat({
         </Button>
       </div>
 
-      {providerLabel && (
-        <p className="text-[11.5px]" style={{ color: "var(--ink-3)" }}>
-          {providerLabel} · Anu explains grammar; inflected forms in the dictionary come from stored
-          data, not from the model.
-        </p>
-      )}
+      <Provenance label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
     </div>
+  );
+}
+
+/**
+ * Where the answer came from.
+ *
+ * The repo already renders provenance on every form the dictionary shows,
+ * because a learner has to be able to tell a lexicographer's Estonian from a
+ * model's. This is the same question asked of the chat, and the honest answer
+ * has two states rather than one. Before a reply, all this can say is which
+ * provider the deployment would ask. After one, it names the model that
+ * actually wrote what is on screen, read off the reply's own headers, which
+ * with a fallback chain configured is not always the same thing.
+ */
+function Provenance({ label, answered }: { label: string | null; answered: boolean }) {
+  if (!label) return null;
+  return (
+    <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
+      {answered ? "Answered by" : "Will ask"} {label}. Anu explains grammar; every inflected form in
+      the dictionary is stored data from Ekilex, never written by a model.
+    </p>
   );
 }
 
