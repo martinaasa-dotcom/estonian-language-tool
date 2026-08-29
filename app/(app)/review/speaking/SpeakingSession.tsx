@@ -48,7 +48,14 @@ const TONE_SOFT: Record<number, string> = {
  * Estonian, and the learner rates their own recall — the same self-assessment
  * a flipped flashcard asks for, with better evidence to base it on.
  */
-export function SpeakingSession({ cards }: { cards: SpeakingCard[] }) {
+export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[] }) {
+  /*
+    Snapshotted once on mount. gradeCard refreshes this route's Server
+    Component, which would hand down a card list shrinking as graded cards leave the
+    due pool, changing what is on screen mid-session. Same rule as
+    ReviewSession's frozen queue.
+  */
+  const [cards] = useState(initialCards);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(0);

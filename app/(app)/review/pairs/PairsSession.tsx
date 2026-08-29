@@ -27,7 +27,17 @@ export interface PairQuestion {
  * amount of reading practice conveys it. It only became possible because the
  * speech proxy already existed and was already verified end to end.
  */
-export function PairsSession({ questions }: { questions: PairQuestion[] }) {
+export function PairsSession({ questions: initialQuestions }: { questions: PairQuestion[] }) {
+  /*
+    Snapshotted once on mount, never updated from later props. gradeCard() is a
+    Server Action and Next refreshes this route's Server Component after every
+    call, which hands down a freshly computed question set: the word under the
+    learner's feedback would change while they were still reading it. The set
+    the page found on first load is the only one this session should know
+    about. ReviewSession froze its queue for the same reason; these four modes
+    started grading in this change and inherited the hazard with it.
+  */
+  const [questions] = useState(initialQuestions);
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
@@ -235,7 +245,7 @@ export function PairsSession({ questions }: { questions: PairQuestion[] }) {
 
         {revealed && (
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
-            <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+            <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {question.letter
                 ? <>The two differ only in how long the <strong lang="et">{question.letter}</strong> is.
                     The doubled spelling (<strong lang="et">{question.longer}</strong>) is the longer one.</>

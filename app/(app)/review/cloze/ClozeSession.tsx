@@ -253,7 +253,7 @@ export function ClozeSession() {
                 {right
                   ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
                   : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}
-                <p className="text-[14px]">
+                <p className="text-[15px]">
                   {right
                     ? "Exactly the form the writer used."
                     : slip

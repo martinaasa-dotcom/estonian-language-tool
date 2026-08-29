@@ -42,9 +42,19 @@ interface Marked {
  * the dictionary and is certain; what Anu says about the rest of the sentence is
  * a model's opinion and is labelled as one.
  */
-export function WriteSession({ prompts, aiAvailable }: {
+export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
   prompts: WritingPrompt[]; aiAvailable: boolean;
 }) {
+  /*
+    Snapshotted once on mount, never updated from later props. gradeCard() is a
+    Server Action and Next refreshes this route's Server Component after every
+    call, which hands down a freshly computed task list: the word under the
+    learner's feedback would change while they were still reading it. The set
+    the page found on first load is the only one this session should know
+    about. ReviewSession froze its queue for the same reason; these four modes
+    started grading in this change and inherited the hazard with it.
+  */
+  const [prompts] = useState(initialPrompts);
   const [index, setIndex] = useState(0);
   const [sentence, setSentence] = useState("");
   const [busy, setBusy] = useState(false);
@@ -162,7 +172,7 @@ export function WriteSession({ prompts, aiAvailable }: {
         </div>
 
         <div className="px-6 py-8">
-          <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+          <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             Use{" "}
             <strong lang="et" className="est text-[18px]" style={{ color: "var(--ink)" }}>
               {prompt.lemma}
@@ -255,7 +265,7 @@ function Feedback({ marked }: { marked: Marked }) {
         {formCheck.used
           ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
           : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}
-        <p className="text-[14px]">
+        <p className="text-[15px]">
           {formCheck.used
             ? "That is the right form."
             : formCheck.usedAnotherForm
@@ -288,7 +298,7 @@ function Feedback({ marked }: { marked: Marked }) {
             </Chip>
             <span className="label-xs" style={{ color: "var(--ink-3)" }}>AI · verify</span>
           </div>
-          <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>{graded.comment}</p>
+          <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>{graded.comment}</p>
           {graded.rule && (
             <p className="mt-1.5 text-[13px]" style={{ color: "var(--ink-3)" }}>
               Rule: {graded.rule}

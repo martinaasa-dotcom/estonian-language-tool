@@ -54,7 +54,7 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
       <section>
         <SectionTitle>Diagnosis</SectionTitle>
         <Card>
-          <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+          <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             {needed > 0
               ? <>Not enough case reviews yet to say anything useful. About {needed} more and this
                   will start telling you which stems are actually costing you.</>

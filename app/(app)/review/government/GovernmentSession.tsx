@@ -36,7 +36,17 @@ const caseLabel = (key: CaseKey) => CASES.find((c) => c.key === key);
  * English speaker, not recall of a case name — and typing "allative" tests
  * spelling.
  */
-export function GovernmentSession({ questions }: { questions: GovernmentQuestion[] }) {
+export function GovernmentSession({ questions: initialQuestions }: { questions: GovernmentQuestion[] }) {
+  /*
+    Snapshotted once on mount, never updated from later props. gradeCard() is a
+    Server Action and Next refreshes this route's Server Component after every
+    call, which hands down a freshly computed question set: the word under the
+    learner's feedback would change while they were still reading it. The set
+    the page found on first load is the only one this session should know
+    about. ReviewSession froze its queue for the same reason; these four modes
+    started grading in this change and inherited the hazard with it.
+  */
+  const [questions] = useState(initialQuestions);
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<CaseKey | null>(null);
   const [correct, setCorrect] = useState(0);
@@ -143,7 +153,7 @@ export function GovernmentSession({ questions }: { questions: GovernmentQuestion
             </p>
             <Speak text={question.lemma} />
           </div>
-          <p className="mt-1 text-[14px]" style={{ color: "var(--ink-3)" }}>{question.translation}</p>
+          <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>{question.translation}</p>
 
           {question.maskedExample && !revealed && (
             <p lang="et" className="est mt-5 text-[19px]" style={{ color: "var(--ink-2)" }}>
@@ -151,7 +161,7 @@ export function GovernmentSession({ questions }: { questions: GovernmentQuestion
             </p>
           )}
 
-          <p className="mt-5 text-[14px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mt-5 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             Which case does it take?
           </p>
         </div>
@@ -203,7 +213,7 @@ export function GovernmentSession({ questions }: { questions: GovernmentQuestion
               </div>
             )}
             {question.gloss && (
-              <p className="mt-1 text-[14px]" style={{ color: "var(--ink-2)" }}>{question.gloss}</p>
+              <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-2)" }}>{question.gloss}</p>
             )}
             <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
               {question.experiencer

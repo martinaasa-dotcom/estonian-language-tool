@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { AlertTriangle, Upload } from "lucide-react";
-import { inspectBackup, restoreBackup, type RestoreSummary } from "@/app/actions";
+import { type RestoreSummary } from "@/app/actions";
 import { Button } from "@/components/Button";
 
 type Mode = "merge" | "replace";
@@ -23,22 +23,61 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
   const [done, setDone] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
+  /*
+    Every call here is wrapped, because the failure that mattered was the one
+    nobody saw: a rejected promise left the panel exactly as it was, with no
+    summary and no error, and a button that appeared to do nothing.
+  */
+  const explain = (cause: unknown) =>
+    `That could not be completed, and nothing has been changed. ${
+      cause instanceof Error ? cause.message : ""
+    }`.trim();
+
   const pick = async (file: File | undefined) => {
     setError(null); setDone(null); setSummary(null); setJson(null);
     if (!file) return;
     setFilename(file.name);
     const text = await file.text();
-    const result = await inspectBackup(text);
-    if (!result.ok) { setError(result.error); return; }
-    setJson(text);
-    setSummary(result.summary);
+    try {
+      const response = await fetch("/api/restore?mode=inspect", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: text,
+      });
+      const result: { ok: true; summary: RestoreSummary } | { ok: false; error: string } =
+        await response.json();
+      if (!result.ok) { setError(result.error); return; }
+      setJson(text);
+      setSummary(result.summary);
+    } catch (cause) {
+      setError(explain(cause));
+    }
   };
 
   const submit = () => {
     if (!json) return;
     setError(null);
     start(async () => {
-      const result = await restoreBackup(json, mode);
+      /*
+        Posted to a Route Handler rather than called as a Server Action. A
+        backup grows with the deck, and the Server Action transport rejected a
+        990 KB file twice over, on the body limit and then on React's guard
+        over the decoded payload. Neither is a fact about the learner's data,
+        and both bite the person with the most history first. The route takes
+        the file as the request body, so nothing re-encodes it on the way in.
+      */
+      let result: { ok: true; summary: RestoreSummary } | { ok: false; error: string };
+      try {
+        const response = await fetch(`/api/restore?mode=${mode}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: json,
+        });
+        result = await response.json();
+      } catch (cause) {
+        setError(explain(cause));
+        return;
+      }
       if (!result.ok) { setError(result.error); return; }
       setDone(
         mode === "merge"

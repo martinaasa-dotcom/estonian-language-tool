@@ -47,7 +47,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
     <section>
       <SectionTitle>Deleting your data</SectionTitle>
       <Card>
-        <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+        <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
           You can remove everything this app holds about you: {counts.cards} cards,{" "}
           {counts.reviews} reviews, your tasks, your conversations with Anu, your badges and your
           settings. The shared dictionary stays, because other learners have cards built on it.
