@@ -140,6 +140,11 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             Where are you now?
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
+            Not sure which of these you are? The{" "}
+            <a href="/placement" className="underline" style={{ color: "var(--accent-deep)" }}>
+              placement test
+            </a>{" "}
+            takes about two minutes and stops as soon as a level gets hard.
             This only picks your starting units. Nothing is locked, the whole dictionary is open from
             day one.
           </p>

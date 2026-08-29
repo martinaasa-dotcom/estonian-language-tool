@@ -20,6 +20,15 @@ export const SETTING_KEYS = {
   reviewMode: "reviewMode",
   onboardedAt: "onboardedAt",
   cefrGoal: "cefrGoal",
+  /**
+   * The level the learner is at, as opposed to the one they are aiming for.
+   *
+   * Separate from cefrGoal on purpose: what somebody wants to reach and where
+   * they are now are different facts, and the path needs the second one to
+   * decide what to open and where to send them next. Written by the placement
+   * test, and by a level checkpoint when one is passed.
+   */
+  cefrPlacement: "cefrPlacement",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

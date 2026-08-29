@@ -16,7 +16,7 @@
  *   npx tsx scripts/test-invariants.ts
  */
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 let failures = 0;
@@ -230,6 +230,19 @@ check("no counter column exists for anything the review log can reconstruct", ()
 
 // ── Every mode grades through gradeCard (ADR-016) ────────────────────────────
 
+/**
+ * Sessions that measure rather than practise.
+ *
+ * The placement test asks about words the learner may never have had a card for,
+ * to decide where to start them. Writing those answers to the review log would
+ * put grades against cards that do not exist and tell the scheduler somebody had
+ * practised material they have not yet met.
+ */
+const MEASURES_RATHER_THAN_PRACTISES = [
+  "app/(app)/placement/PlacementSession.tsx",
+];
+
+
 check("every practice mode writes to the same review log", () => {
   /*
     Sprint, Listening, Match, Dictation, Sentences and the unit lessons are not
@@ -244,16 +257,34 @@ check("every practice mode writes to the same review log", () => {
     gradeCard would have declared the rule satisfied while the newest and
     busiest mode sat outside it, which is the failure this file exists to catch.
   */
-  const sessions = SESSION_FILES();
+  const sessions = SESSION_FILES().filter((f) => !MEASURES_RATHER_THAN_PRACTISES.includes(f));
   assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint)\b/,
       `${file} does not write to the shared review log`,
     );
   }
+
+  /*
+    The exemption is checked, so it cannot become a parking space. A file listed
+    below has to still be there, and has to still write no grades at all: the
+    moment one starts grading it is a practice mode, belongs under the rule, and
+    this fails until it is taken off the list. Same shape as the ALLOWED list in
+    lib/copy/readerCopy.test.ts, and for the same reason — an unexamined
+    exemption is how a rule quietly stops applying to anything.
+  */
+  for (const file of MEASURES_RATHER_THAN_PRACTISES) {
+    assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
+    assert.doesNotMatch(
+      code(file),
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint)\b/,
+      `${file} now grades, so it is a practice mode and must come off the exemption list`,
+    );
+  }
 });
+
 
 /**
  * Every screen that runs a graded session, wherever it lives.
@@ -286,7 +317,7 @@ check("a session never lets its questions change under the learner", () => {
   assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
     const source = code(file);
-    if (!/\b(gradeCards?|replayGrades|completeLesson)\b/.test(source)) continue;
+    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint)\b/.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be

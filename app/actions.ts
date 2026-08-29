@@ -5,7 +5,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
-import { unitById } from "@/lib/collections/syllabus";
+import { LEVELS, checkpointFor, levelIndex, unitById } from "@/lib/collections/syllabus";
+import { checkpointPassed } from "@/lib/collections/checkpoint";
+import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { translateSentenceWithAnu } from "@/lib/tutor/translate";
@@ -663,6 +665,10 @@ export async function completeOnboarding(input: {
   await Promise.all([
     writeSetting(ownerId, SETTING_KEYS.displayName, input.displayName.trim().slice(0, 32)),
     writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
+    // The level somebody declares at sign-up is the best guess available until
+    // they take the placement test, and the course needs *some* starting point
+    // to decide what to open. The test overwrites it whenever they take it.
+    writeSetting(ownerId, SETTING_KEYS.cefrPlacement, input.cefr),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
   ]);
@@ -759,6 +765,73 @@ const LessonResultSchema = z.object({
 const LESSON_RESULT_LIMIT = 80;
 
 /**
+ * Grades a set of answers against cards the learner already has.
+ *
+ * Shared by the lesson runner and the level checkpoints, which differ in exactly
+ * one way: a lesson creates the cards first, because teaching a word is how it
+ * enters the deck, while a checkpoint creates nothing. Sitting an exam is not a
+ * request to start studying every word it happened to ask about, so a word with
+ * no card is simply not graded — the answer still counts towards the mark, it
+ * just has nowhere in the scheduler to land.
+ *
+ * Not exported: this file is `"use server"`, so an exported ownerId parameter
+ * would let one learner write grades into another's deck.
+ */
+async function gradeAnswers(
+  ownerId: string,
+  answers: readonly { id: string; lemma: string; kind: string; correct: boolean; durationMs: number }[],
+) {
+  const lemmas = [...new Set(answers.map((a) => a.lemma))];
+  const lexemes = await prisma.lexeme.findMany({
+    where: { lemma: { in: lemmas } },
+    select: { id: true, lemma: true },
+  });
+  const cards = await prisma.card.findMany({
+    where: { ownerId, lexemeId: { in: lexemes.map((l) => l.id) }, suspended: false },
+    select: { id: true, cardType: true, lexemeId: true },
+  });
+
+  const lemmaOf = new Map(lexemes.map((l) => [l.id, l.lemma]));
+  const cardFor = new Map<string, string>();
+  for (const card of cards) {
+    const lemma = card.lexemeId ? lemmaOf.get(card.lexemeId) : undefined;
+    // First card of a type wins: a word can have two cloze cards built from two
+    // different sentences, and the question asked about the word, not about one
+    // of them in particular.
+    if (lemma && !cardFor.has(`${lemma}|${card.cardType}`)) {
+      cardFor.set(`${lemma}|${card.cardType}`, card.id);
+    }
+  }
+
+  // One grade per card, from every answer about it. Two wrong is an Again, one
+  // is a Hard, none is a Good. Easy is deliberately never awarded: a lesson has
+  // just taught the word, so getting it right is expected rather than evidence
+  // that the interval should jump.
+  const perCard = new Map<string, { wrong: number; ms: number; id: string }>();
+  for (const answer of answers) {
+    const cardType = STEP_CARD_TYPE[answer.kind];
+    if (!cardType) continue;
+    const cardId = cardFor.get(`${answer.lemma}|${cardType}`);
+    if (!cardId) continue;
+    const entry = perCard.get(cardId) ?? { wrong: 0, ms: 0, id: answer.id };
+    entry.wrong += answer.correct ? 0 : 1;
+    entry.ms += answer.durationMs;
+    perCard.set(cardId, entry);
+  }
+
+  const batch: ReplayItem[] = [...perCard.entries()].map(([cardId, e]) => ({
+    id: e.id,
+    cardId,
+    rating: (e.wrong === 0 ? 3 : e.wrong === 1 ? 2 : 1) as RatingValue,
+    durationMs: e.ms,
+    reviewedAt: Date.now(),
+  }));
+
+  const applied = await applyGradeBatch(ownerId, batch);
+  return { ok: applied.ok, graded: batch.length, error: applied.error };
+}
+
+/**
  * Records a finished lesson.
  *
  * Called once, at the end. An abandoned lesson writes nothing at all, which is
@@ -804,48 +877,9 @@ export async function completeLesson(
     if (result.ok) added += result.added ?? 0;
   }
 
-  const cards = await prisma.card.findMany({
-    where: { ownerId, lexemeId: { in: lexemes.map((l) => l.id) }, suspended: false },
-    select: { id: true, cardType: true, lexemeId: true },
-  });
-  const lemmaOf = new Map(lexemes.map((l) => [l.id, l.lemma]));
-  const cardFor = new Map<string, string>();
-  for (const card of cards) {
-    const lemma = card.lexemeId ? lemmaOf.get(card.lexemeId) : undefined;
-    // First card of a type wins: a word can have two cloze cards built from two
-    // different sentences, and the lesson asked about the word, not about one of
-    // them in particular.
-    if (lemma && !cardFor.has(`${lemma}|${card.cardType}`)) {
-      cardFor.set(`${lemma}|${card.cardType}`, card.id);
-    }
-  }
-
-  // One grade per card, from every step that asked about it. Two wrong answers
-  // about the same card is an Again; one is a Hard; none is a Good. Easy is
-  // deliberately never awarded here — a lesson has just taught the word, so
-  // getting it right is expected rather than evidence of a long interval.
-  const perCard = new Map<string, { wrong: number; total: number; ms: number; id: string }>();
-  for (const answer of answers) {
-    const cardType = STEP_CARD_TYPE[answer.kind]!;
-    const cardId = cardFor.get(`${answer.lemma}|${cardType}`);
-    if (!cardId) continue;
-    const entry = perCard.get(cardId) ?? { wrong: 0, total: 0, ms: 0, id: answer.id };
-    entry.wrong += answer.correct ? 0 : 1;
-    entry.total += 1;
-    entry.ms += answer.durationMs;
-    perCard.set(cardId, entry);
-  }
-
-  const batch: ReplayItem[] = [...perCard.entries()].map(([cardId, e]) => ({
-    id: e.id,
-    cardId,
-    rating: (e.wrong === 0 ? 3 : e.wrong === 1 ? 2 : 1) as RatingValue,
-    durationMs: e.ms,
-    reviewedAt: Date.now(),
-  }));
-
-  const applied = await applyGradeBatch(ownerId, batch);
+  const applied = await gradeAnswers(ownerId, answers);
   if (!applied.ok) return { ok: false as const, error: applied.error ?? "Could not record the lesson." };
+  const batch = { length: applied.graded };
 
   await checkAchievementsFor(ownerId);
   revalidatePath("/learn");
@@ -853,6 +887,92 @@ export async function completeLesson(
   revalidatePath("/words");
   revalidatePath("/");
   return { ok: true as const, graded: batch.length, added };
+}
+
+/**
+ * Records where the placement test put somebody.
+ *
+ * The level is re-derived here from the per-level scores rather than trusted
+ * from the caller. This file is `"use server"`, so `savePlacement("C2")` is an
+ * endpoint anybody can call — and while placing yourself at C2 only unlocks
+ * units you could have opened anyway, a stored level that no test produced would
+ * quietly become a lie the whole path is built on.
+ */
+const StageScoreSchema = z.object({
+  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+  correct: z.number().int().min(0).max(20),
+  asked: z.number().int().min(0).max(20),
+});
+
+export async function savePlacement(scores: z.input<typeof StageScoreSchema>[]) {
+  const ownerId = await requireUserId();
+  const parsed = z.array(StageScoreSchema).max(12).safeParse(scores);
+  if (!parsed.success) return { ok: false as const, error: "That result could not be read." };
+
+  const clean = parsed.data.filter((s) => s.correct <= s.asked);
+  const level = placementResult(clean);
+  await writeSetting(ownerId, SETTING_KEYS.cefrPlacement, level);
+
+  revalidatePath("/learn");
+  revalidatePath("/");
+  return { ok: true as const, level };
+}
+
+/**
+ * Records a level checkpoint.
+ *
+ * Passing moves the learner up, and only ever up: a C1 speaker who takes the A2
+ * checkpoint for fun should not be demoted to A2 by passing it. Failing changes
+ * nothing at all — a checkpoint is a measurement, and a bad evening is not
+ * evidence that somebody has lost a level they already had.
+ *
+ * The score is re-checked here rather than trusted. Every export in this file is
+ * a public endpoint, so `recordCheckpoint("c2", 20, 20)` is a call anybody can
+ * make; what it can buy is only the level marker the path uses to decide what to
+ * open by default, and nothing in the review log moves, but a stored level that
+ * no exam produced is still a lie the whole course is arranged around.
+ */
+export async function recordCheckpoint(
+  level: string,
+  correct: number,
+  total: number,
+  answers: z.input<typeof LessonResultSchema>[] = [],
+) {
+  const ownerId = await requireUserId();
+  const parsed = z.object({
+    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+    correct: z.number().int().min(0).max(100),
+    total: z.number().int().min(1).max(100),
+  }).safeParse({ level: level.toUpperCase(), correct, total });
+  if (!parsed.success || parsed.data.correct > parsed.data.total) {
+    return { ok: false as const, error: "That result could not be read." };
+  }
+
+  // Twenty typed productions on cards the learner owns is real retrieval
+  // practice, and ADR-016 wants the scheduler to see what was actually
+  // practised. It grades what has a card and silently skips what does not: a
+  // checkpoint may ask about words from units the learner has never opened, and
+  // sitting an exam is not a request to start studying them.
+  const graded = z.array(LessonResultSchema).max(LESSON_RESULT_LIMIT).safeParse(answers);
+  if (graded.success && graded.data.length > 0) {
+    await gradeAnswers(ownerId, graded.data);
+  }
+
+  const checkpoint = checkpointFor(parsed.data.level);
+  const passedIt = checkpointPassed(parsed.data.correct, parsed.data.total, checkpoint.passMark);
+  if (!passedIt) return { ok: true as const, passed: false, level: null };
+
+  const current = await readSetting(ownerId, SETTING_KEYS.cefrPlacement);
+  const currentLevel = (LEVELS as readonly string[]).includes(current ?? "")
+    ? (current as (typeof LEVELS)[number])
+    : "A1";
+  const next = LEVELS[Math.min(levelIndex(parsed.data.level) + 1, LEVELS.length - 1)]!;
+  const promoted = levelIndex(next) > levelIndex(currentLevel) ? next : currentLevel;
+  await writeSetting(ownerId, SETTING_KEYS.cefrPlacement, promoted);
+
+  revalidatePath("/learn");
+  revalidatePath("/");
+  return { ok: true as const, passed: true, level: promoted };
 }
 
 // ────────────────────────────── Classrooms ─────────────────────────────────

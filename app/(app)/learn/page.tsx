@@ -1,143 +1,239 @@
 import Link from "next/link";
-import { Check, Lock } from "lucide-react";
+import { Check, Compass, Lock } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
-import { AddUnitButton } from "@/components/AddUnitButton";
+import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import {
+  CHECKPOINTS, LEVELS, LEVEL_INFO, isUnitOpen, nextUnit, type Level,
+} from "@/lib/collections/syllabus";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Chip, Meter, Page, Ring } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
+const isLevel = (value: string | null): value is Level =>
+  value !== null && (LEVELS as readonly string[]).includes(value);
+
 /**
- * The learning path.
+ * The course.
  *
- * A vertical run of units rather than a grid, because the point is *order* —
- * the next thing to do should be obvious without reading every card. Progress
- * is computed from the deck (lib/progress/summary.ts), so a unit fills up as
- * its words are genuinely learned, not as they are clicked on.
+ * Eighty-four units is far too many for one list, so the page is the six CEFR
+ * levels and each one opens. The learner's own level is open on arrival and the
+ * rest are shut — which is also the honest shape of the thing, because a level
+ * is the unit of progress a learner actually cares about. "Four units into B1"
+ * means something; "unit 31 of 84" does not.
+ *
+ * Progress is computed from the deck (lib/progress/summary.ts), so a unit fills
+ * up as its words are genuinely learned rather than as they are clicked on.
  */
 export default async function LearnPage() {
   const ownerId = await requireUserId();
-  const snapshot = await deckSnapshot(ownerId);
+  const [snapshot, placementSetting] = await Promise.all([
+    deckSnapshot(ownerId),
+    readSetting(ownerId, SETTING_KEYS.cefrPlacement),
+  ]);
   const units = await pathWithProgress(ownerId, snapshot);
+  const placement: Level = isLevel(placementSetting) ? placementSetting : "A1";
 
-  const done = units.filter((u) => u.state === "done").length;
-  const started = units.filter((u) => u.state === "learning").length;
+  const doneIds = new Set(units.filter((u) => u.state === "done").map((u) => u.unit.id));
+  const startedIds = new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id));
+  const next = nextUnit({ doneUnitIds: doneIds, startedUnitIds: startedIds, placement });
+
   const totalWords = units.reduce((sum, u) => sum + u.available, 0);
   const knownWords = units.reduce((sum, u) => sum + u.known, 0);
   const overall = totalWords > 0 ? Math.round((knownWords / totalWords) * 100) : 0;
-  const next = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "available");
+
+  const byLevel = LEVELS.map((level) => {
+    const rows = units.filter((u) => u.unit.level === level);
+    const words = rows.reduce((sum, u) => sum + u.available, 0);
+    const known = rows.reduce((sum, u) => sum + u.known, 0);
+    return {
+      level,
+      rows,
+      words,
+      known,
+      pct: words > 0 ? Math.round((known / words) * 100) : 0,
+      finished: rows.length > 0 && rows.every((u) => u.state === "done"),
+    };
+  });
 
   return (
     <Page
-      title="Learning path"
-      lead="The built-in dictionary, arranged into units. Each one is a sitting's worth of words, and adding a unit builds real flashcards with audio and full paradigms."
+      title="The course"
+      lead="Six levels, A1 to C2. Every unit teaches a lesson first, then puts its words into your review deck with real audio and full paradigms."
     >
       <div
         className="mb-7 flex flex-wrap items-center gap-5 rounded-[var(--r-lg)] border p-5"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
       >
-        <Ring pct={overall} size={72} label={`${overall}% of the path learned`}>
+        <Ring pct={overall} size={72} label={`${overall}% of the course learned`}>
           <span className="tnum text-sm font-bold" style={{ color: "var(--ink)" }}>{overall}%</span>
         </Ring>
         <div className="min-w-0 flex-1">
           <p className="text-base" style={{ color: "var(--ink)" }}>
-            {done} unit{done === 1 ? "" : "s"} finished
-            {started > 0 ? `, ${started} in progress` : ""} · {knownWords} of {totalWords} words known
+            You are working at {placement} · {knownWords} of {totalWords} words known
           </p>
           <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
             A word counts as known once every card made from it has graduated in the scheduler,
             not just answered right once.
           </p>
+          <Link
+            href="/placement"
+            className="mt-1.5 inline-flex items-center gap-1.5 text-xs underline"
+            style={{ color: "var(--accent-deep)" }}
+          >
+            <Compass size={13} aria-hidden /> Not sure? Take the placement test
+          </Link>
         </div>
         {next && (
-          <ButtonLink href={`/learn/${next.unit.id}`} variant="primary">
-            {next.state === "available" ? "Start" : "Continue"}: {next.unit.title}
+          <ButtonLink href={`/learn/${next.id}/lesson`} variant="primary">
+            {startedIds.has(next.id) ? "Continue" : "Start"}: {next.title}
           </ButtonLink>
         )}
       </div>
 
-      <ol className="relative flex flex-col gap-3">
-        {/* The spine of the path. Decorative — the list itself carries the order. */}
-        <span
-          aria-hidden
-          className="absolute left-[27px] top-6 bottom-6 hidden w-px sm:block"
-          style={{ background: "var(--rule)" }}
-        />
-        {units.map((u) => {
-          const Icon = icon(u.unit.icon);
-          const locked = u.state === "locked";
-          const complete = u.state === "done";
+      <div className="flex flex-col gap-3">
+        {byLevel.map(({ level, rows, words, known, pct, finished }) => {
+          const info = LEVEL_INFO[level];
+          const checkpoint = CHECKPOINTS.find((c) => c.level === level);
+          // The learner's own level is open on arrival; so is anything they have
+          // already started, so work in progress is never hidden behind a click.
+          const open = level === placement || rows.some((u) => u.state === "learning");
           return (
-            <li
-              key={u.unit.id}
-              className={`relative flex flex-wrap items-center gap-4 rounded-[var(--r-lg)] border p-4 sm:pl-5 ${locked ? "" : "lift"}`}
-              style={{
-                borderColor: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--rule)",
-                background: "var(--surface)",
-                boxShadow: "var(--shadow-sm)",
-                opacity: locked ? 0.55 : 1,
-              }}
+            <details
+              key={level}
+              open={open}
+              className="rounded-[var(--r-lg)] border"
+              style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
             >
-              <span
-                className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                style={{
-                  background: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--raised)",
-                  color: complete || u.state === "learning" ? "var(--surface)" : "var(--ink-3)",
-                  outline: "4px solid var(--ground)",
-                }}
-              >
-                {locked ? <Lock size={18} aria-hidden /> : complete ? <Check size={20} aria-hidden /> : <Icon size={19} aria-hidden />}
-              </span>
+              <summary className="flex min-h-[56px] cursor-pointer flex-wrap items-center gap-4 p-4">
+                <span
+                  className="tnum flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                  style={{
+                    background: finished ? "var(--mint)" : pct > 0 ? "var(--accent)" : "var(--raised)",
+                    color: finished || pct > 0 ? "var(--surface)" : "var(--ink-3)",
+                  }}
+                >
+                  {finished ? <Check size={20} aria-hidden /> : level}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline gap-2">
+                    <span lang="et" className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                      {info.title}
+                    </span>
+                    {level === placement && <Chip tone="accent">You are here</Chip>}
+                  </span>
+                  <span className="mt-0.5 block max-w-[70ch] text-sm" style={{ color: "var(--ink-2)" }}>
+                    {info.summary}
+                  </span>
+                  <span className="mt-2 flex items-center gap-3">
+                    <span className="max-w-[220px] flex-1">
+                      <Meter
+                        pct={pct}
+                        label={`${level}: ${known} of ${words} words known`}
+                        tone={finished ? "var(--good)" : "var(--accent)"}
+                        height={7}
+                      />
+                    </span>
+                    <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
+                      {rows.length} units · {known}/{words} words
+                    </span>
+                  </span>
+                </span>
+              </summary>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <Link
-                    href={`/learn/${u.unit.id}`}
-                    lang="et"
-                    className="est text-lg font-bold hover:underline"
-                    style={{ color: "var(--ink)" }}
+              <ol className="flex flex-col gap-2 border-t p-4" style={{ borderColor: "var(--rule)" }}>
+                {rows.map((u) => {
+                  const Icon = icon(u.unit.icon);
+                  const locked = !isUnitOpen({ unit: u.unit, doneUnitIds: doneIds, placement });
+                  const complete = u.state === "done";
+                  return (
+                    <li
+                      key={u.unit.id}
+                      className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border p-3"
+                      style={{
+                        borderColor: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--rule)",
+                        background: "var(--surface)",
+                        opacity: locked ? 0.6 : 1,
+                      }}
+                    >
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                        style={{
+                          background: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--raised)",
+                          color: complete || u.state === "learning" ? "var(--surface)" : "var(--ink-3)",
+                        }}
+                      >
+                        {locked ? <Lock size={16} aria-hidden /> : complete ? <Check size={18} aria-hidden /> : <Icon size={17} aria-hidden />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <Link
+                          href={`/learn/${u.unit.id}`}
+                          lang="et"
+                          className="est text-md font-bold hover:underline"
+                          style={{ color: "var(--ink)" }}
+                        >
+                          {u.unit.title}
+                        </Link>
+                        <span className="block max-w-[62ch] text-sm" style={{ color: "var(--ink-2)" }}>
+                          {u.unit.canDo}
+                        </span>
+                        {locked && (
+                          <span className="mt-1 block text-xs" style={{ color: "var(--ink-3)" }}>
+                            Builds on {u.unit.requires.join(", ")}. You can still open it.
+                          </span>
+                        )}
+                      </span>
+                      <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
+                        {u.known}/{u.available}
+                      </span>
+                      <ButtonLink
+                        href={u.available > 0 ? `/learn/${u.unit.id}/lesson` : `/learn/${u.unit.id}`}
+                        variant={u.state === "learning" ? "primary" : "ghost"}
+                        size="sm"
+                        className="w-full justify-center sm:w-32"
+                      >
+                        {complete ? "Revisit" : u.state === "learning" ? "Continue" : "Learn"}
+                      </ButtonLink>
+                    </li>
+                  );
+                })}
+
+                {checkpoint && (
+                  <li
+                    className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border border-dashed p-3"
+                    style={{ borderColor: "var(--rule)" }}
                   >
-                    {u.unit.title}
-                  </Link>
-                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>{u.unit.subtitle}</span>
-                  <Chip tone={complete ? "good" : u.state === "learning" ? "accent" : "sky"}>{u.unit.cefr}</Chip>
-                </div>
-                <p className="mt-1 max-w-[62ch] text-sm" style={{ color: "var(--ink-2)" }}>{u.unit.blurb}</p>
-                <div className="mt-2.5 flex items-center gap-3">
-                  <span className="max-w-[220px] flex-1">
-                    <Meter
-                      pct={u.pct}
-                      label={`${u.unit.title}: ${u.known} of ${u.available} words known`}
-                      tone={complete ? "var(--good)" : "var(--accent)"}
-                      height={7}
-                    />
-                  </span>
-                  <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
-                    {u.known}/{u.available} known
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex w-full shrink-0 gap-2 sm:w-auto">
-                {u.state === "available" ? (
-                  <AddUnitButton unitId={u.unit.id} words={u.available} started={false} className="flex-1 sm:w-44" />
-                ) : (
-                  <ButtonLink href={`/learn/${u.unit.id}`} className="flex-1 justify-center sm:w-44">
-                    {complete ? "Review unit" : "Open unit"}
-                  </ButtonLink>
+                    <span className="min-w-0 flex-1">
+                      <span className="text-md font-bold" style={{ color: "var(--ink)" }}>
+                        {checkpoint.title}
+                      </span>
+                      <span className="block max-w-[62ch] text-sm" style={{ color: "var(--ink-2)" }}>
+                        {checkpoint.blurb} {checkpoint.questions} questions, {checkpoint.passMark}% to pass.
+                      </span>
+                    </span>
+                    <ButtonLink
+                      href={`/learn/checkpoint/${level.toLowerCase()}`}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-center sm:w-32"
+                    >
+                      Take it
+                    </ButtonLink>
+                  </li>
                 )}
-              </div>
-            </li>
+              </ol>
+            </details>
           );
         })}
-      </ol>
+      </div>
 
       <p className="mt-6 text-xs" style={{ color: "var(--ink-3)" }}>
         Units are shortcuts into the same dictionary, not a separate course, everything in them can
         also be found by searching, and anything the dictionary is missing you can{" "}
         <Link href="/dictionary" className="underline" style={{ color: "var(--accent-deep)" }}>add yourself</Link>.
+        Nothing is ever truly locked: a unit above your level shows what it builds on, and opens anyway.
       </p>
     </Page>
   );
