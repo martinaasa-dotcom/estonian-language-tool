@@ -289,7 +289,9 @@ spoken by a native synthetic voice: clean audio, no accent, no noise, which is e
 learner's recording. It comes back at a 14.6% word error rate, and its mistakes land on consonant
 length (`Poiss` as `Pois`), voicing (`abikaasaga` as `abigaasaga`) and word boundaries, which is
 precisely where an Estonian learner is weakest. Showing that transcript would report correct
-pronunciation as an error four times in five. Re-run the script before re-opening the question.
+pronunciation as an error four times in five. Re-run the script before re-opening the question. It compares recognisers on byte-identical
+audio and refuses to report a rate when the service refused too much of the sample, which it
+learned by once reporting 2% over three surviving sentences and reading as a breakthrough.
 Speaking practice compares a recording with a native rendering and lets the learner judge. (ADR-018.)
 The level check has a speaking section for the same reason it has the other three, and it obeys the
 same rule: it collects the learner's own rating, reports it as theirs, and contributes **nothing**
