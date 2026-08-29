@@ -1,0 +1,348 @@
+import { describe, expect, it } from "vitest";
+import {
+  BLANK, buildPaper, cardsInPaper, eligibleWords, fillRate, formsOf, maskForms, partOf, rng,
+  seedFrom, type PoolWord,
+} from "./paper";
+
+/*
+  The rule this module exists to keep is that nothing in a paper is written by
+  this app, so the tests that matter are the ones that would fail if a builder
+  started inventing. Every assertion about a sentence checks it against the
+  material that went in.
+*/
+
+function word(over: Partial<PoolWord> & { lemma: string }): PoolWord {
+  return {
+    lexemeId: `id-${over.lemma}`,
+    translation: "gloss",
+    pos: "NOUN",
+    cefr: "A1",
+    forms: [],
+    examples: [],
+    government: null,
+    cardId: null,
+    ...over,
+  };
+}
+
+/**
+ * A distinct lemma made only of letters.
+ *
+ * Digits would be simpler and are wrong: the word pattern these modules share
+ * matches letters and combining marks only, so `sona7` tokenises as `sona` and
+ * every builder that looks a form up in a sentence quietly finds nothing. A
+ * fixture that cannot be found is a fixture that tests the empty path.
+ */
+function nth(i: number): string {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  return `sona${letters[Math.floor(i / 26) % 26]}${letters[i % 26]}`;
+}
+
+/** A pool big enough that the builders are not starved, built out of one shape. */
+function pool(count: number): PoolWord[] {
+  return Array.from({ length: count }, (_, i) => {
+    const lemma = nth(i);
+    return word({
+      lemma,
+      lexemeId: `lex-${i}`,
+      cefr: i % 3 === 0 ? "A1" : i % 3 === 1 ? "A2" : "B1",
+      forms: [
+        { formType: "NOM_SG", value: lemma, morphCode: null, morphName: null },
+        { formType: "GEN_SG", value: `${lemma}a`, morphCode: null, morphName: null },
+        { formType: "PART_SG", value: `${lemma}at`, morphCode: null, morphName: null },
+      ],
+      examples: [
+        { et: `Mina olen ${lemma}a juures igal hommikul.`, en: null },
+        { et: `See ${lemma} seisab seal.`, en: null },
+      ],
+      cardId: i % 2 === 0 ? `card-${i}` : null,
+    });
+  });
+}
+
+describe("the seeded generator", () => {
+  it("gives the same stream for the same seed", () => {
+    const a = rng(seedFrom("hello"));
+    const b = rng(seedFrom("hello"));
+    expect([a(), a(), a()]).toEqual([b(), b(), b()]);
+  });
+
+  it("gives a different stream for a different seed", () => {
+    const a = rng(seedFrom("hello"));
+    const b = rng(seedFrom("hellp"));
+    expect(a()).not.toEqual(b());
+  });
+});
+
+describe("choosing what a level may be examined on", () => {
+  it("admits everything up to the level and nothing above it", () => {
+    const words = [
+      word({ lemma: "a", lexemeId: "1", cefr: "A1" }),
+      word({ lemma: "b", lexemeId: "2", cefr: "B1" }),
+      word({ lemma: "c", lexemeId: "3", cefr: "C1" }),
+    ];
+    expect(eligibleWords(words, "B1").map((w) => w.lemma).sort()).toEqual(["a", "b"]);
+  });
+
+  it("puts the words at the level first, so a C1 paper is not made of A1 nouns", () => {
+    const words = [
+      word({ lemma: "easy", lexemeId: "1", cefr: "A1" }),
+      word({ lemma: "hard", lexemeId: "2", cefr: "C1" }),
+    ];
+    expect(eligibleWords(words, "C1")[0]?.lemma).toBe("hard");
+  });
+
+  it("keeps untagged entries out of the two lowest papers and lets them into B1", () => {
+    const untagged = [word({ lemma: "x", lexemeId: "1", cefr: null })];
+    expect(eligibleWords(untagged, "A2")).toHaveLength(0);
+    expect(eligibleWords(untagged, "B1")).toHaveLength(1);
+  });
+});
+
+describe("hiding a word in its own sentence", () => {
+  it("blanks every form of it", () => {
+    const masked = maskForms("Toas on toa aken.", ["toas", "toa"]);
+    expect(masked).toBe(`${BLANK} on ${BLANK} aken.`);
+  });
+
+  it("prefers the longer form, so a blank never leaves a stray ending", () => {
+    expect(maskForms("Ma olen toas.", ["toa", "toas"])).toBe(`Ma olen ${BLANK}.`);
+  });
+
+  it("leaves a sentence alone when it names none of them", () => {
+    expect(maskForms("Ma olen kodus.", ["toa"])).toBe("Ma olen kodus.");
+  });
+
+  it("does nothing with an empty form list", () => {
+    expect(maskForms("Ma olen kodus.", [])).toBe("Ma olen kodus.");
+  });
+});
+
+describe("building a paper", () => {
+  const paper = buildPaper("B1", pool(40), "seed-one");
+
+  it("is reproducible from its seed, which is what makes a reload safe", () => {
+    const again = buildPaper("B1", pool(40), "seed-one");
+    expect(JSON.stringify(again)).toEqual(JSON.stringify(paper));
+  });
+
+  it("is a different paper under a different seed", () => {
+    const other = buildPaper("B1", pool(40), "seed-two");
+    expect(JSON.stringify(other)).not.toEqual(JSON.stringify(paper));
+  });
+
+  it("has all four parts", () => {
+    expect(paper.parts.map((p) => p.spec.skill))
+      .toEqual(["writing", "listening", "reading", "speaking"]);
+    expect(partOf(paper, "reading")).toBeDefined();
+  });
+
+  it("never asks about the same word twice", () => {
+    const asked = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .map((i) => i.lexemeId)
+      .filter((id) => id !== "");
+    // The composition and the spoken tasks anchor to a word without asking
+    // about it, so they are allowed to reuse one; every real question is unique.
+    const questions = paper.parts
+      .flatMap((p) => p.tasks)
+      .filter((t) => !["compose", "speak"].includes(t.spec.kind))
+      .flatMap((t) => t.items)
+      .map((i) => i.lexemeId);
+    expect(new Set(questions).size).toBe(questions.length);
+    expect(asked.length).toBeGreaterThan(0);
+  });
+
+  it("writes no Estonian of its own: every sentence came out of the pool", () => {
+    const attested = new Set(pool(40).flatMap((w) => w.examples.map((e) => e.et)));
+    for (const part of paper.parts) {
+      for (const task of part.tasks) {
+        for (const item of task.items) {
+          if (item.kind === "dictation" || item.kind === "order") {
+            expect(attested.has(item.answer)).toBe(true);
+          }
+          if (item.kind === "listen-choose") {
+            expect(attested.has(item.answer)).toBe(true);
+            for (const option of item.options) expect(attested.has(option)).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  it("offers a gap question only real forms to choose between", () => {
+    const known = new Set(pool(40).flatMap(formsOf).map((f) => f.toLowerCase()));
+    const gaps = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .filter((i): i is Extract<typeof i, { kind: "gap-choice" }> => i.kind === "gap-choice");
+    expect(gaps.length).toBeGreaterThan(0);
+    for (const gap of gaps) {
+      expect(gap.options).toContain(gap.answer);
+      expect(new Set(gap.options).size).toBe(gap.options.length);
+      for (const option of gap.options) expect(known.has(option.toLowerCase())).toBe(true);
+      // None of the options may already be standing in the sentence, or two of
+      // them look right at once.
+      const words = gap.sentence.toLowerCase().split(/\s+/);
+      for (const option of gap.options) {
+        if (option === gap.answer) continue;
+        expect(words).not.toContain(option.toLowerCase());
+      }
+    }
+  });
+
+  it("scrambles a sentence into an order that is not the original", () => {
+    const orders = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .filter((i): i is Extract<typeof i, { kind: "order" }> => i.kind === "order");
+    for (const item of orders) {
+      expect(item.tiles.join(" ")).not.toEqual(item.answer);
+      expect([...item.tiles].sort()).toEqual([...item.answer.replace(/[.!?]/g, "").split(" ")].sort());
+    }
+  });
+
+  it("names the learner's own cards, so the sitting reaches the scheduler", () => {
+    expect(cardsInPaper(paper).length).toBeGreaterThan(0);
+    expect(cardsInPaper(paper).every((id) => id.startsWith("card-"))).toBe(true);
+  });
+});
+
+describe("a dictionary too thin to fill the paper", () => {
+  const paper = buildPaper("B1", pool(3), "thin");
+
+  it("says so rather than quietly setting a shorter paper", () => {
+    expect(paper.thin).toBe(true);
+    const short = paper.parts.flatMap((p) => p.tasks).filter((t) => t.shortfall > 0);
+    expect(short.length).toBeGreaterThan(0);
+    for (const task of short) {
+      expect(task.shortfallReason).toBeTruthy();
+      expect(task.rawAvailable).toBeLessThan(task.spec.raw);
+    }
+  });
+
+  it("reports how much of the paper it managed", () => {
+    expect(fillRate(paper)).toBeLessThan(100);
+    expect(fillRate(paper)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("still builds a paper rather than throwing", () => {
+    expect(paper.parts).toHaveLength(4);
+  });
+});
+
+describe("an empty dictionary", () => {
+  it("produces a paper with no questions rather than a crash", () => {
+    const paper = buildPaper("A2", [], "empty");
+    expect(paper.thin).toBe(true);
+    // Not zero: the composition and the two spoken tasks need a topic and a
+    // microphone rather than a dictionary, so they survive an empty one. Every
+    // task that needs a sentence is empty, which is most of the paper.
+    expect(fillRate(paper)).toBeLessThan(50);
+    expect(cardsInPaper(paper)).toEqual([]);
+    const needingWords = paper.parts
+      .flatMap((p) => p.tasks)
+      .filter((t) => !["compose", "speak"].includes(t.spec.kind));
+    expect(needingWords.every((t) => t.items.length === 0)).toBe(true);
+  });
+});
+
+describe("a dictionary with no recorded sentences, which is what a keyless install has", () => {
+  /*
+    The built-in 360 word set carries no examples at all: they arrive from
+    Ekilex `usages`. Without the fallback shapes this state produced an empty
+    reading part and an empty listening part, which is half the paper, on the
+    install a stranger gets by default.
+  */
+  const wordsOnly = pool(40).map((word) => ({ ...word, examples: [] }));
+  const paper = buildPaper("B1", wordsOnly, "no-sentences");
+
+  it("still sets a listening part, out of single words", () => {
+    const listening = paper.parts.find((p) => p.spec.skill === "listening")!;
+    const items = listening.tasks.flatMap((t) => t.items);
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) {
+      if (item.kind === "dictation" || item.kind === "listen-choose") {
+        expect(item.unit).toBe("word");
+      }
+    }
+  });
+
+  it("plays a form rather than the headword, because an ending is what it tests", () => {
+    const spoken = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .filter((i) => i.kind === "dictation" || i.kind === "listen-choose");
+    expect(spoken.some((i) => "answer" in i && i.answer !== i.lemma)).toBe(true);
+  });
+
+  it("still sets a reading part, out of glosses and forms", () => {
+    const reading = paper.parts.find((p) => p.spec.skill === "reading")!;
+    expect(reading.tasks.flatMap((t) => t.items).length).toBeGreaterThan(0);
+  });
+
+  it("records the substitution rather than hiding it", () => {
+    expect(paper.substituted).toBe(true);
+    const swapped = paper.parts.flatMap((p) => p.tasks).filter((t) => t.fallbackFrom !== null);
+    expect(swapped.length).toBeGreaterThan(0);
+    for (const task of swapped) {
+      // The task now describes what it actually set, not what it wanted to.
+      expect(task.spec.kind).not.toEqual(task.fallbackFrom);
+      expect(task.spec.raw).toBeGreaterThan(0);
+    }
+  });
+
+  it("offers only real glosses and real forms as the wrong answers", () => {
+    const glosses = new Set(wordsOnly.map((w) => w.translation));
+    const forms = new Set(wordsOnly.flatMap(formsOf).map((f) => f.toLowerCase()));
+    for (const item of paper.parts.flatMap((p) => p.tasks).flatMap((t) => t.items)) {
+      if (item.kind === "gloss-choice") {
+        expect(item.options).toContain(item.answer);
+        for (const option of item.options) expect(glosses.has(option)).toBe(true);
+      }
+      if (item.kind === "form-choice") {
+        expect(item.options).toContain(item.answer);
+        // A derived case form is not a row in the pool, so the answer itself is
+        // checked against the derivation rather than against the stored forms.
+        for (const option of item.options) {
+          expect(option.length).toBeGreaterThan(0);
+          expect(/^[\p{L}\p{M}]+$/u.test(option)).toBe(true);
+        }
+        expect(forms.has(item.lemma.toLowerCase())).toBe(true);
+      }
+    }
+  });
+
+  it("keeps the word-order task honestly empty, because it genuinely needs a sentence", () => {
+    const order = paper.parts
+      .flatMap((p) => p.tasks)
+      .find((t) => t.spec.kind === "order" || t.fallbackFrom === "order");
+    expect(order?.items).toEqual([]);
+    expect(order?.shortfallReason).toBeTruthy();
+  });
+
+  it("prefers a half filled real task to a full substitute", () => {
+    /*
+      A task in the shape the paper actually sets, half filled, is closer to the
+      examination than a full one built out of word cards. So a fallback is only
+      reached when the intended shape produced nothing at all, and a task that
+      managed some of its items keeps them and reports the shortfall.
+
+      Twenty sentences rather than one, because the parts are built in the order
+      they are sat and each marks the words it used as spent: a single sentence
+      is claimed by the listening part long before the reading part asks.
+    */
+    const some = wordsOnly.map((word, i) =>
+      i < 20 ? { ...word, examples: [{ et: `See ${word.lemma} seisab seal.`, en: null }] } : word);
+    const mixed = buildPaper("B1", some, "some-sentences");
+    const partial = mixed.parts
+      .flatMap((p) => p.tasks)
+      .filter((t) => t.fallbackFrom === null && t.items.length > 0 && t.shortfall > 0);
+    expect(partial.length).toBeGreaterThan(0);
+    for (const task of partial) {
+      expect(task.rawAvailable).toBeLessThan(task.spec.raw);
+      expect(task.rawAvailable).toBeGreaterThan(0);
+    }
+  });
+});

@@ -3,12 +3,13 @@
 What was actually built, what was deliberately left out, and which planning decisions changed once
 the answers to `12-open-questions.md` came back.
 
-**§11, §12 and §13 are the current state.** §1–5 describe the first MVP, §6 the pass that made it
-usable by a stranger, §7 the pass that made it teach in context, §9 and §10 the teaching and
-diagnostic layers, §11 the pass that measured the learner and stated what the app costs, §12 the
-pass that let a photographed page become a set of words, and §13 the pass that turned the path
-into a course covering A1 to C2. Those three were built at the same time against the same main and
-landed together. Word counts in §1–7 are the numbers of their own time and §13 supersedes them.
+**§11 to §14 are the current state.** §1–5 describe the first MVP, §6 the pass that made it usable
+by a stranger, §7 the pass that made it teach in context, §9 and §10 the teaching and diagnostic
+layers, §11 the pass that measured the learner and stated what the app costs, §12 the pass that let
+a photographed page become a set of words, §13 the mock state examination, and §14 the pass that
+turned the path into a course covering A1 to C2. Those four were built at the same time against the
+same main and landed one after another. Word counts in §1–7 are the numbers of their own time and
+§14 supersedes them.
 
 ## 1. The answers, and what they changed
 
@@ -161,7 +162,7 @@ deployment had quietly broken. This pass closes those.
 | Area | What it is | Why it earns its place |
 |---|---|---|
 | **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
-| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. Rebuilt in §13 as `lib/collections/syllabus/`: 83 units, A1 to C2 | "Here are five thousand words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
+| **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. Rebuilt in §14 as `lib/collections/syllabus/`: 83 units, A1 to C2 | "Here are five thousand words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
 | **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
 | **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
 | **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
@@ -479,7 +480,91 @@ fail on purpose before being made to pass.
 4. **Quality is the model's.** A bad photograph produces a short list, not a wrong deck, which is
    the failure mode this was designed to have.
 
-## 13. The eighth pass: a course rather than a shelf
+
+## 13. The eighth pass: the paper people are actually learning for
+
+Most people learning Estonian are learning for a specific paper. The state examines at **A2, B1, B2
+and C1**, sixty percent to pass, and a zero in any one of the four parts fails the whole thing
+however the other three went. B1 is what a citizenship application asks for. An app that teaches
+Estonian and cannot tell somebody which of those they could pass today is answering a smaller
+question than the one being asked.
+
+`docs/16-exam.md` is the full account, including every figure and where it was read from. What
+follows is what it cost and what it does not do.
+
+### What was built
+
+| Piece | State |
+|---|---|
+| The examination as data (`lib/exam/spec.ts`) | Complete. Parts, minutes, points, bands and the pass rule for all six levels, the four real ones cited, asserted by 17 unit tests |
+| Paper assembly (`lib/exam/paper.ts`) | Complete. Eleven task shapes, deterministic in (level, seed, pool), and a stated shortfall wherever the dictionary runs out |
+| Marking (`lib/exam/score.ts`) | Complete. No provider, no socket, no model anywhere in it |
+| Readiness and confidence (`lib/exam/readiness.ts`) | Complete. Per-part prediction, a pass chance with a widening spread, an evidence ceiling, strengths and gaps that link somewhere |
+| The report (`lib/exam/report.ts`) | Complete. Where the marks went, which task did the damage, every wrong answer, the words that caught you twice |
+| The screens | Hub, briefing, sitting, result. `scripts/test-exam.mjs` sits a whole paper at two levels, 39 checks |
+
+### The thing that nearly sank it, and what it changed
+
+**The built-in dictionary carries no example sentences at all.** Not few: none. Every one of the 360
+seeded entries has an empty `examples` array, because sentences arrive from Ekilex `usages` and only
+once a word has been looked at with a key configured.
+
+Three of the task shapes need an attested sentence. Without a key that meant the reading part and
+the listening part came out completely empty, and the honest shortfall machinery dutifully reported
+half a paper as absent. Honest, and useless, on the install a stranger gets by default.
+
+So a task that cannot be set falls back to one built from what the dictionary always holds: words,
+forms, glosses, and a speech synthesiser that needs no key. Listening becomes single words rather
+than sentences, which in Estonian is a harder test than it sounds, since hearing `toas` and writing
+`toa` is exactly the failure the exercise exists to catch. Reading becomes meaning and form
+recognition. The word-order task has no fallback and stays honestly empty, because rebuilding a
+sentence genuinely needs a sentence.
+
+**Every substitution is declared**: on the briefing, per task, before the clock starts. A paper that
+quietly swapped in an easier shape would be worse than a short one.
+
+This is the third fault in this repository's history that only a keyless deployment reaches, after
+the dictionary's dead-end case table and Anu's empty state dropping the learner's question. All
+three were invisible on a machine with the keys set, which is the argument for running the suites in
+the state a stranger installs into.
+
+### Two things the first version got wrong on screen
+
+Both were found by rendering the page rather than by reading the code, and both were the same shape:
+a number and its explanation coming from different places.
+
+**"Reading is at 11 percent, across 143 goes."** Neither half was true of the other. A sat exam part
+replaced the card-based percentage while keeping the card-based count, so a learner with 143
+recognition reviews at 73 percent and one bad paper was shown the paper's percentage over the
+cards' count. The two sources are now a weighted mean, a sitting counting as twenty reviews' worth.
+
+**Four cards each claiming to be the biggest problem.** Every part below the threshold said "this is
+the part costing you the most marks". They are ranked now and only the worst one says it.
+
+### Known limitations
+
+1. **The reading part is not text comprehension.** It cannot be: the app may not write Estonian, and
+   the dictionary holds sentences rather than passages. With an Ekilex key it is gap-fill and
+   matching over attested sentences, which is two of the four official reading tasks; without one it
+   is word level. The briefing says which.
+2. **The spoken part is marked by the learner** (ADR-018), and a paper is a quarter self-marked
+   because of it. The result says so rather than folding it in silently.
+3. **Listening and speaking rest on the placement check or on nothing.** A `Review` row carries no
+   note of which mode wrote it, so a dictation and a flip of the same card are indistinguishable in
+   the log, and adding a mode column to the one append-only table for a reporting convenience is a
+   bad trade. The level check of section 11 is the way out: it measures all four skills directly, so
+   where one has been sat its listening and reading levels are folded in at two thirds. Where none
+   has, the advice says the app has nothing on those parts rather than claiming they have never been
+   practised. Its speaking number is the learner's own rating and is never read as a level.
+4. **Vocabulary coverage is measured against this dictionary, not against the syllabus.** The real
+   B1 vocabulary is several thousand words and the built-in set is 360, so "88 of 100 A2 words have
+   stuck" is a proxy. The gap states the fraction it is working from rather than hiding it behind a
+   percentage.
+5. **The confidence figure is a model, and it says so.** It is capped by how many reviews are behind
+   it, and a paper actually sat outranks it. Nobody with ninety reviews is told the app is ninety
+   percent sure of anything.
+
+## 14. The ninth pass: a course rather than a shelf
 
 §6 added a learning path and §9 a teaching layer, and between them they left one
 honest gap that a direct question exposed: could somebody actually go from A1 to
@@ -560,7 +645,7 @@ A long unit is several lessons of six words rather than one lesson of nineteen.
 The step budget used to run out and quietly drop the last rung for the last
 words.
 
-### What merging the two passes together found
+### What merging the parallel passes found, and what happened to the fix
 
 §12 and this pass were built against the same main and neither could see the
 other's effect. Reading a page narrowed the dictionary with `take: 4000` and no
@@ -572,18 +657,69 @@ words: probing twelve real entries from beyond row 4000 came back with five of
 them unrecognised, all of them sitting in the table with their forms intact,
 and *which* five depended on where Postgres happened to keep the rows.
 
-`vouchableCandidates` narrows in the database instead. It needs no `LIKE` at
-all, unlike the search box, because nothing above the confidence line is a
-substring match: a vouched word is the lemma, the folded lemma, a stored form
-or a regular case on a genitive stem, and all four are exact. A page of sixty
-words is one indexed query whose cost does not move with the dictionary.
+**Two sessions found it within the hour and fixed it the same way**, which is
+the hazard `CLAUDE.md` describes at the end: a clean three-way merge is exactly
+what two correct answers to one question produce, and you end up with two of
+everything. So one was kept and the other deleted outright rather than left
+alongside it. The one on main is kept, because it had already been through CI
+there and because putting the narrowing in `resolveScan.ts` keeps `fold` and
+`possibleStems` where they were; this branch's `vouchableCandidates` in
+`search.ts` was equivalent and is gone.
 
-The regression test asserts the narrowing rather than the outcome, and that
-distinction is the lesson. "The right word resolves" passes on a small
-dictionary and on a large one whenever the row lands early, which is why the
-existing tests had been green on both branches. "An unrelated word is not
-fetched" fails on any version that reads the table, and was made to fail before
-it was made to pass.
+What survives from this side is the part the other had no equivalent of. That
+fix was verified by hand, against real words from the far end of the table, and
+carried no test. **The regression test asserts the narrowing rather than the
+outcome, and that distinction is the whole lesson.** "The right word resolves"
+passes on a small dictionary, and on a large one whenever the row happens to
+land early, which is precisely why the existing tests were green on both
+branches while the scanner was losing a quarter of the dictionary. "An
+unrelated word is not fetched" fails on any version that reads the table, and
+was made to fail before it was made to pass. `candidatesFor` is exported for
+that and nothing else.
+
+### The tap that did nothing
+
+`scripts/test-scan.mjs` had been failing about a third of the time on "the
+saved page opens as a set", on main as much as here: 4 runs in 10 against
+`origin/main` itself. It was worth chasing rather than re-running, because the
+thing the suite was reporting is a thing a learner does. They tap "Open the
+page" on the card that has just told them their photograph is saved, and stay
+on the capture screen. A second tap always works.
+
+Five explanations were measured and all five were wrong: the card's spring
+animation (a Playwright stability trap by reputation, still failing 2 in 10
+under `reducedMotion`), a network race, `ScanCapture`'s own `router.refresh()`,
+the Server Action's `revalidatePath("/scan")`, and the router dropping the
+navigation. The last of those was right and had been measured wrong, which is
+the part worth writing down: the run was scored on whether the whole suite
+passed, and this suite has two independent faults, so a fix for one kept being
+marked a failure by the other. Score the check, not the suite.
+
+What settled it was instrumenting the handler with a counter. On a failing run
+it had run exactly once: React dispatched the click, the component called
+`router.push`, and no navigation happened. `AddWord` had already reached the
+same conclusion from the other end and written it down, which nothing in the
+scan path had read.
+
+So the same answer: `window.location.assign`. This is the tap that finishes the
+paper-to-deck path and it may not be best-effort. Falsified both ways, on one
+build each: `router.push` fails 3 in 12 with everything else in place, the
+document load passes 18 in 18 and then 15 in 15.
+
+The second fault was in the harness and is fixed there, with the reason in the
+file. A document load commits the address *before* the body arrives, where a
+router push swaps the address only once the tree is applied, so two lines that
+counted chips immediately after the URL changed had been reading a page that
+had not rendered. The assertion is unchanged; only the moment it is taken.
+
+Also here, and found by main's own phone check rather than by anything of ours:
+the exam's composition task puts a full dictionary gloss inside a `Chip`, and a
+`Chip` does not wrap because a chip is a short label. "gymnasium, secondary
+school, high school" is 404px of unbreakable line in a 350px card, and it
+pushed 76px of the paper off the side of a 390px phone. It only appeared once
+the course dictionary replaced the shorter seeded glosses, so the markup had
+been right about everything except how long a real gloss is. `Chip` takes an
+explicit `wrap` now, and nothing else in the app asks for it.
 
 ### Known limitations, stated plainly
 
@@ -615,4 +751,3 @@ it was made to pass.
    neither half is ours to rewrite because a headword was corrected. Same
    reasoning as the case-form cards in §5, and it only became visible when
    seeded words gained attested sentences.
-

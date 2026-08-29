@@ -1,0 +1,276 @@
+import Link from "next/link";
+import {
+  ArrowRight, BadgeCheck, CircleAlert, ClipboardCheck, Clock, Info, Lightbulb, TriangleAlert,
+} from "lucide-react";
+import { requireUserId } from "@/lib/auth/session";
+import { readinessSignals, recentAttempts } from "@/lib/progress/exam";
+import { assessReadiness } from "@/lib/exam/readiness";
+import {
+  OFFICIAL_LEVELS, PASS_PCT, bandFor, specFor, writtenMinutes,
+} from "@/lib/exam/spec";
+import { SKILLS, SKILL_LABEL } from "@/lib/exam/types";
+import { formatDateTime } from "@/lib/time/clock";
+import { ButtonLink } from "@/components/Button";
+import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * The examination hub.
+ *
+ * It answers three questions, in the order somebody actually asks them: where
+ * am I, which paper could I pass, and what is stopping me. The confidence
+ * figure beside each level is the headline, and the evidence tier under it is
+ * what stops the headline being a lie: an app that says "72 percent likely to
+ * pass B2" after nine reviews has invented a number, and the learner has no way
+ * of telling that from a number that means something.
+ */
+export default async function ExamPage() {
+  const ownerId = await requireUserId();
+  const [signals, attempts] = await Promise.all([
+    readinessSignals(ownerId),
+    recentAttempts(ownerId),
+  ]);
+  const readiness = assessReadiness(signals);
+
+  const evidenceNote = {
+    thin: "We have very little to go on yet, so these are guesses and are capped to say so.",
+    fair: "There is enough history here for a rough estimate, not a confident one.",
+    good: "There is enough history here for these numbers to mean something.",
+  }[readiness.evidence];
+
+  return (
+    <Page
+      eyebrow="Mock examination"
+      title="Sit the state exam, before you sit the state exam"
+      lead={
+        "Estonia examines at A2, B1, B2 and C1. Each paper is four parts, sixty percent to pass, " +
+        "and a zero in any one part fails the whole thing. These are imitations of those papers, " +
+        "built out of the dictionary, plus two levels the state does not examine at all."
+      }
+    >
+      <section className="mb-10">
+        <SectionTitle hint={evidenceNote}>Where you are</SectionTitle>
+        <Card tone={readiness.assessed ? "mint" : "accent"}>
+          <div className="flex flex-wrap items-center gap-5">
+            <Ring
+              pct={readiness.assessed ? 100 : 0}
+              size={72}
+              tone={readiness.assessed ? "var(--mint)" : "var(--accent)"}
+              label={readiness.assessed ? `Assessed at ${readiness.assessed}` : "No level assessed yet"}
+            >
+              <span className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+                {readiness.assessed ?? "?"}
+              </span>
+            </Ring>
+            <div className="min-w-[16rem] flex-1">
+              <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+                {readiness.assessed
+                  ? `We would bet on you passing ${readiness.assessed} today.`
+                  : "We would not bet on any paper yet."}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                {!readiness.next
+                  ? "Every paper here is within reach, which is as far as this app can measure."
+                  : readiness.assessed
+                    ? `The next one up is ${readiness.next}, and the gaps below are what stands between you and it.`
+                    : `${readiness.next} is the one to aim at first, and the gaps below are what stands between you and it.`}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      <section className="mb-10">
+        <SectionTitle hint={`${PASS_PCT} percent to pass, and no part may score nothing`}>
+          Every paper, and how likely you are to pass it
+        </SectionTitle>
+        <ul className="grid gap-4 md:grid-cols-2">
+          {readiness.levels.map((level) => {
+            const spec = specFor(level.level);
+            const official = (OFFICIAL_LEVELS as readonly string[]).includes(level.level);
+            const band = bandFor(level.expectedTotal);
+            return (
+              <Card as="li" key={level.level} hover>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+                        {level.level}
+                      </span>
+                      {official
+                        ? <Chip tone="sky"><BadgeCheck size={12} aria-hidden /> State exam</Chip>
+                        : <Chip tone="neutral">Not examined</Chip>}
+                      {level.measured && <Chip tone="accent">Sat</Chip>}
+                    </div>
+                    <p className="mt-2 max-w-[44ch] text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                      {spec.summary}
+                    </p>
+                  </div>
+                  <Ring
+                    pct={level.confidence}
+                    size={62}
+                    tone={level.confidence >= PASS_PCT ? "var(--mint)" : "var(--accent)"}
+                    label={`${level.confidence} percent likely to pass ${level.level}`}
+                  >
+                    <span className="est tnum text-md font-bold" style={{ color: "var(--ink)" }}>
+                      {level.confidence}%
+                    </span>
+                  </Ring>
+                </div>
+
+                <p className="mt-3 text-sm" style={{ color: "var(--ink-2)" }}>{level.verdict}</p>
+
+                <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2">
+                  {SKILLS.map((skill) => (
+                    <div key={skill}>
+                      <dt className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
+                        {SKILL_LABEL[skill]}
+                      </dt>
+                      <dd>
+                        <Meter
+                          pct={level.expected[skill]}
+                          label={`${SKILL_LABEL[skill]} predicted at ${level.expected[skill]} percent`}
+                          tone={level.expected[skill] >= PASS_PCT ? "var(--mint)" : "var(--peach)"}
+                          height={6}
+                        />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>
+                    <Clock size={12} className="mr-1 inline" aria-hidden />
+                    {writtenMinutes(spec)} minutes written, then {spec.parts[3]?.minutes ?? 15} speaking
+                    {" · "}
+                    predicted {level.expectedTotal} percent, {band.label}
+                  </span>
+                  <ButtonLink href={`/exam/${level.level}`} variant="secondary" size="sm">
+                    Sit it <ArrowRight size={14} aria-hidden />
+                  </ButtonLink>
+                </div>
+              </Card>
+            );
+          })}
+        </ul>
+      </section>
+
+      <div className="mb-10 grid gap-6 md:grid-cols-2">
+        <section>
+          <SectionTitle>What you are already good at</SectionTitle>
+          {readiness.strengths.length === 0 ? (
+            <Note tone="neutral">
+              Nothing to report yet. Review for a week or two and this fills in.
+            </Note>
+          ) : (
+            <ul className="grid gap-3">
+              {readiness.strengths.map((item) => (
+                <Card as="li" key={item.id} tone="mint">
+                  <p className="flex items-center gap-2 text-md font-semibold" style={{ color: "var(--mint-ink)" }}>
+                    <BadgeCheck size={16} aria-hidden />
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--mint-ink)" }}>
+                    {item.detail}
+                  </p>
+                </Card>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <SectionTitle>What is standing in the way</SectionTitle>
+          {readiness.gaps.length === 0 ? (
+            <Note tone="good">Nothing this app can find. Book the paper.</Note>
+          ) : (
+            <ul className="grid gap-3">
+              {readiness.gaps.map((item) => (
+                <Card as="li" key={item.id} tone="peach">
+                  <p className="flex items-center gap-2 text-md font-semibold" style={{ color: "var(--peach-ink)" }}>
+                    <TriangleAlert size={16} aria-hidden />
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--peach-ink)" }}>
+                    {item.detail}
+                  </p>
+                  {item.href && (
+                    <Link
+                      href={item.href}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
+                      style={{ color: "var(--peach-ink)" }}
+                    >
+                      {item.cta ?? "Go and fix it"} <ArrowRight size={13} aria-hidden />
+                    </Link>
+                  )}
+                </Card>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <section className="mb-10">
+        <SectionTitle>Papers you have sat</SectionTitle>
+        {attempts.length === 0 ? (
+          <Note tone="neutral">
+            <ClipboardCheck size={14} className="mr-1.5 inline" aria-hidden />
+            None yet. A paper you sit is worth more to the estimate above than a month of flashcards,
+            because it is the only thing here that measures all four parts at once.
+          </Note>
+        ) : (
+          <ul className="grid gap-2">
+            {attempts.map((attempt, index) => (
+              <li key={`${attempt.level}-${attempt.at}-${index}`}>
+                <Card className="flex flex-wrap items-center justify-between gap-3 !py-3">
+                  <span className="flex items-center gap-3">
+                    <span className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                      {attempt.level}
+                    </span>
+                    <Chip tone={attempt.passed ? "good" : "again"}>
+                      {attempt.pct} percent, {attempt.passed ? "pass" : "not a pass"}
+                    </Chip>
+                  </span>
+                  <span className="text-xs" style={{ color: "var(--ink-3)" }}>
+                    {formatDateTime(new Date(attempt.at))}
+                  </span>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <Card tone="sky">
+        <p className="flex items-center gap-2 text-md font-semibold" style={{ color: "var(--sky-ink)" }}>
+          <Info size={16} aria-hidden />
+          What these papers are, and what they are not
+        </p>
+        <ul className="mt-2 grid gap-1.5 text-sm leading-relaxed" style={{ color: "var(--sky-ink)" }}>
+          <li>
+            The frame is real: the parts, the minutes, the points, the sixty percent, and the rule
+            that a zero anywhere fails the paper. Sit one and you meet the same clock and the same
+            arithmetic.
+          </li>
+          <li>
+            The questions are not the real questions. Every Estonian word in them came out of the
+            dictionary, because this app never writes Estonian, so the reading part is built from
+            recorded sentences rather than a magazine article and the examiner is a microphone.
+          </li>
+          <li>
+            <CircleAlert size={13} className="mr-1 inline" aria-hidden />
+            Nothing scores your pronunciation. There is no verified Estonian speech recogniser
+            available here, so you record yourself, listen back and mark yourself against the
+            criteria, and the paper says as much on the result.
+          </li>
+          <li>
+            <Lightbulb size={13} className="mr-1 inline" aria-hidden />
+            The A1 and C2 papers are ours. The state has never set either, and its own note says a
+            command of Estonian past C1 cannot be required of anybody for a job.
+          </li>
+        </ul>
+      </Card>
+    </Page>
+  );
+}

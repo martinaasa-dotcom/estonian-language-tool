@@ -93,8 +93,8 @@ function formLabel(form: { formType: string; morphCode: string | null; morphName
  * extension: this needs no extension installed, and it folds exactly the six
  * letters Estonian uses rather than everything with a diacritic.
  */
-const FOLD_FROM = "õäöüšž";
-const FOLD_TO = "oaousz";
+export const FOLD_FROM = "õäöüšž";
+export const FOLD_TO = "oaousz";
 
 /**
  * Finds the words a query could match, in the database.
@@ -131,7 +131,7 @@ const FOLD_TO = "oaousz";
  * cannot miss a form the ranker would have matched. The bare query is included
  * because a genitive typed on its own is its own stem.
  */
-function possibleStems(folded: string): string[] {
+export function possibleStems(folded: string): string[] {
   const stems = new Set<string>([folded]);
   for (const { suffix } of CASE_SUFFIXES) {
     if (suffix && folded.endsWith(suffix)) stems.add(folded.slice(0, folded.length - suffix.length));
@@ -190,58 +190,6 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
   });
 
   return rankCandidates(candidates, q, limit);
-}
-
-/**
- * The candidates a set of words could be *vouched for* by, narrowed in the
- * database.
- *
- * `matchEstonianForm` only ever vouches on an exact condition: the lemma
- * spelled the same way, the lemma with its diacritics folded, a stored form,
- * or a regular case built on a genitive stem. There is no substring tier above
- * the confidence line, so unlike the search box this needs no `LIKE` at all,
- * and the three branches below are a deliberate superset of exactly those
- * tiers.
- *
- * It exists because reading a photograph used to pull the whole dictionary with
- * `take: 4000` and no ordering, which is the same fault `searchLexemes` above
- * had and for the same reason: past four thousand entries the cap silently
- * dropped words, and nothing said which. A page printing a word the dictionary
- * holds came back "not in the dictionary" depending on where the row happened
- * to sit in the heap. A whole page of sixty words is one query now, and it
- * costs the same at six thousand entries as at six hundred thousand.
- */
-export async function vouchableCandidates(words: string[]): Promise<Candidate[]> {
-  const folded = [...new Set(words.map(fold).filter(Boolean))];
-  if (folded.length === 0) return [];
-
-  const stems = [...new Set(folded.flatMap(possibleStems))];
-
-  const rows = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT id FROM (
-      SELECT l.id FROM "Lexeme" l
-        WHERE translate(lower(l.lemma), ${FOLD_FROM}, ${FOLD_TO}) IN (${Prisma.join(folded)})
-      UNION
-      SELECT f."lexemeId" FROM "Form" f
-        WHERE translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO}) IN (${Prisma.join(folded)})
-      UNION
-      SELECT f."lexemeId" FROM "Form" f
-        WHERE f."formType" IN ('GEN_SG', 'GEN_PL')
-          AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
-              IN (${Prisma.join(stems.length ? stems : [""])})
-    ) AS candidates
-  `;
-
-  if (rows.length === 0) return [];
-
-  return prisma.lexeme.findMany({
-    where: { id: { in: rows.map((r) => r.id) } },
-    select: {
-      id: true, lemma: true, translation: true, pos: true,
-      cefr: true, gradationNote: true,
-      forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
-    },
-  });
 }
 
 /**

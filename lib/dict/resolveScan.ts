@@ -18,22 +18,45 @@
  * what they were actually looking at.
  */
 
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import type { ScannedItem } from "@/lib/scan/extract";
 import type { ResolvedItem } from "@/lib/scan/items";
-import { matchEstonianForm, vouchableCandidates, type Candidate } from "./search";
+import {
+  FOLD_FROM, FOLD_TO, fold, matchEstonianForm, possibleStems, type Candidate,
+} from "./search";
 
 /**
- * The whole page is narrowed in one query and matched in memory, rather than
- * one query per word or, as this once did, the whole dictionary read into
- * memory behind an unordered `take`. `vouchableCandidates` returns a superset
- * of what the ranker can vouch for, so nothing that would have matched is
- * filtered out before it gets the chance.
+ * Narrowing the dictionary to the rows a page could possibly match.
+ *
+ * THIS PULLED THE WHOLE TABLE WITH `take: 4000` AND NO ORDERING, WHICH IS THE
+ * FAULT `searchLexemes` HAD JUST BEEN FIXED FOR AND ITS COMMENT DESCRIBES IN
+ * FULL. It was true that "a few thousand rows is milliseconds" when the
+ * dictionary was 370 hand-written words. The expanded dictionary is 5,400, so
+ * the cap was below the table: Postgres returns rows in no defined order
+ * without an ORDER BY, so roughly a quarter of the dictionary was invisible to
+ * the scanner, and *which* quarter changed between requests. A learner
+ * photographing homework got words back unvouched that the dictionary holds,
+ * differently each time. `resolveScan.itest.ts` caught it as a test that
+ * failed three times and then passed, on unchanged code.
+ *
+ * So the database narrows and `matchEstonianForm` still decides, exactly as
+ * `searchLexemes` does. The predicate is a deliberate superset of what that
+ * matcher accepts: it scores a lemma, a stored form, or a regular case of the
+ * genitive stem at or above `VOUCHED_SCORE`, and rejects the English-only tier
+ * outright, so there is no English branch here. `possibleStems` is imported
+ * rather than restated, because the suffix list has to stay the one the ranker
+ * scores with or the prefilter can drop a form the matcher would have taken.
+ *
+ * One query for the page, still: a page can carry sixty words and sixty
+ * queries was the thing the original was right to avoid.
  */
+const CANDIDATE_CEILING = 4000;
+
 export async function resolveScannedItems(items: ScannedItem[]): Promise<ResolvedItem[]> {
   if (items.length === 0) return [];
 
-  const candidates = await vouchableCandidates(items.map((i) => i.et));
-
+  const candidates = await candidatesFor(items.map((item) => item.et));
   return items.map((item) => resolveOne(candidates, item));
 }
 
@@ -75,7 +98,55 @@ export async function resolveOneWord(word: string): Promise<ResolvedItem | null>
   const trimmed = word.trim();
   if (!trimmed) return null;
 
-  const candidates = await vouchableCandidates([trimmed]);
-
+  const candidates = await candidatesFor([trimmed]);
   return resolveOne(candidates, { et: trimmed, en: "" });
+}
+
+/**
+ * The dictionary rows any of these words could resolve to.
+ *
+ * Three branches, unioned rather than ORed for the reason `searchLexemes`
+ * measured: as a union each one can take its own index, and `prisma/indexes.ts`
+ * gives all three one.
+ *
+ * Exported only so the narrowing itself can be asserted. `resolveScan.itest.ts`
+ * checks that a word with nothing to do with the query is *not* fetched, which
+ * is a thing no test of `resolveScannedItems` can see: "the right word
+ * resolves" passes on a small dictionary, and on a large one whenever the row
+ * happens to land early, which is exactly why the fault above went unnoticed
+ * until it started failing at random.
+ */
+export async function candidatesFor(words: string[]): Promise<Candidate[]> {
+  const folded = [...new Set(
+    words.map((w) => fold(w.trim().toLowerCase())).filter(Boolean),
+  )];
+  if (folded.length === 0) return [];
+
+  const stems = [...new Set(folded.flatMap((f) => possibleStems(f)))].filter(Boolean);
+
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM (
+      SELECT l.id FROM "Lexeme" l
+        WHERE translate(lower(l.lemma), ${FOLD_FROM}, ${FOLD_TO}) IN (${Prisma.join(folded)})
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO}) IN (${Prisma.join(folded)})
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE f."formType" IN ('GEN_SG', 'GEN_PL')
+          AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
+              IN (${Prisma.join(stems.length ? stems : [""])})
+    ) AS candidates
+    LIMIT ${CANDIDATE_CEILING}
+  `;
+  if (rows.length === 0) return [];
+
+  return prisma.lexeme.findMany({
+    where: { id: { in: rows.map((r) => r.id) } },
+    select: {
+      id: true, lemma: true, translation: true, pos: true,
+      cefr: true, gradationNote: true,
+      forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
+    },
+  });
 }

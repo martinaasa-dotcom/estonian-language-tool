@@ -1,7 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
-import { vouchableCandidates } from "./search";
-import { resolveOneWord, resolveScannedItems } from "./resolveScan";
+import { candidatesFor, resolveOneWord, resolveScannedItems } from "./resolveScan";
 
 /**
  * The gate between a photograph and the deck, run against a real dictionary.
@@ -109,7 +108,7 @@ describe("resolveOneWord", () => {
   });
 });
 
-describe("vouchableCandidates", () => {
+describe("candidatesFor", () => {
   /*
     The narrowing is the test, not an optimisation detail.
 
@@ -123,19 +122,19 @@ describe("vouchableCandidates", () => {
     fetched fails immediately on any version that pulls the table.
   */
   it("fetches only what could match, never the table", async () => {
-    const lemmas = (await vouchableCandidates([LEMMA])).map((c) => c.lemma);
+    const lemmas = (await candidatesFor([LEMMA])).map((c) => c.lemma);
     expect(lemmas).toContain(LEMMA);
     expect(lemmas).not.toContain(DECOY);
   });
 
   it("narrows a whole page in one pass, inflected forms included", async () => {
-    const lemmas = (await vouchableCandidates([LEMMA, "itest-scan-toas", "itest-scan-puudub"]))
+    const lemmas = (await candidatesFor([LEMMA, "itest-scan-toas", "itest-scan-puudub"]))
       .map((c) => c.lemma);
     expect(lemmas).toContain(LEMMA);
     expect(lemmas).not.toContain(DECOY);
   });
 
   it("asks nothing of the database for an empty page", async () => {
-    expect(await vouchableCandidates([])).toEqual([]);
+    expect(await candidatesFor([])).toEqual([]);
   });
 });

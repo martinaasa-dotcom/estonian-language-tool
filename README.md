@@ -3,8 +3,8 @@
 *Kodukeel*, "home language". An Estonian study workspace built around the thing that actually makes
 the language hard: the cases. A dictionary that answers with the whole paradigm, a course you can
 work through, flashcards scheduled by FSRS, seven practice modes, a grammar reference written in
-English, printable worksheets for a real class, and a tutor that is never allowed to invent an
-Estonian form.
+English, printable worksheets for a real class, a mock of the state language examination at every
+level, and a tutor that is never allowed to invent an Estonian form.
 
 > **Status: usable by someone who is not you.** First run walks a new learner through a setup wizard
 > and builds them a real deck; the daily loop, path, review, practice, progress, is complete, works
@@ -55,6 +55,15 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   against the clock, Sentences, Speaking, Listening and Dictation, plus a one-click drill for
   whichever case you keep missing. Everything writes to the same review log, so a game still moves
   the schedule forward.
+- **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
+  citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
+  real points, under the real rule that sixty percent passes and a zero in any one part fails the
+  whole thing. Plus an A1 and a C2 paper the state has never set, clearly labelled, because it is
+  worth being allowed to find out. Every level carries a percentage chance of passing it today,
+  with the evidence behind that number stated rather than implied, and a list of what to fix that
+  links to where to fix it. Nothing about the paper is written by a model: the questions are
+  assembled out of the dictionary and the marks come from comparing your answer with a form the
+  dictionary vouches for.
 - **Dictation, marked word by word.** A real sentence is played and you write it down; the marking
   shows which word you missed and whether you only lost its Estonian letters. Estonian welds its
   case endings onto the stem, so hearing a sentence perfectly and writing the wrong ending is a

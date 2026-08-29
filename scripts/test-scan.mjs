@@ -180,6 +180,23 @@ await page.getByRole("button", { name: /open the page/i }).click();
 const opened = await eventually(async () => /\/scan\/[0-9a-f-]{36}/.test(page.url()));
 check("the saved page opens as a set", opened, page.url());
 
+/*
+  Wait for the page itself, not just for the address bar.
+
+  "Open the page" is a document load rather than a router push, deliberately:
+  see the comment on the button in ScanCapture. That moves when the URL
+  changes. A client-side push swaps the address only once the new tree has been
+  applied, so reading the DOM straight after was safe; a document load commits
+  the address first and the body arrives after it, so the same two lines were
+  counting chips on a page that had not rendered yet. Measured at two failures
+  in fifteen runs, always on the chip count and never on the navigation above.
+
+  This is not a retry around the assertion, and the assertion is unchanged: if
+  the page renders and marks nothing as unverified, the check below still
+  fails. It only stops the count being taken before there is anything to count.
+*/
+await page.getByRole("heading", { name: "Scan test page" }).waitFor({ timeout: 20_000 });
+
 const unverifiedChip = await page.getByText("Unverified", { exact: false }).count();
 check("the set still marks the word nobody checked", unverifiedChip > 0);
 
