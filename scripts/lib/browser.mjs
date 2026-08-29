@@ -42,3 +42,31 @@ export function launchChromium(options = {}) {
   const path = executablePath();
   return chromium.launch(path ? { executablePath: path, ...options } : options);
 }
+
+/**
+ * Wait for something to become true, by polling from here.
+ *
+ * A Server Action is a round trip and then a router refresh, and how long
+ * that takes is a fact about the machine. Every check in these suites that
+ * follows a fixed `waitForTimeout` is asserting the runner's speed as much as
+ * the app's behaviour: e2e's `task is created and persists` slept 2000ms and
+ * failed on a CI runner while passing everywhere else, on an app that had
+ * created the task correctly. The sleeps that happened to be 2500ms passed in
+ * the same run, which is the whole argument.
+ *
+ * Polled from Node rather than through `page.waitForFunction`, which injects
+ * its predicate as a string and throws under this app's Content Security
+ * Policy, and which resolves immediately on an async predicate because a
+ * Promise is truthy.
+ *
+ * It still fails when the thing never happens. It just stops failing when the
+ * thing happens a moment later than somebody guessed.
+ */
+export async function eventually(isTrue, { timeoutMs = 15_000, everyMs = 150 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    if (await isTrue()) return true;
+    if (Date.now() >= deadline) return false;
+    await new Promise((resolve) => setTimeout(resolve, everyMs));
+  }
+}
