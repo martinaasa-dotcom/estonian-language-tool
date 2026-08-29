@@ -20,7 +20,12 @@ is the current state.
 
 **Never ship a credential to the client.** The Anthropic and Ekilex keys live only in server-side
 Route Handlers and server actions. Nothing gets a `NEXT_PUBLIC_` prefix unless it is genuinely
-public. CI greps the build output for key patterns.
+public. CI greps the build output for key patterns, and that is true now rather than aspirational:
+the `secrets` job in `.github/workflows/ci.yml` builds with a marked string in every server-only
+variable and greps `.next/static` for it, so a leak names which variable leaked. It was verified
+both ways, clean on the bundle as it stands and failing when a value was deliberately given a
+public prefix and read from a client component, because a check nobody has made fail once is a
+check nobody knows the state of.
 
 **Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
@@ -61,6 +66,26 @@ personal best, and which days a streak shield has already covered. (ADR-014.)
 own scores — they write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)
 
+**Every mutation goes through the forged-request gate, and it is not an `/api/` rule.** Every
+mutation a learner makes here is a Server Action, which is a POST to a *page* path, so a gate
+inside an `isApi` branch would be watching the quiet door. `lib/security/sameOrigin.ts` reads
+`Sec-Fetch-Site` first (a browser sets it and page script cannot), falls back to comparing
+`Origin`'s host against `Host`, and **allows a request carrying neither**: that is not a browser,
+so it has no ambient cookie to forge with, and refusing it would break every server-to-server
+caller for nothing. It runs before the auth branch in `middleware.ts`, because a redirect keeps
+the method and the body. The Content Security Policy is set there too, on every response
+including the refusals; the static headers are in `next.config.ts` so they cover the files the
+matcher skips. `Permissions-Policy` keeps `microphone=(self)` on purpose: speaking practice
+records, and denying it would switch that off with no error anybody could act on.
+
+**A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
+`/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
+students on one school network are one IP and a review session asks for audio on nearly every
+card, so per-address counting would refuse a whole classroom in its first few seconds. `/api/tts`
+also joins an identical request already in flight rather than making a second one: the disk cache
+is consulted before the call and written after it, and the gap between those is exactly where a
+class starting the same unit together lands.
+
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only —
 never add a flag that can disable auth on a deployment that has it. (ADR-013.)
@@ -68,8 +93,8 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
-- `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/` and
-  `lib/offline/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
+- `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/`,
+  `lib/offline/`, `lib/security/` and `lib/copy/` stay free of React, Next.js and Prisma — pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
@@ -77,21 +102,90 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
   offline). A view without an empty state is not finished.
+- **No em dash or en dash in anything a person reads**, anywhere in `app/`, `lib/`, `components/`
+  or the README. A dash used as a clause break is the loudest single tell that a sentence was
+  generated, and every screen here is one person explaining Estonian to another.
+  `lib/copy/readerCopy.test.ts` walks the whole tree and fails on one; its `ALLOWED` list is three
+  files where the character is data, and a test fails if an entry there stops containing one, so
+  it cannot become a parking space. Replacing a dash between two independent clauses with a comma
+  makes a splice and reads worse than the dash did: use a full stop. A separator in a label takes
+  the middot the app already uses.
+- **Some code reads a dash rather than writing one, and a sweep cannot tell those apart.** The word
+  list separator in `ImportPanel` and the punctuation class in `lib/estonian/dictation.ts` were
+  both rewritten once, silently: a pasted list stopped splitting and a stray dash in an Ekilex
+  sentence became a word the learner had to type. Both are named constants written with escapes,
+  and `readerCopy.test.ts` asserts they still read all three characters.
+- **An empty cell says `NO_VALUE`, which is "n/a"** (`lib/copy/values.ts`). It was an em dash,
+  which is now the one banned character; a bare hyphen is worse, since in a paradigm table it
+  reads as a one-character form and beside a percentage as a minus sign whose digits failed to
+  load. `lookup.ts` still recognises all three spellings a stored translation may carry, because
+  the dictionary is seeded data that outlives a deploy.
+- **24-hour clock everywhere** (`lib/time/clock.ts`), never am/pm. Estonia writes the time that
+  way and so does every country whose language this app teaches, and a reading that changes shape
+  with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
+  rather than `hour12: false`, which renders midnight as "24:00" in en-US.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
   meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
   free for decoration.
 - Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
   page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
   to be added to the allowlist in `middleware.ts` as well.
-- Every interactive element is keyboard-reachable with a visible focus ring.
+- Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
+  pointer every one of them clears 44px.
+- **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
+  container, and every library that positions a floating element works in document coordinates
+  instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is
+  then drawn one scroll offset from where it belongs, which on a scrolled phone means open,
+  focused and off the top of the screen. Sideways is still clipped, on `body`.
+- **Nothing may be `position: fixed` over moving content and carry a `backdrop-filter`.** That
+  pairing re-filters its backdrop every frame of every scroll; Upside Lab measured it at 42
+  repainted frames in one pass down a phone screen, the worst a third of a screen behind where the
+  page was. The phone bar is a solid fill for this reason, and the pull-to-refresh ring carries no
+  filter.
+- **Nothing pinned to the bottom of the window types its own offset.** `lib/layout/dockClearance.ts`
+  measures the phone bar and publishes `data-dock` and `--dock-clearance` on `<html>`, and only
+  while it is drawn; `.bottom-notice` and `.dock-pad` read those. A `:has()` selector would answer
+  yes for a `md:hidden` bar in the DOM drawing nothing, which is how three notices ended up
+  floating most of an inch up an empty landing page.
+- **`overscroll-behavior-y: none` is load-bearing and it took the browser's pull to refresh with
+  it.** There is no setting that keeps one and not the other, and installed to a home screen this
+  app has no address bar and so no reload button anywhere in it. `components/PullToRefresh.tsx` is
+  the gesture put back under our own control. It settles on the router's own request landing,
+  observed through resource timing, **not** on `useTransition`'s pending flag: measured here that
+  goes true and never comes back, which would have turned the ring for its full eight second
+  ceiling on every pull.
 - Estonian text inputs get the diacritic bar.
 
 ## Model configuration
 
-**Provider-agnostic** — `lib/tutor/provider.ts` uses whichever key is in `.env`: OpenRouter
-(default, free model), Anthropic, or OpenAI. Do not re-pin a single provider. The Anthropic path
-keeps a `cache_control` breakpoint on the static Estonian system prompt. This supersedes the
-original ADR-004; see `docs/13-mvp-status.md` §2.
+**Provider-agnostic, and it is a chain rather than a choice.** `resolveProviders()` returns every
+key in `.env` in order, free first: OpenRouter (default), Anthropic, then OpenAI. Do not re-pin a
+single provider. `openWithFallback` walks past a provider that is throttled or having a bad
+minute, and never past a rejected key or a model that does not exist, since every provider would
+answer those the same way and trying them all turns one clear message into a slower one. A
+provider is only ever walked past **before it has said anything**: once text is reaching the
+learner a failure stays a failure, because a second answer appended to half of a first one is two
+teachers talking over each other. `withRetry` is patient only on the last link of the chain, which
+is where waiting is the only option; on every link before it, moving on costs one request and
+sitting through 4.5 seconds of backoff against a provider that has already said no costs 4.5
+seconds. The Anthropic path keeps a `cache_control` breakpoint on the static Estonian system
+prompt. This supersedes the original ADR-004; see `docs/13-mvp-status.md` §2.
+
+**Which model answered is a fact about the answer, so it travels with it.** Never the head of the
+chain: a screen naming the wrong model is worse than one naming none. The handshake finishes
+before the response head is written, which is what lets `x-model-provider` and `x-model-id` be
+headers at all; the chat reads them back and the line under the conversation says "Will ask" until
+a reply has arrived and "Answered by" after. A trailer was tried and is not an option, because no
+browser exposes one.
+
+**Anu's English is cleaned on its way past, and her Estonian never is.** `lib/tutor/humanize.ts`
+strips dashes used as clause breaks and stock openers. It streams, holding text back only where a
+rule could still change it, so it costs the learner nothing they would notice. `FIX:` and `VOCAB:`
+lines pass through byte for byte: rewriting punctuation inside a corrected sentence would be the
+app editing Estonian, which is the rule the whole project is built on. The first version of the
+stream got that wrong in the way only a test finds, rewriting a corrected sentence one chunk
+boundary at a time once the first half of its line had already been shown, so the line's character
+is now decided when it opens and carried until it ends.
 
 **A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
 this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
@@ -109,8 +203,17 @@ npm run test         # unit tests (Vitest) — DB-backed tests skip themselves w
 npm run typecheck    # tsc --noEmit
 npm run db:seed      # reload the built-in dictionary
 npm run demo         # two months of sample history, for looking at the charts
-npm run test:e2e     # every browser suite — needs the server running
+npm run test:e2e     # every browser suite, needs the server running
+npm run test:invariants  # the rules in CLAUDE.md, asserted
+npm run test:mobile      # the phone, measured; needs the server running
 ```
+
+`scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
+1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on
+phones and gone above the breakpoint, every target clear of 44px, and the pull gesture driven for
+real. `scripts/test-invariants.ts` asserts the rules above, and CI runs it, which is the only
+reason it will stay green: Upside Lab kept one that nothing ran and it drifted to twenty-three
+failures before anybody counted. Assert the rule, not today's markup.
 
 `scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo, the command
 palette and — the one worth keeping green — reviewing with the network switched off.
