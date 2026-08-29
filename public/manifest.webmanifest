@@ -1,0 +1,23 @@
+{
+  "name": "Kodukeel — Estonian study",
+  "short_name": "Kodukeel",
+  "description": "Dictionary, flashcards and a grammar tutor for learning Estonian.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf9f7",
+  "theme_color": "#faf9f7",
+  "lang": "en",
+  "categories": ["education"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Review", "url": "/review", "description": "Today's due cards" },
+    { "name": "Dictionary", "url": "/dictionary", "description": "Look up a word" }
+  ]
+}

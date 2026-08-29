@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, Check, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
 import { checkAchievements, gradeCard } from "@/app/actions";
+import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
+import { useOffline } from "@/components/OfflineProvider";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, Stat } from "@/components/ui";
@@ -53,7 +55,9 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
   // due" instead of the session summary — the pool the page found on the
   // very first load is the only one this session should ever know about.
   const [queue, setQueue] = useState(initialCards);
-  const [wasEmptyAtStart] = useState(initialCards.length === 0);
+  const [wasEmptyAtStart, setWasEmptyAtStart] = useState(initialCards.length === 0);
+  const { refresh: refreshOutbox } = useOffline();
+
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(0);
@@ -66,6 +70,24 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
 
   const card = queue[index];
   const finished = !card;
+
+  // Two halves of offline review. When the server handed cards down, keep them:
+  // a later visit with no connection needs something real to work through.
+  // When it handed nothing down *and* the browser says it is offline, the empty
+  // state is a lie — the page was served from the service worker cache and the
+  // server never ran. Fall back to what was stashed.
+  useEffect(() => {
+    if (initialCards.length > 0) {
+      void stashSession(initialCards);
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.onLine) return;
+    void readStashedSession().then((stashed) => {
+      if (stashed.length === 0) return;
+      setQueue(stashed);
+      setWasEmptyAtStart(false);
+    });
+  }, [initialCards]);
 
   useEffect(() => {
     if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
@@ -93,13 +115,22 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
     if (!card || busy) return;
     setBusy(true);
     const duration = Date.now() - shownAt.current;
+    const reviewedAt = Date.now();
     try {
       await gradeCard(card.id, rating, duration);
     } catch {
-      // The grade did not reach the database. Keep the card in the queue rather
-      // than silently dropping a review the learner just did.
-      setBusy(false);
-      return;
+      // The grade did not reach the server. It is still a fact about something
+      // the learner did, so it goes to the durable outbox and is replayed with
+      // this timestamp once there is a connection — which, because Review is
+      // append-only, lands exactly where it would have.
+      await enqueueGrade({
+        id: crypto.randomUUID(),
+        cardId: card.id,
+        rating,
+        durationMs: duration,
+        reviewedAt,
+      });
+      refreshOutbox();
     }
     setDone((d) => d + 1);
     if (rating >= 3) setCorrect((c) => c + 1);
@@ -118,7 +149,7 @@ export function ReviewSession({ cards: initialCards, drillCase, totalCards }: {
       setIndex((i) => i + 1);
     }
     setBusy(false);
-  }, [card, busy, index]);
+  }, [card, busy, index, refreshOutbox]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

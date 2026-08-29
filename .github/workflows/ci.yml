@@ -14,11 +14,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: kodukeel
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
-      # A syntactically valid URL so `next build` can collect pages without a
-      # live database — nothing here connects, and `build:ci` omits `db push`.
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+      DATABASE_URL: postgresql://postgres:ci@localhost:5432/kodukeel
+      DIRECT_URL: postgresql://postgres:ci@localhost:5432/kodukeel
       NEXT_PUBLIC_SUPABASE_URL: https://ci.example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
 
@@ -35,8 +46,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Hermetic: no database, no network. This is the gate that must stay fast.
       - name: Unit tests
         run: npm run test
+
+      - name: Prepare the database
+        run: npx prisma db push --skip-generate
+
+      # The claims that are claims about Postgres rather than about types:
+      # replay idempotency, and that a review outlives the card it belonged to.
+      - name: Integration tests
+        run: npm run test:db
 
       - name: Build
         run: npm run build:ci

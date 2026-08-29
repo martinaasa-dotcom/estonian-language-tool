@@ -8,6 +8,7 @@ import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradati
 import { BADGES, type BadgeStats, computeStreakWithShields, earnedBadgeKeys } from "@/lib/achievements/badges";
 import { generateCards, type CardType, type LexemeForCards } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -128,6 +129,22 @@ export async function gradeCard(cardId: string, rating: RatingValue, durationMs:
 
   revalidatePath("/");
   return { ok: true as const, due: next.due };
+}
+
+/**
+ * Applies grades taken while the connection was down.
+ *
+ * A thin authentication wrapper: the owner comes from the session, never from
+ * the caller, and the work lives in `lib/srs/replay` where it can be tested
+ * against a real database without one.
+ */
+export async function replayGrades(batch: ReplayItem[]) {
+  const ownerId = await requireUserId();
+  const result = await applyGradeBatch(ownerId, batch);
+  if (!result.ok) return { ok: false as const, error: result.error ?? "Replay failed." };
+  revalidatePath("/");
+  revalidatePath("/words");
+  return { ok: true as const, settled: result.settled };
 }
 
 export async function setCardSuspended(cardId: string, suspended: boolean) {
