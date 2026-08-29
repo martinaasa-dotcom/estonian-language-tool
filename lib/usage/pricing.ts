@@ -37,6 +37,24 @@ const PRICES: Readonly<Record<string, ModelPrice>> = {
   // OpenAI
   "gpt-4o": { inputPerMTok: 2.5, outputPerMTok: 10 },
   "gpt-4o-mini": { inputPerMTok: 0.15, outputPerMTok: 0.6 },
+
+  /*
+    The models the free-tier providers give away, at the rate they are given
+    away for. Named one by one rather than pricing a whole provider at zero,
+    because "free" is a property of the account and this table cannot see the
+    account: a deployment that has upgraded its Groq or Gemini plan and pinned
+    some other model still meets UNKNOWN_MODEL and still fails closed.
+
+    Without these rows the cap would fail the other way. An unrecognised model
+    is charged at the dearest rate in the table, so a handful of genuinely free
+    Groq calls would have read as several dollars and switched Anu off for
+    everybody, which is exactly the fault the TTS speaker name caused once
+    before.
+  */
+  "llama-3.3-70b-versatile": { inputPerMTok: 0, outputPerMTok: 0 },
+  "llama-3.1-8b-instant": { inputPerMTok: 0, outputPerMTok: 0 },
+  "gemini-2.0-flash": { inputPerMTok: 0, outputPerMTok: 0 },
+  "gemini-1.5-flash": { inputPerMTok: 0, outputPerMTok: 0 },
 };
 
 /** Charged when the model is not in the table. Deliberately the dearest rate. */

@@ -179,9 +179,12 @@ export default async function SettingsPage() {
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     Everything above is {resilience.providers[0]}, on one account. If that key stops
                     answering, whether it runs out of credit or has a bad minute, Anu stops with it.
-                    Adding <code className="text-xs">ANTHROPIC_API_KEY</code> or{" "}
-                    <code className="text-xs">OPENAI_API_KEY</code> to <code className="text-xs">.env</code>{" "}
-                    gives the chain somewhere to fall through to. Nothing else needs changing.
+                    Adding <code className="text-xs">GROQ_API_KEY</code> or{" "}
+                    <code className="text-xs">GEMINI_API_KEY</code> to <code className="text-xs">.env</code>{" "}
+                    gives the chain somewhere to fall through to. Both have a free tier and neither
+                    asks for a card. Read the note beside them in{" "}
+                    <code className="text-xs">.env.example</code> first: a free tier is usually free
+                    because the provider may look at what goes through it.
                   </p>
                 )}
               </div>
