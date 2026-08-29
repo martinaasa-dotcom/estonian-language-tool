@@ -547,8 +547,20 @@
   .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
-     script. Browsers without scroll timelines simply get the finished state. */
-  .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% cover 20%; }
+     script. Browsers without scroll timelines simply get the finished state.
+
+     The range ends at `entry 100%`, which is the moment a section is wholly on
+     screen, and it ends there because that is the last moment a page can still
+     reach. This read `cover 20%` and left the bottom of the landing page
+     permanently dimmed: at maximum scroll the final call to action measured
+     opacity 0.51 and the last three questions above it 0.72, 0.77 and 0.82,
+     because completing a cover-based range needs scrolling that a page which
+     has hit its end has no more of. Every element in the last screenful was
+     affected, not just the last one. Anything ending at or before `entry 100%`
+     is reachable by construction, and the tallest section here is 745px
+     against a 780px phone viewport, so the fade still finishes as the section
+     lands rather than early. */
+  .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
   .float { animation: float 6s ease-in-out infinite; }
   .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }

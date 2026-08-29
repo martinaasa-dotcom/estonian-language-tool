@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight, BookOpen, ChartNoAxesColumn, Check, Download, Flame, Headphones, Minus,
+  ArrowRight, BookOpen, ChartNoAxesColumn, Check, CircleHelp, Download, Flame, Headphones, Minus,
   Map as MapIcon, Sparkles, Timer, Trophy, Volume2, WifiOff,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -538,70 +538,215 @@ function Numbers({ stats }: { stats: { words: number; forms: number } }) {
 
 /* ──────────────────────────────────────────────────── comparison ── */
 
-const ROWS = [
-  ["Teaches the case system itself", true, false],
-  ["Forms come from a real dictionary", true, false],
-  ["Schedules by when you'll forget", true, false],
-  ["Tells you when to stop for the day", true, false],
-  ["Explains why, not just wrong", true, false],
-  ["Your history is yours to export", true, false],
-  ["Works with no signal at all", true, false],
+/**
+ * The comparison, and the rules it is written under.
+ *
+ * It used to be headed "Kodukeel vs. the owl", which was a joke at the expense
+ * of an app that has never offered Estonian at all. Comparing yourself with a
+ * product nobody can buy in this language is not an honest comparison, and it
+ * left the page silent about the tools somebody choosing today is actually
+ * choosing between. The fact is now stated plainly and the mascot is gone with
+ * it: borrowing somebody else's branding to sell your own thing is the part of
+ * a comparison that gets a letter, and the plain sentence was better copy
+ * anyway.
+ *
+ * So the columns are the real ones, and every claim in the table is written to
+ * survive being read by the people it is about: a fact taken from that
+ * product's own public pages, checked on a stated date, with a third state for
+ * the cells we could not confirm rather than a guess in our own favour. No
+ * logos, no borrowed branding, nothing about price beyond what their own store
+ * listing says, and a credit line under the table for what each of them does
+ * better than Kodukeel does. Three of the eight rows are ticks for somebody
+ * else, which is what a comparison looks like when it is not rigged.
+ *
+ * If you add a row, it has to be checkable by a stranger in an afternoon. A row
+ * that can only be settled by opinion belongs in the prose, not the grid.
+ */
+
+/** yes · no, going by its own public pages · we could not tell. */
+type Verdict = "yes" | "no" | "unsure";
+
+const TOOLS = [
+  { name: "Kodukeel", short: "Kodukeel", ours: true },
+  { name: "Speakly", short: "Speakly", ours: false },
+  { name: "Keeleklikk", short: "Keeleklikk", ours: false },
+  { name: "Anki", short: "Anki", ours: false },
 ] as const;
+
+const ROWS: readonly { label: string; cells: readonly [Verdict, Verdict, Verdict, Verdict] }[] = [
+  { label: "Free, with no subscription", cells: ["yes", "no", "yes", "yes"] },
+  { label: "Built for Estonian and nothing else", cells: ["yes", "no", "yes", "no"] },
+  { label: "Teaches the case system case by case", cells: ["yes", "unsure", "yes", "no"] },
+  { label: "Every form shows the dictionary it came from", cells: ["yes", "no", "no", "no"] },
+  { label: "Brings a word back on the day you would forget it", cells: ["yes", "yes", "no", "yes"] },
+  { label: "Any word you look up becomes a card", cells: ["yes", "no", "no", "yes"] },
+  { label: "Explains why the answer was wrong", cells: ["yes", "yes", "yes", "no"] },
+  { label: "Keeps working with no connection", cells: ["yes", "unsure", "no", "yes"] },
+];
+
+const CREDITS = [
+  {
+    name: "Speakly",
+    body:
+      "Built in Estonia, and the closest thing here to a like for like comparison. It teaches the 4,000 words you will meet most often in the order you will meet them, with audio, grammar notes and its own spaced repetition, in ten languages. For getting words into your ear quickly it is good, and it is a subscription: its App Store listing runs from 9.99 euros a month to 69.99 euros once.",
+  },
+  {
+    name: "Keeleklikk and Keeletee",
+    body:
+      "Free courses funded by the Integration Foundation: A1 to A2, then B1, sixteen chapters of animation and grammar video, and an Estonian teacher who answers your questions by email. If you are starting from nothing and want a course rather than a tool, start there. Kodukeel is the thing to keep open alongside it and after it.",
+  },
+  {
+    name: "Anki",
+    body:
+      "Free, open source, works offline, and it will schedule anything you are willing to type onto a card. What it will not do is supply the Estonian: every form is yours to find, and yours to get wrong. The desktop and Android apps cost nothing; the iPhone one is a single purchase.",
+  },
+  {
+    name: "The vocabulary apps",
+    body:
+      "Drops, Mondly, uTalk, Ling, Memrise, Clozemaster and Lingvist all include Estonian and all do words in five quiet minutes rather well. Kodukeel is aimed at the part that comes after the word: which form of it, and why that one.",
+  },
+] as const;
+
+function Mark({ verdict }: { verdict: Verdict }) {
+  if (verdict === "yes") {
+    return (
+      <span
+        className="flex h-7 w-7 items-center justify-center rounded-full"
+        style={{ background: "var(--mint-soft)", color: "var(--mint-ink)" }}
+      >
+        <Check size={15} strokeWidth={3} aria-label="yes" />
+      </span>
+    );
+  }
+  if (verdict === "unsure") {
+    return (
+      <span
+        className="flex h-7 w-7 items-center justify-center rounded-full"
+        style={{ background: "var(--butter-soft)", color: "var(--butter-ink)" }}
+      >
+        <CircleHelp size={15} strokeWidth={2.5} aria-label="we could not tell" />
+      </span>
+    );
+  }
+  return (
+    <span
+      className="flex h-7 w-7 items-center justify-center rounded-full"
+      style={{ background: "var(--raised)", color: "var(--ink-3)" }}
+    >
+      <Minus size={15} strokeWidth={3} aria-label="no" />
+    </span>
+  );
+}
 
 function Comparison() {
   return (
     <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <div className="mx-auto max-w-[40ch] text-center">
+        <div className="mx-auto max-w-[46ch] text-center">
           <p className="label-xs" style={{ color: "var(--peach-ink)" }}>An honest comparison</p>
           <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Kodukeel vs. the owl
+            Kodukeel next to the alternatives
           </h2>
           <p className="mt-4 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            Streak apps are excellent at getting you to open them. That is a different problem to
-            being able to say <span lang="et" className="est font-semibold">ma lähen tuppa</span> and
-            know why it is not <span lang="et" className="est font-semibold">tuba</span>.
+            Duolingo has never offered an Estonian course, so the choice you actually face is
+            between the tools that do. None of them is trying to do quite this: get you to the
+            point of saying{" "}
+            <span lang="et" className="est font-semibold">ma lähen tuppa</span> and knowing why it
+            is not <span lang="et" className="est font-semibold">tuba</span>.
           </p>
         </div>
       </Reveal>
 
       <Reveal>
-        <div
-          className="mt-9 overflow-hidden rounded-[var(--r-xl)] border"
-          style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
-        >
-          <div
-            className="grid grid-cols-[1fr_88px_88px] items-center gap-2 border-b px-5 py-3.5 md:grid-cols-[1fr_120px_120px]"
-            style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
-          >
-            <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
-            <span className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>Kodukeel</span>
-            <span className="label-xs text-center" style={{ color: "var(--ink-3)" }}>Streak apps</span>
-          </div>
-          {ROWS.map(([label, ours, theirs]) => (
+        {/* Phones get a card per claim: four columns of ticks at 390px would
+            leave the labels a third of a line wide, and this page may not
+            scroll sideways. */}
+        <div className="mt-9 flex flex-col gap-3 md:hidden">
+          {ROWS.map((row) => (
             <div
-              key={label}
-              className="grid grid-cols-[1fr_88px_88px] items-center gap-2 px-5 py-3.5 md:grid-cols-[1fr_120px_120px]"
-              style={{ borderTop: "1px solid var(--rule-soft)" }}
+              key={row.label}
+              className="rounded-[var(--r-lg)] border p-4"
+              style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
             >
-              <span className="text-base" style={{ color: "var(--ink-2)" }}>{label}</span>
-              <span className="flex justify-center">
-                {ours ? (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: "var(--mint-soft)", color: "var(--mint-ink)" }}>
-                    <Check size={15} strokeWidth={3} aria-label="yes" />
+              <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {TOOLS.map((tool, i) => (
+                  <span key={tool.name} className="flex items-center gap-2">
+                    <Mark verdict={row.cells[i] ?? "unsure"} />
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
+                    >
+                      {tool.short}
+                    </span>
                   </span>
-                ) : null}
-              </span>
-              <span className="flex justify-center">
-                {theirs ? null : (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
-                    <Minus size={15} strokeWidth={3} aria-label="no" />
-                  </span>
-                )}
-              </span>
+                ))}
+              </div>
             </div>
           ))}
         </div>
+
+        <div
+          className="mt-9 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
+          style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
+        >
+          <div
+            className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
+            style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
+          >
+            <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
+            {TOOLS.map((tool) =>
+              tool.ours ? (
+                <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
+                  {tool.name}
+                </span>
+              ) : (
+                <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
+                  {tool.name}
+                </span>
+              ),
+            )}
+          </div>
+          {ROWS.map((row) => (
+            <div
+              key={row.label}
+              className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
+              style={{ borderTop: "1px solid var(--rule-soft)" }}
+            >
+              <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
+              {TOOLS.map((tool, i) => (
+                <span key={tool.name} className="flex justify-center">
+                  <Mark verdict={row.cells[i] ?? "unsure"} />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {CREDITS.map((credit) => (
+            <div
+              key={credit.name}
+              className="rounded-[var(--r-lg)] border px-4 py-3.5"
+              style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
+            >
+              <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
+              <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+          A tick means yes, a dash means not from anything its own public pages say, and a question
+          mark means we could not tell and would rather say so. Checked in August 2026 against each
+          product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
+          is not affiliated with any of them and none of them has endorsed it. If something is out
+          of date or simply wrong, tell us and it gets corrected.
+        </p>
       </Reveal>
     </section>
   );

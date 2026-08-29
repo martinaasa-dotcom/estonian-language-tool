@@ -9,6 +9,7 @@ import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
 import { ImportPanel } from "./ImportPanel";
+import { InstallPanel } from "./InstallPanel";
 import { LeaderboardPanel, ReviewModePanel } from "./PreferencesPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
@@ -230,6 +231,7 @@ export default async function SettingsPage() {
                   online, with the time you actually answered, so an offline session still counts
                   towards the right day&rsquo;s streak.
                 </p>
+                <InstallPanel />
               </div>
             </div>
           </Card>

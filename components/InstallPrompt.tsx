@@ -3,76 +3,102 @@
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
 import { Button } from "@/components/Button";
+import { isIosSafari, isStandalone, runInstall, useInstallEvent } from "@/components/installEvent";
+import {
+  dayKey,
+  markDismissed,
+  markOffered,
+  readMemory,
+  rememberDay,
+  shouldOffer,
+  writeMemory,
+} from "@/lib/install/offer";
 
-interface InstallEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
+const MEMORY_KEY = "kodukeel:install";
+/** The flag this used to keep. Read once, so an old dismissal is still honoured. */
+const LEGACY_KEY = "kodukeel:install-dismissed";
 
-const DISMISSED_KEY = "kodukeel:install-dismissed";
+/** iOS has no install event, so the hint waits for somebody to settle into the page. */
+const IOS_HINT_DELAY_MS = 20_000;
 
 /**
- * "Add to home screen", offered once and never nagged.
+ * "Add to home screen", offered once in a device's life and then never again.
  *
  * Installed, Kodukeel opens straight into review and keeps working without a
- * connection — which is the difference between a study habit and a browser tab
- * someone means to open. But an install banner that reappears is an advert, so
- * this shows once per device and remembers a dismissal forever.
+ * connection, which is the difference between a habit and a browser tab
+ * somebody means to open. That is worth saying once. It is not worth saying
+ * twice, and a banner that reappears on every visit is the kind of thing people
+ * come to dislike an app for, so the rule is in `lib/install/offer.ts` with its
+ * own tests: the offer waits for a third day of use, is spent the moment it is
+ * drawn rather than when it is answered, and an X ends it permanently.
  *
- * Two paths, because the platforms differ: Chrome and Edge fire
- * `beforeinstallprompt` and can be installed with a button; iOS Safari has no
- * such event and needs the Share → Add to Home Screen instruction spelled out.
+ * Nothing replaces it afterwards. The reminder that this app installs lives in
+ * Settings, under "Install it", with a button that works whenever the browser
+ * will allow one. Somebody who wants it can find it on the day they want it.
  */
 export function InstallPrompt() {
-  const [event, setEvent] = useState<InstallEvent | null>(null);
+  const event = useInstallEvent();
   const [iosHint, setIosHint] = useState(false);
+  const [open, setOpen] = useState(false);
 
+  // One pass at mount: today is recorded, and the offer is either due or not.
   useEffect(() => {
-    let dismissed = false;
+    if (isStandalone()) return;
+
+    let memory;
     try {
-      dismissed = window.localStorage.getItem(DISMISSED_KEY) === "1";
+      const legacy = window.localStorage.getItem(LEGACY_KEY) === "1";
+      memory = rememberDay(readMemory(window.localStorage.getItem(MEMORY_KEY), legacy), dayKey(new Date()));
+      window.localStorage.setItem(MEMORY_KEY, writeMemory(memory));
     } catch {
-      // Storage blocked: better to stay quiet than to nag every load.
-      dismissed = true;
-    }
-    if (dismissed) return;
-
-    // Already installed — nothing to offer.
-    const standalone =
-      window.matchMedia?.("(display-mode: standalone)").matches ||
-      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (standalone) return;
-
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      setEvent(e as InstallEvent);
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-
-    // iOS never fires that event, so it is detected and told what to tap.
-    const ua = window.navigator.userAgent;
-    if (/iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS/.test(ua)) {
-      const timer = window.setTimeout(() => setIosHint(true), 20_000);
-      return () => {
-        window.clearTimeout(timer);
-        window.removeEventListener("beforeinstallprompt", onPrompt);
-      };
+      // Storage blocked. Better to stay quiet forever than to nag every load.
+      return;
     }
 
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    if (!isIosSafari()) return;
+    if (!shouldOffer(memory, { standalone: false, canInstall: true })) return;
+    const timer = window.setTimeout(() => setIosHint(true), IOS_HINT_DELAY_MS);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  // Chrome and Edge hand over an event, which can arrive after that first pass.
+  useEffect(() => {
+    if (!event || isStandalone()) return;
+    try {
+      const memory = readMemory(
+        window.localStorage.getItem(MEMORY_KEY),
+        window.localStorage.getItem(LEGACY_KEY) === "1",
+      );
+      if (!shouldOffer(memory, { standalone: false, canInstall: true })) return;
+      setOpen(true);
+    } catch {
+      // Same as above: no memory means no offer.
+    }
+  }, [event]);
+
+  // Shown is spent, whatever happens next. Somebody who ignores it is answering too.
+  useEffect(() => {
+    if (!open && !iosHint) return;
+    try {
+      const memory = readMemory(window.localStorage.getItem(MEMORY_KEY));
+      window.localStorage.setItem(MEMORY_KEY, writeMemory(markOffered(memory)));
+    } catch {
+      // Nothing to do.
+    }
+  }, [open, iosHint]);
 
   const dismiss = () => {
     try {
-      window.localStorage.setItem(DISMISSED_KEY, "1");
+      const memory = readMemory(window.localStorage.getItem(MEMORY_KEY));
+      window.localStorage.setItem(MEMORY_KEY, writeMemory(markDismissed(memory)));
     } catch {
       // Nothing to do; it simply may ask again on this device.
     }
-    setEvent(null);
+    setOpen(false);
     setIosHint(false);
   };
 
-  if (!event && !iosHint) return null;
+  if (!open && !iosHint) return null;
 
   return (
     <div
@@ -101,12 +127,15 @@ export function InstallPrompt() {
             "It opens straight into review, and reviewing keeps working with no connection."
           )}
         </p>
-        {event && (
+        <p className="mt-1.5 text-2xs" style={{ color: "var(--ink-3)" }}>
+          Asked once. It is in Settings whenever you want it.
+        </p>
+        {open && event && (
           <Button
             variant="primary"
             className="mt-3"
             onClick={() => {
-              void event.prompt().then(() => event.userChoice).finally(dismiss);
+              void runInstall(event).finally(dismiss);
             }}
           >
             Install
