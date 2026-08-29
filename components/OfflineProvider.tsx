@@ -16,6 +16,9 @@ interface OfflineState {
 
 const Context = createContext<OfflineState>({ online: true, pending: 0, refresh: () => {} });
 
+/** How often to retry a stuck queue. Long enough to be invisible, short enough to matter. */
+const RETRY_INTERVAL_MS = 30_000;
+
 export const useOffline = () => useContext(Context);
 
 /**
@@ -36,6 +39,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
   const sync = useCallback(async () => {
     if (syncing) return;
+    // Cheap guard so the retry interval costs nothing in the normal case.
+    if ((await outboxSize()) === 0) { setPending(0); return; }
     setSyncing(true);
     try {
       // Drain in batches until the queue is empty or a batch fails to land.
@@ -71,7 +76,15 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     setOnline(navigator.onLine);
     refresh();
 
-    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+    // Registered in production, and in development only when explicitly asked
+    // for. A service worker in dev otherwise serves stale code and wastes an
+    // afternoon; without the opt-in, the offline path could not be exercised in
+    // a browser at all, which is worse.
+    const wantsServiceWorker =
+      process.env.NODE_ENV === "production" ||
+      process.env.NEXT_PUBLIC_ENABLE_SW === "1";
+
+    if ("serviceWorker" in navigator && wantsServiceWorker) {
       navigator.serviceWorker.register("/sw.js").catch(() => {
         // No service worker means no offline review. Everything else is fine,
         // so this is not worth telling anyone about.
@@ -89,7 +102,18 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
     void sync();
 
+    // A retry while nothing else is happening. The events above cover the common
+    // cases — a connection returning, a tab coming back — but a sync that fails
+    // for any other reason (a server hiccup, a deploy mid-request) would
+    // otherwise sit until one of them fires, which for someone who never leaves
+    // the tab could be never. Cheap because it does nothing when the queue is
+    // empty.
+    const retry = setInterval(() => {
+      if (navigator.onLine) void sync();
+    }, RETRY_INTERVAL_MS);
+
     return () => {
+      clearInterval(retry);
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
       document.removeEventListener("visibilitychange", onVisible);
