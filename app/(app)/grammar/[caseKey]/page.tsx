@@ -71,7 +71,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
       actions={
         <Link
           href="/grammar"
-          className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
+          className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
         >
           <ArrowLeft size={14} aria-hidden /> All cases
@@ -83,27 +83,27 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
               <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Called</dt>
-              <dd lang="et" className="est mt-1 text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.et}
               </dd>
             </div>
             <div>
               <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Answers</dt>
-              <dd lang="et" className="est mt-1 text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.question}
               </dd>
             </div>
             <div>
               <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Ending</dt>
-              <dd className="est mt-1 text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.principal
-                  ? <span className="text-[15px] font-semibold" style={{ color: "var(--ink-2)" }}>memorised, not derived</span>
-                  : <>-{ref.spec.suffix} <span className="text-[13px] font-normal" style={{ color: "var(--ink-3)" }}>on the genitive</span></>}
+                  ? <span className="text-base font-semibold" style={{ color: "var(--ink-2)" }}>memorised, not derived</span>
+                  : <>-{ref.spec.suffix} <span className="text-xs font-normal" style={{ color: "var(--ink-3)" }}>on the genitive</span></>}
               </dd>
             </div>
           </dl>
           {ref.englishHook && (
-            <p className="mt-4 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+            <p className="mt-4 text-sm" style={{ color: "var(--ink-2)" }}>
               <span className="label-xs mr-2" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>In English</span>
               {ref.englishHook}
             </p>
@@ -115,7 +115,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           <Card>
             <ul className="flex flex-col gap-2.5">
               {ref.uses.map((use) => (
-                <li key={use} className="flex items-start gap-2.5 text-[14.5px]" style={{ color: "var(--ink-2)" }}>
+                <li key={use} className="flex items-start gap-2.5 text-base" style={{ color: "var(--ink-2)" }}>
                   <span
                     aria-hidden
                     className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full"
@@ -132,8 +132,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           <SectionTitle>Watch out</SectionTitle>
           <Card tone="butter">
             <div className="flex items-start gap-3">
-              <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--butter)" }} />
-              <p className="text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              <TriangleAlert size={18} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--butter-ink)" }} />
+              <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 {ref.watchOut}
               </p>
             </div>
@@ -155,7 +155,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               className="overflow-x-auto rounded-[var(--r-lg)] border"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
             >
-              <table className="w-full min-w-[460px] text-[14px]">
+              <table className="w-full min-w-[460px] text-sm">
                 <thead>
                   <tr>
                     {["Word", "Genitive", ref.spec.en, "From"].map((h) => (
@@ -177,11 +177,11 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                           href={`/dictionary?q=${encodeURIComponent(example.lemma)}`}
                           className="hover:underline"
                         >
-                          <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>
+                          <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>
                             {example.lemma}
                           </span>
                         </Link>
-                        <span className="block text-[12px]" style={{ color: "var(--ink-3)" }}>
+                        <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
                           {example.translation}
                         </span>
                       </td>
@@ -190,7 +190,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                       </td>
                       <td className="px-3 py-2.5">
                         <span className="inline-flex items-center gap-1.5">
-                          <span lang="et" className="est text-[15.5px] font-semibold" style={{ color: "var(--accent)" }}>
+                          <span lang="et" className="est text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
                             {example.form}
                           </span>
                           <Speak text={example.form} label={`Hear "${example.form}"`} size={13} />
@@ -220,22 +220,22 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                 <li key={`${example.lexemeId}-sentence`}>
                   <Card>
                     <div className="flex items-start gap-2">
-                      <p lang="et" className="est flex-1 text-[15.5px] leading-snug" style={{ color: "var(--ink)" }}>
+                      <p lang="et" className="est flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
                         {example.sentence!.et}
                       </p>
                       <Speak text={example.sentence!.et} label="Hear the sentence" />
                     </div>
                     {example.sentence!.en && (
-                      <p className="mt-1 flex items-center gap-2 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                      <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
                         <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
                           AI
                         </Chip>
                       </p>
                     )}
-                    <p className="mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                    <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                       contains{" "}
-                      <span lang="et" className="est" style={{ color: "var(--accent)" }}>{example.form}</span>
+                      <span lang="et" className="est" style={{ color: "var(--accent-deep)" }}>{example.form}</span>
                       {", "}the {ref.spec.en.toLowerCase()} of{" "}
                       <span lang="et" className="est">{example.lemma}</span>
                     </p>
@@ -272,7 +272,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           {previous ? (
             <Link
               href={`/grammar/${previous.key.toLowerCase()}`}
-              className="flex items-center gap-1.5 text-[13.5px]"
+              className="flex items-center gap-1.5 text-sm"
               style={{ color: "var(--ink-2)" }}
             >
               <ArrowLeft size={14} aria-hidden /> {previous.spec.en}
@@ -281,7 +281,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           {next && (
             <Link
               href={`/grammar/${next.key.toLowerCase()}`}
-              className="flex items-center gap-1.5 text-[13.5px]"
+              className="flex items-center gap-1.5 text-sm"
               style={{ color: "var(--ink-2)" }}
             >
               {next.spec.en} <ArrowRight size={14} aria-hidden />

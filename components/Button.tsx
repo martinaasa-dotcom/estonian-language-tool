@@ -22,18 +22,18 @@ const STYLES: Record<Variant, CSSProperties & { className?: string }> = {
   secondary: { background: "var(--surface)", color: "var(--ink)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" },
   soft: { background: "var(--accent-soft)", color: "var(--accent-deep)", borderColor: "transparent" },
   ghost: { background: "transparent", color: "var(--ink-2)", borderColor: "transparent" },
-  danger: { background: "var(--again-soft)", color: "var(--again)", borderColor: "transparent" },
+  danger: { background: "var(--again-soft)", color: "var(--again-ink)", borderColor: "transparent" },
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-[13px]",
-  md: "px-4 py-2.5 text-[14px]",
-  lg: "px-6 py-3.5 text-[15.5px]",
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-4 py-2.5 text-sm",
+  lg: "px-6 py-3.5 text-base",
 };
 
 const base =
   "press inline-flex items-center justify-center gap-2 rounded-full border font-semibold " +
-  "transition-all duration-200 hover:brightness-[1.04] hover:-translate-y-px " +
+  "transition-ui hover:brightness-[1.04] hover:-translate-y-px " +
   "disabled:pointer-events-none disabled:opacity-45";
 
 function split(variant: Variant) {

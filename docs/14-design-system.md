@@ -40,6 +40,37 @@ Two uses of colour, and only one of them carries meaning:
   in a session summary, and the practice modes on Today, cycle the palette so they can be scanned
   — XP is blush there because it is the fifth tile, not because Anu is involved.
 
+### Every hue has an ink
+
+The five hues are chosen to read as *colour* at full strength — a bar, a ring, a
+dot, a filled button. Set as **text on their own 8% tint** they land around
+2.5:1, which is decoration pretending to be a label. So each hue also has an
+ink: the same colour walked down until it clears 4.5:1 on its own tint.
+
+| Use | Token |
+|---|---|
+| A bar, ring, dot, or filled surface | `--mint`, `--peach`, `--butter`, `--sky`, `--blush`, `--accent` |
+| Text or a meaningful icon on that hue's tint | `--mint-ink`, `--peach-ink`, `--butter-ink`, `--sky-ink`, `--blush-ink`, **`--accent-deep`** |
+| Text on the *solid* accent | `--accent-ink` (white) |
+
+The accent is the trap: `--accent-ink` was already the white that sits on the
+solid button, so the accent's *tint* ink is `--accent-deep`. Anything building a
+token name from a tone must go through `toneInk()` in `components/ui.tsx`, or it
+paints white text on a pale lilac tile.
+
+The grading aliases follow: `--good-ink`, `--hard-ink`, `--again-ink`,
+`--easy-ink`. In dark mode each ink is the hue itself — the dark tints are deep
+enough that the hue already clears 7:1 on them.
+
+`--ink-3` is picked against every surface in the system rather than against
+white: 4.59:1 on the softest tint and better everywhere else, so a caption stays
+legible on a pastel tile.
+
+Both gradients are pinned to contrast too. `.grad-accent` carries white text, so
+every stop clears 4.5:1 against white; `.grad-text` *is* the text, so every stop
+clears 4.5:1 against the page. The previous ramp ran 4.05 → 3.46 → 3.50, which
+made the app's most-pressed button its least legible surface.
+
 ## 2. Tokens
 
 Defined twice in `app/globals.css`, deliberately:
@@ -52,13 +83,40 @@ system-light (bare `:root`), system-dark (`prefers-color-scheme` guarded by
 `:root:not([data-theme="light"])`), and explicitly chosen (`:root[data-theme="…"]`).
 
 Shape: `--r-sm` 10px, `--r` 16px, `--r-lg` 22px, `--r-xl` 30px. Buttons, chips and pills are
-fully round. Shadows are violet-tinted rather than grey (`--shadow-sm/-/-lg`), plus
-`--shadow-accent` for the one gradient button.
+fully round. Tailwind's own radius names are remapped onto those four in `@theme`, so a stray
+`rounded-md` lands on 10px instead of inventing a 6px corner. The single exception is the heatmap
+cell: at 10px square, a token radius rounds it into a dot and the grid stops reading as a calendar.
+
+Shadows are violet-tinted rather than grey (`--shadow-sm/-/-lg`), plus `--shadow-accent` for the
+one gradient button.
 
 ## 3. Type
 
 - **Fraunces** (`.est`) — headings, numbers that matter, and every Estonian word in the app.
 - **Plus Jakarta Sans** — the interface around it.
+
+**Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes —
+13px and 13.5px and 14px appearing inside one card, each chosen once and never compared with the
+others. A reader does not see half a pixel; they see a page that will not settle.
+
+| Step | px | Job |
+|---|---|---|
+| `text-2xs` | 11.5 | micro-label: uppercase, tracked, sparingly. **The floor** |
+| `text-xs` | 12.5 | captions, meta, provenance |
+| `text-sm` | 13.5 | secondary body, dense UI |
+| `text-base` | 15 | body |
+| `text-md` | 17 | lead paragraphs, card titles |
+| `text-lg` | 19 | section headings |
+| `text-xl` | 22 | card headline |
+| `text-2xl` | 27 | the number a screen is about |
+| `text-3xl` | 32 | page title |
+| `text-4xl` | 40 | display |
+| `text-5xl` / `6xl` | 52 / 68 | landing hero |
+
+11.5px is a floor, not a suggestion: below it an uppercase label stops being readable on a phone
+held at arm's length in the evening, which is when this app is actually used. `.label-xs` sits on
+that floor. The one thing off the scale is the step numeral behind the landing page's how-it-works
+cards — that is ornament, not type.
 
 Both are loaded with `latin-ext`, which is not optional: without it `õ ä ö ü š ž` fall back to a
 different face mid-word. The font variables are attached to `<html>`, not `<body>`, because
@@ -71,6 +129,9 @@ Small, physical, and never blocking:
 
 - `.lift` — cards that are themselves a link rise 3px on hover.
 - `.press` — every button dips on `:active`. This is most of what makes the app feel responsive.
+- `.transition-ui` — the shared transition, with its properties named. Never `transition-all`:
+  that animates `outline-width` too, so a focus ring fades in over 200ms and a keyboard user
+  watches it arrive.
 - `.fade-up`, `.pop-in` — entrances for content that has just arrived (a flipped card, a summary).
 - `.float` — the mascot and the landing page's decorative letters.
 - `.reveal` — the landing page's scroll-driven section reveal, done with CSS scroll timelines so

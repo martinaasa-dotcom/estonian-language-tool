@@ -112,10 +112,10 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
-          <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
             Tubli töö. That&rsquo;s every word in this round.
           </p>
         </div>
@@ -148,7 +148,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
         </Link>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
           <div
-            className="grad-accent h-full rounded-full transition-all duration-500"
+            className="grad-accent h-full rounded-full transition-[width] duration-500"
             style={{ width: `${Math.max((index / cards.length) * 100, 2)}%` }}
             role="progressbar"
             aria-valuenow={index}
@@ -171,18 +171,18 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
       >
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><Headphones size={12} aria-hidden /> Listening</Chip>
-          <span className="ml-auto text-[12.5px]" style={{ color: "var(--ink-3)" }}>{correct} correct</span>
+          <span className="ml-auto text-xs" style={{ color: "var(--ink-3)" }}>{correct} correct</span>
         </div>
 
         <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 px-6 py-10 text-center" aria-live="polite">
           {!answered ? (
             noAudio ? (
               <>
-                <p lang="et" className="est text-[30px] font-semibold" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="est text-2xl font-semibold" style={{ color: "var(--ink)" }}>
                   {card.lemma}
                 </p>
-                <p className="max-w-[40ch] text-[13px]" style={{ color: "var(--ink-3)" }}>
-                  No audio right now. The pronunciation service could not be reached, so the word is
+                <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
+                  No audio right now, the pronunciation service could not be reached, so the word is
                   shown instead. Still worth answering; come back for the listening part.
                 </p>
               </>
@@ -192,15 +192,15 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                   text={card.lemma}
                   size={30}
                   onUnavailable={() => setNoAudio(true)}
-                  className="press flex h-24 w-24 items-center justify-center rounded-full transition-all hover:-translate-y-0.5"
+                  className="press flex h-24 w-24 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
                 />
-                <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap to hear the word, tap again to replay</p>
+                <p className="text-xs" style={{ color: "var(--ink-3)" }}>Tap to hear the word, tap again to replay</p>
               </>
             )
           ) : (
             <div className="flex items-center gap-2">
-              <p lang="et" className="est text-[30px] font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
+              <p lang="et" className="est text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
               <Speak text={card.lemma} />
             </div>
           )}
@@ -213,9 +213,9 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
             const tone = !answered
               ? { background: "var(--raised)", color: "var(--ink)" }
               : isCorrectChoice
-                ? { background: "var(--good-soft)", color: "var(--good)" }
+                ? { background: "var(--good-soft)", color: "var(--good-ink)" }
                 : isPicked
-                  ? { background: "var(--again-soft)", color: "var(--again)" }
+                  ? { background: "var(--again-soft)", color: "var(--again-ink)" }
                   : { background: "var(--raised)", color: "var(--ink-3)" };
             return (
               <button
@@ -223,10 +223,10 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                 type="button"
                 disabled={answered || busy}
                 onClick={() => void pick(choice)}
-                className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-[14.5px] font-semibold transition-all hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
+                className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-base font-semibold transition-ui hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
                 style={tone}
               >
-                <kbd className="text-[10.5px] opacity-60">{i + 1}</kbd>
+                <kbd className="text-2xs opacity-60">{i + 1}</kbd>
                 <span className="flex-1">{choice}</span>
                 {answered && isCorrectChoice && <Check size={15} aria-hidden />}
                 {answered && isPicked && !isCorrectChoice && <X size={15} aria-hidden />}
@@ -239,7 +239,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
             <Button variant="primary" size="lg" className="w-full" onClick={next}>
               Continue
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-[11px]" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
             </Button>
           </div>
         )}

@@ -13,7 +13,7 @@ import { dayKey, recentDayKeys } from "@/lib/time/day";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile, toneInk } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 
@@ -100,15 +100,15 @@ export default async function TodayPage() {
                   label={`${summary.reviewsToday} of ${summary.dailyGoal} reviews toward today's goal`}
                 >
                   <span
-                    className="est tnum text-[15px] font-bold"
-                    style={{ color: summary.goalPct >= 100 ? "var(--good)" : "var(--ink)" }}
+                    className="est tnum text-base font-bold"
+                    style={{ color: summary.goalPct >= 100 ? "var(--good-ink)" : "var(--ink)" }}
                   >
                     {summary.goalPct}%
                   </span>
                 </Ring>
                 <div aria-hidden className="sm:hidden">
                   <p className="label-xs" style={{ color: "var(--ink-3)" }}>Daily goal</p>
-                  <p className="tnum mt-1 text-[13px]" style={{ color: "var(--ink-2)" }}>
+                  <p className="tnum mt-1 text-xs" style={{ color: "var(--ink-2)" }}>
                     {summary.reviewsToday} of {summary.dailyGoal} reviews
                   </p>
                 </div>
@@ -137,7 +137,7 @@ export default async function TodayPage() {
                 <span className="label-xs" style={{ color: "var(--ink-3)" }}>
                   Level {summary.level.level} · <span lang="et">{summary.level.title}</span>
                 </span>
-                <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+                <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
                   {summary.level.into}/{summary.level.span} XP
                 </span>
               </div>
@@ -145,7 +145,7 @@ export default async function TodayPage() {
                 pct={summary.level.pct}
                 label={`Level ${summary.level.level}, ${summary.level.remaining} XP to the next level`}
               />
-              <p className="mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                 {summary.xpToday > 0 ? `+${summary.xpToday} XP today. ` : ""}
                 {summary.level.remaining} XP to level {summary.level.level + 1}.
               </p>
@@ -156,7 +156,7 @@ export default async function TodayPage() {
               {week.map((d) => (
                 <div key={d.day} className="flex flex-1 flex-col items-center gap-1.5">
                   <span
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-bold"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
                     style={{
                       background: d.done ? "var(--mint)" : "var(--raised)",
                       color: d.done ? "var(--surface)" : "var(--ink-3)",
@@ -170,7 +170,7 @@ export default async function TodayPage() {
                   <span className="sr-only">
                     {d.day}: {d.done ? "reviewed" : "no reviews"}
                   </span>
-                  <span className="label-xs" style={{ color: "var(--ink-3)" }}>
+                  <span className="text-2xs font-semibold" style={{ color: "var(--ink-3)" }}>
                     {weekdayLetter(d.day)}
                   </span>
                 </div>
@@ -178,8 +178,8 @@ export default async function TodayPage() {
             </div>
 
             {summary.shieldsAvailable > 0 && (
-              <p className="flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-                <Shield size={13} aria-hidden style={{ color: "var(--accent)" }} />
+              <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
+                <Shield size={13} aria-hidden style={{ color: "var(--accent-deep)" }} />
                 {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked, one
                 missed day won&rsquo;t break your streak.
               </p>
@@ -207,15 +207,15 @@ export default async function TodayPage() {
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                       style={{
                         background: q.done ? "var(--surface)" : "var(--accent-soft)",
-                        color: q.done ? "var(--good)" : "var(--accent-deep)",
+                        color: q.done ? "var(--good-ink)" : "var(--accent-deep)",
                       }}
                     >
                       <Icon size={17} aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-3">
-                        <span className="text-[14.5px] font-semibold" style={{ color: "var(--ink)" }}>{q.title}</span>
-                        <span className="tnum text-[12px]" style={{ color: "var(--ink-3)" }}>
+                        <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>{q.title}</span>
+                        <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
                           {q.progress}/{q.target}
                         </span>
                       </span>
@@ -227,7 +227,7 @@ export default async function TodayPage() {
                           height={5}
                         />
                       </span>
-                      <span className="mt-1.5 block text-[12px]" style={{ color: "var(--ink-3)" }}>
+                      <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>
                         {q.detail} · +{q.reward} XP
                       </span>
                     </span>
@@ -241,9 +241,9 @@ export default async function TodayPage() {
             <SectionTitle hint={overdue > 0 ? `${overdue} overdue` : undefined}>Tasks</SectionTitle>
             {tasks.length === 0 ? (
               <Card>
-                <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                   Nothing outstanding.{" "}
-                  <Link href="/tasks" className="font-semibold underline underline-offset-2" style={{ color: "var(--accent)" }}>
+                  <Link href="/tasks" className="font-semibold underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
                     Add homework
                   </Link>{" "}
                   to keep class work in one place.
@@ -273,13 +273,13 @@ export default async function TodayPage() {
               <div className="flex items-center gap-3">
                 <NextUnitIcon name={nextUnit.unit.icon} />
                 <div className="min-w-0">
-                  <p lang="et" className="est text-[20px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="est text-lg font-bold leading-tight" style={{ color: "var(--ink)" }}>
                     {nextUnit.unit.title}
                   </p>
-                  <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>{nextUnit.unit.subtitle}</p>
+                  <p className="text-xs" style={{ color: "var(--ink-3)" }}>{nextUnit.unit.subtitle}</p>
                 </div>
               </div>
-              <p className="mt-3 text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{nextUnit.unit.blurb}</p>
+              <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>{nextUnit.unit.blurb}</p>
               <div className="mt-3.5">
                 <Meter pct={nextUnit.pct} label={`${nextUnit.unit.title}: ${nextUnit.pct}% complete`} />
               </div>
@@ -310,8 +310,8 @@ export default async function TodayPage() {
                 grid stays a grid. */}
             <Link
               href="/practice"
-              className="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-semibold"
-              style={{ color: "var(--accent)" }}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold"
+              style={{ color: "var(--accent-deep)" }}
             >
               Every mode, and a drill for your weakest case <ArrowRight size={13} aria-hidden />
             </Link>
@@ -321,20 +321,20 @@ export default async function TodayPage() {
             <Card>
               <SectionTitle hint="from your weakest cards">Word to revisit</SectionTitle>
               <div className="flex items-center gap-2">
-                <p lang="et" className="est text-[28px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
                   {wordOfDay.lemma}
                 </p>
                 <Speak text={wordOfDay.lemma} />
               </div>
-              <p className="mt-1 text-[14px]" style={{ color: "var(--ink-2)" }}>{wordOfDay.translation}</p>
+              <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>{wordOfDay.translation}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {wordOfDay.cefr && <Chip tone="sky">{wordOfDay.cefr}</Chip>}
                 {wordOfDay.gradationNote && <Chip tone="hard" caseSensitive>{wordOfDay.gradationNote}</Chip>}
               </div>
               <Link
                 href={`/dictionary?q=${encodeURIComponent(wordOfDay.lemma)}`}
-                className="mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold"
-                style={{ color: "var(--accent)" }}
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold"
+                style={{ color: "var(--accent-deep)" }}
               >
                 <BookOpen size={14} aria-hidden /> See the full paradigm
               </Link>
@@ -343,12 +343,12 @@ export default async function TodayPage() {
 
           <Card tone="blush">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} aria-hidden style={{ color: "var(--blush)" }} />
-              <h2 className="label-xs" style={{ color: "var(--blush)" }}>
+              <Sparkles size={16} aria-hidden style={{ color: "var(--blush-ink)" }} />
+              <h2 className="label-xs" style={{ color: "var(--blush-ink)" }}>
                 {tutorReady ? "Stuck on something?" : "Anu needs a key"}
               </h2>
             </div>
-            <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
               {tutorReady
                 ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
                 : "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."}
@@ -379,9 +379,9 @@ function PracticeTile({ href, tone, icon: glyph, title, body }: {
       className="lift flex flex-col gap-1 rounded-[var(--r)] p-4"
       style={{ background: `var(--${tone}-soft)` }}
     >
-      <span style={{ color: `var(--${tone})` }}>{glyph}</span>
-      <span className="est mt-1 text-[15.5px] font-bold" style={{ color: "var(--ink)" }}>{title}</span>
-      <span className="text-[11.5px]" style={{ color: "var(--ink-3)" }}>{body}</span>
+      <span style={{ color: toneInk(tone) }}>{glyph}</span>
+      <span className="est mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{title}</span>
+      <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{body}</span>
     </Link>
   );
 }

@@ -14,6 +14,39 @@
   :root copy is the one that flips in dark mode.
 */
 @theme {
+  /*
+    The type scale.
+
+    Eleven steps, and nothing between them. Before this the app used
+    twenty-eight distinct sizes — 13px and 13.5px and 14px all appearing in the
+    same card, each one a decision made once and never compared with the others.
+    A reader does not see 0.5px; they see a page that will not settle.
+
+    The steps are named for their job rather than their size, and the floor is
+    11.5px: below that an uppercase label stops being readable on a phone held
+    at arm's length in the evening, which is when this app is actually used.
+  */
+  --text-2xs: 11.5px;   /* micro-label: uppercase, tracked, sparingly */
+  --text-xs: 12.5px;    /* captions, meta, provenance */
+  --text-sm: 13.5px;    /* secondary body, dense UI */
+  --text-base: 15px;    /* body */
+  --text-md: 17px;      /* lead paragraphs, card titles */
+  --text-lg: 19px;      /* section headings */
+  --text-xl: 22px;      /* card headline */
+  --text-2xl: 27px;     /* the number a screen is about */
+  --text-3xl: 32px;     /* page title */
+  --text-4xl: 40px;     /* display */
+  --text-5xl: 52px;     /* landing hero */
+  --text-6xl: 68px;     /* the same hero, once there is room for it */
+
+  /* Tailwind's radius names, mapped onto the four the system actually has, so
+     a stray `rounded-md` lands on 10px rather than inventing a 6px corner. */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-2xl: 30px;
+
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
@@ -23,7 +56,7 @@
   --color-raised: #f4f1fe;
   --color-ink: #241f35;
   --color-ink-2: #5b5470;
-  --color-ink-3: #8b84a3;
+  --color-ink-3: #6b6485;
   --color-rule: #e8e3f7;
   --color-rule-soft: #f2effb;
 
@@ -33,14 +66,19 @@
 
   --color-mint: #1fb894;
   --color-mint-soft: #dcf7ee;
+  --color-mint-ink: #0e735d;
   --color-peach: #ef6f52;
   --color-peach-soft: #ffe6df;
+  --color-peach-ink: #b0341f;
   --color-butter: #cf9114;
   --color-butter-soft: #fff0d4;
+  --color-butter-ink: #845c0b;
   --color-sky: #2b93d8;
   --color-sky-soft: #ddeffd;
+  --color-sky-ink: #1868a0;
   --color-blush: #e2559a;
   --color-blush-soft: #ffe2f0;
+  --color-blush-ink: #a72e6b;
 
   --color-again: #ef6f52;
   --color-hard: #cf9114;
@@ -62,7 +100,10 @@
     --raised: #f4f1fe;
     --ink: #241f35;
     --ink-2: #5b5470;
-    --ink-3: #8b84a3;
+    /* Tertiary ink, chosen against every surface in the system rather than
+       against white: 4.59:1 on the softest tint (blush) and better everywhere
+       else, so a caption stays legible on a pastel tile. */
+    --ink-3: #6b6485;
     --rule: #e8e3f7;
     --rule-soft: #f2effb;
 
@@ -81,6 +122,25 @@
     --sky-soft: #ddeffd;
     --blush: #e2559a;
     --blush-soft: #ffe2f0;
+
+    /*
+      Text on a pastel tile.
+
+      The five hues are chosen to read as colour at full strength on white — as
+      a bar, a ring, a dot. Set as *text* on their own 8%-tint they land around
+      2.5:1, which is decoration pretending to be a label. Every hue therefore
+      has an ink: the same colour walked down until it clears 4.5:1 on its own
+      tint, so a chip, a stat tile and a grade button can all be read.
+    */
+    --mint-ink: #0e735d;
+    --peach-ink: #b0341f;
+    --butter-ink: #845c0b;
+    --sky-ink: #1868a0;
+    --blush-ink: #a72e6b;
+    --good-ink: var(--mint-ink);
+    --hard-ink: var(--butter-ink);
+    --again-ink: var(--peach-ink);
+    --easy-ink: var(--sky-ink);
 
     --again: var(--peach);
     --hard: var(--butter);
@@ -136,6 +196,18 @@
       --blush: #ff9cc7;
       --blush-soft: #371c2c;
 
+      /* Dark tints are deep enough that each hue already reads as text on its
+         own tile — 7.5:1 and up — so the ink is the hue. */
+      --mint-ink: var(--mint);
+      --peach-ink: var(--peach);
+      --butter-ink: var(--butter);
+      --sky-ink: var(--sky);
+      --blush-ink: var(--blush);
+      --good-ink: var(--mint);
+      --hard-ink: var(--butter);
+      --again-ink: var(--peach);
+      --easy-ink: var(--sky);
+
       --wash-1: #2b2358;
       --wash-2: #3b1f36;
       --wash-3: #123a33;
@@ -174,6 +246,16 @@
     --sky-soft: #132a3d;
     --blush: #ff9cc7;
     --blush-soft: #371c2c;
+
+    --mint-ink: var(--mint);
+    --peach-ink: var(--peach);
+    --butter-ink: var(--butter);
+    --sky-ink: var(--sky);
+    --blush-ink: var(--blush);
+    --good-ink: var(--mint);
+    --hard-ink: var(--butter);
+    --again-ink: var(--peach);
+    --easy-ink: var(--sky);
 
     --wash-1: #2b2358;
     --wash-2: #3b1f36;
@@ -406,19 +488,26 @@
   .tnum { font-variant-numeric: tabular-nums; }
 
   .label-xs {
-    font-size: 10.5px;
+    font-size: var(--text-2xs);
     font-weight: 700;
     letter-spacing: 0.11em;
     text-transform: uppercase;
   }
 
-  /* The one gradient in the system. Used for the primary action and for the
-     single word a headline leans on — never for body text. */
+  /*
+    The one gradient in the system. Used for the primary action and for the
+    single word a headline leans on — never for body text.
+
+    Both ramps are pinned to contrast, not to taste. `grad-accent` carries white
+    text, so every stop clears 4.5:1 against white (the old ramp ran 4.05 → 3.46
+    → 3.50, which made the app's most-pressed button its least legible one).
+    `grad-text` is the text, so every stop clears 4.5:1 against the page.
+  */
   .grad-accent {
-    background-image: linear-gradient(112deg, var(--accent) 0%, #9a72f2 45%, var(--blush) 100%);
+    background-image: linear-gradient(112deg, #6a5ae8 0%, #7a4fdc 45%, #c33a7e 100%);
   }
   .grad-text {
-    background-image: linear-gradient(112deg, var(--accent) 0%, #9a72f2 40%, var(--blush) 92%);
+    background-image: linear-gradient(112deg, var(--accent-deep) 0%, #7b3fd0 40%, var(--blush-ink) 92%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -431,6 +520,21 @@
     filter: blur(64px);
     opacity: 0.75;
     pointer-events: none;
+  }
+
+  /*
+    The transition every control uses, with the properties named.
+
+    Not `transition-all`: that animates `outline-width` too, so a focus ring
+    fades in over 200ms and a keyboard user watches it arrive. It also animates
+    a dozen properties nothing here changes. Naming them keeps the ring instant
+    and the work off the compositor's list.
+  */
+  .transition-ui {
+    transition-property: color, background-color, border-color, box-shadow,
+                         transform, opacity, filter;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .lift {

@@ -70,7 +70,7 @@ export function ImportPanel() {
 
   return (
     <Card>
-      <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+      <p className="text-sm" style={{ color: "var(--ink-2)" }}>
         Paste a word list, from Speakly, a spreadsheet, or typed off a class handout. One word per
         line, Estonian first. Tabs, dashes, commas and semicolons all work as separators.
       </p>
@@ -80,7 +80,7 @@ export function ImportPanel() {
         rows={6}
         placeholder={EXAMPLE}
         aria-label="Paste word list"
-        className="est mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-[15px] outline-none"
+        className="est mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base outline-none"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
 
@@ -93,7 +93,7 @@ export function ImportPanel() {
             {rows.slice(0, 40).map((r, i) => (
               <li
                 key={i}
-                className="flex justify-between gap-4 px-3 py-1.5 text-[13.5px]"
+                className="flex justify-between gap-4 px-3 py-1.5 text-sm"
                 style={{ borderTop: i ? "1px solid var(--rule-soft)" : undefined }}
               >
                 <span lang="et" className="est" style={{ color: "var(--ink)" }}>{r.lemma}</span>
@@ -109,7 +109,7 @@ export function ImportPanel() {
           <Upload size={15} aria-hidden />
           {pending ? "Adding…" : `Add ${rows.length || ""} word${rows.length === 1 ? "" : "s"}`}
         </Button>
-        {result && <p className="text-[13.5px]" style={{ color: "var(--good)" }}>{result}</p>}
+        {result && <p className="text-sm" style={{ color: "var(--good-ink)" }}>{result}</p>}
       </div>
     </Card>
   );

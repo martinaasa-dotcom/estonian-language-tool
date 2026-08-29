@@ -53,14 +53,14 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="label-xs" style={{ color: "var(--ink-3)" }}>Badge earned</p>
-                <p className="est text-[15px] font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
-                <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-2)" }}>{b.description}</p>
+                <p className="est text-base font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>{b.description}</p>
               </div>
               <button
                 type="button"
                 aria-label="Dismiss"
                 onClick={() => setQueue((q) => q.filter((x) => x.key !== b.key))}
-                className="shrink-0 rounded p-1"
+                className="shrink-0 rounded-md p-1"
                 style={{ color: "var(--ink-3)" }}
               >
                 <X size={15} aria-hidden />

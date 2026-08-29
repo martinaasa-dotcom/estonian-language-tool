@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, Trophy, Users } from "lucide-react";
+import { CircleHelp, Flame, Trophy, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -127,15 +127,15 @@ export default async function ProgressPage() {
       <div className="flex flex-col gap-6">
         <Card className="flex flex-wrap items-center gap-6">
           <Ring pct={summary.level.pct} size={78} label={`Level ${summary.level.level}, ${summary.level.pct}% to the next`}>
-            <span className="est tnum text-[20px] font-bold" style={{ color: "var(--ink)" }}>
+            <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
               {summary.level.level}
             </span>
           </Ring>
           <div className="min-w-0 flex-1">
-            <p lang="et" className="est text-[20px] font-semibold" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--ink)" }}>
               {summary.level.title}
             </p>
-            <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>
+            <p className="text-xs" style={{ color: "var(--ink-3)" }}>
               {summary.level.gloss} · {summary.level.totalXp} XP total · {summary.level.remaining} to level {summary.level.level + 1}
             </p>
             <div className="mt-2 max-w-sm">
@@ -144,10 +144,10 @@ export default async function ProgressPage() {
           </div>
           <div className="flex flex-wrap items-center gap-7">
             <Stat
-              value={<span className="inline-flex items-center gap-1.5">{summary.streak}<Flame size={18} aria-hidden style={{ color: "var(--hard)" }} /></span>}
+              value={<span className="inline-flex items-center gap-1.5">{summary.streak}<Flame size={18} aria-hidden style={{ color: "var(--hard-ink)" }} /></span>}
               label="Day streak"
             />
-            <Stat value={snapshot.knownCards} label="Cards known" tone="var(--good)" />
+            <Stat value={snapshot.knownCards} label="Cards known" tone="var(--good-ink)" />
             <Stat value={breakdown.accuracy === null ? NO_VALUE : `${breakdown.accuracy}%`} label="Recall rate" />
             <ShareProgress />
           </div>
@@ -176,18 +176,18 @@ export default async function ProgressPage() {
                     : `${retention.retention}% of mature cards recalled, against a ${retention.target}% target`
                 }
               >
-                <span className="est tnum text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+                <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
                   {retention.retention === null ? NO_VALUE : `${retention.retention}%`}
                 </span>
               </Ring>
               <div className="min-w-0 flex-1">
-                <p className="est text-[18px] font-bold" style={{ color: "var(--ink)" }}>
+                <p className="est text-md font-bold" style={{ color: "var(--ink)" }}>
                   {retention.headline}
                 </p>
-                <p className="mt-1.5 max-w-[62ch] text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                <p className="mt-1.5 max-w-[62ch] text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                   {retention.advice}
                 </p>
-                <p className="tnum mt-2 text-[12px]" style={{ color: "var(--ink-3)" }}>
+                <p className="tnum mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   {retention.recalled} recalled of {retention.reviews} mature reviews · target {retention.target}%
                 </p>
               </div>
@@ -200,7 +200,7 @@ export default async function ProgressPage() {
           <Card>
             <Heatmap days={heatmap} />
             {hour !== null && (
-              <p className="mt-3 text-[13px]" style={{ color: "var(--ink-2)" }}>
+              <p className="mt-3 text-xs" style={{ color: "var(--ink-2)" }}>
                 You study most at {formatHour(hour)}. Reviews done at a consistent time are the ones
                 that survive a busy week.
               </p>
@@ -223,13 +223,13 @@ export default async function ProgressPage() {
                       }}
                       title={`${f.day}: ${f.count} card${f.count === 1 ? "" : "s"} due`}
                     />
-                    <span className="tnum text-[10.5px]" style={{ color: "var(--ink-3)" }}>
+                    <span className="text-2xs" style={{ color: "var(--ink-3)" }}>
                       {f.offset === 0 ? "now" : f.offset % 2 === 0 ? f.offset : ""}
                     </span>
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                 {dueDates.length === 0
                   ? "Nothing scheduled yet. This fills in as cards graduate out of the learning steps."
                   : "Overdue cards are counted as today, because that is when the work is. A flat-ish shape means the scheduler has settled; a spike means a big day was added at once."}
@@ -257,7 +257,7 @@ export default async function ProgressPage() {
                 ))}
               </div>
               {breakdown.total === 0 && (
-                <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                   No reviews in this window yet. Each bar is a day, coloured by how much you recalled.
                 </p>
               )}
@@ -274,7 +274,7 @@ export default async function ProgressPage() {
         {sticking.length > 0 && (
           <section>
             <SectionTitle hint="worst first">Sticking points</SectionTitle>
-            <p className="mb-3 max-w-[68ch] text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+            <p className="mb-3 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
               Cards you have learned and forgotten more than once. A card that keeps lapsing is
               usually a grammar problem wearing a vocabulary costume, so the explanation comes
               first, and setting it aside is the last resort rather than the first.
@@ -288,18 +288,23 @@ export default async function ProgressPage() {
             <SectionTitle hint="weakest first">Cases</SectionTitle>
             <Card>
               {cases.length === 0 ? (
-                <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                   No case-form cards answered yet. Add a noun unit from the{" "}
-                  <Link href="/learn" className="underline" style={{ color: "var(--accent)" }}>path</Link>{" "}
+                  <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
                   and this becomes the most useful chart here.
                 </p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {cases.map((c) => (
-                    <li key={c.grammCase}>
+                    // Two destinations for one row: the bar drills the case,
+                    // the question mark explains it. Side by side rather than
+                    // stacked — drilling a case you have not understood yet
+                    // only fails faster, so the way out has to be visible
+                    // without turning the list into two lines per case.
+                    <li key={c.grammCase} className="flex items-center gap-1">
                       <Link
                         href={`/review?case=${c.grammCase}`}
-                        className="flex items-center gap-3 rounded px-1 py-1 text-[13.5px] transition-opacity hover:opacity-75"
+                        className="flex flex-1 items-center gap-3 rounded-md px-1 py-1 text-sm transition-opacity hover:opacity-75"
                       >
                         <span className="w-24" style={{ color: "var(--ink-2)" }}>{c.grammCase.toLowerCase()}</span>
                         <span className="flex-1">
@@ -310,18 +315,18 @@ export default async function ProgressPage() {
                             height={5}
                           />
                         </span>
-                        <span className="tnum w-16 text-right text-[12px]" style={{ color: "var(--ink-3)" }}>
+                        <span className="tnum w-16 text-right text-xs" style={{ color: "var(--ink-3)" }}>
                           {c.accuracy}% · {c.total}
                         </span>
                       </Link>
-                      {/* Drilling a case you do not understand yet just fails
-                          faster, so the explanation sits next to the drill. */}
                       <Link
                         href={`/grammar/${c.grammCase.toLowerCase()}`}
-                        className="ml-1 text-[11.5px] underline"
+                        aria-label={`What the ${c.grammCase.toLowerCase()} is for`}
+                        title={`What the ${c.grammCase.toLowerCase()} is for`}
+                        className="press flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
                         style={{ color: "var(--ink-3)" }}
                       >
-                        what is the {c.grammCase.toLowerCase()} for?
+                        <CircleHelp size={14} aria-hidden />
                       </Link>
                     </li>
                   ))}
@@ -339,19 +344,19 @@ export default async function ProgressPage() {
                   if (!entry || entry.total.size === 0) return null;
                   const pct = Math.round((entry.known.size / entry.total.size) * 100);
                   return (
-                    <li key={level} className="flex items-center gap-3 text-[13.5px]">
+                    <li key={level} className="flex items-center gap-3 text-sm">
                       <span className="w-8" style={{ color: "var(--ink-2)" }}>{level}</span>
                       <span className="flex-1">
                         <Meter pct={pct} label={`${level}: ${entry.known.size} of ${entry.total.size} known`} height={5} />
                       </span>
-                      <span className="tnum w-16 text-right text-[12px]" style={{ color: "var(--ink-3)" }}>
+                      <span className="tnum w-16 text-right text-xs" style={{ color: "var(--ink-3)" }}>
                         {entry.known.size}/{entry.total.size}
                       </span>
                     </li>
                   );
                 })}
               </ul>
-              <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                 Only counts words in your own deck, and only once every card made from them has
                 graduated. It is a floor on what you know, never a flattering estimate.
               </p>
@@ -373,29 +378,29 @@ export default async function ProgressPage() {
                       className="flex items-center gap-3 rounded-md px-3 py-2"
                       style={{
                         background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
-                        color: row.ownerId === ownerId ? "var(--accent)" : "var(--ink-2)",
+                        color: row.ownerId === ownerId ? "var(--accent-deep)" : "var(--ink-2)",
                       }}
                     >
-                      <span className="tnum w-6 text-[13px]">{i + 1}</span>
+                      <span className="tnum w-6 text-xs">{i + 1}</span>
                       {i === 0 && row.weeklyXp > 0
-                        ? <Trophy size={15} aria-hidden style={{ color: "var(--hard)" }} />
+                        ? <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
                         : <Users size={15} aria-hidden style={{ opacity: 0.5 }} />}
-                      <span className="min-w-0 flex-1 truncate text-[14px]">{row.displayName}</span>
-                      <span className="tnum text-[13px]">{row.weeklyXp} XP</span>
+                      <span className="min-w-0 flex-1 truncate text-sm">{row.displayName}</span>
+                      <span className="tnum text-xs">{row.weeklyXp} XP</span>
                     </li>
                   ))}
                 </ol>
                 <Link
                   href={`/class/${membership.classroomId}`}
-                  className="mt-3 inline-block text-[13px]"
-                  style={{ color: "var(--accent)" }}
+                  className="mt-3 inline-block text-xs"
+                  style={{ color: "var(--accent-deep)" }}
                 >
                   Open the class
                 </Link>
               </>
             ) : !optedIn ? (
               <>
-                <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                   Off by default. Turn it on and everyone else who has opted in (your class, say)
                   sees the name you choose and your XP for the week. Nothing else is shared: no
                   email, no word lists, no history.
@@ -418,14 +423,14 @@ export default async function ProgressPage() {
                       color: row.ownerId === ownerId ? "var(--accent)" : "var(--ink-2)",
                     }}
                   >
-                    <span className="tnum w-6 text-[13px]">{i + 1}</span>
+                    <span className="tnum w-6 text-xs">{i + 1}</span>
                     {i === 0 ? (
-                      <Trophy size={15} aria-hidden style={{ color: "var(--hard)" }} />
+                      <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
                     ) : (
                       <Users size={15} aria-hidden style={{ opacity: 0.5 }} />
                     )}
-                    <span className="min-w-0 flex-1 truncate text-[14px]">{row.name}</span>
-                    <span className="tnum text-[13px]">{row.xp} XP</span>
+                    <span className="min-w-0 flex-1 truncate text-sm">{row.name}</span>
+                    <span className="tnum text-xs">{row.xp} XP</span>
                   </li>
                 ))}
               </ol>

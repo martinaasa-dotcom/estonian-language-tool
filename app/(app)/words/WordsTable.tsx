@@ -49,10 +49,10 @@ export function WordsTable({ rows }: { rows: CardRow[] }) {
             type="button"
             onClick={() => setFilter(f)}
             aria-pressed={filter === f}
-            className="press rounded-full border px-3.5 py-1.5 text-[13px] transition-all"
+            className="press rounded-full border px-3.5 py-1.5 text-xs transition-ui"
             style={{
               borderColor: filter === f ? "transparent" : "var(--rule)",
-              background: filter === f ? "var(--accent)" : "var(--surface)",
+              background: filter === f ? "var(--accent-deep)" : "var(--surface)",
               color: filter === f ? "var(--accent-ink)" : "var(--ink-2)",
               fontWeight: filter === f ? 700 : 500,
               boxShadow: filter === f ? "var(--shadow-accent)" : "none",
@@ -66,14 +66,14 @@ export function WordsTable({ rows }: { rows: CardRow[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter…"
           aria-label="Filter cards"
-          className="ml-auto rounded-full border px-4 py-2 text-[13.5px] outline-none"
+          className="ml-auto rounded-full border px-4 py-2 text-sm outline-none"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>
 
       {visible.length === 0 ? (
         <p
-          className="rounded-[var(--r-lg)] border border-dashed px-4 py-10 text-center text-[14px]"
+          className="rounded-[var(--r-lg)] border border-dashed px-4 py-10 text-center text-sm"
           style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}
         >
           No cards match that. Try another filter.
@@ -107,15 +107,15 @@ function Row({ row }: { row: CardRow }) {
       }}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[14.5px]" style={{ color: "var(--ink)" }}>
+        <p className="truncate text-base" style={{ color: "var(--ink)" }}>
           <span lang="et" className="est">{row.front}</span>
           <span style={{ color: "var(--ink-3)" }}> → {row.back}</span>
         </p>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-2xs" style={{ color: "var(--ink-3)" }}>
           <span>{row.cardType.toLowerCase().replace("_", " ")}</span>
           <span>{row.stateLabel}</span>
           <span>{isDue ? "due now" : `due ${dueDate.toLocaleDateString(undefined, { day: "numeric", month: "short" })}`}</span>
-          {row.lapses > 0 && <span style={{ color: "var(--again)" }}>{row.lapses} lapse{row.lapses === 1 ? "" : "s"}</span>}
+          {row.lapses > 0 && <span style={{ color: "var(--again-ink)" }}>{row.lapses} lapse{row.lapses === 1 ? "" : "s"}</span>}
         </div>
       </div>
 
@@ -125,8 +125,8 @@ function Row({ row }: { row: CardRow }) {
         type="button"
         onClick={() => start(async () => { await setCardSuspended(row.id, !suspended); setSuspended(!suspended); })}
         aria-label={suspended ? `Resume "${row.front}"` : `Suspend "${row.front}"`}
-        className="rounded p-1.5 transition-opacity hover:opacity-60"
-        style={{ color: suspended ? "var(--accent)" : "var(--ink-3)" }}
+        className="rounded-md p-1.5 transition-opacity hover:opacity-60"
+        style={{ color: suspended ? "var(--accent-deep)" : "var(--ink-3)" }}
       >
         <EyeOff size={15} aria-hidden />
       </button>
@@ -134,7 +134,7 @@ function Row({ row }: { row: CardRow }) {
         type="button"
         onClick={() => start(async () => { await deleteCard(row.id); setGone(true); })}
         aria-label={`Delete card "${row.front}"`}
-        className="rounded p-1.5 transition-opacity hover:opacity-60"
+        className="rounded-md p-1.5 transition-opacity hover:opacity-60"
         style={{ color: "var(--ink-3)" }}
       >
         <Trash2 size={15} aria-hidden />

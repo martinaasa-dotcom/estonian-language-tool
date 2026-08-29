@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Ear, GraduationCap, Grid2x2, Headphones, Mic, Puzzle, Target, Zap } from "lucide-react";
+import { CircleHelp, Ear, GraduationCap, Grid2x2, Headphones, Mic, Puzzle, Target, Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
@@ -152,7 +152,7 @@ export default async function PracticePage() {
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
-                <span className="flex items-center gap-3">
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <span
                     className="flex h-11 w-11 items-center justify-center rounded-full"
                     style={{
@@ -162,15 +162,15 @@ export default async function PracticePage() {
                   >
                     <m.icon size={19} aria-hidden />
                   </span>
-                  <span>
-                    <span className="est block text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+                  <span className="min-w-0">
+                    <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>
                       {m.title}
                     </span>
-                    <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>{m.subtitle}</span>
+                    <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{m.subtitle}</span>
                   </span>
                   <span className="ml-auto"><Chip tone={m.primary ? "accent" : "neutral"}>{m.meta}</Chip></span>
                 </span>
-                <span className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>{m.body}</span>
+                <span className="text-sm" style={{ color: "var(--ink-2)" }}>{m.body}</span>
               </Link>
             ))}
           </div>
@@ -179,23 +179,23 @@ export default async function PracticePage() {
             <SectionTitle hint="weakest first">Drill one case</SectionTitle>
             <Card>
               {weakCases.length === 0 ? (
-                <p className="text-[14px]" style={{ color: "var(--ink-2)" }}>
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                   Once you have answered a few case-form cards, the cases you keep missing show up
                   here with a one-click drill. Add a noun unit from the{" "}
-                  <Link href="/learn" className="underline" style={{ color: "var(--accent)" }}>path</Link>{" "}
+                  <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
                   to start generating them.
                 </p>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {weakCases.map((c) => (
-                    <li key={c.grammCase}>
+                    <li key={c.grammCase} className="flex items-center gap-1">
                       <Link
                         href={`/review?case=${c.grammCase}`}
-                        className="flex items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
+                        className="flex flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
                         aria-label={`Drill the ${c.grammCase.toLowerCase()}, currently ${c.accuracy} percent over ${c.total} reviews`}
                       >
                         <Target size={15} aria-hidden style={{ color: "var(--ink-3)" }} />
-                        <span className="w-28 text-[14px]" style={{ color: "var(--ink-2)" }}>
+                        <span className="w-28 text-sm" style={{ color: "var(--ink-2)" }}>
                           {c.grammCase.toLowerCase()}
                         </span>
                         <span className="max-w-[200px] flex-1">
@@ -206,16 +206,18 @@ export default async function PracticePage() {
                             height={5}
                           />
                         </span>
-                        <span className="tnum w-20 text-right text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                        <span className="tnum w-20 text-right text-xs" style={{ color: "var(--ink-3)" }}>
                           {c.accuracy}% · {c.total}
                         </span>
                       </Link>
                       <Link
                         href={`/grammar/${c.grammCase.toLowerCase()}`}
-                        className="ml-8 text-[11.5px] underline"
+                        aria-label={`What the ${c.grammCase.toLowerCase()} is for`}
+                        title={`What the ${c.grammCase.toLowerCase()} is for`}
+                        className="press flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
                         style={{ color: "var(--ink-3)" }}
                       >
-                        what it is for
+                        <CircleHelp size={14} aria-hidden />
                       </Link>
                     </li>
                   ))}

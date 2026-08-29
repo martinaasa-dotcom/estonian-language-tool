@@ -34,12 +34,12 @@ export function Paradigm({ forms, pos }: { forms: ParadigmForm[]; pos: string })
       <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
         The full paradigm, from Ekilex
       </h3>
-      <p className="mb-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
         These are the authoritative forms, not worked out from a stem, irregular plurals and the
         parallel forms Estonian really has, included.
       </p>
       {isVerb ? <VerbTable forms={forms} /> : <CaseTable forms={forms} />}
-      <p className="mt-3 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
         Forms from{" "}
         <a href="https://ekilex.ee" target="_blank" rel="noreferrer" style={{ color: "var(--ink-3)" }}>
           Ekilex
@@ -66,7 +66,7 @@ function Cell({ values }: { values: string[] }) {
   }
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>
+      <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>
         {values.join(" / ")}
       </span>
       <Speak text={values[0]!} size={13} />
@@ -97,7 +97,7 @@ function CaseTable({ forms }: { forms: ParadigmForm[] }) {
   return (
     <>
       <div className="overflow-x-auto rounded-[var(--r-lg)] border" style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
-        <table className="w-full min-w-[420px] text-[14px]">
+        <table className="w-full min-w-[420px] text-sm">
           <thead>
             <tr>
               {["Case", "Singular", "Plural", "Answers"].map((h) => (
@@ -116,26 +116,26 @@ function CaseTable({ forms }: { forms: ParadigmForm[] }) {
                   <Link href={`/grammar/${spec.key.toLowerCase()}`} className="hover:underline">
                     {spec.en}
                   </Link>
-                  <span lang="et" className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>
+                  <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
                     {spec.et}
                   </span>
                 </td>
                 <td className="px-3 py-2"><Cell values={singular[spec.key] ? valuesFor(forms, singular[spec.key]!) : []} /></td>
                 <td className="px-3 py-2"><Cell values={plural[spec.key] ? valuesFor(forms, plural[spec.key]!) : []} /></td>
-                <td lang="et" className="px-3 py-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
+                <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
               </tr>
             ))}
             {shortIllative.length > 0 && (
               <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
                 <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                   Short illative
-                  <span lang="et" className="ml-1.5 text-[11.5px] italic" style={{ color: "var(--ink-3)" }}>
+                  <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
                     lühike sisseütlev
                   </span>
                 </td>
                 <td className="px-3 py-2"><Cell values={shortIllative} /></td>
                 <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span></td>
-                <td lang="et" className="px-3 py-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>kuhu?</td>
+                <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>kuhu?</td>
               </tr>
             )}
           </tbody>
@@ -167,7 +167,7 @@ function VerbTable({ forms }: { forms: ParadigmForm[] }) {
     <>
       {groups.length > 0 && (
         <div className="overflow-x-auto rounded-[var(--r-lg)] border" style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
-          <table className="w-full min-w-[420px] text-[14px]">
+          <table className="w-full min-w-[420px] text-sm">
             <thead>
               <tr>
                 <th className="label-xs px-3 py-2.5 text-left" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
@@ -186,7 +186,7 @@ function VerbTable({ forms }: { forms: ParadigmForm[] }) {
             <tbody>
               {PERSONS.map((person) => (
                 <tr key={person.order} style={{ borderTop: "1px solid var(--rule-soft)" }}>
-                  <td lang="et" className="px-3 py-2 text-[13.5px]" style={{ color: "var(--ink-2)" }}>{person.et}</td>
+                  <td lang="et" className="px-3 py-2 text-sm" style={{ color: "var(--ink-2)" }}>{person.et}</td>
                   {groups.map((g) => {
                     const match = slotted.find((x) => x.slot.group === g && x.slot.order === person.order);
                     return (
@@ -247,8 +247,8 @@ function OtherForms({ forms, used }: { forms: ParadigmForm[]; used: Set<string> 
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex items-center gap-1.5 text-[12.5px]"
-        style={{ color: "var(--accent)" }}
+        className="flex items-center gap-1.5 text-xs"
+        style={{ color: "var(--accent-deep)" }}
       >
         <ChevronDown
           size={13}
@@ -260,9 +260,9 @@ function OtherForms({ forms, used }: { forms: ParadigmForm[]; used: Set<string> 
       {open && (
         <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
           {rest.map((r) => (
-            <li key={r.code} className="flex items-baseline justify-between gap-3 text-[12.5px]">
+            <li key={r.code} className="flex items-baseline justify-between gap-3 text-xs">
               <span lang="et" style={{ color: "var(--ink-3)" }}>{r.name}</span>
-              <span lang="et" className="est text-[14px]" style={{ color: "var(--ink-2)" }}>
+              <span lang="et" className="est text-sm" style={{ color: "var(--ink-2)" }}>
                 {r.values.join(" / ")}
               </span>
             </li>

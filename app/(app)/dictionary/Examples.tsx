@@ -34,14 +34,14 @@ export function Examples({ lexemeId, examples, tutorReady }: {
     return (
       <div>
         <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Näited · in a sentence</h3>
-        <p className="text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+        <p className="text-sm" style={{ color: "var(--ink-3)" }}>
           No example sentences for this word yet. Ekilex has them for most common words, and one
           arrives the first time this entry is fetched. You can also{" "}
           <button
             type="button"
             onClick={() => setAdding(true)}
             className="underline"
-            style={{ color: "var(--accent)" }}
+            style={{ color: "var(--accent-deep)" }}
           >
             add one from class
           </button>.
@@ -82,7 +82,7 @@ export function Examples({ lexemeId, examples, tutorReady }: {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="press mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition-all hover:-translate-y-px"
+          className="press mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
           <Plus size={13} aria-hidden /> Add a sentence of your own
@@ -116,14 +116,14 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
       style={{ background: "var(--raised)" }}
     >
       <div className="flex items-start gap-2">
-        <p lang="et" className="est flex-1 text-[15.5px] leading-snug" style={{ color: "var(--ink)" }}>
+        <p lang="et" className="est flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
           {example.et}
         </p>
         <Speak text={example.et} label={`Hear "${example.et}"`} />
       </div>
 
       {example.en ? (
-        <p className="mt-1 flex items-center gap-2 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+        <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
           {example.en}
           <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
             AI
@@ -134,8 +134,8 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
           type="button"
           onClick={translate}
           disabled={pending}
-          className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] disabled:opacity-50"
-          style={{ color: "var(--accent)" }}
+          className="mt-1 inline-flex items-center gap-1.5 text-xs disabled:opacity-50"
+          style={{ color: "var(--accent-deep)" }}
         >
           {pending
             ? <><Loader2 size={12} className="animate-spin" aria-hidden /> Translating…</>
@@ -144,9 +144,9 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
       ) : null}
 
       {example.source === "USER" && (
-        <span className="mt-1 block text-[11px]" style={{ color: "var(--ink-3)" }}>your own sentence</span>
+        <span className="mt-1 block text-2xs" style={{ color: "var(--ink-3)" }}>your own sentence</span>
       )}
-      {error && <p role="alert" className="mt-1 text-[12px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p role="alert" className="mt-1 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
     </li>
   );
 }
@@ -188,10 +188,10 @@ function AddExample({ lexemeId, onAdded, onCancel }: {
         onChange={(e) => setEn(e.target.value)}
         placeholder="English (optional)"
         aria-label="English translation"
-        className="mt-2 w-full rounded-[var(--r)] border px-3.5 py-2.5 text-[14px] outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="mt-2 w-full rounded-[var(--r)] border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
-      {error && <p role="alert" className="mt-2 text-[12.5px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p role="alert" className="mt-2 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
       <div className="mt-3 flex gap-2">
         <Button variant="primary" onClick={save} disabled={pending || et.trim().length < 4}>
           {pending ? "Saving…" : "Save sentence"}

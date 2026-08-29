@@ -99,7 +99,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
       <div className="mb-8 flex items-center gap-4">
         <Mascot size={44} className="float shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>
+          <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>
             Step {step + 1} of {STEPS.length} · {STEPS[step]}
           </p>
           <Meter pct={((step + 1) / STEPS.length) * 100} label={`Setup progress, step ${step + 1} of ${STEPS.length}`} />
@@ -108,10 +108,10 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
 
       {step === 0 && (
         <section>
-          <h1 lang="et" className="est text-[34px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+          <h1 lang="et" className="est text-3xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
             Tere tulemast!
           </h1>
-          <p className="mt-3 max-w-[52ch] text-[15px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mt-3 max-w-[52ch] text-base" style={{ color: "var(--ink-2)" }}>
             Kodukeel is built around the thing that actually makes Estonian hard: the cases. Learn a
             word&rsquo;s genitive and eleven more forms follow, so the dictionary, the flashcards and
             the games are all organised around that one idea.
@@ -125,10 +125,10 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
             onChange={(e) => setName(e.target.value)}
             maxLength={32}
             placeholder="Your name or a nickname"
-            className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3.5 text-[16px] outline-none"
+            className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3.5 text-md outline-none"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           />
-          <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
             Only used to greet you, and on the class leaderboard if you ever turn that on.
           </p>
         </section>
@@ -136,11 +136,11 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
 
       {step === 1 && (
         <section>
-          <h1 className="est text-[30px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
             Where are you now?
           </h1>
-          <p className="mt-2 text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-            This only picks your starting units. Nothing is locked. The whole dictionary is open from
+          <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
+            This only picks your starting units. Nothing is locked, the whole dictionary is open from
             day one.
           </p>
           <div className="mt-6 flex flex-col gap-2">
@@ -156,12 +156,12 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
                   background: level === l.key ? "var(--accent-soft)" : "var(--surface)",
                 }}
               >
-                <span className="est tnum text-[15px] font-bold" style={{ color: "var(--accent)" }}>{l.key}</span>
+                <span className="est tnum text-base font-bold" style={{ color: "var(--accent-deep)" }}>{l.key}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium" style={{ color: "var(--ink)" }}>{l.label}</span>
-                  <span className="block text-[13px]" style={{ color: "var(--ink-3)" }}>{l.detail}</span>
+                  <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{l.label}</span>
+                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{l.detail}</span>
                 </span>
-                {level === l.key && <Check size={17} aria-hidden style={{ color: "var(--accent)" }} />}
+                {level === l.key && <Check size={17} aria-hidden style={{ color: "var(--accent-deep)" }} />}
               </button>
             ))}
           </div>
@@ -170,11 +170,11 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
 
       {step === 2 && (
         <section>
-          <h1 className="est text-[30px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
             How much a day?
           </h1>
-          <p className="mt-2 text-[14.5px]" style={{ color: "var(--ink-2)" }}>
-            Sets your daily goal ring. It is motivational only. It never caps a session, and you can
+          <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
+            Sets your daily goal ring. It is motivational only, it never caps a session, and you can
             change it any time in Settings.
           </p>
           <div className="mt-6 grid gap-2 sm:grid-cols-2">
@@ -190,10 +190,10 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
                   background: goal === g.value ? "var(--accent-soft)" : "var(--surface)",
                 }}
               >
-                <span className="block text-[15px] font-medium" style={{ color: "var(--ink)" }}>
+                <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>
                   {g.label} · {g.value} cards
                 </span>
-                <span className="block text-[13px]" style={{ color: "var(--ink-3)" }}>{g.detail}</span>
+                <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{g.detail}</span>
               </button>
             ))}
           </div>
@@ -202,10 +202,10 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
 
       {step === 3 && (
         <section>
-          <h1 className="est text-[30px] font-bold leading-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
             Your first units
           </h1>
-          <p className="mt-2 text-[14.5px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
             Picked for {level}. Each unit becomes real flashcards with audio and full paradigms, you
             can add or drop units later on the path.
           </p>
@@ -225,21 +225,21 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
                     background: on ? "var(--accent-soft)" : "var(--surface)",
                   }}
                 >
-                  <Icon size={18} aria-hidden style={{ color: on ? "var(--accent)" : "var(--ink-3)" }} />
+                  <Icon size={18} aria-hidden style={{ color: on ? "var(--accent-deep)" : "var(--ink-3)" }} />
                   <span className="min-w-0 flex-1">
-                    <span lang="et" className="est block text-[15px] font-semibold" style={{ color: "var(--ink)" }}>
+                    <span lang="et" className="est block text-base font-semibold" style={{ color: "var(--ink)" }}>
                       {u.title}
                     </span>
-                    <span className="block text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                    <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
                       {u.subtitle} · {u.words} words · {u.cefr}
                     </span>
                   </span>
-                  {on && <Check size={16} aria-hidden style={{ color: "var(--accent)" }} />}
+                  {on && <Check size={16} aria-hidden style={{ color: "var(--accent-deep)" }} />}
                 </button>
               );
             })}
           </div>
-          <p className="mt-3 text-[13px]" style={{ color: "var(--ink-3)" }}>
+          <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
             {wordCount === 0
               ? "Nothing selected. You can also start from the dictionary and add words as you meet them."
               : `${wordCount} words, about ${wordCount * 2} cards to start with.`}
@@ -275,7 +275,7 @@ export function WelcomeWizard({ units, suggestedName }: { units: WizardUnit[]; s
           type="button"
           onClick={skip}
           disabled={pending}
-          className="text-[13px] underline underline-offset-2 transition-opacity hover:opacity-70"
+          className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
           style={{ color: "var(--ink-3)" }}
         >
           Skip setup and go straight to the dictionary

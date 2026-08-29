@@ -30,8 +30,8 @@ export function SignInForm() {
         {pending ? "Redirecting…" : "Continue with Google"}
       </Button>
       {error && (
-        <p role="alert" className="text-[13.5px]" style={{ color: "var(--again)" }}>
-          {error} If this keeps happening, the Google provider may not be enabled in Supabase yet.
+        <p role="alert" className="text-sm" style={{ color: "var(--again-ink)" }}>
+          {error}, if this keeps happening, the Google provider may not be enabled in Supabase yet.
         </p>
       )}
     </div>

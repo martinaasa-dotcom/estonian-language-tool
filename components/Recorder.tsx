@@ -70,7 +70,7 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
 
   if (state === "unavailable") {
     return (
-      <p className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+      <p className="text-xs" style={{ color: "var(--ink-3)" }}>
         No microphone available, say it out loud anyway, then compare with the native voice.
       </p>
     );
@@ -82,8 +82,8 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
         <button
           type="button"
           onClick={stop}
-          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
-          style={{ borderColor: "var(--again)", background: "var(--again-soft)", color: "var(--again)" }}
+          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
+          style={{ borderColor: "var(--again)", background: "var(--again-soft)", color: "var(--again-ink)" }}
         >
           <Square size={14} aria-hidden /> Stop
           <span className="ml-1 h-2 w-2 animate-pulse rounded-full" style={{ background: "var(--again)" }} aria-hidden />
@@ -92,7 +92,7 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
         <button
           type="button"
           onClick={() => void start()}
-          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
+          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
         >
           <Mic size={14} aria-hidden /> {url ? "Record again" : "Record yourself"}
@@ -103,7 +103,7 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
         <button
           type="button"
           onClick={() => { void new Audio(url).play(); }}
-          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
+          className="press inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink-2)" }}
         >
           <Play size={14} aria-hidden /> Hear yourself

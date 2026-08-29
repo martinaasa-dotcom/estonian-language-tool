@@ -90,7 +90,7 @@ export function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className="flex items-center gap-3 rounded-full px-3 py-2 text-[14.5px] transition-all duration-200"
+              className="flex items-center gap-3 rounded-full px-3 py-2 text-base transition-ui"
               style={{
                 background: active ? "var(--surface)" : "transparent",
                 color: active ? "var(--ink)" : "var(--ink-2)",
@@ -114,13 +114,13 @@ export function Sidebar() {
 
         <Link
           href="/review/sprint"
-          className="lift mt-3 flex items-center gap-2.5 rounded-full px-3 py-2.5 text-[13.5px] font-semibold"
+          className="lift mt-3 flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-semibold"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
           <Zap size={15} strokeWidth={2.4} aria-hidden /> 60-second sprint
         </Link>
 
-        <p className="mt-4 px-3 text-[11px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
+        <p className="mt-4 px-3 text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
           Press{" "}
           <kbd
             className="rounded-md px-1.5 py-0.5 font-semibold"
@@ -142,8 +142,8 @@ export function Sidebar() {
           <Link
             href="/settings"
             aria-current={isActive("/settings") ? "page" : undefined}
-            className="flex flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-[13.5px] font-medium"
-            style={{ color: isActive("/settings") ? "var(--accent)" : "var(--ink-3)" }}
+            className="flex flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-sm font-medium"
+            style={{ color: isActive("/settings") ? "var(--accent-deep)" : "var(--ink-3)" }}
           >
             <Settings size={16} strokeWidth={2} aria-hidden />
             Settings
@@ -198,7 +198,7 @@ export function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[11px] font-semibold transition-colors"
+              className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold transition-colors"
               style={{ color: active ? "var(--ink)" : "var(--ink-3)" }}
             >
               <span
@@ -215,7 +215,7 @@ export function Sidebar() {
           type="button"
           onClick={() => setMoreOpen(true)}
           aria-expanded={moreOpen}
-          className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-[11px] font-semibold"
+          className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold"
           style={{ color: secondaryActive ? "var(--ink)" : "var(--ink-3)" }}
         >
           <span
@@ -275,7 +275,7 @@ export function Sidebar() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-3 rounded-[var(--r)] px-4 py-3 text-[14.5px] font-medium"
+                  className="flex items-center gap-3 rounded-[var(--r)] px-4 py-3 text-base font-medium"
                   style={{
                     color: isActive(href) ? "var(--accent-deep)" : "var(--ink-2)",
                     background: isActive(href) ? "var(--accent-soft)" : "var(--raised)",
@@ -308,7 +308,7 @@ function IconButton({ onClick, label, labelled, children }: {
       onClick={onClick}
       aria-label={label}
       className={`press flex items-center gap-2 rounded-full p-2 transition-colors hover:bg-[var(--raised)] ${
-        labelled ? "px-4 text-[14px] font-medium" : ""
+        labelled ? "px-4 text-sm font-medium" : ""
       }`}
       style={{ color: "var(--ink-3)", background: labelled ? "var(--raised)" : undefined }}
     >

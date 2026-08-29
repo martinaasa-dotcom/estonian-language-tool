@@ -142,12 +142,12 @@ export function TutorChat({
         <Card tone="blush" className="flex items-start gap-4">
           <Mascot size={46} className="float shrink-0" />
           <div>
-            <p className="est text-[21px] font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
-            <p className="mt-1.5 max-w-[62ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
+            <p className="mt-1.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
               Ask me anything about Estonian grammar. I&rsquo;ll always tell you the rule, not just the
               answer, and I&rsquo;ll say so if I&rsquo;m not sure of a form rather than guessing.
             </p>
-            <p className="mt-3 flex items-center gap-1.5 text-[12.5px]" style={{ color: "var(--blush)" }}>
+            <p className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: "var(--blush-ink)" }}>
               <Sparkles size={13} aria-hidden /> Pick a starter below, or just type.
             </p>
           </div>
@@ -182,7 +182,7 @@ export function TutorChat({
             key={c.label}
             type="button"
             onClick={() => setInput(c.prompt)}
-            className="press rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all hover:-translate-y-px"
+            className="press rounded-full px-3.5 py-2 text-xs font-semibold transition-ui hover:-translate-y-px"
             style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
           >
             {c.label}
@@ -230,7 +230,7 @@ export function TutorChat({
 function Provenance({ label, answered }: { label: string | null; answered: boolean }) {
   if (!label) return null;
   return (
-    <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--ink-3)" }}>
+    <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
       {answered ? "Answered by" : "Will ask"} {label}. Anu explains grammar; every inflected form in
       the dictionary is stored data from Ekilex, never written by a model.
     </p>
@@ -272,12 +272,12 @@ function Bubble({ message, streaming }: { message: Msg; streaming: boolean }) {
           maxWidth: isUser ? "85%" : "100%",
         }}
       >
-        <p className="label-xs mb-1.5" style={{ color: isUser ? "var(--accent-deep)" : "var(--blush)" }}>
+        <p className="label-xs mb-1.5" style={{ color: isUser ? "var(--accent-deep)" : "var(--blush-ink)" }}>
           {isUser
             ? message.content.startsWith("Check this sentence for me.") ? "You · sentence to check" : "You"
             : "Anu"}
         </p>
-        <div className="whitespace-pre-wrap text-[14.5px] leading-relaxed" style={{ color: "var(--ink)" }}>
+        <div className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--ink)" }}>
           {rest}
           {streaming && <span className="ml-0.5 inline-block animate-pulse">▍</span>}
         </div>
@@ -289,7 +289,7 @@ function Bubble({ message, streaming }: { message: Msg; streaming: boolean }) {
                 AI · verify
               </Chip>
             </div>
-            <p lang="et" className="est text-[17px]" style={{ color: "var(--ink)" }}>{fix}</p>
+            <p lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{fix}</p>
           </div>
         )}
         {vocab.length > 0 && <VocabBridge vocab={vocab} />}
@@ -353,8 +353,8 @@ function SentenceCheck({
       <button
         type="button"
         onClick={onOpen}
-        className="flex items-center gap-2 self-start rounded-full border px-4 py-2 text-[13.5px] font-medium"
-        style={{ borderColor: "var(--accent)", color: "var(--accent)", background: "var(--accent-soft)" }}
+        className="flex items-center gap-2 self-start rounded-full border px-4 py-2 text-sm font-medium"
+        style={{ borderColor: "var(--accent)", color: "var(--accent-deep)", background: "var(--accent-soft)" }}
       >
         <CheckCheck size={15} aria-hidden /> Check a sentence I wrote
       </button>
@@ -365,7 +365,7 @@ function SentenceCheck({
     <Card>
       <div className="mb-3 flex items-center justify-between gap-3">
         <span className="label-xs" style={{ color: "var(--ink-3)" }}>Check a sentence</span>
-        <button type="button" onClick={onClose} className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+        <button type="button" onClick={onClose} className="text-xs" style={{ color: "var(--ink-3)" }}>
           Close
         </button>
       </div>
@@ -381,14 +381,14 @@ function SentenceCheck({
         onChange={(e) => onMeaning(e.target.value)}
         placeholder="What you meant, in English (optional but it helps)"
         aria-label="What you meant, in English"
-        className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-[15px]"
+        className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-base"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <div className="mt-3 flex items-center gap-3">
         <Button variant="primary" onClick={onSubmit} disabled={streaming || estonian.trim().length < 3}>
           <CheckCheck size={15} aria-hidden /> Check it
         </Button>
-        <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+        <span className="text-xs" style={{ color: "var(--ink-3)" }}>
           Anu names the rule before the fix, and says so when she is unsure rather than guessing.
         </span>
       </div>
@@ -423,7 +423,7 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
       <ul className="flex flex-col gap-1.5">
         {vocab.map((w) => (
           <li key={w.et} className="flex items-center justify-between gap-3">
-            <span className="text-[14px]">
+            <span className="text-sm">
               <span className="est font-semibold" style={{ color: "var(--ink)" }}>{w.et}</span>
               <span style={{ color: "var(--ink-3)" }}>, {w.en}</span>
             </span>

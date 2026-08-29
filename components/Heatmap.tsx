@@ -45,6 +45,9 @@ export function Heatmap({ days }: { days: DayBucket[] }) {
                 return (
                   <span
                     key={di}
+                    /* 2px, not a token radius: at 10px square anything larger
+                       rounds the cell into a dot and the grid stops reading as
+                       a calendar. Data cells are the one exception (docs §2). */
                     className="block h-[10px] w-[10px] rounded-[2px]"
                     style={{ background: LEVEL_COLOR[cell.level] }}
                     title={`${cell.day}: ${cell.count} review${cell.count === 1 ? "" : "s"}`}
@@ -55,7 +58,7 @@ export function Heatmap({ days }: { days: DayBucket[] }) {
           ))}
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+      <div className="mt-2 flex flex-wrap items-center gap-3 text-2xs" style={{ color: "var(--ink-3)" }}>
         <span>{total} reviews on {active} days in the last {days.length}</span>
         <span className="ml-auto flex items-center gap-1.5">
           Quiet

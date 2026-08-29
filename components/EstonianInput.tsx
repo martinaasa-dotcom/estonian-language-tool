@@ -49,7 +49,7 @@ export function EstonianInput({
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
         }}
-        className={`est w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-[21px]" : "py-3 text-[16px]"}`}
+        className={`est w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-xl" : "py-3 text-md"}`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
       />
       <div className="flex gap-1.5" role="group" aria-label="Insert Estonian character">
@@ -59,7 +59,7 @@ export function EstonianInput({
             type="button"
             onClick={() => insert(ch)}
             aria-label={`Insert ${ch}`}
-            className="est press h-9 w-9 rounded-full text-[15px] font-semibold transition-all hover:-translate-y-px"
+            className="est press h-9 w-9 rounded-full text-base font-semibold transition-ui hover:-translate-y-px"
             style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
           >
             {ch}

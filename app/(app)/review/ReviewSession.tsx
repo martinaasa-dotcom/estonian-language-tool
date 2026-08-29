@@ -32,8 +32,10 @@ export interface ReviewCard {
   scheduling: Omit<SchedulingState, "due" | "lastReview"> & { due: string; lastReview: string | null };
 }
 
+// The ink of each grade, not the hue: these are set as text on the matching
+// soft tint, where the hue itself is barely 2.5:1 (globals.css).
 const TONE: Record<number, string> = {
-  1: "var(--again)", 2: "var(--hard)", 3: "var(--good)", 4: "var(--easy)",
+  1: "var(--again-ink)", 2: "var(--hard-ink)", 3: "var(--good-ink)", 4: "var(--easy-ink)",
 };
 const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
@@ -54,7 +56,7 @@ function WhyRow({ card }: { card: ReviewCard }) {
     : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
 
   const pill =
-    "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all hover:-translate-y-px";
+    "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px";
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
@@ -397,10 +399,10 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={72} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-[34px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
-          <p className="mx-auto mt-2 max-w-[46ch] text-[15px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             {drillCase
               ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done, these cards keep their normal schedule too.</>
               : drillUnit
@@ -417,8 +419,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
         </div>
         {pendingOffline > 0 && (
           <p
-            className="mt-4 rounded-[var(--r)] px-4 py-3 text-[13.5px]"
-            style={{ background: "var(--hard-soft)", color: "var(--hard)" }}
+            className="mt-4 rounded-[var(--r)] px-4 py-3 text-sm"
+            style={{ background: "var(--hard-soft)", color: "var(--hard-ink)" }}
           >
             {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved on this device while offline.
             They will be sent the moment you are back online. You can close the tab.
@@ -472,7 +474,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           {card.lemma && (
             <Link
               href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
-              className="ml-auto flex items-center gap-1.5 text-[12.5px] font-semibold transition-opacity hover:opacity-60"
+              className="ml-auto flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-60"
               style={{ color: "var(--ink-3)" }}
             >
               <BookOpen size={13} aria-hidden /> Full entry
@@ -492,8 +494,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                 // A gap-fill prompt is a whole sentence: at flashcard size it
                 // wraps to four lines and stops being readable at a glance.
                 card.cardType === "CLOZE"
-                  ? "est text-[23px] font-semibold leading-snug tracking-tight md:text-[27px]"
-                  : "est text-[36px] font-bold leading-tight tracking-tight md:text-[42px]"
+                  ? "est text-xl font-semibold leading-snug tracking-tight md:text-2xl"
+                  : "est text-3xl font-bold leading-tight tracking-tight md:text-4xl"
               }
               style={{ color: "var(--ink)" }}
             >
@@ -508,7 +510,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           </div>
 
           {card.hint && !revealed && ask !== "intro" && (
-            <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
+            <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
           )}
 
           {ask === "type" && !verdict && (
@@ -531,18 +533,18 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           {ask === "type" && verdict && (
             <div className="w-full max-w-sm">
               <p
-                className="rounded-md px-4 py-2.5 text-[14px]"
+                className="rounded-md px-4 py-2.5 text-sm"
                 style={{
                   background: verdict.verdict === "correct" ? "var(--good-soft)"
                     : verdict.verdict === "wrong" ? "var(--again-soft)" : "var(--hard-soft)",
-                  color: verdict.verdict === "correct" ? "var(--good)"
-                    : verdict.verdict === "wrong" ? "var(--again)" : "var(--hard)",
+                  color: verdict.verdict === "correct" ? "var(--good-ink)"
+                    : verdict.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)",
                 }}
               >
                 {verdict.verdict === "correct" ? "Õige!" : verdict.note}
               </p>
               {typed.trim() && verdict.verdict !== "correct" && (
-                <p className="mt-2 text-[13px]" style={{ color: "var(--ink-3)" }}>
+                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   You typed <span lang={backLang} className="est">{typed.trim()}</span>
                 </p>
               )}
@@ -556,11 +558,11 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                   key={choice}
                   type="button"
                   onClick={() => pickChoice(choice)}
-                  className="press flex items-center gap-3 rounded-[var(--r)] px-4 py-3.5 text-left text-[15px] font-medium transition-all hover:-translate-y-0.5"
+                  className="press flex items-center gap-3 rounded-[var(--r)] px-4 py-3.5 text-left text-base font-medium transition-ui hover:-translate-y-0.5"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow-sm)" }}
                 >
                   <span
-                    className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                    className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-2xs font-bold"
                     style={{ background: "var(--surface)", color: "var(--accent-deep)" }}
                   >
                     {i + 1}
@@ -579,10 +581,10 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                 return (
                   <div
                     key={choice}
-                    className="rounded-[var(--r)] px-4 py-3.5 text-left text-[15px] font-medium"
+                    className="rounded-[var(--r)] px-4 py-3.5 text-left text-base font-medium"
                     style={{
                       background: isAnswer ? "var(--good-soft)" : picked ? "var(--again-soft)" : "var(--raised)",
-                      color: isAnswer ? "var(--good)" : picked ? "var(--again)" : "var(--ink-3)",
+                      color: isAnswer ? "var(--good-ink)" : picked ? "var(--again-ink)" : "var(--ink-3)",
                       outline: isAnswer ? "2px solid var(--good)" : "none",
                       outlineOffset: -2,
                     }}
@@ -602,9 +604,9 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                    so the reveal puts the word back where it came from and reads
                    the whole thing aloud. */
                 <div className="flex flex-col items-center gap-2">
-                  <p lang="et" className="est text-[24px] leading-snug md:text-[27px]" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="est text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
                     {card.front.split(BLANK)[0]}
-                    <span style={{ color: "var(--accent)", fontWeight: 600 }}>{card.back}</span>
+                    <span style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
                     {card.front.split(BLANK)[1]}
                   </p>
                   <Speak text={card.front.replace(BLANK, card.back)} label="Hear the whole sentence" />
@@ -613,8 +615,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                 <div className="flex items-center gap-2">
                   <p
                     lang={backLang}
-                    className="est text-[30px] font-bold md:text-[34px]"
-                    style={{ color: "var(--accent)" }}
+                    className="est text-2xl font-bold md:text-3xl"
+                    style={{ color: "var(--accent-deep)" }}
                   >
                     {card.back}
                   </p>
@@ -622,12 +624,12 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                 </div>
               )}
 
-              {card.hint && <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>{card.hint}</p>}
+              {card.hint && <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>}
             </>
           )}
 
           {ask === "intro" && (
-            <p className="max-w-[40ch] text-[13px]" style={{ color: "var(--ink-3)" }}>
+            <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
               First time seeing this one, read it, say it, then tell the scheduler how well it stuck.
             </p>
           )}
@@ -639,20 +641,20 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
           {ask === "type" && !verdict ? (
             <Button variant="primary" size="lg" className="w-full" onClick={checkTyped}>
               Check
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
                 Enter
               </kbd>
             </Button>
           ) : ask === "choice" && !chosen ? (
-            <p className="text-center text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="text-center text-xs" style={{ color: "var(--ink-3)" }}>
               Pick the meaning · keys 1, {card.choices?.length ?? 4}
             </p>
           ) : ask === "choice" && chosen === card.back ? (
-            <p className="text-center text-[13.5px] font-semibold" style={{ color: "var(--good)" }}>Õige!</p>
+            <p className="text-center text-sm font-semibold" style={{ color: "var(--good-ink)" }}>Õige!</p>
           ) : !revealed && ask !== "intro" ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
                 Space
               </kbd>
             </Button>
@@ -667,7 +669,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                     disabled={busy}
                     onClick={() => void submit(r.value as RatingValue)}
                     aria-label={intervals ? `${r.label}, next in ${intervals[r.value as RatingValue]}` : r.label}
-                    className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-all hover:-translate-y-0.5 disabled:opacity-40"
+                    className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                     style={{
                       outline: suggested ? `2px solid ${TONE[r.value]!}` : "none",
                       outlineOffset: -2,
@@ -675,9 +677,9 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
                       color: TONE[r.value],
                     }}
                   >
-                    <span className="text-[14.5px] font-bold">{r.label}</span>
-                    <span className="tnum text-[11px] opacity-80">{intervals?.[r.value as RatingValue]}</span>
-                    <kbd className="text-[10px] opacity-60">{r.key}</kbd>
+                    <span className="text-base font-bold">{r.label}</span>
+                    <span className="tnum text-2xs opacity-80">{intervals?.[r.value as RatingValue]}</span>
+                    <kbd className="text-2xs opacity-60">{r.key}</kbd>
                   </button>
                 );
               })}
@@ -686,15 +688,15 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11.5px]" style={{ color: "var(--ink-3)" }}>
-        <span className="flex items-center gap-1"><Check size={12} aria-hidden style={{ color: "var(--good)" }} /> {correct} recalled</span>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-2xs" style={{ color: "var(--ink-3)" }}>
+        <span className="flex items-center gap-1"><Check size={12} aria-hidden style={{ color: "var(--good-ink)" }} /> {correct} recalled</span>
         <span className="flex items-center gap-1"><RotateCcw size={12} aria-hidden /> {done} graded</span>
         <span className="flex items-center gap-1"><Zap size={12} aria-hidden /> +{xp} XP</span>
         <button
           type="button"
           onClick={() => void undo()}
           disabled={history.length === 0 || busy}
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 disabled:opacity-40"
+          className="flex items-center gap-1 rounded-md px-1.5 py-0.5 disabled:opacity-40"
           style={{ color: "var(--ink-3)" }}
         >
           <Undo2 size={12} aria-hidden /> Undo <kbd className="opacity-60">u</kbd>
@@ -717,8 +719,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, total
       </div>
 
       {pendingOffline > 0 && (
-        <p className="mt-3 text-center text-[12px]" style={{ color: "var(--hard)" }}>
-          Offline · {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here and sent when you reconnect.
+        <p className="mt-3 text-center text-xs" style={{ color: "var(--hard-ink)" }}>
+          Offline, {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here and sent when you reconnect.
         </p>
       )}
       {verdict && countsAsRecalled(verdict.verdict) && verdict.verdict !== "correct" && (

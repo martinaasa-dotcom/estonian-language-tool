@@ -15,7 +15,7 @@
     "db:seed:ensure": "tsx prisma/seed.ts --only-if-empty",
     "setup": "node scripts/setup-env.mjs && prisma generate && prisma db push && npm run db:seed",
     "predev": "node scripts/setup-env.mjs",
-    "test:e2e": "node scripts/e2e.mjs && node scripts/test-modes.mjs && node scripts/test-polish.mjs && node scripts/test-edit.mjs && node scripts/test-rename.mjs && node scripts/test-ekilex.mjs && node scripts/test-teaching.mjs && node scripts/test-mobile.mjs && node scripts/test-restore.mjs",
+    "test:e2e": "node scripts/e2e.mjs && node scripts/test-modes.mjs && node scripts/test-polish.mjs && node scripts/test-edit.mjs && node scripts/test-rename.mjs && node scripts/test-ekilex.mjs && node scripts/test-teaching.mjs && node scripts/test-design.mjs && node scripts/test-mobile.mjs && node scripts/test-restore.mjs",
     "demo": "tsx scripts/demo-data.ts",
     "eval:anu": "node scripts/eval-anu.mjs",
     "test:invariants": "tsx scripts/test-invariants.ts",

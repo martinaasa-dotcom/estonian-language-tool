@@ -180,20 +180,12 @@ const hasSticking = (await page.getByText("Sticking points").count()) > 0;
 check("the deck's sticking points are named", hasSticking);
 
 if (hasSticking) {
-  /*
-    Case-insensitively, and matching both reasons a card can be flagged.
-
-    This block had never run: the panel was empty on every demo deck, because
-    no history in the fixture ever reached a lapse, so `hasSticking` was false
-    and everything under it was skipped. With the fixture fixed it ran for the
-    first time and failed, on the check rather than on the app. The badge is
-    lowercase in the DOM and uppercased by CSS, so `innerText` hands back
-    "4 LAPSES", and a card flagged for lapses says "Learned and forgotten 4
-    times", which never contained the word this was looking for at all.
-  */
-  const row = page.locator("li", { hasText: /lapses|forgotten|never really settled/i }).first();
+  const row = page.locator("li", { hasText: /lapses|never really settled/ }).first();
+  // Either rule may have flagged it, and each has to say which: a count of
+  // times the card was learned and lost, or an accuracy that never settled.
   check("each one says what is wrong with it",
-    /lapses|forgotten|settled/i.test(await row.innerText()));
+    /forgotten \d+ times|never really settled/i.test(await row.innerText()),
+    (await row.innerText()).replace(/\n/g, " · ").slice(0, 70));
   // The argument this section makes is in the order of its actions: understand
   // it, look it up, and only then set it aside.
   check("and offers the explanation before the off switch",

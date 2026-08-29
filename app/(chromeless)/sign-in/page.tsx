@@ -26,7 +26,7 @@ export default function SignInPage() {
       <div className="relative w-full max-w-[440px]">
         <Link
           href="/welcome"
-          className="mb-6 inline-flex items-center gap-1.5 text-[13.5px] font-medium transition-opacity hover:opacity-60"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60"
           style={{ color: "var(--ink-3)" }}
         >
           <ArrowLeft size={14} aria-hidden /> Back to the tour
@@ -37,10 +37,10 @@ export default function SignInPage() {
           style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-lg)" }}
         >
           <Mascot size={62} className="float mx-auto" />
-          <h1 className="est mt-5 text-[28px] font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
             Tere tulemast tagasi
           </h1>
-          <p className="mx-auto mt-2 max-w-[36ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          <p className="mx-auto mt-2 max-w-[36ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             Learn Estonian the way it is actually taught, by its cases. Sign in to reach your deck,
             your dictionary and every review you have ever done.
           </p>
@@ -50,12 +50,12 @@ export default function SignInPage() {
               <SignInForm />
             ) : (
               <div className="rounded-[var(--r-lg)] p-5 text-left" style={{ background: "var(--raised)" }}>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                   This copy is running in local mode, no accounts, no sign-in, everything stored in
                   the database on this machine. Add{" "}
-                  <code className="text-[12.5px]">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-                  <code className="text-[12.5px]">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your{" "}
-                  <code className="text-[12.5px]">.env</code> to turn on Google sign-in and
+                  <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+                  <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your{" "}
+                  <code className="text-xs">.env</code> to turn on Google sign-in and
                   per-person decks.
                 </p>
                 <ButtonLink href="/" variant="primary" className="mt-4 w-full">Start studying</ButtonLink>
@@ -65,10 +65,10 @@ export default function SignInPage() {
 
           <ul className="mt-7 flex flex-col gap-2.5 border-t pt-6 text-left" style={{ borderColor: "var(--rule-soft)" }}>
             {PROMISES.map((p) => (
-              <li key={p} className="flex items-start gap-2.5 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+              <li key={p} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--ink-2)" }}>
                 <span
                   className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                  style={{ background: "var(--mint-soft)", color: "var(--mint)" }}
+                  style={{ background: "var(--mint-soft)", color: "var(--mint-ink)" }}
                 >
                   <Check size={12} strokeWidth={3} aria-hidden />
                 </span>
@@ -78,7 +78,7 @@ export default function SignInPage() {
           </ul>
         </div>
 
-        <p className="mx-auto mt-6 max-w-[46ch] text-center text-[12px]" style={{ color: "var(--ink-3)" }}>
+        <p className="mx-auto mt-6 max-w-[46ch] text-center text-xs" style={{ color: "var(--ink-3)" }}>
           Dictionary data from Ekilex (Institute of the Estonian Language, CC BY 4.0). Speech from the
           University of Tartu.
         </p>

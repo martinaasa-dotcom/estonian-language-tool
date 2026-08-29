@@ -46,10 +46,10 @@ export default async function GrammarIndexPage() {
           <div className="flex items-start gap-3">
             <Sparkles size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
             <div>
-              <p className="est text-[19px] font-bold" style={{ color: "var(--ink)" }}>
+              <p className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
                 Learn one form, get eleven cases
               </p>
-              <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 Three of the fourteen are unpredictable and have to be memorised word by word. The
                 other eleven are regular endings on the second of those three, the genitive. That
                 is why the app drills the genitive so hard, and why a case table is mostly
@@ -74,7 +74,7 @@ export default async function GrammarIndexPage() {
                         className="flex flex-wrap items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
                       >
                         <Target size={15} aria-hidden style={{ color: "var(--ink-3)" }} />
-                        <span className="w-28 text-[14px]" style={{ color: "var(--ink)" }}>{ref.spec.en}</span>
+                        <span className="w-28 text-sm" style={{ color: "var(--ink)" }}>{ref.spec.en}</span>
                         <span className="max-w-[200px] flex-1">
                           <Meter
                             pct={c.accuracy}
@@ -83,7 +83,7 @@ export default async function GrammarIndexPage() {
                             height={5}
                           />
                         </span>
-                        <span className="tnum text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                        <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
                           {c.accuracy}% over {c.total}
                         </span>
                       </Link>
@@ -98,7 +98,7 @@ export default async function GrammarIndexPage() {
         {CASE_GROUPS.map((group) => (
           <section key={group.title}>
             <SectionTitle>{group.title}</SectionTitle>
-            <p className="mb-3 max-w-[68ch] text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+            <p className="mb-3 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
               {group.blurb}
             </p>
             <ul className="grid gap-3 sm:grid-cols-2">
@@ -117,10 +117,10 @@ export default async function GrammarIndexPage() {
                       }}
                     >
                       <span className="flex flex-wrap items-baseline gap-2">
-                        <span className="est text-[18px] font-bold" style={{ color: "var(--ink)" }}>
+                        <span className="est text-md font-bold" style={{ color: "var(--ink)" }}>
                           {ref.spec.en}
                         </span>
-                        <span lang="et" className="text-[12.5px] italic" style={{ color: "var(--ink-3)" }}>
+                        <span lang="et" className="text-xs italic" style={{ color: "var(--ink-3)" }}>
                           {ref.spec.et}
                         </span>
                         <span className="ml-auto">
@@ -129,10 +129,10 @@ export default async function GrammarIndexPage() {
                             : <Chip tone="accent" caseSensitive>{`-${ref.spec.suffix}`}</Chip>}
                         </span>
                       </span>
-                      <span className="text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                      <span className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                         {ref.summary}
                       </span>
-                      <span lang="et" className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+                      <span lang="et" className="text-xs" style={{ color: "var(--ink-3)" }}>
                         {ref.spec.question}
                       </span>
                     </Link>
@@ -149,9 +149,9 @@ export default async function GrammarIndexPage() {
           the app has not been given a genitive plural it shows a gap rather than a guess.
         </Note>
 
-        <p className="text-[13px]" style={{ color: "var(--ink-3)" }}>
+        <p className="text-xs" style={{ color: "var(--ink-3)" }}>
           Still stuck on one?{" "}
-          <Link href="/tutor" className="underline" style={{ color: "var(--accent)" }}>
+          <Link href="/tutor" className="underline" style={{ color: "var(--accent-deep)" }}>
             Ask Anu
           </Link>{" "}
           and she can take a sentence you wrote and name the rule behind the correction.{" "}

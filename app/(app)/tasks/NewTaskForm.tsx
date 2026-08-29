@@ -39,7 +39,7 @@ export function NewTaskForm() {
   const field = {
     borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)",
   } as const;
-  const control = "rounded-full border px-4 py-2.5 text-[13.5px] outline-none";
+  const control = "rounded-full border px-4 py-2.5 text-sm outline-none";
 
   return (
     <Card>
@@ -50,7 +50,7 @@ export function NewTaskForm() {
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
           placeholder="What needs doing? e.g. Exercise 4B, partitive plural"
           aria-label="Task title"
-          className="w-full rounded-[var(--r-lg)] border px-5 py-3 text-[15px] outline-none"
+          className="w-full rounded-[var(--r-lg)] border px-5 py-3 text-base outline-none"
           style={field}
         />
         <div className="flex flex-wrap gap-2">
@@ -86,7 +86,7 @@ export function NewTaskForm() {
             <Plus size={15} aria-hidden /> Add
           </Button>
         </div>
-        {error && <p className="text-[13px]" style={{ color: "var(--again)" }}>{error}</p>}
+        {error && <p className="text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
       </div>
     </Card>
   );

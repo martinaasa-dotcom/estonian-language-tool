@@ -122,20 +122,20 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
         >
           <span
             className="float mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-            style={{ background: "var(--surface)", color: "var(--butter)", boxShadow: "var(--shadow)" }}
+            style={{ background: "var(--surface)", color: "var(--butter-ink)", boxShadow: "var(--shadow)" }}
           >
             <Timer size={30} aria-hidden />
           </span>
-          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Case Sprint
           </h1>
-          <p className="mx-auto mt-2 max-w-[44ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          <p className="mx-auto mt-2 max-w-[44ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             {cards.length} cards loaded. Flip and answer as fast as you can for {DURATION_S} seconds. Space to
             flip, Enter for correct, Backspace for missed.
           </p>
           <p
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold"
-            style={{ background: "var(--surface)", color: "var(--butter)" }}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold"
+            style={{ background: "var(--surface)", color: "var(--butter-ink)" }}
           >
             <Trophy size={14} aria-hidden /> Personal best: {best}
           </p>
@@ -153,11 +153,11 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood={isNewBest ? "cheer" : "happy"} className="float mx-auto" />
-          <h1 className="est mt-5 text-[34px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Time&rsquo;s up!
           </h1>
-          <p className="mt-2 flex items-center justify-center gap-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-            {isNewBest && <Trophy size={17} aria-hidden style={{ color: "var(--butter)" }} />}
+          <p className="mt-2 flex items-center justify-center gap-2 text-base" style={{ color: "var(--ink-2)" }}>
+            {isNewBest && <Trophy size={17} aria-hidden style={{ color: "var(--butter-ink)" }} />}
             {isNewBest ? "New personal best." : `Best so far: ${best}.`}
           </p>
         </div>
@@ -189,12 +189,12 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           <X size={18} aria-hidden />
         </Link>
         <div
-          className="tnum flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[14px] font-bold"
+          className="tnum flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold"
           style={{ background: secondsLeft <= 10 ? "var(--again-soft)" : "var(--raised)", color: secondsLeft <= 10 ? "var(--again)" : "var(--ink-2)" }}
         >
           <Timer size={14} aria-hidden /> {secondsLeft}s
         </div>
-        <span className="tnum text-[13px]" style={{ color: "var(--ink-3)" }}>{correct} correct</span>
+        <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>{correct} correct</span>
       </div>
 
       <div
@@ -203,14 +203,14 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
       >
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent">Sprint</Chip>
-          <span className="ml-auto text-[12.5px]" style={{ color: "var(--ink-3)" }}>#{attempted + 1}</span>
+          <span className="ml-auto text-xs" style={{ color: "var(--ink-3)" }}>#{attempted + 1}</span>
         </div>
 
         <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-12 text-center" aria-live="polite">
           <div className="flex items-center gap-2">
             <p
               lang={estonianSide(card.cardType, "front") ? "et" : "en"}
-              className="est text-[32px] font-semibold leading-tight md:text-[38px]"
+              className="est text-3xl font-semibold leading-tight md:text-4xl"
               style={{ color: "var(--ink)" }}
             >
               {card.front}
@@ -224,8 +224,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
               <div className="flex items-center gap-2">
                 <p
                   lang={estonianSide(card.cardType, "back") ? "et" : "en"}
-                  className="est text-[28px] font-semibold md:text-[32px]"
-                  style={{ color: "var(--accent)" }}
+                  className="est text-2xl font-semibold md:text-3xl"
+                  style={{ color: "var(--accent-deep)" }}
                 >
                   {card.back}
                 </p>
@@ -239,7 +239,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           {!revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-[11px]" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
             </Button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -247,8 +247,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 type="button"
                 disabled={busy}
                 onClick={() => void answer(1)}
-                className="press rounded-[var(--r)] px-3 py-3 text-[14.5px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40"
-                style={{ background: "var(--again-soft)", color: "var(--again)" }}
+                className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
+                style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
               >
                 Missed it <kbd className="ml-1 opacity-70">⌫</kbd>
               </button>
@@ -256,8 +256,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 type="button"
                 disabled={busy}
                 onClick={() => void answer(3)}
-                className="press rounded-[var(--r)] px-3 py-3 text-[14.5px] font-bold transition-all hover:-translate-y-0.5 disabled:opacity-40"
-                style={{ background: "var(--good-soft)", color: "var(--good)" }}
+                className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
+                style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
               >
                 Got it <kbd className="ml-1 opacity-70">Enter</kbd>
               </button>

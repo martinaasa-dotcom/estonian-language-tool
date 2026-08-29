@@ -46,11 +46,11 @@ export function ReviewModePanel({ current }: { current: ReviewMode }) {
           }}
         >
           <span className="flex items-center gap-2">
-            <m.icon size={16} aria-hidden style={{ color: mode === m.value ? "var(--accent)" : "var(--ink-3)" }} />
-            <span className="text-[14.5px] font-medium" style={{ color: "var(--ink)" }}>{m.label}</span>
-            {mode === m.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent)" }} />}
+            <m.icon size={16} aria-hidden style={{ color: mode === m.value ? "var(--accent-deep)" : "var(--ink-3)" }} />
+            <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{m.label}</span>
+            {mode === m.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />}
           </span>
-          <span className="mt-1.5 block text-[12.5px]" style={{ color: "var(--ink-3)" }}>{m.detail}</span>
+          <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>{m.detail}</span>
         </button>
       ))}
     </div>
@@ -90,7 +90,7 @@ export function LeaderboardPanel({ currentName, optedIn }: { currentName: string
           maxLength={32}
           onChange={(e) => setName(e.target.value)}
           placeholder="Whatever your class calls you"
-          className="min-w-0 flex-1 rounded-[var(--r)] border px-3.5 py-2.5 text-[15px]"
+          className="min-w-0 flex-1 rounded-[var(--r)] border px-3.5 py-2.5 text-base"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
         <Button
@@ -102,9 +102,9 @@ export function LeaderboardPanel({ currentName, optedIn }: { currentName: string
         </Button>
       </div>
       {message && (
-        <p role="status" className="text-[13px]" style={{ color: "var(--ink-3)" }}>{message}</p>
+        <p role="status" className="text-xs" style={{ color: "var(--ink-3)" }}>{message}</p>
       )}
-      <p className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="text-xs" style={{ color: "var(--ink-3)" }}>
         Sharing this puts your chosen name and your XP for the week in front of everyone else who has
         opted in. Nothing else, not your email, not your words, not your history, is visible to
         them, and leaving removes you immediately.

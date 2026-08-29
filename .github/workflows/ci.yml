@@ -162,7 +162,7 @@ jobs:
       - run: npm test
 
   mobile:
-    name: The phone, measured
+    name: The phone and the design system, measured
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -211,6 +211,11 @@ jobs:
       # backdrop filter repainting the bottom of the window on every frame of
       # every scroll, a target smaller than a thumb.
       - run: node scripts/test-mobile.mjs
+      # The design suite arrived on main while this branch was open and checks
+      # the other half of the same screens: contrast ratios, the type scale and
+      # a real focus ring. Same server, same browser, so it costs one more
+      # command rather than another job.
+      - run: node scripts/test-design.mjs
 
   audit:
     name: Dependency audit

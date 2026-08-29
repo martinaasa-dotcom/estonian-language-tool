@@ -48,7 +48,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
       actions={
         <Link
           href="/class"
-          className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13.5px] font-semibold transition-all hover:-translate-y-px"
+          className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
         >
           <ArrowLeft size={14} aria-hidden /> All classes
@@ -67,13 +67,13 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <div className="flex flex-wrap items-center gap-4">
               <div>
                 <SectionTitle>Join code</SectionTitle>
-                <p className="est text-[34px] font-bold tracking-[0.25em]" style={{ color: "var(--accent-deep)" }}>
+                <p className="est text-3xl font-bold tracking-[0.25em]" style={{ color: "var(--accent-deep)" }}>
                   {classroom.code}
                 </p>
               </div>
               <div className="flex flex-col gap-2">
                 <CopyCode code={classroom.code} />
-                <span className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+                <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                   Students enter this under Classes → Join.
                 </span>
               </div>
@@ -111,19 +111,19 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                       boxShadow: isYou ? "none" : "var(--shadow-sm)",
                     }}
                   >
-                    <span className="tnum w-6 text-[13px]" style={{ color: "var(--ink-3)" }}>{i + 1}</span>
+                    <span className="tnum w-6 text-xs" style={{ color: "var(--ink-3)" }}>{i + 1}</span>
                     {i === 0 && entry.weeklyXp > 0
-                      ? <Trophy size={16} aria-hidden style={{ color: "var(--hard)" }} />
+                      ? <Trophy size={16} aria-hidden style={{ color: "var(--hard-ink)" }} />
                       : <span className="w-4" aria-hidden />}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px]" style={{ color: "var(--ink)" }}>
+                      <span className="block truncate text-base" style={{ color: "var(--ink)" }}>
                         {entry.displayName}
                         {entry.role === "TEACHER" && (
                           <GraduationCap size={13} aria-label="teacher" className="ml-1.5 inline" style={{ color: "var(--ink-3)" }} />
                         )}
                       </span>
                       {isTeacher && (
-                        <span className="block text-[12px]" style={{ color: quiet ? "var(--hard)" : "var(--ink-3)" }}>
+                        <span className="block text-xs" style={{ color: quiet ? "var(--hard-ink)" : "var(--ink-3)" }}>
                           {entry.daysSinceLastReview === null
                             ? "no reviews yet"
                             : entry.daysSinceLastReview === 0
@@ -133,10 +133,10 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                         </span>
                       )}
                     </span>
-                    <span className="flex items-center gap-1 text-[13px]" style={{ color: "var(--ink-2)" }}>
-                      {entry.streak}<Flame size={13} aria-hidden style={{ color: entry.streak > 0 ? "var(--hard)" : "var(--ink-3)" }} />
+                    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--ink-2)" }}>
+                      {entry.streak}<Flame size={13} aria-hidden style={{ color: entry.streak > 0 ? "var(--hard-ink)" : "var(--ink-3)" }} />
                     </span>
-                    <span className="tnum w-20 text-right text-[13.5px]" style={{ color: "var(--ink)" }}>
+                    <span className="tnum w-20 text-right text-sm" style={{ color: "var(--ink)" }}>
                       {entry.weeklyXp} XP
                     </span>
                   </li>
@@ -145,7 +145,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             </ul>
           )}
           {you && leader && you.ownerId !== leader.ownerId && (
-            <p className="mt-2 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
               {leader.weeklyXp - you.weeklyXp} XP behind the top of the class, about{" "}
               {Math.max(1, Math.ceil((leader.weeklyXp - you.weeklyXp) / 10))} more cards.
             </p>
@@ -158,7 +158,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <Card>
               <ul className="flex flex-col gap-2">
                 {roster.weakestCases.map((c) => (
-                  <li key={c.grammCase} className="flex items-center gap-3 text-[13.5px]">
+                  <li key={c.grammCase} className="flex items-center gap-3 text-sm">
                     <Target size={14} aria-hidden style={{ color: "var(--ink-3)" }} />
                     <span className="w-28" style={{ color: "var(--ink-2)" }}>{c.grammCase.toLowerCase()}</span>
                     <span className="max-w-[240px] flex-1">
@@ -169,13 +169,13 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                         height={5}
                       />
                     </span>
-                    <span className="tnum text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                    <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
                       {c.accuracy}% over {c.total}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                 Aggregated across everyone who has answered a case-form card. Individual answers are
                 not shown to anyone but the learner who gave them.
               </p>
@@ -188,7 +188,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <SectionTitle>Homework</SectionTitle>
             <Card>
               <AssignUnit classroomId={classroomId} units={units} />
-              <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                 Lands as a task in each student&rsquo;s own list, with a link to the unit. Nobody&rsquo;s
                 deck is changed, they choose when to add the words.
               </p>

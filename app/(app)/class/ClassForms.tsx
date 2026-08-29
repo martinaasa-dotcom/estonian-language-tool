@@ -35,10 +35,10 @@ export function CreateClass() {
         maxLength={60}
         onChange={(e) => setName(e.target.value)}
         placeholder="Eesti keel A2, teisipäev"
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-[15px] outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-base outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
-      {error && <p role="alert" className="text-[13px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p role="alert" className="text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
       <Button variant="primary" onClick={create} disabled={pending || name.trim().length < 2}>
         <Plus size={15} aria-hidden /> {pending ? "Creating…" : "Create the class"}
       </Button>
@@ -77,7 +77,7 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         autoCapitalize="characters"
         autoCorrect="off"
         spellCheck={false}
-        className="est rounded-[var(--r)] border px-3.5 py-2.5 text-[22px] tracking-[0.3em] outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="est rounded-[var(--r)] border px-3.5 py-2.5 text-xl tracking-[0.3em] outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <label htmlFor="join-name" className="label-xs" style={{ color: "var(--ink-3)" }}>
@@ -89,14 +89,14 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         maxLength={32}
         onChange={(e) => setName(e.target.value)}
         placeholder="Kadri"
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-[15px] outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-base outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
-      {error && <p role="alert" className="text-[13px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p role="alert" className="text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
       <Button variant="primary" onClick={join} disabled={pending || code.trim().length < CODE_LENGTH}>
         {pending ? "Joining…" : "Join the class"}
       </Button>
-      <p className="text-[12px]" style={{ color: "var(--ink-3)" }}>
+      <p className="text-xs" style={{ color: "var(--ink-3)" }}>
         Joining shares your name, your streak, your XP for the week and how many words you know with
         your teacher and classmates. Not your deck, not your searches, not your mistakes one by one.
         Leaving stops it immediately.
@@ -116,7 +116,7 @@ export function CopyCode({ code }: { code: string }) {
           window.setTimeout(() => setCopied(false), 1600);
         });
       }}
-      className="press inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-all hover:-translate-y-px"
+      className="press inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
       style={{ borderColor: "var(--rule)", background: "var(--surface)", color: copied ? "var(--good)" : "var(--ink-2)" }}
     >
       {copied ? <><Check size={13} aria-hidden /> Copied</> : <><Copy size={13} aria-hidden /> Copy code</>}
@@ -139,12 +139,12 @@ export function LeaveClass({ classroomId }: { classroomId: string }) {
           router.push("/class");
           router.refresh();
         })}
-        className="inline-flex items-center gap-1.5 text-[12.5px]"
+        className="inline-flex items-center gap-1.5 text-xs"
         style={{ color: "var(--ink-3)" }}
       >
         <LogOut size={12} aria-hidden /> Leave this class
       </button>
-      {error && <p role="alert" className="mt-1 text-[12px]" style={{ color: "var(--again)" }}>{error}</p>}
+      {error && <p role="alert" className="mt-1 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
     </>
   );
 }
@@ -159,7 +159,7 @@ export function ArchiveClass({ classroomId }: { classroomId: string }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="text-[12.5px]"
+        className="text-xs"
         style={{ color: "var(--ink-3)" }}
       >
         Archive this class
@@ -168,7 +168,7 @@ export function ArchiveClass({ classroomId }: { classroomId: string }) {
   }
 
   return (
-    <span className="flex items-center gap-2 text-[12.5px]" style={{ color: "var(--ink-2)" }}>
+    <span className="flex items-center gap-2 text-xs" style={{ color: "var(--ink-2)" }}>
       The join code stops working. Nobody loses any work.
       <Button variant="danger" disabled={pending} onClick={() => start(async () => {
         await archiveClassroom(classroomId);
@@ -202,7 +202,7 @@ export function AssignUnit({ classroomId, units }: {
           id="assign-unit"
           value={unitId}
           onChange={(e) => setUnitId(e.target.value)}
-          className="w-full rounded-[var(--r)] border px-3 py-2 text-[14px]"
+          className="w-full rounded-[var(--r)] border px-3 py-2 text-sm"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         >
           {units.map((u) => (
@@ -219,7 +219,7 @@ export function AssignUnit({ classroomId, units }: {
           type="date"
           value={due}
           onChange={(e) => setDue(e.target.value)}
-          className="rounded-[var(--r)] border px-3 py-2 text-[14px]"
+          className="rounded-[var(--r)] border px-3 py-2 text-sm"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>
@@ -237,12 +237,12 @@ export function AssignUnit({ classroomId, units }: {
       {/* The same unit, on paper. A class that meets in a room wants both. */}
       <Link
         href={`/learn/${unitId}/worksheet`}
-        className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition-all hover:-translate-y-px"
+        className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-ui hover:-translate-y-px"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
       >
         <Printer size={14} aria-hidden /> Worksheet
       </Link>
-      {message && <p role="status" className="w-full text-[12.5px]" style={{ color: "var(--ink-3)" }}>{message}</p>}
+      {message && <p role="status" className="w-full text-xs" style={{ color: "var(--ink-3)" }}>{message}</p>}
     </div>
   );
 }

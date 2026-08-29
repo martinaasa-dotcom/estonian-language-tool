@@ -9,6 +9,7 @@ import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Mascot, Wordmark } from "@/components/brand";
 import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo";
+import { toneInk } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Kodukeel · Estonian that finally sticks",
@@ -78,7 +79,7 @@ function Nav() {
         <Link href="/welcome" aria-label="Kodukeel, home">
           <Wordmark size={30} />
         </Link>
-        <div className="hidden items-center gap-7 text-[14px] font-medium md:flex" style={{ color: "var(--ink-2)" }}>
+        <div className="hidden items-center gap-7 text-sm font-medium md:flex" style={{ color: "var(--ink-2)" }}>
           <a href="#cases" className="transition-opacity hover:opacity-60">The cases</a>
           <a href="#features" className="transition-opacity hover:opacity-60">What you get</a>
           <a href="#how" className="transition-opacity hover:opacity-60">How it works</a>
@@ -87,7 +88,7 @@ function Nav() {
         <div className="flex items-center gap-2">
           <Link
             href="/sign-in"
-            className="hidden rounded-full px-4 py-2 text-[14px] font-semibold transition-opacity hover:opacity-60 sm:block"
+            className="hidden rounded-full px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-60 sm:block"
             style={{ color: "var(--ink-2)" }}
           >
             Sign in
@@ -109,13 +110,13 @@ function Hero({ words }: { words: DemoWord[] }) {
       <div>
         <p
           className="fade-up label-xs inline-flex items-center gap-2 rounded-full px-3.5 py-2"
-          style={{ background: "var(--butter-soft)", color: "var(--butter)", animationDelay: "40ms" }}
+          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", animationDelay: "40ms" }}
         >
           <Sparkles size={13} aria-hidden /> For everyone who bounced off Estonian once already
         </p>
 
         <h1
-          className="est fade-up mt-6 text-[46px] font-bold leading-[1.02] tracking-[-0.02em] md:text-[68px]"
+          className="est fade-up mt-6 text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
           style={{ color: "var(--ink)", animationDelay: "90ms" }}
         >
           Estonian that
@@ -124,7 +125,7 @@ function Hero({ words }: { words: DemoWord[] }) {
         </h1>
 
         <p
-          className="fade-up mt-6 max-w-[54ch] text-[17px] leading-relaxed md:text-[18.5px]"
+          className="fade-up mt-6 max-w-[54ch] text-md leading-relaxed md:text-md"
           style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
         >
           Fourteen cases. A stem that changes shape when you look at it. Kodukeel turns all of it
@@ -138,7 +139,7 @@ function Hero({ words }: { words: DemoWord[] }) {
           </ButtonLink>
           <a
             href="#cases"
-            className="press inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-[15.5px] font-semibold transition-all hover:-translate-y-px"
+            className="press inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-base font-semibold transition-ui hover:-translate-y-px"
             style={{ background: "var(--surface)", borderColor: "var(--rule)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
           >
             Show me a word <BookOpen size={16} aria-hidden />
@@ -146,12 +147,12 @@ function Hero({ words }: { words: DemoWord[] }) {
         </div>
 
         <ul
-          className="fade-up mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]"
+          className="fade-up mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs"
           style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
         >
           {["No card, no trial timer", "Your review history exports in one click", "Reviewing works offline"].map((t) => (
             <li key={t} className="flex items-center gap-1.5">
-              <Check size={14} aria-hidden style={{ color: "var(--mint)" }} /> {t}
+              <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
             </li>
           ))}
         </ul>
@@ -161,22 +162,22 @@ function Hero({ words }: { words: DemoWord[] }) {
         {/* Floating diacritics: the six characters this whole app is built around. */}
         <span
           aria-hidden
-          className="est float absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-[26px] font-bold md:-left-10"
-          style={{ background: "var(--blush-soft)", color: "var(--blush)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
+          className="est float absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
+          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="est float absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-[22px] font-bold md:-right-8"
-          style={{ background: "var(--mint-soft)", color: "var(--mint)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
+          className="est float absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
+          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="est float absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-[22px] font-bold"
-          style={{ background: "var(--sky-soft)", color: "var(--sky)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
+          className="est float absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
+          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
         >
           ü
         </span>
@@ -210,8 +211,8 @@ function Sources() {
               className="rounded-[var(--r)] border px-4 py-3.5 text-center"
               style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
             >
-              <p className="est text-[17px] font-bold" style={{ color: "var(--ink)" }}>{name}</p>
-              <p className="mt-0.5 text-[11.5px] leading-snug" style={{ color: "var(--ink-3)" }}>{detail}</p>
+              <p className="est text-md font-bold" style={{ color: "var(--ink)" }}>{name}</p>
+              <p className="mt-0.5 text-2xs leading-snug" style={{ color: "var(--ink-3)" }}>{detail}</p>
             </div>
           ))}
         </div>
@@ -244,7 +245,7 @@ function Problem() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <h2 className="est mx-auto max-w-[20ch] text-center text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
+        <h2 className="est mx-auto max-w-[20ch] text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           You didn’t fail Estonian. Your tools did.
         </h2>
       </Reveal>
@@ -256,15 +257,15 @@ function Problem() {
               style={{ background: `var(--${p.tone}-soft)` }}
             >
               <span
-                className="est flex h-11 w-11 items-center justify-center rounded-full text-[18px] font-bold"
-                style={{ background: "var(--surface)", color: `var(--${p.tone})` }}
+                className="est flex h-11 w-11 items-center justify-center rounded-full text-md font-bold"
+                style={{ background: "var(--surface)", color: toneInk(p.tone) }}
               >
                 {i + 1}
               </span>
-              <h3 className="est mt-4 text-[21px] font-bold leading-snug" style={{ color: "var(--ink)" }}>
+              <h3 className="est mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
                 {p.title}
               </h3>
-              <p className="mt-2.5 text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 {p.body}
               </p>
             </div>
@@ -285,11 +286,11 @@ function Cases({ words }: { words: DemoWord[] }) {
     <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <div className="mx-auto max-w-[46ch] text-center">
-          <p className="label-xs" style={{ color: "var(--accent)" }}>Learn one form, get eleven</p>
-          <h2 className="est mt-3 text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
+          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn one form, get eleven</p>
+          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             The fourteen cases, finally on your side
           </h2>
-          <p className="mt-4 text-[16px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          <p className="mt-4 text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             Three principal parts are genuinely unpredictable, so you memorise those. The other
             eleven are regular endings on the genitive stem. Press a word and watch them fall out.
           </p>
@@ -311,8 +312,8 @@ function Features() {
     <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
-          <p className="label-xs" style={{ color: "var(--blush)" }}>What you actually get</p>
-          <h2 className="est mt-3 text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
+          <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
+          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             Eight things, each doing one job well
           </h2>
         </div>
@@ -350,12 +351,12 @@ function Features() {
             style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
           >
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--blush-soft)", color: "var(--blush)" }}>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--blush-soft)", color: "var(--blush-ink)" }}>
                 <Sparkles size={18} aria-hidden />
               </span>
-              <h3 className="est text-[21px] font-bold" style={{ color: "var(--ink)" }}>Anu explains the rule</h3>
+              <h3 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>Anu explains the rule</h3>
             </div>
-            <p className="mt-2.5 max-w-[62ch] text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            <p className="mt-2.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
               A grammar tutor for the questions a textbook answers on page 240. She explains, checks
               your sentence and names the pattern, and she is never allowed to invent an Estonian
               form, because those come from the dictionary.
@@ -428,15 +429,15 @@ function Feature({ tone, icon, icon2, title, body, className = "" }: {
     >
       <span
         className="flex h-9 w-9 items-center justify-center rounded-full"
-        style={{ background: `var(--${tone}-soft)`, color: `var(--${tone})` }}
+        style={{ background: `var(--${tone}-soft)`, color: toneInk(tone) }}
       >
         {icon}
       </span>
-      <h3 className="est mt-4 flex items-center gap-2 text-[19px] font-bold leading-snug" style={{ color: "var(--ink)" }}>
+      <h3 className="est mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
         {title}
         {icon2 && <span style={{ color: "var(--ink-3)" }}>{icon2}</span>}
       </h3>
-      <p className="mt-2 text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+      <p className="mt-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
     </div>
   );
 }
@@ -467,8 +468,8 @@ function HowItWorks() {
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <div className="mx-auto max-w-[42ch] text-center">
-            <p className="label-xs" style={{ color: "var(--mint)" }}>Three steps, then a habit</p>
-            <h2 className="est mt-3 text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
+            <p className="label-xs" style={{ color: "var(--mint-ink)" }}>Three steps, then a habit</p>
+            <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
               How a day with Kodukeel goes
             </h2>
           </div>
@@ -483,15 +484,18 @@ function HowItWorks() {
               >
                 <span
                   aria-hidden
+                  /* Ornament rather than type: a step number set large enough
+                     to read as a shape behind the card. Off the scale on
+                     purpose — see docs/14-design-system.md §3. */
                   className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
                   style={{ color: `var(--${s.tone}-soft)` }}
                 >
                   {i + 1}
                 </span>
                 <div className="relative">
-                  <span className="label-xs" style={{ color: `var(--${s.tone})` }}>Step {i + 1}</span>
-                  <h3 className="est mt-2 text-[21px] font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
-                  <p className="mt-2.5 text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
+                  <span className="label-xs" style={{ color: toneInk(s.tone) }}>Step {i + 1}</span>
+                  <h3 className="est mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
+                  <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
                 </div>
               </li>
             </Reveal>
@@ -521,9 +525,9 @@ function Numbers({ stats }: { stats: { words: number; forms: number } }) {
         >
           {items.map(([value, label, hint]) => (
             <div key={label}>
-              <p className="est tnum text-[40px] font-bold leading-none tracking-tight grad-text">{value}</p>
-              <p className="mt-2 text-[14px] font-semibold" style={{ color: "var(--ink)" }}>{label}</p>
-              <p className="text-[12.5px]" style={{ color: "var(--ink-3)" }}>{hint}</p>
+              <p className="est tnum text-4xl font-bold leading-none tracking-tight grad-text">{value}</p>
+              <p className="mt-2 text-sm font-semibold" style={{ color: "var(--ink)" }}>{label}</p>
+              <p className="text-xs" style={{ color: "var(--ink-3)" }}>{hint}</p>
             </div>
           ))}
         </div>
@@ -549,11 +553,11 @@ function Comparison() {
     <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <div className="mx-auto max-w-[40ch] text-center">
-          <p className="label-xs" style={{ color: "var(--peach)" }}>An honest comparison</p>
-          <h2 className="est mt-3 text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
+          <p className="label-xs" style={{ color: "var(--peach-ink)" }}>An honest comparison</p>
+          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             Kodukeel vs. the owl
           </h2>
-          <p className="mt-4 text-[15.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          <p className="mt-4 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             Streak apps are excellent at getting you to open them. That is a different problem to
             being able to say <span lang="et" className="est font-semibold">ma lähen tuppa</span> and
             know why it is not <span lang="et" className="est font-semibold">tuba</span>.
@@ -571,7 +575,7 @@ function Comparison() {
             style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
           >
             <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
-            <span className="est text-center text-[15px] font-bold" style={{ color: "var(--accent)" }}>Kodukeel</span>
+            <span className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>Kodukeel</span>
             <span className="label-xs text-center" style={{ color: "var(--ink-3)" }}>Streak apps</span>
           </div>
           {ROWS.map(([label, ours, theirs]) => (
@@ -580,10 +584,10 @@ function Comparison() {
               className="grid grid-cols-[1fr_88px_88px] items-center gap-2 px-5 py-3.5 md:grid-cols-[1fr_120px_120px]"
               style={{ borderTop: "1px solid var(--rule-soft)" }}
             >
-              <span className="text-[14.5px]" style={{ color: "var(--ink-2)" }}>{label}</span>
+              <span className="text-base" style={{ color: "var(--ink-2)" }}>{label}</span>
               <span className="flex justify-center">
                 {ours ? (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: "var(--mint-soft)", color: "var(--mint)" }}>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: "var(--mint-soft)", color: "var(--mint-ink)" }}>
                     <Check size={15} strokeWidth={3} aria-label="yes" />
                   </span>
                 ) : null}
@@ -628,7 +632,7 @@ function Faq() {
   return (
     <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <h2 className="est text-center text-[32px] font-bold leading-tight tracking-tight md:text-[42px]" style={{ color: "var(--ink)" }}>
+        <h2 className="est text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           The questions people ask
         </h2>
       </Reveal>
@@ -640,19 +644,19 @@ function Faq() {
               style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
             >
               <summary
-                className="flex cursor-pointer list-none items-center justify-between gap-4 text-[16px] font-semibold"
+                className="flex cursor-pointer list-none items-center justify-between gap-4 text-md font-semibold"
                 style={{ color: "var(--ink)" }}
               >
                 {q}
                 <span
                   aria-hidden
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[17px] leading-none transition-transform group-open:rotate-45"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-md leading-none transition-transform group-open:rotate-45"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                 >
                   +
                 </span>
               </summary>
-              <p className="mt-3 text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>{a}</p>
+              <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{a}</p>
             </details>
           </Reveal>
         ))}
@@ -668,7 +672,7 @@ function FinalCta() {
     <section className="px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <div
-          className="relative mx-auto max-w-5xl overflow-hidden rounded-[36px] px-6 py-14 text-center md:px-16 md:py-20"
+          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-14 text-center md:px-16 md:py-20"
           style={{ background: "var(--accent-soft)" }}
         >
           <span aria-hidden className="wash" style={{ background: "var(--wash-2)", width: 420, height: 420, top: -160, right: -80 }} />
@@ -676,10 +680,10 @@ function FinalCta() {
 
           <div className="relative">
             <Mascot size={68} mood="cheer" className="float mx-auto" />
-            <h2 className="est mx-auto mt-6 max-w-[18ch] text-[34px] font-bold leading-[1.08] tracking-tight md:text-[50px]" style={{ color: "var(--ink)" }}>
+            <h2 className="est mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
               Fifteen minutes. Starting today.
             </h2>
-            <p className="mx-auto mt-4 max-w-[52ch] text-[16.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
               Look up one word, add it, and let the scheduler do the remembering. That is the whole
               commitment.
             </p>
@@ -689,13 +693,13 @@ function FinalCta() {
               </ButtonLink>
               <a
                 href="#cases"
-                className="press inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-[15.5px] font-semibold transition-all hover:-translate-y-px"
+                className="press inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-base font-semibold transition-ui hover:-translate-y-px"
                 style={{ background: "var(--surface)", borderColor: "transparent", color: "var(--ink)" }}
               >
                 <Headphones size={16} aria-hidden /> See it first
               </a>
             </div>
-            <p className="mt-5 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+            <p className="mt-5 text-xs" style={{ color: "var(--ink-3)" }}>
               Google sign-in · nothing to install · export whenever you like
             </p>
           </div>
@@ -709,7 +713,7 @@ function Footer() {
   return (
     <footer className="relative px-5 pb-10 md:px-8">
       <div
-        className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 border-t pt-8 text-[12.5px] md:flex-row"
+        className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 border-t pt-8 text-xs md:flex-row"
         style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}
       >
         <Wordmark size={26} />

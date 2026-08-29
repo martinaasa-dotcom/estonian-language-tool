@@ -159,10 +159,10 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Sentences done
           </h1>
-          <p className="mx-auto mt-2 max-w-[46ch] text-[15px]" style={{ color: "var(--ink-2)" }}>
+          <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             Word order is the part a flashcard cannot teach. Every sentence here was written by
             lexicographers, not by this app.
           </p>
@@ -198,7 +198,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
         </Link>
         <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--raised)" }}>
           <div
-            className="grad-accent h-full rounded-full transition-all duration-500"
+            className="grad-accent h-full rounded-full transition-[width] duration-500"
             style={{ width: `${Math.max(progress, 2)}%` }}
             role="progressbar"
             aria-valuenow={index}
@@ -223,7 +223,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
           <Chip tone="accent">Build the sentence</Chip>
           <Link
             href={`/dictionary?q=${encodeURIComponent(task.lemma)}`}
-            className="ml-auto text-[12.5px]"
+            className="ml-auto text-xs"
             style={{ color: "var(--ink-3)" }}
           >
             {task.lemma}
@@ -235,14 +235,14 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
             {task.en ? (
               <>
                 <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Say this in Estonian</p>
-                <p className="text-[19px] leading-snug" style={{ color: "var(--ink)" }}>{task.en}</p>
+                <p className="text-lg leading-snug" style={{ color: "var(--ink)" }}>{task.en}</p>
               </>
             ) : previewing ? (
               <>
                 <p className="label-xs mb-2 flex items-center justify-center gap-1.5" style={{ color: "var(--ink-3)" }}>
                   <Eye size={12} aria-hidden /> Read it. The words scramble in a moment
                 </p>
-                <p lang="et" className="est text-[21px] leading-snug" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="est text-xl leading-snug" style={{ color: "var(--ink)" }}>
                   {task.et}
                 </p>
               </>
@@ -262,7 +262,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
             }}
           >
             {built.length === 0 && (
-              <span className="text-[13px]" style={{ color: "var(--ink-3)" }}>Tap the words in order…</span>
+              <span className="text-xs" style={{ color: "var(--ink-3)" }}>Tap the words in order…</span>
             )}
             {built.map((tileIndex) => {
               const tile = tiles.find((t) => t.index === tileIndex)!;
@@ -274,7 +274,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
                   onClick={() => setBuilt((b) => b.filter((i) => i !== tileIndex))}
                   lang="et"
                   aria-label={`Remove ${tile.word}`}
-                  className="est press rounded-[var(--r-sm)] border px-3 py-1.5 text-[16px] transition-all hover:-translate-y-px"
+                  className="est press rounded-[var(--r-sm)] border px-3 py-1.5 text-md transition-ui hover:-translate-y-px"
                   style={{
                     borderColor: "var(--rule)",
                     background: "var(--surface)",
@@ -300,7 +300,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
                   onClick={() => setBuilt((b) => [...b, tile.index])}
                   lang="et"
                   aria-label={`Add ${tile.word}`}
-                  className="est press rounded-[var(--r-sm)] border px-3 py-1.5 text-[16px] transition-all hover:-translate-y-px disabled:opacity-25 disabled:hover:translate-y-0"
+                  className="est press rounded-[var(--r-sm)] border px-3 py-1.5 text-md transition-ui hover:-translate-y-px disabled:opacity-25 disabled:hover:translate-y-0"
                   style={{ borderColor: "transparent", background: "var(--raised)", color: "var(--ink)" }}
                 >
                   {tile.word}
@@ -314,11 +314,11 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
               className="pop-in rounded-[var(--r)] px-4 py-3 text-center"
               style={{ background: checked === "right" ? "var(--good-soft)" : "var(--again-soft)" }}
             >
-              <p className="label-xs" style={{ color: checked === "right" ? "var(--good)" : "var(--again)" }}>
+              <p className="label-xs" style={{ color: checked === "right" ? "var(--good-ink)" : "var(--again-ink)" }}>
                 {checked === "right" ? "Õige, exactly right." : "Not the order Estonian uses. It goes:"}
               </p>
               <p className="mt-1 flex items-center justify-center gap-2">
-                <span lang="et" className="est text-[18px]" style={{ color: "var(--ink)" }}>{task.et}</span>
+                <span lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{task.et}</span>
                 <Speak text={task.et} />
               </p>
             </div>
@@ -349,7 +349,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
         </div>
       </div>
 
-      <p className="mt-4 text-center text-[11.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
         {correct} of {attempts} first time · +{xp} XP · sentences from Ekilex
       </p>
     </div>

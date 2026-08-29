@@ -20,16 +20,16 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
-      <TriangleAlert size={28} aria-hidden style={{ color: "var(--hard)" }} />
-      <h1 className="est text-[26px] font-bold" style={{ color: "var(--ink)" }}>
+      <TriangleAlert size={28} aria-hidden style={{ color: "var(--hard-ink)" }} />
+      <h1 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
         That screen didn&rsquo;t load
       </h1>
-      <p className="text-[14.5px]" style={{ color: "var(--ink-2)" }}>
+      <p className="text-base" style={{ color: "var(--ink-2)" }}>
         Nothing has been lost, your deck and review history are untouched. Trying again usually
         works; if it keeps happening, the message below is the useful part.
       </p>
       <code
-        className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-[12px]"
+        className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-xs"
         style={{ background: "var(--raised)", color: "var(--ink-2)" }}
       >
         {error.message || "Unknown error"}
