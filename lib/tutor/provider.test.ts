@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  completeWithImage, FREE_OPENROUTER_MODELS, openWithFallback, resolveProviders,
+  completeWithImage, FREE_OPENROUTER_MODELS, openWithFallback, providerResilience, resolveProviders,
   TutorError, visionProviders,
 } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
@@ -21,6 +21,42 @@ function only(name: "openrouter" | "anthropic" | "openai") {
   vi.stubEnv("ANTHROPIC_API_KEY", name === "anthropic" ? "k" : "");
   vi.stubEnv("OPENAI_API_KEY", name === "openai" ? "k" : "");
 }
+
+/*
+  A chain that looks redundant and is not.
+
+  OpenRouter contributes one link per free model, so the chain can be four long
+  and still be a single account with a single balance. When that balance ran out
+  on the live deployment every link answered 402 within the same second and the
+  tutor went down, which is the exact failure a fallback is supposed to absorb.
+  Settings now says so, and this is what keeps that warning honest.
+*/
+describe("how many things can actually answer", () => {
+  it("counts one provider as one, however many models it offers", () => {
+    only("openrouter");
+    const state = providerResilience();
+    expect(state.providers).toEqual(["OpenRouter"]);
+    expect(state.models).toBeGreaterThan(1);
+    expect(state.singlePointOfFailure).toBe(true);
+  });
+
+  it("stops warning once a second provider is configured", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "k");
+    vi.stubEnv("ANTHROPIC_API_KEY", "k");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const state = providerResilience();
+    expect(state.providers).toEqual(["OpenRouter", "Anthropic"]);
+    expect(state.singlePointOfFailure).toBe(false);
+  });
+
+  it("does not call an unconfigured app a single point of failure", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
+    // Nothing configured is a different message, shown elsewhere.
+    expect(providerResilience().singlePointOfFailure).toBe(false);
+  });
+});
 
 describe("the chain", () => {
   it("is empty with no key at all, so nothing above it has to guess", () => {

@@ -43,6 +43,33 @@ export interface ChatMessage {
  * what this app has always done; a deployment with two gets somewhere to go
  * when the first is throttled.
  */
+/**
+ * How many *independent* things can answer, which is not the length of the
+ * chain.
+ *
+ * OpenRouter contributes one link per free model, so a chain of four can still
+ * be a single account with a single balance. When that balance ran out here
+ * every link returned 402 together and Anu went down, which is exactly the
+ * failure a fallback chain is supposed to absorb. What protects availability
+ * is a second *provider*, not a fifth model.
+ *
+ * Pure, so Settings can say this without asking anything upstream.
+ */
+export function providerResilience(chain = resolveProviders()): {
+  providers: string[];
+  models: number;
+  singlePointOfFailure: boolean;
+} {
+  const providers = [...new Set(chain.map((c) => c.label))];
+  return {
+    providers,
+    models: chain.length,
+    // Nothing configured is its own problem, reported elsewhere; this flag is
+    // about a chain that looks redundant and is not.
+    singlePointOfFailure: providers.length === 1,
+  };
+}
+
 export function resolveProviders(): ProviderConfig[] {
   const chain: ProviderConfig[] = [];
   if (process.env.OPENROUTER_API_KEY) {
