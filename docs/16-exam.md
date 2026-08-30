@@ -136,9 +136,11 @@ Both are marked identically, on length and on the words the task named, which is
 app can offer a choice honestly: a mock where picking the letter scored differently would be
 inventing a judgement about somebody's Estonian.
 
-**A1 and C2 papers exist here and nowhere else.** The A1 paper is built to the A2 paper's shape, one
-step easier. The C2 paper is built past C1 for the fun of finding out. Both are labelled "not
-examined" everywhere they appear, and the level cards say why.
+**An A1 paper exists here and nowhere else.** It is built to the A2 paper's shape, one step easier,
+labelled "not examined" everywhere it appears, and the level card says why. An earlier version of
+this app also built a C2 paper past C1 "for the fun of finding out"; it was removed along with the
+C2 course units, on the same argument that dropped them: a level the app cannot verify vocabulary
+for is a promise it should not make. See `docs/13-mvp-status.md` §19.
 
 **Nothing scores pronunciation.** ADR-018 has not moved: there is no verified Estonian speech
 recogniser available to this app, so the spoken part is recorded, played back and marked by the

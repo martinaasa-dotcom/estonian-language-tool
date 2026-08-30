@@ -949,13 +949,13 @@ export async function completeLesson(
  * Records where the placement test put somebody.
  *
  * The level is re-derived here from the per-level scores rather than trusted
- * from the caller. This file is `"use server"`, so `savePlacement("C2")` is an
- * endpoint anybody can call — and while placing yourself at C2 only unlocks
+ * from the caller. This file is `"use server"`, so `savePlacement("C1")` is an
+ * endpoint anybody can call — and while placing yourself at C1 only unlocks
  * units you could have opened anyway, a stored level that no test produced would
  * quietly become a lie the whole path is built on.
  */
 const StageScoreSchema = z.object({
-  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+  level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
   correct: z.number().int().min(0).max(20),
   asked: z.number().int().min(0).max(20),
 });
@@ -983,7 +983,7 @@ export async function savePlacement(scores: z.input<typeof StageScoreSchema>[]) 
  * evidence that somebody has lost a level they already had.
  *
  * The score is re-checked here rather than trusted. Every export in this file is
- * a public endpoint, so `recordCheckpoint("c2", 20, 20)` is a call anybody can
+ * a public endpoint, so `recordCheckpoint("c1", 20, 20)` is a call anybody can
  * make; what it can buy is only the level marker the path uses to decide what to
  * open by default, and nothing in the review log moves, but a stored level that
  * no exam produced is still a lie the whole course is arranged around.
@@ -996,7 +996,7 @@ export async function recordCheckpoint(
 ) {
   const ownerId = await requireUserId();
   const parsed = z.object({
-    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+    level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
     correct: z.number().int().min(0).max(100),
     total: z.number().int().min(1).max(100),
   }).safeParse({ level: level.toUpperCase(), correct, total });

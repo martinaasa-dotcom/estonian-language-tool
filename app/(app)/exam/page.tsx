@@ -342,8 +342,8 @@ export default async function ExamPage() {
           </li>
           <li>
             <Lightbulb size={13} className="mr-1 inline" aria-hidden />
-            The A1 and C2 papers are ours. The state has never set either, and its own note says a
-            command of Estonian past C1 cannot be required of anybody for a job.
+            The A1 paper is ours. The state has never set one at that level, so it is built to the
+            shape of the A2 paper, one step easier, for a first sitting that is meant to be passable.
           </li>
         </ul>
       </Card>

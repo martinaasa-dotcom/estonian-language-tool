@@ -40,7 +40,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A course.** Eighty-three units across all six CEFR levels, from *Tervitused* to *Vaba valdamine*, each a
+- **A course.** Seventy-three units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
   sitting's worth of words. Adding a unit builds real flashcards, full paradigm, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
@@ -58,8 +58,8 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
   citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
   real points, under the real rule that sixty percent passes and a zero in any one part fails the
-  whole thing. Plus an A1 and a C2 paper the state has never set, clearly labelled, because it is
-  worth being allowed to find out. Every level carries a percentage chance of passing it today,
+  whole thing. Plus an A1 paper the state has never set, clearly labelled, because it is worth
+  being allowed to find out. Every level carries a percentage chance of passing it today,
   with the evidence behind that number stated rather than implied, and a list of what to fix that
   links to where to fix it. Nothing about the paper is written by a model: the questions are
   assembled out of the dictionary and the marks come from comparing your answer with a form the

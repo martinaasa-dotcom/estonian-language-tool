@@ -1087,3 +1087,30 @@ provider list.
    section is a distinct control, so grouping it would be churn rather than clarity. Left alone on
    purpose.
 
+## 19. The thirteenth pass: a course honest about where it stops
+
+§14 built a course to C2 and named the honest gap plainly: "1,266 words is a real course and not a
+real vocabulary," and the C2 units themselves were the thinnest ten in the whole syllabus, existing
+mostly to say that C2 is earned by living in the language rather than by finishing units. A course
+whose last fifth is a well-written admission that it cannot teach what it claims to cover is not
+a stronger course for having tried. It is cut here rather than left to keep failing gracefully.
+
+The course now runs **A1 to C1**, 73 units, dropping the ten C2 units and the words only they
+introduced. Everything that read the top of the level list, `EXAM_LEVELS`, `ExamLevel`, the mock
+exam's own now-removed C2 paper, the placement ladder, the onboarding self-rating ladder, now stops
+at C1 rather than quietly carrying a sixth rung nothing above it needs. `docs/16-exam.md` and
+`README.md` are corrected along with the code; this file's own earlier sections are left as the
+record of what was tried, per the rule at the top of this document about more than one session
+working here at once, except where a passage would otherwise assert something false about the app
+as it stands today.
+
+**What this does not touch.** A dictionary entry can still carry a `C2` CEFR tag: that is Ekilex's
+own grading of a word's real difficulty, sourced live, not a claim this app makes about its course.
+`lib/estonian/types.ts`'s `CefrLevel` keeps all six bands for exactly that reason, and the add-word
+form still offers C2 as an honest label for a word a person hand-adds. The distinction is the same
+one ADR-005 draws everywhere else: Ekilex's own data is trusted as far as Ekilex vouches for it, and
+this project does not add to it from memory. Nobody re-verified whether the ten deleted units'
+vocabulary belongs in the general dictionary; it was seeded there already and stays, since removing
+real, Ekilex-sourced words because their course unit was cut would be deleting correct data over an
+unrelated decision.
+

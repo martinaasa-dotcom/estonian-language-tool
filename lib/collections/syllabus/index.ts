@@ -1,8 +1,15 @@
 /**
  * The course, assembled.
  *
- * Six levels, A1 to C2. The ordering here is the course: units come in the order
- * they are meant to be worked, and each one names the units it builds on.
+ * Five levels, A1 to C1. The ordering here is the course: units come in the
+ * order they are meant to be worked, and each one names the units it builds
+ * on.
+ *
+ * C2 was cut rather than built out further: the app can name what C2 asks
+ * for, but it cannot verify vocabulary at that register without a fluent
+ * reviewer, and a "course" whose top level is ten thin units is a promise
+ * the app should not make. `docs/13-mvp-status.md` §14 and §19 have the
+ * fuller account.
  *
  * On locking. The first version of the path locked nothing at all, which made it
  * a shelf of word lists rather than a course; the obvious fix, hard
@@ -20,12 +27,11 @@ import { A2 } from "./a2";
 import { B1 } from "./b1";
 import { B2 } from "./b2";
 import { C1 } from "./c1";
-import { C2 } from "./c2";
 
 export type { Level, SyllabusUnit, UnitSpec, WordSpec, Pos };
 export { LEVELS, unit };
 
-export const SYLLABUS: readonly SyllabusUnit[] = [...A1, ...A2, ...B1, ...B2, ...C1, ...C2];
+export const SYLLABUS: readonly SyllabusUnit[] = [...A1, ...A2, ...B1, ...B2, ...C1];
 
 /** What each level is for, in the words a learner would use about themselves. */
 export interface LevelInfo {
@@ -66,12 +72,6 @@ export const LEVEL_INFO: Record<Level, LevelInfo> = {
     title: "Vilunud keelekasutaja",
     summary: "Compress, subordinate, hedge and choose between near-synonyms.",
     arrival: "You can write academic and professional Estonian that reads as though written, not translated.",
-  },
-  C2: {
-    level: "C2",
-    title: "Vaba valdamine",
-    summary: "Specialised registers, irony, dialect and wordplay: the part earned by living in the language.",
-    arrival: "You work in Estonian without thinking about Estonian.",
   },
 };
 
