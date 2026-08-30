@@ -708,7 +708,9 @@ check("the chat says which model actually replied", () => {
   const route = read("app/api/tutor/route.ts");
   assert.match(route, /x-model-provider/, "the reply no longer carries which model wrote it");
   assert.match(route, /open\.config/, "the header names something other than the run that answered");
-  const chat = read("app/(app)/tutor/TutorChat.tsx");
+  // Shared by the full `/tutor` page and the floating Anu button, so both
+  // read it from the one place that actually asks the response for it.
+  const chat = read("components/anu/useAnuChat.ts");
   assert.match(chat, /x-model-provider/, "the chat no longer reads it back");
 });
 
@@ -734,7 +736,9 @@ check("Anu's free chat prose is checked against the dictionary, not just her gra
   assert.match(route, /matchEstonianForm\(/, "the chat route no longer checks tokens against the dictionary");
   assert.match(route, /UNVERIFIED:/, "the chat route no longer flags what it could not confirm");
 
-  const chat = read("app/(app)/tutor/TutorChat.tsx");
+  // Shared by the full `/tutor` page and the floating Anu button, so both
+  // render the flag the same way.
+  const chat = read("components/anu/AnuParts.tsx");
   assert.match(chat, /UNVERIFIED:/, "the chat screen no longer reads the flag back");
 });
 
