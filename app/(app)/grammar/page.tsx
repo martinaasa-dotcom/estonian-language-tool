@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
-import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CASE_GROUPS, TOPIC_GROUPS, TOPIC_NOTES, caseReference, grammarTopic } from "@/lib/estonian/grammar";
 import { VERB_AXES, grammarGroupTerm, grammarTerm } from "@/lib/estonian/terms";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { Card, Chip, Meter, Note, Page, SectionTitle, Stack } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +30,9 @@ export const metadata = {
 export default async function GrammarIndexPage() {
   const ownerId = await requireUserId();
 
-  const caseReviews = await prisma.review.findMany({
-    where: { targetCase: { not: null }, ownerId },
-    select: { targetCase: true, rating: true },
-    take: 5000,
-  });
-  const weakest = caseAccuracy(caseReviews).slice(0, 3);
+  // Through the one reader, so this page and Practice and Progress cannot name
+  // three different weakest cases at the same learner. See lib/progress/cases.ts.
+  const weakest = caseAccuracy(await caseReviewsFor(ownerId)).slice(0, 3);
 
   return (
     <Page

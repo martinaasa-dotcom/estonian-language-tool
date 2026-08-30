@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -29,11 +30,9 @@ export default async function PracticePage() {
   const [snapshot, settings, caseReviews, sentenceReady] = await Promise.all([
     deckSnapshot(ownerId),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
-    prisma.review.findMany({
-      where: { targetCase: { not: null }, ownerId },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
+    // The one reader, so Practice and Progress cannot disagree about which case
+    // a learner is worst at. See lib/progress/cases.ts.
+    caseReviewsFor(ownerId),
     prisma.card.findMany({
       where: { ownerId, suspended: false, lexemeId: { not: null } },
       distinct: ["lexemeId"],

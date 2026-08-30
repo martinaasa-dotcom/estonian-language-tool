@@ -18,6 +18,7 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
@@ -38,7 +39,7 @@ export default async function ProgressPage() {
   const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
 
-  const [summary, units, reviews, dueDates, cefrRows, learnerSettings] = await Promise.all([
+  const [summary, units, reviews, dueDates, cefrRows, learnerSettings, caseReviews] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -55,6 +56,17 @@ export default async function ProgressPage() {
       select: { state: true, lexeme: { select: { lemma: true, cefr: true } } },
     }),
     readSettings(ownerId, [SETTING_KEYS.leaderboard, SETTING_KEYS.displayName]),
+    /*
+      Read separately from the charts above, and on purpose.
+
+      This page's reading of the panel was the considered one, over the last
+      half-year, and Practice and the grammar index each answered it over an
+      arbitrary five thousand rows of all time. So the same learner could be
+      told 100% here and 50% there about the same case on the same day. The
+      panel is one component and one calculation already; this makes it one
+      input too, and the window is the one this page already used.
+    */
+    caseReviewsFor(ownerId, now),
   ]);
 
   // The cards that keep coming back. Lapses live on the card's own FSRS state;
@@ -83,7 +95,7 @@ export default async function ProgressPage() {
   // The narrower, more useful number: how often a card the scheduler believed
   // you knew actually came back. The recall rate above counts first sights too.
   const retention = retentionReading(reviews);
-  const cases = caseAccuracy(reviews);
+  const cases = caseAccuracy(caseReviews);
   const hour = bestStudyHour(reviews, 20, clock);
   const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
   // A class you have joined is the leaderboard that means something: real people
