@@ -306,6 +306,30 @@ waiting to happen. Two sessions fixed this within the hour and the other kept it
 that copy was deleted rather than left beside this one. If you add a provider, add its key to
 `PROVIDER_KEY_ENV`, three lines above the function that reads it.
 
+**A screen shows what earns its place now, and one module decides what that is.** The feedback that
+produced `lib/ux/disclosure.ts` was that the app overwhelms somebody just getting started, and the
+cause was not any one screen: every screen showed everything the app can do to everybody, from the
+first minute. Today led with eleven panels and on day one ten of them were reporting on an empty
+review log, so a streak of nought, a goal ring at nought percent and a "word to revisit" from a deck
+nobody had read yet all had to be scrolled past to reach the one button that matters. The rule is a
+table of three stages keyed on the learner's own history: `arriving` until they have graded a card,
+`starting` until roughly three days at the default goal, `settled` after. Nothing is *deleted* by
+it. Every panel a stage withholds is still in the rail, in the palette and on its own page, and
+`disclosure.test.ts` asserts each stage is a superset of the one before, because a panel that
+appears and then vanishes reads as a bug rather than as restraint. The invariant fails on a screen
+that stops asking the module, and on anybody outside it comparing a review count against a number
+of their own, since a second answer to "has this learner started yet" is how the first one rots.
+
+**Where a walkthrough is short, the reason is that the questions were spread, not that they were
+dropped.** First run was eight screens and is four. Every answer it used to collect it still
+collects: what to call you, where you are, why, how far, by when, how often, the daily goal and the
+first units. What went is four screens that each carried one question, a screen of feature tour that
+is `/guide` word for word, and a plan panel whose six cited facts and essay on where the hours come
+from now live on `/assess` behind `compact`. The order is still the argument: the limits are stated
+before anything is asked for, the level is measured before the plan is built on it, and the plan is
+seen before a single word is chosen. `test-assess.mjs` drives all four screens and would fail if the
+deck step ever moved above the plan.
+
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only —
 never add a flag that can disable auth on a deployment that has it. (ADR-013.)
@@ -314,8 +338,8 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
-  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/` and `lib/copy/` stay free of React,
-  Next.js and Prisma — pure functions, unit tested. Anything that
+  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/` and `lib/copy/` stay free of
+  React, Next.js and Prisma — pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
@@ -559,7 +583,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
-`rawAvailable`, `absentParts`, `standsFor`. Most of them now
+`rawAvailable`, `absentParts`, `standsFor`, `stageOf`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

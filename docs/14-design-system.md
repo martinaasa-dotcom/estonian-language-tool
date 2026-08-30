@@ -223,3 +223,40 @@ worksheet.
 
 Two classes are the whole contract: `no-print` on screen-only controls, `page-break` where a new
 sheet begins. `avoid-break` keeps an exercise from splitting across a page.
+
+## 11. Restraint, and who it is for
+
+Everything above is about what a thing looks like. This section is about how much of it there is,
+which turned out to be the harder half.
+
+The feedback was that the app overwhelms somebody just getting started, and it was fair on every
+screen a stranger meets first. Today rendered eleven panels to everybody. The landing page ran to
+ten sections before the sign-up button at the bottom. First run asked ten questions across eight
+screens. The practice hub laid out thirteen modes in one flat grid, each with a two-sentence
+paragraph. The desktop rail listed fifteen destinations with no grouping. None of that was wrong,
+and all of it was true and useful to somebody. There was simply too much of it before the decision.
+
+Three moves, and they are the ones to reach for again.
+
+**Stage it.** `lib/ux/disclosure.ts` is the one table of what a screen leads with, keyed on how far
+the learner has actually got. A figure computed from an empty log is not information, it is
+furniture: a streak of nought, a ring at nought percent, a word of the day drawn at random from a
+dictionary nobody has opened. Hold those back until they say something, and never hold back the way
+in. Each stage is a superset of the one before, because a panel that appears and then disappears
+reads as a fault.
+
+**Group it.** Thirteen practice modes in one grid make the reader do the sorting. The daily loop,
+the quick rounds, the five that work a named weakness and the mock paper are four groups that answer
+"what should I do with the next five minutes" by their headings alone, which is what the page
+claimed to do and was not doing. Same on the rail: four destinations that are the app, and the other
+eleven behind one disclosure that opens itself whenever the current page is inside it.
+
+**Fold it, do not cut it.** The comparison table on the landing page is eight checkable claims
+against three real products, three of them ticks for somebody else, and deleting it to save scroll
+would have been the cheapest kind of tidying: it is the block that makes the rest checkable. It is
+behind its own summary now. The same applies to the walkthrough's tour, which is `/guide`, and to
+the plan's working, which is on `/assess`. Nothing that was true stopped being said; it stopped
+being said in the way of somebody who has not decided yet.
+
+What none of this licenses is hiding a thing because a screen looks busy. The test is whether the
+panel can say anything yet to the person in front of it. Where the answer is yes, it stays.

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight, BookOpen, ChartNoAxesColumn, Check, CircleHelp, Download, Flame, Headphones, Minus,
-  Map as MapIcon, Sparkles, Timer, Trophy, Volume2, WifiOff,
+  ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Flame, Headphones, Minus,
+  Map as MapIcon, Sparkles, Volume2,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Mascot, Wordmark } from "@/components/brand";
@@ -36,14 +37,29 @@ export default async function WelcomePage() {
 
       <Nav />
 
+      {/*
+        Ten sections became six.
+
+        The page was answering every question a visitor could have, in the order
+        somebody thought of them, and a first-time reader had to scroll past a
+        four-tile source credit, a four-figure stat panel and an eight-row
+        comparison grid to reach the part that shows what the app actually does.
+        Nothing here was wrong; there was simply too much of it before the
+        decision.
+
+        So: the sources and the figures are one line in the hero, where they are
+        evidence rather than a section. The comparison is behind its own summary,
+        because it answers a question only a comparison shopper is asking and it
+        is the longest block on the page. Everything cut from here is still said
+        somewhere it is read: the credits in the footer and on /terms, the
+        comparison one press away, the feature list on /guide in full.
+      */}
       <main className="relative">
-        <Hero words={words} />
-        <Sources />
+        <Hero words={words} stats={stats} />
         <Problem />
         <Cases words={words} />
         <Features />
         <HowItWorks />
-        <Numbers stats={stats} />
         <Comparison />
         <Faq />
         <FinalCta />
@@ -104,7 +120,21 @@ function Nav() {
 
 /* ────────────────────────────────────────────────────────── hero ── */
 
-function Hero({ words }: { words: DemoWord[] }) {
+function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; forms: number } }) {
+  /*
+    The four figures that were a panel of their own, as one line of evidence
+    under the buttons. A stat panel three screens down is a claim nobody has a
+    reason to read; the same numbers beside the call to action are the reason to
+    believe the sentence above them. The unit count and the level range are read
+    from the course itself, because both were written by hand as "eighteen
+    units, A1 to C1" and the course has been eighty-three units to C2 for a
+    while now.
+  */
+  const claims = [
+    `${stats.words.toLocaleString("en-GB")} words, every form from Ekilex`,
+    `${PATH.length} units, ${LEVELS[0]} to ${LEVELS[LEVELS.length - 1]}`,
+    "Free, and it works offline",
+  ];
   return (
     <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-8 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:px-8 md:pb-16 md:pt-20">
       <div>
@@ -150,7 +180,7 @@ function Hero({ words }: { words: DemoWord[] }) {
           className="fade-up mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs"
           style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
         >
-          {["No card, no trial timer", "Your review history exports in one click", "Reviewing works offline"].map((t) => (
+          {claims.map((t) => (
             <li key={t} className="flex items-center gap-1.5">
               <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
             </li>
@@ -185,39 +215,6 @@ function Hero({ words }: { words: DemoWord[] }) {
         <DemoCard words={words} />
       </div>
     </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────── sources ── */
-
-const SOURCES = [
-  ["Ekilex", "Institute of the Estonian Language"],
-  ["Wiktionary", "the English glosses, CC BY-SA"],
-  ["TartuNLP", "University of Tartu speech"],
-  ["FSRS", "the scheduler Anki moved to"],
-] as const;
-
-function Sources() {
-  return (
-    <Reveal>
-      <section className="mx-auto max-w-6xl px-5 py-10 md:px-8">
-        <p className="label-xs mb-5 text-center" style={{ color: "var(--ink-3)" }}>
-          Every Estonian form in the app comes from a named source
-        </p>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {SOURCES.map(([name, detail]) => (
-            <div
-              key={name}
-              className="rounded-[var(--r)] border px-4 py-3.5 text-center"
-              style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
-            >
-              <p className="est text-md font-bold" style={{ color: "var(--ink)" }}>{name}</p>
-              <p className="mt-0.5 text-2xs leading-snug" style={{ color: "var(--ink-3)" }}>{detail}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </Reveal>
   );
 }
 
@@ -308,26 +305,28 @@ function Cases({ words }: { words: DemoWord[] }) {
 /* ────────────────────────────────────────────────────── features ── */
 
 function Features() {
+  /*
+    Eight cards became five.
+
+    Three of them were saying the same thing as the hero, the FAQ or each other:
+    a portability card beside an offline tick, a progress card beside an XP
+    card, a "four ways to practise" card that had been wrong since the third
+    practice mode shipped. What is left is the five things somebody could not
+    guess from the sentence at the top of the page, and the two that were merged
+    are stronger together than either was alone.
+  */
   return (
     <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
           <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Eight things, each doing one job well
+            Five things, each doing one job well
           </h2>
         </div>
       </Reveal>
 
       <div className="mt-10 grid gap-4 md:grid-cols-3">
-        <Reveal>
-          <Feature
-            tone="mint"
-            icon={<MapIcon size={18} aria-hidden />}
-            title="A path from A1 to C1"
-            body="Eighteen units, each a sitting's worth of words. Adding one builds real cards, full paradigm, audio, both directions, in a single click."
-          />
-        </Reveal>
         <Reveal>
           <Feature
             tone="accent"
@@ -342,6 +341,14 @@ function Features() {
             icon={<Flame size={18} aria-hidden />}
             title="Repetition that knows when to stop"
             body="FSRS schedules every card for the day you were about to forget it, then tells you you're done. New cards are capped, so week three never becomes an hour."
+          />
+        </Reveal>
+        <Reveal>
+          <Feature
+            tone="sky"
+            icon={<Volume2 size={18} aria-hidden />}
+            title="Hear every single form"
+            body="Estonian neural speech from the University of Tartu, on every word and every form, at normal or slow speed. No key, no per-word charge."
           />
         </Reveal>
 
@@ -368,45 +375,11 @@ function Features() {
         </Reveal>
 
         <Reveal>
-          <div className="flex h-full flex-col gap-4">
-            <Feature
-              tone="sky"
-              icon={<Volume2 size={18} aria-hidden />}
-              title="Hear every single form"
-              body="Estonian neural speech from the University of Tartu, on every word and every form, at normal or slow speed. No key, no per-word charge."
-            />
-            <Feature
-              tone="peach"
-              icon={<Timer size={18} aria-hidden />}
-              title="Four ways to practise"
-              body="A 60-second sprint, a match round, listening, and a drill for whichever case you keep missing. All of it feeds the same schedule."
-            />
-          </div>
-        </Reveal>
-
-        <Reveal>
-          <Feature
-            tone="accent"
-            icon={<ChartNoAxesColumn size={18} aria-hidden />}
-            title="Progress you can audit"
-            body="A heatmap of every day you showed up, a forecast of what is coming, and accuracy per grammatical case. All computed from the review log, there is no score to inflate."
-          />
-        </Reveal>
-        <Reveal>
-          <Feature
-            tone="butter"
-            icon={<Trophy size={18} aria-hidden />}
-            title="XP, quests and a streak"
-            body="Ten levels with Estonian names, three quests a day, and streak shields for the evening life gets in the way. Motivation that is earned, never bought."
-          />
-        </Reveal>
-        <Reveal>
           <Feature
             tone="mint"
-            icon={<WifiOff size={18} aria-hidden />}
-            title="Yours, and portable"
-            body="Reviewing works on a train with no signal. Grades queue up and send themselves later. Your whole history exports as JSON whenever you want it."
-            icon2={<Download size={15} aria-hidden />}
+            icon={<MapIcon size={18} aria-hidden />}
+            title={`A course of ${PATH.length} units, and a dozen ways to drill it`}
+            body="Each unit is a sitting's worth of words that becomes real cards in one click. Sprint, dictation, listening, word order, minimal pairs and the rest all grade the same cards, so practice is never a side game with a score of its own."
           />
         </Reveal>
       </div>
@@ -414,11 +387,10 @@ function Features() {
   );
 }
 
-function Feature({ tone, icon, icon2, title, body, className = "" }: {
+function Feature({ tone, icon, title, body, className = "" }: {
   tone: "accent" | "mint" | "sky" | "butter" | "peach" | "blush";
   icon: React.ReactNode;
-  icon2?: React.ReactNode;
-  title: string;
+  title: React.ReactNode;
   body: string;
   className?: string;
 }) {
@@ -435,7 +407,6 @@ function Feature({ tone, icon, icon2, title, body, className = "" }: {
       </span>
       <h3 className="est mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
         {title}
-        {icon2 && <span style={{ color: "var(--ink-3)" }}>{icon2}</span>}
       </h3>
       <p className="mt-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
     </div>
@@ -447,7 +418,7 @@ function Feature({ tone, icon, icon2, title, body, className = "" }: {
 const STEPS = [
   {
     title: "Pick a unit, or look a word up",
-    body: "Eighteen units from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class.",
+    body: "A course from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class.",
     tone: "sky",
   },
   {
@@ -503,36 +474,6 @@ function HowItWorks() {
         </ol>
       </div>
     </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────── numbers ── */
-
-function Numbers({ stats }: { stats: { words: number; forms: number } }) {
-  const items = [
-    [stats.words.toLocaleString("en-GB"), "words, hand-checked", "A1 up into C1"],
-    [stats.forms.toLocaleString("en-GB"), "stored forms", "never generated"],
-    ["18", "units, A1 to C1", "greetings to argument"],
-    ["14", "cases covered", "3 memorised, 11 derived"],
-  ] as const;
-
-  return (
-    <Reveal>
-      <section className="mx-auto max-w-6xl px-5 py-10 md:px-8">
-        <div
-          className="grid gap-6 rounded-[var(--r-xl)] px-6 py-8 sm:grid-cols-2 md:grid-cols-4 md:px-10"
-          style={{ background: "var(--surface)", border: "1px solid var(--rule)", boxShadow: "var(--shadow-sm)" }}
-        >
-          {items.map(([value, label, hint]) => (
-            <div key={label}>
-              <p className="est tnum text-4xl font-bold leading-none tracking-tight grad-text">{value}</p>
-              <p className="mt-2 text-sm font-semibold" style={{ color: "var(--ink)" }}>{label}</p>
-              <p className="text-xs" style={{ color: "var(--ink-3)" }}>{hint}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </Reveal>
   );
 }
 
@@ -638,115 +579,150 @@ function Mark({ verdict }: { verdict: Verdict }) {
   );
 }
 
+/**
+ * The comparison, folded shut.
+ *
+ * Every claim in it is still here, and so is the credit paragraph for each of
+ * the four tools. What changed is that it no longer sits in the scroll of
+ * somebody who has not yet worked out what this app is: an eight-row grid
+ * against three products, four credit cards and a dated methodology note is the
+ * longest block on the page, and it answers a question only a person already
+ * choosing between tools is asking. That person will open it. Everybody else
+ * gets one honest sentence and their evening back.
+ *
+ * Shut by default rather than removed, because the argument in the comment
+ * below still holds: a page that will not say what it is not better at is a
+ * page whose claims cannot be checked.
+ */
 function Comparison() {
   return (
     <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <div className="mx-auto max-w-[46ch] text-center">
-          <p className="label-xs" style={{ color: "var(--peach-ink)" }}>An honest comparison</p>
-          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Kodukeel next to the alternatives
-          </h2>
-          <p className="mt-4 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            Duolingo has never offered an Estonian course, so the choice you actually face is
-            between the tools that do. None of them is trying to do quite this: get you to the
-            point of saying{" "}
+        <details
+          className="group rounded-[var(--r-xl)] border px-5 py-5 md:px-8 md:py-7"
+          style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
+        >
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-5">
+            <span className="min-w-0">
+              <span className="label-xs block" style={{ color: "var(--peach-ink)" }}>An honest comparison</span>
+              <span className="est mt-2 block text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
+                How it sits next to Speakly, Keeleklikk and Anki
+              </span>
+              <span className="mt-2 block max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                Duolingo has never offered an Estonian course, so the choice you actually face is
+                between the tools that do. Eight claims, checked against their own public pages,
+                three of them ticks for somebody else.
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform group-open:rotate-180"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+            >
+              <ChevronDown size={17} aria-hidden />
+            </span>
+          </summary>
+
+          {/*
+            No Reveal inside here. It fades a section up as it enters the
+            viewport, and an element that is display:none until somebody opens
+            a disclosure has no entry to animate on a page already scrolled
+            past it. The one thing worse than an animation nobody sees is one
+            that leaves the content half-faded, which the design suite checks
+            for by name.
+          */}
+          <p className="mt-6 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            None of them is trying to do quite this: get you to the point of saying{" "}
             <span lang="et" className="est font-semibold">ma lähen tuppa</span> and knowing why it
             is not <span lang="et" className="est font-semibold">tuba</span>.
           </p>
-        </div>
-      </Reveal>
 
-      <Reveal>
-        {/* Phones get a card per claim: four columns of ticks at 390px would
-            leave the labels a third of a line wide, and this page may not
-            scroll sideways. */}
-        <div className="mt-9 flex flex-col gap-3 md:hidden">
-          {ROWS.map((row) => (
-            <div
-              key={row.label}
-              className="rounded-[var(--r-lg)] border p-4"
-              style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
-            >
-              <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {TOOLS.map((tool, i) => (
-                  <span key={tool.name} className="flex items-center gap-2">
-                    <Mark verdict={row.cells[i] ?? "unsure"} />
-                    <span
-                      className="text-xs font-semibold"
-                      style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
-                    >
-                      {tool.short}
+          {/* Phones get a card per claim: four columns of ticks at 390px would
+              leave the labels a third of a line wide, and this page may not
+              scroll sideways. */}
+          <div className="mt-7 flex flex-col gap-3 md:hidden">
+            {ROWS.map((row) => (
+              <div
+                key={row.label}
+                className="rounded-[var(--r-lg)] border p-4"
+                style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+              >
+                <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {TOOLS.map((tool, i) => (
+                    <span key={tool.name} className="flex items-center gap-2">
+                      <Mark verdict={row.cells[i] ?? "unsure"} />
+                      <span
+                        className="text-xs font-semibold"
+                        style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
+                      >
+                        {tool.short}
+                      </span>
                     </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="mt-7 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
+            style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
+          >
+            <div
+              className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
+              style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
+            >
+              <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
+              {TOOLS.map((tool) =>
+                tool.ours ? (
+                  <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
+                    {tool.name}
+                  </span>
+                ) : (
+                  <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
+                    {tool.name}
+                  </span>
+                ),
+              )}
+            </div>
+            {ROWS.map((row) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
+                style={{ borderTop: "1px solid var(--rule-soft)" }}
+              >
+                <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
+                {TOOLS.map((tool, i) => (
+                  <span key={tool.name} className="flex justify-center">
+                    <Mark verdict={row.cells[i] ?? "unsure"} />
                   </span>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-
-        <div
-          className="mt-9 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
-          style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
-        >
-          <div
-            className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
-            style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
-          >
-            <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
-            {TOOLS.map((tool) =>
-              tool.ours ? (
-                <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
-                  {tool.name}
-                </span>
-              ) : (
-                <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
-                  {tool.name}
-                </span>
-              ),
-            )}
+            ))}
           </div>
-          {ROWS.map((row) => (
-            <div
-              key={row.label}
-              className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
-              style={{ borderTop: "1px solid var(--rule-soft)" }}
-            >
-              <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
-              {TOOLS.map((tool, i) => (
-                <span key={tool.name} className="flex justify-center">
-                  <Mark verdict={row.cells[i] ?? "unsure"} />
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </Reveal>
 
-      <Reveal>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          {CREDITS.map((credit) => (
-            <div
-              key={credit.name}
-              className="rounded-[var(--r-lg)] border px-4 py-3.5"
-              style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
-            >
-              <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
-              <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
-            </div>
-          ))}
-        </div>
-      </Reveal>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {CREDITS.map((credit) => (
+              <div
+                key={credit.name}
+                className="rounded-[var(--r-lg)] border px-4 py-3.5"
+                style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
+              >
+                <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
+                <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
+              </div>
+            ))}
+          </div>
 
-      <Reveal>
-        <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          A tick means yes, a dash means not from anything its own public pages say, and a question
-          mark means we could not tell and would rather say so. Checked in August 2026 against each
-          product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
-          is not affiliated with any of them and none of them has endorsed it. If something is out
-          of date or simply wrong, tell us and it gets corrected.
-        </p>
+          <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+            A tick means yes, a dash means not from anything its own public pages say, and a question
+            mark means we could not tell and would rather say so. Checked in August 2026 against each
+            product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
+            is not affiliated with any of them and none of them has endorsed it. If something is out
+            of date or simply wrong, tell us and it gets corrected.
+          </p>
+        </details>
       </Reveal>
     </section>
   );

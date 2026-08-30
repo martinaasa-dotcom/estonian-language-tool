@@ -677,6 +677,33 @@ check("nothing tries to embed Sonaveeb or Ekilex", () => {
 
 // ── Conventions that hold the design together ────────────────────────────────
 
+check("how much of the app a screen leads with is decided in one place", () => {
+  /*
+    The feedback that produced `lib/ux/disclosure.ts` was that this app
+    overwhelms somebody just getting started, and the cause was that every
+    screen decided on its own how much to show and every one of them decided
+    "everything". A rule that lives in one module is only a rule while the
+    next screen reaches for it instead of writing its own threshold, so this
+    fails on two shapes: Today no longer asking the module, and anybody
+    outside it comparing a review count against a number of their own.
+  */
+  const today = code("app/(app)/page.tsx");
+  assert.match(today, /from "@\/lib\/ux\/disclosure"/, "Today decides for itself again");
+  assert.match(today, /\bshows\(/, "Today imports the rule without applying it");
+
+  for (const file of ALL) {
+    if (file.startsWith("lib/ux/")) continue;
+    const source = code(file);
+    // A comparison of a review total against a literal is somebody inventing a
+    // second answer to "has this learner started yet". `stageOf` is the answer.
+    assert.equal(
+      /reviewsAllTime\s*[<>]=?\s*\d/.test(source),
+      false,
+      `${file} sets its own threshold for a new learner instead of calling stageOf`,
+    );
+  }
+});
+
 check("the pure modules stay free of React, Next and Prisma", () => {
   /*
     These are the ones with unit tests around them, and a test is only cheap
@@ -684,7 +711,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "scan", "security", "stats", "time",
+    "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
