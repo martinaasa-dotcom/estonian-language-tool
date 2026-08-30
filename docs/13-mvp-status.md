@@ -936,6 +936,37 @@ card was always for.
    vocabulary at the same time measures neither. `lib/srs/cards.ts` says so at
    the line that builds the hint.
 
+### And one word given away next door
+
+The same audit turned up a smaller version of it in dictation. The card header
+carried a dictionary link for `task.lemma`, drawn whether or not the sentence
+had been answered, directly above a chip reading "Write what you hear". That
+lemma is a word *of the sentence being dictated*, so the exercise printed part
+of its own answer. It is not the same as the form drills above: they hand over
+the vocabulary because they are asking for a case ending instead, whereas
+dictation is asking for the spelling of exactly those words.
+
+The review session's own header carries the same link and is fine, which is
+what made this easy to miss when the component was written: there the link is
+the card's subject and the front of the card is already showing it. Here there
+was no front to show it.
+
+The link is worth keeping for after the answer, when looking the word up is the
+natural next thing to do, so it is gated on the result rather than deleted.
+`scripts/test-teaching.mjs` asserts both halves, because deleting it outright
+would satisfy "not given away while typing" on its own and quietly cost the
+learner something. Its floor moves up by two, to 45 after the pass below took it to 43, and
+the no-sentences waiver 4 to 6.
+The first of those two checks was watched to fail against the ungated header
+before it was trusted.
+
+Two findings from the same audit are recorded and not acted on. The minimal
+pairs option list prints `formLabel of lemma, translation` under every choice
+while the learner is discriminating a sound; the gloss is not the answer there,
+so it leaks nothing the mode grades, but it is not doing any work either.
+Sentence building carries the same header link as dictation, and it is
+harmless: the tiles already show every word of the target sentence.
+
 ## 17. The eleventh pass: named the way it is taught
 
 The domain model had been right since it was written and the screens had not
