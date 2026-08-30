@@ -64,18 +64,39 @@ export async function caseExamples(
     forms: { select: { formType: true, value: true, morphCode: true } },
   } as const;
 
-  // The learner's own nouns first: a case is easier to believe in a word you
-  // are already studying than in whatever the dictionary happens to list first.
+  /*
+    The learner's own nouns first: a case is easier to believe in a word you
+    are already studying than in whatever the dictionary happens to list first.
+
+    Both of these are ordered, and neither was. This is a reference page a
+    learner comes back to, and the six words on it were decided by the order
+    Postgres returned rows in: `rank` below has four values and `sort` is
+    stable, so ties keep whatever order arrived, and the top-up query was the
+    only one of the three that said which order it wanted. It looked settled
+    because a plan for the same rows usually is, and it is not a promise. The
+    same shape as the dictionary leading with an arbitrary one of two entries,
+    one page along.
+
+    Oldest card first for *which* nouns are candidates, because the words
+    somebody has been studying longest are the ones they can read a new case
+    off; then cefr and lemma for the order they are considered in, which is
+    what the top-up already uses, so the two halves agree.
+  */
   const deckIds = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { not: null }, lexeme: { pos: "NOUN" } },
     distinct: ["lexemeId"],
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
     take: CANDIDATES,
     select: { lexemeId: true },
   });
   const owned = deckIds.map((c) => c.lexemeId!).filter(Boolean);
 
   const mine: Candidate[] = owned.length
-    ? await prisma.lexeme.findMany({ where: { id: { in: owned } }, select })
+    ? await prisma.lexeme.findMany({
+      where: { id: { in: owned } },
+      orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
+      select,
+    })
     : [];
 
   // Topped up from the dictionary, easiest words first, so an empty deck still
