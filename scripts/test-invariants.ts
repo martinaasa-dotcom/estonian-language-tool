@@ -2078,6 +2078,122 @@ check("every cache the service worker writes to is bounded, except the one that 
   );
 });
 
+/**
+ * A route that spends something is a route with a ceiling in front of it.
+ *
+ * `lib/security/rateLimit.ts` opened by saying "three of them do" and naming
+ * three, and there were five by then. That drift is exactly how `/api/write`
+ * ended up without one: it is `/api/exam/write` with a different prompt, its
+ * twin has been throttled since the day it landed, and the only difference
+ * between them was which had been written first. Meanwhile `/api/restore` read
+ * a body of any size the caller liked and handed it to `JSON.parse` before
+ * anything had counted the request.
+ *
+ * The ledger is what actually bounds the spend, and this is not a second
+ * ledger. It is the thing that refuses an obvious loop before it makes a
+ * database round trip per attempt, and the only ceiling at all on the routes
+ * the ledger does not price: speech, the share card, the export and the
+ * restore.
+ *
+ * Read from the routes rather than from the prose, on the shape of the ledger
+ * check above and for the same reason: a paragraph kept four of these honest
+ * and did not catch the fifth.
+ */
+check("a route that spends something is throttled", () => {
+  const routes = APP.filter((file) => /[\\/]api[\\/].*route\.tsx?$/.test(file));
+  assert.ok(routes.length >= 8, `only found ${routes.length} route handlers, so this check stopped looking`);
+
+  /*
+    Exempt, each for a reason that is a fact about the route:
+
+    metrics  carries its own bearer token, 404s when none is configured, and is
+             read by whoever runs the deployment rather than by a learner.
+    reminder is one indexed read and some string building, so a ceiling there
+             would be met by a person tapping twice and by nobody else, which
+             is the same argument `lib/security/actionLimits.ts` makes about
+             grading a card.
+  */
+  const exempt = new Set(["metrics", "reminder"]);
+
+  for (const file of routes) {
+    const name = file.split(/[\\/]/).slice(-2, -1)[0] ?? file;
+    if (exempt.has(name)) continue;
+    const source = code(file);
+    assert.match(
+      source,
+      /checkRateLimit\(/,
+      `${file} does per-call expensive work with no ceiling in front of it`,
+    );
+    /*
+      And charged to the learner rather than to their address. Twenty-five
+      students on one school network are one IP, so an address bucket would
+      refuse a whole classroom in its first few seconds.
+    */
+    assert.match(
+      source,
+      /bucketForOwner\(|bucketForRequest\(/,
+      `${file} throttles against something other than the account it resolved`,
+    );
+  }
+
+  /*
+    And the file that reads a whole upload states a ceiling on it. Without one
+    `request.text()` reads whatever arrives, which is one signed-in account
+    away from holding an arbitrary amount of a server's memory per request.
+  */
+  const restore = code(join("app", "api", "restore", "route.ts"));
+  assert.match(restore, /MAX_BACKUP_BYTES/, "the restore route reads an upload of any size again");
+  assert.match(restore, /content-length/, "the restore route no longer refuses an oversized upload before reading it");
+});
+
+/**
+ * Every route group has a loading state.
+ *
+ * `docs/08-ux-ia-a11y.md` §4 asks each view for four states, and CLAUDE.md
+ * repeats it: "A view without an empty state is not finished." Loading is one
+ * of the four and it is the one a route group can lose wholesale, because it
+ * is a file rather than a branch in a component. `app/(app)/` had one. The
+ * chromeless group and the two policy pages had none, so the landing page,
+ * sign-in, first run, /privacy and /terms each showed a blank screen until
+ * their data arrived.
+ *
+ * First run is the worst of those to lose. It builds a whole level check on
+ * the server before rendering, which is a handful of queries paid for
+ * deliberately, and what it showed for the length of them was nothing at all,
+ * as the first screen this app puts in front of anybody.
+ *
+ * Checked per group rather than per page, because that is the granularity
+ * Next resolves a `loading.tsx` at and therefore the granularity at which one
+ * can go missing.
+ */
+check("every route group says it is loading rather than showing nothing", () => {
+  /*
+    A directory owns a loading state if it or an ancestor up to `app/` has one.
+    Only directories that hold a page need one; a bare segment inherits.
+  */
+  const owners = new Set(
+    APP.filter((file) => /[\\/]loading\.tsx$/.test(file)).map((file) => file.replace(/[\\/]loading\.tsx$/, "")),
+  );
+
+  const covered = (dir: string): boolean => {
+    let at = dir;
+    for (;;) {
+      if (owners.has(at)) return true;
+      const up = at.replace(/[\\/][^\\/]+$/, "");
+      if (up === at || up.length < "app".length) return false;
+      at = up;
+    }
+  };
+
+  for (const file of APP.filter((f) => /[\\/]page\.tsx$/.test(f))) {
+    const dir = file.replace(/[\\/]page\.tsx$/, "");
+    // The offline page is static by construction and renders from the service
+    // worker's cache, where there is nothing to wait for.
+    if (dir.endsWith("offline")) continue;
+    assert.ok(covered(dir), `${file} has no loading state above it, so a slow request shows a blank screen`);
+  }
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

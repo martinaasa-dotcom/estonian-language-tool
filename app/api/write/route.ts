@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
 import { gradeSentence } from "@/lib/tutor/grader";
 import { verifyComment } from "@/lib/tutor/verify";
@@ -25,6 +26,22 @@ export const maxDuration = 60;
  */
 export async function POST(request: Request) {
   const ownerId = await requireUserId();
+
+  /*
+    The same ceiling its twin has.
+
+    `/api/exam/write` is this route with a different prompt and it has had one
+    since it landed; this one never did, and the difference was nothing more
+    than which was written first. The ledger is what actually bounds the spend
+    and it covers both, but the limiter in front of it is there so an obvious
+    loop is refused before it makes a database round trip per attempt, and a
+    grader that costs a call is exactly the shape that gets looped.
+
+    Six a minute, which is one every ten seconds: nobody writing an Estonian
+    sentence and reading the marking meets that, and a script meets it at once.
+  */
+  const limit = checkRateLimit(`write:${bucketForOwner(ownerId)}`, 6, 60_000);
+  if (!limit.ok) return rateLimited(limit, "Anu is still reading the last one.");
 
   let lexemeId: string;
   let caseKey: CaseKey;

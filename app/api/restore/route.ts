@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { inspectBackup, restoreBackup } from "@/app/actions";
+import { requireUserId } from "@/lib/auth/session";
+import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 
 /**
@@ -22,7 +24,53 @@ import { reportError } from "@/lib/observability/report";
  * that a restore never deletes a review, stays in `restoreBackup`: this only
  * changes how the bytes arrive.
  */
+/**
+ * The biggest body this route will read.
+ *
+ * A backup carries the shared dictionary as well as the deck, so a real one is
+ * already tens of megabytes and grows as the dictionary does. This is set well
+ * above that rather than close to it: refusing somebody's genuine backup is a
+ * far worse failure than accepting one that is larger than expected, and the
+ * whole point of the route is that the person with the longest history is not
+ * the first to lose the ability to restore it.
+ *
+ * What it is for is the other end. `request.text()` read whatever arrived,
+ * with no ceiling anywhere in the app, and `inspect` then handed the result to
+ * `JSON.parse`. That is one signed-in account away from holding an arbitrary
+ * amount of a server's memory, per request, as often as it likes.
+ */
+const MAX_BACKUP_BYTES = 128 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
+  /*
+    Charged to the learner, and charged for `inspect` too.
+
+    `restoreBackup` throttles itself through `lib/security/actionLimits.ts`,
+    which is the right place for it: it is a Server Action and that table is
+    where a per-call expensive action's ceiling lives. `inspectBackup` has no
+    such ceiling, because it writes nothing and so never looked expensive, and
+    it parses the same whole file. A refusal here is cheaper than either one,
+    and it is the only thing standing in front of the parse.
+  */
+  const ownerId = await requireUserId();
+  const limit = checkRateLimit(`restore:${bucketForOwner(ownerId)}`, 12, 60_000);
+  if (!limit.ok) {
+    return rateLimited(limit, "That file is still being read. Nothing has changed.");
+  }
+
+  const declared = Number(request.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > MAX_BACKUP_BYTES) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "That file is larger than this app will read, and nothing was changed. " +
+          "If it really is a Kodukeel backup, whoever runs this installation can raise the limit.",
+      },
+      { status: 413 },
+    );
+  }
+
   const asked = request.nextUrl.searchParams.get("mode");
   /*
     "inspect" reads the file and reports what is in it without writing
@@ -36,6 +84,18 @@ export async function POST(request: NextRequest) {
   let json: string;
   try {
     json = await request.text();
+    /*
+      And again after reading it, because `content-length` is the caller's
+      claim about the body rather than a fact about it: a chunked upload sends
+      none at all. Checked before anything parses it, which is the step that
+      costs.
+    */
+    if (json.length > MAX_BACKUP_BYTES) {
+      return NextResponse.json(
+        { ok: false, error: "That file is larger than this app will read, and nothing was changed." },
+        { status: 413 },
+      );
+    }
   } catch (cause) {
     await reportError(cause, { at: "api/restore", extra: { stage: "read" } });
     return NextResponse.json(

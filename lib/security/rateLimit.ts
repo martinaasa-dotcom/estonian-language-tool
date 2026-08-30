@@ -2,10 +2,12 @@
  * A best-effort, per-instance rate limiter for the routes that spend
  * somebody else's quota.
  *
- * Three of them do. `/api/tutor` costs money or burns a free model's daily
- * allowance; `/api/tts` is a free academic service run by the University of
- * Tartu, and being a polite consumer of it is stated in that route already;
- * `/api/share` renders an image per call. None of that needs a distributed
+ * `/api/tutor`, `/api/write` and `/api/exam/write` each cost money or burn a
+ * free model's daily allowance; `/api/scan` costs a vision call; `/api/tts` is
+ * a free academic service run by the University of Tartu, and being a polite
+ * consumer of it is stated in that route already; `/api/share` renders an image
+ * per call; `/api/export` reads every table this account owns and `/api/restore`
+ * parses a file the caller chose the size of. None of that needs a distributed
  * limiter, and this deliberately is not one: buckets live in the memory of
  * one warm instance, so a burst spread across cold starts can slip past. It
  * still catches the pattern that actually happens, which is one retry loop or
@@ -20,7 +22,16 @@
  * the counters and is therefore the same number whichever instance answers.
  * This limiter is in front of that to keep an obvious loop from making a
  * hundred database round trips on its way to being refused, and to cap the
- * one route the ledger does not price at all, which is speech.
+ * routes the ledger does not price at all: speech, the share card, the export
+ * and the restore.
+ *
+ * THE LIST ABOVE USED TO SAY "THREE OF THEM" AND NAME THREE, and it was five
+ * by then. That is how `/api/write` went without one: it is `/api/exam/write`
+ * with a different prompt, its twin was throttled from the day it landed, and
+ * the only difference between them was which had been written first. Prose
+ * kept four routes honest and did not catch the fifth, which is the argument
+ * `lib/usage/ledger.ts` makes about itself, so an invariant reads the routes
+ * rather than this paragraph.
  */
 
 type Bucket = { count: number; resetAt: number };
