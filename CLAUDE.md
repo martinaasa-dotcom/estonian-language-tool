@@ -476,7 +476,13 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   rather than `hour12: false`, which renders midnight as "24:00" in en-US.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
   meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
-  free for decoration.
+  free for decoration. **A hue has a fill and an ink and they are not interchangeable**: `--accent`
+  is what a button is painted, `--accent-deep` is what a word is written in, and text set in the
+  fill measured 3.87 on the week header and 4.05 in the leech clinic against a bar of 4.5. Contrast
+  is measured in a browser rather than reasoned about from the token list, and **in both themes**,
+  because light and dark are two palettes rather than one with a filter over it: every failure this
+  found was in dark mode, where `--ink-3` on the four soft tints came in between 4.07 and 4.45. What
+  a colour is worth depends on what it is sitting on, which a palette cannot tell you.
 - Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
   page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
   to be added to the allowlist in `middleware.ts` as well.

@@ -215,7 +215,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             {question.example && (
               <div className="flex flex-wrap items-center gap-2">
-                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent)" }}>
+                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {question.example}
                 </p>
                 <Speak text={question.example} />

@@ -81,7 +81,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
           href={`/week/${week - 1}`}
           aria-disabled={week <= 1}
           className="flex items-center gap-1 text-[13.5px]"
-          style={{ color: week <= 1 ? "var(--ink-3)" : "var(--accent)", pointerEvents: week <= 1 ? "none" : undefined }}
+          style={{ color: week <= 1 ? "var(--ink-3)" : "var(--accent-deep)", pointerEvents: week <= 1 ? "none" : undefined }}
         >
           <ChevronLeft size={14} aria-hidden /> Week {week - 1}
         </Link>
@@ -89,7 +89,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
         <Link
           href={`/week/${week + 1}`}
           className="flex items-center gap-1 text-[13.5px]"
-          style={{ color: "var(--accent)" }}
+          style={{ color: "var(--accent-deep)" }}
         >
           Week {week + 1} <ChevronRight size={14} aria-hidden />
         </Link>
@@ -111,7 +111,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
             <div className="flex flex-wrap gap-8">
               <Stat value={words.size} label="Words" />
               <Stat value={cards.length} label="Cards" />
-              <Stat value={known} label="Known" tone="var(--good)" />
+              <Stat value={known} label="Known" tone="var(--good-ink)" />
               <Stat value={`${doneTasks}/${tasks.length}`} label="Tasks done" />
             </div>
             <div className="mt-5 flex flex-wrap items-center gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
@@ -189,7 +189,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
           )}
 
           <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-            <Link href="/tasks" className="inline-flex items-center gap-1.5" style={{ color: "var(--accent)" }}>
+            <Link href="/tasks" className="inline-flex items-center gap-1.5" style={{ color: "var(--accent-deep)" }}>
               <CalendarCheck size={13} aria-hidden /> All tasks <ArrowRight size={12} aria-hidden />
             </Link>
           </p>

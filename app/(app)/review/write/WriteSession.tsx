@@ -184,7 +184,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             </strong>{" "}
             <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
           </p>
-          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent)" }}>
+          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
             {prompt.caseEt}
           </p>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>

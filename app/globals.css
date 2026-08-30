@@ -176,7 +176,15 @@
       --raised: #221e36;
       --ink: #f2eeff;
       --ink-2: #c2bade;
-      --ink-3: #8f87ad;
+      /*
+        Nudged from #8f87ad, which was a near miss rather than a comfortable
+        pass. Secondary text sits on a tinted card as often as on the ground,
+        and against the soft tints in dark mode it measured 4.07 on butter,
+        4.08 on mint, 4.29 on accent and 4.45 on peach, every one of them under
+        the 4.5 that small text needs. This clears all four and is the same
+        hue: what was wrong was the lightness, not the colour.
+      */
+      --ink-3: #9a92b8;
       --rule: #2e2848;
       --rule-soft: #241f39;
 
@@ -227,7 +235,8 @@
     --raised: #221e36;
     --ink: #f2eeff;
     --ink-2: #c2bade;
-    --ink-3: #8f87ad;
+    /* The same nudge as the media-query block above, for the same numbers. */
+    --ink-3: #9a92b8;
     --rule: #2e2848;
     --rule-soft: #241f39;
 
