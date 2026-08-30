@@ -310,10 +310,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm }
       - run: npm ci
-      # Read every advisory at high and above, out loud, whether or not it
+      # Read every advisory in the whole tree, out loud, whether or not it
       # blocks. This step never fails: it is the record.
-      - name: Advisories, high and above
-        run: npm audit --omit=dev --audit-level=high || true
+      - name: Every advisory, dev included
+        run: npm audit || true
       # THE GATE IS `high`, AND IT GOT THERE BY THE CHAIN BEING CLEARED
       # RATHER THAN BY THE BAR BEING MOVED.
       #
@@ -334,9 +334,23 @@ jobs:
       #   deepmerge-ts, reached through @prisma/config. Overridden to 8.0.2,
       #   and `prisma generate`, `prisma db push` and the seed all run.
       #
-      # `npm audit --omit=dev` reports zero. Dev-only advisories are read by
-      # the step above and do not block, because they do not ship.
+      # `npm audit --omit=dev` reports zero. Dev-only advisories used to be
+      # read by the step above and left to it, because they do not ship.
       #
-      # If this ever cannot pass again, fix the dependency or say here, in
-      # writing, why it is unreachable. Do not lower the number.
+      # THEY NOW BLOCK TOO, AND AGAIN BY THE CHAIN BEING CLEARED RATHER THAN
+      # THE BAR BEING MOVED. There were five, up to critical, all of them in
+      # the vitest -> vite -> esbuild chain: a dev server that accepts requests
+      # from any website, a path traversal, an fs.deny bypass. None of it ships
+      # and "0 vulnerabilities" was true of the built app, which is exactly why
+      # it was worth saying out loud that it was not true of a contributor's
+      # machine while `npm run dev` or a watch run was up. A minor upgrade to
+      # vitest 3 cleared all five, with the whole unit and integration suite
+      # green on it and no change to a single test.
+      #
+      # Two gates rather than one, on purpose: the first is the promise about
+      # what is deployed and must never be relaxed, the second is the promise
+      # about what a contributor runs. If either cannot pass, fix the
+      # dependency or say here, in writing, why it is unreachable. Do not lower
+      # a number.
       - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high

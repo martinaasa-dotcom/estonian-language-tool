@@ -6,7 +6,7 @@ import { verifyComment } from "@/lib/tutor/verify";
 import {
   MAX_SENTENCE_CHARS, checkForm, looksLikeSentence, writingTasksFor,
 } from "@/lib/estonian/writing";
-import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { reportError } from "@/lib/observability/report";
 import type { CaseKey } from "@/lib/estonian/types";
 
@@ -96,6 +96,10 @@ export async function POST(request: Request) {
     );
   }
 
+  // Set the moment the reservation is settled, so the catch below can tell a
+  // grader that never ran from one that ran and then tripped over its own
+  // verification. Only the first is owed its authorisation back.
+  let settled = false;
   try {
     const { graded, usage } = await gradeSentence(config, {
       task,
@@ -110,7 +114,9 @@ export async function POST(request: Request) {
     void recordUsage({
       ownerId, kind: "GRADER", provider: config.name, model: config.model,
       inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+      reservation: decision.reservation,
     });
+    settled = true;
 
     // ADR-005, enforced rather than requested. The prompt tells the model it may
     // only mention forms it was given; this checks. A comment that introduces an
@@ -132,6 +138,7 @@ export async function POST(request: Request) {
 
     return Response.json({ formCheck, graded, aiAvailable: true, withheld });
   } catch (error) {
+    if (!settled && decision.reservation) void releaseReservation(decision.reservation);
     if (!(error instanceof TutorError)) {
       reportError(error, { at: "api/write", ownerId, extra: { model: config.model } });
     }

@@ -48,6 +48,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "That file was empty." }, { status: 400 });
   }
 
+  /*
+    A backup that arrived cut in half, told apart from a file that was never a
+    backup.
+
+    Both fail the schema check, and until this they failed it with the same
+    sentence: "that doesn't look like a Kodukeel backup". For a truncated
+    upload that is a wrong answer, and a discouraging one — the file is a
+    perfectly good backup, it is the transport that gave up, and the learner
+    has no way to tell from the message that trying a smaller export or
+    raising a limit is what would help.
+
+    A backup is one JSON object, so it ends in a closing brace. Anything that
+    parses as JSON is left to the schema check as before; only a *whole* file
+    that does not close is treated as truncated, which is a property of the
+    bytes rather than a guess about their contents.
+  */
+  const closed = json.trimEnd().endsWith("}");
+  if (!closed) {
+    await reportError(new Error("restore upload truncated"), {
+      at: "api/restore",
+      extra: { stage: "read", bytes: json.length },
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          `Only part of that file arrived: ${Math.round(json.length / 1_048_576)} MB of it, ` +
+          "and it stops mid-way rather than at the end. Nothing was changed and your file is " +
+          "untouched. This is a limit on the upload rather than anything wrong with the backup.",
+      },
+      { status: 413 },
+    );
+  }
+
   try {
     const result = mode === "inspect" ? await inspectBackup(json) : await restoreBackup(json, mode);
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });

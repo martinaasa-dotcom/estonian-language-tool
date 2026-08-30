@@ -74,8 +74,14 @@ model StarredWord {
   lexeme    Lexeme   @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
+  /*
+    No separate index on `ownerId`. There was one, and the planner could never
+    have chosen it: the composite primary key above is itself an index whose
+    leading column is `ownerId`, so every query that would have wanted one
+    uses that. All the extra index did was cost a second write on every star
+    and unstar.
+  */
   @@id([ownerId, lexemeId])
-  @@index([ownerId])
 }
 
 /// An inflected form.
@@ -273,6 +279,28 @@ model UsageEvent {
   /// UTC date, "YYYY-MM-DD". Denormalised so a day's usage is an index lookup.
   day          String
   createdAt    DateTime @default(now())
+
+  /// `CALL` or `SETTLEMENT`.
+  ///
+  /// A cap that reads the ledger and then writes to it much later is a
+  /// check-then-act race: ten tabs all read the same "under the limit" and all
+  /// go ahead, and for a streamed answer the gap between the read and the
+  /// write is the whole length of the answer. So a call is written down when
+  /// it is authorised, at an estimate, and the tokens the provider actually
+  /// reports arrive afterwards as a second row carrying the difference — which
+  /// may be negative, because an estimate that was too high is a debt the
+  /// learner does not owe.
+  ///
+  /// Two rows rather than an update, because this table is append-only for the
+  /// same reason `Review` is: it is the evidence behind the cap, and a ledger
+  /// you can rewrite is not a ledger. A settlement is a fact about a call, not
+  /// a correction of the record that the call happened.
+  ///
+  /// Which is why the two are told apart at all: spend sums every row, and the
+  /// call counts (the burst window, the daily allowance) count only `CALL`.
+  /// Counting settlements as calls would silently halve every allowance in the
+  /// app.
+  entry        String   @default("CALL")
 
   @@index([ownerId, day])
   @@index([day])

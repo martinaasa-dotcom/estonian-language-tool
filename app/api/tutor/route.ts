@@ -9,7 +9,7 @@ import {
   TutorError,
   type ChatMessage,
 } from "@/lib/tutor/provider";
-import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { reportError } from "@/lib/observability/report";
 
 export const dynamic = "force-dynamic";
@@ -108,9 +108,18 @@ export async function POST(request: Request) {
       void recordUsage({
         ownerId, kind: "TUTOR", provider: config.name, model: config.model,
         inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+        // Settles the reservation `authoriseCall` already booked, rather than
+        // charging a second time. The call was written down before the chain
+        // was opened, which is what stops ten tabs reading the same "under the
+        // limit" while none of them has been recorded yet.
+        reservation: decision.reservation,
       });
     });
   } catch (error) {
+    // Nothing was spent and nothing was answered, so the authorisation is
+    // handed back: a deployment with a bad key must not ration its learners
+    // over calls none of them received.
+    if (decision.reservation) void releaseReservation(decision.reservation);
     const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
     const status = error instanceof TutorError ? error.status : 502;
     return Response.json({ error: message }, { status });

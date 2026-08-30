@@ -141,6 +141,27 @@ export function possibleStems(folded: string): string[] {
   return [...stems].filter(Boolean);
 }
 
+/**
+ * One string, as a literal inside a `LIKE` pattern.
+ *
+ * `%` and `_` are LIKE's own wildcards, and a search box is exactly where they
+ * arrive by accident: pasted text, a stray keystroke, a word list with an
+ * underscore in it. Unescaped, `_` silently matches any character, so a search
+ * for `s_na` quietly returns `sõna` and `sina` and `sona` alike, and a `%`
+ * matches everything from there to the end of the value. Both are wrong
+ * answers rather than errors, which is the kind that nobody reports.
+ *
+ * Parameterisation does not cover this and never did: Prisma's tagged template
+ * stops the string being read as SQL, which is a different question from what
+ * the string means once it *is* a pattern.
+ *
+ * The backslash is escaped first, because escaping it last would go back over
+ * the ones this function had just added.
+ */
+export function likeLiteral(text: string): string {
+  return text.replace(/[\\%_]/g, "\\$&");
+}
+
 export async function searchLexemes(query: string, limit = 40): Promise<SearchHit[]> {
   const q = query.trim();
   if (!q) return [];
@@ -148,6 +169,10 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
   const folded = fold(q);
   const raw = q.toLowerCase();
   const stems = possibleStems(folded);
+  // Substring branches only. The equality branches below compare whole values
+  // and must not have backslashes inserted into them.
+  const foldedLike = likeLiteral(folded);
+  const rawLike = likeLiteral(raw);
 
   /*
     A union of four branches rather than one WHERE with four ORs.
@@ -162,10 +187,11 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     SELECT id FROM (
       SELECT l.id FROM "Lexeme" l
-        WHERE translate(lower(l.lemma), ${FOLD_FROM}, ${FOLD_TO}) LIKE ${`%${folded}%`}
+        WHERE translate(lower(l.lemma), ${FOLD_FROM}, ${FOLD_TO})
+              LIKE ${`%${foldedLike}%`} ESCAPE '\\'
       UNION
       SELECT l.id FROM "Lexeme" l
-        WHERE lower(l.translation) LIKE ${`%${raw}%`}
+        WHERE lower(l.translation) LIKE ${`%${rawLike}%`} ESCAPE '\\'
       UNION
       SELECT f."lexemeId" FROM "Form" f
         WHERE translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO}) = ${folded}

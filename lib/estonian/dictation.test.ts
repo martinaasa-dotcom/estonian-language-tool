@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkDictation, dictationWords } from "./dictation";
+import { checkDictation, dictationWords, wordNote } from "./dictation";
 
 const statuses = (typed: string, expected: string) =>
   checkDictation(typed, expected).words.map((w) => w.status);
@@ -124,5 +124,52 @@ describe("checkDictation", () => {
     expect(words.filter((w) => w.expected !== null).map((w) => w.expected)).toEqual(
       dictationWords(expected),
     );
+  });
+});
+
+describe("wordNote", () => {
+  /*
+    The exercise's headline claim: it tells you whether you only lost the
+    Estonian letters. That distinction lived in a `title` attribute, which is
+    a hover tooltip, on an app whose primary device has no hover — so on a
+    phone `diacritics` and `typo` were two identical chips.
+  */
+  it("names the letters that were dropped", () => {
+    expect(wordNote({ expected: "õues", typed: "oues", status: "diacritics" }))
+      .toBe("õ, not o");
+  });
+
+  it("names every dropped letter, once each", () => {
+    expect(wordNote({ expected: "üksüs", typed: "uksus", status: "diacritics" }))
+      .toBe("ü, not u");
+  });
+
+  it("says only that a typo was a typo", () => {
+    // Not which keystroke. Separating a slip from a lesson is the point; two
+    // equally detailed notes would put them back on the same footing.
+    expect(wordNote({ expected: "kool", typed: "koll", status: "typo" }))
+      .toBe("one letter out");
+  });
+
+  it("says nothing where the chip already says it", () => {
+    expect(wordNote({ expected: "maja", typed: "kool", status: "wrong" })).toBeNull();
+    expect(wordNote({ expected: "maja", typed: null, status: "missing" })).toBeNull();
+    expect(wordNote({ expected: null, typed: "ja", status: "extra" })).toBeNull();
+    expect(wordNote({ expected: "maja", typed: "maja", status: "right" })).toBeNull();
+  });
+
+  it("falls back to a phrase rather than an empty label", () => {
+    // A `diacritics` verdict whose letters this cannot line up (a length
+    // difference, say) must still say something: a blank line under a word is
+    // worse than the tooltip was.
+    expect(wordNote({ expected: "õu", typed: "ou koos", status: "diacritics" }))
+      .toBeTruthy();
+  });
+
+  it("never reaches for a word neither side wrote", () => {
+    // Every character it names is read out of the expected form, which came
+    // from Ekilex. ADR-005: nothing here composes Estonian.
+    const note = wordNote({ expected: "tänav", typed: "tanav", status: "diacritics" });
+    expect(note).toBe("ä, not a");
   });
 });

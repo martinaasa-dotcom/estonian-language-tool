@@ -24,7 +24,7 @@ export default async function DictionaryPage({
   // second lookup of the same word never leaves the machine.
   let fetched = false;
   if (q && hits.length === 0 && ekilexConfigured()) {
-    const found = await lookupAndStore(q);
+    const found = await lookupAndStore(ownerId, q);
     if (found) {
       hits = await searchLexemes(found.lemma);
       fetched = true;

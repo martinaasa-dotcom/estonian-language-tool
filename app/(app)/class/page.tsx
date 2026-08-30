@@ -107,6 +107,13 @@ export default async function ClassIndexPage() {
                   actually reviewing, and the cases your group keeps missing, which is the useful
                   half of a progress report.
                 </p>
+                <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
+                  If your pupils are under 13, a parent has to agree before they sign up, and the
+                  school is the one answerable for that rather than this app. Worth knowing before
+                  you write the code on the board. The{" "}
+                  <Link href="/privacy" className="underline underline-offset-2">privacy page</Link>{" "}
+                  says what is held and what you can see.
+                </p>
                 <CreateClass />
               </Card>
             </section>

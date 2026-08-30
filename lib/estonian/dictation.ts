@@ -1,4 +1,4 @@
-import { editDistance } from "./answer";
+import { droppedDiacritics, editDistance } from "./answer";
 
 /**
  * Marking a dictation.
@@ -223,4 +223,48 @@ function judge(
     suggestedRating: 1,
     note: total === right ? "Extra words crept in." : `${right} of ${total} words right, play it again.`,
   };
+}
+
+/**
+ * What went wrong with one word, in words.
+ *
+ * THE DISTINCTION THIS EXERCISE EXISTS FOR WAS IN A TOOLTIP.
+ *
+ * `diacritics` and `typo` are the whole pedagogical claim of dictation: the
+ * README promises the marking shows "whether you only lost its Estonian
+ * letters", and that is a different lesson from a slipped finger. They were
+ * rendered identically — same background, same ink, same "you: ‹typed›" line —
+ * and told apart only by a `title` attribute, which is a hover tooltip. On a
+ * phone, which is the device this app is measured on, hover does not happen,
+ * so on the primary device the exercise's headline distinction was invisible.
+ *
+ * The main review flow already had this right: `checkAnswer` produces a
+ * sentence and `ReviewSession` prints it. This is that, per word, and it
+ * reuses `droppedDiacritics` rather than rewriting the loop, so the two
+ * cannot drift apart on which letters they know about.
+ *
+ * `wrong`, `missing` and `extra` return null on purpose. What is already on
+ * screen — the word that was expected, the word that was typed, "left out",
+ * the strikethrough — says everything a label would, and a chip that explains
+ * an obvious mistake at length is a chip nobody reads.
+ *
+ * Nothing here writes Estonian: every letter named comes out of the sentence
+ * Ekilex recorded (ADR-005).
+ */
+export function wordNote(word: DictationWord): string | null {
+  if (!word.expected || !word.typed) return null;
+
+  if (word.status === "diacritics") {
+    const dropped = droppedDiacritics(word.typed, word.expected);
+    return dropped.length > 0 ? dropped.join(", ") : "the dots and tildes";
+  }
+
+  if (word.status === "typo") {
+    // Deliberately not "which" keystroke. The point of separating this from a
+    // dropped diacritic is that this one is a slip and that one is a thing to
+    // learn; spelling out the slip would give the two the same weight again.
+    return "one letter out";
+  }
+
+  return null;
 }

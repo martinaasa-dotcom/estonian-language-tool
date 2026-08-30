@@ -101,15 +101,31 @@ export function editDistance(a: string, b: string, max = 2): number {
   return prev[b.length] ?? max + 1;
 }
 
-/** Which diacritics were dropped, e.g. "õ, not o" — the actually useful hint. */
-function diacriticNote(typed: string, expected: string): string {
+/**
+ * Which diacritics were dropped, each as "õ, not o".
+ *
+ * Exported because dictation needs the same sentence about the same mistake,
+ * and it marks word by word where this marks a whole answer. A second copy of
+ * this loop is where the two would drift: one of them would learn about a
+ * letter the other did not.
+ *
+ * Nothing here writes Estonian. Every character it names is read out of the
+ * expected form, which came from Ekilex or the seeded principal parts, and
+ * the comparison is the same latitude `cloze.ts` takes (ADR-005).
+ */
+export function droppedDiacritics(typed: string, expected: string): string[] {
   const missed: string[] = [];
   for (let i = 0; i < expected.length && i < typed.length; i++) {
     const e = expected[i]!;
     const t = typed[i]!;
     if (e !== t && FOLD[e] === t) missed.push(`${e}, not ${t}`);
   }
-  const unique = [...new Set(missed)];
+  return [...new Set(missed)];
+}
+
+/** Which diacritics were dropped, e.g. "õ, not o" — the actually useful hint. */
+function diacriticNote(typed: string, expected: string): string {
+  const unique = droppedDiacritics(typed, expected);
   return unique.length > 0
     ? `Almost, it's ${unique.join(" and ")}.`
     : "Almost, check the letters with dots and tildes.";

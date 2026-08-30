@@ -51,10 +51,26 @@ export async function GET() {
     to enforce a cap, and its contents are a count and a cost rather than
     anything the learner produced. It is deleted with the account like
     everything else.
+
+    THEN IT STOPPED AT TEN OUT OF THIRTEEN, AND THE CHECK SAID IT DID NOT.
+
+    The invariant behind the paragraph above reads the owner-scoped models out
+    of the schema so that a new table fails until somebody decides about it.
+    Three had been added to its skip list instead of to this query: mock exam
+    sittings, classes and class memberships. A skip list with one reasoned
+    entry is a decision; a skip list anybody can append to is the parking space
+    this project's own copy rules warn about, and it had become one. The
+    exclusions carry their reason now (`lib/legal/exportCoverage.ts`) and the
+    check fails on an unexplained one, so this cannot happen a third time
+    quietly.
+
+    A mock sitting is the sharpest of the three: it holds the composition the
+    learner wrote, which no log reconstructs and no other table keeps.
   */
   const [
     lexemes, cards, reviews, tasks, scans,
     settings, messages, assessments, stars, achievements,
+    examAttempts, classrooms, classroomMembers,
   ] = await Promise.all([
     prisma.lexeme.findMany({ include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
@@ -72,6 +88,13 @@ export async function GET() {
     prisma.assessment.findMany({ where: { ownerId }, orderBy: { takenAt: "asc" } }),
     prisma.starredWord.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
     prisma.achievement.findMany({ where: { ownerId }, orderBy: { earnedAt: "asc" } }),
+    // A sat mock paper, marked. The writing part is in `result` verbatim, so
+    // this is the one export row that is the learner's own prose.
+    prisma.examAttempt.findMany({ where: { ownerId }, orderBy: { finishedAt: "asc" } }),
+    // Classes they run, and classes they are in. The second carries the name
+    // they chose to be known by, which is theirs and is nowhere else.
+    prisma.classroom.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
+    prisma.classroomMember.findMany({ where: { ownerId }, orderBy: { joinedAt: "asc" } }),
   ]);
 
   const payload = {
@@ -82,10 +105,12 @@ export async function GET() {
       reviews: reviews.length, tasks: tasks.length, scans: scans.length,
       settings: settings.length, messages: messages.length,
       assessments: assessments.length, stars: stars.length,
-      achievements: achievements.length,
+      achievements: achievements.length, examAttempts: examAttempts.length,
+      classrooms: classrooms.length, classroomMembers: classroomMembers.length,
     },
     lexemes, cards, reviews, tasks, scans,
     settings, messages, assessments, stars, achievements,
+    examAttempts, classrooms, classroomMembers,
   };
 
   const date = new Date().toISOString().slice(0, 10);

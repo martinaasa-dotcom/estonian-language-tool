@@ -9,7 +9,19 @@ import { STATIC_SECURITY_HEADERS } from "./lib/security/headers";
  * Supabase project to allow. See lib/security/headers.ts.
  */
 const config: NextConfig = {
-  eslint: { ignoreDuringBuilds: true },
+  /*
+    LINT IS PART OF THE BUILD, NOT ONLY PART OF CI.
+
+    This was `ignoreDuringBuilds: true`, and the `lint` job in CI was the only
+    thing enforcing it. That covers every push and every pull request, which is
+    where the code actually arrives — until somebody runs `vercel --prod` by
+    hand, or forks this and trims the workflow, and then a rule this repository
+    treats as non-negotiable is enforced by nothing at all.
+
+    Every other rule here is asserted by something the build itself runs. This
+    is the same argument, and the cost is a few seconds on a deploy.
+  */
+  eslint: { ignoreDuringBuilds: false },
   serverExternalPackages: ["@prisma/client"],
   experimental: {
     /*
@@ -27,6 +39,34 @@ const config: NextConfig = {
       button do nothing.
     */
     serverActions: { bodySizeLimit: "16mb" },
+
+    /*
+      AND THE SAME CEILING AGAIN, THROUGH A DOOR THAT DID NOT EXIST WHEN THE
+      COMMENT ABOVE WAS WRITTEN.
+
+      Restoring a backup was moved out of a Server Action and into
+      /api/restore precisely to get out from under a body limit. Next 15.5
+      then added `middlewareClientMaxBodySize`, which defaults to 10 MB and
+      applies to any request that passes through middleware — and this app's
+      middleware matches every route, because the forged-request gate has to.
+
+      So the route built to escape a limit acquired a lower one, and it fails
+      in the worst available way: the body is *truncated* at 10 MB rather than
+      refused, so the JSON arrives cut in half, fails to parse, and the
+      learner is told their file "doesn't look like a Kodukeel backup". It
+      looks exactly like a Kodukeel backup. It is one.
+
+      Measured: a full dictionary and one learner's deck exports at 15.3 MB,
+      which is over the old ceiling and under the new one, so the restore path
+      was broken for anybody whose dictionary had grown past a few thousand
+      words. `scripts/test-restore.mjs` catches it now; it did not before,
+      because it was last run against a database small enough to fit.
+
+      Matched to `bodySizeLimit` above deliberately. Two limits on the same
+      upload that disagree is how this happened, and the next person to raise
+      one needs to find the other in the same glance.
+    */
+    middlewareClientMaxBodySize: "16mb",
   },
   async headers() {
     return [{ source: "/:path*", headers: STATIC_SECURITY_HEADERS }];

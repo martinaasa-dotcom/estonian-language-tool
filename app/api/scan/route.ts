@@ -9,7 +9,7 @@ import {
 } from "@/lib/scan/image";
 import { resolveScannedItems } from "@/lib/dict/resolveScan";
 import { summarise } from "@/lib/scan/items";
-import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { reportError } from "@/lib/observability/report";
 
 export const dynamic = "force-dynamic";
@@ -101,9 +101,14 @@ export async function POST(request: Request) {
         // and let a loop of scans run straight past the cap.
         inputTokens: usage.measured ? usage.inputTokens : usage.inputTokens + estimateImageTokens(),
         outputTokens: usage.outputTokens,
+        reservation: decision.reservation,
       });
     });
   } catch (error) {
+    // No page was read, so the authorisation goes back. A vision model that
+    // refuses every image would otherwise spend a learner's scan allowance on
+    // photographs they never got a word out of.
+    if (decision.reservation) void releaseReservation(decision.reservation);
     if (!(error instanceof TutorError)) {
       reportError(error, { at: "api/scan", ownerId });
     }

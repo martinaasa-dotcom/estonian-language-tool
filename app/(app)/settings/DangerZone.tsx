@@ -63,12 +63,14 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
       <Card>
         <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
           You can remove everything this app holds about you: {counts.cards} cards,{" "}
-          {counts.reviews} reviews, your tasks, your conversations with Anu, your badges and your
-          settings. The shared dictionary stays, because other learners have cards built on it.
+          {counts.reviews} reviews, your tasks, your conversations with Anu, your scanned word
+          lists, your level checks, every mock exam paper you sat and the writing in it, any
+          class you are in or run, your badges and your settings. The shared dictionary stays,
+          because other learners have cards built on it.
         </p>
         <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
           Download a backup first if there is any chance you will want it. Your review history
-          cannot be recreated, and this does not keep a copy.
+          and anything you wrote in an exam cannot be recreated, and this does not keep a copy.
         </p>
 
         {remaining ? (

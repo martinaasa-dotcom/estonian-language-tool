@@ -42,6 +42,20 @@ const PROVIDER_HOME: Record<string, boolean | null> = {
   OpenAI: false,
 };
 
+/**
+ * The host of a configured URL, or a plain admission that it is unreadable.
+ *
+ * Never the whole URL: a webhook path is a common place to put a token, and
+ * this renders on a page anybody can read.
+ */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "an address this installation has configured";
+  }
+}
+
 export function resolveRecipients(): Recipient[] {
   const recipients: Recipient[] = [];
 
@@ -59,6 +73,19 @@ export function resolveRecipients(): Recipient[] {
       what: "a single word you looked up, with no account attached",
       eea: true,
     });
+    /*
+      And Wiktionary, on the same trigger and in the same breath, because it is
+      the same lookup: Ekilex carries no English on a reader key, so a word it
+      answers for is then asked about at Wikimedia. One request, one word, no
+      account. It was missing from this list while the lookup that makes it has
+      been in the app from the beginning.
+    */
+    recipients.push({
+      name: "Wikimedia, which runs Wiktionary",
+      what: "the same single word, asked for its English meaning, with no account attached",
+      // Wikimedia Foundation is established in the United States.
+      eea: false,
+    });
   }
 
   recipients.push({
@@ -66,6 +93,31 @@ export function resolveRecipients(): Recipient[] {
     what: "a phrase you asked to hear read aloud, with no account attached",
     eea: true,
   });
+
+  /*
+    An operator-chosen endpoint that handled errors are posted to, if one is
+    configured. It is redacted — no email address, and anything shaped like a
+    credential is stripped — but it carries the opaque user id, and a user id
+    plus a timestamp is personal data by any reading of Article 4.
+
+    It was the one recipient this page could not name, because it is the one
+    the software does not choose. Which made it exactly the one worth
+    generating: the page is meant to be reused as-is by whoever deploys this,
+    and it went from accurate to inaccurate the moment a deployer set a single
+    variable, silently, with nothing anywhere to notice.
+
+    The host is named rather than the URL. A reader needs to know who is on the
+    other end; a path may carry a token, and this page is public.
+  */
+  const webhook = process.env.ERROR_WEBHOOK_URL?.trim();
+  if (webhook) {
+    recipients.push({
+      name: `The error reporting endpoint at ${hostOf(webhook)}`,
+      what: "a description of anything that breaks, with your user id and never your email",
+      // Wherever the operator pointed it. Nothing here can tell.
+      eea: null,
+    });
+  }
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
     recipients.push({

@@ -3,7 +3,7 @@ import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rate
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
 import { gradeComposition } from "@/lib/tutor/grader";
 import { verifyComment } from "@/lib/tutor/verify";
-import { authoriseCall, recordUsage } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { reportError } from "@/lib/observability/report";
 
 export const dynamic = "force-dynamic";
@@ -65,12 +65,17 @@ export async function POST(request: Request) {
     });
   }
 
+  // As in /api/write: tells a reader that never ran from one that ran and was
+  // then withheld. Only the first is owed its authorisation back.
+  let settled = false;
   try {
     const { graded, usage } = await gradeComposition(config, text, level);
     void recordUsage({
       ownerId, kind: "GRADER", provider: config.name, model: config.model,
       inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
+      reservation: decision.reservation,
     });
+    settled = true;
 
     if (!graded) return Response.json({ comment: "", rule: "", aiAvailable: true });
 
@@ -96,6 +101,7 @@ export async function POST(request: Request) {
 
     return Response.json({ comment: verified.comment ?? "", rule: graded.rule, aiAvailable: true });
   } catch (error) {
+    if (!settled && decision.reservation) void releaseReservation(decision.reservation);
     if (!(error instanceof TutorError)) {
       reportError(error, { at: "api/exam/write", ownerId, extra: { model: config.model } });
     }

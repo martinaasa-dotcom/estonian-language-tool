@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Candidate, fold, matchEstonianForm, rankCandidates } from "./search";
+import { type Candidate, fold, likeLiteral, matchEstonianForm, rankCandidates } from "./search";
 
 describe("fold", () => {
   it.each([
@@ -148,5 +148,29 @@ describe("matchEstonianForm", () => {
 
   it("has nothing to say about an empty string", () => {
     expect(matchEstonianForm(DICT, "   ")).toBeNull();
+  });
+});
+
+describe("likeLiteral", () => {
+  /*
+    `%` and `_` are LIKE's own wildcards and a search box is where they arrive
+    by accident. Parameterisation stops a string being read as SQL; it says
+    nothing about what the string means once it is a pattern, and the two were
+    being confused.
+  */
+  it("escapes the wildcards LIKE would otherwise act on", () => {
+    expect(likeLiteral("100%")).toBe("100\\%");
+    expect(likeLiteral("s_na")).toBe("s\\_na");
+  });
+
+  it("escapes the escape character itself", () => {
+    // And escapes it first, or the pass would come back over its own work.
+    expect(likeLiteral("a\\b")).toBe("a\\\\b");
+    expect(likeLiteral("\\%")).toBe("\\\\\\%");
+  });
+
+  it("leaves an ordinary Estonian query alone", () => {
+    expect(likeLiteral("õues")).toBe("õues");
+    expect(likeLiteral("kõrvits")).toBe("kõrvits");
   });
 });

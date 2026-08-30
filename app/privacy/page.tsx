@@ -33,7 +33,7 @@ export default function PrivacyPage() {
   const leavesTheUnion = transfersOutsideEea(recipients);
 
   return (
-    <Legal title="Privacy" updated="29 August 2026">
+    <Legal title="Privacy" updated="30 August 2026">
       <P>
         Kodukeel is a tool for learning Estonian. This page says exactly what it stores
         about you, why it is allowed to, who else sees it, and how to get rid of it.
@@ -89,9 +89,29 @@ export default function PrivacyPage() {
           forgets it is not the app you signed up for.
         </P>
         <P>
-          <strong>Your level checks and your mock exams.</strong> Each sitting is kept: the
-          levels it measured, how many questions it came from, and the rating you gave your
-          own speaking. Nothing you record is uploaded, and no audio is stored anywhere.
+          <strong>Your level checks.</strong> Each sitting is kept: the levels it measured,
+          how many questions it came from, and the rating you gave your own speaking. Nothing
+          you record is uploaded, and no audio is stored anywhere.
+        </P>
+        <P>
+          <strong>Your mock exams.</strong> A sat paper is kept whole: the level, your score,
+          and the marked paper itself, question by question, with what was expected and what
+          you gave. That includes <strong>the composition you wrote</strong>, kept in your own
+          words, because a piece of writing is only worth going back to if it is the piece you
+          actually wrote. It is the longest thing you write anywhere in this app, which is why
+          it has a line of its own here. A paper you abandon is never written down at all. The
+          spoken part is marked by you and nothing you record leaves your device.
+        </P>
+        <P>
+          <strong>Your class, if you are in one.</strong> Joining with a code stores which
+          class you joined, when, and the name you chose to be known by in it, which is the
+          one place you can be under a name of your own choosing rather than your account.
+          If you run a class, its name and its join code are stored against you. What a
+          teacher sees of a pupil is only ever effort, never contents: reviews this week, a
+          streak, words known, when they were last here, and which grammar the class as a
+          whole is weakest at. Never a deck, a search or an answer. Leaving a class removes
+          your membership of it, and deleting your account removes every class you are in and
+          every class you run.
         </P>
         <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
@@ -216,9 +236,12 @@ export default function PrivacyPage() {
         <P>
           <strong>A copy of everything (access, and portability).</strong> Settings has an{" "}
           <strong>Export</strong> button that gives you the whole thing as a JSON file: every
-          card, review, task, setting, scanned page, level check, tutor message, starred word
-          and badge. It is a real backup, and the same file restores into a fresh
-          installation. Nothing is held back from it.
+          card, review, task, setting, scanned page, level check, mock exam paper with your
+          composition in it, tutor message, starred word, badge and class membership. It is a
+          real backup, and the same file restores into a fresh installation. One thing is held
+          back and it is the spending record described above, which is this installation&rsquo;s
+          accounting rather than your work; it is deleted with your account like everything
+          else.
         </P>
         <P>
           <strong>Erasure.</strong> <strong>Settings → Deleting your data</strong> removes all

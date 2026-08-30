@@ -15,7 +15,7 @@ export default function TermsPage() {
   const operator = resolveOperator();
 
   return (
-    <Legal title="Terms" updated="29 August 2026">
+    <Legal title="Terms" updated="30 August 2026">
       <P>
         Kodukeel is a study tool. These terms are short because the arrangement is
         simple: use it to learn Estonian, do not abuse the shared services behind it,
@@ -94,8 +94,20 @@ export default function TermsPage() {
         <P>
           Your deck, your review history, your tasks and your notes are yours. Export them
           whenever you like from Settings, in a format that restores into any installation.
-          The built-in dictionary and anything retrieved from Ekilex is licensed CC BY 4.0
-          by the Institute of the Estonian Language and is credited accordingly.
+          The dictionary is two sources joined, and they carry different licences, so it is
+          worth being exact rather than tidy. Every Estonian form and every example sentence
+          comes from Ekilex and is licensed <strong>CC BY 4.0</strong> by the Institute of
+          the Estonian Language. Every English gloss that was not written for this project
+          comes from <a
+            href="https://en.wiktionary.org"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >English Wiktionary</a> and is licensed <strong>CC BY-SA 4.0</strong> by its
+          contributors, which is the stricter of the two: a work built on it has to be
+          shared on the same terms. Both are credited on the sign-in page and in the
+          footer, and the split between them is the whole design of the dictionary rather
+          than an accident of it.
         </P>
       </S>
 
