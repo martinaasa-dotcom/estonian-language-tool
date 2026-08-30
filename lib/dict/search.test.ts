@@ -58,16 +58,27 @@ function top(query: string) {
 
 describe("rankCandidates — inflected forms", () => {
   it.each([
-    ["loen", "lugema", /present 1sg/],
-    ["lugesin", "lugema", /past 1sg/],
-    ["tuppa", "tuba", /short illative/],
-    ["toas", "tuba", /inessive/],
-    ["raamatuga", "raamat", /comitative/],
-    ["tubadega", "tuba", /comitative plural/],
-    ["raamatud", "raamat", /nominative plural/],
+    ["loen", "lugema", /olevik ma/],
+    ["lugesin", "lugema", /lihtminevik ma/],
+    ["tuppa", "tuba", /lühike sisseütlev/],
+    ["toas", "tuba", /seesütlev/],
+    ["raamatuga", "raamat", /kaasaütlev/],
+    ["tubadega", "tuba", /mitmuse kaasaütlev/],
+    ["raamatud", "raamat", /mitmuse nimetav/],
   ])("finds %s as a form of %s", (query, lemma, why) => {
     expect(top(query)?.lemma).toBe(lemma);
     expect(top(query)?.matchedAs).toMatch(why);
+  });
+
+  it("names the form the way a class names it, English in brackets after", () => {
+    // A learner who searches `toas` and is told it is "the inessive" has been
+    // handed a word their own teacher does not say. Both names, Estonian first.
+    const inessive = top("toas")?.matchedAs ?? "";
+    expect(inessive.indexOf("seesütlev")).toBeLessThan(inessive.indexOf("inessive"));
+    const past = top("lugesin")?.matchedAs ?? "";
+    expect(past).toContain("lihtminevik ma");
+    const plural = top("tubadega")?.matchedAs ?? "";
+    expect(plural).toContain("mitmuse kaasaütlev");
   });
 
   it("does not label a headword match as an inflected form", () => {
@@ -117,13 +128,13 @@ describe("matchEstonianForm", () => {
   it("takes a stored principal part and says which one it was", () => {
     const match = matchEstonianForm(DICT, "lugesin");
     expect(match?.lemma).toBe("lugema");
-    expect(match?.matchedAs).toContain("past 1sg");
+    expect(match?.matchedAs).toContain("lihtminevik ma");
   });
 
   it("takes a regular case built on the genitive stem, which is most of a homework page", () => {
     const match = matchEstonianForm(DICT, "toas");
     expect(match?.lemma).toBe("tuba");
-    expect(match?.matchedAs).toContain("inessive");
+    expect(match?.matchedAs).toContain("seesütlev");
   });
 
   it("refuses a prefix, however plausible", () => {

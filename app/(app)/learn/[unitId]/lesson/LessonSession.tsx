@@ -262,10 +262,13 @@ function StepCard({
                     <li key={id}>
                       <Link
                         href={point.href}
-                        className="inline-block rounded-[var(--r-sm)] px-2.5 py-1 text-sm underline"
+                        className="inline-flex flex-wrap items-baseline gap-1.5 rounded-[var(--r-sm)] px-2.5 py-1 text-sm"
                         style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                       >
-                        {point.title}
+                        <span lang={point.estonian ? "et" : undefined} className="underline">
+                          {point.title}
+                        </span>
+                        <span className="text-xs" style={{ opacity: 0.75 }}>{point.english}</span>
                       </Link>
                     </li>
                   );

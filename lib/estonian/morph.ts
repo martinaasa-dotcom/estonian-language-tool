@@ -1,3 +1,4 @@
+import { caseByKey } from "./cases";
 import type { CaseKey } from "./types";
 
 /**
@@ -115,11 +116,103 @@ export function verbSlot(code: string | null | undefined): VerbSlot | null {
   return VERB_SLOTS[code] ?? null;
 }
 
-/** English name for a noun/adjective form code, for scanning a paradigm table. */
-export function caseLabelFromMorphCode(code: string | null | undefined): string | null {
+/**
+ * What to call one slot of a paradigm, in front of a learner.
+ *
+ * Three copies of a hand-typed English table used to answer this question, in
+ * the dictionary's "you typed the X of Y" note, in the pasted-passage gap fill
+ * and in the minimal pairs round. All three said "inessive" and "present 1sg",
+ * which are names no Estonian course uses: a learner who searches `toas` and is
+ * told it is the inessive has been handed a word their own teacher will not
+ * say. One table now, derived from the case list and the verb slots rather than
+ * retyped, and the Estonian name leads with the English one after it, because
+ * that is the pair that is useful to somebody reading in both places.
+ */
+export interface FormName {
+  readonly et: string;
+  readonly en: string;
+}
+
+/** The slots the seed stores by `formType`, which carry no morph code. */
+const STORED_NAMES: Record<string, FormName> = {
+  NOM_SG: { et: "nimetav", en: "nominative" },
+  GEN_SG: { et: "omastav", en: "genitive" },
+  PART_SG: { et: "osastav", en: "partitive" },
+  ILL_SG_SHORT: { et: "lühike sisseütlev", en: "short illative" },
+  PART_PL: { et: "mitmuse osastav", en: "partitive plural" },
+  GEN_PL: { et: "mitmuse omastav", en: "genitive plural" },
+  INF_MA: { et: "ma-tegevusnimi", en: "ma-infinitive" },
+  INF_DA: { et: "da-tegevusnimi", en: "da-infinitive" },
+  // Worded exactly as the derived verb-slot names below, so that one word
+  // resolving from a stored principal part and another from an Ekilex morph
+  // code do not read as two different grammatical categories.
+  PRES_1SG: { et: "olevik ma", en: "present ma" },
+  PAST_1SG: { et: "lihtminevik ma", en: "simple past ma" },
+  PART_TUD: { et: "tud-kesksõna", en: "tud-participle" },
+};
+
+/** The non-finite verb codes, which have a name rather than a person. */
+const NON_FINITE_NAMES: Record<string, FormName> = {
+  Sup: { et: "ma-tegevusnimi", en: "ma-infinitive" },
+  Inf: { et: "da-tegevusnimi", en: "da-infinitive" },
+  PtsPtPs: { et: "nud-kesksõna", en: "nud-participle" },
+  PtsPtIps: { et: "tud-kesksõna", en: "tud-participle" },
+  IndPrIps: { et: "umbisikuline olevik", en: "impersonal present" },
+};
+
+/** Name for a noun or adjective form code, or null when it is not one. */
+function caseName(code: string): FormName | null {
+  if (code === "SgAdt") return { et: "lühike sisseütlev", en: "short illative" };
   const key = caseFromMorphCode(code);
   if (!key) return null;
-  if (code === "SgAdt") return "Short illative";
-  const label = key.charAt(0) + key.slice(1).toLowerCase();
-  return label;
+  const spec = caseByKey(key);
+  if (!spec) return null;
+  const plural = numberFromMorphCode(code) === "PLURAL";
+  return {
+    et: plural ? `mitmuse ${spec.et}` : spec.et,
+    en: plural ? `${spec.en.toLowerCase()} plural` : spec.en.toLowerCase(),
+  };
+}
+
+/**
+ * The name of a form, from whichever of the three things we know about it.
+ *
+ * Never falls through to an internal `formType`: that leaked as "EKILEX:SgIn"
+ * once. Ekilex's own `morphName` is Estonian already, so it stands alone.
+ */
+export function formName(form: {
+  formType?: string | null;
+  morphCode?: string | null;
+  morphName?: string | null;
+}): FormName | null {
+  const code = form.morphCode;
+  if (code) {
+    const nonFinite = NON_FINITE_NAMES[code];
+    if (nonFinite) return nonFinite;
+    const cased = caseName(code);
+    if (cased) return cased;
+    const slot = VERB_SLOTS[code];
+    if (slot && slot.group !== "NON_FINITE") {
+      const group = VERB_GROUP_LABELS[slot.group];
+      return { et: `${group.et} ${slot.en}`, en: `${group.en.toLowerCase()} ${slot.en}` };
+    }
+  }
+  if (form.formType && STORED_NAMES[form.formType]) return STORED_NAMES[form.formType]!;
+  if (form.morphName) return { et: form.morphName, en: form.morphName };
+  return null;
+}
+
+/**
+ * The one string to print: the name a class uses, with the English one after it
+ * where the two differ. Falls back to the raw slot only when nothing else is
+ * known, and never to an internal code.
+ */
+export function formLabel(form: {
+  formType?: string | null;
+  morphCode?: string | null;
+  morphName?: string | null;
+}): string {
+  const name = formName(form);
+  if (!name) return (form.formType ?? form.morphCode ?? "").replace(/^EKILEX:/, "");
+  return name.et === name.en ? name.et : `${name.et} (${name.en})`;
 }

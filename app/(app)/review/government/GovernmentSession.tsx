@@ -162,7 +162,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           )}
 
           <p className="mt-5 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
-            Which case does it take?
+            Which question does it answer?
           </p>
         </div>
 
@@ -192,7 +192,11 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                 >
                   <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
                   <span className="min-w-0">
-                    <span className="block text-base font-medium">{spec?.en}</span>
+                    {/* The question leads because the dictionary records
+                        government as the question a verb answers, and because
+                        that is how the answer is said out loud: "aitama" takes
+                        "keda?", not "the partitive". */}
+                    <span lang="et" className="block text-base font-medium">{spec?.question}</span>
                     <span lang="et" className="block text-[12.5px] opacity-75">{spec?.et}</span>
                   </span>
                   {revealed && isAnswer && <Check size={16} className="ml-auto shrink-0" aria-hidden />}
@@ -217,8 +221,8 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
             )}
             <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
               {question.experiencer
-                ? `An experiencer construction: the person goes in the ${question.answerEn.toLowerCase()} and the thing is the grammatical subject.`
-                : `${question.lemma} governs the ${question.answerEn.toLowerCase()} (${question.answerEt}). English gives you no clue here, so it has to be learned with the verb.`}
+                ? `An experiencer construction: the person goes in the ${question.answerEt} and the thing is the grammatical subject.`
+                : `${question.lemma} governs the ${question.answerEt}, the ${question.answerEn.toLowerCase()}. English gives you no clue here, so it has to be learned with the verb.`}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">

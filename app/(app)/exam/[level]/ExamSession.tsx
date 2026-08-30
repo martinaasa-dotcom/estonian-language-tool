@@ -478,8 +478,9 @@ function ItemView({ item, number, marks, choices, response, onAnswer }: {
             <span className="est font-semibold" lang="et">{item.lemma}</span>
             <span style={{ color: "var(--ink-3)" }}> {item.translation}</span>
             <span className="ml-2">
-              in the {item.caseEn.toLowerCase()}
-              <span style={{ color: "var(--ink-3)" }}> {item.caseEt}, {item.caseQuestion}</span>
+              in the <span lang="et">{item.caseEt}</span>
+              <span lang="et" style={{ color: "var(--accent-deep)" }}> {item.caseQuestion}</span>
+              <span style={{ color: "var(--ink-3)" }}> the {item.caseEn.toLowerCase()}</span>
             </span>
           </p>
           <Options
@@ -505,7 +506,7 @@ function ItemView({ item, number, marks, choices, response, onAnswer }: {
           )}
           <Options
             name={item.id}
-            options={item.options.map((o) => ({ value: o.key, label: o.en, hint: o.et }))}
+            options={item.options.map((o) => ({ value: o.key, label: o.et, hint: o.question }))}
             selected={response?.kind === "chosen" ? response.value : null}
             onSelect={(value) => onAnswer({ kind: "chosen", value })}
             columns
@@ -521,14 +522,15 @@ function ItemView({ item, number, marks, choices, response, onAnswer }: {
             <span className="est font-semibold" lang="et">{item.lemma}</span>
             <span style={{ color: "var(--ink-3)" }}> {item.translation}</span>
             <span className="ml-2">
-              in the {item.caseEn.toLowerCase()}
-              <span style={{ color: "var(--ink-3)" }}> {item.caseEt}, {item.caseQuestion}</span>
+              in the <span lang="et">{item.caseEt}</span>
+              <span lang="et" style={{ color: "var(--accent-deep)" }}> {item.caseQuestion}</span>
+              <span style={{ color: "var(--ink-3)" }}> the {item.caseEn.toLowerCase()}</span>
             </span>
           </p>
           <EstonianInput
             value={response?.kind === "typed" ? response.value : ""}
             onChange={(value) => onAnswer({ kind: "typed", value })}
-            ariaLabel={`${item.caseEn} of ${item.lemma}`}
+            ariaLabel={`${item.caseEt} of ${item.lemma}, the ${item.caseEn.toLowerCase()}`}
             placeholder="Write the form"
           />
         </div>

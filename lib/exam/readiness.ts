@@ -59,6 +59,8 @@ export interface PastAttempt {
 export interface CaseSignal {
   caseKey: string;
   caseEn: string;
+  /** The name a course uses, which is the one the advice is written in. */
+  caseEt: string;
   pct: number;
   reviews: number;
 }
@@ -401,7 +403,7 @@ function strengthsFrom(signals: ReadinessSignals, assessed: ExamLevel | null): F
     out.push({
       id: "cases",
       title: solid.length === 1 ? "One case is solid" : `${solid.length} cases are solid`,
-      detail: `${solid.map((c) => `${c.caseEn.toLowerCase()} at ${c.pct} percent`).join(", ")}. That is the half of the grammar you can stop worrying about.`,
+      detail: `${solid.map((c) => `${c.caseEt} at ${c.pct} percent`).join(", ")}. That is the half of the grammar you can stop worrying about.`,
     });
   }
 
@@ -498,7 +500,7 @@ function gapsFrom(signals: ReadinessSignals, target: ExamLevel): Feedback[] {
   for (const c of weak) {
     out.push({
       id: `case-${c.caseKey}`,
-      title: `The ${c.caseEn.toLowerCase()} is at ${c.pct} percent`,
+      title: `The ${c.caseEt}, the ${c.caseEn.toLowerCase()}, is at ${c.pct} percent`,
       detail: `${c.reviews} reviews, and it is still going wrong. Case endings carry marks in every written part.`,
       href: `/grammar/${c.caseKey.toLowerCase()}`,
       cta: "Read the rule",

@@ -9,6 +9,15 @@ tab bar with a chat window in it.
 too irregular for a rules engine to be trustworthy, and a confidently wrong form is worse than no
 form. Rules are used only to *explain* retrieved data, never to invent it.
 
+**Naming principle.** Every table in this document names a form in Estonian first, because that is
+how the language is taught: *ainsuse omastav*, not "genitive singular". The app follows the same
+rule on every screen (ADR-023). A case is identified by its Estonian name and by the question it
+answers, which is the pair a class hears together; the English or Latin name is kept beside it as a
+cross-reference for anyone reading an English grammar, and never as the heading. The verb is named
+by *aeg*, *kõneviis*, *tegumood* and *pööre* rather than by a row of English-shaped tenses, of which
+Estonian inflects for two. `lib/estonian/terms.ts` holds the terms, and holds none for a point where
+a class has no settled one.
+
 ---
 
 ## 1. Nouns: principal parts, not "3 of 14 cases"

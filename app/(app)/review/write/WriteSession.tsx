@@ -179,11 +179,11 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             </strong>{" "}
             <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
           </p>
-          <p className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent)" }}>
-            {prompt.caseEn.toLowerCase()}
+          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent)" }}>
+            {prompt.caseEt}
           </p>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
-            <span lang="et">{prompt.caseEt}</span> · {prompt.caseQuestion}
+            <span lang="et">{prompt.caseQuestion}</span> · the {prompt.caseEn.toLowerCase()}
           </p>
 
           <div className="mt-6">

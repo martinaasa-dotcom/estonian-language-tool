@@ -35,6 +35,34 @@ form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
 `lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
 the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
+**Estonian is taught in Estonian, and the Latin names are the cross-reference.** Nobody teaching
+this language says "the inessive". A course in Tallinn, a school textbook and the state examination
+all name a case by its Estonian name and, more often, by the question it answers: `kus?`. The verb
+is named by four axes a course keeps apart, `aeg`, `kõneviis`, `tegumood` and `pööre`, of which only
+two are tenses the verb inflects for. This app had all of that data and led with none of it. Every
+screen headed a case "Inessive" and set `seesütlev` in small italics under it; the flashcard asked
+for "tuba → inessive" and put the question in the hint; the reference called `lihtminevik` "the
+imperfect", which is a Latin category Estonian does not have; and the placement check offered a
+beginner "Inessive, Elative, Allative" as multiple choice. A learner who has only ever met the
+English names cannot follow their own teacher, which is the one thing a course-shaped app must not
+do to somebody who is also taking a course.
+
+So the Estonian name and the question lead, everywhere, and the English name stays as a labelled
+cross-reference for anyone reading an English reference grammar. `lib/estonian/terms.ts` is the one
+table of what a point is called, and it is **deliberately partial**: a point is in it only where
+there is a term a class actually uses, and `grammarTerm()` returning nothing is the honest answer
+for `irony` rather than a cue to invent one. `grammar.ts` still holds no Estonian and its tripwire
+is unchanged, which is why the terms live next door rather than in the prose. Two invariants hold
+the rest: every case and every part of the verb carries the name a class uses, and a screen that
+names a case in Latin names it in Estonian too. The second is anchored on a member access rather
+than on the word, because a file declaring `caseEt: string` in an interface and never rendering it
+satisfied the first version of it.
+
+Three things are **not** covered by this and should not be "fixed": an English column heading over a
+table of Estonian ("Case", "Singular"), the English prose that explains a point, and the topic ids
+in URLs. The ids are keys that 83 syllabus entries and any bookmarked link point at, and renaming
+them buys a slug and risks the course.
+
 **The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
 `prisma/data/expanded.json` from two sources with a strict division of labour: every Estonian
 form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the

@@ -2,7 +2,7 @@ import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
 // Floor: 11, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Polish", { floor: 11 });
+const { check, done } = suite("Polish", { floor: 12 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
@@ -21,9 +21,11 @@ check("every form in the paradigm is marked as Estonian", marked >= 14, `${marke
 
 // Searching an inflected form — what a learner actually meets in class.
 for (const [query, lemma, why] of [
-  ["toas", "tuba", /inessive/i],
-  ["lugesin", "lugema", /past 1sg/i],
-  ["tubadega", "tuba", /comitative plural/i],
+  // Estonian first, English in brackets after it (ADR-023). Both names, because
+  // a learner reads this next to an English grammar and next to their homework.
+  ["toas", "tuba", /seesütlev \(inessive\)/i],
+  ["lugesin", "lugema", /lihtminevik ma/i],
+  ["tubadega", "tuba", /mitmuse kaasaütlev/i],
 ]) {
   await page.goto(`${B}/dictionary?q=${encodeURIComponent(query)}`, { waitUntil: "networkidle" });
   const heading = await page.locator('h2[lang="et"]').innerText().catch(() => "");
@@ -46,8 +48,16 @@ check("the drill opens and says what it is",
 // on the review history, so pinning one name here makes the test fail on data
 // rather than on behaviour.
 const drilledCase = new URL(href, B).searchParams.get("case")?.toLowerCase() ?? "";
+// The card's hint names the case in both languages, so the English name read
+// off the link is still the way to check the drill was filtered. What the
+// *front* says changed with ADR-023: a case is asked by the question it
+// answers, the way a class is asked for one, and never by the Latin name.
+const drillBody = (await page.textContent("body")) ?? "";
 check("the drill only contains that case's cards",
-  (await page.getByText(new RegExp(`→ ${drilledCase}`, "i")).count()) > 0, drilledCase);
+  new RegExp(`\\b${drilledCase}\\b`, "i").test(drillBody), drilledCase);
+check("and asks for it by its question, not by its Latin name",
+  /→[^\n]*\?/.test(drillBody) && !new RegExp(`→ ${drilledCase}`, "i").test(drillBody),
+  drillBody.match(/→[^\n]{0,24}/)?.[0] ?? "no prompt found");
 
 // A card you are struggling with should reach its full entry in one click.
 check("a review card links to the full dictionary entry",

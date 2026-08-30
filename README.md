@@ -99,14 +99,16 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **Offline.** Installable as an app; reviewing works with no connection and every grade is kept on
   the device with the time you actually answered, then sent when you are back. A daily reminder is
   offered as a calendar event, which fires whether or not the app is open.
-- **A grammar reference in English.** One page per case: what it is for, when Estonian reaches for
-  it, and the mistake an English speaker makes, with the case shown on real words from your own
-  deck, each form labelled with where it came from. The explanations are the only part of those
-  pages this app wrote.
+- **A grammar reference in English, named in Estonian.** One page per case: what it is for, when
+  Estonian reaches for it, and the mistake an English speaker makes, with the case shown on real
+  words from your own deck, each form labelled with where it came from. Everything is named the way
+  a course names it, by the Estonian term and the question it answers, with the English name kept
+  beside it for when you are reading an English grammar, because nobody teaching this language says
+  "the inessive". The explanations are the only part of those pages this app wrote.
 - **Photograph a page.** Point the camera at a vocabulary list, a page of your textbook or last
   night's homework, and the words on it come back matched against the dictionary. An exercise sheet
   is written in cases rather than in citation forms, so `toas` is traced back to `tuba` and told
-  you as the inessive. Every word arrives ticked, editable, and labelled either "in the dictionary"
+  you as the seesütlev. Every word arrives ticked, editable, and labelled either "in the dictionary"
   or "read from the photo", because the only person who can say what is printed on the paper is the
   one holding it. Nothing becomes a flashcard until you say so, a word the dictionary vouches for
   brings its own principal parts, and the picture itself is read once and never stored. The page
@@ -151,8 +153,8 @@ Everything except the two things that need a model, Anu and reading a photograph
 - **Minimal pairs**. The length contrasts Estonian spelling only half records, found automatically
   wherever two forms in the dictionary differ by a doubled letter.
 - **From your reading**. Paste real Estonian; words already in your deck are blanked out.
-- **Diagnosis and the leech clinic**. Not "you are weak at the partitive" but "you are fine at the
-  partitive except on gradating stems", and the cards you keep failing taken apart properly.
+- **Diagnosis and the leech clinic**. Not "you are weak at the osastav" but "you are fine at the
+  osastav except on gradating stems", and the cards you keep failing taken apart properly.
 - **Offline review**. Grades queue on the device and replay in order when you are back. The review
   log is append-only, which is what makes that sync conflict-free.
 - **Tasks, import, export, week view**, all local. The course week ties vocabulary and homework
