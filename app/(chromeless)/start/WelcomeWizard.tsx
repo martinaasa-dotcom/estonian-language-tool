@@ -8,6 +8,7 @@ import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { Button } from "@/components/Button";
+import { LetterBarScope, LetterSample } from "@/components/DiacriticBar";
 import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
@@ -16,6 +17,7 @@ import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus"
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
 import { WHAT_IT_IS } from "@/lib/copy/tour";
+import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 
 export interface WizardUnit {
   id: string;
@@ -105,6 +107,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(suggestedName);
+  const [letters, setLetters] = useState<LetterBar>(DEFAULT_LETTER_BAR);
 
   const [reason, setReason] = useState<string | null>(null);
   const [target, setTarget] = useState<Band | null>(null);
@@ -163,6 +166,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         cefr: startBand,
         dailyGoal: goal,
         unitIds: picked,
+        letterBar: letters,
         goals: {
           reason: goals.reason,
           target: goals.target,
@@ -188,8 +192,9 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   // Back button somebody presses by accident nine questions in.
   if (checking) {
     return (
-      <div className="min-h-screen" style={{ background: "var(--ground)" }}>
-        <AssessmentRunner
+      <LetterBarScope value={letters}>
+        <div className="min-h-screen" style={{ background: "var(--ground)" }}>
+          <AssessmentRunner
           items={paper.items}
           missing={paper.missing}
           onFinish={(result) => {
@@ -200,7 +205,8 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             setStep(2);
           }}
         />
-      </div>
+        </div>
+      </LetterBarScope>
     );
   }
 
@@ -209,6 +215,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
     (step !== 1 || level !== null);
 
   return (
+    <LetterBarScope value={letters}>
     <div className="relative flex min-h-screen flex-col justify-center px-5 py-10 md:px-8">
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <span className="wash" style={{ background: "var(--wash-1)", width: 560, height: 560, top: -220, left: -160 }} />
@@ -274,6 +281,46 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
               Only used to greet you, and on the class leaderboard if you ever turn that on.
             </p>
+
+            {/*
+              THE ONE QUESTION ABOUT THE MACHINE RATHER THAN THE LEARNER, ON THE
+              SCREEN THAT IS ALREADY ABOUT NEITHER THE LEVEL NOR THE PLAN.
+
+              It is here rather than on a fifth screen. Four screens is the
+              shape of this wizard and a question with a screen to itself is
+              exactly the fault the last pass over it fixed: this one is a pair
+              of buttons and it belongs beside the other thing we need before
+              anybody starts typing Estonian.
+
+              `letters-choice` is the same media query the bar itself is drawn
+              under, so a phone is not asked. It gets the default written for
+              it, which is what it wants: when that learner next opens the app
+              on a computer the row is there, and one press removes it.
+
+              Answered live, and the next screen is the level check, which is
+              full of Estonian fields. Whatever is chosen here is what they
+              meet there.
+            */}
+            <div className="letters-choice mt-7">
+              <ChoiceGroup
+                label="How do you type õ, ä, ö and ü?"
+                className="grid gap-2 sm:grid-cols-2"
+              >
+                {LETTER_BAR_CHOICES.map((o) => (
+                  <ChoiceCard
+                    key={o.value}
+                    layout="stacked"
+                    selected={letters === o.value}
+                    onSelect={() => setLetters(o.value)}
+                    title={o.label}
+                    detail={<><LetterSample lit={o.value === "on"} />{o.detail}</>}
+                  />
+                ))}
+              </ChoiceGroup>
+              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                Change it whenever you like, in Settings or from the row itself.
+              </p>
+            </div>
           </section>
         )}
 
@@ -554,5 +601,6 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         </div>
       </div>
     </div>
+    </LetterBarScope>
   );
 }

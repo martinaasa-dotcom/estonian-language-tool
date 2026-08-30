@@ -52,7 +52,11 @@ learner will avoid features that require it.
 
 Three affordances, all of them:
 
-1. **A diacritic bar** under every Estonian text input: `õ ä ö ü š ž` as click-to-insert buttons.
+1. **A letter bar** under every Estonian text input: `õ ä ö ü š ž` as click-to-insert buttons.
+   On a computer only, and only for somebody who wants it. A phone keyboard already has these
+   letters and the row costs it the scarce thing; an Estonian keyboard has them as keys and the row
+   is a line of buttons that will never be pressed. Asked on the first screen of first run,
+   reversible from Settings and from the row itself. See `lib/ux/letterBar.ts`.
 2. **Long-press / repeat-key expansion**: pressing `o` twice quickly inserts `õ`. Configurable,
    off by default.
 3. **Diacritic-insensitive search**: typing `sona` finds `sõna`; `raamat` matches regardless.

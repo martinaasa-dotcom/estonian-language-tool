@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { Upload } from "lucide-react";
 import { importWords } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { DiacriticBar } from "@/components/DiacriticBar";
 import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 
@@ -102,6 +103,9 @@ export function ImportPanel() {
         className="est mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base outline-none"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
+      {/* This box is usually pasted into, but its own copy says "typed off a
+          class handout", and a handout is exactly where the õ comes from. */}
+      <div className="mt-2"><DiacriticBar /></div>
 
       {rows.length > 0 && (
         <div className="mt-3">

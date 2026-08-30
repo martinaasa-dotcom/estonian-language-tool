@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Keyboard, PenLine } from "lucide-react";
-import { setLeaderboardPreferences, setReviewMode } from "@/app/actions";
+import { setLeaderboardPreferences, setLetterBar, setReviewMode } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
+import { LetterSample } from "@/components/DiacriticBar";
 import type { ReviewMode } from "@/lib/settings/store";
+import { LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 
 const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof PenLine }[] = [
   {
@@ -45,6 +48,55 @@ export function ReviewModePanel({ current }: { current: ReviewMode }) {
         />
       ))}
     </ChoiceGroup>
+  );
+}
+
+/**
+ * The Estonian letter bar, on or off.
+ *
+ * The one screen that can turn it back on, so it is worth it being findable:
+ * the bar itself carries the way out, and somebody who took it needs somewhere
+ * obvious to change their mind. It draws the six letters it is talking about
+ * rather than naming them, because "the diacritic bar" means nothing to
+ * somebody who has met it once under a text box.
+ *
+ * The whole section is `letters-choice`, which is the same media query the bar
+ * is drawn under. On a phone there is no bar and so no question, and a heading
+ * over an answered-for-you choice is worse than no heading.
+ */
+export function LetterBarPanel({ current }: { current: LetterBar }) {
+  const [value, setValue] = useState(current);
+  const [pending, start] = useTransition();
+  const root = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const pick = (next: LetterBar) => {
+    setValue(next);
+    // The bars on this very page, immediately. The refresh re-renders the same
+    // attribute from the setting a moment later, so the two cannot disagree.
+    root.current?.closest("[data-letters]")?.setAttribute("data-letters", next);
+    start(async () => {
+      await setLetterBar(next);
+      router.refresh();
+    });
+  };
+
+  return (
+    <div ref={root}>
+      <ChoiceGroup ariaLabel="Typing Estonian" className="grid gap-2 sm:grid-cols-2">
+        {LETTER_BAR_CHOICES.map((o) => (
+          <ChoiceCard
+            key={o.value}
+            layout="stacked"
+            disabled={pending}
+            selected={value === o.value}
+            onSelect={() => pick(o.value)}
+            title={o.label}
+            detail={<><LetterSample lit={o.value === "on"} />{o.detail}</>}
+          />
+        ))}
+      </ChoiceGroup>
+    </div>
   );
 }
 

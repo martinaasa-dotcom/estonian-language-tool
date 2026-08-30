@@ -21,8 +21,8 @@ const WIDE = [768, 1280];
 
 const browser = await launchChromium();
 
-// Floor: 51, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 51 });
+// Floor: 59, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("The phone", { floor: 59 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -282,5 +282,113 @@ for (const path of ["/learn", "/learn/kodu", "/placement"]) {
   await ctx.close();
 }
 
+// 9 — THE ESTONIAN LETTER BAR IS A DESKTOP THING, AND IT IS REVERSIBLE.
+//
+//     The row of õ ä ö ü š ž used to be drawn under every Estonian field on
+//     every device for everybody. A phone keyboard already carries those
+//     letters, on a long press or a keyboard switched to Estonian, so the row
+//     bought a phone nothing and spent the one thing a phone has none of.
+//
+//     Measured rather than asserted in CSS, because "a desktop" is a width and
+//     a pointer together and only a browser can answer both. `open()` above
+//     sets `hasTouch` below 768, which is what makes the pointer half real
+//     here rather than assumed.
+//
+//     COUNTED BEFORE IT IS JUDGED. `drawn === 0` is satisfied just as well by
+//     a selector that matches nothing, which is how a check like this passes
+//     for a year after the class is renamed. So each of these asserts the row
+//     is in the page first.
+//     STARTED FROM A KNOWN ANSWER, NOT FROM WHATEVER THE LAST RUN LEFT.
+//     The round trip below turns the row off and back on, so a run that dies
+//     between the two leaves the setting off in the database, and every width
+//     check here then fails on the next run for a reason that has nothing to
+//     do with the code. Setting it on first costs one page load and makes this
+//     block say the same thing twice in a row.
+async function letterBarOn(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+  const on = page.getByRole("radio", { name: /Show the letters/ }).first();
+  if ((await on.getAttribute("aria-checked")) !== "true") {
+    await on.click();
+    await page.waitForTimeout(1500);
+  }
+  await ctx.close();
+}
+
+const letterBar = (page) => page.evaluate(() => {
+  const bars = [...document.querySelectorAll(".letter-bar")];
+  return {
+    found: bars.length,
+    drawn: bars.filter((b) => b.getClientRects().length > 0).length,
+  };
+});
+
+await letterBarOn(browser);
+
+for (const width of PHONES) {
+  const { ctx, page } = await open(width, 844, "/dictionary");
+  const bar = await letterBar(page);
+  check(
+    `no letter bar on a phone at ${width}`,
+    bar.found > 0 && bar.drawn === 0,
+    JSON.stringify(bar),
+  );
+  await ctx.close();
+}
+
+for (const width of WIDE) {
+  const { ctx, page } = await open(width, 900, "/dictionary");
+  const bar = await letterBar(page);
+  check(
+    `the letter bar is drawn at ${width}, where there are no keys for these letters`,
+    bar.found > 0 && bar.drawn > 0,
+    JSON.stringify(bar),
+  );
+  await ctx.close();
+}
+
+//     And the round trip, because "easily removable" is the whole reason the
+//     row carries its own way out: take it from where it annoys you, and get
+//     it back from the one screen that says what it was. Driven in this order
+//     so the suite leaves the setting where it found it and can be run twice.
+{
+  const { ctx, page } = await open(1280, 900, "/dictionary");
+
+  // Drawn first, then gone. Asserting only "gone" is satisfied by a renamed
+  // class matching nothing, which is exactly how the version of this check
+  // without `before` passed while the whole row had vanished from the page.
+  const before = await letterBar(page);
+  const hide = page.getByRole("button", { name: /Hide the Estonian letters/ }).first();
+  await hide.click();
+  await page.waitForFunction(
+    () => [...document.querySelectorAll(".letter-bar")].every((b) => b.getClientRects().length === 0),
+    null,
+    { timeout: 8000 },
+  ).catch(() => {});
+  const after = await letterBar(page);
+  check(
+    "the way out is on the row itself",
+    before.drawn > 0 && after.drawn === 0,
+    JSON.stringify({ before, after }),
+  );
+
+  await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+  const back = page.getByRole("radio", { name: /Show the letters/ }).first();
+  check("and Settings still offers it back", await back.isVisible());
+
+  await back.click();
+  await page.waitForFunction(
+    () => [...document.querySelectorAll(".letter-bar")].some((b) => b.getClientRects().length > 0),
+    null,
+    { timeout: 8000 },
+  ).catch(() => {});
+  check("and taking it back brings the row with it", (await letterBar(page)).drawn > 0);
+
+  await ctx.close();
+}
+
+
 await browser.close();
+
 done();

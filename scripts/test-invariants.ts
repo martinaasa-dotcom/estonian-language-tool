@@ -832,20 +832,123 @@ check("colour comes from a token, never a raw hex", () => {
   assert.deepEqual(offenders, [], "a raw hex is used instead of a token");
 });
 
-check("an Estonian text input gets the diacritic bar", () => {
+check("an Estonian text input gets the letter bar, from one list", () => {
   /*
     õ ä ö ü š ž are not on a UK or US keyboard, and a learner typing an answer
     should not have to know an alt code to be marked right.
+
+    The list is read from the module rather than from the component that draws
+    it, which is the change this check needed: there used to be a `DIACRITICS`
+    constant in `EstonianInput` and a second one in `DiacriticBar`, and this
+    check read both, so it was asserting that two copies each said six things
+    rather than that there was one list. A seventh letter added to one of them
+    would have passed.
   */
-  // The characters, not the component that draws them: `EstonianInput` builds
-  // its own row and `DiacriticBar` is the free-standing one, and either is a
-  // fine way to keep the promise.
-  for (const file of ["components/EstonianInput.tsx", "components/DiacriticBar.tsx"]) {
-    const source = read(file);
-    for (const letter of ["õ", "ä", "ö", "ü", "š", "ž"]) {
-      assert.ok(source.includes(letter), `${file} no longer offers ${letter}`);
-    }
+  const letters = read("lib/ux/letterBar.ts");
+  for (const letter of ["õ", "ä", "ö", "ü", "š", "ž"]) {
+    assert.ok(letters.includes(letter), `lib/ux/letterBar.ts no longer offers ${letter}`);
   }
+
+  // And there is one bar. Anything drawing the row has to be the shared
+  // component, whose letters come from the module above.
+  const bar = read("components/DiacriticBar.tsx");
+  assert.match(bar, /ESTONIAN_LETTERS/, "the bar no longer reads the shared list of letters");
+  const drawers = ALL.filter((f) => /className="letter-bar|className={`letter-bar/.test(read(f)));
+  assert.deepEqual(
+    drawers,
+    ["components/DiacriticBar.tsx"],
+    "something other than DiacriticBar draws its own letter bar",
+  );
+});
+
+check("the letter bar is a desktop thing, and a choice, and reversible", () => {
+  /*
+    THREE PROPERTIES, ONE FEATURE. See lib/ux/letterBar.ts for the argument.
+
+    A phone keyboard already carries these letters, so the row buys it nothing
+    and costs it the only vertical space it has. A learner on an Estonian
+    keyboard has them as keys, so the row is clutter under every field in the
+    app. Neither is detectable, so it is asked at first run and changed after.
+
+    Asserted as shapes rather than as today's declarations: what matters is
+    that the bar is off by default and turned on only under a query naming both
+    a width and a real pointer, that the answer is asked and stored, and that
+    there is a way back.
+  */
+  const css = read("app/globals.css");
+
+  // Off by default, so a device that matches nothing draws no bar. A rule that
+  // hid it inside a `max-width` query instead would leave every browser
+  // without that query drawing one.
+  // Anchored to a rule of its own, because the first version of this matched
+  // the `[data-letters="off"] .letter-bar` rule *inside* the query and passed
+  // happily with the default rule deleted, which draws the bar on every phone.
+  assert.match(
+    css,
+    /(^|\n)\s*\.letter-bar[^{}]*\{[^}]*display:\s*none/,
+    "the letter bar is no longer hidden by default",
+  );
+
+  // Both halves of "a desktop". `min-width` alone hands the bar to a tablet in
+  // landscape with nothing attached to it.
+  const query = /@media\s*\(min-width:\s*768px\)\s*and\s*\(pointer:\s*fine\)\s*\{([\s\S]*?)\n  \}/
+    .exec(css);
+  assert.ok(query, "the letter bar is no longer drawn under a width-and-pointer query");
+  assert.match(query[1]!, /\.letter-bar\s*\{\s*display:\s*flex/, "the query no longer draws the bar");
+  assert.match(
+    query[1]!,
+    /\[data-letters="off"\][^{]*\.letter-bar[^{]*\{[^}]*display:\s*none/,
+    "the learner's own answer no longer turns the bar off",
+  );
+
+  // The answer is stored through the settings store, like every other setting.
+  assert.match(read("lib/settings/store.ts"), /letterBar:/, "letterBar is not declared in the store");
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    assert.equal(
+      /["']letterBar["']/.exec(read(file)),
+      null,
+      `${file} writes the letterBar key as a literal`,
+    );
+  }
+
+  // Published for every signed-in screen, from the setting, in the render
+  // rather than from an effect: an attribute written after hydration shows the
+  // bar for a frame to everybody who asked for it to be gone.
+  const layout = read("app/(app)/layout.tsx");
+  assert.match(layout, /SETTING_KEYS\.letterBar/, "the app shell no longer reads the answer");
+  assert.match(layout, /<LetterBarScope/, "the app shell no longer publishes the answer");
+  assert.match(
+    read("components/DiacriticBar.tsx"),
+    /data-letters=\{value\}/,
+    "the scope no longer renders the answer as an attribute",
+  );
+
+  // Asked at first run, which is the point of asking at all: a learner meets
+  // Estonian fields on the very next screen of the wizard.
+  assert.match(
+    read("app/(chromeless)/start/WelcomeWizard.tsx"),
+    /letterBar:\s*letters/,
+    "first run no longer asks which keyboard the learner has",
+  );
+  assert.match(
+    read("app/actions.ts"),
+    /completeOnboarding[\s\S]*?SETTING_KEYS\.letterBar/,
+    "first run's answer is no longer written",
+  );
+
+  // And two ways back, because the moment somebody notices they do not need
+  // the row is the moment they are looking at it.
+  assert.match(
+    read("components/DiacriticBar.tsx"),
+    /setLetterBar\("off"\)/,
+    "the bar no longer offers to remove itself",
+  );
+  assert.match(
+    read("app/(app)/settings/PreferencesPanel.tsx"),
+    /setLetterBar/,
+    "Settings can no longer turn the letters back on",
+  );
 });
 
 check("nothing a person reads is smaller than the scale allows", () => {

@@ -216,7 +216,8 @@ forms at all.
 - Every view still implements the four states from `08-ux-ia-a11y.md` §4.
 - Every interactive element is still keyboard-reachable, with a visible focus ring — now 2.5px,
   offset 3px.
-- Estonian text still carries `lang="et"`, and every Estonian input still has the diacritic bar.
+- Estonian text still carries `lang="et"`, and every Estonian input still has the letter bar,
+  on a desktop and for a learner who has not turned it off.
 - No Estonian morphology is generated anywhere, including in decoration.
 
 ## 8. Session screens

@@ -530,7 +530,25 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   observed through resource timing, **not** on `useTransition`'s pending flag: measured here that
   goes true and never comes back, which would have turned the ring for its full eight second
   ceiling on every pull.
-- Estonian text inputs get the diacritic bar.
+- **The Estonian letter bar is a desktop thing, and a choice.** `õ ä ö ü š ž` are not on a UK or US
+  keyboard, so a row of click-to-insert buttons under every Estonian field is the only thing making
+  half these exercises answerable. It was drawn for everybody, everywhere, always, and it should
+  have been neither. A phone keyboard already carries those letters, on a long press or a keyboard
+  switched to Estonian, so the row buys a phone nothing and spends the one thing a phone has none
+  of; and a learner typing on an Estonian keyboard has them as keys, so it is clutter under every
+  field in the app. Neither is detectable: a browser will not say what is printed on the keys, and
+  a learner who never reaches for õ looks exactly like one who cannot. So it is asked, once, on the
+  first screen of first run, and changed afterwards from Settings or from the row itself, which
+  carries its own way out because the moment somebody notices they do not need it is the moment
+  they are looking at it. `lib/ux/letterBar.ts` holds the letters and the answer, `app/globals.css`
+  holds the one definition of "a desktop" (a width **and** a real pointer, since `min-width` alone
+  hands the row to a tablet with nothing attached to it), and the signed-in shell publishes the
+  learner's answer as `data-letters` in the render rather than from an effect, because an attribute
+  written after hydration shows the row for a frame to everybody who asked for it to be gone.
+  **On is the default and stays the default**: everybody who signed up before the question existed
+  is never asked, and reading a missing answer as "off" would take away the only way they have of
+  writing õ. `scripts/test-mobile.mjs` measures all of it in a browser, which is the only place the
+  pointer half of the rule is real.
 
 ## Model configuration
 
