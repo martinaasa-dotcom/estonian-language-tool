@@ -2654,6 +2654,43 @@ check("a hover makes a control more present, never less", () => {
   }
 });
 
+/**
+ * The accessibility sweep is axe, and it runs in both themes.
+ *
+ * This suite spent its whole life describing itself as "not a substitute for
+ * axe". That was honest and it was also the reason five real failures sat in
+ * the app unseen: the hand-rolled contrast pass scoped to `main`, so the
+ * navigation rail on every signed-in screen was outside it, and it read a
+ * colour's own alpha but not an `opacity` inherited from a parent, so a faded
+ * container reported as passing while its text sat at 2.63. axe found both in
+ * one run, plus an `<ol>` whose `<li>`s were behind a wrapper `div` and which
+ * therefore announced itself as an empty list.
+ *
+ * Asserted here because the alternative is a suite that quietly goes back to
+ * checking what it finds easy. `best-practice` is part of it on purpose: that
+ * is the tag the broken list came in under, and a list that says it is empty
+ * is not a matter of taste.
+ */
+check("the accessibility sweep runs axe, over both themes", () => {
+  const suite = code(join("scripts", "a11y-check.mjs"));
+  assert.match(suite, /axe-core\/axe\.min\.js/, "the a11y suite no longer loads axe");
+  assert.match(suite, /window\.axe\.run\(/, "the a11y suite loads axe and never runs it");
+  assert.match(
+    suite, /"best-practice"/,
+    "axe runs without best-practice, which is the tag the broken list came in under",
+  );
+  assert.match(
+    suite, /colorScheme:\s*"dark"/,
+    "the a11y suite stopped sweeping the dark palette, which is half of what ships",
+  );
+  // Both themes get the same sweep, so neither can be the one nobody looks at.
+  const runs = [...suite.matchAll(/axeViolations\(/g)].length;
+  assert.ok(runs >= 3, `axe is invoked ${runs} times; light and dark each need one plus the helper`);
+
+  const pkg = JSON.parse(read("package.json")) as { devDependencies?: Record<string, string> };
+  assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

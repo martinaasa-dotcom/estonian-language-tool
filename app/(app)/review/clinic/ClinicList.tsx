@@ -128,25 +128,50 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
   );
 }
 
-/** The failure history as a strip, oldest on the left. */
+/**
+ * The failure history as a strip, oldest on the left.
+ *
+ * A FAILURE AND A RECALL ARE DIFFERENT SHAPES, NOT JUST DIFFERENT HUES.
+ *
+ * They were peach and mint squares with a `title` on each, and CLAUDE.md
+ * already says what is wrong with that in the dictation drill: a colour may
+ * not be the only thing carrying a distinction, and a tooltip is not text.
+ * The `aria-hidden` and the `sr-only` line below meant a screen reader was
+ * fine; somebody who simply cannot separate those two hues, on a phone where
+ * no tooltip exists, had a row of identical squares. Telling a failure from a
+ * recall is the whole of what this strip is for.
+ *
+ * A failure is full height and a recall is a third of it, which is the
+ * sparkline idiom and reads at 10 pixels. The hues stay, because they are
+ * right and because two signals are better than one.
+ *
+ * And the count is visible rather than only announced. It was already written
+ * for a screen reader; there was no reason the person looking at the strip
+ * could not have it too.
+ */
 function Timeline({ history }: { history: { rating: number; at: string }[] }) {
   const shown = history.slice(-24);
   if (shown.length === 0) return null;
+  const failures = shown.filter((h) => h.rating <= 2).length;
 
   return (
     <div className="mt-3">
-      <div className="flex flex-wrap gap-1" aria-hidden>
-        {shown.map((h, i) => (
-          <span
-            key={i}
-            title={`${new Date(h.at).toLocaleDateString()} · ${h.rating <= 2 ? "failed" : "recalled"}`}
-            className="h-2.5 w-2.5 rounded-[2px]"
-            style={{ background: h.rating <= 2 ? "var(--again)" : "var(--good)" }}
-          />
-        ))}
+      <div className="flex flex-wrap items-end gap-1" aria-hidden>
+        {shown.map((h, i) => {
+          const failed = h.rating <= 2;
+          return (
+            <span
+              key={i}
+              title={`${new Date(h.at).toLocaleDateString()} · ${failed ? "failed" : "recalled"}`}
+              className={`w-2.5 rounded-[2px] ${failed ? "h-2.5" : "h-1"}`}
+              style={{ background: failed ? "var(--again)" : "var(--good)" }}
+            />
+          );
+        })}
       </div>
-      <p className="sr-only">
-        {shown.filter((h) => h.rating <= 2).length} failures in the last {shown.length} reviews.
+      <p className="mt-1.5 text-2xs" style={{ color: "var(--ink-3)" }}>
+        {failures} {failures === 1 ? "failure" : "failures"} in the last {shown.length} reviews.
+        Tall marks are the failures.
       </p>
     </div>
   );

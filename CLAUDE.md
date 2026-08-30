@@ -568,9 +568,21 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   is what a button is painted, `--accent-deep` is what a word is written in, and text set in the
   fill measured 3.87 on the week header and 4.05 in the leech clinic against a bar of 4.5. Contrast
   is measured in a browser rather than reasoned about from the token list, and **in both themes**,
-  because light and dark are two palettes rather than one with a filter over it: every failure this
-  found was in dark mode, where `--ink-3` on the four soft tints came in between 4.07 and 4.45. What
-  a colour is worth depends on what it is sitting on, which a palette cannot tell you.
+  because light and dark are two palettes rather than one with a filter over it: the first batch of
+  failures was entirely in dark mode and the second entirely in light. What a colour is worth
+  depends on what it is sitting on, which a palette cannot tell you.
+- **`opacity` never goes on a box that holds words.** It multiplies through everything inside, so a
+  fade meaning "not yet" fades the sentence explaining why. A locked unit on the course page ended
+  up saying "you can still open it" at 2.63:1, on every locked row of a 73-unit course; the badge
+  shelf and the grammar reference had the same shape. A state that means "not yet" has a border, an
+  icon and a sentence to say so with. Where a fade genuinely helps, it goes on the icon.
+- **And the sweep is axe, not a hand-rolled one.** `scripts/a11y-check.mjs` spent its life saying it
+  was "not a substitute for axe", which was true and was also why five real failures sat unseen. The
+  contrast pass it replaced scoped to `main`, so the navigation rail on every signed-in screen was
+  outside it, and it read a colour's own alpha but not an `opacity` inherited from a parent. axe
+  found both in one run, plus an `<ol>` on the landing page whose `<li>`s sat behind a wrapper `div`,
+  so the list announced itself as empty. What stays hand-written is only what axe has no opinion
+  about: exactly one `main` and one `h1` per screen, and a title that is not the landing page's.
 - Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
   page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
   to be added to the allowlist in `middleware.ts` as well.

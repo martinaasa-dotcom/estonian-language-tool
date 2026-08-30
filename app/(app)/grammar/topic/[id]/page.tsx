@@ -67,7 +67,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             <dl className="grid gap-4 sm:grid-cols-3">
               {term?.question && (
                 <div>
-                  <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     Answers
                   </dt>
                   <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
@@ -76,7 +76,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
               <div>
-                <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                   In plain English
                 </dt>
                 <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
@@ -85,7 +85,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
               </div>
               {term?.alsoCalled && (
                 <div>
-                  <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     In English references
                   </dt>
                   <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
@@ -95,7 +95,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
               )}
               {topic.marker && (
                 <div>
-                  <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     The ending that carries it
                   </dt>
                   <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>

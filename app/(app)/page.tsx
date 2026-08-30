@@ -247,9 +247,26 @@ export default async function TodayPage() {
                   <div key={d.day} className="flex flex-1 flex-col items-center gap-1.5">
                     <span
                       className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
+                      /*
+                        The ring is what makes a reviewed day visible.
+
+                        Mint on the card is 2.52:1 and the white tick inside it
+                        is the same, which is under the 3:1 a graphic needs to
+                        carry meaning. This is not a reason to repaint mint:
+                        mint means "recalled" and that is the whole of what this
+                        circle says. It is the case `.choice-card[data-on]` in
+                        globals.css already solved, in the words written there:
+                        where a fill would swallow the contrast, double the rule
+                        instead. Three channels, one of them hue.
+
+                        `--mint-ink` gives the circle a 5.79:1 boundary in
+                        light. In dark it is the mint itself, where the fill
+                        already clears 11:1 and needs no help.
+                      */
                       style={{
                         background: d.done ? "var(--mint)" : "var(--raised)",
                         color: d.done ? "var(--surface)" : "var(--ink-3)",
+                        boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
                         outline: d.isToday ? "2px solid var(--accent)" : "none",
                         outlineOffset: 2,
                       }}

@@ -87,13 +87,13 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         <Card tone="accent">
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
-              <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Answers</dt>
+              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Answers</dt>
               <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.question}
               </dd>
             </div>
             <div>
-              <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                 In English references
               </dt>
               <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
@@ -101,7 +101,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               </dd>
             </div>
             <div>
-              <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Ending</dt>
+              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Ending</dt>
               <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.principal
                   ? <span className="text-base font-semibold" style={{ color: "var(--ink-2)" }}>memorised, not derived</span>
@@ -111,7 +111,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           </dl>
           {ref.englishHook && (
             <p className="mt-4 text-sm" style={{ color: "var(--ink-2)" }}>
-              <span className="label-xs mr-2" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>In English</span>
+              <span className="label-xs mr-2" style={{ color: "var(--accent-deep)" }}>In English</span>
               {ref.englishHook}
             </p>
           )}

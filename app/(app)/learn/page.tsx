@@ -180,10 +180,24 @@ export default async function LearnPage() {
                     <li
                       key={u.unit.id}
                       className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border p-3"
+                      /*
+                        A locked unit is quieter, and the quiet used to be an
+                        `opacity: 0.6` on the whole row. That fades the words:
+                        the unit's own name came out at 4.25, its can-do
+                        statement at 2.8 and, worst of all, the line saying
+                        "Builds on X. You can still open it." at 2.63 against a
+                        bar of 4.5. The app was telling somebody this unit is
+                        available to them in the least readable text on the
+                        page, on every locked row of a 73-unit course.
+
+                        The row already says "not yet" four other ways: a
+                        padlock, a plain border, that sentence, and a button
+                        reading Learn rather than Continue. The fade moves onto
+                        the padlock, which carries no words.
+                      */
                       style={{
                         borderColor: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--rule)",
                         background: "var(--surface)",
-                        opacity: locked ? 0.6 : 1,
                       }}
                     >
                       <span
@@ -191,6 +205,7 @@ export default async function LearnPage() {
                         style={{
                           background: complete ? "var(--mint)" : u.state === "learning" ? "var(--accent)" : "var(--raised)",
                           color: complete || u.state === "learning" ? "var(--surface)" : "var(--ink-3)",
+                          opacity: locked ? 0.6 : 1,
                         }}
                       >
                         {locked ? <Lock size={16} aria-hidden /> : complete ? <Check size={18} aria-hidden /> : <Icon size={17} aria-hidden />}

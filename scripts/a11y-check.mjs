@@ -5,11 +5,53 @@
  * Estonian text marked `lang="et"` so a screen reader does not read it with
  * English phonics.
  *
- * Not a substitute for axe — it is the subset the codebase promised, checked on
- * the pages this branch added, where a promise is easiest to forget.
+ * AND AXE ITSELF, WHICH THIS SUITE SPENT ITS WHOLE LIFE SAYING IT WAS NOT.
+ *
+ * "Not a substitute for axe" was true and was also the reason five real
+ * failures sat in the app unseen. The hand-rolled contrast pass this replaces
+ * was wrong in two ways that are obvious once named and were invisible while
+ * it was the only thing looking: it scoped to `main`, so the navigation rail
+ * on every signed-in screen was outside it, and it read a colour's own alpha
+ * but not an `opacity` inherited from a parent, so a locked badge faded to
+ * three quarters reported as passing while its description sat at 3.27.
+ *
+ * axe found both in one run, plus a broken list on the landing page that
+ * nothing here would ever have thought to look for. So axe runs the general
+ * rules and the checks below stay for what axe has no opinion about: exactly
+ * one `main` and one `h1` per screen, a title that is not the landing page's,
+ * and Estonian marked `lang="et"` so a screen reader does not read it with
+ * English phonics.
  */
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+
+/*
+  Read off disk and injected, rather than imported and called in Node: axe
+  runs against a live DOM, and the only live DOM here is the browser's. This
+  app's Content Security Policy has no bearing on it because Playwright's
+  `addScriptTag` goes through the DevTools protocol rather than the page.
+*/
+const AXE = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
+
+/**
+ * Every axe violation on the page, as one line each.
+ *
+ * `best-practice` is included on purpose. It is where the landing page's
+ * `<ol>` full of `<div>`s turned up, and a list that announces itself as empty
+ * is not a matter of taste.
+ */
+async function axeViolations(page) {
+  await page.addScriptTag({ content: AXE });
+  const result = await page.evaluate(async () => await window.axe.run(document, {
+    resultTypes: ["violations"],
+    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
+  }));
+  return result.violations.map((v) =>
+    `${v.id} (${v.impact}, ${v.nodes.length}): ${v.nodes[0]?.target.join(" ") ?? ""}`);
+}
 
 const BASE = baseUrl();
 
@@ -37,82 +79,6 @@ const ROUTES = [
 const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
-/*
-  Contrast, measured in the browser rather than reasoned about in the palette.
-
-  This suite had no contrast check at all, which is the one accessibility
-  question a design system cannot answer from its own tokens: what a colour is
-  worth depends on what it is sitting on, and this app puts secondary text on
-  five different soft tints as readily as on the page. Measuring found the
-  answer was not the same on all of them. In dark mode `--ink-3` came in at
-  4.07 on butter, 4.08 on mint, 4.29 on accent and 4.45 on peach, all under
-  the 4.5 small text needs and none of them visible from the token list.
-
-  Two things are skipped and both are skipped honestly. An `aria-hidden`
-  subtree is not text, which is what the enormous step numerals on the landing
-  page are: `docs/14-design-system.md` §3 puts them off the type scale on
-  purpose and they are ornament behind a card. And an element sitting on a
-  gradient is not measurable this way, because `backgroundColor` is
-  transparent there and walking past it compares the text to the page behind
-  the button rather than to the button. Reporting those as failures was the
-  first version of this and it buried the four real ones under eleven that
-  were not.
-*/
-const CONTRAST = `(${(() => {
-  const parse = (c) => {
-    const m = c.match(/rgba?\(([^)]+)\)/);
-    if (!m) return null;
-    const p = m[1].split(",").map(Number);
-    return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
-  };
-  const lum = ({ r, g, b }) => {
-    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-  };
-  const bgOf = (el) => {
-    let n = el;
-    while (n && n !== document.documentElement) {
-      const st = getComputedStyle(n);
-      if (st.backgroundImage && st.backgroundImage !== "none") return "gradient";
-      const c = parse(st.backgroundColor);
-      if (c && c.a > 0.9) return c;
-      n = n.parentElement;
-    }
-    return parse(getComputedStyle(document.body).backgroundColor);
-  };
-  const out = [];
-  const seen = new Set();
-  for (const el of document.querySelectorAll("main *")) {
-    if (el.closest("[aria-hidden='true']")) continue;
-    const text = [...el.childNodes]
-      .filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join("");
-    if (!text) continue;
-    const st = getComputedStyle(el);
-    if (st.visibility === "hidden" || st.display === "none" || Number(st.opacity) < 0.1) continue;
-    const box = el.getBoundingClientRect();
-    if (box.width === 0 || box.height === 0) continue;
-    const fg = parse(st.color);
-    const bg = bgOf(el);
-    if (!fg || !bg || bg === "gradient") continue;
-    const eff = fg.a < 1
-      ? { r: fg.r * fg.a + bg.r * (1 - fg.a), g: fg.g * fg.a + bg.g * (1 - fg.a),
-          b: fg.b * fg.a + bg.b * (1 - fg.a) }
-      : fg;
-    const l1 = lum(eff);
-    const l2 = lum(bg);
-    const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-    const size = parseFloat(st.fontSize);
-    const large = size >= 24 || (size >= 18.66 && Number(st.fontWeight) >= 700);
-    const need = large ? 3 : 4.5;
-    if (ratio >= need) continue;
-    const key = st.color + "|" + st.fontSize + "|" + st.fontWeight;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(st.color + " at " + Math.round(ratio * 100) / 100 + ", needs " + need +
-             ' ("' + text.slice(0, 24) + '")');
-  }
-  return out;
-}).toString()})()`;
 
 /*
   Floor: 335, which is what this list reaches: thirty-seven routes at eight
@@ -220,31 +186,31 @@ for (const route of ROUTES) {
     report.title,
   );
 
-  const lowContrast = await page.evaluate(CONTRAST);
-  check(`${route}: every reading of text clears its contrast ratio`,
-    lowContrast.length === 0, lowContrast.slice(0, 2).join("; "));
+  const violations = await axeViolations(page);
+  check(`${route}: axe finds nothing`, violations.length === 0, violations.slice(0, 2).join("; "));
 }
 
 /*
-  And the same measurement in the other theme, which is where it actually bit.
+  And the same sweep in the other theme, which is where it kept biting.
 
   Light and dark are two palettes, not one palette with a filter over it, so a
-  colour that clears the bar in one says nothing about the other. Every
-  contrast failure this check has found so far was in dark mode: `--ink-3` on
-  the soft tints came in at 4.07, 4.08, 4.29 and 4.45 against a bar of 4.5,
-  four near misses that no reading of the token list would show, because what a
-  colour is worth depends on what it is sitting on.
+  colour that clears the bar in one says nothing about the other. The first
+  batch of contrast failures this suite found was entirely in dark mode:
+  `--ink-3` on the four soft tints, between 4.07 and 4.45 against a bar of 4.5,
+  four near misses that no reading of the token list would show. The second
+  batch was entirely in light, on a wash the rail is drawn over. Neither theme
+  is the one to check.
 
-  Contrast only, rather than the whole battery again: names, focus order, alt
-  text, landmarks and titles are the same markup in both themes.
+  The structural checks above are not repeated: a landmark, a heading and a
+  title are the same markup whichever palette is painted over them.
 */
 const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" });
 for (const route of ROUTES) {
   await dark.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
   await dark.waitForTimeout(200);
-  const lowContrast = await dark.evaluate(CONTRAST);
-  check(`${route}: clears its contrast ratio in dark mode too`,
-    lowContrast.length === 0, lowContrast.slice(0, 2).join("; "));
+  const violations = await axeViolations(dark);
+  check(`${route}: axe finds nothing in dark mode either`,
+    violations.length === 0, violations.slice(0, 2).join("; "));
 }
 await dark.close();
 
