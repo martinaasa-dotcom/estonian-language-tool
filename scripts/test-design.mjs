@@ -36,6 +36,8 @@ const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } });
 const p = await ctx.newPage();
 
 const sizes = new Map(), weights = new Map(), radii = new Map();
+/** Elements whose gradient is measured from a smaller box than it is painted into. */
+const wrapped = new Set();
 /** One example per text size, so an off-scale one says where to look. */
 const where = new Map();
 const contrast = [];
@@ -47,7 +49,30 @@ for (const url of PAGES) {
   await p.waitForTimeout(250);
 
   const data = await p.evaluate(() => {
-    const out = { text: [], targets: [], radii: [] };
+    const out = { text: [], targets: [], radii: [], wrapped: [] };
+    /*
+      A gradient sized to one box and painted into a larger one wraps.
+
+      The defaults disagree: `background-origin` is the padding box and
+      `background-clip` is the border box, so on anything with a border the
+      ramp is measured a pixel short at each end of where it is drawn, and the
+      default `repeat` fills the difference from the tile next door. On the primary
+      button that put the pink end of the ramp down the left edge and the blue
+      end down the right, one pixel wide, on the two rounded caps where a flat
+      colour shows most. It survived the fix that made the ramp horizontal,
+      because it never had anything to do with the angle.
+
+      Stated as the condition rather than as one button: measured smaller than
+      painted, and repeating. Any of the three cleared makes it safe.
+    */
+    const wraps = (cs) => {
+      if (!cs.backgroundImage || !/gradient/.test(cs.backgroundImage)) return false;
+      if (cs.backgroundOrigin !== "padding-box") return false;
+      if (!/border-box/.test(cs.backgroundClip)) return false;
+      if (!cs.backgroundRepeat.split(/[ ,]+/).some((r) => r === "repeat" || r === "repeat-x")) return false;
+      return ["Top", "Right", "Bottom", "Left"]
+        .some((side) => parseFloat(cs[`border${side}Width`]) > 0);
+    };
     const bgOf = (el) => {
       let n = el;
       while (n) {
@@ -83,6 +108,9 @@ for (const url of PAGES) {
         });
       }
       if (cs.borderRadius && cs.borderRadius !== "0px") out.radii.push(cs.borderRadius.split(" ")[0]);
+      if (wraps(cs)) {
+        out.wrapped.push(`${el.tagName.toLowerCase()}.${String(el.className).slice(0, 30)}`);
+      }
       if (el.matches("a, button, [role=button], input, select, textarea")) {
         out.targets.push({ w: Math.round(r.width), h: Math.round(r.height), tag: el.tagName,
           label: (el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30) });
@@ -107,6 +135,7 @@ for (const url of PAGES) {
     if (parseFloat(t.size) < 12) small.push({ url, size: t.size, text: t.text });
   }
   for (const r of data.radii) radii.set(r, (radii.get(r) ?? 0) + 1);
+  for (const w of data.wrapped) wrapped.add(`${url} ${w}`);
 }
 
 // Focus rings, by actually tabbing: `:focus-visible` matches keyboard focus
@@ -154,8 +183,8 @@ for (const url of ["/welcome"]) {
       .map((r) => `${page} ${r.o.toFixed(2)} "${r.t}"`), url);
 }
 
-// Floor: 7, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Design system", { floor: 7 });
+// Floor: 8, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Design system", { floor: 8 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
@@ -189,6 +218,9 @@ check("nothing is left half-faded at the bottom of a page", faded.length === 0,
 // A ring that fades in is a ring a keyboard user does not see land.
 check("every tab stop shows its focus ring immediately", noFocus.length === 0,
   noFocus.slice(0, 5).join(" | "));
+
+check("no gradient wraps the wrong colour round its own edge", wrapped.size === 0,
+  [...wrapped].slice(0, 4).join(" | "));
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();
