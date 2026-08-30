@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#241f35"/>
+  <path d="M12 26 L32 9 L52 26" fill="none" stroke="#7a6bf0"
+  stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 27.5 C40 27.5 46 33.5 46 41 C46 48.5 40 54.5 32 54.5 C24 54.5 18 48.5 18 41
+  C18 33.5 24 27.5 32 27.5 Z
+  M32 33 C27.5 33 24.5 36.5 24.5 41 C24.5 45.5 27.5 49 32 49 C36.5 49 39.5 45.5 39.5 41
+  C39.5 36.5 36.5 33 32 33 Z"
+  fill="#ffffff" fill-rule="evenodd"/>
+</svg>

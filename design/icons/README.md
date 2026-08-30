@@ -100,3 +100,36 @@ It has to land in four places at once, because that is what is wrong today:
 
 A maskable variant is a separate drawing, not a resize. 13, 15, 16 and 19 bleed to the edges
 and would lose their edges to a circular launcher mask.
+
+## Shortlist, and the Kodukatus variants
+
+Review kept two: **01 Kodukatus** and **12 Neliteist**. 01 is the one being adjusted, because the
+idea is right and the drawing was generic: the roof floated clear of the ring with nothing tying
+them together, so at a glance it was a chevron above a doughnut rather than one mark.
+
+Six adjustments live in `design/icons/kodukatus/`, drawn by
+`node scripts/make-kodukatus-variants.mjs`.
+
+| # | Name | What changes | Round launcher mask |
+|---|---|---|---|
+| 01a | **Tihedam** | the gap closed, both strokes at one weight | survives |
+| 01b | **Kirjatäht** | the ring given a letter's modulation, thick at the sides | survives |
+| 01c | **Aken** | the house drawn whole, the o as the round window | survives |
+| 01d | **Pööratud** | the same mark on the accent rather than the ink | survives |
+| 01e | **Maja ja neliteist** | both kept marks in one: the number inside the house | clips |
+| 01f | **Katus ja neliteist** | the roof sitting on the number instead | clips |
+
+Two earlier attempts were cut rather than kept. A ring made of fourteen radial ticks, one per
+case, read as a loading spinner. Roof and ring joined into one closed figure read as a water
+droplet.
+
+**01d is the best pure version.** Violet is what the rest of the app is painted with, it holds at
+20px, and it is the only one of the six that comes through a circular mask losing nothing.
+
+**01f is the one that does something the others cannot**, since it carries both marks that
+survived. The eaves are load-bearing: without them a peak over a number reads as an arrow, which
+is a stock chart rather than a house.
+
+**01e is the boldest and the one to be careful with.** Unmistakable at every flat size, but the
+mask takes the roof and the top of the number, so it needs a maskable drawing that is genuinely
+different rather than a resize.
