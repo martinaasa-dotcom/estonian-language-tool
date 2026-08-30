@@ -2,74 +2,43 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  BookOpen, Camera, CalendarCheck, CalendarRange, ChartNoAxesColumn, ChevronDown, CircleHelp,
-  ClipboardCheck, Compass,
-  GraduationCap, Languages, Layers, LogOut, Map, MessageCircleQuestion, MoreHorizontal, Moon,
-  School, Settings, Sun, Swords, X, Zap,
-} from "lucide-react";
-import { useCallback, useEffect, useState, type ComponentType } from "react";
+import { LogOut, MoreHorizontal, Moon, Sun, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { useDockClearance } from "@/lib/layout/dockClearance";
 import { createClient } from "@/lib/supabase/client";
+import { BAR, isUnder, PLACES, SECTIONS, type Destination, type NavSection } from "@/lib/ux/nav";
 import { Wordmark } from "@/components/brand";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>;
-  /** The dot behind the icon when the item is current. Each destination owns one. */
-  tone: string;
-  /**
-   * The four destinations that are the app: what is due, the course, the loop,
-   * the reference. Shown in the phone bar and standing at the top of the
-   * desktop rail; everything else lives behind "More" on both.
-   *
-   * The rail used to list all fifteen flat, which is a menu to read rather
-   * than a place to go, and eleven of them answer a question a learner does
-   * not have in their first week. Nothing is hidden: "More" is one press, it
-   * opens itself whenever the current page is inside it, and it stays open
-   * once somebody has opened it.
-   */
-  primary?: boolean;
-}
-
-const NAV: NavItem[] = [
-  { href: "/", label: "Today", icon: Sun, tone: "var(--butter)", primary: true },
-  { href: "/learn", label: "Learn", icon: Map, tone: "var(--mint)", primary: true },
-  { href: "/review", label: "Review", icon: GraduationCap, tone: "var(--accent)", primary: true },
-  { href: "/practice", label: "Practice", icon: Swords, tone: "var(--peach)" },
-  { href: "/exam", label: "Mock exam", icon: ClipboardCheck, tone: "var(--blush)" },
-  { href: "/dictionary", label: "Dictionary", icon: BookOpen, tone: "var(--sky)", primary: true },
-  { href: "/grammar", label: "Grammar", icon: Languages, tone: "var(--butter)" },
-  { href: "/scan", label: "Scan a page", icon: Camera, tone: "var(--sky)" },
-  { href: "/tutor", label: "Anu", icon: MessageCircleQuestion, tone: "var(--blush)" },
-  { href: "/words", label: "My words", icon: Layers, tone: "var(--mint)" },
-  { href: "/progress", label: "Progress", icon: ChartNoAxesColumn, tone: "var(--accent)" },
-  { href: "/assess", label: "Level check", icon: Compass, tone: "var(--blush)" },
-  { href: "/tasks", label: "Tasks", icon: CalendarCheck, tone: "var(--peach)" },
-  { href: "/week", label: "This week", icon: CalendarRange, tone: "var(--butter)" },
-  { href: "/class", label: "Classes", icon: School, tone: "var(--sky)" },
-  { href: "/guide", label: "What this app is", icon: CircleHelp, tone: "var(--ink-3)" },
-];
-
-/**
- * Whether the rail's secondary group was left open. A per-browser convenience,
- * never anything the app depends on knowing.
- */
-const RAIL_OPEN_KEY = "railMoreOpen";
+import { icon } from "@/components/icons";
 
 /**
  * The rail, and the phone bar under it.
  *
- * Routes that own the whole screen — the landing page, sign-in, first-run setup —
- * live in `app/(chromeless)/` and never render this at all, which is why there is
- * no path list here to keep in sync.
+ * Every destination is on the rail, all the time, under the heading for the
+ * question it answers. There is no "More" here and there is nothing behind it.
+ *
+ * There used to be. Four links were promoted, the other twelve sat behind a
+ * disclosure, and it had a bug you only met once you used the app: the group
+ * opened itself whenever the current page was inside it, so on Practice or
+ * Progress or Grammar the button read "Less" and pressing it did nothing.
+ * `showRest` was `railOpen || secondaryActive`, the click flipped `railOpen`,
+ * and the second half of that held the rail open regardless.
+ *
+ * Fixing the toggle was the small half of the fix. Sixteen links behind a
+ * button marked "More" are not fewer links, they are the same links somewhere
+ * you have to remember; four headings over the same sixteen are four short
+ * answers to "where do I go for this", and they cost nothing to read past.
+ * `lib/ux/nav.ts` is the one table of what goes where, and the phone sheet and
+ * the command palette read it too, so a new screen cannot arrive on two of the
+ * three surfaces.
+ *
+ * Routes that own the whole screen — the landing page, sign-in, first-run
+ * setup — live in `app/(chromeless)/` and never render this at all, which is
+ * why there is no path list here to keep in sync.
  */
 export function Sidebar() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
-  const [railOpen, setRailOpen] = useState(false);
   const [bar, setBar] = useState<HTMLElement | null>(null);
 
   // Published on <html> so the offline banner, the install prompt and the
@@ -77,33 +46,6 @@ export function Sidebar() {
   useDockClearance(bar);
 
   useEffect(() => setMoreOpen(false), [pathname]);
-
-  /*
-    The rail's own "More" remembers being opened, because somebody who has gone
-    looking for the mock exam once will go looking for it again, and a
-    disclosure that shuts itself on every navigation is a disclosure you learn
-    to distrust. Read once on mount rather than on every render: this is a
-    convenience, and a browser that refuses storage is not an error worth
-    surfacing.
-  */
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(RAIL_OPEN_KEY) === "1") setRailOpen(true);
-    } catch {
-      // Private windows and blocked site data. The rail simply starts shut.
-    }
-  }, []);
-
-  const toggleRail = () => {
-    setRailOpen((open) => {
-      try {
-        window.localStorage.setItem(RAIL_OPEN_KEY, open ? "0" : "1");
-      } catch {
-        // As above: the state still applies to this page.
-      }
-      return !open;
-    });
-  };
 
   // Escape closes the sheet. A sheet with no way out but a small X in its
   // corner is a sheet somebody taps around the edges of.
@@ -118,77 +60,61 @@ export function Sidebar() {
 
   const measure = useCallback((node: HTMLElement | null) => setBar(node), []);
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  const primary = NAV.filter((n) => n.primary);
-  const secondary = NAV.filter((n) => !n.primary);
-  const secondaryActive = secondary.some((n) => isActive(n.href));
-  /*
-    Open when the learner asked for it, and open regardless when the page they
-    are on lives inside it: a rail that does not contain the current page has
-    lost its one job, which is telling you where you are.
-  */
-  const showRest = railOpen || secondaryActive;
+  const active = (href: string) => isUnder(href, pathname);
+  // The sheet holds everything the four cells of the bar do not.
+  const sheet: NavSection[] = SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => !item.bar),
+  })).filter((section) => section.items.length > 0);
+  const restActive = sheet.some((s) => s.items.some((i) => active(i.href)));
 
   return (
     <>
       {/* Desktop rail */}
       <nav
         aria-label="Main"
-        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-1 overflow-y-auto p-4 md:flex"
+        className="scroll-host sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto p-4 md:flex"
       >
-        <Link href="/" className="mb-6 block rounded-[var(--r)] px-2 pt-3">
+        <Link href="/" className="mb-4 block rounded-[var(--r)] px-2 pt-3">
           <Wordmark subtitle="Estonian, daily" />
         </Link>
 
-        {primary.map((item) => <RailLink key={item.href} item={item} active={isActive(item.href)} />)}
+        {PLACES.map((section) => (
+          <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-2.5">
+            <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-1.5" style={{ color: "var(--ink-3)" }}>
+              {section.title}
+            </h2>
+            {section.items.map((item) => (
+              <RailLink key={item.href} item={item} active={active(item.href)} />
+            ))}
+          </section>
+        ))}
 
-        <button
-          type="button"
-          onClick={toggleRail}
-          aria-expanded={showRest}
-          className="mt-1 flex items-center gap-3 rounded-full px-3 py-2 text-base transition-ui"
-          style={{ color: "var(--ink-3)", fontWeight: 500 }}
-        >
-          <span
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ background: "var(--raised)", color: "var(--ink-3)" }}
-          >
-            <ChevronDown
-              size={15}
-              strokeWidth={2.2}
-              aria-hidden
-              className="transition-transform"
-              style={{ transform: showRest ? "rotate(180deg)" : "none" }}
-            />
-          </span>
-          {showRest ? "Less" : "More"}
-        </button>
-
-        {showRest &&
-          secondary.map((item) => <RailLink key={item.href} item={item} active={isActive(item.href)} />)}
-
-        <p className="mt-4 px-3 text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          <kbd
-            className="rounded-md px-1.5 py-0.5 font-semibold"
-            style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-          >
-            ⌘K
-          </kbd>{" "}
-          goes anywhere.
-        </p>
-
-        <div className="mt-auto flex items-center gap-1 pt-4">
-          <Link
-            href="/settings"
-            aria-current={isActive("/settings") ? "page" : undefined}
-            className="flex flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-sm font-medium"
-            style={{ color: isActive("/settings") ? "var(--accent-deep)" : "var(--ink-3)" }}
-          >
-            <Settings size={16} strokeWidth={2} aria-hidden />
-            Settings
-          </Link>
-          <ThemeToggle />
-          <SignOutButton />
+        {/*
+          Pinned under the sections when they fit and simply last when they do
+          not: the rail is a scroll container, because sixteen links plus their
+          headings are taller than a short laptop and the answer to that is a
+          scrollbar rather than a disclosure.
+        */}
+        <div className="mt-auto pt-2">
+          <p className="px-3 pb-2.5 text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+            <kbd
+              className="rounded-md px-1.5 py-0.5 font-semibold"
+              style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+            >
+              ⌘K
+            </kbd>{" "}
+            goes anywhere.
+          </p>
+          {SECTIONS.filter((s) => s.id === "app").map((section) =>
+            section.items.map((item) => (
+              <RailLink key={item.href} item={item} active={active(item.href)} />
+            )),
+          )}
+          <div className="mt-1 flex items-center gap-1 px-1">
+            <ThemeToggle labelled />
+            <SignOutButton />
+          </div>
         </div>
       </nav>
 
@@ -196,6 +122,12 @@ export function Sidebar() {
         Phone bar: four destinations plus everything else behind one button, so
         no tap target is smaller than a thumb. Floating, so it reads as a
         control rather than the edge of the page.
+
+        This one keeps its "More" and the rail does not, because the constraint
+        is different: a rail is a column with a screen of height in it and a bar
+        is five cells across a phone. What the button opens is not a heap
+        though. It is the same sections the rail shows, with the same headings,
+        so the two surfaces answer "where does this live" the same way.
 
         NO BACKDROP FILTER ON IT, AND THAT IS THE WHOLE REASON IT IS OPAQUE.
         An element that is `position: fixed`, carries a `backdrop-filter` and
@@ -230,23 +162,27 @@ export function Sidebar() {
           boxShadow: "var(--shadow)",
         }}
       >
-        {primary.map(({ href, label, icon: Icon, tone }) => {
-          const active = isActive(href);
+        {BAR.map((item) => {
+          const Icon = icon(item.icon);
+          const on = active(item.href);
           return (
             <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
+              key={item.href}
+              href={item.href}
+              aria-current={on ? "page" : undefined}
               className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold transition-colors"
-              style={{ color: active ? "var(--ink)" : "var(--ink-3)" }}
+              style={{ color: on ? "var(--ink)" : "var(--ink-3)" }}
             >
               <span
                 className="flex h-7 w-7 items-center justify-center rounded-full"
-                style={{ background: active ? tone : "transparent", color: active ? "var(--surface)" : "var(--ink-3)" }}
+                style={{
+                  background: on ? `var(--${item.tone})` : "transparent",
+                  color: on ? "var(--surface)" : "var(--ink-3)",
+                }}
               >
                 <Icon size={16} strokeWidth={2.2} aria-hidden />
               </span>
-              {label}
+              {item.label}
             </Link>
           );
         })}
@@ -255,13 +191,13 @@ export function Sidebar() {
           onClick={() => setMoreOpen(true)}
           aria-expanded={moreOpen}
           className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold"
-          style={{ color: secondaryActive ? "var(--ink)" : "var(--ink-3)" }}
+          style={{ color: restActive ? "var(--ink)" : "var(--ink-3)" }}
         >
           <span
             className="flex h-7 w-7 items-center justify-center rounded-full"
             style={{
-              background: secondaryActive ? "var(--accent)" : "transparent",
-              color: secondaryActive ? "var(--surface)" : "var(--ink-3)",
+              background: restActive ? "var(--accent)" : "transparent",
+              color: restActive ? "var(--surface)" : "var(--ink-3)",
             }}
           >
             <MoreHorizontal size={16} strokeWidth={2.2} aria-hidden />
@@ -272,10 +208,14 @@ export function Sidebar() {
 
       {moreOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col justify-end md:hidden"
+          /*
+            Above Anu's floating button, which sits at z-90 and was drawing on
+            top of this sheet, and below the command palette at 120.
+          */
+          className="fixed inset-0 z-[100] flex flex-col justify-end md:hidden"
           role="dialog"
           aria-modal="true"
-          aria-label="More"
+          aria-label="Everywhere else"
         >
           <button
             type="button"
@@ -285,7 +225,7 @@ export function Sidebar() {
             style={{ background: "rgb(20 16 32 / 0.4)" }}
           />
           <div
-            className="rounded-t-[var(--r-xl)] p-5"
+            className="scroll-host max-h-[82vh] overflow-y-auto rounded-t-[var(--r-xl)] p-5"
             style={{
               background: "var(--surface)",
               boxShadow: "var(--shadow-lg)",
@@ -294,7 +234,7 @@ export function Sidebar() {
             }}
           >
             <div className="mb-4 flex items-center justify-between">
-              <span className="label-xs" style={{ color: "var(--ink-3)" }}>More</span>
+              <span className="label-xs" style={{ color: "var(--ink-3)" }}>Everywhere else</span>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
@@ -305,29 +245,22 @@ export function Sidebar() {
                 <X size={16} aria-hidden />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                ...secondary,
-                { href: "/review/sprint", label: "Sprint", icon: Zap, tone: "var(--butter)" },
-                { href: "/settings", label: "Settings", icon: Settings, tone: "var(--ink-3)" },
-              ].map(({ href, label, icon: Icon, tone }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="flex items-center gap-3 rounded-[var(--r)] px-4 py-3 text-base font-medium"
-                  style={{
-                    color: isActive(href) ? "var(--accent-deep)" : "var(--ink-2)",
-                    background: isActive(href) ? "var(--accent-soft)" : "var(--raised)",
-                  }}
-                >
-                  <span style={{ color: isActive(href) ? "var(--accent-deep)" : tone }}>
-                    <Icon size={16} strokeWidth={2.2} aria-hidden />
-                  </span>
-                  {label}
-                </Link>
+            <div className="flex flex-col gap-5">
+              {sheet.map((section) => (
+                <section key={section.id} aria-labelledby={`sheet-${section.id}`}>
+                  <h3 id={`sheet-${section.id}`} className="text-base font-bold" style={{ color: "var(--ink)" }}>
+                    {section.title}
+                  </h3>
+                  <p className="mt-0.5 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+                    {section.blurb}
+                  </p>
+                  <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+                    {section.items.map((item) => <SheetLink key={item.href} item={item} active={active(item.href)} />)}
+                  </div>
+                </section>
               ))}
             </div>
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-5 flex items-center gap-2">
               <ThemeToggle labelled />
               <SignOutButton labelled />
             </div>
@@ -339,13 +272,14 @@ export function Sidebar() {
 }
 
 /** One row of the desktop rail. */
-function RailLink({ item, active }: { item: NavItem; active: boolean }) {
-  const { href, label, icon: Icon, tone } = item;
+function RailLink({ item, active }: { item: Destination; active: boolean }) {
+  const Icon = icon(item.icon);
   return (
     <Link
-      href={href}
+      href={item.href}
       aria-current={active ? "page" : undefined}
-      className="flex items-center gap-3 rounded-full px-3 py-2 text-base transition-ui"
+      title={item.blurb}
+      className="flex items-center gap-3 rounded-full px-3 py-1 text-base transition-ui"
       style={{
         background: active ? "var(--surface)" : "transparent",
         color: active ? "var(--ink)" : "var(--ink-2)",
@@ -354,15 +288,47 @@ function RailLink({ item, active }: { item: NavItem; active: boolean }) {
       }}
     >
       <span
-        className="flex h-7 w-7 items-center justify-center rounded-full transition-colors"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
         style={{
-          background: active ? tone : "var(--raised)",
+          background: active ? `var(--${item.tone})` : "var(--raised)",
           color: active ? "var(--surface)" : "var(--ink-3)",
         }}
       >
         <Icon size={15} strokeWidth={2.2} aria-hidden />
       </span>
-      {label}
+      {item.label}
+    </Link>
+  );
+}
+
+/**
+ * One card in the phone sheet.
+ *
+ * It carries the blurb where the rail only has room for a title, because the
+ * sheet is the surface somebody opens when they are not sure where a thing is,
+ * and "Level check" beside "Mock exam" needs a line to tell them apart.
+ */
+function SheetLink({ item, active }: { item: Destination; active: boolean }) {
+  const Icon = icon(item.icon);
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className="flex items-start gap-3 rounded-[var(--r)] px-4 py-3"
+      style={{
+        color: active ? "var(--accent-deep)" : "var(--ink-2)",
+        background: active ? "var(--accent-soft)" : "var(--raised)",
+      }}
+    >
+      <span className="mt-0.5" style={{ color: active ? "var(--accent-deep)" : `var(--${item.tone})` }}>
+        <Icon size={16} strokeWidth={2.2} aria-hidden />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-base font-semibold">{item.label}</span>
+        <span className="mt-0.5 block text-xs leading-snug" style={{ color: "var(--ink-3)" }}>
+          {item.blurb}
+        </span>
+      </span>
     </Link>
   );
 }

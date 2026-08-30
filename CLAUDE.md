@@ -348,6 +348,32 @@ appears and then vanishes reads as a bug rather than as restraint. The invariant
 that stops asking the module, and on anybody outside it comparing a review count against a number
 of their own, since a second answer to "has this learner started yet" is how the first one rots.
 
+**Where a screen lives is one table, and nothing lives behind a button marked "More".** The rail
+promoted four destinations and hid the other twelve behind a disclosure, which is not fewer links,
+it is the same links somewhere a learner has to remember. It also had a bug you only met by using
+it: `showRest` was `railOpen || secondaryActive`, so on any page *inside* the hidden group the
+button read "Less" and pressing it did nothing at all, because the click flipped the first half and
+the second held it open. Fixing the toggle was the small half. `lib/ux/nav.ts` is the one table of
+what the app contains and which of four questions each destination answers, the desktop rail draws
+every one of them under its heading, and the phone keeps one button only because five cells across
+a phone is a different problem from a column with a screen of height in it: what it opens is the
+same sections with the same headings. This is not `lib/ux/disclosure.ts` and does not overlap it.
+That module decides what a *screen leads with* by how far in the learner is; this one decides where
+a thing lives, and the answer is the same in the first minute as in the first year.
+
+The table is read by the rail, the phone sheet, the command palette and the guide, because it was
+four lists and they had drifted. The palette offered six practice modes while `/practice` offered
+eleven, so the Leech clinic was reachable from one screen and unfindable from the box that promises
+to go anywhere; `components/PracticeModes.tsx` held a seventh copy that no screen rendered at all
+and has been deleted; `lib/copy/tour.ts` named nine screens a second time with their own icons, and
+now carries the prose and joins the rest. `lib/ux/modes.ts` did the same for the practice modes, and
+the split is deliberate: what a mode *is* lives there, what it is like *right now* is a database
+question and stays in the page. Two invariants hold it, plus `scripts/smoke-new.mjs`, which opens
+the app and asks the two questions no source check can: the rail draws its links with nothing to
+open first, and a phone reaches every place a desktop does. `icon()` falling back to a sparkle is
+why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
+before a screenshot caught them.
+
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still
 collects: what to call you, where you are, why, how far, by when, how often, the daily goal and the
@@ -633,7 +659,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
-`rawAvailable`, `absentParts`, `standsFor`, `stageOf`. Most of them now
+`rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `PLACES`, `QUICK_MODES`,
+`tourBySection`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

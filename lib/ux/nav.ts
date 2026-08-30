@@ -1,0 +1,220 @@
+/**
+ * Every destination in the app, and which section it belongs to.
+ *
+ * There used to be one flat list of sixteen links with four of them promoted
+ * and the other twelve behind a button marked "More". That is not a fix for a
+ * cluttered rail, it is the clutter moved somewhere a learner has to remember.
+ * Worse, it had a bug that only showed up once you used it: the group opened
+ * itself whenever the current page was inside it, so on Practice or Progress
+ * or Grammar the button read "Less" and pressing it did nothing at all. The
+ * flag went false, the derived value stayed true, and the rail never moved.
+ *
+ * So the sections are the fix and hiding is not. Sixteen links in one column
+ * are a list to read; the same sixteen under four headings are four short
+ * answers to "where do I go for this", and every one of them is on the screen
+ * the whole time. The groups are the questions a learner actually asks:
+ *
+ *   - what do I do now
+ *   - where am I in the course
+ *   - what does this word mean
+ *   - how am I doing
+ *
+ * Nothing here decides *whether* to show a destination. That question is
+ * `lib/ux/disclosure.ts`, it is about what a screen leads with, and it is a
+ * different question from where a thing lives. A destination this module names
+ * is always in the navigation, at every stage, from the first minute.
+ *
+ * One table, read by three surfaces: the desktop rail, the phone sheet and the
+ * command palette. Three copies of a list of screens is how a screen ends up
+ * reachable from two of them and missing from the third.
+ *
+ * Pure: strings in, strings out. The icon is a lucide *name* and
+ * `components/icons.tsx` is the only place that turns one into a component,
+ * which is what keeps this file importable by a unit test.
+ */
+
+/** A hue from the palette. Five of them, and each one means something. */
+export type Tone = "accent" | "mint" | "sky" | "butter" | "peach" | "blush" | "ink";
+
+export interface Destination {
+  /** Where it goes. The rail matches the current path against this. */
+  href: string;
+  /** What it is called, everywhere it appears. */
+  label: string;
+  /** One line saying what it is for. The sheet and the palette show it. */
+  blurb: string;
+  /** A lucide icon name. See components/icons.tsx. */
+  icon: string;
+  /** The dot behind the icon when the destination is current. */
+  tone: Tone;
+  /** Words somebody might type when looking for it. */
+  keywords: string;
+  /**
+   * In the phone bar, which holds four destinations and a button for the rest.
+   * Four rather than five because a thumb needs 44px and the fifth cell is how
+   * you reach everything else.
+   */
+  bar?: boolean;
+}
+
+export interface NavSection {
+  id: string;
+  /** The heading over the group. */
+  title: string;
+  /** Why these belong together. Shown in the phone sheet, under the heading. */
+  blurb: string;
+  items: Destination[];
+}
+
+/**
+ * The four questions, in the order a day asks them, and then the app itself.
+ *
+ * `app` is last and is the only group the rail pins to the bottom, because
+ * settings and the honest description of what this thing cannot do are not
+ * somewhere you go, they are somewhere you end up.
+ */
+export const SECTIONS: NavSection[] = [
+  {
+    id: "daily",
+    title: "Every day",
+    blurb: "What is due, and the five minutes after it.",
+    items: [
+      {
+        href: "/", label: "Today", blurb: "Due cards, your goal, the streak", icon: "Sun", tone: "butter",
+        keywords: "home dashboard streak quests goal xp", bar: true,
+      },
+      {
+        href: "/review", label: "Review", blurb: "Everything due, scheduled by FSRS", icon: "GraduationCap",
+        tone: "accent", keywords: "flashcards srs study due", bar: true,
+      },
+      {
+        href: "/practice", label: "Practice", blurb: "Sprint, match, sentences, speaking, listening",
+        icon: "Swords", tone: "peach", keywords: "games modes drill weakest case",
+      },
+    ],
+  },
+  {
+    id: "course",
+    title: "Your course",
+    blurb: "The path through the levels, and the week you are in.",
+    items: [
+      {
+        href: "/learn", label: "Learn", blurb: "Units from A1 to C1", icon: "Map", tone: "mint",
+        keywords: "course units path lessons syllabus", bar: true,
+      },
+      {
+        href: "/tasks", label: "Tasks", blurb: "Homework and class work", icon: "CalendarCheck",
+        tone: "peach", keywords: "homework todo class due",
+      },
+      {
+        href: "/week", label: "This week", blurb: "The words and work filed under this week",
+        icon: "CalendarRange", tone: "butter", keywords: "week class lesson current",
+      },
+      {
+        href: "/class", label: "Classes", blurb: "Teach a class, or join one", icon: "School", tone: "sky",
+        keywords: "classroom teacher students join code school",
+      },
+    ],
+  },
+  {
+    id: "lookup",
+    title: "Look it up",
+    blurb: "Any word, any case, and somebody to ask when the rule will not come.",
+    items: [
+      {
+        href: "/dictionary", label: "Dictionary", blurb: "Search any word or inflected form", icon: "BookOpen",
+        tone: "sky", keywords: "search lookup paradigm cases forms", bar: true,
+      },
+      {
+        href: "/grammar", label: "Grammar", blurb: "What each of the fourteen cases is for", icon: "Languages",
+        tone: "butter", keywords: "cases reference partitive genitive inessive endings rules seesutlev",
+      },
+      {
+        href: "/scan", label: "Scan a page", blurb: "Photograph a word list and study what is on it",
+        icon: "Camera", tone: "sky",
+        keywords: "camera photo picture ocr homework textbook handout import paper digitise digitize",
+      },
+      {
+        href: "/tutor", label: "Ask Anu", blurb: "Grammar questions, explained", icon: "MessageCircleQuestion",
+        tone: "blush", keywords: "ai chat grammar help tutor explain",
+      },
+    ],
+  },
+  {
+    id: "standing",
+    title: "Where you stand",
+    blurb: "What has stuck, and what you are ready to sit.",
+    items: [
+      {
+        href: "/progress", label: "Progress", blurb: "Heatmap, forecast, weak cases", icon: "ChartNoAxesColumn",
+        tone: "accent", keywords: "stats charts history retention leaderboard",
+      },
+      {
+        href: "/words", label: "My words", blurb: "Your deck, card by card", icon: "Layers", tone: "mint",
+        keywords: "deck cards suspend delete lapses",
+      },
+      {
+        href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",
+        icon: "Compass", tone: "blush",
+        keywords: "assessment placement cefr level a1 a2 b1 b2 c1 goal plan timeline",
+      },
+      {
+        href: "/exam", label: "Mock exam", blurb: "An imitation of the state language exam",
+        icon: "ClipboardCheck", tone: "blush",
+        keywords: "tasemeeksam a2 b1 b2 c1 citizenship certificate ready confidence",
+      },
+    ],
+  },
+  {
+    id: "app",
+    title: "This app",
+    blurb: "Your settings, and an honest account of what this cannot do.",
+    items: [
+      {
+        href: "/settings", label: "Settings", blurb: "Goal, review mode, backup", icon: "Settings", tone: "ink",
+        keywords: "backup export import goal preferences delete account theme",
+      },
+      {
+        href: "/guide", label: "What this app is", blurb: "Every screen, and what this app cannot do",
+        icon: "CircleHelp", tone: "ink", keywords: "tour help onboarding walkthrough limits honest",
+      },
+    ],
+  },
+];
+
+/** The four sections a learner navigates by. `app` is the footer, not a place. */
+export const PLACES = SECTIONS.filter((s) => s.id !== "app");
+
+/** Every destination, flat, in the order the sections put them in. */
+export const DESTINATIONS: Destination[] = SECTIONS.flatMap((s) => s.items);
+
+/** The four in the phone bar. Everything else is one press away in the sheet. */
+export const BAR = DESTINATIONS.filter((d) => d.bar);
+
+/**
+ * Whether a path is inside a destination.
+ *
+ * Root is exact or every page would be "Today"; everything else matches its
+ * subtree, so a unit page lights Learn and a sprint lights Review.
+ */
+export function isUnder(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** The section a path belongs to, or undefined for a page outside the rail. */
+export function sectionOf(pathname: string): NavSection | undefined {
+  /*
+    Longest href first. `/review` and `/review/sprint` are both destinations in
+    principle and `/learn/greetings` is under `/learn`, so a first match on the
+    table's own order would answer whichever happened to be written higher up.
+  */
+  let found: { section: NavSection; length: number } | undefined;
+  for (const section of SECTIONS) {
+    for (const item of section.items) {
+      if (!isUnder(item.href, pathname)) continue;
+      if (!found || item.href.length > found.length) found = { section, length: item.href.length };
+    }
+  }
+  return found?.section;
+}

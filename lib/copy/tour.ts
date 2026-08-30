@@ -13,15 +13,19 @@
  * not a course. A learner who knows both lists uses it well. A learner who
  * finds out the second list in month three feels lied to, and stops.
  *
- * Data only: a lucide icon *name*, never a component (components/icons.tsx is
- * the only place that resolves one). Pure, like the rest of lib/copy.
+ * What a screen is *called* is not here. This file used to carry a title and
+ * an icon beside each entry, which made it a second navigation table: nine
+ * screens named twice, and nothing to stop the two from disagreeing. It holds
+ * the prose now and joins it to `lib/ux/nav.ts` for the rest, so the guide
+ * calls Anu what the rail calls her.
+ *
+ * Data only, and pure like the rest of lib/copy.
  */
+import { DESTINATIONS, SECTIONS, type Tone } from "../ux/nav";
 
 export interface TourStop {
+  /** Which destination this is about. Its name and icon come from the rail. */
   href: string;
-  /** A lucide icon name. */
-  icon: string;
-  title: string;
   /** What the screen is. */
   what: string;
   /** When a learner should actually open it. */
@@ -31,15 +35,11 @@ export interface TourStop {
 export const TOUR: readonly TourStop[] = [
   {
     href: "/",
-    icon: "Sun",
-    title: "Today",
     what: "What is due, what you have done, and the one word most worth a minute right now.",
     when: "Open this first, every day. If you only ever use one screen, use this one.",
   },
   {
     href: "/review",
-    icon: "GraduationCap",
-    title: "Review",
     what:
       "The daily loop. Cards scheduled by FSRS, which decides when you are about to forget something " +
       "and asks you then. It works with the network off, and grades made offline are replayed with the " +
@@ -48,15 +48,11 @@ export const TOUR: readonly TourStop[] = [
   },
   {
     href: "/learn",
-    icon: "Map",
-    title: "Learn",
     what: "Units of words grouped by topic and level, from A1 to C1. Adding a unit turns it into cards.",
     when: "When your deck is running dry, or you want a new topic rather than a new word.",
   },
   {
     href: "/practice",
-    icon: "Swords",
-    title: "Practice",
     what:
       "Writing, dictation, listening, minimal pairs, verb government, speaking, a sixty second sprint. " +
       "Every one of them grades the same cards the daily loop does, so practice is never a side game " +
@@ -65,8 +61,6 @@ export const TOUR: readonly TourStop[] = [
   },
   {
     href: "/dictionary",
-    icon: "BookOpen",
-    title: "Dictionary",
     what:
       "Any word, with its full paradigm. Type an inflected form and it tells you which word it is and " +
       "which case you found. Forms come from Ekilex or from the stored principal parts, never from a model.",
@@ -74,8 +68,6 @@ export const TOUR: readonly TourStop[] = [
   },
   {
     href: "/grammar",
-    icon: "Languages",
-    title: "Grammar",
     what:
       "What each of the fourteen cases is for, with real examples pulled from the dictionary and labelled " +
       "with where they came from.",
@@ -83,8 +75,6 @@ export const TOUR: readonly TourStop[] = [
   },
   {
     href: "/tutor",
-    icon: "MessageCircleQuestion",
-    title: "Anu",
     what:
       "An AI that explains Estonian grammar in English. It is allowed to explain and to translate into " +
       "English. It is never allowed to supply an Estonian form, and anything Estonian it does write is " +
@@ -93,8 +83,6 @@ export const TOUR: readonly TourStop[] = [
   },
   {
     href: "/progress",
-    icon: "ChartNoAxesColumn",
-    title: "Progress",
     what:
       "Charts computed from your review log every time you load them. Nothing is stored as a score, so " +
       "nothing can drift out of step with what you actually did.",
@@ -102,14 +90,43 @@ export const TOUR: readonly TourStop[] = [
   },
   {
     href: "/assess",
-    icon: "Compass",
-    title: "Level check",
     what:
       "Reading, listening, writing and speaking, measured rather than guessed, out of the dictionary the " +
       "rest of the app runs on. Take it whenever you want to know where you are.",
     when: "Now, and then every couple of months. Sooner and you are measuring noise.",
   },
 ];
+
+/** A tour stop with the name, icon and hue the rail gives it. */
+export interface TourRoom extends TourStop {
+  title: string;
+  icon: string;
+  tone: Tone;
+}
+
+/**
+ * The tour, room by room, grouped the way the rail groups the app.
+ *
+ * The guide used to be nine cards in a flat grid, which teaches a learner
+ * nine screens and no map. Under the rail's own headings it teaches the map
+ * as well, and the two surfaces cannot drift apart because there is one table
+ * behind both.
+ *
+ * A stop naming a destination the rail does not have is dropped rather than
+ * guessed at, and `tour.test.ts` fails on one, so this cannot quietly lose a
+ * room.
+ */
+export function tourBySection(): { title: string; rooms: TourRoom[] }[] {
+  const rooms = TOUR.flatMap((stop) => {
+    const place = DESTINATIONS.find((d) => d.href === stop.href);
+    return place ? [{ ...stop, title: place.label, icon: place.icon, tone: place.tone }] : [];
+  });
+  return SECTIONS.flatMap((section) => {
+    const hrefs = new Set(section.items.map((i) => i.href));
+    const mine = rooms.filter((r) => hrefs.has(r.href));
+    return mine.length > 0 ? [{ title: section.title, rooms: mine }] : [];
+  });
+}
 
 export interface Claim {
   /** A lucide icon name. */

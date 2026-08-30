@@ -1,25 +1,29 @@
 import {
-  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, ChartNoAxesColumn, CheckCheck,
-  Clock, Compass, Flame, Footprints, GraduationCap, Grid2x2, Hand, Headphones, Heart, HeartPulse,
-  Hourglass, House, Landmark, Languages, Library, Map, MessageCircleQuestion, MessagesSquare, Mic,
-  Moon, Palette, PenLine, Plane, Plus, Repeat, School, ScrollText, ShoppingBag, Sparkles, Stamp, Sun,
+  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarRange, Camera,
+  ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
+  Clock, Compass, Ear, Flame, Footprints, GraduationCap, Grid2x2, Hand, Headphones, Heart, HeartPulse,
+  Hourglass, House, Landmark, Languages, Layers, Library, Map, MessageCircleQuestion, MessagesSquare,
+  Mic, Moon, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
+  ScrollText, Settings, ShoppingBag, Sparkles, Stamp, Stethoscope, Sun,
   Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap, type LucideIcon,
 } from "lucide-react";
 
 /**
  * One place where an icon *name* — stored in framework-free data like
- * lib/achievements/badges.ts, lib/collections/syllabus/ and
- * lib/gamification/quests.ts — becomes a React component.
+ * lib/achievements/badges.ts, lib/collections/syllabus/,
+ * lib/gamification/quests.ts and lib/ux/nav.ts — becomes a React component.
  *
  * Those modules deliberately hold no JSX (they are unit-tested without a DOM),
  * so they carry a string. This is the only file that has to know what the
  * string means, and the fallback keeps a typo from crashing a page.
  */
 export const ICONS: Record<string, LucideIcon> = {
-  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, ChartNoAxesColumn, CheckCheck,
-  Clock, Compass, Flame, Footprints, GraduationCap, Grid2x2, Hand, Headphones, Heart, HeartPulse,
-  Hourglass, House, Landmark, Languages, Library, Map, MessageCircleQuestion, MessagesSquare, Mic,
-  Moon, Palette, PenLine, Plane, Plus, Repeat, School, ScrollText, ShoppingBag, Sparkles, Stamp, Sun,
+  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarRange, Camera,
+  ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
+  Clock, Compass, Ear, Flame, Footprints, GraduationCap, Grid2x2, Hand, Headphones, Heart, HeartPulse,
+  Hourglass, House, Landmark, Languages, Layers, Library, Map, MessageCircleQuestion, MessagesSquare,
+  Mic, Moon, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
+  ScrollText, Settings, ShoppingBag, Sparkles, Stamp, Stethoscope, Sun,
   Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap,
 };
 

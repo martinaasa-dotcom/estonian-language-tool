@@ -23,8 +23,13 @@ mkdirSync(SHOTS, { recursive: true });
 
 const browser = await launchChromium();
 
-// Floor: measured 45 in dev mode, which is the mode its header documents.
-const { check, done } = suite("The new routes, rendered", { floor: 45 });
+/*
+  Floor: 45 before the navigation checks below, plus the seven they add. This
+  box reaches 54 against a seeded database, so the two above the floor are the
+  ones gated on the deck holding enough to build a government drill and a
+  minimal pair, which a thin database does not.
+*/
+const { check, done } = suite("The new routes, rendered", { floor: 52 });
 
 const ROUTES = [
   ["/", "today"],
@@ -149,6 +154,66 @@ const navOverflow = await mobile.evaluate(() => {
   return [...bar.querySelectorAll("a")].filter((a) => a.scrollWidth > a.clientWidth + 1).length;
 });
 check("mobile nav labels fit their cells", navOverflow === 0, `${navOverflow} clipped`);
+
+/*
+  Nothing in the navigation is only reachable by remembering it.
+
+  The rail used to promote four destinations and hide twelve behind a button
+  marked "More", whose "Less" did nothing at all on any page inside the group:
+  `showRest` was `railOpen || secondaryActive`, the click flipped the first
+  half and the second held it open. The answer was sections rather than a
+  better toggle, and this is what says so out loud.
+
+  Written without a copy of the table on purpose. It asks the two questions
+  that stay true whatever gets added: the rail draws its links with nothing to
+  open, and a phone can reach every place a desktop can. A check that listed
+  the destinations here would be the fifth copy of the list this branch spent
+  its time deleting.
+*/
+await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+const rail = await page.evaluate(() => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  if (!nav) return null;
+  return {
+    links: [...nav.querySelectorAll("a")]
+      .filter((a) => a.getBoundingClientRect().width > 0)
+      .map((a) => a.getAttribute("href")),
+    headings: [...nav.querySelectorAll("h2")].map((h) => h.textContent.trim()),
+    // A control that decides which links exist. The bug was one of these.
+    toggles: nav.querySelectorAll("button[aria-expanded]").length,
+  };
+});
+check("the desktop rail is drawn", rail !== null);
+if (rail) {
+  check("the rail shows its links with nothing to open first",
+    rail.toggles === 0, `${rail.toggles} disclosures in the rail`);
+  check("the rail groups what it shows under headings",
+    rail.headings.length >= 4, `${rail.headings.length} headings`);
+  // Sanity on the count: four sections of three or four, plus settings and the
+  // guide. Anything near the four the rail used to lead with is a regression.
+  check("the rail shows the whole app", rail.links.length >= 14, `${rail.links.length} links`);
+}
+
+// The phone cannot show sixteen links at once, so it shows them under the same
+// headings behind one button. Same map, less room, and nothing lost.
+await mobile.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await mobile.getByRole("button", { name: "More" }).click();
+const sheet = await mobile.evaluate(() => {
+  const dialog = document.querySelector('[role="dialog"]');
+  const bar = [...document.querySelectorAll("nav.fixed a")].map((a) => a.getAttribute("href"));
+  if (!dialog) return null;
+  return {
+    reachable: [...bar, ...[...dialog.querySelectorAll("a")].map((a) => a.getAttribute("href"))],
+    headings: [...dialog.querySelectorAll("h3")].map((h) => h.textContent.trim()),
+  };
+});
+check("the phone sheet opens", sheet !== null);
+if (sheet && rail) {
+  const missing = rail.links.filter((href) => !sheet.reachable.includes(href));
+  check("a phone reaches every place a desktop does", missing.length === 0, missing.join(", "));
+  check("the sheet groups what it holds", sheet.headings.length >= 4, `${sheet.headings.length} headings`);
+}
 
 console.log(`\nScreenshots in ${SHOTS}`);
 console.log(errors.length ? `\nConsole errors:\n${errors.join("\n")}` : "\nNo console errors.");
