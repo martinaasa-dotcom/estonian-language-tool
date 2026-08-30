@@ -5,7 +5,10 @@ import { Shortcuts } from "@/components/Shortcuts";
 import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
 import { AnuFab } from "@/components/anu/AnuFab";
+import { TimeZoneSync } from "@/components/TimeZoneSync";
 import { resolveProviders } from "@/lib/tutor/provider";
+import { requireUserId } from "@/lib/auth/session";
+import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
 import { supabaseConfigured } from "@/lib/auth/mode";
 
 // Not cached at build time: `configured` below is read from the environment,
@@ -20,8 +23,17 @@ export const dynamic = "force-dynamic";
  * Routes that own the whole screen — the landing page, sign-in, first-run setup
  * — sit in `app/(chromeless)/` and get none of it.
  */
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const chain = resolveProviders();
+  /*
+    Where this learner's midnight is. Read in the layout rather than on Today,
+    because it is not Today's question: the heatmap, the badges, the class
+    roster and the share card all count days too, and a value collected on one
+    screen would be missing for anybody whose first visit landed on another.
+    One indexed read, and the component below writes only when the browser
+    disagrees with what came back. See lib/time/day.ts.
+  */
+  const storedZone = await readSetting(await requireUserId(), SETTING_KEYS.timeZone);
   return (
     <>
       <a
@@ -42,6 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           none` in globals.css, and there is no setting that keeps one and not
           the other. Installed to a home screen there is no address bar and so
           no reload button anywhere in this app. */}
+      <TimeZoneSync stored={storedZone} />
       <PullToRefresh />
       <CommandPalette />
       {/* `?` anywhere. Documentation with a keyboard binding — see the component. */}

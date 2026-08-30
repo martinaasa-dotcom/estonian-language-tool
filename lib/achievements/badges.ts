@@ -7,7 +7,7 @@
  * does: a badge is either honestly earned from real review history or it isn't).
  */
 
-import { dayKey, shiftDay } from "@/lib/time/day";
+import { dayClock, type DayClock, type DayKey } from "@/lib/time/day";
 
 export interface Badge {
   key: string;
@@ -103,19 +103,26 @@ export function earnedBadgeKeys(stats: BadgeStats): string[] {
 /**
  * Consecutive-day streak from review timestamps, counting from today or yesterday.
  *
- * Days are the learner's own calendar days (lib/time/day.ts), not UTC ones — a
- * streak that breaks at the wrong midnight is worse than no streak at all.
+ * Days are the learner's own calendar days, not UTC ones and not the
+ * deployment's: a streak that breaks at the wrong midnight is worse than no
+ * streak at all. That is what `clock` carries, and it has to be passed by
+ * anything running on a server, because the default reads whichever zone the
+ * process happens to sit in. See lib/time/day.ts.
  */
-export function computeStreak(dates: Date[], now: Date = new Date()): number {
+export function computeStreak(
+  dates: Date[],
+  now: Date = new Date(),
+  clock: DayClock = dayClock(),
+): number {
   if (dates.length === 0) return 0;
-  const days = new Set(dates.map((d) => dayKey(d)));
+  const days = new Set(dates.map((d) => clock.dayKey(d)));
   let streak = 0;
   let cursor = now;
   // Today not yet reviewed does not break a streak that is alive from yesterday.
-  if (!days.has(dayKey(cursor))) cursor = shiftDay(cursor, 1);
-  while (days.has(dayKey(cursor))) {
+  if (!days.has(clock.dayKey(cursor))) cursor = clock.shiftDay(cursor, 1);
+  while (days.has(clock.dayKey(cursor))) {
     streak++;
-    cursor = shiftDay(cursor, 1);
+    cursor = clock.shiftDay(cursor, 1);
   }
   return streak;
 }
@@ -142,12 +149,13 @@ export interface StreakShieldResult {
  * silently bridge years of pre-history that was never really a streak.
  */
 export function computeStreakWithShields(
-  reviewDates: Date[],
+  reviewDates: readonly (Date | DayKey)[],
   shieldsAvailable: number,
   previouslyShieldedDates: string[] = [],
   now: Date = new Date(),
+  clock: DayClock = dayClock(),
 ): StreakShieldResult {
-  const reviewed = new Set(reviewDates.map((d) => dayKey(d)));
+  const reviewed = new Set(reviewDates.map((d) => (typeof d === "string" ? d : clock.dayKey(d))));
   const shielded = new Set(previouslyShieldedDates);
   const newlyShieldedDates: string[] = [];
   let shieldsLeft = shieldsAvailable;
@@ -158,12 +166,12 @@ export function computeStreakWithShields(
   const earliestKnownDay = known.length > 0 ? known.reduce((a, b) => (a < b ? a : b)) : null;
 
   let cursor = now;
-  const today = dayKey(cursor);
+  const today = clock.dayKey(cursor);
   // Today not yet reviewed does not break a streak that is alive from yesterday.
-  if (!reviewed.has(today) && !shielded.has(today)) cursor = shiftDay(cursor, 1);
+  if (!reviewed.has(today) && !shielded.has(today)) cursor = clock.shiftDay(cursor, 1);
 
   for (;;) {
-    const day = dayKey(cursor);
+    const day = clock.dayKey(cursor);
     if (earliestKnownDay === null || day < earliestKnownDay) break;
     if (reviewed.has(day) || shielded.has(day)) {
       streak++;
@@ -174,7 +182,7 @@ export function computeStreakWithShields(
     } else {
       break;
     }
-    cursor = shiftDay(cursor, 1);
+    cursor = clock.shiftDay(cursor, 1);
   }
 
   return { streak, newlyShieldedDates, shieldsRemaining: shieldsLeft };

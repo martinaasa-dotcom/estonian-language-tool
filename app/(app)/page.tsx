@@ -9,10 +9,11 @@ import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
+import { learnerDayClock } from "@/lib/progress/dayClock";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
-import { dayKey, recentDayKeys } from "@/lib/time/day";
+import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
@@ -40,6 +41,13 @@ export const dynamic = "force-dynamic";
 export default async function TodayPage() {
   const ownerId = await requireUserId();
   const now = new Date();
+  /*
+    The learner's own midnight, not this server's. Every day-shaped figure on
+    this page reads it: the streak, the goal ring, the quests and the week
+    strip. Without it they all break at the deployment's midnight, which on
+    Vercel is UTC — see lib/time/day.ts for what that cost.
+  */
+  const clock = await learnerDayClock(ownerId);
 
   const snapshot = await deckSnapshot(ownerId, now);
   const settings = await readSettings(ownerId, [
@@ -51,7 +59,7 @@ export default async function TodayPage() {
   if (!settings[SETTING_KEYS.onboardedAt] && snapshot.totalCards === 0) redirect("/start");
 
   const [summary, units, tasks, weekReviews, learner] = await Promise.all([
-    dailySummary(ownerId, snapshot, now),
+    dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.task.findMany({
       where: { ownerId, completed: false },
@@ -106,8 +114,8 @@ export default async function TodayPage() {
     ? units.find((u) => u.unit.id === nextSyllabusUnit.id)
     : undefined;
 
-  const reviewedDays = new Set(weekReviews.map((r) => dayKey(r.reviewedAt)));
-  const week = recentDayKeys(7, now).map((day) => ({
+  const reviewedDays = new Set(weekReviews.map((r) => clock.dayKey(r.reviewedAt)));
+  const week = clock.recentDayKeys(7, now).map((day) => ({
     day,
     done: reviewedDays.has(day),
     isToday: day === summary.dayKey,
@@ -117,8 +125,10 @@ export default async function TodayPage() {
 
   return (
     <Page
-      eyebrow={now.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
-      title={name ? `${greeting()}, ${name}` : greeting()}
+      eyebrow={new Intl.DateTimeFormat(undefined, {
+        timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
+      }).format(now)}
+      title={name ? `${greeting(clock, now)}, ${name}` : greeting(clock, now)}
       lead={lead(stage, toReview)}
     >
       {/*
@@ -515,8 +525,13 @@ function weekdayLetter(day: string): string {
   return letters[date.getDay()] ?? "?";
 }
 
-function greeting(): string {
-  const h = new Date().getHours();
+/*
+  Which greeting, on the learner's clock rather than the server's. Rendered on
+  the server, so "Tere hommikust" was the deployment's morning: at two in the
+  morning in Tallinn this said good evening.
+*/
+function greeting(clock: DayClock, now: Date): string {
+  const h = clock.hourOf(now);
   if (h < 5) return "Still up";
   if (h < 11) return "Tere hommikust";
   if (h < 18) return "Tere päevast";

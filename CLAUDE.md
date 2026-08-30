@@ -230,6 +230,25 @@ Do not add a counter column. A stored score is a second source of truth that dri
 awarded for something that never happened. The only exceptions are values no log can reconstruct: a
 personal best, and which days a streak shield has already covered. (ADR-014.)
 
+**A day is the learner's day, and every screen that counts one is rendered on a server.** The
+streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour
+of the day are all derived server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
+had a header saying its days were "the learner's own calendar days" and a body reading
+`getFullYear()`, which is the day boundary of whichever process is running: on Vercel, UTC. The
+shortcut that file was written to forbid was being taken one layer down from where it forbade it.
+A learner in Tallinn who studied on Monday morning, at one in the morning on Tuesday and again on
+Wednesday morning kept a three-day streak; those sittings fall in two UTC days with a hole between
+them, so the app said 1 and, with a shield banked, spent it bridging a Tuesday they had not missed.
+So a day boundary needs a zone, `dayClock(zone)` is how you get one, and anything touching the
+database takes one rather than calling the process-bound free functions. The learner's zone is
+whatever their browser reports (`components/TimeZoneSync.tsx`), stored under `SETTING_KEYS.timeZone`
+and never asked for, because the device already knows. **A naive timestamp needs two `AT TIME ZONE`s**:
+Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value one of them
+*interprets* rather than converts, which read 22:00 UTC as 22:00 in Tallinn. The single
+`AT TIME ZONE 'UTC'` that preceded this was the same mistake wearing a disguise, since its result is
+a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
+on any other.
+
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
 own scores — they write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)

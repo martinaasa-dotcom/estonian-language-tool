@@ -96,10 +96,20 @@ export function writeMemory(memory: InstallMemory): string {
   return JSON.stringify({ days: memory.days, offered: memory.offered, dismissed: memory.dismissed });
 }
 
-/** The local calendar day, which is the only clock this decision needs. */
-export function dayKey(now: Date): string {
-  const year = now.getFullYear();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+/*
+  The local calendar day, which is the only clock this decision needs — and it
+  is `lib/time/day.ts`'s, not a second copy of it.
+
+  A retyped copy sat here, character for character the same as the one next
+  door, on the reasoning that this module wants nothing else from that one.
+  Two of anything is how they drift: when the day module learned that a server
+  has no business reading its own midnight, this copy learned nothing, and the
+  two answers to "which day is it" would have parted company on the first
+  change either one made.
+
+  The process's own zone is the right answer here and needs no clock passed in,
+  because this only ever runs in a browser: it decides whether somebody has
+  opened the app on enough separate days to be offered the install prompt, from
+  a note in their own localStorage.
+*/
+export { dayKey } from "@/lib/time/day";

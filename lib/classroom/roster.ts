@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { computeStreak } from "@/lib/achievements/badges";
 import { xpFromRatingCounts } from "@/lib/gamification/xp";
 import { caseAccuracy } from "@/lib/stats/history";
+import { dayClock } from "@/lib/time/day";
+import { SETTING_KEYS } from "@/lib/settings/store";
 
 /**
  * What a teacher needs to see about a class, in three queries rather than three
@@ -52,7 +54,7 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
   const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
   const historyStart = new Date(now.getTime() - HISTORY_DAYS * 86_400_000);
 
-  const [reviews, known] = await Promise.all([
+  const [reviews, known, zones] = await Promise.all([
     prisma.review.findMany({
       where: { reviewedAt: { gte: historyStart }, ownerId: { in: ids } },
       select: { reviewedAt: true, rating: true, targetCase: true, ownerId: true },
@@ -62,9 +64,23 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
       where: { ownerId: { in: ids }, state: 2 },
       _count: true,
     }),
+    /*
+      Each student's own midnight. A class is the one place where several
+      people's days are counted side by side, and an exchange student sitting
+      in the same room is not in the same zone as everybody else: a streak
+      counted on the teacher's clock, or on the server's, is a different number
+      from the one the student is looking at on their own screen. One indexed
+      read for the whole roster, which is the fourth query in a function whose
+      whole argument is three rather than three per student.
+    */
+    prisma.setting.findMany({
+      where: { ownerId: { in: ids }, key: SETTING_KEYS.timeZone },
+      select: { ownerId: true, value: true },
+    }),
   ]);
 
   const knownByOwner = new Map(known.map((k) => [k.ownerId, k._count]));
+  const zoneByOwner = new Map(zones.map((z) => [z.ownerId, z.value]));
   const byOwner = new Map<string, { dates: Date[]; weekRatings: Record<number, number>; weekCount: number }>();
   for (const id of ids) byOwner.set(id, { dates: [], weekRatings: {}, weekCount: 0 });
 
@@ -88,7 +104,7 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
       joinedAt: member.joinedAt,
       weeklyXp: xpFromRatingCounts(stats.weekRatings),
       reviewsThisWeek: stats.weekCount,
-      streak: computeStreak(stats.dates, now),
+      streak: computeStreak(stats.dates, now, dayClock(zoneByOwner.get(member.ownerId))),
       wordsKnown: knownByOwner.get(member.ownerId) ?? 0,
       daysSinceLastReview: last
         ? Math.floor((now.getTime() - last.getTime()) / 86_400_000)

@@ -6,7 +6,7 @@ import { questsForDay, type Quest, type QuestStats } from "@/lib/gamification/qu
 import {
   dailyGoalFrom, numberSetting, readSettings, SETTING_KEYS, writeSetting,
 } from "@/lib/settings/store";
-import { dayKey, startOfDay } from "@/lib/time/day";
+import { dayClock, type DayClock } from "@/lib/time/day";
 
 /**
  * One read of "where is this learner", shared by Today, the path, the progress
@@ -147,8 +147,9 @@ export async function dailySummary(
   ownerId: string,
   snapshot: DeckSnapshot,
   now = new Date(),
+  clock: DayClock = dayClock(),
 ): Promise<DailySummary> {
-  const startToday = startOfDay(now);
+  const startToday = clock.startOfDay(now);
 
   const [allRatings, todayRatings, todayReviews, cardsAddedToday, tasksDoneToday, settings, streakInfo] =
     await Promise.all([
@@ -165,7 +166,7 @@ export async function dailySummary(
       prisma.card.count({ where: { ownerId, createdAt: { gte: startToday } } }),
       prisma.task.count({ where: { ownerId, completedAt: { gte: startToday } } }),
       readSettings(ownerId, [SETTING_KEYS.dailyGoal]),
-      resolveStreakFor(ownerId, now),
+      resolveStreakFor(ownerId, now, clock),
     ]);
 
   const toCounts = (rows: { rating: number; _count: number }[]) =>
@@ -187,7 +188,7 @@ export async function dailySummary(
     dailyGoal,
   };
 
-  const key = dayKey(now);
+  const key = clock.dayKey(now);
   const quests = questsForDay(key, questStats);
 
   return {
@@ -214,7 +215,11 @@ export async function dailySummary(
  * without importing the whole action module; `resolveStreak` in actions.ts is
  * now a thin wrapper over it.
  */
-export async function resolveStreakFor(ownerId: string, now = new Date()) {
+export async function resolveStreakFor(
+  ownerId: string,
+  now = new Date(),
+  clock: DayClock = dayClock(),
+) {
   // Distinct *days*, not every review. The streak only cares whether a day had
   // any activity, and loading a year of rows to answer that meant somebody doing
   // sixty reviews a day pulled twenty thousand rows into memory on every render
@@ -224,9 +229,35 @@ export async function resolveStreakFor(ownerId: string, now = new Date()) {
   // Returned as text, not as a date: the driver parses a Postgres `date` at
   // *local* midnight, so `toISOString()` on it reports the previous day anywhere
   // east of UTC, silently breaking the streak for a learner in Tallinn.
+  //
+  // And bucketed in the learner's zone rather than in UTC, which is the same
+  // fault one layer along. Somebody in Tallinn who studied on Monday morning,
+  // at one on Tuesday morning and again on Wednesday morning kept a three-day
+  // streak; in UTC days that reads as Monday, Monday and Wednesday, so the app
+  // reported a streak of 1 and spent a banked shield bridging a Tuesday they
+  // had not missed. Postgres knows the same IANA names `Intl` does, so the
+  // keys it come back with and the ones `clock` derives are the same keys —
+  // which is why they go straight into the streak rather than back through a
+  // Date.
+  //
+  // TWO `AT TIME ZONE`s, AND THE FIRST ONE IS NOT DECORATION. Prisma maps
+  // `DateTime` to `timestamp without time zone`, so this column holds a UTC
+  // wall clock with nothing recording that it is one. On a naive timestamp
+  // `AT TIME ZONE z` *interprets* the value as being in `z` rather than
+  // converting it into `z`, which is the opposite direction: one alone read
+  // 22:00 UTC as 22:00 in Tallinn and filed it under the wrong day. So the
+  // first labels the column as the UTC it actually is, and the second converts
+  // that instant into the learner's zone.
+  //
+  // The single `AT TIME ZONE 'UTC'` this replaces was the same mistake in a
+  // shape that hid: it returns a `timestamptz`, which `TO_CHAR` then renders
+  // in the *session's* TimeZone, so the streak's day boundary was a property
+  // of how the database happened to be configured. Correct on a UTC session
+  // and silently a day out on any other.
   const [days, settings] = await Promise.all([
     prisma.$queryRaw<{ day: string }[]>`
-      SELECT DISTINCT TO_CHAR("reviewedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
+      SELECT DISTINCT
+        TO_CHAR(("reviewedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${clock.zoneName}, 'YYYY-MM-DD') AS day
       FROM "Review"
       WHERE "ownerId" = ${ownerId}
         AND "reviewedAt" >= ${new Date(now.getTime() - 400 * 86_400_000)}
@@ -248,7 +279,7 @@ export async function resolveStreakFor(ownerId: string, now = new Date()) {
   }
 
   const result = computeStreakWithShields(
-    days.map((d) => new Date(`${d.day}T00:00:00.000Z`)), shieldsAvailable, shieldedDates, now,
+    days.map((d) => d.day), shieldsAvailable, shieldedDates, now, clock,
   );
 
   if (result.newlyShieldedDates.length > 0) {

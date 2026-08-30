@@ -41,6 +41,22 @@ export const SETTING_KEYS = {
   goalDeadline: "goalDeadline",
   goalDays: "goalDays",
   goalNote: "goalNote",
+
+  /**
+   * The learner's own timezone, as an IANA name, reported by their browser.
+   *
+   * Every screen that leads with a day boundary — the streak, the daily goal,
+   * the quests, the heatmap — is rendered on the server, and a server has no
+   * idea what midnight means to the person reading it. Without this it used
+   * the deployment's own zone, which on Vercel is UTC, and a learner in
+   * Tallinn who studied at one in the morning had it filed under yesterday.
+   * See lib/time/day.ts.
+   *
+   * Written by the browser rather than asked for, because nobody should have
+   * to answer a question their device already knows the answer to, and it is
+   * re-checked on every load so it follows somebody who moves.
+   */
+  timeZone: "timeZone",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

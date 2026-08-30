@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { BADGES, earnedBadgeKeys, type Badge, type BadgeStats } from "@/lib/achievements/badges";
 import { caseAccuracy } from "@/lib/stats/history";
 import { numberSetting, readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
+import { learnerDayClock } from "@/lib/progress/dayClock";
 import {
   dailySummary, deckSnapshot, pathWithProgress, unitsCompleted,
   type DailySummary, type DeckSnapshot, type UnitView,
@@ -101,16 +102,20 @@ export async function checkAchievementsFor(
   session?: { count: number; accuracy: number },
   now = new Date(),
 ): Promise<Badge[]> {
+  // The learner's clock, because two of these badges are about the hour of the
+  // day and the rest are about the day: "review before 7am" was reading the
+  // deployment's morning, so a Tallinn learner earned it at nine.
+  const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
   const [summary, units] = await Promise.all([
-    dailySummary(ownerId, snapshot, now),
+    dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
   ]);
   const stats = await buildBadgeStats(ownerId, {
     snapshot,
     summary,
     units,
-    ...(session ? { session, reviewHour: now.getHours() } : {}),
+    ...(session ? { session, reviewHour: clock.hourOf(now) } : {}),
   });
   return awardBadges(ownerId, stats);
 }

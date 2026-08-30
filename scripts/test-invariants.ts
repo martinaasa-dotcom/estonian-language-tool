@@ -1831,6 +1831,78 @@ check("a screen that names a case in Latin names it in Estonian too", () => {
   }
 });
 
+/**
+ * A day boundary rendered on a server belongs to the learner, not to the box.
+ *
+ * Every day-shaped figure in this app is derived on the server: the streak,
+ * the daily goal, the quests, the week strip, the heatmap, the two badges
+ * about the hour of the day. `lib/time/day.ts` had a header saying its days
+ * were "the learner's own calendar days" and a body reading
+ * `date.getFullYear()`, which is the day boundary of whichever process is
+ * running. On Vercel that process is UTC, so the shortcut the file was written
+ * to forbid was being taken one layer down.
+ *
+ * The bill it ran up: a learner in Tallinn who studied on Monday morning, at
+ * one in the morning on Tuesday and again on Wednesday morning kept a
+ * three-day streak. Those sittings fall in two UTC days with a hole between
+ * them, so the app reported a streak of 1 and, with a shield banked, spent it
+ * bridging a Tuesday they had not missed.
+ *
+ * So the rule is: a module that reaches the database is a module rendering for
+ * somebody, and it takes a `DayClock` rather than calling the process-bound
+ * free functions. Anchored on the import, because that is what a new caller
+ * writes first and it is the one line a person adding a fifth day-shaped panel
+ * would copy from a fourth.
+ */
+check("a day boundary on the server is the learner's, never the deployment's", () => {
+  const PROCESS_BOUND = /\bimport\s*\{([^}]*)\}\s*from\s*"@\/lib\/time\/day"/g;
+  const FREE = ["dayKey", "startOfDay", "shiftDay", "recentDayKeys", "daysBetween"];
+
+  for (const file of [...APP, ...LIB]) {
+    if (file.endsWith(".test.ts") || file.endsWith(".itest.ts")) continue;
+    if (file === join("lib", "time", "day.ts")) continue;
+    const source = code(file);
+    // Reaching the database is what makes a module one that renders for a
+    // particular person. A pure module with no owner in sight has no learner
+    // whose clock it could be reading.
+    if (!/@\/lib\/db|prisma\./.test(source)) continue;
+
+    for (const match of source.matchAll(PROCESS_BOUND)) {
+      const named = (match[1] ?? "").split(",").map((n) => n.trim().replace(/^type\s+/, ""));
+      const bare = named.filter((n) => FREE.includes(n));
+      assert.equal(
+        bare.length, 0,
+        `${file} counts days with ${bare.join(", ")}, which reads the server's midnight. ` +
+        `Take a DayClock (lib/progress/dayClock.ts) instead.`,
+      );
+    }
+  }
+
+  // And the module itself still offers one, so the check above cannot be
+  // satisfied by there being nothing to take.
+  const day = code(join("lib", "time", "day.ts"));
+  assert.match(day, /export function dayClock/, "there is no clock to pass any more");
+  assert.match(day, /timeZone: zone/, "the clock stopped reading a zone at all");
+
+  /*
+    The naive-timestamp trap, asserted where it bit. Prisma maps `DateTime` to
+    `timestamp without time zone`, and on a naive value `AT TIME ZONE z`
+    *interprets* rather than converts: a single one read 22:00 UTC as 22:00 in
+    Tallinn and filed the review under the wrong day. The correct form labels
+    the column as the UTC it is and only then converts.
+  */
+  const summary = code(join("lib", "progress", "summary.ts"));
+  const single = /"reviewedAt"\s+AT TIME ZONE\s+\$\{/;
+  assert.doesNotMatch(
+    summary, single,
+    "the streak converts a naive timestamp with one AT TIME ZONE, which interprets it instead",
+  );
+  assert.match(
+    summary,
+    /\("reviewedAt" AT TIME ZONE 'UTC'\) AT TIME ZONE/,
+    "the streak no longer labels its naive column as UTC before converting it",
+  );
+});
 
 console.log(
   failures === 0
