@@ -71,6 +71,23 @@ export function emptyScheduling(now = new Date()): SchedulingState {
 }
 
 /**
+ * Whether a card is still being learned rather than merely rehearsed.
+ *
+ * FSRS keeps four states, and the interesting line runs between Review and the
+ * other three. New and Learning are a memory not yet formed; Relearning is one
+ * that has just broken. Review is the only state that means the recall has
+ * held, so it is the only state where scaffolding costs something: propping up
+ * a card in Review measures the prop.
+ *
+ * The state number is FSRS's own, and reading it as a bare integer at a call
+ * site is how a scheduler change becomes a silent behaviour change somewhere
+ * that never mentioned the scheduler.
+ */
+export function isStillLearning(state: number): boolean {
+  return state === State.New || state === State.Learning || state === State.Relearning;
+}
+
+/**
  * A review can never have happened before the one before it.
  *
  * FSRS computes `delta_t` as the days between a card's `lastReview` and the
