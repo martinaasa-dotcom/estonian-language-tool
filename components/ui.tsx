@@ -142,30 +142,33 @@ const TONES = {
   blush: ["var(--blush-soft)", "var(--blush-ink)"],
 } as const;
 
-export function Chip({ children, tone = "neutral", title, caseSensitive, wrap }: {
+export function Chip({ children, tone = "neutral", title, caseSensitive }: {
   children: ReactNode; tone?: keyof typeof TONES; title?: string;
   /** Keeps the label as written — uppercasing mangles forms like `b : ∅`. */
   caseSensitive?: boolean;
-  /**
-   * Lets a chip run onto a second line instead of holding one.
-   *
-   * A chip is a short label, so not wrapping is the right default and stays
-   * the default. It is wrong for the one place a chip carries a dictionary
-   * gloss: those are as long as the word needs, and "gymnasium, secondary
-   * school, high school" is 404px of unbreakable line inside a 350px card. It
-   * pushed 76px of the exam paper off the side of a 390px phone, and only
-   * once the course dictionary replaced the shorter seeded glosses, so the
-   * markup had been correct about everything except how long a real gloss is.
-   */
-  wrap?: boolean;
 }) {
+  /*
+    A CHIP NEVER LEAVES THE BOX IT IS IN, AND THAT USED TO BE A PROP.
+
+    It held one line whatever that cost, with a `wrap` prop for the one caller
+    that had been caught out. That default was wrong twice. First on the
+    examination paper, where a chip carries a dictionary gloss: "gymnasium,
+    secondary school, high school" is 404px of unbreakable line inside a 350px
+    card, and it pushed 76px of the paper off the side of a 390px phone, but
+    only once the course dictionary replaced the shorter seeded glosses. Then
+    on Practice, where a tile's chip went 4px past the card at 768.
+
+    Ninety-two call sites cannot each be asked to know how long their own
+    label might get, and the one that was asked had already been caught. So
+    the chip wraps: a short label ("A2", "Sat") still sits on one line because
+    it fits, and a long one now takes a second line rather than the card's
+    border. `scripts/test-containment.mjs` is what measures that.
+  */
   const [bg, fg] = TONES[tone];
   return (
     <span
       title={title}
-      className={`label-xs inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
-        wrap ? "max-w-full whitespace-normal" : "whitespace-nowrap"
-      }`}
+      className="label-xs inline-flex max-w-full items-center gap-1.5 whitespace-normal rounded-full px-2.5 py-1"
       style={{ background: bg, color: fg, textTransform: caseSensitive ? "none" : undefined }}
     >
       {children}

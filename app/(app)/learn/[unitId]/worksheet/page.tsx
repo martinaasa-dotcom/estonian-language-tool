@@ -173,36 +173,47 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
                 Fill in the missing principal parts. These three are the ones that have to be
                 memorised; every other case is built on the second of them.
               </p>
-              <table className="w-full text-base">
-                <thead>
-                  <tr>
-                    {["Nimetav · nominative", "Omastav · genitive", "Osastav · partitive"].map((h) => (
-                      <th
-                        key={h}
-                        className="border-b px-2 py-2 text-left text-xs font-semibold"
-                        style={{ borderColor: "var(--ink-3)", color: "var(--ink-2)" }}
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sheet.cases.map((row) => (
-                    <tr key={row.lemma} style={{ borderBottom: "1px solid var(--rule)" }}>
-                      <td lang="et" className="est px-2 py-3" style={{ color: "var(--ink)" }}>
-                        {row.nominative}
-                      </td>
-                      <td lang="et" className="est px-2 py-3" style={{ color: "var(--ink)" }}>
-                        {row.blanks.includes("genitive") ? <Rule width={110} /> : row.genitive}
-                      </td>
-                      <td lang="et" className="est px-2 py-3" style={{ color: "var(--ink)" }}>
-                        {row.blanks.includes("partitive") ? <Rule width={110} /> : row.partitive}
-                      </td>
+              {/*
+                A blank to write on is 110px wide because that is what a hand
+                needs, so three of them and their padding come to more than a
+                360px phone has. The sheet is made to be printed and prints at
+                its full width; on a screen too narrow for it the scroller is
+                the way out, which is the same bargain every other table in the
+                app makes and what lets `table { overflow-wrap: break-word }`
+                in app/globals.css keep an Estonian form whole.
+              */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] text-base">
+                  <thead>
+                    <tr>
+                      {["Nimetav · nominative", "Omastav · genitive", "Osastav · partitive"].map((h) => (
+                        <th
+                          key={h}
+                          className="border-b px-2 py-2 text-left text-xs font-semibold"
+                          style={{ borderColor: "var(--ink-3)", color: "var(--ink-2)" }}
+                        >
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {sheet.cases.map((row) => (
+                      <tr key={row.lemma} style={{ borderBottom: "1px solid var(--rule)" }}>
+                        <td lang="et" className="est px-2 py-3" style={{ color: "var(--ink)" }}>
+                          {row.nominative}
+                        </td>
+                        <td lang="et" className="est px-2 py-3" style={{ color: "var(--ink)" }}>
+                          {row.blanks.includes("genitive") ? <Rule width={110} /> : row.genitive}
+                        </td>
+                        <td lang="et" className="est px-2 py-3" style={{ color: "var(--ink)" }}>
+                          {row.blanks.includes("partitive") ? <Rule width={110} /> : row.partitive}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           )}
 

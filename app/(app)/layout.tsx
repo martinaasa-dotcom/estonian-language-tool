@@ -59,9 +59,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex min-h-screen flex-col md:flex-row">
         <Wash />
         <Sidebar />
-        {/* `dock-pad` is the phone bar's measured height, so the last card in
-            a list is never left under it. See lib/layout/dockClearance.ts. */}
-        <main id="main" className="dock-pad flex-1">{children}</main>
+        {/*
+          `dock-pad` is the phone bar's measured height, so the last card in a
+          list is never left under it. See lib/layout/dockClearance.ts.
+
+          `min-w-0` is the rule in app/globals.css applied to the one flex item
+          the whole app sits inside. From `md:` up this is a row, and a flex
+          item's automatic minimum is its min-content width, so anything wide
+          in a page (a paradigm table, a row of chips that will not wrap) made
+          `main` wider than the window rather than being contained by it. The
+          body clips sideways, so the overflow did not even leave a scrollbar
+          to find it with: the right-hand end of the page was simply gone.
+          Below `md:` this is a column and the question never arose, which is
+          why it took measuring at 768 to see it at all.
+        */}
+        <main id="main" className="dock-pad min-w-0 flex-1">{children}</main>
       </div>
       {/* The browser's own pull to refresh went with `overscroll-behavior-y:
           none` in globals.css, and there is no setting that keeps one and not

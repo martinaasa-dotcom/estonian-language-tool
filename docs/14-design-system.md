@@ -52,6 +52,16 @@ ink: the same colour walked down until it clears 4.5:1 on its own tint.
 | A bar, ring, dot, or filled surface | `--mint`, `--peach`, `--butter`, `--sky`, `--blush`, `--accent` |
 | Text or a meaningful icon on that hue's tint | `--mint-ink`, `--peach-ink`, `--butter-ink`, `--sky-ink`, `--blush-ink`, **`--accent-deep`** |
 | Text on the *solid* accent | `--accent-ink` (white) |
+| Text on the *solid* mint | `--on-mint` (near-black, the same in both themes) |
+
+Mint is the other half of that trap and did not have its own answer until a
+contrast pass found the hole: the tick inside a reviewed day on Today's week
+strip was `--surface`, which is white on `#1fb894` at 2.52:1. `--mint-ink` is
+the ink on mint's *tint* and is no use on the solid fill, so `--on-mint` is the
+one for that, and it is a single value in both themes rather than a light and a
+dark, because both mints are light enough for it: 7.40:1 on `#1fb894` and
+11.70:1 on the dark theme's `#5fe3bc`. It is written out rather than
+`var(--ink)`, which inverts with the theme and would take the tick with it.
 
 The accent is the trap: `--accent-ink` was already the white that sits on the
 solid button, so the accent's *tint* ink is `--accent-deep`. Anything building a
@@ -145,6 +155,44 @@ Both are loaded with `latin-ext`, which is not optional: without it `õ ä ö ü
 different face mid-word. The font variables are attached to `<html>`, not `<body>`, because
 `--font-serif` is declared on `:root` and references them, and a custom property is substituted
 where it is declared, so the face has to be in scope there.
+
+### Text stays in its box
+
+Four declarations in `app/globals.css`, and between them they are the reason no screen here has a
+word sitting on the ground behind a card.
+
+- **`overflow-wrap: anywhere`, inherited from the body.** A word that will not fit breaks.
+  `anywhere` rather than `break-word` because only `anywhere` counts towards min-content, which is
+  what a flex or grid item's automatic minimum is: with `break-word` one long word is a floor under
+  the whole row and the row leaves the card having broken nothing. Estonian is why this is not
+  academic. The dictionary holds compounds past twenty characters and the row holding one is three
+  or four columns wide on a phone.
+- **`table { overflow-wrap: break-word }` is the single exemption.** A paradigm is read by
+  comparing forms down a column, so a form split across two lines has to be reassembled before it
+  can be compared. The table pays for that with a scroller of its own, which every table in the app
+  sits in and `scripts/test-invariants.ts` checks.
+- **`svg.lucide { flex: none }`.** An icon is a square and a flex item with no `flex` of its own
+  both shrinks and grows: measured with the rule off, `lucide-eye-off` was drawn 0x15 in a deck row
+  and `lucide-sun` 28x16 in the rail. `shrink-0` was on about a fifth of the icons in the app,
+  which is what a rule kept by remembering looks like from the inside.
+- **`img, video, canvas, iframe, input, select, textarea { max-width: 100% }`.** The one thing
+  wrapping cannot reach: a replaced element brings its own width. Settings' backup picker is an
+  `<input type="file">`, laid out at 336px from its button label and room for a filename, and it
+  was in a 278px card on a 360px phone.
+
+`scripts/test-containment.mjs` is the half that measures rectangles: every text-bearing element,
+every icon and everything with a width of its own, across every route the app has at 360, 768 and
+1280, in the dark as well as the light, in the states a route does not arrive in, and on the three
+screens that need a row made before they can be visited. Four questions each time, of which the
+fourth is whether anything is drawn on top of anything else. Then the same four again with every
+run of text swapped for one of the same length with no space or hyphen in it. Same length is the
+discipline: a stress test that hands every element a forty-character word is unfalsifiable, since a
+ring whose middle says "42%" fails it and no markup would pass. Same length asks what the language
+actually asks.
+
+768 earns its place: it is the width at which the rail appears, so the content column is narrower
+there than at any other width the app is used at, and every fault this suite has found since it
+started measuring three widths has been at that one.
 
 ## 4. Motion
 

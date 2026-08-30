@@ -254,6 +254,14 @@ jobs:
       # is actually reachable.
       - run: node scripts/smoke-new.mjs
       - run: node scripts/test-mobile.mjs
+      # Text and icons inside their boxes, which is the fault none of the
+      # page-shaped checks above can see: a word over a card's border, an icon
+      # squeezed into an oval by the label beside it, a file picker 58px wider
+      # than the card holding it. Then the same three questions with every run
+      # of text swapped for one of the same length with nothing in it to break
+      # on, because a row that fits today fits on the accident of where the
+      # spaces in a gloss fell.
+      - run: node scripts/test-containment.mjs
       - run: node scripts/test-design.mjs
       - run: node scripts/e2e.mjs
       - run: node scripts/test-modes.mjs

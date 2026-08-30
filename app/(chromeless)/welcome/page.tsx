@@ -224,24 +224,33 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
       </div>
 
       <div className="fade-up relative" style={{ animationDelay: "320ms" }}>
-        {/* Floating diacritics: the six characters this whole app is built around. */}
+        {/*
+          Floating diacritics: the six characters this whole app is built
+          around. They are tucked over the card's corners on purpose, by
+          between sixteen and forty pixels depending on the width, and they
+          are `pointer-events-none` because of it: they are `aria-hidden`
+          ornament, and an ornament that eats a tap on the card underneath it
+          is a decoration doing something no decoration should. At 768 the
+          bottom one lands on a tick rather than on a blank corner, which is
+          how this turned up.
+        */}
         <span
           aria-hidden
-          className="est float absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
+          className="est float pointer-events-none absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
           style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="est float absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
+          className="est float pointer-events-none absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
           style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="est float absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
+          className="est float pointer-events-none absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
           style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
         >
           ü
@@ -493,7 +502,14 @@ function HowItWorks() {
                 aria-hidden
                 /* Ornament rather than type: a step number set large enough
                    to read as a shape behind the card. Off the scale on
-                   purpose — see docs/14-design-system.md §3. */
+                   purpose — see docs/14-design-system.md §3.
+
+                   `data-ornament` says the same thing to the contrast pass in
+                   scripts/test-design.mjs, which measures single characters
+                   now and would otherwise read a hue's own tint at 1.18:1 as a
+                   failure. It is decoration: the step is written in words
+                   inside the card this sits behind. */
+                data-ornament
                 className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
                 style={{ color: `var(--${s.tone}-soft)` }}
               >

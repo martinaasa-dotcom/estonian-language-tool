@@ -1176,7 +1176,7 @@ function RequiredWords({ words, text }: {
         return (
           // `wrap`, because this chip carries a full dictionary gloss rather
           // than a label, and a gloss is as long as the word needs.
-          <Chip key={word.lexemeId} tone={done ? "good" : "neutral"} caseSensitive wrap>
+          <Chip key={word.lexemeId} tone={done ? "good" : "neutral"} caseSensitive>
             <span className="est" lang="et">{word.lemma}</span>
             <span style={{ opacity: 0.75 }}>{word.translation}</span>
           </Chip>
