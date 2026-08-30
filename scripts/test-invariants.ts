@@ -2194,6 +2194,42 @@ check("every route group says it is loading rather than showing nothing", () => 
   }
 });
 
+/**
+ * The screen a learner spends the round on has a heading too.
+ *
+ * A browser run only ever sees the state the database happens to produce, and
+ * that is precisely what hid this. Every one of these files renders three or
+ * four screens from one component: an empty state, sometimes a start screen,
+ * the round itself, and a finished screen. The empty and finished ones each
+ * carried an `h1`, so an accessibility run that met an empty deck saw a
+ * heading and passed, and a run against a full one saw none. The whole set was
+ * caught in two passes for that reason: five modes on a deck with cards in it,
+ * and four more the next time the fixture put them into a different state.
+ *
+ * So it is asserted from the source, where every branch is visible at once,
+ * rather than from whichever branch a fixture happened to render. Anchored on
+ * the visually hidden heading, because on these screens that is what the rule
+ * has to mean: there is nothing on a progress bar and a card that a visible
+ * heading could be added to without taking space from the card, which is why
+ * they were written without one.
+ */
+check("a practice round has a heading, not only its empty and finished screens", () => {
+  const sessions = APP.filter((file) =>
+    /[\\/]review[\\/].*Session\.tsx$/.test(file));
+  assert.ok(
+    sessions.length >= 10,
+    `only found ${sessions.length} review session components, so this check stopped looking`,
+  );
+
+  for (const file of sessions) {
+    assert.match(
+      code(file),
+      /<h1 className="sr-only">/,
+      `${file} renders a round with no heading on it; only its empty or finished screen has one`,
+    );
+  }
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
