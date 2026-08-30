@@ -71,9 +71,24 @@ comes out a noun: `lilla`, `kallis`, `valge`, `sinine`, `noor`, `tark`, `paks`, 
 `vana`, `vale`, `võõras` and about twenty more. Ekilex cannot settle it either; it calls every
 nominal a "noomen", which is why the builder asks Wiktionary in the first place.
 
-Nothing visibly breaks today, because an Estonian adjective declines like a noun and the paradigm
-is therefore right. It matters wherever the part of speech is the point rather than the shape:
-which practice modes a word is eligible for, and any future rule that reads `pos`.
+**Something visibly breaks, and this entry used to say it did not.** The claim was that an Estonian
+adjective declines like a noun so the paradigm is right either way, which is true about the forms
+and was never the whole story. The course harvest tags these words `ADJECTIVE` and the built
+expansion tags them `NOUN`, and `@@unique` is on `(lemma, pos)`, so the two do not collide: they
+both land. Thirteen lemmas ship with **two entries each** (`hall`, `kallis`, `keskmine`, `kiire`,
+`kuiv`, `lilla`, `must`, `noor`, `paks`, `roosa`, `rõõmus`, `sinine`, `valge`, `vana`), most of them
+saying nearly the same thing twice: `must` is "black" and "black", `vana` is "old" and "old". Four
+of the words named above are still `NOUN` alone (`magus`, `tark`, `vale`, `võõras`).
+
+Which of a pair a learner met was decided by nothing at all until the search was given a tiebreak,
+because the entry page renders one hit. That half is fixed (`bySubstance` in `lib/dict/search.ts`),
+so the answer is stable and the fuller entry leads. What is left is this question: two of the
+thirteen look like real pairs rather than mislabels, since `hall` is grey and also frost and
+`keskmine` is average and also the middle, and telling those apart from `must` twice is the decision
+nobody has made.
+
+It also still matters wherever the part of speech is the point rather than the shape: which practice
+modes a word is eligible for, and any future rule that reads `pos`.
 
 **Needed:** decide whether the fix is to prefer the more specific category (adjective over noun,
 as the builder already does for adverbs), or to keep both and let a word carry more than one part

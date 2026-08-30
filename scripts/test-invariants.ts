@@ -728,6 +728,55 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
+check("which of two entries for one word wins is decided, not left to the rows", () => {
+  /*
+    `@@unique` is on `(lemma, pos)`, so one lemma can hold more than one entry
+    and sometimes should: `hall` is grey and also frost. What may not happen is
+    the app having no rule about which of them it leads with, because the entry
+    page renders `hits[0]` and nothing else.
+
+    It had none. Both rows score 100, the tiebreak compared `lemma` against
+    `lemma` and returned 0, and neither query behind the search carried an
+    `ORDER BY`, so the winner came out of the plan. A fresh seed ships thirteen
+    such pairs (open question Q8), and a learner confirming a scanned word the
+    dictionary already knows makes another with no forms in it, which took the
+    whole paradigm off the entry page for a word the app knows perfectly well.
+    Three browser suites failed on it in one run and passed in the next with
+    nothing changed.
+
+    Asserted on both comparators, because the search box and the gate in front
+    of a flashcard had the same fault in different words: one sorted, the other
+    kept whichever candidate the array listed first.
+  */
+  const search = read("lib/dict/search.ts");
+
+  assert.match(
+    search,
+    /function bySubstance\([\s\S]*?a\.id\.localeCompare\(b\.id\)/,
+    "the tiebreak stopped ending on id, so it can return 0 for two different rows",
+  );
+  assert.match(
+    search,
+    /\.sort\(\(a, b\) =>[\s\S]{0,200}?bySubstance\(a\.hit, b\.hit\)\)/,
+    "rankCandidates no longer breaks a tie between two entries for one word",
+  );
+  assert.match(
+    search,
+    /scored\.score === best\.score && bySubstance\(/,
+    "matchEstonianForm is back to keeping whichever equal candidate came first",
+  );
+  /*
+    And the candidate set itself is ordered, because it is truncated: which 600
+    of a broad match you get was otherwise the plan's choice, and the ranker can
+    only rank what it was handed.
+  */
+  assert.match(
+    search,
+    /ORDER BY id\s*\n\s*LIMIT 600/,
+    "the truncated candidate query lost its order, so it can return a different 600",
+  );
+});
+
 check("the photograph itself is never stored", () => {
   /*
     A picture of somebody's homework has their name at the top of it, and the

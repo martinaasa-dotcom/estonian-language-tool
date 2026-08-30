@@ -137,7 +137,10 @@ async function main() {
   const byLevel = new Map<string, number>();
   for (const c of corrected) byLevel.set(c.entry.cefr ?? "none", (byLevel.get(c.entry.cefr ?? "none") ?? 0) + 1);
 
-  console.log(`\n${corrected.length} gloss${corrected.length === 1 ? "" : "es"} disagree with Wiktionary:\n`);
+  // The verb has to agree too. It read "1 gloss disagree" for the single-item
+  // case, which is the one somebody reads most carefully.
+  const one = corrected.length === 1;
+  console.log(`\n${corrected.length} gloss${one ? "" : "es"} ${one ? "disagrees" : "disagree"} with Wiktionary:\n`);
   for (const c of corrected) {
     console.log(`  ${(c.entry.cefr ?? "--").padEnd(4)} ${c.entry.lemma.padEnd(18)} ${JSON.stringify(c.from)}`);
     console.log(`  ${"".padEnd(4)} ${"".padEnd(18)}   -> ${JSON.stringify(c.to)}`);

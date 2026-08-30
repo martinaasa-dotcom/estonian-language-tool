@@ -169,6 +169,16 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
           AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
               IN (${Prisma.join(stems.length ? stems : [""])})
     ) AS candidates
+    -- Ordered because it is truncated. Which 600 of a broad match you got was
+    -- otherwise decided by the plan, so one query could answer differently
+    -- after a reindex, and the ranker can only rank what it was handed.
+    -- Arbitrary-but-stable beats arbitrary: a search is a function of the
+    -- dictionary now, which is what makes a wrong result reproducible.
+    -- Measured on the full dictionary, both ways, since the split-branch union
+    -- above was won on exactly this ground: an ordinary word is 3ms either way,
+    -- and a single letter, which is the only query that reaches 600, is 49ms
+    -- against 50ms. The sort is off the end of a set the LIMIT already caps.
+    ORDER BY id
     LIMIT 600
   `;
 
@@ -187,6 +197,36 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
 }
 
 /**
+ * Which of two entries for the *same word* the app should lead with.
+ *
+ * More than one row can hold one lemma, and that is on purpose: `@@unique` is
+ * on `(lemma, pos)`, so `hall` is grey and also frost. What was not on purpose
+ * is that nothing chose between them. The scores are equal, the old tiebreak
+ * compared `lemma` against `lemma` and got 0, neither query behind the search
+ * carries an `ORDER BY`, and the entry page renders `hits[0]` and nothing else.
+ * The winner was whatever order Postgres returned, which is stable enough to
+ * look decided and arbitrary enough to change under a reindex or a restore.
+ *
+ * Two things went wrong with that. A fresh seed ships thirteen lemmas holding
+ * two rows each, the A1 and A2 adjectives of open question Q8 where the course
+ * harvest says ADJECTIVE and the built expansion says NOUN. And a learner who
+ * confirms a scanned word the dictionary already knows gets a second, formless
+ * row that could shadow the real one, so the paradigm disappeared from the
+ * entry page for a word the app knows perfectly well.
+ *
+ * So: an entry there is something to teach from wins. A known part of speech
+ * beats OTHER, which is what an unvouched scanned word is filed as, and then
+ * more stored principal parts beats fewer. `id` last makes the order *total*,
+ * which is the property that actually matters — a comparator that can return 0
+ * for two different rows leaves the answer to the array it was handed.
+ */
+function bySubstance(a: Candidate, b: Candidate): number {
+  return Number(b.pos !== "OTHER") - Number(a.pos !== "OTHER")
+    || b.forms.length - a.forms.length
+    || a.id.localeCompare(b.id);
+}
+
+/**
  * The half of the search that knows about Estonian. Pure — no Prisma, no I/O —
  * so the inflected-form behaviour can be tested over fixtures rather than
  * against whatever happens to be seeded in a developer's database.
@@ -199,7 +239,13 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
   const scored = candidates
     .map((c) => ({ hit: c, ...rank(c, q, folded) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.hit.lemma.localeCompare(b.hit.lemma, "et"));
+    // Lemma before substance, so a prefix search stays alphabetical across
+    // *different* words and only falls through to `bySubstance` for two rows
+    // that are the same word.
+    .sort((a, b) =>
+      b.score - a.score
+      || a.hit.lemma.localeCompare(b.hit.lemma, "et")
+      || bySubstance(a.hit, b.hit));
 
   return scored.slice(0, limit).map(({ hit, matchedAs }) => ({
     id: hit.id,
@@ -315,7 +361,19 @@ export function matchEstonianForm(candidates: Candidate[], word: string): FormMa
     // The English tier: right for a search box, wrong here.
     if (scored.score === 95 && candidate.translation.toLowerCase() === lower) continue;
     if (scored.score < VOUCHED_SCORE) continue;
-    if (!best || scored.score > best.score) best = { hit: candidate, ...scored };
+    /*
+      `>` alone kept whichever of two equal candidates the array happened to
+      hold first, which is the same fault `bySubstance` exists for and worse
+      here than in a search box: this is the check that stands between a
+      photograph and a flashcard, so an arbitrary winner means the word a
+      learner ticks off their own homework brings back an arbitrary paradigm.
+      A tie now goes to the entry with something in it.
+    */
+    if (!best
+      || scored.score > best.score
+      || (scored.score === best.score && bySubstance(candidate, best.hit) < 0)) {
+      best = { hit: candidate, ...scored };
+    }
   }
   if (!best) return null;
 

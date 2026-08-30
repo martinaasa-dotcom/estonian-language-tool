@@ -113,6 +113,72 @@ describe("rankCandidates — inflected forms", () => {
 });
 
 /*
+  Two rows, one word.
+
+  `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one entry and
+  should: `hall` is grey and also frost. What could not happen and did was the
+  app having no rule about which one it leads with. Both score 100, the tiebreak
+  compared `lemma` with `lemma` and returned 0, and the entry page renders
+  `hits[0]`, so the answer came from whatever order the rows arrived in.
+
+  A fresh seed ships thirteen of these — the Q8 adjectives, ADJECTIVE from the
+  course harvest and NOUN from the built expansion — and a learner who confirms
+  a scanned word the dictionary already knows makes another, with no forms in
+  it at all. That one is the reason these tests are here: a formless stub
+  winning takes the whole paradigm off the entry page for a word the app knows.
+
+  Every case below is asserted from a *reversed* array as well, because an
+  assertion that only ever sees one input order cannot tell a rule from a
+  coincidence, which is exactly how the old comparator passed for a year.
+*/
+describe("rankCandidates — two entries for one word", () => {
+  const seeded = lexeme("vana", "old", "ADJECTIVE", [
+    ["NOM_SG", "vana"], ["GEN_SG", "vana"], ["PART_SG", "vana"],
+    ["PART_PL", "vanu"], ["GEN_PL", "vanade"],
+  ]);
+  // What confirming an unvouched word off a photograph leaves behind:
+  // `guessPos` files it as OTHER and nothing invents a form for it.
+  const scanned: Candidate = {
+    ...lexeme("vana", "old", "OTHER", []), id: "scanned-vana",
+  };
+  const both = [seeded, scanned];
+
+  it("leads with the entry there is something to teach from", () => {
+    for (const order of [both, [...both].reverse()]) {
+      expect(rankCandidates(order, "vana")[0]?.pos).toBe("ADJECTIVE");
+    }
+  });
+
+  it("still offers the other one rather than hiding it", () => {
+    expect(rankCandidates(both, "vana").filter((h) => h.lemma === "vana")).toHaveLength(2);
+  });
+
+  it("orders two real entries the same way whichever order they arrive in", () => {
+    // `hall` is a genuine pair rather than a mislabel, and neither is a stub,
+    // so the rule that decides it is only that there *is* one.
+    const grey = { ...lexeme("hall", "grey", "ADJECTIVE", [["NOM_SG", "hall"]]), id: "a-grey" };
+    const frost = { ...lexeme("hall", "frost", "NOUN", [["NOM_SG", "hall"]]), id: "b-frost" };
+    const forward = rankCandidates([grey, frost], "hall").map((h) => h.translation);
+    const back = rankCandidates([frost, grey], "hall").map((h) => h.translation);
+    expect(forward).toEqual(back);
+  });
+
+  it("keeps different words alphabetical, whatever is in them", () => {
+    /*
+      `bySubstance` may only ever decide between two rows that are the *same*
+      word, which is why it sits after the lemma comparison rather than before
+      it. Were it first, these two would come back the other way round and a
+      prefix search would list words by how much happens to be stored against
+      them. Both score 70 here: `raamat` on its own spelling, `rõõm` because
+      folding makes it `room`.
+    */
+    const bare: Candidate = { ...lexeme("raamat", "book", "OTHER", []), id: "bare" };
+    const full = DICT.find((c) => c.lemma === "rõõm")!;
+    expect(rankCandidates([full, bare], "r").map((h) => h.lemma)).toEqual(["raamat", "rõõm"]);
+  });
+});
+
+/*
   The gate a photographed page has to get through.
 
   `rankCandidates` is built for a search box, where a prefix match is a helpful
@@ -159,6 +225,38 @@ describe("matchEstonianForm", () => {
 
   it("has nothing to say about an empty string", () => {
     expect(matchEstonianForm(DICT, "   ")).toBeNull();
+  });
+
+  /*
+    The tie here is worse than the one in the search box. A learner ticks a word
+    off their own homework and the app vouches for it by handing back a
+    paradigm; if two rows hold that lemma and the winner is whichever the array
+    listed first, the card is built from an arbitrary one. `>` on its own did
+    exactly that, so a word already confirmed off an earlier photograph could
+    answer for the seeded entry that has the forms in it.
+  */
+  it("vouches with the entry that has forms, not whichever came first", () => {
+    const seeded = lexeme("tuba", "room", "NOUN", [
+      ["NOM_SG", "tuba"], ["GEN_SG", "toa"], ["PART_SG", "tuba"],
+    ]);
+    const stub: Candidate = { ...lexeme("tuba", "room", "OTHER", []), id: "scanned-tuba" };
+    for (const order of [[seeded, stub], [stub, seeded]]) {
+      expect(matchEstonianForm(order, "tuba")?.pos).toBe("NOUN");
+    }
+  });
+
+  it("breaks the same tie on a derived form", () => {
+    // Both of these can answer for `toas` off the same genitive stem and both
+    // score 85 for it, so the ranker cannot separate them and `bySubstance`
+    // has to. The word carries the paradigm into the card, so which row
+    // answers is the whole question.
+    const seeded = lexeme("tuba", "room", "NOUN", [["NOM_SG", "tuba"], ["GEN_SG", "toa"]]);
+    const stub: Candidate = {
+      ...lexeme("tuba", "room", "OTHER", [["GEN_SG", "toa"]]), id: "scanned-tuba",
+    };
+    for (const order of [[seeded, stub], [stub, seeded]]) {
+      expect(matchEstonianForm(order, "toas")?.pos).toBe("NOUN");
+    }
   });
 });
 
