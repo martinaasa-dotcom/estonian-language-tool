@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-> **Where this stands.** Phases 0–5 shipped, plus a later pass that added the learning path, typed
+> **Where this stands.** Phases 0-5 shipped, plus a later pass that added the learning path, typed
 > answers, the practice modes, XP/quests/progress and offline review. `13-mvp-status.md` §6 is the
 > current state; this file is kept as the plan the build actually followed.
 
@@ -14,31 +14,31 @@ keyboard-operable, and the phase demoed against a real study session.
 
 ---
 
-## Phase 0 — De-risk (2–3 days)
+## Phase 0: De-risk (2-3 days)
 
 The phase v4.0 does not have, and the reason its plan would have failed in week three.
 
 | Task | Output |
 |---|---|
-| **Request the Ekilex API key** | Submitted day one — human turnaround is not under our control and blocks Phase 2 |
+| **Request the Ekilex API key** | Submitted day one; human turnaround is not under our control and blocks Phase 2 |
 | Spike: Ekilex API contract | A real response for `raamat`, `tuba`, `lugema`, `tulema` saved as fixtures; confirm paradigm data yields all five principal parts for both nouns and verbs |
 | Spike: TartuNLP TTS | Fetch and play a `.wav` end to end; measure latency; confirm cache strategy |
 | Scaffold | Next.js 15 + TS strict + Tailwind + shadcn + Prisma + Vitest + Playwright + CI |
-| Seed fixture | ~500 A1–B1 lexemes committed, so all later work is unblocked if the key is delayed |
+| Seed fixture | ~500 A1-B1 lexemes committed, so all later work is unblocked if the key is delayed |
 
 **Exit:** we know the Ekilex response shape from real data, audio plays, CI is green on an empty app.
-**Gate:** if Ekilex data cannot supply all five noun principal parts, that is discovered here — in
-week one, with the plan intact — not in Phase 2 with a dictionary UI already built on the assumption.
+**Gate:** if Ekilex data cannot supply all five noun principal parts, that is discovered here in
+week one, with the plan intact, rather than in Phase 2 with a dictionary UI already built on the assumption.
 
 ---
 
-## Phase 1 — Shell, Today, Tasks (1 week)
+## Phase 1: Shell, Today, Tasks (1 week)
 
 | Task | Notes |
 |---|---|
 | App shell: sidebar, routing, theme, command palette | All eight routes exist, placeholders allowed |
 | Prisma schema + first migration | Full schema from `04-data-model.md` |
-| `lib/estonian/` domain core | Cases, principal parts, gradation, derivation — **100% unit tested**, no UI |
+| `lib/estonian/` domain core | Cases, principal parts, gradation, derivation: **100% unit tested**, no UI |
 | Tasks CRUD with tags, week, due date, filtering | v4.0 Feature 1, complete |
 | Today view | Due tasks, streak, empty states (no cards yet) |
 | Diacritic input bar | Available everywhere from day one |
@@ -51,7 +51,7 @@ for Phase 2 to consume.
 
 ---
 
-## Phase 2 — Dictionary + Anu (2 weeks)
+## Phase 2: Dictionary + Anu (2 weeks)
 
 | Task | Notes |
 |---|---|
@@ -69,7 +69,7 @@ bundle, verified in CI.
 
 ---
 
-## Phase 3 — Flashcards, imports, export (2 weeks)
+## Phase 3: Flashcards, imports, export (2 weeks)
 
 The SRS moves ahead of Calendar because it is where the learning actually happens.
 
@@ -83,12 +83,12 @@ The SRS moves ahead of Calendar because it is where the learning actually happen
 | **Export: JSON + Anki** | Ships here, not deferred |
 | Today wired to due cards | The loop closes |
 
-**Exit:** a full daily loop — Today shows due cards, review runs entirely from the keyboard offline,
+**Exit:** a full daily loop: Today shows due cards, review runs entirely from the keyboard offline,
 new words arrive from dictionary/Anu/paste, and everything exports.
 
 ---
 
-## Phase 4 — Calendar, progress, voice spike (1.5 weeks)
+## Phase 4: Calendar, progress, voice spike (1.5 weeks)
 
 | Task | Notes |
 |---|---|
@@ -102,7 +102,7 @@ new words arrive from dictionary/Anu/paste, and everything exports.
 
 ---
 
-## Phase 5 — Durability and polish (1 week)
+## Phase 5: Durability and polish (1 week)
 
 | Task | Notes |
 |---|---|
@@ -119,7 +119,7 @@ new words arrive from dictionary/Anu/paste, and everything exports.
 
 | Phase | Focus | Duration |
 |---|---|---|
-| 0 | De-risk + scaffold | 2–3 days |
+| 0 | De-risk + scaffold | 2-3 days |
 | 1 | Shell, Today, Tasks, domain core | 1 week |
 | 2 | Dictionary + Anu | 2 weeks |
 | 3 | Flashcards + imports + export | 2 weeks |
