@@ -13,6 +13,7 @@ import {
 import { checkpointPassed } from "@/lib/collections/checkpoint";
 import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
+import { loadRecentMessages } from "@/lib/tutor/history";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
 import { eraseAuthIdentity, remainingIdentityNote } from "@/lib/auth/erase";
@@ -611,6 +612,20 @@ export async function checkAchievements(session?: { count: number; accuracy: num
   const ownerId = await requireUserId();
   const newBadges = await checkAchievementsFor(ownerId, session);
   return { ok: true as const, newBadges };
+}
+
+/**
+ * A learner's recent turns with Anu, for the floating Anu button.
+ *
+ * The full `/tutor` page loads this server-side on every visit; the floating
+ * button is chrome that stays mounted across navigation, so it fetches once,
+ * the first time it is opened, rather than on every page load. Same table,
+ * same shape, so a conversation continued from either one reads as one
+ * conversation.
+ */
+export async function getTutorHistory() {
+  const ownerId = await requireUserId();
+  return loadRecentMessages(ownerId);
 }
 
 /** Sets the review count that fills the daily-goal ring on Today. */
