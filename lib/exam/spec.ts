@@ -265,7 +265,9 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     kind: "case-form",
     title: "Write the form",
     instruction:
-      "Write the named form of each word. Marked against the dictionary, never against a model.",
+      "Write the named form of each word. Marked against the dictionary, never against a model. " +
+      "The real paper gives this part's whole clock to the two texts above, so do these last and " +
+      "with whatever is left.",
     standsFor:
       "not a task the real paper sets: grammatiline korrektsus, the accuracy an examiner marks " +
       "inside your two texts, asked directly because nothing here may mark your Estonian",
@@ -275,7 +277,7 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     title: "Which case does the verb take?",
     instruction:
       "Estonian verbs govern a case, and English gives you no clue which. Choose the one each " +
-      "verb takes.",
+      "verb takes. Ours rather than the paper's, like the task above it, so it goes last.",
     standsFor:
       "not a task the real paper sets: rektsioon, the verb government marked inside your two " +
       "texts, asked directly for the same reason",

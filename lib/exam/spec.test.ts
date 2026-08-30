@@ -80,6 +80,24 @@ describe("the writing part, which is two pieces of writing", () => {
     }
   });
 
+  it("tells the learner the clock belongs to the two texts, not to the drills", () => {
+    /*
+      The real writing part is two pieces of writing and its published minutes
+      are for those two, so four tasks under that clock is a distortion however
+      well the tasks themselves are labelled. It is a small one, since the texts
+      set here are shorter than the real ones and the drills fill the slack
+      rather than eating the letter, and a distortion this app does not declare
+      is the only kind it is not allowed.
+    */
+    const writing = specFor("B1").parts.find((p) => p.skill === "writing");
+    const drills = (writing?.tasks ?? [])
+      .filter((t) => t.kind === "case-form" || t.kind === "government");
+    expect(drills).toHaveLength(2);
+    for (const drill of drills) {
+      expect(drill.instruction).toMatch(/clock|last/i);
+    }
+  });
+
   it("lets the two texts carry more of the part than the drills do", () => {
     for (const level of EXAM_LEVELS) {
       const writing = specFor(level).parts.find((p) => p.skill === "writing");

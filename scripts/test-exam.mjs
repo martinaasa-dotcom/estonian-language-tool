@@ -40,7 +40,7 @@ page.on("console", (m) => {
   will sit through: a part closing when its time runs out. The shortest part on
   the shortest paper is twelve minutes.
 */
-const { check, absent, done } = suite("The mock examination", { floor: 57 });
+const { check, absent, done } = suite("The mock examination", { floor: 58 });
 
 // ── The hub ──────────────────────────────────────────────────────────────────
 
@@ -120,6 +120,15 @@ check("every task says which official task it stands in for",
 
 check("the briefing says the spoken part is marked by the learner",
   /marked by you/i.test(brief));
+
+/*
+  Four tasks sit under a clock the real paper gives to two. The drills are the
+  app's own and they go last, so the pressure falls on them rather than on the
+  letter, and the trade is declared before the clock starts rather than
+  discovered at task three.
+*/
+check("the briefing says the writing clock belongs to the two texts",
+  /clock is for those two/i.test(brief) && /accuracy questions after them/i.test(brief));
 
 check("the clock has not started before the learner starts it",
   !/\d\d:\d\d/.test(await page.locator("header").innerText().catch(() => "")));

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowRight, BadgeCheck, FileWarning, Repeat, TrendingDown, TrendingUp, Trophy, TriangleAlert,
+  ArrowRight, BadgeCheck, FileWarning, Info, Repeat, TrendingDown, TrendingUp, Trophy,
+  TriangleAlert,
 } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { attemptById, bestAt, previousAttempt } from "@/lib/progress/exam";
@@ -281,6 +282,25 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
           <SectionTitle hint={written.length > 1 ? "both of them" : undefined}>
             What you wrote
           </SectionTitle>
+          {/*
+            THE ONE PLACE THIS SCORE CAN FLATTER SOMEBODY, SAID OUT LOUD. The
+            marks on these two came from length and from the words the task
+            named, because those are the only things a machine can settle
+            without judging Estonian. An examiner marks the accuracy of the
+            prose itself and this app never will, so the mark is a ceiling
+            rather than a measurement, and somebody reading a good writing score
+            has to know which of the two they are holding.
+          */}
+          <div className="mb-4">
+            <Note tone="neutral">
+              <Info size={14} className="mr-1.5 inline" aria-hidden />
+              These marks are for length and for using the words you were given. Whether the
+              Estonian itself is right is what an examiner marks and what nothing here may judge, so
+              treat this part of your score as the most you could have got rather than what you
+              would have got. Anu will read either text back and say what she thinks, and her note
+              carries no marks.
+            </Note>
+          </div>
           <ul className="grid gap-4">
             {written.map((mark) => {
               const task = result.parts

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CircleAlert, Clock, Coffee, Ear, FileWarning, Headphones, Loader2, Mic, RotateCcw, Send,
-  TriangleAlert, VolumeX, WifiOff,
+  CircleAlert, Clock, Coffee, Ear, FileWarning, Headphones, Loader2, Mic, PenLine, RotateCcw,
+  Send, TriangleAlert, VolumeX, WifiOff,
 } from "lucide-react";
 import { submitExam } from "@/app/actions";
 import { Button } from "@/components/Button";
@@ -581,6 +581,14 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
           left, and when a part&apos;s time goes it closes. Your answers are kept on this device as you
           go, so a reload or a closed tab does not lose the paper. The clock does not stop while it
           is shut.
+        </Note>
+        <Note tone="neutral">
+          <PenLine size={14} className="mr-1.5 inline" aria-hidden />
+          The writing part of the real paper is two pieces of writing and nothing else, and its
+          clock is for those two. The accuracy questions after them are this app&apos;s own, because
+          the accuracy an examiner marks inside your texts is the one thing nothing here may judge.
+          They sit last for that reason, and the time to spend on them is the time the two texts
+          leave you.
         </Note>
         <Note tone="neutral">
           <Headphones size={14} className="mr-1.5 inline" aria-hidden />

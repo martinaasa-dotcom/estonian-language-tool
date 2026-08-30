@@ -112,6 +112,25 @@ of a letter arrived having rehearsed the wrong half of the part. The briefing no
 the real paper sets" against both, `lib/exam/spec.test.ts` fails if either stops saying it, and the
 two texts carry more of the part than the drills do at every level.
 
+**Four tasks under a clock the real paper gives to two, and why that was the right way round.**
+The writing part's published minutes are for the two texts alone, so putting the accuracy drills
+under the same clock is a distortion of the one thing this app claims is real. Dropping them was the
+alternative and it is worse, because it makes the score flatter rather than the clock honest: the
+two texts are marked on length and on the words the task named, so a writing part made only of them
+gives full marks for the required length of poor Estonian, and then feeds that into a figure telling
+somebody they would pass. A flattering measurement of readiness is the failure this whole feature
+exists to avoid; a declared distortion of the clock is not.
+
+So both are declared instead. The drills sit last, after the two texts, so the pressure falls on
+them rather than on the letter. Their instruction says the clock belongs to the texts above, and the
+briefing says it before the clock starts. The result says that the marks on the two texts are for
+length and for the named words, and that the accuracy of the prose is what an examiner marks and
+what nothing here may judge, so that quarter of the score is a ceiling rather than a measurement.
+And the distortion is small in practice: the texts set here are shorter than the real ones (110
+words at B1 against a message and a fuller letter in the same thirty minutes), so the drills fill
+slack rather than eating the letter. Cut the drills only if something else can measure accuracy
+mechanically first.
+
 **The second writing task offers the choice the real one offers**, a story or a personal letter.
 Both are marked identically, on length and on the words the task named, which is the only way this
 app can offer a choice honestly: a mock where picking the letter scored differently would be
