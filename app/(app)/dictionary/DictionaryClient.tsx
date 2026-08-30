@@ -7,7 +7,7 @@ import { Camera, Check, Plus, Search, Star } from "lucide-react";
 import { addToDeck, toggleStar } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Speak } from "@/components/Speak";
+import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
@@ -286,8 +286,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
             <h2 lang="et" className="est text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
               {entry.lemma}
             </h2>
-            <Speak text={entry.lemma} />
-            <Speak text={entry.lemma} slow label={`Hear "${entry.lemma}" slowly`} />
+            <SpeakPair text={entry.lemma} />
           </div>
           <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
