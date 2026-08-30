@@ -46,6 +46,8 @@ export const ACTION_LIMITS = {
   joinClassroom: { perMinute: 10 },
   /** Writes a task per member of a class. */
   assignUnit: { perMinute: 10 },
+  /** Writes a task per member of a class. */
+  assignHomework: { perMinute: 10 },
   /** Parses and writes a whole backup: the most expensive call in the app. */
   restoreBackup: { perMinute: 4 },
 } as const;

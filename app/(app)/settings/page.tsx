@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
+import { ekilexConfigured } from "@/lib/ekilex/client";
 import { BADGES } from "@/lib/achievements/badges";
 import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
@@ -11,6 +12,7 @@ import { levelLabel } from "@/components/assessment/PlanPanel";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
+import { EkilexSetupGuide } from "./EkilexSetupGuide";
 import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
@@ -35,6 +37,7 @@ export default async function SettingsPage() {
   const provider = resolveProvider();
   const resilience = providerResilience();
   const hosted = supabaseConfigured();
+  const ekilexOn = ekilexConfigured();
 
   const [words, cards, reviews, earned, settings, learner, goals, latestCheck] = await Promise.all([
     prisma.lexeme.count(),
@@ -302,7 +305,7 @@ export default async function SettingsPage() {
         </section>
 
         <section>
-          <SectionTitle>Dictionary</SectionTitle>
+          <SectionTitle hint={ekilexOn ? "connected" : "built-in set only"}>Dictionary</SectionTitle>
           <Card>
             <p className="text-sm" style={{ color: "var(--ink-2)" }}>
               The built-in dictionary has {words} words with checked principal parts, covering A1 up
@@ -311,11 +314,26 @@ export default async function SettingsPage() {
               typed. Audio comes from the University of Tartu&rsquo;s Estonian speech service and
               needs no key.
             </p>
-            <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-              Words beyond the built-in dictionary are fetched from Ekilex, at the Institute of the
-              Estonian Language, and stored as they arrive so the next lookup is local and works
-              offline. Nothing to set up: it is part of the app.
-            </p>
+            {ekilexOn ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Chip tone="good">Connected</Chip>
+                <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+                  Words beyond the built-in set are fetched live from Ekilex, at the Institute of the
+                  Estonian Language, and stored as they arrive so the next lookup is local and works
+                  offline. Example sentences, dictation and the fuller mock exam all draw on this.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
+                <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
+                  No Ekilex key is configured on this deployment, so search stops at the {words}{" "}
+                  built-in words: nothing outside that set can be looked up, and dictation, the
+                  sentence builder and the mock exam&rsquo;s reading and listening parts stay thin or
+                  empty because the built-in set carries almost no attested sentences.
+                </p>
+                <EkilexSetupGuide />
+              </div>
+            )}
           </Card>
         </section>
       </div>

@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Flame, GraduationCap, Target, Trophy } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { classworkHistory } from "@/app/actions";
 import { PATH } from "@/lib/collections/syllabus";
 import { classRoster } from "@/lib/classroom/roster";
 import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, StatTile } from "@/components/ui";
-import { ArchiveClass, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
+import { ArchiveClass, AssignHomework, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,10 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
 
   const classroom = membership.classroom;
   const isTeacher = classroom.ownerId === ownerId;
-  const roster = await classRoster(classroomId);
+  const [roster, history] = await Promise.all([
+    classRoster(classroomId),
+    isTeacher ? classworkHistory(classroomId) : Promise.resolve([]),
+  ]);
 
   const leader = roster.entries[0];
   const you = roster.entries.find((e) => e.ownerId === ownerId);
@@ -193,6 +197,39 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                 deck is changed, they choose when to add the words.
               </p>
             </Card>
+
+            <Card className="mt-3">
+              <SectionTitle hint="a page, an exercise, anything not on the path">
+                Something else
+              </SectionTitle>
+              <AssignHomework classroomId={classroomId} />
+            </Card>
+
+            {history.length > 0 && (
+              <div className="mt-4">
+                <SectionTitle hint="most recent first">Sent to this class</SectionTitle>
+                <ul className="flex flex-col gap-1.5">
+                  {history.map((h) => (
+                    <li
+                      key={h.id}
+                      className="rounded-[var(--r)] border px-3.5 py-2.5"
+                      style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>{h.title}</span>
+                        <span className="text-xs" style={{ color: "var(--ink-3)" }}>
+                          {h.createdAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                          {h.dueAt && ` · due ${h.dueAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}`}
+                        </span>
+                      </div>
+                      {h.detail && (
+                        <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>{h.detail}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         )}
 
