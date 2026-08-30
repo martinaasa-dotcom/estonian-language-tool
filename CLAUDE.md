@@ -879,6 +879,18 @@ npm run test:mobile      # the phone, measured; needs the server running
 With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the
 browser suites possible without driving a Google sign-in from Playwright.
 
+**Reloading a deployed dictionary is a button, and it is the one workflow that reads a secret.**
+`.github/workflows/seed-production.yml` runs `npm run db:seed` against the deployment, by hand,
+after somebody types a word into the confirmation box. `ci.yml` says of itself that nothing in it
+maps a repository secret into a job, so a workflow file cannot become a way to read one; this file
+is the exception and keeps what it can of that, being `workflow_dispatch` only and mapping the
+connection string into the three steps that need a database and no others. It exists because a
+deployment seeded before the harvest and the built expansion keeps saying it has 360 words for as
+long as nobody reseeds it, and the person who can see that number is rarely the person with a
+checkout and the production password. It never pushes the schema: the deployment's own build does
+that, and a workflow that can reshape the production database is a bigger thing than one that can
+reload the dictionary inside it.
+
 **A suite that ran nothing looks exactly like one that passed, so every suite
 counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
 it reached and a `done` that refuses to pass below a declared floor. Two
