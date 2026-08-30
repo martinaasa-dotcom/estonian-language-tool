@@ -1314,6 +1314,38 @@ check("the actions that do real work per call are throttled", () => {
   );
 });
 
+check("audio a page has fetched is released, not merely remembered", () => {
+  /*
+    An object URL is a file the browser holds until it is told not to.
+    `Speak` and `PairsSession` each kept a cache of them and neither ever
+    revoked one: `Speak`'s was module-level and so outlived every navigation,
+    `PairsSession`'s went unreachable when the round ended and was still
+    held. Review plays audio on nearly every card, so a phone left in the app
+    accumulated a WAV per word for the whole session.
+
+    The presence of a cache is what made this look solved, which is why the
+    check is about revocation rather than about caching. One bounded cache in
+    lib/audio/clipCache.ts, and no component minting its own url beside it:
+    a second copy of a pattern with a cleanup step is where the cleanup step
+    goes missing, which is the argument lib/cache/singleFlight.ts makes about
+    itself.
+  */
+  const cache = code("lib/audio/clipCache.ts");
+  assert.match(cache, /revokeObjectURL/, "the clip cache no longer releases anything");
+
+  for (const file of ALL) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    if (file === "lib/audio/clipCache.ts" || file === "components/Recorder.tsx") continue;
+    const source = code(file);
+    if (!/createObjectURL/.test(source)) continue;
+    assert.match(
+      source,
+      /revokeObjectURL/,
+      `${file} makes an object URL and never revokes it`,
+    );
+  }
+});
+
 check("dictation says which kind of mistake it was, in text", () => {
   /*
     "The marking shows which word you missed and whether you only lost its

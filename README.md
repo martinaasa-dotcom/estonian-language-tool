@@ -351,5 +351,18 @@ Four rules the code holds to, all explained in `docs/`:
 
 ## Credits
 
+- Estonian forms, paradigms and example sentences: [Ekilex](https://ekilex.ee), the lexicographic
+  database of the Institute of the Estonian Language. CC BY 4.0.
+- English glosses: [English Wiktionary](https://en.wiktionary.org), by its contributors.
+  CC BY-SA 4.0.
 - Speech synthesis: [TartuNLP](https://tartunlp.ai), University of Tartu (MIT).
 - The plan this was built from, including the audit of the original spec, is in `docs/`.
+
+## Licence
+
+The code is MIT, in `LICENSE`. The language data is not, and the difference matters if you
+redistribute rather than merely run this: Ekilex is CC BY 4.0 and Wiktionary is CC BY-SA 4.0,
+which is share-alike, so `prisma/data/expanded.json` carries CC BY-SA as a build product of
+both. Both attributions are rendered in the running app rather than only in this file, on the
+sign-in page, in the landing footer and on `/terms`, which is where a licence of that shape
+expects to find them. `LICENSE` sets all of this out.

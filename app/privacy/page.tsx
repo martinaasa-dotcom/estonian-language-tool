@@ -33,7 +33,7 @@ export default function PrivacyPage() {
   const leavesTheUnion = transfersOutsideEea(recipients);
 
   return (
-    <Legal title="Privacy" updated="29 August 2026">
+    <Legal title="Privacy" updated="30 August 2026">
       <P>
         Kodukeel is a tool for learning Estonian. This page says exactly what it stores
         about you, why it is allowed to, who else sees it, and how to get rid of it.
@@ -98,10 +98,9 @@ export default function PrivacyPage() {
           and the marked paper itself, question by question, with what was expected and what
           you gave. That includes <strong>the composition you wrote</strong>, kept in your own
           words, because a piece of writing is only worth going back to if it is the piece you
-          actually wrote. It is the longest thing you write anywhere in this app, so it is
-          named here separately rather than folded into the line above. A paper you abandon is
-          never written down at all. The spoken part is marked by you and nothing you record
-          leaves your device.
+          actually wrote. It is the longest thing you write anywhere in this app, which is why
+          it has a line of its own here. A paper you abandon is never written down at all. The
+          spoken part is marked by you and nothing you record leaves your device.
         </P>
         <P>
           <strong>Your class, if you are in one.</strong> Joining with a code stores which

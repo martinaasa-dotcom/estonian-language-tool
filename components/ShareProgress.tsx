@@ -28,9 +28,21 @@ export function ShareProgress() {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "My Estonian progress" });
       } else {
-        // A blob URL rather than a download attribute: some browsers block
-        // programmatic downloads, and every one of them can open a tab.
-        window.open(URL.createObjectURL(blob), "_blank", "noopener");
+        /*
+          A blob URL rather than a download attribute: some browsers block
+          programmatic downloads, and every one of them can open a tab.
+
+          Revoked on a timer rather than straight after `open`, and that is
+          the whole difficulty: the new tab has not fetched the url yet when
+          this line returns, so releasing it immediately hands somebody a
+          blank tab. Held for a minute, which is far longer than any tab
+          takes to load an image it was opened for, and then let go. Without
+          this the card stayed in memory for as long as the tab that made it
+          was open, and sharing twice held two.
+        */
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener");
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       }
     } catch {
       setError("Could not build the card just now. Try again in a moment.");

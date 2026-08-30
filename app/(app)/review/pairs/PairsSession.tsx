@@ -7,6 +7,7 @@ import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -44,7 +45,6 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   const [playing, setPlaying] = useState(false);
   const [audioFailed, setAudioFailed] = useState(false);
   const startedAt = useRef(Date.now());
-  const cache = useRef(new Map<string, string>());
 
   const question = questions[index];
   const finished = !question;
@@ -54,7 +54,13 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
     const key = `${text}|${slow ? 0.6 : 1}`;
     try {
       setPlaying(true);
-      let url = cache.current.get(key);
+      /*
+        Shared with `Speak` rather than a ref of its own. A ref's clips became
+        unreachable when the round ended and were still held by the browser,
+        because nothing revoked them: a listening round meets a dozen new
+        words a minute and every one of them stayed.
+      */
+      let url = cachedClip(key);
       if (!url) {
         const res = await fetch("/api/tts", {
           method: "POST",
@@ -62,8 +68,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           body: JSON.stringify({ text, speed: slow ? 0.6 : 1 }),
         });
         if (!res.ok) throw new Error(String(res.status));
-        url = URL.createObjectURL(await res.blob());
-        cache.current.set(key, url);
+        url = rememberClip(key, await res.blob());
       }
       await new Audio(url).play();
     } catch {

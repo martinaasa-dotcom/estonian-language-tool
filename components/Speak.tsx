@@ -2,8 +2,7 @@
 
 import { Volume2, Loader2 } from "lucide-react";
 import { useState, type CSSProperties } from "react";
-
-const cache = new Map<string, string>();
+import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
 
 /**
  * Pronunciation button.
@@ -33,7 +32,14 @@ export function Speak({ text, slow, label, size = 15, className, style, onUnavai
     const key = `${text}|${slow ? 0.6 : 1}`;
     try {
       setState("loading");
-      let url = cache.get(key);
+      /*
+        Held in lib/audio/clipCache.ts rather than in a `Map` here. That map
+        was module-level and never revoked one of its object URLs, so a tab
+        left open through a few review sessions kept every clip it had ever
+        played. The cache is bounded and revokes what it evicts now, and it is
+        shared with the listening round, so a word met in both is one clip.
+      */
+      let url = cachedClip(key);
       if (!url) {
         const res = await fetch("/api/tts", {
           method: "POST",
@@ -41,8 +47,7 @@ export function Speak({ text, slow, label, size = 15, className, style, onUnavai
           body: JSON.stringify({ text, speed: slow ? 0.6 : 1 }),
         });
         if (!res.ok) throw new Error(String(res.status));
-        url = URL.createObjectURL(await res.blob());
-        cache.set(key, url);
+        url = rememberClip(key, await res.blob());
       }
       await new Audio(url).play();
       setState("idle");

@@ -328,6 +328,16 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 - Unit tests stay hermetic: no database, no network, no clock you do not control. Anything needing
   Postgres is an `*.itest.ts` under `npm run test:db`. The unit suite gates every commit and must
   stay fast enough that nobody is tempted to skip it.
+- **A cache of object URLs that never revokes one is a leak with a hit rate.** `Speak` and
+  `PairsSession` each held a `Map` of blob URLs and neither released anything: `Speak`'s was
+  module-level and so outlived every navigation, `PairsSession`'s went unreachable when the round
+  ended and was still held by the browser. Review plays audio on nearly every card, so a phone
+  left in the app kept a WAV per word for the session. The presence of a cache is what made this
+  look solved, which is why `lib/audio/clipCache.ts` is bounded and least-recently-used rather
+  than merely revoking: an unbounded cache that revokes on eviction never evicts. One module
+  rather than a copy per caller, on the argument `lib/cache/singleFlight.ts` makes about itself,
+  and the invariant fails on any component that mints an object URL without revoking it. That is
+  how `ShareProgress` turned up, holding a shared card for the life of its tab.
 - **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So

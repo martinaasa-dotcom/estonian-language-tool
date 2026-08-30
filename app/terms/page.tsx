@@ -15,7 +15,7 @@ export default function TermsPage() {
   const operator = resolveOperator();
 
   return (
-    <Legal title="Terms" updated="29 August 2026">
+    <Legal title="Terms" updated="30 August 2026">
       <P>
         Kodukeel is a study tool. These terms are short because the arrangement is
         simple: use it to learn Estonian, do not abuse the shared services behind it,
