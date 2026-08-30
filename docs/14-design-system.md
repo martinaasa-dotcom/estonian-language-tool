@@ -52,6 +52,16 @@ ink: the same colour walked down until it clears 4.5:1 on its own tint.
 | A bar, ring, dot, or filled surface | `--mint`, `--peach`, `--butter`, `--sky`, `--blush`, `--accent` |
 | Text or a meaningful icon on that hue's tint | `--mint-ink`, `--peach-ink`, `--butter-ink`, `--sky-ink`, `--blush-ink`, **`--accent-deep`** |
 | Text on the *solid* accent | `--accent-ink` (white) |
+| Text on the *solid* mint | `--on-mint` (near-black, the same in both themes) |
+
+Mint is the other half of that trap and did not have its own answer until a
+contrast pass found the hole: the tick inside a reviewed day on Today's week
+strip was `--surface`, which is white on `#1fb894` at 2.52:1. `--mint-ink` is
+the ink on mint's *tint* and is no use on the solid fill, so `--on-mint` is the
+one for that, and it is a single value in both themes rather than a light and a
+dark, because both mints are light enough for it: 7.40:1 on `#1fb894` and
+11.70:1 on the dark theme's `#5fe3bc`. It is written out rather than
+`var(--ink)`, which inverts with the theme and would take the tick with it.
 
 The accent is the trap: `--accent-ink` was already the white that sits on the
 solid button, so the accent's *tint* ink is `--accent-deep`. Anything building a

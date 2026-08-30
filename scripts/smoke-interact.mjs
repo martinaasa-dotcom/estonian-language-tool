@@ -24,7 +24,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 const app = page.locator("main");
 
 // Floor: measured 13 in dev mode. It cannot run against a production build at all: `page.waitForFunction` evaluates a string, which the production Content Security Policy refuses.
-const { check, done } = suite("The new modes, driven", { floor: 13 });
+const { absent, check, done } = suite("The new modes, driven", { floor: 13 });
 
 /**
  * Wait from Node, by polling, rather than with `page.waitForFunction`.
@@ -80,22 +80,40 @@ check("a model note, if any, is labelled as unverified",
   !/almost|reads well|not yet/i.test(feedback) || /AI · verify|withheld/i.test(feedback));
 
 // ── Government: answering reveals the example and the rule ───────────────────
-await page.goto(`${BASE}/review/government`, { waitUntil: "networkidle" });
-const verb = (await page.locator("p.est").first().textContent())?.trim() ?? "";
-// Options are named the way a class names them: the question first, the
-// Estonian case name under it. Any option will do, this is checking that the
-// answer reveals the rule.
-await app.getByRole("button", { name: /osastav|alaleütlev|seestütlev|kaasaütlev|seesütlev|sisseütlev|alalütlev/ }).first().click();
-await page.waitForSelector("[aria-live='polite']", { timeout: 15000 });
-const govBody = (await page.textContent("body")) ?? "";
-check("answering reveals the governed case", /governs the|experiencer construction/i.test(govBody), verb);
-check("the example sentence is shown after answering",
-  (await app.getByRole("button", { name: /^Next/ }).count()) > 0);
+/*
+  This mode builds its questions out of the learner's own deck, so a deck with
+  no verb carrying government data has nothing to ask and says so instead. That
+  is the page behaving correctly, and this block used to meet it by clicking a
+  button that was not there: thirty seconds of Playwright waiting, a throw, and
+  the eight checks after it never running, all reported as one failure naming a
+  regex. It cost a real investigation on a suite with nothing wrong with it.
 
-await app.getByRole("button", { name: /^Next/ }).click();
-await page.waitForTimeout(400);
-check("Next advances to a new question",
-  (await app.getByText(/Which question does it answer/i).count()) > 0);
+  So the precondition is read rather than assumed, and a deck that cannot ask
+  the question waives its three checks with the reason on screen. See
+  scripts/lib/checks.mjs for why `absent` exists rather than a silent skip.
+*/
+await page.goto(`${BASE}/review/government`, { waitUntil: "networkidle" });
+const CASE_OPTION = /osastav|alaleütlev|seestütlev|kaasaütlev|seesütlev|sisseütlev|alalütlev/;
+const options = app.getByRole("button", { name: CASE_OPTION });
+if ((await options.count()) === 0) {
+  absent(3, "a deck with a verb whose government is recorded; this one asks nothing");
+} else {
+  const verb = (await page.locator("p.est").first().textContent())?.trim() ?? "";
+  // Options are named the way a class names them: the question first, the
+  // Estonian case name under it. Any option will do, this is checking that the
+  // answer reveals the rule.
+  await options.first().click();
+  await page.waitForSelector("[aria-live='polite']", { timeout: 15000 });
+  const govBody = (await page.textContent("body")) ?? "";
+  check("answering reveals the governed case", /governs the|experiencer construction/i.test(govBody), verb);
+  check("the example sentence is shown after answering",
+    (await app.getByRole("button", { name: /^Next/ }).count()) > 0);
+
+  await app.getByRole("button", { name: /^Next/ }).click();
+  await page.waitForTimeout(400);
+  check("Next advances to a new question",
+    (await app.getByText(/Which question does it answer/i).count()) > 0);
+}
 
 // ── Cloze: paste a passage built from the learner's own deck ─────────────────
 // Put a word in the deck first, so this exercises the real path rather than
