@@ -14,7 +14,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 38, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("Teaching layer", { floor: 38 });
+const { check, absent, done } = suite("Teaching layer", { floor: 40 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
@@ -93,12 +93,20 @@ if (hasRound) {
     /No sentences/i.test(empty) && /Ekilex/i.test(empty));
   check("and points somewhere that would fill them in",
     (await page.locator('main a[href*="/dictionary"], main a[href*="/learn"]').count()) > 0);
-  // The round itself is six checks and this state reaches two of them. Said
+  // The round itself is eight checks and this state reaches two of them. Said
   // out loud, with the number, so the floor still means what it says.
-  absent(4, "sentences from Ekilex, which this database has none of");
+  absent(6, "sentences from Ekilex, which this database has none of");
 }
 
 if (hasRound) {
+  // The header used to link the sentence's own lemma while the box was still
+  // empty, which is a word of the answer printed above "Write what you hear".
+  // Asserted from both sides: deleting the link outright would satisfy the
+  // first of these on its own and cost the learner something worth keeping.
+  const lemmaLink = 'a[href*="/dictionary?q="]';
+  check("the sentence's own word is not given away while it is being typed",
+    (await page.locator(lemmaLink).count()) === 0);
+
   // Deliberately wrong, and wrong in a specific way: the marking has to show
   // which words were missed rather than a single red cross.
   await page.getByLabel("What you heard").fill("see ei ole see lause");
@@ -113,6 +121,9 @@ if (hasRound) {
   // dictation round says what it just wrote there.
   const footer = await page.locator("text=/word-perfect of/").first().innerText();
   check("the answer was graded, not just marked", /\+\d+ XP/.test(footer), footer.trim());
+
+  check("and it is offered once the answer is in, when looking it up is the point",
+    (await page.locator(lemmaLink).count()) > 0);
 
   check("the round moves on",
     (await page.getByRole("button", { name: /Next sentence/ }).count()) > 0);
