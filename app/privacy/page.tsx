@@ -1,38 +1,97 @@
 import Link from "next/link";
 import { Legal, P, S } from "@/components/Legal";
+import { resolveOperator, SUPERVISORY_AUTHORITY } from "@/lib/legal/operator";
+import { resolveRecipients, transfersOutsideEea } from "@/lib/legal/recipients";
 
 export const metadata = { title: "Privacy · Kodukeel" };
 
+/*
+  Read at request time rather than at build time, because most of what this
+  page says is a fact about the deployment: who runs it, and which services it
+  is configured to send anything to. A notice baked in at build would describe
+  whatever the build machine happened to have set, which is usually nothing.
+*/
+export const dynamic = "force-dynamic";
+
 /**
- * Written from the schema, not from a template. Every claim here is one someone
- * could check against `prisma/schema.prisma`, and it stays accurate only if it
- * is updated when that file is.
+ * Written from the schema and from this deployment's own configuration, not
+ * from a template. Every claim here is one somebody could check against
+ * `prisma/schema.prisma` or against the environment the app is running in, and
+ * it stays accurate only if it is updated when those are.
+ *
+ * The structure follows Article 13 of the GDPR, which is what a person has to
+ * be told at the point their data is collected: who holds it, what is held,
+ * why that is allowed, who else sees it, whether it leaves the Union, how long
+ * it is kept, what they can demand, and who they complain to. The Estonian
+ * Personal Data Protection Act applies the same rules here and adds the local
+ * ones this page names, of which the age of consent is the one that changes
+ * anything.
  */
 export default function PrivacyPage() {
+  const operator = resolveOperator();
+  const recipients = resolveRecipients();
+  const leavesTheUnion = transfersOutsideEea(recipients);
+
   return (
     <Legal title="Privacy" updated="29 August 2026">
       <P>
         Kodukeel is a tool for learning Estonian. This page says exactly what it stores
-        about you, why, and how to get rid of it. It describes the software; if you are
-        using someone else&rsquo;s installation of it, they hold the database.
+        about you, why it is allowed to, who else sees it, and how to get rid of it.
       </P>
 
-      <S title="What is stored">
+      <S title="Who holds this">
+        {operator.identified ? (
+          <>
+            <P>
+              The controller of your data, which means the one answerable for it, is{" "}
+              <strong>{operator.name}</strong>
+              {operator.registryCode ? ` (registry code ${operator.registryCode})` : ""}
+              , at {operator.address}. Write to{" "}
+              <a href={`mailto:${operator.email}`} className="underline underline-offset-2">
+                {operator.email}
+              </a>{" "}
+              about anything on this page, including any of the requests below.
+            </P>
+            <P>
+              There is no data protection officer. This is a small installation and the
+              law requires one only of a public body or of an operation whose core
+              business is monitoring people at scale, which this is not. The address
+              above reaches a person.
+            </P>
+          </>
+        ) : (
+          <P>
+            <strong>Whoever runs this installation has not filled their name in.</strong>{" "}
+            Kodukeel is software somebody installs rather than a service with one address,
+            and the person or school running this copy is the one answerable for your data.
+            They are supposed to be named here and are not, which is itself something you
+            can complain about to the authority named further down. Ask whoever gave you
+            the link. If you are running this yourself, set{" "}
+            <code>OPERATOR_NAME</code>, <code>OPERATOR_ADDRESS</code> and{" "}
+            <code>OPERATOR_EMAIL</code> and this paragraph becomes your details.
+          </P>
+        )}
+      </S>
+
+      <S title="What is stored, and why that is allowed">
         <P>
           <strong>Your identity.</strong> Signing in with Google gives us your email address
           and a user id, held by Supabase Auth. We never see your Google password, and we do
-          not request access to anything else in your Google account.
+          not request access to anything else in your Google account. Without it there is no
+          way to show you your own deck rather than somebody else&rsquo;s, so this is held to
+          provide the service you asked for.
         </P>
         <P>
           <strong>Your learning.</strong> The cards in your deck, every review you have ever
           done (the grade, the moment, and how long you took), your tasks, your starred words,
           your badges and your settings. The review log is what makes the scheduling work.
-          It is the app&rsquo;s memory of how well you know each word.
+          It is the app&rsquo;s memory of how well you know each word, and an app that
+          forgets it is not the app you signed up for.
         </P>
         <P>
-          <strong>Your level checks.</strong> Each sitting of the level check is kept: the levels it
-          measured, how many questions it came from, and the rating you gave your own speaking.
-          Nothing you record is uploaded, and no audio is stored anywhere.
+          <strong>Your level checks and your mock exams.</strong> Each sitting is kept: the
+          levels it measured, how many questions it came from, and the rating you gave your
+          own speaking. Nothing you record is uploaded, and no audio is stored anywhere.
         </P>
         <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
@@ -47,8 +106,23 @@ export default function PrivacyPage() {
           top of it.
         </P>
         <P>
+          <strong>What the tutor cost.</strong> A record per AI request of which model was
+          asked, roughly how much text went in and out, and the estimated cost. The tutor
+          runs on somebody&rsquo;s paid key and sign-up is open, so a per-person daily
+          allowance is the only thing standing between an open door and an unbounded bill.
+          This is kept because there is a legitimate interest in a free service surviving
+          the week, and there is no version of that cap which works without counting.
+        </P>
+        <P>
+          <strong>Errors.</strong> When something breaks, the message and where it happened
+          are logged, with your opaque user id and never your email. Values that look like a
+          credential are stripped before anything is written. Same reason: an app nobody can
+          debug is an app that stays broken.
+        </P>
+        <P>
           <strong>What is not stored.</strong> No analytics, no advertising identifiers, no
-          third-party trackers, no cookies beyond the one that keeps you signed in.
+          third-party trackers, no profiling, and no cookie that is not needed to keep you
+          signed in.
         </P>
         <P>
           <strong>How we tell whether the app works.</strong> We count, from the review log
@@ -61,63 +135,175 @@ export default function PrivacyPage() {
         </P>
       </S>
 
-      <S title="What leaves this site">
+      <S title="What is kept on your own device">
         <P>
-          <strong>Your tutor messages</strong> go to whichever AI provider this installation is
-          configured with, to produce a reply. They are not used to train anything by us; the
-          provider&rsquo;s own policy governs what they do with an API request.
+          One cookie keeps you signed in. Beyond that the app stores a few things in the
+          browser itself: whether you chose the dark theme, whether you have already been
+          offered the install prompt, and an outbox holding any card you graded while the
+          network was down, so that grade is not lost and is sent with the time you actually
+          answered it.
         </P>
         <P>
-          <strong>Dictionary lookups</strong> go to Ekilex, at the Institute of the Estonian
-          Language, as a bare word with no account attached.
-        </P>
-        <P>
-          <strong>Text you play aloud</strong> goes to the TartuNLP speech service, again as a
-          bare phrase with no account attached.
-        </P>
-        <P>
-          <strong>A page you photograph</strong> goes to the same AI provider as your tutor
-          messages, once, so the words on it can be read back. Nothing about your account goes
-          with it, and no copy is kept at either end of ours.
-        </P>
-        <P>
-          Your deck, your review history and your tasks are never sent anywhere.
+          None of that is a tracker and none of it is shared with anybody. Estonian law
+          requires your agreement before something is stored on your device unless it is
+          strictly necessary for the service you asked for, and each of these is: a review
+          app that silently drops the answers you gave on a train is broken, not private.
+          That is why there is no cookie banner. Clearing your browser storage removes all
+          of it, and costs you nothing except any grade still waiting to be sent.
         </P>
       </S>
 
-      <S title="Your data, in your hands">
+      <S title="Who else sees it">
         <P>
-          Settings has an <strong>Export</strong> button that gives you the whole thing as a
-          JSON file: every card, review, task, scanned page and setting. It is a real backup, and
-          the same file
-          restores into a fresh installation. Nothing is held back from it.
+          This installation is configured to reach the services below, and nobody else. Each
+          gets only what is described beside it, and none of them is paid to profile you.
         </P>
+        <ul className="space-y-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          {recipients.map((r) => (
+            <li key={r.name}>
+              <strong>{r.name}</strong>: {r.what}.{" "}
+              {r.eea === true
+                ? "In Estonia."
+                : r.eea === false
+                  ? "Outside the European Economic Area."
+                  : "Where this is hosted depends on how the installation was set up, so ask the operator above."}
+            </li>
+          ))}
+        </ul>
         <P>
-          <strong>Settings → Deleting your data</strong> removes your cards, reviews, tasks,
-          messages, stars, badges, settings, scanned pages, level checks and usage records, in one
-          transaction,
-          immediately.
-          The shared dictionary stays (other learners have cards built on it) but any entry you
-          edited stops being attributed to you. Take an export first: this keeps no copy.
+          Your deck, your review history, your tasks and your level checks are never sent to
+          any of them.
+        </P>
+        {leavesTheUnion && (
+          <P>
+            <strong>Some of that leaves the European Economic Area.</strong> The AI providers
+            are established outside it, so what you type to Anu and any page you photograph
+            crosses a border to be read. That transfer rests on the standard contractual
+            clauses the provider publishes and on nothing else, and it is worth knowing that
+            protection there is not identical to protection here. It is also avoidable: the
+            tutor and the page scanner are the only features that do it, and using neither
+            means nothing of yours leaves.
+          </P>
+        )}
+        <P>
+          None of it is sold, and none of it is used by us to train a model. What a provider
+          does with an API request is governed by their own terms, which is a real limit on
+          this promise rather than a formality: some free tiers are free because the provider
+          reserves the right to look at what goes through them.
         </P>
       </S>
 
       <S title="How long it is kept">
         <P>
-          For as long as you keep the account. There is no separate archive and no backup that
-          outlives a deletion by more than the hosting provider&rsquo;s own retention window.
+          Your learning, your conversations and your scanned word lists are kept for as long
+          as you keep the account, because their whole value is that they are long. The
+          scheduling works off years of history and a level check is only useful next to the
+          one before it.
+        </P>
+        <P>
+          Spending records are kept for the running year, since the caps they enforce are
+          daily. Error logs are short-lived by nature and hold no name. There is no separate
+          archive, and no backup that outlives a deletion by more than the hosting
+          provider&rsquo;s own retention window.
+        </P>
+      </S>
+
+      <S title="What you can demand">
+        <P>
+          These are your rights under the GDPR, and the two that people actually want are
+          buttons rather than requests.
+        </P>
+        <P>
+          <strong>A copy of everything (access, and portability).</strong> Settings has an{" "}
+          <strong>Export</strong> button that gives you the whole thing as a JSON file: every
+          card, review, task, setting, scanned page, level check, tutor message, starred word
+          and badge. It is a real backup, and the same file restores into a fresh
+          installation. Nothing is held back from it.
+        </P>
+        <P>
+          <strong>Erasure.</strong> <strong>Settings → Deleting your data</strong> removes all
+          of that in one transaction, immediately, along with your sign-in record. The shared
+          dictionary stays, because other learners have cards built on it, but any entry you
+          edited stops being attributed to you. Take an export first: this keeps no copy. If
+          the installation is not configured to delete the sign-in record itself, the button
+          says so plainly rather than pretending, and the address at the top of this page is
+          who to ask.
+        </P>
+        <P>
+          <strong>Correction.</strong> Anything you can see, you can change: your settings,
+          your cards, your tasks, your goal. A dictionary entry can be corrected too, and
+          because the dictionary is shared, that correction is attributed to you until you
+          delete your account.
+        </P>
+        <P>
+          <strong>Restriction and objection.</strong> You can ask for processing to be paused
+          or object to it, in writing, at the address above. In practice almost everything
+          here exists only to deliver the app to you, so the usual answer to an objection is
+          to stop using the part you object to, and erasure is the stronger and faster
+          version of the same thing.
+        </P>
+        <P>
+          There is no charge for any of this and no need to give a reason. A request made in
+          writing is answered within a month.
+        </P>
+      </S>
+
+      <S title="Nothing here decides anything about you">
+        <P>
+          The app estimates a CEFR level from what you answered and predicts your chance of
+          passing a mock exam. Neither is a decision with any legal or comparable effect: they
+          are study advice, they are marked by string comparison against the dictionary rather
+          than by a model, and every figure says how thin the evidence behind it is. No
+          qualification, no admission and no result depends on them. There is no automated
+          decision-making in the sense the law means, and no profiling.
+        </P>
+      </S>
+
+      <S title="If you are not satisfied">
+        <P>
+          Ask the operator first, at the address at the top of this page. If that gets you
+          nowhere you have the right to complain to the{" "}
+          <strong>{SUPERVISORY_AUTHORITY.name}</strong> ({SUPERVISORY_AUTHORITY.localName}),
+          which is the supervisory authority for Estonia:{" "}
+          {SUPERVISORY_AUTHORITY.address}, {SUPERVISORY_AUTHORITY.phone},{" "}
+          <a
+            href={`mailto:${SUPERVISORY_AUTHORITY.email}`}
+            className="underline underline-offset-2"
+          >
+            {SUPERVISORY_AUTHORITY.email}
+          </a>
+          ,{" "}
+          <a
+            href={SUPERVISORY_AUTHORITY.web}
+            className="underline underline-offset-2"
+            rel="noreferrer"
+          >
+            {SUPERVISORY_AUTHORITY.web}
+          </a>
+          . If you live elsewhere in the Union you may go to your own country&rsquo;s
+          authority instead. You can also take it to court.
         </P>
       </S>
 
       <S title="Children">
         <P>
-          Kodukeel is not aimed at children under 13 and does not knowingly hold their data.
+          In Estonia a person can agree to a service like this one for themselves from the age
+          of 13, which is the age the Personal Data Protection Act sets. Below that, a parent
+          has to agree. Kodukeel is not aimed at younger children and does not knowingly hold
+          their data; if you believe a child under 13 has an account here without a
+          parent&rsquo;s agreement, write to the address above and it will be deleted.
+        </P>
+        <P>
+          A school running this for a class is the controller of its pupils&rsquo; data and
+          answers for that agreement. What a teacher can see is deliberately narrow: how much
+          work each pupil did and which grammar the class as a whole is weakest at, never an
+          individual&rsquo;s deck, their searches or their answers.
         </P>
       </S>
 
       <S title="Getting in touch">
         <P>
-          Questions about your data go to whoever runs this installation. See also the{" "}
+          Questions about your data go to the operator named at the top. See also the{" "}
           <Link href="/terms" className="underline underline-offset-2">terms</Link>.
         </P>
       </S>

@@ -1,10 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   completeWithImage, FREE_GEMINI_MODELS, FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS,
-  openWithFallback, providerResilience, resolveProviders,
+  openWithFallback, PROVIDER_KEY_ENV, providerResilience, resolveProviders,
   TutorError, visionProviders,
 } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
+
+/*
+  EVERY CASE STARTS ON A MACHINE WITH NO KEYS, WHATEVER MACHINE IT IS ON.
+
+  A test here describes a chain, so it has to state the whole environment the
+  chain is read from. It did not: each case stubbed the keys it cared about
+  and inherited the rest from whoever was running it. CI carries no provider
+  keys, so it passed; a developer machine with `GROQ_API_KEY` exported failed
+  thirteen of these, and the failures read as chain bugs rather than as the
+  suite reporting its own host.
+
+  Clearing `PROVIDER_KEY_ENV` here fixes both halves at once. A case that
+  names a key still names it, and a case that forgets one now inherits an
+  empty string rather than somebody's real credential, which is also the only
+  version of this file that is safe to run with a `.env` loaded.
+*/
+beforeEach(() => {
+  for (const key of PROVIDER_KEY_ENV) vi.stubEnv(key, "");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -17,32 +36,23 @@ function sse(text: string): Response {
   return new Response(body, { status: 200 });
 }
 
-/** Every provider key the chain reads, so a test can speak about all of them. */
-const PROVIDER_KEYS = [
-  "OPENROUTER_API_KEY",
-  "GROQ_API_KEY",
-  "GEMINI_API_KEY",
-  "ANTHROPIC_API_KEY",
-  "OPENAI_API_KEY",
-] as const;
-
-/*
-  Cleared before every test, because the suite has to say the same thing on a
-  machine that has keys and one that does not.
-
-  It did not. `.env` gained real Groq and Gemini keys, the tests stubbed only
-  the three providers that existed when they were written, and thirteen of them
-  failed at once: "the chain is empty with no key at all" is not empty when the
-  developer's own environment quietly adds two more links. A test whose answer
-  depends on the machine is not a test.
-*/
-beforeEach(() => {
-  for (const key of PROVIDER_KEYS) vi.stubEnv(key, "");
-});
-
+/**
+ * Exactly one provider configured, whichever the case is about.
+ *
+ * Driven off `PROVIDER_KEY_ENV`, which is exported by the module that reads
+ * those keys, rather than a list retyped here. That is the whole fix and not a
+ * tidying: the fault was a list in this file falling behind the chain, so a
+ * second copy of the list living here is the same fault waiting to happen. A
+ * provider added to `resolveProviders` is now three lines from the list that
+ * has to name it.
+ *
+ * Two sessions fixed this within the hour and the other one kept its list in
+ * this file. Its sentence is worth keeping though, because it is the rule:
+ * a test whose answer depends on the machine is not a test.
+ */
 function only(name: "openrouter" | "groq" | "gemini" | "anthropic" | "openai") {
-  for (const key of PROVIDER_KEYS) vi.stubEnv(key, "");
-  vi.stubEnv(`${name.toUpperCase()}_API_KEY`, "k");
+  const wanted = `${name.toUpperCase()}_API_KEY`;
+  for (const key of PROVIDER_KEY_ENV) vi.stubEnv(key, key === wanted ? "k" : "");
 }
 
 /*

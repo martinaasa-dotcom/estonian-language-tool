@@ -30,11 +30,22 @@ const AUDIO = `${VERSION}-audio`;
 /** The page shown when a navigation cannot be served any other way. */
 const OFFLINE_URL = "/offline";
 
+/** Files with no session in them, needed whatever happens. */
+const SHELL_URLS = [OFFLINE_URL, "/app-icon.svg"];
+
+/**
+ * One at a time rather than `addAll`, which is atomic: a single URL that
+ * cannot be fetched throws away the whole batch, and the offline page is in
+ * this batch. Losing the icon costs an icon; losing /offline costs the
+ * fallback itself, which is the one thing in here that has no fallback.
+ */
+function cacheEach(cache, urls) {
+  return Promise.all(urls.map((url) => cache.add(url).catch(() => undefined)));
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(SHELL)
-      .then((cache) => cache.addAll([OFFLINE_URL, "/app-icon.svg"]))
-      .catch(() => undefined),
+    caches.open(SHELL).then((cache) => cacheEach(cache, SHELL_URLS)).catch(() => undefined),
   );
   self.skipWaiting();
 });

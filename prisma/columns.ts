@@ -78,6 +78,11 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
  */
 export const PRESERVED_COLUMNS = [
   "provenance", "ekilexWordId", "fetchedAt",
+  // When Ekilex was last asked about this word and had nothing. Cache state,
+  // like the two before it, and reloading the built-in words tells us nothing
+  // new about what Ekilex holds. Clearing it here would put every word Ekilex
+  // cannot answer for back into the re-ask loop this column exists to stop.
+  "lookupMissAt",
   // Who corrected an entry by hand, and when. The dictionary is shared, so an
   // edit is everybody's — which is exactly why a reseed must not quietly erase
   // the record of who made it.

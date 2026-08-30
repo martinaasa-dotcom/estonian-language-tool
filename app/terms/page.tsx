@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { Legal, P, S } from "@/components/Legal";
+import { resolveOperator } from "@/lib/legal/operator";
 
 export const metadata = { title: "Terms · Kodukeel" };
 
+/*
+  Same reason as the privacy page: who provides this service is a fact about
+  the deployment, so it is read when the page is requested rather than baked in
+  by whichever machine ran the build.
+*/
+export const dynamic = "force-dynamic";
+
 export default function TermsPage() {
+  const operator = resolveOperator();
+
   return (
     <Legal title="Terms" updated="29 August 2026">
       <P>
@@ -12,11 +22,47 @@ export default function TermsPage() {
         and understand what it can and cannot promise you.
       </P>
 
+      <S title="Who provides it">
+        {operator.identified ? (
+          <P>
+            This installation of Kodukeel is provided by <strong>{operator.name}</strong>
+            {operator.registryCode ? `, registry code ${operator.registryCode}` : ""}, at{" "}
+            {operator.address}. Reach them directly at{" "}
+            <a href={`mailto:${operator.email}`} className="underline underline-offset-2">
+              {operator.email}
+            </a>
+            . Estonian law asks a provider of an online service for exactly that: a name, a
+            place, and a way to get hold of them quickly without going through a form.
+          </P>
+        ) : (
+          <P>
+            <strong>Whoever runs this installation has not filled their name in</strong>, and
+            they are supposed to. Kodukeel is software somebody installs, so the provider of
+            the service you are using is the person or school running this copy, not the
+            people who wrote it. Ask whoever gave you the link. If that is you, setting{" "}
+            <code>OPERATOR_NAME</code>, <code>OPERATOR_ADDRESS</code> and{" "}
+            <code>OPERATOR_EMAIL</code> puts your details here and on the{" "}
+            <Link href="/privacy" className="underline underline-offset-2">privacy page</Link>.
+          </P>
+        )}
+        <P>
+          The service costs nothing and there is nothing to buy, so no consumer purchase, no
+          right of withdrawal and no payment terms arise. If an installation ever starts
+          charging, that is a different arrangement and these terms do not cover it.
+        </P>
+      </S>
+
       <S title="What it promises">
         <P>
           Inflected Estonian forms come from Ekilex, the lexicographic database of the
           Institute of the Estonian Language. They are not generated. Where a form is
           shown as derived from a stored genitive stem, it is labelled as derived.
+        </P>
+        <P>
+          <strong>Anu is a machine, and says so on every screen it speaks from.</strong> You
+          are talking to a language model, not to a teacher, and the app is required to make
+          that unmistakable rather than merely true. Which model answered is printed under
+          each reply, because a screen naming the wrong one would be worse than naming none.
         </P>
         <P>
           Anu, the AI tutor, is not authoritative. It may explain grammar and suggest an
@@ -57,6 +103,15 @@ export default function TermsPage() {
         <P>
           You can stop and delete your data at any time. An installation may withdraw
           access to an account that is abusing the shared services described above.
+        </P>
+      </S>
+
+      <S title="Which law applies">
+        <P>
+          Estonian law governs these terms and anything arising from them, and the Estonian
+          courts are where a dispute ends up. Nothing here takes away a right you have as a
+          consumer where you live: if the law of your own country gives you something these
+          terms do not, that law wins.
         </P>
       </S>
 

@@ -187,6 +187,62 @@ also joins an identical request already in flight rather than making a second on
 is consulted before the call and written after it, and the gap between those is exactly where a
 class starting the same unit together lands.
 
+**A policy page states this deployment, or states that nobody filled it in.** Kodukeel is
+software somebody installs, so the controller is whoever runs the copy, and "ask whoever runs
+this installation" is honest but not an answer: there is no way to find out who that is.
+`lib/legal/operator.ts` reads the identity from `OPERATOR_NAME`, `OPERATOR_ADDRESS`,
+`OPERATOR_EMAIL` and an optional registry code, and `/privacy` and `/terms` render it. Never
+add a placeholder: an unset deployment says out loud that it is unset, because a page that
+quietly says nothing looks finished. Both pages are `force-dynamic` for the same reason, since
+a notice baked in at build time describes the build machine's environment, which is nobody's.
+The recipients list is generated from the deployment's own configuration (`lib/legal/recipients.ts`)
+rather than described in the abstract, so a reader is told which companies and whether they are
+in Estonia. Estonia sets the age of consent at 13, not 16.
+
+**Erasure and export are promises, and both were being broken.** "Delete everything" emptied
+every table and left the identity in Supabase Auth, where the email address, the Google subject
+id and the sign-in history live; `lib/auth/erase.ts` removes it, and where a deployment has no
+key that can, the screen says which part is left rather than reporting a success. The export was
+five tables and the page said nothing was held back: settings, tutor conversations, level checks,
+stars and badges were all missing, and a level check cannot be recomputed from anything. The
+invariant reads the owner-scoped models out of the schema rather than a list somebody typed, so a
+new table fails until a person decides about it. `UsageEvent` is the one deliberate exclusion and
+/privacy names it.
+
+**A source that will not answer is written down as a miss, in the live path too.** The seed
+learned this expensively. `enrichFromEkilex` had the same bug with a symptom nobody looks for:
+it recorded nothing when Ekilex had nothing, so every render of that word asked again, two round
+trips to a free academic service, for ever, against a 2,500ms deadline. `Lexeme.lookupMissAt` is
+the marker and is deliberately **not** `fetchedAt`, which `lib/progress/exam.ts` reads as "words
+the dictionary knows most about": folding a miss into it would sort the least known words to the
+front of a mock paper. It expires after a day, because Ekilex is a living database.
+
+**There is one in-flight map, and it lives in `lib/cache/singleFlight.ts`.** A cache consulted
+before a call and written after it has a gap exactly as wide as the call, and a class of
+twenty-five starting the same unit lands in it. Speech worked this out first and the dictionary
+needed the same thing; a second copy of the pattern is where the `finally` gets dropped and one
+bad minute upstream is remembered as a failure until the next deploy. A joiner is not charged for
+a request it did not make, which is why `singleFlightTagged` reports which caller it was.
+
+**The service worker warms the page you were on when it took over.** The page cache fills as a
+side effect of a navigation the worker intercepts, and the worker never serves the navigation
+that installed it: the page is fetched, the worker installs behind it, and `clients.claim()`
+takes over a client whose own page was never seen. So the first journey failed and the second
+worked. `warmOpenPages` on activate is the fix, and it caches whatever window is open rather
+than a list of routes, because the rule is "the page you were last on opens again", not "one
+route is special". The shell is warmed one URL at a time and never through `addAll`, which is
+atomic: one URL that will not fetch throws away the batch, and `/offline` is in it.
+
+**A unit test states a machine, it does not run on one.** The provider suite cleared three
+provider keys and inherited the rest from whoever ran it. CI carries none, so it passed; a machine
+with `GROQ_API_KEY` exported failed thirteen of them, and the failures read as chain bugs rather
+than as the suite reporting its host. A test whose answer depends on the machine is not a test.
+`PROVIDER_KEY_ENV` is the one list and it is **exported by `provider.ts`, not retyped in the test**:
+the fault was a list in the test falling behind the chain, so a copy living there is the same fault
+waiting to happen. Two sessions fixed this within the hour and the other kept its list in the test;
+that copy was deleted rather than left beside this one. If you add a provider, add its key to
+`PROVIDER_KEY_ENV`, three lines above the function that reads it.
+
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only —
 never add a flag that can disable auth on a deployment that has it. (ADR-013.)

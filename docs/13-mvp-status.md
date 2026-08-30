@@ -796,3 +796,103 @@ and one redirecting URL would take the offline page down with it.
    neither half is ours to rewrite because a headword was corrected. Same
    reasoning as the case-form cards in §5, and it only became visible when
    seeded words gained attested sentences.
+
+## 15. The tenth pass: what a person has to be told, and what to stop asking twice
+
+Three passes over one branch, and they turned out to share a shape: in each
+one the app was doing the right thing and could not prove it, or was doing an
+honest thing that quietly cost something.
+
+### The policy pages named nothing, and could not
+
+`/privacy` and `/terms` were written from the schema, which is why almost every
+sentence in them was true. What they had no way to say was who was answerable.
+Kodukeel is software somebody installs rather than a service with one address,
+so the controller is whoever runs the copy, and the pages said exactly that:
+"ask whoever runs this installation". That is honest and it is not an answer,
+because there is no way to find out who that is.
+
+Article 13(1)(a) wants a name and a contact at the point of collection, and the
+Information Society Services Act wants the same of anyone providing an online
+service. So the identity is configuration now, like the database URL:
+`OPERATOR_NAME`, `OPERATOR_ADDRESS`, `OPERATOR_EMAIL` and, for a company, the
+registry code. Both pages render it, and **a deployment that has not set it says
+so in as many words** rather than showing a plausible blank. That is the half
+worth defending: a page that quietly says nothing looks finished.
+
+Six more things a reader is entitled to and was not being told: the lawful basis
+for each thing stored, who else sees it, whether any of it leaves the Union, how
+long it is kept, the rights that can be exercised, and the right to complain to
+the Data Protection Inspectorate. The recipients section is generated from the
+deployment's own configuration rather than described in the abstract, so a
+reader is told which companies specifically, and whether they are in Estonia or
+not. A page that says "whichever AI provider this installation is configured
+with" answers the question in form only.
+
+The one genuinely Estonian detail, as opposed to the European ones: the age at
+which somebody can agree to this for themselves is 13 here, which the page now
+states rather than leaving to a reader's assumption about 16.
+
+### Two promises the app was not keeping
+
+Both were found by reading the page against the code, which is the only way
+either would have been found.
+
+**"Delete everything" did not.** `deleteMyAccount` emptied every table this app
+owns, in one transaction, and left the identity behind: the email address, the
+Google subject id and the sign-in history live in Supabase Auth, not in our
+schema. There was no route to remove them and nothing on screen admitting it.
+An email address is personal data wherever it is stored. The button now erases
+the auth user too, and where the deployment holds no key that can, it says which
+part is left and who to ask instead of reporting a success it did not achieve.
+
+**"Nothing is held back from it" held back half.** The export was five tables.
+Settings, the conversations with Anu, the level checks, the starred words and
+the badges were all absent, and two of those cannot be reconstructed from
+anything: a sitting of the level check is a measurement of a moment, and a
+tutor conversation is the learner's own writing. All five are exported now, and
+all five restore, so the file is a real backup as well as an Article 20 copy.
+The invariant behind it reads the owner-scoped models out of the schema rather
+than a list somebody typed, so a new table is a failure until a person decides
+about it. `UsageEvent` is the one deliberate exclusion and the page names it:
+it is the deployment's spending record, not the learner's work.
+
+### A question asked on every render, for ever
+
+`enrichFromEkilex` had no way to record that Ekilex had nothing to say, so it
+did not, so the next render asked again. Two round trips to a free academic
+service per view of a word that was never in Ekilex, against a 2,500ms deadline
+that could hold the page for all of it. The seed learned this exact lesson
+expensively, and the live path had the same bug with a symptom nobody looks
+for: a cost rather than an absence.
+
+`Lexeme.lookupMissAt` records it, and is deliberately not `fetchedAt`, which
+the exam pool reads as a ranking. Details are in `docs/15-performance.md`.
+
+### The offline fault two sessions found at once
+
+This pass also found `smoke-offline` failing on a real bug: the worker never
+serves the navigation that installs it, so the page cache was empty for exactly
+the person the fallback exists for. Another session found it in the same week
+and landed the better fix, which caches whatever window is open rather than a
+list of routes written in advance. The version written here was deleted rather
+than left beside it, keeping only the one clause it carried that the other had
+no reason to: the shell is warmed one URL at a time, because `addAll` is atomic
+and `/offline` is in that batch. `docs/15-performance.md` has the measurement,
+and the invariant is what the surviving fix did not come with.
+
+### Known limitations, stated plainly
+
+1. **A deployment can still run unnamed.** Nothing refuses to boot without an
+   operator, and nothing should: a local single-learner install has no third
+   party to inform, and a hard failure would push somebody towards a fake value.
+   The pages say the field is empty, which is the strongest honest move.
+2. **Where Supabase hosts a project is not readable from here.** The region is
+   chosen when the project is created, so the recipients list says it depends on
+   how the installation was set up rather than guessing at a continent.
+3. **A provider's own terms are outside this promise, and the page says so.**
+   Some free tiers are free because the provider reserves the right to read what
+   goes through them. The app can name who it sends to; it cannot bind them.
+4. **The miss marker is a per-word day, not a shared negative cache.** A word
+   nobody looks at twice never benefits from it, which is correct and worth
+   naming: it makes the second view cheap, not the first.

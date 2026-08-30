@@ -124,7 +124,20 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
                 {summary.scans === 1 ? "" : "s"},{" "}
               </>
             )}
-            and <span className="tnum">{summary.tasks}</span> tasks.
+            <span className="tnum">{summary.tasks}</span> tasks{" "}
+            {summary.personal > 0 ? (
+              <>
+                and <span className="tnum">{summary.personal}</span> other saved things:
+                your settings, your conversations with Anu, your level checks, your
+                starred words and your badges.
+              </>
+            ) : (
+              <>
+                and nothing else. A backup written before those were included holds no
+                settings, conversations or level checks, so this restore leaves yours
+                as they are rather than emptying them.
+              </>
+            )}
           </p>
 
           <fieldset className="mt-4">

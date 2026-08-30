@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForRequest, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
+import { singleFlightTagged } from "@/lib/cache/singleFlight";
 import { recordUsage } from "@/lib/usage/ledger";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
@@ -36,14 +37,11 @@ const SPEECH_PER_MINUTE = 120;
   thing happens to one learner whose card renders a word and its example
   sentence side by side.
 
-  So a miss records the promise it is waiting on before it awaits it, and
-  anybody arriving during that window awaits the same one. It is per warm
-  instance, like the rate limiter, and for the same reason: it costs no
-  infrastructure and it removes the burst that actually happens. The entry is
-  deleted in a `finally`, so a failed fetch is retried by the next caller
-  rather than remembered as a failure.
+  The mechanism used to be a `Map` and a `finally` written out here. It moved
+  to lib/cache/singleFlight.ts when the dictionary turned out to need exactly
+  the same thing: a second copy of this is where the `finally` gets dropped and
+  a bad minute upstream is remembered as a failure until the next deploy.
 */
-const inFlight = new Map<string, Promise<Buffer>>();
 
 /**
  * Server-side proxy and cache for Estonian speech.
@@ -86,35 +84,33 @@ export async function POST(request: Request) {
   const cached = await readAudio(hash).catch(() => null);
   if (cached) return wav(cached.body, cached.from);
 
-  const joined = inFlight.get(hash);
-  if (joined) {
-    // Somebody else is already asking for this exact clip. Wait on their
-    // answer rather than making a second identical request.
-    try {
-      return wav(await joined, "joined");
-    } catch {
-      return NextResponse.json({ error: "Speech service unreachable." }, { status: 503 });
-    }
-  }
-
-  const work = speak(text, speaker, speed, hash).finally(() => inFlight.delete(hash));
-  inFlight.set(hash, work);
-
   try {
-    const audio = await work;
+    /*
+      Whoever gets here first fetches; everybody who arrives while that is in
+      flight is handed the same promise. Which of the two this caller was
+      still matters below, so it is asked for rather than thrown away.
+    */
+    const { value: audio, joined } = await singleFlightTagged(
+      `tts:${hash}`, () => speak(text, speaker, speed, hash),
+    );
     // TartuNLP is free, so this costs nothing — it is recorded to show how
     // heavily the app leans on somebody else's goodwill. Passing an explicit
     // zero matters: the speaker name would otherwise price as an unknown model.
     // Anonymous callers are possible here (the bucket falls back to the
     // request), and the ledger is per learner, so an unattributed clip is
     // simply not recorded rather than filed under nobody.
-    if (ownerId) {
+    //
+    // A joiner is not recorded, for the same reason a cache hit above is not:
+    // this row counts requests actually made of TartuNLP, and a joiner made
+    // none. Counting them would tighten the speech allowance by the size of
+    // whatever burst the deduplication just absorbed.
+    if (ownerId && !joined) {
       void recordUsage({
         ownerId, kind: "TTS", provider: "tartunlp", model: speaker,
         inputTokens: text.length, outputTokens: 0, costMicros: 0,
       });
     }
-    return wav(audio, "upstream");
+    return wav(audio, joined ? "joined" : "upstream");
   } catch (error) {
     const status = error instanceof SpeechError ? error.status : 503;
     const message =

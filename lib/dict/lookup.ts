@@ -5,6 +5,32 @@ import { mergeExamples, parseExamples, serialiseExamples } from "./examples";
 import { fetchEnglishGloss } from "./wiktionary";
 import { translateWithAnu } from "@/lib/tutor/translate";
 import { NEEDS_TRANSLATION, NO_VALUE } from "@/lib/copy/values";
+import { isRecentMiss, rememberMiss, singleFlight } from "@/lib/cache/singleFlight";
+
+/**
+ * How long a word Ekilex had nothing to say about is left alone.
+ *
+ * The upgrade path used to record nothing at all when the answer was nothing,
+ * so a word Ekilex does not carry cost two round trips on every single render
+ * of the page it sits on. Not once, not once a day: every render, for ever,
+ * against a free academic service, and the word never got any better for it.
+ *
+ * A day is the balance. Ekilex is a living lexicographic database and a word
+ * added to it tomorrow has to be findable tomorrow, so this cannot be a
+ * permanent verdict; and nothing in it changes often enough that asking more
+ * than once a day is anything but noise.
+ */
+const MISS_TTL_MS = 24 * 60 * 60 * 1_000;
+
+/**
+ * The same window for a search that matched nothing at all.
+ *
+ * That case has no row to write to, since there is no word to write it
+ * against, so it is held in memory for the life of the instance instead. It
+ * absorbs exactly what it needs to: somebody typing a word that does not
+ * exist, seeing nothing, and pressing enter again.
+ */
+const QUERY_MISS_TTL_MS = 10 * 60 * 1_000;
 
 /**
  * Fetches a word we do not hold locally, and stores it.
@@ -85,11 +111,20 @@ export async function enrichWithinDeadline(
 
 export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
   if (!ekilexConfigured()) return false;
+  /*
+    One upgrade per word at a time. Two renders of the same entry arriving
+    together used to make two full upgrades: four Ekilex requests, and then two
+    `deleteMany` plus `createMany` pairs racing over the same word's forms.
+    Joining the one already running costs nothing and removes both.
+  */
+  return singleFlight(`ekilex:enrich:${lexemeId}`, () => runEnrich(lexemeId));
+}
 
+async function runEnrich(lexemeId: string): Promise<boolean> {
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     select: {
-      id: true, lemma: true, ekilexWordId: true,
+      id: true, lemma: true, ekilexWordId: true, lookupMissAt: true,
       translation: true, provenance: true, government: true, examples: true,
       // The marker alone is not proof: re-running the seed rewrites forms with
       // principal parts only while leaving ekilexWordId set, which would strand
@@ -102,14 +137,23 @@ export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
   if (lexeme.provenance === "USER") return false;
   // Already carries a retrieved paradigm.
   if (lexeme.ekilexWordId && lexeme.forms.length > 0) return false;
+  /*
+    Asked recently, and Ekilex had nothing. Not an error and not a permanent
+    verdict: a word can be added to Ekilex tomorrow, so the marker expires. It
+    just stops this from being asked twice per render of a page that will show
+    the same thing either way.
+  */
+  if (lexeme.lookupMissAt && Date.now() - lexeme.lookupMissAt.getTime() < MISS_TTL_MS) {
+    return false;
+  }
 
   const matches = await searchEkilex(lexeme.lemma);
   const first = matches.find((m) => m.wordValue === lexeme.lemma) ?? matches[0];
-  if (!first) return false;
+  if (!first) return recordMiss(lexeme.id);
 
   const details = await fetchEkilexDetails(first.wordId);
   const mapped = details ? mapEkilexDetails(details) : null;
-  if (!mapped || mapped.lemma !== lexeme.lemma) return false;
+  if (!mapped || mapped.lemma !== lexeme.lemma) return recordMiss(lexeme.id);
 
   await prisma.lexeme.update({
     where: { id: lexeme.id },
@@ -128,6 +172,8 @@ export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
       ekilexWordId: mapped.ekilexWordId,
       provenance: "EKILEX",
       fetchedAt: new Date(),
+      // Whatever we wrote down last time, Ekilex has answered now.
+      lookupMissAt: null,
     },
   });
   await prisma.form.deleteMany({ where: { lexemeId: lexeme.id } });
@@ -137,18 +183,58 @@ export async function enrichFromEkilex(lexemeId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * Writes down that Ekilex was asked and had nothing, and reports "not
+ * upgraded" to the caller, which is what it was going to say anyway.
+ *
+ * Only `lookupMissAt` is touched. Not `fetchedAt`, which means a successful
+ * retrieval and is read as a ranking signal by the exam pool; not
+ * `provenance`, which is a claim about where the entry came from and is
+ * unchanged by a question nobody answered. A failed write is swallowed: the
+ * cost of it is one wasted lookup next time, which is the state we were
+ * already in, and it must never turn a page render into an error.
+ */
+async function recordMiss(lexemeId: string): Promise<false> {
+  await prisma.lexeme
+    .update({ where: { id: lexemeId }, data: { lookupMissAt: new Date() } })
+    .catch(() => undefined);
+  return false;
+}
+
 export async function lookupAndStore(query: string): Promise<LookupResult | null> {
   if (!ekilexConfigured()) return null;
+  const trimmed = query.trim();
+  /*
+    Nothing came back for this exact query a moment ago, so nothing will now.
+    A search that misses is the one a person retries, and each attempt is two
+    requests to a free academic service for an answer we already have.
+  */
+  if (isRecentMiss(`ekilex:q:${trimmed}`)) return null;
+  // And one upstream search per query, however many people typed it at once.
+  return singleFlight(`ekilex:lookup:${trimmed}`, () => runLookup(trimmed));
+}
 
-  const matches = await searchEkilex(query.trim());
+async function runLookup(query: string): Promise<LookupResult | null> {
+  const missKey = `ekilex:q:${query}`;
+
+  const matches = await searchEkilex(query);
   const first = matches[0];
-  if (!first) return null;
+  if (!first) {
+    rememberMiss(missKey, QUERY_MISS_TTL_MS);
+    return null;
+  }
 
   const details = await fetchEkilexDetails(first.wordId);
-  if (!details) return null;
+  if (!details) {
+    rememberMiss(missKey, QUERY_MISS_TTL_MS);
+    return null;
+  }
 
   const mapped = mapEkilexDetails(details);
-  if (!mapped) return null;
+  if (!mapped) {
+    rememberMiss(missKey, QUERY_MISS_TTL_MS);
+    return null;
+  }
 
   // Already stored under this lemma from an earlier lookup or the seed.
   const existing = await prisma.lexeme.findUnique({
@@ -174,6 +260,7 @@ export async function lookupAndStore(query: string): Promise<LookupResult | null
     ekilexWordId: mapped.ekilexWordId,
     provenance: "EKILEX",
     fetchedAt: new Date(),
+    lookupMissAt: null,
   };
 
   const lexeme = existing
