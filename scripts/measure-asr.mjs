@@ -228,7 +228,15 @@ async function withRetry(hear) {
       return await hear();
     } catch (error) {
       last = error;
-      if (!String(error.message).includes("429")) throw error;
+      /*
+        429 is "too many for now" and 503 is "this model is busy for
+        everybody"; both clear on their own and neither says anything about the
+        recogniser's accuracy. Only 429 was retried at first, and a run where
+        Gemini answered 503 twenty-five times in a row gave up instantly on
+        each one and looked like a decision rather than an outage.
+      */
+      const transient = /\b(429|503)\b/.test(String(error.message));
+      if (!transient) throw error;
       await new Promise((r) => setTimeout(r, 4000 * 2 ** attempt));
     }
   }
