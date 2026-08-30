@@ -159,9 +159,16 @@ export default function PrivacyPage() {
         <P>
           One cookie keeps you signed in. Beyond that the app stores a few things in the
           browser itself: whether you chose the dark theme, whether you have already been
-          offered the install prompt, and an outbox holding any card you graded while the
+          offered the install prompt, an outbox holding any card you graded while the
           network was down, so that grade is not lost and is sent with the time you actually
-          answered it.
+          answered it, and a mock exam paper you have started but not handed in, so that
+          closing the tab three hours into a B2 paper does not throw the whole sitting away.
+        </P>
+        <P>
+          The unfinished paper holds your answers and when each part&apos;s clock runs out. It
+          holds no marks and no questions: the paper is rebuilt from a seed and marked on the
+          server, so nothing kept here can change a score. It is replaced as you write and
+          removed the moment the paper is handed in.
         </P>
         <P>
           None of that is a tracker and none of it is shared with anybody. Estonian law

@@ -524,7 +524,29 @@ examination is the exact judgement it is least qualified to make.
 The **imitation declares itself**. Each task names the official task it stands in for and the
 briefing prints it; the A1 and C2 papers are labelled "not examined" wherever they appear, because
 the state sets neither; and the spoken part says on every screen that the learner is marking
-themselves. **What the dictionary cannot fill is reported, not dropped**: a task states its
+themselves. Two of those tasks stand in for a **marking criterion rather than a task** and used to
+claim otherwise: the real writing part is two pieces of writing, `teate koostamine` and then a story
+or a personal letter, and grammatical accuracy is what an examiner marks inside them. This app may
+not mark Estonian prose, so it asks the accuracy directly and now says "not a task the real paper
+sets" against both, which is the difference between a defensible substitution and a candidate who
+rehearsed the wrong half of the part.
+
+**The conditions are the paper too, and four of them were missing.** A recording plays twice and no
+more, counted on the question rather than on the button so the dictation's slow play cannot hand out
+four; a listening task opens with a pause to read the questions; a part **closes** when its clock
+goes, inside one `fieldset` rather than a flag threaded through eleven question shapes, because the
+screen used to say the paper would be taken away and then let you carry on writing; and the spoken
+part follows a break, since running it off the back of ninety minutes of writing tests stamina
+rather than speaking. The clock announces at five minutes and at one, and does **not** sit in a live
+region, which had it reading a number a second at a screen reader for fifty minutes.
+
+**An unfinished paper is kept on the device**, because "nothing is saved until you hand in" was an
+honest description of losing three hours of B2 to a reload. `app/(app)/exam/[level]/resume.ts` holds
+answers and deadlines and never a mark or a question, the deadlines are absolute so shutting the tab
+does not stop the clock, and /privacy accounts for it. What the two written tasks are marked on is
+shown live from `lib/exam/written.ts`, which is the marker's own function: a chip that ticked a word
+off by a rule of its own would promise a mark the server was not going to give. It is a module
+rather than an export of `score.ts` because the sitting screen may not import the marker at all. **What the dictionary cannot fill is reported, not dropped**: a task states its
 shortfall, a part is marked out of what was actually set, and a part nothing could be set for is
 left out of the total rather than scored zero. Scoring it zero would fail a candidate for a gap in
 the dictionary and would trip the one clause that is supposed to mean "you did not attempt this".

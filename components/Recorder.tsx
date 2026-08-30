@@ -21,12 +21,35 @@ type State = "idle" | "recording" | "ready" | "unavailable";
  * The audio never leaves the browser — no upload, no storage, and the blob is
  * released when the card changes.
  */
-export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
+export function Recorder({ onRecorded, targetSeconds }: {
+  onRecorded?: () => void;
+  /**
+   * Seconds the answer is supposed to run for, shown as a clock while recording.
+   *
+   * The spoken part of the state examination is timed, and "aim for about ninety
+   * seconds" printed above a microphone button is not a timing: nobody knows how
+   * long they have been talking. The clock counts up rather than down, and going
+   * past the target is not stopped or penalised, because the examiner does not
+   * stop you either.
+   */
+  targetSeconds?: number;
+}) {
   const [state, setState] = useState<State>("idle");
   const [url, setUrl] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const stream = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (state !== "recording") return;
+    const started = Date.now();
+    setElapsed(0);
+    const timer = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [state]);
 
   const cleanup = useCallback(() => {
     stream.current?.getTracks().forEach((t) => t.stop());
@@ -78,6 +101,17 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
+      {state === "recording" && (
+        <span
+          className="est tnum text-sm font-semibold"
+          style={{ color: targetSeconds && elapsed >= targetSeconds ? "var(--mint-ink)" : "var(--ink-2)" }}
+          role="timer"
+        >
+          {clock(elapsed)}
+          {targetSeconds ? <span style={{ color: "var(--ink-3)" }}> of {clock(targetSeconds)}</span> : null}
+        </span>
+      )}
+
       {state === "recording" ? (
         <button
           type="button"
@@ -111,4 +145,10 @@ export function Recorder({ onRecorded }: { onRecorded?: () => void }) {
       )}
     </div>
   );
+}
+
+function clock(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }

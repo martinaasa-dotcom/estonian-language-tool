@@ -192,8 +192,30 @@ export interface ComposeItem extends BaseItem {
   /** The topic, in English. The app teaches in English; only the answer is Estonian. */
   topic: string;
   prompt: string;
+  /**
+   * The two briefs the real paper offers, and the learner picks one.
+   *
+   * "Testitaval tuleb kirjutada kas a) jutt etteantud teemal või b) isiklik
+   * kiri" is the B1 specification's own wording for the second writing task, so
+   * a mock that hands over one brief and no choice is setting a different task.
+   * Both are marked identically, because both are marked on length and on the
+   * words the dictionary asked for; the choice changes what somebody writes, not
+   * what it is worth, which is the only way this app can offer one honestly.
+   */
+  variants: { label: string; prompt: string }[];
   minWords: number;
   /** Words from the dictionary the text must use, with their glosses. */
+  mustUse: { lemma: string; translation: string; lexemeId: string }[];
+}
+
+export interface MessageItem extends BaseItem {
+  kind: "message";
+  /** The situation, in English. */
+  scenario: string;
+  prompt: string;
+  /** The points the message has to cover, which the real task always lists. */
+  cover: string[];
+  minWords: number;
   mustUse: { lemma: string; translation: string; lexemeId: string }[];
 }
 
@@ -208,7 +230,7 @@ export interface SpeakItem extends BaseItem {
 
 export type ExamItem =
   | MatchItem | GapChoiceItem | OrderItem | CaseFormItem | GovernmentItem
-  | DictationItem | ListenChooseItem | ComposeItem | SpeakItem
+  | DictationItem | ListenChooseItem | MessageItem | ComposeItem | SpeakItem
   | GlossChoiceItem | FormChoiceItem;
 
 export interface ExamTask {
@@ -273,6 +295,55 @@ export const TOPICS: readonly string[] = [
   "languages",
   "the weather",
   "work",
+] as const;
+
+/**
+ * The situations the short message task is set in.
+ *
+ * `teate koostamine` is the first task of the real writing part, and what makes
+ * it that task rather than a short essay is that it has a job to do: the paper
+ * gives a situation and lists the points the message must cover. Those lists are
+ * here, in English, for the same reason `TOPICS` is: a prompt is an instruction
+ * rather than a text to be understood, and the Estonian is what the learner
+ * writes back (ADR-005).
+ *
+ * The functions named in the specification are what these were written against:
+ * seletamine, kirjeldamine, ettepaneku tegemine, isikuandmete edastamine.
+ * Explaining, describing, proposing something, passing on your own details.
+ */
+export const MESSAGES: readonly { scenario: string; cover: readonly string[] }[] = [
+  {
+    scenario: "a note to a neighbour who took in a parcel for you",
+    cover: ["say who you are", "say what you are collecting", "say when you will come"],
+  },
+  {
+    scenario: "an e-mail cancelling an appointment you cannot keep",
+    cover: ["say which appointment", "give a reason", "propose another time"],
+  },
+  {
+    scenario: "a message to a landlord about something broken in the flat",
+    cover: ["say what is broken", "say since when", "ask what happens next"],
+  },
+  {
+    scenario: "a note to a colleague who will cover your work tomorrow",
+    cover: ["say why you are away", "say what needs doing", "say how to reach you"],
+  },
+  {
+    scenario: "a message to a friend inviting them somewhere",
+    cover: ["say where and when", "say why you are going", "ask them to answer"],
+  },
+  {
+    scenario: "an e-mail to a course you want to join",
+    cover: ["give your name and details", "say which course", "ask what it costs"],
+  },
+  {
+    scenario: "a note to a shop about something you bought that is faulty",
+    cover: ["say what you bought and when", "say what is wrong", "say what you want done"],
+  },
+  {
+    scenario: "a message to a doctor's surgery asking for an appointment",
+    cover: ["give your name", "say what is wrong", "say when you can come"],
+  },
 ] as const;
 
 /**
@@ -700,6 +771,34 @@ function buildFormChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
   return finish(spec, items, undefined, "words with more than one case form to tell apart");
 }
 
+function buildMessage(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
+  const { messageWords } = lengthsFor(ctx.level);
+  const brief = MESSAGES[Math.floor(ctx.random() * MESSAGES.length)] ?? MESSAGES[0]!;
+  // Two rather than the composition's four: this is a short message, and asking
+  // for four given words inside twenty of your own is asking for a word list.
+  const mustUse = shuffle(ctx.words, ctx.random)
+    .filter((w) => !ctx.spent.has(w.lexemeId))
+    .slice(0, 2)
+    .map((w) => ({ lemma: w.lemma, translation: w.translation, lexemeId: w.lexemeId }));
+  for (const word of mustUse) ctx.spent.add(word.lexemeId);
+
+  const anchor = ctx.words[0];
+  const items: MessageItem[] = [{
+    id: `${spec.id}-${index}`,
+    lexemeId: anchor?.lexemeId ?? "",
+    lemma: anchor?.lemma ?? "",
+    translation: anchor?.translation ?? "",
+    cardId: null,
+    kind: "message",
+    scenario: brief.scenario,
+    prompt: `Write ${brief.scenario}. At least ${messageWords} words.`,
+    cover: [...brief.cover],
+    minWords: messageWords,
+    mustUse,
+  }];
+  return finish(spec, items, undefined, "a situation, three points to cover and two words");
+}
+
 function buildCompose(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
   const { composeWords } = lengthsFor(ctx.level);
   const topic = TOPICS[Math.floor(ctx.random() * TOPICS.length)] ?? TOPICS[0]!;
@@ -707,6 +806,21 @@ function buildCompose(spec: TaskSpec, ctx: BuildContext, index: number): ExamTas
     .filter((w) => !ctx.spent.has(w.lexemeId))
     .slice(0, 4)
     .map((w) => ({ lemma: w.lemma, translation: w.translation, lexemeId: w.lexemeId }));
+
+  const variants = [
+    {
+      label: "A story",
+      prompt:
+        `Write a story about ${topic}. Say what happened, why, and what you think about it. ` +
+        `At least ${composeWords} words.`,
+    },
+    {
+      label: "A personal letter",
+      prompt:
+        `Write a personal letter to somebody you know about ${topic}. Greet them, tell them ` +
+        `what has been happening, ask them something, and sign off. At least ${composeWords} words.`,
+    },
+  ];
 
   const anchor = ctx.words[0];
   const items: ComposeItem[] = [{
@@ -717,13 +831,12 @@ function buildCompose(spec: TaskSpec, ctx: BuildContext, index: number): ExamTas
     cardId: null,
     kind: "compose",
     topic,
-    prompt:
-      `Write about ${topic}. Say what happens, why, and what you think about it. ` +
-      `At least ${composeWords} words.`,
+    prompt: variants[0]!.prompt,
+    variants,
     minWords: composeWords,
     mustUse,
   }];
-  return finish(spec, items, undefined, "a topic and four words to build it from");
+  return finish(spec, items, undefined, "a topic, two briefs to choose between and four words");
 }
 
 function buildSpeak(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
@@ -855,6 +968,7 @@ function buildOne(kind: TaskKind, taskSpec: TaskSpec, ctx: BuildContext, index: 
     case "government": return buildGovernment(taskSpec, ctx);
     case "dictation": return buildDictation(taskSpec, ctx);
     case "listen-choose": return buildListenChoose(taskSpec, ctx);
+    case "message": return buildMessage(taskSpec, ctx, index);
     case "compose": return buildCompose(taskSpec, ctx, index);
     case "speak": return buildSpeak(taskSpec, ctx, index);
     case "gloss-choice": return buildGlossChoice(taskSpec, ctx);
