@@ -5,7 +5,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { CASE_GROUPS, TOPIC_GROUPS, TOPIC_NOTES, caseReference, grammarTopic } from "@/lib/estonian/grammar";
 import { VERB_AXES, grammarGroupTerm, grammarTerm } from "@/lib/estonian/terms";
 import { caseAccuracy } from "@/lib/stats/history";
-import { Card, Chip, Meter, Note, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Meter, Note, Page, SectionTitle, Stack } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +43,7 @@ export default async function GrammarIndexPage() {
       title="Grammar"
       lead="Named the way a course names them: the Estonian term and the question it answers first, the English name after it for when you are reading an English reference. Every Estonian word on these pages comes from the dictionary, the explanations are the only part this app wrote."
     >
-      <div className="flex flex-col gap-7">
+      <Stack>
         <Card tone="accent">
           <div className="flex items-start gap-3">
             <Sparkles size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
@@ -274,7 +274,7 @@ export default async function GrammarIndexPage() {
           and she can take a sentence you wrote and name the rule behind the correction.{" "}
           <ArrowRight size={12} aria-hidden className="inline" />
         </p>
-      </div>
+      </Stack>
     </Page>
   );
 }

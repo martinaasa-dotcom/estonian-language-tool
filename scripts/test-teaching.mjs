@@ -208,9 +208,16 @@ for (let i = 0; i < 6 && !revealed; i++) {
   if (!revealed) { await page.keyboard.press("3"); await page.waitForTimeout(650); }
 }
 check("a revealed case card offers the rule behind it", revealed);
-check("and offers Anu as well", (await page.getByRole("link", { name: /Ask Anu/ }).count()) > 0);
+/*
+  Scoped to the card rather than the page. The rail names every destination now
+  and one of them is Anu, so an unscoped query for "Ask Anu" finds the rail
+  link, passes this check for the wrong reason, and then reads a bare `/tutor`
+  where the next check wants the question the card handed over.
+*/
+const anuOnCard = page.locator("main").getByRole("link", { name: /Ask Anu/ });
+check("and offers Anu as well", (await anuOnCard.count()) > 0);
 
-const anuHref = await page.getByRole("link", { name: /Ask Anu/ }).first().getAttribute("href");
+const anuHref = await anuOnCard.first().getAttribute("href");
 await page.goto(B + anuHref, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 const asked = decodeURIComponent(new URL(B + anuHref).searchParams.get("q") ?? "");

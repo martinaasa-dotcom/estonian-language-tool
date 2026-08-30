@@ -464,6 +464,57 @@ appears and then vanishes reads as a bug rather than as restraint. The invariant
 that stops asking the module, and on anybody outside it comparing a review count against a number
 of their own, since a second answer to "has this learner started yet" is how the first one rots.
 
+**Where a screen lives is one table, and nothing lives behind a button marked "More".** The rail
+promoted four destinations and hid the other twelve behind a disclosure, which is not fewer links,
+it is the same links somewhere a learner has to remember. It also had a bug you only met by using
+it: `showRest` was `railOpen || secondaryActive`, so on any page *inside* the hidden group the
+button read "Less" and pressing it did nothing at all, because the click flipped the first half and
+the second held it open. Fixing the toggle was the small half. `lib/ux/nav.ts` is the one table of
+what the app contains and which of four questions each destination answers, the desktop rail draws
+every one of them under its heading, and the phone keeps one button only because five cells across
+a phone is a different problem from a column with a screen of height in it: what it opens is the
+same sections with the same headings. This is not `lib/ux/disclosure.ts` and does not overlap it.
+That module decides what a *screen leads with* by how far in the learner is; this one decides where
+a thing lives, and the answer is the same in the first minute as in the first year.
+
+A place that lives *inside* another place carries `within` and keeps its row out of the rail
+without leaving the table, so the palette still reaches it. Three do: Anu, because her button is in
+the corner of every signed-in screen and a row saying "Ask Anu" was a second door onto a room whose
+door is always open; the class week, which now leads the Tasks page where its homework already was;
+and the scanner, which is a way of getting words *into* the dictionary and sat under "Look it up",
+which is not what it does. This is not the "More" button coming back: each is on the screen a
+learner is already standing on when they want it, and `within` has to say which, asserted.
+
+The table is read by the rail, the phone sheet, the command palette and the guide, because it was
+four lists and they had drifted. The palette offered six practice modes while `/practice` offered
+eleven, so the Leech clinic was reachable from one screen and unfindable from the box that promises
+to go anywhere; `components/PracticeModes.tsx` held a seventh copy that no screen rendered at all
+and has been deleted; `lib/copy/tour.ts` named nine screens a second time with their own icons, and
+now carries the prose and joins the rest. `lib/ux/modes.ts` did the same for the practice modes, and
+the split is deliberate: what a mode *is* lives there, what it is like *right now* is a database
+question and stays in the page. Two invariants hold it, plus `scripts/smoke-new.mjs`, which opens
+the app and asks the two questions no source check can: the rail draws its links with nothing to
+open first, and a phone reaches every place a desktop does. `icon()` falling back to a sparkle is
+why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
+before a screenshot caught them.
+
+**Space is what says two things are separate, and it was saying five different things.** Pages
+stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
+them, so moving from Progress to Practice changed how tightly the app breathed for no reason a
+reader could name. `Stack` in `components/ui.tsx` is the one rhythm and it is the generous one: 32px
+between sections, against 20px inside a card and 8px between rows in a list. Only the outermost
+column uses it, because proximity is what says a grid of cards or a list of rows belongs together.
+The rail follows the same rule at 28px between its groups, which is the largest space in that
+column on purpose: four groups two rows apart read as one list with words in it.
+
+**And a panel drawn three times is three answers.** "Your weakest cases, click to drill" was on
+Progress, Practice and My words, each with its own markup, and My words tallied the review log in a
+local function of its own instead of calling `caseAccuracy`, so one learner could read two different
+numbers for one case and nothing in the app would disagree with either. `components/WeakestCases.tsx`
+is the one component and `lib/stats/history.ts` is the one calculation. My words dropped the panel
+and the five thousand row query behind it and points at Progress instead, which is what
+`test-polish.mjs` drives now: a consolidation that drops the signpost is just a removal.
+
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still
 collects: what to call you, where you are, why, how far, by when, how often, the daily goal and the
@@ -835,7 +886,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
-`requireAdminId`, `upsertLexemeWithForms`. Most of them now
+`requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`,
+`tourBySection`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
