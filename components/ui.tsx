@@ -101,6 +101,28 @@ export function Card({ children, className = "", as: Tag = "div", tone = "plain"
   );
 }
 
+/**
+ * The top-level column of a page: one section under another, with air between.
+ *
+ * There were five rhythms doing this job. Pages stacked their sections at
+ * gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote them, so moving
+ * between Progress and Practice changed how tightly the app breathed for no
+ * reason a reader could name. A rhythm nobody can predict is one more thing to
+ * absorb on every screen.
+ *
+ * So this is the rhythm, and it is deliberately generous: 32px between one
+ * section and the next, which is comfortably more than the 20px inside a card
+ * and the 8px between rows in a list. Space is what says "these are separate
+ * things" before a heading has to.
+ *
+ * It is only for the outermost column. Grids of cards, rows in a list and the
+ * inside of a card keep their own tighter spacing, because proximity is what
+ * says those belong together.
+ */
+export function Stack({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`flex flex-col gap-8 ${className}`}>{children}</div>;
+}
+
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">

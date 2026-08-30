@@ -235,6 +235,11 @@ jobs:
       # than a job. Every one declares a floor, so a suite that dies early or
       # quietly stops running a block fails here rather than printing nothing
       # and being read as a pass. See scripts/lib/checks.mjs.
+      # The broadest walk first, so a route that stopped rendering says so
+      # before fifteen narrower suites fail for the same reason. It is also the
+      # only one that opens the navigation and asks whether every place in it
+      # is actually reachable.
+      - run: node scripts/smoke-new.mjs
       - run: node scripts/test-mobile.mjs
       # Text and icons inside their boxes, which is the fault none of the
       # page-shaped checks above can see: a word over a card's border, an icon
@@ -277,7 +282,11 @@ jobs:
       # deck that had just been rebuilt. It is also the one this list could
       # least afford to be missing, since a backup that cannot be restored is
       # the only failure in this app with nothing to recover from.
-      - run: node scripts/smoke-new.mjs
+      #
+      # `smoke-new.mjs` was the fifth and two branches added it at once, which
+      # a clean merge kept twice. It leads the list instead: it is the broadest
+      # walk of the routes, so a page that stopped rendering says so before
+      # fifteen narrower suites fail for the same reason.
       - run: node scripts/smoke-interact.mjs
       - run: node scripts/test-edit.mjs
       - run: node scripts/test-rename.mjs

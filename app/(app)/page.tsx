@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  ArrowRight, BookOpen, Ear, Flame, Grid2x2, Headphones, Mic, Puzzle, Shield, Sparkles, Zap,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Flame, Shield, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -15,10 +13,11 @@ import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
+import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile, toneInk } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
@@ -40,6 +39,14 @@ export const dynamic = "force-dynamic";
  *
  * Nothing here is deleted for anybody. Every panel a stage holds back is one
  * click away in the rail, in the palette and on its own page.
+ *
+ * What each card is *about* is the other half of it. The first card used to
+ * carry five unrelated things stacked with no headings between them: the due
+ * counts, the goal ring, the button, the level bar, the week strip and a note
+ * about shields. The streak was a number at the top and its own picture a
+ * hundred pixels lower with an XP meter wedged in between, which is one thing
+ * told in three places. So the do-now card is now only what to do now, and
+ * everything that reports on the run of days is one card that says so.
  */
 export default async function TodayPage() {
   const ownerId = await requireUserId();
@@ -124,7 +131,7 @@ export default async function TodayPage() {
     isToday: day === summary.dayKey,
   }));
 
-  const modes = PRACTICE.slice(0, practiceTiles(stage));
+  const modes = QUICK_MODES.slice(0, practiceTiles(stage));
 
   return (
     <Page
@@ -151,21 +158,15 @@ export default async function TodayPage() {
         enough in it to be a dashboard, and at that point there is one card in
         the left column and one in the right, sitting a screen-width apart.
       */}
-      <div className={stage === "arriving" ? "mx-auto max-w-xl" : "grid gap-5 lg:grid-cols-[1.45fr_1fr]"}>
-        <div className="flex min-w-0 flex-col gap-5">
-          {/* The one thing the app exists to get you to do. */}
+      <div className={stage === "arriving" ? "mx-auto max-w-xl" : "grid gap-6 lg:grid-cols-[1.45fr_1fr]"}>
+        <Stack className="min-w-0">
+          {/* The one thing the app exists to get you to do, and nothing else. */}
           <Card className="flex flex-col gap-5">
             {shows(stage, "streak") && (
               <div className="flex flex-wrap items-center gap-4">
-                <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:min-w-[260px] sm:flex-1">
+                <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[200px] sm:flex-1">
                   <StatTile value={snapshot.dueCount} label="Due now" tone="accent" />
                   <StatTile value={Math.min(snapshot.newCount, 10)} label="New today" tone="sky" />
-                  <StatTile
-                    value={summary.streak}
-                    label="Day streak"
-                    tone="butter"
-                    icon={<Flame size={15} aria-hidden />}
-                  />
                 </div>
                 {/* On a phone the ring wraps onto its own line, where a bare
                     circle says nothing — so it is captioned there and only there. */}
@@ -218,89 +219,108 @@ export default async function TodayPage() {
                 said you knew.
               </p>
             )}
+          </Card>
 
-            {shows(stage, "level") && (
-              <div>
-                <div className="mb-2 flex items-baseline justify-between gap-3">
-                  <span className="label-xs" style={{ color: "var(--ink-3)" }}>
-                    Level {summary.level.level} · <span lang="et">{summary.level.title}</span>
-                  </span>
-                  <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
-                    {summary.level.into}/{summary.level.span} XP
-                  </span>
-                </div>
-                <Meter
-                  pct={summary.level.pct}
-                  label={`Level ${summary.level.level}, ${summary.level.remaining} XP to the next level`}
+          {/*
+            Everything that reports on the run of days, in one card that says
+            so. The streak, the week it is drawn from, the shields that protect
+            it and the XP the same reviews earned are one story, and they used
+            to be told in three places inside the card above.
+          */}
+          {shows(stage, "streak") && (
+            <Card className="flex flex-col gap-4">
+              <SectionTitle hint={`${summary.reviewsToday} reviewed today`}>Keeping it up</SectionTitle>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <StatTile
+                  value={summary.streak}
+                  label="Day streak"
+                  tone="butter"
+                  icon={<Flame size={15} aria-hidden />}
                 />
-                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                  {summary.xpToday > 0 ? `+${summary.xpToday} XP today. ` : ""}
-                  {summary.level.remaining} XP to level {summary.level.level + 1}.
-                </p>
+                {/* A week at a glance: the streak, made concrete. */}
+                <div className="flex min-w-[210px] flex-1 items-center justify-between gap-2">
+                  {week.map((d) => (
+                    <div key={d.day} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                      {/*
+                        Sized to the column it is in, up to 36px, rather than
+                        36px whatever the column turned out to be. Seven of
+                        these, six gaps and the card's own padding come to more
+                        than a 360px phone has, so the last circle was drawn 2px
+                        over the card's right border. `aspect-square` keeps it a
+                        circle at whatever width it ends up with.
+                      */}
+                      <span
+                        className="flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold"
+                        /*
+                          The ring is what makes a reviewed day visible.
+
+                          Mint on the card is 2.52:1 and the white tick inside
+                          it is the same, which is under the 3:1 a graphic needs
+                          to carry meaning. This is not a reason to repaint
+                          mint: mint means "recalled" and that is the whole of
+                          what this circle says. It is the case
+                          `.choice-card[data-on]` in globals.css already solved,
+                          in the words written there: where a fill would swallow
+                          the contrast, double the rule instead. Three channels,
+                          one of them hue.
+
+                          `--mint-ink` gives the circle a 5.79:1 boundary in
+                          light. In dark it is the mint itself, where the fill
+                          already clears 11:1 and needs no help.
+                        */
+                        style={{
+                          background: d.done ? "var(--mint)" : "var(--raised)",
+                          color: d.done ? "var(--surface)" : "var(--ink-3)",
+                          boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
+                          outline: d.isToday ? "2px solid var(--accent)" : "none",
+                          outlineOffset: 2,
+                        }}
+                        aria-hidden
+                      >
+                        {d.done ? "✓" : "·"}
+                      </span>
+                      <span className="sr-only">
+                        {d.day}: {d.done ? "reviewed" : "no reviews"}
+                      </span>
+                      <span className="text-2xs font-semibold" style={{ color: "var(--ink-3)" }}>
+                        {weekdayLetter(d.day)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
 
-            {/* A week at a glance — the streak, made concrete. */}
-            {shows(stage, "streak") && (
-              <div className="flex items-center justify-between gap-2">
-                {week.map((d) => (
-                  <div key={d.day} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-                    {/*
-                      Sized to the column it is in, up to 36px, rather than
-                      36px whatever the column turned out to be. Seven of
-                      these, six gaps and the card's own padding come to more
-                      than a 360px phone has, so the last circle was drawn 2px
-                      over the card's right border. `aspect-square` keeps it a
-                      circle at whatever width it ends up with.
-                    */}
-                    <span
-                      className="flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold"
-                      /*
-                        The ring is what makes a reviewed day visible.
+              {summary.shieldsAvailable > 0 && (
+                <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
+                  <Shield size={13} aria-hidden style={{ color: "var(--accent-deep)" }} />
+                  {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked, one
+                  missed day won&rsquo;t break your streak.
+                </p>
+              )}
 
-                        Mint on the card is 2.52:1 and the white tick inside it
-                        is the same, which is under the 3:1 a graphic needs to
-                        carry meaning. This is not a reason to repaint mint:
-                        mint means "recalled" and that is the whole of what this
-                        circle says. It is the case `.choice-card[data-on]` in
-                        globals.css already solved, in the words written there:
-                        where a fill would swallow the contrast, double the rule
-                        instead. Three channels, one of them hue.
-
-                        `--mint-ink` gives the circle a 5.79:1 boundary in
-                        light. In dark it is the mint itself, where the fill
-                        already clears 11:1 and needs no help.
-                      */
-                      style={{
-                        background: d.done ? "var(--mint)" : "var(--raised)",
-                        color: d.done ? "var(--surface)" : "var(--ink-3)",
-                        boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
-                        outline: d.isToday ? "2px solid var(--accent)" : "none",
-                        outlineOffset: 2,
-                      }}
-                      aria-hidden
-                    >
-                      {d.done ? "✓" : "·"}
+              {shows(stage, "level") && (
+                <div className="border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
+                  <div className="mb-2 flex items-baseline justify-between gap-3">
+                    <span className="label-xs" style={{ color: "var(--ink-3)" }}>
+                      Level {summary.level.level} · <span lang="et">{summary.level.title}</span>
                     </span>
-                    <span className="sr-only">
-                      {d.day}: {d.done ? "reviewed" : "no reviews"}
-                    </span>
-                    <span className="text-2xs font-semibold" style={{ color: "var(--ink-3)" }}>
-                      {weekdayLetter(d.day)}
+                    <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
+                      {summary.level.into}/{summary.level.span} XP
                     </span>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {shows(stage, "streak") && summary.shieldsAvailable > 0 && (
-              <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
-                <Shield size={13} aria-hidden style={{ color: "var(--accent-deep)" }} />
-                {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked, one
-                missed day won&rsquo;t break your streak.
-              </p>
-            )}
-          </Card>
+                  <Meter
+                    pct={summary.level.pct}
+                    label={`Level ${summary.level.level}, ${summary.level.remaining} XP to the next level`}
+                  />
+                  <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                    {summary.xpToday > 0 ? `+${summary.xpToday} XP today. ` : ""}
+                    {summary.level.remaining} XP to level {summary.level.level + 1}.
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
 
           {shows(stage, "quests") && (
             <section>
@@ -384,9 +404,9 @@ export default async function TodayPage() {
               )}
             </section>
           )}
-        </div>
+        </Stack>
 
-        <div className="flex min-w-0 flex-col gap-5">
+        <Stack className="min-w-0">
           {shows(stage, "next") && nextUnit && (
             <Card>
               <SectionTitle hint={nextUnit.unit.cefr}>Next on the path</SectionTitle>
@@ -418,7 +438,7 @@ export default async function TodayPage() {
               <SectionTitle hint="a minute each">Quick practice</SectionTitle>
               <div className="grid grid-cols-2 gap-3">
                 {modes.map((m) => (
-                  <PracticeTile key={m.href} {...m} />
+                  <PracticeTile key={m.href} mode={m} />
                 ))}
               </div>
               {/* The hub rather than a seventh tile: six hues, six modes, and the
@@ -479,52 +499,24 @@ export default async function TodayPage() {
               )}
             </Card>
           )}
-        </div>
+        </Stack>
       </div>
       <AchievementToasts badges={newBadges} />
     </Page>
   );
 }
 
-/**
- * The practice tiles, in the order they are worth offering.
- *
- * The first three are the ones that need nothing but a deck. The last three
- * need audio, a microphone or a sentence, so they are the ones most likely to
- * be a dead end on a fresh account, and they arrive with the rest of the app.
- */
-const PRACTICE = [
-  { href: "/review/sprint", tone: "butter", glyph: "sprint", title: "Sprint", body: "60 seconds, weak cards" },
-  { href: "/review/match", tone: "mint", glyph: "match", title: "Match", body: "Pair word to meaning" },
-  { href: "/review/sentences", tone: "accent", glyph: "sentences", title: "Sentences", body: "Put the words in order" },
-  { href: "/review/speaking", tone: "blush", glyph: "speaking", title: "Speaking", body: "Say it, then compare" },
-  { href: "/review/listening", tone: "sky", glyph: "listening", title: "Listening", body: "Hear it, then answer" },
-  { href: "/review/dictation", tone: "peach", glyph: "dictation", title: "Dictation", body: "Hear it, then write it" },
-] as const;
-
-const GLYPHS = {
-  sprint: Zap, match: Grid2x2, sentences: Puzzle, speaking: Mic, listening: Headphones, dictation: Ear,
-} as const;
-
-function PracticeTile({ href, tone, glyph, title, body }: {
-  href: string;
-  // Every hue in the palette, because there are six modes and each one owns a
-  // colour on this grid — see docs/14-design-system.md §1.
-  tone: "butter" | "sky" | "mint" | "peach" | "accent" | "blush";
-  glyph: keyof typeof GLYPHS;
-  title: string;
-  body: string;
-}) {
-  const Glyph = GLYPHS[glyph];
+function PracticeTile({ mode }: { mode: PracticeMode }) {
+  const Glyph = icon(mode.icon);
   return (
     <Link
-      href={href}
+      href={mode.href}
       className="lift flex flex-col gap-1 rounded-[var(--r)] p-4"
-      style={{ background: `var(--${tone}-soft)` }}
+      style={{ background: `var(--${mode.tone}-soft)` }}
     >
-      <span style={{ color: toneInk(tone) }}><Glyph size={17} aria-hidden /></span>
-      <span className="est mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{title}</span>
-      <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{body}</span>
+      <span style={{ color: toneInk(mode.tone) }}><Glyph size={17} aria-hidden /></span>
+      <span className="est mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
+      <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
     </Link>
   );
 }

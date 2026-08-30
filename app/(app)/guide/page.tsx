@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Check, X } from "lucide-react";
-import { CAN, CANNOT, TOUR, WHAT_IT_IS } from "@/lib/copy/tour";
+import { CAN, CANNOT, tourBySection, WHAT_IT_IS } from "@/lib/copy/tour";
 import { ButtonLink } from "@/components/Button";
 import { Card, Page, SectionTitle } from "@/components/ui";
 import { icon } from "@/components/icons";
@@ -72,34 +72,45 @@ export default function GuidePage() {
           </Card>
         </div>
 
-        <div>
+        <div className="flex flex-col gap-6">
           <SectionTitle hint="every screen, and when to open it">The app, room by room</SectionTitle>
-          <ul className="grid gap-3 md:grid-cols-2">
-            {TOUR.map((stop) => {
-              const Icon = icon(stop.icon);
-              return (
-                <li key={stop.href}>
-                  <Card className="h-full" hover>
-                    <Link href={stop.href} className="block">
-                      <span className="flex items-center gap-3">
-                        <span
-                          className="flex h-9 w-9 items-center justify-center rounded-full"
-                          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-                        >
-                          <Icon size={17} aria-hidden />
-                        </span>
-                        <span className="est text-lg font-bold" style={{ color: "var(--ink)" }}>{stop.title}</span>
-                      </span>
-                      <span className="mt-3 block text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                        {stop.what}
-                      </span>
-                      <span className="mt-2 block text-sm" style={{ color: "var(--ink-3)" }}>{stop.when}</span>
-                    </Link>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
+          {/*
+            Grouped under the same headings the rail uses, so reading the guide
+            teaches where things live rather than nine screens in a row.
+          */}
+          {tourBySection().map((section) => (
+            <section key={section.title}>
+              <h3 className="label-xs mb-2.5" style={{ color: "var(--ink-3)" }}>{section.title}</h3>
+              <ul className="grid gap-3 md:grid-cols-2">
+                {section.rooms.map((stop) => {
+                  const Icon = icon(stop.icon);
+                  return (
+                    <li key={stop.href}>
+                      <Card className="h-full" hover>
+                        <Link href={stop.href} className="block">
+                          <span className="flex items-center gap-3">
+                            <span
+                              className="flex h-9 w-9 items-center justify-center rounded-full"
+                              style={{ background: `var(--${stop.tone}-soft)`, color: "var(--ink-2)" }}
+                            >
+                              <Icon size={17} aria-hidden />
+                            </span>
+                            <span className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                              {stop.title}
+                            </span>
+                          </span>
+                          <span className="mt-3 block text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                            {stop.what}
+                          </span>
+                          <span className="mt-2 block text-sm" style={{ color: "var(--ink-3)" }}>{stop.when}</span>
+                        </Link>
+                      </Card>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
         </div>
 
         <Card>

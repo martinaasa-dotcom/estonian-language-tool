@@ -4,12 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { PATH } from "@/lib/collections/syllabus";
+import { PRACTICE_MODES } from "@/lib/ux/modes";
+import { SECTIONS } from "@/lib/ux/nav";
 import { SHORTCUTS_EVENT } from "@/components/Shortcuts";
 
 interface Command {
   id: string;
   label: string;
   hint: string;
+  /** The heading it appears under. Results are grouped by it. */
+  group: string;
   /** Where it goes. Empty for a command that acts instead of navigating. */
   href: string;
   keywords: string;
@@ -17,34 +21,42 @@ interface Command {
   run?: () => void;
 }
 
+/*
+  Built from the same tables the rail and the practice hub read, rather than
+  typed out again here. This list had drifted: it offered six practice modes
+  and the hub offers eleven, so Verb government and the Leech clinic were
+  reachable from one screen and unfindable from the box that promises to go
+  anywhere. It also carried its own wording for every destination, which is how
+  a screen ends up called two things.
+*/
+const PLACE_COMMANDS: Command[] = SECTIONS.flatMap((section) =>
+  section.items.map((item) => ({
+    id: `place-${item.href}`,
+    label: item.label,
+    hint: item.blurb,
+    group: section.title,
+    href: item.href,
+    keywords: item.keywords,
+  })),
+);
+
+const MODE_COMMANDS: Command[] = PRACTICE_MODES.map((mode) => ({
+  id: `mode-${mode.href}`,
+  label: mode.title,
+  hint: mode.subtitle,
+  group: "Practice",
+  href: mode.href,
+  keywords: `${mode.subtitle} ${mode.blurb} practice mode game drill`,
+}));
+
 const COMMANDS: Command[] = [
-  { id: "today", label: "Today", hint: "Your day: due cards, quests, streak", href: "/", keywords: "home dashboard streak quests goal xp" },
-  { id: "review", label: "Start reviewing", hint: "Everything due, scheduled by FSRS", href: "/review", keywords: "flashcards srs study due" },
-  { id: "learn", label: "Learning path", hint: "Units from A1 to C1", href: "/learn", keywords: "course units path lessons" },
-  { id: "practice", label: "Practice", hint: "Sprint, match, sentences, speaking, listening", href: "/practice", keywords: "games modes" },
-  { id: "sprint", label: "Case Sprint", hint: "60-second speed round", href: "/review/sprint", keywords: "timed fast game" },
-  { id: "match", label: "Match", hint: "Pair words with meanings", href: "/review/match", keywords: "pairs game tiles" },
-  { id: "sentences", label: "Sentences", hint: "Rebuild a real sentence word by word", href: "/review/sentences", keywords: "word order build tiles grammar" },
-  { id: "speaking", label: "Speaking", hint: "Say it out loud, compare with a native voice", href: "/review/speaking", keywords: "pronounce record microphone shadowing accent" },
-  { id: "listening", label: "Listening", hint: "Hear a word, pick the meaning", href: "/review/listening", keywords: "audio ear sound" },
-  { id: "dictation", label: "Dictation", hint: "Hear a sentence, write it down", href: "/review/dictation", keywords: "audio typing spelling listening transcribe" },
-  { id: "scan", label: "Scan a page", hint: "Photograph a word list and study what is on it", href: "/scan", keywords: "camera photo picture ocr homework textbook handout import paper digitise digitize" },
-  { id: "exam", label: "Mock exam", hint: "Sit an imitation of the state language exam", href: "/exam", keywords: "tasemeeksam a2 b1 b2 c1 citizenship level test certificate ready confidence" },
-  { id: "dictionary", label: "Dictionary", hint: "Search any word or inflected form", href: "/dictionary", keywords: "search lookup paradigm cases" },
-  { id: "grammar", label: "Grammar", hint: "What each of the fourteen cases is for", href: "/grammar", keywords: "cases reference explanation partitive genitive inessive endings rules" },
-  { id: "tutor", label: "Ask Anu", hint: "Grammar questions, explained", href: "/tutor", keywords: "ai chat grammar help" },
-  { id: "words", label: "My words", hint: "Your deck, card by card", href: "/words", keywords: "deck cards suspend delete" },
-  { id: "progress", label: "Progress", hint: "Heatmap, forecast, weak cases", href: "/progress", keywords: "stats charts history leaderboard" },
-  { id: "assess", label: "Level check", hint: "Measure reading, listening, writing and speaking", href: "/assess", keywords: "assessment placement cefr test level exam a1 a2 b1 b2 c1 goal plan timeline" },
-  { id: "guide", label: "What this app is", hint: "Every screen, and what this app cannot do", href: "/guide", keywords: "tour help onboarding walkthrough limits honest" },
-  { id: "tasks", label: "Tasks", hint: "Homework and class work", href: "/tasks", keywords: "homework todo class" },
-  { id: "class", label: "Classes", hint: "Teach or join a class", href: "/class", keywords: "classroom teacher students join code school homework" },
-  { id: "suggestions", label: "Suggested fixes", hint: "What you have reported, and what happened to it", href: "/suggestions", keywords: "report wrong mistake feedback correction missing word fix suggest admin review" },
-  { id: "settings", label: "Settings", hint: "Goal, review mode, backup", href: "/settings", keywords: "backup export import goal preferences" },
+  ...PLACE_COMMANDS,
+  ...MODE_COMMANDS,
   {
     id: "shortcuts",
     label: "Keyboard shortcuts",
     hint: "Everything you can do without the mouse",
+    group: "This app",
     href: "",
     keywords: "keys hotkeys bindings help question mark",
     run: () => window.dispatchEvent(new Event(SHORTCUTS_EVENT)),
@@ -54,7 +66,8 @@ const COMMANDS: Command[] = [
 const UNIT_COMMANDS: Command[] = PATH.map((u) => ({
   id: `unit-${u.id}`,
   label: `${u.title}, ${u.subtitle}`,
-  hint: `Unit · ${u.cefr}`,
+  hint: u.cefr,
+  group: "Units",
   href: `/learn/${u.id}`,
   keywords: `${u.lemmas.join(" ")} unit ${u.cefr}`,
 }));
@@ -66,6 +79,10 @@ const UNIT_COMMANDS: Command[] = PATH.map((u) => ({
  * the one that matters — the app's centre of gravity is the dictionary, and
  * getting there should never cost a click, a page load and a focus hunt when
  * you are mid-sentence in your homework.
+ *
+ * Results carry the heading of the section they live in, so the box teaches
+ * the same map the rail does rather than answering with a flat list of
+ * twenty-eight things that all look alike.
  */
 export function CommandPalette() {
   const router = useRouter();
@@ -94,11 +111,21 @@ export function CommandPalette() {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
+    if (!q) {
+      /*
+        Nothing typed: every place, under its heading, in the order the rail
+        puts them in. Not a cut of seven off the top of a flat list, which is
+        what this used to be, and which meant the box that says it goes
+        anywhere opened on a sample. Sixteen rows under five headings scroll,
+        and the first keystroke narrows them anyway. The modes and the units
+        stay out of it, since those are what searching is for.
+      */
+      return PLACE_COMMANDS;
+    }
     const pool = [...COMMANDS, ...UNIT_COMMANDS];
-    const matches = q
-      ? pool.filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q)).slice(0, 8)
-      : COMMANDS.slice(0, 7);
-    if (!q) return matches;
+    const matches = pool
+      .filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q))
+      .slice(0, 8);
     // The dictionary can answer for a word nothing here matches, so it is always
     // offered rather than leaving a dead end.
     return [
@@ -107,11 +134,24 @@ export function CommandPalette() {
         id: "search",
         label: `Look up “${query.trim()}” in the dictionary`,
         hint: "Estonian or English, inflected forms included",
+        group: "Look it up",
         href: `/dictionary?q=${encodeURIComponent(query.trim())}`,
         keywords: "",
       },
     ];
   }, [query]);
+
+  /*
+    Grouped for the eye, flat for the keyboard. The arrow keys walk `results`
+    in order and the index into it has to keep meaning the same row, so the
+    headings are drawn from a walk over that same array rather than from a
+    second pass that regroups it.
+  */
+  const rows = results.map((command, index) => ({
+    command,
+    index,
+    heading: command.group !== results[index - 1]?.group ? command.group : null,
+  }));
 
   if (!open) return null;
 
@@ -160,8 +200,11 @@ export function CommandPalette() {
           </kbd>
         </div>
         <ul className="scroll-host max-h-[52vh] py-1">
-          {results.map((c, i) => (
+          {rows.map(({ command: c, index: i, heading }) => (
             <li key={c.id}>
+              {heading && (
+                <p className="label-xs px-4 pb-1 pt-2.5" style={{ color: "var(--ink-3)" }}>{heading}</p>
+              )}
               <button
                 type="button"
                 onMouseEnter={() => setActive(i)}
