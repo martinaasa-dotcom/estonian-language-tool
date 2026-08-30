@@ -141,3 +141,43 @@ The gable's corners are rounded on purpose. Sharp ones make a warning sign.
 than setting it on the tile gives it an edge to sit against, and it comes through a launcher mask
 whole. **02h is the only mark here that is not a variation on something already seen**, and the
 only one that would also work as a wordmark's initial.
+
+## Round four
+
+The first three rounds were the same drawing three times: a flat geometric pictogram, one or two
+elements, on a solid rounded tile, in the app's violet. Every variation happened inside that frame,
+which is why they converged.
+
+Round four changes the frame instead of the mark. Thirteen in `design/icons/round4/`, drawn by
+`node scripts/make-icon-round4.mjs`. No roof, no ring, no numeral, no K, and no violet on four of
+them.
+
+| # | Name | Made of | What it is |
+|---|---|---|---|
+| 03a | **Aken** | depth | a lit window on a dark street |
+| 03k | **Uks** | depth | a door left ajar with the light coming out |
+| 03b | **Horisont** | atmosphere | the flag as sky, soil and snow rather than as three bars |
+| 03e | **Tomme** | material | the o drawn with a nib on paper, not with a compass |
+| 03l | **Kolm silmust** | craft | three rings woven over and under, in the flag's colours |
+| 03c | **Solm** | craft | the same weave with two rings, warmer |
+| 03m | **Taht, sinisel** | type | one letterform four times too big for the tile, cropped by it |
+| 03f | **Taht** | type | the same crop on a red the app has no claim to |
+| 03i | **Vahe** | negative space | a solid field split once, the gap being the mark |
+| 03d | **Laine** | rhythm | arcs going out at the intervals a card comes back at |
+| 03g | **Kiri** | texture | a writing system seen from too far to read |
+| 03h | **Kihid** | light | three planes of coloured glass, colour from the overlaps |
+| 03j | **Orb** | light | no drawing at all, only a sphere lit from one side |
+
+Three were reworked mid-round. The ink stroke was a swoosh with a stray dot beside it and became a
+hand-drawn ring. The writing texture was seven rows of small marks and read as a keyboard, so it is
+four rows of large ones. The split had three paths fighting each other and is one clean slanted gap.
+
+**The four worth arguing for.** 03a and 03k are the only marks in four rounds that draw the reader
+rather than the language, and the app's own design notes describe exactly that person: one person,
+alone, most evenings, usually tired. 03e is the only candidate at any point that looks made by a
+hand rather than by a script. 03l is the only one that would survive being embroidered, printed in
+one colour, or cut in vinyl. 03b is how the flag is actually explained to Estonian children.
+
+**The cost is real and worth naming.** Nine of the thirteen are not flat fills and four leave the
+violet entirely. Adopting one means widening the design system rather than picking from it, and a
+gradient mark needs its maskable variant checked separately because the launcher crops to a circle.
