@@ -10,6 +10,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
+import { SuggestFix } from "@/components/SuggestFix";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
@@ -582,6 +583,31 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   You typed <span lang={backLang} className="est">{typed.trim()}</span>
                 </p>
+              )}
+              {/*
+                MARKED WRONG, AND THE LEARNER DISAGREES.
+
+                The check is a string comparison against a form the dictionary
+                vouches for, which is the right way round: no model decides
+                whether somebody was right. What it cannot know is that the
+                dictionary itself is wrong, or that Estonian has a second
+                accepted form here, and the person who does know is looking at
+                the screen at exactly this moment. Sending it does not change
+                the grade they are about to give, which stays theirs.
+              */}
+              {verdict.verdict !== "correct" && (
+                <div className="mt-3">
+                  <SuggestFix
+                    category="MARKED_WRONG"
+                    categories={["MARKED_WRONG", "WRONG_MEANING", "WRONG_FORM"]}
+                    lemma={card.lemma ?? card.front}
+                    trigger={
+                      `Asked: ${card.front}. Expected: ${card.back}. ` +
+                      `Typed: ${typed.trim() || "nothing"}.`
+                    }
+                    label="I think that was right"
+                  />
+                </div>
               )}
             </div>
           )}

@@ -8,6 +8,7 @@ import { caseExamples, type CaseExample } from "@/lib/progress/caseExamples";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Note, Page, SectionTitle } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import { SuggestFix } from "@/components/SuggestFix";
 import { NO_VALUE } from "@/lib/copy/values";
 
 export const dynamic = "force-dynamic";
@@ -269,6 +270,23 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           noun unit from the path, the case cards are generated from the forms the dictionary
           holds, never from a pattern applied blindly.
         </Note>
+
+        {/*
+          The reference is prose we wrote about a language we do not speak
+          natively, next to forms the dictionary supplied. Both can be wrong,
+          and the reader is frequently in a class with somebody who will tell
+          them so that afternoon.
+        */}
+        <div className="flex flex-wrap items-center gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
+          <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+            Does this not match what your course says?
+          </p>
+          <SuggestFix
+            category="WRONG_CONTENT"
+            trigger={`The grammar reference for ${ref.spec.et} (${ref.spec.en})`}
+            label="Tell us what is wrong"
+          />
+        </div>
 
         <nav
           aria-label="Cases"

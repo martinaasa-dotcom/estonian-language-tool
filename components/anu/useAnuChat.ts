@@ -25,12 +25,23 @@ export function useAnuChat(initialMessages: Msg[]) {
     key happens to be first in the environment today.
   */
   const [answeredBy, setAnsweredBy] = useState<string | null>(null);
+  /*
+    The last thing that went wrong, kept out of the transcript.
+
+    The failure is written into the conversation too, because that is where a
+    learner is looking, but a report button cannot live there: it would be a
+    control inside a message, in a thread that is sent back to the model as
+    context next time. So the fact of it is held here, where both surfaces
+    that use this hook can offer a way to tell somebody.
+  */
+  const [failure, setFailure] = useState<string | null>(null);
 
   const send = async (text: string) => {
     const content = text.trim();
     if (!content || streaming) return;
 
     const next: Msg[] = [...messages, { role: "user", content }];
+    setFailure(null);
     setMessages(next);
     setStreaming(true);
     setMessages((m) => [...m, { role: "assistant", content: "" }]);
@@ -48,6 +59,7 @@ export function useAnuChat(initialMessages: Msg[]) {
 
       if (!res.ok || !res.body) {
         const { error } = await res.json().catch(() => ({ error: "Anu could not be reached." }));
+        setFailure(String(error));
         setMessages((m) => [...m.slice(0, -1), { role: "assistant", content: `⚠ ${error}` }]);
         return;
       }
@@ -62,6 +74,7 @@ export function useAnuChat(initialMessages: Msg[]) {
         setMessages((m) => [...m.slice(0, -1), { role: "assistant", content: acc }]);
       }
     } catch {
+      setFailure("Lost the connection to Anu mid-answer.");
       setMessages((m) => [...m.slice(0, -1), {
         role: "assistant",
         content: "⚠ Lost the connection to Anu. Your question is still in the box above. Try again.",
@@ -71,5 +84,5 @@ export function useAnuChat(initialMessages: Msg[]) {
     }
   };
 
-  return { messages, setMessages, streaming, answeredBy, send };
+  return { messages, setMessages, streaming, answeredBy, failure, send };
 }

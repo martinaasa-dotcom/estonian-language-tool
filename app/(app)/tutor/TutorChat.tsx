@@ -7,7 +7,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Empty } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { useAnuChat, type Msg } from "@/components/anu/useAnuChat";
-import { Bubble, CHIPS, Provenance, SentenceCheck, sentenceCheckPrompt } from "@/components/anu/AnuParts";
+import { AnuFailure, Bubble, CHIPS, Provenance, SentenceCheck, sentenceCheckPrompt } from "@/components/anu/AnuParts";
 
 export function TutorChat({
   configured, readerCanConfigure, plannedLabel, history, initialQuestion,
@@ -26,7 +26,7 @@ export function TutorChat({
   /** A question handed over from elsewhere: written into the box, not sent. */
   initialQuestion?: string;
 }) {
-  const { messages, streaming, answeredBy, send } = useAnuChat(history);
+  const { messages, streaming, answeredBy, failure, send } = useAnuChat(history);
   const [input, setInput] = useState(initialQuestion ?? "");
   const [checkOpen, setCheckOpen] = useState(false);
   const [checkEt, setCheckEt] = useState("");
@@ -138,6 +138,8 @@ export function TutorChat({
           <Send size={15} aria-hidden /> {streaming ? "Thinking…" : "Ask"}
         </Button>
       </div>
+
+      <AnuFailure failure={failure} />
 
       <Provenance label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
     </div>

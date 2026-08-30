@@ -134,6 +134,17 @@ export default function PrivacyPage() {
           the week, and there is no version of that cap which works without counting.
         </P>
         <P>
+          <strong>What you report as wrong.</strong> Anywhere the app cannot help you there
+          is a button to tell us so. What you send is kept: what kind of problem it was, the
+          screen you were on, what the app had just said to you, the correction you proposed
+          and anything you wrote. Whoever runs this installation reads it, so treat that box
+          as something another person will see, and please do not put anything private in it.
+          It is kept because a shared dictionary that nobody can correct goes wrong quietly,
+          and because you asked us to look at it. Your own reports and what happened to each
+          are on the <strong>Suggestions</strong> page, they are in the export, and they are
+          deleted with your account.
+        </P>
+        <P>
           <strong>Errors.</strong> When something breaks, the message and where it happened
           are logged, with your opaque user id and never your email. Values that look like a
           credential are stripped before anything is written. Same reason: an app nobody can
@@ -244,7 +255,8 @@ export default function PrivacyPage() {
           <strong>A copy of everything (access, and portability).</strong> Settings has an{" "}
           <strong>Export</strong> button that gives you the whole thing as a JSON file: every
           card, review, task, setting, scanned page, level check, mock exam paper with your
-          composition in it, tutor message, starred word, badge and class membership. It is a
+          composition in it, tutor message, suggested fix, starred word, badge and class
+          membership. It is a
           real backup, and the same file restores into a fresh installation. One thing is held
           back and it is the spending record described above, which is this installation&rsquo;s
           accounting rather than your work; it is deleted with your account like everything
@@ -263,7 +275,8 @@ export default function PrivacyPage() {
           <strong>Correction.</strong> Anything you can see, you can change: your settings,
           your cards, your tasks, your goal. A dictionary entry can be corrected too, and
           because the dictionary is shared, that correction is attributed to you until you
-          delete your account.
+          delete your account. Where you would rather somebody looked at it first, the same
+          entry has a button to suggest the change instead of making it.
         </P>
         <P>
           <strong>Restriction and objection.</strong> You can ask for processing to be paused
