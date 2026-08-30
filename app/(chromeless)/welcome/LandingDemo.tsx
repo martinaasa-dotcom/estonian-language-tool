@@ -236,7 +236,10 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
                 className="flex items-baseline justify-between gap-2 rounded-[var(--r-sm)] px-3 py-2"
                 style={{ background: "var(--accent-soft)" }}
               >
-                <span lang="et" className="text-2xs" style={{ color: "var(--accent-deep)", opacity: 0.75 }}>{c.et}</span>
+                {/* No opacity: `--accent-deep` on `--accent-soft` is 5.16, and three
+                    quarters of it is 3.25. This is the Estonian name of the case,
+                    which is the label this app leads with everywhere else. */}
+                <span lang="et" className="text-2xs" style={{ color: "var(--accent-deep)" }}>{c.et}</span>
                 <span lang="et" className="est text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {c.singular}
                 </span>

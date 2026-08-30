@@ -4,6 +4,8 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ClozeSession } from "./ClozeSession";
 
+export const metadata = { title: "From your reading" };
+
 export const dynamic = "force-dynamic";
 
 /**

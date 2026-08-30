@@ -56,7 +56,7 @@
   --color-raised: #f4f1fe;
   --color-ink: #241f35;
   --color-ink-2: #5b5470;
-  --color-ink-3: #6b6485;
+  --color-ink-3: #635c7d;
   --color-rule: #e8e3f7;
   --color-rule-soft: #f2effb;
 
@@ -103,7 +103,18 @@
     /* Tertiary ink, chosen against every surface in the system rather than
        against white: 4.59:1 on the softest tint (blush) and better everywhere
        else, so a caption stays legible on a pastel tile. */
-    --ink-3: #6b6485;
+    /*
+      Darkened from #6b6485, which was picked against every *surface token* and
+      met one thing that is not one. The rail is drawn over `.wash`, a blurred
+      pastel blob rather than a named background, and the wordmark's subtitle
+      and the rail's own controls sit on it at 4.36 rather than the 4.59 the
+      design system claims as its floor. That is on every signed-in screen, and
+      it was outside the reach of a contrast sweep scoped to `main`.
+
+      Same hue, one step down: it clears 4.5 on the wash, both grounds, both
+      surfaces, the raised fill and the softest tint.
+    */
+    --ink-3: #635c7d;
     --rule: #e8e3f7;
     --rule-soft: #f2effb;
 
@@ -176,7 +187,15 @@
       --raised: #221e36;
       --ink: #f2eeff;
       --ink-2: #c2bade;
-      --ink-3: #8f87ad;
+      /*
+        Nudged from #8f87ad, which was a near miss rather than a comfortable
+        pass. Secondary text sits on a tinted card as often as on the ground,
+        and against the soft tints in dark mode it measured 4.07 on butter,
+        4.08 on mint, 4.29 on accent and 4.45 on peach, every one of them under
+        the 4.5 that small text needs. This clears all four and is the same
+        hue: what was wrong was the lightness, not the colour.
+      */
+      --ink-3: #9a92b8;
       --rule: #2e2848;
       --rule-soft: #241f39;
 
@@ -227,7 +246,8 @@
     --raised: #221e36;
     --ink: #f2eeff;
     --ink-2: #c2bade;
-    --ink-3: #8f87ad;
+    /* The same nudge as the media-query block above, for the same numbers. */
+    --ink-3: #9a92b8;
     --rule: #2e2848;
     --rule-soft: #241f39;
 
@@ -775,7 +795,12 @@
     --raised: #f4f1fe;
     --ink: #241f35;
     --ink-2: #5b5470;
-    --ink-3: #8b84a3;
+    /*
+      The same ink as the screen's light palette rather than a paler one.
+      A caption at 3.54:1 is thin on a screen and worse on paper, where there
+      is no backlight behind it and a worksheet is usually printed in draft.
+    */
+    --ink-3: #635c7d;
     --rule: #e8e3f7;
     --rule-soft: #f2effb;
     --accent: #7a6bf0;

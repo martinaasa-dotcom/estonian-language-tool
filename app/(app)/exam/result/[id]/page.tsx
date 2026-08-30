@@ -17,6 +17,8 @@ import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/
 import { SuggestFix } from "@/components/SuggestFix";
 import { AnuReading } from "./AnuReading";
 
+export const metadata = { title: "Exam result" };
+
 export const dynamic = "force-dynamic";
 
 /**

@@ -6,10 +6,14 @@
  * keeps the interesting logic (day boundaries, empty ranges, off-by-one at the
  * edges of a heatmap) unit-testable without a database.
  *
- * All bucketing uses the learner's local calendar day, via lib/time/day.ts.
+ * All bucketing uses the learner's own calendar day, which means every
+ * function here takes a `DayClock`. It is not a decoration: these run on the
+ * server, and a server's midnight is the deployment's rather than the
+ * learner's, so a heatmap built without one draws somebody's evening on the
+ * wrong square. See lib/time/day.ts.
  */
 
-import { dayKey, daysBetween, recentDayKeys, shiftDay } from "@/lib/time/day";
+import { dayClock, type DayClock } from "@/lib/time/day";
 
 export interface ReviewPoint {
   reviewedAt: Date;
@@ -32,14 +36,19 @@ export interface DayBucket {
  * quiet one for someone with 500 cards, and a fixed scale would tell one of
  * them a lie.
  */
-export function buildHeatmap(dates: Date[], days = 182, from: Date = new Date()): DayBucket[] {
+export function buildHeatmap(
+  dates: Date[],
+  days = 182,
+  from: Date = new Date(),
+  clock: DayClock = dayClock(),
+): DayBucket[] {
   const counts = new Map<string, number>();
   for (const d of dates) {
-    const key = dayKey(d);
+    const key = clock.dayKey(d);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  const keys = recentDayKeys(days, from);
+  const keys = clock.recentDayKeys(days, from);
   const busiest = Math.max(0, ...keys.map((k) => counts.get(k) ?? 0));
 
   return keys.map((day) => {
@@ -72,17 +81,22 @@ export interface ForecastDay {
  * Anything already overdue is folded into today rather than shown in the past,
  * because that is where the work sits: a card due last Tuesday is due now.
  */
-export function buildForecast(dueDates: Date[], days = 14, from: Date = new Date()): ForecastDay[] {
+export function buildForecast(
+  dueDates: Date[],
+  days = 14,
+  from: Date = new Date(),
+  clock: DayClock = dayClock(),
+): ForecastDay[] {
   const buckets = new Map<number, number>();
   for (const due of dueDates) {
-    const offset = Math.max(0, daysBetween(from, due));
+    const offset = Math.max(0, clock.daysBetween(from, due));
     if (offset >= days) continue;
     buckets.set(offset, (buckets.get(offset) ?? 0) + 1);
   }
 
   return Array.from({ length: days }, (_, offset) => ({
     offset,
-    day: dayKey(shiftDay(from, -offset)),
+    day: clock.dayKey(clock.shiftDay(from, -offset)),
     count: buckets.get(offset) ?? 0,
   }));
 }
@@ -119,17 +133,22 @@ export interface DailyLoad {
 }
 
 /** Reviews and accuracy per day, oldest first — the "how am I trending" chart. */
-export function dailyLoad(reviews: ReviewPoint[], days = 30, from: Date = new Date()): DailyLoad[] {
+export function dailyLoad(
+  reviews: ReviewPoint[],
+  days = 30,
+  from: Date = new Date(),
+  clock: DayClock = dayClock(),
+): DailyLoad[] {
   const tally = new Map<string, { total: number; ok: number }>();
   for (const r of reviews) {
-    const key = dayKey(r.reviewedAt);
+    const key = clock.dayKey(r.reviewedAt);
     const entry = tally.get(key) ?? { total: 0, ok: 0 };
     entry.total++;
     if (r.rating >= 3) entry.ok++;
     tally.set(key, entry);
   }
 
-  return recentDayKeys(days, from).map((day) => {
+  return clock.recentDayKeys(days, from).map((day) => {
     const entry = tally.get(day);
     return {
       day,
@@ -175,10 +194,14 @@ export function caseAccuracy(
 }
 
 /** The busiest hour of the day, for the "you study best at…" line. Null when thin. */
-export function bestStudyHour(reviews: ReviewPoint[], minReviews = 20): number | null {
+export function bestStudyHour(
+  reviews: ReviewPoint[],
+  minReviews = 20,
+  clock: DayClock = dayClock(),
+): number | null {
   if (reviews.length < minReviews) return null;
   const hours = new Array<number>(24).fill(0);
-  for (const r of reviews) hours[r.reviewedAt.getHours()]!++;
+  for (const r of reviews) hours[clock.hourOf(r.reviewedAt)]!++;
   let best = 0;
   for (let h = 1; h < 24; h++) if (hours[h]! > hours[best]!) best = h;
   return hours[best]! > 0 ? best : null;

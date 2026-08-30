@@ -3,7 +3,7 @@ import { Legal, P, S } from "@/components/Legal";
 import { resolveOperator, SUPERVISORY_AUTHORITY } from "@/lib/legal/operator";
 import { resolveRecipients, transfersOutsideEea } from "@/lib/legal/recipients";
 
-export const metadata = { title: "Privacy · Kodukeel" };
+export const metadata = { title: "Privacy" };
 
 /*
   Read at request time rather than at build time, because most of what this

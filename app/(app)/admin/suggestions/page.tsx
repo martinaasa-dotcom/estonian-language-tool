@@ -9,6 +9,8 @@ import {
 import { Card, Chip, Empty, Page } from "@/components/ui";
 import { QueueRows } from "./QueueRows";
 
+export const metadata = { title: "Suggested fixes · review queue" };
+
 export const dynamic = "force-dynamic";
 
 /**

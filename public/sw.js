@@ -20,15 +20,94 @@
  *    network fails, never a faster stale answer — a flashcard app that shows
  *    yesterday's due count because it felt quicker is worse than a slow one.
  * 3. **Nothing under /api/ is cached** except that speech, which is immutable.
+ *
+ * And a fourth, learned one layer up and not applied here until now:
+ *
+ * 4. **Every cache is bounded.** `lib/audio/clipCache.ts` exists because a
+ *    cache that never evicts is a leak with a hit rate, and both caches down
+ *    here had exactly that shape. Speech is a WAV per phrase and review plays
+ *    audio on nearly every card, so a phone kept every clip it had ever heard;
+ *    the shell cache is worse, because `_next/static` filenames are hashed per
+ *    build and `VERSION` is typed by hand, so every deploy added a fresh set of
+ *    chunks under the same cache name and nothing ever removed the old ones.
+ *    Neither had a ceiling, and when storage for the origin is finally
+ *    evicted the browser takes the whole thing, including /offline, which is
+ *    the one entry with no fallback of its own.
  */
 
-const VERSION = "kodukeel-v2";
+/*
+  Bumped to v3 so `activate` clears what v2 accumulated.
+
+  `activate` deletes every `kodukeel-` cache that is not this version's, which
+  is the only thing that has ever removed a stale entry here — and since the
+  version is typed by hand and had not changed across many deploys, an install
+  that had been running for months was carrying every hashed chunk of every
+  build it had ever seen and every clip it had ever played. The ceilings below
+  stop that happening again; this bump is what clears the arrears.
+*/
+const VERSION = "kodukeel-v3";
+/*
+  Four caches, and the split between the first two is the point of it.
+
+  SHELL is /offline and the app icon: two entries, never trimmed, because
+  /offline is the fallback that has no fallback and evicting it turns a
+  connection failure into a browser error page. STATIC is hashed build output,
+  which is exactly what grows without limit, so that is where the ceiling
+  goes. Putting both in one cache and trimming it would eventually evict the
+  offline page to make room for a chunk.
+*/
 const SHELL = `${VERSION}-shell`;
+const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 const AUDIO = `${VERSION}-audio`;
 
 /** The page shown when a navigation cannot be served any other way. */
 const OFFLINE_URL = "/offline";
+
+/*
+  Ceilings, in entries.
+
+  Counted rather than measured in bytes, for the reason `clipCache.ts` gives:
+  a count is a bound a person can check, and the Cache API will not tell you
+  what an entry costs without reading it back.
+
+  Audio: a long review session meets a few hundred distinct phrases, and a
+  clip heard once a month ago is not one anybody is about to ask for again.
+  Static: one build of this app is well under a hundred chunks, so this is
+  roughly the current build plus the one before it, which is what makes a
+  deploy landing mid-session survivable.
+  Pages: this app has forty-five routes and nobody has all of them open.
+
+  SHELL is deliberately absent, and absent means never trimmed rather than
+  trimmed at some large number. It holds /offline.
+*/
+const LIMITS = { [AUDIO]: 400, [STATIC]: 220, [PAGES]: 60 };
+
+/*
+  Trim to the ceiling, oldest first.
+
+  `cache.keys()` returns entries in insertion order, so the oldest write is the
+  first key. That is a first-in-first-out rather than a true least-recently-
+  used: the Cache API has no way to record a read, and re-putting an entry on
+  every hit would turn a cache lookup into a cache write on the busiest path in
+  the app. FIFO over a ceiling this size costs an occasional re-fetch of
+  something old and saves the unbounded growth, which is the trade the ceiling
+  is for.
+
+  Failures are swallowed: a trim that cannot run leaves a cache that is too big,
+  which is the state it was already in, and never a request that fails.
+*/
+async function trim(cacheName) {
+  const limit = LIMITS[cacheName];
+  if (!limit) return;
+  try {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    for (let i = 0; i < keys.length - limit; i++) await cache.delete(keys[i]);
+  } catch {
+    // Nothing to recover from and nothing worth failing a fetch over.
+  }
+}
 
 /** Files with no session in them, needed whatever happens. */
 const SHELL_URLS = [OFFLINE_URL, "/app-icon.svg"];
@@ -93,6 +172,7 @@ async function warmOpenPages() {
       if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) return;
       await cache.add(new Request(url.href, { credentials: "same-origin" })).catch(() => undefined);
     }));
+    await trim(PAGES);
   } catch {
     // A warm-up that cannot run leaves the worker exactly as it was.
   }
@@ -120,7 +200,11 @@ self.addEventListener("fetch", (event) => {
 
   // Build output is immutable and hashed: cache-first is safe and makes a
   // repeat visit instant.
-  if (url.pathname.startsWith("/_next/static/") || url.pathname === "/app-icon.svg") {
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(cacheFirst(request, STATIC));
+    return;
+  }
+  if (url.pathname === "/app-icon.svg") {
     event.respondWith(cacheFirst(request, SHELL));
     return;
   }
@@ -136,7 +220,10 @@ async function cacheFirst(request, cacheName) {
   const response = await fetch(request);
   if (response.ok) {
     const copy = response.clone();
-    caches.open(cacheName).then((cache) => cache.put(request, copy)).catch(() => undefined);
+    caches.open(cacheName)
+      .then((cache) => cache.put(request, copy))
+      .then(() => trim(cacheName))
+      .catch(() => undefined);
   }
   return response;
 }
@@ -167,7 +254,10 @@ async function audioWithCache(request) {
     const response = await fetch(request);
     if (response.ok) {
       const copy = response.clone();
-      caches.open(AUDIO).then((cache) => cache.put(key, copy)).catch(() => undefined);
+      caches.open(AUDIO)
+        .then((cache) => cache.put(key, copy))
+        .then(() => trim(AUDIO))
+        .catch(() => undefined);
     }
     return response;
   } catch {
@@ -191,7 +281,10 @@ async function navigateWithFallback(request) {
     const response = await fetch(request);
     if (response.ok) {
       const copy = response.clone();
-      caches.open(PAGES).then((cache) => cache.put(request, copy)).catch(() => undefined);
+      caches.open(PAGES)
+        .then((cache) => cache.put(request, copy))
+        .then(() => trim(PAGES))
+        .catch(() => undefined);
     }
     return response;
   } catch {

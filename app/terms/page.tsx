@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Legal, P, S } from "@/components/Legal";
 import { resolveOperator } from "@/lib/legal/operator";
 
-export const metadata = { title: "Terms · Kodukeel" };
+export const metadata = { title: "Terms" };
 
 /*
   Same reason as the privacy page: who provides this service is a fact about

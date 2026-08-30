@@ -5,6 +5,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
 import { xpFromRatingCounts } from "@/lib/gamification/xp";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
+import { learnerDayClock } from "@/lib/progress/dayClock";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { classRoster } from "@/lib/classroom/roster";
 import {
@@ -20,6 +21,8 @@ import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stat } from "
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
 
+export const metadata = { title: "Progress" };
+
 export const dynamic = "force-dynamic";
 
 const HEATMAP_DAYS = 182;
@@ -29,10 +32,13 @@ const FORECAST_DAYS = 14;
 export default async function ProgressPage() {
   const ownerId = await requireUserId();
   const now = new Date();
+  // Every figure below is a fact about a *day*, and this page renders on the
+  // server, whose midnight is the deployment's. See lib/time/day.ts.
+  const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
 
   const [summary, units, reviews, dueDates, cefrRows, learnerSettings] = await Promise.all([
-    dailySummary(ownerId, snapshot, now),
+    dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
       where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
@@ -69,15 +75,15 @@ export default async function ProgressPage() {
     reviews,
   );
 
-  const heatmap = buildHeatmap(reviews.map((r) => r.reviewedAt), HEATMAP_DAYS, now);
-  const forecast = buildForecast(dueDates.map((c) => c.due), FORECAST_DAYS, now);
-  const trend = dailyLoad(reviews, TREND_DAYS, now);
+  const heatmap = buildHeatmap(reviews.map((r) => r.reviewedAt), HEATMAP_DAYS, now, clock);
+  const forecast = buildForecast(dueDates.map((c) => c.due), FORECAST_DAYS, now, clock);
+  const trend = dailyLoad(reviews, TREND_DAYS, now, clock);
   const breakdown = ratingBreakdown(reviews);
   // The narrower, more useful number: how often a card the scheduler believed
   // you knew actually came back. The recall rate above counts first sights too.
   const retention = retentionReading(reviews);
   const cases = caseAccuracy(reviews);
-  const hour = bestStudyHour(reviews);
+  const hour = bestStudyHour(reviews, 20, clock);
   const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
   // A class you have joined is the leaderboard that means something: real people
   // you sit next to, and joining was itself the consent. The instance-wide

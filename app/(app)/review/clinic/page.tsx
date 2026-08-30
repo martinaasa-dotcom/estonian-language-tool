@@ -6,6 +6,8 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ClinicList, type ClinicItem } from "./ClinicList";
 
+export const metadata = { title: "Leech clinic" };
+
 export const dynamic = "force-dynamic";
 
 /**

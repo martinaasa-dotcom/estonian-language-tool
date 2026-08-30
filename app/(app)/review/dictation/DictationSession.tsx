@@ -178,6 +178,16 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
+      {/* The heading a session screen has no room to draw.
+
+          These five screens are a progress bar, a card and four rating buttons,
+          and there is nothing on them a title could be added to without taking
+          space from the card. So they had no heading at all: somebody working
+          down a page by its headings, or asking what this screen is, got
+          nothing back, while the four modes that happen to have a title bar
+          answered fine. The `Empty` and finished states of these same files
+          already carry one, which is how the gap survived a sweep. */}
+      <h1 className="sr-only">Dictation</h1>
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link
           href="/"

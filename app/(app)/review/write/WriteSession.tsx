@@ -142,6 +142,11 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
+      {/* The heading a session screen has no room to draw. Same line as the
+          other six modes: the empty state carries one and the round did not,
+          which is why an accessibility run that happened to meet an empty deck
+          saw a heading and passed. */}
+      <h1 className="sr-only">Writing</h1>
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link href="/" aria-label="End session" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
           <X size={19} aria-hidden />
@@ -179,7 +184,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             </strong>{" "}
             <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
           </p>
-          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent)" }}>
+          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
             {prompt.caseEt}
           </p>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>

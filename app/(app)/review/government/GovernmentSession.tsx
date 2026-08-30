@@ -116,6 +116,11 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
+      {/* The heading a session screen has no room to draw. See the same line
+          in the other five modes: an `Empty` state and a finished state each
+          carry one, so the only screen without a heading was the one a learner
+          spends the round on. */}
+      <h1 className="sr-only">Verb government</h1>
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link href="/" aria-label="End session" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
           <X size={19} aria-hidden />
@@ -210,7 +215,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             {question.example && (
               <div className="flex flex-wrap items-center gap-2">
-                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent)" }}>
+                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {question.example}
                 </p>
                 <Speak text={question.example} />

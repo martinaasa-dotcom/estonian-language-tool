@@ -5,40 +5,104 @@
  * Estonian text marked `lang="et"` so a screen reader does not read it with
  * English phonics.
  *
- * Not a substitute for axe — it is the subset the codebase promised, checked on
- * the pages this branch added, where a promise is easiest to forget.
+ * AND AXE ITSELF, WHICH THIS SUITE SPENT ITS WHOLE LIFE SAYING IT WAS NOT.
+ *
+ * "Not a substitute for axe" was true and was also the reason five real
+ * failures sat in the app unseen. The hand-rolled contrast pass this replaces
+ * was wrong in two ways that are obvious once named and were invisible while
+ * it was the only thing looking: it scoped to `main`, so the navigation rail
+ * on every signed-in screen was outside it, and it read a colour's own alpha
+ * but not an `opacity` inherited from a parent, so a locked badge faded to
+ * three quarters reported as passing while its description sat at 3.27.
+ *
+ * axe found both in one run, plus a broken list on the landing page that
+ * nothing here would ever have thought to look for. So axe runs the general
+ * rules and the checks below stay for what axe has no opinion about: exactly
+ * one `main` and one `h1` per screen, a title that is not the landing page's,
+ * and Estonian marked `lang="et"` so a screen reader does not read it with
+ * English phonics.
  */
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 
+/*
+  Read off disk and injected, rather than imported and called in Node: axe
+  runs against a live DOM, and the only live DOM here is the browser's. This
+  app's Content Security Policy has no bearing on it because Playwright's
+  `addScriptTag` goes through the DevTools protocol rather than the page.
+*/
+const AXE = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
+
+/**
+ * Every axe violation on the page, as one line each.
+ *
+ * `best-practice` is included on purpose. It is where the landing page's
+ * `<ol>` full of `<div>`s turned up, and a list that announces itself as empty
+ * is not a matter of taste.
+ */
+async function axeViolations(page) {
+  await page.addScriptTag({ content: AXE });
+  const result = await page.evaluate(async () => await window.axe.run(document, {
+    resultTypes: ["violations"],
+    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
+  }));
+  return result.violations.map((v) =>
+    `${v.id} (${v.impact}, ${v.nodes.length}): ${v.nodes[0]?.target.join(" ") ?? ""}`);
+}
+
 const BASE = baseUrl();
+
+/*
+  Every route, rather than the ones a branch happened to add.
+
+  This list was fifteen of the app's forty-five, and it grew a line at a time
+  as each new feature landed. What that misses is not hypothetical: a sweep
+  over the whole tree found the five review modes rendering a whole session
+  with no heading in it at all, a progress bar and a card and four buttons,
+  and first run with no landmark on the page, which is the first screen
+  anybody meets. Both sit on routes nobody had thought to add here. The cost
+  of checking a route that has never broken is a second of wall clock.
+*/
 const ROUTES = [
-  "/", "/review/write", "/review/government", "/review/cloze",
-  "/review/clinic", "/words", "/week", "/scan", "/settings", "/privacy", "/terms",
-  "/assess", "/assess?take=1", "/guide", "/exam",
-  "/suggestions", "/admin/suggestions",
+  "/", "/learn", "/practice", "/progress", "/tasks", "/words", "/week", "/dictionary",
+  "/grammar", "/grammar/inessive", "/guide", "/settings", "/scan", "/class", "/tutor",
+  "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/welcome", "/suggestions", "/admin/suggestions",
+  "/review", "/review/write", "/review/government", "/review/cloze", "/review/clinic",
+  "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
+  "/review/sentences", "/review/speaking", "/review/sprint",
 ];
 
 const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
+
 /*
-  Floor: 70, which is what this list reaches: seventeen routes at four checks
-  each, plus the two that run once at the end.
+  Floor: 335, which is what this list reaches: thirty-seven routes at eight
+  checks each, a contrast pass over the same thirty-seven in dark mode, and the
+  two that run once at the end.
 
   It was 42 for ten routes, and stayed 42 when the level check added three and
   the exam hub added a fourth, which left it slack by twelve. A floor that never
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, done } = suite("Accessibility", { floor: 70 });
+const { check, done } = suite("Accessibility", { floor: 335 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(300);
 
   const report = await page.evaluate(() => {
-    const bad = { unnamed: [], noFocusRing: [], imgNoAlt: 0, headings: [] };
+    const bad = {
+      unnamed: [], noFocusRing: [], imgNoAlt: 0, headings: [],
+      h1s: document.querySelectorAll("main h1").length,
+      landmarks: document.querySelectorAll("main").length,
+      title: document.title,
+    };
 
     const interactive = [...document.querySelectorAll(
       "main button, main a[href], main input, main textarea, main select, main [role='button']",
@@ -97,7 +161,58 @@ for (const route of ROUTES) {
     if (report.headings[i] - report.headings[i - 1] > 1) skips++;
   }
   check(`${route}: heading levels do not skip`, skips === 0, `${skips} skip(s)`);
+
+  /*
+    One `main`, and one `h1` inside it.
+
+    Both were being broken on routes this list did not cover. The five review
+    modes drew a whole session with no heading, and their `Empty` and finished
+    states each carried one, which is exactly why nobody noticed. First run had
+    no `main` at all, so the skip link had nothing to skip to and a reader had
+    no landmark to jump into on the first screen of the app.
+  */
+  check(`${route}: has exactly one main landmark`, report.landmarks === 1, `${report.landmarks} found`);
+  check(`${route}: has exactly one h1`, report.h1s === 1, `${report.h1s} found`);
+
+  /*
+    And a title that says which screen this is. Thirty-four routes shared the
+    landing page's line, so two tabs side by side were indistinguishable and a
+    history entry said nothing about what it linked to. The landing page is the
+    one route whose title is that line.
+  */
+  check(
+    `${route}: names itself in the tab`,
+    route === "/welcome" || !report.title.startsWith("Kodukeel."),
+    report.title,
+  );
+
+  const violations = await axeViolations(page);
+  check(`${route}: axe finds nothing`, violations.length === 0, violations.slice(0, 2).join("; "));
 }
+
+/*
+  And the same sweep in the other theme, which is where it kept biting.
+
+  Light and dark are two palettes, not one palette with a filter over it, so a
+  colour that clears the bar in one says nothing about the other. The first
+  batch of contrast failures this suite found was entirely in dark mode:
+  `--ink-3` on the four soft tints, between 4.07 and 4.45 against a bar of 4.5,
+  four near misses that no reading of the token list would show. The second
+  batch was entirely in light, on a wash the rail is drawn over. Neither theme
+  is the one to check.
+
+  The structural checks above are not repeated: a landmark, a heading and a
+  title are the same markup whichever palette is painted over them.
+*/
+const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" });
+for (const route of ROUTES) {
+  await dark.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
+  await dark.waitForTimeout(200);
+  const violations = await axeViolations(dark);
+  check(`${route}: axe finds nothing in dark mode either`,
+    violations.length === 0, violations.slice(0, 2).join("; "));
+}
+await dark.close();
 
 // A visible focus ring on the primary action of the review path.
 await page.goto(`${BASE}/review/write`, { waitUntil: "networkidle" });

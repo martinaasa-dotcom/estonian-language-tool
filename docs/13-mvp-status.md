@@ -1132,7 +1132,7 @@ screen's own consent copy names the new figure before anyone joins. The class-wi
 teacher which case the room struggles with and nothing about who to help with it; the per-student
 figure is the answer to the harder half of that question, in a room of twenty-five rather than one.
 
-## 19. The thirteenth pass: what to do when the app is wrong
+## 20. The fourteenth pass: what to do when the app is wrong
 
 The dictionary is assembled rather than typed, which is what keeps invented
 Estonian out of it and is not the same thing as being right. Ekilex may have no
@@ -1208,3 +1208,116 @@ sends twice.
    dictionary with no second pair of eyes and no undo beyond editing the entry
    back. The list is meant to be short enough to read aloud, which is why it is
    exact addresses and why there is no way to grant it from inside the app.
+
+## 21. The fifteenth pass: the day a learner is actually having
+
+An audit of what was still missing, run against a database, a browser and CI rather than against the
+source alone. Six findings, all of them fixed here, and the shape they share is worth naming first:
+every one lived in the gap between a rule this repository had written down and the place the rule was
+actually enforced.
+
+### The day boundary was the deployment's
+
+`lib/time/day.ts` carried a header saying its days were "the learner's own calendar days, not UTC
+ones" and a body reading `date.getFullYear()`, which is the day boundary of whichever process is
+running. Every screen that leads with a day is rendered on the server, and on Vercel that server is
+UTC, so the shortcut the file was written to forbid was being taken one layer down from where it
+forbade it.
+
+Not a rounding error. A learner in Tallinn who studied on Monday morning, at one in the morning on
+Tuesday and again on Wednesday morning kept a three-day streak. Those sittings fall in two UTC days
+with a hole between them: the app said 1, and with a shield banked it spent one bridging a Tuesday
+they had not missed. Estonia is UTC+2/+3 and this app teaches Estonian, so that is the audience
+rather than an edge case.
+
+`dayClock(zone)` carries a zone; the free functions are the same thing bound to the running process,
+which is correct in a browser and wrong on a server, so anything touching the database takes a clock.
+The zone is whatever the learner's browser reports, written once by `components/TimeZoneSync.tsx` and
+never asked for in a form. Threaded through the streak, the goal, the quests, the week strip, the
+heatmap, the forecast, the trend, the study-hour line, the greeting, the share card, the class roster
+(each student's own zone) and the two badges about the hour of the day, which had been awarding
+"review before 7am" to somebody studying at nine.
+
+Two faults found underneath it. A naive timestamp needs **two** `AT TIME ZONE`s, because Prisma maps
+`DateTime` to `timestamp without time zone` and on a naive value one of them interprets rather than
+converts; the single `AT TIME ZONE 'UTC'` it replaces was the same mistake wearing a disguise, since
+its result is a `timestamptz` that `TO_CHAR` renders in the session's own zone. And the streak's
+integration test kept a copy of that query beside the real one, which is exactly what goes stale
+first: it would have gone on asserting UTC days were right while the app had stopped using them.
+
+### Thirty-four routes shared one title, and eleven screens had no heading
+
+With no `metadata` export Next falls back to the root layout's title, so /review, /settings,
+/progress, the dictionary, the course and the exam were all called "Kodukeel. Estonian that finally
+sticks". Two tabs side by side were indistinguishable and a bookmark said nothing about what had been
+bookmarked. Every screen names itself now, and `title.template` adds the app's name so none of them
+has to remember it.
+
+Every review mode renders three or four screens from one component, and the empty and finished ones
+each carried an `h1` while the round itself did not. That is why it survived: a run against an empty
+deck saw a heading. It took two passes to find all eleven, which is the argument for the invariant
+that reads the source rather than whichever branch a fixture rendered.
+
+And three pages had no `main` at all: /privacy, /terms and first run, which sit outside both route
+groups. Two are the public pages somebody reads when they have a question about their rights, and the
+third is the first screen anybody meets.
+
+The accessibility suite was fifteen routes of forty-five, grown a line at a time as features landed,
+which is why none of this was visible. It runs every route now, at 247 checks rather than 62.
+
+### CI ran eleven of seventeen browser suites
+
+The workflow's own comment names this fault in one direction: "a suite added to that script alone is
+a suite CI never runs". It had drifted the other way too, and nothing was counting. Five suites had
+nothing watching them, `test-restore.mjs` among them, which guards the only failure in this app that
+cannot be recovered from. A sixth, `test-anu.mjs`, was in no npm script either. The source of truth
+is the filesystem now, and an exemption carries a written reason.
+
+### Two caches with no ceiling, and two routes with none
+
+The service worker kept every speech clip a device had ever played, and every hashed chunk of every
+build it had ever seen, because the version that clears them is typed by hand. `lib/audio/clipCache.ts`
+exists for exactly that shape one layer up. What it costs is not a slow app: a browser evicting an
+origin's storage takes all of it, including `/offline`, which is the one entry with nothing behind
+it. `/offline` now lives in a cache that is never trimmed and everything else has a count.
+
+`/api/write` had no limiter and `/api/exam/write`, which is the same route with a different prompt,
+has had one since it landed. `/api/restore` read a body of any size and handed it to `JSON.parse`
+before anything counted the request.
+
+### Known limitations, stated plainly
+
+1. **A learner's zone is known one page load late.** The browser reports it on first render, so the
+   very first Today a brand-new account sees is drawn on the deployment's clock. Nothing is stored
+   wrong by it, since every figure is derived; the next render is right.
+2. **The zone is the device's, not a setting.** Somebody who studies in Tallinn on a laptop still set
+   to another country is counted in that country. Asking would be worse: the person who most needs
+   this is the one who would never think to fill the field in.
+3. **The service worker's caches are trimmed oldest-first, not least-recently-used.** The Cache API
+   cannot record a read, and re-putting an entry on every hit would make a cache lookup a cache write
+   on the busiest path in the app. It costs an occasional re-fetch of something old.
+4. ~~**The accessibility suite is still the subset this project promised itself**, not axe.~~
+   **It is axe now**, over every route in both themes, which found eight things the hand-rolled
+   sweep could not: the sweep scoped to `main` and so never saw the navigation rail, and it read a
+   colour's own alpha but not an `opacity` inherited from a parent. What that second blind spot hid
+   was a locked course unit explaining itself at 2.63:1, on every locked row of a 73-unit course.
+   Still not a screen reader: axe cannot tell you whether the reading order makes sense, whether a
+   focus trap is escapable, or whether a label says the right thing.
+
+### Found on the way, and fixed
+
+**A fade never goes on a box that holds words.** `opacity` multiplies through everything inside it,
+so a fade meaning "not yet" fades the sentence explaining why. Three places had it: the course
+page's locked units, the badge shelf's unearned badges and the grammar reference's definition
+labels. Each already says "not yet" three or four other ways, so the fade moves onto the icon.
+
+**A list that announced itself as empty.** The landing page's three steps are an `<ol>` of `<li>`s
+with a fade-in wrapper around each, and a `div` between an `ol` and its `li` means the list is not a
+list.
+
+**And the two findings this pass had left as the reader's call** turned out to have answers inside
+the design system rather than decisions about it. The week strip's reviewed-day circle is mint at
+2.52:1 against its card, which is the case `.choice-card[data-on]` already solved: where a fill
+would swallow the contrast, double the rule instead. The leech clinic's failure strip told a failure
+from a recall by hue with a tooltip as the fallback, which is the pairing the dictation drill's own
+rule forbids; a failure is a taller mark now, and the count is visible rather than only announced.
