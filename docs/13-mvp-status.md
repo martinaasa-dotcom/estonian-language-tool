@@ -1415,3 +1415,26 @@ carries the correct adjective independently, so a learner meets the right one an
 The second option Q8 offered, letting a word carry more than one part of speech, was not needed and
 is still available. It is still the truer model and still a schema change, and `hall` is the case
 for it.
+
+### And the course harvest, which turned out not to have the fault
+
+Checked afterwards, because the same question is worth asking of the other file that carries a part
+of speech. It does not have the fault, and the reason is structural rather than lucky.
+`prisma/data/harvested.ts` is generated and its `pos` is a passthrough: `harvestWord` reads the
+label off the syllabus entry and returns it untouched, so the label and the English gloss are
+authored by the same person in the same line of `lib/collections/syllabus/`. The failure above needs
+two sources that can disagree, and here there is one.
+
+Checked rather than asserted, since "by construction" is a claim like any other. An authored gloss
+has no heading it came from, so it is matched to the Wiktionary sense it describes and that sense's
+heading is compared against the label. 673 of the 1,248 could be checked and none disagreed. The
+other 575 have no Estonian Wiktionary entry or no sense matching the gloss, which is the same
+silence the gloss review met, and it is reported rather than filled in. The one review list worth
+printing came back empty: the 41 nominals whose lemma ends the way an Estonian adjective often does
+are all `-mine` and `-nne` nominalisations, which are nouns.
+
+That pass is kept inside `npm run audit:pos` and it reports without ever writing, because the file
+is generated and a correction belongs in the syllabus. Nothing new asserts the link, because
+`syllabus.test.ts` already keys the course's vocabulary on `lemma|pos` against the harvest alone: a
+label changed in one file and not the other fails `npm test`, which was confirmed by changing one
+and watching it fail. A second check of the same thing is how the first one rots.

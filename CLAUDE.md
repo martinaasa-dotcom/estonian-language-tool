@@ -120,7 +120,17 @@ who answers what: Ekilex draws the verb line, because that is the line it actual
 one that decides which principal parts a word has; the page's heading decides among the nominals;
 the category is a fallback for a page headed `Participle` or `Postposition`, which are true things
 this app has no column for. `npm run audit:pos` re-runs it over the shipped file, 61 labels
-corrected. **An adjective claim from either the heading or the `{{et-adj}}` headword is enough,
+corrected.
+
+**The course harvest cannot be wrong this way, and is checked anyway.** `harvested.ts` is generated
+and its `pos` is a passthrough: `harvestWord` reads the label off the syllabus entry and returns it
+untouched, so the label and the English gloss are authored by one person in one line of
+`lib/collections/syllabus/` and cannot come apart the way a parsed gloss and a category can. The
+audit checks it regardless, matching each authored gloss to the Wiktionary sense it describes and
+comparing that sense's heading: 673 of 1,248 checkable, none wrong. It **reports and never writes**,
+because a correction belongs in the syllabus, and because `syllabus.test.ts` keys the course on
+`lemma|pos` against the harvest alone, so editing one file and not the other already fails
+`npm test`. Do not add an invariant for that; it is the same check twice. **An adjective claim from either the heading or the `{{et-adj}}` headword is enough,
 and a noun claim from the headword alone is not**, which is an asymmetry in the sources rather
 than a thumb on the scale: `{{et-adj}}` carries a superlative, which only an adjective has, while
 `{{et-noun}}` is the ordinary nominal declension an adjective shares, so one is a statement and

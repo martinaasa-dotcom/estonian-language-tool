@@ -200,6 +200,27 @@ course harvest carries the correct `rõõmus` adjective independently, so a lear
 one. `asjatundja` and `brünett` read as nouns in English and are headed `===Adjective===` on their
 own pages; that is Wiktionary's call and the dictionary is editable.
 
+**The course harvest was checked for the same fault and does not have it**, which is a fact about
+how the two files are made rather than luck. `prisma/data/harvested.ts` is generated and its `pos`
+is a passthrough: `harvestWord` reads the label off the syllabus entry and returns it untouched, so
+the label is authored by the same person who wrote the English gloss, in the same line of
+`lib/collections/syllabus/`. The two cannot come apart the way a parsed gloss and a category can.
+
+Checked rather than asserted, because "by construction" is still a claim. The authored gloss has no
+heading it came from, so it is matched to the Wiktionary sense it describes and that sense's heading
+is what the label is compared against. **673 of the 1,248 could be checked and none disagreed**; 475
+have no Estonian Wiktionary entry and 100 no sense matching the gloss, which is the same silence §5
+reported for the glosses and is reported rather than guessed at. The one review list worth printing,
+nominals whose lemma carries an ending Estonian adjectives often take, came back empty: all 41 are
+`-mine` and `-nne` nominalisations (`hindamine`, `ettekanne`, `värbamine`), which are nouns by
+construction.
+
+That pass is kept, inside `npm run audit:pos`, and it **reports and never writes**. The file says it
+is generated, and a correction belongs in the syllabus, which is also where the existing test would
+otherwise stop agreeing with it: `syllabus.test.ts` keys the course's words on `lemma|pos` against
+the harvest alone, so a label changed in one file and not the other fails `npm test`. That was
+verified by changing one and watching it fail, which is also how the audit pass itself was trusted.
+
 ## 7. Where it stands
 
 25 corrections in 2,164 is a defect rate of 1.2%, so measured precision across A1 to B1 is 98.8%
