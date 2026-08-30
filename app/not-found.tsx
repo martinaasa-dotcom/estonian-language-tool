@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/Button";
+import { SuggestFix } from "@/components/SuggestFix";
 import { Mascot } from "@/components/brand";
 
 export default function NotFound() {
@@ -15,6 +16,14 @@ export default function NotFound() {
       <div className="mt-2 flex flex-wrap justify-center gap-3">
         <ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>
         <ButtonLink href="/">Back to Today</ButtonLink>
+      </div>
+      {/* A link inside the app that leads nowhere is our fault, not the reader's. */}
+      <div className="mt-2 w-full">
+        <SuggestFix
+          category="BROKEN"
+          trigger="A link in the app led to a page that is not there."
+          label="This link is broken"
+        />
       </div>
     </main>
   );

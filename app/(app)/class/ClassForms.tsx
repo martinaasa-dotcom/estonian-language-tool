@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Copy, LogOut, Plus, Printer } from "lucide-react";
-import { archiveClassroom, assignUnit, createClassroom, joinClassroom, leaveClassroom } from "@/app/actions";
+import { archiveClassroom, assignHomework, assignUnit, createClassroom, joinClassroom, leaveClassroom } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { CODE_LENGTH } from "@/lib/classroom/code";
 
@@ -98,8 +98,10 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
       </Button>
       <p className="text-xs" style={{ color: "var(--ink-3)" }}>
         Joining shares your name, your streak, your XP for the week and how many words you know with
-        your teacher and classmates. Not your deck, not your searches, not your mistakes one by one.
-        Leaving stops it immediately.
+        your teacher and classmates, and shares one more thing with your teacher alone: which grammar
+        case you personally get wrong most, as a rolled-up percentage over your own reviews, never a
+        specific answer. Not your deck, not your searches, not your mistakes one by one. Leaving stops
+        it immediately.
       </p>
     </div>
   );
@@ -243,6 +245,84 @@ export function AssignUnit({ classroomId, units }: {
         <Printer size={14} aria-hidden /> Worksheet
       </Link>
       {message && <p role="status" className="w-full text-xs" style={{ color: "var(--ink-3)" }}>{message}</p>}
+    </div>
+  );
+}
+
+/**
+ * Anything else as homework: a page number, an exercise, a sentence to write.
+ * Most of what a real class actually assigns is not one of the fixed units,
+ * so `AssignUnit` alone left a teacher typing the real homework into a
+ * WhatsApp group anyway, which is the exact gap the class feature exists to
+ * close.
+ */
+export function AssignHomework({ classroomId }: { classroomId: string }) {
+  const router = useRouter();
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [due, setDue] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  const send = () => {
+    setMessage(null);
+    start(async () => {
+      const result = await assignHomework(classroomId, title, notes, due || undefined);
+      if (!result.ok) { setMessage(result.error); return; }
+      setMessage(`Sent to ${result.assigned} ${result.assigned === 1 ? "person" : "people"}.`);
+      setTitle("");
+      setNotes("");
+      setDue("");
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor="assign-title" className="label-xs" style={{ color: "var(--ink-3)" }}>
+        Title
+      </label>
+      <input
+        id="assign-title"
+        value={title}
+        maxLength={200}
+        placeholder="Write 5 sentences using the partitive"
+        onChange={(e) => setTitle(e.target.value)}
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+      />
+      <label htmlFor="assign-notes" className="label-xs" style={{ color: "var(--ink-3)" }}>
+        Details (optional)
+      </label>
+      <textarea
+        id="assign-notes"
+        value={notes}
+        maxLength={1900}
+        rows={2}
+        placeholder="Textbook page 34, exercise 3. Bring it printed on Thursday."
+        onChange={(e) => setNotes(e.target.value)}
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+      />
+      <div className="flex flex-wrap items-end gap-2">
+        <div>
+          <label htmlFor="assign-hw-due" className="label-xs mb-1 block" style={{ color: "var(--ink-3)" }}>
+            Due (optional)
+          </label>
+          <input
+            id="assign-hw-due"
+            type="date"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+            className="rounded-[var(--r)] border px-3 py-2 text-sm"
+            style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+          />
+        </div>
+        <Button variant="primary" disabled={pending || title.trim().length < 2} onClick={send}>
+          {pending ? "Sending…" : "Set as homework"}
+        </Button>
+      </div>
+      {message && <p role="status" className="text-xs" style={{ color: "var(--ink-3)" }}>{message}</p>}
     </div>
   );
 }

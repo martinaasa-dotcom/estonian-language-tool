@@ -57,9 +57,9 @@ describe("buildPlacement", () => {
 
   it("skips a level it cannot build a fair question for", () => {
     // Better to leave a rung out than to ask a question with two options.
-    const thin = WORDS.filter((w) => w.level !== "C2");
-    const stages = buildPlacement([...thin, { lemma: "üks", gloss: "one", level: "C2" }], 2);
-    expect(stages.map((s) => s.level)).not.toContain("C2");
+    const thin = WORDS.filter((w) => w.level !== "C1");
+    const stages = buildPlacement([...thin, { lemma: "üks", gloss: "one", level: "C1" }], 2);
+    expect(stages.map((s) => s.level)).not.toContain("C1");
   });
 });
 
@@ -80,7 +80,7 @@ describe("placementResult", () => {
   });
 
   it("places a fluent speaker at the top", () => {
-    expect(placementResult(LEVELS.map((l) => score(l, 4)))).toBe("C2");
+    expect(placementResult(LEVELS.map((l) => score(l, 4)))).toBe("C1");
   });
 
   it("requires the pass mark, not a majority", () => {
@@ -106,8 +106,8 @@ describe("placementSummary", () => {
     expect(text).toMatch(/recognition/i);
   });
 
-  it("does not pretend C2 is finished by finishing units", () => {
-    const text = placementSummary("C2", LEVELS.map((l) => score(l, 4)));
+  it("does not pretend fluency past the course is finished by finishing units", () => {
+    const text = placementSummary("C1", LEVELS.map((l) => score(l, 4)));
     expect(text).toMatch(/reading and arguing/i);
   });
 });

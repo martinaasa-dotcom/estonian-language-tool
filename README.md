@@ -40,7 +40,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A course.** Eighty-three units across all six CEFR levels, from *Tervitused* to *Vaba valdamine*, each a
+- **A course.** Seventy-three units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
   sitting's worth of words. Adding a unit builds real flashcards, full paradigm, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
@@ -58,8 +58,8 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
   citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
   real points, under the real rule that sixty percent passes and a zero in any one part fails the
-  whole thing. Plus an A1 and a C2 paper the state has never set, clearly labelled, because it is
-  worth being allowed to find out. Every level carries a percentage chance of passing it today,
+  whole thing. Plus an A1 paper the state has never set, clearly labelled, because it is worth
+  being allowed to find out. Every level carries a percentage chance of passing it today,
   with the evidence behind that number stated rather than implied, and a list of what to fix that
   links to where to fix it. Nothing about the paper is written by a model: the questions are
   assembled out of the dictionary and the marks come from comparing your answer with a form the
@@ -241,6 +241,22 @@ off. The reserve costs a heavy user their eleventh conversation and gives a newc
 The defaults are live whether or not you configure anything. There is no way to turn metering off,
 because sign-up is open by default. If you would rather run a private instance, `ALLOWED_EMAILS` or
 `ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
+
+### When the app gets something wrong
+
+The dictionary is built from Ekilex and Wiktionary rather than typed, which keeps invented Estonian
+out of it and does not make every entry right. So every dead end offers to send a suggested fix: a
+search that found nothing, a gloss that is the wrong sense, a principal part that is wrong, an
+answer marked wrong that was right, a page whose explanation does not match what a course says, a
+screen that failed. What is sent carries the screen and what the app had just said, so a report
+arrives with the thing it is about rather than as a sentence out of context.
+
+They land in a review queue at `/admin/suggestions`, grouped so that one problem is one decision
+however many people reported it, with what the entry says now beside what is proposed. Accepting a
+dictionary correction writes it into the shared entry in one click. `ADMIN_EMAILS` names who may do
+that; with sign-in configured and nobody named, the queue says so instead of showing an empty list.
+Running locally there is one learner and they review their own. Anyone can see what they sent, and
+what happened to it, at `/suggestions`.
 
 ### Adding Google sign-in (multi-user)
 

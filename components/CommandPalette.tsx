@@ -39,6 +39,7 @@ const COMMANDS: Command[] = [
   { id: "guide", label: "What this app is", hint: "Every screen, and what this app cannot do", href: "/guide", keywords: "tour help onboarding walkthrough limits honest" },
   { id: "tasks", label: "Tasks", hint: "Homework and class work", href: "/tasks", keywords: "homework todo class" },
   { id: "class", label: "Classes", hint: "Teach or join a class", href: "/class", keywords: "classroom teacher students join code school homework" },
+  { id: "suggestions", label: "Suggested fixes", hint: "What you have reported, and what happened to it", href: "/suggestions", keywords: "report wrong mistake feedback correction missing word fix suggest admin review" },
   { id: "settings", label: "Settings", hint: "Goal, review mode, backup", href: "/settings", keywords: "backup export import goal preferences" },
   {
     id: "shortcuts",

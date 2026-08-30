@@ -160,7 +160,7 @@ export function placementSummary(level: Level, scores: readonly StageScore[]): s
   const answered = scores.reduce((n, s) => n + s.asked, 0);
   const top = LEVELS[LEVELS.length - 1];
   if (level === top && scores.every(passed)) {
-    return `You recognised words at every level, ${answered} of them. The course starts you at ${top}, and its last units are honest that C2 is finished by reading and arguing in Estonian rather than by finishing units.`;
+    return `You recognised words at every level, ${answered} of them. The course starts you at ${top}. Real fluency past that is earned by reading and arguing in Estonian, not by finishing another unit.`;
   }
   if (level === "A1" && (scores[0] ? !passed(scores[0]) : true)) {
     return "Starting at the beginning, which is the right place to start and much the fastest way through. The first units are short.";

@@ -9,7 +9,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Empty } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { useAnuChat } from "./useAnuChat";
-import { Bubble, CHIPS, Provenance, SentenceCheck, sentenceCheckPrompt } from "./AnuParts";
+import { AnuFailure, Bubble, CHIPS, Provenance, SentenceCheck, sentenceCheckPrompt } from "./AnuParts";
 
 /**
  * Anu, reachable from anywhere: a button in the bottom right corner of every
@@ -33,7 +33,7 @@ export function AnuFab({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
-  const { messages, setMessages, streaming, answeredBy, send } = useAnuChat([]);
+  const { messages, setMessages, streaming, answeredBy, failure, send } = useAnuChat([]);
   const [input, setInput] = useState("");
   const [checkOpen, setCheckOpen] = useState(false);
   const [checkEt, setCheckEt] = useState("");
@@ -174,6 +174,7 @@ export function AnuFab({
                 </Button>
               </div>
 
+              <AnuFailure failure={failure} />
               <Provenance label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
             </div>
           )}
