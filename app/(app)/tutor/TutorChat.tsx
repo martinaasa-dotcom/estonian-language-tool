@@ -274,7 +274,8 @@ function displayUserContent(content: string): string {
 
 function Bubble({ message, streaming }: { message: Msg; streaming: boolean }) {
   const isUser = message.role === "user";
-  const { body, vocab } = splitVocab(message.content);
+  const { body: withoutVocab, vocab } = splitVocab(message.content);
+  const { body, unverified } = splitUnverified(withoutVocab);
   const { rest, fix } = splitFix(isUser ? displayUserContent(body) : body);
 
   return (
@@ -311,6 +312,7 @@ function Bubble({ message, streaming }: { message: Msg; streaming: boolean }) {
             <p lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{fix}</p>
           </div>
         )}
+        {unverified.length > 0 && <UnverifiedNotice words={unverified} />}
         {vocab.length > 0 && <VocabBridge vocab={vocab} />}
       </div>
     </div>
@@ -329,6 +331,53 @@ function splitVocab(content: string): { body: string; vocab: { et: string; en: s
     else body.push(line);
   }
   return { body: body.join("\n").trim(), vocab };
+}
+
+/**
+ * Pulls the trailing UNVERIFIED: line out of the reply.
+ *
+ * `app/api/tutor/route.ts` appends this itself, after streaming ends, once it
+ * has checked Anu's own prose (never a FIX: or VOCAB: line, both already
+ * boxed and tagged below) against the dictionary the way a scanned word is
+ * checked (ADR-021). It cannot withhold what has already streamed to the
+ * screen, so this is the honest alternative: name exactly which word was not
+ * one the dictionary could confirm.
+ */
+function splitUnverified(content: string): { body: string; unverified: string[] } {
+  const lines = content.split("\n");
+  const unverified: string[] = [];
+  const body: string[] = [];
+
+  for (const line of lines) {
+    const match = /^UNVERIFIED:\s*(.+)$/.exec(line.trim());
+    if (match?.[1]) unverified.push(...match[1].split(",").map((w) => w.trim()).filter(Boolean));
+    else body.push(line);
+  }
+  return { body: body.join("\n").trim(), unverified };
+}
+
+function UnverifiedNotice({ words }: { words: string[] }) {
+  const plural = words.length > 1;
+  return (
+    <div
+      className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-[var(--r)] px-4 py-3 text-sm"
+      style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
+    >
+      <Chip tone="again" title="Not a stored form, so the dictionary could not confirm it">
+        AI · verify
+      </Chip>
+      <span>{plural ? "Anu used words above" : "Anu used a word above"} the dictionary does not recognise yet:</span>
+      <span>
+        {words.map((w, i) => (
+          <span key={w}>
+            {i > 0 && ", "}
+            <span lang="et" className="est font-semibold">{w}</span>
+          </span>
+        ))}.
+      </span>
+      <span>Check {plural ? "them" : "it"} before you trust {plural ? "them" : "it"}.</span>
+    </div>
+  );
 }
 
 /**

@@ -26,6 +26,7 @@ import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
+import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS } from "../lib/tutor/prompt";
 
 let failures = 0;
 let checks = 0;
@@ -147,6 +148,57 @@ check("the module that writes about Estonian holds no Estonian", () => {
     .filter((line) => !/\b(et|estonianName|caseNames?):/i.test(line))
     .filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//"));
   assert.deepEqual(offenders, [], "an Estonian form is written into the grammar prose");
+});
+
+check("Anu's worked examples are sourced from a table the dictionary checks", () => {
+  /*
+    `lib/estonian/grammar.ts` holds no Estonian at all, checked above.
+    `lib/tutor/prompt.ts` is the other module that writes about Estonian at
+    length, and it used to type its worked examples straight into the
+    template: a wrong form there ships to every learner, at every level, in
+    every single conversation, and nothing ever re-checked it. `WORKED_FORMS`
+    is now the one place a claim is made, and `lib/tutor/prompt.itest.ts`
+    checks every one against a real stored `Form` row.
+
+    `CLOSED_CLASS_EXAMPLES` is the honest exception: a pronoun's oblique case,
+    a demonstrative and a particle, none of which the dictionary holds a
+    paradigm for at all, so they cannot be checked the same way and stay
+    hand-verified. Naming the list here, imported rather than retyped, is what
+    stops a sixth word joining it silently.
+  */
+  const prompt = read("lib/tutor/prompt.ts");
+  const table = between(prompt, "export const WORKED_FORMS");
+  assert.ok(table, "WORKED_FORMS is gone; the worked examples are typed loose again");
+  const outside = prompt.replace(table, "");
+
+  for (const word of CLOSED_CLASS_EXAMPLES) {
+    assert.ok(outside.includes(word), `"${word}" dropped out of CLOSED_CLASS_EXAMPLES`);
+  }
+
+  // Case names (sisseütlev, seesütlev, ...) are Estonian too, but they are the
+  // subject of a sentence about how Anu names things, not a form she could get
+  // wrong, and CASES is the one place that already governs what they are.
+  const caseNames = new Set(CASES.map((c) => c.et));
+  const estonianLetters = /[õäöüšž]/i;
+  const offenders = outside
+    .split("\n")
+    .filter((line) => estonianLetters.test(line))
+    .filter((line) => !CLOSED_CLASS_EXAMPLES.some((word) => line.includes(word)))
+    .filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//"))
+    .filter((line) => {
+      const words = line.match(/\p{L}[\p{L}\p{M}]*/gu) ?? [];
+      const diacriticWords = words.filter((w) => estonianLetters.test(w));
+      return !diacriticWords.every((w) => caseNames.has(w.toLowerCase()));
+    });
+  assert.deepEqual(offenders, [], "a hardcoded Estonian form appeared in Anu's system prompt, outside WORKED_FORMS and CLOSED_CLASS_EXAMPLES");
+
+  // Every entry on the table is actually quoted somewhere in the template; an
+  // entry nobody reads from is a claim nobody is relying on, which is a
+  // different thing from a claim that has been checked.
+  const template = prompt.slice(prompt.indexOf("return `"));
+  for (const key of Object.keys(WORKED_FORMS)) {
+    assert.ok(template.includes(`${key}.`), `WORKED_FORMS.${key} is on the table but never read in the prompt`);
+  }
 });
 
 check("the model may never supply a form that becomes a card", () => {
@@ -662,6 +714,28 @@ check("the chat says which model actually replied", () => {
 
 check("Anu's prose is cleaned on its way to the learner", () => {
   assert.match(read("app/api/tutor/route.ts"), /ProseStream/, "the humanize pass is gone");
+});
+
+check("Anu's free chat prose is checked against the dictionary, not just her graded comments", () => {
+  /*
+    `verifyComment` withholds a graded comment before it is ever shown
+    (app/api/write/route.ts, app/api/exam/write/route.ts, both checked
+    above). The main chat is the higher-traffic path, it is where the system
+    prompt asks Anu to give worked examples and minimal pairs inline, and
+    until now nothing checked a word of it: `ProseStream` cleans punctuation
+    and explicitly never touches Estonian, and the two lines that were boxed
+    and tagged, FIX: and VOCAB:, are the only ones a learner was ever told to
+    doubt. `scripts/eval-anu.mjs` already caught a model inventing a form on
+    exactly this kind of question, which is the whole argument for a check
+    here rather than a stronger request in the prompt.
+  */
+  const route = read("app/api/tutor/route.ts");
+  assert.match(route, /chatEstonianTokens\(/, "the chat route no longer extracts candidate Estonian tokens");
+  assert.match(route, /matchEstonianForm\(/, "the chat route no longer checks tokens against the dictionary");
+  assert.match(route, /UNVERIFIED:/, "the chat route no longer flags what it could not confirm");
+
+  const chat = read("app/(app)/tutor/TutorChat.tsx");
+  assert.match(chat, /UNVERIFIED:/, "the chat screen no longer reads the flag back");
 });
 
 // ── Never re-add the iframes (docs/00-audit-v4.md section A) ─────────────────
