@@ -9,7 +9,7 @@ import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { SuggestFix } from "@/components/SuggestFix";
-import { NO_VALUE } from "@/lib/copy/values";
+import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
 
 export const dynamic = "force-dynamic";
 
@@ -236,7 +236,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                       <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
                         <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
-                          AI
+                          {AI_TAG}
                         </Chip>
                       </p>
                     )}

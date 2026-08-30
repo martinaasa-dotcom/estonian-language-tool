@@ -8,6 +8,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import type { Example } from "@/lib/dict/examples";
+import { AI_TAG } from "@/lib/copy/values";
 
 /**
  * Example sentences on a dictionary entry.
@@ -126,7 +127,7 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
         <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
           {example.en}
           <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
-            AI
+            {AI_TAG}
           </Chip>
         </p>
       ) : tutorReady ? (

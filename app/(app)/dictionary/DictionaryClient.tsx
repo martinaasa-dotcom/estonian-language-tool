@@ -18,7 +18,7 @@ import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
 import { SuggestFix } from "@/components/SuggestFix";
-import { NO_VALUE } from "@/lib/copy/values";
+import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
 
 export interface EntryForm {
   formType: string;
@@ -333,7 +333,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 gradation {entry.gradationNote}
               </Chip>
             )}
-            {entry.provenance === "AI" && <Chip tone="again">AI · verify</Chip>}
+            {entry.provenance === "AI" && <Chip tone="again">{AI_TAG}</Chip>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

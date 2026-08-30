@@ -3107,6 +3107,66 @@ check("the accessibility sweep runs axe, over both themes", () => {
 
 // ── Checks about the checks ──────────────────────────────────────────────────
 
+check("anything a model wrote carries the mark the terms page promises", () => {
+  /*
+    `/terms` says what the AI suggests "is marked *AI · verify* and needs your
+    confirmation". That is a promise on a page somebody can hold the app to, so
+    every screen showing a model's words has to actually say it.
+
+    It had already drifted. Six places said `AI · verify` and three said a bare
+    `AI` with the rest in a `title`, which is a hover: this app is measured at
+    360px and its README leads with "works on a phone", where a hover does not
+    exist, so on the grammar case page, the dictation round and the dictionary's
+    own examples the useful half of the tag was not there at all. The word that
+    matters is `verify`, because `AI` says where a sentence came from and
+    `verify` says what to do about it.
+
+    One constant, read from `lib/copy/values.ts`, on the argument `NO_VALUE`
+    already makes next to it: a phrase retyped in nine places drifts in one of
+    them, and this one had. Asserted as "nobody retypes it" rather than "the
+    string is right", because a literal is exactly how it came apart.
+  */
+  const tagged = [...APP, ...COMPONENTS].filter((f) => read(f).includes("AI_TAG"));
+  assert.ok(
+    tagged.length >= 6,
+    `only ${tagged.length} screens read AI_TAG; the tag is being written some other way`,
+  );
+
+  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(read(f)));
+  assert.deepEqual(
+    retyped, [],
+    `the AI tag is typed out rather than read from lib/copy/values: ${retyped.join(", ")}`,
+  );
+
+  /*
+    And no screen marks a model's words with a bare `AI` and leaves the rest to
+    a tooltip, which is the shape the three drifted ones had.
+  */
+  const bare = [...APP, ...COMPONENTS].filter((f) =>
+    /<Chip[^>]*title="Machine translation[^"]*">\s*AI\s*<\/Chip>/.test(read(f)));
+  assert.deepEqual(
+    bare, [],
+    `a machine translation is marked "AI" with its meaning in a hover: ${bare.join(", ")}`,
+  );
+
+  /*
+    The terms page has to be making the promise this is holding it to.
+
+    Asserted on the rendered `{AI_TAG}` rather than on the token, and with the
+    imports stripped first: the first version matched the import line, so it
+    passed on a terms page that had stopped saying it. A check that cannot fail
+    is the thing this file exists to prevent, and writing one while adding a
+    check is a good argument for the discipline of taking each new rule away
+    once and watching it complain.
+  */
+  const terms = read("app/terms/page.tsx").replace(/^import [^\n]*\n/gm, "");
+  assert.match(
+    terms,
+    /\{AI_TAG\}/,
+    "the terms page stopped naming the mark, so there is no promise to keep",
+  );
+});
+
 check("every marker the merge ritual names is still somewhere in the tree", () => {
   /*
     CLAUDE.md ends its section on more than one session at a time with a list of
