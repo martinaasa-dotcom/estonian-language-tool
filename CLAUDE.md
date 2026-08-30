@@ -958,6 +958,19 @@ checkout and the production password. It never pushes the schema: the deployment
 that, and a workflow that can reshape the production database is a bigger thing than one that can
 reload the dictionary inside it.
 
+**One character is still text, and the contrast pass was skipping every one of
+them.** `test-design.mjs` measured a text node only at `length > 1`, so no
+single-character run was ever checked, and the one that mattered was exactly
+that shape: the tick inside a reviewed day on Today's week strip, white on mint
+at 2.52:1, sitting in the app unseen by the suite whose job is finding that. It
+measures them now, and the exemption is `data-ornament` in the markup rather
+than a length: a 92px step numeral in a hue's own tint, behind a card that says
+the same thing in words, is decoration and has to say so. `aria-hidden` cannot
+stand in for it, because the tick carries that too and is still the thing a
+sighted reader looks at. The fix on the other side was `--on-mint`, since
+`--mint-ink` is the ink on mint's *tint* and there was nothing for its solid
+fill (docs/14-design-system.md §"Every hue has an ink").
+
 **A suite states its preconditions; it does not inherit them.** `letterBar` is a
 stored preference that decides whether a control is drawn at all, so a database
 where any earlier suite walked through first run and answered "I have them
@@ -967,7 +980,13 @@ than in ones that name the cause. CI escapes it only by seeding fresh, which
 means the one place it bites is somebody's own machine, in their own order, with
 the least context for reading it. `scripts/lib/prefs.mjs` holds `ensureLetterBar`
 and `requireLetterBar`: set the answer you depend on, and fail in seven
-milliseconds and in words when it is not there. Cleaning up after yourself is the
+milliseconds and in words when it is not there. The same rule covers data and
+not only preferences: `/review/government` builds its questions out of the
+learner's deck and correctly asks nothing when no verb in it carries a recorded
+government, and `smoke-interact.mjs` met that by clicking a button that was not
+there, which is thirty seconds of waiting, a throw, and the eight checks after
+it never running, all reported as one failure naming a regex. It reads the
+precondition and waives its three checks with the reason on screen instead. Cleaning up after yourself is the
 weaker version of the same idea, since it only works while every suite remembers
 and cannot help the first run on a machine somebody has been clicking around on.
 

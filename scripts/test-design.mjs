@@ -97,10 +97,28 @@ for (const url of PAGES) {
       const cs = getComputedStyle(el);
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) continue;
-      const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
+      /*
+        ONE CHARACTER IS STILL TEXT.
+
+        This read `> 1`, so no single-character run was ever measured, and the
+        one that mattered most was exactly that shape: the tick inside a
+        reviewed day on Today's week strip, white on mint at 2.52:1, sitting in
+        the app unseen by a suite whose whole job is finding that. Anything a
+        reader reads is text, and "✓" is read.
+
+        The exemption is `data-ornament` and it has to be argued for in the
+        markup rather than inferred from a length. A step numeral set at 92px in
+        a hue's own tint, behind a card that says the same thing in words, is
+        decoration in the WCAG sense and would fail any threshold this check
+        could set. `aria-hidden` cannot stand in for it: the tick carries
+        `aria-hidden` too, because the day beside it is already spelled out for
+        a screen reader, and it is still the thing a sighted reader looks at.
+      */
+      const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length >= 1);
       // `nextjs-portal` is the dev overlay, not the app.
       if (own && cs.visibility !== "hidden" && parseFloat(cs.opacity) > 0.1
-          && !el.closest(".sr-only") && !el.closest("nextjs-portal")) {
+          && !el.closest(".sr-only") && !el.closest("[data-ornament]")
+          && !el.closest("nextjs-portal")) {
         out.text.push({
           size: cs.fontSize, weight: cs.fontWeight, color: cs.color, bg: bgOf(el) ?? "gradient",
           text: el.textContent.trim().slice(0, 40),
@@ -203,7 +221,12 @@ check("nothing is set below the 11.5px floor",
   [...sizes.keys()].every((s) => parseFloat(s) >= 11.5),
   [...sizes.keys()].filter((s) => parseFloat(s) < 11.5).join(" "));
 check("every run of text clears WCAG AA on its background", contrast.length === 0,
-  contrast.slice(0, 3).map((c) => `${c.cr}:1 "${c.text}"`).join(" | "));
+  /*
+    Name where, not just what, for the same reason the type-scale check above
+    does. This printed three ratios and the text, which for a run of five
+    identical ticks is one clue repeated five times and no page to look on.
+  */
+  contrast.slice(0, 8).map((c) => `${c.url} ${c.cr}:1 "${c.text}" .${c.cls}`).join("\n      "));
 check("weights stay within the four the system defines", weights.size <= 4,
   [...weights.keys()].join(" "));
 
