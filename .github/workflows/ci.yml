@@ -175,7 +175,12 @@ jobs:
   mobile:
     name: The browser suites
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Sixteen suites rather than eleven, and the five that were added are not
+    # the cheap ones: the restore round trip exports and re-imports the whole
+    # account. Measured at about seven and a half minutes of suites on top of
+    # the install, the browser download, the build and the seed, so the ceiling
+    # goes up rather than the list coming back down.
+    timeout-minutes: 30
 
     services:
       postgres:
