@@ -9,7 +9,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { Recorder } from "@/components/Recorder";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
-import { Speak } from "@/components/Speak";
+import { SpeakPair } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { xpForRating } from "@/lib/gamification/xp";
 import { RATINGS, type RatingValue } from "@/lib/srs/scheduler";
@@ -214,8 +214,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
                 <p lang="et" className="est text-2xl font-semibold md:text-2xl" style={{ color: "var(--accent-deep)" }}>
                   {card.et}
                 </p>
-                <Speak text={card.et} label={`Hear "${card.et}"`} size={17} />
-                <Speak text={card.et} slow label={`Hear "${card.et}" slowly`} size={17} />
+                <SpeakPair text={card.et} size={17} />
               </div>
               <Recorder />
               <p className="max-w-[44ch] text-xs" style={{ color: "var(--ink-3)" }}>

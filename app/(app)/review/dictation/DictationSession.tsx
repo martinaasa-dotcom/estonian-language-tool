@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Ear, X } from "lucide-react";
+import { ArrowRight, Check, Ear, X, Volume2 } from "lucide-react";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
@@ -264,7 +264,16 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
                 />
                 <div className="flex items-center gap-3">
-                  <Speak text={task.et} slow label="Play it slowly" size={14} />
+                  <Speak
+                    text={task.et}
+                    slow
+                    label="Play it slowly"
+                    size={14}
+                    className="press tap-tint inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                    style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
+                  >
+                    <Volume2 size={14} strokeWidth={2} aria-hidden /> Slow
+                  </Speak>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {played ? "Play it as often as you like" : "Tap to hear it, the slow button is next to it"}
                   </span>
