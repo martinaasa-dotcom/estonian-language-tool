@@ -77,7 +77,7 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
           type="button"
           onClick={() => start(() => void deleteTask(task.id))}
           aria-label={`Delete task "${task.title}"`}
-          className="shrink-0 rounded-md p-1.5 transition-opacity hover:opacity-60"
+          className="tap-tint shrink-0 rounded-md p-1.5"
           style={{ color: "var(--ink-3)" }}
         >
           <Trash2 size={15} aria-hidden />

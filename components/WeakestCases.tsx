@@ -14,6 +14,12 @@ import { Meter } from "@/components/ui";
  * numbers for the same case on two screens, and nothing in the app would
  * disagree with either.
  *
+ * It carries `tap-tint` because a row here is a control: it tints and lifts
+ * under the pointer rather than fading, which is what every other selectable
+ * option in the app does since the sweep that made them look selectable. That
+ * arrived on main while this component was being extracted, on two of the three
+ * copies it replaces, so it is ported here rather than lost to a clean merge.
+ *
  * One component, one calculation, and the best of the three affordances kept:
  * two destinations per row, because the bar drills a case and the question mark
  * explains it. Side by side rather than stacked, since drilling a case you have
@@ -36,7 +42,7 @@ export function WeakestCases({ cases, empty }: {
             <Link
               href={`/review?case=${c.grammCase}`}
               aria-label={`Drill the ${name}, currently ${c.accuracy} percent over ${c.total} reviews`}
-              className="flex flex-1 items-center gap-3 rounded-md px-1 py-1 text-sm transition-opacity hover:opacity-75"
+              className="tap-tint flex flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 text-sm"
             >
               <span className="w-24 shrink-0" style={{ color: "var(--ink-2)" }}>{name}</span>
               <span className="min-w-0 flex-1">

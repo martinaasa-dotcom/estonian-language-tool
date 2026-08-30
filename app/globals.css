@@ -454,6 +454,47 @@
   :root[data-dock] .dock-pad { padding-bottom: calc(var(--dock-clearance) + 1.5rem); }
 
   /*
+    THE ESTONIAN LETTER BAR, WHICH IS A DESKTOP THING AND A CHOICE.
+
+    Two rules, in one place, because they were previously neither: the bar was
+    drawn under every Estonian field on every device for everybody.
+
+    NOT ON A PHONE, EVER. A software keyboard already carries õ ä ö ü: they are
+    a long press on the vowel, or one tap on a keyboard switched to Estonian,
+    which is a thing a phone does per field rather than per machine. So the row
+    buys a phone nothing and costs it the scarcest thing it has, which is
+    vertical space under a field that the keyboard has already taken two thirds
+    of the screen away from.
+
+    NOT IF THEY HAVE THE KEYS, EITHER. An Estonian keyboard has all six as
+    keys, so the row is a line of buttons that learner will never press, under
+    every field in the app. Which keyboard somebody has cannot be detected, so
+    `[data-letters]` carries their own answer, written by the layout they are
+    rendered in and therefore present in the first paint rather than a frame
+    after it: a row that appears and then vanishes on every navigation is worse
+    than one that was never asked about.
+
+    WHAT COUNTS AS A DESKTOP is stated once, here. `min-width` alone would give
+    the bar to a tablet in landscape with no keys attached to it; `pointer:
+    fine` alone would give it to a phone with a mouse paired, which is a
+    stranger thing but not an impossible one. Both, and the answer is a machine
+    somebody is typing on with their hands on physical keys.
+
+    `.letters-choice` is the control that offers the bar, and it takes the same
+    media query rather than a `md:` class, so a screen cannot end up offering a
+    choice about something it is not drawing. It is display: none rather than
+    hidden, so it is gone from the accessibility tree too and not merely from
+    the picture.
+  */
+  .letter-bar, .letters-choice { display: none; }
+
+  @media (min-width: 768px) and (pointer: fine) {
+    .letter-bar { display: flex; }
+    .letters-choice { display: block; }
+    [data-letters="off"] .letter-bar { display: none; }
+  }
+
+  /*
     A SCROLLER INSIDE A PANEL, WITH A TRACK THAT DOES NOT SIT ON THE CONTENT.
 
     Overlay scrollbars, which is what macOS and iOS draw, paint on top of
@@ -583,6 +624,16 @@
     pointer everywhere they appeared. Once an answer is picked and the button
     disables, the caller's own inline colours (correct/incorrect) take over,
     and `:not(:disabled)` keeps this rule out of their way.
+
+    THIS IS ALSO THE BASE FOR AN OPTION THAT STAYS CHOSEN, and it is one class
+    rather than two because two sessions arrived at the same fault from
+    different ends within the day. This branch built `components/Choice.tsx`
+    for the settings and first-run questions and gave it a `.choice` base of
+    its own; main had already landed this, for the multiple-choice answers,
+    with the better mechanism: a custom property is how a caller passes a tone
+    through a class hover, and working around an inline style with an inset
+    ring is only how you avoid needing one. So `.choice` is gone and the
+    chip and card below layer their chosen state on this.
   */
   .choice-btn {
     --choice-border: var(--rule);
@@ -601,6 +652,82 @@
   }
   .choice-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
   .choice-btn:disabled { cursor: default; }
+
+  /*
+    An option that stays chosen, which a multiple-choice answer never is.
+
+    `components/Choice.tsx` asks the settings and first-run questions, where
+    the answer persists and has to be legible at a glance afterwards. Resting
+    it carries a shadow and quieter ink than a bare `.choice-btn`, so a row of
+    them reads as a form rather than as a legend, which is what a row of
+    `<Chip>`s inside bare `<button>`s read as.
+  */
+  .choice-chip, .choice-card {
+    color: var(--ink-2);
+    box-shadow: var(--shadow-sm);
+  }
+  .choice-chip:disabled, .choice-card:disabled { opacity: 0.45; }
+
+  /*
+    Chosen, on a pill: the fill inverts. That is a change of *luminance* rather
+    than of hue, which is what the old `--raised` to `--accent-soft` swap was
+    not: on the dark theme those two are two percent of lightness apart, so the
+    answer to the question was being carried by a difference a person could
+    look straight at and not see.
+  */
+  .choice-chip[data-on] {
+    background: var(--accent-deep);
+    border-color: transparent;
+    color: var(--accent-ink);
+    box-shadow: var(--shadow-accent);
+    font-weight: 700;
+  }
+  .choice-chip[data-on]:hover:not(:disabled) {
+    background: var(--accent-deep);
+    border-color: transparent;
+    box-shadow: var(--shadow-accent);
+    filter: brightness(1.08);
+  }
+
+  /*
+    Chosen, on a card: the tint stays rather than inverting, because the second
+    line of a card is `--ink-3` and a solid accent fill would swallow it. So the
+    rule doubles instead (an inset shadow over the border, so nothing reflows)
+    and the tick beside it becomes visible. Three channels, one of them hue.
+  */
+  .choice-card[data-on] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .choice-card[data-on]:hover:not(:disabled) {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow);
+  }
+
+  /*
+    THE SAME RULE, FOR SOMETHING WITH NO BOX OF ITS OWN.
+
+    `.choice-btn` needs a border and a background to move. A row in a list that
+    happens to be a link, or a bare icon button, has neither: the case rows on
+    grammar, progress and practice, and the suspend and delete buttons in two
+    lists, all carried `transition-opacity hover:opacity-60` as their entire
+    hover state. Dimming is exactly how every disabled control here is drawn,
+    so the strongest signal a mouse got was the control appearing to switch
+    off. A raised tint arrives under the pointer instead, which is a button
+    appearing rather than one fading. A tint rather than a colour change
+    because these set their ink inline.
+  */
+  .tap-tint {
+    transition-property: box-shadow, transform, background-color, color;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .tap-tint:hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(-1px);
+    background-color: var(--raised);
+  }
+  .tap-tint:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
 
   .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 

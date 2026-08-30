@@ -497,6 +497,30 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   rather than a copy per caller, on the argument `lib/cache/singleFlight.ts` makes about itself,
   and the invariant fails on any component that mints an object URL without revoking it. That is
   how `ShareProgress` turned up, holding a shared card for the life of its tab.
+- **"Pick one of these" is one component, and a chip is not a control.**
+  `components/Choice.tsx` is it: `ChoiceGroup` plus `ChoiceChip` or `ChoiceCard`. There was no
+  primitive for this and every screen that asked invented its own, two of the three wrongly. The
+  worst was a bare `<button>` wrapped round a `<Chip>`, which is the app's *label* primitive: no
+  border, no shadow, no hover, so first run, the screen that decides a learner's year, read as a
+  legend rather than as a form. Chosen was `--raised` swapped for `--accent-soft`, two percent of
+  lightness apart on the dark theme, which is the palette's own rule about hue being broken on the
+  one screen where the distinction *is* the answer. And a set of mutually exclusive options wore
+  `aria-pressed`, so it announced as that many unrelated switches and cost that many tab stops
+  rather than as one radio group saying "3 of 8". Its chosen states live in `globals.css`
+  and not in a `style` prop, for the reason in the next rule: a control that paints its resting
+  background inline can never define a hover, which is what made this unfixable in place.
+- **A hover makes a control more present, never less.** `.choice-btn` for a box, `.tap-tint` for a
+  bare row or icon button. Twenty-odd controls carried `transition-opacity hover:opacity-80` as
+  their whole hover state, and dimming is exactly how every disabled control here is drawn, so the
+  strongest signal a mouse got on those screens was the control appearing to switch off. A link
+  may still fade, and a `<button>` drawn as underlined text is a link wearing the right element,
+  which is the one exemption the invariant reads.
+  Two sessions found this the same day from opposite ends, main on the multiple-choice answers and
+  this branch on the settings and first-run questions, and both worked out the same cause: an
+  inline style beats a class `:hover`, so a control that paints its resting background inline can
+  never define one. Main's answer is the one kept, because a `--choice-bg` custom property is how a
+  caller passes a tone *through* a hover, where an inset ring is only how you avoid needing to.
+  The second copy was deleted rather than left beside it.
 - **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So
@@ -557,7 +581,25 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   observed through resource timing, **not** on `useTransition`'s pending flag: measured here that
   goes true and never comes back, which would have turned the ring for its full eight second
   ceiling on every pull.
-- Estonian text inputs get the diacritic bar.
+- **The Estonian letter bar is a desktop thing, and a choice.** `õ ä ö ü š ž` are not on a UK or US
+  keyboard, so a row of click-to-insert buttons under every Estonian field is the only thing making
+  half these exercises answerable. It was drawn for everybody, everywhere, always, and it should
+  have been neither. A phone keyboard already carries those letters, on a long press or a keyboard
+  switched to Estonian, so the row buys a phone nothing and spends the one thing a phone has none
+  of; and a learner typing on an Estonian keyboard has them as keys, so it is clutter under every
+  field in the app. Neither is detectable: a browser will not say what is printed on the keys, and
+  a learner who never reaches for õ looks exactly like one who cannot. So it is asked, once, on the
+  first screen of first run, and changed afterwards from Settings or from the row itself, which
+  carries its own way out because the moment somebody notices they do not need it is the moment
+  they are looking at it. `lib/ux/letterBar.ts` holds the letters and the answer, `app/globals.css`
+  holds the one definition of "a desktop" (a width **and** a real pointer, since `min-width` alone
+  hands the row to a tablet with nothing attached to it), and the signed-in shell publishes the
+  learner's answer as `data-letters` in the render rather than from an effect, because an attribute
+  written after hydration shows the row for a frame to everybody who asked for it to be gone.
+  **On is the default and stays the default**: everybody who signed up before the question existed
+  is never asked, and reading a missing answer as "off" would take away the only way they have of
+  writing õ. `scripts/test-mobile.mjs` measures all of it in a browser, which is the only place the
+  pointer half of the rule is real.
 
 ## Model configuration
 
