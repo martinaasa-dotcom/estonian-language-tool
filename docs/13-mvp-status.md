@@ -1083,9 +1083,10 @@ provider list.
 2. **A learner who imports a large deck on day one skips `arriving` the moment they grade a card.**
    That is the right answer for the common case and a slightly abrupt one for them: they meet the
    full dashboard in one step. Nothing is hidden from them that they cannot reach.
-3. **Settings is still a flat list of twelve sections.** It is not on the first-run path and every
-   section is a distinct control, so grouping it would be churn rather than clarity. Left alone on
-   purpose.
+3. ~~**Settings is still a flat list of twelve sections.**~~ **Grouped in §19** under four plain
+   headings once the list actually reached twelve. The original argument against grouping assumed
+   the cost was navigational churn; adding a label above a cluster of existing sections, with no
+   section moved out of view and no anchor broken, turned out not to carry that cost.
 
 ## 19. The thirteenth pass: a course honest about where it stops
 
@@ -1113,4 +1114,13 @@ this project does not add to it from memory. Nobody re-verified whether the ten 
 vocabulary belongs in the general dictionary; it was seeded there already and stays, since removing
 real, Ekilex-sourced words because their course unit was cut would be deleting correct data over an
 unrelated decision.
+
+**Settings, grouped.** The same pass grouped the twelve sections in `/settings` under four plain
+headings, Study, Progress and sharing, Words and Anu, Device and data, and §18's limitation above is
+struck rather than left standing. Every section keeps its own heading, its own anchor and its own
+content in the same order as before; nothing is collapsed and nothing moved off the page, which is
+the whole reason this is a landmark added rather than a restructure. The distinction from what §18
+warned against: that entry was arguing against turning Settings into tabs or an accordion that would
+hide a control behind a click, which is a real cost for a page nobody reaches through a menu. A label
+above four sections is not that.
 
