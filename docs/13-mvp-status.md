@@ -1296,7 +1296,28 @@ before anything counted the request.
 3. **The service worker's caches are trimmed oldest-first, not least-recently-used.** The Cache API
    cannot record a read, and re-putting an entry on every hit would make a cache lookup a cache write
    on the busiest path in the app. It costs an occasional re-fetch of something old.
-4. **The accessibility suite is still the subset this project promised itself**, not axe. It checks
-   names, focus order, alt text, heading order, landmarks, titles and contrast, the last of these in
-   both themes, which is where every contrast failure it has found so far lived. It does not check
-   reading order, focus traps or anything a real screen reader would tell you.
+4. ~~**The accessibility suite is still the subset this project promised itself**, not axe.~~
+   **It is axe now**, over every route in both themes, which found eight things the hand-rolled
+   sweep could not: the sweep scoped to `main` and so never saw the navigation rail, and it read a
+   colour's own alpha but not an `opacity` inherited from a parent. What that second blind spot hid
+   was a locked course unit explaining itself at 2.63:1, on every locked row of a 73-unit course.
+   Still not a screen reader: axe cannot tell you whether the reading order makes sense, whether a
+   focus trap is escapable, or whether a label says the right thing.
+
+### Found on the way, and fixed
+
+**A fade never goes on a box that holds words.** `opacity` multiplies through everything inside it,
+so a fade meaning "not yet" fades the sentence explaining why. Three places had it: the course
+page's locked units, the badge shelf's unearned badges and the grammar reference's definition
+labels. Each already says "not yet" three or four other ways, so the fade moves onto the icon.
+
+**A list that announced itself as empty.** The landing page's three steps are an `<ol>` of `<li>`s
+with a fade-in wrapper around each, and a `div` between an `ol` and its `li` means the list is not a
+list.
+
+**And the two findings this pass had left as the reader's call** turned out to have answers inside
+the design system rather than decisions about it. The week strip's reviewed-day circle is mint at
+2.52:1 against its card, which is the case `.choice-card[data-on]` already solved: where a fill
+would swallow the contrast, double the rule instead. The leech clinic's failure strip told a failure
+from a recall by hue with a tooltip as the fallback, which is the pairing the dictation drill's own
+rule forbids; a failure is a taller mark now, and the count is visible rather than only announced.
