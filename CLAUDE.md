@@ -543,6 +543,23 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   never define one. Main's answer is the one kept, because a `--choice-bg` custom property is how a
   caller passes a tone *through* a hover, where an inset ring is only how you avoid needing to.
   The second copy was deleted rather than left beside it.
+- **A control the 44px floor makes bigger centres its own content.** The floor under a coarse
+  pointer is a `min-width` and a `min-height`, and an inline box lays its content out from the top
+  left, so on a button holding nothing but an icon all of the slack lands on one side: measured at
+  390px, the cross on the phone's More sheet sat six pixels left of the middle of the circle around
+  it, and so did every other icon-only control that had not thought to say `flex` for itself. One
+  rule in `app/globals.css` centres them, written inside `:where()` and keyed on `[aria-label]` plus
+  a lone `svg` child, so it carries no specificity and reaches only the controls whose whole content
+  is the icon. A control that lays its own icon out keeps doing exactly what it says. The invariant
+  asserts the pairing rather than the rule, because a floor that inflates a box with nothing
+  centring what is inside it is the state that produced this.
+- **Two speeds are one control, not the same icon twice.** Normal and slow were two identical
+  speaker buttons side by side on the dictionary entry, the speaking round and the listening part of
+  the mock exam, which reads as a rendering fault rather than as a choice, and the only way to find
+  out what the second one did was to press it. `SpeakPair` in `components/Speak.tsx` is one pill with
+  a divider whose slow half says "Slow" in words, since a `title` attribute is a hover and this app
+  is measured on a phone. It goes away as a pair: both halves ask the same service for the same
+  sentence, so a failure is a fact about the service and not about a speed.
 - **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So
