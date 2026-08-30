@@ -119,8 +119,7 @@ export function DictionaryClient({
                 <button
                   type="button"
                   onClick={() => go(s.lemma)}
-                  className="flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left transition-opacity hover:opacity-70"
-                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                  className="choice-btn flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left"
                 >
                   <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>{s.translation}</span>

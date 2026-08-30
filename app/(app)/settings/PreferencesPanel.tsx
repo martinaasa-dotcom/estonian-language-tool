@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Keyboard, PenLine } from "lucide-react";
+import { Keyboard, PenLine } from "lucide-react";
 import { setLeaderboardPreferences, setReviewMode } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import type { ReviewMode } from "@/lib/settings/store";
 
 const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof PenLine }[] = [
@@ -23,7 +24,7 @@ const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof Pe
 
 export function ReviewModePanel({ current }: { current: ReviewMode }) {
   const [mode, setMode] = useState(current);
-  const [pending, start] = useTransition();
+  const [, start] = useTransition();
 
   const pick = (next: ReviewMode) => {
     setMode(next);
@@ -31,29 +32,19 @@ export function ReviewModePanel({ current }: { current: ReviewMode }) {
   };
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <ChoiceGroup ariaLabel="How review asks" className="grid gap-2 sm:grid-cols-2">
       {MODES.map((m) => (
-        <button
+        <ChoiceCard
           key={m.value}
-          type="button"
-          disabled={pending}
-          onClick={() => pick(m.value)}
-          aria-pressed={mode === m.value}
-          className="rounded-[var(--r-lg)] border p-4 text-left transition-opacity hover:opacity-85"
-          style={{
-            borderColor: mode === m.value ? "var(--accent)" : "var(--rule)",
-            background: mode === m.value ? "var(--accent-soft)" : "var(--surface)",
-          }}
-        >
-          <span className="flex items-center gap-2">
-            <m.icon size={16} aria-hidden style={{ color: mode === m.value ? "var(--accent-deep)" : "var(--ink-3)" }} />
-            <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{m.label}</span>
-            {mode === m.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />}
-          </span>
-          <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>{m.detail}</span>
-        </button>
+          layout="stacked"
+          selected={mode === m.value}
+          onSelect={() => pick(m.value)}
+          icon={<m.icon size={16} aria-hidden />}
+          title={m.label}
+          detail={m.detail}
+        />
       ))}
-    </div>
+    </ChoiceGroup>
   );
 }
 

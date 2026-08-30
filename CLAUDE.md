@@ -446,6 +446,30 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   rather than a copy per caller, on the argument `lib/cache/singleFlight.ts` makes about itself,
   and the invariant fails on any component that mints an object URL without revoking it. That is
   how `ShareProgress` turned up, holding a shared card for the life of its tab.
+- **"Pick one of these" is one component, and a chip is not a control.**
+  `components/Choice.tsx` is it: `ChoiceGroup` plus `ChoiceChip` or `ChoiceCard`. There was no
+  primitive for this and every screen that asked invented its own, two of the three wrongly. The
+  worst was a bare `<button>` wrapped round a `<Chip>`, which is the app's *label* primitive: no
+  border, no shadow, no hover, so first run, the screen that decides a learner's year, read as a
+  legend rather than as a form. Chosen was `--raised` swapped for `--accent-soft`, two percent of
+  lightness apart on the dark theme, which is the palette's own rule about hue being broken on the
+  one screen where the distinction *is* the answer. And a set of mutually exclusive options wore
+  `aria-pressed`, so it announced as that many unrelated switches and cost that many tab stops
+  rather than as one radio group saying "3 of 8". Its chosen states live in `globals.css`
+  and not in a `style` prop, for the reason in the next rule: a control that paints its resting
+  background inline can never define a hover, which is what made this unfixable in place.
+- **A hover makes a control more present, never less.** `.choice-btn` for a box, `.tap-tint` for a
+  bare row or icon button. Twenty-odd controls carried `transition-opacity hover:opacity-80` as
+  their whole hover state, and dimming is exactly how every disabled control here is drawn, so the
+  strongest signal a mouse got on those screens was the control appearing to switch off. A link
+  may still fade, and a `<button>` drawn as underlined text is a link wearing the right element,
+  which is the one exemption the invariant reads.
+  Two sessions found this the same day from opposite ends, main on the multiple-choice answers and
+  this branch on the settings and first-run questions, and both worked out the same cause: an
+  inline style beats a class `:hover`, so a control that paints its resting background inline can
+  never define one. Main's answer is the one kept, because a `--choice-bg` custom property is how a
+  caller passes a tone *through* a hover, where an inset ring is only how you avoid needing to.
+  The second copy was deleted rather than left beside it.
 - **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So

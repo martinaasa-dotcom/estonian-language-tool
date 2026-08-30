@@ -128,7 +128,7 @@ function Row({ row }: { row: CardRow }) {
         type="button"
         onClick={() => start(async () => { await setCardSuspended(row.id, !suspended); setSuspended(!suspended); })}
         aria-label={suspended ? `Resume "${row.front}"` : `Suspend "${row.front}"`}
-        className="rounded-md p-1.5 transition-opacity hover:opacity-60"
+        className="tap-tint rounded-md p-1.5"
         style={{ color: suspended ? "var(--accent-deep)" : "var(--ink-3)" }}
       >
         <EyeOff size={15} aria-hidden />
@@ -137,7 +137,7 @@ function Row({ row }: { row: CardRow }) {
         type="button"
         onClick={() => start(async () => { await deleteCard(row.id); setGone(true); })}
         aria-label={`Delete card "${row.front}"`}
-        className="rounded-md p-1.5 transition-opacity hover:opacity-60"
+        className="tap-tint rounded-md p-1.5"
         style={{ color: "var(--ink-3)" }}
       >
         <Trash2 size={15} aria-hidden />
