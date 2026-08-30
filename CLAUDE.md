@@ -498,6 +498,44 @@ open first, and a phone reaches every place a desktop does. `icon()` falling bac
 why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
 before a screenshot caught them.
 
+**Where you are is one pill that travels, and it leaves on the press rather than on the page.**
+The rail and the phone bar used to say it by painting the row you arrived on and unpainting the one
+you left, which is two things happening at once and reads as two things: a light going out over
+here and another coming on over there, with nothing connecting them. What connects them is a marker
+that moves, borrowed from Upside Lab's dock with its measurements intact, and three things carry it.
+Its **leading edge sets off before its trailing edge follows**, so the pill stretches across the
+ground it is covering and gathers itself up on arrival, which is why a mark is two edges rather
+than a position and a size: the stretch falls out of the arithmetic and scales with the distance,
+1.20x for one row and 4.28x for the length of the rail, where a fixed keyframe would give both the
+same. It is a **transform animation handed to the compositor**, never a transition on `top` or
+`left`: those are laid out and painted on the main thread, and the main thread is exactly what a
+page navigation is busy with, which Lab measured as three frames of travel, five frames frozen
+while the new room rendered, then the rest of the way in one. And it **leaves on `pointerdown`**,
+because these pages are rendered on a server and the wait is real; that is a bet, so it is called
+off by a press dragged off the cell, by a page that answers with a different cell, or by four
+seconds of nothing, which is long on purpose since snapping the marker home mid-wait looks far more
+broken than letting it stand where somebody put it. `lib/ux/navMotion.ts` is the arithmetic and is
+pure, `lib/layout/navMarker.ts` measures the cells and plays it, `app/nav.css` says how a pane
+behaves once placed, and both surfaces read all three, because a second marker is two answers to
+one question drifting apart a number at a time.
+
+Four things about it are decisions rather than details. **A pane is placed by measurement on both
+axes**, never by an inset typed to match a padding: the rail is a scroll container, so its padding
+box takes in the scrollbar's gutter and a pane inset from both edges came out four pixels narrower
+than the row it was under. **A pane with no offset on the axis it travels stays at its static
+position**, one padding in from the edge, while the cell it is chasing reports an `offsetTop`
+measured from the padding box, which drew the whole rail's marker 16px low on every row until
+`restingStyle` pinned the origin. **The panes sit at a negative z-index** so the cells can stay
+unpositioned and keep reporting their offsets against the well rather than against whichever
+section they are in, which is the same measurement fault arriving through the door marked
+`position: relative`. And **the current row still carries its own card until a pane exists**: a
+marker cannot be placed on a server, so the well declares the material once as `--nav-marker-bg`
+and the row wears it until `data-nav-marked` says the pane has taken it over, or every hard load
+would paint a rail with nothing marked and then flicker a card into place. The rail deliberately
+does **not** breathe on a travel the way the phone's capsule does, since a column lurching beside
+the page it just changed is arguing with a decision the reader has already made; what a pointer
+gets there instead is the fainter pane following it, which is the hover those rows never had.
+
 **Space is what says two things are separate, and it was saying five different things.** Pages
 stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
 them, so moving from Progress to Practice changed how tightly the app breathed for no reason a
@@ -887,7 +925,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`,
-`tourBySection`. Most of them now
+`tourBySection`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

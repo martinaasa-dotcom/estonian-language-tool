@@ -912,6 +912,61 @@ check("the rail shows every place, rather than hiding some behind a button", () 
   }
 });
 
+check("where you are is one pill that travels, on the compositor", () => {
+  /*
+    The rail and the phone bar say where you are with one pane that moves
+    between their cells, rather than each cell painting itself when its turn
+    comes. Three things hold that up and each one has already been the bug.
+
+    ONE SOURCE FOR THE MOTION. Both surfaces take their marker from
+    `lib/layout/navMarker.ts`, which takes its arithmetic from
+    `lib/ux/navMotion.ts`. A surface that grows a marker of its own is two
+    answers to one question, drifting apart a number at a time.
+
+    NOTHING ANIMATES A LAYOUT PROPERTY. `top`, `left`, `width` and `height`
+    are laid out and painted on the main thread, and the main thread is what a
+    page navigation is busy with: Upside Lab measured its own marker on those
+    running three frames, stalling five while the new room rendered, then
+    teleporting the rest of the way in one. The travel is a transform
+    animation with a clock of its own, so a transition naming any of those
+    four on either pane is the regression.
+
+    AND THE ROW STILL CARRIES ITS OWN CARD UNTIL A PANE EXISTS. A marker is
+    placed by measuring, which cannot happen on a server, so every hard load
+    paints once before there is one. The well declares the material as
+    `--nav-marker-bg` and the current cell wears it until `data-nav-marked`
+    says a pane has taken over.
+  */
+  const rail = code("components/Sidebar.tsx");
+  assert.match(rail, /useNavMarker\(/, "the navigation stopped reading lib/layout/navMarker.ts");
+  assert.match(
+    code("lib/layout/navMarker.ts"),
+    /from "@\/lib\/ux\/navMotion"/,
+    "the marker grew geometry of its own instead of reading lib/ux/navMotion.ts",
+  );
+
+  const motion = read("app/nav.css");
+  for (const pane of [".nav-marker", ".nav-ghost"]) {
+    assert.ok(motion.includes(pane), `app/nav.css no longer draws ${pane}`);
+  }
+  for (const rule of motion.split("}")) {
+    if (!/\.nav-(marker|ghost)\b/.test(rule)) continue;
+    const transition = /transition:([^;]*)/.exec(rule)?.[1] ?? "";
+    assert.doesNotMatch(
+      transition,
+      /\b(top|left|right|bottom|width|height|all)\b/,
+      "a marker pane is back on a layout property, which a route change freezes",
+    );
+  }
+
+  assert.match(
+    motion,
+    /\.nav-cell\[data-nav-on\][^{]*\{[^}]*--nav-marker-bg/,
+    "the current row stopped carrying its own card for the paint before hydration",
+  );
+  assert.match(rail, /data-nav-marked/, "nothing tells the row when a pane has taken the card over");
+});
+
 check("the pure modules stay free of React, Next and Prisma", () => {
   /*
     These are the ones with unit tests around them, and a test is only cheap

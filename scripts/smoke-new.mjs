@@ -24,12 +24,13 @@ mkdirSync(SHOTS, { recursive: true });
 const browser = await launchChromium();
 
 /*
-  Floor: 45 before the navigation checks below, plus the seven they add. This
-  box reaches 54 against a seeded database, so the two above the floor are the
-  ones gated on the deck holding enough to build a government drill and a
-  minimal pair, which a thin database does not.
+  Floor: 45 before the navigation checks below, plus the seven they add, plus
+  the five the travelling marker adds. This box reaches 59 against a seeded
+  database, so the two above the floor are the ones gated on the deck holding
+  enough to build a government drill and a minimal pair, which a thin database
+  does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 52 });
+const { check, done } = suite("The new routes, rendered", { floor: 58 });
 
 const ROUTES = [
   ["/", "today"],
@@ -214,6 +215,107 @@ if (sheet && rail) {
   check("a phone reaches every place a desktop does", missing.length === 0, missing.join(", "));
   check("the sheet groups what it holds", sheet.headings.length >= 4, `${sheet.headings.length} headings`);
 }
+
+/*
+  THE MARKER: ONE PILL THAT TRAVELS, RATHER THAN A ROW LIGHTING UP AS ANOTHER
+  GOES OUT.
+
+  Written in a browser because none of it is visible to a source check. The
+  pane is placed by measuring, so the questions that matter are whether it
+  lands on the row it is meant to be under, whether it leaves on the press
+  rather than on the page, and whether the row still carries its own card in
+  the window before any of that can have run. The last one is not theoretical:
+  a marker cannot be placed on a server, and every hard load paints once
+  before it is.
+*/
+await page.goto(`${BASE}/grammar`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+const marker = await page.evaluate(() => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav?.querySelector(".nav-marker");
+  const cell = nav?.querySelector("[data-nav-on]");
+  if (!pane || !cell) return null;
+  const p = pane.getBoundingClientRect();
+  const c = cell.getBoundingClientRect();
+  return {
+    row: cell.getAttribute("href"),
+    off: Math.max(Math.abs(p.top - c.top), Math.abs(p.left - c.left),
+                  Math.abs(p.width - c.width), Math.abs(p.height - c.height)),
+    painted: getComputedStyle(pane).backgroundColor,
+  };
+});
+check("the marker sits on the row you are on", marker !== null && marker.off <= 1,
+  marker ? `${marker.row}, out by ${marker.off.toFixed(1)}px` : "no marker");
+
+const was = page.url();
+const aimed = await page.evaluate(async () => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")]
+    .find((c) => c.getAttribute("href") === "/settings");
+  const from = pane.getBoundingClientRect().top;
+  const distance = to.getBoundingClientRect().top - from;
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+  /*
+    A press and nothing else: no click, so nothing navigates, and the marker
+    has only the bet to go on. Halfway through the travel it should be most of
+    the way there, since the curve spends nearly all of its distance early.
+  */
+  await new Promise((r) => setTimeout(r, 130));
+  const gone = pane.getBoundingClientRect().top - from;
+  return { covered: Math.round((gone / distance) * 100), stretched: Math.round(pane.getBoundingClientRect().height) };
+});
+check("the marker leaves on the press, not on the page",
+  aimed.covered > 40 && page.url() === was,
+  `${aimed.covered}% of the way there 130ms after pointerdown, still on ${page.url().replace(BASE, "")}`);
+check("and it stretches across the ground it covers", aimed.stretched > 60,
+  `${aimed.stretched}px tall mid-travel, against a 40px row`);
+
+const still = await browser.newContext({ viewport: { width: 1280, height: 1000 }, reducedMotion: "reduce" });
+const calm = await still.newPage();
+await calm.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await calm.waitForTimeout(400);
+const arrived = await calm.evaluate(async () => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")]
+    .find((c) => c.getAttribute("href") === "/settings");
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return {
+    onto: Math.round(pane.getBoundingClientRect().top - to.getBoundingClientRect().top),
+    running: pane.getAnimations().length,
+  };
+});
+check("under reduced motion it arrives rather than travels",
+  arrived.running === 0 && Math.abs(arrived.onto) <= 1,
+  `${arrived.running} animations, out by ${arrived.onto}px`);
+
+const flat = await browser.newContext({ viewport: { width: 1280, height: 1000 }, javaScriptEnabled: false });
+const unscripted = await flat.newPage();
+await unscripted.goto(`${BASE}/grammar`, { waitUntil: "domcontentloaded" });
+const fallback = await unscripted.evaluate(() => {
+  const cell = document.querySelector('nav[aria-label="Main"] [data-nav-on]');
+  if (!cell) return null;
+  const seen = getComputedStyle(cell);
+  return { background: seen.backgroundColor, shadow: seen.boxShadow };
+});
+check("the row you are on is marked before any of that has run",
+  fallback !== null && !/rgba\(0, 0, 0, 0\)|transparent/.test(fallback.background),
+  fallback ? fallback.background : "no row marked");
+
+const barMark = await mobile.evaluate(() => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  const pane = nav?.querySelector(".nav-marker");
+  const cell = nav?.querySelector("[data-nav-on]");
+  if (!pane || !cell) return null;
+  const p = pane.getBoundingClientRect();
+  const c = cell.getBoundingClientRect();
+  return Math.max(Math.abs(p.left - c.left), Math.abs(p.width - c.width));
+});
+check("the phone bar marks the cell you are on too", barMark !== null && barMark <= 1,
+  barMark === null ? "no marker" : `out by ${barMark.toFixed(1)}px`);
 
 console.log(`\nScreenshots in ${SHOTS}`);
 console.log(errors.length ? `\nConsole errors:\n${errors.join("\n")}` : "\nNo console errors.");
