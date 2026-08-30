@@ -470,6 +470,14 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   reads as a one-character form and beside a percentage as a minus sign whose digits failed to
   load. `lookup.ts` still recognises all three spellings a stored translation may carry, because
   the dictionary is seeded data that outlives a deploy.
+- **A date is written the way the reader writes dates, and only their browser knows how that is.**
+  `lib/time/clock.ts` pins the hour and deliberately leaves date order and month names to the reader,
+  which is true of a client component and was false of the two places this app formatted a date on
+  the server: `undefined` as a locale means the deployment's, so on a machine set to en-US Today's
+  greeting line read "Sunday, August 30" to somebody in Tartu who writes "pühapäev, 30. august".
+  `components/LocalDate.tsx` renders what the server wrote and lets the browser replace it on mount.
+  A separate rule from the day boundary above, because the fix is different: a zone can be stored and
+  handed to the server, and a locale is a list of preferences only the browser has.
 - **24-hour clock everywhere** (`lib/time/clock.ts`), never am/pm. Estonia writes the time that
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`

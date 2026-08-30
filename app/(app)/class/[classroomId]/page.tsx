@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { PATH } from "@/lib/collections/syllabus";
 import { classRoster } from "@/lib/classroom/roster";
+import { LocalDate } from "@/components/LocalDate";
 import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, StatTile } from "@/components/ui";
 import { ArchiveClass, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
 
@@ -215,7 +216,16 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
 
         <div className="flex flex-wrap items-center gap-4 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
           {isTeacher ? <ArchiveClass classroomId={classroomId} /> : <LeaveClass classroomId={classroomId} />}
-          <Chip>joined {membership.joinedAt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</Chip>
+          <Chip>
+            joined{" "}
+            <LocalDate
+              iso={membership.joinedAt.toISOString()}
+              options={{ day: "numeric", month: "short", year: "numeric" }}
+              fallback={membership.joinedAt.toLocaleDateString(undefined, {
+                day: "numeric", month: "short", year: "numeric",
+              })}
+            />
+          </Chip>
         </div>
       </div>
     </Page>

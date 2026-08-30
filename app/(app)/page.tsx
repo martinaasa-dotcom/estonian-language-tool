@@ -19,6 +19,7 @@ import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile, toneInk } from "@/components/ui";
+import { LocalDate } from "@/components/LocalDate";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 
@@ -127,9 +128,21 @@ export default async function TodayPage() {
 
   return (
     <Page
-      eyebrow={new Intl.DateTimeFormat(undefined, {
-        timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
-      }).format(now)}
+      eyebrow={
+        <LocalDate
+          iso={now.toISOString()}
+          zone={clock.zone}
+          options={{ weekday: "long", day: "numeric", month: "long" }}
+          /*
+            What the server writes, and what a reader sees if script never
+            runs. Its zone is the learner's; only the shape of the reading is
+            the deployment's until the browser has said otherwise.
+          */
+          fallback={new Intl.DateTimeFormat(undefined, {
+            timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
+          }).format(now)}
+        />
+      }
       title={name ? `${greeting(clock, now)}, ${name}` : greeting(clock, now)}
       lead={lead(stage, toReview)}
     >

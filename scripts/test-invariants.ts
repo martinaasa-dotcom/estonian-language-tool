@@ -2230,6 +2230,54 @@ check("a practice round has a heading, not only its empty and finished screens",
   }
 });
 
+/**
+ * A date is written the way the reader writes dates.
+ *
+ * `lib/time/clock.ts` pins the hour and deliberately leaves date order and
+ * month names to the reader, "because those are genuinely theirs". That is
+ * true of a client component and was false of the two places this app
+ * formatted a date on the server, where `undefined` as a locale means the
+ * deployment's: on a machine set to en-US, Today's greeting line read "Sunday,
+ * August 30" to a learner in Tartu who writes "pühapäev, 30. august".
+ *
+ * The same class of mistake as the day boundary and one notch less severe,
+ * because it is the shape of a reading rather than which day it names. It is
+ * checked separately because the fix is different: a zone can be stored and
+ * passed to the server, and a locale is a list of preferences that only the
+ * browser has.
+ */
+check("a date is written in the reader's own locale, not the server's", () => {
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    /*
+      Only a call that leaves the locale to the runtime. A literal locale is a
+      deliberate choice and is usually not about a date at all: the landing
+      page writes a word count with `toLocaleString("en-GB")` so the thousands
+      separator does not move about, which is the opposite of this fault.
+    */
+    const LEFT_TO_THE_RUNTIME = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/;
+    if (!LEFT_TO_THE_RUNTIME.test(source)) continue;
+    /*
+      A client component is the reader's own machine, so there is nothing to
+      get wrong there. Anywhere else the call has to be handed to one, which
+      is what `LocalDate` is: a server rendering that a browser replaces with
+      its own on mount. A file that formats on the server AND mounts a
+      LocalDate is the shape of that fix, since the server's rendering is the
+      fallback.
+    */
+    if (/^\s*"use client"/m.test(read(file))) continue;
+    assert.match(
+      source,
+      /<LocalDate/,
+      `${file} formats a date on the server, so it is written in the deployment's locale rather than the reader's`,
+    );
+  }
+
+  const local = code(join("components", "LocalDate.tsx"));
+  assert.match(local, /^\s*"use client"/m, "LocalDate stopped being a client component");
+  assert.match(local, /fallback/, "LocalDate no longer renders what the server wrote while it waits");
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
