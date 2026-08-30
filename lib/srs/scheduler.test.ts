@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  emptyScheduling, grade, humaniseInterval, previewIntervals, type SchedulingState,
+  emptyScheduling, grade, humaniseInterval, isStillLearning, previewIntervals,
+  type SchedulingState,
 } from "./scheduler";
 
 describe("FSRS scheduling", () => {
@@ -115,5 +116,38 @@ describe("a card whose last review is in the future", () => {
 
   it("previews intervals for one instead of throwing", () => {
     expect(() => previewIntervals(cardLastReviewedInTheFuture(), now)).not.toThrow();
+  });
+});
+
+describe("still learning", () => {
+  const now = new Date("2026-01-01T10:00:00Z");
+
+  it("counts a card that has never been seen", () => {
+    expect(isStillLearning(emptyScheduling(now).state)).toBe(true);
+  });
+
+  it("counts a card part way through its learning steps", () => {
+    // One Good on a new card leaves it in Learning, not Review: the graduating
+    // step has not been reached, which is exactly the position multiple choice
+    // is meant for.
+    const next = grade(emptyScheduling(now), 3, now);
+    expect(next.state).toBe(1);
+    expect(isStillLearning(next.state)).toBe(true);
+  });
+
+  it("does not count a card that has graduated to Review", () => {
+    expect(isStillLearning(2)).toBe(false);
+  });
+
+  it("counts a card that has lapsed back out of Review", () => {
+    // A card in Review, failed. FSRS puts it in Relearning, and the memory is
+    // in the same position a new card's is, so the scaffolding comes back.
+    const settled: SchedulingState = {
+      ...emptyScheduling(now), state: 2, reps: 8, stability: 20, difficulty: 5,
+      lastReview: new Date("2026-01-01T09:00:00Z"),
+    };
+    const lapsed = grade(settled, 1, now);
+    expect(lapsed.state).toBe(3);
+    expect(isStillLearning(lapsed.state)).toBe(true);
   });
 });
