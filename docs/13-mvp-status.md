@@ -56,11 +56,11 @@ because a cap that fails open is not a cap.
 | Area | State |
 |---|---|
 | `lib/estonian/`: cases, principal parts, gradation, derivation | Complete, 56 unit tests |
-| Dictionary: search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,970 words |
+| Dictionary: search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,960 words |
 | Ekilex integration: live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
 | English translations, layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
 | Inflected-form search: `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
-| Built-in dictionary, about 5,970 entries and 34,500 stored forms | Grown twice over by two pipelines that turned out to be complements: 360 hand-checked entries, 1,248 fetched against the syllabus by `scripts/harvest-ekilex.ts` with authored English glosses, and the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C2 (478 / 693 / 1,226 / 1,243 / 180 / 76, the rest ungraded by either source). 461 verbs carry government, up from 24, and 5,405 entries carry an attested Estonian sentence |
+| Built-in dictionary, about 5,960 entries and 34,500 stored forms | Grown twice over by two pipelines that turned out to be complements: 360 hand-checked entries, 1,248 fetched against the syllabus by `scripts/harvest-ekilex.ts` with authored English glosses, and the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C2 (478 / 693 / 1,226 / 1,243 / 180 / 76, the rest ungraded by either source). 461 verbs carry government, up from 24, and 5,405 entries carry an attested Estonian sentence |
 | Speech: TartuNLP, server-proxied, content-addressed cache | Complete and verified end to end. Now durable in object storage rather than per-instance; see §4b |
 | Flashcards: FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
 | Today: due counts, streak, tasks, weak-word pick | Complete |
@@ -123,7 +123,7 @@ Each of these is a decision, not an omission.
    Free models are rate-limited hard enough upstream that they cannot be evaluated reliably, let
    alone relied on. This is exactly why the model is never allowed to supply an inflected form.
 
-1. **The built-in dictionary is about 5,970 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary and by the course harvest, it works offline, but it is short of the full
+1. **The built-in dictionary is about 5,960 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary and by the course harvest, it works offline, but it is short of the full
    lexicon. Anything outside it can be added by hand: the add-word form takes principal parts and
    classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
    key would close the gap properly.
@@ -1321,3 +1321,120 @@ the design system rather than decisions about it. The week strip's reviewed-day 
 would swallow the contrast, double the rule instead. The leech clinic's failure strip told a failure
 from a recall by hue with a tooltip as the fallback, which is the pairing the dictation drill's own
 rule forbids; a failure is a taller mark now, and the count is visible rather than only announced.
+
+## 22. The sixteenth pass: the label that was read from the wrong place
+
+`docs/12-open-questions.md` Q8, answered. It was carrying a default of "leave it", on the grounds
+that the glosses were right and this was wrong metadata rather than wrong teaching, and that was
+true of the symptom and wrong about the cause.
+
+### What was wrong
+
+A word's English gloss and its part of speech are two facts about one definition line, and they
+were read from two different places. The gloss is the first definition on the word's Wiktionary
+page. The label was whichever of Wiktionary's four part-of-speech categories the seed builder drew
+the candidate from first, which is a statement about the word having *some* sense of that kind
+somewhere, and nouns are drawn first. So every word listed in two categories came out a noun:
+`kallis`, `valge`, `sinine`, `noor`, `tark`, `vana`, `magus`, `lilla` and 53 others.
+
+Nothing looked broken, which is why it survived a full gloss audit sitting right beside it. Every
+wrong answer is a real part of speech spelled correctly, and an Estonian adjective declines exactly
+like a noun, so the paradigm on the entry page was right and no screen contradicted itself. What it
+reached was `lib/srs/cards.ts`, which prints the label as a card's hint, and every rule that filters
+on `pos`: which practice modes a word is eligible for, and which words `lib/progress/caseExamples.ts`
+is allowed to draw a noun case example from.
+
+### The recommended fix was measured and was worse
+
+Q8's own default was to prefer the more specific category, adjective over noun. Over the whole
+dictionary that relabels 86 entries and breaks 25 of them, because a category is not a claim about
+the sense being shipped. `lamp` is in the adjectives category for a colloquial sense meaning
+"random", which is the exact sense the gloss audit had just finished removing from its answer side;
+`pea` and `kama` are in the adverbs category; `mari`, `norm`, `seadus`, `kreem`, `kile` and `kogus`
+would every one have been labelled against the gloss printed beside them. Reversing the category
+order does not fix that, it moves it onto a different set of words.
+
+### What was built
+
+The page answers the question directly: every definition sits under a `===Noun===` or
+`===Adjective===` heading. `extractEstonianEntries` returns each sense with its own heading, so the
+two facts come out of one parse and cannot disagree, and `extractEstonianSenses` is now that
+function with the headings dropped rather than a second reader of the same markup.
+`lib/dict/pos.ts` is the one table of who answers what. Ekilex draws the verb line, because it is
+the line Ekilex actually draws and the one that decides which principal parts a word has. The
+heading decides among the nominals. The category survives only as a fallback for a page headed
+`Participle` or `Postposition`, which are true things this app has no column for, and 7 entries
+took it.
+
+One asymmetry, in the sources rather than in the rule. The heading and the headword template
+disagree on 13 pages of 5,363 and neither wins them all: `võimas` is headed `===Noun===` and
+declared `{{et-adj|võimsa|võimsat|s=võimsaim}}`, while `üksik`, `lämbe` and `lämmi` are headed
+`===Adjective===` and declared `{{et-noun}}`. All four are adjectives. `{{et-adj}}` carries a
+comparative and a superlative, which only an adjective has; `{{et-noun}}` is the ordinary nominal
+declension that an adjective shares, so an editor writing out the forms of `üksik` reaches for it
+with nothing implied. One is a statement and the other is a shrug, so an adjective claim from
+either source counts and a noun claim from the template alone does not.
+
+`npm run audit:pos` is that pass kept, the sibling of `npm run audit:glosses`, sharing its page
+cache so whichever runs second is free. **61 labels corrected**, 60 NOUN to ADJECTIVE and one
+ADVERB to ADJECTIVE.
+
+### Twelve words were in the dictionary twice
+
+Found by running the reseed rather than by reading it. `pos` is half of `Lexeme`'s conflict key, so
+a word the course harvest labels `ADJECTIVE` and the builder labelled `NOUN` never collided: it was
+inserted twice, as two entries with two ids and two sets of cards, and nothing anywhere reported
+it. `kallis`, `valge` and `noor` were among them. They are one entry each now, which is why
+`SEED_SET_SIZE` went down by twelve without a word being dropped, and it is the only time that
+number has ever fallen.
+
+That same key is why `prisma/data/pos-corrections.json` exists. A deployment seeded before this
+holds `kallis` as a NOUN, and a reseed looking for the ADJECTIVE finds no conflict and puts a
+second one beside it, so the fix would have shipped the bug. `applyPosCorrections` repoints the
+existing row first. Two things about when it runs were both found by testing rather than by
+reasoning: it is before the early return `--only-if-empty` takes, for the same reason
+`ensureSearchIndexes` is, since a correction only matters to a database that was already seeded
+with the old label and that is exactly the case a normal deploy skips; and it is before the course
+harvest is written, because run afterwards the harvest has already inserted its own correct
+`kallis` and the guard against moving a row onto an occupied key then correctly declines, leaving
+the duplicate in place.
+
+It writes no content. The translation, paradigm, examples and provenance stay as they were, the row
+keeps its id, and a card and its review history follow it. It never touches a row somebody edited by
+hand, and never moves a row onto a key another row holds, because `hall` is legitimately both a noun
+meaning "frost" and an adjective meaning "grey".
+
+### What was deliberately not changed
+
+`rõõmus` is headed `===Noun===` with `{{et-noun}}` under it and glossed "happy". Both signals agree
+and both are wrong, so no rule separates it from a genuine noun, and writing one would be this
+pipeline making the lexical judgement it does not get to make. It is the `kõrb` case in a new
+column, and it is left for a person, which the dictionary is editable for. The course harvest
+carries the correct adjective independently, so a learner meets the right one anyway.
+
+The second option Q8 offered, letting a word carry more than one part of speech, was not needed and
+is still available. It is still the truer model and still a schema change, and `hall` is the case
+for it.
+
+### And the course harvest, which turned out not to have the fault
+
+Checked afterwards, because the same question is worth asking of the other file that carries a part
+of speech. It does not have the fault, and the reason is structural rather than lucky.
+`prisma/data/harvested.ts` is generated and its `pos` is a passthrough: `harvestWord` reads the
+label off the syllabus entry and returns it untouched, so the label and the English gloss are
+authored by the same person in the same line of `lib/collections/syllabus/`. The failure above needs
+two sources that can disagree, and here there is one.
+
+Checked rather than asserted, since "by construction" is a claim like any other. An authored gloss
+has no heading it came from, so it is matched to the Wiktionary sense it describes and that sense's
+heading is compared against the label. 673 of the 1,248 could be checked and none disagreed. The
+other 575 have no Estonian Wiktionary entry or no sense matching the gloss, which is the same
+silence the gloss review met, and it is reported rather than filled in. The one review list worth
+printing came back empty: the 41 nominals whose lemma ends the way an Estonian adjective often does
+are all `-mine` and `-nne` nominalisations, which are nouns.
+
+That pass is kept inside `npm run audit:pos` and it reports without ever writing, because the file
+is generated and a correction belongs in the syllabus. Nothing new asserts the link, because
+`syllabus.test.ts` already keys the course's vocabulary on `lemma|pos` against the harvest alone: a
+label changed in one file and not the other fails `npm test`, which was confirmed by changing one
+and watching it fail. A second check of the same thing is how the first one rots.

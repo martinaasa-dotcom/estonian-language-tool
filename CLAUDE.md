@@ -102,6 +102,54 @@ correcting: of the 684 with an independent English gloss, 657 agree outright and
 not are a choice between synonyms. Those are authored rather than parsed, so no fault above can
 reach them, which is the argument for the division of labour and not for skipping the check.
 
+**A word's gloss and its part of speech are two facts about one line, so they are read off one
+line.** They were not, and that is the whole of what went wrong. The gloss is the first definition
+on the page; the label was whichever of Wiktionary's four part-of-speech categories the candidate
+was drawn from first, and nouns are drawn first, so every word listed as both came out a noun:
+`kallis`, `valge`, `sinine`, `noor`, `tark`, `vana` and 55 more. The obvious fix is to prefer the
+more specific category, and it was measured and is worse. It relabels 86 words and breaks 25 of
+them, because a category says only that the word has *some* sense of that kind somewhere on its
+page: `lamp` is in the adjectives category for a colloquial sense meaning "random", `pea` and
+`kama` are in the adverbs category, and `mari`, `norm` and `seadus` would all have been labelled
+against the very gloss printed beside them. Reversing the order moves the fault rather than fixing
+it.
+
+Every definition sits under a `===Noun===` or `===Adjective===` heading, so
+`extractEstonianEntries` returns each sense with its own, and `lib/dict/pos.ts` is the one table of
+who answers what: Ekilex draws the verb line, because that is the line it actually draws and the
+one that decides which principal parts a word has; the page's heading decides among the nominals;
+the category is a fallback for a page headed `Participle` or `Postposition`, which are true things
+this app has no column for. `npm run audit:pos` re-runs it over the shipped file, 61 labels
+corrected.
+
+**The course harvest cannot be wrong this way, and is checked anyway.** `harvested.ts` is generated
+and its `pos` is a passthrough: `harvestWord` reads the label off the syllabus entry and returns it
+untouched, so the label and the English gloss are authored by one person in one line of
+`lib/collections/syllabus/` and cannot come apart the way a parsed gloss and a category can. The
+audit checks it regardless, matching each authored gloss to the Wiktionary sense it describes and
+comparing that sense's heading: 673 of 1,248 checkable, none wrong. It **reports and never writes**,
+because a correction belongs in the syllabus, and because `syllabus.test.ts` keys the course on
+`lemma|pos` against the harvest alone, so editing one file and not the other already fails
+`npm test`. Do not add an invariant for that; it is the same check twice. **An adjective claim from either the heading or the `{{et-adj}}` headword is enough,
+and a noun claim from the headword alone is not**, which is an asymmetry in the sources rather
+than a thumb on the scale: `{{et-adj}}` carries a superlative, which only an adjective has, while
+`{{et-noun}}` is the ordinary nominal declension an adjective shares, so one is a statement and
+the other is a shrug. That is what keeps `võimas` an adjective under its `===Noun===` heading and
+`üksik`, `lämbe` and `lämmi` adjectives under their `{{et-noun}}`.
+
+**`pos` is half of `Lexeme`'s conflict key, so correcting one is not an edit, it is a move.** Twelve
+of those 61 words were already in the dictionary *twice*, because the course harvest labelled
+`kallis` an adjective and the builder labelled it a noun, and two labels means two rows with two
+ids and two sets of cards. Nothing reported it. They are one entry each now, which is the only
+reason `SEED_SET_SIZE` has ever gone down. The same key is why `prisma/data/pos-corrections.json`
+exists: a deployment seeded before this holds the old label, a reseed finds no conflict and adds a
+second row beside it, so `applyPosCorrections` repoints the existing one first. It runs before the
+early return `--only-if-empty` takes, for the reason `ensureSearchIndexes` does, and before the
+harvest is written, because the harvest inserting its own correct label first strands the stale row
+this was meant to replace. It writes no content, never touches a row somebody edited by hand, and
+never moves a row onto a key another row holds, since `hall` is legitimately a noun meaning "frost"
+and an adjective meaning "grey".
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
@@ -1084,6 +1132,7 @@ npm run test             # unit tests (Vitest), hermetic: no database, no networ
 npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
+npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary

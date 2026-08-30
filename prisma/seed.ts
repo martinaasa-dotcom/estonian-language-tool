@@ -5,7 +5,7 @@ import { ADJECTIVES, PHRASES } from "./data/other";
 import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/advanced";
 import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
-import { writeExpanded } from "./expanded";
+import { applyPosCorrections, writeExpanded } from "./expanded";
 import { ensureSearchIndexes } from "./indexes";
 import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
@@ -30,6 +30,21 @@ async function main() {
     indexes have to be ensured on every deploy, not only the first.
   */
   await ensureSearchIndexes(prisma);
+
+  /*
+    Before the early return for the same reason, and it is the reason this
+    correction reaches anybody at all. A part of speech the builder got wrong
+    is only wrong on a database that was already seeded with it, which is
+    precisely the case `--only-if-empty` skips: put this after the check and it
+    would run on new deployments, which do not need it, and never on the ones
+    that do. Before the writes below as well, because the course harvest
+    carries its own correct label for some of these words and inserting that
+    first strands the stale row it was supposed to replace.
+  */
+  const relabelled = await applyPosCorrections(prisma);
+  if (relabelled > 0) {
+    console.log(`Corrected the part of speech on ${relabelled} entries.`);
+  }
 
   if (process.argv.includes("--only-if-empty")) {
     const existing = await prisma.lexeme.count();
