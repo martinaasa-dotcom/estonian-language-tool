@@ -573,6 +573,119 @@
   .lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
   .press:active { transform: translateY(1px) scale(0.985); }
 
+  /*
+    A CONTROL REACTS TO A POINTER BY BECOMING MORE PRESENT, NEVER LESS.
+
+    Twenty-odd controls carried `transition-opacity hover:opacity-80` as their
+    entire hover state: the multiple-choice options in two practice modes, the
+    self-rating buttons on the level check, the starred words in the dictionary,
+    the case rows on three screens. Fading a thing under the cursor is the one
+    hover the rest of this interface uses for nothing else, because dimming is
+    exactly how every disabled control here is drawn. So the strongest signal a
+    mouse got on those screens was the control appearing to switch off, which is
+    worse than no hover at all.
+
+    Two shapes, because a bordered control and a bare row want different
+    answers, and both are written so they cannot collide with an inline style:
+
+    `.tap` is for a control that is a box — an answer option, a pill, a round
+    play button. It raises and draws an accent rule inside its own edge, which
+    says "this is the one you are about to choose" without moving anything.
+    The ring is an inset shadow rather than a border so nothing reflows, and it
+    is a shadow rather than a background because these controls set their
+    background inline, where a stylesheet cannot reach.
+
+    `.tap-tint` is for something with no box of its own — a row in a list that
+    happens to be a link, a bare icon button. No ring, since a row holding a
+    progress bar has enough lines in it already: a raised tint arrives under
+    the pointer instead, which is a button appearing rather than one fading.
+    A tint rather than a colour change because these set their ink inline too.
+  */
+  /*
+    THE SELECTABLE OPTION, AND WHY ITS STATES ARE HERE RATHER THAN IN A STYLE
+    PROP.
+
+    `components/Choice.tsx` is the one control that answers "pick one of these"
+    and "pick any of these". Its resting, hover, pressed and chosen looks are
+    written as CSS rather than as the inline `style` the rest of this app uses,
+    for a reason that only shows up on this component: an inline style beats
+    every stylesheet rule there is, so a component that paints its resting
+    background inline can never define a hover. That is exactly how the goal
+    chips ended up with no hover state at all, and how the option cards ended
+    up with `hover:opacity-80` as a substitute for one.
+
+    Resting is a surface with a rule and a small shadow, which is how
+    `Button variant="secondary"` already says "press me". Hover moves the rule
+    to the accent, doubles it, and lifts a pixel. `data-on` is chosen.
+  */
+  .choice {
+    transition-property: color, background-color, border-color, box-shadow, transform, filter;
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    background-color: var(--surface);
+    border-color: var(--rule);
+    color: var(--ink-2);
+    box-shadow: var(--shadow-sm);
+  }
+  .choice:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent), var(--shadow);
+  }
+  .choice:active:not(:disabled) { transform: translateY(1px) scale(0.985); }
+  .choice:disabled { opacity: 0.45; }
+
+  /*
+    Chosen, on a pill: the fill inverts. That is a change of *luminance* rather
+    than of hue, which is what the old `--raised` to `--accent-soft` swap was
+    not: on the dark theme those two are two percent of lightness apart, so the
+    answer to the question was being carried by a difference a person could
+    look straight at and not see.
+  */
+  .choice-chip[data-on] {
+    background-color: var(--accent-deep);
+    border-color: transparent;
+    color: var(--accent-ink);
+    box-shadow: var(--shadow-accent);
+    font-weight: 700;
+  }
+  .choice-chip[data-on]:hover:not(:disabled) {
+    border-color: transparent;
+    box-shadow: var(--shadow-accent);
+    filter: brightness(1.08);
+  }
+
+  /*
+    Chosen, on a card: the tint stays rather than inverting, because the second
+    line of a card is `--ink-3` and a solid accent fill would swallow it. So the
+    rule doubles instead (an inset shadow over the border, so nothing reflows)
+    and the tick beside it becomes visible. Three channels, one of them hue.
+  */
+  .choice-card[data-on] {
+    background-color: var(--accent-soft);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .choice-card[data-on]:hover:not(:disabled) {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow);
+  }
+
+  .tap, .tap-tint {
+    transition-property: box-shadow, transform, background-color, border-color, color;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .tap:hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1.5px var(--accent), var(--shadow-sm);
+  }
+  .tap-tint:hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(-1px);
+    background-color: var(--raised);
+  }
+  .tap:active:not(:disabled), .tap-tint:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+
   .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a

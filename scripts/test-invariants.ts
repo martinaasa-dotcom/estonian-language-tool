@@ -1754,6 +1754,120 @@ check("a screen that names a case in Latin names it in Estonian too", () => {
 });
 
 
+/*
+  A CONTROL LOOKS LIKE A CONTROL, AND A CHOSEN ONE LOOKS CHOSEN.
+
+  Three faults, one cause: there was no primitive for "pick one of these", so
+  every screen that asked invented its own answer and two of the three were
+  wrong.
+
+  The worst was a bare `<button>` wrapped round a `<Chip>`. A chip is the
+  app's *label*: it is what the dictionary uses to say "B1" and "verb", and it
+  carries no border, no shadow and no hover. Eight of them in a row under a
+  heading read as a legend, so first run, the screen that decides a learner's
+  year, did not read as a form at all. Selection swapped `--raised` for
+  `--accent-soft`, which on the dark theme is two percent of lightness: the
+  answer to the question was being carried by a difference somebody could look
+  straight at and not see. And every option carried `aria-pressed`, so eight
+  mutually exclusive answers announced as eight unrelated switches and cost
+  eight tab stops.
+
+  `components/Choice.tsx` is the one answer now, and its states live in
+  `.choice` in app/globals.css rather than in a `style` prop, because an inline
+  style beats a stylesheet and a control that paints its resting look inline
+  can never define a hover. That is not a detail: it is the mechanism that made
+  the missing hover unfixable in place.
+
+  Asserted as a shape rather than as today's markup: a chip inside a button is
+  the fault, wherever it appears.
+*/
+/**
+ * Every `<button …>` opening tag in a source file, with what follows it.
+ *
+ * A regex cannot do this and the first version of the two checks below proved
+ * it by passing over a deliberately reintroduced fault: `<button[^>]*>` ends
+ * at the first `>` it meets, and `onClick={() => pick(x)}` puts one inside the
+ * tag. Both checks then matched an empty prefix and found nothing. So the tag
+ * ends at the first `>` outside any brace, which is where JSX actually ends it.
+ */
+function buttonTags(source: string): { tag: string; after: string }[] {
+  const out: { tag: string; after: string }[] = [];
+  for (let i = source.indexOf("<button"); i !== -1; i = source.indexOf("<button", i + 1)) {
+    let depth = 0;
+    for (let j = i + 7; j < source.length; j += 1) {
+      const c = source[j];
+      if (c === "{") depth += 1;
+      else if (c === "}") depth -= 1;
+      else if (c === ">" && depth === 0) {
+        out.push({ tag: source.slice(i, j + 1), after: source.slice(j + 1, j + 400) });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+check("an option a learner picks is a control, not a label in a button", () => {
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const { tag, after } of buttonTags(read(file))) {
+      assert.ok(
+        !/^\s*(?:\{[^{}]*\}\s*)?<Chip\b/.test(after),
+        `${file} wraps a Chip in a button (${tag.slice(0, 60)}…): a chip is a label and has ` +
+        "no pressable state. Use ChoiceChip from components/Choice.tsx.",
+      );
+    }
+  }
+
+  // And the primitive still has the three things that make it one.
+  const choice = read("components/Choice.tsx");
+  assert.match(choice, /role: "radio"/, "the single-select group stopped being a radio group");
+  assert.match(choice, /"aria-pressed"/, "the multi-select group stopped being toggle buttons");
+  assert.match(choice, /tabIndex = r === stop \? 0 : -1/, "the radio group lost its roving tab stop");
+
+  for (const name of [".choice", ".choice-chip[data-on]", ".choice-card[data-on]", ".choice:hover"]) {
+    assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
+  }
+});
+
+/*
+  A HOVER MAKES A CONTROL MORE PRESENT, NEVER LESS.
+
+  Twenty-odd controls carried `transition-opacity hover:opacity-80` as their
+  entire hover state: the multiple-choice options in two practice modes, the
+  self-rating buttons on the level check, the starred words in the dictionary,
+  the case rows on three screens, the delete buttons in two lists. Fading a
+  thing under the pointer is the one hover the rest of this interface uses for
+  nothing else, because dimming is exactly how every disabled control here is
+  drawn. So the strongest signal a mouse got on those screens was the control
+  appearing to switch off, which is worse than no hover at all. `.tap` and
+  `.tap-tint` in app/globals.css are the two replacements.
+
+  The exemption is a link, and it is deliberate rather than a hole: an `<a>`
+  fading slightly is the oldest link hover there is, and a `<button>` that is
+  drawn as underlined text is a link wearing the right element. So the rule is
+  written against `<button>` and reads the underline, rather than being
+  switched off per file.
+*/
+check("a hover makes a control more present, never less", () => {
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const { tag } of buttonTags(read(file))) {
+      if (!/hover:opacity-/.test(tag)) continue;
+      assert.match(
+        tag,
+        /\bunderline\b/,
+        `${file} fades a button on hover, which is how this app draws "disabled". ` +
+        "Use .tap (a box) or .tap-tint (a bare row or icon) from app/globals.css.",
+      );
+    }
+  }
+
+  for (const name of [".tap:hover", ".tap-tint:hover"]) {
+    assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
+  }
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

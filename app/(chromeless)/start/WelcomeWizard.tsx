@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Compass, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Compass, Loader2 } from "lucide-react";
 import { completeOnboarding, skipOnboarding } from "@/app/actions";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel } from "@/components/assessment/PlanPanel";
@@ -10,6 +10,7 @@ import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { Button } from "@/components/Button";
 import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
+import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
 import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
@@ -310,28 +311,18 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
                 )}
 
                 <SectionTitle hint="a guess is a guess, and it says so on the plan">Or estimate it</SectionTitle>
-                <div className="flex flex-col gap-2">
+                <ChoiceGroup ariaLabel="Estimate your level" className="flex flex-col gap-2">
                   {LEVELS.map((l) => (
-                    <button
+                    <ChoiceCard
                       key={l.key}
-                      type="button"
-                      onClick={() => chooseLevel(l.key)}
-                      aria-pressed={estimated === l.key}
-                      className="flex items-center gap-4 rounded-[var(--r-lg)] border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
-                      style={{
-                        borderColor: estimated === l.key ? "var(--accent)" : "var(--rule)",
-                        background: estimated === l.key ? "var(--accent-soft)" : "var(--surface)",
-                      }}
-                    >
-                      <span className="est tnum text-base font-bold" style={{ color: "var(--accent-deep)" }}>{l.key}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{l.label}</span>
-                        <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{l.detail}</span>
-                      </span>
-                      {estimated === l.key && <Check size={17} aria-hidden style={{ color: "var(--accent-deep)" }} />}
-                    </button>
+                      selected={estimated === l.key}
+                      onSelect={() => chooseLevel(l.key)}
+                      lead={l.key}
+                      title={l.label}
+                      detail={l.detail}
+                    />
                   ))}
-                </div>
+                </ChoiceGroup>
               </>
             )}
           </section>
@@ -355,32 +346,21 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               this pass exists to remove. Eight short rows in two columns fit
               without one.
             */}
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <ChoiceGroup ariaLabel="Why you are learning Estonian" className="mt-6 grid gap-2 sm:grid-cols-2">
               {REASONS.map((r) => {
                 const Icon = icon(r.icon);
-                const on = reason === r.id;
                 return (
-                  <button
+                  <ChoiceCard
                     key={r.id}
-                    type="button"
-                    onClick={() => chooseReason(r.id)}
-                    aria-pressed={on}
-                    className="flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left transition-opacity hover:opacity-80"
-                    style={{
-                      borderColor: on ? "var(--accent)" : "var(--rule)",
-                      background: on ? "var(--accent-soft)" : "var(--surface)",
-                    }}
-                  >
-                    <Icon size={18} aria-hidden style={{ color: on ? "var(--accent-deep)" : "var(--ink-3)" }} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{r.label}</span>
-                      <span className="block text-xs leading-snug" style={{ color: "var(--ink-3)" }}>{r.detail}</span>
-                    </span>
-                    {on && <Check size={16} className="shrink-0" aria-hidden style={{ color: "var(--accent-deep)" }} />}
-                  </button>
+                    selected={reason === r.id}
+                    onSelect={() => chooseReason(r.id)}
+                    icon={<Icon size={18} aria-hidden />}
+                    title={r.label}
+                    detail={r.detail}
+                  />
                 );
               })}
-            </div>
+            </ChoiceGroup>
 
             {/*
               Three rows of chips rather than three screens of cards. Each
@@ -392,13 +372,13 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             <div className="mt-7 flex flex-col gap-6">
               <div>
                 <SectionTitle>How far</SectionTitle>
-                <div className="flex flex-wrap gap-2">
+                <ChoiceGroup ariaLabel="How far">
                   {TARGETS.map((t) => (
-                    <button key={t.band} type="button" onClick={() => setTarget(t.band)} aria-pressed={target === t.band}>
-                      <Chip tone={target === t.band ? "accent" : "neutral"}>{t.band} · {t.label}</Chip>
-                    </button>
+                    <ChoiceChip key={t.band} selected={target === t.band} onSelect={() => setTarget(t.band)}>
+                      {t.band} · {t.label}
+                    </ChoiceChip>
                   ))}
-                </div>
+                </ChoiceGroup>
                 {chosenTarget && (
                   <p className="mt-2.5 max-w-[60ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
                     {chosenTarget.can}{" "}
@@ -411,24 +391,24 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
               <div>
                 <SectionTitle>By when</SectionTitle>
-                <div className="flex flex-wrap gap-2">
+                <ChoiceGroup ariaLabel="By when">
                   {DEADLINES.map((d) => (
-                    <button key={d.id} type="button" onClick={() => setDeadlineId(d.id)} aria-pressed={deadlineId === d.id}>
-                      <Chip tone={deadlineId === d.id ? "accent" : "neutral"}>{d.label}</Chip>
-                    </button>
+                    <ChoiceChip key={d.id} selected={deadlineId === d.id} onSelect={() => setDeadlineId(d.id)}>
+                      {d.label}
+                    </ChoiceChip>
                   ))}
-                </div>
+                </ChoiceGroup>
               </div>
 
               <div>
                 <SectionTitle hint="be honest, the plan is built on it">Days a week you will really practise</SectionTitle>
-                <div className="flex flex-wrap gap-2">
+                <ChoiceGroup ariaLabel="Days a week you will really practise">
                   {[2, 3, 4, 5, 6, 7].map((days) => (
-                    <button key={days} type="button" onClick={() => setDaysPerWeek(days)} aria-pressed={daysPerWeek === days}>
-                      <Chip tone={daysPerWeek === days ? "accent" : "neutral"}>{days}</Chip>
-                    </button>
+                    <ChoiceChip key={days} even selected={daysPerWeek === days} onSelect={() => setDaysPerWeek(days)}>
+                      {days}
+                    </ChoiceChip>
                   ))}
-                </div>
+                </ChoiceGroup>
               </div>
             </div>
 
@@ -462,7 +442,16 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               Picked for {startBand}. Each one becomes real flashcards with audio and full
               paradigms, and you can add or drop units later on the path.
             </p>
-            <div className="scroll-host mt-5 flex max-h-[38vh] flex-col gap-2">
+            {/*
+              Any number of units, so these are toggle buttons and say so:
+              `aria-pressed` is what a checkbox-shaped answer means, and it is
+              the one group on this screen it was ever right for.
+            */}
+            <ChoiceGroup
+              select="many"
+              ariaLabel="Units to start with"
+              className="scroll-host mt-5 flex max-h-[38vh] flex-col gap-2"
+            >
               {/*
                 This level's units only. The course is eighty-three of them
                 across six levels, and a first-run picker listing all of them is
@@ -470,33 +459,19 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               */}
               {units.filter((u) => u.cefr === startBand || u.cefr === level).map((u) => {
                 const Icon = icon(u.icon);
-                const on = picked.includes(u.id);
                 return (
-                  <button
+                  <ChoiceCard
                     key={u.id}
-                    type="button"
-                    onClick={() => toggleUnit(u.id)}
-                    aria-pressed={on}
-                    className="flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left transition-opacity hover:opacity-80"
-                    style={{
-                      borderColor: on ? "var(--accent)" : "var(--rule)",
-                      background: on ? "var(--accent-soft)" : "var(--surface)",
-                    }}
-                  >
-                    <Icon size={18} aria-hidden style={{ color: on ? "var(--accent-deep)" : "var(--ink-3)" }} />
-                    <span className="min-w-0 flex-1">
-                      <span lang="et" className="est block text-base font-semibold" style={{ color: "var(--ink)" }}>
-                        {u.title}
-                      </span>
-                      <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
-                        {u.subtitle} · {u.words} words · {u.cefr}
-                      </span>
-                    </span>
-                    {on && <Check size={16} aria-hidden style={{ color: "var(--accent-deep)" }} />}
-                  </button>
+                    selected={picked.includes(u.id)}
+                    onSelect={() => toggleUnit(u.id)}
+                    icon={<Icon size={18} aria-hidden />}
+                    title={u.title}
+                    titleLang="et"
+                    detail={`${u.subtitle} · ${u.words} words · ${u.cefr}`}
+                  />
                 );
               })}
-            </div>
+            </ChoiceGroup>
             <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
               {wordCount === 0
                 ? "Nothing selected. You can also start from the dictionary and add words as you meet them."
@@ -510,13 +485,13 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               consequential answer in the walkthrough.
             */}
             <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
-            <div className="flex flex-wrap gap-2">
+            <ChoiceGroup ariaLabel="How much a day">
               {GOALS.map((g) => (
-                <button key={g.value} type="button" onClick={() => setGoal(g.value)} aria-pressed={goal === g.value}>
-                  <Chip tone={goal === g.value ? "accent" : "neutral"}>{g.label} · {g.value} cards</Chip>
-                </button>
+                <ChoiceChip key={g.value} selected={goal === g.value} onSelect={() => setGoal(g.value)}>
+                  {g.label} · {g.value} cards
+                </ChoiceChip>
               ))}
-            </div>
+            </ChoiceGroup>
             <p className="mt-2.5 max-w-[60ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
               About {GOALS.find((g) => g.value === goal)?.detail ?? "five minutes a day"}. A card you
               learn today costs roughly ten reviews over its first year, so setting this higher does

@@ -57,8 +57,21 @@ for (const route of ROUTES) {
       ).trim();
       if (!name) bad.unnamed.push(el.tagName + (el.className ? `.${String(el.className).slice(0, 30)}` : ""));
 
-      // A tabindex of -1 on something clickable means keyboard users cannot reach it.
-      if (el.getAttribute("tabindex") === "-1") bad.noFocusRing.push(el.tagName);
+      /*
+        A tabindex of -1 on something clickable means keyboard users cannot
+        reach it, with one standard exception: a member of a radio group.
+        ARIA's roving tabindex gives the whole group a single tab stop and
+        moves between its options with the arrow keys, so every option but one
+        carries -1 on purpose (components/Choice.tsx). The exemption is
+        conditional on the group actually having that one stop, so a group
+        that loses it still fails here rather than being waved through.
+      */
+      const group = el.closest("[role='radiogroup']");
+      const roving =
+        el.getAttribute("role") === "radio" &&
+        group !== null &&
+        group.querySelectorAll("[role='radio'][tabindex='0']").length === 1;
+      if (el.getAttribute("tabindex") === "-1" && !roving) bad.noFocusRing.push(el.tagName);
     }
 
     for (const img of document.querySelectorAll("main img")) {

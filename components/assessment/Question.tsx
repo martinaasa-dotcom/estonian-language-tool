@@ -415,7 +415,7 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
             key={rating.value}
             type="button"
             onClick={() => onAnswer({ credit: 0, selfRating: rating.value })}
-            className="min-h-[52px] rounded-[var(--r-lg)] border px-4 py-3 text-left transition-ui hover:opacity-80"
+            className="tap min-h-[52px] rounded-[var(--r-lg)] border px-4 py-3 text-left"
             style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
           >
             <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{rating.label}</span>

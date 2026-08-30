@@ -21,8 +21,8 @@ const WIDE = [768, 1280];
 
 const browser = await launchChromium();
 
-// Floor: 34, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 49 });
+// Floor: 51, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("The phone", { floor: 51 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -137,9 +137,15 @@ for (const width of PHONES) {
 //     person looking, or a check that ran here.
 //     `/exam` is on it for main's own reason: it is the densest screen in the
 //     app, six level cards each with four meters, a ring and a button.
+// `/settings` and `/practice` are on it because that is where the app asks a
+// question rather than answers one: a row of goal options and a row of case
+// drills, both of which were rebuilt onto components/Choice.tsx and .tap-tint.
+// Neither route was covered here before, which is why a whole screen of
+// controls could be redrawn without this suite having an opinion.
 for (const path of [
   "/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam",
   "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
+  "/settings", "/practice",
 ]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>

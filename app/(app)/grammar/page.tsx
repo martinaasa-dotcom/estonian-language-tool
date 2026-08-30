@@ -73,7 +73,7 @@ export default async function GrammarIndexPage() {
                     <li key={c.grammCase}>
                       <Link
                         href={`/grammar/${c.grammCase.toLowerCase()}`}
-                        className="flex flex-wrap items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
+                        className="tap-tint flex flex-wrap items-center gap-3 rounded-[var(--r)] px-2 py-1.5"
                       >
                         <Target size={15} aria-hidden style={{ color: "var(--ink-3)" }} />
                         <span className="w-28 text-sm">
