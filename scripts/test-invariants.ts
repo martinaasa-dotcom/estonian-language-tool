@@ -755,6 +755,23 @@ check("which of two entries for one word wins is decided, not left to the rows",
     /function bySubstance\([\s\S]*?a\.id\.localeCompare\(b\.id\)/,
     "the tiebreak stopped ending on id, so it can return 0 for two different rows",
   );
+  /*
+    And the order of its first two tests, which is not a detail. Provenance has
+    to come second: a word confirmed off a photograph is filed as USER, which
+    counts as written by a person and has no forms in it, so ranking provenance
+    first hands a formless stub the entry page again. Ranking forms before
+    provenance is the other way to get it wrong, and did: `vana` the built noun
+    has six principal parts and the hand-checked course adjective has five.
+  */
+  const body = /function bySubstance\(([\s\S]*?)\n\}/.exec(search)?.[1] ?? "";
+  const posAt = body.indexOf('pos !== "OTHER"');
+  const provAt = body.indexOf("HAND_WRITTEN.has");
+  const formsAt = body.indexOf("forms.length");
+  assert.ok(posAt >= 0 && provAt >= 0 && formsAt >= 0, "bySubstance lost one of its three tests");
+  assert.ok(
+    posAt < provAt && provAt < formsAt,
+    "bySubstance reordered: a known part of speech, then a hand-written source, then how much is stored",
+  );
   assert.match(
     search,
     /\.sort\(\(a, b\) =>[\s\S]{0,200}?bySubstance\(a\.hit, b\.hit\)\)/,

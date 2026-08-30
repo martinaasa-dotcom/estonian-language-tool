@@ -77,10 +77,19 @@ export async function caseExamples(
     same shape as the dictionary leading with an arbitrary one of two entries,
     one page along.
 
-    Oldest card first for *which* nouns are candidates, because the words
-    somebody has been studying longest are the ones they can read a new case
-    off; then cefr and lemma for the order they are considered in, which is
-    what the top-up already uses, so the two halves agree.
+    Oldest card first, because the words somebody has been studying longest are
+    the ones they can read a new case off, and that order is then *kept*.
+
+    Sorting the deck words by lemma afterwards was the first attempt and it
+    reads badly, which is the sort of thing only looking at the page tells you:
+    the six real words under `seesütlev` came out `aadress, aasta, abi,
+    abikaasa, aastapäev, abielu`, six words from the top of the alphabet under a
+    heading that says "words from your deck first". Deterministic, and it looks
+    like a bug. Postgres does not return `IN (…)` in the order the ids were
+    given, so keeping the deck's own order means putting it back by hand.
+
+    The top-up below stays on cefr and lemma. That is the empty-deck case, where
+    easiest-first is the right answer and there is no better order to preserve.
   */
   const deckIds = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { not: null }, lexeme: { pos: "NOUN" } },
@@ -90,13 +99,11 @@ export async function caseExamples(
     select: { lexemeId: true },
   });
   const owned = deckIds.map((c) => c.lexemeId!).filter(Boolean);
+  const deckOrder = new Map(owned.map((id, at) => [id, at]));
 
   const mine: Candidate[] = owned.length
-    ? await prisma.lexeme.findMany({
-      where: { id: { in: owned } },
-      orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
-      select,
-    })
+    ? (await prisma.lexeme.findMany({ where: { id: { in: owned } }, select }))
+      .sort((a, b) => (deckOrder.get(a.id) ?? 0) - (deckOrder.get(b.id) ?? 0))
     : [];
 
   // Topped up from the dictionary, easiest words first, so an empty deck still

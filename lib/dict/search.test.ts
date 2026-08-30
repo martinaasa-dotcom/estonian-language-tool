@@ -25,9 +25,10 @@ function lexeme(
   translation: string,
   pos: string,
   forms: [string, string][],
+  provenance = "SEED",
 ): Candidate {
   return {
-    id: lemma, lemma, translation, pos, cefr: "A1", gradationNote: null,
+    id: lemma, lemma, translation, pos, cefr: "A1", gradationNote: null, provenance,
     forms: forms.map(([formType, value]) => ({
       formType, value, morphCode: null, morphName: null,
     })),
@@ -151,6 +152,45 @@ describe("rankCandidates — two entries for one word", () => {
 
   it("still offers the other one rather than hiding it", () => {
     expect(rankCandidates(both, "vana").filter((h) => h.lemma === "vana")).toHaveLength(2);
+  });
+
+  /*
+    The pair this whole block was written for, with the numbers it really has.
+
+    `vana` is a hand-checked A1 adjective from the course with five principal
+    parts, and a noun from the built expansion with six, glossed "an old
+    person; guy, dude, chap". Ranking on how much is stored alone therefore
+    handed a learner searching the commonest adjective in the language the
+    noun, by rule and every time, which is worse than the arbitrary answer it
+    replaced. `prisma/expanded.ts` already says a hand-written entry wins over
+    the expansion; that is as true of reads as of writes.
+  */
+  it("leads with the hand-written entry even when the built one holds more forms", () => {
+    const course = lexeme("vana", "old", "ADJECTIVE", [
+      ["NOM_SG", "vana"], ["GEN_SG", "vana"], ["PART_SG", "vana"],
+      ["PART_PL", "vanu"], ["GEN_PL", "vanade"],
+    ], "SEED");
+    const built: Candidate = {
+      ...lexeme("vana", "an old person; guy, dude, chap", "NOUN", [
+        ["NOM_SG", "vana"], ["GEN_SG", "vana"], ["PART_SG", "vana"],
+        ["PART_PL", "vanu"], ["GEN_PL", "vanade"], ["ILL_SG_SHORT", "vanna"],
+      ], "EKILEX"),
+      id: "built-vana",
+    };
+    expect(built.forms.length).toBeGreaterThan(course.forms.length);
+    for (const order of [[course, built], [built, course]]) {
+      expect(rankCandidates(order, "vana")[0]?.pos).toBe("ADJECTIVE");
+    }
+  });
+
+  it("still keeps a formless scan stub behind a built entry", () => {
+    // Provenance must not outrank the OTHER test: a word confirmed off a
+    // photograph is USER, which a person wrote, and has nothing in it.
+    const built = lexeme("kohv", "coffee", "NOUN", [["NOM_SG", "kohv"], ["GEN_SG", "kohvi"]], "EKILEX");
+    const stub: Candidate = { ...lexeme("kohv", "coffee", "OTHER", [], "USER"), id: "scanned-kohv" };
+    for (const order of [[built, stub], [stub, built]]) {
+      expect(rankCandidates(order, "kohv")[0]?.pos).toBe("NOUN");
+    }
   });
 
   it("orders two real entries the same way whichever order they arrive in", () => {

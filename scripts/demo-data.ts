@@ -66,12 +66,45 @@ async function main() {
   await prisma.card.deleteMany({ where: { ownerId } });
   await prisma.task.deleteMany({ where: { ownerId } });
 
+  /*
+    A DECK A BEGINNER COULD PLAUSIBLY HAVE, WHICH THIS HAD QUIETLY STOPPED BEING.
+
+    It took the alphabetically first thirty nouns and verbs in the dictionary,
+    and that was a fair sample of a 360-word seed. The harvest and the built
+    expansion took the dictionary past five thousand words and nobody re-read
+    what "alphabetically first" now meant: `aabe`, `aadressiraamat`, `aamissepp`,
+    `aardelaegas`, `aatomipomm`, `aberratsioon`, `abieluvaraleping`. A treasure
+    chest, an atom bomb, an aberration and a prenuptial agreement, in the deck
+    of somebody eight weeks into A1.
+
+    That is not only untidy. This fixture is what every screenshot shows, what
+    every browser suite reviews, and what the grammar reference draws its "in
+    real words" table from, so the app demonstrated itself in vocabulary that
+    argued against it.
+
+    The course's own A1 nouns and verbs instead, which is 244 words to draw
+    thirty from and gives `aeg`, `aitama`, `aken`, `andma`, `arst`, `auto`,
+    `buss`, `elama`, `ema`, `hommik`, `inimene`, `isa`. Still alphabetical, so
+    the deck is the same deck on every run, which is what the suites need.
+
+    The query cannot silently widen again: a word is in this deck because the
+    syllabus put it there and marked it A1, rather than because of where it
+    happens to sort.
+  */
   const lexemes = await prisma.lexeme.findMany({
-    where: { pos: { in: ["NOUN", "VERB"] } },
+    where: { pos: { in: ["NOUN", "VERB"] }, cefr: "A1", provenance: "SEED" },
     include: { forms: true },
     take: 30,
     orderBy: { lemma: "asc" },
   });
+  if (lexemes.length < 30) {
+    console.error(
+      `Only ${lexemes.length} A1 course words are seeded, so this deck would be thin.\n` +
+      `Run \`npm run db:seed\` first: the demo is built from the course vocabulary.`,
+    );
+    await prisma.$disconnect();
+    process.exit(1);
+  }
 
   for (const [i, lex] of lexemes.entries()) {
     const types = i < 4 ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)

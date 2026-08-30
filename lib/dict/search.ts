@@ -36,6 +36,8 @@ const CASE_SUFFIXES = CASES
 export interface Candidate {
   id: string; lemma: string; translation: string; pos: string;
   cefr: string | null; gradationNote: string | null;
+  /** SEED | EKILEX | AI | USER, as `prisma/schema.prisma` defines it. */
+  provenance: string;
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
 }
 
@@ -188,7 +190,7 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
     where: { id: { in: rows.map((r) => r.id) } },
     select: {
       id: true, lemma: true, translation: true, pos: true,
-      cefr: true, gradationNote: true,
+      cefr: true, gradationNote: true, provenance: true,
       forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
     },
   });
@@ -215,13 +217,39 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
  * entry page for a word the app knows perfectly well.
  *
  * So: an entry there is something to teach from wins. A known part of speech
- * beats OTHER, which is what an unvouched scanned word is filed as, and then
- * more stored principal parts beats fewer. `id` last makes the order *total*,
- * which is the property that actually matters — a comparator that can return 0
- * for two different rows leaves the answer to the array it was handed.
+ * beats OTHER, which is what an unvouched scanned word is filed as. Then a
+ * hand-written entry beats a built one. Then more stored principal parts beats
+ * fewer. `id` last makes the order *total*, which is the property that actually
+ * matters — a comparator that can return 0 for two different rows leaves the
+ * answer to the array it was handed.
+ *
+ * WRITTEN BY HAND BEFORE COUNTED, AND THE ORDER OF THOSE TWO IS THE POINT.
+ *
+ * Ranking on the number of stored forms alone got this backwards on the
+ * thirteen pairs it was written for. `vana` has a hand-checked A1 adjective
+ * from the course with five principal parts, and a noun from the built
+ * expansion with six, glossed "an old person; guy, dude, chap". So a learner
+ * searching the commonest adjective in the language was handed the noun, every
+ * time and by rule, which is worse than the arbitrary answer it replaced.
+ *
+ * `prisma/expanded.ts` already states the precedence this restores: the
+ * expansion loads with `ON CONFLICT DO NOTHING` and never an update, "so a
+ * hand-written entry, a learner's correction and a live Ekilex fetch all win
+ * over it". That was a rule about writes and it is just as true about reads.
+ * SEED and USER are the rows a person wrote; EKILEX is the built expansion, which is
+ * every row it wrote and is where a wrong part of speech comes from in the
+ * first place.
+ *
+ * It sits *after* the OTHER test on purpose. An unvouched word confirmed off a
+ * photograph is USER and is filed as OTHER, so putting provenance first would
+ * hand a formless stub the entry page again, which is the bug this function
+ * exists for.
  */
+const HAND_WRITTEN = new Set(["SEED", "USER"]);
+
 function bySubstance(a: Candidate, b: Candidate): number {
   return Number(b.pos !== "OTHER") - Number(a.pos !== "OTHER")
+    || Number(HAND_WRITTEN.has(b.provenance)) - Number(HAND_WRITTEN.has(a.provenance))
     || b.forms.length - a.forms.length
     || a.id.localeCompare(b.id);
 }
