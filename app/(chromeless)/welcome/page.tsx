@@ -126,9 +126,8 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
     under the buttons. A stat panel three screens down is a claim nobody has a
     reason to read; the same numbers beside the call to action are the reason to
     believe the sentence above them. The unit count and the level range are read
-    from the course itself, because both were written by hand as "eighteen
-    units, A1 to C1" and the course has been eighty-three units to C2 for a
-    while now.
+    from the course itself rather than written by hand, which is what kept this
+    line from going stale the way "eighteen units, A1 to C1" once did.
   */
   const claims = [
     `${stats.words.toLocaleString("en-GB")} words, every form from Ekilex`,

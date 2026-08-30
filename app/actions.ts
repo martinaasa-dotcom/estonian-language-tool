@@ -933,13 +933,13 @@ export async function completeLesson(
  * Records where the placement test put somebody.
  *
  * The level is re-derived here from the per-level scores rather than trusted
- * from the caller. This file is `"use server"`, so `savePlacement("C2")` is an
- * endpoint anybody can call — and while placing yourself at C2 only unlocks
+ * from the caller. This file is `"use server"`, so `savePlacement("C1")` is an
+ * endpoint anybody can call — and while placing yourself at C1 only unlocks
  * units you could have opened anyway, a stored level that no test produced would
  * quietly become a lie the whole path is built on.
  */
 const StageScoreSchema = z.object({
-  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+  level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
   correct: z.number().int().min(0).max(20),
   asked: z.number().int().min(0).max(20),
 });
@@ -967,7 +967,7 @@ export async function savePlacement(scores: z.input<typeof StageScoreSchema>[]) 
  * evidence that somebody has lost a level they already had.
  *
  * The score is re-checked here rather than trusted. Every export in this file is
- * a public endpoint, so `recordCheckpoint("c2", 20, 20)` is a call anybody can
+ * a public endpoint, so `recordCheckpoint("c1", 20, 20)` is a call anybody can
  * make; what it can buy is only the level marker the path uses to decide what to
  * open by default, and nothing in the review log moves, but a stored level that
  * no exam produced is still a lie the whole course is arranged around.
@@ -980,7 +980,7 @@ export async function recordCheckpoint(
 ) {
   const ownerId = await requireUserId();
   const parsed = z.object({
-    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+    level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
     correct: z.number().int().min(0).max(100),
     total: z.number().int().min(1).max(100),
   }).safeParse({ level: level.toUpperCase(), correct, total });
@@ -1176,6 +1176,97 @@ export async function assignUnit(classroomId: string, unitId: string, dueAt?: st
   revalidatePath("/class");
   revalidatePath("/tasks");
   return { ok: true as const, assigned: members.length };
+}
+
+/** The marker every classroom-issued task's `notes` starts with, teacher and student alike. */
+function classworkMarker(classroomName: string): string {
+  return `Set by ${classroomName}.`;
+}
+
+/**
+ * Sets anything as homework, not just a unit — a page number, an exercise from
+ * the textbook, a sentence to write, whatever the lesson actually was. A join
+ * code and a roster do not make a classroom feature on their own if the only
+ * thing a teacher can hand out is one of eighty-three fixed units; most
+ * homework is not a unit.
+ *
+ * Same shape as `assignUnit` on purpose — one task per member, nobody's deck
+ * touched, the teacher's own copy of the task (they are a member too) is what
+ * lets the class page read its own history back without a table to hold it.
+ */
+export async function assignHomework(classroomId: string, title: string, notes: string, dueAt?: string) {
+  const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "assignHomework");
+  if (busy) return busy;
+  const classroom = await prisma.classroom.findFirst({
+    where: { id: classroomId, ownerId },
+    select: { id: true, name: true },
+  });
+  if (!classroom) return { ok: false as const, error: "That is not your class." };
+
+  const cleanTitle = capped(title, LIMITS.taskTitle);
+  if (!cleanTitle) return { ok: false as const, error: "Give the homework a title." };
+  const cleanNotes = capped(notes, LIMITS.taskNotes - classworkMarker(classroom.name).length - 1);
+
+  const members = await prisma.classroomMember.findMany({
+    where: { classroomId },
+    select: { ownerId: true },
+  });
+
+  const due = dueAt ? new Date(dueAt) : null;
+  const marker = classworkMarker(classroom.name);
+  await prisma.task.createMany({
+    data: members.map((m) => ({
+      ownerId: m.ownerId,
+      title: cleanTitle,
+      notes: cleanNotes ? `${marker} ${cleanNotes}` : marker,
+      tag: "HOMEWORK",
+      dueAt: due && !Number.isNaN(due.getTime()) ? due : null,
+    })),
+  });
+
+  revalidatePath("/class");
+  revalidatePath("/tasks");
+  return { ok: true as const, assigned: members.length };
+}
+
+/**
+ * What a teacher has sent this class, most recent first.
+ *
+ * There is no table for this, deliberately: an assignment is a `Task` on
+ * every member, and the teacher is a member too (they joined their own class
+ * at creation), so their own copy of each task they ever assigned already
+ * carries the record. Reading it back is a filter on the marker every
+ * classroom-issued task's `notes` starts with, not a new source of truth to
+ * keep in sync with the real one.
+ *
+ * The one place this heuristic can be fooled: two classes taught by the same
+ * teacher with the exact same name would share a marker. Rare enough, and
+ * visible enough if it happens, not to be worth a schema change over.
+ */
+export async function classworkHistory(classroomId: string) {
+  const ownerId = await requireUserId();
+  const classroom = await prisma.classroom.findFirst({
+    where: { id: classroomId, ownerId },
+    select: { name: true },
+  });
+  if (!classroom) return [];
+
+  const marker = classworkMarker(classroom.name);
+  const tasks = await prisma.task.findMany({
+    where: { ownerId, notes: { startsWith: marker } },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: { id: true, title: true, notes: true, dueAt: true, createdAt: true },
+  });
+  return tasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    detail: t.notes?.slice(marker.length).trim() || null,
+    dueAt: t.dueAt,
+    createdAt: t.createdAt,
+  }));
 }
 
 /** The name to show in a class: their chosen one, else their account's. */

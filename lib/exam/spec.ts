@@ -29,9 +29,9 @@ import type { SkillKey } from "./types";
  * Pure: no React, no Prisma, no clock.
  */
 
-export type ExamLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export type ExamLevel = "A1" | "A2" | "B1" | "B2" | "C1";
 
-export const EXAM_LEVELS: readonly ExamLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+export const EXAM_LEVELS: readonly ExamLevel[] = ["A1", "A2", "B1", "B2", "C1"] as const;
 
 /** The four levels the state actually examines at. */
 export const OFFICIAL_LEVELS: readonly ExamLevel[] = ["A2", "B1", "B2", "C1"] as const;
@@ -405,16 +405,6 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
     summary:
       "The highest level the state examines. Ninety minutes of writing alone, and the second " +
       "written task runs to about 260 words.",
-  },
-  C2: {
-    minutes: { writing: 100, listening: 50, reading: 70, speaking: 25 },
-    points: 25,
-    reading: [10, 16, 10], listening: [10, 9], writing: [7, 6, 11, 18], speaking: [9, 9],
-    messageWords: 70, composeWords: 300, speakSeconds: 180,
-    summary:
-      "There is no C2 examination. The Board's own note says a command of Estonian this far " +
-      "past C1 cannot be required of anybody for a job, so nobody sets a paper for it. This one " +
-      "is the app's, built past C1 for the fun of finding out. Sit it, by all means.",
   },
 };
 

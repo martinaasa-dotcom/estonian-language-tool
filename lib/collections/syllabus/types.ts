@@ -13,9 +13,9 @@
  */
 import type { CardType } from "@/lib/srs/cards";
 
-export type Level = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export type Level = "A1" | "A2" | "B1" | "B2" | "C1";
 
-export const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
+export const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1"];
 
 /**
  * `PHRASE` is the one part of speech the harvest does not fetch. A multi-word
