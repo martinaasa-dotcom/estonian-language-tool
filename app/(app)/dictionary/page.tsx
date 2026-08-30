@@ -9,6 +9,8 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { Page } from "@/components/ui";
 import { DictionaryClient, type EntryView } from "./DictionaryClient";
 
+export const metadata = { title: "Dictionary" };
+
 export const dynamic = "force-dynamic";
 
 export default async function DictionaryPage({

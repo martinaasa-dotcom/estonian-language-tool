@@ -1904,6 +1904,49 @@ check("a day boundary on the server is the learner's, never the deployment's", (
   );
 });
 
+/**
+ * A screen says which screen it is, in the tab and in the history.
+ *
+ * Thirty-four of the forty-five routes here set no title at all, so Next fell
+ * back to the one in the root layout and every one of them was called
+ * "Kodukeel. Estonian that finally sticks". That is the landing page's
+ * marketing line, and it was the name of /review, /settings, /progress, the
+ * dictionary and the exam alike: two tabs open side by side were
+ * indistinguishable, a bookmark said nothing about what had been bookmarked,
+ * and a screen reader announcing the document name announced the pitch.
+ *
+ * The three that did set one each invented their own suffix, which is what the
+ * `title.template` in `app/layout.tsx` is now for: a page states its own name
+ * and the app's name is added for it.
+ *
+ * Asserted on every `page.tsx` because this is exactly the kind of thing that
+ * is remembered on the first four screens of a feature and forgotten on the
+ * fifth.
+ */
+check("every screen names itself in the browser tab", () => {
+  const pages = APP.filter((file) => file.endsWith(`${"/"}page.tsx`) || file.endsWith("\\page.tsx"));
+  assert.ok(pages.length > 30, `only found ${pages.length} pages, so this check stopped looking`);
+
+  for (const file of pages) {
+    const source = code(file);
+    assert.match(
+      source,
+      /export const metadata|export async function generateMetadata|export function generateMetadata/,
+      `${file} sets no title, so its tab reads as the landing page`,
+    );
+  }
+
+  /*
+    And the template exists, so a page that sets "Review" is not a page whose
+    tab says only "Review". Checked on the layout rather than on a rendered
+    page: this suite reads source, and a template that is deleted would leave
+    every check above passing.
+  */
+  const layout = code(join("app", "layout.tsx"));
+  assert.match(layout, /template:\s*"%s/, "the root layout no longer adds the app's name to a page title");
+  assert.match(layout, /default:/, "the root layout has no fallback title for a route without one");
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

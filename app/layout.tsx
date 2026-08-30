@@ -23,7 +23,27 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Kodukeel. Estonian that finally sticks",
+  /*
+    A title per screen, and a template so none of them has to remember the
+    app's name.
+
+    Thirty-four of the forty-five routes here set nothing, so every one of them
+    was called "Kodukeel. Estonian that finally sticks" — the landing page's
+    marketing line, in the browser tab, in the history and in the bookmark, on
+    /review and /settings and /progress alike. Somebody with the review screen
+    and the dictionary open side by side had two identical tabs, and somebody
+    reading their history back had a column of the same sentence. The three
+    pages that did set one each did it a different way ("Grammar · käänded",
+    "What this app is · Kodukeel", "Offline. Kodukeel"), which is what a
+    template is for.
+
+    `default` is what a route without its own title gets, which is the landing
+    page and nothing else worth naming.
+  */
+  title: {
+    default: "Kodukeel. Estonian that finally sticks",
+    template: "%s · Kodukeel",
+  },
   description:
     "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that " +
     "knows when to stop, native audio, and a grammar tutor that explains the rule.",

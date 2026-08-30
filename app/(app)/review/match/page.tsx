@@ -3,6 +3,8 @@ import { requireUserId } from "@/lib/auth/session";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { MatchSession, type MatchPair } from "./MatchSession";
 
+export const metadata = { title: "Match" };
+
 export const dynamic = "force-dynamic";
 
 const PAIRS = 8;

@@ -21,6 +21,8 @@ import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stat } from "
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
 
+export const metadata = { title: "Progress" };
+
 export const dynamic = "force-dynamic";
 
 const HEATMAP_DAYS = 182;

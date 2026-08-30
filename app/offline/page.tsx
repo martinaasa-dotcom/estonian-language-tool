@@ -1,7 +1,7 @@
 import { CloudOff } from "lucide-react";
 import { Mascot } from "@/components/brand";
 
-export const metadata = { title: "Offline. Kodukeel" };
+export const metadata = { title: "Offline" };
 
 /**
  * The service worker's fallback for a page that was never visited while online.

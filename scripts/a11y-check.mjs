@@ -12,32 +12,53 @@ import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 
 const BASE = baseUrl();
+
+/*
+  Every route, rather than the ones a branch happened to add.
+
+  This list was fifteen of the app's forty-five, and it grew a line at a time
+  as each new feature landed. What that misses is not hypothetical: a sweep
+  over the whole tree found the five review modes rendering a whole session
+  with no heading in it at all, a progress bar and a card and four buttons,
+  and first run with no landmark on the page, which is the first screen
+  anybody meets. Both sit on routes nobody had thought to add here. The cost
+  of checking a route that has never broken is a second of wall clock.
+*/
 const ROUTES = [
-  "/", "/review/write", "/review/government", "/review/cloze",
-  "/review/clinic", "/words", "/week", "/scan", "/settings", "/privacy", "/terms",
-  "/assess", "/assess?take=1", "/guide", "/exam",
+  "/", "/learn", "/practice", "/progress", "/tasks", "/words", "/week", "/dictionary",
+  "/grammar", "/grammar/inessive", "/guide", "/settings", "/scan", "/class", "/tutor",
+  "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/welcome",
+  "/review", "/review/write", "/review/government", "/review/cloze", "/review/clinic",
+  "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
+  "/review/sentences", "/review/speaking", "/review/sprint",
 ];
 
 const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
 /*
-  Floor: 62, which is what this list reaches: fifteen routes at four checks
-  each, plus the two that run once at the end.
+  Floor: 247, which is what this list reaches: thirty-five routes at seven
+  checks each, plus the two that run once at the end.
 
   It was 42 for ten routes, and stayed 42 when the level check added three and
   the exam hub added a fourth, which left it slack by twelve. A floor that never
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, done } = suite("Accessibility", { floor: 62 });
+const { check, done } = suite("Accessibility", { floor: 247 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(300);
 
   const report = await page.evaluate(() => {
-    const bad = { unnamed: [], noFocusRing: [], imgNoAlt: 0, headings: [] };
+    const bad = {
+      unnamed: [], noFocusRing: [], imgNoAlt: 0, headings: [],
+      h1s: document.querySelectorAll("main h1").length,
+      landmarks: document.querySelectorAll("main").length,
+      title: document.title,
+    };
 
     const interactive = [...document.querySelectorAll(
       "main button, main a[href], main input, main textarea, main select, main [role='button']",
@@ -83,6 +104,30 @@ for (const route of ROUTES) {
     if (report.headings[i] - report.headings[i - 1] > 1) skips++;
   }
   check(`${route}: heading levels do not skip`, skips === 0, `${skips} skip(s)`);
+
+  /*
+    One `main`, and one `h1` inside it.
+
+    Both were being broken on routes this list did not cover. The five review
+    modes drew a whole session with no heading, and their `Empty` and finished
+    states each carried one, which is exactly why nobody noticed. First run had
+    no `main` at all, so the skip link had nothing to skip to and a reader had
+    no landmark to jump into on the first screen of the app.
+  */
+  check(`${route}: has exactly one main landmark`, report.landmarks === 1, `${report.landmarks} found`);
+  check(`${route}: has exactly one h1`, report.h1s === 1, `${report.h1s} found`);
+
+  /*
+    And a title that says which screen this is. Thirty-four routes shared the
+    landing page's line, so two tabs side by side were indistinguishable and a
+    history entry said nothing about what it linked to. The landing page is the
+    one route whose title is that line.
+  */
+  check(
+    `${route}: names itself in the tab`,
+    route === "/welcome" || !report.title.startsWith("Kodukeel."),
+    report.title,
+  );
 }
 
 // A visible focus ring on the primary action of the review path.

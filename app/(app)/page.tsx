@@ -22,6 +22,8 @@ import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile, ton
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 
+export const metadata = { title: "Today" };
+
 export const dynamic = "force-dynamic";
 
 /**

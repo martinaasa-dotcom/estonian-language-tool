@@ -6,6 +6,8 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { paperFor } from "@/lib/progress/assessment";
 import { WelcomeWizard, type WizardUnit } from "./WelcomeWizard";
 
+export const metadata = { title: "Getting set up" };
+
 export const dynamic = "force-dynamic";
 
 /**

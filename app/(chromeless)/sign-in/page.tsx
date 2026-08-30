@@ -5,6 +5,8 @@ import { ButtonLink } from "@/components/Button";
 import { Mascot } from "@/components/brand";
 import { SignInForm } from "./SignInForm";
 
+export const metadata = { title: "Sign in" };
+
 export const dynamic = "force-dynamic";
 
 const PROMISES = [

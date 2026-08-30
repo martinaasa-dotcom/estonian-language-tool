@@ -19,6 +19,8 @@ import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 import { providerResilience } from "@/lib/tutor/provider";
 
+export const metadata = { title: "Settings" };
+
 export const dynamic = "force-dynamic";
 
 const SHORTCUTS: [string, string][] = [

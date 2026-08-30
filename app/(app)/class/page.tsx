@@ -7,6 +7,8 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { Card, Chip, Note, Page, SectionTitle } from "@/components/ui";
 import { CreateClass, JoinClass } from "./ClassForms";
 
+export const metadata = { title: "Classes" };
+
 export const dynamic = "force-dynamic";
 
 /**

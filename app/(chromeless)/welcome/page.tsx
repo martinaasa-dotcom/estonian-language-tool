@@ -13,7 +13,7 @@ import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo"
 import { toneInk } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Kodukeel · Estonian that finally sticks",
+  title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
     "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real paradigms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
 };

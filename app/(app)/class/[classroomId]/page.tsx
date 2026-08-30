@@ -8,6 +8,23 @@ import { classRoster } from "@/lib/classroom/roster";
 import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, StatTile } from "@/components/ui";
 import { ArchiveClass, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
 
+/*
+  The class's own name, and never a fallback that names one to somebody who is
+  not in it. `generateMetadata` runs before the page's membership check, so a
+  title read straight from `Classroom` would put the name of a class in the
+  browser tab of anybody who guessed its id. It reads through the membership
+  row for the same reason the page does.
+*/
+export async function generateMetadata({ params }: { params: Promise<{ classroomId: string }> }) {
+  const { classroomId } = await params;
+  const ownerId = await requireUserId();
+  const membership = await prisma.classroomMember.findUnique({
+    where: { classroomId_ownerId: { classroomId, ownerId } },
+    select: { classroom: { select: { name: true } } },
+  });
+  return { title: membership?.classroom.name ?? "Class" };
+}
+
 export const dynamic = "force-dynamic";
 
 /**

@@ -6,6 +6,8 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { PairsSession, type PairQuestion } from "./PairsSession";
 
+export const metadata = { title: "Minimal pairs" };
+
 export const dynamic = "force-dynamic";
 
 const ROUND = 10;

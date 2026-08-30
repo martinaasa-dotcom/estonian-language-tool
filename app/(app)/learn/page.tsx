@@ -10,6 +10,8 @@ import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Chip, Meter, Page, Ring } from "@/components/ui";
 
+export const metadata = { title: "The course" };
+
 export const dynamic = "force-dynamic";
 
 /**

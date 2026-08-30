@@ -15,6 +15,8 @@ import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store"
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Meter, Page, SectionTitle } from "@/components/ui";
 
+export const metadata = { title: "Practice" };
+
 export const dynamic = "force-dynamic";
 
 /**

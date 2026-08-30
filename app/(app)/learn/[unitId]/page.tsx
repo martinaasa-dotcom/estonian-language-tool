@@ -14,6 +14,12 @@ import { icon } from "@/components/icons";
 import { Card, Chip, Meter, Page, Ring } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 
+export async function generateMetadata({ params }: { params: Promise<{ unitId: string }> }) {
+  const { unitId } = await params;
+  const unit = unitById(unitId);
+  return { title: unit ? unit.title : "Unit" };
+}
+
 export const dynamic = "force-dynamic";
 
 /**

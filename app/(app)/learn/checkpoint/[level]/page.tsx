@@ -7,6 +7,12 @@ import { parseExamples } from "@/lib/dict/examples";
 import { isPrincipalFormType } from "@/lib/estonian/types";
 import { CheckpointSession } from "./CheckpointSession";
 
+export async function generateMetadata({ params }: { params: Promise<{ level: string }> }) {
+  const { level } = await params;
+  const upper = level.toUpperCase();
+  return { title: (LEVELS as readonly string[]).includes(upper) ? `${upper} checkpoint` : "Checkpoint" };
+}
+
 export const dynamic = "force-dynamic";
 
 /**

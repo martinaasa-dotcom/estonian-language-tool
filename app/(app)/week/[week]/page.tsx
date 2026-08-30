@@ -10,6 +10,12 @@ import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 import { WeekPicker } from "../WeekPicker";
 
+export async function generateMetadata({ params }: { params: Promise<{ week: string }> }) {
+  const { week } = await params;
+  const n = Number(week);
+  return { title: Number.isFinite(n) && n > 0 ? `Week ${n}` : "This week" };
+}
+
 export const dynamic = "force-dynamic";
 
 /**

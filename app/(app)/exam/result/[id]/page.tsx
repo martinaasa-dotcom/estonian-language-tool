@@ -16,6 +16,8 @@ import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
 import { AnuReading } from "./AnuReading";
 
+export const metadata = { title: "Exam result" };
+
 export const dynamic = "force-dynamic";
 
 /**

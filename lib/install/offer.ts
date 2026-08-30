@@ -110,6 +110,6 @@ export function writeMemory(memory: InstallMemory): string {
   The process's own zone is the right answer here and needs no clock passed in,
   because this only ever runs in a browser: it decides whether somebody has
   opened the app on enough separate days to be offered the install prompt, from
-  a note in their own localStorage.
+  a note this module is handed by its caller.
 */
 export { dayKey } from "@/lib/time/day";
