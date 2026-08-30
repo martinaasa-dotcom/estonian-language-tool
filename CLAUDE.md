@@ -360,6 +360,28 @@ Do not add a counter column. A stored score is a second source of truth that dri
 awarded for something that never happened. The only exceptions are values no log can reconstruct: a
 personal best, and which days a streak shield has already covered. (ADR-014.)
 
+**A query that is cut short says where to cut, and a query whose answer is picked from says how to
+pick.** Derived progress is only as trustworthy as the rows it was derived from, and four places had
+handed that choice to Postgres. The shape is always the same: a `take` with no `orderBy`, or a
+comparator that can return 0 for two different rows, and then one of the results is shown. It looks
+settled, because a plan over unchanged rows usually is, and it is not a promise.
+
+All four were real. The dictionary showed one of two entries for a lemma and nothing chose which, so
+a scanned word could shadow a word the app knows and take the paradigm off the page, and three
+browser suites failed on it in one run and passed in the next with the code untouched. The grammar
+reference picked its example words the same way. `readinessSignals` capped three queries at twenty
+thousand rows without saying which twenty thousand, in a file whose own header promises no
+confidence percentage can drift from the reviews behind it. And the weakest-case panel, already
+consolidated to one component and one calculation, still had three inputs, so a learner who had
+fixed their partitive was told 100% on Progress and 50% on Practice on the same day.
+
+So: `bySubstance` ends on `id` because a total comparator is the only kind whose answer does not
+depend on the array it was handed; a truncated query is ordered even where the order looks
+arbitrary, since arbitrary-but-stable is what makes a wrong result reproducible; and where two
+screens answer one question, the query is a function they share rather than a query each
+(`lib/progress/cases.ts`). Ordering is free wherever the index is already there, and it was in every
+one of these. What is not free is a number that moves on its own.
+
 **A day is the learner's day, and every screen that counts one is rendered on a server.** The
 streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour
 of the day are all derived server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
