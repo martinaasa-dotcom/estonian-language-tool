@@ -1,6 +1,6 @@
 # Spaced Repetition Design
 
-v4.0 said "Leitner / SM-2 algorithm" — two different algorithms, undecided, both dated — and modelled
+v4.0 said "Leitner / SM-2 algorithm" (two different algorithms, undecided, both dated) and modelled
 a single implicit card type. Both are upgraded here.
 
 ## 1. Algorithm: FSRS (ADR-003)
@@ -30,7 +30,7 @@ Fuzz is on: without it, cards added in one session return in one clump forever.
 against a user's own history once there are ~1 000 reviews. Discarding review history discards the
 ability to ever personalise the schedule. Phase 5 adds an "optimise my parameters" action.
 
-## 2. Card types — the Estonian-specific part
+## 2. Card types: the Estonian-specific part
 
 One card type cannot teach Estonian. A learner who can translate `tuba → room` still cannot say
 "into the room". These types come directly from `02-estonian-domain.md`.
@@ -38,12 +38,12 @@ One card type cannot teach Estonian. A learner who can translate `tuba → room`
 | Type | Front | Back | Teaches |
 |---|---|---|---|
 | `RECOGNITION` | `tuba` | room | Passive vocabulary |
-| `PRODUCTION` | room | `tuba` | Active recall — harder, scheduled separately |
+| `PRODUCTION` | room | `tuba` | Active recall: harder, scheduled separately |
 | `CASE_FORM` | `tuba` → **inessive**? | `toas` | Case formation from the stem |
-| `GRADATION` | `tuba` → genitive? | `toa` — qualitative, `b : ∅` | The gradation pattern itself |
-| `GOVERNMENT` | `aitama` takes which case? | partitive — *aitan sind* | Verb government (*rektsioon*) |
-| `LISTENING` | 🔊 audio only | `tuba` / room | Aural recognition; quantity contrasts |
-| `OBJECT_CASE` | "I read the book (finished)" | `Lugesin raamatu läbi` — total object | Aspect via case |
+| `GRADATION` | `tuba` → genitive? | `toa`, qualitative, `b : ∅` | The gradation pattern itself |
+| `GOVERNMENT` | `aitama` takes which case? | partitive, *aitan sind* | Verb government (*rektsioon*) |
+| `LISTENING` | audio only, no text | `tuba` / room | Aural recognition; quantity contrasts |
+| `OBJECT_CASE` | "I read the book (finished)" | `Lugesin raamatu läbi`, total object | Aspect via case |
 
 `RECOGNITION` and `PRODUCTION` are separate cards with independent scheduling, because recognising a
 word and producing it are genuinely different memories with different decay.
@@ -61,7 +61,7 @@ The learner can always override.
 |---|---|
 | `Space` / `Enter` | Show answer |
 | `1` `2` `3` `4` | Again · Hard · Good · Easy |
-| `u` | Undo last grade — **specified, not yet built** (`13-mvp-status.md` §4) |
+| `u` | Undo last grade: **specified, not yet built** (`13-mvp-status.md` §4) |
 | `e` | Edit card inline |
 | `a` | Replay audio |
 | `s` | Suspend |
@@ -77,7 +77,7 @@ follow-up.
 ## 4. Offline
 
 Review works with no network at all. Cards, scheduling state and pre-warmed audio are local; grading
-writes to SQLite. This is the daily path and it depends on nothing external — which is a large part
+writes to SQLite. This is the daily path and it depends on nothing external, which is a large part
 of why ADR-002 chose a local database.
 
 ## 5. Weak-case analytics
@@ -86,13 +86,13 @@ Every `Review` records `targetCase`. Aggregated, this produces the **weak-case h
 (`01-product-spec.md` §3.7): accuracy per grammatical case across all cards.
 
 This is the feature that turns the app from a card box into a diagnostic. "Your partitive plural is
-at 61% and your adessive is at 94%" is directly actionable — and clicking the weak cell starts a
+at 61% and your adessive is at 94%" is directly actionable, and clicking the weak cell starts a
 filtered session on exactly those cards.
 
 ## 6. Export (audit C10)
 
-- **JSON** — complete, lossless, including review history.
-- **Anki-compatible CSV/APKG** — so the learner is never locked in.
+- **JSON**: complete, lossless, including review history.
+- **Anki-compatible CSV/APKG**, so the learner is never locked in.
 - Automatic local snapshot before every schema migration.
 
 Available from Phase 3, not deferred. Months of review history is the one irreplaceable asset in the

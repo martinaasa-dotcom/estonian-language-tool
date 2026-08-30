@@ -4,6 +4,19 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Run the whole suite by hand against any ref, from the Actions tab.
+  #
+  # A pull request opened by a GitHub App does not create a workflow run: the
+  # events an installation token generates are not allowed to trigger one, and
+  # the result is a PR with no CI at all rather than a red one, which is the
+  # harder thing to notice. This is the way back in. It needs write access to
+  # invoke, it takes no inputs, and it runs exactly the jobs below, so it
+  # widens who can start CI and not what CI can reach.
+  #
+  # GitHub only offers a workflow for dispatch once the trigger is on the
+  # default branch, so this does nothing until it lands on main. After that it
+  # covers every branch, including any this one cannot reach today.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}

@@ -48,6 +48,19 @@ describe("stock openers", () => {
       .toBe("It is a rule, and a pattern.");
   });
 
+  /*
+    Openers stack, and one pass only ever removes the outermost. This came out
+    of a single pass as "It's important to note that the object takes the
+    partitive": the anchored pattern for the second opener cannot match until
+    the first has gone, and nothing ran again afterwards. So the list is walked
+    until a walk changes nothing.
+  */
+  it("drops a stack of them, not only the outermost", () => {
+    expect(humanizeLine("Great question! It's important to note that the object takes the partitive.")).toBe(
+      "The object takes the partitive.",
+    );
+  });
+
   it("does not capitalise a line that deliberately continues the one above", () => {
     expect(humanizeLine("and that is why it is partitive.")).toBe("and that is why it is partitive.");
   });
@@ -90,6 +103,7 @@ describe("streaming reaches the same answer as cleaning it all at once", () => {
     "Short.",
     "Use the partitive — the action is ongoing.\nThat form is right — Estonian marks aspect on the object.",
     "aitama takes the partitive (aitan sind), helistama the allative (helistan sulle).",
+    "Great question! It's important to note that the object takes the partitive.",
   ];
 
   for (const reply of replies) {
