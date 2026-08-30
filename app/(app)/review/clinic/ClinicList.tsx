@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { Card, Chip, Page, SectionTitle } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { buildClinicQuestion, type Leech } from "@/lib/analysis/leeches";
+import { caseByKey } from "@/lib/estonian/cases";
 
 export interface ClinicItem extends Omit<Leech, "history"> {
   history: { rating: number; at: string }[];
@@ -83,7 +84,10 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
                   )}
                   {leech.targetCase && (
                     <ButtonLink href={`/review?case=${leech.targetCase}`}>
-                      Drill the {leech.targetCase.toLowerCase()}
+                      Drill the{" "}
+                      <span lang="et">
+                        {caseByKey(leech.targetCase)?.et ?? leech.targetCase.toLowerCase()}
+                      </span>
                     </ButtonLink>
                   )}
                   <Button

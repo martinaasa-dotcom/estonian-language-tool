@@ -62,10 +62,15 @@ function add(tally: Tally, rating: number): void {
   if (rating >= 3) tally.ok++;
 }
 
-const caseName = (key: string) =>
-  CASES.find((c) => c.key === key)?.en.toLowerCase() ?? key.toLowerCase();
+/**
+ * A finding is named the way a class names a case, with the Latin name after
+ * it. A learner told their `seesütlev` is weak can carry that sentence into a
+ * lesson; one told about their "inessive" cannot.
+ */
+const caseName = (key: string) => CASES.find((c) => c.key === key)?.et ?? key.toLowerCase();
 
-const caseNameEt = (key: string) => CASES.find((c) => c.key === key)?.et ?? "";
+const caseNameEn = (key: string) =>
+  CASES.find((c) => c.key === key)?.en.toLowerCase() ?? key.toLowerCase();
 
 /**
  * The headline finding: a case the learner handles well in general but fails on
@@ -98,7 +103,7 @@ function gradationFindings(facts: ReviewFact[]): Finding[] {
       caseKey: key as CaseKey,
       headline: `Your ${caseName(key)} is fine until the stem changes`,
       detail:
-        `You recall the ${caseName(key)} (${caseNameEt(key)}) ${strong}% of the time on words with a ` +
+        `You recall the ${caseName(key)} (${caseNameEn(key)}) ${strong}% of the time on words with a ` +
         `stable stem, but only ${weak}% on words with consonant gradation. The ending is not the ` +
         `problem; the stem it attaches to is. Drill astmevaheldus rather than the case.`,
       weakPct: weak,
@@ -135,7 +140,7 @@ function caseFindings(facts: ReviewFact[]): Finding[] {
       caseKey: key as CaseKey,
       headline: `The ${caseName(key)} is your weakest case`,
       detail:
-        `${weak}% recall on the ${caseName(key)} (${caseNameEt(key)}), against ${overallPct}% across ` +
+        `${weak}% recall on the ${caseName(key)} (${caseNameEn(key)}), against ${overallPct}% across ` +
         `every other case. This one is worth a focused drill.`,
       weakPct: weak,
       strongPct: overallPct,

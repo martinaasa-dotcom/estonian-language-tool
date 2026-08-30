@@ -66,7 +66,7 @@ describe("resolveScannedItems", () => {
   it("traces a retrieved paradigm form back to its headword", async () => {
     const [item] = await resolveScannedItems([{ et: "itest-scan-toas", en: "" }]);
     expect(item?.lemma).toBe(LEMMA);
-    expect(item?.matchedAs).toContain("inessive");
+    expect(item?.matchedAs).toContain("seesütlev");
   });
 
   it("traces a case derived from the genitive stem, which no Form row holds", async () => {
@@ -74,7 +74,7 @@ describe("resolveScannedItems", () => {
     // to resolve, or most of a homework exercise would come back unrecognised.
     const [item] = await resolveScannedItems([{ et: "itest-scan-toale", en: "" }]);
     expect(item?.lemma).toBe(LEMMA);
-    expect(item?.matchedAs).toContain("allative");
+    expect(item?.matchedAs).toContain("alaleütlev");
   });
 
   it("hands back a word it cannot vouch for, marked as exactly that", async () => {

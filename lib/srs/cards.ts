@@ -1,4 +1,4 @@
-import { CASES } from "@/lib/estonian/cases";
+import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { buildCloze } from "@/lib/estonian/cloze";
 import { deriveCase } from "@/lib/estonian/derive";
 import { caseFromMorphCode } from "@/lib/estonian/morph";
@@ -19,11 +19,11 @@ export interface CardTypeSpec {
 export const CARD_TYPES: readonly CardTypeSpec[] = [
   { type: "RECOGNITION", label: "Recognition", description: "Estonian → English", defaultOn: true },
   { type: "PRODUCTION", label: "Production", description: "English → Estonian", defaultOn: true },
-  { type: "CASE_FORM", label: "Case form", description: "Produce a named case from the stem", defaultOn: false },
+  { type: "CASE_FORM", label: "Case form", description: "Answer a case question from the stem", defaultOn: false },
   { type: "GRADATION", label: "Gradation", description: "Strong grade → weak grade", defaultOn: false },
   { type: "GOVERNMENT", label: "Government", description: "Which case the verb takes", defaultOn: false },
   { type: "CLOZE", label: "In a sentence", description: "Fill the gap in a real Estonian sentence", defaultOn: true },
-  { type: "CONJUGATION", label: "Conjugation", description: "Produce a person and tense of a verb", defaultOn: false },
+  { type: "CONJUGATION", label: "Conjugation", description: "Produce a named form of a verb", defaultOn: false },
 ];
 
 /**
@@ -33,14 +33,20 @@ export const CARD_TYPES: readonly CardTypeSpec[] = [
  * conversation; the rest of the paradigm is on the dictionary entry to be read,
  * not memorised. Every one is a form we actually hold — from Ekilex by its
  * morph code, or from the seeded principal parts — so nothing is derived.
+ *
+ * Asked by the name a teacher asks by. Nobody stands at a whiteboard in Tallinn
+ * and says "the conditional"; they say `tingiv kõneviis`, and a learner who has
+ * only ever met the English name cannot follow the question. The English name
+ * is on the reference page this card links back to, which is the right place
+ * for a cross-reference and the wrong place for the prompt.
  */
 const CONJUGATION_SLOTS: { match: { morphCode?: string; formType?: string }; label: string }[] = [
-  { match: { morphCode: "IndPrSg1", formType: "PRES_1SG" }, label: "present · ma" },
-  { match: { morphCode: "IndPrSg3" }, label: "present · ta" },
-  { match: { morphCode: "IndPrPl1" }, label: "present · me" },
-  { match: { morphCode: "IndIpfSg1", formType: "PAST_1SG" }, label: "past · ma" },
-  { match: { morphCode: "IndIpfSg3" }, label: "past · ta" },
-  { match: { morphCode: "KndPrSg1" }, label: "conditional · ma" },
+  { match: { morphCode: "IndPrSg1", formType: "PRES_1SG" }, label: "olevik · ma" },
+  { match: { morphCode: "IndPrSg3" }, label: "olevik · ta" },
+  { match: { morphCode: "IndPrPl1" }, label: "olevik · me" },
+  { match: { morphCode: "IndIpfSg1", formType: "PAST_1SG" }, label: "lihtminevik · ma" },
+  { match: { morphCode: "IndIpfSg3" }, label: "lihtminevik · ta" },
+  { match: { morphCode: "KndPrSg1" }, label: "tingiv kõneviis · ma" },
 ];
 
 /** At most this many gap-fill cards per word: two sentences teach, eight nag. */
@@ -100,9 +106,9 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           const spec = CASES.find((c) => c.key === key)!;
           out.push({
             cardType: type,
-            front: `${lex.lemma} → ${spec.en.toLowerCase()}`,
+            front: `${lex.lemma} → ${spec.question}`,
             back: value,
-            hint: `${spec.et} · ${spec.question}`,
+            hint: `${spec.et} · the ${spec.en.toLowerCase()}`,
             targetCase: key,
           });
         }
@@ -113,9 +119,9 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
         if (lex.gradation === "NONE" || !genSg) break;
         out.push({
           cardType: type,
-          front: `${lex.lemma} → genitive`,
+          front: `${lex.lemma} → ${caseByKey("GENITIVE")!.question}`,
           back: genSg,
-          hint: lex.gradationNote ? `gradation ${lex.gradationNote}` : "consonant gradation",
+          hint: lex.gradationNote ? `astmevaheldus ${lex.gradationNote}` : "astmevaheldus · consonant gradation",
           targetCase: "GENITIVE",
         });
         break;

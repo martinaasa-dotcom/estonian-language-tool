@@ -204,7 +204,7 @@ describe("the advice", () => {
   it("names a weak case and links to the rule", () => {
     const readiness = assessReadiness(signals({
       ...established(),
-      cases: [{ caseKey: "ELATIVE", caseEn: "Elative", pct: 42, reviews: 30 }],
+      cases: [{ caseKey: "ELATIVE", caseEn: "Elative", caseEt: "seestütlev", pct: 42, reviews: 30 }],
     }));
     const gap = readiness.gaps.find((g) => g.id === "case-ELATIVE");
     expect(gap?.href).toBe("/grammar/elative");
@@ -214,7 +214,7 @@ describe("the advice", () => {
   it("ignores a case with too few reviews to mean anything", () => {
     const readiness = assessReadiness(signals({
       ...established(),
-      cases: [{ caseKey: "ESSIVE", caseEn: "Essive", pct: 0, reviews: 2 }],
+      cases: [{ caseKey: "ESSIVE", caseEn: "Essive", caseEt: "olev", pct: 0, reviews: 2 }],
     }));
     expect(readiness.gaps.some((g) => g.id === "case-ESSIVE")).toBe(false);
   });

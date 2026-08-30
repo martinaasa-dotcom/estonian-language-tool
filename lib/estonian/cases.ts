@@ -39,6 +39,18 @@ export const CASES: readonly CaseSpec[] = [
   { key: "COMITATIVE",  en: "Comitative",  et: "kaasaütlev",   question: "millega?",          suffix: "ga",  principal: false, gloss: "with the book" },
 ] as const;
 
+/**
+ * How a case is named when it is one of several to choose between.
+ *
+ * The Estonian name and the question, which is the pair a class hears together
+ * and the pair that lets somebody actually pick. A list of Latin names asks an
+ * English speaker to remember a translation of a translation; the question is
+ * the thing they will hear in a shop.
+ */
+export function caseOptionLabel(spec: CaseSpec): string {
+  return `${spec.et} · ${spec.question}`;
+}
+
 export const DERIVED_CASES = CASES.filter((c) => !c.principal);
 
 export function caseByKey(key: string): CaseSpec | undefined {

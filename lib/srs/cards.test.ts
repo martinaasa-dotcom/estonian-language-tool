@@ -31,7 +31,12 @@ describe("generateCards", () => {
     const inessive = cards.find((c) => c.targetCase === "INESSIVE");
     expect(inessive?.back).toBe("toas");
     expect(inessive?.front).toContain("tuba");
+    // Asked by the question, which is how a class is asked for a case. The
+    // Latin name is the cross-reference on the hint, not the prompt.
+    expect(inessive?.front).toContain("kus?");
+    expect(inessive?.front).not.toMatch(/inessive/i);
     expect(inessive?.hint).toContain("seesütlev");
+    expect(inessive?.hint).toContain("inessive");
   });
 
   it("makes a gradation card only when the word actually alternates", () => {
@@ -147,9 +152,9 @@ describe("generateCards — CONJUGATION", () => {
     ],
   };
 
-  it("asks for a person and tense, and answers with the stored form", () => {
+  it("asks by the name a class uses, and answers with the stored form", () => {
     const cards = generateCards(lugema, ["CONJUGATION"]);
-    const third = cards.find((c) => c.front.includes("present · ta"));
+    const third = cards.find((c) => c.front.includes("olevik · ta"));
     expect(third?.back).toBe("loeb");
     expect(cards.every((c) => lugema.forms.some((f) => f.value === c.back))).toBe(true);
   });

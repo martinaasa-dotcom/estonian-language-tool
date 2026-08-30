@@ -20,7 +20,7 @@ describe("searchLexemes against the seeded dictionary", () => {
   it("finds a word by an inflected form and says which form it was", async () => {
     const [top] = await searchLexemes("toas");
     expect(top?.lemma).toBe("tuba");
-    expect(top?.matchedAs).toMatch(/inessive/);
+    expect(top?.matchedAs).toMatch(/seesütlev \(inessive\)/);
   });
 
   /*
@@ -52,7 +52,7 @@ describe("searchLexemes against the seeded dictionary", () => {
   it("finds a verb by a stored principal part", async () => {
     const [top] = await searchLexemes("lugesin");
     expect(top?.lemma).toBe("lugema");
-    expect(top?.matchedAs).toMatch(/past 1sg/);
+    expect(top?.matchedAs).toMatch(/lihtminevik ma/);
   });
 
   it("does not label a headword match as an inflected form", async () => {
@@ -73,7 +73,7 @@ describe("searchLexemes against the seeded dictionary", () => {
     // this test exists to catch.
     const [top] = await searchLexemes("tubadega");
     expect(top?.lemma).toBe("tuba");
-    expect(top?.matchedAs).toMatch(/comitative plural/);
+    expect(top?.matchedAs).toMatch(/mitmuse kaasaütlev/);
   });
 
   it("returns nothing for a query that matches nothing", async () => {

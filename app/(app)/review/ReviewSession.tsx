@@ -11,6 +11,7 @@ import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
+import { caseByKey } from "@/lib/estonian/cases";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { BLANK } from "@/lib/estonian/cloze";
 import { xpForRating } from "@/lib/gamification/xp";
@@ -52,8 +53,12 @@ const TONE_SOFT: Record<number, string> = {
  * Anu opens with the question already written so it can be sent or edited.
  */
 function WhyRow({ card }: { card: ReviewCard }) {
+  // Named the way a class names it, because this question is going to a tutor
+  // who is told to answer in the same words (lib/tutor/prompt.ts).
+  const named = card.targetCase ? caseByKey(card.targetCase) : undefined;
+  const caseName = named?.et ?? card.targetCase?.toLowerCase() ?? "";
   const question = card.targetCase
-    ? `Why is the ${card.targetCase.toLowerCase()} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
+    ? `Why is the ${caseName} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
     : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
 
   const pill =
@@ -67,7 +72,7 @@ function WhyRow({ card }: { card: ReviewCard }) {
           className={pill}
           style={{ background: "var(--raised)", color: "var(--ink-2)" }}
         >
-          <Compass size={12} aria-hidden /> Why the {card.targetCase.toLowerCase()}?
+          <Compass size={12} aria-hidden /> Why the <span lang="et">{caseName}</span>?
         </Link>
       )}
       <Link

@@ -82,7 +82,10 @@ check("a model note, if any, is labelled as unverified",
 // ── Government: answering reveals the example and the rule ───────────────────
 await page.goto(`${BASE}/review/government`, { waitUntil: "networkidle" });
 const verb = (await page.locator("p.est").first().textContent())?.trim() ?? "";
-await app.getByRole("button", { name: /Partitive|Allative|Elative|Comitative/ }).first().click();
+// Options are named the way a class names them: the question first, the
+// Estonian case name under it. Any option will do, this is checking that the
+// answer reveals the rule.
+await app.getByRole("button", { name: /osastav|alaleütlev|seestütlev|kaasaütlev|seesütlev|sisseütlev|alalütlev/ }).first().click();
 await page.waitForSelector("[aria-live='polite']", { timeout: 15000 });
 const govBody = (await page.textContent("body")) ?? "";
 check("answering reveals the governed case", /governs the|experiencer construction/i.test(govBody), verb);
@@ -92,7 +95,7 @@ check("the example sentence is shown after answering",
 await app.getByRole("button", { name: /^Next/ }).click();
 await page.waitForTimeout(400);
 check("Next advances to a new question",
-  (await app.getByText(/Which case does it take/i).count()) > 0);
+  (await app.getByText(/Which question does it answer/i).count()) > 0);
 
 // ── Cloze: paste a passage built from the learner's own deck ─────────────────
 // Put a word in the deck first, so this exercises the real path rather than

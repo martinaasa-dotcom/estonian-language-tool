@@ -68,7 +68,7 @@ describe("diagnose — the plain weak-case finding", () => {
       ...facts(20, { okRate: 0.95, targetCase: "ELATIVE" }),
       ...facts(20, { okRate: 0.25, targetCase: "COMITATIVE" }),
     ]);
-    expect(findings.some((f) => f.headline.includes("comitative"))).toBe(true);
+    expect(findings.some((f) => f.headline.includes("kaasaütlev"))).toBe(true);
   });
 
   it("says nothing when every case is equally strong", () => {
