@@ -220,6 +220,24 @@ function shuffled<T>(items: readonly T[], rand: () => number): T[] {
   return out;
 }
 
+/** Up to `count` distinct candidates, skipping anything already in `seen`. */
+function pickWrong(
+  candidates: readonly string[],
+  count: number,
+  rand: () => number,
+  seen: Set<string>,
+): string[] {
+  const out: string[] = [];
+  for (const candidate of shuffled(candidates, rand)) {
+    const key = candidate.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(candidate);
+    if (out.length === count) break;
+  }
+  return out;
+}
+
 /**
  * Builds a multiple choice whose wrong answers are real and not accidentally
  * right.
@@ -234,13 +252,36 @@ function choiceOf(
   rand: () => number,
 ): { options: string[]; answer: number } | null {
   const seen = new Set([correct.toLowerCase()]);
-  const wrong: string[] = [];
-  for (const candidate of shuffled(pool, rand)) {
-    const key = candidate.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    wrong.push(candidate);
-    if (wrong.length === OPTIONS - 1) break;
+  const wrong = pickWrong(pool, OPTIONS - 1, rand, seen);
+  if (wrong.length < OPTIONS - 1) return null;
+  const options = shuffled([correct, ...wrong], rand);
+  return { options, answer: options.indexOf(correct) };
+}
+
+/**
+ * Like `choiceOf`, but reaches for the same part of speech first.
+ *
+ * A gloss is not just a translation, it is authored in whatever convention
+ * that part of speech uses: a verb reads "to help", a phrase reads "Thank
+ * you!". Mixed with a noun's bare "salt", the phrase is the only option
+ * that looks like one, so it is the answer before anyone reads it. Wrong
+ * options drawn from the word's own part of speech are ones a learner has
+ * to actually rule out, and they carry the same authoring style along with
+ * it. Falls back to the whole pool exactly where `choiceOf` would, when
+ * there is not enough of the same kind to fill four.
+ */
+function choiceOfNear(
+  correct: string,
+  correctPos: string,
+  pool: readonly { text: string; pos: string }[],
+  rand: () => number,
+): { options: string[]; answer: number } | null {
+  const seen = new Set([correct.toLowerCase()]);
+  const near = pool.filter((c) => c.pos === correctPos).map((c) => c.text);
+  const far = pool.filter((c) => c.pos !== correctPos).map((c) => c.text);
+  const wrong = pickWrong(near, OPTIONS - 1, rand, seen);
+  if (wrong.length < OPTIONS - 1) {
+    wrong.push(...pickWrong(far, OPTIONS - 1 - wrong.length, rand, seen));
   }
   if (wrong.length < OPTIONS - 1) return null;
   const options = shuffled([correct, ...wrong], rand);
@@ -480,8 +521,8 @@ export function planLesson(input: LessonInput): LessonStep[] {
 
   if (words.length === 0) return [];
 
-  const glossPool = [...words, ...(input.distractors ?? [])].map((w) => w.gloss);
-  const lemmaPool = [...words, ...(input.distractors ?? [])].map((w) => w.lemma);
+  const glossPool = [...words, ...(input.distractors ?? [])].map((w) => ({ text: w.gloss, pos: w.pos }));
+  const lemmaPool = [...words, ...(input.distractors ?? [])].map((w) => ({ text: w.lemma, pos: w.pos }));
 
   steps.push({
     id: nextId("intro"), kind: "intro",
@@ -505,7 +546,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
   }));
 
   const chooseLane = (block: readonly LessonWord[]) => block.flatMap((word): LessonStep[] => {
-    const choice = choiceOf(word.gloss, glossPool, rand);
+    const choice = choiceOfNear(word.gloss, word.pos, glossPool, rand);
     return choice
       ? [{ id: nextId("choose"), kind: "choose", lemma: word.lemma, options: choice.options, answer: choice.answer }]
       : [];
@@ -530,7 +571,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
       if (own) break;
     }
     if (own) return [own];
-    const choice = choiceOf(word.lemma, lemmaPool, rand);
+    const choice = choiceOfNear(word.lemma, word.pos, lemmaPool, rand);
     return choice
       ? [{ id: nextId("produce"), kind: "produce", lemma: word.lemma, gloss: word.gloss, options: choice.options, answer: choice.answer }]
       : [];
@@ -545,7 +586,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
   // produce is how the two skills reinforce each other.
   const listenLane = (block: readonly LessonWord[]) =>
     block.flatMap((word): LessonStep[] => {
-      const choice = choiceOf(word.gloss, glossPool, rand);
+      const choice = choiceOfNear(word.gloss, word.pos, glossPool, rand);
       return choice
         ? [{ id: nextId("listen"), kind: "listen", lemma: word.lemma, options: choice.options, answer: choice.answer }]
         : [];
