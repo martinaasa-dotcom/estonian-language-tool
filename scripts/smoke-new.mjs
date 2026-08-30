@@ -30,7 +30,7 @@ const browser = await launchChromium();
   enough to build a government drill and a minimal pair, which a thin database
   does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 58 });
+const { check, done } = suite("The new routes, rendered", { floor: 60 });
 
 const ROUTES = [
   ["/", "today"],
@@ -270,6 +270,57 @@ check("the marker leaves on the press, not on the page",
   `${aimed.covered}% of the way there 130ms after pointerdown, still on ${page.url().replace(BASE, "")}`);
 check("and it stretches across the ground it covers", aimed.stretched > 60,
   `${aimed.stretched}px tall mid-travel, against a 40px row`);
+
+/*
+  ONE NAVIGATION IS ONE JOURNEY.
+
+  A press bets the marker on the cell before the page answers, and calling
+  that bet off puts the marker back on whatever is still marked, which during
+  a navigation is the row you are LEAVING. So any pointer event landing off
+  the cell while the new page renders used to send the pill all the way home
+  and all the way back: measured on this rail at three travels for one tap,
+  127 to 817, 817 to 127, then 127 to 817 again. On a phone the browser taking
+  the gesture for a scroll does it on an ordinary tap.
+*/
+await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await page.evaluate(() => {
+  const pane = document.querySelector('nav[aria-label="Main"] .nav-marker');
+  window.__travels = [];
+  const real = pane.animate.bind(pane);
+  pane.animate = (frames, opts) => {
+    window.__travels.push(String(frames[frames.length - 1]?.transform ?? ""));
+    return real(frames, opts);
+  };
+});
+await page.locator('nav[aria-label="Main"] a[href="/settings"]').click();
+await page.waitForTimeout(60);
+await page.evaluate(() =>
+  document.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerType: "touch" })),
+);
+await page.waitForURL("**/settings", { timeout: 15000 }).catch(() => {});
+await page.waitForTimeout(900);
+const travels = await page.evaluate(() => window.__travels ?? []);
+check("a navigation is one journey, not three", travels.length === 1,
+  `${travels.length} travels: ${travels.join(" then ")}`);
+
+const abandoned = await page.evaluate(async () => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")].find((c) => c.getAttribute("href") === "/");
+  const at = () => Math.round(pane.getBoundingClientRect().top);
+  const home = at();
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "touch" }));
+  await new Promise((r) => setTimeout(r, 400));
+  const aimed = at();
+  document.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerType: "touch" }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return { home, aimed, back: at(), running: pane.getAnimations().length };
+});
+check("an abandoned press arrives home rather than travelling back",
+  abandoned.aimed !== abandoned.home && abandoned.back === abandoned.home && abandoned.running === 0,
+  `aimed at ${abandoned.aimed}, back at ${abandoned.back} against ${abandoned.home}, ` +
+  `${abandoned.running} animations`);
 
 const still = await browser.newContext({ viewport: { width: 1280, height: 1000 }, reducedMotion: "reduce" });
 const calm = await still.newPage();

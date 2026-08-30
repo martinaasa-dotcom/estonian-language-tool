@@ -569,7 +569,15 @@ while the new room rendered, then the rest of the way in one. And it **leaves on
 because these pages are rendered on a server and the wait is real; that is a bet, so it is called
 off by a press dragged off the cell, by a page that answers with a different cell, or by four
 seconds of nothing, which is long on purpose since snapping the marker home mid-wait looks far more
-broken than letting it stand where somebody put it. `lib/ux/navMotion.ts` is the arithmetic and is
+broken than letting it stand where somebody put it. **A click on the aimed cell ends the betting**,
+though, and that one is not a refinement: calling a bet off puts the marker back on whatever is
+still marked, which during a navigation is the row you are *leaving*, so before this any pointer
+event landing off the cell while the new page rendered sent the pill all the way home and all the
+way back. Measured on this rail at three travels for one tap, 127 to 817, 817 to 127, then 127 to
+817 again, and on a phone the browser taking the gesture for a scroll does it on an ordinary tap. A
+cancel *before* the click is still a genuinely abandoned press, and a bet that loses **arrives
+rather than travels**, because reverting is a correction and not a journey.
+`lib/ux/navMotion.ts` is the arithmetic and is
 pure, `lib/layout/navMarker.ts` measures the cells and plays it, `app/nav.css` says how a pane
 behaves once placed, and both surfaces read all three, because a second marker is two answers to
 one question drifting apart a number at a time.
@@ -580,7 +588,11 @@ box takes in the scrollbar's gutter and a pane inset from both edges came out fo
 than the row it was under. **A pane with no offset on the axis it travels stays at its static
 position**, one padding in from the edge, while the cell it is chasing reports an `offsetTop`
 measured from the padding box, which drew the whole rail's marker 16px low on every row until
-`restingStyle` pinned the origin. **The panes sit at a negative z-index** so the cells can stay
+`restingStyle` pinned the origin. **The curve is solved once**, into a table of 1,024 points read
+by interpolation, because the keyframes are worked out inside the `pointerdown` handler before the
+browser can dispatch the click that navigates, and binary searching a bezier twice per sample is
+about 1,900 iterations on the press path for a curve that never changes. **The panes sit at a
+negative z-index** so the cells can stay
 unpositioned and keep reporting their offsets against the well rather than against whichever
 section they are in, which is the same measurement fault arriving through the door marked
 `position: relative`. And **the current row still carries its own card until a pane exists**: a

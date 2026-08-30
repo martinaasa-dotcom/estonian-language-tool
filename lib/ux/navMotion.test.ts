@@ -8,6 +8,7 @@ import {
   restingStyle,
   sameMark,
   swellFrames,
+  TRAVEL_EASE,
   travelDirection,
   travelKeyframes,
 } from "./navMotion";
@@ -140,6 +141,41 @@ describe("the travel", () => {
     const midBack = edges(back[Math.floor(back.length / 4)]!, home, "x");
     expect(midBack.start).toBeLessThan(200 - 0);
     expect(midBack.end - midBack.start).toBeGreaterThan(home.size);
+  });
+
+  it("samples the same curve a solver would, from a table it builds once", () => {
+    /*
+      The curve is worked out inside the `pointerdown` handler, before the
+      browser can dispatch the click that navigates, and it used to binary
+      search the bezier twice for every sample: about 1,900 iterations of a
+      solver on the press path, on every tap, for a curve that never changes.
+      It is a table of 1,024 points now, so this checks it against an
+      independent solve rather than against itself. Measured, the worst
+      disagreement over a 500px journey is six ten-thousandths of a pixel,
+      against a 40px row as the finest thing the marker has to place.
+    */
+    const solve = (t: number) => {
+      const [p1x, p1y, p2x, p2y] = TRAVEL_EASE;
+      let lo = 0;
+      let hi = 1;
+      for (let i = 0; i < 40; i += 1) {
+        const u = (lo + hi) / 2;
+        const x = 3 * (1 - u) ** 2 * u * p1x + 3 * (1 - u) * u * u * p2x + u ** 3;
+        if (x < t) lo = u;
+        else hi = u;
+      }
+      const u = (lo + hi) / 2;
+      return 3 * (1 - u) ** 2 * u * p1y + 3 * (1 - u) * u * u * p2y + u ** 3;
+    };
+
+    const to = cell(500);
+    const frames = travelKeyframes(cell(0), to, { axis: "x", durationMs: 320, lagMs: 0 });
+    const worst = Math.max(
+      ...frames.slice(1, -1).map((frame) =>
+        Math.abs(edges(frame, to, "x").start - 500 * solve(frame.offset as number)),
+      ),
+    );
+    expect(worst).toBeLessThan(0.01);
   });
 
   it("has a value for every frame a browser could draw", () => {

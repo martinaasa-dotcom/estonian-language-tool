@@ -168,7 +168,10 @@ Small, physical, and never blocking:
   never a transition on `top` or `left`, because those are laid out and painted on the main thread
   and the main thread is exactly what a page navigation is busy with. And it leaves on the press
   rather than on the page, since these pages are rendered on a server and the wait is real; a press
-  dragged off, a page that answers somewhere else, or four seconds of nothing all call the bet off.
+  dragged off, a page that answers somewhere else, or four seconds of nothing all call the bet off,
+  while a click on the cell ends the betting, since calling a bet off mid-navigation puts the pill
+  back on the row you are leaving and then sends it out again. A bet that loses arrives rather than
+  travels: reverting is a correction and not a journey.
   A pointer drags a second, fainter pane on the same physics, which is the hover the rail never had.
   The phone bar's capsule also breathes, three percent uniformly on both axes over 460ms with a
   slight undershoot; the rail does not, because a column that lurched beside the page it just

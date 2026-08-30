@@ -78,6 +78,15 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   /** The cell a press is betting on, until the page agrees or the bet is off. */
   const aimed = useRef<HTMLElement | null>(null);
   const aimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /*
+    Whether the press has already become a click, which is to say a navigation
+    is under way. See the press effect at the bottom: a bet the page is about
+    to confirm must not be called off, or the marker walks all the way home
+    and all the way back for nothing.
+  */
+  const going = useRef(false);
+  /** A bet being reverted arrives rather than travels. See `callOff`. */
+  const reverting = useRef(false);
 
   const markOf = useCallback(
     (cell: HTMLElement): NavMark =>
@@ -163,11 +172,19 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     const target = aimed.current ?? on;
     const next = target ? markOf(target) : null;
     if (!sameMark(lastMark.current, next)) {
-      if (lastMark.current && next) swell(host, travelDirection(lastMark.current, next));
+      if (lastMark.current && next && !reverting.current) {
+        swell(host, travelDirection(lastMark.current, next));
+      }
       if (target && next) {
+        /*
+          A REVERTED BET ARRIVES, IT DOES NOT TRAVEL. Reverting is a
+          correction rather than a journey, and animating it draws a second
+          full trip down the rail for a place the reader never went to, which
+          is exactly what somebody would report as a glitch.
+        */
         glide(
           host.querySelector<HTMLElement>(".nav-marker"),
-          lastMark.current,
+          reverting.current ? null : lastMark.current,
           next,
           crossOf(target),
           gliding,
@@ -346,7 +363,13 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       }
       if (!aimed.current) return;
       aimed.current = null;
-      measure();
+      going.current = false;
+      reverting.current = true;
+      try {
+        measure();
+      } finally {
+        reverting.current = false;
+      }
     };
 
     const aim = (cell: HTMLElement) => {
@@ -354,6 +377,7 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       if (!well || !well.contains(cell)) return;
       if (cell === well.querySelector("[data-nav-on]")) return;
       aimed.current = cell;
+      going.current = false;
       if (aimTimer.current) clearTimeout(aimTimer.current);
       aimTimer.current = setTimeout(callOff, GIVES_UP_MS);
       measure();
@@ -382,8 +406,29 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       finger that wandered off has usually left the bar entirely.
     */
     const release = (event: PointerEvent) => {
-      if (!aimed.current) return;
+      if (!aimed.current || going.current) return;
       if (goes(event.target) !== aimed.current) callOff();
+    };
+
+    /*
+      ONCE THE PRESS HAS BECOME A CLICK IT IS NO LONGER A BET.
+
+      A navigation is under way, and the only things allowed to settle the
+      marker after that are the page answering and the timeout. Without this,
+      any later pointer event landing off the cell calls the bet off, and
+      calling off repositions the marker to whatever is still marked, which
+      during a navigation is the row you are LEAVING. A second tap does it, a
+      press anywhere on the page while the new one renders does it, and on a
+      phone the browser taking the gesture for a scroll does it on an ordinary
+      tap.
+
+      Measured on this rail before the fix, one navigation drew three travels:
+      127 to 817 on the press, 817 back to 127 a tenth of a second later, then
+      127 to 817 again when the page arrived.
+    */
+    const went = (event: MouseEvent) => {
+      if (!aimed.current) return;
+      if (goes(event.target) === aimed.current) going.current = true;
     };
 
     /* A keyboard never presses, and Enter is how it opens a link. */
@@ -393,15 +438,23 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       if (cell) aim(cell);
     };
 
+    /* A cancel before the click is a genuinely abandoned press. */
+    const abandon = () => {
+      if (going.current) return;
+      callOff();
+    };
+
     host.addEventListener("pointerdown", press);
+    host.addEventListener("click", went);
     host.addEventListener("keydown", key);
     document.addEventListener("pointerup", release);
-    document.addEventListener("pointercancel", callOff);
+    document.addEventListener("pointercancel", abandon);
     return () => {
       host.removeEventListener("pointerdown", press);
+      host.removeEventListener("click", went);
       host.removeEventListener("keydown", key);
       document.removeEventListener("pointerup", release);
-      document.removeEventListener("pointercancel", callOff);
+      document.removeEventListener("pointercancel", abandon);
       if (aimTimer.current) clearTimeout(aimTimer.current);
     };
   }, [measure]);

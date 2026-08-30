@@ -109,7 +109,7 @@ export function travelDirection(was: NavMark, next: NavMark): NavDir {
   return null;
 }
 
-function bezier(p1x: number, p1y: number, p2x: number, p2y: number, t: number): number {
+function solve(p1x: number, p1y: number, p2x: number, p2y: number, t: number): number {
   if (t <= 0) return 0;
   if (t >= 1) return 1;
   let lo = 0;
@@ -158,6 +158,38 @@ export function crossStyle(cross: NavMark, axis: NavAxis) {
 }
 
 /**
+ * THE CURVE IS ALWAYS THE SAME CURVE, SO IT IS SOLVED ONCE.
+ *
+ * `travelKeyframes` runs synchronously inside the `pointerdown` handler,
+ * before the browser can dispatch the click that navigates, and it used to
+ * binary-search the bezier twice for every sample: at 8ms over a 330ms travel
+ * that is about 1,900 iterations of the solver on the press path, on every
+ * tap, for a curve that never changes. A table of 1,024 points built once on
+ * first use and read with a linear interpolation is exact to about 1e-6,
+ * which is far finer than a sub-pixel position on a 40px row, and turns the
+ * press path into 84 lookups.
+ *
+ * It takes no curve, deliberately: there is one travel curve in this app, and
+ * a table keyed to nothing would quietly answer for the wrong one if a second
+ * were ever passed in.
+ */
+const EASE_STEPS = 1024;
+let easeTable: Float64Array | null = null;
+
+function eased(t: number): number {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  if (!easeTable) {
+    const [a, b, c, d] = TRAVEL_EASE;
+    easeTable = new Float64Array(EASE_STEPS + 1);
+    for (let i = 0; i <= EASE_STEPS; i += 1) easeTable[i] = solve(a, b, c, d, i / EASE_STEPS);
+  }
+  const at = t * EASE_STEPS;
+  const i = Math.floor(at);
+  return easeTable[i]! + (easeTable[i + 1]! - easeTable[i]!) * (at - i);
+}
+
+/**
  * The pill's travel, as compositor keyframes.
  *
  * The element is given the destination's own length before this plays, so the
@@ -171,7 +203,6 @@ export function travelKeyframes(
   to: NavMark,
   opts: { axis: NavAxis; durationMs: number; lagMs: number },
 ): Keyframe[] {
-  const [a, b, c, d] = TRAVEL_EASE;
   const { axis, durationMs, lagMs } = opts;
   const move = axis === "x" ? "translateX" : "translateY";
   const stretch = axis === "x" ? "scaleX" : "scaleY";
@@ -182,8 +213,8 @@ export function travelKeyframes(
   const frames: Keyframe[] = [];
   for (let t = 0; t <= durationMs; t += SAMPLE_MS) {
     // The leading edge sets off first; the trailing one is delayed by the lag.
-    const lead = bezier(a, b, c, d, t / durationMs);
-    const trail = bezier(a, b, c, d, (t - lagMs) / durationMs);
+    const lead = eased(t / durationMs);
+    const trail = eased((t - lagMs) / durationMs);
     const s = forward ? trail : lead;
     const e = forward ? lead : trail;
     const start = from.start + (to.start - from.start) * s;
