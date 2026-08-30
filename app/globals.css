@@ -376,6 +376,37 @@
     }
   }
 
+  /*
+    An inflated box still has to centre what is in it.
+
+    The floor above is a `min-width` and a `min-height` on a control that is,
+    by default, an inline box laying its content out from the top left. On a
+    button holding nothing but an icon that is a quarter of an inch of slack
+    put entirely on one side: measured at 390px, the close button on the phone's
+    More sheet drew its cross six pixels left of the middle of the circle it
+    sits in, and so did every other icon-only control in the app that had not
+    thought to say `flex` for itself. It looks like a rendering fault because it
+    is one.
+
+    So an icon-only control centres its own content, everywhere rather than
+    only under a thumb, since padding rounds unevenly on a mouse too. Written
+    inside `:where()` so it carries no specificity at all: any component that
+    lays its own icon out (a full-width button, a row that pushes its icon to
+    one end) keeps doing exactly what it says, and this only reaches the
+    controls that never said anything.
+
+    `[aria-label]` is what makes "icon only" checkable: a control whose whole
+    content is one glyph has to carry its name in an attribute or it has no
+    name at all, and a control with words in it does not. So a button that says
+    something *and* points at it keeps laying itself out, and this reaches the
+    ones that are nothing but the icon.
+  */
+  :where(button, summary, [role="button"], a, label):where([aria-label]):where(:has(> svg:only-child)) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* A tap is a tap: no grey flash, and none of the 300ms double-tap-to-zoom
      wait on the rating buttons, which are pressed hundreds of times a session. */
   button, a, [role="button"] {

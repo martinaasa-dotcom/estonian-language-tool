@@ -2834,6 +2834,35 @@ check("a hover makes a control more present, never less", () => {
 });
 
 /**
+ * A control the 44px floor makes bigger still centres what is inside it.
+ *
+ * The floor is a `min-width` and a `min-height`, and an inline box lays its
+ * content out from the top left, so on an icon-only button all of the slack
+ * lands on two sides. Measured in a browser at 390px, the cross on the phone's
+ * More sheet sat six pixels left of the middle of the circle it was drawn in,
+ * and every other icon-only control that had not thought to say `flex` for
+ * itself was drawn the same way. It reads as a rendering fault because it is
+ * one.
+ *
+ * Asserted as the pairing rather than as one rule: a floor that inflates a box
+ * with no rule centring the box's content is the state that produced this, and
+ * a later edit that keeps the floor and drops the centring would put it back.
+ */
+check("a control inflated to the tap-target floor centres its own content", () => {
+  const floor = /@media\s*\(pointer:\s*coarse\)\s*\{[^]*?min-width:\s*2\.75rem/;
+  assert.match(CSS, floor, "the 44px tap-target floor is gone from app/globals.css");
+
+  const centred = CSS.match(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/);
+  assert.ok(centred, "nothing in app/globals.css centres an icon-only control's content");
+  for (const declaration of ["display: inline-flex", "align-items: center", "justify-content: center"]) {
+    assert.ok(
+      centred[1]!.includes(declaration),
+      `the icon-only rule no longer sets ${declaration}, so the floor's slack lands on one side`,
+    );
+  }
+});
+
+/**
  * The accessibility sweep is axe, and it runs in both themes.
  *
  * This suite spent its whole life describing itself as "not a substitute for

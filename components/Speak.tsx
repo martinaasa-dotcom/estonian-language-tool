@@ -1,7 +1,7 @@
 "use client";
 
 import { Volume2, Loader2 } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
 
 /**
@@ -13,7 +13,7 @@ import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
  * disappears rather than sitting there doing nothing.
  */
 export function Speak({
-  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled,
+  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children,
 }: {
   text: string; slow?: boolean; label?: string;
   /** Icon size in px, plus className/style overrides for a bigger tap target (e.g. Listening mode). */
@@ -38,6 +38,12 @@ export function Speak({
   onPlay?: () => void;
   /** Held shut, for the pause before a listening task and for a spent budget. */
   disabled?: boolean;
+  /**
+   * What the button draws when it is not loading. The speaker icon by default;
+   * a word where the icon would be ambiguous, which is what `SpeakPair` needs
+   * for its slow half.
+   */
+  children?: ReactNode;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
 
@@ -84,7 +90,81 @@ export function Speak({
     >
       {state === "loading"
         ? <Loader2 size={size} className="animate-spin" aria-hidden />
-        : <Volume2 size={size} strokeWidth={2} aria-hidden />}
+        : children ?? <Volume2 size={size} strokeWidth={2} aria-hidden />}
     </button>
+  );
+}
+
+/**
+ * The two speeds, as one control.
+ *
+ * Normal and slow were two identical speaker buttons sitting side by side, and
+ * an icon repeated with nothing to tell the copies apart reads as a rendering
+ * fault rather than as a choice. It was also unanswerable: the only way to find
+ * out what the second one did was to press it, since the difference was carried
+ * by a `title` attribute, and a phone has no hover. That is the rule dictation
+ * met first, one layer down: a distinction the learner has to act on is carried
+ * in words, never by a hue or a hover.
+ *
+ * So: one pill, a divider, and the slow half says "Slow". One control with two
+ * speeds, legible without pressing anything.
+ *
+ * The pair goes away as a pair. Both halves ask the same service for the same
+ * sentence, so a failure is a fact about the service rather than about a speed,
+ * and letting one half vanish on its own would leave a stray divider against a
+ * lone button.
+ */
+export function SpeakPair({
+  text, label, slowLabel, disabled, onPlay, onUnavailable, size = 15, className = "",
+}: {
+  text: string;
+  label?: string;
+  slowLabel?: string;
+  disabled?: boolean;
+  size?: number;
+  className?: string;
+  onPlay?: () => void;
+  onUnavailable?: () => void;
+}) {
+  const [gone, setGone] = useState(false);
+  if (gone) return null;
+
+  const lost = () => {
+    setGone(true);
+    onUnavailable?.();
+  };
+
+  const half = "press tap-tint inline-flex items-center justify-center rounded-full";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border ${className}`}
+      style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+    >
+      <Speak
+        text={text}
+        size={size}
+        label={label ?? `Hear "${text}" in Estonian`}
+        disabled={disabled}
+        onPlay={onPlay}
+        onUnavailable={lost}
+        className={`${half} px-2.5 py-1.5`}
+        style={{ color: "var(--ink-2)" }}
+      />
+      <span aria-hidden className="h-4 w-px shrink-0" style={{ background: "var(--rule)" }} />
+      <Speak
+        text={text}
+        slow
+        size={size}
+        label={slowLabel ?? `Hear "${text}" slowly in Estonian`}
+        disabled={disabled}
+        onPlay={onPlay}
+        onUnavailable={lost}
+        className={`${half} gap-1 px-2.5 py-1.5 text-xs font-semibold`}
+        style={{ color: "var(--ink-3)" }}
+      >
+        Slow
+      </Speak>
+    </span>
   );
 }

@@ -1,0 +1,124 @@
+name: Seed the production dictionary
+
+# Run by hand, and only by hand.
+#
+# ci.yml says of itself that nothing in it maps a repository secret into a job,
+# so a workflow file cannot become a way to read one. This file is the
+# deliberate exception to that, and it is written to keep as much of the
+# property as it can. It is `workflow_dispatch` only, so it never runs from a
+# pull request and never for anybody without write access. The connection
+# string is mapped into the three steps that need a database and into no other,
+# so nothing an install script does can see it. And it asks for a word to be
+# typed, because a workflow list is a list of buttons and this is the one that
+# writes to the database everybody is reading from.
+#
+# What it runs is `npm run db:seed`, the same command a developer runs locally,
+# with the same guarantees: one transaction, an upsert keyed on (lemma, pos)
+# that never deletes a Lexeme, forms replaced only for the entries it writes,
+# and ON CONFLICT DO NOTHING for the built dictionary layered on top. Cards,
+# reviews, settings and accounts are not in its path, and neither are the
+# columns that belong to the Ekilex cache or to a learner who has corrected an
+# entry: `prisma/columns.ts` keeps `provenance`, `ekilexWordId`, `fetchedAt`,
+# `lookupMissAt`, `editedBy` and `editedAt` out of the update. Running it twice
+# changes nothing the second time.
+#
+# It deliberately does NOT push the schema. The deployment's own build does
+# that, and a workflow that can reshape the production database is a bigger
+# thing than a workflow that can reload the dictionary in it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type seed to confirm you mean the production database
+        required: true
+        default: ""
+
+concurrency:
+  # Never two at once. The seed is idempotent, but two of them interleaving
+  # would have each waiting on the other's row locks for no reason.
+  group: seed-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    name: Seed
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Named so that required reviewers can be added later without touching this
+    # file. An environment with no protection rules changes nothing today.
+    environment: production
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      # Through the environment rather than interpolated into the script, so a
+      # crafted input is a string that fails the comparison rather than a line
+      # of shell.
+      - name: Check this was meant
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "seed" ]; then
+            echo "Type seed in the confirmation box to run this. Nothing was changed." >&2
+            exit 1
+          fi
+
+      - name: Check a connection string is configured
+        env:
+          # The seed does its work in one long transaction of raw statements,
+          # which is the wrong shape for pgbouncer's transaction pooling, so the
+          # direct connection is preferred wherever both are set.
+          DB_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "No database configured. Add DIRECT_URL (the direct connection," >&2
+            echo "port 5432, not the pooler) as a repository secret, or DATABASE_URL" >&2
+            echo "if that is the only one you have. Nothing was changed." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+
+      - run: npm ci
+
+      # The client is generated code, and the seed imports it. It needs no
+      # database to be generated.
+      - run: npx prisma generate
+
+      - name: Load the built-in dictionary
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+        run: npm run db:seed
+
+      # The seed prints what it wrote; this prints what is now there, which is
+      # the number the landing page will start claiming within the hour.
+      - name: Say what the dictionary holds now
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+        run: |
+          node - <<'JS' >> "$GITHUB_STEP_SUMMARY"
+          const { PrismaClient } = require("@prisma/client");
+          const db = new PrismaClient();
+          Promise.all([db.lexeme.count(), db.form.count(), db.card.count(), db.review.count()])
+            .then(([words, forms, cards, reviews]) => {
+              console.log(`The dictionary holds **${words}** entries and **${forms}** forms.`);
+              console.log("");
+              console.log(`Learner data is untouched: ${cards} cards, ${reviews} reviews.`);
+            })
+            // The seed has already committed by the time this runs, so a
+            // failure to read the counts back is a note rather than a failed
+            // job. Reporting the run as broken would send somebody looking for
+            // a half-written dictionary that is not there.
+            .catch((error) => console.log(`The seed finished; the counts could not be read back: ${error.message}`))
+            .finally(() => db.$disconnect());
+          JS
