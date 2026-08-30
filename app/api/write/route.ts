@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
 import { gradeSentence } from "@/lib/tutor/grader";
-import { verifyComment } from "@/lib/tutor/verify";
+import { verifyComment, type WithholdReason } from "@/lib/tutor/verify";
 import {
   MAX_SENTENCE_CHARS, checkForm, looksLikeSentence, writingTasksFor,
 } from "@/lib/estonian/writing";
@@ -123,10 +123,15 @@ export async function POST(request: Request) {
     // Estonian form from the model's own knowledge is withheld — the verdict
     // stands, because that came from the mechanical check.
     let withheld: string[] = [];
+    // Which of the two guards fired, because the screen says so in words and
+    // "it used an Estonian form" is a claim rather than a hedge. See
+    // `WithholdReason`.
+    let withheldReason: WithholdReason | null = null;
     if (graded) {
       const verified = verifyComment(graded.comment, vouchedForms, sentence, [lexeme.translation]);
       if (verified.comment === null && graded.comment.trim()) {
         withheld = verified.unverified;
+        withheldReason = verified.reason;
         reportError(new Error("grader introduced an unverified Estonian form"), {
           at: "api/write/verify",
           ownerId,
@@ -136,7 +141,7 @@ export async function POST(request: Request) {
       graded.comment = verified.comment ?? "";
     }
 
-    return Response.json({ formCheck, graded, aiAvailable: true, withheld });
+    return Response.json({ formCheck, graded, aiAvailable: true, withheld, withheldReason });
   } catch (error) {
     if (!settled && decision.reservation) void releaseReservation(decision.reservation);
     if (!(error instanceof TutorError)) {

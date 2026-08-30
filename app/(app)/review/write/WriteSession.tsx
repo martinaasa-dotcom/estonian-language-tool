@@ -9,6 +9,7 @@ import { DiacriticBar } from "@/components/DiacriticBar";
 import { Chip, Stat } from "@/components/ui";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import type { GradedSentence } from "@/lib/tutor/grader";
+import type { WithholdReason } from "@/lib/tutor/verify";
 
 export interface WritingPrompt {
   /** The card this exercise practises, so the round feeds the scheduler. */
@@ -31,6 +32,8 @@ interface Marked {
   quotaMessage?: string;
   /** Forms Anu used that the dictionary could not vouch for. Its note is dropped. */
   withheld?: string[];
+  /** Whether those were certainly Estonian, which decides what the notice claims. */
+  withheldReason?: WithholdReason | null;
 }
 
 /**
@@ -251,7 +254,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
  * would borrow the dictionary's authority for the model's guess.
  */
 function Feedback({ marked }: { marked: Marked }) {
-  const { formCheck, graded, quotaMessage, withheld } = marked;
+  const { formCheck, graded, quotaMessage, withheld, withheldReason } = marked;
 
   return (
     <div className="mt-6 flex flex-col gap-3" aria-live="polite">
@@ -280,9 +283,19 @@ function Feedback({ marked }: { marked: Marked }) {
           style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
         >
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
-            Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give it,
-            and an unverified form is exactly what this app will not show you. The verdict above
-            comes from the dictionary and stands.
+            {withheldReason === "unvouched-word" ? (
+              <>
+                Anu&rsquo;s note was withheld: it quoted a word the dictionary could not vouch for.
+                That word may have been English rather than an Estonian form, and the check does not
+                gamble on which. The verdict above comes from the dictionary and stands.
+              </>
+            ) : (
+              <>
+                Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give
+                it, and an unverified form is exactly what this app will not show you. The verdict
+                above comes from the dictionary and stands.
+              </>
+            )}
           </p>
         </div>
       )}

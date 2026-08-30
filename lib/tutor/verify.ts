@@ -97,11 +97,31 @@ export function estonianTokens(comment: string): string[] {
   return [...found];
 }
 
+/**
+ * Which of the two things a withheld note actually did, because the learner is
+ * told about it and the two sentences are not interchangeable.
+ *
+ * `estonian-form` is certain: the word carried one of õäöüšž, so it is Estonian
+ * whatever else it is. `unvouched-word` is the weaker inference `looksInflected`
+ * makes, that a word of five letters or more which nothing supplied is more
+ * likely an inflected form than an English word the note happened to quote. That
+ * inference is deliberately biased towards withholding and it is wrong sometimes:
+ * `gradeComposition` is handed no glosses and an allowlist of the learner's own
+ * text, so Anu quoting "weather" in an otherwise English note lands here. The
+ * note is still withheld, which is the safe error. Telling the learner she used
+ * an Estonian form is not, because that is a claim about what happened rather
+ * than about what could be ruled out, and a guard that overstates what it caught
+ * is a guard nobody believes the day it catches something real.
+ */
+export type WithholdReason = "estonian-form" | "unvouched-word";
+
 export interface VerifiedComment {
   /** The comment, or null when it must not be shown. */
   comment: string | null;
   /** Forms the model introduced that it was never given. */
   unverified: string[];
+  /** Why it was withheld, or null when nothing was. */
+  reason: WithholdReason | null;
 }
 
 /**
@@ -121,10 +141,14 @@ export function verifyComment(
   learnerSentence: string,
   englishGlosses: string[] = [],
 ): VerifiedComment {
-  if (!comment.trim()) return { comment: null, unverified: [] };
+  if (!comment.trim()) return { comment: null, unverified: [], reason: null };
 
   const allowed = buildAllowlist(knownForms, learnerSentence, englishGlosses);
   const unverified: string[] = [];
+  // Whether anything caught is certainly Estonian, rather than merely long
+  // enough that withholding was the safer guess. Both withhold; they are not
+  // the same thing to say out loud, so the caller is told which happened.
+  let certain = false;
 
   for (const token of estonianTokens(comment)) {
     if (allowed.has(token)) continue;
@@ -132,11 +156,12 @@ export function verifyComment(
     // is actually Estonian-looking or long enough to be an inflected form.
     if (!isCandidateForm(token)) continue;
     unverified.push(token);
+    if (ESTONIAN_LETTERS.test(token)) certain = true;
   }
 
   return unverified.length > 0
-    ? { comment: null, unverified }
-    : { comment, unverified: [] };
+    ? { comment: null, unverified, reason: certain ? "estonian-form" : "unvouched-word" }
+    : { comment, unverified: [], reason: null };
 }
 
 /**
@@ -202,6 +227,24 @@ const TAGGED_LINE = /^(?:\d+[.)]\s*)?(?:VOCAB|FIX):/i;
  * undiacriticked Estonian word is indistinguishable from English here and is
  * let through, because the cost of missing one is nothing next to the cost
  * of a false alarm on a genuine explanation.
+ *
+ * WHICH MAKES THIS THE WEAKER OF THE TWO GUARDS, ON THE BUSIER PATH, AND THAT
+ * IS DELIBERATE RATHER THAN OVERLOOKED. `verifyComment` is a gate: it runs on a
+ * complete reply and withholds it, so the learner never sees the form at all.
+ * This cannot be, because the chat streams on purpose and most of a reply is
+ * already on screen by the time it ends, so `flagUnverifiedEstonian` is a notice
+ * printed under an answer the learner has already read. The hole that leaves is
+ * worth naming rather than implying: `isCandidateForm` only reaches a word that
+ * is quoted or carries õäöüšž, and a great deal of Estonian is neither, so
+ * `sa oled kodus` written straight into a sentence of prose passes untouched.
+ *
+ * Widening the extractor is not the obvious fix it looks like. The dictionary
+ * behind this one removes a false positive only where the word happens to be an
+ * Estonian lemma; an English word that is not one comes back unmatched and would
+ * be flagged as an unverified Estonian form, which trains the learner to ignore
+ * the line on the day it is right. So the recall stays where the precision is,
+ * and the reply's Estonian claims are boxed and tagged in the UI instead.
+ * ADR-005, amendment 2.
  */
 export function chatEstonianTokens(reply: string): string[] {
   const untagged = reply

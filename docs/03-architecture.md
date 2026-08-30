@@ -131,12 +131,46 @@ are worth the top model — a wrong case explanation is actively harmful to a le
 means the multi-thousand-token grammar prompt is paid for once per session rather than per turn.
 Details and cost model in `06-anu-tutor.md`.
 
-**ADR-005 — Retrieve morphology, never generate it.**
+**ADR-005 — Retrieve morphology, never generate it. (AMENDED, twice, below.)**
 *Context:* an LLM will happily produce a plausible, wrong partitive plural. *Decision:* authoritative
 forms come from Ekilex only; AI output is tagged `provenance: AI` and requires explicit confirmation
 before entering a card's answer field. *Consequences:* the dictionary is bounded by Ekilex coverage;
 that is the correct trade — an unverified form in a flashcard gets *memorised wrong*, which is worse
 than a gap.
+
+*Amendment 1: what "generate" means, and who is allowed to do it.* The decision clause says forms
+come from Ekilex only, and the code has never done exactly that. `lib/estonian/morph.ts` builds the
+ten regular cases from a stored genitive stem and the app renders them; ADR-009 makes that the
+explicit fallback for a word held as principal parts alone; and `matchEstonianForm` vouches for a
+derived case at `VOUCHED_SCORE` when deciding whether to believe a word read off a photograph
+(ADR-021). Three later decisions rest on a permission this one does not grant in writing. So the
+operative rule is narrower than "never generate" and sharper than "Ekilex only": **no model may
+originate an Estonian form; a deterministic rule over a form already stored may.** The difference is
+who can be wrong and how. A derivation is wrong the same way for every word that takes that ending,
+which is one bug a person finds once and fixes for all of them, and the form carries its provenance
+so the learner is told it was derived rather than attested. A model is wrong once, unpredictably,
+about a single word, in output indistinguishable from the forms around it. Both readings of the
+original wording are available to somebody arriving at this file cold, and both are damaging: read
+literally, "Ekilex only" forbids the derivation the seeded dictionary depends on and a session
+dutifully rips it out; read loosely, "generate" becomes a word somebody argues a model does not
+really do when it writes a partitive. `CLAUDE.md` has stated the rule more precisely than this ADR
+for some time, which is the wrong way round.
+
+*Amendment 2: the chat guard is a notice, not a gate, and it is the weaker of the two.* `verifyComment`
+is a gate. It runs over a finished grader reply and withholds it whole, so a form the model reached
+for is never shown at all (`/api/write`, `/api/exam/write`). The main chat cannot have that, because
+it streams on purpose and most of a reply is on screen before it ends: `flagUnverifiedEstonian`
+checks Anu's prose against the dictionary the way ADR-021 checks a scanned word, and prints what it
+could not confirm in a line underneath. That is weaker in two ways worth stating rather than
+implying. It is after the fact, so a wrong form has already been read. And it inherits
+`estonianTokens`, which only reaches a word that is quoted or carries õäöüšž, so ordinary Estonian
+written straight into a sentence of prose passes untouched. Widening it is not the obvious fix: the
+dictionary behind it clears an English word only when that word happens also to be an Estonian
+lemma, so a wider net would flag English as unverified Estonian and teach the learner to ignore the
+line on the day it is right. The chat is therefore the path where ADR-005 is enforced least and read
+most, and the compensating control is the UI rather than the check: every claim Anu makes about a
+form is boxed and tagged, and a word only becomes a card through a confirmation step. If that trade
+is ever revisited, the thing to change is the reply's shape, not the extractor's threshold.
 
 **ADR-006 — Generic importer instead of a Speakly integration.**
 *Context:* Speakly has no public API and no verifiable export (audit A3). *Decision:* one
