@@ -30,7 +30,7 @@ const browser = await launchChromium();
   enough to build a government drill and a minimal pair, which a thin database
   does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 60 });
+const { check, done } = suite("The new routes, rendered", { floor: 61 });
 
 const ROUTES = [
   ["/", "today"],
@@ -354,6 +354,50 @@ const fallback = await unscripted.evaluate(() => {
 check("the row you are on is marked before any of that has run",
   fallback !== null && !/rgba\(0, 0, 0, 0\)|transparent/.test(fallback.background),
   fallback ? fallback.background : "no row marked");
+
+/*
+  A SURFACE NOBODY IS LOOKING AT MUST NOT MEASURE ITSELF.
+
+  Both are always mounted, and at every width one of the two is
+  `display: none`. An element with no layout box reports its offsets as zero,
+  so a hidden surface that measures itself writes a collapsed marker at the
+  far edge down as its last known place, and the first travel after the
+  breakpoint is crossed sweeps the whole width from there. Measured before the
+  gate: `x 0 scaleX 0.01 -> x 288`.
+*/
+await page.setViewportSize({ width: 1280, height: 1000 });
+await page.goto(`${BASE}/grammar`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await page.evaluate(() => {
+  const hidden = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display === "none");
+  window.__crossed = [];
+  const pane = hidden?.querySelector(".nav-marker");
+  if (!pane) return;
+  const real = pane.animate.bind(pane);
+  pane.animate = (frames, opts) => {
+    window.__crossed.push(String(frames[0]?.transform ?? ""));
+    return real(frames, opts);
+  };
+});
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(700);
+const crossing = await page.evaluate(() => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  const pane = nav.querySelector(".nav-marker");
+  const cell = nav.querySelector("[data-nav-on]");
+  const p = pane.getBoundingClientRect();
+  const c = cell.getBoundingClientRect();
+  return {
+    travels: window.__crossed ?? [],
+    off: Math.max(Math.abs(p.left - c.left), Math.abs(p.width - c.width)),
+  };
+});
+check("a surface coming back arrives rather than sweeping the width",
+  crossing.travels.length === 0 && crossing.off <= 1,
+  `${crossing.travels.length} travels: ${crossing.travels.join(", ")}; out by ${crossing.off.toFixed(1)}px`);
+await page.setViewportSize({ width: 1280, height: 1000 });
 
 const barMark = await mobile.evaluate(() => {
   const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]

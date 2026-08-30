@@ -87,6 +87,8 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   const going = useRef(false);
   /** A bet being reverted arrives rather than travels. See `callOff`. */
   const reverting = useRef(false);
+  /** Whether this surface was off screen when it was last looked at. */
+  const wasHidden = useRef(false);
 
   const markOf = useCallback(
     (cell: HTMLElement): NavMark =>
@@ -160,6 +162,15 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   const measure = useCallback(() => {
     const host = ref.current;
     if (!host) return;
+    if (!onScreen(host)) {
+      // The surface the other breakpoint draws. See `onScreen`.
+      wasHidden.current = true;
+      aimed.current = null;
+      return;
+    }
+    /* Back on screen: arrive on the cell rather than travel across to it. */
+    const arriving = wasHidden.current;
+    wasHidden.current = false;
     const on = host.querySelector<HTMLElement>("[data-nav-on]");
     /*
       A press outstanding, so the marker is already where the reader aimed it
@@ -172,7 +183,7 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     const target = aimed.current ?? on;
     const next = target ? markOf(target) : null;
     if (!sameMark(lastMark.current, next)) {
-      if (lastMark.current && next && !reverting.current) {
+      if (lastMark.current && next && !reverting.current && !arriving) {
         swell(host, travelDirection(lastMark.current, next));
       }
       if (target && next) {
@@ -184,7 +195,7 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
         */
         glide(
           host.querySelector<HTMLElement>(".nav-marker"),
-          reverting.current ? null : lastMark.current,
+          reverting.current || arriving ? null : lastMark.current,
           next,
           crossOf(target),
           gliding,
@@ -196,7 +207,7 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     }
 
     const cell = hoverCell.current;
-    const overIt = cell && host.contains(cell) ? markOf(cell) : null;
+    const overIt = cell && host.contains(cell) && onScreen(cell) ? markOf(cell) : null;
     if (cell && overIt && !sameMark(lastHover.current, overIt)) {
       glide(
         host.querySelector<HTMLElement>(".nav-ghost"),
@@ -471,6 +482,28 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   }, [mark, travels]);
 
   return { ref, mark, hover, hovering, travels };
+}
+
+/**
+ * A SURFACE NOBODY IS LOOKING AT MUST NOT MEASURE ITSELF.
+ *
+ * Both surfaces are always mounted: the rail is `hidden md:flex` and the bar
+ * is `md:hidden`, so at every width one of the two is `display: none`. An
+ * element with no layout box reports `offsetLeft` and `offsetWidth` as **0**,
+ * and measuring one writes `{start: 0, size: 0}` down as that surface's last
+ * known marker. Cross the breakpoint and the travel is computed from there,
+ * which is a collapsed pill at the far edge sweeping the whole width to reach
+ * the cell you were on all along. Measured on the phone bar before this
+ * existed: crossing from 1280 to 390 drew `x 0 scaleX 0.01 -> x 288`.
+ *
+ * So: no layout box, no measuring, no animating, nothing written down. Any
+ * outstanding bet goes with it, since the press that placed it was on a
+ * surface the reader is no longer looking at. And the first measure after a
+ * surface comes back **arrives** rather than travels, because where its
+ * marker was last is not a place anybody should watch it come back from.
+ */
+function onScreen(el: HTMLElement): boolean {
+  return el.getClientRects().length > 0;
 }
 
 function stillMotion(): boolean {

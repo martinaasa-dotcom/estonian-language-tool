@@ -582,7 +582,15 @@ pure, `lib/layout/navMarker.ts` measures the cells and plays it, `app/nav.css` s
 behaves once placed, and both surfaces read all three, because a second marker is two answers to
 one question drifting apart a number at a time.
 
-Four things about it are decisions rather than details. **A pane is placed by measurement on both
+Five things about it are decisions rather than details. **A surface nobody is looking at does not
+measure itself**: both are always mounted, the rail is `hidden md:flex` and the bar is `md:hidden`,
+so at every width one of the two has no layout box and reports its offsets as zero. Measuring one
+writes a collapsed marker at the far edge down as its last known place, and the first travel after
+the breakpoint is crossed sweeps the whole width from there, measured at `x 0 scaleX 0.01 -> x 288`
+going from 1280 to 390. So a surface with no layout box measures nothing, animates nothing, writes
+nothing down, and drops any outstanding bet, since the press that placed it was on a surface the
+reader is no longer looking at; the first measure after it comes back arrives rather than travels.
+**A pane is placed by measurement on both
 axes**, never by an inset typed to match a padding: the rail is a scroll container, so its padding
 box takes in the scrollbar's gutter and a pane inset from both edges came out four pixels narrower
 than the row it was under. **A pane with no offset on the axis it travels stays at its static
