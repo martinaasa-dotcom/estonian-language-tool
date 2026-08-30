@@ -1539,6 +1539,11 @@ check("nothing is stored on a device that would need asking first", () => {
     "components/Sidebar.tsx",
     "app/layout.tsx",
     "lib/offline/db.ts",
+    // An exam paper started and not handed in. Strictly necessary by the same
+    // argument the outbox is: a mock exam that loses three hours of a B2 paper
+    // to a closed tab is broken rather than private. Answers only, never marks
+    // and never questions, and removed the moment the paper is handed in.
+    "app/(app)/exam/[level]/resume.ts",
   ];
   for (const file of storage) {
     assert.ok(

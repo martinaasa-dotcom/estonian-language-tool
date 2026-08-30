@@ -24,6 +24,20 @@ Raw marks are weighted so that each part contributes its published share. The B1
 instance, carries 33 raw marks across four tasks (9, 6, 10 and 8 items) and those 33 are weighted to
 25 points.
 
+**The writing part is two pieces of writing.** The B1 specification names them: the first task is
+`teate koostamine`, a short message doing a job (explaining, describing, proposing something,
+passing on your own details), and the second is `loovkirjutamine` or `isikliku kirja koostamine`,
+where the candidate writes *either* a story on a given topic *or* a personal letter. There is no
+grammar exercise on it. Accuracy is a criterion an examiner applies to those two texts.
+
+**Each listening text is heard twice**, with a pause before each task so the questions can be read
+first. The A2, B1 and C1 specifications all set this; the C1 paper sets one of its tasks to a single
+listen.
+
+**There is a break between the halves.** The Board's own description of the day is the written parts
+first, two to three hours of them depending on the level, then a short break, then the spoken part.
+It does not publish a number of minutes for it.
+
 **A pass is sixty percent of the total, and no part may score zero.** Both halves matter: full marks
 on three parts and nothing on the fourth is a fail. Below **forty five percent** a candidate waits
 six months before sitting again.
@@ -56,6 +70,11 @@ diacritic.
 - [Eesti keele B2-taseme eksam, Innove](https://www.innove.ee/eksamid-ja-testid/eesti-keele-tasemeeksamid/b2/)
 - [Eesti keele tasemeeksamite ülesehitus ja läbiviimise kord, Riigi Teataja](https://www.riigiteataja.ee/akt/103112023012)
 
+The writing tasks, the two listens and the pause before each listening task were read off the
+`eristuskiri` PDFs above; the break between the halves is from the Board's own English page, which
+says the written parts run two to three hours and the spoken part follows a short break without
+putting a number on it.
+
 `lib/exam/spec.test.ts` asserts every figure in the table above. A change to one of them is a change
 to a claim this product makes about an examination somebody may be about to book.
 
@@ -76,12 +95,27 @@ is standing in for, and the briefing screen prints it before the clock starts.
 | Which word does each sentence use? | sobitamine |
 | Choose the missing word | valikvastustega lünkülesanne |
 | Put the sentence back together | tekstisiseste seoste mõistmine |
-| Write the form | andmete kirjutamine, the short controlled writing task |
-| Which case does the verb take? | grammatiline korrektsus |
+| Write a short message | teate koostamine |
+| Write a text | loovkirjutamine või isikliku kirja koostamine, and the choice is offered |
+| Write the form | **nothing the real paper sets**: grammatiline korrektsus, marked inside the texts |
+| Which case does the verb take? | **nothing the real paper sets**: rektsioon, marked inside the texts |
 | Write down what you hear | puuduva infoga ülesanne |
 | Which sentence was it? | valikvastustega kuulamisülesanne |
-| Write a text | loovkirjutamine |
 | Speak | suuline esinemine ja dialoog |
+
+**Two of those stand in for a marking criterion rather than for a task, and used to claim
+otherwise.** The writing part sets two pieces of writing; grammatical accuracy is something an
+examiner marks *inside* them. This app may not mark Estonian prose, because marking it means a model
+deciding whether an ending is right, so it asks the accuracy directly instead. That substitution is
+defensible and was undeclared, which is not: a candidate who practised two grammar exercises in place
+of a letter arrived having rehearsed the wrong half of the part. The briefing now prints "not a task
+the real paper sets" against both, `lib/exam/spec.test.ts` fails if either stops saying it, and the
+two texts carry more of the part than the drills do at every level.
+
+**The second writing task offers the choice the real one offers**, a story or a personal letter.
+Both are marked identically, on length and on the words the task named, which is the only way this
+app can offer a choice honestly: a mock where picking the letter scored differently would be
+inventing a judgement about somebody's Estonian.
 
 **A1 and C2 papers exist here and nowhere else.** The A1 paper is built to the A2 paper's shape, one
 step easier. The C2 paper is built past C1 for the fun of finding out. Both are labelled "not
@@ -96,6 +130,71 @@ the score came from that.
 with a form the dictionary vouches for, and that module imports no provider and makes no request; an
 invariant asserts it. Anu will read a composition back on request afterwards, and her note carries no
 marks and is withheld whole if it quotes an Estonian form the learner did not write.
+
+## 2a. Sitting it, which is half of what a mock exam is for
+
+A mock exam is not a question bank with a timer bolted on. What fails candidates is rarely the
+questions; it is the conditions, and four of them are reproduced here because they change what the
+practice is worth.
+
+**Each recording plays twice.** It used to play as often as you liked, which is the difference
+between practising listening and sitting a listening test: somebody who gets there on the fifth play
+has learnt nothing about whether they can get there on the second. `LISTEN_PLAYS` is the number, the
+count is on screen, and a slow play spends one of them so the dictation's two buttons cannot quietly
+hand out four. The count is kept on the question rather than in the button for exactly that reason,
+and it only counts a play that actually happened: a clip that would not load costs nothing and takes
+the unheard path instead, which leaves the question out of the marks rather than counting it wrong.
+
+**A listening task opens with a pause to read the questions**, which every specification describes.
+Thirty seconds, skippable, with the play buttons held shut until it is over. It is skippable and the
+real one is not, because the point is to teach the shape of the part rather than to make somebody sit
+out half a minute they have already used.
+
+**A part closes when its time goes.** The screen said "in the hall the paper would be taken away
+now" and then let you carry on answering, which is a mock exam telling you a comforting thing about
+itself. The part's questions are now inside one `fieldset` that is disabled when the clock reaches
+zero: radios, text boxes, both compositions, the word tiles, the play buttons and the microphone, in
+one, because the failure worth designing against is one question shape staying answerable because
+somebody forgot to pass a flag down to it. The clock also says something at five minutes and at one,
+which is what an invigilator does, and that announcement is the accessible half of the timer: the
+countdown itself no longer sits in a live region, where it was announcing a number a second at a
+screen reader for the length of a fifty minute part.
+
+**There is a break between the halves**, ten minutes, endable early, and labelled as this app's own
+figure since the Board publishes "a short break" and no number. Running the spoken part straight off
+the back of ninety minutes of writing makes it a test of stamina rather than of speaking.
+
+**And the paper survives a closed tab.** "Nothing here is saved until you hand in, so sit it in one
+go" was the honest description of a real defect: three hours and five minutes of B2 written paper,
+and a reload, a crash or a phone call took the lot. `app/(app)/exam/[level]/resume.ts` keeps the
+answers, the part, and each part's deadline on the device. Three things about it matter. The
+deadlines are absolute times rather than a remaining count, so shutting the tab does not stop the
+clock, which is what shutting it would not have done in the hall. Nothing stored is a mark or a
+question: the paper is rebuilt from its seed and marked on the server, so the worst somebody can do
+by editing it is give themselves back time they already spent. And it is offered rather than
+restored, because dropping somebody back into a paper they had forgotten about is a worse surprise
+than the loss it prevents. It lives beside the screen rather than in `lib/exam/`, which has no clock
+and no browser in it.
+
+**Blank answers are queried before a part closes.** On the real paper you cannot come back, and a
+guess is worth more than a blank on every question here. The dialogue says how many are blank and
+what leaving them costs, and then does what it is told.
+
+**What the two written tasks are marked on is visible while they are written.** The words the task
+named tick off as they are used and the length meter fills, both through `lib/exam/written.ts`,
+which is the marker's own function rather than a second implementation of it: a chip that lit up on
+a rule of its own would be promising a mark the server was not going to give. It is a module of its
+own rather than an export of `score.ts` because the sitting screen may not import the marker at all,
+which is the invariant that stops a client marking its own paper, and one convenience import is
+exactly how a rule like that gets softened.
+
+**The spoken answers are timed.** "Aim for about ninety seconds" over a microphone button is not a
+timing, because nobody knows how long they have been talking. The recorder counts up, and going past
+the target is neither stopped nor penalised, because the examiner does not stop you either.
+
+**What is still not imitated** is said out loud on the briefing rather than left to be discovered:
+the C1 paper's single-listen task, and the few minutes of conversation with an examiner that the real
+spoken part opens with.
 
 ## 3. A short paper says so
 
@@ -162,9 +261,11 @@ is the half worth having.
 
 | File | What it is |
 |---|---|
-| `lib/exam/spec.ts` | The examination as data: levels, parts, minutes, points, bands, task shapes. Pure. |
+| `lib/exam/spec.ts` | The examination as data: levels, parts, minutes, points, bands, task shapes, and the conditions each part is sat under. Pure. |
 | `lib/exam/paper.ts` | Assembling one paper from dictionary material. Deterministic in (level, seed, pool). Pure. |
 | `lib/exam/score.ts` | Marking. No provider, no network, no model. Pure. |
+| `lib/exam/written.ts` | The two things a machine may decide about a piece of writing: its length, and whether it used the words the task named. Shared by the marking and the screen. Pure. |
+| `app/(app)/exam/[level]/resume.ts` | An unfinished paper, kept on the device. Answers and deadlines only, never a mark and never a question. |
 | `lib/exam/readiness.ts` | Confidence, predicted scores, strengths and gaps. Pure. |
 | `lib/exam/report.ts` | What to tell somebody who has just sat one. Pure. |
 | `lib/progress/exam.ts` | The database half: the pool, the signals, the stored sittings. |

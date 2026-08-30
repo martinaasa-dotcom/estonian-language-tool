@@ -40,6 +40,44 @@ export function isExamLevel(value: string): value is ExamLevel {
   return (EXAM_LEVELS as readonly string[]).includes(value);
 }
 
+/**
+ * How many times the real paper plays each listening recording.
+ *
+ * The A2, B1 and C1 specifications all say each listening text is heard twice,
+ * with a pause before the task so the candidate can read the questions first.
+ * This app played every recording as often as you liked, which is the single
+ * biggest difference between practising listening and sitting a listening test:
+ * a candidate who can get there on the fifth play has learnt nothing about
+ * whether they can get there on the second. Both plays are offered, the count
+ * is on screen, and the paper says why.
+ *
+ * The C1 paper sets one task to a single listen. That is not imitated here, and
+ * the briefing says so rather than leaving the paper quietly easier than the one
+ * it stands in for.
+ */
+export const LISTEN_PLAYS = 2;
+
+/**
+ * Seconds to read a listening task's questions before its recordings unlock.
+ *
+ * The specifications describe a pause before each listening task for exactly
+ * this. It can be ended early, which the real pause cannot: the point is to
+ * teach the shape of the part, not to make somebody sit through half a minute
+ * they have already used.
+ */
+export const READ_QUESTIONS_SECONDS = 30;
+
+/**
+ * Minutes of the break between the written half and the spoken part.
+ *
+ * The Board publishes that the written parts are sat first and the spoken part
+ * follows "after a short break", without putting a number on it, so ten minutes
+ * is the app's own figure and is labelled as such. It can be ended early. It is
+ * here because a paper that runs the speaking part straight off the back of
+ * ninety minutes of writing is not the paper anybody actually sits.
+ */
+export const BREAK_MINUTES = 10;
+
 /** The exercise shapes the app can assemble out of attested Estonian. */
 export type TaskKind =
   /** A recorded sentence with one word removed, chosen from four real forms. */
@@ -62,6 +100,8 @@ export type TaskKind =
   | "dictation"
   /** Hear a sentence, pick which one it was. */
   | "listen-choose"
+  /** A short functional message: a note, an e-mail, a set of details. */
+  | "message"
   /** Write a text of your own. */
   | "compose"
   /** Record yourself, then mark yourself. */
@@ -210,12 +250,25 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
       "than English, so this is marked against the order the writer actually chose.",
     standsFor: "tekstisiseste seoste mõistmine, following how a text holds together",
   },
+  /*
+    THE TWO DRILLS BELOW ARE NOT TASKS ON THE REAL PAPER, and used to say they
+    were. The writing part of the state examination is two pieces of writing and
+    nothing else; grammatical accuracy is a criterion the examiner marks *inside*
+    those two texts. This app may not mark Estonian prose, because marking it
+    would mean a model deciding whether somebody's ending was right (ADR-005,
+    ADR-022), so the accuracy that carries marks in the hall is asked directly
+    here instead. That is a defensible substitution and an indefensible thing to
+    leave undeclared: a candidate who practises two grammar exercises in place of
+    a letter arrives having rehearsed the wrong half of the part.
+  */
   "case-form": {
     kind: "case-form",
     title: "Write the form",
     instruction:
       "Write the named form of each word. Marked against the dictionary, never against a model.",
-    standsFor: "andmete kirjutamine, the short controlled writing task",
+    standsFor:
+      "not a task the real paper sets: grammatiline korrektsus, the accuracy an examiner marks " +
+      "inside your two texts, asked directly because nothing here may mark your Estonian",
   },
   government: {
     kind: "government",
@@ -223,15 +276,28 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     instruction:
       "Estonian verbs govern a case, and English gives you no clue which. Choose the one each " +
       "verb takes.",
-    standsFor: "grammatiline korrektsus, the accuracy the written parts are marked for",
+    standsFor:
+      "not a task the real paper sets: rektsioon, the verb government marked inside your two " +
+      "texts, asked directly for the same reason",
+  },
+  message: {
+    kind: "message",
+    title: "Write a short message",
+    instruction:
+      "The real writing part opens with this one: a short message with a job to do. Cover every " +
+      "point you are given. Length and the words you were asked to use are checked mechanically " +
+      "and carry the marks; whether you covered the points is for you to read back, because " +
+      "nothing here judges your Estonian with a model.",
+    standsFor: "teate koostamine, the short message the writing part opens with",
   },
   dictation: {
     kind: "dictation",
     title: "Write down what you hear",
     instruction:
-      "Play each recording as often as you like within the time, then type it. Marked word by " +
-      "word, so a missed ending costs one word and not the whole of it. A missed diacritic is " +
-      "reported and does not cost the mark, which is how the real paper marks this one.",
+      `Each recording plays ${LISTEN_PLAYS} times and no more, which is what the specifications ` +
+      "set, and a slow play is one of them. Marked word by word, so a missed ending costs one " +
+      "word and not the whole of it. A missed diacritic is reported and does not cost the mark, " +
+      "which is how the real paper marks this one.",
     standsFor: "puuduva infoga ulesanne, writing down what the recording said",
   },
   "listen-choose": {
@@ -242,17 +308,21 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     // misdescribing itself. Each question says which it is.
     title: "What did you hear?",
     instruction:
-      "Play each recording as often as you like within the time, then choose what it said.",
+      `Each recording plays ${LISTEN_PLAYS} times and no more, which is what the specifications ` +
+      "set. Read the questions during the pause, then play it and choose what it said.",
     standsFor: "valikvastustega kuulamisulesanne, multiple choice after a recording",
   },
   compose: {
     kind: "compose",
     title: "Write a text",
     instruction:
-      "Write in Estonian, on the topic given, using the words listed. Length and the words you " +
-      "were asked to use are checked mechanically and carry the marks. Anu may add a note, and " +
-      "her note carries none.",
-    standsFor: "loovkirjutamine, the free writing task",
+      "The second writing task, and the real paper lets you choose: a story on the topic given, " +
+      "or a personal letter about it. Pick one and write it in Estonian, using the words listed. " +
+      "Length and the words you were asked to use are checked mechanically and carry the marks. " +
+      "Anu may add a note, and her note carries none.",
+    standsFor:
+      "loovkirjutamine või isikliku kirja koostamine, the second writing task, which the real " +
+      "paper also lets you choose between",
   },
   speak: {
     kind: "speak",
@@ -271,10 +341,17 @@ interface LevelPlan {
   points: number;
   reading: [match: number, gap: number, order: number];
   listening: [choose: number, dictate: number];
-  /** Forms task items, government items, then the marks the composition carries. */
-  writing: [forms: number, government: number, composeRaw: number];
+  /**
+   * Forms items, government items, then the marks the two written texts carry.
+   *
+   * The texts carry the bulk of the part, as they do in the hall: the drills are
+   * this app's stand-in for a marking criterion and should not outweigh the
+   * writing they are a criterion of.
+   */
+  writing: [forms: number, government: number, messageRaw: number, composeRaw: number];
   speaking: [first: number, second: number];
-  /** Words the composition must reach. */
+  /** Words the short message must reach, and words the composition must reach. */
+  messageWords: number;
   composeWords: number;
   /** Seconds each spoken answer runs for. */
   speakSeconds: number;
@@ -285,8 +362,8 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
   A1: {
     minutes: { writing: 25, listening: 25, reading: 40, speaking: 12 },
     points: 20,
-    reading: [5, 6, 4], listening: [5, 4], writing: [6, 4, 8], speaking: [4, 4],
-    composeWords: 30, speakSeconds: 45,
+    reading: [5, 6, 4], listening: [5, 4], writing: [4, 3, 5, 8], speaking: [4, 4],
+    messageWords: 15, composeWords: 30, speakSeconds: 45,
     summary:
       "The state does not examine at A1, so this paper is the app's own. It is built to the " +
       "shape of the A2 paper, one step easier, for a first sitting that is meant to be passable.",
@@ -294,8 +371,8 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
   A2: {
     minutes: { writing: 30, listening: 30, reading: 50, speaking: 15 },
     points: 20,
-    reading: [6, 8, 5], listening: [6, 5], writing: [8, 5, 10], speaking: [5, 5],
-    composeWords: 40, speakSeconds: 60,
+    reading: [6, 8, 5], listening: [6, 5], writing: [5, 4, 6, 10], speaking: [5, 5],
+    messageWords: 20, composeWords: 40, speakSeconds: 60,
     summary:
       "The lowest level the state examines, and the one that meets the language requirement for " +
       "several jobs. Eighty points, twenty for each part.",
@@ -303,8 +380,8 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
   B1: {
     minutes: { writing: 30, listening: 35, reading: 50, speaking: 15 },
     points: 25,
-    reading: [8, 10, 6], listening: [7, 6], writing: [8, 6, 12], speaking: [6, 6],
-    composeWords: 80, speakSeconds: 90,
+    reading: [8, 10, 6], listening: [7, 6], writing: [5, 4, 8, 12], speaking: [6, 6],
+    messageWords: 30, composeWords: 80, speakSeconds: 90,
     summary:
       "The level a citizenship application asks for. A hundred points, twenty five for each " +
       "part, and the written half runs under two hours.",
@@ -312,8 +389,8 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
   B2: {
     minutes: { writing: 80, listening: 35, reading: 70, speaking: 20 },
     points: 25,
-    reading: [8, 12, 8], listening: [8, 7], writing: [10, 7, 14], speaking: [7, 7],
-    composeWords: 140, speakSeconds: 120,
+    reading: [8, 12, 8], listening: [8, 7], writing: [6, 5, 9, 14], speaking: [7, 7],
+    messageWords: 45, composeWords: 140, speakSeconds: 120,
     summary:
       "Three hours and five minutes of written paper, then twenty minutes of speaking. The " +
       "level most professional registers ask for.",
@@ -321,8 +398,8 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
   C1: {
     minutes: { writing: 90, listening: 45, reading: 60, speaking: 20 },
     points: 25,
-    reading: [10, 14, 8], listening: [9, 8], writing: [10, 8, 16], speaking: [8, 8],
-    composeWords: 260, speakSeconds: 150,
+    reading: [10, 14, 8], listening: [9, 8], writing: [6, 5, 10, 16], speaking: [8, 8],
+    messageWords: 60, composeWords: 260, speakSeconds: 150,
     summary:
       "The highest level the state examines. Ninety minutes of writing alone, and the second " +
       "written task runs to about 260 words.",
@@ -330,8 +407,8 @@ const PLANS: Record<ExamLevel, LevelPlan> = {
   C2: {
     minutes: { writing: 100, listening: 50, reading: 70, speaking: 25 },
     points: 25,
-    reading: [10, 16, 10], listening: [10, 9], writing: [12, 9, 18], speaking: [9, 9],
-    composeWords: 300, speakSeconds: 180,
+    reading: [10, 16, 10], listening: [10, 9], writing: [7, 6, 11, 18], speaking: [9, 9],
+    messageWords: 70, composeWords: 300, speakSeconds: 180,
     summary:
       "There is no C2 examination. The Board's own note says a command of Estonian this far " +
       "past C1 cannot be required of anybody for a job, so nobody sets a paper for it. This one " +
@@ -353,7 +430,7 @@ export function specFor(level: ExamLevel): ExamSpec {
   const plan = PLANS[level];
   const [match, gap, order] = plan.reading;
   const [choose, dictate] = plan.listening;
-  const [forms, governed, composeRaw] = plan.writing;
+  const [forms, governed, messageRaw, composeRaw] = plan.writing;
   const [speakA, speakB] = plan.speaking;
 
   return {
@@ -365,10 +442,18 @@ export function specFor(level: ExamLevel): ExamSpec {
       {
         skill: "writing", label: "Writing", et: "kirjutamine",
         minutes: plan.minutes.writing, points: plan.points,
+        /*
+          The two written texts first, in the order the real paper sets them,
+          then the two accuracy drills. A learner who runs out of time should run
+          out of it on the drills rather than on the letter: in the hall the
+          letter is the part that carries the marks, and a mock that puts the
+          exercises first teaches the wrong order to panic in.
+        */
         tasks: [
-          task("case-form", "w1", forms),
-          task("government", "w2", governed),
-          task("compose", "w3", 1, composeRaw),
+          task("message", "w1", 1, messageRaw),
+          task("compose", "w2", 1, composeRaw),
+          task("case-form", "w3", forms),
+          task("government", "w4", governed),
         ],
       },
       {
@@ -399,10 +484,16 @@ export function specFor(level: ExamLevel): ExamSpec {
   };
 }
 
-/** Words the composition at this level must reach, and seconds per spoken answer. */
-export function lengthsFor(level: ExamLevel): { composeWords: number; speakSeconds: number } {
+/** Words each written task at this level must reach, and seconds per spoken answer. */
+export function lengthsFor(level: ExamLevel): {
+  messageWords: number; composeWords: number; speakSeconds: number;
+} {
   const plan = PLANS[level];
-  return { composeWords: plan.composeWords, speakSeconds: plan.speakSeconds };
+  return {
+    messageWords: plan.messageWords,
+    composeWords: plan.composeWords,
+    speakSeconds: plan.speakSeconds,
+  };
 }
 
 /** Total minutes of the written half, which is what a learner plans an evening around. */

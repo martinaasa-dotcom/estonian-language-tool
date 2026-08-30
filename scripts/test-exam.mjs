@@ -29,14 +29,18 @@ page.on("console", (m) => {
 });
 
 /*
-  Floor: 39, measured against the state CI seeds: the built-in 360 word
-  dictionary, the demo deck, and no Ekilex key. That last part matters. Without
-  a key the dictionary holds no recorded example sentences at all, so the
-  listening and reading parts are set in their fallback shapes, and this suite
-  was written to pass in exactly that state rather than in the one a developer
-  with a key happens to have.
+  Floor: 56, measured against the state CI seeds: the built-in dictionary, the
+  demo deck, and no Ekilex key. That last part matters. Without a key the
+  dictionary holds no recorded example sentences at all, so the listening and
+  reading parts are set in their fallback shapes, and this suite was written to
+  pass in exactly that state rather than in the one a developer with a key
+  happens to have.
+
+  What the paper cannot check here is the one thing that needs a clock nobody
+  will sit through: a part closing when its time runs out. The shortest part on
+  the shortest paper is twelve minutes.
 */
-const { check, absent, done } = suite("The mock examination", { floor: 39 });
+const { check, absent, done } = suite("The mock examination", { floor: 56 });
 
 // ── The hub ──────────────────────────────────────────────────────────────────
 
@@ -139,8 +143,24 @@ check("the clock is running once the paper is open",
 check("it opens on the writing part, as the real paper does",
   (await page.locator("h1").innerText()).includes("Writing"));
 
+/**
+ * Opens the recordings on any listening task that is still in its reading pause.
+ *
+ * The pause is the real paper's: thirty seconds to read the questions before the
+ * audio unlocks. A suite that sat through it would add half a minute per task
+ * for nothing, so it presses the button a candidate in a hurry would press.
+ */
+async function unlockRecordings() {
+  const unlock = page.getByRole("button", { name: /unlock the recordings/i });
+  for (let i = await unlock.count(); i > 0; i--) {
+    await unlock.first().click().catch(() => {});
+  }
+}
+
 /** Answers whatever it can on the part on screen, then moves on. */
 async function answerAndAdvance(lastPart) {
+  await unlockRecordings();
+
   // A typed answer of any shape: the form questions and the dictation.
   const boxes = page.locator("input[type=text], input:not([type])");
   const typed = await boxes.count();
@@ -157,21 +177,94 @@ async function answerAndAdvance(lastPart) {
     seen.add(name);
     await radios.nth(i).check().catch(() => {});
   }
-  // The composition.
-  const area = page.locator("textarea");
-  if (await area.count()) {
-    await area.first().fill("Ma olen siin ja kirjutan teksti oma sonadega iga paev.");
+  // Every written answer: the writing part sets two, a short message and a
+  // longer text, exactly as the real paper does.
+  const areas = page.locator("textarea");
+  for (let i = 0; i < (await areas.count()); i++) {
+    await areas.nth(i).fill(
+      "Ma olen siin ja kirjutan teksti oma sonadega iga paev sest see on minu kodutoo.",
+    );
   }
+
   const next = lastPart
     ? page.getByRole("button", { name: /Hand in/ })
     : page.getByRole("button", { name: /^Next part/ });
   await next.click();
+  await page.waitForTimeout(400);
+
+  /*
+    Anything still blank is queried before the part closes, which is the point of
+    that gate: on the real paper you cannot come back. The suite leaves the
+    blanks blank deliberately, because a paper answered in full never exercises
+    the marking of an unanswered question.
+  */
+  const anyway = page.getByRole("button", { name: /Leave them blank and move on|Hand in anyway/ });
+  if (await anyway.count()) await anyway.first().click();
   await page.waitForTimeout(900);
+
+  // Between the written half and the spoken part there is a break, as there is
+  // on the day. It can be ended early, and here it is.
+  const afterBreak = page.getByRole("button", { name: /Start the spoken part/ });
+  if (await afterBreak.count()) {
+    check("a break sits between the written half and the spoken part",
+      /break/i.test(await page.locator("body").innerText()));
+    await afterBreak.click();
+    await page.waitForTimeout(600);
+  }
+
   return { typed, chosen: seen.size };
 }
 
+// ── The writing part, which is two pieces of writing ─────────────────────────
+
+const writingBody = await page.locator("body").innerText();
+
+// Case-insensitively: the task headings are `label-xs`, which uppercases, and
+// `innerText` reports what is rendered rather than what is in the markup.
+const taskHeadings = (await page.locator("h2, h3").allInnerTexts()).join(" ").toLowerCase();
+check("the writing part opens with the short message the real paper opens with",
+  /teate koostamine/i.test(brief) &&
+  taskHeadings.indexOf("write a short message") < taskHeadings.indexOf("write a text"),
+  taskHeadings);
+
+check("the message names the points it has to cover, as the real task does",
+  /Write a note|Write an e-mail|Write a message/i.test(writingBody));
+
+check("the second writing task offers the choice the real paper offers",
+  (await page.getByRole("radiogroup", { name: /Which to write/i }).count()) > 0 &&
+  /personal letter/i.test(writingBody));
+
+check("it declares that the two grammar drills are not tasks the real paper sets",
+  (brief.match(/not a task the real paper sets/gi) ?? []).length === 2,
+  `${(brief.match(/not a task the real paper sets/gi) ?? []).length} declared`);
+
+// The words a written task names are ticked off as they are used, by the same
+// rule that marks them. Before anything is written, none of them can be.
+check("a written task counts the words it asked for, and starts at none of them",
+  /0 of \d used/.test(writingBody));
+
+/*
+  The chips are ticked off by `usesRequiredWord`, the same function that marks
+  them, which is the only reason showing them live is honest. So the check is
+  that writing one of the words actually moves the count: a screen that promised
+  a mark the server was not going to give would be worse than no screen at all.
+*/
+const wordChips = page.locator("p", { hasText: /Use every one of these/ }).first();
+const firstWord = (await wordChips.locator('span[lang="et"]').first().innerText()).trim();
+const firstArea = page.locator("textarea").first();
+await firstArea.fill(`Tere, ma kirjutan sulle ${firstWord} kohta pikalt ja pohjalikult iga paev.`);
+await page.waitForTimeout(250);
+
+const afterTyping = await page.locator("body").innerText();
+check("a word the task asked for is ticked off once it is used",
+  /1 of \d used/.test(afterTyping),
+  firstWord);
+
+check("the length meter counts what was written towards the length that carries the marks",
+  /\d+ of \d+ words/.test(afterTyping));
+
 const writing = await answerAndAdvance(false);
-check("the writing part takes typed forms and a composition",
+check("the writing part takes typed forms and two written texts",
   writing.typed > 0 && (await page.locator("h1").innerText()).includes("Listening"),
   `${writing.typed} typed`);
 
@@ -186,6 +279,27 @@ check("the listening part offers a recording for every question",
 check("a task set from words rather than sentences says so",
   !/set from words rather than sentences/i.test(brief) ||
   /One word\./i.test(listeningBody));
+
+// ── The listening conditions, which are the specification's, not ours ────────
+
+check("a listening task opens with the pause the real paper gives to read the questions",
+  /Read the questions first/i.test(listeningBody));
+
+const playButtons = page.getByRole("button", { name: /Play recording/i });
+const held = await page.locator('button[aria-label*="Play recording"]:disabled').count();
+check("the recordings are held shut until that pause is over",
+  held > 0 && held === (await playButtons.count()),
+  `${held} of ${await playButtons.count()} held`);
+
+await unlockRecordings();
+await page.waitForTimeout(300);
+const unlocked = await page.locator("body").innerText();
+
+check("the recordings open once the pause is skipped",
+  (await page.locator('button[aria-label*="Play recording"]:disabled').count()) === 0);
+
+check("each recording is worth two plays and says how many are left",
+  /2 of 2 plays left/.test(unlocked) && /plays 2 times and no more/i.test(brief));
 
 await answerAndAdvance(false);
 check("the reading part follows", (await page.locator("h1").innerText()).includes("Reading"));
@@ -210,7 +324,21 @@ check("it says out loud that nothing here scores a recording",
 
 // ── Handing in ───────────────────────────────────────────────────────────────
 
-await page.getByRole("button", { name: /Hand in/ }).click();
+await page.getByRole("button", { name: /^Hand in$/ }).click();
+await page.waitForTimeout(500);
+
+/*
+  The spoken part cannot be answered by a browser with no microphone, so the
+  paper always reaches this point with blanks on it, which is the state the
+  query exists for: on the real paper you cannot come back, and a blank left by
+  accident is the one thing a mock can still save somebody from.
+*/
+const query = page.getByRole("button", { name: /Hand in anyway/ });
+check("a paper with blanks on it says so before it is handed in",
+  (await query.count()) > 0 &&
+  /still blank/i.test(await page.locator("body").innerText()));
+if (await query.count()) await query.click();
+
 const landed = await eventually(async () => /\/exam\/result\//.test(page.url()), { timeoutMs: 25_000 });
 check("handing in produces a marked paper", landed, page.url());
 
@@ -241,6 +369,38 @@ if (!landed) {
   check("the sitting shows up on the hub afterwards",
     /Papers you have sat/i.test(await page.locator("body").innerText()) &&
     (await page.getByText(/percent, (pass|not a pass)/).count()) > 0);
+}
+
+// ── Not losing three hours of work ───────────────────────────────────────────
+
+/*
+  The paper used to say "nothing here is saved until you hand in", and a reload
+  an hour into a B2 paper threw the lot away. What is checked is the promise the
+  briefing now makes instead: the answers come back, and the clock does not.
+*/
+await page.goto(`${B}/exam/A2?seed=resume`, { waitUntil: "networkidle" });
+await page.getByRole("button", { name: "Start the clock" }).click();
+await page.waitForTimeout(500);
+await page.locator("textarea").first().fill("Tere ma kirjutan siia oma teate ja jatan selle pooleli.");
+await page.waitForTimeout(400);
+
+await page.reload({ waitUntil: "networkidle" });
+const returning = await page.locator("body").innerText();
+check("a paper left part way through is offered back rather than lost",
+  /left this paper part way through/i.test(returning));
+
+check("it says how much of the part's time is left, because the clock kept running",
+  /of that part is left|time has run out/i.test(returning));
+
+const carryOn = page.getByRole("button", { name: /Carry on/ });
+check("carrying on is one press away", (await carryOn.count()) > 0);
+if (await carryOn.count()) {
+  await carryOn.click();
+  await page.waitForTimeout(500);
+  check("the answers are the ones that were written, not a blank paper",
+    (await page.locator("textarea").first().inputValue()).includes("jatan selle pooleli"));
+} else {
+  absent(1, "the resumed answers, because the paper was not offered back");
 }
 
 check("nothing threw along the way", errors.length === 0, errors.slice(0, 2).join(" | "));

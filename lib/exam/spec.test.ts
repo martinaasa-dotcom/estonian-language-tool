@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  BANDS, EXAM_LEVELS, OFFICIAL_LEVELS, PASS_PCT, bandFor, isExamLevel, lengthsFor,
-  speakingCriteria, specFor, writtenMinutes,
+  BANDS, BREAK_MINUTES, EXAM_LEVELS, LISTEN_PLAYS, OFFICIAL_LEVELS, PASS_PCT,
+  READ_QUESTIONS_SECONDS, bandFor, isExamLevel, lengthsFor, speakingCriteria, specFor,
+  writtenMinutes,
 } from "./spec";
 import { SKILLS } from "./types";
 
@@ -27,6 +28,77 @@ describe("the levels the state examines", () => {
     expect(isExamLevel("B2")).toBe(true);
     expect(isExamLevel("D1")).toBe(false);
     expect(isExamLevel("b2")).toBe(false);
+  });
+});
+
+describe("the conditions the parts are sat under", () => {
+  it("plays each listening recording twice, which is what the specifications set", () => {
+    // A2, B1 and C1 all say each listening text is heard twice. Raising this is
+    // making the paper easier than the one it claims to imitate; lowering it is
+    // making it harder than any paper the state sets.
+    expect(LISTEN_PLAYS).toBe(2);
+  });
+
+  it("gives a pause to read the questions before a listening task", () => {
+    expect(READ_QUESTIONS_SECONDS).toBeGreaterThan(0);
+  });
+
+  it("puts a break between the written half and the spoken part", () => {
+    // The Board publishes "a short break" and no number, so the figure is ours
+    // and the screen says so. What is not ours is that there is one.
+    expect(BREAK_MINUTES).toBeGreaterThan(0);
+  });
+});
+
+describe("the writing part, which is two pieces of writing", () => {
+  it("opens with the short message and follows with the longer text, as the real paper does", () => {
+    for (const level of EXAM_LEVELS) {
+      const writing = specFor(level).parts.find((p) => p.skill === "writing");
+      expect(writing?.tasks.map((t) => t.kind).slice(0, 2)).toEqual(["message", "compose"]);
+    }
+  });
+
+  it("names the two official writing tasks it stands in for", () => {
+    const writing = specFor("B1").parts.find((p) => p.skill === "writing");
+    const stands = writing?.tasks.map((t) => t.standsFor).join(" ") ?? "";
+    expect(stands).toContain("teate koostamine");
+    expect(stands).toContain("loovkirjutamine");
+  });
+
+  it("says out loud that the two accuracy drills are not tasks the real paper sets", () => {
+    /*
+      They stand in for a criterion an examiner marks inside the two texts,
+      which this app may not mark, because marking Estonian prose means a model
+      deciding whether an ending is right. Standing in for it is defensible.
+      Letting somebody think the paper sets it is not.
+    */
+    const writing = specFor("B1").parts.find((p) => p.skill === "writing");
+    const drills = writing?.tasks.filter((t) => t.kind === "case-form" || t.kind === "government");
+    expect(drills).toHaveLength(2);
+    for (const drill of drills ?? []) {
+      expect(drill.standsFor).toMatch(/not a task the real paper sets/);
+    }
+  });
+
+  it("lets the two texts carry more of the part than the drills do", () => {
+    for (const level of EXAM_LEVELS) {
+      const writing = specFor(level).parts.find((p) => p.skill === "writing");
+      const texts = (writing?.tasks ?? [])
+        .filter((t) => t.kind === "message" || t.kind === "compose")
+        .reduce((sum, t) => sum + t.raw, 0);
+      const drills = (writing?.tasks ?? [])
+        .filter((t) => t.kind === "case-form" || t.kind === "government")
+        .reduce((sum, t) => sum + t.raw, 0);
+      expect(texts).toBeGreaterThan(drills);
+    }
+  });
+
+  it("asks for a shorter message than composition at every level", () => {
+    for (const level of EXAM_LEVELS) {
+      const { messageWords, composeWords } = lengthsFor(level);
+      expect(messageWords).toBeGreaterThan(0);
+      expect(messageWords).toBeLessThan(composeWords);
+    }
   });
 });
 

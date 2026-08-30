@@ -318,6 +318,51 @@ function partPercentages(json: string): Partial<Record<SkillKey, number>> {
   }
 }
 
+/**
+ * The sitting before this one at the same level, for the result to compare with.
+ *
+ * A percentage on its own answers "did I pass" and nothing else. The question
+ * somebody sitting their third A2 paper is actually asking is whether the work
+ * in between moved anything, and that is one row away. Strictly earlier than the
+ * paper being looked at, so opening an old result compares it with the one
+ * before it rather than with a paper sat afterwards.
+ *
+ * Derived, not stored: no best-score column, no counter. (ADR-014.)
+ */
+export async function previousAttempt(
+  ownerId: string,
+  level: ExamLevel,
+  before: Date,
+): Promise<{ pct: number; passed: boolean; at: Date } | null> {
+  const row = await prisma.examAttempt.findFirst({
+    where: { ownerId, level, finishedAt: { lt: before } },
+    orderBy: { finishedAt: "desc" },
+    select: { pct: true, passed: true, finishedAt: true },
+  });
+  return row ? { pct: row.pct, passed: row.passed, at: row.finishedAt } : null;
+}
+
+/**
+ * The best percentage this learner had scored at a level before a given moment.
+ *
+ * `before` rather than "ever", because the caller is a result page asking
+ * whether the paper it is showing beat anything: including that paper's own row
+ * makes "your best yet" true of every paper anybody ever sits. Derived, not
+ * stored: no best-score column. (ADR-014.)
+ */
+export async function bestAt(
+  ownerId: string,
+  level: ExamLevel,
+  before: Date,
+): Promise<number | null> {
+  const row = await prisma.examAttempt.findFirst({
+    where: { ownerId, level, finishedAt: { lt: before } },
+    orderBy: { pct: "desc" },
+    select: { pct: true },
+  });
+  return row?.pct ?? null;
+}
+
 /** One stored sitting, marked paper and all. Null when it is not this learner's. */
 export async function attemptById(ownerId: string, id: string) {
   const row = await prisma.examAttempt.findFirst({ where: { id, ownerId } });

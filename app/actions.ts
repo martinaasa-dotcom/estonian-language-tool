@@ -2071,7 +2071,18 @@ const ExamResponseSchema = z.union([
   z.object({ kind: z.literal("chosen"), value: z.string().max(400) }),
   z.object({ kind: z.literal("typed"), value: z.string().max(400) }),
   z.object({ kind: z.literal("ordered"), value: z.array(z.string().max(80)).max(24) }),
-  z.object({ kind: z.literal("composed"), value: z.string().max(6000) }),
+  /*
+    `variant` is which of the second writing task's two briefs the learner
+    chose, a story or a personal letter, exactly as the real paper offers.
+    Optional because it says nothing about the marks: both briefs are marked on
+    length and on the words the task named, so this travels only so the result
+    can show which one was answered.
+  */
+  z.object({
+    kind: z.literal("composed"),
+    value: z.string().max(6000),
+    variant: z.number().int().min(0).max(1).optional(),
+  }),
   z.object({
     kind: z.literal("spoken"),
     recorded: z.boolean(),
