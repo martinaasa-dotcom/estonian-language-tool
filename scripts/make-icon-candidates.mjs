@@ -195,16 +195,6 @@ const kannel = wrap(
        ever seen, drawn as the crozier before it opens. It replaced a set of
        islands that read as bacteria, and a freehand outline of the country,
        which is not a thing to get slightly wrong on an Estonian app. */
-function spiral(cx, cy, r0, r1, turns, startDeg, steps = 160) {
-  const pts = [];
-  for (let i = 0; i <= steps; i += 1) {
-    const t = i / steps;
-    const a = ((startDeg + turns * 360 * t) * Math.PI) / 180;
-    const r = r0 + (r1 - r0) * t;
-    pts.push(`${f(cx + r * Math.cos(a))} ${f(cy + r * Math.sin(a))}`);
-  }
-  return `M${pts.join(" L")}`;
-}
 function taperedSpiral(cx, cy, r0, r1, turns, startDeg, h0, h1, steps = 200) {
   const outer = [];
   const inner = [];
