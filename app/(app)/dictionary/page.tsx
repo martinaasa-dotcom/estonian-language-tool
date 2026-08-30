@@ -79,6 +79,7 @@ export default async function DictionaryPage({
     >
       <DictionaryClient
         tutorReady={resolveProvider() !== null}
+        canScan={resolveProvider() !== null}
         justFetched={fetched}
         initialQuery={q}
         hits={hits}

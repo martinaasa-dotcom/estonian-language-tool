@@ -4,7 +4,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { goalsFor, historyFor, latestFor, paperFor } from "@/lib/progress/assessment";
 import { PRE_A1, type Confidence, type Placement, type SkillResult } from "@/lib/assessment/types";
 import { ButtonLink } from "@/components/Button";
-import { Card, Chip, Empty, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Empty, Page, SectionTitle, Stack } from "@/components/ui";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel, levelLabel } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
@@ -76,7 +76,7 @@ export default async function AssessPage({
         </ButtonLink>
       }
     >
-      <div className="flex flex-col gap-8">
+      <Stack>
         {result ? (
           <ResultPanel
             result={result}
@@ -148,7 +148,7 @@ export default async function AssessPage({
             What this app can and cannot do
           </Link>
         </Card>
-      </div>
+      </Stack>
     </Page>
   );
 }

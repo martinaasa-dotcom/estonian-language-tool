@@ -839,6 +839,80 @@ check("how much of the app a screen leads with is decided in one place", () => {
   }
 });
 
+check("where a screen lives is decided in one table", () => {
+  /*
+    The rail, the phone sheet, the command palette and the guide are four
+    answers to "where does this live", and for a while they were four lists.
+    The palette offered six practice modes while the hub offered eleven, so the
+    Leech clinic was reachable from one screen and unfindable from the box that
+    promises to go anywhere; `components/PracticeModes.tsx` held a seventh copy
+    of them that no screen rendered at all; and `lib/copy/tour.ts` named nine
+    screens a second time with their own icons.
+
+    Two shapes fail here. A navigation surface that stops reading
+    `lib/ux/nav.ts` or `lib/ux/modes.ts`, and anybody else collecting this
+    app's own routes into a table that also names them. Prose keyed by route is
+    fine, and so is a link: it is the second copy of the *names* that rots.
+  */
+  const readers: [string, RegExp][] = [
+    ["components/Sidebar.tsx", /lib\/ux\/nav/],
+    ["components/CommandPalette.tsx", /lib\/ux\/nav/],
+    ["app/(app)/guide/page.tsx", /lib\/copy\/tour/],
+    ["app/(app)/practice/page.tsx", /lib\/ux\/modes/],
+    ["app/(app)/page.tsx", /lib\/ux\/modes/],
+  ];
+  for (const [file, table] of readers) {
+    assert.match(code(file), table, `${file} navigates by a list of its own again`);
+  }
+
+  for (const file of ALL) {
+    if (file.startsWith("lib/ux/")) continue;
+    // The syllabus, the badges and the quests carry a route into their own
+    // page beside their own content. That is content with a link on it.
+    if (/^lib\/(collections|achievements|gamification)\//.test(file)) continue;
+    for (const literal of code(file).match(/\[[^[\]]*\]/g) ?? []) {
+      const routes = literal.match(/href:\s*"\/[a-z]/g)?.length ?? 0;
+      const named = /\b(label|title):\s*"/.test(literal) && /\bicon:\s*"/.test(literal);
+      assert.ok(
+        routes < 3 || !named,
+        `${file} names ${routes} destinations in a table of its own instead of reading lib/ux/nav.ts`,
+      );
+    }
+  }
+});
+
+check("the rail shows every place, rather than hiding some behind a button", () => {
+  /*
+    The rail used to promote four destinations and put the other twelve behind
+    a button marked "More", and the button had a bug that only showed up in
+    use: the group opened itself whenever the current page was inside it, so on
+    Practice or Progress the label read "Less" and pressing it did nothing.
+    `showRest` was `railOpen || secondaryActive`, the click flipped `railOpen`,
+    and the second half of that held it open regardless.
+
+    Fixing the toggle was the small half. Sixteen links behind a disclosure are
+    the same sixteen links somewhere a learner has to remember, so the rail
+    draws every section it is given. This fails on the shape that came back:
+    the rail keeping a piece of state that decides which links exist. The phone
+    sheet keeps its button, because five cells across a phone is a different
+    problem from a column with a screen of height in it, and what it opens is
+    the same sections under the same headings.
+
+    `scripts/smoke-new.mjs` is the other half of this and the one that counts:
+    it opens the app at desktop width and asserts every destination in the
+    table is a link you can see.
+  */
+  const rail = code("components/Sidebar.tsx");
+  assert.match(rail, /PLACES\.map/, "the rail stopped drawing the sections it is given");
+  for (const gate of ["railOpen", "showRest", "secondaryActive"]) {
+    assert.equal(
+      rail.includes(gate),
+      false,
+      `the rail hides some of its links behind ${gate} again`,
+    );
+  }
+});
+
 check("the pure modules stay free of React, Next and Prisma", () => {
   /*
     These are the ones with unit tests around them, and a test is only cheap

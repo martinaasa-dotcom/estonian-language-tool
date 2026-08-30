@@ -5,7 +5,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { MAX_ITEMS } from "@/lib/scan/extract";
 import { parseItems, summarise } from "@/lib/scan/items";
-import { Card, Empty, Note, Page, SectionTitle } from "@/components/ui";
+import { Card, Empty, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { ScanCapture } from "./ScanCapture";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ export default async function ScanPage() {
       title="Scan a page"
       lead="Photograph a word list or your homework, and study what is on it."
     >
-      <div className="flex flex-col gap-6">
+      <Stack>
         {!configured && (
           <Note tone="hard">
             Reading a photo needs an AI key, and this deployment has none configured. Everything
@@ -106,7 +106,7 @@ export default async function ScanPage() {
             </ul>
           )}
         </section>
-      </div>
+      </Stack>
     </Page>
   );
 }
