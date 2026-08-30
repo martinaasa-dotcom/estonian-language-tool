@@ -30,9 +30,13 @@ export default async function GovernmentPage() {
   const ownerId = await requireUserId();
 
   const [governed, inDeck] = await Promise.all([
+    // Easiest first and stable, rather than whichever two hundred verbs the
+    // plan returned. This is a reference a learner comes back to, so the page
+    // should be the same page.
     prisma.lexeme.findMany({
       where: { pos: "VERB", government: { not: null } },
       select: { id: true, lemma: true, translation: true, government: true, cefr: true, examples: true },
+      orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
       take: 200,
     }),
     prisma.card.findMany({

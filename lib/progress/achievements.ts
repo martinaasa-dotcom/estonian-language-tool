@@ -34,9 +34,18 @@ export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promi
     prisma.review.count({ where: { ownerId } }),
     prisma.lexeme.count(),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
+    /*
+      Ordered, because a badge that can appear and disappear is worse than one
+      that is never earned. Which five thousand rows decide somebody's best
+      case was the plan's choice, and a badge awarded off an arbitrary slice
+      can be taken away by the next page load. All-time rather than the recent
+      window `caseReviewsFor` uses, because this is a claim about what somebody
+      has done rather than about what they should drill now.
+    */
     prisma.review.findMany({
       where: { targetCase: { not: null }, ownerId },
       select: { targetCase: true, rating: true },
+      orderBy: { reviewedAt: "desc" },
       take: 5000,
     }),
   ]);

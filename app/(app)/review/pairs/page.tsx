@@ -23,11 +23,22 @@ const ROUND = 10;
 export default async function PairsPage() {
   const ownerId = await requireUserId();
 
+  /*
+    Easiest first, and ordered at all.
+
+    This cap binds: the dictionary is around six thousand words and the pairs
+    are discovered by collapsing doubled letters across all of them, so which
+    two thousand were looked at decided which contrasts existed. Unordered,
+    that was the plan's choice, and a drill could offer a pair one day and not
+    the next. By cefr and lemma the pool is the words a learner is likeliest to
+    have met, which is also the better third to draw a listening drill from.
+  */
   const lexemes = await prisma.lexeme.findMany({
     select: {
       id: true, lemma: true, translation: true,
       forms: { select: { value: true, formType: true, morphName: true } },
     },
+    orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
     take: 2000,
   });
 
