@@ -252,6 +252,13 @@ where it can be practised. A gap that cannot be turned into somewhere to go does
 The strengths are there for the same reason in reverse: somebody grinding vocabulary they already
 know is losing time they could spend on the part that is actually failing them.
 
+**And the paper somebody said they were aiming at goes at the top.** The goal is asked for on the
+first run, and the hub then listed six levels as though it had never been told. The target level's
+card carries the weeks left beside the confidence, because those two numbers only mean anything
+together: eleven weeks and 38 percent is a different situation from eleven weeks and 71. It names
+the part standing in the way rather than only the number, and it links to the paper and to the place
+the goal can be changed. With no target set there is no card, and nothing on the page claims one.
+
 After a sitting, `lib/exam/report.ts` reads the marked paper back: which part lost the marks, which
 task inside it did the damage, every question that was wrong with the answer beside it, and the words
 that caught the learner more than once. That is the half a real result slip does not give you, and it

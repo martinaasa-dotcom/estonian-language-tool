@@ -40,7 +40,7 @@ page.on("console", (m) => {
   will sit through: a part closing when its time runs out. The shortest part on
   the shortest paper is twelve minutes.
 */
-const { check, absent, done } = suite("The mock examination", { floor: 56 });
+const { check, absent, done } = suite("The mock examination", { floor: 57 });
 
 // ── The hub ──────────────────────────────────────────────────────────────────
 
@@ -87,6 +87,21 @@ check("it says nothing scores pronunciation",
 
 check("it offers advice rather than only a verdict",
   (await page.getByText("What is standing in the way").count()) > 0);
+
+/*
+  The goal somebody stated on their first run and the paper they are being shown
+  were two features that did not speak to each other. The card only appears when
+  a target has been set, which the CI seeds do not, so what is checked here is
+  the other half of the promise: with no goal set, nothing on the page claims
+  one.
+*/
+const aiming = /The paper you said you were aiming at/i.test(body);
+if (aiming) {
+  check("the paper aimed at is named with the weeks and the confidence together",
+    /weeks left|deadline is here|no deadline set/i.test(body));
+} else {
+  absent(1, "the goal card, because these seeds set no target level");
+}
 
 const firstGapLink = page.locator("a", { hasText: /Open the path|Practise|Take a dictation|Record yourself|Fill some gaps|Write a sentence|Read the rule|Open the clinic|Review now/ }).first();
 check("every gap hands over somewhere to go", (await firstGapLink.count()) > 0);
