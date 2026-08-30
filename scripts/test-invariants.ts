@@ -656,7 +656,9 @@ check("the chat says which model actually replied", () => {
   const route = read("app/api/tutor/route.ts");
   assert.match(route, /x-model-provider/, "the reply no longer carries which model wrote it");
   assert.match(route, /open\.config/, "the header names something other than the run that answered");
-  const chat = read("app/(app)/tutor/TutorChat.tsx");
+  // Shared by the full `/tutor` page and the floating Anu button, so both
+  // read it from the one place that actually asks the response for it.
+  const chat = read("components/anu/useAnuChat.ts");
   assert.match(chat, /x-model-provider/, "the chat no longer reads it back");
 });
 

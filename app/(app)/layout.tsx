@@ -4,6 +4,14 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { Shortcuts } from "@/components/Shortcuts";
 import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
+import { AnuFab } from "@/components/anu/AnuFab";
+import { resolveProviders } from "@/lib/tutor/provider";
+import { supabaseConfigured } from "@/lib/auth/mode";
+
+// Not cached at build time: `configured` below is read from the environment,
+// and a notice baked in from the build machine's environment describes
+// nobody's deployment (see /privacy and /terms for the same reasoning).
+export const dynamic = "force-dynamic";
 
 /**
  * The signed-in shell: rail on the left, floating tab bar on mobile, pastel
@@ -13,6 +21,7 @@ import { Wash } from "@/components/ui";
  * — sit in `app/(chromeless)/` and get none of it.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const chain = resolveProviders();
   return (
     <>
       <a
@@ -40,6 +49,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Offered once, inside the app only: someone still reading the landing
           page has not decided they want this on their home screen. */}
       <InstallPrompt />
+      <AnuFab
+        configured={chain.length > 0}
+        readerCanConfigure={!supabaseConfigured()}
+        plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
+      />
     </>
   );
 }
