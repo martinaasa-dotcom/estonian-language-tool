@@ -230,6 +230,12 @@ jobs:
       # than a job. Every one declares a floor, so a suite that dies early or
       # quietly stops running a block fails here rather than printing nothing
       # and being read as a pass. See scripts/lib/checks.mjs.
+      # The broadest walk first, so a route that stopped rendering says so
+      # before eleven narrower suites fail for the same reason. This one was
+      # not here, which is the fault this list's own comment describes further
+      # down: it is the only suite that opens the navigation and asks whether
+      # every place is reachable, and CI has never run that.
+      - run: node scripts/smoke-new.mjs
       - run: node scripts/test-mobile.mjs
       - run: node scripts/test-design.mjs
       - run: node scripts/e2e.mjs
