@@ -101,35 +101,43 @@ It has to land in four places at once, because that is what is wrong today:
 A maskable variant is a separate drawing, not a resize. 13, 15, 16 and 19 bleed to the edges
 and would lose their edges to a circular launcher mask.
 
-## Shortlist, and the Kodukatus variants
+## Shortlist
 
-Review kept two: **01 Kodukatus** and **12 Neliteist**. 01 is the one being adjusted, because the
-idea is right and the drawing was generic: the roof floated clear of the ring with nothing tying
-them together, so at a glance it was a chevron above a doughnut rather than one mark.
+Review has kept three: **01a Tihedam** and **01d Pooratud**, the roof over the o drawn cleanly on
+the ink and on the violet, and **12 Neliteist**, the numeral. The two live in
+`design/icons/kodukatus/`, drawn by `node scripts/make-kodukatus-variants.mjs`.
 
-Six adjustments live in `design/icons/kodukatus/`, drawn by
-`node scripts/make-kodukatus-variants.mjs`.
+Four other Kodukatus adjustments were drawn and turned down. The house drawn whole was too close
+to the home icon every app already has; giving the ring a letter's modulation was too quiet to
+see; and the two that paired the house with the number made one mark too many out of two that
+each worked alone. Two more never got that far: a ring of fourteen radial ticks read as a loading
+spinner, and roof and ring joined into one closed figure read as a water droplet.
 
-| # | Name | What changes | Round launcher mask |
+## Round three
+
+Nine bolder marks in `design/icons/round3/`, drawn by `node scripts/make-icon-round3.mjs`. The
+direction follows from what round two turned down: solid shapes, negative space, two elements at
+most, and no more literal illustration.
+
+| # | Name | What it is | Round mask |
 |---|---|---|---|
-| 01a | **Tihedam** | the gap closed, both strokes at one weight | survives |
-| 01b | **Kirjatäht** | the ring given a letter's modulation, thick at the sides | survives |
-| 01c | **Aken** | the house drawn whole, the o as the round window | survives |
-| 01d | **Pööratud** | the same mark on the accent rather than the ink | survives |
-| 01e | **Maja ja neliteist** | both kept marks in one: the number inside the house | clips |
-| 01f | **Katus ja neliteist** | the roof sitting on the number instead | clips |
+| 02a | **Taidetud** | the roof as a solid gable rather than a stroke | survives |
+| 02b | **Taidetud, aktsendil** | the same gable on the violet | survives |
+| 02c | **Kolmnurk** | one filled gable with the o as the hole in it | trims |
+| 02d | **Kolmnurk, ringiga** | the same gable with the o left as a ring | trims |
+| 02e | **Mark** | the numeral as a circular badge | survives |
+| 02f | **Ruut** | the numeral in the app's own corner radius | trims |
+| 02g | **Negatiiv** | the numeral cut out of a disc | survives |
+| 02h | **K** | the initial as a geometric monogram under its own tilde | trims |
+| 02i | **K katusega** | the monogram under a roof instead of a tilde | trims |
 
-Two earlier attempts were cut rather than kept. A ring made of fourteen radial ticks, one per
-case, read as a loading spinner. Roof and ring joined into one closed figure read as a water
-droplet.
+Four were cut mid-round for reading as something else: a disc with a roof groove was a beetle, the
+kept mark knocked out of a disc went muddy where the two strokes met, a ring opening to let the
+roof drop in was a power button, and the tile split diagonally read as a torn corner.
 
-**01d is the best pure version.** Violet is what the rest of the app is painted with, it holds at
-20px, and it is the only one of the six that comes through a circular mask losing nothing.
+The gable's corners are rounded on purpose. Sharp ones make a warning sign.
 
-**01f is the one that does something the others cannot**, since it carries both marks that
-survived. The eaves are load-bearing: without them a peak over a number reads as an arrow, which
-is a stock chart rather than a house.
-
-**01e is the boldest and the one to be careful with.** Unmistakable at every flat size, but the
-mask takes the roof and the top of the number, so it needs a maskable drawing that is genuinely
-different rather than a resize.
+**02g is the strongest of the three numeral treatments**: cutting the figure out of a disc rather
+than setting it on the tile gives it an edge to sit against, and it comes through a launcher mask
+whole. **02h is the only mark here that is not a variation on something already seen**, and the
+only one that would also work as a wordmark's initial.
