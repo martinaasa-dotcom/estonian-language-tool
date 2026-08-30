@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleHelp, ClipboardCheck, Target } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
@@ -11,7 +11,8 @@ import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store"
 import { QUICK_MODES, TARGETED_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Chip, Empty, Meter, Page, SectionTitle, Stack } from "@/components/ui";
+import { WeakestCases } from "@/components/WeakestCases";
+import { Card, Chip, Empty, Page, SectionTitle, Stack } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -186,51 +187,17 @@ export default async function PracticePage() {
           <section>
             <SectionTitle hint="weakest first">Drill one case</SectionTitle>
             <Card>
-              {weakCases.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  Once you have answered a few case-form cards, the cases you keep missing show up
-                  here with a one-click drill. Add a noun unit from the{" "}
-                  <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
-                  to start generating them.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {weakCases.map((c) => (
-                    <li key={c.grammCase} className="flex items-center gap-1">
-                      <Link
-                        href={`/review?case=${c.grammCase}`}
-                        className="flex flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
-                        aria-label={`Drill the ${c.grammCase.toLowerCase()}, currently ${c.accuracy} percent over ${c.total} reviews`}
-                      >
-                        <Target size={15} aria-hidden style={{ color: "var(--ink-3)" }} />
-                        <span className="w-28 text-sm" style={{ color: "var(--ink-2)" }}>
-                          {c.grammCase.toLowerCase()}
-                        </span>
-                        <span className="max-w-[200px] flex-1">
-                          <Meter
-                            pct={c.accuracy}
-                            label={`${c.grammCase.toLowerCase()} accuracy`}
-                            tone={c.accuracy >= 85 ? "var(--good)" : c.accuracy >= 65 ? "var(--hard)" : "var(--again)"}
-                            height={5}
-                          />
-                        </span>
-                        <span className="tnum w-20 text-right text-xs" style={{ color: "var(--ink-3)" }}>
-                          {c.accuracy}% · {c.total}
-                        </span>
-                      </Link>
-                      <Link
-                        href={`/grammar/${c.grammCase.toLowerCase()}`}
-                        aria-label={`What the ${c.grammCase.toLowerCase()} is for`}
-                        title={`What the ${c.grammCase.toLowerCase()} is for`}
-                        className="press flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
-                        style={{ color: "var(--ink-3)" }}
-                      >
-                        <CircleHelp size={14} aria-hidden />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <WeakestCases
+                cases={weakCases}
+                empty={
+                  <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                    Once you have answered a few case-form cards, the cases you keep missing show up
+                    here with a one-click drill. Add a noun unit from the{" "}
+                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
+                    to start generating them.
+                  </p>
+                }
+              />
             </Card>
           </section>
         </Stack>

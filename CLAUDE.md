@@ -417,6 +417,14 @@ same sections with the same headings. This is not `lib/ux/disclosure.ts` and doe
 That module decides what a *screen leads with* by how far in the learner is; this one decides where
 a thing lives, and the answer is the same in the first minute as in the first year.
 
+A place that lives *inside* another place carries `within` and keeps its row out of the rail
+without leaving the table, so the palette still reaches it. Three do: Anu, because her button is in
+the corner of every signed-in screen and a row saying "Ask Anu" was a second door onto a room whose
+door is always open; the class week, which now leads the Tasks page where its homework already was;
+and the scanner, which is a way of getting words *into* the dictionary and sat under "Look it up",
+which is not what it does. This is not the "More" button coming back: each is on the screen a
+learner is already standing on when they want it, and `within` has to say which, asserted.
+
 The table is read by the rail, the phone sheet, the command palette and the guide, because it was
 four lists and they had drifted. The palette offered six practice modes while `/practice` offered
 eleven, so the Leech clinic was reachable from one screen and unfindable from the box that promises
@@ -429,6 +437,23 @@ the app and asks the two questions no source check can: the rail draws its links
 open first, and a phone reaches every place a desktop does. `icon()` falling back to a sparkle is
 why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
 before a screenshot caught them.
+
+**Space is what says two things are separate, and it was saying five different things.** Pages
+stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
+them, so moving from Progress to Practice changed how tightly the app breathed for no reason a
+reader could name. `Stack` in `components/ui.tsx` is the one rhythm and it is the generous one: 32px
+between sections, against 20px inside a card and 8px between rows in a list. Only the outermost
+column uses it, because proximity is what says a grid of cards or a list of rows belongs together.
+The rail follows the same rule at 28px between its groups, which is the largest space in that
+column on purpose: four groups two rows apart read as one list with words in it.
+
+**And a panel drawn three times is three answers.** "Your weakest cases, click to drill" was on
+Progress, Practice and My words, each with its own markup, and My words tallied the review log in a
+local function of its own instead of calling `caseAccuracy`, so one learner could read two different
+numbers for one case and nothing in the app would disagree with either. `components/WeakestCases.tsx`
+is the one component and `lib/stats/history.ts` is the one calculation. My words dropped the panel
+and the five thousand row query behind it and points at Progress instead, which is what
+`test-polish.mjs` drives now: a consolidation that drops the signpost is just a removal.
 
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still

@@ -56,18 +56,27 @@ export interface Destination {
    */
   bar?: boolean;
   /**
-   * Already has a permanent button of its own, so the rail does not repeat it.
+   * Reached from somewhere else, so the rail does not carry a row for it.
    *
-   * One place is like this: Anu sits in the bottom right corner of every
-   * signed-in screen (`components/anu/AnuFab.tsx`, mounted in the layout), so a
-   * rail link marked "Ask Anu" was a second door onto a room whose door is
-   * always open. It stays a destination rather than leaving the table, because
-   * `/tutor` is the full-page conversation that the grammar pages, the leech
-   * clinic and a review card link to with a question already written, and the
-   * command palette has to be able to find it. What it does not need is a row
-   * in a column the learner reads top to bottom.
+   * Never "hidden": each of these is on the screen it belongs to, in the place
+   * a learner is already standing when they want it, and all of them stay in
+   * the command palette. The rail is a list of *places*; this is for the ones
+   * that are really a part of another place.
+   *
+   *   - `/tutor` — Anu sits in the bottom right corner of every signed-in
+   *     screen (`components/anu/AnuFab.tsx`, mounted in the layout), so a row
+   *     marked "Ask Anu" was a second door onto a room whose door is always
+   *     open. The page stays a destination because the grammar pages, the leech
+   *     clinic and a review card all link to it with a question already written.
+   *   - `/week` — the week you are in leads the Tasks page now, which is where
+   *     the homework filed under it already was.
+   *   - `/scan` — a way of getting words *in*, which is what the dictionary is
+   *     for. It sat under "Look it up", which is not what it does.
+   *
+   * The value is where it is reached from, so this file says so rather than
+   * leaving the next reader to find out.
    */
-  fab?: boolean;
+  within?: string;
 }
 
 export interface NavSection {
@@ -116,12 +125,13 @@ export const SECTIONS: NavSection[] = [
         keywords: "course units path lessons syllabus", bar: true,
       },
       {
-        href: "/tasks", label: "Tasks", blurb: "Homework and class work", icon: "CalendarCheck",
-        tone: "peach", keywords: "homework todo class due",
+        href: "/tasks", label: "Tasks", blurb: "Homework, and the week you are in", icon: "CalendarCheck",
+        tone: "peach", keywords: "homework todo class due week current",
       },
       {
         href: "/week", label: "This week", blurb: "The words and work filed under this week",
         icon: "CalendarRange", tone: "butter", keywords: "week class lesson current",
+        within: "/tasks",
       },
       {
         href: "/class", label: "Classes", blurb: "Teach a class, or join one", icon: "School", tone: "sky",
@@ -132,7 +142,7 @@ export const SECTIONS: NavSection[] = [
   {
     id: "lookup",
     title: "Look it up",
-    blurb: "Any word, any case, and somebody to ask when the rule will not come.",
+    blurb: "Any word, any case, and the rule behind it.",
     items: [
       {
         href: "/dictionary", label: "Dictionary", blurb: "Search any word or inflected form", icon: "BookOpen",
@@ -144,12 +154,13 @@ export const SECTIONS: NavSection[] = [
       },
       {
         href: "/scan", label: "Scan a page", blurb: "Photograph a word list and study what is on it",
-        icon: "Camera", tone: "sky",
+        icon: "Camera", tone: "sky", within: "/dictionary",
         keywords: "camera photo picture ocr homework textbook handout import paper digitise digitize",
       },
       {
         href: "/tutor", label: "Ask Anu", blurb: "Grammar questions, explained", icon: "MessageCircleQuestion",
-        tone: "blush", keywords: "ai chat grammar help tutor explain", fab: true,
+        tone: "blush", keywords: "ai chat grammar help tutor explain",
+        within: "the button in the corner of every screen",
       },
     ],
   },
@@ -212,22 +223,24 @@ export const SECTIONS: NavSection[] = [
 ];
 
 /**
- * The sections the rail draws, with anything carrying its own button removed.
+ * The sections the rail draws: the places, minus the ones that live inside a
+ * place.
  *
- * `app` is the footer rather than a place, and a `fab` destination is a door
- * that is already open on every screen. Both are still in `SECTIONS`, so the
- * command palette reaches them; neither earns a row in the column.
+ * `app` is the footer rather than somewhere you go, and a `within` destination
+ * is reached from the screen it belongs to. Both stay in `SECTIONS`, so the
+ * command palette finds them; neither earns a row in a column somebody reads
+ * top to bottom.
  */
 export const PLACES = SECTIONS
   .filter((s) => s.id !== "app")
-  .map((s) => ({ ...s, items: s.items.filter((i) => !i.fab) }))
+  .map((s) => ({ ...s, items: s.items.filter((i) => !i.within) }))
   .filter((s) => s.items.length > 0);
 
 /** Every destination, flat, in the order the sections put them in. */
 export const DESTINATIONS: Destination[] = SECTIONS.flatMap((s) => s.items);
 
-/** Everything the rail and the phone sheet list. Anu is reached by her button. */
-export const LISTED: Destination[] = DESTINATIONS.filter((d) => !d.fab);
+/** Everything the rail and the phone sheet list, as opposed to everything there is. */
+export const LISTED: Destination[] = DESTINATIONS.filter((d) => !d.within);
 
 /** The four in the phone bar. Everything else is one press away in the sheet. */
 export const BAR = DESTINATIONS.filter((d) => d.bar);

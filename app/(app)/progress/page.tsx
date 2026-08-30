@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleHelp, Compass, Flame, Trophy, Users } from "lucide-react";
+import { Compass, Flame, Trophy, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -16,6 +16,7 @@ import { ButtonLink } from "@/components/Button";
 import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
+import { WeakestCases } from "@/components/WeakestCases";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
@@ -292,51 +293,16 @@ export default async function ProgressPage() {
           <section>
             <SectionTitle hint="weakest first">Cases</SectionTitle>
             <Card>
-              {cases.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  No case-form cards answered yet. Add a noun unit from the{" "}
-                  <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
-                  and this becomes the most useful chart here.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {cases.map((c) => (
-                    // Two destinations for one row: the bar drills the case,
-                    // the question mark explains it. Side by side rather than
-                    // stacked — drilling a case you have not understood yet
-                    // only fails faster, so the way out has to be visible
-                    // without turning the list into two lines per case.
-                    <li key={c.grammCase} className="flex items-center gap-1">
-                      <Link
-                        href={`/review?case=${c.grammCase}`}
-                        className="flex flex-1 items-center gap-3 rounded-md px-1 py-1 text-sm transition-opacity hover:opacity-75"
-                      >
-                        <span className="w-24" style={{ color: "var(--ink-2)" }}>{c.grammCase.toLowerCase()}</span>
-                        <span className="flex-1">
-                          <Meter
-                            pct={c.accuracy}
-                            label={`${c.grammCase.toLowerCase()}: ${c.accuracy}%`}
-                            tone={c.accuracy >= 85 ? "var(--good)" : c.accuracy >= 65 ? "var(--hard)" : "var(--again)"}
-                            height={5}
-                          />
-                        </span>
-                        <span className="tnum w-16 text-right text-xs" style={{ color: "var(--ink-3)" }}>
-                          {c.accuracy}% · {c.total}
-                        </span>
-                      </Link>
-                      <Link
-                        href={`/grammar/${c.grammCase.toLowerCase()}`}
-                        aria-label={`What the ${c.grammCase.toLowerCase()} is for`}
-                        title={`What the ${c.grammCase.toLowerCase()} is for`}
-                        className="press flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
-                        style={{ color: "var(--ink-3)" }}
-                      >
-                        <CircleHelp size={14} aria-hidden />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <WeakestCases
+                cases={cases}
+                empty={
+                  <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                    No case-form cards answered yet. Add a noun unit from the{" "}
+                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
+                    and this becomes the most useful chart here.
+                  </p>
+                }
+              />
             </Card>
           </section>
 

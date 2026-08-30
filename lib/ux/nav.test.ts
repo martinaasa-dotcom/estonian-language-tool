@@ -60,21 +60,29 @@ describe("the navigation table", () => {
     expect(SECTIONS.map((s) => s.id)).toContain("app");
   });
 
-  it("does not list a destination that already has a button of its own", () => {
+  it("does not list a destination that lives inside another one", () => {
     /*
-      Anu sits in the corner of every signed-in screen, so a rail row saying
-      "Ask Anu" was a second door onto a room whose door is always open. She
-      stays in the table because the command palette has to find /tutor, which
-      the grammar pages and a review card link to with a question in the query
-      string.
+      Three of these. Anu is a button in the corner of every screen, the week
+      leads the Tasks page, and scanning is how you get words into the
+      dictionary. Each stays in the table so the command palette finds it, and
+      none earns a row in a column read top to bottom.
     */
     const railed = PLACES.flatMap((s) => s.items.map((i) => i.href));
-    for (const item of DESTINATIONS.filter((d) => d.fab)) {
-      expect(railed, `${item.href} carries its own button and is in the rail too`)
+    for (const item of DESTINATIONS.filter((d) => d.within)) {
+      expect(railed, `${item.href} is reached from elsewhere and is in the rail too`)
         .not.toContain(item.href);
       expect(LISTED.map((d) => d.href)).not.toContain(item.href);
     }
-    expect(DESTINATIONS.some((d) => d.fab), "nothing claims a button of its own").toBe(true);
+    expect(DESTINATIONS.some((d) => d.within), "nothing lives inside anything").toBe(true);
+  });
+
+  it("says where each of those is reached from", () => {
+    // A blank here is the next reader having to go and find out, which is how
+    // one quietly becomes unreachable.
+    for (const item of DESTINATIONS.filter((d) => d.within)) {
+      expect(item.within?.length ?? 0, `${item.href} does not say where it is reached from`)
+        .toBeGreaterThan(0);
+    }
   });
 
   it("still reaches every destination through the table the palette reads", () => {
