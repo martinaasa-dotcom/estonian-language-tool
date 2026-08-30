@@ -82,7 +82,8 @@ of the words named above are still `NOUN` alone (`magus`, `tark`, `vale`, `võõ
 
 Which of a pair a learner met was decided by nothing at all until the search was given a tiebreak,
 because the entry page renders one hit. That half is fixed (`bySubstance` in `lib/dict/search.ts`),
-so the answer is stable and the fuller entry leads. What is left is this question: two of the
+so the answer is stable and the course's own entry leads, and the other one is reachable from the
+chip that names it rather than merely listed. What is left is this question: two of the
 thirteen look like real pairs rather than mislabels, since `hall` is grey and also frost and
 `keskmine` is average and also the middle, and telling those apart from `must` twice is the decision
 nobody has made.
@@ -96,3 +97,35 @@ of speech. The second is truer and is a schema change.
 
 **Default if unanswered:** leave it. It is wrong metadata rather than wrong teaching, and the
 gloss review deliberately did not widen into it.
+
+### Q9: A seeded dictionary is twelve words larger here than it is in CI
+
+Measured rather than suspected. `prisma/expanded.ts` reports how many rows it actually inserted, from
+`RETURNING`, and on this machine a fresh seed adds **4,656** expansion entries where the same commit
+in CI adds **4,644**. The dictionary page then reads 5,971 words locally and 5,962 in CI. The file is
+the same file: `prisma/data/expanded.json` holds 5,363 entries with 5,363 distinct `(lemma, pos)`
+pairs, so nothing is being deduplicated inside it.
+
+Twelve rows means twelve more `ON CONFLICT` collisions with what the seed put down first, and the
+seed's own printed counts are read off the source arrays rather than off the database, so they agree
+in both places and prove nothing.
+
+Ruled out, each by running it: `db:seed` against `db:seed:ensure`, which is the entry point CI uses;
+two consecutive fresh databases, which give the same number twice; the presence or absence of
+`EKILEX_API_KEY` and every provider key, since the seed writes no live lookups; duplicate keys inside
+the expansion; and the database collation, under both `C.UTF-8` and ICU `en-US`. What is left
+untested is glibc `en_US.utf8`, which the `postgres:16` image CI runs uses and which is not installed
+here, and where a locale with ignorable characters can make a unique index treat two rows as one.
+
+**Why it is written down rather than chased further:** nothing depends on it that used to. Which of
+two entries for a lemma a learner sees is decided by `bySubstance` now rather than by which rows
+happen to exist, and `test-polish.mjs` states the precondition and waives by number where a pair is
+absent, so a smaller dictionary reports itself instead of changing an answer. A deployment seeds its
+own database, so no learner meets both.
+
+**Needed:** seed once against `postgres:16` with its own locale and print the twelve. If they are
+real words being silently dropped in one environment, that is a data bug; if they are rows the
+expansion should never have held, the builder should not be writing them.
+
+**Default if unanswered:** leave it. It is a reproducibility question rather than a teaching one, and
+the app no longer behaves differently for it.
