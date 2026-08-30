@@ -5,7 +5,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { throttleAction } from "@/lib/security/actionLimits";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
-import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import { formName } from "@/lib/estonian/morph";
 import {
   LEVELS, checkpointFor, levelIndex, unitById, wordsAtLevel,
@@ -16,6 +15,13 @@ import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { loadRecentMessages } from "@/lib/tutor/history";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
+import { upsertLexemeWithForms } from "@/lib/dict/upsert";
+import { requireAdminId } from "@/lib/auth/admin";
+import { applyPatch } from "@/lib/suggestions/apply";
+import {
+  SUGGESTION_LIMITS, acknowledgement, groupKeyFor, isCategory, parsePatch, parsePatchValue,
+  patchFitsCategory,
+} from "@/lib/suggestions/model";
 import { eraseAuthIdentity, remainingIdentityNote } from "@/lib/auth/erase";
 import { NEEDS_TRANSLATION } from "@/lib/copy/values";
 import { resolveOneWord } from "@/lib/dict/resolveScan";
@@ -29,6 +35,7 @@ import { isTimeZone } from "@/lib/time/day";
 import {
   numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
+import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import {
   availableCardTypes, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -36,7 +43,6 @@ import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
 import { MAX_PASSAGE_CHARS, buildPassageCloze, type KnownForm } from "@/lib/estonian/passage";
-import { PRINCIPAL_FORM_TYPES, isPrincipalFormType } from "@/lib/estonian/types";
 import { DEFAULT_DAYS_PER_WEEK, normaliseGoals } from "@/lib/assessment/goals";
 import { placement } from "@/lib/assessment/score";
 import type { Band, ItemRef, Response } from "@/lib/assessment/types";
@@ -451,55 +457,19 @@ export async function createLexemeWithForms(input: {
     return { ok: false as const, error: "A word needs both an Estonian form and a translation." };
   }
 
-  const forms = Object.entries(input.forms)
-    // Only the principal parts are user-managed. Everything else on this lexeme
-    // came from Ekilex and is authoritative; a hand edit must not submit one.
-    .map(([formType, value]) => ({ formType, value: capped(value, LIMITS.form) }))
-    .filter((f) => f.value && isPrincipalFormType(f.formType));
-
-  const nomSg = forms.find((f) => f.formType === "NOM_SG")?.value;
-  const genSg = forms.find((f) => f.formType === "GEN_SG")?.value;
-  const infMa = forms.find((f) => f.formType === "INF_MA")?.value;
-  const pres1 = forms.find((f) => f.formType === "PRES_1SG")?.value;
-
-  const gradation =
-    nomSg && genSg ? classifyGradation(nomSg, genSg)
-    : infMa && pres1 ? classifyVerbGradation(infMa, pres1)
-    : { type: "NONE" as const, note: undefined };
-
-  const existing = input.id
-    ? await prisma.lexeme.findUnique({ where: { id: input.id } })
-    : await prisma.lexeme.findUnique({ where: { lemma_pos: { lemma, pos: input.pos } } });
-
-  const data = {
-    lemma, translation, pos: input.pos,
-    cefr: input.cefr || null,
-    government: capped(input.government, LIMITS.government) || null,
-    notes: capped(input.notes, LIMITS.notes) || null,
-    gradation: gradation.type,
-    gradationNote: gradation.note ?? null,
-    // An entry Ekilex supplied stays marked as Ekilex's after a correction —
-    // relabelling it USER would quietly discard where the paradigm came from.
-    ...(existing && (existing.provenance === "SEED" || existing.provenance === "EKILEX")
-      ? {}
-      : { provenance: "USER" }),
+  const lexeme = await upsertLexemeWithForms({
+    id: input.id,
+    lemma,
+    translation,
+    pos: input.pos,
+    cefr: input.cefr,
+    government: capped(input.government, LIMITS.government),
+    notes: capped(input.notes, LIMITS.notes),
+    forms: Object.fromEntries(
+      Object.entries(input.forms).map(([type, value]) => [type, capped(value, LIMITS.form)]),
+    ),
     editedBy: ownerId,
-    editedAt: new Date(),
-  };
-
-  const lexeme = existing
-    ? await prisma.lexeme.update({ where: { id: existing.id }, data })
-    : await prisma.lexeme.create({ data });
-
-  // Replace only the principal parts. Deleting every row for the lexeme threw
-  // away the retrieved Ekilex paradigm — the one thing on an entry that cannot
-  // be reconstructed — whenever anybody corrected a typo.
-  await prisma.form.deleteMany({
-    where: { lexemeId: lexeme.id, formType: { in: [...PRINCIPAL_FORM_TYPES] } },
   });
-  if (forms.length) {
-    await prisma.form.createMany({ data: forms.map((f) => ({ ...f, lexemeId: lexeme.id })) });
-  }
 
   // Correcting a word must correct the cards made from it, or she keeps being
   // drilled on the mistake she just fixed. Only the text is rewritten — the FSRS
@@ -507,7 +477,7 @@ export async function createLexemeWithForms(input: {
   // Scoped to this learner's own cards. The dictionary is shared, but a deck is
   // not: rewriting every user's cards because one of them fixed a spelling
   // reaches into strangers' data, and they would have no idea why a card changed.
-  if (existing && (existing.lemma !== lemma || existing.translation !== translation)) {
+  if (lexeme.previous && (lexeme.previous.lemma !== lemma || lexeme.previous.translation !== translation)) {
     await prisma.card.updateMany({
       where: { ownerId, lexemeId: lexeme.id, cardType: "RECOGNITION" },
       data: { front: lemma, back: translation },
@@ -521,7 +491,7 @@ export async function createLexemeWithForms(input: {
   revalidatePath("/dictionary");
   revalidatePath("/words");
   revalidatePath("/");
-  return { ok: true as const, id: lexeme.id, lemma, updated: Boolean(existing) };
+  return { ok: true as const, id: lexeme.id, lemma, updated: lexeme.previous !== null };
 }
 
 export async function toggleStar(lexemeId: string) {
@@ -703,6 +673,20 @@ export async function setReviewMode(mode: ReviewMode) {
 }
 
 /**
+ * Whether the Estonian letter bar is drawn under text fields.
+ *
+ * Revalidated at the layout rather than at a path: the answer is published as
+ * an attribute by the signed-in shell, so every screen inside it is stale the
+ * moment this changes, not just the one the learner happened to press it on.
+ */
+export async function setLetterBar(value: LetterBar) {
+  const ownerId = await requireUserId();
+  await writeSetting(ownerId, SETTING_KEYS.letterBar, value === "off" ? "off" : "on");
+  revalidatePath("/", "layout");
+  return { ok: true as const, value };
+}
+
+/**
  * The name shown on the class leaderboard, and whether to appear on it at all.
  *
  * Opt-in, and off by default: a study app should never publish who studied how
@@ -742,6 +726,11 @@ export async function completeOnboarding(input: {
   cefr: string;
   dailyGoal: number;
   unitIds: string[];
+  /**
+   * Whether they want the Estonian letter bar. Absent from a phone, where the
+   * question is not asked because the bar is not drawn either way.
+   */
+  letterBar?: LetterBar;
   /** What the learner said they are here for. Absent when they skipped it. */
   goals?: {
     reason?: string | null;
@@ -762,6 +751,7 @@ export async function completeOnboarding(input: {
     // to decide what to open. The test overwrites it whenever they take it.
     writeSetting(ownerId, SETTING_KEYS.cefrPlacement, input.cefr),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
+    writeSetting(ownerId, SETTING_KEYS.letterBar, letterBarFrom(input.letterBar)),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
     input.goals
       ? saveGoals(ownerId, normaliseGoals({
@@ -992,13 +982,13 @@ export async function completeLesson(
  * Records where the placement test put somebody.
  *
  * The level is re-derived here from the per-level scores rather than trusted
- * from the caller. This file is `"use server"`, so `savePlacement("C2")` is an
- * endpoint anybody can call — and while placing yourself at C2 only unlocks
+ * from the caller. This file is `"use server"`, so `savePlacement("C1")` is an
+ * endpoint anybody can call — and while placing yourself at C1 only unlocks
  * units you could have opened anyway, a stored level that no test produced would
  * quietly become a lie the whole path is built on.
  */
 const StageScoreSchema = z.object({
-  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+  level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
   correct: z.number().int().min(0).max(20),
   asked: z.number().int().min(0).max(20),
 });
@@ -1026,7 +1016,7 @@ export async function savePlacement(scores: z.input<typeof StageScoreSchema>[]) 
  * evidence that somebody has lost a level they already had.
  *
  * The score is re-checked here rather than trusted. Every export in this file is
- * a public endpoint, so `recordCheckpoint("c2", 20, 20)` is a call anybody can
+ * a public endpoint, so `recordCheckpoint("c1", 20, 20)` is a call anybody can
  * make; what it can buy is only the level marker the path uses to decide what to
  * open by default, and nothing in the review log moves, but a stored level that
  * no exam produced is still a lie the whole course is arranged around.
@@ -1039,7 +1029,7 @@ export async function recordCheckpoint(
 ) {
   const ownerId = await requireUserId();
   const parsed = z.object({
-    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+    level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
     correct: z.number().int().min(0).max(100),
     total: z.number().int().min(1).max(100),
   }).safeParse({ level: level.toUpperCase(), correct, total });
@@ -1235,6 +1225,97 @@ export async function assignUnit(classroomId: string, unitId: string, dueAt?: st
   revalidatePath("/class");
   revalidatePath("/tasks");
   return { ok: true as const, assigned: members.length };
+}
+
+/** The marker every classroom-issued task's `notes` starts with, teacher and student alike. */
+function classworkMarker(classroomName: string): string {
+  return `Set by ${classroomName}.`;
+}
+
+/**
+ * Sets anything as homework, not just a unit — a page number, an exercise from
+ * the textbook, a sentence to write, whatever the lesson actually was. A join
+ * code and a roster do not make a classroom feature on their own if the only
+ * thing a teacher can hand out is one of eighty-three fixed units; most
+ * homework is not a unit.
+ *
+ * Same shape as `assignUnit` on purpose — one task per member, nobody's deck
+ * touched, the teacher's own copy of the task (they are a member too) is what
+ * lets the class page read its own history back without a table to hold it.
+ */
+export async function assignHomework(classroomId: string, title: string, notes: string, dueAt?: string) {
+  const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "assignHomework");
+  if (busy) return busy;
+  const classroom = await prisma.classroom.findFirst({
+    where: { id: classroomId, ownerId },
+    select: { id: true, name: true },
+  });
+  if (!classroom) return { ok: false as const, error: "That is not your class." };
+
+  const cleanTitle = capped(title, LIMITS.taskTitle);
+  if (!cleanTitle) return { ok: false as const, error: "Give the homework a title." };
+  const cleanNotes = capped(notes, LIMITS.taskNotes - classworkMarker(classroom.name).length - 1);
+
+  const members = await prisma.classroomMember.findMany({
+    where: { classroomId },
+    select: { ownerId: true },
+  });
+
+  const due = dueAt ? new Date(dueAt) : null;
+  const marker = classworkMarker(classroom.name);
+  await prisma.task.createMany({
+    data: members.map((m) => ({
+      ownerId: m.ownerId,
+      title: cleanTitle,
+      notes: cleanNotes ? `${marker} ${cleanNotes}` : marker,
+      tag: "HOMEWORK",
+      dueAt: due && !Number.isNaN(due.getTime()) ? due : null,
+    })),
+  });
+
+  revalidatePath("/class");
+  revalidatePath("/tasks");
+  return { ok: true as const, assigned: members.length };
+}
+
+/**
+ * What a teacher has sent this class, most recent first.
+ *
+ * There is no table for this, deliberately: an assignment is a `Task` on
+ * every member, and the teacher is a member too (they joined their own class
+ * at creation), so their own copy of each task they ever assigned already
+ * carries the record. Reading it back is a filter on the marker every
+ * classroom-issued task's `notes` starts with, not a new source of truth to
+ * keep in sync with the real one.
+ *
+ * The one place this heuristic can be fooled: two classes taught by the same
+ * teacher with the exact same name would share a marker. Rare enough, and
+ * visible enough if it happens, not to be worth a schema change over.
+ */
+export async function classworkHistory(classroomId: string) {
+  const ownerId = await requireUserId();
+  const classroom = await prisma.classroom.findFirst({
+    where: { id: classroomId, ownerId },
+    select: { name: true },
+  });
+  if (!classroom) return [];
+
+  const marker = classworkMarker(classroom.name);
+  const tasks = await prisma.task.findMany({
+    where: { ownerId, notes: { startsWith: marker } },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: { id: true, title: true, notes: true, dueAt: true, createdAt: true },
+  });
+  return tasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    detail: t.notes?.slice(marker.length).trim() || null,
+    dueAt: t.dueAt,
+    createdAt: t.createdAt,
+  }));
 }
 
 /** The name to show in a class: their chosen one, else their account's. */
@@ -1486,7 +1567,22 @@ export async function deleteMyAccount(confirmation: string) {
       */
       await tx.classroomMember.deleteMany({ where: { ownerId } });
       await tx.classroom.deleteMany({ where: { ownerId } });
+      /*
+        What they reported as wrong. Their own words, and a reply written to
+        them, so it goes with the rest of them. A report they sent that was
+        already accepted has changed the shared dictionary and that change
+        stays, exactly as an edit they made by hand does: undoing it would
+        delete other learners' data to satisfy this request. What is removed
+        is the row that ties the report to a person.
+      */
+      await tx.suggestion.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
+      /*
+        And the attribution on anything they reviewed, for the same reason the
+        line above clears `editedBy`: a decision stays on the record, the name
+        against it does not.
+      */
+      await tx.suggestion.updateMany({ where: { reviewedBy: ownerId }, data: { reviewedBy: null } });
     }, { timeout: 120_000 });
   } catch (error) {
     return {
@@ -2185,4 +2281,184 @@ export async function submitExam(input: unknown) {
   revalidatePath("/exam");
   revalidatePath("/");
   return { ok: true as const, id, pct: result.pct, passed: result.passed };
+}
+
+// ───────────────────────── Suggested fixes ─────────────────────────────────
+
+/**
+ * A learner telling us something is wrong, and what it should say instead.
+ *
+ * EVERY DEAD END IN THIS APP NOW OFFERS THIS, which is what decides the shape
+ * of the action. It is called from an error screen, from an empty search, from
+ * a card that was marked wrong, from a page of homework whose words the
+ * dictionary could not vouch for. In every one of those the person is already
+ * annoyed, so the form asks for as little as it can get away with: a note is
+ * optional, because the category, the screen and the message the app had just
+ * shown them are the three things a reviewer actually needs, and the app knows
+ * all three without asking.
+ *
+ * `input` is unknown and validated here for the usual reason: every export of
+ * this file is a public endpoint, and this one is reachable from more screens
+ * than any other. The proposal is re-parsed by `parsePatchValue` rather than
+ * trusted, and it has to belong to the category it arrived under, or a report
+ * filed as "wrong explanation" could create a dictionary entry on accept.
+ */
+const SuggestionInput = z.object({
+  category: z.string(),
+  note: z.string().optional(),
+  lemma: z.string().optional(),
+  lexemeId: z.string().optional(),
+  context: z.string().optional(),
+  trigger: z.string().optional(),
+  patch: z.unknown().optional(),
+});
+
+export async function submitSuggestion(input: unknown) {
+  const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "sendSuggestion");
+  if (busy) return busy;
+
+  const parsed = SuggestionInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: "That did not arrive in a shape we could read. Nothing was sent." };
+  }
+  const raw = parsed.data;
+  if (!isCategory(raw.category)) {
+    return { ok: false as const, error: "Pick what kind of problem this is." };
+  }
+  const category = raw.category;
+
+  const patch = parsePatchValue(raw.patch);
+  if (!patchFitsCategory(category, patch)) {
+    return { ok: false as const, error: "That correction does not match the kind of problem chosen." };
+  }
+
+  const note = capped(raw.note, SUGGESTION_LIMITS.note);
+  const lemma = capped(raw.lemma, SUGGESTION_LIMITS.lemma) || null;
+  const lexemeId = capped(raw.lexemeId, 64) || null;
+  const context = capped(raw.context, SUGGESTION_LIMITS.context) || null;
+  const trigger = capped(raw.trigger, SUGGESTION_LIMITS.trigger) || null;
+
+  const groupKey = groupKeyFor({ category, lexemeId, lemma, context, trigger, patch });
+
+  /*
+    One person, one open report per thing. Somebody who meets the same dead end
+    on Monday and again on Thursday is one voice, not two, and the count beside
+    a group in the review queue is only worth reading while that is true: the
+    number is there to say "this many people", and clicks would make it say
+    "this many clicks" while looking identical.
+
+    The later report wins the note and the proposal, because it is the one they
+    wrote after seeing more of the problem.
+  */
+  const mine = await prisma.suggestion.findFirst({
+    where: { ownerId, groupKey, status: "OPEN" },
+    select: { id: true },
+  });
+
+  if (mine) {
+    await prisma.suggestion.update({
+      where: { id: mine.id },
+      data: {
+        note, context, trigger, lemma, lexemeId,
+        patch: patch ? JSON.stringify(patch) : "{}",
+      },
+    });
+    return { ok: true as const, repeat: true, message: acknowledgement(category) };
+  }
+
+  await prisma.suggestion.create({
+    data: {
+      ownerId, category, groupKey, note, context, trigger, lemma, lexemeId,
+      patch: patch ? JSON.stringify(patch) : "{}",
+    },
+  });
+
+  revalidatePath("/suggestions");
+  return { ok: true as const, repeat: false, message: acknowledgement(category) };
+}
+
+/**
+ * A reviewer acting on one, and pushing the change through if it carries one.
+ *
+ * Gated on `requireAdminId`, which resolves who is asking rather than taking
+ * it as an argument, for the reason every action in this file resolves its own
+ * owner: an exported function here is a public endpoint, and this one writes to
+ * the dictionary every learner reads.
+ *
+ * The default scope is the whole group. That is the entire answer to a queue
+ * of thousands: forty-one people reporting one dead link is one decision, and
+ * making a reviewer take it forty-one times is how a queue stops being worked.
+ */
+const ReviewInput = z.object({
+  id: z.string(),
+  decision: z.union([z.literal("ACCEPT"), z.literal("DECLINE")]),
+  /** Whether to write the proposal into the dictionary. Ignored on a decline. */
+  apply: z.boolean().optional(),
+  note: z.string().optional(),
+  scope: z.union([z.literal("group"), z.literal("one")]).optional(),
+});
+
+export async function reviewSuggestion(input: unknown) {
+  const reviewerId = await requireAdminId();
+
+  const busy = throttleAction(reviewerId, "reviewSuggestion");
+  if (busy) return busy;
+
+  const parsed = ReviewInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: "That did not arrive in a shape we could read. Nothing has changed." };
+  }
+  const { id, decision, scope = "group" } = parsed.data;
+
+  const row = await prisma.suggestion.findUnique({ where: { id } });
+  if (!row) return { ok: false as const, error: "That suggestion is no longer here." };
+
+  let applied: string | null = null;
+  if (decision === "ACCEPT" && parsed.data.apply) {
+    const outcome = await applyPatch(parsePatch(row.patch), reviewerId);
+    /*
+      A failed write stops the whole thing. Marking the report accepted and
+      then failing to make the change would leave the queue saying a word had
+      been added that had not, which is the one state a review queue must never
+      reach: the reviewer would have no reason to look at it again.
+    */
+    if (!outcome.ok) return { ok: false as const, error: outcome.error };
+    applied = outcome.summary;
+  }
+
+  const resolved = await prisma.suggestion.updateMany({
+    where: scope === "group" ? { groupKey: row.groupKey, status: "OPEN" } : { id: row.id },
+    data: {
+      status: decision === "ACCEPT" ? "ACCEPTED" : "DECLINED",
+      reviewedBy: reviewerId,
+      reviewedAt: new Date(),
+      decision: capped(parsed.data.note, SUGGESTION_LIMITS.decision) || null,
+    },
+  });
+
+  /*
+    NOT `/admin/suggestions`. Working through a queue is the one screen where
+    rows must not reshuffle under the cursor between clicks, and the list is
+    right again on the next load anyway.
+
+    That is not on its own enough to keep the reviewer informed, and the
+    browser suite is what proved it: any server action re-renders the tree the
+    page is on, so the row that was just accepted disappears from the server's
+    answer regardless of what this revalidates. `QueueRows` holds the outcome
+    a level above the row for that reason, and shows it for a row the server
+    has since dropped.
+  */
+  revalidatePath("/suggestions");
+  if (applied) {
+    revalidatePath("/dictionary");
+    revalidatePath("/words");
+  }
+
+  return {
+    ok: true as const,
+    resolved: resolved.count,
+    applied,
+  };
 }

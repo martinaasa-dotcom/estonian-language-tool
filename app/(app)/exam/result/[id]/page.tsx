@@ -14,6 +14,7 @@ import { NO_VALUE } from "@/lib/copy/values";
 import { formatDateTime } from "@/lib/time/clock";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
+import { SuggestFix } from "@/components/SuggestFix";
 import { AnuReading } from "./AnuReading";
 
 export const metadata = { title: "Exam result" };
@@ -362,6 +363,26 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               );
             })}
           </ul>
+        )}
+        {report.missed.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {/*
+              Every mark on this paper is a comparison against a form the
+              dictionary vouches for, which is what keeps a model out of the
+              judgement. It does not make the dictionary right, and a candidate
+              who has just been marked down by it is the person most likely to
+              have spotted that.
+            */}
+            <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+              Marked wrong and you think it was right?
+            </p>
+            <SuggestFix
+              category="MARKED_WRONG"
+              categories={["MARKED_WRONG", "WRONG_CONTENT"]}
+              trigger={`A ${result.level} mock paper marked ${report.missed.length} answer(s) wrong.`}
+              label="Tell us about the marking"
+            />
+          </div>
         )}
       </section>
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Chip } from "@/components/ui";
 import { Mascot } from "@/components/brand";
+import { SuggestFix } from "@/components/SuggestFix";
 import type { Msg } from "./useAnuChat";
 
 /**
@@ -67,6 +68,29 @@ export function Provenance({ label, answered }: { label: string | null; answered
       {answered ? "Answered by" : "Will ask"} {label}. Anu explains grammar; every inflected form in
       the dictionary is stored data from Ekilex, never written by a model.
     </p>
+  );
+}
+
+/**
+ * The way out when Anu could not answer.
+ *
+ * Both surfaces show the failure inside the conversation, because that is
+ * where the learner is looking. Neither may put a control there: a message is
+ * sent back to the model as context next time, and a button inside one is a
+ * button inside a transcript. So the offer to tell somebody sits under the
+ * thread, and only once something has actually failed.
+ */
+export function AnuFailure({ failure }: { failure: string | null }) {
+  if (!failure) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-sm" style={{ color: "var(--ink-3)" }}>Keeps happening?</p>
+      <SuggestFix
+        category="BROKEN"
+        trigger={`Asking Anu failed: ${failure}`}
+        label="Tell the Kodukeel team"
+      />
+    </div>
   );
 }
 

@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { saveLearningGoals } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { icon } from "@/components/icons";
-import { Chip } from "@/components/ui";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, weeksUntil, type Goals } from "@/lib/assessment/goals";
 import type { Band } from "@/lib/assessment/types";
 
@@ -39,61 +39,63 @@ export function GoalsPanel({ current }: { current: Goals }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Why you are learning</p>
-        <div className="flex flex-wrap gap-2">
-          {REASONS.map((r) => {
-            const Icon = icon(r.icon);
-            const on = reason === r.id;
-            return (
-              <button key={r.id} type="button" onClick={() => setReason(on ? null : r.id)} aria-pressed={on}>
-                <Chip tone={on ? "accent" : "neutral"}>
-                  <Icon size={12} aria-hidden /> {r.label}
-                </Chip>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/*
+        Every one of these is a `ChoiceGroup` rather than a row of chips in
+        buttons. The chips carried no border, no shadow and no hover, so the one
+        screen that decides a learner's year read as a legend rather than a
+        form, and the chosen answer was a hue shift of almost no luminance.
+      */}
+      <ChoiceGroup label="Why you are learning">
+        {REASONS.map((r) => {
+          const Icon = icon(r.icon);
+          const on = reason === r.id;
+          return (
+            <ChoiceChip
+              key={r.id}
+              selected={on}
+              /* Pressing the chosen one again clears it: "none of these" is a
+                 real answer, and the plan is honest about having no reason. */
+              onSelect={() => setReason(on ? null : r.id)}
+              icon={<Icon size={14} aria-hidden />}
+            >
+              {r.label}
+            </ChoiceChip>
+          );
+        })}
+      </ChoiceGroup>
 
-      <div>
-        <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Where you want to get to</p>
-        <div className="flex flex-wrap gap-2">
-          {TARGETS.map((t) => (
-            <button key={t.band} type="button" onClick={() => setTarget(t.band)} aria-pressed={target === t.band} title={t.can}>
-              <Chip tone={target === t.band ? "accent" : "neutral"}>{t.band} · {t.label}</Chip>
-            </button>
-          ))}
-        </div>
-      </div>
+      <ChoiceGroup label="Where you want to get to">
+        {TARGETS.map((t) => (
+          <ChoiceChip
+            key={t.band}
+            selected={target === t.band}
+            onSelect={() => setTarget(t.band)}
+            title={t.can}
+          >
+            {t.band} · {t.label}
+          </ChoiceChip>
+        ))}
+      </ChoiceGroup>
 
-      <div>
-        <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-          By when {weeks === null ? "" : `· ${weeks} weeks away`}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {DEADLINES.map((d) => {
-            const value = deadlineFrom(d, new Date());
-            const on = value === null ? deadline === null : weeks !== null && Math.abs(weeks - (weeksUntil(value, new Date()) ?? 0)) <= 1;
-            return (
-              <button key={d.id} type="button" onClick={() => setDeadline(value)} aria-pressed={on}>
-                <Chip tone={on ? "accent" : "neutral"}>{d.label}</Chip>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <ChoiceGroup label={`By when${weeks === null ? "" : ` · ${weeks} weeks away`}`}>
+        {DEADLINES.map((d) => {
+          const value = deadlineFrom(d, new Date());
+          const on = value === null ? deadline === null : weeks !== null && Math.abs(weeks - (weeksUntil(value, new Date()) ?? 0)) <= 1;
+          return (
+            <ChoiceChip key={d.id} selected={on} onSelect={() => setDeadline(value)}>
+              {d.label}
+            </ChoiceChip>
+          );
+        })}
+      </ChoiceGroup>
 
-      <div>
-        <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Days a week you practise</p>
-        <div className="flex flex-wrap gap-2">
-          {[2, 3, 4, 5, 6, 7].map((n) => (
-            <button key={n} type="button" onClick={() => setDays(n)} aria-pressed={days === n}>
-              <Chip tone={days === n ? "accent" : "neutral"}>{n}</Chip>
-            </button>
-          ))}
-        </div>
-      </div>
+      <ChoiceGroup label="Days a week you practise">
+        {[2, 3, 4, 5, 6, 7].map((n) => (
+          <ChoiceChip key={n} even selected={days === n} onSelect={() => setDays(n)}>
+            {n}
+          </ChoiceChip>
+        ))}
+      </ChoiceGroup>
 
       <div>
         <label htmlFor="goal-note-setting" className="label-xs mb-2 block" style={{ color: "var(--ink-3)" }}>

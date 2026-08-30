@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { TriangleAlert } from "lucide-react";
 import { Button, ButtonLink } from "@/components/Button";
+import { SuggestFix } from "@/components/SuggestFix";
 
 /**
  * Something threw on the server.
@@ -38,6 +39,21 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <div className="mt-2 flex gap-3">
         <Button variant="primary" onClick={reset}>Try again</Button>
         <ButtonLink href="/">Back to Today</ButtonLink>
+      </div>
+      {/*
+        A screen that failed is the one place a person has nothing else to do,
+        and the message above is the useful part only to somebody who can act
+        on it. This is how it reaches them: the digest and the message go with
+        the report, so a fault nobody could reproduce arrives with what it
+        actually said and on which screen.
+      */}
+      <div className="mt-2 w-full">
+        <SuggestFix
+          category="BROKEN"
+          trigger={`${error.message || "Unknown error"}${error.digest ? ` (${error.digest})` : ""}`}
+          label="Tell the Kodukeel team"
+          tone="loud"
+        />
       </div>
     </main>
   );

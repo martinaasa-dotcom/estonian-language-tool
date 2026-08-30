@@ -252,6 +252,11 @@ jobs:
       # exists to make visible.
       - run: node scripts/test-assess.mjs
       - run: node scripts/test-exam.mjs
+      # The loop that starts at a dead end and ends in the shared dictionary:
+      # a report sent from a failed search, accepted in the review queue, and
+      # read back on the entry. Every part of it is in a different process, so
+      # nothing smaller than this can say the loop closes.
+      - run: node scripts/test-suggestions.mjs
       - run: node scripts/a11y-check.mjs
       # And the five this list had quietly lost. The comment above about
       # `test-exam.mjs` sitting here unrun describes the drift in one

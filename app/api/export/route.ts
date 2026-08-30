@@ -70,7 +70,7 @@ export async function GET() {
   const [
     lexemes, cards, reviews, tasks, scans,
     settings, messages, assessments, stars, achievements,
-    examAttempts, classrooms, classroomMembers,
+    examAttempts, classrooms, classroomMembers, suggestions,
   ] = await Promise.all([
     prisma.lexeme.findMany({ include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
@@ -95,6 +95,10 @@ export async function GET() {
     // they chose to be known by, which is theirs and is nowhere else.
     prisma.classroom.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
     prisma.classroomMember.findMany({ where: { ownerId }, orderBy: { joinedAt: "asc" } }),
+    // What they told us was wrong, and what a reviewer said back. Their own
+    // words on one side and a reply about them on the other, so it is theirs
+    // twice over.
+    prisma.suggestion.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
   ]);
 
   const payload = {
@@ -107,10 +111,11 @@ export async function GET() {
       assessments: assessments.length, stars: stars.length,
       achievements: achievements.length, examAttempts: examAttempts.length,
       classrooms: classrooms.length, classroomMembers: classroomMembers.length,
+      suggestions: suggestions.length,
     },
     lexemes, cards, reviews, tasks, scans,
     settings, messages, assessments, stars, achievements,
-    examAttempts, classrooms, classroomMembers,
+    examAttempts, classrooms, classroomMembers, suggestions,
   };
 
   const date = new Date().toISOString().slice(0, 10);

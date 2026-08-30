@@ -17,6 +17,7 @@ import { Paradigm } from "./Paradigm";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
+import { SuggestFix } from "@/components/SuggestFix";
 import { NO_VALUE } from "@/lib/copy/values";
 
 export interface EntryForm {
@@ -118,8 +119,7 @@ export function DictionaryClient({
                 <button
                   type="button"
                   onClick={() => go(s.lemma)}
-                  className="flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left transition-opacity hover:opacity-70"
-                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                  className="choice-btn flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left"
                 >
                   <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>{s.translation}</span>
@@ -157,6 +157,28 @@ export function DictionaryClient({
             body="The built-in dictionary covers common words up to B2. Add this one yourself, put in the genitive and you get the whole case table, audio and cards, exactly like a built-in word."
           />
           <AddWord initialLemma={initialQuery} />
+          {/*
+            A search that found nothing is the commonest dead end in the app,
+            and until now it ended here. Adding the word yourself is the fix
+            for one person; telling us it is missing is the fix for the next
+            person who looks it up, and most people who meet this know the
+            word exists because they are holding it on a page in front of them.
+          */}
+          <div className="flex flex-col gap-2">
+            <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+              Sure this word exists? Tell us and it goes to the Kodukeel team, who can put it in the
+              dictionary for everybody.
+            </p>
+            <div>
+              <SuggestFix
+                category="MISSING_WORD"
+                lemma={initialQuery}
+                trigger={`The dictionary found nothing for "${initialQuery}"`}
+                label="This word is missing"
+                tone="loud"
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -272,6 +294,15 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
         </div>
       </header>
 
+      {/*
+        Disagreeing with the entry, for somebody who is not going to open the
+        edit form. The dictionary is shared and hand-editable, and that is the
+        right tool for a typo you are certain about; this is the one for "my
+        teacher says this is the wrong sense", which is a judgement somebody
+        should look at before it changes what everybody reads.
+      */}
+      <EntryProblem entry={entry} />
+
       {entry.notes && (
         <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
           {entry.notes}
@@ -381,6 +412,38 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
         </div>
       )}
     </Card>
+  );
+}
+
+/** The "this is wrong" affordance on a dictionary entry, in one place. */
+function EntryProblem({ entry }: { entry: EntryView }) {
+  const isVerb = entry.pos === "VERB";
+  const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
+  const formTypes = parts
+    .map(([type, label]) => ({
+      formType: type as string,
+      label,
+      value: entry.forms.find((f) => f.formType === type)?.value ?? "",
+    }))
+    .filter((f) => f.value);
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+        Something here wrong?
+      </p>
+      <SuggestFix
+        category="WRONG_MEANING"
+        categories={["WRONG_MEANING", "WRONG_FORM", "WRONG_EXAMPLE", "OTHER"]}
+        lemma={entry.lemma}
+        lexemeId={entry.id}
+        currentTranslation={entry.translation}
+        formTypes={formTypes}
+        examples={entry.examples.map((e) => e.et)}
+        trigger={`${entry.lemma}: "${entry.translation}"`}
+        label="Suggest a correction"
+      />
+    </div>
   );
 }
 

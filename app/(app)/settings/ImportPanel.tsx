@@ -4,7 +4,9 @@ import { useMemo, useState, useTransition } from "react";
 import { Upload } from "lucide-react";
 import { importWords } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { DiacriticBar } from "@/components/DiacriticBar";
 import { Card } from "@/components/ui";
+import { SuggestFix } from "@/components/SuggestFix";
 
 interface Row { lemma: string; translation: string; pos: string }
 
@@ -52,6 +54,9 @@ const DASH_SEPARATED = /\s[\u2013\u2014-]\s/;
 export function ImportPanel() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<string | null>(null);
+  /* Set when the import itself was refused, which is the only outcome here a
+     person cannot fix by editing their own paste. */
+  const [refused, setRefused] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const rows = useMemo(() => parse(text), [text]);
 
@@ -63,8 +68,10 @@ export function ImportPanel() {
       // cleared by a message telling them to try again.
       if (!r.ok) {
         setResult(r.error);
+        setRefused(r.error);
         return;
       }
+      setRefused(null);
       // A paste larger than the limit is handled, not rejected. Silently
       // dropping the tail would leave someone thinking it all went in.
       const overflow = r.truncated
@@ -96,6 +103,9 @@ export function ImportPanel() {
         className="est mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base outline-none"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
+      {/* This box is usually pasted into, but its own copy says "typed off a
+          class handout", and a handout is exactly where the õ comes from. */}
+      <div className="mt-2"><DiacriticBar /></div>
 
       {rows.length > 0 && (
         <div className="mt-3">
@@ -122,8 +132,20 @@ export function ImportPanel() {
           <Upload size={15} aria-hidden />
           {pending ? "Adding…" : `Add ${rows.length || ""} word${rows.length === 1 ? "" : "s"}`}
         </Button>
-        {result && <p className="text-sm" style={{ color: "var(--good-ink)" }}>{result}</p>}
+        {result && (
+          <p className="text-sm" style={{ color: refused ? "var(--again-ink)" : "var(--good-ink)" }}>{result}</p>
+        )}
       </div>
+
+      {refused && (
+        <div className="mt-3">
+          <SuggestFix
+            category="BROKEN"
+            trigger={`Importing a word list was refused: ${refused}`}
+            label="Tell the Kodukeel team"
+          />
+        </div>
+      )}
     </Card>
   );
 }

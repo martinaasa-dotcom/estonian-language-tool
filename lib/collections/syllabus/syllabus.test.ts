@@ -24,7 +24,7 @@ const SEEDED = new Set<string>([
 ]);
 
 describe("the course", () => {
-  it("runs A1 to C2 with every level populated", () => {
+  it("runs A1 to C1 with every level populated", () => {
     for (const level of LEVELS) {
       expect(unitsAtLevel(level).length, `${level} has no units`).toBeGreaterThan(0);
     }
@@ -158,14 +158,14 @@ describe("what is open to a learner", () => {
   });
 
   it("locks a unit above their level whose prerequisites are unmet", () => {
-    const c2 = SYLLABUS.find((u) => u.level === "C2" && u.requires.length > 0)!;
-    expect(isUnitOpen({ unit: c2, doneUnitIds: new Set(), placement: "A1" })).toBe(false);
+    const c1 = SYLLABUS.find((u) => u.level === "C1" && u.requires.length > 0)!;
+    expect(isUnitOpen({ unit: c1, doneUnitIds: new Set(), placement: "A1" })).toBe(false);
   });
 
   it("opens it once the prerequisites are done", () => {
-    const c2 = SYLLABUS.find((u) => u.level === "C2" && u.requires.length > 0)!;
-    const done = new Set(c2.requires);
-    expect(isUnitOpen({ unit: c2, doneUnitIds: done, placement: "A1" })).toBe(true);
+    const c1 = SYLLABUS.find((u) => u.level === "C1" && u.requires.length > 0)!;
+    const done = new Set(c1.requires);
+    expect(isUnitOpen({ unit: c1, doneUnitIds: done, placement: "A1" })).toBe(true);
   });
 });
 
@@ -193,7 +193,7 @@ describe("nextUnit", () => {
 
   it("runs out honestly when the whole course is done", () => {
     const all = new Set(SYLLABUS.map((u) => u.id));
-    expect(nextUnit({ doneUnitIds: all, startedUnitIds: empty, placement: "C2" })).toBeUndefined();
+    expect(nextUnit({ doneUnitIds: all, startedUnitIds: empty, placement: "C1" })).toBeUndefined();
   });
 });
 

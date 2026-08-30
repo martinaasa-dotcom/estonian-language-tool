@@ -23,6 +23,7 @@ import { extractEstonianSenses } from "../lib/dict/wiktionary";
 import { wordNote } from "../lib/estonian/dictation";
 import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
+import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
@@ -833,20 +834,123 @@ check("colour comes from a token, never a raw hex", () => {
   assert.deepEqual(offenders, [], "a raw hex is used instead of a token");
 });
 
-check("an Estonian text input gets the diacritic bar", () => {
+check("an Estonian text input gets the letter bar, from one list", () => {
   /*
     õ ä ö ü š ž are not on a UK or US keyboard, and a learner typing an answer
     should not have to know an alt code to be marked right.
+
+    The list is read from the module rather than from the component that draws
+    it, which is the change this check needed: there used to be a `DIACRITICS`
+    constant in `EstonianInput` and a second one in `DiacriticBar`, and this
+    check read both, so it was asserting that two copies each said six things
+    rather than that there was one list. A seventh letter added to one of them
+    would have passed.
   */
-  // The characters, not the component that draws them: `EstonianInput` builds
-  // its own row and `DiacriticBar` is the free-standing one, and either is a
-  // fine way to keep the promise.
-  for (const file of ["components/EstonianInput.tsx", "components/DiacriticBar.tsx"]) {
-    const source = read(file);
-    for (const letter of ["õ", "ä", "ö", "ü", "š", "ž"]) {
-      assert.ok(source.includes(letter), `${file} no longer offers ${letter}`);
-    }
+  const letters = read("lib/ux/letterBar.ts");
+  for (const letter of ["õ", "ä", "ö", "ü", "š", "ž"]) {
+    assert.ok(letters.includes(letter), `lib/ux/letterBar.ts no longer offers ${letter}`);
   }
+
+  // And there is one bar. Anything drawing the row has to be the shared
+  // component, whose letters come from the module above.
+  const bar = read("components/DiacriticBar.tsx");
+  assert.match(bar, /ESTONIAN_LETTERS/, "the bar no longer reads the shared list of letters");
+  const drawers = ALL.filter((f) => /className="letter-bar|className={`letter-bar/.test(read(f)));
+  assert.deepEqual(
+    drawers,
+    ["components/DiacriticBar.tsx"],
+    "something other than DiacriticBar draws its own letter bar",
+  );
+});
+
+check("the letter bar is a desktop thing, and a choice, and reversible", () => {
+  /*
+    THREE PROPERTIES, ONE FEATURE. See lib/ux/letterBar.ts for the argument.
+
+    A phone keyboard already carries these letters, so the row buys it nothing
+    and costs it the only vertical space it has. A learner on an Estonian
+    keyboard has them as keys, so the row is clutter under every field in the
+    app. Neither is detectable, so it is asked at first run and changed after.
+
+    Asserted as shapes rather than as today's declarations: what matters is
+    that the bar is off by default and turned on only under a query naming both
+    a width and a real pointer, that the answer is asked and stored, and that
+    there is a way back.
+  */
+  const css = read("app/globals.css");
+
+  // Off by default, so a device that matches nothing draws no bar. A rule that
+  // hid it inside a `max-width` query instead would leave every browser
+  // without that query drawing one.
+  // Anchored to a rule of its own, because the first version of this matched
+  // the `[data-letters="off"] .letter-bar` rule *inside* the query and passed
+  // happily with the default rule deleted, which draws the bar on every phone.
+  assert.match(
+    css,
+    /(^|\n)\s*\.letter-bar[^{}]*\{[^}]*display:\s*none/,
+    "the letter bar is no longer hidden by default",
+  );
+
+  // Both halves of "a desktop". `min-width` alone hands the bar to a tablet in
+  // landscape with nothing attached to it.
+  const query = /@media\s*\(min-width:\s*768px\)\s*and\s*\(pointer:\s*fine\)\s*\{([\s\S]*?)\n  \}/
+    .exec(css);
+  assert.ok(query, "the letter bar is no longer drawn under a width-and-pointer query");
+  assert.match(query[1]!, /\.letter-bar\s*\{\s*display:\s*flex/, "the query no longer draws the bar");
+  assert.match(
+    query[1]!,
+    /\[data-letters="off"\][^{]*\.letter-bar[^{]*\{[^}]*display:\s*none/,
+    "the learner's own answer no longer turns the bar off",
+  );
+
+  // The answer is stored through the settings store, like every other setting.
+  assert.match(read("lib/settings/store.ts"), /letterBar:/, "letterBar is not declared in the store");
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    assert.equal(
+      /["']letterBar["']/.exec(read(file)),
+      null,
+      `${file} writes the letterBar key as a literal`,
+    );
+  }
+
+  // Published for every signed-in screen, from the setting, in the render
+  // rather than from an effect: an attribute written after hydration shows the
+  // bar for a frame to everybody who asked for it to be gone.
+  const layout = read("app/(app)/layout.tsx");
+  assert.match(layout, /SETTING_KEYS\.letterBar/, "the app shell no longer reads the answer");
+  assert.match(layout, /<LetterBarScope/, "the app shell no longer publishes the answer");
+  assert.match(
+    read("components/DiacriticBar.tsx"),
+    /data-letters=\{value\}/,
+    "the scope no longer renders the answer as an attribute",
+  );
+
+  // Asked at first run, which is the point of asking at all: a learner meets
+  // Estonian fields on the very next screen of the wizard.
+  assert.match(
+    read("app/(chromeless)/start/WelcomeWizard.tsx"),
+    /letterBar:\s*letters/,
+    "first run no longer asks which keyboard the learner has",
+  );
+  assert.match(
+    read("app/actions.ts"),
+    /completeOnboarding[\s\S]*?SETTING_KEYS\.letterBar/,
+    "first run's answer is no longer written",
+  );
+
+  // And two ways back, because the moment somebody notices they do not need
+  // the row is the moment they are looking at it.
+  assert.match(
+    read("components/DiacriticBar.tsx"),
+    /setLetterBar\("off"\)/,
+    "the bar no longer offers to remove itself",
+  );
+  assert.match(
+    read("app/(app)/settings/PreferencesPanel.tsx"),
+    /setLetterBar/,
+    "Settings can no longer turn the letters back on",
+  );
 });
 
 check("nothing a person reads is smaller than the scale allows", () => {
@@ -1403,24 +1507,179 @@ check("the actions that do real work per call are throttled", () => {
   const keys = Object.keys(ACTION_LIMITS);
   assert.ok(keys.length >= 6, `expected the throttled actions, found ${keys.length}`);
 
+  /*
+    THE NAMES A THROTTLE MAY BE CHARGED TO, READ OFF THE FILE.
+
+    This used to require the literal `ownerId`, which was right while every
+    throttled action was a learner acting on their own data. The review queue
+    is the first one that is not: `reviewSuggestion` resolves an *admin*
+    through `requireAdminId`, and calling that binding `ownerId` to satisfy a
+    regex would be naming a variable after the check that reads it.
+
+    So what is asserted is the property the literal was standing in for: the
+    id was resolved here, by a `require...()` helper, and did not arrive as an
+    argument. Every export of a "use server" file is a public endpoint, so an
+    action taking the id to charge from its caller would let anybody spend
+    somebody else's allowance, or spend none at all by passing a fresh string
+    every time.
+  */
+  const resolvedIds = new Set(
+    [...source.matchAll(/const (\w+) = await require(\w*)\(/g)].map(([, name]) => name!),
+  );
+  assert.ok(
+    resolvedIds.size >= 1,
+    "no action resolves its own identity, which would make the check below vacuous",
+  );
+
   for (const key of keys) {
-    assert.match(
-      source,
-      new RegExp(`throttleAction\\(ownerId, "${key}"\\)`),
-      `${key} has an allowance in the table and no action applying it`,
+    const applied = new RegExp(`throttleAction\\((\\w+), "${key}"\\)`).exec(source);
+    assert.ok(applied, `${key} has an allowance in the table and no action applying it`);
+    assert.ok(
+      resolvedIds.has(applied[1]!),
+      `${key} is charged to ${applied[1]}, which this file never resolved for itself`,
     );
   }
 
+  for (const [, charged] of source.matchAll(/throttleAction\(([^,)]*),/g)) {
+    assert.ok(
+      resolvedIds.has(charged!.trim()),
+      `an action throttles against ${charged!.trim()}, which is not an identity it resolved`,
+    );
+  }
+});
+
+check("every dead end in the app offers a way to report it", () => {
   /*
-    And the throttle is charged to the resolved owner, never to an argument.
-    Every export in a "use server" file is a public endpoint, so an action that
-    took the id to charge from its caller would let anybody spend somebody
-    else's allowance, or spend none by passing a fresh string each time.
+    THE RULE: nothing here may tell somebody it cannot help them and then
+    stop. A search that found nothing, an answer marked wrong that was right, a
+    screen that threw, a link that went nowhere — each of those used to end in
+    a sentence and a back button, and the person who knew what was actually
+    wrong was the one person with nowhere to put it.
+
+    Asserted on the four screens where the dead end is structural rather than
+    incidental, and asserted in both halves: the failure copy has to still be
+    there, and the way out has to be beside it. Half of that on its own is
+    what decays. A file that stops rendering the failure is a screen that was
+    rewritten and should be looked at again; a file that keeps the failure and
+    loses the button is the regression this check exists for.
   */
+  const deadEnds: [string, RegExp, string][] = [
+    [
+      "app/(app)/dictionary/DictionaryClient.tsx",
+      /Nothing found for/,
+      "a search that found nothing",
+    ],
+    [
+      "app/error.tsx",
+      /didn&rsquo;t load|did not load/,
+      "a screen that threw",
+    ],
+    [
+      "app/not-found.tsx",
+      /There&rsquo;s no page here|no page here/,
+      "a link that led nowhere",
+    ],
+    [
+      "app/(app)/review/ReviewSession.tsx",
+      /verdict\.verdict !== "correct"/,
+      "an answer the app marked wrong",
+    ],
+  ];
+
+  for (const [file, failure, what] of deadEnds) {
+    const source = read(file);
+    assert.match(source, failure, `${file} no longer renders ${what}, so this check is watching nothing`);
+    assert.match(
+      source,
+      /<SuggestFix/,
+      `${file} shows ${what} and offers no way to tell anybody about it`,
+    );
+  }
+});
+
+check("a category nobody can send is not a tab in the review queue", () => {
+  /*
+    The same shape as the throttle table above, for the same reason. The
+    categories are what the queue filters, counts and reasons by, so one that
+    no screen can produce is a permanently empty tab and a branch in the apply
+    path that is never exercised. Reading the table rather than a list typed
+    here means adding a category is adding it in one place and using it.
+  */
+  /*
+    Read out of the mounted components rather than out of the files. A key
+    also appears in the queue's own fallback and in a filter, and matching
+    those would let a category pass this check while being unreachable from
+    any dead end, which is the exact failure it is here to catch.
+  */
+  const mounted = [...APP, ...COMPONENTS]
+    .flatMap((file) => [...read(file).matchAll(/<SuggestFix[\s\S]*?\/>/g)].map(([usage]) => usage))
+    .join("\n");
+  assert.ok(mounted.length > 0, "nothing in the app mounts the report button at all");
+
+  for (const key of CATEGORY_KEYS) {
+    assert.ok(
+      mounted.includes(`"${key}"`),
+      `${key} is a category in the review queue that no screen can send`,
+    );
+  }
+});
+
+check("pushing a change through the queue is gated on more than being signed in", () => {
+  /*
+    `reviewSuggestion` writes to the shared dictionary on one person's say-so,
+    and every export of a "use server" file is a public endpoint. So it
+    resolves a reviewer rather than a user, and it resolves them rather than
+    taking an id: an action that trusted an argument here would let anybody
+    accept their own suggestion.
+
+    `lib/auth/admin.ts` is the whole answer to who that is, and it may never
+    learn it from the request. A deployment with sign-in configured and nobody
+    named has no admins, which is why the empty list is checked too: falling
+    back to "anybody signed in" on an open sign-up would be the same hole with
+    a friendlier shape.
+  */
+  const review = between(read("app/actions.ts"), "export async function reviewSuggestion");
+  assert.match(review, /requireAdminId\(\)/, "the review action does not establish who is reviewing");
   assert.doesNotMatch(
-    source,
-    /throttleAction\((?!ownerId)/,
-    "an action throttles against something other than the owner it resolved",
+    review,
+    /requireUserId\(\)/,
+    "the review action settles for a signed-in user where it needs a reviewer",
+  );
+
+  const admin = read("lib/auth/admin.ts");
+  assert.match(
+    admin,
+    /admins\.length === 0\) return false/,
+    "a deployment that has named no reviewer no longer refuses everybody",
+  );
+});
+
+check("nothing a model wrote can reach the dictionary through the queue", () => {
+  /*
+    ADR-005 stated over the newest write path into the dictionary. Every
+    Estonian character an accepted suggestion writes was typed by a person, in
+    a form, exactly like a hand edit — and the way that stays true is that no
+    module in this feature can reach a provider at all.
+
+    The apply path also writes forms, so it carries the same restriction the
+    hand-edit path does: a principal part may be replaced and a retrieved
+    Ekilex paradigm may not. That is stated here as well as in the module,
+    because it is one `if` between a correction and a learner's paradigm being
+    overwritten by whoever shouted loudest.
+  */
+  for (const file of sourceFiles("lib/suggestions")) {
+    const source = read(file);
+    assert.doesNotMatch(
+      source,
+      /lib\/tutor|openWithFallback|ANTHROPIC|OPENAI|OPENROUTER/,
+      `${file} can reach a model, and this path writes Estonian into the shared dictionary`,
+    );
+  }
+  const apply = read("lib/suggestions/apply.ts");
+  assert.match(
+    apply,
+    /isPrincipalFormType\(/,
+    "an accepted correction can now overwrite a retrieved Ekilex form",
   );
 });
 
@@ -2276,6 +2535,123 @@ check("a date is written in the reader's own locale, not the server's", () => {
   const local = code(join("components", "LocalDate.tsx"));
   assert.match(local, /^\s*"use client"/m, "LocalDate stopped being a client component");
   assert.match(local, /fallback/, "LocalDate no longer renders what the server wrote while it waits");
+});
+
+/*
+  A CONTROL LOOKS LIKE A CONTROL, AND A CHOSEN ONE LOOKS CHOSEN.
+
+  Three faults, one cause: there was no primitive for "pick one of these", so
+  every screen that asked invented its own answer and two of the three were
+  wrong.
+
+  The worst was a bare `<button>` wrapped round a `<Chip>`. A chip is the
+  app's *label*: it is what the dictionary uses to say "B1" and "verb", and it
+  carries no border, no shadow and no hover. Eight of them in a row under a
+  heading read as a legend, so first run, the screen that decides a learner's
+  year, did not read as a form at all. Selection swapped `--raised` for
+  `--accent-soft`, which on the dark theme is two percent of lightness: the
+  answer to the question was being carried by a difference somebody could look
+  straight at and not see. And every option carried `aria-pressed`, so eight
+  mutually exclusive answers announced as eight unrelated switches and cost
+  eight tab stops.
+
+  `components/Choice.tsx` is the one answer now, and its states live in
+  `.choice` in app/globals.css rather than in a `style` prop, because an inline
+  style beats a stylesheet and a control that paints its resting look inline
+  can never define a hover. That is not a detail: it is the mechanism that made
+  the missing hover unfixable in place.
+
+  Asserted as a shape rather than as today's markup: a chip inside a button is
+  the fault, wherever it appears.
+*/
+/**
+ * Every `<button …>` opening tag in a source file, with what follows it.
+ *
+ * A regex cannot do this and the first version of the two checks below proved
+ * it by passing over a deliberately reintroduced fault: `<button[^>]*>` ends
+ * at the first `>` it meets, and `onClick={() => pick(x)}` puts one inside the
+ * tag. Both checks then matched an empty prefix and found nothing. So the tag
+ * ends at the first `>` outside any brace, which is where JSX actually ends it.
+ */
+function buttonTags(source: string): { tag: string; after: string }[] {
+  const out: { tag: string; after: string }[] = [];
+  for (let i = source.indexOf("<button"); i !== -1; i = source.indexOf("<button", i + 1)) {
+    let depth = 0;
+    for (let j = i + 7; j < source.length; j += 1) {
+      const c = source[j];
+      if (c === "{") depth += 1;
+      else if (c === "}") depth -= 1;
+      else if (c === ">" && depth === 0) {
+        out.push({ tag: source.slice(i, j + 1), after: source.slice(j + 1, j + 400) });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+check("an option a learner picks is a control, not a label in a button", () => {
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const { tag, after } of buttonTags(read(file))) {
+      assert.ok(
+        !/^\s*(?:\{[^{}]*\}\s*)?<Chip\b/.test(after),
+        `${file} wraps a Chip in a button (${tag.slice(0, 60)}…): a chip is a label and has ` +
+        "no pressable state. Use ChoiceChip from components/Choice.tsx.",
+      );
+    }
+  }
+
+  // And the primitive still has the three things that make it one.
+  const choice = read("components/Choice.tsx");
+  assert.match(choice, /role: "radio"/, "the single-select group stopped being a radio group");
+  assert.match(choice, /"aria-pressed"/, "the multi-select group stopped being toggle buttons");
+  assert.match(choice, /tabIndex = r === stop \? 0 : -1/, "the radio group lost its roving tab stop");
+
+  for (const name of [".choice-btn", ".choice-chip[data-on]", ".choice-card[data-on]", ".choice-btn:hover"]) {
+    assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
+  }
+});
+
+/*
+  A HOVER MAKES A CONTROL MORE PRESENT, NEVER LESS.
+
+  Twenty-odd controls carried `transition-opacity hover:opacity-80` as their
+  entire hover state: the multiple-choice options in two practice modes, the
+  self-rating buttons on the level check, the starred words in the dictionary,
+  the case rows on three screens, the delete buttons in two lists. Fading a
+  thing under the pointer is the one hover the rest of this interface uses for
+  nothing else, because dimming is exactly how every disabled control here is
+  drawn. So the strongest signal a mouse got on those screens was the control
+  appearing to switch off, which is worse than no hover at all. `.choice-btn`
+  and `.tap-tint` in app/globals.css are the two replacements, and `.choice-btn`
+  is main's rather than this branch's: two sessions found the same fault the
+  same day from different ends, and a custom property is the better way to let
+  a caller's tone through a class hover.
+
+  The exemption is a link, and it is deliberate rather than a hole: an `<a>`
+  fading slightly is the oldest link hover there is, and a `<button>` that is
+  drawn as underlined text is a link wearing the right element. So the rule is
+  written against `<button>` and reads the underline, rather than being
+  switched off per file.
+*/
+check("a hover makes a control more present, never less", () => {
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const { tag } of buttonTags(read(file))) {
+      if (!/hover:opacity-/.test(tag)) continue;
+      assert.match(
+        tag,
+        /\bunderline\b/,
+        `${file} fades a button on hover, which is how this app draws "disabled". ` +
+        "Use .choice-btn (a box) or .tap-tint (a bare row or icon) from app/globals.css.",
+      );
+    }
+  }
+
+  for (const name of [".choice-btn:hover", ".tap-tint:hover"]) {
+    assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
+  }
 });
 
 console.log(

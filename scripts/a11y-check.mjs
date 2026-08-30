@@ -28,7 +28,7 @@ const ROUTES = [
   "/", "/learn", "/practice", "/progress", "/tasks", "/words", "/week", "/dictionary",
   "/grammar", "/grammar/inessive", "/guide", "/settings", "/scan", "/class", "/tutor",
   "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
-  "/welcome",
+  "/welcome", "/suggestions", "/admin/suggestions",
   "/review", "/review/write", "/review/government", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
   "/review/sentences", "/review/speaking", "/review/sprint",
@@ -115,8 +115,8 @@ const CONTRAST = `(${(() => {
 }).toString()})()`;
 
 /*
-  Floor: 317, which is what this list reaches: thirty-five routes at eight
-  checks each, a contrast pass over the same thirty-five in dark mode, and the
+  Floor: 335, which is what this list reaches: thirty-seven routes at eight
+  checks each, a contrast pass over the same thirty-seven in dark mode, and the
   two that run once at the end.
 
   It was 42 for ten routes, and stayed 42 when the level check added three and
@@ -124,7 +124,7 @@ const CONTRAST = `(${(() => {
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, done } = suite("Accessibility", { floor: 317 });
+const { check, done } = suite("Accessibility", { floor: 335 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -156,8 +156,21 @@ for (const route of ROUTES) {
       ).trim();
       if (!name) bad.unnamed.push(el.tagName + (el.className ? `.${String(el.className).slice(0, 30)}` : ""));
 
-      // A tabindex of -1 on something clickable means keyboard users cannot reach it.
-      if (el.getAttribute("tabindex") === "-1") bad.noFocusRing.push(el.tagName);
+      /*
+        A tabindex of -1 on something clickable means keyboard users cannot
+        reach it, with one standard exception: a member of a radio group.
+        ARIA's roving tabindex gives the whole group a single tab stop and
+        moves between its options with the arrow keys, so every option but one
+        carries -1 on purpose (components/Choice.tsx). The exemption is
+        conditional on the group actually having that one stop, so a group
+        that loses it still fails here rather than being waved through.
+      */
+      const group = el.closest("[role='radiogroup']");
+      const roving =
+        el.getAttribute("role") === "radio" &&
+        group !== null &&
+        group.querySelectorAll("[role='radio'][tabindex='0']").length === 1;
+      if (el.getAttribute("tabindex") === "-1" && !roving) bad.noFocusRing.push(el.tagName);
     }
 
     for (const img of document.querySelectorAll("main img")) {

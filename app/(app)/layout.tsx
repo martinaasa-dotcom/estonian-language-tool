@@ -6,10 +6,12 @@ import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
 import { AnuFab } from "@/components/anu/AnuFab";
 import { TimeZoneSync } from "@/components/TimeZoneSync";
+import { LetterBarScope } from "@/components/DiacriticBar";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { requireUserId } from "@/lib/auth/session";
-import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { letterBarFrom } from "@/lib/ux/letterBar";
 
 // Not cached at build time: `configured` below is read from the environment,
 // and a notice baked in from the build machine's environment describes
@@ -26,16 +28,27 @@ export const dynamic = "force-dynamic";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const chain = resolveProviders();
   /*
-    Where this learner's midnight is. Read in the layout rather than on Today,
-    because it is not Today's question: the heatmap, the badges, the class
-    roster and the share card all count days too, and a value collected on one
-    screen would be missing for anybody whose first visit landed on another.
-    One indexed read, and the component below writes only when the browser
-    disagrees with what came back. See lib/time/day.ts.
+    Two settings the shell needs, in one read rather than two.
+
+    The letter bar has to be resolved here rather than on each page, because
+    Anu's floating input and the command palette sit outside every page and
+    carry Estonian fields too. The timezone has to be here for the same shape
+    of reason: the heatmap, the badges, the class roster and the share card all
+    count days, so a value collected on one screen would be missing for anybody
+    whose first visit landed on another. `readSettings` takes both keys in one
+    indexed query, on a request that is already dynamic.
+
+    See lib/ux/letterBar.ts for why the bar is a question at all, and
+    lib/time/day.ts for what the zone is worth.
   */
-  const storedZone = await readSetting(await requireUserId(), SETTING_KEYS.timeZone);
+  const settings = await readSettings(
+    await requireUserId(),
+    [SETTING_KEYS.letterBar, SETTING_KEYS.timeZone],
+  );
+  const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
+  const storedZone = settings[SETTING_KEYS.timeZone] ?? null;
   return (
-    <>
+    <LetterBarScope value={letters} dismissible>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-full focus:px-4 focus:py-2"
@@ -67,6 +80,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         readerCanConfigure={!supabaseConfigured()}
         plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
       />
-    </>
+    </LetterBarScope>
   );
 }

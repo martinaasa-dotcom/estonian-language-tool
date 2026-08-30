@@ -172,9 +172,12 @@ check("the plan is on the same screen as the level",
 await page.goto(`${B}/settings#goals`, { waitUntil: "networkidle" });
 check("goals are editable for ever, not just at first run",
   (await page.getByText("Why you are learning").count()) > 0);
-await page.getByRole("button", { name: /Citizenship or residence/ }).click();
-await page.getByRole("button", { name: /^B1 · Live in the language$/ }).click();
-await page.getByRole("button", { name: /In six months/ }).click();
+// A goal answer is a `radio` and not a `button`: these are mutually
+// exclusive, so the set is one radio group rather than eight toggle switches
+// each announcing itself as pressed or not. See components/Choice.tsx.
+await page.getByRole("radio", { name: /Citizenship or residence/ }).click();
+await page.getByRole("radio", { name: /^B1 · Live in the language$/ }).click();
+await page.getByRole("radio", { name: /In six months/ }).click();
 await page.getByRole("button", { name: /^Save goals$/ }).click();
 await page.waitForTimeout(900);
 
@@ -232,12 +235,12 @@ if (onboarded) {
     (await page.getByRole("button", { name: /Take the level check/ }).count()) > 0);
   check("and an estimate for anyone in a hurry",
     (await page.getByText(/a guess is a guess/i).count()) > 0);
-  await page.getByRole("button", { name: /I get by/ }).click();
+  await page.getByRole("radio", { name: /I get by/ }).click();
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   check("it asks why, and one of the reasons is the one with an exam attached",
     (await page.getByText(/Citizenship or residence/).count()) > 0);
-  await page.getByRole("button", { name: /Citizenship or residence/ }).click();
+  await page.getByRole("radio", { name: /Citizenship or residence/ }).click();
 
   const goalStep = await page.locator("body").innerText();
   check("choosing a reason names the level it needs, by what it lets you do",

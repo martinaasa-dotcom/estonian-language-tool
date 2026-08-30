@@ -224,6 +224,62 @@ replace only the principal parts, and it must never touch a retrieved Ekilex par
 scoped to a person — cards, reviews, tasks — is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
+**A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
+somebody it cannot help them and then stop. A search that found nothing, an answer marked wrong that
+was right, a word off their own homework the dictionary would not vouch for, a grammar page that
+contradicts their teacher, a screen that threw: every one of those used to end in a sentence and a
+back button, and the person who knew what was actually wrong was the one person with nowhere to put
+it. `components/SuggestFix.tsx` is mounted beside the failure rather than filed under a contact
+page, and it carries the failure with it, because "kohv is wrong" teaches a reviewer nothing and the
+same words under `/review` beside "we asked for the partitive and marked kohvi wrong" teach them
+everything. The note is optional on purpose: somebody annoyed enough to press it has already given
+us the useful half by pressing it there, and a form that will not send without a paragraph collects
+nothing from the people worth hearing from.
+
+`lib/suggestions/model.ts` is the one table of what can be reported, and two invariants hold it up.
+Every category must be reachable from a screen, asserted against the mounted components rather than
+against the files, because a key also appears in the queue's own fallback and matching that would
+let a category pass while being unreachable. And the four screens where the dead end is structural
+have to still render both halves, the failure and the button beside it, since a file that keeps the
+failure and loses the button is the regression worth catching.
+
+**The unit of review is the group, not the report.** Sign-up is open and every failure offers this
+button, so the queue's size is decided by how many people meet one fault. A list ordered by time is
+one dead link four hundred times over with the report that matters on page nine. `groupKeyFor` is
+deliberately blunt about it: over-grouping two similar reports costs a reviewer one extra read,
+under-grouping costs them four hundred. One person gets one open report per thing, so the count
+beside a group means people rather than clicks, which is the only reading that makes it worth
+printing. Accepting acts on the group.
+
+**Accepting is a write into the shared dictionary, so it obeys every rule a hand edit does.** Both
+go through `lib/dict/upsert.ts`, which is one function rather than two copies of the answers that
+matter: only principal parts may be replaced, a retrieved Ekilex paradigm is never touched, and an
+entry Ekilex supplied stays marked as Ekilex's after a correction. `lib/suggestions/apply.ts` may
+remove an example sentence and never rewrite one, because editing an attested sentence would be this
+app writing Estonian. Every Estonian character that reaches the dictionary this way was typed by a
+person into a form, exactly as ADR-005 requires; no module under `lib/suggestions/` can reach a
+provider at all, and an invariant says so. It never rewrites anybody's cards: the hand-edit path
+rewrites the editor's own and deliberately nobody else's, and a reviewer accepting a stranger's
+report has less claim still.
+
+**Who reviews is a deployment fact, like who the controller is.** `lib/auth/admin.ts` reads
+`ADMIN_EMAILS`, exact addresses only, never a domain: "this school may sign in" and "this person may
+change what everybody reads" are different questions. A hosted deployment that has named nobody has
+no reviewers and the queue says so out loud, the way `/privacy` says an operator was not named,
+because an empty list looks like an empty queue. Local mode is one learner on one machine who
+reviews their own. There is no way to grant this from inside the app, since a privilege a request
+can grant is a privilege a forged one can grant. `reviewSuggestion` resolves a reviewer through
+`requireAdminId` rather than settling for a signed-in user, and the throttle invariant was widened
+for it: what it asserts now is that the id was resolved by a `require...()` in the same file, not
+that it is spelled `ownerId`, because naming an admin binding after a regex is naming a variable
+after the check that reads it.
+
+**And it does not revalidate its own queue.** Revalidating `/admin/suggestions` inside the action
+re-rendered the list, which unmounted the row that had just been acted on along with the sentence
+saying what it did: the reviewer clicked "Accept and apply" and the line vanished with no word about
+whether a word had been added. Rows must not reshuffle under the cursor between clicks either. The
+row reports its own outcome and the list is right again on the next load.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -444,6 +500,30 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   rather than a copy per caller, on the argument `lib/cache/singleFlight.ts` makes about itself,
   and the invariant fails on any component that mints an object URL without revoking it. That is
   how `ShareProgress` turned up, holding a shared card for the life of its tab.
+- **"Pick one of these" is one component, and a chip is not a control.**
+  `components/Choice.tsx` is it: `ChoiceGroup` plus `ChoiceChip` or `ChoiceCard`. There was no
+  primitive for this and every screen that asked invented its own, two of the three wrongly. The
+  worst was a bare `<button>` wrapped round a `<Chip>`, which is the app's *label* primitive: no
+  border, no shadow, no hover, so first run, the screen that decides a learner's year, read as a
+  legend rather than as a form. Chosen was `--raised` swapped for `--accent-soft`, two percent of
+  lightness apart on the dark theme, which is the palette's own rule about hue being broken on the
+  one screen where the distinction *is* the answer. And a set of mutually exclusive options wore
+  `aria-pressed`, so it announced as that many unrelated switches and cost that many tab stops
+  rather than as one radio group saying "3 of 8". Its chosen states live in `globals.css`
+  and not in a `style` prop, for the reason in the next rule: a control that paints its resting
+  background inline can never define a hover, which is what made this unfixable in place.
+- **A hover makes a control more present, never less.** `.choice-btn` for a box, `.tap-tint` for a
+  bare row or icon button. Twenty-odd controls carried `transition-opacity hover:opacity-80` as
+  their whole hover state, and dimming is exactly how every disabled control here is drawn, so the
+  strongest signal a mouse got on those screens was the control appearing to switch off. A link
+  may still fade, and a `<button>` drawn as underlined text is a link wearing the right element,
+  which is the one exemption the invariant reads.
+  Two sessions found this the same day from opposite ends, main on the multiple-choice answers and
+  this branch on the settings and first-run questions, and both worked out the same cause: an
+  inline style beats a class `:hover`, so a control that paints its resting background inline can
+  never define one. Main's answer is the one kept, because a `--choice-bg` custom property is how a
+  caller passes a tone *through* a hover, where an inset ring is only how you avoid needing to.
+  The second copy was deleted rather than left beside it.
 - **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So
@@ -518,7 +598,25 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   observed through resource timing, **not** on `useTransition`'s pending flag: measured here that
   goes true and never comes back, which would have turned the ring for its full eight second
   ceiling on every pull.
-- Estonian text inputs get the diacritic bar.
+- **The Estonian letter bar is a desktop thing, and a choice.** `õ ä ö ü š ž` are not on a UK or US
+  keyboard, so a row of click-to-insert buttons under every Estonian field is the only thing making
+  half these exercises answerable. It was drawn for everybody, everywhere, always, and it should
+  have been neither. A phone keyboard already carries those letters, on a long press or a keyboard
+  switched to Estonian, so the row buys a phone nothing and spends the one thing a phone has none
+  of; and a learner typing on an Estonian keyboard has them as keys, so it is clutter under every
+  field in the app. Neither is detectable: a browser will not say what is printed on the keys, and
+  a learner who never reaches for õ looks exactly like one who cannot. So it is asked, once, on the
+  first screen of first run, and changed afterwards from Settings or from the row itself, which
+  carries its own way out because the moment somebody notices they do not need it is the moment
+  they are looking at it. `lib/ux/letterBar.ts` holds the letters and the answer, `app/globals.css`
+  holds the one definition of "a desktop" (a width **and** a real pointer, since `min-width` alone
+  hands the row to a tablet with nothing attached to it), and the signed-in shell publishes the
+  learner's answer as `data-letters` in the render rather than from an effect, because an attribute
+  written after hydration shows the row for a frame to everybody who asked for it to be gone.
+  **On is the default and stays the default**: everybody who signed up before the question existed
+  is never asked, and reading a missing answer as "off" would take away the only way they have of
+  writing õ. `scripts/test-mobile.mjs` measures all of it in a browser, which is the only place the
+  pointer half of the rule is real.
 
 ## Model configuration
 
@@ -564,8 +662,12 @@ boundary at a time once the first half of its line had already been shown, so th
 is now decided when it opens and carried until it ends.
 
 **A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
-this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
-individual's deck, searches or answer history. Do not widen it. (ADR-019.)
+this week, streak, words known, last-seen, the group's weakest cases in aggregate, and, amending
+ADR-019, each student's own weakest case as a rolled-up percentage over their own reviews, gated on
+`MIN_STUDENT_CASE_REVIEWS` so one bad card never names anybody. That is still never an individual's
+deck, searches or answer history: a student's raw mistakes stay theirs alone, only the roll-up moves.
+The join screen states this before anyone joins, and `weakestCase` may only ever be a `{grammCase,
+accuracy, total}` roll-up, never a specific answer, a search, or a card.
 
 **Never score pronunciation.** Not because none is reachable, which stopped being true, but
 because the reachable one is not good enough and that was measured rather than assumed.
@@ -701,7 +803,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
-`rawAvailable`, `absentParts`, `standsFor`, `stageOf`. Most of them now
+`rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
+`requireAdminId`, `upsertLexemeWithForms`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -719,7 +822,7 @@ npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
-npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, a11y
+npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y
 
 npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
@@ -792,6 +895,11 @@ page correctly offers no camera.
 per-part clock, one question of every shape, handing in, and the result's per-part breakdown and
 answer list. It also checks the hub's confidence figures carry an evidence tier, because a
 percentage whose basis is not stated is the one thing this feature must not ship.
+
+`scripts/test-suggestions.mjs` drives the loop that starts at a dead end and ends in the shared
+dictionary: a report sent from a failed search, accepted in the review queue, and read back on the
+entry, then a correction to that entry sent and accepted the same way. Every part of it is in a
+different process, so nothing smaller than this can say the loop closes.
 
 `scripts/test-modes.mjs` covers the path, the practice modes, typed answers, undo and the command
 palette. `scripts/test-teaching.mjs` covers the half that teaches rather than tests: the grammar

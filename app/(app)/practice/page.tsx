@@ -260,7 +260,7 @@ export default async function PracticePage() {
                     <li key={c.grammCase} className="flex items-center gap-1">
                       <Link
                         href={`/review?case=${c.grammCase}`}
-                        className="flex flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 transition-opacity hover:opacity-75"
+                        className="tap-tint flex flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5"
                         aria-label={`Drill the ${c.grammCase.toLowerCase()}, currently ${c.accuracy} percent over ${c.total} reviews`}
                       >
                         <Target size={15} aria-hidden style={{ color: "var(--ink-3)" }} />

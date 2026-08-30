@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setDailyGoal } from "@/app/actions";
-import { Chip } from "@/components/ui";
+import { ChoiceChip, ChoiceGroup } from "@/components/Choice";
 
 const PRESETS = [
   { label: "Casual", value: 10 },
@@ -13,7 +13,7 @@ const PRESETS = [
 
 export function DailyGoalPanel({ currentGoal }: { currentGoal: number }) {
   const [goal, setGoal] = useState(currentGoal);
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const pick = (value: number) => {
     setGoal(value);
@@ -21,20 +21,18 @@ export function DailyGoalPanel({ currentGoal }: { currentGoal: number }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    /*
+      No `disabled` while the write is in flight. The chosen preset is local
+      state and moves on the click, so disabling the row only made the answer
+      you just gave un-hoverable for a moment, which reads as the control
+      breaking rather than as it working.
+    */
+    <ChoiceGroup ariaLabel="Daily goal" className="flex flex-wrap items-center gap-2">
       {PRESETS.map((p) => (
-        <button
-          key={p.value}
-          type="button"
-          disabled={pending}
-          onClick={() => pick(p.value)}
-          aria-pressed={goal === p.value}
-        >
-          <Chip tone={goal === p.value ? "accent" : "neutral"}>
-            {p.label} · {p.value}/day
-          </Chip>
-        </button>
+        <ChoiceChip key={p.value} selected={goal === p.value} onSelect={() => pick(p.value)}>
+          {p.label} · {p.value}/day
+        </ChoiceChip>
       ))}
-    </div>
+    </ChoiceGroup>
   );
 }
