@@ -7,6 +7,8 @@ import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
 
+export const metadata = { title: "Review" };
+
 export const dynamic = "force-dynamic";
 
 const NEW_PER_SESSION = 10;

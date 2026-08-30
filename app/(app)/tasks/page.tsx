@@ -4,6 +4,8 @@ import { Empty, Page, SectionTitle } from "@/components/ui";
 import { TaskRow } from "@/components/TaskRow";
 import { NewTaskForm } from "./NewTaskForm";
 
+export const metadata = { title: "Tasks" };
+
 export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {

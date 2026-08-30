@@ -9,6 +9,7 @@ import { DiacriticBar } from "@/components/DiacriticBar";
 import { Chip, Stat } from "@/components/ui";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import type { GradedSentence } from "@/lib/tutor/grader";
+import type { WithholdReason } from "@/lib/tutor/verify";
 
 export interface WritingPrompt {
   /** The card this exercise practises, so the round feeds the scheduler. */
@@ -31,6 +32,8 @@ interface Marked {
   quotaMessage?: string;
   /** Forms Anu used that the dictionary could not vouch for. Its note is dropped. */
   withheld?: string[];
+  /** Whether those were certainly Estonian, which decides what the notice claims. */
+  withheldReason?: WithholdReason | null;
 }
 
 /**
@@ -142,6 +145,11 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
+      {/* The heading a session screen has no room to draw. Same line as the
+          other six modes: the empty state carries one and the round did not,
+          which is why an accessibility run that happened to meet an empty deck
+          saw a heading and passed. */}
+      <h1 className="sr-only">Writing</h1>
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link href="/" aria-label="End session" className="rounded p-1" style={{ color: "var(--ink-3)" }}>
           <X size={19} aria-hidden />
@@ -179,7 +187,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             </strong>{" "}
             <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
           </p>
-          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent)" }}>
+          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
             {prompt.caseEt}
           </p>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
@@ -251,7 +259,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
  * would borrow the dictionary's authority for the model's guess.
  */
 function Feedback({ marked }: { marked: Marked }) {
-  const { formCheck, graded, quotaMessage, withheld } = marked;
+  const { formCheck, graded, quotaMessage, withheld, withheldReason } = marked;
 
   return (
     <div className="mt-6 flex flex-col gap-3" aria-live="polite">
@@ -280,9 +288,19 @@ function Feedback({ marked }: { marked: Marked }) {
           style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
         >
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
-            Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give it,
-            and an unverified form is exactly what this app will not show you. The verdict above
-            comes from the dictionary and stands.
+            {withheldReason === "unvouched-word" ? (
+              <>
+                Anu&rsquo;s note was withheld: it quoted a word the dictionary could not vouch for.
+                That word may have been English rather than an Estonian form, and the check does not
+                gamble on which. The verdict above comes from the dictionary and stands.
+              </>
+            ) : (
+              <>
+                Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give
+                it, and an unverified form is exactly what this app will not show you. The verdict
+                above comes from the dictionary and stands.
+              </>
+            )}
           </p>
         </div>
       )}

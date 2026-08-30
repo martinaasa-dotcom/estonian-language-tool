@@ -6,8 +6,26 @@ import { requireUserId } from "@/lib/auth/session";
 import { classworkHistory } from "@/app/actions";
 import { PATH } from "@/lib/collections/syllabus";
 import { classRoster } from "@/lib/classroom/roster";
+import { LocalDate } from "@/components/LocalDate";
 import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, StatTile } from "@/components/ui";
 import { ArchiveClass, AssignHomework, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
+
+/*
+  The class's own name, and never a fallback that names one to somebody who is
+  not in it. `generateMetadata` runs before the page's membership check, so a
+  title read straight from `Classroom` would put the name of a class in the
+  browser tab of anybody who guessed its id. It reads through the membership
+  row for the same reason the page does.
+*/
+export async function generateMetadata({ params }: { params: Promise<{ classroomId: string }> }) {
+  const { classroomId } = await params;
+  const ownerId = await requireUserId();
+  const membership = await prisma.classroomMember.findUnique({
+    where: { classroomId_ownerId: { classroomId, ownerId } },
+    select: { classroom: { select: { name: true } } },
+  });
+  return { title: membership?.classroom.name ?? "Class" };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -243,7 +261,16 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
 
         <div className="flex flex-wrap items-center gap-4 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
           {isTeacher ? <ArchiveClass classroomId={classroomId} /> : <LeaveClass classroomId={classroomId} />}
-          <Chip>joined {membership.joinedAt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</Chip>
+          <Chip>
+            joined{" "}
+            <LocalDate
+              iso={membership.joinedAt.toISOString()}
+              options={{ day: "numeric", month: "short", year: "numeric" }}
+              fallback={membership.joinedAt.toLocaleDateString(undefined, {
+                day: "numeric", month: "short", year: "numeric",
+              })}
+            />
+          </Chip>
         </div>
       </div>
     </Page>

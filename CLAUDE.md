@@ -124,6 +124,25 @@ test showed a model reaching for forms unprompted despite the instruction, which
 argument for checking rather than asking. If you add another path where a model discusses Estonian
 the learner will act on, put it behind that check too.
 
+**"Never generate" means never by a model.** A deterministic rule over a form already stored is not
+the thing this forbids, and reading it that way would delete the ten regular cases `morph.ts` builds
+off a genitive stem, the ADR-009 fallback for a word held as principal parts alone, and the derived
+case `matchEstonianForm` vouches for when believing a scanned word. A derivation is wrong the same
+way for every word that takes the ending, so it is one bug found once, and the form says on screen
+that it was derived. A model is wrong about one word, unpredictably, in output that looks exactly
+like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
+only" and three later decisions had already been reading it the narrower way.
+
+**The chat guard is a notice; only the grader has a gate.** `verifyComment` withholds a whole reply
+before the learner sees it, which only a non-streaming answer can afford. The main chat streams, so
+`flagUnverifiedEstonian` checks Anu's prose against the dictionary after the fact and names what it
+could not confirm in a trailing line. It inherits `estonianTokens`, which only reaches a quoted word
+or one carrying õäöüšž, so ordinary Estonian in a sentence of prose passes untouched, and that hole
+stays open on purpose: the dictionary behind the check clears an English word only when it happens
+to be an Estonian lemma too, so a wider net would flag English as unverified Estonian and teach
+somebody to ignore the line on the day it is right. What compensates is the UI, not the check. Do
+not raise the extractor's recall without changing what sits behind it. ADR-005 amendment 2.
+
 **A photograph is read by a model; whether it is believed is decided by the dictionary.** Scanning a
 page (`/scan`) is the one path where a model unavoidably looks at Estonian, and it does not get an
 exception. `lib/scan/extract.ts` transcribes and is pure: no database, no network, and every string
@@ -286,6 +305,25 @@ Do not add a counter column. A stored score is a second source of truth that dri
 awarded for something that never happened. The only exceptions are values no log can reconstruct: a
 personal best, and which days a streak shield has already covered. (ADR-014.)
 
+**A day is the learner's day, and every screen that counts one is rendered on a server.** The
+streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour
+of the day are all derived server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
+had a header saying its days were "the learner's own calendar days" and a body reading
+`getFullYear()`, which is the day boundary of whichever process is running: on Vercel, UTC. The
+shortcut that file was written to forbid was being taken one layer down from where it forbade it.
+A learner in Tallinn who studied on Monday morning, at one in the morning on Tuesday and again on
+Wednesday morning kept a three-day streak; those sittings fall in two UTC days with a hole between
+them, so the app said 1 and, with a shield banked, spent it bridging a Tuesday they had not missed.
+So a day boundary needs a zone, `dayClock(zone)` is how you get one, and anything touching the
+database takes one rather than calling the process-bound free functions. The learner's zone is
+whatever their browser reports (`components/TimeZoneSync.tsx`), stored under `SETTING_KEYS.timeZone`
+and never asked for, because the device already knows. **A naive timestamp needs two `AT TIME ZONE`s**:
+Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value one of them
+*interprets* rather than converts, which read 22:00 UTC as 22:00 in Tallinn. The single
+`AT TIME ZONE 'UTC'` that preceded this was the same mistake wearing a disguise, since its result is
+a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
+on any other.
+
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
 own scores — they write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)
@@ -301,6 +339,14 @@ the method and the body. The Content Security Policy is set there too, on every 
 including the refusals; the static headers are in `next.config.ts` so they cover the files the
 matcher skips. `Permissions-Policy` keeps `microphone=(self)` on purpose: speaking practice
 records, and denying it would switch that off with no error anybody could act on.
+
+**A suite that exists is a suite CI runs.** The workflow names its suites one line at a time, and
+its own comment says why: "a suite added to `npm run test:browser` alone is a suite CI never runs".
+It had drifted in the other direction too, with nothing counting, and five suites had nothing
+watching them at all, `test-restore.mjs` among them. The source of truth is the filesystem: every
+`scripts/*.mjs` that declares a suite is one CI runs, and anything else is named in
+`scripts/lib/suites.mjs` with a written reason. Two are, and both are facts about the route rather
+than about anybody's schedule.
 
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
@@ -371,6 +417,20 @@ needed the same thing; a second copy of the pattern is where the `finally` gets 
 bad minute upstream is remembered as a failure until the next deploy. A joiner is not charged for
 a request it did not make, which is why `singleFlightTagged` reports which caller it was.
 
+**Every cache the service worker keeps has a ceiling, and the one that does not is the reason
+why.** `lib/audio/clipCache.ts` was written because a cache that never evicts is a leak with a hit
+rate, and one layer down the worker had the same shape twice over with nothing watching either.
+Speech is a WAV per phrase and review plays audio on nearly every card, so a phone kept every clip
+it had ever heard; the build-output cache was worse, since `_next/static` names are hashed per build
+while the cache name is typed by hand, so every deploy added a set of chunks and nothing removed the
+last one's. The cost is not a slow app, it is a lost fallback: a browser evicting an origin's
+storage takes all of it, and `/offline` is the entry with nothing behind it. So `/offline` and the
+icon live in their own cache which is **never** trimmed, and everything else has a count in `LIMITS`
+with a trim after every write. Oldest first rather than least-recently-used, because the Cache API
+cannot record a read and re-putting on every hit would make a lookup a write on the busiest path in
+the app. `VERSION` is what clears the arrears, and it is the only thing that has ever removed a
+stale entry here.
+
 **The service worker warms the page you were on when it took over.** The page cache fills as a
 side effect of a navigation the worker intercepts, and the worker never serves the navigation
 that installed it: the page is fetched, the worker installs behind it, and `clients.claim()`
@@ -432,7 +492,20 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   and nowhere else, and an invariant checks it.
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
-  offline). A view without an empty state is not finished.
+  offline). A view without an empty state is not finished. **Loading is the one a route group can
+  lose wholesale**, because it is a file rather than a branch: `app/(app)/` had one and the
+  chromeless group and the two policy pages had none, so the landing page, sign-in, first run,
+  /privacy and /terms each showed a blank screen. An invariant checks per group, which is the
+  granularity Next resolves a `loading.tsx` at.
+- **A screen names itself, in the tab and to a reader.** Thirty-four of forty-five routes set no
+  title, so every one of them was called "Kodukeel. Estonian that finally sticks" and two tabs side
+  by side were indistinguishable. A page states its own name and `title.template` in
+  `app/layout.tsx` adds the app's. And a practice round carries an `h1` even where there is no room
+  to draw one: each mode renders three or four screens from one component, the empty and finished
+  ones each had a heading and the round did not, so an accessibility run that met an empty deck saw
+  one and passed. That is why it is asserted from the source rather than from whichever branch a
+  fixture rendered, and why the browser suite now walks every route rather than the fifteen a branch
+  happened to add.
 - Unit tests stay hermetic: no database, no network, no clock you do not control. Anything needing
   Postgres is an `*.itest.ts` under `npm run test:db`. The unit suite gates every commit and must
   stay fast enough that nobody is tempted to skip it.
@@ -496,13 +569,39 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   reads as a one-character form and beside a percentage as a minus sign whose digits failed to
   load. `lookup.ts` still recognises all three spellings a stored translation may carry, because
   the dictionary is seeded data that outlives a deploy.
+- **A date is written the way the reader writes dates, and only their browser knows how that is.**
+  `lib/time/clock.ts` pins the hour and deliberately leaves date order and month names to the reader,
+  which is true of a client component and was false of the two places this app formatted a date on
+  the server: `undefined` as a locale means the deployment's, so on a machine set to en-US Today's
+  greeting line read "Sunday, August 30" to somebody in Tartu who writes "pühapäev, 30. august".
+  `components/LocalDate.tsx` renders what the server wrote and lets the browser replace it on mount.
+  A separate rule from the day boundary above, because the fix is different: a zone can be stored and
+  handed to the server, and a locale is a list of preferences only the browser has.
 - **24-hour clock everywhere** (`lib/time/clock.ts`), never am/pm. Estonia writes the time that
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
   rather than `hour12: false`, which renders midnight as "24:00" in en-US.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
   meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
-  free for decoration.
+  free for decoration. **A hue has a fill and an ink and they are not interchangeable**: `--accent`
+  is what a button is painted, `--accent-deep` is what a word is written in, and text set in the
+  fill measured 3.87 on the week header and 4.05 in the leech clinic against a bar of 4.5. Contrast
+  is measured in a browser rather than reasoned about from the token list, and **in both themes**,
+  because light and dark are two palettes rather than one with a filter over it: the first batch of
+  failures was entirely in dark mode and the second entirely in light. What a colour is worth
+  depends on what it is sitting on, which a palette cannot tell you.
+- **`opacity` never goes on a box that holds words.** It multiplies through everything inside, so a
+  fade meaning "not yet" fades the sentence explaining why. A locked unit on the course page ended
+  up saying "you can still open it" at 2.63:1, on every locked row of a 73-unit course; the badge
+  shelf and the grammar reference had the same shape. A state that means "not yet" has a border, an
+  icon and a sentence to say so with. Where a fade genuinely helps, it goes on the icon.
+- **And the sweep is axe, not a hand-rolled one.** `scripts/a11y-check.mjs` spent its life saying it
+  was "not a substitute for axe", which was true and was also why five real failures sat unseen. The
+  contrast pass it replaced scoped to `main`, so the navigation rail on every signed-in screen was
+  outside it, and it read a colour's own alpha but not an `opacity` inherited from a parent. axe
+  found both in one run, plus an `<ol>` on the landing page whose `<li>`s sat behind a wrapper `div`,
+  so the list announced itself as empty. What stays hand-written is only what axe has no opinion
+  about: exactly one `main` and one `h1` per screen, and a title that is not the landing page's.
 - Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
   page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
   to be added to the allowlist in `middleware.ts` as well.

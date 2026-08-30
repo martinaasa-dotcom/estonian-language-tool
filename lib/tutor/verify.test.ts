@@ -120,6 +120,45 @@ describe("verifyComment", () => {
   });
 });
 
+/*
+  The two withholds are not the same claim, and the screen makes one of them out
+  loud. A word carrying an Estonian letter is Estonian and nothing else; a long
+  quoted word that nothing supplied is a guess, biased towards withholding, and
+  on the composition route (no glosses, no paradigm, an allowlist of the
+  learner's own text) an English word is exactly what it usually catches. Both
+  drop the note. Only one of them may be reported as Anu writing Estonian.
+*/
+describe("verifyComment reports which guard fired", () => {
+  it("says nothing was withheld when nothing was", () => {
+    expect(verifyComment("Your 'toas' is right.", FORMS, SENTENCE).reason).toBeNull();
+  });
+
+  it("calls a word carrying an Estonian letter what it is", () => {
+    const result = verifyComment("The correct form is mõtlesime.", FORMS, SENTENCE);
+    expect(result.comment).toBeNull();
+    expect(result.reason).toBe("estonian-form");
+  });
+
+  it("does not claim Estonian over a long English word it merely could not vouch for", () => {
+    // The shape `/api/exam/write` hands it: no forms, no glosses, the learner's
+    // own text as the whole allowlist.
+    const result = verifyComment(`You use "weather" twice.`, [], "Ma olen kodus.", []);
+    expect(result.comment).toBeNull();
+    expect(result.unverified).toContain("weather");
+    expect(result.reason).toBe("unvouched-word");
+  });
+
+  it("prefers the certain reason when both kinds are present", () => {
+    const result = verifyComment(
+      `You use "weather" twice, and mõtlesime is wrong.`,
+      [],
+      "Ma olen kodus.",
+      [],
+    );
+    expect(result.reason).toBe("estonian-form");
+  });
+});
+
 describe("chatEstonianTokens", () => {
   it("finds a word carrying an Estonian letter in ordinary prose", () => {
     expect(chatEstonianTokens("The word õppima means to study.")).toContain("õppima");

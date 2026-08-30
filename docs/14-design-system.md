@@ -63,8 +63,23 @@ The grading aliases follow: `--good-ink`, `--hard-ink`, `--again-ink`,
 enough that the hue already clears 7:1 on them.
 
 `--ink-3` is picked against every surface in the system rather than against
-white: 4.59:1 on the softest tint and better everywhere else, so a caption stays
+white: 5.26:1 on the softest tint and better everywhere else, so a caption stays
 legible on a pastel tile.
+
+It was two steps lighter than that, and the correction came from the one thing
+"every surface" did not cover. The navigation rail is drawn over `.wash`, a
+blurred pastel blob rather than a named background, so the wordmark's subtitle
+and the rail's own controls sat at 4.36 on every signed-in screen. The wash is
+a surface too, whatever the token list says.
+
+**And a fade is never applied to a box that holds words.** `opacity` on a
+container multiplies through everything inside it, which is how a locked unit
+on the course page ended up explaining itself at 2.63:1: the sentence saying
+"you can still open it" was the least readable thing on that screen, on every
+locked row of a 73-unit course. The badge shelf and the grammar reference had
+the same shape. A state that means "not yet" has a border, an icon and a
+sentence to say so with; where a fade genuinely helps, it goes on the icon,
+which carries no words.
 
 Both gradients are pinned to contrast too. `.grad-accent` carries white text, so
 every stop clears 4.5:1 against white; `.grad-text` *is* the text, so every stop

@@ -10,6 +10,8 @@ import { PlanPanel, levelLabel } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { formatDateTime } from "@/lib/time/clock";
 
+export const metadata = { title: "Level check" };
+
 export const dynamic = "force-dynamic";
 
 /**

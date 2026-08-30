@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { requireUserId } from "@/lib/auth/session";
 import { dailySummary, deckSnapshot } from "@/lib/progress/summary";
+import { learnerDayClock } from "@/lib/progress/dayClock";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 
@@ -29,7 +30,7 @@ export async function GET() {
   const now = new Date();
   const snapshot = await deckSnapshot(ownerId, now);
   const [summary, settings] = await Promise.all([
-    dailySummary(ownerId, snapshot, now),
+    dailySummary(ownerId, snapshot, now, await learnerDayClock(ownerId)),
     readSettings(ownerId, [SETTING_KEYS.displayName]),
   ]);
 

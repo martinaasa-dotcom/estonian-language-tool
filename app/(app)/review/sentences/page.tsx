@@ -4,6 +4,8 @@ import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { SentenceSession, type SentenceTask } from "./SentenceSession";
 
+export const metadata = { title: "Sentences" };
+
 export const dynamic = "force-dynamic";
 
 const ROUND = 8;

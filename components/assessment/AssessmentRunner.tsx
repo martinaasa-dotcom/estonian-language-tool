@@ -186,6 +186,10 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-8 md:px-8">
+      {/* The check is four sections in one screen, so the section's own name is
+          an h2 and there was nothing above it. Named for the whole sitting
+          rather than for the section, which is what changes underneath it. */}
+      <h1 className="sr-only">Level check</h1>
       <div className="mb-7">
         <div className="mb-2 flex items-center justify-between gap-3">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>

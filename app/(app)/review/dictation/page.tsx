@@ -4,6 +4,8 @@ import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { DictationSession, type DictationTask } from "./DictationSession";
 
+export const metadata = { title: "Dictation" };
+
 export const dynamic = "force-dynamic";
 
 const ROUND = 6;
