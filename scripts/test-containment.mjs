@@ -58,18 +58,35 @@
  *   npm run demo && npm run dev
  *   node scripts/test-containment.mjs
  */
-import { launchChromium } from "./lib/browser.mjs";
+import { eventually, launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 
 const B = baseUrl();
 
 /**
- * The narrowest phone anybody still holds, and a desktop. Both, because the
- * two faults live at opposite ends: a word runs out of a card when the card is
- * narrow, and a fixed-width rail runs out of room when the window is wide
- * enough for the rail to exist at all.
+ * The narrowest phone anybody still holds, the breakpoint, and a desktop.
+ *
+ * Both ends first, because the two faults live at opposite ones: a word runs
+ * out of a card when the card is narrow, and a fixed-width rail runs out of
+ * room only when the window is wide enough for the rail to exist. 768 is here
+ * because it is the width at which the layout actually changes its mind, and a
+ * rule that holds either side of a breakpoint can still fail on it: the
+ * comparison grid on the landing page is `md:block`, so at 1280 it is measured
+ * and at 360 it does not exist, and 768 is the first width that has it in the
+ * least room it will ever have.
  */
-const WIDTHS = [360, 1280];
+const WIDTHS = [360, 768, 1280];
+
+/**
+ * Dark is measured once, at the width where containment fails first.
+ *
+ * It is one sweep rather than a third of the suite, because containment is
+ * layout and the two themes differ in colour. Not none, though: "bleeds over a
+ * border" is answered by looking for the nearest ancestor that paints a border
+ * or a fill, and whether a token paints anything is exactly the thing a theme
+ * changes.
+ */
+const DARK_WIDTH = 360;
 
 /**
  * Every route the app has, rather than a spread of the ones somebody thought
@@ -168,16 +185,177 @@ const SPARSE = new Map([
 ]);
 
 /*
-  Floor: 470. Forty-five routes at two widths is ninety passes, plus the
-  landing page with its disclosures open and the examination paper being sat,
-  each at both widths. Every pass reports five things: cut off, bled over a
-  border, drawn into a neighbour, deformed, and then the same four again with
-  every word turned into one with nothing to break on. Raise this when you add
-  a route; never lower it to make a run go green.
+  Floor: 1020. Forty-eight routes (forty-five listed, three made) at three
+  widths, plus the landing page with its disclosures open and the paper being
+  sat at each of them, plus three asked-for states at the two ends, plus the
+  whole list again in the dark at 360. Every pass reports five things: cut off,
+  bled over a border, drawn into a neighbour, deformed, and then the same four
+  again with every word turned into one with nothing to break on.
+
+  Raise this when you add a route; never lower it to make a run go green. What
+  a state that genuinely cannot be reached does instead is call `absent` with
+  its count and its reason, which is how a machine with no provider key says
+  it could not make a scanned page rather than quietly checking twenty fewer
+  things.
 */
-const { check, done } = suite("Containment", { floor: 470 });
+const { check, absent, done } = suite("Containment", { floor: 1020 });
 
 const browser = await launchChromium();
+
+/**
+ * The three screens that cannot be visited until something has made them.
+ *
+ * A classroom, a marked paper and a scanned page each need a row, so a route
+ * list alone can never reach them and they were the one part of the app this
+ * suite could not see. They are made once, here, and then measured at every
+ * width like any other route.
+ *
+ * Reused rather than remade where the app lists them, so running this locally
+ * a dozen times leaves a dozen of nothing. A sitting is the exception and is
+ * meant to be: `Assessment` is append-only, and `scripts/test-exam.mjs` hands
+ * one in on every run for the same reason.
+ */
+async function screensToMake() {
+  const made = [];
+  const missing = [];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
+
+  /*
+    Each maker is given a budget and reports what it did, because this runs
+    before the first check and a suite that dies before its first check prints
+    nothing at all, which is what `scripts/lib/checks.mjs` exists to stop
+    looking like a pass. A maker that overruns leaves its screen unmeasured and
+    says so through `absent`, rather than taking the whole suite down with it.
+  */
+  const budgeted = async (what, ms, run) => {
+    const started = Date.now();
+    let timer;
+    /*
+      A page of its own for each, because they do not share a subject and were
+      sharing state. The scan maker ran on the page the exam had just handed a
+      paper in on, and its `getByLabel` found no camera on a deployment that
+      has one, which reads exactly like "no provider key here" and is not that
+      at all.
+    */
+    const own = await ctx.newPage();
+    const result = await Promise.race([
+      run(own).catch((e) => ({ failed: String(e).split("\n")[0] })),
+      new Promise((resolve) => { timer = setTimeout(() => resolve({ failed: `gave up after ${ms}ms` }), ms); }),
+    ]);
+    clearTimeout(timer);
+    await own.close().catch(() => {});
+    const took = `${Math.round((Date.now() - started) / 100) / 10}s`;
+    if (typeof result === "string") { console.log(`made  ${what}: ${result} (${took})`); return result; }
+    // Deliberately not the word a waiver prints. `scripts/lib/checks.mjs` owns
+    // that word and the number behind it, and an invariant fails on a suite
+    // that prints it from anywhere else: it would say the same thing to a
+    // person and nothing at all to the tally.
+    console.log(`unmade  ${what}: ${result?.failed ?? "not reached"} (${took})`);
+    return null;
+  };
+
+  // A classroom.
+  const classroom = await budgeted("a classroom", 60_000, async (page) => {
+    await page.goto(`${B}/class`, { waitUntil: "networkidle", timeout: 30_000 });
+    const link = page.locator('a[href^="/class/"]').first();
+    if (await link.count()) return link.getAttribute("href");
+    await page.getByLabel("Class name").fill("Containment, teisipäev", { timeout: 10_000 });
+    await page.getByRole("button", { name: /Create the class/ }).click({ timeout: 10_000 });
+    await eventually(async () => /\/class\/[^/]+$/.test(page.url()), { timeoutMs: 20_000 });
+    return /\/class\/[^/]+$/.test(page.url()) ? new URL(page.url()).pathname : null;
+  });
+  if (classroom) made.push(classroom); else missing.push("a classroom, which local mode cannot create by hand: run `npm run demo`");
+
+  // A marked paper: sat, advanced part by part with the blanks left blank, and
+  // handed in. The blanks are the point elsewhere and harmless here.
+  const result = await budgeted("a marked paper", 120_000, async (page) => {
+    await page.goto(`${B}/exam/A2?seed=containment-result`, { waitUntil: "networkidle", timeout: 30_000 });
+    await page.getByRole("button", { name: "Start the clock" }).click({ timeout: 10_000 });
+    for (let part = 0; part < 8 && !/\/exam\/result\//.test(page.url()); part += 1) {
+      for (const name of [/^Next part|^Hand in$/, /Leave them blank and move on|Hand in anyway/, /Start the spoken part/]) {
+        const on = page.getByRole("button", { name }).first();
+        if (await on.count()) {
+          await on.click({ timeout: 8_000 }).catch(() => {});
+          await page.waitForTimeout(500);
+        }
+      }
+    }
+    await eventually(async () => /\/exam\/result\//.test(page.url()), { timeoutMs: 20_000 });
+    return /\/exam\/result\//.test(page.url()) ? new URL(page.url()).pathname : null;
+  });
+  if (result) made.push(result); else missing.push("a marked paper could not be handed in");
+
+  /*
+    A scanned page. The model is the one thing stubbed, exactly as
+    `scripts/test-scan.mjs` stubs it, because what is being measured is the
+    confirmation screen rather than anybody's reading of a photograph. With no
+    provider key on the server the page correctly offers no camera, and then
+    this screen is genuinely unreachable rather than broken.
+  */
+  const scan = await budgeted("a scanned page", 90_000, async (page) => {
+    await page.route("**/api/scan", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "x-model-provider": "Stub", "x-model-id": "test" },
+      body: JSON.stringify({
+        items: [{ et: "tuba", en: "room", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
+        summary: { total: 1, known: 0, unknown: 1, inflected: 0 },
+      }),
+    }));
+    await page.goto(`${B}/scan`, { waitUntil: "networkidle", timeout: 30_000 });
+    const link = page.locator('a[href^="/scan/"]').first();
+    if (await link.count()) return link.getAttribute("href");
+    /*
+      Waited for rather than counted straight away. The capture control is
+      rendered by a client component, so on a page object that has already been
+      round several other screens `networkidle` can land a beat before it
+      exists, and counting then reports "no camera on this deployment" about a
+      deployment that has one.
+    */
+    const camera = page.getByLabel(/take a photo/i).first();
+    await camera.waitFor({ state: "attached", timeout: 8_000 }).catch(() => {});
+    if (!(await camera.count())) throw new Error("the page offers no camera, so this deployment has no provider key");
+    await page.locator('input[type="file"]').first().setInputFiles({
+      name: "page.png", mimeType: "image/png", buffer: await page.screenshot(),
+    });
+    await page.getByText(/word.* ticked/i).first().waitFor({ timeout: 20_000 }).catch(() => {});
+    // "Make 1 flashcard", which is what the button says. Matched loosely on
+    // the count, because it names how many words were ticked.
+    const add = page.getByRole("button", { name: /Make \d+ flashcard/ }).first();
+    if (await add.count()) {
+      await add.click({ timeout: 8_000 }).catch(() => {});
+      /*
+        And then "Open the page", which is a document load rather than a
+        `router.push` and is the tap that finishes the paper-to-deck path.
+        `app/(app)/scan/ScanCapture.tsx` says why in as many words: the push
+        silently did nothing three times in ten.
+      */
+      const open = page.getByRole("button", { name: /Open the page/ }).first();
+      await open.waitFor({ state: "visible", timeout: 15_000 }).catch(() => {});
+      if (await open.count()) await open.click({ timeout: 8_000 }).catch(() => {});
+      await eventually(async () => /\/scan\/[^/]+$/.test(page.url()), { timeoutMs: 20_000 });
+    }
+    if (!/\/scan\/[^/]+$/.test(page.url())) {
+      throw new Error(`the photo was taken but the deck never took it: still on ${new URL(page.url()).pathname}`);
+    }
+    return new URL(page.url()).pathname;
+  });
+  if (scan) made.push(scan);
+  else missing.push("a scanned page, which needs a provider key on the server for the camera to be offered");
+
+  await ctx.close();
+  return { made, missing };
+}
+
+const { made, missing } = await screensToMake();
+/*
+  Twenty: five checks on each of the three widths, and five more in the dark.
+  Written out rather than worked out, because a waiver whose number is an
+  expression is a waiver nobody can check by reading it, and an invariant in
+  `scripts/test-invariants.ts` says so.
+*/
+for (const why of missing) absent(20, why);
+const ALL = [...ROUTES, ...made];
 
 /**
  * Everything this measures, in one function, because it runs in the page.
@@ -574,6 +752,134 @@ function survey({ stress }) {
   };
 }
 
+/**
+ * One pass over whatever a page is showing: the four questions, then the same
+ * four with every run of text swapped for one of the same length that cannot
+ * break.
+ *
+ * `atLeast` rides along on the first check rather than getting one of its own.
+ * A route that rendered an error boundary has a heading and a button on it and
+ * passes all four on the strength of having almost nothing to look at, which
+ * is the failure `scripts/lib/checks.mjs` exists for arriving one level
+ * further in: the block ran, it just ran over an empty page.
+ */
+async function measure(page, label, atLeast = 25) {
+  const rest = await page.evaluate(survey, { stress: false });
+  check(
+    `nothing is cut off on ${label}`,
+    rest.cut === 0 && rest.counted >= atLeast,
+    rest.cut > 0 ? rest.say.cut
+      : rest.counted < atLeast ? `only ${rest.counted} things on the page, expected ${atLeast}` : "",
+  );
+  check(`nothing bleeds over a border on ${label}`, rest.bled === 0, rest.say.bled);
+  check(`nothing is drawn into its neighbour on ${label}`, rest.collided === 0, rest.say.collided);
+  check(`no icon is deformed on ${label}`, rest.deformed === 0, rest.say.deformed);
+
+  const hard = await page.evaluate(survey, { stress: true });
+  check(
+    `the same words with nothing to break on stay in their boxes on ${label}`,
+    hard.cut === 0 && hard.bled === 0 && hard.collided === 0 && hard.deformed === 0 && hard.sideways <= 0,
+    [hard.say.cut, hard.say.bled, hard.say.collided, hard.say.deformed,
+     hard.sideways > 0 ? `${hard.sideways}px sideways` : ""].filter(Boolean).join(" · "),
+  );
+}
+
+/** Every route, in one context, at whatever width and theme it was opened at. */
+async function sweep(ctx, at) {
+  const page = await ctx.newPage();
+  for (const route of ALL) {
+    await page.goto(`${B}${route}`, { waitUntil: "networkidle", timeout: 60000 });
+    await page.waitForTimeout(250);
+    await measure(page, `${route} ${at}`, SPARSE.get(route) ?? 25);
+  }
+  await page.close();
+}
+
+/*
+  THE LANDING PAGE WITH EVERY DISCLOSURE OPEN, which is a third of that page
+  and had never been looked at.
+
+  A closed `<details>` is skipped contents: `checkVisibility` says so, which is
+  what stopped this suite reporting the comparison panel as bleeding when it
+  was shut. The other half of that fact is that the panel's whole argument, its
+  eight-claim grid and its four credit cards, is unmeasured until somebody
+  opens it, and this page is the first thing anybody sees.
+*/
+async function openedWelcome(ctx, at) {
+  const page = await ctx.newPage();
+  await page.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
+  await page.evaluate(() => {
+    for (const d of document.querySelectorAll("details")) d.open = true;
+  });
+  await page.waitForTimeout(400);
+  await measure(page, `/welcome with every disclosure open ${at}`);
+  await page.close();
+}
+
+/*
+  THE EXAMINATION PAPER, BEING SAT. Not in the route list because it takes a
+  click to reach and is worth the extra load anyway: it is the densest screen
+  in the app and the one that has already produced this fault twice, once as a
+  diacritic bar a pixel wider than a phone has room for, and once as a chip
+  carrying a dictionary gloss ("gymnasium, secondary school, high school") that
+  would not wrap, at 404px of unbreakable line inside a 350px card. Both were
+  found on a device rather than by a check, which is the argument for the check.
+*/
+async function paperBeingSat(ctx, at) {
+  const page = await ctx.newPage();
+  await page.goto(`${B}/exam/A2?seed=containment`, { waitUntil: "networkidle", timeout: 60000 });
+  await page.getByRole("button", { name: "Start the clock" }).click();
+  await page.waitForTimeout(700);
+  await measure(page, `the A2 paper ${at}`);
+  await page.close();
+}
+
+/*
+  THE STATES A ROUTE DOES NOT ARRIVE IN.
+
+  Everything above measures a page as it loads, and three of the boxes in this
+  app only exist once somebody asks for them. The command palette and Anu's
+  panel are drawn over the page from anywhere in it, and a review card spends
+  half its life with the answer hidden and the other half with it shown, which
+  is a different amount of text in the same card.
+
+  A modal covering the page is not reported as drawing into it: the hit test
+  skips anything under something `fixed`, deliberately, because that is
+  layering rather than a fault. What is being asked here is whether the modal
+  contains its own contents.
+*/
+async function askedForStates(ctx, at) {
+  const page = await ctx.newPage();
+  await page.goto(`${B}/`, { waitUntil: "networkidle", timeout: 60000 });
+
+  await page.keyboard.press("Control+k");
+  await page.waitForTimeout(400);
+  await measure(page, `the command palette ${at}`);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(250);
+
+  const anu = page.getByRole("button", { name: "Ask Anu" }).first();
+  if (await anu.count()) {
+    await anu.click();
+    await page.waitForTimeout(500);
+    await measure(page, `Anu's panel ${at}`);
+  } else {
+    absent(5, `Anu's panel ${at}, which needs the tutor to be reachable`);
+  }
+
+  await page.goto(`${B}/review`, { waitUntil: "networkidle", timeout: 60000 });
+  const show = page.getByRole("button", { name: /Show answer/ }).first();
+  if (await show.count()) {
+    await show.click();
+    await page.waitForTimeout(450);
+    await measure(page, `a review card with its answer shown ${at}`);
+  } else {
+    absent(5, `a revealed review card ${at}, because the deck had nothing due`);
+  }
+
+  await page.close();
+}
+
 for (const width of WIDTHS) {
   const ctx = await browser.newContext({
     viewport: { width, height: 900 },
@@ -584,104 +890,29 @@ for (const width of WIDTHS) {
     // different answer every run.
     reducedMotion: "reduce",
   });
-  const page = await ctx.newPage();
 
-  for (const route of ROUTES) {
-    await page.goto(`${B}${route}`, { waitUntil: "networkidle", timeout: 60000 });
-    await page.waitForTimeout(250);
+  await sweep(ctx, `at ${width}`);
+  await openedWelcome(ctx, `at ${width}`);
+  await paperBeingSat(ctx, `at ${width}`);
+  if (width !== 768) await askedForStates(ctx, `at ${width}`);
 
-    const at = `${route} at ${width}`;
-    const rest = await page.evaluate(survey, { stress: false });
-    /*
-      `counted` rides along on the first check rather than getting one of its
-      own. A route that rendered an error boundary has a heading and a button
-      on it and passes all four of these on the strength of having almost
-      nothing to look at, which is the failure `scripts/lib/checks.mjs` exists
-      for arriving one level further in: the block ran, it just ran over an
-      empty page. `SPARSE` above holds the two routes that are honestly
-      smaller than the default.
-    */
-    const atLeast = SPARSE.get(route) ?? 25;
-    check(
-      `nothing is cut off on ${at}`,
-      rest.cut === 0 && rest.counted >= atLeast,
-      rest.cut > 0 ? rest.say.cut : `only ${rest.counted} things on the page, expected ${atLeast}`,
-    );
-    check(`nothing bleeds over a border on ${at}`, rest.bled === 0, rest.say.bled);
-    check(`nothing is drawn into its neighbour on ${at}`, rest.collided === 0, rest.say.collided);
-    check(`no icon is deformed on ${at}`, rest.deformed === 0, rest.say.deformed);
+  await ctx.close();
+}
 
-    const hard = await page.evaluate(survey, { stress: true });
-    check(
-      `the same words with nothing to break on stay in their boxes on ${at}`,
-      hard.cut === 0 && hard.bled === 0 && hard.collided === 0 && hard.deformed === 0 && hard.sideways <= 0,
-      [hard.say.cut, hard.say.bled, hard.say.collided, hard.say.deformed,
-       hard.sideways > 0 ? `${hard.sideways}px sideways` : ""].filter(Boolean).join(" · "),
-    );
-  }
-
-  /*
-    And the examination paper, which is not in the list above because it takes
-    a click to reach and is worth the extra load anyway. It is the densest
-    screen in the app and the one that has already produced this fault twice:
-    a diacritic bar a pixel wider than a phone has room for, and a chip
-    carrying a dictionary gloss ("gymnasium, secondary school, high school")
-    that would not wrap, at 404px of unbreakable line inside a 350px card.
-    Both were found on a device rather than by a check, which is the argument
-    for the check.
-  */
-  /*
-    The landing page with every disclosure open, which is a third of that page
-    and had never been looked at.
-
-    A closed `<details>` is skipped contents: `checkVisibility` says so, which
-    is what stopped this suite reporting the comparison panel as bleeding when
-    it was shut. The other half of that fact is that the panel's whole
-    argument, its eight-claim grid and its four credit cards, is unmeasured
-    until somebody opens it, and this page is the first thing anybody sees.
-  */
-  const open = await ctx.newPage();
-  await open.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
-  await open.evaluate(() => {
-    for (const d of document.querySelectorAll("details")) d.open = true;
+/*
+  AND THE WHOLE APP IN THE DARK, once, at the width where containment fails
+  first. `colorScheme` sets `prefers-color-scheme`, which is what the palette
+  in app/globals.css reads when nobody has picked a theme by hand.
+*/
+{
+  const ctx = await browser.newContext({
+    viewport: { width: DARK_WIDTH, height: 900 },
+    hasTouch: true,
+    isMobile: true,
+    reducedMotion: "reduce",
+    colorScheme: "dark",
   });
-  await open.waitForTimeout(400);
-
-  const opened = await open.evaluate(survey, { stress: false });
-  check(`nothing is cut off on /welcome with every disclosure open at ${width}`, opened.cut === 0, opened.say.cut);
-  check(`nothing bleeds over a border on /welcome with every disclosure open at ${width}`, opened.bled === 0, opened.say.bled);
-  check(`nothing is drawn into its neighbour on /welcome with every disclosure open at ${width}`, opened.collided === 0, opened.say.collided);
-  check(`no icon is deformed on /welcome with every disclosure open at ${width}`, opened.deformed === 0, opened.say.deformed);
-
-  const pressed = await open.evaluate(survey, { stress: true });
-  check(
-    `the same words with nothing to break on stay in their boxes on an open /welcome at ${width}`,
-    pressed.cut === 0 && pressed.bled === 0 && pressed.collided === 0 && pressed.deformed === 0 && pressed.sideways <= 0,
-    [pressed.say.cut, pressed.say.bled, pressed.say.collided, pressed.say.deformed,
-     pressed.sideways > 0 ? `${pressed.sideways}px sideways` : ""].filter(Boolean).join(" · "),
-  );
-  await open.close();
-
-  const paper = await ctx.newPage();
-  await paper.goto(`${B}/exam/A2?seed=containment`, { waitUntil: "networkidle", timeout: 60000 });
-  await paper.getByRole("button", { name: "Start the clock" }).click();
-  await paper.waitForTimeout(700);
-
-  const sat = await paper.evaluate(survey, { stress: false });
-  check(`nothing is cut off on the A2 paper at ${width}`, sat.cut === 0, sat.say.cut);
-  check(`nothing bleeds over a border on the A2 paper at ${width}`, sat.bled === 0, sat.say.bled);
-  check(`nothing is drawn into its neighbour on the A2 paper at ${width}`, sat.collided === 0, sat.say.collided);
-  check(`no icon is deformed on the A2 paper at ${width}`, sat.deformed === 0, sat.say.deformed);
-
-  const strained = await paper.evaluate(survey, { stress: true });
-  check(
-    `the same words with nothing to break on stay in their boxes on the A2 paper at ${width}`,
-    strained.cut === 0 && strained.bled === 0 && strained.collided === 0 && strained.deformed === 0 && strained.sideways <= 0,
-    [strained.say.cut, strained.say.bled, strained.say.collided, strained.say.deformed,
-     strained.sideways > 0 ? `${strained.sideways}px sideways` : ""].filter(Boolean).join(" · "),
-  );
-  await paper.close();
-
+  await sweep(ctx, `at ${DARK_WIDTH} in the dark`);
   await ctx.close();
 }
 

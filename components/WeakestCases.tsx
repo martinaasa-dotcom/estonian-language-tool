@@ -38,13 +38,23 @@ export function WeakestCases({ cases, empty }: {
       {cases.map((c) => {
         const name = c.grammCase.toLowerCase();
         return (
-          <li key={c.grammCase} className="flex items-center gap-1">
+          <li key={c.grammCase} className="flex min-w-0 items-center gap-1">
             <Link
               href={`/review?case=${c.grammCase}`}
               aria-label={`Drill the ${name}, currently ${c.accuracy} percent over ${c.total} reviews`}
-              className="tap-tint flex flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 text-sm"
+              className="tap-tint flex min-w-0 flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 text-sm"
             >
-              <span className="w-24 shrink-0" style={{ color: "var(--ink-2)" }}>{name}</span>
+              {/*
+                A width to line the names up at, not a width to hold at any
+                cost. Ninety-six pixels for the name, sixty-four for the
+                figure and twenty-eight for the help link came to more than
+                this card has inside it at 768, where the rail is drawn and
+                the column is at its narrowest: the row ran 37px past the
+                card's right border, and the page drawn after it was on top
+                of the help link. The case names are one word, so a name that
+                has to give up a few pixels still reads.
+              */}
+              <span className="w-24 shrink" style={{ color: "var(--ink-2)" }}>{name}</span>
               <span className="min-w-0 flex-1">
                 <Meter
                   pct={c.accuracy}

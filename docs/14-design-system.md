@@ -171,13 +171,18 @@ word sitting on the ground behind a card.
   was in a 278px card on a 360px phone.
 
 `scripts/test-containment.mjs` is the half that measures rectangles: every text-bearing element,
-every icon and everything with a width of its own, across every route the app has at 360 and 1280,
-plus the landing page with its disclosures open and a paper actually being sat. Four questions each
-time, of which the fourth is whether anything is drawn on top of anything else. Then the same four
-again with every run of text swapped for one of the same length with no space or hyphen in it. Same
-length is the discipline: a stress test that hands every element a forty-character word is
-unfalsifiable, since a ring whose middle says "42%" fails it and no markup would pass. Same length
-asks what the language actually asks.
+every icon and everything with a width of its own, across every route the app has at 360, 768 and
+1280, in the dark as well as the light, in the states a route does not arrive in, and on the three
+screens that need a row made before they can be visited. Four questions each time, of which the
+fourth is whether anything is drawn on top of anything else. Then the same four again with every
+run of text swapped for one of the same length with no space or hyphen in it. Same length is the
+discipline: a stress test that hands every element a forty-character word is unfalsifiable, since a
+ring whose middle says "42%" fails it and no markup would pass. Same length asks what the language
+actually asks.
+
+768 earns its place: it is the width at which the rail appears, so the content column is narrower
+there than at any other width the app is used at, and every fault this suite has found since it
+started measuring three widths has been at that one.
 
 ## 4. Motion
 

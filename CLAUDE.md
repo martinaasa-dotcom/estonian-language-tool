@@ -746,15 +746,24 @@ local learner; with them, every route is gated. It keys off the absence of confi
   because a paradigm is read by comparing forms down a column and a form broken across two lines
   has to be reassembled first. It buys that with a scroller of its own, which every table in the
   app sits in and an invariant checks, since the worksheet's did not and was 103px over a phone.
-  `scripts/test-containment.mjs` measures the rectangles, on **every route the app has** at two
-  widths plus the landing page with its disclosures open and a paper actually being sat. Four
-  questions each time: cut off by something that clips, drawn over a border somebody painted,
-  drawn on top of something else, or resized away from the size it declared. Then the same four
-  again with every run of text swapped for one **of the same length** with no space or hyphen in
-  it. Same length is the discipline: a stress test that hands every element a forty-character word
-  is unfalsifiable, since a ring whose middle says "42%" fails it and no markup would pass, while
-  same length asks the question Estonian actually poses. With the four declarations removed it
-  failed 183 of its 470 checks.
+  `scripts/test-containment.mjs` measures the rectangles, on **every route the app has** at 360,
+  768 and 1280, in the dark as well as the light, in the states a route does not arrive in, and on
+  the three screens that need a row made before they can be visited at all. Four questions each
+  time: cut off by something that clips, drawn over a border somebody painted, drawn on top of
+  something else, or resized away from the size it declared. Then the same four again with every
+  run of text swapped for one **of the same length** with no space or hyphen in it. Same length is
+  the discipline: a stress test that hands every element a forty-character word is unfalsifiable,
+  since a ring whose middle says "42%" fails it and no markup would pass, while same length asks
+  the question Estonian actually poses.
+
+  **768 is where the faults were**, and it went unmeasured for a while because it is neither end.
+  It is the width at which the rail appears and the content column is therefore at its narrowest,
+  and five things were wrong there. The worst was the shell: `main` is a flex item and had no
+  `min-w-0`, so from `md:` up a paradigm table or a row of chips made it wider than the window,
+  and since the body clips sideways there was not even a scrollbar to find the missing half with.
+  Then a case row whose fixed columns came to more than its card had inside it, an exam card whose
+  chips set a floor it could not meet, the landing page's ornaments swallowing taps on the card
+  they are tucked over, and `Chip` itself.
 - **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
   container, and every library that positions a floating element works in document coordinates
   instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is
@@ -1088,6 +1097,21 @@ route left out is a screen where the whole rule is unenforced. The count of thin
 part of each pass for the same reason: a route that rendered its 404 has a heading and a button
 and passes everything on the strength of having nothing to look at, which is exactly what
 `/grammar/topic/rektsioon` did for one run before the count said so.
+
+**Three screens need a row before they can be visited**, so the suite makes them: a classroom, a
+paper sat and handed in, and a page scanned with the model stubbed the way `test-scan.mjs` stubs
+it. The classroom is the one worth knowing about. In local mode `/class` deliberately replaces the
+create and join forms with the reason there is nobody to share with, so that screen is unreachable
+by driving the app and `scripts/demo-data.ts` lays one down instead. Without it the suite would
+waive twenty checks on a real screen for want of a fixture, which is the sort of hole a waiver is
+supposed to report rather than create. Each maker has a time budget and says what it did, because
+this runs before the first check and a suite that dies before its first check prints nothing at
+all.
+
+**And the states a route does not arrive in**: the command palette, Anu's panel, a review card with
+its answer shown, and the landing page with its disclosures open. A modal drawn over the page is
+not a fault and is not reported as one, since the hit test skips anything under something `fixed`
+or `sticky`; what is asked is whether the modal contains its own contents.
 
 The fourth question is asked by hit-testing the letters, not by comparing rectangles, and that was
 arrived at the hard way. Sibling rectangles report a wrapped inline as one box spanning every line

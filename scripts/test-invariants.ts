@@ -1419,15 +1419,19 @@ check("the root declares no overflow", () => {
   `scripts/test-containment.mjs` is the third leg and the only one that can
   see a rectangle. It walks every text-bearing element, every lucide icon and
   everything that arrives with a width of its own, on every route the app has
-  at two widths, and asks whether any of them is cut off by an ancestor that
-  clips, drawn outside a border somebody painted, drawn on top of something
-  else, or resized away from the size it declared. Then it swaps every run of
-  text for a run of letters OF THE SAME LENGTH with no space and no hyphen in
-  it and asks all four again, which is the question Estonian actually poses: a
-  row fits today because the gloss it happens to hold has commas in it, and
-  the compound of the same width has to fit as well. With the four
-  declarations removed it failed 183 of its 470 checks, which is how
-  anybody knows it is looking.
+  at 360, 768 and 1280, in the dark as well as the light, and asks whether any
+  of them is cut off by an ancestor that clips, drawn outside a border
+  somebody painted, drawn on top of something else, or resized away from the
+  size it declared. Then it swaps every run of text for a run of letters OF
+  THE SAME LENGTH with no space and no hyphen in it and asks all four again,
+  which is the question Estonian actually poses: a row fits today because the
+  gloss it happens to hold has commas in it, and the compound of the same
+  width has to fit as well.
+
+  768 is where it earns its keep. It is neither end, so it went unmeasured
+  longest, and it is the width at which the rail appears and the content
+  column is therefore narrowest: five faults were waiting there, one of them
+  in the shell every page is drawn inside.
 */
 check("nobody opts back out of the wrapping default", () => {
   /*
