@@ -15,6 +15,8 @@ is the current state.
 4. `docs/03-architecture.md` §6 — the ADRs. Do not silently reverse one.
 5. `docs/14-design-system.md` — the visual language: palette, tokens, motion, and what each colour
    is allowed to mean. Read it before adding a colour, a radius or a shadow.
+6. `docs/18-voice.md` — how the app speaks: warm, kind, concise, and never in a way that reads as
+   generated. Read it before writing a sentence anybody will see, which is most changes.
 
 ## Rules that are not negotiable
 
@@ -132,6 +134,47 @@ way for every word that takes the ending, so it is one bug found once, and the f
 that it was derived. A model is wrong about one word, unpredictably, in output that looks exactly
 like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
 only" and three later decisions had already been reading it the narrower way.
+
+**Nothing a person reads may sound like a machine wrote it.** Every screen, every error, every
+empty state, the README, the policy pages and Anu are one person explaining Estonian to another.
+Almost everybody using this is also sitting in a class or working through a textbook, and they read
+a teacher carefully and skim marketing, deciding which a screen is inside about a sentence. So a
+panel that opens "Unlock the power of spaced repetition" has already been sorted into the second
+pile and the useful thing underneath it goes unread.
+
+The standard is **warm, kind, concise, and unmistakably a person**, and each of those is a decision
+rather than a mood. Warm is attention, not enthusiasm: "six days in a row" is warmer than "amazing
+work" because one of them is about the learner and required us to have been looking. Kind is where
+the news is bad, which is most of the copy in this app, and it is never softening a correction into
+vagueness, since a learner left unsure whether they were wrong rehearses the error. Concise has no
+word count; it is that every sentence does work for the person in front of it, and two sentences
+that answer the question are kinder than six that circle it.
+
+`lib/copy/voice.ts` is the one table of what gives a sentence away: the em dash and the en dash,
+the stock openers ("It's important to note that", "Moreover", "In conclusion"), the inflated shapes
+("not just a rule, but a pattern", "more than just", "that's where X comes in"), the brochure
+vocabulary (delve, leverage, seamless, empower, embark on, your journey, unleash, a plethora of,
+"whether you're a beginner or"), the praise adjectives, and emoji. Three files used to state this
+and no two of them agreed: `humanize.ts` stripped seven openers out of Anu, `prompt.ts` asked the
+model for roughly the same thing in its own words, and the sweep over hand-written copy covered
+nine brochure words across **six hand-listed files out of four hundred**. So a phrase Anu was
+forbidden from using was fine in the panel beside her, and the 73-unit course page, the exam
+briefing and every empty state were outside the check entirely. There is one table now,
+`readerCopy.test.ts` sweeps the whole of `app/`, `lib/`, `components/` and the README against it,
+and `VOICE_RULES` is interpolated into Anu's system prompt so what the model is asked for is what
+the sweep enforces. An invariant fails if any of those three stops reading the table, if the sweep
+narrows back to a list, or if a rule stops reaching the prompt.
+
+Adding a tell means arguing that the phrase is never right on a screen here. `perfect` is not on
+the list, because taisminevik is the perfect tense and a grammar page has to say so; `unlock` is
+not, because the exam recordings genuinely unlock. A check that fires on honest copy gets waived,
+and a check everybody waives is a check nobody reads. The emoji rule is drawn the same way: the
+arrow in "Estonian to English", the return key in a keyboard hint and the tick on the week strip
+are typographic glyphs doing a job, and only the pictographic kind is banned.
+
+**The table is half the rule.** No regex tells kind from cold, or notices a paragraph that is
+twice as long as it needs to be. `docs/18-voice.md` is the other half, with worked before-and-after
+examples off real screens, and it is what to read before writing a sentence anybody will see.
 
 **The chat guard is a notice; only the grader has a gate.** `verifyComment` withholds a whole reply
 before the learner sees it, which only a non-streaming answer can afford. The main chat streams, so
@@ -554,9 +597,10 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 - **No em dash or en dash in anything a person reads**, anywhere in `app/`, `lib/`, `components/`
   or the README. A dash used as a clause break is the loudest single tell that a sentence was
   generated, and every screen here is one person explaining Estonian to another.
-  `lib/copy/readerCopy.test.ts` walks the whole tree and fails on one; its `ALLOWED` list is three
-  files where the character is data, and a test fails if an entry there stops containing one, so
-  it cannot become a parking space. Replacing a dash between two independent clauses with a comma
+  `lib/copy/readerCopy.test.ts` walks the whole tree and fails on one, alongside every other tell
+  in `lib/copy/voice.ts`; its `ALLOWED` list is now the table itself, the one file that has to name
+  what it bans, and a test fails if an entry there stops containing one, so it cannot become a
+  parking space. Replacing a dash between two independent clauses with a comma
   makes a splice and reads worse than the dash did: use a full stop. A separator in a label takes
   the middot the app already uses.
 - **Some code reads a dash rather than writing one, and a sweep cannot tell those apart.** The word
@@ -684,8 +728,12 @@ a reply has arrived and "Answered by" after. A trailer was tried and is not an o
 browser exposes one.
 
 **Anu's English is cleaned on its way past, and her Estonian never is.** `lib/tutor/humanize.ts`
-strips dashes used as clause breaks and stock openers. It streams, holding text back only where a
-rule could still change it, so it costs the learner nothing they would notice. `FIX:` and `VOCAB:`
+strips dashes used as clause breaks and stock openers, reading both from `lib/copy/voice.ts` rather
+than keeping a list of its own. It streams, holding text back only where a
+rule could still change it, so it costs the learner nothing they would notice. Only the phrases
+carrying no information are rewritten: there is no mechanical translation from "seamless" back into
+whatever was meant, so a brochure word is asked against in the prompt and swept in hand-written
+copy rather than replaced mid-sentence with something Anu did not say. `FIX:` and `VOCAB:`
 lines pass through byte for byte: rewriting punctuation inside a corrected sentence would be the
 app editing Estonian, which is the rule the whole project is built on. The first version of the
 stream got that wrong in the way only a test finds, rewriting a corrected sentence one chunk
@@ -835,7 +883,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
-`requireAdminId`, `upsertLexemeWithForms`. Most of them now
+`requireAdminId`, `upsertLexemeWithForms`, `VOICE_RULES`, `findTells`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

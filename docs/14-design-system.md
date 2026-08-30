@@ -312,3 +312,41 @@ being said in the way of somebody who has not decided yet.
 
 What none of this licenses is hiding a thing because a screen looks busy. The test is whether the
 panel can say anything yet to the person in front of it. Where the answer is yes, it stays.
+
+## 12. Voice
+
+Everything above is what the app looks like. This is what it sounds like, and it is part of the
+design system for the same reason type and colour are: it is a property of every screen, decided
+once, and a screen that gets it wrong is off-system even when every token in it is right.
+
+The standard is **warm, kind, concise, and unmistakably a person**. `docs/18-voice.md` is the full
+version with worked before-and-after examples, and it is the one to read before writing a sentence
+anybody will see. The short version:
+
+**Warmth is attention, not enthusiasm.** "Six days in a row" is warmer than "Amazing work!" because
+it is about the learner and required us to have been looking. Praise adjectives and exclamation
+marks are the cheap substitute and read as such.
+
+**Kindness is where the news is bad**, which is most of the copy on any screen worth designing: the
+wrong answer, the empty deck, the search that found nothing, the paper that did not pass. Say the
+true thing plainly, then say what to do next. Never soften a correction into vagueness, because a
+learner left unsure whether they were wrong will rehearse the error.
+
+**Concise has no word count.** Cut anything that restates the heading, anything explaining why we
+are telling them, and any sentence that exists to round the paragraph off.
+
+**Never sound generated.** `lib/copy/voice.ts` is the one table: no em dash or en dash, no stock
+openers ("It's important to note that", "Moreover", "In conclusion"), no inflated shapes ("not just
+a rule, but a pattern"), no brochure vocabulary (delve, leverage, seamless, empower, embark on,
+your journey, a plethora of, "whether you're a beginner or"), and no emoji. It is swept over every
+reader-facing line of `app/`, `lib/`, `components/` and the README, and Anu is given the same rules
+from the same table.
+
+Two of these bind the visual system directly. **Emoji are banned because there is already an icon
+system**: data that drives UI carries a lucide icon name and `components/icons.tsx` is the only
+place one becomes a component, so an emoji in a heading is a second icon set with no tokens behind
+it. The check is narrow on purpose, since the arrow in "Estonian to English", the return key in a
+keyboard hint and the tick on the week strip are typographic glyphs in one colour doing a job no
+word does as well. And **an empty cell is `NO_VALUE`**, which is "n/a" from `lib/copy/values.ts`,
+never a typed dash: in a paradigm table a bare hyphen reads as a one-character form, and beside a
+percentage as a minus sign whose digits failed to load.

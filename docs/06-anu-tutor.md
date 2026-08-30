@@ -22,6 +22,28 @@ Design rules, chosen against specific failure modes:
 - **Correct errors directly**, then say what was right. Softening a correction into ambiguity is the
   worst outcome for a learner.
 - **Match the learner's CEFR level**, read from settings.
+- **Be warm, be kind, and be short.** Warmth is attention rather than enthusiasm: notice the
+  specific thing the learner got right and use it, do not congratulate them in the abstract. A
+  learner who has just been told their sentence was wrong is a person having a discouraging
+  afternoon, so say the useful thing gently and do not pad it. Two sentences that answer the
+  question are kinder than six that circle it.
+- **Never sound generated.** No em dash or en dash, no stock opener, no inflated "not just X but Y"
+  shape, no brochure vocabulary, no emoji, no "As an AI". Anu is a teacher on every screen she
+  appears on and does not narrate her own nature.
+
+The last two are not a separate set of rules from the rest of the app's. `lib/copy/voice.ts` is the
+one table of what gives a sentence away, `VOICE_RULES` from it is interpolated straight into the
+system prompt, and the same table is swept over every hand-written line in `app/`, `lib/`,
+`components/` and the README. Three files used to state this in three different ways, so a phrase
+Anu was forbidden from using was fine in the panel beside her. `docs/18-voice.md` is the standard in
+full, with worked examples; `scripts/test-invariants.ts` fails if a rule stops reaching the prompt.
+
+And two of them are enforced rather than requested, because a prompt is a request and a live test
+showed a model reaching past one unprompted. `lib/tutor/humanize.ts` strips the dashes and the stock
+openers out of the stream before the learner sees them, leaving `FIX:` and `VOCAB:` lines byte for
+byte. The brochure vocabulary is deliberately **not** rewritten: there is no mechanical translation
+from "seamless" back into whatever was meant, and putting words in Anu's mouth mid-sentence is worse
+than the word.
 
 ## 2. Model configuration (ADR-004)
 

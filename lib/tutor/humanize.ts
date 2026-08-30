@@ -13,6 +13,13 @@
   end of the day" carry no information at all, and a learner reading an
   explanation of the partitive should not have to walk past one to reach it.
 
+  NEITHER LIST LIVES HERE ANY MORE. `lib/copy/voice.ts` is the one table of
+  what gives a sentence away, and this file is the pass that applies the part
+  of it a stream can safely apply. It used to hold its own copy, `prompt.ts`
+  asked the model in different words again, and `readerCopy.test.ts` swept
+  hand-written copy for a third list, so a phrase banned in Anu's answer was
+  fine in the panel beside it and nobody could see that from any one file.
+
   WHAT IS DELIBERATELY NOT TOUCHED, AND WHY THAT IS THE WHOLE CARE HERE.
 
   Estonian. Never a word of it. Two lines in a reply are Estonian by
@@ -30,24 +37,22 @@
   opener, and neither can reach inside a word.
 */
 
-const EM = "—";
-const EN = "–";
+import { EM_DASH as EM, EN_DASH as EN, OPENER_REWRITES } from "@/lib/copy/voice";
 
 /** Lines that are Estonian by construction, and are never rewritten. */
 const ESTONIAN_LINE = /^(?:\d+[.)]\s*)?(?:VOCAB|FIX):/i;
 
-const OPENERS: [RegExp, string][] = [
-  [/^it'?s important to note that\s+/i, ""],
-  [/^it'?s worth noting that\s+/i, ""],
-  [/^it is worth noting that\s+/i, ""],
-  [/^at the end of the day,?\s+/i, ""],
-  [/^in essence,?\s+/i, ""],
-  [/^great question!?\s*/i, ""],
-  [/^certainly!?\s*/i, ""],
-  // "not just a rule, but a pattern" is a shape rather than an opener, so it
-  // is rewritten wherever it appears rather than only at the start.
-  [/\bnot just\s+([^,.;]+),\s+but\s+/gi, "$1, and "],
-];
+/**
+ * The rewritable half of the voice table.
+ *
+ * Anchored patterns are openers and run first; the one unanchored pattern is
+ * the "not just a rule, but a pattern" shape, which is rewritten wherever it
+ * appears. Only phrases carrying no information get a rewrite at all: a
+ * brochure word has no mechanical translation back into whatever was meant, so
+ * the table detects those in hand-written copy and asks against them in the
+ * prompt rather than putting words in Anu's mouth mid-sentence.
+ */
+const OPENERS: readonly [RegExp, string][] = OPENER_REWRITES;
 
 /**
  * Dashes into punctuation a person would type.
@@ -75,15 +80,33 @@ function dashes(text: string): string {
   return s;
 }
 
+/**
+ * How many times the opener list is walked before giving up.
+ *
+ * Openers stack, and one pass only ever removes the outermost. "Great
+ * question! It's important to note that the partitive marks an ongoing
+ * action" came out of a single pass as "It's important to note that the
+ * partitive marks an ongoing action", because the anchored pattern for the
+ * second opener could not match until the first had gone and nothing ran
+ * again afterwards. Two is the realistic depth and this allows four, since a
+ * pass that changes nothing stops the loop anyway and the cost of the ceiling
+ * is one wasted walk of a short list on the rare line that needed two.
+ */
+const OPENER_PASSES = 4;
+
 function openers(text: string): string {
   let s = text;
   let ateLead = false;
-  for (const [pattern, replacement] of OPENERS) {
-    const next = s.replace(pattern, replacement);
-    if (next !== s) {
-      s = next;
-      if (pattern.source.startsWith("^")) ateLead = true;
+  for (let pass = 0; pass < OPENER_PASSES; pass += 1) {
+    const before = s;
+    for (const [pattern, replacement] of OPENERS) {
+      const next = s.replace(pattern, replacement);
+      if (next !== s) {
+        s = next;
+        if (pattern.source.startsWith("^")) ateLead = true;
+      }
     }
+    if (s === before) break;
   }
   // Only recapitalise when an opener was actually removed. Doing it to every
   // line would capitalise a line that deliberately continues the one above.
@@ -129,8 +152,17 @@ export function humanizeReply(text: string): string {
   a line opens, and carried until that line ends.
 */
 
-/** How far into a line an opener can reach. Every pattern above is well inside this. */
-const LEAD = 48;
+/**
+ * How far into a line an opener can reach.
+ *
+ * The longest pattern in the table is "it's important to note that " at 28
+ * characters, and openers stack: "Great question! It's important to note
+ * that" is two of them and 44. So this covers a chain of two with room, and
+ * a third would have to arrive as prose. It is the price of the stream, paid
+ * once at the start of each line: 64 characters held before the first word
+ * appears, and nothing held after that beyond the word being typed.
+ */
+const LEAD = 64;
 
 export class ProseStream {
   private held = "";
