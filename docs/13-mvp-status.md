@@ -1124,3 +1124,11 @@ warned against: that entry was arguing against turning Settings into tabs or an 
 hide a control behind a click, which is a real cost for a page nobody reaches through a menu. A label
 above four sections is not that.
 
+**ADR-019, amended.** The class boundary widened from "the group's weakest cases in aggregate" to
+also carry each student's own weakest case, still a rolled-up percentage over that student's own
+reviews and gated on a minimum review count, never a specific answer. `docs/03-architecture.md`
+records the amendment against the original ADR rather than silently reversing it, and the join
+screen's own consent copy names the new figure before anyone joins. The class-wide aggregate told a
+teacher which case the room struggles with and nothing about who to help with it; the per-student
+figure is the answer to the harder half of that question, in a room of twenty-five rather than one.
+

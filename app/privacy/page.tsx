@@ -108,10 +108,11 @@ export default function PrivacyPage() {
           one place you can be under a name of your own choosing rather than your account.
           If you run a class, its name and its join code are stored against you. What a
           teacher sees of a pupil is only ever effort, never contents: reviews this week, a
-          streak, words known, when they were last here, and which grammar the class as a
-          whole is weakest at. Never a deck, a search or an answer. Leaving a class removes
-          your membership of it, and deleting your account removes every class you are in and
-          every class you run.
+          streak, words known, when they were last here, which grammar the class as a whole is
+          weakest at, and which grammar that pupil personally is weakest at, as a percentage
+          rolled up over their own reviews. Never a deck, a search or a specific answer.
+          Leaving a class removes your membership of it, and deleting your account removes
+          every class you are in and every class you run.
         </P>
         <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
@@ -326,8 +327,9 @@ export default function PrivacyPage() {
         <P>
           A school running this for a class is the controller of its pupils&rsquo; data and
           answers for that agreement. What a teacher can see is deliberately narrow: how much
-          work each pupil did and which grammar the class as a whole is weakest at, never an
-          individual&rsquo;s deck, their searches or their answers.
+          work each pupil did, which grammar the class as a whole is weakest at, and which
+          grammar each pupil personally is weakest at as a rolled-up percentage, never an
+          individual&rsquo;s deck, their searches or a specific answer.
         </P>
       </S>
 

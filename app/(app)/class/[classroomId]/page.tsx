@@ -134,6 +134,14 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                               ? "reviewed today"
                               : `last review ${entry.daysSinceLastReview} day${entry.daysSinceLastReview === 1 ? "" : "s"} ago`}
                           {" · "}{entry.wordsKnown} words known
+                          {entry.weakestCase && (
+                            <>
+                              {" · weakest: "}
+                              <span style={{ color: "var(--hard-ink)" }}>
+                                {entry.weakestCase.grammCase.toLowerCase()} ({entry.weakestCase.accuracy}%)
+                              </span>
+                            </>
+                          )}
                         </span>
                       )}
                     </span>

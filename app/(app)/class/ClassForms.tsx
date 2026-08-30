@@ -98,8 +98,10 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
       </Button>
       <p className="text-xs" style={{ color: "var(--ink-3)" }}>
         Joining shares your name, your streak, your XP for the week and how many words you know with
-        your teacher and classmates. Not your deck, not your searches, not your mistakes one by one.
-        Leaving stops it immediately.
+        your teacher and classmates, and shares one more thing with your teacher alone: which grammar
+        case you personally get wrong most, as a rolled-up percentage over your own reviews, never a
+        specific answer. Not your deck, not your searches, not your mistakes one by one. Leaving stops
+        it immediately.
       </p>
     </div>
   );

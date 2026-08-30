@@ -104,8 +104,8 @@ export default async function ClassIndexPage() {
               <Card tone="accent">
                 <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
                   You get a six-character join code to put on the board, a roster showing who is
-                  actually reviewing, and the cases your group keeps missing, which is the useful
-                  half of a progress report.
+                  actually reviewing, the cases your group keeps missing, and which case each
+                  student personally keeps missing, which is the useful half of a progress report.
                 </p>
                 <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                   If your pupils are under 13, a parent has to agree before they sign up, and the
@@ -138,9 +138,10 @@ export default async function ClassIndexPage() {
         )}
 
         <Note tone="neutral">
-          A teacher sees effort and progress: reviews this week, streak, words known, and the
-          class&rsquo;s weakest cases in aggregate. Never an individual&rsquo;s searches, deck or
-          mistakes. That line is drawn in the code, not in a policy, see{" "}
+          A teacher sees effort and progress: reviews this week, streak, words known, the
+          class&rsquo;s weakest cases in aggregate, and which case each student personally is
+          weakest at as a rolled-up percentage. Never a search, a deck, or a specific answer. That
+          line is drawn in the code, not in a policy, see{" "}
           <code className="text-xs">lib/classroom/roster.ts</code>.
         </Note>
       </div>

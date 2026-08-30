@@ -496,8 +496,12 @@ boundary at a time once the first half of its line had already been shown, so th
 is now decided when it opens and carried until it ends.
 
 **A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
-this week, streak, words known, last-seen, and the group's weakest cases in aggregate. Never an
-individual's deck, searches or answer history. Do not widen it. (ADR-019.)
+this week, streak, words known, last-seen, the group's weakest cases in aggregate, and, amending
+ADR-019, each student's own weakest case as a rolled-up percentage over their own reviews, gated on
+`MIN_STUDENT_CASE_REVIEWS` so one bad card never names anybody. That is still never an individual's
+deck, searches or answer history: a student's raw mistakes stay theirs alone, only the roll-up moves.
+The join screen states this before anyone joins, and `weakestCase` may only ever be a `{grammCase,
+accuracy, total}` roll-up, never a specific answer, a search, or a card.
 
 **Never score pronunciation.** Not because none is reachable, which stopped being true, but
 because the reachable one is not good enough and that was measured rather than assumed.
