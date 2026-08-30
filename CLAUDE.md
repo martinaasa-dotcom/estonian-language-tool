@@ -124,6 +124,25 @@ test showed a model reaching for forms unprompted despite the instruction, which
 argument for checking rather than asking. If you add another path where a model discusses Estonian
 the learner will act on, put it behind that check too.
 
+**"Never generate" means never by a model.** A deterministic rule over a form already stored is not
+the thing this forbids, and reading it that way would delete the ten regular cases `morph.ts` builds
+off a genitive stem, the ADR-009 fallback for a word held as principal parts alone, and the derived
+case `matchEstonianForm` vouches for when believing a scanned word. A derivation is wrong the same
+way for every word that takes the ending, so it is one bug found once, and the form says on screen
+that it was derived. A model is wrong about one word, unpredictably, in output that looks exactly
+like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
+only" and three later decisions had already been reading it the narrower way.
+
+**The chat guard is a notice; only the grader has a gate.** `verifyComment` withholds a whole reply
+before the learner sees it, which only a non-streaming answer can afford. The main chat streams, so
+`flagUnverifiedEstonian` checks Anu's prose against the dictionary after the fact and names what it
+could not confirm in a trailing line. It inherits `estonianTokens`, which only reaches a quoted word
+or one carrying õäöüšž, so ordinary Estonian in a sentence of prose passes untouched, and that hole
+stays open on purpose: the dictionary behind the check clears an English word only when it happens
+to be an Estonian lemma too, so a wider net would flag English as unverified Estonian and teach
+somebody to ignore the line on the day it is right. What compensates is the UI, not the check. Do
+not raise the extractor's recall without changing what sits behind it. ADR-005 amendment 2.
+
 **A photograph is read by a model; whether it is believed is decided by the dictionary.** Scanning a
 page (`/scan`) is the one path where a model unavoidably looks at Estonian, and it does not get an
 exception. `lib/scan/extract.ts` transcribes and is pure: no database, no network, and every string

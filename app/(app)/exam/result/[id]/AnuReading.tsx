@@ -4,12 +4,15 @@ import { useState } from "react";
 import { CircleAlert, Loader2, MessageCircleQuestion, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card, Note } from "@/components/ui";
+import type { WithholdReason } from "@/lib/tutor/verify";
 
 interface Reading {
   comment: string;
   rule: string;
   aiAvailable: boolean;
   withheld?: string[];
+  /** Whether those were certainly Estonian, which decides what the notice claims. */
+  withheldReason?: WithholdReason | null;
   quotaMessage?: string;
 }
 
@@ -27,7 +30,7 @@ interface Reading {
  * number rather than to be taught. Asking makes the spend follow the interest.
  *
  * Whatever she says is checked against the dictionary before it is shown: a
- * note that quotes an Estonian form nobody can vouch for is withheld whole,
+ * note that quotes a form nobody can vouch for is withheld whole,
  * which is the same guard the single sentence grader runs behind.
  */
 export function AnuReading({ text, level, title, marks }: {
@@ -94,9 +97,20 @@ export function AnuReading({ text, level, title, marks }: {
             ) : (
               <Note tone="neutral">
                 <ShieldCheck size={14} className="mr-1.5 inline" aria-hidden />
-                Anu reached for an Estonian form the dictionary could not vouch for, so her note was
-                withheld. That is the app working, not failing: an unverified form in feedback is
-                the one thing this app will not show you.
+                {reading.withheldReason === "unvouched-word" ? (
+                  <>
+                    Anu quoted a word the dictionary could not vouch for, so her note was withheld.
+                    It may have been English rather than an Estonian form, and the check does not
+                    gamble on which. That is the app working, not failing: an unverified form in
+                    feedback is the one thing this app will not show you.
+                  </>
+                ) : (
+                  <>
+                    Anu reached for an Estonian form the dictionary could not vouch for, so her note
+                    was withheld. That is the app working, not failing: an unverified form in
+                    feedback is the one thing this app will not show you.
+                  </>
+                )}
               </Note>
             )}
             {reading.rule && (

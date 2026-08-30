@@ -86,6 +86,14 @@ export async function POST(request: Request) {
       a form the model reached for on its own. The note is withheld whole in that
       case, because a correction spelled out of a model's own knowledge is the
       single failure this codebase is organised to prevent.
+
+      That empty allowlist is also why this is the route where the check is most
+      likely to withhold over an English word: with no glosses and no paradigm to
+      compare against, any word of five letters or more that the learner did not
+      write is caught, and Anu quoting "weather" back at somebody is caught with
+      it. Withholding is still the right error. Claiming she wrote Estonian is
+      not, so `withheldReason` carries which of the two happened and the result
+      screen says the one that is true.
     */
     const verified = verifyComment(graded.comment, [], text, []);
     if (verified.comment === null && graded.comment.trim()) {
@@ -95,7 +103,8 @@ export async function POST(request: Request) {
         extra: { model: config.model, unverified: verified.unverified },
       });
       return Response.json({
-        comment: "", rule: "", aiAvailable: true, withheld: verified.unverified,
+        comment: "", rule: "", aiAvailable: true,
+        withheld: verified.unverified, withheldReason: verified.reason,
       });
     }
 

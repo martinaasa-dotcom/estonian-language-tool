@@ -221,6 +221,56 @@ check("the model may never supply a form that becomes a card", () => {
   assert.equal(writesForms.test(translate), false, "the model's output reaches a form row directly");
 });
 
+check("a withheld note claims Estonian only when it caught Estonian", () => {
+  /*
+    ADR-005 amendment 2. `verifyComment` withholds on two different findings
+    and they are not the same claim. A word carrying one of õäöüšž is Estonian
+    whatever else it is. A word of five letters or more that nothing supplied
+    is `looksInflected`'s guess, deliberately biased towards withholding, and
+    on `/api/exam/write` it is handed no glosses, no paradigm and an allowlist
+    of the learner's own text, so an English word Anu quoted back is the thing
+    it usually catches. Both drop the note, which is the safe error either way.
+
+    Only one of them may be reported to the learner as Anu having written
+    Estonian. A guard that overstates what it caught is a guard nobody believes
+    on the day it catches something real, and both screens used to say the
+    stronger sentence unconditionally.
+  */
+  const verify = read("lib/tutor/verify.ts");
+  assert.match(
+    verify,
+    /reason:\s*certain \? "estonian-form" : "unvouched-word"/,
+    "the verifier stopped distinguishing a certain find from a guess",
+  );
+  assert.match(
+    verify,
+    /certain = true/,
+    "nothing raises the certain flag, so every withhold now reports the same reason",
+  );
+
+  // Both routes have to carry it out to the client, and both screens have to
+  // branch on it. Anchored on the member rather than on a sentence, because
+  // the wording is copy and a copy sweep may rewrite it.
+  for (const file of [
+    "app/api/write/route.ts",
+    "app/api/exam/write/route.ts",
+    "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/exam/result/[id]/AnuReading.tsx",
+  ]) {
+    assert.match(read(file), /withheldReason/, `${file} dropped the withhold reason`);
+  }
+  for (const file of [
+    "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/exam/result/[id]/AnuReading.tsx",
+  ]) {
+    assert.match(
+      read(file),
+      /withheldReason === "unvouched-word"/,
+      `${file} tells every withheld learner that Anu wrote Estonian, including when she did not`,
+    );
+  }
+});
+
 check("nothing derived from a stem is stored", () => {
   /*
     Five principal parts per lexeme, and the eleven regular cases computed
