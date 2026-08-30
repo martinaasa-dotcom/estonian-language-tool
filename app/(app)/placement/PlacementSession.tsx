@@ -173,13 +173,11 @@ export function PlacementSession({
                   type="button"
                   disabled={settled}
                   onClick={() => answer(i)}
-                  className="flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
-                  style={{
-                    borderColor: settled && isAnswer ? "var(--mint)" : "var(--rule)",
-                    background: settled && isAnswer
-                      ? "var(--mint-soft)"
-                      : settled && chosen === i ? "var(--peach-soft)" : "var(--surface)",
-                  }}
+                  className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
+                  style={settled ? {
+                    borderColor: isAnswer ? "var(--mint)" : "var(--rule)",
+                    background: isAnswer ? "var(--mint-soft)" : chosen === i ? "var(--peach-soft)" : "var(--surface)",
+                  } : undefined}
                 >
                   <span
                     className="grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-sm)] text-xs"

@@ -573,6 +573,35 @@
   .lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
   .press:active { transform: translateY(1px) scale(0.985); }
 
+  /*
+    An option in a multiple-choice question: a tappable answer among several,
+    before it has been picked. `--choice-border`/`--choice-bg` carry a caller's
+    default tone (several screens sit these on `--raised` rather than
+    `--surface`); the rule reads the variables rather than the caller setting
+    `border-color`/`background` inline, because an inline style wins over any
+    class `:hover`, silently, and that is what left these options dead under a
+    pointer everywhere they appeared. Once an answer is picked and the button
+    disables, the caller's own inline colours (correct/incorrect) take over,
+    and `:not(:disabled)` keeps this rule out of their way.
+  */
+  .choice-btn {
+    --choice-border: var(--rule);
+    --choice-bg: var(--surface);
+    border-color: var(--choice-border);
+    background: var(--choice-bg);
+    transition-property: color, background-color, border-color, box-shadow, transform;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    transform: translateY(-2px) scale(1.015);
+    box-shadow: var(--shadow-sm);
+  }
+  .choice-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
+  .choice-btn:disabled { cursor: default; }
+
   .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
