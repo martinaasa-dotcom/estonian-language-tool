@@ -309,7 +309,7 @@ export default async function ProgressPage() {
                     <li key={c.grammCase} className="flex items-center gap-1">
                       <Link
                         href={`/review?case=${c.grammCase}`}
-                        className="flex flex-1 items-center gap-3 rounded-md px-1 py-1 text-sm transition-opacity hover:opacity-75"
+                        className="tap-tint flex flex-1 items-center gap-3 rounded-md px-1 py-1 text-sm"
                       >
                         <span className="w-24" style={{ color: "var(--ink-2)" }}>{c.grammCase.toLowerCase()}</span>
                         <span className="flex-1">

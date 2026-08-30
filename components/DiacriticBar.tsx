@@ -150,12 +150,45 @@ export function DiacriticBar({
           onClick={(e) => hide(e.currentTarget)}
           title="Hide these. Settings turns them back on."
           aria-label="Hide the Estonian letters. Settings turns them back on."
-          className="press ml-1 flex h-9 w-9 items-center justify-center rounded-full opacity-60 transition-ui hover:opacity-100"
+          className="press tap-tint ml-1 flex h-9 w-9 items-center justify-center rounded-full"
           style={{ color: "var(--ink-3)" }}
         >
           <X size={15} aria-hidden />
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * The six letters, drawn as a sample rather than named.
+ *
+ * "The diacritic bar" means nothing to somebody who has met it once under a
+ * text box, so the question that offers it shows it. Solid and bordered when
+ * the row would be drawn, dashed and faded when it would not: the difference
+ * is a border style as well as a tone, because the design system does not let
+ * a colour carry a distinction on its own.
+ *
+ * On a surface rather than an accent tint, since a chosen `ChoiceCard` is
+ * itself `--accent-soft` and a tinted chip on it would disappear at exactly
+ * the moment it is the answer.
+ */
+export function LetterSample({ lit }: { lit: boolean }) {
+  return (
+    <span className="mt-1 flex flex-wrap gap-1" aria-hidden>
+      {ESTONIAN_LETTERS.map((ch) => (
+        <span
+          key={ch}
+          className="est flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+          style={
+            lit
+              ? { background: "var(--surface)", border: "1px solid var(--accent)", color: "var(--accent-deep)" }
+              : { border: "1px dashed var(--rule)", color: "var(--ink-3)", opacity: 0.55 }
+          }
+        >
+          {ch}
+        </span>
+      ))}
+    </span>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Check, Keyboard, PenLine } from "lucide-react";
-import { setLeaderboardPreferences, setLetterBar, setReviewMode } from "@/app/actions";
 import { useRouter } from "next/navigation";
+import { Keyboard, PenLine } from "lucide-react";
+import { setLeaderboardPreferences, setLetterBar, setReviewMode } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
+import { LetterSample } from "@/components/DiacriticBar";
 import type { ReviewMode } from "@/lib/settings/store";
-import { ESTONIAN_LETTERS, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
+import { LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 
 const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof PenLine }[] = [
   {
@@ -25,7 +27,7 @@ const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof Pe
 
 export function ReviewModePanel({ current }: { current: ReviewMode }) {
   const [mode, setMode] = useState(current);
-  const [pending, start] = useTransition();
+  const [, start] = useTransition();
 
   const pick = (next: ReviewMode) => {
     setMode(next);
@@ -33,29 +35,19 @@ export function ReviewModePanel({ current }: { current: ReviewMode }) {
   };
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <ChoiceGroup ariaLabel="How review asks" className="grid gap-2 sm:grid-cols-2">
       {MODES.map((m) => (
-        <button
+        <ChoiceCard
           key={m.value}
-          type="button"
-          disabled={pending}
-          onClick={() => pick(m.value)}
-          aria-pressed={mode === m.value}
-          className="rounded-[var(--r-lg)] border p-4 text-left transition-opacity hover:opacity-85"
-          style={{
-            borderColor: mode === m.value ? "var(--accent)" : "var(--rule)",
-            background: mode === m.value ? "var(--accent-soft)" : "var(--surface)",
-          }}
-        >
-          <span className="flex items-center gap-2">
-            <m.icon size={16} aria-hidden style={{ color: mode === m.value ? "var(--accent-deep)" : "var(--ink-3)" }} />
-            <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{m.label}</span>
-            {mode === m.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />}
-          </span>
-          <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>{m.detail}</span>
-        </button>
+          layout="stacked"
+          selected={mode === m.value}
+          onSelect={() => pick(m.value)}
+          icon={<m.icon size={16} aria-hidden />}
+          title={m.label}
+          detail={m.detail}
+        />
       ))}
-    </div>
+    </ChoiceGroup>
   );
 }
 
@@ -90,42 +82,20 @@ export function LetterBarPanel({ current }: { current: LetterBar }) {
   };
 
   return (
-    <div ref={root} className="grid gap-2 sm:grid-cols-2">
-      {LETTER_BAR_CHOICES.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          disabled={pending}
-          onClick={() => pick(o.value)}
-          aria-pressed={value === o.value}
-          className="rounded-[var(--r-lg)] border p-4 text-left transition-opacity hover:opacity-85"
-          style={{
-            borderColor: value === o.value ? "var(--accent)" : "var(--rule)",
-            background: value === o.value ? "var(--accent-soft)" : "var(--surface)",
-          }}
-        >
-          <span className="flex items-center gap-2">
-            <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{o.label}</span>
-            {value === o.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />}
-          </span>
-          <span className="mt-2 flex flex-wrap gap-1.5" aria-hidden>
-            {ESTONIAN_LETTERS.map((ch) => (
-              <span
-                key={ch}
-                className="est flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold"
-                style={{
-                  background: o.value === "on" ? "var(--accent-soft)" : "var(--rule-soft)",
-                  color: o.value === "on" ? "var(--accent-deep)" : "var(--ink-3)",
-                  opacity: o.value === "on" ? 1 : 0.45,
-                }}
-              >
-                {ch}
-              </span>
-            ))}
-          </span>
-          <span className="mt-2 block text-xs" style={{ color: "var(--ink-3)" }}>{o.detail}</span>
-        </button>
-      ))}
+    <div ref={root}>
+      <ChoiceGroup ariaLabel="Typing Estonian" className="grid gap-2 sm:grid-cols-2">
+        {LETTER_BAR_CHOICES.map((o) => (
+          <ChoiceCard
+            key={o.value}
+            layout="stacked"
+            disabled={pending}
+            selected={value === o.value}
+            onSelect={() => pick(o.value)}
+            title={o.label}
+            detail={<><LetterSample lit={o.value === "on"} />{o.detail}</>}
+          />
+        ))}
+      </ChoiceGroup>
     </div>
   );
 }

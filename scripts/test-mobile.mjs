@@ -21,8 +21,8 @@ const WIDE = [768, 1280];
 
 const browser = await launchChromium();
 
-// Floor: 34, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 57 });
+// Floor: 59, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("The phone", { floor: 59 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -137,9 +137,15 @@ for (const width of PHONES) {
 //     person looking, or a check that ran here.
 //     `/exam` is on it for main's own reason: it is the densest screen in the
 //     app, six level cards each with four meters, a ring and a button.
+// `/settings` and `/practice` are on it because that is where the app asks a
+// question rather than answers one: a row of goal options and a row of case
+// drills, both of which were rebuilt onto components/Choice.tsx and .tap-tint.
+// Neither route was covered here before, which is why a whole screen of
+// controls could be redrawn without this suite having an opinion.
 for (const path of [
   "/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam",
   "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
+  "/settings", "/practice",
 ]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
@@ -292,6 +298,24 @@ for (const path of ["/learn", "/learn/kodu", "/placement"]) {
 //     a selector that matches nothing, which is how a check like this passes
 //     for a year after the class is renamed. So each of these asserts the row
 //     is in the page first.
+//     STARTED FROM A KNOWN ANSWER, NOT FROM WHATEVER THE LAST RUN LEFT.
+//     The round trip below turns the row off and back on, so a run that dies
+//     between the two leaves the setting off in the database, and every width
+//     check here then fails on the next run for a reason that has nothing to
+//     do with the code. Setting it on first costs one page load and makes this
+//     block say the same thing twice in a row.
+async function letterBarOn(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+  const on = page.getByRole("radio", { name: /Show the letters/ }).first();
+  if ((await on.getAttribute("aria-checked")) !== "true") {
+    await on.click();
+    await page.waitForTimeout(1500);
+  }
+  await ctx.close();
+}
+
 const letterBar = (page) => page.evaluate(() => {
   const bars = [...document.querySelectorAll(".letter-bar")];
   return {
@@ -299,6 +323,8 @@ const letterBar = (page) => page.evaluate(() => {
     drawn: bars.filter((b) => b.getClientRects().length > 0).length,
   };
 });
+
+await letterBarOn(browser);
 
 for (const width of PHONES) {
   const { ctx, page } = await open(width, 844, "/dictionary");
@@ -348,7 +374,7 @@ for (const width of WIDE) {
   );
 
   await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
-  const back = page.getByRole("button", { name: /Show the letters/ }).first();
+  const back = page.getByRole("radio", { name: /Show the letters/ }).first();
   check("and Settings still offers it back", await back.isVisible());
 
   await back.click();

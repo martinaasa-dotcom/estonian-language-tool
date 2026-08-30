@@ -154,6 +154,42 @@ scroll-driven animation has no duration to shorten, so it needs removing rather 
 `Chip`, `Empty`, `Stat`, `StatTile`, `Ring`, `Meter`, `Note`, `Skeleton`, `Wash`. `components/Button.tsx` has one gradient
 variant (`primary`) and four quiet ones; one loud action per screen.
 
+`components/Choice.tsx` is the one answer to "pick one of these" and "pick any of these":
+`ChoiceGroup` plus `ChoiceChip` (a pill) or `ChoiceCard` (an answer with a line under it). It
+exists because there was no primitive for it and every screen that asked invented one, two of the
+three wrongly. The worst was a bare `<button>` wrapped round a `<Chip>`: a chip is the app's
+*label*, so the control had no border, no shadow and no hover, and eight of them under a heading
+read as a legend rather than as a form. Chosen was `--raised` swapped for `--accent-soft`, two
+percent of lightness apart on the dark theme, which is a distinction carried by hue alone on the
+one screen where the distinction *is* the answer. And every option carried `aria-pressed`, so a
+set of mutually exclusive answers announced as that many unrelated switches and cost that many
+tab stops.
+
+Three things follow, and each has an invariant:
+
+- **A group knows what kind of question it is.** `select="one"` is a real radio group: one tab
+  stop, arrow keys between the options, "3 of 8". `select="many"` is toggle buttons, which is
+  what `aria-pressed` actually means. The roving tab stop is settled from the DOM, because only
+  the group knows whether *any* option is chosen and first run always starts with none.
+- **Chosen inverts rather than tints, on a pill.** A luminance change survives both themes and
+  anybody who cannot separate the two hues. A card keeps the tint, because its second line is
+  `--ink-3` and a solid fill would swallow it, so it doubles its rule and shows a tick instead.
+- **The states are CSS, not a `style` prop.** `.choice-btn` plus the two `[data-on]` rules in
+  `globals.css`. An inline style beats a stylesheet, so a component that paints its resting
+  background inline can never define a hover. That is the mechanism that made the missing hover
+  unfixable in place, rather than a detail, and it is why `.choice-btn` is shared with the
+  multiple-choice answers rather than copied: two sessions found the same cause the same day, and
+  main's fix reached it through a custom property, which is the more precise of the two.
+
+**A hover makes a control more present, never less.** `.choice-btn` (a bordered box: its tone comes
+in through `--choice-border`/`--choice-bg` so the hover can actually win) and `.tap-tint` (a bare
+row or icon button: a raised tint arrives under the pointer) replaced
+`transition-opacity hover:opacity-80` on twenty-odd controls. Fading a
+thing under the cursor is the one hover the rest of this interface uses for nothing else, because
+dimming is exactly how every disabled control here is drawn: the strongest signal a mouse got on
+those screens was the control appearing to switch off. A link may still fade, and a `<button>`
+drawn as underlined text is a link wearing the right element.
+
 `components/brand.tsx` holds **Õ**, the mascot: Estonian's most recognisable letter is already a
 round face with a squiggle on top, so the mascot is that letter taken literally. It appears in
 the rail, in every empty state, at the end of a session, and on the landing page. It is a
