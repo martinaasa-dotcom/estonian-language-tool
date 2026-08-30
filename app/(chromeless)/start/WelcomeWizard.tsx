@@ -38,8 +38,8 @@ const LEVELS = [
   { key: "A2", label: "I get by", detail: "Shopping, ordering, the lihtminevik." },
   { key: "B1", label: "Conversational", detail: "I can hold a conversation and read the news slowly." },
   { key: "B2", label: "Confident", detail: "I follow a debate and want precision, not basics." },
-  { key: "C1", label: "Fluent", detail: "I work in Estonian and want the last ten percent." },
-  { key: "C2", label: "Near native", detail: "I want register, idiom and the shades." },
+  { key: "C1", label: "Fluent", detail: "I work in Estonian and want to write it well." },
+  { key: "C2", label: "Near-native", detail: "I want register, idiom and the last few percent." },
 ] as const;
 
 const GOALS = [
