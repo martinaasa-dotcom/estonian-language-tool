@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { contrastLetter, findQuantityPairs, longerOf, type FormRef } from "@/lib/estonian/quantity";
+import { formLabel } from "@/lib/estonian/morph";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { PairsSession, type PairQuestion } from "./PairsSession";
@@ -8,14 +9,6 @@ import { PairsSession, type PairQuestion } from "./PairsSession";
 export const dynamic = "force-dynamic";
 
 const ROUND = 10;
-
-/** Readable names for the paradigm slots the seed data stores. */
-const FORM_LABELS: Record<string, string> = {
-  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
-  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
-  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
-  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
-};
 
 /**
  * Minimal-pair listening.
@@ -43,10 +36,7 @@ export default async function PairsPage() {
         value: form.value,
         lemma: lexeme.lemma,
         translation: lexeme.translation,
-        formLabel:
-          FORM_LABELS[form.formType] ??
-          form.morphName ??
-          form.formType.replace(/^EKILEX:/, ""),
+        formLabel: formLabel(form),
         lexemeId: lexeme.id,
       });
     }

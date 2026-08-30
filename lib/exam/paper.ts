@@ -147,7 +147,7 @@ export interface GovernmentItem extends BaseItem {
   kind: "government";
   /** The example with its governed word hidden, when there is one. */
   cue: string | null;
-  options: { key: string; en: string; et: string }[];
+  options: { key: string; en: string; et: string; question: string }[];
   answer: string;
 }
 
@@ -511,7 +511,12 @@ function buildGovernment(spec: TaskSpec, ctx: BuildContext): ExamTask {
     ctx.spent.add(row.word.lexemeId);
     const options = buildOptions(row.government.caseKey, casePool, 4, ctx.random).map((key) => {
       const named = caseByKey(key);
-      return { key, en: named?.en ?? key, et: named?.et ?? key };
+      return {
+        key,
+        en: named?.en ?? key,
+        et: named?.et ?? key,
+        question: named?.question ?? "",
+      };
     });
     items.push({
       ...base(row.word, `${spec.id}-${items.length}`),

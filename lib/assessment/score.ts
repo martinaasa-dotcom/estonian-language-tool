@@ -95,7 +95,7 @@ export function gradeWrite(item: WriteItem, sentence: string): WriteMark {
     return {
       credit: 1,
       used, usedAnotherForm, isSentence,
-      note: `${item.targetForm} is the ${item.caseEn.toLowerCase()}, and you used it.`,
+      note: `${item.targetForm} is the ${item.caseEt}, the ${item.caseEn.toLowerCase()}, and you used it.`,
     };
   }
   if (usedAnotherForm) {

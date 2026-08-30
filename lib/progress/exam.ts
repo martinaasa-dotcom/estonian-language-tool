@@ -139,6 +139,7 @@ export async function readinessSignals(ownerId: string): Promise<ReadinessSignal
   const cases = caseAccuracy(caseReviews).map((row) => ({
     caseKey: row.grammCase,
     caseEn: caseByKey(row.grammCase)?.en ?? row.grammCase,
+    caseEt: caseByKey(row.grammCase)?.et ?? row.grammCase,
     pct: row.accuracy,
     reviews: row.total,
   }));

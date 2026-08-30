@@ -449,3 +449,38 @@ and questions with a model (ADR-005, and the failure would be invisible precisel
 most); scoring an unset part as zero (it fails a candidate for a gap in the dictionary, and trips the
 one clause that is supposed to mean "you did not attempt this"); and letting the client send its own
 marks (a result anybody can type is not a measurement).
+
+**ADR-023 — A grammar point is named the way a class names it, and the Latin name is the
+cross-reference.**
+*Context:* the reference layer, the dictionary, the flashcards, the placement check and the mock
+exam all name cases and verb forms, and every one of them held the Estonian name and the question
+word already: `cases.ts` has carried `et` and `question` since the domain model was written, and
+`morph.ts` has carried `olevik` and `lihtminevik` for as long as there has been a paradigm table.
+*Problem:* all of them led with the English or Latin name and demoted the Estonian one to small
+italics, a hint or a bracket. Estonian is not taught that way anywhere. A course, a school textbook
+and the state examination name a case by its Estonian name and, more often, by the question it
+answers, and they name the verb by `aeg`, `kõneviis`, `tegumood` and `pööre`, four axes kept apart,
+of which only two are tenses the verb inflects for. So the app was teaching a private vocabulary: a
+learner drilled on "tuba → inessive" and told their weakest case was "the comitative" had been given
+words their own teacher will not say, and the reference called `lihtminevik` "the imperfect", which
+is a Latin category Estonian does not have. The placement check was the sharpest version, offering
+somebody in their first week "Inessive, Elative, Allative" as multiple choice. *Decision:* flip the
+hierarchy everywhere rather than delete a name. The Estonian term and the question lead; the English
+name stays, labelled as what it is, because a learner reading an English reference grammar needs it
+and this app is written in English. `lib/estonian/terms.ts` is the one table of what a point is
+called, keyed by the topic ids `grammar.ts` already uses and falling back to `cases.ts` for the
+fourteen cases, so a heading does not have to know whether it is looking at a case or a mood. It is
+deliberately partial: a point is in it only where a class actually has a term, and `irony` correctly
+has none. `grammar.ts` keeps its "no Estonian at all" tripwire, which is the reason the terms live
+in a neighbouring module rather than in the prose; `terms.ts` has the mirror-image tripwire, holding
+every entry to the shape of a term rather than of a form. *Consequences:* three hand-typed English
+label tables in `search.ts`, `actions.ts` and the minimal-pairs page collapse into one derived
+`formName()` in `morph.ts`, so `toas` now resolves as "seesütlev (inessive) of tuba" in every one of
+them at once. Cards already in a deck keep the front they were generated with, since `Card.front` is
+stored; only new ones are asked the new way, which is the same latitude every other prompt change
+has had. Anu is told to name a point Estonian-first as well, and that instruction sits beside the
+one that was already there asking her to use both. *Rejected:* removing the Latin names, which would
+strand anyone using an English grammar or a Wiktionary page and buys nothing; renaming the topic ids
+to Estonian, which reads better in a URL and would rewrite 83 syllabus entries and break every
+bookmark for a slug; and inventing an Estonian term where a course does not have one, which is the
+same failure as inventing a form, one level up.

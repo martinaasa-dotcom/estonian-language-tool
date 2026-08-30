@@ -955,7 +955,8 @@ The link is worth keeping for after the answer, when looking the word up is the
 natural next thing to do, so it is gated on the result rather than deleted.
 `scripts/test-teaching.mjs` asserts both halves, because deleting it outright
 would satisfy "not given away while typing" on its own and quietly cost the
-learner something. Its floor moves 38 to 40 and the no-sentences waiver 4 to 6.
+learner something. Its floor moves up by two, to 45 after the pass below took it to 43, and
+the no-sentences waiver 4 to 6.
 The first of those two checks was watched to fail against the ungated header
 before it was trusted.
 
@@ -965,3 +966,56 @@ while the learner is discriminating a sound; the gloss is not the answer there,
 so it leaks nothing the mode grades, but it is not doing any work either.
 Sentence building carries the same header link as dictation, and it is
 harmless: the tiles already show every word of the target sentence.
+
+## 17. The eleventh pass: named the way it is taught
+
+The domain model had been right since it was written and the screens had not
+been reading it. `cases.ts` has carried the Estonian name and the question word
+for every case from the beginning; `morph.ts` has carried `olevik` and
+`lihtminevik` for as long as there has been a paradigm table. Every screen led
+with the other column. A case was headed "Inessive" with `seesütlev` in small
+italics under it, a flashcard asked for "tuba → inessive" and put the question
+in the hint, the reference called `lihtminevik` "the imperfect", which is a
+Latin category this language does not have, and the placement check offered
+somebody in their first week "Inessive, Elative, Allative" as multiple choice.
+
+None of that is how Estonian is taught anywhere. A course, a school textbook
+and the state examination name a case by its Estonian name and, more often, by
+the question it answers, and they name the verb by four axes kept apart, of
+which only two are tenses the verb inflects for. An app whose whole argument is
+that it fits alongside a course was teaching a private vocabulary that a course
+does not use.
+
+### What changed
+
+The hierarchy is flipped rather than a name deleted: the Estonian term and the
+question lead, and the English name stays as a labelled cross-reference, because
+this app is written in English and an English reference grammar has to stay
+usable. `lib/estonian/terms.ts` is the one table of what a point is called, and
+it is deliberately partial, holding nothing for a point where a class has no
+settled term. The grammar reference is regrouped by what kind of word is doing
+the work, with the four verb axes stated at the top instead of a flat list
+headed by English tense names. Three hand-typed English label tables, in
+`search.ts`, `app/actions.ts` and the minimal-pairs page, collapsed into one
+derived `formName()` in `morph.ts`, so `toas` resolves as "seesütlev (inessive)
+of tuba" in all three at once. Anu is told to name a point the same way, beside
+the instruction that already asked her to use both names.
+
+### Known limitations, stated plainly
+
+1. **Cards already in a deck keep the front they were built with.** `Card.front`
+   is stored, so an existing conjugation card still reads "present · ma" until
+   it is regenerated. Rewriting stored fronts in a migration would edit a card
+   somebody has a scheduling history against, for a cosmetic gain.
+2. **The topic ids are unchanged, so `/grammar/topic/imperfect` still says
+   `imperfect` in the URL.** The id is a key that 83 syllabus entries point at
+   and that any bookmark holds. Renaming it buys a slug and risks the course.
+3. **A term nobody says is worse than an English one.** Roughly a third of the
+   grammar points have no entry, because a settled classroom term for "irony" or
+   "register" is not something this repository can invent, and `grammarTerm()`
+   returning nothing is the honest answer. Those points keep their English
+   description.
+4. **The English column headings over the tables stay English.** "Case",
+   "Singular", "Answers" are labels on a table of Estonian, not names of
+   grammatical categories, and translating them would be decoration.
+

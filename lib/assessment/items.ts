@@ -1,4 +1,4 @@
-import { CASES, caseByKey } from "@/lib/estonian/cases";
+import { CASES, caseByKey, caseOptionLabel } from "@/lib/estonian/cases";
 import { deriveCase } from "@/lib/estonian/derive";
 import { parseGovernment } from "@/lib/estonian/government";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -207,20 +207,20 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
         skill: "reading",
         band: raise(bandOf(word.cefr)!, CASE_BAND[caseKey]),
         lemma: word.lemma,
-        question: `Which one is "${word.lemma}" (${word.translation}) in the ${spec.en.toLowerCase()}, the case that answers ${spec.question}?`,
+        question: `Which one is "${word.lemma}" (${word.translation}) in the ${spec.et}, the case that answers ${spec.question}?`,
         et: "",
         heard: false,
         options: set.options,
         estonianOptions: true,
         answer: set.answer,
         source: form.provenance === "ekilex" ? "ekilex" : "derived",
-        because: `The ${spec.en.toLowerCase()} of ${word.lemma} is ${form.value}.`,
+        because: `The ${spec.et}, the ${spec.en.toLowerCase()}, of ${word.lemma} is ${form.value}.`,
       });
       break;
     }
   }
 
-  const caseNames = CASES.map((c) => c.en);
+  const caseNames = CASES.map(caseOptionLabel);
   for (const word of shuffled(pool, rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
     const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
@@ -230,7 +230,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
       if (spec.principal) continue;
       const value = deriveCase(gen, caseKey);
       if (!value || value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const set = choices(spec.en, caseNames, rng, differentText);
+      const set = choices(caseOptionLabel(spec), caseNames, rng, differentText);
       if (!set) continue;
       out.push({
         id: `r-ident-${word.id}-${caseKey}`,
@@ -245,7 +245,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
         estonianOptions: false,
         answer: set.answer,
         source: "derived",
-        because: `The ending marks the ${spec.en.toLowerCase()}, which answers ${spec.question}.`,
+        because: `The ending marks the ${spec.et}, the ${spec.en.toLowerCase()}, which answers ${spec.question}.`,
       });
       break;
     }
@@ -254,7 +254,9 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   for (const word of shuffled(pool, rng)) {
     const government = parseGovernment(word.government);
     if (!government) continue;
-    const set = choices(government.caseEn, caseNames, rng, differentText);
+    const govSpec = caseByKey(government.caseKey);
+    if (!govSpec) continue;
+    const set = choices(caseOptionLabel(govSpec), caseNames, rng, differentText);
     if (!set) continue;
     out.push({
       id: `r-gov-${word.id}`,
@@ -270,8 +272,8 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
       answer: set.answer,
       source: "dictionary",
       because: government.example
-        ? `${word.lemma} takes the ${government.caseEn.toLowerCase()}: ${government.example}`
-        : `${word.lemma} takes the ${government.caseEn.toLowerCase()}.`,
+        ? `${word.lemma} takes the ${government.caseEt}, the ${government.caseEn.toLowerCase()}: ${government.example}`
+        : `${word.lemma} takes the ${government.caseEt}, the ${government.caseEn.toLowerCase()}.`,
     });
   }
 
@@ -313,7 +315,7 @@ export function dictatable(sentence: string): boolean {
 export function listeningItems(words: readonly WordRow[], rng: () => number): (ChoiceItem | DictationItem)[] {
   const pool = usableWords(words);
   const glosses = pool.map((w) => w.translation);
-  const caseNames = CASES.map((c) => c.en);
+  const caseNames = CASES.map(caseOptionLabel);
   const out: (ChoiceItem | DictationItem)[] = [];
 
   for (const word of shuffled(pool, rng)) {
@@ -345,7 +347,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
       if (spec.principal) continue;
       const value = deriveCase(gen, caseKey);
       if (!value || value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const set = choices(spec.en, caseNames, rng, differentText);
+      const set = choices(caseOptionLabel(spec), caseNames, rng, differentText);
       if (!set) continue;
       out.push({
         id: `l-case-${word.id}-${caseKey}`,
@@ -360,7 +362,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
         estonianOptions: false,
         answer: set.answer,
         source: "derived",
-        because: `You heard ${value}, the ${spec.en.toLowerCase()}.`,
+        because: `You heard ${value}, the ${spec.et}, which an English grammar calls the ${spec.en.toLowerCase()}.`,
       });
       break;
     }
@@ -403,7 +405,7 @@ export function writingItems(words: readonly WordRow[], rng: () => number): Writ
         skill: "writing",
         band: raise(bandOf(word.cefr)!, CASE_BAND[caseKey]),
         lemma: word.lemma,
-        question: `Write one Estonian sentence using ${word.lemma} (${word.translation}) in the ${spec.en.toLowerCase()}.`,
+        question: `Write one Estonian sentence using ${word.lemma} (${word.translation}) in the ${spec.et} (${spec.question}).`,
         translation: word.translation,
         caseKey,
         caseEn: spec.en,

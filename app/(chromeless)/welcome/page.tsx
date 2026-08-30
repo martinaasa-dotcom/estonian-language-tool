@@ -903,9 +903,12 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 
+      // Labelled the way a course labels them. The three noun parts are the
+      // three questions every Estonian schoolbook drills them by, and a visitor
+      // who has been to one lesson recognises them.
       const principal = (isVerb
-        ? [["ma-infinitive", form("INF_MA")], ["da-infinitive", form("INF_DA")], ["present 1sg", form("PRES_1SG")], ["past 1sg", form("PAST_1SG")]]
-        : [["nominative", form("NOM_SG")], ["genitive", form("GEN_SG")], ["partitive", form("PART_SG")]]
+        ? [["ma-tegevusnimi", form("INF_MA")], ["da-tegevusnimi", form("INF_DA")], ["olevik · ma", form("PRES_1SG")], ["lihtminevik · ma", form("PAST_1SG")]]
+        : [["nimetav · kes? mis?", form("NOM_SG")], ["omastav · kelle? mille?", form("GEN_SG")], ["osastav · keda? mida?", form("PART_SG")]]
       ).flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
 
       const cases = isVerb
@@ -970,9 +973,9 @@ const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
   gradationNote: w.gradationNote,
   genitive: w.genSg,
   principal: [
-    { label: "nominative", value: w.nomSg },
-    { label: "genitive", value: w.genSg },
-    { label: "partitive", value: w.partSg },
+    { label: "nimetav · kes? mis?", value: w.nomSg },
+    { label: "omastav · kelle? mille?", value: w.genSg },
+    { label: "osastav · keda? mida?", value: w.partSg },
   ],
   cases: buildCaseTable(w).map((row) => ({
     en: row.spec.en,

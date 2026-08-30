@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CASES } from "./cases";
 import {
-  allCaseReferences, caseReference, grammarPoint, CASE_GROUPS, CASE_NOTES, TOPIC_NOTES,
+  allCaseReferences, caseReference, grammarPoint, grammarTopic, CASE_GROUPS, CASE_NOTES,
+  TOPIC_GROUPS, TOPIC_NOTES,
 } from "./grammar";
 
 describe("case notes", () => {
@@ -99,6 +100,16 @@ describe("topic notes", () => {
       expect(topic.points.length, topic.id).toBeGreaterThanOrEqual(3);
       for (const point of topic.points) expect(point.length, topic.id).toBeGreaterThan(10);
     }
+  });
+
+  it("places every topic in exactly one group, and names no topic that is gone", () => {
+    // The reference renders the groups, not the flat list, so a topic missing
+    // from every group is a page nobody can reach and an id in a group with no
+    // topic behind it is a card that silently does not render.
+    const grouped = TOPIC_GROUPS.flatMap((g) => g.ids);
+    expect(new Set(grouped).size).toBe(grouped.length);
+    expect(grouped.slice().sort()).toEqual(TOPIC_NOTES.map((t) => t.id).sort());
+    for (const id of grouped) expect(grammarTopic(id), id).toBeDefined();
   });
 
   it("resolves a topic and a case through the same door", () => {

@@ -18,8 +18,15 @@ export function Wash() {
   );
 }
 
-export function Page({ title, lead, actions, children, eyebrow }: {
-  title: string; lead?: string; actions?: ReactNode; children: ReactNode; eyebrow?: string;
+export function Page({ title, titleLang, lead, actions, children, eyebrow }: {
+  title: string;
+  /**
+   * Set to "et" where the heading is the Estonian name of a grammar point
+   * rather than English prose. A reference page is titled the way a course
+   * titles it, and a screen reader needs telling which language to say it in.
+   */
+  titleLang?: string;
+  lead?: string; actions?: ReactNode; children: ReactNode; eyebrow?: string;
 }) {
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 md:px-10 md:py-12">
@@ -28,7 +35,7 @@ export function Page({ title, lead, actions, children, eyebrow }: {
           {eyebrow && (
             <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>{eyebrow}</p>
           )}
-          <h1 className="est text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+          <h1 lang={titleLang} className="est text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             {title}
           </h1>
           {lead && <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{lead}</p>}

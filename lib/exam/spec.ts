@@ -430,7 +430,7 @@ export const SPEAKING_CRITERIA: readonly string[] = [
   "I gave a reason, not only a description.",
   "I used the case endings I meant to use.",
   "Somebody Estonian would have understood me first time.",
-  "I used more than one tense.",
+  "I used more than one tense, not only the olevik.",
   "I used at least three words from the idea card.",
   "I heard a mistake and corrected it as I went.",
   "I never switched into English.",

@@ -112,12 +112,15 @@ function CaseTable({ forms }: { forms: ParadigmForm[] }) {
               <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                 <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                   {/* The case name is the way into the reference page: this table
-                      says what the form is, that page says when to use it. */}
-                  <Link href={`/grammar/${spec.key.toLowerCase()}`} className="hover:underline">
-                    {spec.en}
-                  </Link>
-                  <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                      says what the form is, that page says when to use it. The
+                      Estonian name leads because that is the one a course, a
+                      textbook and the state examination all use; the Latin one
+                      is kept small for anyone reading an English grammar. */}
+                  <Link href={`/grammar/${spec.key.toLowerCase()}`} lang="et" className="hover:underline">
                     {spec.et}
+                  </Link>
+                  <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                    {spec.en.toLowerCase()}
                   </span>
                 </td>
                 <td className="px-3 py-2"><Cell values={singular[spec.key] ? valuesFor(forms, singular[spec.key]!) : []} /></td>
@@ -128,9 +131,9 @@ function CaseTable({ forms }: { forms: ParadigmForm[] }) {
             {shortIllative.length > 0 && (
               <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
                 <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                  Short illative
-                  <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
-                    lühike sisseütlev
+                  <span lang="et">lühike sisseütlev</span>
+                  <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                    short illative
                   </span>
                 </td>
                 <td className="px-3 py-2"><Cell values={shortIllative} /></td>
@@ -175,9 +178,9 @@ function VerbTable({ forms }: { forms: ParadigmForm[] }) {
                 </th>
                 {groups.map((g) => (
                   <th key={g} className="label-xs px-3 py-2.5 text-left" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
-                    {VERB_GROUP_LABELS[g].en}
-                    <span lang="et" className="ml-1.5 font-normal normal-case italic" style={{ letterSpacing: 0 }}>
-                      {VERB_GROUP_LABELS[g].et}
+                    <span lang="et">{VERB_GROUP_LABELS[g].et}</span>
+                    <span className="ml-1.5 font-normal normal-case italic" style={{ letterSpacing: 0 }}>
+                      {VERB_GROUP_LABELS[g].en.toLowerCase()}
                     </span>
                   </th>
                 ))}

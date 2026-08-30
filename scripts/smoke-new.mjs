@@ -83,14 +83,15 @@ for (const [route, name] of ROUTES) {
 
 await page.goto(`${BASE}/review/government`, { waitUntil: "networkidle" });
 check("government drill has real questions",
-  (await page.getByText(/Which case does it take/i).count()) > 0);
+  (await page.getByText(/Which question does it answer/i).count()) > 0);
 // Assert the rule, not three case names. The distractors are drawn from the
 // cases the learner's own deck actually governs, so a legitimate round can
-// offer inessive, illative, adessive and comitative and name none of the three
-// that used to be hard-coded here. That failed about one run in four, on an
-// app that was working.
+// offer four cases and name none of the three that used to be hard-coded here.
+// That failed about one run in four, on an app that was working. Estonian
+// names, because that is what the buttons say now: a case is offered by the
+// question it answers and the name a class gives it, never by the Latin one.
 const CASE_NAMES =
-  /nominative|genitive|partitive|illative|inessive|elative|allative|adessive|ablative|translative|terminative|essive|abessive|comitative/i;
+  /nimetav|omastav|osastav|sisseütlev|seesütlev|seestütlev|alaleütlev|alalütlev|alaltütlev|saav|rajav|olev|ilmaütlev|kaasaütlev/i;
 check("government drill offers case options",
   (await page.getByRole("button", { name: CASE_NAMES }).count()) >= 3);
 

@@ -1,4 +1,5 @@
 import { CASES, type CaseSpec } from "./cases";
+import { grammarTerm } from "./terms";
 import type { CaseKey } from "./types";
 
 /**
@@ -281,8 +282,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "present-tense",
-    title: "The present tense",
-    summary: "One present tense, doing the work English splits between I write and I am writing.",
+    title: "Talking about now",
+    summary: "One form doing the work English splits between I write and I am writing, and the future as well.",
     points: [
       "Personal endings for the six persons, attached to a stem",
       "Covers both the simple and the continuous English present",
@@ -305,7 +306,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "imperfect",
-    title: "The simple past",
+    title: "Saying what happened",
     summary: "The tense for anything that happened and finished, and the backbone of any story.",
     points: [
       "Formed from a past stem that is often unpredictable",
@@ -317,8 +318,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "perfect",
-    title: "The perfect",
-    summary: "Have done: the auxiliary plus a participle, for a past that still matters now.",
+    title: "Done, and it still matters",
+    summary: "The auxiliary plus a participle, for a past whose result is the point rather than the event.",
     marker: "-nud",
     points: [
       "Built from the verb to be plus the past active participle",
@@ -330,8 +331,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "pluperfect",
-    title: "The pluperfect",
-    summary: "Had done: the same participle, with the auxiliary itself in the past.",
+    title: "Done before something else",
+    summary: "The same participle, with the auxiliary itself in the past, for an event that came before another past one.",
     marker: "-nud",
     points: [
       "For an event completed before another past event",
@@ -355,8 +356,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "conditional",
-    title: "The conditional",
-    summary: "Would, could, should. One suffix that makes a sentence hypothetical or polite.",
+    title: "Would, could, should",
+    summary: "One suffix that makes a sentence hypothetical, or makes a request something a stranger will not find blunt.",
     marker: "-ksi-",
     points: [
       "Hypothetical situations and their consequences",
@@ -368,7 +369,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "imperative",
-    title: "The imperative",
+    title: "Telling somebody to do it",
     summary: "Instructions and invitations, with a separate form for one person and for several.",
     points: [
       "Distinct singular and plural forms, unlike English",
@@ -380,7 +381,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "quotative",
-    title: "The quotative",
+    title: "Passing on what you heard",
     summary: "A whole mood for information you are passing on rather than vouching for.",
     marker: "-vat",
     points: [
@@ -393,8 +394,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
   {
     id: "impersonal",
-    title: "The impersonal",
-    summary: "It is done, with nobody named. Not the passive, and worth keeping separate from it.",
+    title: "Said without naming who",
+    summary: "An action reported with nobody named as doing it. Not the passive, and worth keeping separate from it.",
     marker: "-takse",
     points: [
       "Notices, instructions, official prose and news",
@@ -815,6 +816,58 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   },
 ];
 
+/**
+ * The grammar beyond the cases, grouped the way a course groups it.
+ *
+ * A flat list of thirty points headed by English tense names is not how anybody
+ * meets this language. Estonian sorts the same material by what kind of word is
+ * doing the work, and then, inside the verb, by mood, tense, voice and person as
+ * four separate axes rather than as one row of English-shaped tenses. The
+ * headings are English because everything in this file is; the Estonian name for
+ * each group lives in `terms.ts` beside the terms themselves.
+ */
+export const TOPIC_GROUPS: readonly { id: string; title: string; blurb: string; ids: readonly string[] }[] = [
+  {
+    id: "verb",
+    title: "The verb",
+    blurb:
+      "Two inflected tenses, two built with the auxiliary, and mood and voice crossing all four. Estonian keeps those axes apart, so this is four short systems rather than one long list of tenses.",
+    ids: [
+      "olema", "present-tense", "negation", "imperfect", "perfect", "pluperfect", "future",
+      "conditional", "imperative", "quotative", "impersonal", "participles", "past-participle",
+      "converb", "infinitives", "particle-verbs", "aspect",
+    ],
+  },
+  {
+    id: "noun-phrase",
+    title: "Words that decline",
+    blurb:
+      "What the cases attach to, and the rules about how much of a thing a sentence is talking about.",
+    ids: [
+      "object", "adjective-agreement", "comparative", "superlative", "numerals", "gradation",
+      "derivation", "nominalisation",
+    ],
+  },
+  {
+    id: "sentence",
+    title: "The sentence",
+    blurb: "How clauses join, what a verb demands of what follows it, and where the commas go.",
+    ids: [
+      "government", "word-order", "subordination", "relative-clause", "reported-speech",
+      "concession", "hedging", "cohesion", "emphasis", "rhetorical-questions", "punctuation",
+    ],
+  },
+  {
+    id: "use",
+    title: "Register and use",
+    blurb: "The part that is not a rule: which of three correct ways to say something the room wants.",
+    ids: [
+      "politeness", "register", "collocation", "idiom", "irony", "nuance", "variation",
+      "time-expressions",
+    ],
+  },
+];
+
 const TOPICS_BY_ID = new Map(TOPIC_NOTES.map((t) => [t.id, t]));
 
 export function grammarTopic(id: string): TopicNote | undefined {
@@ -830,7 +883,12 @@ export function grammarTopic(id: string): TopicNote | undefined {
  */
 export interface GrammarPoint {
   id: string;
+  /** The name a course uses for it: the Estonian term wherever there is one. */
   title: string;
+  /** True when `title` is Estonian, so a renderer can mark it up as such. */
+  estonian: boolean;
+  /** The plain English line that goes under the name. */
+  english: string;
   summary: string;
   /** Where the reference page for it lives. */
   href: string;
@@ -838,14 +896,26 @@ export interface GrammarPoint {
 
 export function grammarPoint(id: string): GrammarPoint | undefined {
   const topic = TOPICS_BY_ID.get(id);
-  if (topic) return { id, title: topic.title, summary: topic.summary, href: `/grammar/topic/${id}` };
+  if (topic) {
+    const term = grammarTerm(id);
+    return {
+      id,
+      title: term?.et ?? topic.title,
+      estonian: term !== undefined,
+      english: topic.title,
+      summary: topic.summary,
+      href: `/grammar/topic/${id}`,
+    };
+  }
 
   const spec = CASES.find((c) => c.key.toLowerCase() === id.toLowerCase());
   const note = spec && CASE_NOTES.find((n) => n.key === spec.key);
   if (spec && note) {
     return {
       id,
-      title: `${spec.en} case`,
+      title: spec.et,
+      estonian: true,
+      english: spec.question,
       summary: note.summary,
       href: `/grammar/${spec.key.toLowerCase()}`,
     };

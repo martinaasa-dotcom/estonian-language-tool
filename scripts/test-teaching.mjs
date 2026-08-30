@@ -13,8 +13,8 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  * confident number computed from six reviews.
  */
 const B = baseUrl();
-// Floor: 38, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("Teaching layer", { floor: 40 });
+// Floor: 45, measured in the state CI seeds. A thinner database reads as short.
+const { check, absent, done } = suite("Teaching layer", { floor: 45 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
@@ -43,6 +43,28 @@ check("the reference lists all fourteen cases",
   `${await page.locator('a[href^="/grammar/"]').count()} links`);
 check("it groups them the way they are taught",
   (await page.getByText("The three principal parts").count()) > 0);
+
+/*
+  Estonian is not taught anywhere by its Latin case names or by the English
+  names of tenses it does not inflect for. Both names are on the page, because
+  an English reference grammar has to stay usable, and what is checked here is
+  which one leads: a card headed "Inessive" with the Estonian in small italics
+  teaches a learner a word their own teacher will not say.
+*/
+const indexBody = (await page.textContent("body")) ?? "";
+check("a case is named the way a class names it, and asked by its question",
+  /seesütlev/.test(indexBody) && /milles\? kus\?/.test(indexBody), "no Estonian name or question");
+check("the Latin name is kept as a cross-reference, not as the heading",
+  /In English references: the inessive/i.test(indexBody), "the Latin name is not labelled as one");
+check("it says the verb is four axes rather than a row of English tenses",
+  /kõneviis/.test(indexBody) && /tegumood/.test(indexBody), "the verb axes are not named");
+
+await page.goto(`${B}/grammar/topic/pluperfect`, { waitUntil: "networkidle" });
+const topicHeading = (await page.locator("h1").first().innerText().catch(() => "")).trim();
+check("a tense page is headed by the name a course gives it",
+  topicHeading === "enneminevik", topicHeading || "no heading");
+check("and still names the English one for anyone reading an English grammar",
+  (await page.getByText(/the pluperfect/i).count()) > 0);
 
 await page.goto(`${B}/grammar/inessive`, { waitUntil: "networkidle" });
 check("a case page explains what the case is for in English",
