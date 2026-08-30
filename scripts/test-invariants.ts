@@ -27,6 +27,8 @@ import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS } from "../lib/tutor/prompt";
+// @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
+import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
 let failures = 0;
 let checks = 0;
@@ -1945,6 +1947,77 @@ check("every screen names itself in the browser tab", () => {
   const layout = code(join("app", "layout.tsx"));
   assert.match(layout, /template:\s*"%s/, "the root layout no longer adds the app's name to a page title");
   assert.match(layout, /default:/, "the root layout has no fallback title for a route without one");
+});
+
+/**
+ * A suite that exists is a suite CI runs.
+ *
+ * The workflow's own comment names this fault: "This list is written out
+ * rather than deferring to `npm run test:browser`, so a suite added to that
+ * script alone is a suite CI never runs: `test-exam.mjs` sat here unrun for
+ * its first two builds, floor and all." That is the drift in one direction.
+ * It had also drifted in the other, and nothing was counting: the npm scripts
+ * named seventeen suites and the workflow ran eleven, so five of them had
+ * nothing watching them at all. Among the five was `test-restore.mjs`, the
+ * wipe-and-restore round trip, which guards the only failure in this app that
+ * cannot be recovered from.
+ *
+ * They were all green when somebody finally ran them, which is the least
+ * useful moment to find that out: a suite nobody runs reports on the code it
+ * was written against rather than on the code you have. That is the same
+ * sentence `scripts/lib/checks.mjs` opens with, one level up.
+ *
+ * The source of truth is the filesystem rather than either list, so a new
+ * suite fails this until somebody decides where it runs. An exemption carries
+ * a written reason, on the shape of `lib/legal/exportCoverage.ts`: appending
+ * a filename is not a way to make a check pass.
+ */
+check("every browser suite that exists is a browser suite CI runs", () => {
+  const declared = readdirSync("scripts")
+    .filter((f) => f.endsWith(".mjs"))
+    .filter((f) => DECLARES_SUITE.test(read(join("scripts", f))));
+  assert.ok(declared.length > 10, `only found ${declared.length} suites, so this check stopped looking`);
+
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const exempt = NOT_IN_CI as Record<string, string>;
+
+  for (const file of declared) {
+    if (workflow.includes(`scripts/${file}`)) continue;
+    const reason = exempt[file];
+    assert.ok(reason, `scripts/${file} declares a suite that nothing in CI runs, and no reason is written down`);
+    assert.ok(
+      reason.length > 80,
+      `the reason scripts/${file} is out of CI is too short to be one`,
+    );
+  }
+
+  // And nothing is exempted that CI turns out to run after all, which is how
+  // a reason outlives the thing it was a reason for.
+  for (const file of Object.keys(exempt)) {
+    assert.ok(
+      declared.includes(file),
+      `scripts/lib/suites.mjs exempts scripts/${file}, which is not a suite any more`,
+    );
+    if (file === "load-test.mjs") continue;
+    assert.ok(
+      !workflow.includes(`node scripts/${file}`),
+      `scripts/${file} is exempted from CI and CI runs it`,
+    );
+  }
+
+  /*
+    And every suite is reachable by a person too, through one of the two npm
+    scripts. `test-anu.mjs` was in neither: a whole suite that no command in
+    the repository ran, discoverable only by listing the directory.
+  */
+  const pkg = read("package.json");
+  for (const file of declared) {
+    if (file === "load-test.mjs") continue;
+    assert.ok(
+      pkg.includes(`scripts/${file}`),
+      `scripts/${file} is in no npm script, so nobody can run it without knowing it is there`,
+    );
+  }
 });
 
 console.log(
