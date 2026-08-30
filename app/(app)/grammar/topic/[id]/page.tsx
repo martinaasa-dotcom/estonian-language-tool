@@ -5,7 +5,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { TOPIC_NOTES, grammarTopic } from "@/lib/estonian/grammar";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { SYLLABUS } from "@/lib/collections/syllabus";
-import { Card, Chip, Note, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         </Link>
       }
     >
-      <div className="flex flex-col gap-7">
+      <Stack>
         {(term || topic.marker) && (
           <Card tone="accent">
             <dl className="grid gap-4 sm:grid-cols-3">
@@ -179,7 +179,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             </ul>
           )}
         </section>
-      </div>
+      </Stack>
     </Page>
   );
 }

@@ -6,7 +6,7 @@ import { CASES } from "@/lib/estonian/cases";
 import { allCaseReferences, caseReference } from "@/lib/estonian/grammar";
 import { caseExamples, type CaseExample } from "@/lib/progress/caseExamples";
 import { ButtonLink } from "@/components/Button";
-import { Card, Chip, Empty, Note, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Empty, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { SuggestFix } from "@/components/SuggestFix";
 import { NO_VALUE } from "@/lib/copy/values";
@@ -83,7 +83,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         </Link>
       }
     >
-      <div className="flex flex-col gap-6">
+      <Stack>
         <Card tone="accent">
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
@@ -312,7 +312,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
             </Link>
           )}
         </nav>
-      </div>
+      </Stack>
     </Page>
   );
 }

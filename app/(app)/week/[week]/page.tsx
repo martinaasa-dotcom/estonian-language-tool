@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { getCurrentWeek } from "@/app/actions";
 import { ButtonLink } from "@/components/Button";
-import { Card, Chip, Empty, Page, SectionTitle, Stat } from "@/components/ui";
+import { Card, Chip, Empty, Page, SectionTitle, Stack, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 import { WeekPicker } from "../WeekPicker";
@@ -100,7 +100,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
           action={<ButtonLink href="/dictionary" variant="primary">Add words</ButtonLink>}
         />
       ) : (
-        <div className="flex flex-col gap-8">
+        <Stack>
           <Card>
             <div className="flex flex-wrap gap-8">
               <Stat value={words.size} label="Words" />
@@ -187,7 +187,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
               <CalendarCheck size={13} aria-hidden /> All tasks <ArrowRight size={12} aria-hidden />
             </Link>
           </p>
-        </div>
+        </Stack>
       )}
     </Page>
   );

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { Card, Chip, Note, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { CreateClass, JoinClass } from "./ClassForms";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +52,7 @@ export default async function ClassIndexPage() {
       title="Classes"
       lead="A class shares progress, not data. Your deck, your searches and your history stay yours."
     >
-      <div className="flex flex-col gap-7">
+      <Stack>
         {memberships.length > 0 && (
           <section>
             <SectionTitle>Your classes</SectionTitle>
@@ -144,7 +144,7 @@ export default async function ClassIndexPage() {
           line is drawn in the code, not in a policy, see{" "}
           <code className="text-xs">lib/classroom/roster.ts</code>.
         </Note>
-      </div>
+      </Stack>
     </Page>
   );
 }

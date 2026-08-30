@@ -16,7 +16,7 @@ import { ButtonLink } from "@/components/Button";
 import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
-import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stat } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
 
@@ -129,7 +129,7 @@ export default async function ProgressPage() {
         </ButtonLink>
       }
     >
-      <div className="flex flex-col gap-6">
+      <Stack>
         <Card className="flex flex-wrap items-center gap-6">
           <Ring pct={summary.level.pct} size={78} label={`Level ${summary.level.level}, ${summary.level.pct}% to the next`}>
             <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
@@ -442,7 +442,7 @@ export default async function ProgressPage() {
             )}
           </Card>
         </section>
-      </div>
+      </Stack>
     </Page>
   );
 }

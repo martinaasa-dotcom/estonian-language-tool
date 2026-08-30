@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { Empty, Page, SectionTitle } from "@/components/ui";
+import { Empty, Page, SectionTitle, Stack } from "@/components/ui";
 import { TaskRow } from "@/components/TaskRow";
 import { NewTaskForm } from "./NewTaskForm";
 
@@ -23,7 +23,7 @@ export default async function TasksPage() {
 
   return (
     <Page title="Tasks" lead="Homework and study goals from class, in one place.">
-      <div className="flex flex-col gap-8">
+      <Stack>
         <NewTaskForm />
 
         <section>
@@ -45,7 +45,7 @@ export default async function TasksPage() {
             </ul>
           </section>
         )}
-      </div>
+      </Stack>
     </Page>
   );
 }

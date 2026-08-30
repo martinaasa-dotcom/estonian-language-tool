@@ -1,7 +1,7 @@
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BAR, DESTINATIONS, isUnder, PLACES, SECTIONS, sectionOf } from "./nav";
+import { BAR, DESTINATIONS, isUnder, LISTED, PLACES, SECTIONS, sectionOf } from "./nav";
 import { PRACTICE_MODES, QUICK_MODES, TARGETED_MODES } from "./modes";
 import { ICONS } from "../../components/icons";
 
@@ -58,6 +58,30 @@ describe("the navigation table", () => {
   it("keeps the app's own settings out of the places a learner navigates by", () => {
     expect(PLACES.map((s) => s.id)).not.toContain("app");
     expect(SECTIONS.map((s) => s.id)).toContain("app");
+  });
+
+  it("does not list a destination that already has a button of its own", () => {
+    /*
+      Anu sits in the corner of every signed-in screen, so a rail row saying
+      "Ask Anu" was a second door onto a room whose door is always open. She
+      stays in the table because the command palette has to find /tutor, which
+      the grammar pages and a review card link to with a question in the query
+      string.
+    */
+    const railed = PLACES.flatMap((s) => s.items.map((i) => i.href));
+    for (const item of DESTINATIONS.filter((d) => d.fab)) {
+      expect(railed, `${item.href} carries its own button and is in the rail too`)
+        .not.toContain(item.href);
+      expect(LISTED.map((d) => d.href)).not.toContain(item.href);
+    }
+    expect(DESTINATIONS.some((d) => d.fab), "nothing claims a button of its own").toBe(true);
+  });
+
+  it("still reaches every destination through the table the palette reads", () => {
+    // Whatever the rail leaves out, SECTIONS keeps, or ⌘K stops going anywhere.
+    for (const item of DESTINATIONS) {
+      expect(SECTIONS.flatMap((s) => s.items)).toContain(item);
+    }
   });
 });
 

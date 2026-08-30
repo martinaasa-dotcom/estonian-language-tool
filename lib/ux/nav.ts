@@ -55,6 +55,19 @@ export interface Destination {
    * you reach everything else.
    */
   bar?: boolean;
+  /**
+   * Already has a permanent button of its own, so the rail does not repeat it.
+   *
+   * One place is like this: Anu sits in the bottom right corner of every
+   * signed-in screen (`components/anu/AnuFab.tsx`, mounted in the layout), so a
+   * rail link marked "Ask Anu" was a second door onto a room whose door is
+   * always open. It stays a destination rather than leaving the table, because
+   * `/tutor` is the full-page conversation that the grammar pages, the leech
+   * clinic and a review card link to with a question already written, and the
+   * command palette has to be able to find it. What it does not need is a row
+   * in a column the learner reads top to bottom.
+   */
+  fab?: boolean;
 }
 
 export interface NavSection {
@@ -136,7 +149,7 @@ export const SECTIONS: NavSection[] = [
       },
       {
         href: "/tutor", label: "Ask Anu", blurb: "Grammar questions, explained", icon: "MessageCircleQuestion",
-        tone: "blush", keywords: "ai chat grammar help tutor explain",
+        tone: "blush", keywords: "ai chat grammar help tutor explain", fab: true,
       },
     ],
   },
@@ -198,11 +211,23 @@ export const SECTIONS: NavSection[] = [
   },
 ];
 
-/** The four sections a learner navigates by. `app` is the footer, not a place. */
-export const PLACES = SECTIONS.filter((s) => s.id !== "app");
+/**
+ * The sections the rail draws, with anything carrying its own button removed.
+ *
+ * `app` is the footer rather than a place, and a `fab` destination is a door
+ * that is already open on every screen. Both are still in `SECTIONS`, so the
+ * command palette reaches them; neither earns a row in the column.
+ */
+export const PLACES = SECTIONS
+  .filter((s) => s.id !== "app")
+  .map((s) => ({ ...s, items: s.items.filter((i) => !i.fab) }))
+  .filter((s) => s.items.length > 0);
 
 /** Every destination, flat, in the order the sections put them in. */
 export const DESTINATIONS: Destination[] = SECTIONS.flatMap((s) => s.items);
+
+/** Everything the rail and the phone sheet list. Anu is reached by her button. */
+export const LISTED: Destination[] = DESTINATIONS.filter((d) => !d.fab);
 
 /** The four in the phone bar. Everything else is one press away in the sheet. */
 export const BAR = DESTINATIONS.filter((d) => d.bar);

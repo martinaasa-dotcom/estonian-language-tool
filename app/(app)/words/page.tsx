@@ -3,7 +3,7 @@ import { Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
-import { Card, Empty, Page, SectionTitle, StatTile } from "@/components/ui";
+import { Card, Empty, Page, SectionTitle, Stack, StatTile } from "@/components/ui";
 import { STATE_LABELS } from "@/lib/srs/scheduler";
 import { Diagnosis } from "@/components/Diagnosis";
 import { WordsTable, type CardRow } from "./WordsTable";
@@ -53,7 +53,7 @@ export default async function WordsPage() {
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       ) : (
-        <div className="flex flex-col gap-6">
+        <Stack>
           <div className="grid items-start gap-4 md:grid-cols-[2fr_1fr]">
             <Card>
               <SectionTitle hint="how the deck is settling">Where your cards are</SectionTitle>
@@ -125,7 +125,7 @@ export default async function WordsPage() {
               search box above to find the rest.
             </p>
           )}
-        </div>
+        </Stack>
       )}
     </Page>
   );

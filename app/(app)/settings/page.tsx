@@ -11,7 +11,7 @@ import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEY
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
-import { Card, Chip, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Page, SectionTitle, Stack } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
 import { EkilexSetupGuide } from "./EkilexSetupGuide";
 import { GoalsPanel } from "./GoalsPanel";
@@ -90,7 +90,7 @@ export default async function SettingsPage() {
           : "This copy runs locally: everything is stored in the database on this machine, and nothing is uploaded anywhere."
       }
     >
-      <div className="flex flex-col gap-9">
+      <Stack>
         <Group title="Study">
           <section>
             <SectionTitle hint={mode === "type" ? "typing" : "flipping"}>How review asks</SectionTitle>
@@ -365,7 +365,7 @@ export default async function SettingsPage() {
             </Card>
           </section>
         </Group>
-      </div>
+      </Stack>
     </Page>
   );
 }

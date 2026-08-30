@@ -16,7 +16,7 @@ import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, StatTile, toneInk } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { TaskRow } from "@/components/TaskRow";
 
@@ -133,8 +133,8 @@ export default async function TodayPage() {
         enough in it to be a dashboard, and at that point there is one card in
         the left column and one in the right, sitting a screen-width apart.
       */}
-      <div className={stage === "arriving" ? "mx-auto max-w-xl" : "grid gap-5 lg:grid-cols-[1.45fr_1fr]"}>
-        <div className="flex min-w-0 flex-col gap-5">
+      <div className={stage === "arriving" ? "mx-auto max-w-xl" : "grid gap-6 lg:grid-cols-[1.45fr_1fr]"}>
+        <Stack className="min-w-0">
           {/* The one thing the app exists to get you to do, and nothing else. */}
           <Card className="flex flex-col gap-5">
             {shows(stage, "streak") && (
@@ -353,9 +353,9 @@ export default async function TodayPage() {
               )}
             </section>
           )}
-        </div>
+        </Stack>
 
-        <div className="flex min-w-0 flex-col gap-5">
+        <Stack className="min-w-0">
           {shows(stage, "next") && nextUnit && (
             <Card>
               <SectionTitle hint={nextUnit.unit.cefr}>Next on the path</SectionTitle>
@@ -448,7 +448,7 @@ export default async function TodayPage() {
               )}
             </Card>
           )}
-        </div>
+        </Stack>
       </div>
       <AchievementToasts badges={newBadges} />
     </Page>

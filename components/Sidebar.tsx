@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { useDockClearance } from "@/lib/layout/dockClearance";
 import { createClient } from "@/lib/supabase/client";
-import { BAR, isUnder, PLACES, SECTIONS, type Destination, type NavSection } from "@/lib/ux/nav";
+import { BAR, isUnder, LISTED, PLACES, SECTIONS, type Destination, type NavSection } from "@/lib/ux/nav";
 import { Wordmark } from "@/components/brand";
 import { icon } from "@/components/icons";
 
@@ -61,10 +61,14 @@ export function Sidebar() {
   const measure = useCallback((node: HTMLElement | null) => setBar(node), []);
 
   const active = (href: string) => isUnder(href, pathname);
-  // The sheet holds everything the four cells of the bar do not.
+  /*
+    The sheet holds everything the four cells of the bar do not, minus anything
+    with a button of its own. Anu's is on this screen too, so listing her here
+    would be the same duplicate the rail just lost.
+  */
   const sheet: NavSection[] = SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => !item.bar),
+    items: section.items.filter((item) => LISTED.includes(item) && !item.bar),
   })).filter((section) => section.items.length > 0);
   const restActive = sheet.some((s) => s.items.some((i) => active(i.href)));
 
@@ -75,13 +79,19 @@ export function Sidebar() {
         aria-label="Main"
         className="scroll-host sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto p-4 md:flex"
       >
-        <Link href="/" className="mb-4 block rounded-[var(--r)] px-2 pt-3">
+        <Link href="/" className="mb-7 block rounded-[var(--r)] px-2 pt-3">
           <Wordmark subtitle="Estonian, daily" />
         </Link>
 
+        {/*
+          The gap between sections is doing the work the headings only label.
+          Four groups two rows apart read as one list with words in it; four
+          groups with air around them read as four, which is the whole point of
+          grouping them. It is the largest space in the column on purpose.
+        */}
         {PLACES.map((section) => (
-          <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-2.5">
-            <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-1.5" style={{ color: "var(--ink-3)" }}>
+          <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-7">
+            <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-2.5" style={{ color: "var(--ink-3)" }}>
               {section.title}
             </h2>
             {section.items.map((item) => (
@@ -91,27 +101,23 @@ export function Sidebar() {
         ))}
 
         {/*
-          Pinned under the sections when they fit and simply last when they do
-          not: the rail is a scroll container, because sixteen links plus their
-          headings are taller than a short laptop and the answer to that is a
+          Settings, your reports, and what this thing is. Pinned under the
+          sections when they fit and simply last when they do not, since the
+          rail is a scroll container: fourteen rows with air between their
+          groups are taller than a short laptop, and the answer to that is a
           scrollbar rather than a disclosure.
+
+          A rule rather than another heading. This is the quiet end of the
+          column and three more uppercase words at the bottom of it would be
+          one label too many.
         */}
-        <div className="mt-auto pt-2">
-          <p className="px-3 pb-2.5 text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-            <kbd
-              className="rounded-md px-1.5 py-0.5 font-semibold"
-              style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-            >
-              ⌘K
-            </kbd>{" "}
-            goes anywhere.
-          </p>
+        <div className="mt-auto border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
           {SECTIONS.filter((s) => s.id === "app").map((section) =>
             section.items.map((item) => (
               <RailLink key={item.href} item={item} active={active(item.href)} />
             )),
           )}
-          <div className="mt-1 flex items-center gap-1 px-1">
+          <div className="mt-2 flex items-center gap-1 px-1">
             <ThemeToggle labelled />
             <SignOutButton />
           </div>
@@ -279,7 +285,7 @@ function RailLink({ item, active }: { item: Destination; active: boolean }) {
       href={item.href}
       aria-current={active ? "page" : undefined}
       title={item.blurb}
-      className="flex items-center gap-3 rounded-full px-3 py-1 text-base transition-ui"
+      className="flex items-center gap-3 rounded-full px-3 py-1.5 text-base transition-ui"
       style={{
         background: active ? "var(--surface)" : "transparent",
         color: active ? "var(--ink)" : "var(--ink-2)",

@@ -11,7 +11,7 @@ import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store"
 import { QUICK_MODES, TARGETED_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Chip, Empty, Meter, Page, SectionTitle } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Page, SectionTitle, Stack } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +100,7 @@ export default async function PracticePage() {
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       ) : (
-        <div className="flex flex-col gap-7">
+        <Stack>
           <ModeCard
             href="/review"
             iconName="GraduationCap"
@@ -233,7 +233,7 @@ export default async function PracticePage() {
               )}
             </Card>
           </section>
-        </div>
+        </Stack>
       )}
     </Page>
   );
