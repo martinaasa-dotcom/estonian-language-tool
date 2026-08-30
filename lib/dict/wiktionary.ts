@@ -44,8 +44,86 @@ export async function fetchEnglishGloss(lemma: string): Promise<WiktionaryGloss 
   return { short: senses[0]!, senses: senses.slice(0, 3) };
 }
 
+/** One definition line, with both of the things its own block says it is. */
+export interface EstonianSense {
+  gloss: string;
+  /**
+   * The `===Adjective===` heading this definition sits under, as `NOUN`,
+   * `VERB`, `ADJECTIVE` or `ADVERB`, or null for any other heading.
+   *
+   * Null is the honest answer rather than a default, exactly as `grammarTerm()`
+   * returns nothing for a point with no term a class uses. A page whose senses
+   * sit under `Postposition` or `Numeral` is telling us something true that
+   * this app's four labels cannot carry, and guessing NOUN because the word
+   * declines would be inventing the fact the heading exists to supply.
+   */
+  pos: string | null;
+  /**
+   * The headword template on the same block, as the same four labels.
+   *
+   * A second opinion, and it is worth carrying because the two disagree on
+   * thirteen pages of five thousand and neither one wins them all. `võimas`
+   * is headed `===Noun===` and declared `{{et-adj}}`; `üksik`, `lämbe` and
+   * `lämmi` are headed `===Adjective===` and declared `{{et-noun}}`. The
+   * adjective is right in all four. See `resolvePos` for why that is not a
+   * coin toss.
+   */
+  headword: string | null;
+}
+
 /**
- * Pulls the numbered definitions out of the page's `==Estonian==` section.
+ * The part of speech each Wiktionary heading stands for.
+ *
+ * Matched whole rather than by substring, because `Proper noun` is a heading
+ * this app has no label for and must not be read as `Noun`: the builder drops
+ * proper nouns anyway, and a flashcard for "Aabraham" teaches nobody Estonian.
+ */
+const POS_HEADINGS: Record<string, string> = {
+  noun: "NOUN",
+  verb: "VERB",
+  adjective: "ADJECTIVE",
+  adverb: "ADVERB",
+};
+
+/**
+ * A `===Noun===` heading, at any depth.
+ *
+ * The depth varies with the page: a word with one etymology heads its parts of
+ * speech at three equals signs and a word with several nests them under
+ * `===Etymology 1===` at four. Both have to be read, because the multi-etymology
+ * pages are exactly the ones where the answer changes.
+ */
+const HEADING = /^(={3,6})\s*([^=|]+?)\s*\1\s*$/;
+
+/**
+ * A headword template opening a line, e.g. `{{et-adj|võimsa|võimsat|s=võimsaim}}`.
+ *
+ * Only the four that declare a part of speech are read. `{{et-decl-...}}` and
+ * `{{et-conj-...}}` are the inflection tables further down the block and say
+ * nothing new, and `{{et-nom}}` is the generic nominal, which is the same
+ * silence Ekilex offers.
+ */
+const HEADWORD = /^\{\{\s*(et-(?:noun|verb|adj|adv))\s*[|}]/;
+
+const HEADWORD_POS: Record<string, string> = {
+  "et-noun": "NOUN",
+  "et-verb": "VERB",
+  "et-adj": "ADJECTIVE",
+  "et-adv": "ADVERB",
+};
+
+/**
+ * Pulls the numbered definitions out of the page's `==Estonian==` section,
+ * each with the part-of-speech heading it was written under.
+ *
+ * The heading is not decoration. The gloss is whichever definition comes first
+ * on the page, so the part of speech that describes it is the heading that
+ * definition sits under, and nothing else: `lamp` is a noun meaning "lamp" and
+ * also a colloquial adjective meaning "random", and `pea` is a noun meaning
+ * "head" and also an adverb meaning "almost". Reading the part of speech off
+ * the word's category membership instead says "adjective" for the first and
+ * "adverb" for the second, disagreeing with the very gloss it was shipped
+ * beside. Taking both facts off the same line is what makes that impossible.
  *
  * Exported because the seed builder fetches these pages itself: it has to tell
  * a page with no Estonian section from a request that was rate-limited, and
@@ -53,7 +131,7 @@ export async function fetchEnglishGloss(lemma: string): Promise<WiktionaryGloss 
  * rather than writing a second one keeps the two paths reading the same
  * markup the same way.
  */
-export function extractEstonianSenses(wikitext: string): string[] {
+export function extractEstonianEntries(wikitext: string): EstonianSense[] {
   const section = /==\s*Estonian\s*==([\s\S]*?)(?:\n==[^=]|$)/.exec(wikitext);
   if (!section?.[1]) return [];
 
@@ -70,16 +148,44 @@ export function extractEstonianSenses(wikitext: string): string[] {
     labels do not carry it. Entries like `kõrb` are for a person to correct,
     which the dictionary is editable for.
   */
-  const senses: string[] = [];
+  const senses: EstonianSense[] = [];
+  let pos: string | null = null;
+  let headword: string | null = null;
   for (const line of section[1].split("\n")) {
+    const heading = HEADING.exec(line);
+    if (heading) {
+      pos = POS_HEADINGS[heading[2]!.toLowerCase()] ?? null;
+      // A new block, so the previous block's headword no longer describes
+      // anything below this line.
+      headword = null;
+      continue;
+    }
+    const declared = HEADWORD.exec(line);
+    if (declared) {
+      headword = HEADWORD_POS[declared[1]!] ?? null;
+      continue;
+    }
     if (!line.startsWith("# ")) continue;
     const raw = line.slice(2);
     if (NOT_A_DEFINITION.test(raw)) continue;
     const cleaned = cleanWikitext(raw);
-    if (cleaned && !senses.includes(cleaned)) senses.push(cleaned);
+    if (cleaned && !senses.some((s) => s.gloss === cleaned)) {
+      senses.push({ gloss: cleaned, pos, headword });
+    }
     if (senses.length >= 5) break;
   }
   return senses;
+}
+
+/**
+ * The same definitions, as the plain strings most callers want.
+ *
+ * Kept as its own export rather than folded into the one above so the two
+ * facts stay one parse: a caller that only needs the English does not have to
+ * know a heading exists, and there is still only one reader of this markup.
+ */
+export function extractEstonianSenses(wikitext: string): string[] {
+  return extractEstonianEntries(wikitext).map((s) => s.gloss);
 }
 
 /**

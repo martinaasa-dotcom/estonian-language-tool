@@ -17,5 +17,13 @@
  * `seedSize.test.ts` recounts it from the three sources the seed itself reads,
  * so the next word added to any of them fails here rather than quietly making
  * this a claim about the past again.
+ *
+ * It went *down* by twelve once, which is the only interesting thing that has
+ * happened to it. The part-of-speech audit corrected 61 labels in the built
+ * file, and twelve of those words were ones the course harvest also carries:
+ * `kallis`, `valge`, `noor` and nine more were being seeded twice over, once
+ * as the harvest's adjective and once as the builder's noun, because the two
+ * disagreed and the key they conflict on includes the label. They are one
+ * entry each now. Nothing was dropped from the dictionary.
  */
-export const SEED_SET_SIZE = { words: 5_971, forms: 34_455 };
+export const SEED_SET_SIZE = { words: 5_959, forms: 34_386 };
