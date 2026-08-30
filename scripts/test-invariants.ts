@@ -3105,6 +3105,82 @@ check("the accessibility sweep runs axe, over both themes", () => {
   assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
 });
 
+// ── Checks about the checks ──────────────────────────────────────────────────
+
+check("every marker the merge ritual names is still somewhere in the tree", () => {
+  /*
+    CLAUDE.md ends its section on more than one session at a time with a list of
+    markers to grep for after a merge, learned from an afternoon when two clean
+    conflict-free merges each silently reverted somebody's work: git had no
+    reason to ask, because one side changed lines the other side had moved.
+
+    It was good guidance that depended entirely on a person remembering to run
+    it, which is the same shape as every rule this file exists to take out of
+    prose. So the list is read from CLAUDE.md rather than copied here: a copy is
+    the drift `PROVIDER_KEY_ENV` was consolidated to prevent, and a list that
+    can fall behind the paragraph naming it is worse than no list.
+
+    This is deliberately the blunt question, "is it still here at all", not
+    "does it still work" — most of these have an invariant of their own further
+    up, and the ones that do not are markers precisely because what they protect
+    is hard to assert. A marker that vanished in a merge is the one thing a
+    machine can see that a reviewer reading a green diff cannot.
+
+    CLAUDE.md is not in the haystack, and that is the whole check: the list
+    names each marker in backticks, so searching a corpus that includes the list
+    finds every marker in the list by definition and passes for ever. The first
+    version of this did exactly that, and the way it was found is the way this
+    repository says to find it, by renaming a marker and watching nothing fail.
+  */
+  const claude = read("CLAUDE.md");
+  const ritual = between(claude, "Grep the markers the branch owns");
+  const markers = [...ritual.slice(0, ritual.indexOf("Most of them now"))
+    .matchAll(/`([^`]+)`/g)].map((m) => m[1]!);
+
+  assert.ok(
+    markers.length >= 25,
+    `only ${markers.length} markers parsed out of CLAUDE.md; the list or its wording moved`,
+  );
+
+  const haystack = [
+    ...ALL, ...sourceFiles("scripts", /\.(ts|tsx|mjs)$/), ...sourceFiles("prisma"),
+    "middleware.ts", "next.config.ts", "app/globals.css",
+  ].filter((f) => existsSync(f)).map(read).join("\n");
+
+  const gone = markers.filter((marker) => !haystack.includes(marker));
+  assert.deepEqual(
+    gone, [],
+    `named in the merge ritual and no longer anywhere in the tree: ${gone.join(", ")}`,
+  );
+});
+
+check("every script a workflow runs is a script that exists", () => {
+  /*
+    The invariants already assert that a browser suite CI can run is one CI does
+    run. One layer up, nothing checked the workflow files themselves: a job
+    calling `npm run test:whatever` after somebody renamed the script fails at
+    the point where a failure looks like the code being broken, and a job that
+    quietly stopped being the thing it claims to run does not fail at all.
+
+    Both directions, because they are different faults. A workflow naming a
+    script that is gone is a broken job; a `scripts/*` path that no longer
+    exists is the same thing wearing the other spelling.
+  */
+  const workflows = sourceFiles(".github/workflows", /\.ya?ml$/);
+  assert.ok(workflows.length >= 1, "no workflow files found, so this check is looking in the wrong place");
+  const yaml = workflows.map(read).join("\n");
+
+  const scripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> }).scripts;
+  const named = [...new Set([...yaml.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]!))];
+  const missing = named.filter((name) => !(name in scripts));
+  assert.deepEqual(missing, [], `a workflow runs an npm script that no longer exists: ${missing.join(", ")}`);
+
+  const paths = [...new Set([...yaml.matchAll(/scripts\/([\w.-]+\.(?:mjs|ts))/g)].map((m) => m[1]!))];
+  assert.ok(paths.length >= 5, `only ${paths.length} script paths found in the workflows; the pattern moved`);
+  const absent = paths.filter((file) => !existsSync(join("scripts", file)));
+  assert.deepEqual(absent, [], `a workflow runs a script file that is not there: ${absent.join(", ")}`);
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

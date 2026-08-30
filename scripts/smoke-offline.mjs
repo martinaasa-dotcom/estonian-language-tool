@@ -19,8 +19,9 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } }
 const page = await ctx.newPage();
 const app = page.locator("main");
 
-// Floor: measured 10 in dev mode with NEXT_PUBLIC_ENABLE_SW=1, which its header documents.
-const { check, done } = suite("Offline review", { floor: 14 });
+// Floor: the count CI reaches, which is every check here, including the one
+// about the cache that is deliberately never trimmed.
+const { check, done } = suite("Offline review", { floor: 15 });
 
 
 /**
@@ -150,6 +151,24 @@ await page.waitForTimeout(2500);
 const afterTrim = await page.evaluate(async () =>
   (await caches.open("kodukeel-v3-audio")).keys().then((k) => k.length));
 check("the audio cache is trimmed back to its ceiling", afterTrim <= 400, `${afterTrim} entries`);
+
+/*
+  And the other half of that rule: the one cache with no ceiling still has what
+  it is for in it.
+
+  Every cache the worker keeps has a `LIMITS` entry except the shell, and the
+  reason is the whole point of the ceilings. A browser evicting an origin's
+  storage takes all of it, and `/offline` is the entry with nothing behind it,
+  so it and the icon live in a cache that is never trimmed. Checked right after
+  a trim that just deleted twenty entries from the cache next door, because
+  "never trimmed" is only worth asserting where a trim has actually run.
+*/
+const shellIntact = await page.evaluate(async () => {
+  const shell = (await caches.keys()).find((n) => n.endsWith("-shell"));
+  if (!shell) return false;
+  return Boolean(await (await caches.open(shell)).match("/offline"));
+});
+check("the cache with no ceiling still holds the page it exists for", shellIntact);
 
 const hasCards = (await app.locator("button").count()) > 2 &&
   !/Nothing due|No cards yet/i.test((await page.textContent("body")) ?? "");

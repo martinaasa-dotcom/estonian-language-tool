@@ -153,6 +153,20 @@ async function main() {
 
   if (!write) {
     console.log("\nNothing written. Re-run with --write to apply.");
+    /*
+      A drift check has to be able to fail, or scheduling it buys nothing.
+
+      This printed its findings and exited 0, which is right for somebody
+      reading the output and useless to a job: `.github/workflows/drift.yml`
+      runs this weekly, and a green tick on a run that found twenty-five wrong
+      glosses is worse than not running it. `--write` still exits 0, because
+      applying the corrections is the fix rather than the finding.
+
+      A gloss is the answer side of a flashcard. The first systematic pass
+      corrected 25 of 2,164, and four of those were a different word rather
+      than a different sense.
+    */
+    if (corrected.length || dropped.length) process.exitCode = 1;
     return;
   }
   const remove = new Set(dropped.map((d) => d.lemma));

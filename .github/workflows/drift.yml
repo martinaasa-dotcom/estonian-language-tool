@@ -1,0 +1,57 @@
+name: Drift
+
+# What the app depends on and does not own.
+#
+# CI answers "did this commit break anything". It cannot answer the other
+# question, which is whether something upstream moved while nobody was
+# committing: a Wiktionary page rewritten, a sense reordered, an etymology
+# split. Nothing here is triggered by a change of ours, so nothing here belongs
+# in ci.yml, and an audit found the whole class of check sitting behind
+# "someone happened to run the script that week".
+#
+# Only the checks that need no credential live here, which today is one of
+# them. `scripts/test-ekilex.mjs` needs EKILEX_API_KEY, `scripts/measure-asr.mjs`
+# and `npm run eval:anu` need a provider key, and ci.yml's own comment says of
+# itself that nothing in it maps a repository secret into a job. Buying a weekly
+# check by making that untrue is the wrong trade, and .github/workflows/
+# seed-production.yml is deliberately the only exception in this repository.
+# Those three stay deliberate, by hand, with a person reading the output.
+
+on:
+  schedule:
+    # Monday morning, so a week's drift is waiting rather than a weekend's.
+    # UTC, which is what cron here means.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  glosses:
+    name: Every built gloss still agrees with its own page
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      # No database and no key: this reads prisma/data/expanded.json and asks
+      # Wiktionary, which is why it is the one drift check that can run here.
+      #
+      # A gloss is the answer side of a flashcard, so a wrong one is drilled
+      # rather than displayed. The first systematic pass corrected 25 of 2,164,
+      # and four of those were a different word rather than a different sense:
+      # `lamp` was being taught as "random" and `ooper` as "opera house".
+      #
+      # It exits 1 when anything disagrees. The fix is a person reading the
+      # diff and running it again with `--write`, not this job writing to the
+      # repository: sense order is the page's own, and which sense a learner
+      # needs is explicitly not a judgement this pipeline makes.
+      - run: npm run audit:glosses
