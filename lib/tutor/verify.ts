@@ -130,7 +130,7 @@ export function verifyComment(
     if (allowed.has(token)) continue;
     // A quoted English word is common in an explanation; only flag a token that
     // is actually Estonian-looking or long enough to be an inflected form.
-    if (!ESTONIAN_LETTERS.test(token) && !looksInflected(token)) continue;
+    if (!isCandidateForm(token)) continue;
     unverified.push(token);
   }
 
@@ -168,4 +168,45 @@ function looksInflected(token: string): boolean {
   // English word that long being quoted in a grammar note is uncommon enough
   // that withholding the comment is the safer error.
   return token.length >= 5;
+}
+
+/**
+ * Whether a token `estonianTokens` found is worth checking against anything
+ * at all, shared by `verifyComment` and `chatEstonianTokens` so the two
+ * cannot drift into judging the same token by different rules. A
+ * grammatical term names the lesson, not a word in it; anything else has to
+ * carry an Estonian letter or be long enough that an English word that long
+ * being quoted here would be unusual.
+ */
+function isCandidateForm(token: string): boolean {
+  if (GRAMMATICAL_TERMS.has(token)) return false;
+  return ESTONIAN_LETTERS.test(token) || looksInflected(token);
+}
+
+/** Lines the UI already boxes and tags "AI · verify" on their own: a
+ *  corrected sentence (`FIX:`) and a suggested word pair (`VOCAB:`), both
+ *  parsed out of the reply by `TutorChat.tsx`. Flagging a word inside one of
+ *  these a second time would be noise, not information. */
+const TAGGED_LINE = /^(?:\d+[.)]\s*)?(?:VOCAB|FIX):/i;
+
+/**
+ * Estonian-looking words in Anu's free chat prose, the parts of a reply that
+ * carry none of the grader's tagging and none of its allowlist either: there
+ * is no one word or one sentence this call was about, so there is nothing to
+ * check a token *against* here, only whether it looks like a form at all.
+ * `app/api/tutor/route.ts` takes what this returns and checks each one
+ * against the dictionary itself, the same way a scanned word is vouched for
+ * (ADR-021).
+ *
+ * Conservative in exactly the way `estonianTokens` already is: an unquoted,
+ * undiacriticked Estonian word is indistinguishable from English here and is
+ * let through, because the cost of missing one is nothing next to the cost
+ * of a false alarm on a genuine explanation.
+ */
+export function chatEstonianTokens(reply: string): string[] {
+  const untagged = reply
+    .split("\n")
+    .filter((line) => !TAGGED_LINE.test(line.trim()))
+    .join("\n");
+  return estonianTokens(untagged).filter(isCandidateForm);
 }

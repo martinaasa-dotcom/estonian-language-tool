@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAllowlist, estonianTokens, verifyComment } from "./verify";
+import { buildAllowlist, chatEstonianTokens, estonianTokens, verifyComment } from "./verify";
 
 const FORMS = ["ajalugu", "ajaloo", "ajalugu", "ajaloost", "ajaloos", "tuba", "toa", "toas"];
 const SENTENCE = "Ma näen ajalugu praegu siin.";
@@ -117,5 +117,40 @@ describe("verifyComment", () => {
 
   it("ignores punctuation attached to a quoted form", () => {
     expect(verifyComment("Try 'toas.' instead", FORMS, SENTENCE).comment).not.toBeNull();
+  });
+});
+
+describe("chatEstonianTokens", () => {
+  it("finds a word carrying an Estonian letter in ordinary prose", () => {
+    expect(chatEstonianTokens("The word õppima means to study.")).toContain("õppima");
+  });
+
+  it("finds a long quoted word, the same as a grader comment would", () => {
+    expect(chatEstonianTokens("Use 'ajaloost' here.")).toContain("ajaloost");
+  });
+
+  it("ignores a grammatical term, which names the lesson rather than a form", () => {
+    expect(chatEstonianTokens("This is the osastav, the partitive case.")).toEqual([]);
+  });
+
+  it("ignores a FIX: line, already boxed and tagged in the UI", () => {
+    expect(chatEstonianTokens("Almost.\nFIX: Ma loen raamatut õhtul.")).toEqual([]);
+  });
+
+  it("ignores a VOCAB: line, already gated behind an explicit add", () => {
+    expect(chatEstonianTokens("Nice work.\nVOCAB: õpik | textbook")).toEqual([]);
+  });
+
+  it("still finds a word in ordinary prose alongside a tagged line", () => {
+    const tokens = chatEstonianTokens("The form õppima is right here.\nFIX: Ma õpin eesti keelt.");
+    expect(tokens).toEqual(["õppima"]);
+  });
+
+  it("ignores a numbered FIX: line", () => {
+    expect(chatEstonianTokens("1. FIX: Ma loen raamatut.")).toEqual([]);
+  });
+
+  it("has nothing to say about plain English", () => {
+    expect(chatEstonianTokens("That is the right case for an ongoing action.")).toEqual([]);
   });
 });
