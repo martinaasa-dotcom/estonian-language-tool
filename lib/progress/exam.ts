@@ -102,14 +102,32 @@ export async function readinessSignals(ownerId: string): Promise<ReadinessSignal
       deckSnapshot(ownerId),
       prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
       prisma.lexeme.findMany({ select: { lemma: true, cefr: true } }),
+      /*
+        The most recent twenty thousand, not an arbitrary twenty thousand.
+
+        The cap is a bound on the work, and until it was ordered it was also a
+        bound on the meaning: past it, which reviews the confidence figure was
+        built from came out of the plan, so the number could move between two
+        page loads with no new reviews behind it. This file's own header says
+        there is no path by which a confidence percentage can drift away from
+        the reviews that justify it, and that was the path.
+
+        Recent rather than merely stable, because readiness is a claim about
+        what somebody can do now and a year-old rating is weaker evidence for
+        it. Under the cap nothing changes at all: the same rows, and the
+        tallies below do not depend on their order. `(ownerId, reviewedAt)` is
+        already indexed, which is what makes the ordering free.
+      */
       prisma.review.findMany({
         where: { ownerId, stateBefore: { gte: MATURE_STATE } },
         select: { rating: true },
+        orderBy: { reviewedAt: "desc" },
         take: 20_000,
       }),
       prisma.review.findMany({
         where: { ownerId, targetCase: { not: null } },
         select: { targetCase: true, rating: true },
+        orderBy: { reviewedAt: "desc" },
         take: 20_000,
       }),
       prisma.card.findMany({
@@ -210,9 +228,13 @@ async function skillEvidence(
       .map((c) => c.id),
   );
 
+  // The most recent twenty thousand, for the reason given where the other two
+  // caps are ordered: past the cap an unordered slice makes the per-skill
+  // percentages move on their own.
   const reviews = await prisma.review.findMany({
     where: { ownerId, cardId: { in: [...readingCards, ...writingCards] } },
     select: { cardId: true, rating: true },
+    orderBy: { reviewedAt: "desc" },
     take: 20_000,
   });
 
