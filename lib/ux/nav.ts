@@ -168,11 +168,27 @@ export const SECTIONS: NavSection[] = [
   {
     id: "app",
     title: "This app",
-    blurb: "Your settings, and an honest account of what this cannot do.",
+    blurb: "Your settings, your reports, and an honest account of what this cannot do.",
     items: [
       {
         href: "/settings", label: "Settings", blurb: "Goal, review mode, backup", icon: "Settings", tone: "ink",
         keywords: "backup export import goal preferences delete account theme",
+      },
+      /*
+        The learner's own reports, and the door to the review queue for whoever
+        reviews them. Everybody gets this entry rather than only admins, and
+        that is a decision about cost as much as about design: `isAdmin` asks
+        Supabase who is signed in, and gating a rail link on it would spend
+        that call on every page in the app to decide whether to draw one link.
+        The queue is one click from here, and the page is worth having for
+        everybody anyway, since "what happened to the thing I reported" is the
+        question that decides whether anybody reports a second one.
+      */
+      {
+        href: "/suggestions", label: "Suggested fixes",
+        blurb: "What you have reported, and what happened to it",
+        icon: "MessageSquareWarning", tone: "peach",
+        keywords: "report wrong mistake feedback correction missing word fix suggest admin review",
       },
       {
         href: "/guide", label: "What this app is", blurb: "Every screen, and what this app cannot do",

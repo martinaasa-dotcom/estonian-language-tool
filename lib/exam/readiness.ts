@@ -101,7 +101,7 @@ export interface ReadinessSignals {
 
 /** "pre-A1" and an unmeasured skill both sit below A1. */
 const PLACEMENT_RANK: Record<string, number> = {
-  "pre-A1": -1, A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5,
+  "pre-A1": -1, A1: 0, A2: 1, B1: 2, B2: 3, C1: 4,
 };
 
 /**
@@ -169,7 +169,7 @@ export interface Readiness {
  * has forgotten every A1 word is not ready for C1 however much C1 vocabulary
  * they have collected.
  */
-const DEPTH_WEIGHTS = [1, 0.5, 0.25, 0.125, 0.0625, 0.03125];
+const DEPTH_WEIGHTS = [1, 0.5, 0.25, 0.125, 0.0625];
 
 function coverageAt(signals: ReadinessSignals, level: ExamLevel): number {
   const index = EXAM_LEVELS.indexOf(level);

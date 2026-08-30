@@ -9,6 +9,7 @@ import { saveScan, resolveScannedWord } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { useOffline } from "@/components/OfflineProvider";
+import { SuggestFix } from "@/components/SuggestFix";
 import { Card, Chip, Note } from "@/components/ui";
 import { MAX_EDGE } from "@/lib/scan/image";
 import { MAX_ITEMS } from "@/lib/scan/extract";
@@ -260,12 +261,31 @@ export function ScanCapture() {
         </ul>
 
         {summary.unknown > 0 && (
-          <Note tone="again">
-            {summary.unknown} of these {summary.unknown === 1 ? "is" : "are"} not in the dictionary.
-            They came straight off the photo, so open one and check the spelling against the paper.
-            Added as they are, they get a recognition and a production card, and no case forms,
-            because there are no verified forms to build one from.
-          </Note>
+          <div className="flex flex-col gap-3">
+            <Note tone="again">
+              {summary.unknown} of these {summary.unknown === 1 ? "is" : "are"} not in the dictionary.
+              They came straight off the photo, so open one and check the spelling against the paper.
+              Added as they are, they get a recognition and a production card, and no case forms,
+              because there are no verified forms to build one from.
+            </Note>
+            {/*
+              A word the dictionary would not vouch for is a gap in the
+              dictionary at least as often as it is a misreading, and the
+              person holding the paper is the one who can tell which. Sending
+              it costs them nothing and does not hold up their cards.
+            */}
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                Spelled right on your paper and still not found? Tell us.
+              </p>
+              <SuggestFix
+                category="MISSING_WORD"
+                lemma={rows.find((r) => !r.lexemeId)?.et ?? undefined}
+                trigger={`${summary.unknown} word(s) off a photographed page were not in the dictionary.`}
+                label="A word here is missing"
+              />
+            </div>
+          </div>
         )}
 
         {error && <Note tone="again">{error}</Note>}

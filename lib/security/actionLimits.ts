@@ -46,8 +46,29 @@ export const ACTION_LIMITS = {
   joinClassroom: { perMinute: 10 },
   /** Writes a task per member of a class. */
   assignUnit: { perMinute: 10 },
+  /** Writes a task per member of a class. */
+  assignHomework: { perMinute: 10 },
   /** Parses and writes a whole backup: the most expensive call in the app. */
   restoreBackup: { perMinute: 4 },
+  /**
+   * Sending a suggested fix.
+   *
+   * Offered on every dead end in the app, which is what makes it the one
+   * action a frustrated person can reach several times in a minute without
+   * doing anything wrong. Twenty is well past that and far under a script.
+   * The row it writes is small; what it is really protecting is the review
+   * queue, which is read by a person and only works while its volume means
+   * something.
+   */
+  sendSuggestion: { perMinute: 20 },
+  /**
+   * Acting on one, which can write to the shared dictionary.
+   *
+   * Higher than the rest on purpose: working through a queue is exactly the
+   * case where a person clicks fast for a long time, and a limit a reviewer
+   * meets is a limit that stops the queue being cleared.
+   */
+  reviewSuggestion: { perMinute: 120 },
 } as const;
 
 export type ActionLimit = keyof typeof ACTION_LIMITS;

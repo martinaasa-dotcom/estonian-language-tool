@@ -19,9 +19,8 @@ describe("the levels the state examines", () => {
     expect([...OFFICIAL_LEVELS]).toEqual(["A2", "B1", "B2", "C1"]);
   });
 
-  it("marks A1 and C2 as not official, because no such paper exists", () => {
+  it("marks A1 as not official, because no such paper exists", () => {
     expect(specFor("A1").official).toBe(false);
-    expect(specFor("C2").official).toBe(false);
   });
 
   it("recognises a level string and rejects anything else", () => {
