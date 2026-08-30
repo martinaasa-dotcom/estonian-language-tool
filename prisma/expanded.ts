@@ -26,9 +26,15 @@ import { Prisma, type PrismaClient } from "@prisma/client";
  * because it is already there. A word a learner has corrected is untouched. A
  * paradigm the live Ekilex lookup has already cached is untouched. Running
  * this twice changes nothing the second time.
+ *
+ * `applyPosCorrections` is the one write here that is not an insert, and it
+ * lives in this file rather than beside the seed because the reason for it is
+ * the conflict key above. See its own comment for what it does; `seed.ts`
+ * decides when, and the answer is earlier than this function.
  */
 
 const DATA = "prisma/data/expanded.json";
+const CORRECTIONS = "prisma/data/pos-corrections.json";
 
 interface ExpandedEntry {
   lemma: string;
@@ -55,6 +61,83 @@ export function readExpanded(): ExpandedEntry[] {
     console.warn(`  ${DATA} could not be read; skipping the expanded dictionary.`);
     return [];
   }
+}
+
+/** A label the part-of-speech audit corrected, written down by `scripts/audit-pos.ts`. */
+interface PosCorrection {
+  lemma: string;
+  from: string;
+  to: string;
+}
+
+export function readPosCorrections(): PosCorrection[] {
+  if (!existsSync(CORRECTIONS)) return [];
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(CORRECTIONS, "utf8"));
+    if (!Array.isArray(parsed)) return [];
+    return (parsed as PosCorrection[]).filter((c) => c?.lemma && c.from && c.to && c.from !== c.to);
+  } catch {
+    // Same reasoning as `readExpanded`: a file that cannot be read must not
+    // take a deploy with it. The dictionary still works, one label stays stale.
+    console.warn(`  ${CORRECTIONS} could not be read; leaving existing labels alone.`);
+    return [];
+  }
+}
+
+/**
+ * Moves an already-seeded row onto the label this build corrected.
+ *
+ * `pos` is half of `Lexeme`'s conflict key, so a corrected label stops matching
+ * the row it belongs to: the seed looks for `kallis` ADJECTIVE, finds nothing,
+ * and inserts it beside the `kallis` NOUN already there. Two of the same word
+ * in the dictionary, each with its own id, forms and cards, and no error
+ * anywhere. This repoints the existing row instead, which writes no content at
+ * all: the translation, the paradigm, the examples and the provenance stay
+ * exactly as they were, and only the label this pipeline itself got wrong
+ * moves.
+ *
+ * Two guards, and both have a specific failure behind them rather than a
+ * general caution. `editedBy IS NULL` is the shared-dictionary rule: a
+ * correction one learner makes is everybody's, and a reseed walking over it
+ * would erase a person's work along with the record of who did it. The `NOT
+ * EXISTS` is the conflict key itself: `hall` is a noun meaning "frost" and an
+ * adjective meaning "grey", so a deployment holding it twice is right, and an
+ * update onto an occupied key is an error that would take the whole seed down
+ * with it.
+ *
+ * WHEN IT RUNS IS PART OF THE FIX. `seed.ts` calls it before the early return
+ * that `--only-if-empty` takes, for the reason `ensureSearchIndexes` is there
+ * too: a deploy does nothing to a dictionary that already has words, so
+ * anything behind that check would never reach the deployments this is for.
+ * It is also before the course harvest is written, and that ordering was
+ * arrived at the hard way. Run afterwards, the harvest has already inserted
+ * its own correct `kallis` ADJECTIVE, the `NOT EXISTS` guard correctly
+ * declines to move the stale NOUN onto an occupied key, and the duplicate this
+ * exists to prevent survives anyway.
+ *
+ * Idempotent, because after it runs the `from` row is gone and it matches
+ * nothing on the next pass.
+ */
+export async function applyPosCorrections(prisma: PrismaClient): Promise<number> {
+  const corrections = readPosCorrections();
+  if (corrections.length === 0) return 0;
+
+  let moved = 0;
+  for (const batch of chunk(corrections, 500)) {
+    const rows = batch.map((c) => Prisma.sql`(${c.lemma}, ${c.from}, ${c.to})`);
+    moved += await prisma.$executeRaw`
+      UPDATE "Lexeme" AS l
+      SET pos = c.to_pos, "updatedAt" = NOW()
+      FROM (VALUES ${Prisma.join(rows)}) AS c(lemma, from_pos, to_pos)
+      WHERE l.lemma = c.lemma
+        AND l.pos = c.from_pos
+        AND l."editedBy" IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM "Lexeme" x WHERE x.lemma = c.lemma AND x.pos = c.to_pos
+        )
+    `;
+  }
+  return moved;
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
