@@ -265,6 +265,14 @@ including the refusals; the static headers are in `next.config.ts` so they cover
 matcher skips. `Permissions-Policy` keeps `microphone=(self)` on purpose: speaking practice
 records, and denying it would switch that off with no error anybody could act on.
 
+**A suite that exists is a suite CI runs.** The workflow names its suites one line at a time, and
+its own comment says why: "a suite added to `npm run test:browser` alone is a suite CI never runs".
+It had drifted in the other direction too, with nothing counting, and five suites had nothing
+watching them at all, `test-restore.mjs` among them. The source of truth is the filesystem: every
+`scripts/*.mjs` that declares a suite is one CI runs, and anything else is named in
+`scripts/lib/suites.mjs` with a written reason. Two are, and both are facts about the route rather
+than about anybody's schedule.
+
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
 students on one school network are one IP and a review session asks for audio on nearly every
@@ -409,7 +417,20 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   and nowhere else, and an invariant checks it.
 - Server actions for mutations; Route Handlers for streaming and third-party proxying.
 - Every new view implements all four states from `docs/08-ux-ia-a11y.md` §4 (empty, loading, error,
-  offline). A view without an empty state is not finished.
+  offline). A view without an empty state is not finished. **Loading is the one a route group can
+  lose wholesale**, because it is a file rather than a branch: `app/(app)/` had one and the
+  chromeless group and the two policy pages had none, so the landing page, sign-in, first run,
+  /privacy and /terms each showed a blank screen. An invariant checks per group, which is the
+  granularity Next resolves a `loading.tsx` at.
+- **A screen names itself, in the tab and to a reader.** Thirty-four of forty-five routes set no
+  title, so every one of them was called "Kodukeel. Estonian that finally sticks" and two tabs side
+  by side were indistinguishable. A page states its own name and `title.template` in
+  `app/layout.tsx` adds the app's. And a practice round carries an `h1` even where there is no room
+  to draw one: each mode renders three or four screens from one component, the empty and finished
+  ones each had a heading and the round did not, so an accessibility run that met an empty deck saw
+  one and passed. That is why it is asserted from the source rather than from whichever branch a
+  fixture rendered, and why the browser suite now walks every route rather than the fifteen a branch
+  happened to add.
 - Unit tests stay hermetic: no database, no network, no clock you do not control. Anything needing
   Postgres is an `*.itest.ts` under `npm run test:db`. The unit suite gates every commit and must
   stay fast enough that nobody is tempted to skip it.

@@ -1087,3 +1087,93 @@ provider list.
    section is a distinct control, so grouping it would be churn rather than clarity. Left alone on
    purpose.
 
+
+## 19. The thirteenth pass: the day a learner is actually having
+
+An audit of what was still missing, run against a database, a browser and CI rather than against the
+source alone. Six findings, all of them fixed here, and the shape they share is worth naming first:
+every one lived in the gap between a rule this repository had written down and the place the rule was
+actually enforced.
+
+### The day boundary was the deployment's
+
+`lib/time/day.ts` carried a header saying its days were "the learner's own calendar days, not UTC
+ones" and a body reading `date.getFullYear()`, which is the day boundary of whichever process is
+running. Every screen that leads with a day is rendered on the server, and on Vercel that server is
+UTC, so the shortcut the file was written to forbid was being taken one layer down from where it
+forbade it.
+
+Not a rounding error. A learner in Tallinn who studied on Monday morning, at one in the morning on
+Tuesday and again on Wednesday morning kept a three-day streak. Those sittings fall in two UTC days
+with a hole between them: the app said 1, and with a shield banked it spent one bridging a Tuesday
+they had not missed. Estonia is UTC+2/+3 and this app teaches Estonian, so that is the audience
+rather than an edge case.
+
+`dayClock(zone)` carries a zone; the free functions are the same thing bound to the running process,
+which is correct in a browser and wrong on a server, so anything touching the database takes a clock.
+The zone is whatever the learner's browser reports, written once by `components/TimeZoneSync.tsx` and
+never asked for in a form. Threaded through the streak, the goal, the quests, the week strip, the
+heatmap, the forecast, the trend, the study-hour line, the greeting, the share card, the class roster
+(each student's own zone) and the two badges about the hour of the day, which had been awarding
+"review before 7am" to somebody studying at nine.
+
+Two faults found underneath it. A naive timestamp needs **two** `AT TIME ZONE`s, because Prisma maps
+`DateTime` to `timestamp without time zone` and on a naive value one of them interprets rather than
+converts; the single `AT TIME ZONE 'UTC'` it replaces was the same mistake wearing a disguise, since
+its result is a `timestamptz` that `TO_CHAR` renders in the session's own zone. And the streak's
+integration test kept a copy of that query beside the real one, which is exactly what goes stale
+first: it would have gone on asserting UTC days were right while the app had stopped using them.
+
+### Thirty-four routes shared one title, and eleven screens had no heading
+
+With no `metadata` export Next falls back to the root layout's title, so /review, /settings,
+/progress, the dictionary, the course and the exam were all called "Kodukeel. Estonian that finally
+sticks". Two tabs side by side were indistinguishable and a bookmark said nothing about what had been
+bookmarked. Every screen names itself now, and `title.template` adds the app's name so none of them
+has to remember it.
+
+Every review mode renders three or four screens from one component, and the empty and finished ones
+each carried an `h1` while the round itself did not. That is why it survived: a run against an empty
+deck saw a heading. It took two passes to find all eleven, which is the argument for the invariant
+that reads the source rather than whichever branch a fixture rendered.
+
+And three pages had no `main` at all: /privacy, /terms and first run, which sit outside both route
+groups. Two are the public pages somebody reads when they have a question about their rights, and the
+third is the first screen anybody meets.
+
+The accessibility suite was fifteen routes of forty-five, grown a line at a time as features landed,
+which is why none of this was visible. It runs every route now, at 247 checks rather than 62.
+
+### CI ran eleven of seventeen browser suites
+
+The workflow's own comment names this fault in one direction: "a suite added to that script alone is
+a suite CI never runs". It had drifted the other way too, and nothing was counting. Five suites had
+nothing watching them, `test-restore.mjs` among them, which guards the only failure in this app that
+cannot be recovered from. A sixth, `test-anu.mjs`, was in no npm script either. The source of truth
+is the filesystem now, and an exemption carries a written reason.
+
+### Two caches with no ceiling, and two routes with none
+
+The service worker kept every speech clip a device had ever played, and every hashed chunk of every
+build it had ever seen, because the version that clears them is typed by hand. `lib/audio/clipCache.ts`
+exists for exactly that shape one layer up. What it costs is not a slow app: a browser evicting an
+origin's storage takes all of it, including `/offline`, which is the one entry with nothing behind
+it. `/offline` now lives in a cache that is never trimmed and everything else has a count.
+
+`/api/write` had no limiter and `/api/exam/write`, which is the same route with a different prompt,
+has had one since it landed. `/api/restore` read a body of any size and handed it to `JSON.parse`
+before anything counted the request.
+
+### Known limitations, stated plainly
+
+1. **A learner's zone is known one page load late.** The browser reports it on first render, so the
+   very first Today a brand-new account sees is drawn on the deployment's clock. Nothing is stored
+   wrong by it, since every figure is derived; the next render is right.
+2. **The zone is the device's, not a setting.** Somebody who studies in Tallinn on a laptop still set
+   to another country is counted in that country. Asking would be worse: the person who most needs
+   this is the one who would never think to fill the field in.
+3. **The service worker's caches are trimmed oldest-first, not least-recently-used.** The Cache API
+   cannot record a read, and re-putting an entry on every hit would make a cache lookup a cache write
+   on the busiest path in the app. It costs an occasional re-fetch of something old.
+4. **The accessibility suite is still the subset this project promised itself**, not axe. It checks
+   names, focus order, alt text, heading order, landmarks and titles. It does not check contrast.
