@@ -508,6 +508,28 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
   pointer every one of them clears 44px.
+- **Text and icons stay inside the boxes they were drawn into, and that is four declarations rather
+  than a habit.** Every other rule here about the shape of a page is about the page, and none of
+  them can see this fault: it happens inside a card that is itself exactly the right size, so the
+  document never scrolls sideways and every check that measures the document reads a clean pass
+  while a word sits on the ground behind the card. `overflow-wrap: anywhere` is inherited from the
+  body, and `anywhere` rather than `break-word` is the whole point: both break a word that has
+  already overflowed, but only `anywhere` counts towards min-content, which is what a flex or grid
+  item's automatic minimum is, so with `break-word` one long word is a floor under the row and the
+  row leaves the card having broken nothing. `svg.lucide { flex: none }` stands in for `shrink-0`
+  on several hundred icons, which was on about a fifth of them: an icon with no `flex` of its own
+  both shrinks and grows, measured at 0x15 in a deck row and 28x16 in the rail. A replaced element
+  is capped at its box, because nothing about wrapping reaches one: Settings' backup picker is an
+  `<input type="file">` laid out at 336px inside a 278px card. And **a table is the one exemption**,
+  because a paradigm is read by comparing forms down a column and a form broken across two lines
+  has to be reassembled first. It buys that with a scroller of its own, which every table in the
+  app sits in and an invariant checks, since the worksheet's did not and was 103px over a phone.
+  `scripts/test-containment.mjs` measures the rectangles, then asks the same three questions again
+  with every run of text swapped for one **of the same length** with no space or hyphen in it.
+  Same length is the discipline: a stress test that hands every element a forty-character word is
+  unfalsifiable, since a ring whose middle says "42%" fails it and no markup would pass, while same
+  length asks the question Estonian actually poses. With the four declarations removed it failed 93
+  of its 192 checks.
 - **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
   container, and every library that positions a floating element works in document coordinates
   instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is
@@ -734,6 +756,7 @@ passes on that happily: a comma is not a dash. Grep the markers the branch owns
 after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
+`overflow-wrap`, `svg.lucide`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`. Most of them now
@@ -758,6 +781,7 @@ npm run test:browser     # the newer browser suites: routes, modes, offline, sca
 
 npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
+npm run test:containment # text and icons inside their boxes, measured; needs the server running
 ```
 
 With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the
@@ -803,6 +827,16 @@ no-key empty state dropped the question a review card had just handed her, so
 the key was the price of even seeing what you were about to ask. Neither was
 reachable on a machine with the keys set, which is the argument for running a
 suite in the state a stranger installs into.
+
+`scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
+walks every text-bearing element, every icon and everything that arrives with a width of its own,
+on twenty-three routes at 360 and 1280 plus a paper actually being sat, and asks three things:
+whether anything is cut off by an ancestor that clips, whether anything is drawn outside a border
+somebody painted, and whether any icon is drawn at other than the size it declared. A scroller
+ends the first question rather than answering it, and so does a `truncate`, because both are a way
+out that somebody chose. Then it asks all three again with the text swapped for text of the same
+length that cannot break, which is how it caught the streak circles 2px over the card on a 360px
+phone and the backup picker 58px over its own.
 
 `scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
 1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on

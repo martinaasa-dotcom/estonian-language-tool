@@ -131,6 +131,37 @@ different face mid-word. The font variables are attached to `<html>`, not `<body
 `--font-serif` is declared on `:root` and references them — a custom property is substituted
 where it is declared, so the face has to be in scope there.
 
+### Text stays in its box
+
+Four declarations in `app/globals.css`, and between them they are the reason no screen here has a
+word sitting on the ground behind a card.
+
+- **`overflow-wrap: anywhere`, inherited from the body.** A word that will not fit breaks.
+  `anywhere` rather than `break-word` because only `anywhere` counts towards min-content, which is
+  what a flex or grid item's automatic minimum is: with `break-word` one long word is a floor under
+  the whole row and the row leaves the card having broken nothing. Estonian is why this is not
+  academic. The dictionary holds compounds past twenty characters and the row holding one is three
+  or four columns wide on a phone.
+- **`table { overflow-wrap: break-word }` is the single exemption.** A paradigm is read by
+  comparing forms down a column, so a form split across two lines has to be reassembled before it
+  can be compared. The table pays for that with a scroller of its own, which every table in the app
+  sits in and `scripts/test-invariants.ts` checks.
+- **`svg.lucide { flex: none }`.** An icon is a square and a flex item with no `flex` of its own
+  both shrinks and grows: measured with the rule off, `lucide-eye-off` was drawn 0x15 in a deck row
+  and `lucide-sun` 28x16 in the rail. `shrink-0` was on about a fifth of the icons in the app,
+  which is what a rule kept by remembering looks like from the inside.
+- **`img, video, canvas, iframe, input, select, textarea { max-width: 100% }`.** The one thing
+  wrapping cannot reach: a replaced element brings its own width. Settings' backup picker is an
+  `<input type="file">`, laid out at 336px from its button label and room for a filename, and it
+  was in a 278px card on a 360px phone.
+
+`scripts/test-containment.mjs` is the half that measures rectangles: every text-bearing element,
+every icon and everything with a width of its own, across twenty-three routes at 360 and 1280, then
+the same three questions again with every run of text swapped for one of the same length with no
+space or hyphen in it. Same length is the discipline: a stress test that hands every element a
+forty-character word is unfalsifiable, since a ring whose middle says "42%" fails it and no markup
+would pass. Same length asks what the language actually asks.
+
 ## 4. Motion
 
 Small, physical, and never blocking:
