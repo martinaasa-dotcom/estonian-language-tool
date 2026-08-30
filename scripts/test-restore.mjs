@@ -85,7 +85,25 @@ if (!summarised) {
   process.exit(1);
 }
 await page.getByRole("button", { name: /Merge this backup in/ }).click();
-await page.waitForTimeout(6000);
+/*
+  Wait for the panel to say it finished, not for a duration.
+
+  This file already makes that argument, four lines above, about the summary
+  step — and then guessed at six seconds for the restore, which is the slow
+  half by a wide margin: the summary parses a file, the restore writes every
+  word, form, card and review in it, one at a time, inside a transaction.
+
+  Measured against a full dictionary, that is 5,971 lexemes and 34,455 forms
+  and it takes well over six seconds. So every check below read a database
+  that was still being written and reported zero of everything — after the
+  delete, which means a "failure" here destroyed the fixture it was checking
+  and then told you to restore it by hand. Twice, before it was noticed.
+
+  The panel prints a sentence naming what it merged. That sentence is the
+  event to wait for, and the timeout is generous because the only cost of a
+  generous timeout is a slow pass.
+*/
+await page.getByText(/Merged in \d+ words/).waitFor({ timeout: 180_000 });
 
 const after = {
   words: await prisma.lexeme.count(),
@@ -117,7 +135,9 @@ await page.getByLabel("Choose a backup file").setInputFiles({
 });
 await page.getByText(/holds/).first().waitFor({ timeout: 30000 });
 await page.getByRole("button", { name: /Merge this backup in/ }).click();
-await page.waitForTimeout(6000);
+// Same again: the second merge is no faster than the first, and this check is
+// the one that would catch a restore that duplicates rather than upserts.
+await page.getByText(/Merged in \d+ words/).waitFor({ timeout: 180_000 });
 check("restoring twice does not duplicate anything",
   (await prisma.review.count()) === before.reviews && (await prisma.card.count()) === before.cards,
   `${await prisma.card.count()} cards, ${await prisma.review.count()} reviews`);

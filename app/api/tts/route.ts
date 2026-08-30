@@ -151,11 +151,47 @@ async function speak(
   return audio;
 }
 
+/**
+ * One clip, and an honest word about who is allowed to keep it.
+ *
+ * This used to send `public, max-age=31536000, immutable`, which reads as the
+ * strongest caching statement HTTP has and did nothing whatsoever. There is no
+ * `GET` here; a browser does not put a response to a `POST` in its HTTP cache,
+ * and neither does a CDN. So the header described an intention on a transport
+ * that cannot carry it, and the next person to read this file would have
+ * believed repeat plays were free at the network layer when nothing at that
+ * layer was involved.
+ *
+ * The caching is real, and it is in three other places, none of which reads
+ * this header:
+ *
+ *   the page      `Speak` and `PairsSession` hold the blob for a clip they
+ *                 have already fetched, so a replay inside one screen never
+ *                 leaves the browser at all
+ *   the worker    `audioWithCache` in public/sw.js builds a `GET`-shaped key
+ *                 out of the request body and keeps the clip in the Cache API,
+ *                 which is what makes review work with the network down. The
+ *                 Cache API stores what it is told to store and ignores
+ *                 `Cache-Control` entirely
+ *   the server    `lib/audio/store.ts`, content-addressed and shared across
+ *                 instances and learners, which is the one that keeps us a
+ *                 polite consumer of a free academic service
+ *
+ * `no-store` rather than nothing, because it is the true statement: no HTTP
+ * cache should hold this, and none would have anyway. The audio is not secret
+ * and this is not protecting it — it is refusing to claim something that does
+ * not happen. Turning this route into a `GET` would make the old header mean
+ * something, and would put the sentence being spoken into every access log and
+ * CDN log between here and the learner, which is a worse trade than one
+ * accurate header.
+ */
 function wav(body: Buffer, cache: AudioSource | "joined") {
   return new NextResponse(new Uint8Array(body), {
     headers: {
       "content-type": "audio/wav",
-      "cache-control": "public, max-age=31536000, immutable",
+      "cache-control": "no-store",
+      // Which of the three caches answered, for the offline smoke test and for
+      // anybody wondering whether the disk store is doing its job.
       "x-tts-cache": cache,
     },
   });

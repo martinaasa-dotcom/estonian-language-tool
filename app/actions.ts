@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { throttleAction } from "@/lib/security/actionLimits";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import {
@@ -287,7 +288,7 @@ export async function deleteCard(cardId: string) {
  * page can say where it came from.
  */
 export async function translateExample(lexemeId: string, sentence: string) {
-  await requireUserId();
+  const ownerId = await requireUserId();
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     select: { id: true, examples: true },
@@ -299,8 +300,20 @@ export async function translateExample(lexemeId: string, sentence: string) {
   if (!target) return { ok: false as const, error: "That sentence is not on this word." };
   if (target.en) return { ok: true as const, en: target.en };
 
-  const en = await translateSentenceWithAnu(sentence);
-  if (!en) return { ok: false as const, error: "Anu could not translate that one." };
+  /*
+    A paid call, so it is metered like every other one. The allowance can
+    refuse it, and when it does the learner is told that rather than being
+    told the sentence was too hard: those are different problems and only one
+    of them is worth waiting a day over.
+  */
+  const answer = await translateSentenceWithAnu(ownerId, sentence);
+  if (!answer.ok) {
+    return {
+      ok: false as const,
+      error: answer.reason === "quota" ? answer.message : "Anu could not translate that one.",
+    };
+  }
+  const en = answer.text;
 
   await prisma.lexeme.update({
     where: { id: lexeme.id },
@@ -379,6 +392,9 @@ export async function createLexeme(input: {
   lemma: string; translation: string; pos: string; cefr?: string; notes?: string;
 }) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "editDictionary");
+  if (busy) return busy;
   const lemma = capped(input.lemma, LIMITS.lemma);
   const translation = capped(input.translation, LIMITS.translation);
   if (!lemma || !translation) {
@@ -422,6 +438,9 @@ export async function createLexemeWithForms(input: {
   forms: Record<string, string>;
 }) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "editDictionary");
+  if (busy) return busy;
   const lemma = capped(input.lemma, LIMITS.lemma);
   const translation = capped(input.translation, LIMITS.translation);
   if (!lemma || !translation) {
@@ -521,6 +540,9 @@ const MAX_IMPORT_ROWS = 500;
 
 export async function importWords(rows: { lemma: string; translation: string; pos: string }[]) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "importWords");
+  if (busy) return busy;
   let created = 0;
   let cards = 0;
   const skipped: string[] = [];
@@ -1031,6 +1053,9 @@ const CODE_ATTEMPTS = 8;
  */
 export async function createClassroom(name: string) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "createClassroom");
+  if (busy) return busy;
   const trimmed = name.trim().slice(0, 60);
   if (trimmed.length < 2) return { ok: false as const, error: "Give the class a name." };
 
@@ -1066,6 +1091,9 @@ export async function createClassroom(name: string) {
  */
 export async function joinClassroom(code: string, displayName?: string) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "joinClassroom");
+  if (busy) return busy;
   if (!isValidCode(code)) {
     return { ok: false as const, error: "That is not a valid join code." };
   }
@@ -1132,6 +1160,9 @@ export async function archiveClassroom(classroomId: string) {
  */
 export async function assignUnit(classroomId: string, unitId: string, dueAt?: string) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "assignUnit");
+  if (busy) return busy;
   const classroom = await prisma.classroom.findFirst({
     where: { id: classroomId, ownerId },
     select: { id: true, name: true },
@@ -1287,6 +1318,9 @@ const PASSAGE_FORM_LABELS: Record<string, string> = {
  */
 export async function buildClozeFromText(text: string) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "buildCloze");
+  if (busy) return busy;
   const passage = text.slice(0, MAX_PASSAGE_CHARS);
   if (!passage.trim()) return { ok: false as const, error: "Paste some Estonian first." };
 
@@ -1395,6 +1429,26 @@ export async function deleteMyAccount(confirmation: string) {
         them, or the deletion promise on /privacy is not one.
       */
       await tx.assessment.deleteMany({ where: { ownerId } });
+      /*
+        And a mock sitting, for the same reason and more strongly. It is the
+        only table holding something the learner composed at length: the
+        marked paper carries the writing part back verbatim. That was left
+        behind by every deletion this app performed until now, which made the
+        one category of free-form writing in the schema the one category that
+        survived "delete everything".
+      */
+      await tx.examAttempt.deleteMany({ where: { ownerId } });
+      /*
+        Their membership of somebody else's class, which carries the name they
+        chose to be known by in it. A class they run goes too, and its roster
+        rows cascade with it: the code, the name and the roster all hang off a
+        teacher who no longer exists, and there is no owner to hand them to. It
+        costs the pupils nothing they own — a membership row is a display name
+        and a join date, and every card, review and level check any of them
+        made is theirs and stays where it is.
+      */
+      await tx.classroomMember.deleteMany({ where: { ownerId } });
+      await tx.classroom.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
     }, { timeout: 120_000 });
   } catch (error) {
@@ -1453,6 +1507,19 @@ const BackupSchema = z.object({
   assessments: z.array(z.record(z.unknown())).optional(),
   stars: z.array(z.record(z.unknown())).optional(),
   achievements: z.array(z.record(z.unknown())).optional(),
+  /*
+    A sat mock paper, which is the one row in a backup holding something the
+    learner wrote at length. Restoring it matters more than any other optional
+    key here for exactly that reason: a replace that dropped it would delete a
+    composition on the way to putting a deck back.
+
+    Classes are in the export and deliberately not here. A join code is unique
+    across an installation, so restoring one either collides with a live class
+    or resurrects a code somebody else is now using, and a class with its
+    roster gone is a room with no one in it. The copy is for the learner to
+    read; rejoining is one code away.
+  */
+  examAttempts: z.array(z.record(z.unknown())).optional(),
 });
 
 export interface RestoreSummary {
@@ -1462,7 +1529,7 @@ export interface RestoreSummary {
   tasks: number;
   /** Photographed pages. Absent from a backup written before they existed. */
   scans: number;
-  /** Settings, tutor messages, level checks, stars and badges, counted together. */
+  /** Settings, messages, level checks, exam papers, stars and badges, together. */
   personal: number;
 }
 
@@ -1494,7 +1561,7 @@ export async function inspectBackup(json: string): Promise<
       personal:
         (b.settings?.length ?? 0) + (b.messages?.length ?? 0) +
         (b.assessments?.length ?? 0) + (b.stars?.length ?? 0) +
-        (b.achievements?.length ?? 0),
+        (b.achievements?.length ?? 0) + (b.examAttempts?.length ?? 0),
     },
   };
 }
@@ -1511,6 +1578,9 @@ export async function inspectBackup(json: string): Promise<
  */
 export async function restoreBackup(json: string, mode: "merge" | "replace") {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "restoreBackup");
+  if (busy) return busy;
   const check = await inspectBackup(json);
   if (!check.ok) return { ok: false as const, error: check.error };
 
@@ -1635,6 +1705,14 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         await tx.assessment.create({ data: data as never });
       }
 
+      for (const raw of backup.examAttempts ?? []) {
+        const data = revive(raw, ["startedAt", "finishedAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.examAttempt.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.examAttempt.create({ data: data as never });
+      }
+
       for (const raw of backup.stars ?? []) {
         const data = revive(raw, ["createdAt"]);
         const lexemeId = String(data.lexemeId ?? "");
@@ -1711,6 +1789,9 @@ export async function saveScan(input: {
   addCards: boolean;
 }) {
   const ownerId = await requireUserId();
+
+  const busy = throttleAction(ownerId, "saveScan");
+  if (busy) return busy;
   const items = sanitiseItems(input.items, SCAN_MAX_ITEMS);
   if (items.length === 0) {
     return { ok: false as const, error: "Nothing on that page was ticked." };
@@ -1875,7 +1956,7 @@ export async function deleteScan(scanId: string) {
  * a bare string.
  */
 export async function resolveScannedWord(word: string) {
-  await requireUserId();
+  const ownerId = await requireUserId();
   const trimmed = capped(word, LIMITS.lemma);
   if (!trimmed) return { ok: false as const, error: "Type the word first." };
 
@@ -1884,7 +1965,7 @@ export async function resolveScannedWord(word: string) {
 
   // Not held locally. Ekilex is authoritative and stores what it returns, so
   // the second look at this word, by anyone, is instant.
-  const found = await lookupAndStore(trimmed);
+  const found = await lookupAndStore(ownerId, trimmed);
   if (!found) {
     return { ok: true as const, item: local, source: "NONE" as const };
   }

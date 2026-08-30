@@ -80,3 +80,31 @@ describe("searchLexemes against the seeded dictionary", () => {
     expect(await searchLexemes("zzzzzzzz")).toEqual([]);
   });
 });
+
+describe("a query containing LIKE's own wildcards", () => {
+  /*
+    `%` and `_` are wildcards to LIKE, and pasted text is full of them. This is
+    the half `search.test.ts` cannot check: whether the `ESCAPE` clause and the
+    escaping function agree with each other and with Postgres. All three have
+    to, and only a real database can say so.
+  */
+  it("treats an underscore as a character, not as any character", async () => {
+    // `s_na` matched `sõna` before the escaping went in: the underscore stood
+    // for the letter the learner could not type.
+    const hits = await searchLexemes("s_na");
+    expect(hits.map((h) => h.lemma)).not.toContain("sõna");
+  });
+
+  it("does not turn a stray percent sign into a match-everything", async () => {
+    const hits = await searchLexemes("%");
+    // Unescaped this is "every word in the dictionary". A literal percent is
+    // in no Estonian lemma, so the honest answer is nothing.
+    expect(hits).toHaveLength(0);
+  });
+
+  it("still finds an ordinary word", async () => {
+    // The escaping must be invisible to every query that does not need it.
+    const hits = await searchLexemes("tuba");
+    expect(hits.map((h) => h.lemma)).toContain("tuba");
+  });
+});

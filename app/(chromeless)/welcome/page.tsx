@@ -192,9 +192,9 @@ function Hero({ words }: { words: DemoWord[] }) {
 
 const SOURCES = [
   ["Ekilex", "Institute of the Estonian Language"],
+  ["Wiktionary", "the English glosses, CC BY-SA"],
   ["TartuNLP", "University of Tartu speech"],
   ["FSRS", "the scheduler Anki moved to"],
-  ["Open data", "CC BY 4.0, cited in app"],
 ] as const;
 
 function Sources() {
@@ -761,7 +761,7 @@ const FAQS = [
   ],
   [
     "Where do the Estonian forms come from?",
-    "Ekilex, the Institute of the Estonian Language, plus a hand-checked built-in set of common words. The eleven regular cases are worked out from the genitive by a function with its own unit tests. An AI is never allowed to supply an Estonian form: it invents plausible, wrong ones, and a flashcard would then drill the mistake in.",
+    "Ekilex, the Institute of the Estonian Language, for every Estonian form and every example sentence; English Wiktionary for the English, checked word by word against its own page; plus a hand-checked built-in set of common words. The eleven regular cases are worked out from the genitive by a function with its own unit tests. An AI is never allowed to supply an Estonian form: it invents plausible, wrong ones, and a flashcard would then drill the mistake in.",
   ],
   [
     "Is this only for beginners?",
@@ -863,9 +863,11 @@ function Footer() {
       >
         <Wordmark size={26} />
         <p className="text-center md:text-right">
-          Forms from{" "}
+          Forms and example sentences from{" "}
           <a href="https://ekilex.ee" target="_blank" rel="noreferrer" className="underline underline-offset-2">Ekilex</a>
-          , Institute of the Estonian Language · CC BY 4.0. Speech from{" "}
+          , Institute of the Estonian Language · CC BY 4.0. English glosses from{" "}
+          <a href="https://en.wiktionary.org" target="_blank" rel="noreferrer" className="underline underline-offset-2">Wiktionary</a>
+          {" "}· CC BY-SA 4.0. Speech from{" "}
           <a href="https://tartunlp.ai" target="_blank" rel="noreferrer" className="underline underline-offset-2">TartuNLP</a>,
           University of Tartu.
         </p>

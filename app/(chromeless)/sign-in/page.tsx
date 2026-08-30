@@ -79,7 +79,8 @@ export default function SignInPage() {
         </div>
 
         <p className="mx-auto mt-6 max-w-[46ch] text-center text-xs" style={{ color: "var(--ink-3)" }}>
-          Dictionary data from Ekilex (Institute of the Estonian Language, CC BY 4.0). Speech from the
+          Estonian forms and example sentences from Ekilex (Institute of the Estonian Language,
+          CC BY 4.0). English glosses from English Wiktionary (CC BY-SA 4.0). Speech from the
           University of Tartu.
         </p>
       </div>

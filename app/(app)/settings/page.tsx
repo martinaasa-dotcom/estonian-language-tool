@@ -267,6 +267,10 @@ export default async function SettingsPage() {
                   ))}
                 </div>
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                  The time is read on your own clock, wherever you are, and stays put when the
+                  clocks change.
+                </p>
+                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   Web push was the alternative. It needs a server that stays awake and still does
                   nothing on an iPhone unless the app is installed. A calendar entry just works.
                 </p>

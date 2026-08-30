@@ -20,6 +20,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { extractEstonianSenses } from "../lib/dict/wiktionary";
+import { wordNote } from "../lib/estonian/dictation";
+import { ACTION_LIMITS } from "../lib/security/actionLimits";
+import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 
 let failures = 0;
 let checks = 0;
@@ -1257,6 +1260,158 @@ check("a deletion that leaves something behind says so", () => {
   assert.match(danger, /result\.remaining/, "the screen ignores what the deletion left behind");
 });
 
+/** Every model in the schema carrying an `ownerId`: one person's own data. */
+function ownerScopedModels(): string[] {
+  const owned = [...SCHEMA.matchAll(/model (\w+) \{([^}]*)\}/g)]
+    .filter(([, , body]) => /^\s*ownerId\s/m.test(body ?? ""))
+    .map(([, name]) => name!);
+  assert.ok(owned.length >= 12, `expected the owner-scoped models, found ${owned.length}`);
+  return owned;
+}
+
+const accessorFor = (model: string) => model.charAt(0).toLowerCase() + model.slice(1);
+
+check("the actions that do real work per call are throttled", () => {
+  /*
+    Every mutation a learner makes here is a Server Action, which is a POST to
+    a page path. The five Route Handlers had a limiter and none of the
+    forty-odd actions did, so the gate was on the quiet door: the same
+    misreading that would have put the forged-request check inside an `isApi`
+    branch.
+
+    Not every action needs one, and most must not have one — grading a card is
+    a single indexed write and a limit there would be met by learners and by
+    nobody else. What is listed in `ACTION_LIMITS` is the per-call expensive
+    work, and each entry has to be applied to an action that exists, which is
+    the half a typed list gets wrong.
+
+    Asserted through the table rather than by naming actions here, so adding a
+    limit means adding it in one place and using it, and adding a name nobody
+    uses fails.
+  */
+  const source = code("app/actions.ts");
+  const keys = Object.keys(ACTION_LIMITS);
+  assert.ok(keys.length >= 6, `expected the throttled actions, found ${keys.length}`);
+
+  for (const key of keys) {
+    assert.match(
+      source,
+      new RegExp(`throttleAction\\(ownerId, "${key}"\\)`),
+      `${key} has an allowance in the table and no action applying it`,
+    );
+  }
+
+  /*
+    And the throttle is charged to the resolved owner, never to an argument.
+    Every export in a "use server" file is a public endpoint, so an action that
+    took the id to charge from its caller would let anybody spend somebody
+    else's allowance, or spend none by passing a fresh string each time.
+  */
+  assert.doesNotMatch(
+    source,
+    /throttleAction\((?!ownerId)/,
+    "an action throttles against something other than the owner it resolved",
+  );
+});
+
+check("dictation says which kind of mistake it was, in text", () => {
+  /*
+    "The marking shows which word you missed and whether you only lost its
+    Estonian letters" is the README's promise about this exercise, and it is
+    the reason the exercise exists rather than being another listening round.
+
+    `diacritics` and `typo` share a background, correctly: the palette has one
+    colour for "nearly" and inventing a sixth hue to carry a distinction is
+    exactly what the design system forbids. So the distinction has to be
+    carried by words — and it was carried by a `title` attribute instead,
+    which is a hover tooltip. This app is measured at 360px and the README
+    leads with "works on a phone". Hover does not happen there, so on the
+    primary device the two marks were one mark.
+
+    Asserted by calling the function rather than by matching markup: two
+    different, non-empty notes, and a component that actually renders them.
+  */
+  const diacritics = wordNote({ expected: "õues", typed: "oues", status: "diacritics" });
+  const typo = wordNote({ expected: "kool", typed: "koll", status: "typo" });
+
+  assert.ok(diacritics, "a dropped diacritic is marked with no words on it");
+  assert.ok(typo, "a typo is marked with no words on it");
+  assert.notEqual(diacritics, typo, "dictation tells the two kinds of nearly apart by colour alone");
+
+  const session = code("app/(app)/review/dictation/DictationSession.tsx");
+  assert.match(session, /wordNote\(/, "the dictation marking stopped showing which mistake it was");
+});
+
+check("a daily reminder fires on the learner's clock, not the server's", () => {
+  /*
+    The hour somebody picks in Settings is a reading on their own clock. This
+    route ran `setHours()`, which sets an hour in whatever timezone the Node
+    process is configured with, and wrote the result back out as a `Z`-suffixed
+    instant. On Vercel that process is in UTC and Estonia is two or three hours
+    ahead of it, so the entire intended audience of this app was reminded two
+    or three hours after they asked, every day, with nothing anywhere saying a
+    timezone had been assumed.
+
+    A floating time is the shape RFC 5545 has for this, and it fixes the second
+    bug behind the first for free: an absolute instant on a daily rule keeps
+    one UTC offset for ever, and Estonia moves its clocks twice a year.
+
+    Asserted on the builder rather than on today's output: no `Z` on the
+    recurring start, and no `setHours`, which is the call that cannot know
+    whose hour it is being asked about.
+  */
+  const source = code("lib/time/reminder.ts");
+  assert.doesNotMatch(
+    source,
+    /setHours|setUTCHours/,
+    "the reminder builds its start time from a timezone nobody chose",
+  );
+  assert.doesNotMatch(
+    source,
+    /DTSTART:\$\{[^}]*\}Z|`DTSTART:.*Z`/,
+    "the reminder pins its recurring start to one UTC offset, which the clocks change twice a year",
+  );
+  assert.match(source, /DTSTAMP/, "the reminder no longer stamps when it was written");
+
+  const route = code("app/api/reminder/route.ts");
+  assert.match(route, /buildReminderIcs\(/, "the reminder route builds its own file again");
+  assert.doesNotMatch(route, /setHours/, "the reminder route is back to the server's clock");
+});
+
+check("nothing reaches a paid provider without going through the ledger", () => {
+  /*
+    CLAUDE.md: "Any new path that calls a paid provider goes through
+    `authoriseCall` before the call and `recordUsage` after it." Four routes
+    did. `lib/tutor/translate.ts` did not, and it is reachable from the
+    dictionary search box: a word the local table and Wiktionary both missed
+    fired a real completion with no burst limit, no daily allowance, no global
+    budget check and no row written afterwards. The Settings usage meter then
+    reported that nothing had been spent, because from the ledger's point of
+    view nothing had.
+
+    Asserted by finding the provider chain's own entry points rather than by
+    listing today's four callers, because the rule is about the next one. A
+    module that opens a provider and does not mention the ledger fails here,
+    whether it is a route, an action or a helper — which is what makes putting
+    the meter inside `ask()` a fix rather than a patch: every future caller of
+    it inherits the meter instead of having to remember it.
+  */
+  const entryPoints = /\b(openWithFallback|completeWithImage)\s*\(/;
+  const callers = ALL.filter(
+    (f) =>
+      !/\.(test|itest)\.tsx?$/.test(f) &&
+      f !== "lib/tutor/provider.ts" &&
+      entryPoints.test(read(f)),
+  );
+  assert.ok(callers.length >= 3, `expected the provider callers, found ${callers.length}`);
+
+  for (const file of callers) {
+    const source = read(file);
+    assert.match(source, /authoriseCall\(/, `${file} opens a provider without asking the ledger first`);
+    assert.match(source, /recordUsage\(/, `${file} opens a provider and never files what it spent`);
+  }
+});
+
 check("an export holds every category the account holds", () => {
   /*
     Article 20 is a right to receive the personal data concerning you, and
@@ -1265,23 +1420,70 @@ check("an export holds every category the account holds", () => {
     absent, and two of those cannot be reconstructed from anything.
 
     Asserted against the schema rather than against a list typed here, so a new
-    owner-scoped table is a failure until somebody decides about it. UsageEvent
-    is the one deliberate exclusion and it is named on the page: it is the
-    deployment's spending record, not the learner's work.
-  */
-  const owned = [...SCHEMA.matchAll(/model (\w+) \{([^}]*)\}/g)]
-    .filter(([, , body]) => /^\s*ownerId\s/m.test(body ?? ""))
-    .map(([, name]) => name!)
-    .filter((name) => !["UsageEvent", "ClassroomMember", "ExamAttempt", "Classroom"].includes(name));
-  assert.ok(owned.length >= 8, `expected the owner-scoped models, found ${owned.length}`);
+    owner-scoped table is a failure until somebody decides about it.
 
+    THAT WAS TRUE OF THE CHECK AND NOT OF ITS SKIP LIST, WHICH IS THE SAME BUG
+    ONE LEVEL UP. Three models had been added to the exemption rather than to
+    the query — mock exam sittings, classes and class memberships — so the
+    backup stopped at ten tables out of thirteen and this check called it
+    complete. A sat paper carries the learner's own composition, which is the
+    single least reconstructable thing in the schema.
+
+    The exemptions live in lib/legal/exportCoverage.ts now and each one has to
+    carry a written reason, so appending a model name is no longer a way to
+    make this pass. UsageEvent is the one that earns it.
+  */
   const route = read("app/api/export/route.ts");
-  for (const model of owned) {
-    const accessor = model.charAt(0).toLowerCase() + model.slice(1);
+  for (const model of ownerScopedModels()) {
+    if (Object.hasOwn(NOT_EXPORTED, model)) continue;
     assert.match(
       route,
-      new RegExp(`prisma\\.${accessor}\\.findMany`),
+      new RegExp(`prisma\\.${accessorFor(model)}\\.findMany`),
       `the export leaves ${model} out, and the privacy page promises it does not`,
+    );
+  }
+});
+
+check("an exclusion from the backup is a decision somebody wrote down", () => {
+  /*
+    The check above is only as strong as the thing it consults, so the skip
+    list gets its own. An entry has to name a model the schema actually has
+    (a stale one is an exemption nothing needs, and it would silently cover a
+    future table of the same name), and it has to carry an argument rather
+    than a word. Forty characters is not a quality bar, it is a floor low
+    enough that any real sentence clears it and high enough that "internal" or
+    "not needed" does not.
+  */
+  const owned = new Set(ownerScopedModels());
+  const entries = Object.entries(NOT_EXPORTED);
+  assert.ok(entries.length >= 1, "the exclusion list is empty, which would make the check above trivial");
+  for (const [model, reason] of entries) {
+    assert.ok(owned.has(model), `${model} is exempted from the export but is not an owner-scoped model`);
+    assert.ok(
+      reason.trim().length >= 40,
+      `${model} is exempted from the export with no reason worth the name`,
+    );
+  }
+});
+
+check("erasure has no exemptions at all", () => {
+  /*
+    "Delete everything" is the promise on /privacy, and unlike the export it
+    has nothing it is allowed to keep: even the spending record goes, because
+    it is a record about a person and the cap it enforced dies with the
+    account it capped.
+
+    Read off the schema for the same reason as the export, and it caught the
+    same three: mock sittings, classes and memberships were all left behind by
+    a transaction that named ten tables. So the one category of long-form
+    writing in the whole app survived its author asking for it to be gone.
+  */
+  const action = between(read("app/actions.ts"), "export async function deleteMyAccount");
+  for (const model of ownerScopedModels()) {
+    assert.match(
+      action,
+      new RegExp(`tx\\.${accessorFor(model)}\\.deleteMany`),
+      `account deletion leaves ${model} behind, and /privacy promises it does not`,
     );
   }
 });

@@ -201,7 +201,18 @@ async function recordMiss(lexemeId: string): Promise<false> {
   return false;
 }
 
-export async function lookupAndStore(query: string): Promise<LookupResult | null> {
+/**
+ * `ownerId` is here because the last step of a lookup can cost money.
+ *
+ * Ekilex and Wiktionary are free; the fallback gloss is a model call, and this
+ * app meters every one of those against the person who caused it. So a lookup
+ * is somebody's lookup, and the signature says so rather than leaving the
+ * charge nameless.
+ */
+export async function lookupAndStore(
+  ownerId: string,
+  query: string,
+): Promise<LookupResult | null> {
   if (!ekilexConfigured()) return null;
   const trimmed = query.trim();
   /*
@@ -210,11 +221,17 @@ export async function lookupAndStore(query: string): Promise<LookupResult | null
     requests to a free academic service for an answer we already have.
   */
   if (isRecentMiss(`ekilex:q:${trimmed}`)) return null;
-  // And one upstream search per query, however many people typed it at once.
-  return singleFlight(`ekilex:lookup:${trimmed}`, () => runLookup(trimmed));
+  /*
+    And one upstream search per query, however many people typed it at once.
+
+    A joiner is not charged for a request it did not make, which is the same
+    rule speech follows: the class of twenty-five who all look up the unit's
+    new word cost one lookup and one gloss, billed to whoever asked first.
+  */
+  return singleFlight(`ekilex:lookup:${trimmed}`, () => runLookup(ownerId, trimmed));
 }
 
-async function runLookup(query: string): Promise<LookupResult | null> {
+async function runLookup(ownerId: string, query: string): Promise<LookupResult | null> {
   const missKey = `ekilex:q:${query}`;
 
   const matches = await searchEkilex(query);
@@ -243,6 +260,7 @@ async function runLookup(query: string): Promise<LookupResult | null> {
   });
 
   const { translation, source } = await resolveTranslation(
+    ownerId,
     mapped.lemma,
     existing?.translation,
   );
@@ -302,6 +320,7 @@ function isPlaceholder(translation: string): boolean {
 }
 
 async function resolveTranslation(
+  ownerId: string,
   lemma: string,
   existing: string | undefined,
 ): Promise<{ translation: string; source: LookupResult["translationSource"] }> {
@@ -312,8 +331,20 @@ async function resolveTranslation(
   const gloss = await fetchEnglishGloss(lemma);
   if (gloss) return { translation: gloss.senses.join("; "), source: "WIKTIONARY" };
 
-  const guess = await translateWithAnu(lemma);
-  if (guess) return { translation: guess, source: "AI" };
+  /*
+    The last resort, and the only paid one. It is metered against this
+    learner's allowance like every other call to a model: this was the one
+    path in the app that reached a provider without going through the ledger,
+    so a search box was a way to spend a deployment's budget without leaving a
+    row behind saying so.
+
+    A refusal reads exactly like the model not knowing the word, which is
+    correct here. The entry is written either way, with the full paradigm and
+    the Estonian definition, and the English left honestly blank for the
+    learner to fill in. Nothing about a quota belongs on a dictionary entry.
+  */
+  const guess = await translateWithAnu(ownerId, lemma);
+  if (guess.ok) return { translation: guess.text, source: "AI" };
 
   // Better an honest blank than a wrong word: the entry still carries the full
   // paradigm and the Estonian definition, and the learner can type the English.

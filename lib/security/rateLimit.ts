@@ -11,6 +11,16 @@
  * still catches the pattern that actually happens, which is one retry loop or
  * one script hammering one endpoint, and it costs no infrastructure at all.
  * Swap it for a shared store the day the traffic justifies one.
+ *
+ * WHAT THIS IS AND IS NOT A BACKSTOP FOR, since it used to be described as
+ * though it were the first line of defence for spending. It is not. On
+ * serverless a burst spread across cold starts meets an empty Map every time,
+ * so the thing that actually bounds cost is the Postgres ledger in
+ * `lib/usage/`, which reserves a call inside the same transaction that reads
+ * the counters and is therefore the same number whichever instance answers.
+ * This limiter is in front of that to keep an obvious loop from making a
+ * hundred database round trips on its way to being refused, and to cap the
+ * one route the ledger does not price at all, which is speech.
  */
 
 type Bucket = { count: number; resetAt: number };
@@ -70,12 +80,48 @@ export function resetRateLimitForTests() {
   lastSweep = 0;
 }
 
-/** Client IP as the platform sets it. The first hop is the platform, so it can be believed. */
-export function clientIp(req: { headers: { get(name: string): string | null } }): string {
+/**
+ * Whether a forwarded-for header on this deployment came from a proxy.
+ *
+ * It is a header. Anyone can send one, and this app used to read it whatever
+ * it was standing behind: on Vercel that is correct, because the platform
+ * overwrites `x-vercel-forwarded-for` on every request and a client cannot
+ * reach past it. Self-hosted behind a reverse proxy that passes an incoming
+ * `X-Forwarded-For` through untouched, it is a value the caller chose.
+ *
+ * And a bucket key the caller chooses is worse than no bucket key at all,
+ * which is the part that decided this. An honest caller keeps one key and
+ * gets one allowance. A caller who makes one up per request gets a fresh
+ * allowance every time — an unlimited number of limits, which is not a limit.
+ * So the untrusted case does not fall back to the header; it falls back to
+ * one shared bucket, below.
+ *
+ * `VERCEL` is set by the platform itself. `TRUST_PROXY_HEADERS` is for
+ * everybody else, and defaults off, because a deployment that has not thought
+ * about its proxy has not got one.
+ */
+export function trustsProxyHeaders(env: Record<string, string | undefined> = process.env): boolean {
+  const flag = env.TRUST_PROXY_HEADERS?.trim().toLowerCase();
+  if (flag === "1" || flag === "true" || flag === "yes") return true;
+  return env.VERCEL === "1";
+}
+
+/**
+ * Client IP, where the deployment is in a position to know it.
+ *
+ * Null when it is not, which is a real answer and not a failure: it says "this
+ * request cannot be told apart from any other unattributed one", and the
+ * caller below acts on that rather than inventing a distinction.
+ */
+export function clientIp(
+  req: { headers: { get(name: string): string | null } },
+  env: Record<string, string | undefined> = process.env,
+): string | null {
+  if (!trustsProxyHeaders(env)) return null;
   const vercel = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
   const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const real = req.headers.get("x-real-ip")?.trim();
-  return vercel || forwarded || real || "unknown";
+  return vercel || forwarded || real || null;
 }
 
 /*
@@ -97,11 +143,30 @@ export function bucketForOwner(ownerId: string): string {
   return `o:${ownerId}`;
 }
 
+/**
+ * The shared bucket for a request nothing can attribute.
+ *
+ * One key for all of them, and deliberately so. Where the deployment cannot
+ * believe a forwarded-for header there is nothing else in a `Request` to tell
+ * two anonymous callers apart, and a key made out of an untrusted header
+ * hands a spoofer one allowance per request. Sharing one allowance is the
+ * honest version of not knowing.
+ *
+ * In practice this is the local single-learner deployment (ADR-013), where
+ * there is no sign-in and exactly one person, so one bucket is not a
+ * compromise but the right shape. Any deployment with sign-in configured
+ * charges its learners by owner and never arrives here.
+ */
+const UNATTRIBUTED = "i:unattributed";
+
 export function bucketForRequest(
   req: { headers: { get(name: string): string | null } },
   ownerId?: string | null,
+  env: Record<string, string | undefined> = process.env,
 ): string {
-  return ownerId ? bucketForOwner(ownerId) : `i:${clientIp(req)}`;
+  if (ownerId) return bucketForOwner(ownerId);
+  const ip = clientIp(req, env);
+  return ip ? `i:${ip}` : UNATTRIBUTED;
 }
 
 /**

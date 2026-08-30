@@ -145,7 +145,46 @@ checks that in a browser. (ADR-015.)
 **AI spending is always metered.** `lib/usage` has no off switch and fails closed, because sign-up
 is open by default. Any new path that calls a paid provider goes through `authoriseCall` before the
 call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table — a
-cap that fails open is not a cap.
+cap that fails open is not a cap. This is asserted now rather than asked for: the invariant finds
+every module that opens the provider chain and fails on one that does not mention the ledger,
+because prose had been enough to keep four routes honest and not enough to catch the fifth path.
+That fifth was `lib/tutor/translate.ts`, reachable from the dictionary search box — a word the
+local table and Wiktionary both missed fired a real completion with no burst limit, no daily
+allowance, no global budget check, and no row written afterwards, so the Settings usage meter
+reported nothing spent because from the ledger's view nothing was. The meter lives inside `ask()`
+rather than in its two callers, so the next short helper that wants a sentence from a model
+inherits it by reaching for the function.
+
+**The ledger writes the call down when it authorises it, not when it finishes.** `authoriseCall`
+used to read four aggregates, return a verdict, and leave the row to `recordUsage` — which for a
+streamed answer on a two-minute route lands tens of seconds later. That is check-then-act: ten
+tabs read the same "under the limit" inside the gap and all ten went ahead, and the global budget,
+the one that is supposed to be the hard backstop on the whole deployment's bill, had the widest
+window of the three. So a call is booked at an estimate inside the same transaction that reads the
+counters, under a deployment-wide advisory transaction lock, and the tokens the provider actually
+reports arrive afterwards as a `SETTLEMENT` row carrying the difference, which is negative
+whenever the estimate was generous. Two rows rather than an edit, because `UsageEvent` is
+append-only for the same reason `Review` is. Spend sums every row; the call counts count `CALL`
+only, and getting that backwards would silently halve every allowance in the app. A call that
+never happened hands its authorisation back through `releaseReservation`, or a deployment with a
+rejected key would ration its learners over calls none of them received. `lib/usage/ledger.itest.ts`
+authorises twelve at once, which is the only way to see any of this.
+
+**Every mutation a learner makes is a Server Action, so that is where a throttle belongs.** Five
+Route Handlers called `checkRateLimit` and none of the forty-odd actions did, which is the gate on
+the quiet door again. `lib/security/actionLimits.ts` is the one table of what the per-call
+expensive work is allowed, and the invariant reads that table: an allowance with no action
+applying it fails, and so does an action throttling against anything but the owner it resolved.
+Most actions must **not** have one — grading a card is a single indexed write and a limit there
+would be met by learners and nobody else.
+
+**A bucket key the caller chooses is worse than no bucket key.** `clientIp` read
+`X-Forwarded-For` whatever this app was standing behind. On Vercel that is right, because the
+platform overwrites it; self-hosted behind a proxy that passes it through, it is a value the
+caller picked, and a caller who picks a new one per request gets an unlimited number of
+allowances. So it is read only when `TRUST_PROXY_HEADERS` or `VERCEL` says a proxy is there, and
+every unattributed request otherwise shares one bucket, which is the honest shape for not
+knowing. Signed-in work never touches any of it.
 
 **Nothing in a `"use server"` file may take an owner id from its caller.** Every export there is a
 public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
@@ -185,7 +224,10 @@ students on one school network are one IP and a review session asks for audio on
 card, so per-address counting would refuse a whole classroom in its first few seconds. `/api/tts`
 also joins an identical request already in flight rather than making a second one: the disk cache
 is consulted before the call and written after it, and the gap between those is exactly where a
-class starting the same unit together lands.
+class starting the same unit together lands. What that limiter is *not* is the first line of
+defence for spending: it is per-instance and a burst spread across cold starts meets an empty map
+every time, so the thing that actually bounds cost is the Postgres ledger, which is the same
+number whichever instance answers.
 
 **A policy page states this deployment, or states that nobody filled it in.** Kodukeel is
 software somebody installs, so the controller is whoever runs the copy, and "ask whoever runs
@@ -197,7 +239,18 @@ quietly says nothing looks finished. Both pages are `force-dynamic` for the same
 a notice baked in at build time describes the build machine's environment, which is nobody's.
 The recipients list is generated from the deployment's own configuration (`lib/legal/recipients.ts`)
 rather than described in the abstract, so a reader is told which companies and whether they are
-in Estonia. Estonia sets the age of consent at 13, not 16.
+in Estonia. Estonia sets the age of consent at 13, not 16. A recipient a deployment can switch on
+with one variable is generated like the rest: `ERROR_WEBHOOK_URL` puts an error-reporting endpoint
+on the list, named by host and never by path, because a webhook path is a common place to keep a
+token and that page is public.
+
+**Two sources, two licences, and the page has to say which is which.** Ekilex was credited in four
+places and Wiktionary in none, while Wiktionary supplies the English gloss for most of the
+built-in dictionary and is the second layer of every live lookup. Its terms are the stricter of the
+two: CC BY 4.0 for the Estonian, **CC BY-SA 4.0** for the English, which is share-alike and
+therefore reaches `prisma/data/expanded.json` as a build product of both. Both are credited on
+sign-in, in the landing footer and on /terms, and `LICENSE` says the code is MIT and the data is
+not.
 
 **Erasure and export are promises, and both were being broken.** "Delete everything" emptied
 every table and left the identity in Supabase Auth, where the email address, the Google subject
@@ -208,6 +261,16 @@ stars and badges were all missing, and a level check cannot be recomputed from a
 invariant reads the owner-scoped models out of the schema rather than a list somebody typed, so a
 new table fails until a person decides about it. `UsageEvent` is the one deliberate exclusion and
 /privacy names it.
+
+**And then the check's own skip list became the hole.** Three models had been added to the
+exemption rather than to the query — mock exam sittings, classes and class memberships — so the
+backup stopped at ten tables out of thirteen and the invariant called it complete. A sat paper
+carries the composition the learner wrote, which is the single least reconstructable thing in the
+schema, and it was in no backup and, worse, survived "delete everything" entirely. Exemptions live
+in `lib/legal/exportCoverage.ts` now and each one has to carry a written reason, so appending a
+model name is no longer a way to make the check pass. **Erasure has no exemptions at all**, and
+that is its own invariant plus a DMMF-driven integration test, because the version written from
+the same remembered list agreed with it.
 
 **A source that will not answer is written down as a miss, in the live path too.** The seed
 learned this expensively. `enrichFromEkilex` had the same bug with a symptom nobody looks for:
@@ -265,6 +328,14 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 - Unit tests stay hermetic: no database, no network, no clock you do not control. Anything needing
   Postgres is an `*.itest.ts` under `npm run test:db`. The unit suite gates every commit and must
   stay fast enough that nobody is tempted to skip it.
+- **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
+  Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
+  for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So
+  the two were told apart by a `title` attribute, which is a hover tooltip, in an app measured at
+  360px whose README leads with "works on a phone" — and telling them apart is the entire
+  pedagogical claim of that exercise. `wordNote` in `lib/estonian/dictation.ts` says which in
+  words, reusing `droppedDiacritics` rather than rewriting the loop that knows which letters
+  exist.
 - **No em dash or en dash in anything a person reads**, anywhere in `app/`, `lib/`, `components/`
   or the README. A dash used as a clause break is the loudest single tell that a sentence was
   generated, and every screen here is one person explaining Estonian to another.

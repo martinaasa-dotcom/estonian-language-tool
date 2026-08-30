@@ -144,6 +144,13 @@ async function cacheFirst(request, cacheName) {
 /**
  * The TTS route is a POST, which the Cache API cannot key on, so the request
  * body becomes part of the key. Same phrase, same clip.
+ *
+ * This is where speech is actually cached across page loads, and it is worth
+ * saying so out loud: nothing in the HTTP layer keeps a POST response, so
+ * without this a review session with the network down would be silent. The
+ * Cache API stores what it is told to and pays no attention to the response's
+ * `Cache-Control`, which is why the route sends an honest `no-store` rather
+ * than a year of `immutable` that never applied to anything.
  */
 async function audioWithCache(request) {
   let key;

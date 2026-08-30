@@ -58,6 +58,13 @@ export function ImportPanel() {
   const submit = () => {
     start(async () => {
       const r = await importWords(rows);
+      // Refused for being too fast. Nothing was written, and the text stays in
+      // the box: a paste somebody spent a minute assembling must not be
+      // cleared by a message telling them to try again.
+      if (!r.ok) {
+        setResult(r.error);
+        return;
+      }
       // A paste larger than the limit is handled, not rejected. Silently
       // dropping the tail would leave someone thinking it all went in.
       const overflow = r.truncated

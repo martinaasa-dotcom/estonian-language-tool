@@ -11,7 +11,7 @@ import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
-import { checkDictation, type DictationResult, type WordStatus } from "@/lib/estonian/dictation";
+import { checkDictation, wordNote, type DictationResult, type WordStatus } from "@/lib/estonian/dictation";
 import { xpForRating } from "@/lib/gamification/xp";
 import type { RatingValue } from "@/lib/srs/scheduler";
 
@@ -24,17 +24,27 @@ export interface DictationTask {
   en: string | null;
 }
 
-const WORD_TONE: Record<WordStatus, { background: string; color: string; title: string }> = {
-  right: { background: "var(--good-soft)", color: "var(--good-ink)", title: "Exactly right" },
+/**
+ * The colour each mark carries, and the sentence a screen reader gets.
+ *
+ * `label` is not a tooltip. `diacritics` and `typo` share a hue on purpose —
+ * both are "nearly", and the palette has one colour for that (design system
+ * §1) — which used to mean the two were indistinguishable on screen, since a
+ * `title` attribute was the only thing between them and hover does not exist
+ * on a phone. The visible note now comes from `wordNote`, and this string is
+ * what the chip is announced as.
+ */
+const WORD_TONE: Record<WordStatus, { background: string; color: string; label: string }> = {
+  right: { background: "var(--good-soft)", color: "var(--good-ink)", label: "exactly right" },
   diacritics: {
     background: "var(--hard-soft)",
     color: "var(--hard-ink)",
-    title: "The right word, without its Estonian letters",
+    label: "the right word, without its Estonian letters",
   },
-  typo: { background: "var(--hard-soft)", color: "var(--hard-ink)", title: "One keystroke out" },
-  wrong: { background: "var(--again-soft)", color: "var(--again-ink)", title: "A different word" },
-  missing: { background: "var(--again-soft)", color: "var(--again-ink)", title: "Left out" },
-  extra: { background: "var(--raised)", color: "var(--ink-3)", title: "Not in the sentence" },
+  typo: { background: "var(--hard-soft)", color: "var(--hard-ink)", label: "one keystroke out" },
+  wrong: { background: "var(--again-soft)", color: "var(--again-ink)", label: "a different word" },
+  missing: { background: "var(--again-soft)", color: "var(--again-ink)", label: "left out" },
+  extra: { background: "var(--raised)", color: "var(--ink-3)", label: "not in the sentence" },
 };
 
 /**
@@ -318,10 +328,20 @@ function Marked({ result }: { result: DictationResult }) {
         {result.words.map((word, i) => {
           const tone = WORD_TONE[word.status];
           const shown = word.expected ?? word.typed ?? "";
+          const note = wordNote(word);
           return (
             <span
               key={`${shown}-${i}`}
-              title={tone.title}
+              /*
+                The whole mark in one string, because the chip is three spans
+                of fragments and a screen reader reading them in order says
+                "õues you oues õ, not o", which is not a sentence. `lang="et"`
+                stays on the Estonian span inside so the word itself is still
+                pronounced as Estonian in the visual reading.
+              */
+              aria-label={`${shown}, ${tone.label}${
+                word.typed && word.typed !== shown ? `. You typed ${word.typed}` : ""
+              }`}
               className="flex flex-col items-center rounded-[var(--r-sm)] px-2 py-1"
               style={{ background: tone.background }}
             >
@@ -338,8 +358,23 @@ function Marked({ result }: { result: DictationResult }) {
               {/* What was typed, only where it differs — repeating a correct
                   word underneath itself is noise. */}
               {word.status !== "right" && word.status !== "extra" && (
-                <span className="text-2xs" style={{ color: "var(--ink-3)" }}>
+                <span className="text-2xs" style={{ color: "var(--ink-3)" }} aria-hidden>
                   {word.typed ? `you: ${word.typed}` : "left out"}
+                </span>
+              )}
+              {/*
+                Which kind of nearly it was, on screen rather than in a
+                tooltip. This is the distinction the exercise is built to
+                teach, and it used to be reachable only by hovering a mouse
+                over the word, which no phone can do.
+              */}
+              {note && (
+                <span
+                  className="text-2xs"
+                  style={{ color: "var(--hard-ink)" }}
+                  aria-hidden
+                >
+                  {note}
                 </span>
               )}
             </span>
