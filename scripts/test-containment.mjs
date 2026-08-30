@@ -60,6 +60,7 @@
  */
 import { eventually, launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ensureLetterBar } from "./lib/prefs.mjs";
 
 const B = baseUrl();
 
@@ -201,6 +202,24 @@ const SPARSE = new Map([
 const { check, absent, done } = suite("Containment", { floor: 1020 });
 
 const browser = await launchChromium();
+
+/*
+  THE ESTONIAN LETTER BAR IS ON BEFORE ANY OF THIS IS MEASURED.
+
+  It is a stored preference, so it is shared state between suites, and a
+  database where an earlier suite answered "I have them already" draws no bar
+  at all. For a suite that types Estonian that shows up as a timeout naming a
+  button. For this one it is quieter and worse: the row simply is not there,
+  every check about it passes because there is nothing to check, and the
+  screens that hold it are measured with less on them than a learner sees.
+
+  That row is not an incidental thing to lose, either. It is six buttons wide
+  under every Estonian field, and its own minimum width was once a single
+  pixel more than a 390px phone has inside an exam card, which put 23px of the
+  paper off the side of the screen. Losing it silently would lose the widest
+  row this suite has to contain.
+*/
+await ensureLetterBar(browser, B, "on");
 
 /**
  * The three screens that cannot be visited until something has made them.
