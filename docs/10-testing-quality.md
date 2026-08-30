@@ -9,18 +9,18 @@ Effort is not spread evenly. It goes where a bug is both likely and expensive:
 
 | Area | Priority | Why |
 |---|---|---|
-| `lib/estonian/` | **Highest — 100% coverage** | Wrong morphology is silently taught and then rehearsed by the SRS |
+| `lib/estonian/` | **Highest: 100% coverage** | Wrong morphology is silently taught and then rehearsed by the SRS |
 | FSRS scheduling | **High** | A scheduling bug corrupts months of review history |
 | Ekilex mapper | **High** | The single boundary to an external contract we do not control |
 | Import parsers | Medium | Bad input is the normal case, not the exception |
 | API routes | Medium | Secret handling, error paths |
-| UI components | Low–medium | Covered mostly by E2E |
+| UI components | Low to medium | Covered mostly by E2E |
 | Layout, styling | None | Reviewed visually |
 
 ## 2. Unit tests (Vitest)
 
-`lib/estonian/` is pure functions over plain data with no React, Next.js or database dependency —
-deliberately, so it can be tested exhaustively and fast.
+`lib/estonian/` is pure functions over plain data with no React, Next.js or database dependency, and
+deliberately so, which is what lets it be tested exhaustively and fast.
 
 ```ts
 describe("derived cases", () => {
@@ -63,7 +63,7 @@ it("extracts all five noun principal parts from the Ekilex response", () => {
 });
 ```
 
-A separate `test:live` suite hits the real API. It is **not in CI** — it runs on demand and is the
+A separate `test:live` suite hits the real API. It is **not in CI**. It runs on demand and is the
 early-warning system for upstream drift. When it fails, one file changes.
 
 ## 4. E2E tests (Playwright)
@@ -106,7 +106,7 @@ The review log is the irreplaceable asset:
   way to test a restore is to delete everything first. `scripts/test-restore.mjs` therefore refuses
   to run unless `DATABASE_URL` looks local (`--force` overrides, deliberately awkwardly), and writes
   the export to `.backups/` *before* deleting anything. A crash between the delete and the restore
-  — a dev server hiccup is enough, and has happened — then leaves a file that Settings → Restore
+  (a dev server hiccup is enough, and has happened) leaves a file that Settings → Restore
   takes as it stands, instead of an empty review log.
 
 ## 7. CI pipeline

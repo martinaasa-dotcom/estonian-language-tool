@@ -27,7 +27,8 @@ import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
-import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS } from "../lib/tutor/prompt";
+import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
+import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
 // @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
 import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
@@ -1191,6 +1192,106 @@ check("an empty cell goes through NO_VALUE, never a literal", () => {
     }
   }
   assert.deepEqual(offenders, [], "a placeholder is typed in rather than read from NO_VALUE");
+});
+
+check("the voice is one table, and everything that speaks reads from it", () => {
+  /*
+    THE RULE THAT KEEPS THE COPY SOUNDING LIKE A PERSON, AND THE WAY IT ROTS.
+
+    Three files stated it and no two of them agreed. `humanize.ts` held seven
+    stock openers it stripped out of Anu's stream; `prompt.ts` asked the model
+    for roughly the same thing in a sentence of its own; `readerCopy.test.ts`
+    swept hand-written copy for nine brochure words across six hand-listed
+    public files. So "delve" was banned in Anu's answer and fine in the panel
+    beside it, the 73-unit course page and every empty state were outside the
+    sweep entirely, and nobody reading any one of those files could see any of
+    that. The same fault `PROVIDER_KEY_ENV` was consolidated for.
+
+    `lib/copy/voice.ts` is the table. This asserts the shape rather than the
+    contents: the table exports what its readers import, the stream and the
+    prompt both read it rather than carrying a copy, and the sweep runs over
+    the whole file set rather than a list somebody typed.
+  */
+  const table = "lib/copy/voice.ts";
+  assert.ok(TELLS.length > 20, `${table} has been emptied out`);
+  assert.ok(VOICE_RULES.length >= 5, `${table} no longer states the voice`);
+
+  const humanize = code("lib/tutor/humanize.ts");
+  assert.match(humanize, /from "@\/lib\/copy\/voice"/, "the stream stopped reading the voice table");
+  assert.doesNotMatch(
+    humanize,
+    /(important to note|at the end of the day|great question)/i,
+    "the stream has grown its own copy of the opener list again",
+  );
+
+  /*
+    The prompt has to carry the rules, not merely import them. A file that
+    imports a constant and never interpolates it type-checks perfectly and
+    asks the model for nothing, which is the failure worth catching here.
+  */
+  const prompt = buildSystemPrompt("A2");
+  for (const rule of VOICE_RULES) {
+    assert.ok(prompt.includes(rule), `Anu is not given the rule: ${rule.slice(0, 48)}`);
+  }
+  assert.doesNotMatch(
+    code("lib/tutor/prompt.ts"),
+    /Never use an em dash/,
+    "the prompt has gone back to typing the voice rules out beside the table",
+  );
+
+  /*
+    And the sweep still sweeps everything. Narrowing it back to a hand-listed
+    set of public files is exactly how it spent its first life, and a list is
+    what a rule decays into: it covers the screens somebody was looking at on
+    the day they wrote it and nothing added since.
+  */
+  const sweep = read("lib/copy/readerCopy.test.ts");
+  assert.match(sweep, /FILES[\s\S]{0,300}findTells/, "hand-written copy is no longer swept for tells");
+  assert.match(sweep, /FILES[\s\S]{0,300}EMOJI/, "the emoji rule no longer runs over the tree");
+
+  /*
+    And it still reaches the documentation. `docs/` was outside this rule until
+    somebody counted: 388 dashes, plus three empty table cells written as a bare
+    dash, which is the `NO_VALUE` fault from the source tree wearing a different
+    hat. The pages a contributor reads first are the ones that teach them which
+    of a project's rules are real, so the shape asserted is that the markdown
+    set is built by walking `docs/` rather than by listing what somebody
+    remembered.
+  */
+  assert.match(sweep, /sourceFiles\("docs"/, "the documentation sweep no longer walks docs/");
+  assert.match(sweep, /MARKDOWN[\s\S]{0,300}findTells/, "the docs are no longer swept for tells");
+
+  /*
+    The half a machine cannot hold has to be written down somewhere a person
+    will find it, or the enforceable half becomes the whole rule and the copy
+    gets cold while passing every check.
+  */
+  assert.ok(existsSync("docs/18-voice.md"), "the voice standard has no written half");
+  assert.match(read("CLAUDE.md"), /18-voice\.md/, "CLAUDE.md does not point at the voice standard");
+});
+
+check("the app does not talk about itself the way a brochure would", () => {
+  /*
+    The behavioural end of the same rule, asserted against what a stranger
+    actually meets first rather than against the source tree the unit sweep
+    walks. `readerCopy.test.ts` is the sweep; this is the check that the sweep
+    is pointed at the right thing, since a table with no reader passes every
+    test in it.
+  */
+  const publicSurfaces = [
+    "app/(chromeless)/welcome/page.tsx",
+    "app/(chromeless)/sign-in/page.tsx",
+    "app/(chromeless)/start/WelcomeWizard.tsx",
+    "README.md",
+  ];
+  const offenders: string[] = [];
+  for (const file of publicSurfaces) {
+    assert.ok(existsSync(file), `${file} is gone, so this check is pointed at nothing`);
+    for (const [i, line] of read(file).split("\n").entries()) {
+      for (const tell of findTells(line)) offenders.push(`${file}:${i + 1}: ${tell.name}`);
+    }
+  }
+  assert.deepEqual(offenders, [], "the first thing a stranger reads is written in brochure");
 });
 
 // ── The browser suites, and the two ways one can lie ─────────────────────────

@@ -4,7 +4,7 @@ Prisma schema. v4.0 specified none (audit C3), which is why its `+ Add to Deck` 
 defined destination. Written to be Postgres-portable per ADR-002: no SQLite-specific types, string
 UUID primary keys, UTC timestamps.
 
-`Lexeme` is the hub. Tasks, cards, tutor messages and imports all reference it — the structural
+`Lexeme` is the hub. Tasks, cards, tutor messages and imports all reference it, which is the structural
 expression of "the word is the unit" (`01-product-spec.md` §2) and the fix for audit gap D4.
 
 ```prisma
@@ -283,7 +283,7 @@ enum TaskTag    { GRAMMAR HOMEWORK VOCABULARY SPEAKLY_GOAL LISTENING CUSTOM }
 
 ## Notes on three deliberate choices
 
-**Derived forms are not stored.** Only principal parts live in `Form` — five per lexeme, drawn
+**Derived forms are not stored.** Only principal parts live in `Form`, five per lexeme, drawn
 from the ten `FormType` values (five noun, five verb). The ten derived cases
 are computed at render time from the genitive stem. Storing them would create a second source of
 truth that goes stale the moment a stem is corrected.

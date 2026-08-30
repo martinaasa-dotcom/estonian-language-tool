@@ -26,8 +26,8 @@ Nothing is prefixed `NEXT_PUBLIC_` except genuinely public configuration. This i
 just documented: CI greps the production build output for key patterns and fails the build on a hit
 (`10-testing-quality.md` §5).
 
-v4.0 does not mention this. The default naive implementation — calling Anthropic from a client
-component — publishes the key to anyone who opens devtools. That is audit finding C1.
+v4.0 does not mention this. The default naive implementation (calling Anthropic from a client
+component) publishes the key to anyone who opens devtools. That is audit finding C1.
 
 ```
 Browser  ──►  Next.js Route Handler / Server Action  ──►  Anthropic API
@@ -94,48 +94,48 @@ Every integration has a defined degraded mode. Nothing renders a blank tab.
 | TartuNLP TTS | 5xx / timeout | Serve cached audio; else fall back to Web Speech; else hide the play button (never a dead button) |
 | Anthropic | 429 / 5xx / budget cap | Typed error surfaced in chat with a retry; rest of the app unaffected |
 | iCal feed | unreachable / malformed | Per-feed error row; other feeds and all local events unaffected |
-| Network entirely | — | Today, Tasks, Flashcards and cached Dictionary all function; review scheduling is local |
+| Network entirely | n/a | Today, Tasks, Flashcards and cached Dictionary all function; review scheduling is local |
 
 Flashcard review must work fully offline. It is the daily-use path and it depends on nothing but the
 local database.
 
 ## 6. Architecture decision records
 
-**ADR-001 — Native dictionary UI instead of an iframe.**
-*Context:* v4.0 Feature 3 embeds Sõnaveeb. *Finding:* `X-Frame-Options: DENY`, verified — the frame
+**ADR-001: Native dictionary UI instead of an iframe.**
+*Context:* v4.0 Feature 3 embeds Sõnaveeb. *Finding:* `X-Frame-Options: DENY`, verified, and the frame
 cannot render. *Decision:* consume the Ekilex REST API server-side and build our own UI.
 *Consequences:* more work; we own the layout; **structured data instead of pixels**, which is what
 makes `+ Add to Deck`, offline cache and the derived case table possible at all. The blocker turned
 out to be a favour.
 
-**ADR-002 — SQLite + Prisma for v1; schema kept Postgres-portable.**
+**ADR-002: SQLite + Prisma for v1; schema kept Postgres-portable.**
 *Context:* v4.0 said "Supabase (PostgreSQL) **or** SQLite via Prisma" and never chose (audit C4).
 *Decision:* SQLite. One user, one machine, no network dependency for the daily path, no auth, no
 monthly bill, and the review loop works on a train. *Portability:* no SQLite-specific column types,
 no raw SQL; UUID string ids; timestamps in UTC. Moving to Postgres/Supabase later is a datasource
-swap plus a data migration, spec'd in Phase 5. *Rejected:* Supabase now — it buys sync and auth,
+swap plus a data migration, spec'd in Phase 5. *Rejected:* Supabase now, which buys sync and auth,
 neither of which a single-user local tool needs yet, at the cost of network dependency on the path
 that must never fail.
 
-**ADR-003 — FSRS instead of SM-2/Leitner.**
+**ADR-003: FSRS instead of SM-2/Leitner.**
 *Context:* v4.0 says "Leitner / SM-2", two different algorithms, undecided (audit D6). *Decision:*
 FSRS via `ts-fsrs`. *Rationale:* fewer reviews for the same retention, a tunable target retention,
 actively maintained, MIT. *Consequences:* store FSRS state per card (stability, difficulty, state,
 lapses) rather than an SM-2 ease factor; a review log enables later parameter optimisation.
 
-**ADR-004 — Provider-agnostic tutor (SUPERSEDED the original `claude-opus-5` pin — see `13-mvp-status.md` §2).**
+**ADR-004: Provider-agnostic tutor (SUPERSEDED the original `claude-opus-5` pin, see `13-mvp-status.md` §2).**
 *Context:* v4.0 pins `claude-3-5-sonnet`, which is not a current model identifier (audit C2).
 *Decision:* `claude-opus-5`; `thinking: { type: "adaptive" }`; stream every response; a
 `cache_control` breakpoint on the static Estonian system prompt. *Consequences:* grammar explanations
-are worth the top model — a wrong case explanation is actively harmful to a learner — and caching
+are worth the top model (a wrong case explanation is actively harmful to a learner) and caching
 means the multi-thousand-token grammar prompt is paid for once per session rather than per turn.
 Details and cost model in `06-anu-tutor.md`.
 
-**ADR-005 — Retrieve morphology, never generate it. (AMENDED, twice, below.)**
+**ADR-005: Retrieve morphology, never generate it. (AMENDED, twice, below.)**
 *Context:* an LLM will happily produce a plausible, wrong partitive plural. *Decision:* authoritative
 forms come from Ekilex only; AI output is tagged `provenance: AI` and requires explicit confirmation
 before entering a card's answer field. *Consequences:* the dictionary is bounded by Ekilex coverage;
-that is the correct trade — an unverified form in a flashcard gets *memorised wrong*, which is worse
+that is the correct trade. An unverified form in a flashcard gets *memorised wrong*, which is worse
 than a gap.
 
 *Amendment 1: what "generate" means, and who is allowed to do it.* The decision clause says forms
@@ -172,15 +172,15 @@ most, and the compensating control is the UI rather than the check: every claim 
 form is boxed and tagged, and a word only becomes a card through a confirmation step. If that trade
 is ever revisited, the thing to change is the reply's shape, not the extractor's threshold.
 
-**ADR-006 — Generic importer instead of a Speakly integration.**
+**ADR-006: Generic importer instead of a Speakly integration.**
 *Context:* Speakly has no public API and no verifiable export (audit A3). *Decision:* one
 paste-and-parse importer handling TSV/CSV/JSON/dash-separated lines, with Ekilex enrichment.
 *Consequences:* works with Speakly, Quizlet, a class handout or a photo transcription; depends on no
 third party's continued goodwill; no terms-of-service exposure.
 
-**ADR-009 — Store retrieved paradigms; derive only what we cannot retrieve.**
+**ADR-009: Store retrieved paradigms; derive only what we cannot retrieve.**
 *Context:* the original plan stored five principal parts and derived the rest, to avoid a second
-source of truth. With an Ekilex key we can retrieve the entire paradigm authoritatively — 30–37
+source of truth. With an Ekilex key we can retrieve the entire paradigm authoritatively, 30-37
 forms including irregular plurals and the parallel forms Estonian genuinely has (`raamatutes` /
 `raamatuis`), which derivation cannot produce. *Decision:* store the full retrieved paradigm and
 render it directly; derive only for words held as principal parts alone (user-added, or seeded and
@@ -188,27 +188,27 @@ not yet enriched). *Consequences:* `Form` gains `isPrincipal`, `morphCode` and `
 uniqueness key includes the value so parallel forms coexist. The no-stale-duplication rule is intact:
 retrieved data is the authority, not a copy of a computation.
 
-**ADR-010 — English comes from a layered resolver, not one source.**
+**ADR-010: English comes from a layered resolver, not one source.**
 *Context:* Ekilex is authoritative for Estonian but carries no English on a reader key; its `ing`
-dataset is not public. *Decision:* resolve a translation in order — a translation the learner has
+dataset is not public. *Decision:* resolve a translation in order: a translation the learner has
 already accepted, then Wiktionary, then the AI tutor, then an honest blank inviting her to type one.
 Each layer records where it came from. *Consequences:* coverage is near-complete without any layer
 pretending to an authority it does not have, and the learner can always overwrite.
 
-**ADR-007 — Today is the default route, not Tasks.**
+**ADR-007: Today is the default route, not Tasks.**
 *Context:* v4.0 specifies a sidebar of six tabs and no landing view (audit D2). *Problem:* a tab bar
 makes the user decide what to study before they have done anything, which is the single most likely
 way a daily-use tool stops being used (risk R10). *Decision:* a Today view is the default route: due
 cards, due tasks, next class, one button to start. *Consequences:* Today depends on Tasks (Phase 1)
-and Flashcards (Phase 3), so it ships incrementally rather than all at once — acceptable, because a
+and Flashcards (Phase 3), so it ships incrementally rather than all at once, which is acceptable, because a
 partial Today still answers the question better than a tab bar does.
 
-**ADR-011 — Hosted on Vercel + Supabase (SUPERSEDES ADR-002's "local only" for v1).**
+**ADR-011: Hosted on Vercel + Supabase (SUPERSEDES ADR-002's "local only" for v1).**
 *Context:* ADR-002 chose SQLite explicitly to avoid a network dependency on the review path and to
 avoid a monthly bill, for a single user on a single machine. That premise changed: the app is now
 meant to be reachable as a real website, not just run locally. *Decision:* deploy to Vercel; move the
 datasource from SQLite to Postgres (Supabase), per ADR-002's own portability guarantee (no
-SQLite-specific types, UUID string ids, timestamps in UTC) — this was a datasource swap, not a
+SQLite-specific types, UUID string ids, timestamps in UTC). This was a datasource swap, not a
 data-model change. *Both* connection URLs point at Supabase's shared poolers, never at the direct
 `db.<project-ref>.supabase.co` host: that host resolves to IPv6 only, and Vercel's build and
 runtime have no IPv6 route to it, so it fails every deploy with `P1001: Can't reach database
@@ -216,59 +216,59 @@ server`. This was verified against a real deploy, not assumed. `DATABASE_URL` is
 pooler (6543, `?pgbouncer=true`, required or Prisma's prepared statements break); `DIRECT_URL` is
 the *session* pooler (5432), which is a full Postgres session and so can run the schema changes
 the transaction pooler cannot. *Consequences:* "Review must work offline" (`03-architecture.md` §5) stopped being
-literally true — a hosted app needs a network path to its database. ADR-015 restores it by queuing
+literally true. A hosted app needs a network path to its database. ADR-015 restores it by queuing
 grades on the device and replaying them, rather than by pretending the network is there; ADR-013
 keeps a no-account local install working for anyone running it on their own machine. The TTS disk cache (`app/api/tts/route.ts`) now writes to `/tmp` when `VERCEL` is set, since
 Vercel's filesystem is read-only outside it; this makes it a per-instance cache rather than the
-permanent one ADR intended locally — acceptable, since TartuNLP is still hit far less than once per
-request. *Rejected:* keeping SQLite on a host with a persistent volume (Fly.io/Railway) — Vercel was
+permanent one ADR intended locally, which is acceptable since TartuNLP is still hit far less than once per
+request. *Rejected:* keeping SQLite on a host with a persistent volume (Fly.io/Railway). Vercel was
 the account already in hand.
 
-**ADR-012 — Supabase Auth (Google) for multi-user; dictionary stays shared, decks are per-user.**
+**ADR-012: Supabase Auth (Google) for multi-user; dictionary stays shared, decks are per-user.**
 *Context:* ADR-011 made the app reachable as a real website; the next question was whether "shared
 wider" means several trusted people behind one login, or independent learners with their own
 progress. *Decision:* independent learners. Sign-in is Supabase Auth with the Google provider
 (`@supabase/ssr`), gated by `middleware.ts` on every route except `/sign-in` and `/auth/callback`.
 Ownership splits along the same line ADR-009's data model already drew: `Lexeme`/`Form` are the
-dictionary — shared reference data, exactly like a printed dictionary is shared — while `Card`,
+dictionary (shared reference data, exactly like a printed dictionary is shared) while `Card`,
 `Task`, `Message` and the new `StarredWord` join table carry an `ownerId` (a Supabase `auth.users`
 id) and are filtered by it in every query. Prisma connects with full privileges and bypasses
 Postgres RLS, so this scoping is enforced in application code (`lib/auth/session.ts`'s
-`requireUserId()`), not in the database — consistent with this codebase's existing
+`requireUserId()`), not in the database, consistent with this codebase's existing
 Prisma-everywhere convention, at the cost of needing every query site to remember the filter.
 *Consequences:* `toggleStar` moved off a `Lexeme.starred` boolean (which had no owner) onto
 `StarredWord`; `restoreBackup`'s `replace` mode now deletes only the restoring user's own cards,
 reviews and tasks, never the shared dictionary; `importWords` reuses an existing shared lexeme
 instead of skipping it, since "already exists" no longer means "already yours". *Rejected:*
-Auth.js/NextAuth — Supabase Auth pairs with the Postgres project already in hand and needs no
+Auth.js/NextAuth. Supabase Auth pairs with the Postgres project already in hand and needs no
 separate provider setup beyond Google's own OAuth client.
 
-**ADR-008 — Five noun and five verb principal parts, not three cases and two infinitives.**
+**ADR-008: Five noun and five verb principal parts, not three cases and two infinitives.**
 *Context:* v4.0 stores nominative/genitive/partitive and the ma-/da-infinitives (audit B2, B4).
 *Problem:* partitive plural and the short illative cannot be derived, and the present 1sg is in the
-weak grade and unguessable from the infinitive — a three-form model silently teaches an incomplete
+weak grade and unguessable from the infinitive. A three-form model silently teaches an incomplete
 paradigm. *Decision:* store five principal parts per part of speech; `ILL_SG_SHORT` is nullable
 because it genuinely does not exist for every noun. *Consequences:* the Ekilex mapper must find ten
 `FormType`s rather than five, which is what the Phase 0 spike verifies before any UI is built on the
 assumption.
 
-**ADR-013 — Sign-in is optional: no Supabase keys means single-learner local mode.**
+**ADR-013: Sign-in is optional: no Supabase keys means single-learner local mode.**
 *Context:* ADR-012 gated every route behind Google sign-in, which is right for a hosted class but is
-a wall in front of the first flashcard for anyone who clones the repo — a student on their own
+a wall in front of the first flashcard for anyone who clones the repo: a student on their own
 laptop, or a teacher trying it before a lesson. *Decision:* `lib/auth/mode.ts` decides from the
 environment alone. With `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` present,
 nothing changes: the middleware gates every route and `requireUserId()` reads the session. With
 both absent, the middleware steps aside and every row is owned by one fixed local id. *Consequences:*
 `npm run setup && npm run dev` is a complete installation again, and the browser tests can drive the
 whole app without an OAuth round trip. The fallback is keyed on the *absence* of configuration, so a
-deployment that has the keys can never be talked into the open mode — it is a deployment shape, not
-an auth bypass. *Rejected:* a `DISABLE_AUTH` flag — a flag can be set on a hosted deployment by
+deployment that has the keys can never be talked into the open mode. It is a deployment shape, not
+an auth bypass. *Rejected:* a `DISABLE_AUTH` flag. A flag can be set on a hosted deployment by
 mistake, and a mistake there is everyone's data.
 
-**ADR-014 — Progress is derived from the review log, never stored.**
+**ADR-014: Progress is derived from the review log, never stored.**
 *Context:* XP, levels, daily quests and every chart on `/progress` are the kind of thing normally
 kept in counter columns. *Problem:* a counter is a second source of truth for something the append
--only `Review` table already knows, and the two drift — a failed write, a restored backup, a replayed
+-only `Review` table already knows, and the two drift: a failed write, a restored backup, a replayed
 offline batch, and the number on screen no longer describes anything that happened. *Decision:* XP is
 a pure function of the rating tally (`lib/gamification/xp.ts`); quests, streaks, heatmaps, forecasts
 and case accuracy are all recomputed per request from `Review` rows and card state
@@ -279,60 +279,60 @@ aggregate queries per page, which is why Today and the achievement check share o
 than each loading their own. The only progress-shaped values that *are* stored are the ones no log
 can reconstruct: a personal best, and the streak-shield days already spent.
 
-**ADR-015 — Offline grades queue in the page, not in the service worker.**
+**ADR-015: Offline grades queue in the page, not in the service worker.**
 *Context:* "Review must work offline" is a standing rule, and ADR-011 quietly broke it by putting the
 database behind the network. *Decision:* the service worker (`public/sw.js`) only keeps the app
-*openable* — cache-first for hashed build output, network-first for navigations with an offline
+*openable*: cache-first for hashed build output, network-first for navigations with an offline
 fallback, and it never touches a non-GET request. Grades are queued by the page instead
 (`lib/offline/queue.ts`): one synchronous localStorage write per answer, stamped with the moment it
 was answered, replayed through the ordinary `gradeCard` path when the connection returns.
 *Consequences:* an offline evening lands in the log with its real timestamps, so the streak, heatmap
 and daily goal describe the day that actually happened; a tab closed mid-session loses nothing; and
-the parts that are genuinely hard — auth, ordering, a card deleted on another device — stay in server
+the parts that are genuinely hard (auth, ordering, a card deleted on another device) stay in server
 code that can be read and tested. *Rejected:* Background Sync in the worker (replaying an
 authenticated Server Action from a worker means reimplementing the session, for a browser API Safari
 still does not have) and IndexedDB (asynchronous writes can be lost by a closing tab; the payload is
 tiny).
 
-**ADR-016 — Games write to the same review log as review does.**
+**ADR-016: Games write to the same review log as review does.**
 *Context:* Case Sprint, Listening and Match are there to make practice enjoyable, which invites the
 usual arrangement where a game keeps its own score and touches nothing real. *Problem:* a mode whose
 results evaporate is a mode nobody plays twice, and worse, it splits "what I studied" from "what the
 scheduler knows". *Decision:* every mode grades through `gradeCard`, so FSRS sees the same evidence
 from a match round as from a review. Match rates a pair found first time as Good and one that took a
-wrong guess as Hard — recognising a word among seven others under time pressure is genuine recall,
+wrong guess as Hard. Recognising a word among seven others under time pressure is genuine recall,
 and pretending otherwise would be as dishonest as pretending it is a full production test.
 *Consequences:* games count towards the daily goal and the quests, which is the point; an abandoned
 round writes nothing, because nothing was answered.
 
-**ADR-017 — Example sentences come from Ekilex usages; exercises rearrange them, never write them.**
+**ADR-017: Example sentences come from Ekilex usages; exercises rearrange them, never write them.**
 *Context:* `13-mvp-status.md` §4 shelved cloze and sentence work because "the dictionary does not
 carry example sentences for every word", and generating them was never an option (ADR-005).
-*Discovery:* Ekilex's `/word/details` response carries `usages` — attested sentences recorded by
+*Discovery:* Ekilex's `/word/details` response carries `usages`, attested sentences recorded by
 lexicographers against each meaning ("Jõin tassi kohvi.", "Kitsed olid ojal joomas."), flagged
 `public` for what may be shown. *Decision:* store them on `Lexeme.examples` (the JSON column the
-schema already had), and build every sentence exercise by *hiding* or *reordering* that text —
+schema already had), and build every sentence exercise by *hiding* or *reordering* that text:
 `lib/estonian/cloze.ts` blanks a form we already hold out of a sentence, and the sentence builder
 shuffles its words. English translations are fetched per sentence from the tutor, which is
 translation *into* English and therefore inside what ADR-005 permits; they are stored tagged `AI`.
-*Consequences:* the app can finally teach a word in context — the single biggest gap a vocabulary
-tool has — while every Estonian character on screen is still either attested or the learner's own.
+*Consequences:* the app can finally teach a word in context (the single biggest gap a vocabulary
+tool has) while every Estonian character on screen is still either attested or the learner's own.
 Words already in a deck get their gap-fill cards backfilled when their entry is next opened
 (`lib/srs/backfill.ts`), because the sentences arrive after the cards do. *Rejected:* writing a
-corpus of our own example sentences, and asking the model for them — both reintroduce exactly the
+corpus of our own example sentences, and asking the model for them. Both reintroduce exactly the
 failure ADR-005 exists to prevent, one of them with a straight face.
 
-**ADR-018 — Speaking practice compares; it does not score.**
+**ADR-018: Speaking practice compares; it does not score.**
 *Context:* Speakly and Duolingo both grade pronunciation, and it is the obvious next mode.
 *Problem:* scoring needs speech recognition for Estonian. TartuNLP publish the text-to-speech
 service this app already uses and nothing comparable in the other direction; the browser's own
 `SpeechRecognition` has no dependable `et-EE`. A score invented on top of that would be believed.
-*Decision:* `/review/speaking` is shadowing — say it, then play a native rendering and your own
+*Decision:* `/review/speaking` is shadowing: say it, then play a native rendering and your own
 recording back to back and judge for yourself. The audio is a blob URL that never leaves the
-browser. The card is graded by the learner on the same 1–4 scale as any flip, because the prompt is
+browser. The card is graded by the learner on the same 1-4 scale as any flip, because the prompt is
 a meaning and the answer is Estonian, which is a production test whatever the microphone does.
 *Consequences:* the app has a speaking mode without a lie in it. If a verified Estonian recogniser
-appears, this is where it plugs in. *Rejected:* comparing waveforms or durations locally — it
+appears, this is where it plugs in. *Rejected:* comparing waveforms or durations locally, which
 measures the wrong thing and dresses it as a score.
 
 *Re-tested 2026-08-29, and the decision survived on measurement rather than on the old assumption.*
@@ -381,10 +381,10 @@ fifteenfold improvement. It now names how many sentences were actually measured 
 a verdict below two thirds of them, on the same reasoning as the browser suites' counting harness:
 a measurement that silently shrinks its own sample is worse than no measurement.
 
-**ADR-019 — A class is a view over what learners already own.**
+**ADR-019: A class is a view over what learners already own.**
 *Context:* the app is used in real Estonian courses, where the teacher's actual question is "who is
 keeping up" and the students' is "where is this week's homework". *Decision:* `Classroom` +
-`ClassroomMember` hold a name, a join code and a membership — nothing else. Every figure a teacher
+`ClassroomMember` hold a name, a join code and a membership, and nothing else. Every figure a teacher
 sees is computed from the learner's own rows at request time (`lib/classroom/roster.ts`); no cards,
 reviews or tasks are copied into a class, and leaving deletes one membership row and nothing more.
 Assigning a unit writes a `Task` into each member's own list rather than inventing a parallel
@@ -392,7 +392,7 @@ assignments system. *What a teacher may see is deliberately bounded:* reviews th
 words known, how long since the last review, and the cases the class is weakest at **in aggregate**.
 Never an individual's searches, deck contents or answer-by-answer mistakes. *Consequences:* the
 privacy promise is enforceable by reading one file, joining is the only consent needed and it is
-revocable, and the feature adds no new failure mode to the daily loop — with no class, nothing about
+revocable, and the feature adds no new failure mode to the daily loop: with no class, nothing about
 the app changes. *Rejected:* a teacher-owned deck pushed to students (it makes the teacher the owner
 of everyone's scheduling, which is exactly what FSRS must not have) and per-student answer logs (a
 study tool that becomes surveillance stops being used honestly).
@@ -408,7 +408,7 @@ name, a streak and a word count is not meaningfully better protected by withhold
 actionable fact alongside them. The join screen states this before joining, and leaving still deletes
 one membership row and nothing more.
 
-**ADR-020 — The placement check is assembled from the dictionary, marked without a model, and
+**ADR-020: The placement check is assembled from the dictionary, marked without a model, and
 reports a level it refuses to certify.**
 *Context:* onboarding asked a stranger to self-rate as A1 to B2 and used the answer to pick their
 first units. That is the one question a beginner is least able to answer, and every downstream
@@ -419,9 +419,9 @@ identification, verb government and, where a translated sentence exists, compreh
 is the same material with nothing written down, plus dictation; writing is a sentence that has to
 contain a named case of a named word; speaking is shadowing. Questions climb the bands in order and
 a skill stops as soon as a whole band comes in under half, so the paper is about ten minutes rather
-than forty. *Three rules make the result trustworthy.* **No Estonian is written for it** — every
+than forty. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
 form is retrieved, stored or derived from the genitive stem by the app's own derivation, and every
-question says which (ADR-005, ADR-017). **No model marks anything** — a choice against a stored
+question says which (ADR-005, ADR-017). **No model marks anything**: a choice against a stored
 index, a dictation against the recorded sentence, a written sentence against a form the dictionary
 vouches for, which is the same ordering `/review/write` already uses. **Speaking is never scored**
 (ADR-018): it collects the learner's own rating, reports it as theirs, and is excluded from the
@@ -429,7 +429,7 @@ level entirely, which `scripts/test-invariants.ts` asserts. *The level itself fo
 measured skill*, because a CEFR level is a claim about everything a person can do at it; the
 strongest is reported beside it so the flattering half is not lost. *Consequences:* the result is
 `Assessment`, the second table after `Review` that is written once and never edited, and the third
-exception to "progress is derived" (ADR-014) after a personal best and a shield date — a
+exception to "progress is derived" (ADR-014) after a personal best and a shield date, because a
 measurement of answers that were never cards cannot be recomputed from the review log. The questions
 are drawn from words the learner does **not** have in their deck wherever there are enough of them,
 so the check measures their Estonian rather than their revision. *Rejected:* marking with a model
@@ -438,9 +438,9 @@ this app has), a single number rather than a profile (it hides which skill is be
 one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest
 recogniser did not change because a test wanted one).
 
-**ADR-021 — A photograph is read by a model; whether it is *believed* is decided by the dictionary.**
-*Context:* half of an Estonian course is on paper — a handout, a textbook page, a list copied off a
-whiteboard — and typing it back in is the step where a learner stops. Reading it needs optical
+**ADR-021: A photograph is read by a model; whether it is *believed* is decided by the dictionary.**
+*Context:* half of an Estonian course is on paper (a handout, a textbook page, a list copied off a
+whiteboard) and typing it back in is the step where a learner stops. Reading it needs optical
 character recognition, and the only recogniser available here is a model, which is the one thing
 ADR-005 says may never supply an Estonian form. *Decision:* separate the two claims. The model
 transcribes and nothing more (`lib/scan/extract.ts`, pure, no database, no network); every string it
@@ -449,7 +449,7 @@ lemma, a diacritic-folded lemma, a stored form or a regular case built on a geni
 rejects everything below that. A word the dictionary vouches for becomes cards from its own
 principal parts and paradigm, so nothing the model wrote survives into the card. A word it does not
 recognise is shown as exactly that, editable beside the paper, and reaches the deck only once a
-person has ticked it — the same standard the paste importer has always met, since there too a human
+person has ticked it, the same standard the paste importer has always met, since there too a human
 vouched for the list. *The picture is never stored:* it is decoded in a Route Handler, sent once, and
 dropped, exactly as the cloze exercise treats a pasted passage. A photograph of homework has a name
 at the top of it. *Consequences:* a homework page full of inflected forms resolves to headwords and
@@ -463,7 +463,7 @@ the image to re-read later (it buys a retry and costs the one promise worth maki
 homework).
 
 
-**ADR-022 — The mock examination is assembled from the dictionary, marked mechanically, and says
+**ADR-022: The mock examination is assembled from the dictionary, marked mechanically, and says
 where it stops imitating.**
 *Context:* the reason most people learn Estonian in the first place is a paper: A2, B1, B2 or C1,
 sat at the Education and Youth Board, sixty percent to pass, and a zero in any one of the four parts
@@ -495,7 +495,7 @@ most); scoring an unset part as zero (it fails a candidate for a gap in the dict
 one clause that is supposed to mean "you did not attempt this"); and letting the client send its own
 marks (a result anybody can type is not a measurement).
 
-**ADR-023 — A grammar point is named the way a class names it, and the Latin name is the
+**ADR-023: A grammar point is named the way a class names it, and the Latin name is the
 cross-reference.**
 *Context:* the reference layer, the dictionary, the flashcards, the placement check and the mock
 exam all name cases and verb forms, and every one of them held the Estonian name and the question
