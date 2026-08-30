@@ -1,6 +1,6 @@
 # UX, Information Architecture and Accessibility
 
-v4.0 specified "sidebar navigation with tabs" and nothing else — no default view, no keyboard model,
+v4.0 specified "sidebar navigation with tabs" and nothing else: no default view, no keyboard model,
 no empty states, no accessibility, and no answer to the daily friction of typing `õäöü` on a US
 keyboard.
 
@@ -21,7 +21,7 @@ Sidebar
 
 **Today is the default route**, not Tasks. This is the fix for audit gap D2: a dashboard whose front
 door is a list of tabs makes the user decide what to do before they have done anything. Today answers
-"what now" — due cards, due tasks, next class, one button to start.
+"what now": due cards, due tasks, next class, one button to start.
 
 ## 2. Cross-cutting interactions
 
@@ -43,7 +43,7 @@ Anu. For a power tool used daily by one person, the palette is faster than any n
 | `?` | Keyboard shortcut help |
 
 Review-session keys are in `07-srs.md` §3. Undo (`u`) is specified there but is not in
-the MVP — see `13-mvp-status.md` §4.
+the MVP. See `13-mvp-status.md` §4.
 
 ## 3. Estonian text input (audit C9)
 
@@ -62,8 +62,8 @@ Three affordances, all of them:
 3. **Diacritic-insensitive search**: typing `sona` finds `sõna`; `raamat` matches regardless.
    Implemented as a normalised search column so it is a real index lookup, not a scan.
 
-Answer checking in review is **diacritic-strict by default** — `sona` is not `sõna` and accepting it
-teaches the wrong spelling — with a "close, check the diacritics" hint rather than a bare wrong mark.
+Answer checking in review is **diacritic-strict by default**: `sona` is not `sõna` and accepting it
+teaches the wrong spelling, with a "close, check the diacritics" hint rather than a bare wrong mark.
 
 ## 4. States
 
@@ -71,16 +71,16 @@ Every view specifies four states. v4.0 specified none (audit C6).
 
 | View | Empty | Loading | Error | Offline |
 |---|---|---|---|---|
-| Today | "Nothing due — add words or review ahead" + actions | Skeleton tiles | Section-level, others render | Fully functional |
-| Dictionary | Search prompt + recent searches | Skeleton entry | "Ekilex unavailable — showing cached" | Cached entries open |
-| Flashcards | "No cards yet" + import/dictionary links | Instant (local) | — | Fully functional |
+| Today | "Nothing due. Add words or review ahead" + actions | Skeleton tiles | Section-level, others render | Fully functional |
+| Dictionary | Search prompt + recent searches | Skeleton entry | "Ekilex unavailable, showing cached" | Cached entries open |
+| Flashcards | "No cards yet" + import/dictionary links | Instant (local) | n/a | Fully functional |
 | Anu | Persona intro + chips | Streaming cursor | Typed error + retry, message preserved | "Anu needs a connection" |
 | Calendar | "Add a feed" | Skeleton grid | Per-feed error row | Cached events |
-| Imports | Paste area with format examples | Parse progress | Row-level errors, partial import allowed | Works — parsing is local |
+| Imports | Paste area with format examples | Parse progress | Row-level errors, partial import allowed | Works, parsing is local |
 
 ## 5. Accessibility (audit C8)
 
-Target **WCAG 2.2 AA**. Not aspiration — this app is used for an hour a day.
+Target **WCAG 2.2 AA**. Not aspiration. This app is used for an hour a day.
 
 - **Full keyboard operation.** Every action reachable without a mouse; visible focus rings; logical
   tab order; no keyboard traps.
@@ -89,9 +89,9 @@ Target **WCAG 2.2 AA**. Not aspiration — this app is used for an hour a day.
 - **Contrast** ≥ 4.5:1 for text, ≥ 3:1 for UI boundaries, verified in both themes.
 - **Never colour alone.** Card difficulty, provenance badges and gradation types all carry an icon
   or text label as well as a colour.
-- **`prefers-reduced-motion`** respected — card flip animations become instant.
+- **`prefers-reduced-motion`** respected, so card flip animations become instant.
 - **Text scaling** to 200% without loss of function.
-- **Audio never required.** Listening cards always offer a text alternative — and when the TTS
+- **Audio never required.** Listening cards always offer a text alternative, and when the TTS
   proxy cannot produce any, Listening and Dictation say so and show the word rather than leaving a
   silent exercise with no question in it.
 - **Shortcuts are documented, not folklore.** `?` anywhere opens the shortcut sheet
@@ -105,7 +105,7 @@ Target **WCAG 2.2 AA**. Not aspiration — this app is used for an hour a day.
 > palette, type and shape they are implemented with now live there.
 
 - Light and dark themes, following the OS by default.
-- One accent colour; grammatical case colour-coding is **consistent app-wide** — the same case is the
+- One accent colour; grammatical case colour-coding is **consistent app-wide**: the same case is the
   same colour in the dictionary table, the heatmap and the flashcards. Learners build spatial memory
   off this, so it must never drift between views.
 - Estonian text in a font with proper `õ ä ö ü` rendering; forms in a slightly larger size than UI
@@ -114,7 +114,7 @@ Target **WCAG 2.2 AA**. Not aspiration — this app is used for an hour a day.
 
 ## 7. Responsive
 
-Desktop-first — the stated use case is a laptop at a desk. But:
+Desktop-first: the stated use case is a laptop at a desk. But:
 
 - Sidebar collapses to a bottom bar under 768 px.
 - **Review must be fully usable on a phone**, with large tap targets replacing the number keys. Ten

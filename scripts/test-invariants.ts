@@ -1121,6 +1121,18 @@ check("the voice is one table, and everything that speaks reads from it", () => 
   assert.match(sweep, /FILES[\s\S]{0,300}EMOJI/, "the emoji rule no longer runs over the tree");
 
   /*
+    And it still reaches the documentation. `docs/` was outside this rule until
+    somebody counted: 388 dashes, plus three empty table cells written as a bare
+    dash, which is the `NO_VALUE` fault from the source tree wearing a different
+    hat. The pages a contributor reads first are the ones that teach them which
+    of a project's rules are real, so the shape asserted is that the markdown
+    set is built by walking `docs/` rather than by listing what somebody
+    remembered.
+  */
+  assert.match(sweep, /sourceFiles\("docs"/, "the documentation sweep no longer walks docs/");
+  assert.match(sweep, /MARKDOWN[\s\S]{0,300}findTells/, "the docs are no longer swept for tells");
+
+  /*
     The half a machine cannot hold has to be written down somewhere a person
     will find it, or the enforceable half becomes the whole rule and the copy
     gets cold while passing every check.

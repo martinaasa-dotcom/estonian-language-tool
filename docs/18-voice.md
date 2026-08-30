@@ -5,7 +5,7 @@ about itself, not a system reporting its state, and never something that reads a
 generated. This is the standard for all of it: the interface, the errors, the empty states, the
 grammar prose, the README, the policy pages and Anu.
 
-It is a real requirement rather than a preference, and the argument is about who is reading. Almost
+It covers this page too, and every other one in `docs/`. The argument is about who is reading. Almost
 everybody here is also in a class in Tallinn or working through a textbook at a kitchen table. They
 read their teacher carefully and they skim marketing, and they decide which one a screen is within
 about a sentence. A panel that opens "Unlock the power of spaced repetition" has already been
@@ -142,9 +142,25 @@ minutes.
 
 ## 4. What this rule does not cover
 
-**Comments and this documentation.** Comments are for whoever maintains the code and may punctuate
-however they like. The sweep skips them on purpose, and it skips `docs/` entirely: these pages are
-read by contributors, not by learners, and the rule is about the product.
+**Comments, and code quoted inside a document.** Comments are for whoever maintains the code and may
+punctuate however they like. The sweep skips them on purpose, and it skips a fenced block and an
+inline code span in a markdown file for the same reason: `docs/04-data-model.md` quotes the Prisma
+schema and `docs/10-testing-quality.md` quotes the grep the secret scan runs, and rewriting the
+punctuation inside either would rewrite the thing being quoted. That is also how a page names a
+banned phrase without using one, which is what keeps the exemption list to a single file.
+
+**These pages are not exempt.** `docs/` was left out when this was first written, on the argument
+that it is read by contributors rather than by learners. That was true and it was not a reason. They
+are still somebody explaining something to somebody, they are the first thing a new contributor
+reads, and a project whose own documentation is written in the voice it forbids on screen has told
+that person which of its rules are real. There were 388 dashes behind the argument, and three of
+them were the `NO_VALUE` fault from the source tree wearing a different hat: an empty cell in a
+paradigm table, in the four-states table and in the degradation table, each written as a bare dash
+that a mechanical sweep would have turned into a comma sitting where a form should be.
+
+This standard is the one exemption, from the phrase rule only. It has to name every phrase it bans
+and quote the copy it exists to prevent, and §3 is nothing but that copy. It is still swept for a
+dash like everything else.
 
 **English headings over Estonian tables.** "Case", "Singular", "Plural" are labels, not prose.
 
@@ -176,7 +192,7 @@ swept in hand-written copy, and left alone in a stream.
 | What | Where |
 | --- | --- |
 | The table of banned characters, phrases and shapes | `lib/copy/voice.ts` |
-| The sweep over every reader-facing line, plus the table checked against itself | `lib/copy/readerCopy.test.ts` |
+| The sweep over every reader-facing line of `app/`, `lib/`, `components/`, the README, `CLAUDE.md` and `docs/`, plus the table checked against itself | `lib/copy/readerCopy.test.ts` |
 | Dashes and stock openers removed from Anu's stream | `lib/tutor/humanize.ts` |
 | The same rules given to Anu | `lib/tutor/prompt.ts` |
 | One table, one sweep, and the rules actually reaching the prompt | `scripts/test-invariants.ts` |

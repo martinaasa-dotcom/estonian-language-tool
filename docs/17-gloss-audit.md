@@ -68,11 +68,11 @@ looks like a definition. The word means "to thunder", on the next line down.
 
 `lib/dict/wiktionary.ts`, in three places, and then the data:
 
-1. **Templates whose output is the gloss are unwrapped, not deleted** — `{{l|en|…}}` and its
+1. **Templates whose output is the gloss are unwrapped, not deleted**: `{{l|en|…}}` and its
    aliases, `{{tcl}}`, `{{vern}}`, `{{w}}`. **Only when the language is English.** `{{m|et|kohta}}`
    is an Estonian word quoted inside an English note, and unwrapping it by a language-blind rule
    would write Estonian into a gloss, which is the one thing this file may never do (ADR-005).
-2. **The gap a removed template leaves is closed** — repaired once at the end rather than at each
+2. **The gap a removed template leaves is closed**: repaired once at the end rather than at each
    template, so a kind of markup nobody has met yet cannot open a new hole.
 3. **A sense Wiktionary has asked somebody to define is skipped.**
 

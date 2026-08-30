@@ -1,4 +1,4 @@
-# Product Specification v5.0 — Estonian Learning Dashboard
+# Product Specification v5.0: Estonian Learning Dashboard
 
 Supersedes v4.0. Every change from v4.0 is justified in `00-audit-v4.md`.
 
@@ -6,22 +6,22 @@ Supersedes v4.0. Every change from v4.0 is justified in `00-audit-v4.md`.
 
 One user: a native English speaker taking a structured Estonian class, studying most days, on a
 laptop, at a desk. Not a consumer product, not multi-tenant, not a startup. Every decision below
-optimises for *one committed learner using this daily for a year* — which permits choices a SaaS
+optimises for *one committed learner using this daily for a year*, which permits choices a SaaS
 could not make (local database, no signup, no onboarding funnel) and forbids others (no data loss,
 ever; the review history is irreplaceable).
 
 **The job:** "I have 40 minutes before class. Tell me what to study, let me study it without
 opening five tabs, and answer my grammar question when I get stuck."
 
-**The failure v4.0 does not prevent:** an app you open, look at, and close — because it has six tabs
+**The failure v4.0 does not prevent:** an app you open, look at, and close, because it has six tabs
 and no answer to "what now". Hence the Today view (§3.0) as the default route.
 
 ## 2. Principles
 
 1. **The word is the unit.** Tasks, dictionary entries, tutor messages and cards all link back to a
    lexeme. The dashboard's value is that these stop being separate apps. (Fixes D4.)
-2. **One click to the deck.** Anything the learner sees — a dictionary hit, an Anu example, a pasted
-   line — is one click from becoming a card. This is the app's central interaction, not a feature
+2. **One click to the deck.** Anything the learner sees (a dictionary hit, an Anu example, a pasted
+   line) is one click from becoming a card. This is the app's central interaction, not a feature
    bullet.
 3. **Never invent Estonian.** Authoritative forms come from Ekilex. The AI explains; it does not
    supply answer keys. Provenance is visible. (See `02-estonian-domain.md` §5.)
@@ -35,7 +35,7 @@ and no answer to "what now". Hence the Today view (§3.0) as the default route.
 Each feature carries acceptance criteria. A feature is not done until every box is checkable by
 someone other than the implementer.
 
-### 3.0 Today (NEW — the default route)
+### 3.0 Today (NEW: the default route)
 
 The app's front door. Answers "what now" in one screen.
 
@@ -48,7 +48,7 @@ The app's front door. Answers "what now" in one screen.
 **Acceptance:** opening the app shows a session I can start in one click, with no navigation.
 Empty state (nothing due) suggests a concrete alternative action rather than showing an empty box.
 
-### 3.1 Tasks (v4.0 Feature 1 — kept, extended)
+### 3.1 Tasks (v4.0 Feature 1: kept, extended)
 
 - CRUD, completion checkbox, persistent across restarts.
 - Tags: `Grammar`, `Homework`, `Vocabulary`, `Speakly Goal`, `Listening Practice`, plus user-defined.
@@ -59,7 +59,7 @@ Empty state (nothing due) suggests a concrete alternative action rather than sho
 intact. Filter to week 4 + `Grammar` and see only those. Completing a task with linked words offers
 to add those words to the deck.
 
-### 3.2 Dictionary (v4.0 Feature 3 — rebuilt, no iframe)
+### 3.2 Dictionary (v4.0 Feature 3: rebuilt, no iframe)
 
 Native UI over the Ekilex API. Replaces the impossible embed (audit A1).
 
@@ -75,7 +75,7 @@ Native UI over the Ekilex API. Replaces the impossible embed (audit A1).
 gradation `b : ∅`, renders the 10 derived cases from `toa-`, plays audio, and adds a card in one click.
 With the network off, previously viewed entries still open from cache.
 
-### 3.3 Anu — AI tutor (v4.0 Feature 4 — kept, hardened)
+### 3.3 Anu, the AI tutor (v4.0 Feature 4: kept, hardened)
 
 Full design in `06-anu-tutor.md`.
 
@@ -91,20 +91,20 @@ citing the aspect rule with examples. Responses stream. The API key is not prese
 bundle (verified by a build-output grep in CI). Hitting the daily cap degrades to a clear message,
 not a stack trace.
 
-### 3.4 Flashcards / SRS (v4.0 Feature 6 — upgraded)
+### 3.4 Flashcards / SRS (v4.0 Feature 6: upgraded)
 
 Full design in `07-srs.md`. FSRS via `ts-fsrs`, not SM-2.
 
 - Seven card types: recognition, production, **case-form cloze**, **gradation**, **verb government**,
   listening (audio→meaning) and **object case** (total vs partial minimal pairs).
-- Keyboard-first review: space to flip, 1–4 to grade, `u` to undo.
+- Keyboard-first review: space to flip, 1-4 to grade, `u` to undo.
 - Audio on the card. Session summary with accuracy and time.
 
 **Acceptance:** a 20-card session is completable without touching the mouse. Grading `Again` brings
 the card back in the same session. Scheduling state survives restart. Export produces a file that
 imports into Anki.
 
-### 3.5 Calendar (v4.0 Feature 2 — kept, moved to Phase 4)
+### 3.5 Calendar (v4.0 Feature 2: kept, moved to Phase 4)
 
 - Month and week views showing task due dates, class times and review load.
 - **Read-only** subscription to one or more iCal URLs (Google/Apple), refreshed on a schedule.
@@ -113,7 +113,7 @@ imports into Anki.
 feed removes its events and nothing else. A malformed or unreachable feed shows a per-feed error and
 leaves other feeds working.
 
-### 3.6 Imports (v4.0 Feature 5 — generalised)
+### 3.6 Imports (v4.0 Feature 5: generalised)
 
 Speakly-specific parsing replaced with a format-agnostic importer (audit A3).
 
@@ -128,7 +128,7 @@ filled in for those Ekilex recognises, duplicates flagged, and nothing written u
 ### 3.7 Progress (NEW)
 
 - Reviews per day, retention rate, cards by FSRS state.
-- **Weak-case heatmap** — accuracy per grammatical case, so the learner can see that their ablative
+- **Weak-case heatmap**: accuracy per grammatical case, so the learner can see that their ablative
   is fine and their partitive plural is not.
 - Vocabulary growth over time; per-week accuracy tied to the syllabus.
 
@@ -152,6 +152,6 @@ Named so they do not creep in. Each is a real decision, not an omission:
 The project succeeds if, after one month of daily use:
 1. The learner opens the app *first* when studying, not their browser tabs.
 2. ≥ 80% of cards were created inside the app rather than typed manually elsewhere.
-3. FSRS retention sits in the 85–92% band (correctly tuned scheduling, neither too easy nor too hard).
+3. FSRS retention sits in the 85-92% band (correctly tuned scheduling, neither too easy nor too hard).
 4. No data has ever been lost, and an export has been produced and verified at least once.
 5. The weak-case heatmap has changed at least one study decision.

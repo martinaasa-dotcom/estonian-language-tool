@@ -2,21 +2,21 @@
 
 ## What this is
 
-An Estonian learning app — dictionary, learning path, spaced-repetition review, practice games and a
+An Estonian learning app: dictionary, learning path, spaced-repetition review, practice games and a
 grammar tutor. `docs/` holds the plan it was built from; `docs/13-mvp-status.md` says what is built,
-what is deliberately not, and the known limitations. Read that first, and §6 of it especially — that
+what is deliberately not, and the known limitations. Read that first, and §6 of it especially. That
 is the current state.
 
 ## Read before writing code
 
-1. `docs/09-roadmap.md` — what phase we are in and what "done" means for it.
-2. `docs/02-estonian-domain.md` — the linguistic model. Non-obvious and load-bearing.
-3. `docs/04-data-model.md` — the schema.
-4. `docs/03-architecture.md` §6 — the ADRs. Do not silently reverse one.
-5. `docs/14-design-system.md` — the visual language: palette, tokens, motion, and what each colour
-   is allowed to mean. Read it before adding a colour, a radius or a shadow.
-6. `docs/18-voice.md` — how the app speaks: warm, kind, concise, and never in a way that reads as
-   generated. Read it before writing a sentence anybody will see, which is most changes.
+1. `docs/09-roadmap.md`: what phase we are in and what "done" means for it.
+2. `docs/02-estonian-domain.md`: the linguistic model. Non-obvious and load-bearing.
+3. `docs/04-data-model.md`: the schema.
+4. `docs/03-architecture.md` §6: the ADRs. Do not silently reverse one.
+5. `docs/14-design-system.md`: the visual language. Palette, tokens, motion, and what each
+   colour is allowed to mean. Read it before adding a colour, a radius or a shadow.
+6. `docs/18-voice.md`: how the app speaks. Warm, kind, concise, and never in a way that reads
+   as generated. Read it before writing a sentence anybody will see, which is most changes.
 
 ## Rules that are not negotiable
 
@@ -34,7 +34,7 @@ seeded principal parts; example sentences come from Ekilex `usages` and are only
 *reordered* to make an exercise (`lib/estonian/cloze.ts`). The model may translate into English and
 explain grammar; anything Estonian it produces in chat is boxed and tagged, and never stored as a
 form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
-`lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
+`lib/estonian/grammar.ts`, holds no Estonian at all. Every form on the grammar pages is read from
 the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
 **Estonian is taught in Estonian, and the Latin names are the cross-reference.** Nobody teaching
@@ -84,7 +84,7 @@ balanced templates wholesale, and an emptied line sent the picker to the next se
 page with more than one etymology belongs to another word. Where the template sat mid-line the
 gloss survived with a hole in it instead, which is worse: `segama` read "to , to , to" and `vana`
 read "an person", and nothing watching this file could tell a hole from a short gloss. Both
-shapes are invariants now. **Only an English-tagged link is ever unwrapped** — `{{m|et|kohta}}`
+shapes are invariants now. **Only an English-tagged link is ever unwrapped**: `{{m|et|kohta}}`
 is an Estonian word quoted inside an English note, and unwrapping it by a language-blind rule
 would write Estonian into a gloss (ADR-005). That guard has its own invariant, and it took two
 attempts: the first quoted an Estonian word with no diacritic in it inside a trailing
@@ -117,7 +117,7 @@ bring back, which is what makes this mechanical rather than aspirational. Re-run
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
-is tagged and needs confirmation before becoming a flashcard answer — an unverified form does not
+is tagged and needs confirmation before becoming a flashcard answer. An unverified form does not
 just sit there being wrong, the SRS drills it in. (ADR-005.)
 
 In the writing grader this is *enforced*, not requested: `lib/tutor/verify.ts` checks every Estonian
@@ -139,30 +139,30 @@ only" and three later decisions had already been reading it the narrower way.
 empty state, the README, the policy pages and Anu are one person explaining Estonian to another.
 Almost everybody using this is also sitting in a class or working through a textbook, and they read
 a teacher carefully and skim marketing, deciding which a screen is inside about a sentence. So a
-panel that opens "Unlock the power of spaced repetition" has already been sorted into the second
+panel that opens `Unlock the power of spaced repetition` has already been sorted into the second
 pile and the useful thing underneath it goes unread.
 
 The standard is **warm, kind, concise, and unmistakably a person**, and each of those is a decision
-rather than a mood. Warm is attention, not enthusiasm: "six days in a row" is warmer than "amazing
-work" because one of them is about the learner and required us to have been looking. Kind is where
+rather than a mood. Warm is attention, not enthusiasm: `six days in a row` is warmer than `amazing work`
+because one of them is about the learner and required us to have been looking. Kind is where
 the news is bad, which is most of the copy in this app, and it is never softening a correction into
 vagueness, since a learner left unsure whether they were wrong rehearses the error. Concise has no
 word count; it is that every sentence does work for the person in front of it, and two sentences
 that answer the question are kinder than six that circle it.
 
 `lib/copy/voice.ts` is the one table of what gives a sentence away: the em dash and the en dash,
-the stock openers ("It's important to note that", "Moreover", "In conclusion"), the inflated shapes
-("not just a rule, but a pattern", "more than just", "that's where X comes in"), the brochure
-vocabulary (delve, leverage, seamless, empower, embark on, your journey, unleash, a plethora of,
-"whether you're a beginner or"), the praise adjectives, and emoji. Three files used to state this
+the stock openers (`It's important to note that`, `Moreover`, `In conclusion`), the inflated
+shapes (`not just a rule, but a pattern`, `more than just`, `that's where X comes in`), the
+brochure vocabulary (`delve`, `leverage`, `seamless`, `empower`, `embark on`, `your journey`,
+`unleash`, `a plethora of`, `whether you're a beginner or`), the praise adjectives, and emoji. Three files used to state this
 and no two of them agreed: `humanize.ts` stripped seven openers out of Anu, `prompt.ts` asked the
 model for roughly the same thing in its own words, and the sweep over hand-written copy covered
 nine brochure words across **six hand-listed files out of four hundred**. So a phrase Anu was
 forbidden from using was fine in the panel beside her, and the 73-unit course page, the exam
 briefing and every empty state were outside the check entirely. There is one table now,
-`readerCopy.test.ts` sweeps the whole of `app/`, `lib/`, `components/` and the README against it,
-and `VOICE_RULES` is interpolated into Anu's system prompt so what the model is asked for is what
-the sweep enforces. An invariant fails if any of those three stops reading the table, if the sweep
+`readerCopy.test.ts` sweeps the whole of `app/`, `lib/`, `components/`, the README, this file and
+`docs/` against it, and `VOICE_RULES` is interpolated into Anu's system prompt so what the model is
+asked for is what the sweep enforces. An invariant fails if any of those three stops reading the table, if the sweep
 narrows back to a list, or if a rule stops reaching the prompt.
 
 Adding a tell means arguing that the phrase is never right on a screen here. `perfect` is not on
@@ -171,6 +171,18 @@ not, because the exam recordings genuinely unlock. A check that fires on honest 
 and a check everybody waives is a check nobody reads. The emoji rule is drawn the same way: the
 arrow in "Estonian to English", the return key in a keyboard hint and the tick on the week strip
 are typographic glyphs doing a job, and only the pictographic kind is banned.
+
+**`docs/` is not exempt, and was.** The sweep skipped it on the argument that those pages are read
+by contributors rather than by learners, which was true and was not a reason: they are still
+somebody explaining something to somebody, they are the first thing a new contributor reads, and a
+project whose own documentation is written in the voice it forbids on screen has told that person
+which of its rules are real. There were 388 dashes behind that argument, and three of them were the
+`NO_VALUE` fault wearing a different hat, an empty cell in a paradigm table written as a bare dash
+that a mechanical sweep turns into a comma sitting where a form should be. A fenced block and an
+inline code span are still skipped, because a document quoting the Prisma schema or the secret
+scan's own grep is quoting code, and because backticks are how a page names a banned phrase without
+using one. `docs/18-voice.md` is the one exemption and only from the phrase rule, since it has to
+show the copy it exists to prevent.
 
 **The table is half the rule.** No regex tells kind from cold, or notices a paragraph that is
 twice as long as it needs to be. `docs/18-voice.md` is the other half, with worked before-and-after
@@ -218,7 +230,7 @@ and it is the input to FSRS parameter optimisation.
 This is now a property rather than a hope: `Review` has *no foreign key* to `Card`. It carries its
 own `ownerId` and `lexemeId` and keeps `cardId` as a plain column, so deleting a card or restoring a
 backup over a deck cannot cascade the history away. Do not re-add the relation for the convenience
-of a join — `lib/srs/replay.itest.ts` will fail, which is the point. The same property is what makes
+of a join. `lib/srs/replay.itest.ts` will fail, which is the point. The same property is what makes
 offline sync conflict-free: grades are facts with timestamps, and replaying them in order reproduces
 the state exactly, because `grade()` takes `now` as a parameter.
 
@@ -227,18 +239,18 @@ API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 
 **Review must work offline.** It is the daily path, and it may not depend on any network call.
 A grade that cannot reach the server goes into the IndexedDB outbox (`lib/offline/db.ts`) and is
-replayed in order by `replayGrades` with the timestamp it was actually answered at — never dropped,
+replayed in order by `replayGrades` with the timestamp it was actually answered at, never dropped,
 never re-stamped. Replay is idempotent because the client generates each grade's id. Anything added
 to the review path must survive `navigator.onLine === false`, and `scripts/smoke-offline.mjs`
 checks that in a browser. (ADR-015.)
 
 **AI spending is always metered.** `lib/usage` has no off switch and fails closed, because sign-up
 is open by default. Any new path that calls a paid provider goes through `authoriseCall` before the
-call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table — a
+call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table. A
 cap that fails open is not a cap. This is asserted now rather than asked for: the invariant finds
 every module that opens the provider chain and fails on one that does not mention the ledger,
 because prose had been enough to keep four routes honest and not enough to catch the fifth path.
-That fifth was `lib/tutor/translate.ts`, reachable from the dictionary search box — a word the
+That fifth was `lib/tutor/translate.ts`, reachable from the dictionary search box. A word the
 local table and Wiktionary both missed fired a real completion with no burst limit, no daily
 allowance, no global budget check, and no row written afterwards, so the Settings usage meter
 reported nothing spent because from the ledger's view nothing was. The meter lives inside `ask()`
@@ -246,7 +258,7 @@ rather than in its two callers, so the next short helper that wants a sentence f
 inherits it by reaching for the function.
 
 **The ledger writes the call down when it authorises it, not when it finishes.** `authoriseCall`
-used to read four aggregates, return a verdict, and leave the row to `recordUsage` — which for a
+used to read four aggregates, return a verdict, and leave the row to `recordUsage`, which for a
 streamed answer on a two-minute route lands tens of seconds later. That is check-then-act: ten
 tabs read the same "under the limit" inside the gap and all ten went ahead, and the global budget,
 the one that is supposed to be the hard backstop on the whole deployment's bill, had the widest
@@ -265,7 +277,7 @@ Route Handlers called `checkRateLimit` and none of the forty-odd actions did, wh
 the quiet door again. `lib/security/actionLimits.ts` is the one table of what the per-call
 expensive work is allowed, and the invariant reads that table: an allowance with no action
 applying it fails, and so does an action throttling against anything but the owner it resolved.
-Most actions must **not** have one — grading a card is a single indexed write and a limit there
+Most actions must **not** have one. Grading a card is a single indexed write and a limit there
 would be met by learners and nobody else.
 
 **A bucket key the caller chooses is worse than no bucket key.** `clientIp` read
@@ -281,9 +293,9 @@ public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one
 belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
 
 **The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
-learner sees, so an edit to one is an edit for everybody — it is attributed (`editedBy`), it may
+learner sees, so an edit to one is an edit for everybody. It is attributed (`editedBy`), it may
 replace only the principal parts, and it must never touch a retrieved Ekilex paradigm. Anything
-scoped to a person — cards, reviews, tasks — is always filtered by `ownerId`, including in an
+scoped to a person (cards, reviews, tasks) is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
 **A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
@@ -368,7 +380,7 @@ a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC s
 on any other.
 
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
-own scores — they write to the same review log, so the scheduler sees what was actually practised.
+own scores. They write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)
 
 **Every mutation goes through the forged-request gate, and it is not an `/api/` rule.** Every
@@ -436,7 +448,7 @@ new table fails until a person decides about it. `UsageEvent` is the one deliber
 /privacy names it.
 
 **And then the check's own skip list became the hole.** Three models had been added to the
-exemption rather than to the query — mock exam sittings, classes and class memberships — so the
+exemption rather than to the query (mock exam sittings, classes and class memberships), so the
 backup stopped at ten tables out of thirteen and the invariant called it complete. A sat paper
 carries the composition the learner wrote, which is the single least reconstructable thing in the
 schema, and it was in no backup and, worse, survived "delete everything" entirely. Exemptions live
@@ -518,15 +530,14 @@ seen before a single word is chosen. `test-assess.mjs` drives all four screens a
 deck step ever moved above the plan.
 
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
-local learner; with them, every route is gated. It keys off the absence of configuration only —
-never add a flag that can disable auth on a deployment that has it. (ADR-013.)
+local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
   `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/` and `lib/copy/` stay free of
-  React, Next.js and Prisma — pure functions, unit tested. Anything that
+  React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
@@ -590,7 +601,7 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So
   the two were told apart by a `title` attribute, which is a hover tooltip, in an app measured at
-  360px whose README leads with "works on a phone" — and telling them apart is the entire
+  360px whose README leads with "works on a phone". And telling them apart is the entire
   pedagogical claim of that exercise. `wordNote` in `lib/estonian/dictation.ts` says which in
   words, reusing `droppedDiacritics` rather than rewriting the loop that knows which letters
   exist.
@@ -626,7 +637,7 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
   rather than `hour12: false`, which renders midnight as "24:00" in en-US.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
-  meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
+  meanings (`docs/14-design-system.md` §1). Mint is "recalled", peach is "missed", and neither is
   free for decoration. **A hue has a fill and an ink and they are not interchangeable**: `--accent`
   is what a button is painted, `--accent-deep` is what a word is written in, and text set in the
   fill measured 3.87 on the week header and 4.05 in the leech clinic against a bar of 4.5. Contrast
@@ -646,8 +657,8 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   found both in one run, plus an `<ol>` on the landing page whose `<li>`s sat behind a wrapper `div`,
   so the list announced itself as empty. What stays hand-written is only what axe has no opinion
   about: exactly one `main` and one `h1` per screen, and a title that is not the landing page's.
-- Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
-  page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
+- Signed-in routes live in `app/(app)/`; pages that own the whole screen (the landing
+  page, sign-in, first-run setup) live in `app/(chromeless)/`. A new public page has
   to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
   pointer every one of them clears 44px.
@@ -731,7 +742,7 @@ browser exposes one.
 strips dashes used as clause breaks and stock openers, reading both from `lib/copy/voice.ts` rather
 than keeping a list of its own. It streams, holding text back only where a
 rule could still change it, so it costs the learner nothing they would notice. Only the phrases
-carrying no information are rewritten: there is no mechanical translation from "seamless" back into
+carrying no information are rewritten: there is no mechanical translation from `seamless` back into
 whatever was meant, so a brochure word is asked against in the prompt and swept in hand-written
 copy rather than replaced mid-sentence with something Anu did not say. `FIX:` and `VOCAB:`
 lines pass through byte for byte: rewriting punctuation inside a corrected sentence would be the
