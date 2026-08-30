@@ -30,7 +30,14 @@ interface Reading {
  * note that quotes an Estonian form nobody can vouch for is withheld whole,
  * which is the same guard the single sentence grader runs behind.
  */
-export function AnuReading({ text, level }: { text: string; level: string }) {
+export function AnuReading({ text, level, title, marks }: {
+  text: string;
+  level: string;
+  /** Which of the two written tasks this was, now that there are two. */
+  title?: string;
+  /** What it scored, so the text and its mark are read together. */
+  marks?: string;
+}) {
   const [reading, setReading] = useState<Reading | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +66,12 @@ export function AnuReading({ text, level }: { text: string; level: string }) {
 
   return (
     <Card>
+      {title && (
+        <p className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <span className="label-xs" style={{ color: "var(--ink-3)" }}>{title}</span>
+          {marks && <span className="tnum text-sm" style={{ color: "var(--ink-3)" }}>{marks}</span>}
+        </p>
+      )}
       <p
         className="est whitespace-pre-wrap text-md leading-relaxed"
         style={{ color: "var(--ink)" }}

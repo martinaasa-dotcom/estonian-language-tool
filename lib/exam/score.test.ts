@@ -57,6 +57,7 @@ function perfect(paper: ReturnType<typeof buildPaper>): Map<string, Response> {
               value: item.answer.replace(/[.!?]/g, "").split(" ").filter(Boolean),
             });
             break;
+          case "message":
           case "compose":
             out.set(item.id, {
               kind: "composed",
@@ -186,6 +187,63 @@ describe("what one answer is worth", () => {
     expect(mark.raw).toBe(half);
   });
 
+  it("marks the short message the same way it marks the composition", () => {
+    const message = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .find((i) => i.kind === "message")!;
+    if (message.kind !== "message") throw new Error("expected a message");
+
+    const full = [
+      ...message.mustUse.map((w) => w.lemma),
+      ...Array.from({ length: message.minWords }, (_, i) => `w${i}`),
+    ].join(" ");
+    expect(markItem(message, { kind: "composed", value: full }, 8).scored).toBe(8);
+
+    // Nothing written scores nothing, and the points it did not cover are named
+    // rather than left to be guessed at from a number.
+    const blank = markItem(message, { kind: "composed", value: "" }, 8);
+    expect(blank.scored).toBe(0);
+    expect(blank.note).toContain(message.mustUse[0]?.lemma ?? "");
+  });
+
+  it("marks the two briefs of the second task identically, whichever was chosen", () => {
+    /*
+      The real paper offers a story or a personal letter, so this one does. The
+      choice may not move a mark: both are marked on length and on the words the
+      task named, and a mock where picking the letter scored differently would be
+      inventing a judgement about somebody's Estonian.
+    */
+    const compose = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .find((i) => i.kind === "compose")!;
+    if (compose.kind !== "compose") throw new Error("expected a composition");
+    const text = Array.from({ length: compose.minWords }, (_, i) => `w${i}`).join(" ");
+
+    const story = markItem(compose, { kind: "composed", value: text, variant: 0 }, 12);
+    const letter = markItem(compose, { kind: "composed", value: text, variant: 1 }, 12);
+    expect(letter.scored).toBe(story.scored);
+  });
+
+  it("reports a matching answer as the word, never as the option id it was stored as", () => {
+    /*
+      A radio group carries an id, so that is what the response holds. The
+      result page prints `given`, and a line reading "you wrote
+      dbcff369-4fb5-4a41-9a7d-6b3c3264dbf5" is a line nobody can learn anything
+      from, which is the whole purpose of that list.
+    */
+    const task = paper.parts
+      .flatMap((p) => p.tasks)
+      .find((t) => t.spec.kind === "match-usage" && t.items.length > 0 && t.choices);
+    if (!task) return;
+    const item = task.items[0]!;
+    const wrong = task.choices!.find((c) => c.id !== (item as { answer: string }).answer)!;
+    const mark = markItem(item, { kind: "chosen", value: wrong.id }, 1, task.choices);
+    expect(mark.given).toBe(wrong.label);
+    expect(mark.given).not.toContain("-");
+  });
+
   it("counts a required word however it was inflected", () => {
     const compose = paper.parts
       .flatMap((p) => p.tasks)
@@ -234,7 +292,7 @@ describe("which language an answer is in", () => {
   it("tags the English answers as English, so they are not set in Estonian", () => {
     for (const item of items) {
       const mark = markItem(item, BLANK_RESPONSE, 1);
-      const english = ["government", "gloss-choice", "compose", "speak"].includes(item.kind);
+      const english = ["government", "gloss-choice", "message", "compose", "speak"].includes(item.kind);
       expect(mark.language === "en").toBe(english);
     }
   });

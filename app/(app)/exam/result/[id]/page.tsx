@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowRight, BadgeCheck, FileWarning, Repeat, TriangleAlert,
+  ArrowRight, BadgeCheck, FileWarning, Info, Repeat, TrendingDown, TrendingUp, Trophy,
+  TriangleAlert,
 } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
-import { attemptById } from "@/lib/progress/exam";
+import { attemptById, bestAt, previousAttempt } from "@/lib/progress/exam";
 import { buildReport } from "@/lib/exam/report";
 import { allMarks } from "@/lib/exam/score";
 import { PASS_PCT, specFor } from "@/lib/exam/spec";
@@ -46,9 +47,25 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
 
   const report = buildReport(result);
   const spec = specFor(result.level);
-  // Not off `report.missed`: a composition that scored well is not in that list, and it
-  // is the one answer worth reading back whether or not it lost marks.
-  const composition = allMarks(result).find((mark) => typeof mark.raw === "string" && mark.raw);
+  /*
+    Not off `report.missed`: a text that scored well is not in that list, and it
+    is the answer worth reading back whether or not it lost marks. Both of them
+    now, because the writing part sets two, and the short message is the one
+    people get wrong by treating it as a small essay.
+  */
+  const written = allMarks(result).filter((mark) => typeof mark.raw === "string" && mark.raw);
+
+  /*
+    Both strictly earlier than this sitting, so opening an old result compares it
+    with the papers before it rather than with ones sat afterwards, and so "your
+    best yet" means it beat everything, rather than being trivially true of the
+    row it was computed from.
+  */
+  const [previous, best] = await Promise.all([
+    previousAttempt(ownerId, result.level, attempt.finishedAt),
+    bestAt(ownerId, result.level, attempt.finishedAt),
+  ]);
+  const moved = previous ? result.pct - previous.pct : null;
 
   return (
     <Page
@@ -101,6 +118,48 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
           </div>
         </Card>
       </section>
+
+      {(previous || best === null || result.pct > best) && (
+        <section className="mb-10">
+          <SectionTitle>Against your own record</SectionTitle>
+          <ul className="grid gap-3 md:grid-cols-2">
+            {previous && moved !== null && (
+              <Card as="li" tone={moved >= 0 ? "mint" : "peach"}>
+                <p
+                  className="flex items-center gap-2 text-md font-semibold"
+                  style={{ color: moved >= 0 ? "var(--mint-ink)" : "var(--peach-ink)" }}
+                >
+                  {moved >= 0 ? <TrendingUp size={16} aria-hidden /> : <TrendingDown size={16} aria-hidden />}
+                  {moved === 0
+                    ? `Level with your last ${result.level}`
+                    : `${moved > 0 ? "Up" : "Down"} ${Math.abs(moved)} points on your last ${result.level}`}
+                </p>
+                <p
+                  className="mt-1 text-sm leading-relaxed"
+                  style={{ color: moved >= 0 ? "var(--mint-ink)" : "var(--peach-ink)" }}
+                >
+                  {previous.pct} percent on {formatDateTime(previous.at)}, {result.pct} today. The
+                  questions were not the same ones, so this is two samples of the same paper rather
+                  than a rerun of one.
+                </p>
+              </Card>
+            )}
+            {(best === null || result.pct > best) && (
+              <Card as="li" tone="accent">
+                <p className="flex items-center gap-2 text-md font-semibold" style={{ color: "var(--ink)" }}>
+                  <Trophy size={16} aria-hidden />
+                  Your best {result.level} yet
+                </p>
+                <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                  {best === null
+                    ? "Your first paper at this level, so it is the one to beat."
+                    : `Better than anything you had sat at this level, which stood at ${best} percent.`}
+                </p>
+              </Card>
+            )}
+          </ul>
+        </section>
+      )}
 
       <section className="mb-10">
         <SectionTitle hint={`${PASS_PCT} percent to pass`}>The four parts</SectionTitle>
@@ -218,10 +277,47 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
         </section>
       )}
 
-      {composition?.raw && (
+      {written.length > 0 && (
         <section className="mb-10">
-          <SectionTitle>Your text</SectionTitle>
-          <AnuReading text={composition.raw} level={result.level} />
+          <SectionTitle hint={written.length > 1 ? "both of them" : undefined}>
+            What you wrote
+          </SectionTitle>
+          {/*
+            THE ONE PLACE THIS SCORE CAN FLATTER SOMEBODY, SAID OUT LOUD. The
+            marks on these two came from length and from the words the task
+            named, because those are the only things a machine can settle
+            without judging Estonian. An examiner marks the accuracy of the
+            prose itself and this app never will, so the mark is a ceiling
+            rather than a measurement, and somebody reading a good writing score
+            has to know which of the two they are holding.
+          */}
+          <div className="mb-4">
+            <Note tone="neutral">
+              <Info size={14} className="mr-1.5 inline" aria-hidden />
+              These marks are for length and for using the words you were given. Whether the
+              Estonian itself is right is what an examiner marks and what nothing here may judge, so
+              treat this part of your score as the most you could have got rather than what you
+              would have got. Anu will read either text back and say what she thinks, and her note
+              carries no marks.
+            </Note>
+          </div>
+          <ul className="grid gap-4">
+            {written.map((mark) => {
+              const task = result.parts
+                .flatMap((p) => p.tasks)
+                .find((t) => t.marks.some((m) => m.itemId === mark.itemId));
+              return (
+                <li key={mark.itemId}>
+                  <AnuReading
+                    text={mark.raw ?? ""}
+                    level={result.level}
+                    title={task?.title}
+                    marks={`${Math.round(mark.scored * 10) / 10} of ${mark.available}`}
+                  />
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 

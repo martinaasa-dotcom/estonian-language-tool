@@ -1,8 +1,11 @@
 import Link from "next/link";
 import {
-  ArrowRight, BadgeCheck, CircleAlert, ClipboardCheck, Clock, Info, Lightbulb, TriangleAlert,
+  ArrowRight, BadgeCheck, CalendarClock, CircleAlert, ClipboardCheck, Clock, Info, Lightbulb,
+  TriangleAlert,
 } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
+import { goalsFor } from "@/lib/progress/assessment";
+import { weeksUntil, targetByBand } from "@/lib/assessment/goals";
 import { readinessSignals, recentAttempts } from "@/lib/progress/exam";
 import { assessReadiness } from "@/lib/exam/readiness";
 import {
@@ -27,11 +30,30 @@ export const dynamic = "force-dynamic";
  */
 export default async function ExamPage() {
   const ownerId = await requireUserId();
-  const [signals, attempts] = await Promise.all([
+  const [signals, attempts, goals] = await Promise.all([
     readinessSignals(ownerId),
     recentAttempts(ownerId),
+    goalsFor(ownerId),
   ]);
   const readiness = assessReadiness(signals);
+
+  /*
+    THE GOAL AND THE PAPER WERE TWO FEATURES THAT DID NOT SPEAK TO EACH OTHER.
+    Somebody says on their first run that they want B1 by March, and the exam hub
+    then lists six levels as though it had never been told. The target is the one
+    row of this page they came for, so it goes at the top with the weeks and the
+    confidence beside each other, which is the only place those two numbers mean
+    anything: eleven weeks and 38 percent is a different life from eleven weeks
+    and 71.
+  */
+  const target = goals.target ? targetByBand(goals.target) : undefined;
+  const targetLevel = target
+    ? readiness.levels.find((l) => l.level === target.band)
+    : undefined;
+  const weeks = weeksUntil(goals.deadline, new Date());
+  const weakest = targetLevel
+    ? [...SKILLS].sort((a, b) => targetLevel.expected[a] - targetLevel.expected[b])[0]
+    : undefined;
 
   const evidenceNote = {
     thin: "We have very little to go on yet, so these are guesses and are capped to say so.",
@@ -49,6 +71,60 @@ export default async function ExamPage() {
         "built out of the dictionary, plus two levels the state does not examine at all."
       }
     >
+      {target && targetLevel && (
+        <section className="mb-10">
+          <SectionTitle
+            hint={weeks === null ? "no deadline set" : weeks === 0 ? "the deadline is here" : `${weeks} weeks left`}
+          >
+            The paper you said you were aiming at
+          </SectionTitle>
+          <Card tone={targetLevel.confidence >= PASS_PCT ? "mint" : "accent"}>
+            <div className="flex flex-wrap items-center gap-5">
+              <Ring
+                pct={targetLevel.confidence}
+                size={72}
+                tone={targetLevel.confidence >= PASS_PCT ? "var(--mint)" : "var(--accent)"}
+                label={`${targetLevel.confidence} percent likely to pass ${target.band}`}
+              >
+                <span className="est tnum text-md font-bold" style={{ color: "var(--ink)" }}>
+                  {targetLevel.confidence}%
+                </span>
+              </Ring>
+              <div className="min-w-[16rem] flex-1">
+                <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+                  {target.band}, {target.label.toLowerCase()}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                  {weeks === null
+                    ? "You set no deadline for it. "
+                    : weeks === 0
+                      ? "The date you set has arrived. "
+                      : `${weeks} ${weeks === 1 ? "week" : "weeks"} until the date you set. `}
+                  {targetLevel.confidence >= PASS_PCT
+                    ? "We would put you through it today, on the evidence there is."
+                    : weakest
+                      ? `${SKILL_LABEL[weakest]} is the part standing in the way, predicted at ${targetLevel.expected[weakest]} percent against the sixty a pass needs.`
+                      : "There is not enough here yet to say."}
+                </p>
+                <p className="mt-3 flex flex-wrap items-center gap-3">
+                  <ButtonLink href={`/exam/${target.band}`} variant="secondary" size="sm">
+                    Sit the {target.band} paper <ArrowRight size={14} aria-hidden />
+                  </ButtonLink>
+                  <Link
+                    href="/settings#goals"
+                    className="text-sm underline underline-offset-4"
+                    style={{ color: "var(--ink-3)" }}
+                  >
+                    <CalendarClock size={13} className="mr-1 inline" aria-hidden />
+                    Change the goal
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
+
       <section className="mb-10">
         <SectionTitle hint={evidenceNote}>Where you are</SectionTitle>
         <Card tone={readiness.assessed ? "mint" : "accent"}>

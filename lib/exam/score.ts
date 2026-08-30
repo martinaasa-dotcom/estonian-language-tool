@@ -1,6 +1,7 @@
 import { checkAnswer, countsAsRecalled } from "@/lib/estonian/answer";
 import { sentenceMatches } from "@/lib/estonian/cloze";
 import { checkDictation } from "@/lib/estonian/dictation";
+import { usesRequiredWord, wordsOf } from "./written";
 import { bandFor, PASS_PCT, RETAKE_WAIT_PCT, type Band, type ExamLevel } from "./spec";
 import type { ExamItem, ExamTask, Paper } from "./paper";
 import type { SkillKey } from "./types";
@@ -31,7 +32,7 @@ export type Response =
   | { kind: "chosen"; value: string }
   | { kind: "typed"; value: string }
   | { kind: "ordered"; value: string[] }
-  | { kind: "composed"; value: string }
+  | { kind: "composed"; value: string; variant?: number }
   | { kind: "spoken"; recorded: boolean; criteria: boolean[] }
   /**
    * A listening question whose recording would not play.
@@ -142,8 +143,23 @@ function markChosen(item: ExamItem, expected: string, chosen: string, shown: str
   };
 }
 
-/** Marks one item against one response. */
-export function markItem(item: ExamItem, response: Response, marksPerItem: number): ItemMark {
+/**
+ * Marks one item against one response.
+ *
+ * `choices` are the matching task's shared options, and are what turn the
+ * matching question's answer back into words. The stored response is an option
+ * id, because that is what a radio group carries, and the result page was
+ * printing it: "you wrote dbcff369-4fb5-4a41-9a7d-6b3c3264dbf5" against a
+ * question about a word. The list of what you got wrong is the half of a result
+ * a real slip does not give you, and a line of it nobody can read is a line
+ * that is not there.
+ */
+export function markItem(
+  item: ExamItem,
+  response: Response,
+  marksPerItem: number,
+  choices?: { id: string; label: string }[],
+): ItemMark {
   const scale = (mark: ItemMark): ItemMark => ({
     ...mark,
     scored: Math.round(mark.scored * marksPerItem * 100) / 100,
@@ -168,13 +184,11 @@ export function markItem(item: ExamItem, response: Response, marksPerItem: numbe
   }
 
   switch (item.kind) {
-    case "match-usage":
-      return scale(markChosen(
-        item,
-        item.answer,
-        response.kind === "chosen" ? response.value : "",
-        item.lemma,
-      ));
+    case "match-usage": {
+      const chosen = response.kind === "chosen" ? response.value : "";
+      const mark = scale(markChosen(item, item.answer, chosen, item.lemma));
+      return { ...mark, given: choices?.find((c) => c.id === chosen)?.label ?? "" };
+    }
 
     case "gap-choice":
     case "listen-choose":
@@ -233,8 +247,9 @@ export function markItem(item: ExamItem, response: Response, marksPerItem: numbe
       });
     }
 
+    case "message":
     case "compose":
-      return markCompose(item, response.kind === "composed" ? response.value : "", marksPerItem);
+      return markWritten(item, response.kind === "composed" ? response.value : "", marksPerItem);
 
     case "speak":
       return markSpeak(item, response, marksPerItem);
@@ -256,21 +271,18 @@ export function markItem(item: ExamItem, response: Response, marksPerItem: numbe
  */
 export const COMPOSE_LENGTH_SHARE = 0.6;
 
-function markCompose(
-  item: Extract<ExamItem, { kind: "compose" }>,
+/** The written tasks are marked identically: the message and the composition. */
+type WrittenItem = Extract<ExamItem, { kind: "compose" | "message" }>;
+
+function markWritten(
+  item: WrittenItem,
   text: string,
   marks: number,
 ): ItemMark {
-  const written = text.trim().split(/\s+/).filter(Boolean);
+  const written = wordsOf(text);
   const lengthPct = item.minWords === 0 ? 1 : Math.min(1, written.length / item.minWords);
 
-  const lowered = new Set(written.map((w) => w.toLocaleLowerCase("et").replace(/[^\p{L}\p{M}]/gu, "")));
-  // A required word counts when its headword appears. Estonian inflects, so a
-  // prefix match on the stem is the fair test: `raamatust` is `raamat` used.
-  const used = item.mustUse.filter((w) => {
-    const stem = w.lemma.toLocaleLowerCase("et");
-    return [...lowered].some((word) => word.startsWith(stem.slice(0, Math.max(3, stem.length - 1))));
-  });
+  const used = item.mustUse.filter((w) => usesRequiredWord(w.lemma, text));
   const wordsPct = item.mustUse.length === 0 ? 1 : used.length / item.mustUse.length;
 
   const share = lengthPct * COMPOSE_LENGTH_SHARE + wordsPct * (1 - COMPOSE_LENGTH_SHARE);
@@ -332,6 +344,7 @@ function languageOf(item: ExamItem): "et" | "en" {
   switch (item.kind) {
     case "government":
     case "gloss-choice":
+    case "message":
     case "compose":
     case "speak": return "en";
     default: return "et";
@@ -349,6 +362,7 @@ function expectedOf(item: ExamItem): string {
     case "gloss-choice":
     case "form-choice": return item.answer;
     case "government": return item.options.find((o) => o.key === item.answer)?.en ?? item.answer;
+    case "message":
     case "compose": return `${item.minWords} words`;
     case "speak": return "a recording";
   }
@@ -411,7 +425,7 @@ export interface ExamResult {
 function markTask(task: ExamTask, responses: ReadonlyMap<string, Response>): TaskResult {
   const perItem = task.spec.raw / task.spec.items;
   const marks = task.items.map((item) =>
-    markItem(item, responses.get(item.id) ?? BLANK_RESPONSE, perItem));
+    markItem(item, responses.get(item.id) ?? BLANK_RESPONSE, perItem, task.choices));
   return {
     taskId: task.spec.id,
     title: task.spec.title,

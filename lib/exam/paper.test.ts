@@ -143,11 +143,11 @@ describe("building a paper", () => {
       .flatMap((t) => t.items)
       .map((i) => i.lexemeId)
       .filter((id) => id !== "");
-    // The composition and the spoken tasks anchor to a word without asking
+    // The two written tasks and the spoken tasks anchor to a word without asking
     // about it, so they are allowed to reuse one; every real question is unique.
     const questions = paper.parts
       .flatMap((p) => p.tasks)
-      .filter((t) => !["compose", "speak"].includes(t.spec.kind))
+      .filter((t) => !["message", "compose", "speak"].includes(t.spec.kind))
       .flatMap((t) => t.items)
       .map((i) => i.lexemeId);
     expect(new Set(questions).size).toBe(questions.length);
@@ -209,6 +209,51 @@ describe("building a paper", () => {
   });
 });
 
+describe("the two written tasks", () => {
+  const paper = buildPaper("B1", pool(40), "written-seed");
+  const writing = partOf(paper, "writing");
+  const message = writing?.tasks.find((t) => t.spec.kind === "message")?.items[0];
+  const compose = writing?.tasks.find((t) => t.spec.kind === "compose")?.items[0];
+
+  it("sets the short message with a situation and the points it has to cover", () => {
+    expect(message?.kind).toBe("message");
+    if (message?.kind !== "message") return;
+    expect(message.scenario.length).toBeGreaterThan(0);
+    expect(message.cover.length).toBeGreaterThan(1);
+    expect(message.minWords).toBeGreaterThan(0);
+  });
+
+  it("offers the second task the two briefs the real paper offers", () => {
+    expect(compose?.kind).toBe("compose");
+    if (compose?.kind !== "compose") return;
+    expect(compose.variants).toHaveLength(2);
+    // Both have to be answerable from the same topic, since the choice may not
+    // change what the answer is worth: it is marked on length and on the words.
+    expect(compose.variants[0]?.prompt).toContain(compose.topic);
+    expect(compose.variants[1]?.prompt).toContain(compose.topic);
+  });
+
+  it("writes no Estonian into either brief: every word asked for came from the pool", () => {
+    const lemmas = new Set(pool(40).map((w) => w.lemma));
+    for (const item of [message, compose]) {
+      if (item?.kind !== "message" && item?.kind !== "compose") continue;
+      for (const word of item.mustUse) expect(lemmas.has(word.lemma)).toBe(true);
+    }
+  });
+
+  it("does not ask the same word of both texts", () => {
+    if (message?.kind !== "message" || compose?.kind !== "compose") return;
+    const asked = [...message.mustUse, ...compose.mustUse].map((w) => w.lexemeId);
+    expect(new Set(asked).size).toBe(asked.length);
+  });
+
+  it("asks the message for fewer words than the composition, being a message", () => {
+    if (message?.kind !== "message" || compose?.kind !== "compose") return;
+    expect(message.mustUse.length).toBeLessThan(compose.mustUse.length);
+    expect(message.minWords).toBeLessThan(compose.minWords);
+  });
+});
+
 describe("a dictionary too thin to fill the paper", () => {
   const paper = buildPaper("B1", pool(3), "thin");
 
@@ -236,14 +281,14 @@ describe("an empty dictionary", () => {
   it("produces a paper with no questions rather than a crash", () => {
     const paper = buildPaper("A2", [], "empty");
     expect(paper.thin).toBe(true);
-    // Not zero: the composition and the two spoken tasks need a topic and a
+    // Not zero: the two written tasks and the two spoken ones need a topic and a
     // microphone rather than a dictionary, so they survive an empty one. Every
     // task that needs a sentence is empty, which is most of the paper.
     expect(fillRate(paper)).toBeLessThan(50);
     expect(cardsInPaper(paper)).toEqual([]);
     const needingWords = paper.parts
       .flatMap((p) => p.tasks)
-      .filter((t) => !["compose", "speak"].includes(t.spec.kind));
+      .filter((t) => !["message", "compose", "speak"].includes(t.spec.kind));
     expect(needingWords.every((t) => t.items.length === 0)).toBe(true);
   });
 });
