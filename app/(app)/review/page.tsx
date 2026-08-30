@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseItems } from "@/lib/scan/items";
+import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
 
@@ -159,7 +160,28 @@ function toReviewCard(c: CardRow): ReviewCard {
 }
 
 /**
- * Attaches multiple-choice options to recognition cards.
+ * Which recognition cards are asked as four options rather than recalled.
+ *
+ * Only the ones still being learned, which is the whole point of the shape.
+ * Options were once attached to every recognition card a session held, and the
+ * effect was that half a deck could never be asked properly: `askFor` routes to
+ * a pick whenever options exist, and neither review mode overrides it, so the
+ * one question this app is named for, what does this Estonian word mean, was
+ * always answered with the answer already on the screen. Recognising a gloss
+ * among four is a different and much weaker memory than producing it, and a
+ * schedule built on the easier one says a word is known when it is not.
+ *
+ * A card still in learning keeps them for the same reason a new card leads with
+ * its answer at all (see `askFor`): the memory is not there yet, and asking for
+ * it cold is a guessing game rather than a test. A lapsed card is back in that
+ * position by definition, which `isStillLearning` reads as Relearning.
+ */
+function wantsChoices(card: ReviewCard): boolean {
+  return card.cardType === "RECOGNITION" && !card.isNew && isStillLearning(card.scheduling.state);
+}
+
+/**
+ * Attaches multiple-choice options to the recognition cards that get them.
  *
  * Wrong answers are real translations of other words rather than invented text
  * — nothing here writes Estonian, and a decoy that is obviously nonsense makes
@@ -167,15 +189,14 @@ function toReviewCard(c: CardRow): ReviewCard {
  * one query rather than one per card.
  */
 async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
-  const needs = cards.some((c) => c.cardType === "RECOGNITION" && !c.isNew);
-  if (!needs) return cards;
+  if (!cards.some(wantsChoices)) return cards;
 
   const pool = await prisma.lexeme.findMany({ select: { translation: true }, take: 2000 });
   const translations = [...new Set(pool.map((l) => l.translation))];
   if (translations.length < CHOICES) return cards;
 
   return cards.map((card) => {
-    if (card.cardType !== "RECOGNITION" || card.isNew) return card;
+    if (!wantsChoices(card)) return card;
     const decoys = shuffle(translations.filter((t) => t !== card.back)).slice(0, CHOICES - 1);
     return { ...card, choices: shuffle([...decoys, card.back]) };
   });

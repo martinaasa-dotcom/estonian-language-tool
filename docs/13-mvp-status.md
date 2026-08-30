@@ -896,3 +896,42 @@ and the invariant is what the surviving fix did not come with.
 4. **The miss marker is a per-word day, not a shared negative cache.** A word
    nobody looks at twice never benefits from it, which is correct and worth
    naming: it makes the second view cheap, not the first.
+
+## 16. Multiple choice was every recognition card, not the hard ones
+
+`withChoices` in `app/(app)/review/page.tsx` attached four English options to
+every `RECOGNITION` card a session held that was not brand new, and `askFor`
+routes to a pick whenever options exist. Neither of the two review modes
+overrides that: `"type"` applies only to `TYPEABLE`, which excludes recognition
+because its answer is free English. So half of every deck, the `et → en` half,
+was never once asked with the answer off the screen. `docs/07-srs.md` §2 calls
+recognition "passive vocabulary" and §14 above says options are for cards a
+learner has not met, and the code had quietly widened that to all of them.
+
+Recognising a gloss among four is a much weaker memory than producing it, and
+FSRS does not know which one it just measured: a card graded Good on a pick is
+scheduled as if the word were recalled. The schedule was built on the easier of
+the two memories for the more common direction, which is the one failure mode a
+spaced-repetition app cannot see from inside itself.
+
+Options are now attached only while a card is still being learned.
+`isStillLearning` in `lib/srs/scheduler.ts` reads FSRS's own state rather than
+a bare integer at the call site, and covers three of the four states: New and
+Learning because the memory is not formed yet, Relearning because a card that
+has just lapsed is back in that position by definition. A card in Review gets
+the plain question and the learner grades themselves, which is what the flip
+card was always for.
+
+### What this does not change
+
+1. **A new card still leads with its answer.** That is the `intro` shape and it
+   is the reason options existed at all: asking for a word never shown is a
+   guessing game (§14).
+2. **Recognition is still not typeable.** The answer is English prose, and
+   marking "to help" against "help" would fail people for a synonym. That is
+   the same reason `GOVERNMENT` is excluded from `TYPEABLE`.
+3. **The form drills still show the gloss.** Cloze, case-form, government and
+   the `gap`, `case` and `govern` lesson steps print the lemma and its meaning
+   before the answer, deliberately: they ask for a *form*, and testing the
+   vocabulary at the same time measures neither. `lib/srs/cards.ts` says so at
+   the line that builds the hint.
