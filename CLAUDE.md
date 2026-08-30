@@ -674,12 +674,15 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   because a paradigm is read by comparing forms down a column and a form broken across two lines
   has to be reassembled first. It buys that with a scroller of its own, which every table in the
   app sits in and an invariant checks, since the worksheet's did not and was 103px over a phone.
-  `scripts/test-containment.mjs` measures the rectangles, then asks the same three questions again
-  with every run of text swapped for one **of the same length** with no space or hyphen in it.
-  Same length is the discipline: a stress test that hands every element a forty-character word is
-  unfalsifiable, since a ring whose middle says "42%" fails it and no markup would pass, while same
-  length asks the question Estonian actually poses. With the four declarations removed it failed 93
-  of its 192 checks.
+  `scripts/test-containment.mjs` measures the rectangles, on **every route the app has** at two
+  widths plus the landing page with its disclosures open and a paper actually being sat. Four
+  questions each time: cut off by something that clips, drawn over a border somebody painted,
+  drawn on top of something else, or resized away from the size it declared. Then the same four
+  again with every run of text swapped for one **of the same length** with no space or hyphen in
+  it. Same length is the discipline: a stress test that hands every element a forty-character word
+  is unfalsifiable, since a ring whose middle says "42%" fails it and no markup would pass, while
+  same length asks the question Estonian actually poses. With the four declarations removed it
+  failed 183 of its 470 checks.
 - **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
   container, and every library that positions a floating element works in document coordinates
   instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is
@@ -981,13 +984,31 @@ suite in the state a stranger installs into.
 
 `scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
 walks every text-bearing element, every icon and everything that arrives with a width of its own,
-on twenty-three routes at 360 and 1280 plus a paper actually being sat, and asks three things:
-whether anything is cut off by an ancestor that clips, whether anything is drawn outside a border
-somebody painted, and whether any icon is drawn at other than the size it declared. A scroller
-ends the first question rather than answering it, and so does a `truncate`, because both are a way
-out that somebody chose. Then it asks all three again with the text swapped for text of the same
-length that cannot break, which is how it caught the streak circles 2px over the card on a 360px
-phone and the backup picker 58px over its own.
+on **every route the app has** at 360 and 1280, plus the landing page with its disclosures open
+and a paper actually being sat, and asks four things: whether anything is cut off by an ancestor
+that clips, whether anything is drawn outside a border somebody painted, whether anything is drawn
+on top of anything else, and whether any icon is drawn at other than the size it declared. A
+scroller ends the first question rather than answering it, and so does a `truncate`, because both
+are a way out that somebody chose. Then it asks all four again with the text swapped for text of
+the same length that cannot break, which is how it caught the streak circles 2px over the card on
+a 360px phone and the backup picker 58px over its own.
+
+Every route rather than a chosen spread, because the first version of the list was twelve screens
+picked for carrying text from somewhere other than a designer, and the third fault it found was on
+a printable worksheet nobody would have thought to check. A route costs about two seconds and a
+route left out is a screen where the whole rule is unenforced. The count of things on a page is
+part of each pass for the same reason: a route that rendered its 404 has a heading and a button
+and passes everything on the strength of having nothing to look at, which is exactly what
+`/grammar/topic/rektsioon` did for one run before the count said so.
+
+The fourth question is asked by hit-testing the letters, not by comparing rectangles, and that was
+arrived at the hard way. Sibling rectangles report a wrapped inline as one box spanning every line
+it touches, and an inline whose font changes mid-run (any Estonian prompt with an arrow in it) as
+overlapping fragments; excluding inline elements clears both and leaves the check blind, since the
+painted text here is nearly all inline. What it excludes now is what a reader cannot see anyway or
+what is layered on purpose: text past an ellipsis, an absolutely positioned ornament, and anything
+under the fixed bar or the paper's own sticky header. It was made to fail once, by covering a deck
+row in the browser.
 
 `scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
 1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on

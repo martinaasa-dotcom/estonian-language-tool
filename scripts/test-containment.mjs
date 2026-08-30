@@ -12,7 +12,7 @@
  * The page never scrolls sideways for any of that, so `test-mobile.mjs` reads
  * a clean pass and the screen looks broken.
  *
- * THREE FAULTS, AND EACH IS A DIFFERENT MISTAKE.
+ * FOUR FAULTS, AND EACH IS A DIFFERENT MISTAKE.
  *
  *   1. Something is CUT OFF. It sits inside an ancestor that clips, and part
  *      of it is past the clip: the reader is missing text and has no way to
@@ -31,12 +31,18 @@
  *      app/globals.css is the one rule that stops that, and this is what says
  *      the rule is still doing its job on a real page.
  *
- * AND THEN THE SAME THREE WITH NOTHING TO BREAK ON, WHICH IS THE HALF THAT
+ *   4. Something is DRAWN INTO SOMETHING ELSE. Not out of a box: on top of
+ *      one. This is the fault that survives all three above, because both
+ *      elements are inside their card and neither is cut off; one of them
+ *      just cannot be read. Asked by hit-testing the letters rather than by
+ *      comparing rectangles, for reasons written out where it is done.
+ *
+ * AND THEN THE SAME FOUR WITH NOTHING TO BREAK ON, WHICH IS THE HALF THAT
  * MATTERS. A page that holds today's words is not a page that holds text: a
  * row fits because the gloss it happens to carry has three spaces in it, and
  * a browser will break a line at a space whether or not anybody thought about
  * it. So every run of text is swapped for a run of letters OF THE SAME LENGTH
- * with no space and no hyphen anywhere in it, and the same three questions are
+ * with no space and no hyphen anywhere in it, and the same four questions are
  * asked again.
  *
  * SAME LENGTH IS THE WHOLE DISCIPLINE OF IT. A stress test that hands every
@@ -66,45 +72,110 @@ const B = baseUrl();
 const WIDTHS = [360, 1280];
 
 /**
- * A spread of the screens where text arrives from somewhere other than a
- * designer: the dictionary and the review modes carry Estonian, the progress
- * and class screens carry names people typed, and the exam and grammar pages
- * are the densest layouts in the app.
+ * Every route the app has, rather than a spread of the ones somebody thought
+ * were likely.
+ *
+ * The first version of this list was twelve screens chosen for carrying text
+ * from somewhere other than a designer, which is the right instinct and the
+ * wrong list: two of the three faults this suite has found so far were on
+ * screens that instinct would have picked, and the third was on a printable
+ * worksheet nobody would have thought to check. A route is cheap here, about
+ * two seconds, and a route that is not in this list is a screen where the
+ * whole rule is unenforced.
+ *
+ * What is not here is the three routes that need a row in the database to
+ * exist at all: a classroom, a sat paper and a scan. The paper is covered by
+ * the block at the end, which sits one for real.
  */
 const ROUTES = [
+  // Today, and the daily path.
   "/",
-  "/dictionary?q=tuba",
   "/review",
   "/review/write",
   "/review/cloze",
   "/review/dictation",
   "/review/pairs",
-  "/words",
+  "/review/clinic",
+  "/review/government",
+  "/review/listening",
+  "/review/match",
+  "/review/sentences",
+  "/review/speaking",
+  "/review/sprint",
   "/practice",
-  "/progress",
+  "/tasks",
+
+  // The dictionary, the deck and the reference, which is where the Estonian is.
+  "/dictionary",
+  "/dictionary?q=tuba",
+  "/words",
   "/grammar",
   "/grammar/partitive",
+  "/grammar/topic/object",
+
+  // The course.
   "/learn",
   "/learn/kodu",
+  "/learn/kodu/lesson",
   "/learn/kodu/worksheet",
+  "/learn/checkpoint/A1",
   "/week",
-  "/tasks",
-  "/settings",
+  "/week/1",
+
+  // Measurement, and the things built on it.
+  "/progress",
   "/exam",
   "/assess",
+  "/placement",
+
+  // Everything else a signed-in learner can reach.
+  "/settings",
   "/guide",
   "/class",
+  "/tutor",
+  "/scan",
   "/suggestions",
+  "/admin/suggestions",
+
+  // The pages that own the whole screen, plus the two a regulator reads and
+  // the one shown when the network is gone.
+  "/welcome",
+  "/sign-in",
+  "/start",
+  "/privacy",
+  "/terms",
+  "/offline",
 ];
 
+/**
+ * The routes that genuinely are this small, and how small.
+ *
+ * Each pass asks whether the page had anything on it before believing four
+ * clean answers about it, because a route that rendered its error boundary or
+ * a 404 has a heading and a button and passes all four on the strength of
+ * having almost nothing to look at. That is not hypothetical: this list
+ * carried `/grammar/topic/rektsioon` for one run, which is not a topic id, and
+ * the count is what said so rather than four green ticks on the 404 page.
+ *
+ * Twenty-five is the default and two pages are honestly under it, so they
+ * declare their own rather than the default coming down for everybody.
+ * Lowering it to let `/offline` through is lowering it to let a crashed
+ * `/words` through, which is the whole reason the number is here.
+ */
+const SPARSE = new Map([
+  ["/offline", 4],
+  ["/sign-in", 12],
+]);
+
 /*
-  Floor: 192. Twenty-three routes at two widths is forty-six passes, plus the
-  examination paper at each width, and every pass reports four things: cut
-  off, bled over, deformed, and then the same three again with every word
-  turned into one with nothing to break on. Raise this when you add a route;
-  never lower it to make a run go green.
+  Floor: 470. Forty-five routes at two widths is ninety passes, plus the
+  landing page with its disclosures open and the examination paper being sat,
+  each at both widths. Every pass reports five things: cut off, bled over a
+  border, drawn into a neighbour, deformed, and then the same four again with
+  every word turned into one with nothing to break on. Raise this when you add
+  a route; never lower it to make a run go green.
 */
-const { check, done } = suite("Containment", { floor: 192 });
+const { check, done } = suite("Containment", { floor: 470 });
 
 const browser = await launchChromium();
 
@@ -121,10 +192,30 @@ function survey({ stress }) {
   const EPS = 1.5;
   const originals = [];
 
+  /*
+    Whether this is actually painted, asked of the browser rather than worked
+    out from three computed properties.
+
+    The hand-rolled version checked `display`, `visibility` and `opacity`, and
+    a closed `<details>` is none of those: Chromium skips its contents through
+    `::details-content`, so the paragraphs inside still report full layout
+    rects while nothing is drawn. That had this suite reporting the landing
+    page's comparison panel as 79px of prose bleeding out of its own card, on
+    a card that was shut. `checkVisibility` knows about skipped contents,
+    `content-visibility`, `inert` and the rest, and it will keep knowing about
+    whatever is added next.
+
+    It throws rather than falling back, because a fallback that answers "not
+    shown" for everything is a suite that measures nothing and prints a pass.
+  */
+  if (typeof document.body.checkVisibility !== "function") {
+    throw new Error("this browser has no Element.checkVisibility, so nothing below can tell drawn from skipped");
+  }
+
   const shown = (el) => {
-    const cs = getComputedStyle(el);
-    if (cs.display === "none" || cs.visibility === "hidden") return false;
-    if (parseFloat(cs.opacity) < 0.02) return false;
+    if (!el.checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true })) {
+      return false;
+    }
     const r = el.getBoundingClientRect();
     return r.width > 0.5 || r.height > 0.5;
   };
@@ -258,6 +349,7 @@ function survey({ stress }) {
   const cut = [];
   const bled = [];
   const deformed = [];
+  const collided = [];
 
   /*
     An absolutely positioned element was put where it is on purpose — a corner
@@ -284,6 +376,176 @@ function survey({ stress }) {
     }
   }
 
+  /*
+    AND NOTHING IS DRAWN ON TOP OF ANYTHING ELSE.
+
+    Not out of a box: into one. Something laid over text that is otherwise
+    perfectly inside its card, which every check above passes happily because
+    both elements are where they belong and one of them simply cannot be read.
+
+    ASKED BY HIT-TESTING RATHER THAN BY COMPARING RECTANGLES, and that was
+    arrived at the hard way. Comparing sibling rectangles reported three
+    things and none of them was this fault. An inline element that wraps has
+    one bounding rectangle spanning every line it touches, so a span before it
+    on line one and a span after it on line two overlap on paper with no ink
+    in common at all. `getClientRects` fixes that and uncovers the next one: an
+    inline whose text changes font mid-run, which here is any Estonian prompt
+    with an arrow in it, reports a fragment rectangle per run plus one
+    covering the lot, and those overlap each other by a pixel or ten. Excluding
+    inline-level elements clears both and leaves the check blind, because the
+    painted text in this app is nearly all inline: a 30px negative margin
+    forced into a deck row went unreported.
+
+    `elementFromPoint` asks the browser what is actually on top at a point,
+    which is the question all along. It ignores anything `pointer-events:
+    none`, so the three pastel washes behind every page are not a finding, and
+    a hit on the element itself or on something it is inside is the ordinary
+    answer.
+
+    The point has to be somewhere the element is ACTUALLY PAINTED, which is
+    not the same as somewhere it is laid out, and two things stood between
+    those. A deck row keeps its translation to one line with `truncate`, and
+    the part past the ellipsis still has a rectangle: hit-testing that
+    reported the row's level chip as drawn over a translation it merely sits
+    beside, so the rectangle is intersected with every ancestor that clips.
+    And an inline element's own rectangle is its inline box, which for a run
+    that changes font mid-way (any Estonian prompt with an arrow in it) is
+    reported in fragments that reach past where the text ends. A Range over
+    the text node is where the letters are, which is what this is asking
+    about.
+
+    Text inside an ELLIPSIS is left out of this one, for the same reason it is
+    left out of "cut off" above: the box has said in CSS that it is stopping
+    the line short, and right at that boundary the browser's own geometry for
+    the runs either side of it stops agreeing with itself. A deck row's word
+    and its translation are reported as occupying the same eleven pixels
+    there, which is not something any markup could fix and not something a
+    reader can see.
+
+    The page is walked a screenful at a time, because a point below the fold
+    cannot be hit-tested at all, and the scroll is put back afterwards so both
+    passes over a page start where the last one did.
+
+    Made to fail once, which is the only way anybody knows what a quiet check
+    is saying: an absolutely positioned block was appended over one deck row
+    in the browser, and this reported six things covered by it and nothing
+    anywhere else on the page.
+  */
+  /**
+   * Whether this is chrome: something the page is meant to scroll underneath.
+   *
+   * `fixed` is the phone bar and the desktop rail. `sticky` is the
+   * examination paper's own header, which holds the clock and the part number
+   * and is pinned there precisely so that the paper passes under it. Neither
+   * is a fault. What keeps the *end* of a page clear of the bar is
+   * `.dock-pad`, which `scripts/test-mobile.mjs` measures.
+   */
+  const chrome = (el) => {
+    for (let n = el; n; n = n.parentElement) {
+      const position = getComputedStyle(n).position;
+      if (position === "fixed" || position === "sticky") return true;
+    }
+    return false;
+  };
+
+  /** Whether anything above this has declared it is cutting the line short. */
+  const elided = (el) => {
+    for (let n = el; n && n !== document.body; n = n.parentElement) {
+      if (getComputedStyle(n).textOverflow.startsWith("ellipsis")) return true;
+    }
+    return false;
+  };
+
+  /** The first rectangle of the letters themselves, or of an icon's own box. */
+  const inkOf = (el) => {
+    const text = [...el.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
+    if (!text) return [...el.getClientRects()][0] ?? null;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    return [...range.getClientRects()][0] ?? null;
+  };
+
+  /**
+   * What is left of `rect` once everything that clips it has had its say.
+   *
+   * Starting at the element rather than its parent, because the commonest
+   * thing here that clips is `sr-only`: a one-pixel box with `overflow:
+   * hidden` holding a whole sentence, which a Range reports at its full
+   * unclipped width. The skip link at the top of every signed-in page is one,
+   * and it was being reported as covered by the page it is hidden behind.
+   */
+  const painted = (el, rect) => {
+    let box = { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+    for (let n = el; n && n !== document.body; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (!["x", "y"].some((a) => hides(cs, a) || scrolls(cs, a))) continue;
+      const r = n.getBoundingClientRect();
+      box = {
+        left: Math.max(box.left, r.left),
+        right: Math.min(box.right, r.right),
+        top: Math.max(box.top, r.top),
+        bottom: Math.min(box.bottom, r.bottom),
+      };
+    }
+    return box;
+  };
+
+  const startedAt = window.scrollY;
+  const step = Math.max(200, window.innerHeight - 80);
+
+  /*
+    Each candidate is sorted into the one screenful that will hold it, so the
+    whole list is walked once rather than once per screenful. The first
+    version scrolled and then re-read every element on the page at every stop,
+    which on `/learn` is 498 candidates times a dozen screenfuls of
+    `getComputedStyle`: the same 470 checks took nine minutes that way and
+    take 106 seconds this way, which is the difference between a suite CI runs
+    and one somebody eventually takes out of CI.
+
+    `placed` is here for the reason it is used above: something positioned
+    absolutely was put where it is on purpose, and that includes being put
+    behind something. The landing page's step numerals are the case that made
+    this explicit, a 92px figure sitting behind each card as ornament, which
+    `scripts/test-invariants.ts` names as the one thing deliberately off the
+    type scale.
+  */
+  const screenfuls = new Map();
+  for (const el of [...textLeaves, ...icons]) {
+    if (!shown(el) || placed(el) || elided(el)) continue;
+    const first = inkOf(el);
+    if (!first) continue;
+    const at = Math.max(0, Math.floor((first.top + window.scrollY) / step) * step);
+    if (!screenfuls.has(at)) screenfuls.set(at, []);
+    screenfuls.get(at).push(el);
+  }
+
+  for (const [at, group] of [...screenfuls].sort((a, b) => a[0] - b[0])) {
+    window.scrollTo(0, at);
+    for (const el of group) {
+      const first = inkOf(el);
+      if (!first) continue;
+      const rect = painted(el, first);
+      const w = rect.right - rect.left, h = rect.bottom - rect.top;
+      if (w < 2 || h < 2) continue;
+      const x = rect.left + Math.min(6, w / 2);
+      const y = rect.top + h / 2;
+      if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) continue;
+
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || hit === el || el.contains(hit) || hit.contains(el)) continue;
+      /*
+        The phone bar and the desktop rail are drawn over the page on purpose
+        and the page scrolls under them, so a point beneath one of them is
+        layering rather than a fault. What keeps the *end* of a page clear of
+        the bar is `.dock-pad`, which `scripts/test-mobile.mjs` measures.
+      */
+      if (chrome(hit)) continue;
+      collided.push(`${named(hit)} is drawn over ${named(el)}`);
+    }
+  }
+  window.scrollTo(0, startedAt);
+
+
   for (const svg of icons) {
     if (!shown(svg)) continue;
     const want = { w: parseFloat(svg.getAttribute("width")), h: parseFloat(svg.getAttribute("height")) };
@@ -305,8 +567,9 @@ function survey({ stress }) {
     cut: [...new Set(cut)].length,
     bled: [...new Set(bled)].length,
     deformed: [...new Set(deformed)].length,
+    collided: [...new Set(collided)].length,
     sideways,
-    say: { cut: first(cut), bled: first(bled), deformed: first(deformed) },
+    say: { cut: first(cut), bled: first(bled), deformed: first(deformed), collided: first(collided) },
     counted: textLeaves.length + icons.length + sized.length,
   };
 }
@@ -335,23 +598,25 @@ for (const width of WIDTHS) {
       on it and passes all four of these on the strength of having almost
       nothing to look at, which is the failure `scripts/lib/checks.mjs` exists
       for arriving one level further in: the block ran, it just ran over an
-      empty page. Twenty-five, against a measured minimum of 31 on
-      `/review/pairs`, which is the thinnest screen in the list.
+      empty page. `SPARSE` above holds the two routes that are honestly
+      smaller than the default.
     */
+    const atLeast = SPARSE.get(route) ?? 25;
     check(
       `nothing is cut off on ${at}`,
-      rest.cut === 0 && rest.counted >= 25,
-      rest.cut > 0 ? rest.say.cut : `only ${rest.counted} things on the page to look at`,
+      rest.cut === 0 && rest.counted >= atLeast,
+      rest.cut > 0 ? rest.say.cut : `only ${rest.counted} things on the page, expected ${atLeast}`,
     );
     check(`nothing bleeds over a border on ${at}`, rest.bled === 0, rest.say.bled);
+    check(`nothing is drawn into its neighbour on ${at}`, rest.collided === 0, rest.say.collided);
     check(`no icon is deformed on ${at}`, rest.deformed === 0, rest.say.deformed);
 
     const hard = await page.evaluate(survey, { stress: true });
     check(
       `the same words with nothing to break on stay in their boxes on ${at}`,
-      hard.cut === 0 && hard.bled === 0 && hard.deformed === 0 && hard.sideways <= 0,
-      [hard.say.cut, hard.say.bled, hard.say.deformed, hard.sideways > 0 ? `${hard.sideways}px sideways` : ""]
-        .filter(Boolean).join(" · "),
+      hard.cut === 0 && hard.bled === 0 && hard.collided === 0 && hard.deformed === 0 && hard.sideways <= 0,
+      [hard.say.cut, hard.say.bled, hard.say.collided, hard.say.deformed,
+       hard.sideways > 0 ? `${hard.sideways}px sideways` : ""].filter(Boolean).join(" · "),
     );
   }
 
@@ -365,6 +630,38 @@ for (const width of WIDTHS) {
     Both were found on a device rather than by a check, which is the argument
     for the check.
   */
+  /*
+    The landing page with every disclosure open, which is a third of that page
+    and had never been looked at.
+
+    A closed `<details>` is skipped contents: `checkVisibility` says so, which
+    is what stopped this suite reporting the comparison panel as bleeding when
+    it was shut. The other half of that fact is that the panel's whole
+    argument, its eight-claim grid and its four credit cards, is unmeasured
+    until somebody opens it, and this page is the first thing anybody sees.
+  */
+  const open = await ctx.newPage();
+  await open.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
+  await open.evaluate(() => {
+    for (const d of document.querySelectorAll("details")) d.open = true;
+  });
+  await open.waitForTimeout(400);
+
+  const opened = await open.evaluate(survey, { stress: false });
+  check(`nothing is cut off on /welcome with every disclosure open at ${width}`, opened.cut === 0, opened.say.cut);
+  check(`nothing bleeds over a border on /welcome with every disclosure open at ${width}`, opened.bled === 0, opened.say.bled);
+  check(`nothing is drawn into its neighbour on /welcome with every disclosure open at ${width}`, opened.collided === 0, opened.say.collided);
+  check(`no icon is deformed on /welcome with every disclosure open at ${width}`, opened.deformed === 0, opened.say.deformed);
+
+  const pressed = await open.evaluate(survey, { stress: true });
+  check(
+    `the same words with nothing to break on stay in their boxes on an open /welcome at ${width}`,
+    pressed.cut === 0 && pressed.bled === 0 && pressed.collided === 0 && pressed.deformed === 0 && pressed.sideways <= 0,
+    [pressed.say.cut, pressed.say.bled, pressed.say.collided, pressed.say.deformed,
+     pressed.sideways > 0 ? `${pressed.sideways}px sideways` : ""].filter(Boolean).join(" · "),
+  );
+  await open.close();
+
   const paper = await ctx.newPage();
   await paper.goto(`${B}/exam/A2?seed=containment`, { waitUntil: "networkidle", timeout: 60000 });
   await paper.getByRole("button", { name: "Start the clock" }).click();
@@ -373,13 +670,14 @@ for (const width of WIDTHS) {
   const sat = await paper.evaluate(survey, { stress: false });
   check(`nothing is cut off on the A2 paper at ${width}`, sat.cut === 0, sat.say.cut);
   check(`nothing bleeds over a border on the A2 paper at ${width}`, sat.bled === 0, sat.say.bled);
+  check(`nothing is drawn into its neighbour on the A2 paper at ${width}`, sat.collided === 0, sat.say.collided);
   check(`no icon is deformed on the A2 paper at ${width}`, sat.deformed === 0, sat.say.deformed);
 
   const strained = await paper.evaluate(survey, { stress: true });
   check(
     `the same words with nothing to break on stay in their boxes on the A2 paper at ${width}`,
-    strained.cut === 0 && strained.bled === 0 && strained.deformed === 0 && strained.sideways <= 0,
-    [strained.say.cut, strained.say.bled, strained.say.deformed,
+    strained.cut === 0 && strained.bled === 0 && strained.collided === 0 && strained.deformed === 0 && strained.sideways <= 0,
+    [strained.say.cut, strained.say.bled, strained.say.collided, strained.say.deformed,
      strained.sideways > 0 ? `${strained.sideways}px sideways` : ""].filter(Boolean).join(" · "),
   );
   await paper.close();
