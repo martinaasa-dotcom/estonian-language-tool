@@ -94,28 +94,49 @@ check("that link lands on the entry", page.url().includes("/dictionary?q="), pag
   Driven rather than reasoned about, because the whole bug was that the button
   looked right and did nothing.
 
-  The precondition is stated: a database with no such pair cannot show this, and
-  a suite that clicks a chip that is not there waits thirty seconds and then
-  fails in Playwright's words rather than in ones that name the cause.
+  THE CHIP IS FOUND BY ITS LEMMA, EXACTLY, AND THE FIRST VERSION OF THIS WAS NOT.
+
+  It asked for the first button whose text started with "vana", which in CI was
+  `vanaadium`, vanadium: a different word that shares five letters. So the check
+  about the label failed on a chip it was never about, and the one after it went
+  green for opening an entry that was indeed a different entry. Prefix-matching
+  the thing under test is the same fault as the bug this block exists for, one
+  layer up, which is a good reason to say exactly what you mean.
+
+  The precondition is stated rather than assumed, and it is the real one: not
+  "are there other matches", since searching `vana` finds `vanaadium` whatever
+  else is true, but "is one of them this same word". A database holding one
+  entry for `vana` cannot show any of this, and a suite that clicks a chip that
+  is not there waits thirty seconds and then fails in Playwright's words rather
+  than in ones that name the cause.
 */
 await page.goto(`${B}/dictionary?q=vana`, { waitUntil: "networkidle" });
-const otherChip = page.locator("button", { hasText: /^vana/ }).first();
-const hasPair = (await page.getByText(/other match/).count()) > 0 && (await otherChip.count()) > 0;
+const chips = page.locator('button:has(span[lang="et"])');
+let otherChip = null;
+for (let i = 0; i < (await chips.count()); i++) {
+  const chip = chips.nth(i);
+  const lemma = (await chip.locator('span[lang="et"]').first().innerText()).trim();
+  if (lemma === "vana") { otherChip = chip; break; }
+}
 
-if (!hasPair) {
+if (!otherChip) {
   absent(3, "this dictionary holds one entry for `vana`, so there is no pair to choose between");
 } else {
-  const openedPos = (await page.locator("main").innerText()).toLowerCase();
-  check("a second entry for one word is offered", true);
+  const chipText = (await otherChip.innerText()).replace(/\s+/g, " ").trim();
+  const openedBefore = (await page.locator("main").innerText()).toLowerCase();
+
+  check("a second entry for one word is offered, and it is the same word",
+    (await page.getByText(/other match/).count()) > 0 && chipText.startsWith("vana "),
+    chipText);
   check("and the chip says which one it is, since the glosses barely differ",
-    /adjective|noun|verb|other/i.test((await otherChip.innerText()).toLowerCase()),
-    (await otherChip.innerText()).replace(/\s+/g, " "));
+    /adjective|noun|verb|other/i.test(chipText), chipText);
 
   await otherChip.click();
   await page.waitForURL(/entry=/, { timeout: 10000 }).catch(() => {});
-  const nowPos = (await page.locator("main").innerText()).toLowerCase();
+  const openedAfter = (await page.locator("main").innerText()).toLowerCase();
   check("and clicking it actually opens the other one",
-    page.url().includes("entry=") && nowPos !== openedPos,
+    /[?&]q=vana(&|$)/.test(page.url()) && page.url().includes("entry=")
+      && openedAfter !== openedBefore,
     page.url().replace(B, ""));
 }
 
