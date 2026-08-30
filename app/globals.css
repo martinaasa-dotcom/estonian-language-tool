@@ -517,6 +517,23 @@
       which have no caps to discolour.
     */
     background-image: linear-gradient(90deg, #6a5ae8 0%, #7a4fdc 45%, #c33a7e 100%);
+    /*
+      And the ramp has to be measured from the same box it is painted into.
+      A button here carries a 1px transparent border, and the CSS defaults
+      disagree about it: `background-origin` is the padding box, so the ramp
+      runs from 0% one pixel in to 100% one pixel short, while
+      `background-clip` is the border box, so that outer pixel is painted
+      anyway. The default `repeat` fills it from the next tile along, which
+      puts the pink end of the ramp down the left edge and the blue end down
+      the right, on the two rounded caps where a single flat colour is most
+      visible. That is the same fleck the 90deg fix above was for, arriving by
+      a second route, which is why fixing the angle alone did not clear it.
+      Measuring from the border box makes the caps the true endpoints again;
+      `no-repeat` means a later change to either box shows a gap rather than
+      quietly wrapping a colour round the edge.
+    */
+    background-origin: border-box;
+    background-repeat: no-repeat;
   }
   .grad-text {
     background-image: linear-gradient(112deg, var(--accent-deep) 0%, #7b3fd0 40%, var(--blush-ink) 92%);
