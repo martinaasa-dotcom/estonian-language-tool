@@ -415,3 +415,74 @@ model Assessment {
 
   @@index([ownerId, takenAt])
 }
+
+/// One thing a learner told us was wrong, and what they proposed instead.
+///
+/// THE DICTIONARY IS SHARED, SO DISAGREEING WITH IT HAS TO GO SOMEWHERE.
+///
+/// A learner can already correct an entry by hand, and that stays: it is
+/// attributed, it is reversible, and it is the fastest way to fix a typo in
+/// front of you. What it cannot carry is everything else that goes wrong — a
+/// word the dictionary has never heard of, a gloss that is the wrong sense, a
+/// sentence on a grammar page that is misleading, an answer marked wrong that
+/// was right, a screen that threw. Before this, all of that had one honest
+/// outcome and no second one: the learner read a dead end and closed the tab.
+///
+/// So every dead end in the app now offers to send one of these, and this is
+/// where it lands. A row is a report *and*, where the category allows it, a
+/// machine-applicable proposal (`patch`), so accepting it in the review queue
+/// makes the change rather than opening a to-do.
+///
+/// `lexemeId` is a plain column with no relation, for the reason `Review`'s
+/// `cardId` is: a report about a word has to outlive the word. Deleting or
+/// merging an entry must not cascade away the evidence that it was wrong.
+///
+/// Owner-scoped, so it is in the export and goes with the account — the note
+/// is the learner's own writing, and /privacy accounts for it.
+model Suggestion {
+  id      String @id @default(uuid())
+  ownerId String
+
+  /// OPEN | ACCEPTED | DECLINED.
+  status   String @default("OPEN")
+  /// One of `lib/suggestions/model.ts`'s categories. The queue's own tabs.
+  category String
+
+  /// What a thousand reports of one thing have in common.
+  ///
+  /// Sign-up is open and every failure in the app offers this button, so the
+  /// queue's volume is a property of how many people meet the same dead end.
+  /// Grouping is what keeps that reviewable: the admin sees one row saying
+  /// "forty-one people", acts once, and the whole group resolves.
+  groupKey String
+
+  /// The dictionary entry this is about, when it is about one.
+  lexemeId String?
+  /// The word as the learner had it, which is the only handle a missing word has.
+  lemma    String?
+
+  /// The path they were on: "/dictionary?q=vihm", "/review".
+  context String?
+  /// What the app had just said to them. The failure they were looking at.
+  trigger String?
+  /// What they wrote.
+  note    String  @default("")
+
+  /// JSON: the proposal, in one of `lib/suggestions/model.ts`'s patch shapes,
+  /// or `{}` where the category has nothing mechanical to apply. Every Estonian
+  /// character in here was typed by a person, exactly like a hand edit — no
+  /// model writes a form (ADR-005).
+  patch   String  @default("{}")
+
+  createdAt  DateTime  @default(now())
+  reviewedBy String?
+  reviewedAt DateTime?
+  /// What the reviewer decided, in their words. Kept with the row so a second
+  /// admin meeting the same report can see it was already answered and why.
+  decision   String?
+
+  @@index([status, category, createdAt])
+  @@index([status, groupKey])
+  @@index([ownerId, createdAt])
+  @@index([lexemeId])
+}

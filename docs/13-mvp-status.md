@@ -988,3 +988,80 @@ the instruction that already asked her to use both names.
    "Singular", "Answers" are labels on a table of Estonian, not names of
    grammatical categories, and translating them would be decoration.
 
+
+## 18. The twelfth pass: what to do when the app is wrong
+
+The dictionary is assembled rather than typed, which is what keeps invented
+Estonian out of it and is not the same thing as being right. Ekilex may have no
+entry for a word somebody is holding on a page in front of them; a Wiktionary
+sense order may put an everyday meaning under a later etymology; a mark is a
+string comparison against a form the dictionary vouches for, and it cannot know
+the dictionary is the thing that is wrong. Every one of those ended the same
+way: a sentence, a back button, and the one person who knew what was actually
+wrong with nowhere to put it.
+
+### What was added
+
+**A report from wherever the failure is.** `components/SuggestFix.tsx` mounts
+beside the dead end rather than under a contact page, on a search that found
+nothing, on a dictionary entry, on an answer marked wrong, on a word off a
+photographed page that nothing vouched for, on a grammar reference, on a mock
+paper's marking, on a failed import, on Anu failing to answer, on the error
+boundary and on a link that led nowhere. It sends the screen and what the app
+had just said along with the report, because a correction without the thing it
+corrects is a sentence out of context. The note is optional: pressing the button
+on that screen is already the useful half.
+
+**A queue built for the volume rather than for a demo.** `/admin/suggestions`
+shows one line per thing reported, ordered by how many people reported it,
+filtered by what a reviewer would do about it: dictionary, marking, teaching,
+faults. Each line carries what the entry says now beside what is proposed, so a
+decision does not need a second tab. Accepting acts on the whole group.
+
+**One click that is a real write.** Four of the eight categories carry a
+machine-applicable proposal, and accepting one goes through
+`lib/dict/upsert.ts`, the same function the hand-edit path uses: principal parts
+only, an Ekilex paradigm never touched, provenance never relabelled. An example
+sentence can be removed and never rewritten. Nothing under `lib/suggestions/`
+can reach a model.
+
+**And the learner is told what happened.** `/suggestions` lists what they sent,
+its outcome and the reviewer's words. A report that vanishes is a report nobody
+sends twice.
+
+### Things this pass refused to do
+
+1. **Route every dictionary edit through review.** A learner can still correct
+   an entry by hand, attributed, exactly as before. That is the right tool for a
+   typo in front of you, and taking it away would slow down the correction that
+   is most likely to be right in order to moderate the one least likely to be.
+   The queue is the channel for a judgement somebody should look at, and the two
+   sit side by side on the entry.
+2. **Let the app decide which reports are duplicates of each other.** Grouping
+   is mechanical and blunt: the entry, or the screen and the message with digits
+   flattened. Anything cleverer would merge two reports about different words on
+   a similarity score nobody could audit from the queue.
+3. **Invent a reviewer.** With sign-in configured and `ADMIN_EMAILS` unset,
+   nobody is an admin and the queue says so. Falling back to the first account,
+   or to anybody signed in, would turn an open sign-up into an open dictionary.
+4. **Reply to people.** A reviewer can leave a note and the sender sees it. There
+   is no thread, no email, and no promise about how long any of it takes, because
+   this app cannot keep one.
+
+### Known limitations, stated plainly
+
+1. **An accepted correction does not rewrite existing cards.** Nobody's deck is
+   touched by a review decision, on the same argument the hand-edit path makes
+   about strangers' data. A learner who already holds a card built from the old
+   gloss keeps it until they rebuild it.
+2. **A report cannot be sent offline.** Grades queue in the outbox and these do
+   not: a suggestion is not a fact with a timestamp that can be replayed, it is a
+   message, and one silently held for a week is worse than one that says it did
+   not send.
+3. **The queue has no full-text search.** It has status, category, grouping and
+   a pager. At the volume this was built for that is enough to work through, and
+   searching notes is a feature to add when somebody actually needs to find one.
+4. **A reviewer is trusted completely.** Accepting writes to the shared
+   dictionary with no second pair of eyes and no undo beyond editing the entry
+   back. The list is meant to be short enough to read aloud, which is why it is
+   exact addresses and why there is no way to grant it from inside the app.

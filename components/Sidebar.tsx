@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen, Camera, CalendarCheck, CalendarRange, ChartNoAxesColumn, ClipboardCheck, Compass,
   GraduationCap, Languages, Layers, LogOut, Map, MessageCircleQuestion, MoreHorizontal, Moon,
-  School, Settings, Sun, Swords, X, Zap,
+  MessageSquareWarning, School, Settings, Sun, Swords, X, Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -39,6 +39,17 @@ const NAV: NavItem[] = [
   { href: "/tasks", label: "Tasks", icon: CalendarCheck, tone: "var(--peach)" },
   { href: "/week", label: "This week", icon: CalendarRange, tone: "var(--butter)" },
   { href: "/class", label: "Classes", icon: School, tone: "var(--sky)" },
+  /*
+    The learner's own reports, and the door to the review queue for whoever
+    reviews them. Everybody gets this entry rather than only admins, and that
+    is a decision about cost as much as about design: `isAdmin` asks Supabase
+    who is signed in, and putting it in the layout would spend that call on
+    every page in the app to decide whether to draw one link. The queue is one
+    click from here, and this page is worth having for everybody anyway, since
+    "what happened to the thing I reported" is the question that decides
+    whether anybody reports a second one.
+  */
+  { href: "/suggestions", label: "Suggestions", icon: MessageSquareWarning, tone: "var(--peach)" },
 ];
 
 /**

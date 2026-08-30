@@ -242,6 +242,22 @@ The defaults are live whether or not you configure anything. There is no way to 
 because sign-up is open by default. If you would rather run a private instance, `ALLOWED_EMAILS` or
 `ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
 
+### When the app gets something wrong
+
+The dictionary is built from Ekilex and Wiktionary rather than typed, which keeps invented Estonian
+out of it and does not make every entry right. So every dead end offers to send a suggested fix: a
+search that found nothing, a gloss that is the wrong sense, a principal part that is wrong, an
+answer marked wrong that was right, a page whose explanation does not match what a course says, a
+screen that failed. What is sent carries the screen and what the app had just said, so a report
+arrives with the thing it is about rather than as a sentence out of context.
+
+They land in a review queue at `/admin/suggestions`, grouped so that one problem is one decision
+however many people reported it, with what the entry says now beside what is proposed. Accepting a
+dictionary correction writes it into the shared entry in one click. `ADMIN_EMAILS` names who may do
+that; with sign-in configured and nobody named, the queue says so instead of showing an empty list.
+Running locally there is one learner and they review their own. Anyone can see what they sent, and
+what happened to it, at `/suggestions`.
+
 ### Adding Google sign-in (multi-user)
 
 Every route is gated behind sign-in (`middleware.ts`); each Google account gets its own dictionary

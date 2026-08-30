@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Chip, Empty } from "@/components/ui";
 import { Mascot } from "@/components/brand";
+import { SuggestFix } from "@/components/SuggestFix";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
@@ -76,6 +77,13 @@ export function TutorChat({
     key happens to be first in the environment today.
   */
   const [answeredBy, setAnsweredBy] = useState<string | null>(null);
+  /*
+    The last thing that went wrong, kept out of the transcript.
+    A failure written into the conversation reads as something Anu said, and
+    the way to report it should not be a message in a thread she will be sent
+    back as context next time.
+  */
+  const [failure, setFailure] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -105,6 +113,7 @@ export function TutorChat({
 
       if (!res.ok || !res.body) {
         const { error } = await res.json().catch(() => ({ error: "Anu could not be reached." }));
+        setFailure(String(error));
         setMessages((m) => [...m.slice(0, -1), { role: "assistant", content: `⚠ ${error}` }]);
         return;
       }
@@ -119,6 +128,7 @@ export function TutorChat({
         setMessages((m) => [...m.slice(0, -1), { role: "assistant", content: acc }]);
       }
     } catch {
+      setFailure("Lost the connection to Anu mid-answer.");
       setMessages((m) => [...m.slice(0, -1), {
         role: "assistant",
         content: "⚠ Lost the connection to Anu. Your question is still in the box above. Try again.",
@@ -229,6 +239,19 @@ export function TutorChat({
           <Send size={15} aria-hidden /> {streaming ? "Thinking…" : "Ask"}
         </Button>
       </div>
+
+      {failure && (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+            Keeps happening?
+          </p>
+          <SuggestFix
+            category="BROKEN"
+            trigger={`Asking Anu failed: ${failure}`}
+            label="Tell the Kodukeel team"
+          />
+        </div>
+      )}
 
       <Provenance label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
     </div>
