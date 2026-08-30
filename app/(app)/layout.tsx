@@ -5,8 +5,12 @@ import { Shortcuts } from "@/components/Shortcuts";
 import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
 import { AnuFab } from "@/components/anu/AnuFab";
+import { LetterBarScope } from "@/components/DiacriticBar";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { requireUserId } from "@/lib/auth/session";
+import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import { letterBarFrom } from "@/lib/ux/letterBar";
 
 // Not cached at build time: `configured` below is read from the environment,
 // and a notice baked in from the build machine's environment describes
@@ -20,10 +24,14 @@ export const dynamic = "force-dynamic";
  * Routes that own the whole screen — the landing page, sign-in, first-run setup
  * — sit in `app/(chromeless)/` and get none of it.
  */
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const chain = resolveProviders();
+  // One indexed read, on a request that is already dynamic. It has to be here
+  // rather than on each page: Anu's floating input and the command palette are
+  // outside every page, and they carry Estonian fields too.
+  const letters = letterBarFrom(await readSetting(await requireUserId(), SETTING_KEYS.letterBar));
   return (
-    <>
+    <LetterBarScope value={letters} dismissible>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-full focus:px-4 focus:py-2"
@@ -54,6 +62,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         readerCanConfigure={!supabaseConfigured()}
         plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
       />
-    </>
+    </LetterBarScope>
   );
 }

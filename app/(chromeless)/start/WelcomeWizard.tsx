@@ -8,6 +8,7 @@ import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { Button } from "@/components/Button";
+import { LetterBarScope } from "@/components/DiacriticBar";
 import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
@@ -15,6 +16,9 @@ import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus"
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
 import { WHAT_IT_IS } from "@/lib/copy/tour";
+import {
+  DEFAULT_LETTER_BAR, ESTONIAN_LETTERS, LETTER_BAR_CHOICES, type LetterBar,
+} from "@/lib/ux/letterBar";
 
 export interface WizardUnit {
   id: string;
@@ -105,6 +109,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(suggestedName);
+  const [letters, setLetters] = useState<LetterBar>(DEFAULT_LETTER_BAR);
 
   const [reason, setReason] = useState<string | null>(null);
   const [target, setTarget] = useState<Band | null>(null);
@@ -163,6 +168,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         cefr: startBand,
         dailyGoal: goal,
         unitIds: picked,
+        letterBar: letters,
         goals: {
           reason: goals.reason,
           target: goals.target,
@@ -188,8 +194,9 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   // Back button somebody presses by accident nine questions in.
   if (checking) {
     return (
-      <div className="min-h-screen" style={{ background: "var(--ground)" }}>
-        <AssessmentRunner
+      <LetterBarScope value={letters}>
+        <div className="min-h-screen" style={{ background: "var(--ground)" }}>
+          <AssessmentRunner
           items={paper.items}
           missing={paper.missing}
           onFinish={(result) => {
@@ -200,7 +207,8 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             setStep(2);
           }}
         />
-      </div>
+        </div>
+      </LetterBarScope>
     );
   }
 
@@ -209,6 +217,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
     (step !== 1 || level !== null);
 
   return (
+    <LetterBarScope value={letters}>
     <div className="relative flex min-h-screen flex-col justify-center px-5 py-10 md:px-8">
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <span className="wash" style={{ background: "var(--wash-1)", width: 560, height: 560, top: -220, left: -160 }} />
@@ -274,6 +283,72 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
               Only used to greet you, and on the class leaderboard if you ever turn that on.
             </p>
+
+            {/*
+              THE ONE QUESTION ABOUT THE MACHINE RATHER THAN THE LEARNER, ON THE
+              SCREEN THAT IS ALREADY ABOUT NEITHER THE LEVEL NOR THE PLAN.
+
+              It is here rather than on a fifth screen. Four screens is the
+              shape of this wizard and a question with a screen to itself is
+              exactly the fault the last pass over it fixed: this one is a pair
+              of buttons and it belongs beside the other thing we need before
+              anybody starts typing Estonian.
+
+              `letters-choice` is the same media query the bar itself is drawn
+              under, so a phone is not asked. It gets the default written for
+              it, which is what it wants: when that learner next opens the app
+              on a computer the row is there, and one press removes it.
+
+              Answered live, and the next screen is the level check, which is
+              full of Estonian fields. Whatever is chosen here is what they
+              meet there.
+            */}
+            <div className="letters-choice mt-7">
+              <p className="label-xs" style={{ color: "var(--ink-3)" }}>
+                How do you type õ, ä, ö and ü?
+              </p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                {LETTER_BAR_CHOICES.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setLetters(o.value)}
+                    aria-pressed={letters === o.value}
+                    className="rounded-[var(--r-lg)] border p-4 text-left transition-opacity hover:opacity-85"
+                    style={{
+                      borderColor: letters === o.value ? "var(--accent)" : "var(--rule)",
+                      background: letters === o.value ? "var(--accent-soft)" : "var(--surface)",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{o.label}</span>
+                      {letters === o.value && (
+                        <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />
+                      )}
+                    </span>
+                    <span className="mt-2 flex flex-wrap gap-1.5" aria-hidden>
+                      {ESTONIAN_LETTERS.map((ch) => (
+                        <span
+                          key={ch}
+                          className="est flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold"
+                          style={{
+                            background: o.value === "on" ? "var(--accent-soft)" : "var(--rule-soft)",
+                            color: o.value === "on" ? "var(--accent-deep)" : "var(--ink-3)",
+                            opacity: o.value === "on" ? 1 : 0.45,
+                          }}
+                        >
+                          {ch}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="mt-2 block text-xs" style={{ color: "var(--ink-3)" }}>{o.detail}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                Change it whenever you like, in Settings or from the row itself.
+              </p>
+            </div>
           </section>
         )}
 
@@ -580,5 +655,6 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         </div>
       </div>
     </div>
+    </LetterBarScope>
   );
 }

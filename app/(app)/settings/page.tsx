@@ -6,6 +6,7 @@ import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { BADGES } from "@/lib/achievements/badges";
 import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
+import { letterBarFrom } from "@/lib/ux/letterBar";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
@@ -14,7 +15,7 @@ import { DailyGoalPanel } from "./DailyGoalPanel";
 import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
-import { LeaderboardPanel, ReviewModePanel } from "./PreferencesPanel";
+import { LeaderboardPanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 import { providerResilience } from "@/lib/tutor/provider";
@@ -43,6 +44,7 @@ export default async function SettingsPage() {
     prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     readSettings(ownerId, [
       SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,
+      SETTING_KEYS.letterBar,
       SETTING_KEYS.displayName, SETTING_KEYS.leaderboard,
     ]),
     currentLearner(),
@@ -54,6 +56,7 @@ export default async function SettingsPage() {
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
   const shields = numberSetting(settings[SETTING_KEYS.streakShields], 0);
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
+  const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
   const optedIn = settings[SETTING_KEYS.leaderboard] === "1";
 
@@ -92,6 +95,20 @@ export default async function SettingsPage() {
               <RestorePanel currentReviews={reviews} />
             </div>
           </Card>
+        </section>
+
+        {/*
+          Desktop only, and the section goes with the choice rather than being
+          left as a heading over nothing. See app/globals.css: a phone draws no
+          letter bar, so there is nothing here to decide.
+        */}
+        <section className="letters-choice">
+          <SectionTitle hint={letters === "on" ? "shown" : "hidden"}>Typing Estonian</SectionTitle>
+          <LetterBarPanel current={letters} />
+          <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+            Only ever on a computer. A phone keyboard already has these letters, on a long press or
+            a keyboard switched to Estonian, so no row is drawn there either way.
+          </p>
         </section>
 
         <section>

@@ -27,6 +27,7 @@ import { resolveStreakFor } from "@/lib/progress/summary";
 import {
   numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
+import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import {
   availableCardTypes, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -675,6 +676,20 @@ export async function setReviewMode(mode: ReviewMode) {
 }
 
 /**
+ * Whether the Estonian letter bar is drawn under text fields.
+ *
+ * Revalidated at the layout rather than at a path: the answer is published as
+ * an attribute by the signed-in shell, so every screen inside it is stale the
+ * moment this changes, not just the one the learner happened to press it on.
+ */
+export async function setLetterBar(value: LetterBar) {
+  const ownerId = await requireUserId();
+  await writeSetting(ownerId, SETTING_KEYS.letterBar, value === "off" ? "off" : "on");
+  revalidatePath("/", "layout");
+  return { ok: true as const, value };
+}
+
+/**
  * The name shown on the class leaderboard, and whether to appear on it at all.
  *
  * Opt-in, and off by default: a study app should never publish who studied how
@@ -714,6 +729,11 @@ export async function completeOnboarding(input: {
   cefr: string;
   dailyGoal: number;
   unitIds: string[];
+  /**
+   * Whether they want the Estonian letter bar. Absent from a phone, where the
+   * question is not asked because the bar is not drawn either way.
+   */
+  letterBar?: LetterBar;
   /** What the learner said they are here for. Absent when they skipped it. */
   goals?: {
     reason?: string | null;
@@ -734,6 +754,7 @@ export async function completeOnboarding(input: {
     // to decide what to open. The test overwrites it whenever they take it.
     writeSetting(ownerId, SETTING_KEYS.cefrPlacement, input.cefr),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
+    writeSetting(ownerId, SETTING_KEYS.letterBar, letterBarFrom(input.letterBar)),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
     input.goals
       ? saveGoals(ownerId, normaliseGoals({

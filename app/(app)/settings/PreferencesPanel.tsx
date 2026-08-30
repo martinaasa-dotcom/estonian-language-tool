@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Check, Keyboard, PenLine } from "lucide-react";
-import { setLeaderboardPreferences, setReviewMode } from "@/app/actions";
+import { setLeaderboardPreferences, setLetterBar, setReviewMode } from "@/app/actions";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import type { ReviewMode } from "@/lib/settings/store";
+import { ESTONIAN_LETTERS, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 
 const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof PenLine }[] = [
   {
@@ -51,6 +53,77 @@ export function ReviewModePanel({ current }: { current: ReviewMode }) {
             {mode === m.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />}
           </span>
           <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>{m.detail}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The Estonian letter bar, on or off.
+ *
+ * The one screen that can turn it back on, so it is worth it being findable:
+ * the bar itself carries the way out, and somebody who took it needs somewhere
+ * obvious to change their mind. It draws the six letters it is talking about
+ * rather than naming them, because "the diacritic bar" means nothing to
+ * somebody who has met it once under a text box.
+ *
+ * The whole section is `letters-choice`, which is the same media query the bar
+ * is drawn under. On a phone there is no bar and so no question, and a heading
+ * over an answered-for-you choice is worse than no heading.
+ */
+export function LetterBarPanel({ current }: { current: LetterBar }) {
+  const [value, setValue] = useState(current);
+  const [pending, start] = useTransition();
+  const root = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const pick = (next: LetterBar) => {
+    setValue(next);
+    // The bars on this very page, immediately. The refresh re-renders the same
+    // attribute from the setting a moment later, so the two cannot disagree.
+    root.current?.closest("[data-letters]")?.setAttribute("data-letters", next);
+    start(async () => {
+      await setLetterBar(next);
+      router.refresh();
+    });
+  };
+
+  return (
+    <div ref={root} className="grid gap-2 sm:grid-cols-2">
+      {LETTER_BAR_CHOICES.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          disabled={pending}
+          onClick={() => pick(o.value)}
+          aria-pressed={value === o.value}
+          className="rounded-[var(--r-lg)] border p-4 text-left transition-opacity hover:opacity-85"
+          style={{
+            borderColor: value === o.value ? "var(--accent)" : "var(--rule)",
+            background: value === o.value ? "var(--accent-soft)" : "var(--surface)",
+          }}
+        >
+          <span className="flex items-center gap-2">
+            <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{o.label}</span>
+            {value === o.value && <Check size={15} aria-hidden className="ml-auto" style={{ color: "var(--accent-deep)" }} />}
+          </span>
+          <span className="mt-2 flex flex-wrap gap-1.5" aria-hidden>
+            {ESTONIAN_LETTERS.map((ch) => (
+              <span
+                key={ch}
+                className="est flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold"
+                style={{
+                  background: o.value === "on" ? "var(--accent-soft)" : "var(--rule-soft)",
+                  color: o.value === "on" ? "var(--accent-deep)" : "var(--ink-3)",
+                  opacity: o.value === "on" ? 1 : 0.45,
+                }}
+              >
+                {ch}
+              </span>
+            ))}
+          </span>
+          <span className="mt-2 block text-xs" style={{ color: "var(--ink-3)" }}>{o.detail}</span>
         </button>
       ))}
     </div>

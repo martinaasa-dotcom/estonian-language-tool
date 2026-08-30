@@ -21,6 +21,14 @@ export const SETTING_KEYS = {
   onboardedAt: "onboardedAt",
   cefrGoal: "cefrGoal",
   /**
+   * Whether the Estonian letter bar is drawn under text fields.
+   *
+   * Asked at first run and changed in Settings or from the bar itself. Only
+   * ever consulted on a desktop: see lib/ux/letterBar.ts for why it is a
+   * question at all, and app/globals.css for where the answer is applied.
+   */
+  letterBar: "letterBar",
+  /**
    * The level the learner is at, as opposed to the one they are aiming for.
    *
    * Separate from cefrGoal on purpose: what somebody wants to reach and where

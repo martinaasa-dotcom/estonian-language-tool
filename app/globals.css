@@ -454,6 +454,47 @@
   :root[data-dock] .dock-pad { padding-bottom: calc(var(--dock-clearance) + 1.5rem); }
 
   /*
+    THE ESTONIAN LETTER BAR, WHICH IS A DESKTOP THING AND A CHOICE.
+
+    Two rules, in one place, because they were previously neither: the bar was
+    drawn under every Estonian field on every device for everybody.
+
+    NOT ON A PHONE, EVER. A software keyboard already carries õ ä ö ü: they are
+    a long press on the vowel, or one tap on a keyboard switched to Estonian,
+    which is a thing a phone does per field rather than per machine. So the row
+    buys a phone nothing and costs it the scarcest thing it has, which is
+    vertical space under a field that the keyboard has already taken two thirds
+    of the screen away from.
+
+    NOT IF THEY HAVE THE KEYS, EITHER. An Estonian keyboard has all six as
+    keys, so the row is a line of buttons that learner will never press, under
+    every field in the app. Which keyboard somebody has cannot be detected, so
+    `[data-letters]` carries their own answer, written by the layout they are
+    rendered in and therefore present in the first paint rather than a frame
+    after it: a row that appears and then vanishes on every navigation is worse
+    than one that was never asked about.
+
+    WHAT COUNTS AS A DESKTOP is stated once, here. `min-width` alone would give
+    the bar to a tablet in landscape with no keys attached to it; `pointer:
+    fine` alone would give it to a phone with a mouse paired, which is a
+    stranger thing but not an impossible one. Both, and the answer is a machine
+    somebody is typing on with their hands on physical keys.
+
+    `.letters-choice` is the control that offers the bar, and it takes the same
+    media query rather than a `md:` class, so a screen cannot end up offering a
+    choice about something it is not drawing. It is display: none rather than
+    hidden, so it is gone from the accessibility tree too and not merely from
+    the picture.
+  */
+  .letter-bar, .letters-choice { display: none; }
+
+  @media (min-width: 768px) and (pointer: fine) {
+    .letter-bar { display: flex; }
+    .letters-choice { display: block; }
+    [data-letters="off"] .letter-bar { display: none; }
+  }
+
+  /*
     A SCROLLER INSIDE A PANEL, WITH A TRACK THAT DOES NOT SIT ON THE CONTENT.
 
     Overlay scrollbars, which is what macOS and iOS draw, paint on top of
