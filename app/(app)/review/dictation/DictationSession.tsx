@@ -212,13 +212,21 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       >
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><Ear size={12} aria-hidden /> Write what you hear</Chip>
-          <Link
-            href={`/dictionary?q=${encodeURIComponent(task.lemma)}`}
-            className="ml-auto text-xs"
-            style={{ color: "var(--ink-3)" }}
-          >
-            {task.lemma}
-          </Link>
+          {/* Only once the answer is in. This is a word *from the sentence being
+              dictated*, so printing it above the box hands over part of what the
+              exercise is asking for, which the review session's own header never
+              does: there the link is the card's subject and the front of the card
+              is already showing it. The link is worth keeping for afterwards,
+              when looking the word up is the natural next thing to do. */}
+          {result && (
+            <Link
+              href={`/dictionary?q=${encodeURIComponent(task.lemma)}`}
+              className="ml-auto text-xs"
+              style={{ color: "var(--ink-3)" }}
+            >
+              {task.lemma}
+            </Link>
+          )}
         </div>
 
         <div className="flex min-h-[300px] flex-col gap-5 px-6 py-8" aria-live="polite">

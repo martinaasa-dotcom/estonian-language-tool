@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Compass, Loader2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Compass, Loader2 } from "lucide-react";
 import { completeOnboarding, skipOnboarding } from "@/app/actions";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel } from "@/components/assessment/PlanPanel";
@@ -10,11 +10,11 @@ import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { Button } from "@/components/Button";
 import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
-import { Card, Chip, Meter, Note, SectionTitle } from "@/components/ui";
+import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
 import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
-import { CAN, CANNOT, TOUR, WHAT_IT_IS } from "@/lib/copy/tour";
+import { WHAT_IT_IS } from "@/lib/copy/tour";
 
 export interface WizardUnit {
   id: string;
@@ -55,8 +55,7 @@ const GOALS = [
  *
  * Derived from the syllabus rather than hand-listed. The list it replaced named
  * unit ids in a string literal and stopped at B2, so it could rot silently when
- * a unit was renamed and had nothing at all to offer the C1 and C2 levels the
- * course now covers. `pre-A1` shares A1's opening units, because the first
+ * the course grew. Below A1 starts where A1 does, because the first sensible
  * thing to do is the same either way.
  */
 const SUGGESTED: Record<string, string[]> = {
@@ -66,22 +65,36 @@ const SUGGESTED: Record<string, string[]> = {
   [PRE_A1]: unitsAtLevel("A1").slice(0, 3).map((u) => u.id),
 };
 
-const STEPS = ["You", "Why", "Goal", "Level", "Pace", "Plan", "Tour", "Deck"] as const;
+const STEPS = ["You", "Level", "Goal", "Start"] as const;
 
 /**
  * First run.
  *
- * It asks four things and teaches one, and the order matters. Why you are here
- * comes before what level you want, because "which CEFR level" is unanswerable
- * until somebody tells you that B1 is what naturalisation asks for. The level
- * check comes before the plan, because a plan built on a guessed starting point
- * is a guess with arithmetic on top. The plan comes before the deck, because
- * the number of hours involved is the single most useful thing this app can
- * tell a beginner, and it should be told before they have invested an evening.
+ * It was eight screens and it is now four, because the feedback on this app was
+ * that it overwhelms somebody just getting started and eight screens of
+ * questions before a single Estonian word is the first thing that happens to
+ * them. What went is not the substance, it is the spreading of it: name, why,
+ * how far, by when, days a week, level, pace, plan, tour and deck were ten
+ * questions across eight screens, and four of them had a screen to themselves.
  *
- * The walkthrough is not a carousel of features. It is the list of what this
- * app does and, at equal length, what it does not, because the second list is
- * what makes the first believable.
+ * What each screen is still for:
+ *
+ *   - **You** asks the one thing needed to greet somebody, and states what this
+ *     app is and is not before they have spent an evening on it.
+ *   - **Level** measures or estimates where they are. It comes second because
+ *     everything after it is built on the answer.
+ *   - **Goal** is why, how far, by when and how often, on one screen, with the
+ *     plan those answers produce underneath them rather than on a screen of its
+ *     own. Seeing the hours change as you answer is the argument for asking.
+ *     Skippable in one press, because a learner in a hurry should be.
+ *   - **Start** picks the daily goal and the first units. Last, because the
+ *     plan has to be seen before anybody invests an evening in a deck.
+ *
+ * The tour that was step seven is `/guide`, in the rail and in the palette,
+ * where it can be reopened a fortnight in when the question actually arises.
+ * The honest limits it led with are on the first screen here in one sentence,
+ * because that is where they earn their place: before the investment, not
+ * after seven screens of it.
  */
 export function WelcomeWizard({ units, suggestedName, paper }: {
   units: WizardUnit[];
@@ -97,7 +110,6 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   const [target, setTarget] = useState<Band | null>(null);
   const [deadlineId, setDeadlineId] = useState<string>("1y");
   const [daysPerWeek, setDaysPerWeek] = useState(5);
-  const [note, setNote] = useState("");
 
   const [checking, setChecking] = useState(false);
   const [measured, setMeasured] = useState<Placement | null>(null);
@@ -117,8 +129,8 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
     target,
     deadline: deadlineFrom(DEADLINES.find((d) => d.id === deadlineId) ?? DEADLINES[4]!, new Date()),
     daysPerWeek,
-    note,
-  }), [reason, target, deadlineId, daysPerWeek, note]);
+    note: "",
+  }), [reason, target, deadlineId, daysPerWeek]);
 
   const chooseLevel = (key: string) => {
     setEstimated(key);
@@ -142,6 +154,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   const wordCount = units.filter((u) => picked.includes(u.id)).reduce((sum, u) => sum + u.words, 0);
+  const chosenTarget = TARGETS.find((t) => t.band === target);
 
   const finish = () => {
     start(async () => {
@@ -184,7 +197,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             const band = result.overall === PRE_A1 || result.overall === null ? "A1" : result.overall;
             setPicked((current) => [...new Set([...(SUGGESTED[band] ?? []), ...current])]);
             setChecking(false);
-            setStep(4);
+            setStep(2);
           }}
         />
       </div>
@@ -193,7 +206,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
   const canContinue =
     (step !== 0 || name.trim().length > 0) &&
-    (step !== 3 || level !== null);
+    (step !== 1 || level !== null);
 
   return (
     <div className="relative flex min-h-screen flex-col justify-center px-5 py-10 md:px-8">
@@ -224,11 +237,29 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
               {WHAT_IT_IS}
             </p>
-            <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              The next few minutes ask what you are here for, measure where you are now if you want
-              that, and then tell you honestly how long the thing you want is likely to take.
-            </p>
-            <label htmlFor="learner-name" className="label-xs mt-8 block" style={{ color: "var(--ink-3)" }}>
+            <div className="mt-5">
+              {/*
+                The limits, up front and in one sentence. They used to be a
+                screen of their own, seven steps in, which is after the
+                investment rather than before it. Both lists in full are at
+                /guide, which opens in its own tab so nobody loses this one.
+              */}
+              <Note tone="hard">
+                It will not score your pronunciation, teach you to hold a conversation, or replace a
+                teacher.{" "}
+                <a
+                  href="/guide"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold underline underline-offset-2"
+                  style={{ color: "var(--accent-deep)" }}
+                >
+                  What it does and does not do, in full
+                </a>
+                .
+              </Note>
+            </div>
+            <label htmlFor="learner-name" className="label-xs mt-7 block" style={{ color: "var(--ink-3)" }}>
               What should we call you?
             </label>
             <input
@@ -249,144 +280,11 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         {step === 1 && (
           <section>
             <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              Why Estonian?
-            </h1>
-            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              This is not a personality quiz. Different reasons need different levels, and one of
-              them has an exam attached with a level set by somebody else.
-            </p>
-            <div className="scroll-host mt-6 flex max-h-[46vh] flex-col gap-2">
-              {REASONS.map((r) => {
-                const Icon = icon(r.icon);
-                const on = reason === r.id;
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => chooseReason(r.id)}
-                    aria-pressed={on}
-                    className="flex items-center gap-4 rounded-[var(--r-lg)] border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
-                    style={{
-                      borderColor: on ? "var(--accent)" : "var(--rule)",
-                      background: on ? "var(--accent-soft)" : "var(--surface)",
-                    }}
-                  >
-                    <Icon size={18} aria-hidden style={{ color: on ? "var(--accent-deep)" : "var(--ink-3)" }} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{r.label}</span>
-                      <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{r.detail}</span>
-                    </span>
-                    {on && <Check size={16} aria-hidden style={{ color: "var(--accent-deep)" }} />}
-                  </button>
-                );
-              })}
-            </div>
-            <label htmlFor="goal-note" className="label-xs mt-6 block" style={{ color: "var(--ink-3)" }}>
-              In your own words, if you like
-            </label>
-            <input
-              id="goal-note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              maxLength={280}
-              placeholder="Something you want to be able to do"
-              className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3 text-base outline-none"
-              style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
-            />
-            <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Kept as you wrote it and shown back to you on the plan. Nothing reads it but you.
-            </p>
-          </section>
-        )}
-
-        {step === 2 && (
-          <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              How far, and by when?
-            </h1>
-            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              A level is a claim about what you can do, so each one here says what it gets you and
-              what it still does not.
-            </p>
-            <div className="mt-6 flex flex-col gap-2">
-              {TARGETS.map((t) => {
-                const on = target === t.band;
-                return (
-                  <button
-                    key={t.band}
-                    type="button"
-                    onClick={() => setTarget(t.band)}
-                    aria-pressed={on}
-                    className="rounded-[var(--r-lg)] border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
-                    style={{
-                      borderColor: on ? "var(--accent)" : "var(--rule)",
-                      background: on ? "var(--accent-soft)" : "var(--surface)",
-                    }}
-                  >
-                    <span className="flex items-baseline gap-3">
-                      <span className="est tnum text-base font-bold" style={{ color: "var(--accent-deep)" }}>{t.band}</span>
-                      <span className="text-base font-medium" style={{ color: "var(--ink)" }}>{t.label}</span>
-                    </span>
-                    <span className="mt-1 block text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{t.can}</span>
-                    <span className="mt-1 block text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-                      Still out of reach: {t.cannot.charAt(0).toLowerCase() + t.cannot.slice(1)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <SectionTitle>By when</SectionTitle>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {DEADLINES.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setDeadlineId(d.id)}
-                  aria-pressed={deadlineId === d.id}
-                  className="min-h-[48px] rounded-[var(--r-lg)] border px-4 py-3 text-left text-base transition-opacity hover:opacity-80"
-                  style={{
-                    borderColor: deadlineId === d.id ? "var(--accent)" : "var(--rule)",
-                    background: deadlineId === d.id ? "var(--accent-soft)" : "var(--surface)",
-                    color: "var(--ink)",
-                  }}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-
-            <SectionTitle hint="be honest, the plan is built on it">Days a week you will really practise</SectionTitle>
-            <div className="flex flex-wrap gap-2">
-              {[2, 3, 4, 5, 6, 7].map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  onClick={() => setDaysPerWeek(days)}
-                  aria-pressed={daysPerWeek === days}
-                  className="tnum min-h-[44px] min-w-[44px] rounded-full border px-4 text-base font-semibold transition-opacity hover:opacity-80"
-                  style={{
-                    borderColor: daysPerWeek === days ? "var(--accent)" : "var(--rule)",
-                    background: daysPerWeek === days ? "var(--accent-soft)" : "var(--surface)",
-                    color: daysPerWeek === days ? "var(--accent-deep)" : "var(--ink-2)",
-                  }}
-                >
-                  {days}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {step === 3 && (
-          <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Where are you now?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Measure it or estimate it. Measuring takes about ten minutes and covers reading,
-              listening, writing and speaking. Nothing is locked either way: the whole dictionary is
-              open from day one, and you can take the check any time from the Level check screen.
+              Measure it in about ten minutes, or estimate it and move on. Nothing is locked either
+              way, and the check is on the Level check screen whenever you want it.
             </p>
 
             {measured ? (
@@ -439,148 +337,132 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
           </section>
         )}
 
-        {step === 4 && (
+        {step === 2 && (
           <section>
             <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              How much a day?
+              Why Estonian, and how far?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              This sets your daily goal ring. It never caps a session and you can change it any time
-              in Settings. Pick the number you will still meet on a bad Tuesday.
+              This is not a personality quiz. Different reasons need different levels, one of them
+              has an exam attached, and the hours underneath change with every answer.
             </p>
+
+            {/*
+              A grid rather than a scrolling box. The reasons were in a
+              `scroll-host` capped at a third of the viewport, which cut the
+              seventh card in half with nothing to say it scrolled: a nested
+              scroll region inside a page that already scrolls is the shape
+              this pass exists to remove. Eight short rows in two columns fit
+              without one.
+            */}
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {GOALS.map((g) => (
-                <button
-                  key={g.value}
-                  type="button"
-                  onClick={() => setGoal(g.value)}
-                  aria-pressed={goal === g.value}
-                  className="rounded-[var(--r-lg)] border px-4 py-3.5 text-left transition-opacity hover:opacity-80"
-                  style={{
-                    borderColor: goal === g.value ? "var(--accent)" : "var(--rule)",
-                    background: goal === g.value ? "var(--accent-soft)" : "var(--surface)",
-                  }}
-                >
-                  <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>
-                    {g.label} · {g.value} cards
-                  </span>
-                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{g.detail}</span>
-                </button>
-              ))}
+              {REASONS.map((r) => {
+                const Icon = icon(r.icon);
+                const on = reason === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => chooseReason(r.id)}
+                    aria-pressed={on}
+                    className="flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left transition-opacity hover:opacity-80"
+                    style={{
+                      borderColor: on ? "var(--accent)" : "var(--rule)",
+                      background: on ? "var(--accent-soft)" : "var(--surface)",
+                    }}
+                  >
+                    <Icon size={18} aria-hidden style={{ color: on ? "var(--accent-deep)" : "var(--ink-3)" }} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{r.label}</span>
+                      <span className="block text-xs leading-snug" style={{ color: "var(--ink-3)" }}>{r.detail}</span>
+                    </span>
+                    {on && <Check size={16} className="shrink-0" aria-hidden style={{ color: "var(--accent-deep)" }} />}
+                  </button>
+                );
+              })}
             </div>
-            <div className="mt-5">
-              <Note tone="sky">
-                A card you learn today costs roughly ten reviews over its first year, so a goal of{" "}
-                {goal} cards is one to four genuinely new words a day once the reviews arrive. Setting
-                it higher does not make words arrive faster, it makes week six unbearable.
-              </Note>
-            </div>
-          </section>
-        )}
 
-        {step === 5 && (
-          <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              What this is going to take
-            </h1>
-            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Built from your answers and from published estimates, not from anything this app wants
-              you to believe. If the numbers are uncomfortable, that is the useful part.
-            </p>
-            {!measured && (
-              <div className="mt-5">
-                <Note tone="sky">
-                  This is built on the level you estimated. Take the check when you have ten minutes
-                  and the plan is rebuilt on a measurement instead.
-                </Note>
+            {/*
+              Three rows of chips rather than three screens of cards. Each
+              target used to carry its can and cannot lines whether or not it
+              was the one chosen, which is five paragraphs to read before
+              pressing one button. The pair is shown for the chosen one, where
+              it is the thing being decided rather than a wall to scan.
+            */}
+            <div className="mt-7 flex flex-col gap-6">
+              <div>
+                <SectionTitle>How far</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {TARGETS.map((t) => (
+                    <button key={t.band} type="button" onClick={() => setTarget(t.band)} aria-pressed={target === t.band}>
+                      <Chip tone={target === t.band ? "accent" : "neutral"}>{t.band} · {t.label}</Chip>
+                    </button>
+                  ))}
+                </div>
+                {chosenTarget && (
+                  <p className="mt-2.5 max-w-[60ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+                    {chosenTarget.can}{" "}
+                    <span style={{ color: "var(--butter-ink)" }}>
+                      Still out of reach: {chosenTarget.cannot.charAt(0).toLowerCase() + chosenTarget.cannot.slice(1)}
+                    </span>
+                  </p>
+                )}
               </div>
-            )}
-            {note.trim() && (
-              <p className="mt-5 text-base italic" style={{ color: "var(--ink-2)" }}>
-                Your words: {note.trim()}
-              </p>
-            )}
-            <div className="mt-6">
-              <PlanPanel level={level} goals={goals} dailyGoal={goal} />
-            </div>
-          </section>
-        )}
-
-        {step === 6 && (
-          <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              What is here, and what is not
-            </h1>
-            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Both lists, at the same length. You can reopen this any time under What this app is.
-            </p>
-
-            <div className="scroll-host mt-6 flex max-h-[52vh] flex-col gap-3">
-              <Card tone="accent">
-                <SectionTitle>What it does</SectionTitle>
-                <ul className="flex flex-col gap-2">
-                  {CAN.map((claim) => (
-                    <li key={claim.text} className="flex gap-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                      <Check size={15} className="mt-0.5 shrink-0" aria-hidden style={{ color: "var(--accent-deep)" }} />
-                      <span>{claim.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-
-              <Card tone="butter">
-                <SectionTitle>What it does not</SectionTitle>
-                <ul className="flex flex-col gap-2">
-                  {CANNOT.map((claim) => (
-                    <li key={claim.text} className="flex gap-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                      <X size={15} className="mt-0.5 shrink-0" aria-hidden style={{ color: "var(--butter-ink)" }} />
-                      <span>{claim.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
 
               <div>
-                <SectionTitle hint="and when to open it">Every screen</SectionTitle>
-                <ul className="flex flex-col gap-2">
-                  {TOUR.map((stop) => {
-                    const Icon = icon(stop.icon);
-                    return (
-                      <li
-                        key={stop.href}
-                        className="flex gap-3 rounded-[var(--r-lg)] border px-4 py-3"
-                        style={{ borderColor: "var(--rule)" }}
-                      >
-                        <span
-                          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-                        >
-                          <Icon size={15} aria-hidden />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-base font-semibold" style={{ color: "var(--ink)" }}>{stop.title}</span>
-                          <span className="block text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{stop.what}</span>
-                          <span className="mt-1 block text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{stop.when}</span>
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <SectionTitle>By when</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {DEADLINES.map((d) => (
+                    <button key={d.id} type="button" onClick={() => setDeadlineId(d.id)} aria-pressed={deadlineId === d.id}>
+                      <Chip tone={deadlineId === d.id ? "accent" : "neutral"}>{d.label}</Chip>
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <div>
+                <SectionTitle hint="be honest, the plan is built on it">Days a week you will really practise</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {[2, 3, 4, 5, 6, 7].map((days) => (
+                    <button key={days} type="button" onClick={() => setDaysPerWeek(days)} aria-pressed={daysPerWeek === days}>
+                      <Chip tone={daysPerWeek === days ? "accent" : "neutral"}>{days}</Chip>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/*
+              The plan, under the answers that build it rather than on a screen
+              of its own. It is the single most useful thing this app can tell a
+              beginner and it has to be seen before an evening goes into a deck,
+              which it still is: the deck is the step after this one.
+            */}
+            <div className="mt-7">
+              <SectionTitle hint="from your answers and published estimates">What this is going to take</SectionTitle>
+              {!measured && (
+                <div className="mb-4">
+                  <Note tone="sky">
+                    Built on the level you estimated. Take the check when you have ten minutes and
+                    the plan is rebuilt on a measurement instead.
+                  </Note>
+                </div>
+              )}
+              <PlanPanel level={level} goals={goals} dailyGoal={goal} compact />
             </div>
           </section>
         )}
 
-        {step === 7 && (
+        {step === 3 && (
           <section>
             <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Your first units
             </h1>
-            <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
-              Picked for {startBand}. Each unit becomes real flashcards with audio and full
+            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
+              Picked for {startBand}. Each one becomes real flashcards with audio and full
               paradigms, and you can add or drop units later on the path.
             </p>
-            <div className="scroll-host mt-5 flex max-h-[46vh] flex-col gap-2">
+            <div className="scroll-host mt-5 flex max-h-[38vh] flex-col gap-2">
               {/*
                 This level's units only. The course is eighty-three of them
                 across six levels, and a first-run picker listing all of them is
@@ -620,6 +502,26 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
                 ? "Nothing selected. You can also start from the dictionary and add words as you meet them."
                 : `${wordCount} words, about ${wordCount * 2} cards to start with.`}
             </p>
+
+            {/*
+              The daily goal, as one row rather than a screen. It has a sane
+              default, it never caps a session, and Settings changes it in two
+              clicks, so a whole step for it was a step spent on the least
+              consequential answer in the walkthrough.
+            */}
+            <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            <div className="flex flex-wrap gap-2">
+              {GOALS.map((g) => (
+                <button key={g.value} type="button" onClick={() => setGoal(g.value)} aria-pressed={goal === g.value}>
+                  <Chip tone={goal === g.value ? "accent" : "neutral"}>{g.label} · {g.value} cards</Chip>
+                </button>
+              ))}
+            </div>
+            <p className="mt-2.5 max-w-[60ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+              About {GOALS.find((g) => g.value === goal)?.detail ?? "five minutes a day"}. A card you
+              learn today costs roughly ten reviews over its first year, so setting this higher does
+              not make words arrive faster, it makes week six unbearable.
+            </p>
           </section>
         )}
 
@@ -629,7 +531,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               <ArrowLeft size={15} aria-hidden /> Back
             </Button>
           )}
-          {step === 3 && level !== null && (
+          {step === 1 && level !== null && (
             <Chip tone="accent">
               {measured ? "Measured" : "Estimated"} {level === PRE_A1 ? "below A1" : level}
             </Chip>
@@ -654,15 +556,27 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         </div>
 
         <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={skip}
-            disabled={pending}
-            className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
-            style={{ color: "var(--ink-3)" }}
-          >
-            Skip setup and go straight to the dictionary
-          </button>
+          {step === 2 ? (
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              disabled={pending}
+              className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
+              style={{ color: "var(--ink-3)" }}
+            >
+              Skip the goal and go straight to the words
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={skip}
+              disabled={pending}
+              className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
+              style={{ color: "var(--ink-3)" }}
+            >
+              Skip setup and go straight to the dictionary
+            </button>
+          )}
         </div>
       </div>
     </div>

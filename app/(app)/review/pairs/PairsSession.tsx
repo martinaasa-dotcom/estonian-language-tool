@@ -196,7 +196,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             onClick={() => void play(question.heard)}
             disabled={playing}
             aria-label="Play again"
-            className="flex h-20 w-20 items-center justify-center rounded-full transition-opacity hover:opacity-80"
+            className="press flex h-20 w-20 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0"
             style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
           >
             {playing
@@ -218,7 +218,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
               const isAnswer = option.value.toLowerCase() === question.heard.toLowerCase();
               const isPicked = option.value === picked;
               const tone = !revealed
-                ? { background: "var(--raised)", color: "var(--ink)", borderColor: "var(--rule)" }
+                ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
                 : isAnswer
                   ? { background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }
                   : isPicked
@@ -231,7 +231,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                   type="button"
                   disabled={revealed}
                   onClick={() => choose(option.value)}
-                  className="flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left transition-opacity hover:opacity-85 disabled:cursor-default"
+                  className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
                   <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>

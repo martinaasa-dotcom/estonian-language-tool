@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ComponentType } from "react";
 import {
   CircleHelp, ClipboardCheck, Ear, GraduationCap, Grid2x2, Headphones, Mic, PenLine, Puzzle, Scale,
   ScissorsLineDashed, Stethoscope, Target, Zap,
@@ -55,31 +56,63 @@ export default async function PracticePage() {
   const matchBest = numberSetting(settings[SETTING_KEYS.matchBest], 0);
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
 
-  const modes = [
+  /*
+    Grouped, not listed.
+
+    Thirteen cards, each carrying a two sentence paragraph, is thirteen
+    paragraphs to read before pressing anything, and the page's own promise is
+    that it answers "what should I do with the next five minutes". A flat grid
+    cannot answer that; the grouping is the answer. So: the daily loop leads,
+    the games that need nothing but a deck come next as tiles you can scan, the
+    five that work a specific weakness follow with the one line each that says
+    what the weakness is, and the mock paper sits on its own at the bottom
+    because sitting one is an afternoon rather than five minutes.
+
+    The body copy that came off the games is not lost, it was never the reason
+    anybody pressed them: a title, what it does in three words, and whether
+    there is anything ready to play is the whole decision.
+  */
+  const daily = {
+    href: "/review",
+    icon: GraduationCap,
+    tone: "accent",
+    title: "Review",
+    subtitle: "The daily loop",
+    body: "Everything due, scheduled by FSRS. Type the answer or flip the card, your choice in Settings.",
+    meta: snapshot.dueCount > 0
+      ? `${snapshot.dueCount} due now`
+      : snapshot.newCount > 0 ? `${Math.min(snapshot.newCount, 10)} new waiting` : "Nothing due",
+    primary: snapshot.dueCount > 0,
+  };
+
+  const games = [
     {
-      href: "/exam",
-      icon: ClipboardCheck,
-      tone: "blush",
-      title: "Mock exam",
-      subtitle: "The state paper",
-      body:
-        "Four parts, sixty percent to pass, and a zero anywhere fails the whole thing. Sit an " +
-        "imitation of the A2, B1, B2 or C1 paper and find out which one you could pass today.",
-      meta: "Timed, all four skills",
-      primary: false,
+      href: "/review/sprint", icon: Zap, tone: "butter", title: "Case Sprint", subtitle: "60 seconds",
+      meta: sprintBest > 0 ? `Best: ${sprintBest}` : "No score yet",
     },
     {
-      href: "/review",
-      icon: GraduationCap,
-      tone: "accent",
-      title: "Review",
-      subtitle: "The daily loop",
-      body: "Everything due, scheduled by FSRS. Type the answer or flip the card, your choice in Settings.",
-      meta: snapshot.dueCount > 0
-        ? `${snapshot.dueCount} due now`
-        : snapshot.newCount > 0 ? `${Math.min(snapshot.newCount, 10)} new waiting` : "Nothing due",
-      primary: snapshot.dueCount > 0,
+      href: "/review/match", icon: Grid2x2, tone: "mint", title: "Match", subtitle: "Eight pairs",
+      meta: matchBest > 0 ? `Best: ${matchBest}s` : "No time yet",
     },
+    {
+      href: "/review/sentences", icon: Puzzle, tone: "blush", title: "Sentences", subtitle: "Word order",
+      meta: sentenceCount > 0 ? `${sentenceCount} ready` : "Needs sentences",
+    },
+    {
+      href: "/review/listening", icon: Headphones, tone: "sky", title: "Listening", subtitle: "Hear it, pick it",
+      meta: "Audio from TartuNLP",
+    },
+    {
+      href: "/review/dictation", icon: Ear, tone: "peach", title: "Dictation", subtitle: "Hear it, write it",
+      meta: dictationCount > 0 ? `${dictationCount} ready` : "Needs sentences",
+    },
+    {
+      href: "/review/speaking", icon: Mic, tone: "peach", title: "Speaking", subtitle: "Out loud",
+      meta: "Shadowing",
+    },
+  ];
+
+  const targeted = [
     {
       href: "/review/write",
       icon: PenLine,
@@ -87,10 +120,9 @@ export default async function PracticePage() {
       title: "Writing",
       subtitle: "Your own sentence",
       body:
-        "Use a word in a named case and write a whole sentence. The form is checked against the " +
-        "dictionary before Anu ever sees it, so the verdict is certain even when the AI is off.",
+        "Use a word in a named case. The form is checked against the dictionary before Anu ever " +
+        "sees it, so the verdict is certain even when the AI is off.",
       meta: "Free production",
-      primary: false,
     },
     {
       href: "/review/government",
@@ -100,9 +132,8 @@ export default async function PracticePage() {
       subtitle: "Which case?",
       body:
         "Aitan sind, but helistan sulle. English gives you no clue, so rektsioon has to be learned " +
-        "per verb, and nothing else drills it systematically.",
+        "per verb.",
       meta: "Multiple choice",
-      primary: false,
     },
     {
       href: "/review/pairs",
@@ -114,7 +145,6 @@ export default async function PracticePage() {
         "Maja or majja? The length distinction Estonian spelling only half records, and the one " +
         "thing reading practice can never teach you.",
       meta: "Needs audio",
-      primary: false,
     },
     {
       href: "/review/cloze",
@@ -126,7 +156,6 @@ export default async function PracticePage() {
         "Bring an article or your homework. Words already in your deck get blanked out, and the " +
         "answer is the form a native writer actually chose.",
       meta: "Your own text",
-      primary: false,
     },
     {
       href: "/review/clinic",
@@ -138,74 +167,13 @@ export default async function PracticePage() {
         "The handful of cards you keep getting wrong, with what their history says about how they " +
         "are failing, instead of quietly burying them.",
       meta: "From your review log",
-      primary: false,
-    },
-    {
-      href: "/review/sprint",
-      icon: Zap,
-      tone: "butter",
-      title: "Case Sprint",
-      subtitle: "60 seconds",
-      body: "As many cards as you can in a minute, weighted towards the ones you keep slipping on.",
-      meta: sprintBest > 0 ? `Best: ${sprintBest}` : "No score yet",
-      primary: false,
-    },
-    {
-      href: "/review/match",
-      icon: Grid2x2,
-      tone: "mint",
-      title: "Match",
-      subtitle: "Eight pairs",
-      body: "Pair each word with its meaning against the clock. Clean pairs count as a review.",
-      meta: matchBest > 0 ? `Best: ${matchBest}s` : "No time yet",
-      primary: false,
-    },
-    {
-      href: "/review/sentences",
-      icon: Puzzle,
-      tone: "blush",
-      title: "Sentences",
-      subtitle: "Word order",
-      body: "Rebuild a real Estonian sentence from its words. The part a flashcard cannot teach.",
-      meta: sentenceCount > 0 ? `${sentenceCount} ready` : "Needs sentences",
-      primary: false,
-    },
-    {
-      href: "/review/speaking",
-      icon: Mic,
-      tone: "peach",
-      title: "Speaking",
-      subtitle: "Out loud",
-      body: "Say the word, then hear a native voice and your own recording back to back.",
-      meta: "Shadowing",
-      primary: false,
-    },
-    {
-      href: "/review/listening",
-      icon: Headphones,
-      tone: "sky",
-      title: "Listening",
-      subtitle: "Ear first",
-      body: "Hear an Estonian word and pick the meaning, the one skill reading practice never builds.",
-      meta: "Audio from TartuNLP",
-      primary: false,
-    },
-    {
-      href: "/review/dictation",
-      icon: Ear,
-      tone: "peach",
-      title: "Dictation",
-      subtitle: "Hear it, write it",
-      body: "A whole sentence, played and typed back. Marked word by word, so you see which ending you missed.",
-      meta: dictationCount > 0 ? `${dictationCount} ready` : "Needs sentences",
-      primary: false,
     },
   ];
 
   return (
     <Page
       title="Practice"
-      lead="Seven ways to work the same deck, plus a drill for whichever case you keep missing. They all write to the same review log, so anything you do here moves the same schedule forward."
+      lead="Every mode here writes to the same review log, so nothing you do is a side game with a score of its own."
     >
       {snapshot.totalCards === 0 ? (
         <Empty
@@ -214,41 +182,65 @@ export default async function PracticePage() {
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       ) : (
-        <div className="flex flex-col gap-6">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {modes.map((m) => (
-              <Link
-                key={m.href}
-                href={m.href}
-                className="lift flex flex-col gap-2 rounded-[var(--r-lg)] border p-5"
-                style={{
-                  borderColor: m.primary ? "var(--accent)" : "var(--rule)",
-                  background: "var(--surface)",
-                  boxShadow: "var(--shadow-sm)",
-                }}
-              >
-                <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex flex-col gap-7">
+          <ModeCard mode={daily} />
+
+          <section>
+            <SectionTitle hint="a few minutes each">Quick rounds</SectionTitle>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {games.map((m) => (
+                <Link
+                  key={m.href}
+                  href={m.href}
+                  className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
+                  style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+                >
                   <span
-                    className="flex h-11 w-11 items-center justify-center rounded-full"
-                    style={{
-                      background: `var(--${m.tone})`,
-                      color: "var(--surface)",
-                    }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                    style={{ background: `var(--${m.tone})`, color: "var(--surface)" }}
                   >
-                    <m.icon size={19} aria-hidden />
+                    <m.icon size={18} aria-hidden />
                   </span>
-                  <span className="min-w-0">
-                    <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>
-                      {m.title}
+                  <span className="min-w-0 flex-1">
+                    <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>{m.title}</span>
+                    <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+                      {m.subtitle} · {m.meta}
                     </span>
-                    <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{m.subtitle}</span>
                   </span>
-                  <span className="ml-auto"><Chip tone={m.primary ? "accent" : "neutral"}>{m.meta}</Chip></span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <SectionTitle hint="when you know what is wrong">Work a weakness</SectionTitle>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {targeted.map((m) => <ModeCard key={m.href} mode={m} />)}
+            </div>
+          </section>
+
+          <section>
+            <SectionTitle hint="an afternoon, not five minutes">Sit the paper</SectionTitle>
+            <Link
+              href="/exam"
+              className="lift flex items-center gap-4 rounded-[var(--r-lg)] border p-5"
+              style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+            >
+              <span
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                style={{ background: "var(--blush)", color: "var(--surface)" }}
+              >
+                <ClipboardCheck size={19} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
+                <span className="mt-1 block text-sm" style={{ color: "var(--ink-2)" }}>
+                  An imitation of the A2, B1, B2 or C1 state paper. Four parts, sixty percent to
+                  pass, and a zero anywhere fails the whole thing.
                 </span>
-                <span className="text-sm" style={{ color: "var(--ink-2)" }}>{m.body}</span>
-              </Link>
-            ))}
-          </div>
+              </span>
+            </Link>
+          </section>
 
           <section>
             <SectionTitle hint="weakest first">Drill one case</SectionTitle>
@@ -303,5 +295,51 @@ export default async function PracticePage() {
         </div>
       )}
     </Page>
+  );
+}
+
+/**
+ * A mode with a reason to open it: the daily loop, and the five that work one
+ * specific weakness. The quick rounds do not get one, because a title and
+ * whether there is anything ready is the whole decision there and a paragraph
+ * beside it is a paragraph nobody reads twice.
+ */
+function ModeCard({ mode }: {
+  mode: {
+    href: string;
+    icon: ComponentType<{ size?: number; "aria-hidden"?: boolean }>;
+    tone: string;
+    title: string;
+    subtitle: string;
+    body: string;
+    meta: string;
+    primary?: boolean;
+  };
+}) {
+  return (
+    <Link
+      href={mode.href}
+      className="lift flex h-full flex-col gap-2 rounded-[var(--r-lg)] border p-5"
+      style={{
+        borderColor: mode.primary ? "var(--accent)" : "var(--rule)",
+        background: "var(--surface)",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span
+          className="flex h-11 w-11 items-center justify-center rounded-full"
+          style={{ background: `var(--${mode.tone})`, color: "var(--surface)" }}
+        >
+          <mode.icon size={19} aria-hidden />
+        </span>
+        <span className="min-w-0">
+          <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
+          <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
+        </span>
+        <span className="ml-auto"><Chip tone={mode.primary ? "accent" : "neutral"}>{mode.meta}</Chip></span>
+      </span>
+      <span className="text-sm" style={{ color: "var(--ink-2)" }}>{mode.body}</span>
+    </Link>
   );
 }

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BookOpen, Camera, CalendarCheck, CalendarRange, ChartNoAxesColumn, ClipboardCheck, Compass,
+  BookOpen, Camera, CalendarCheck, CalendarRange, ChartNoAxesColumn, ChevronDown, CircleHelp,
+  ClipboardCheck, Compass,
   GraduationCap, Languages, Layers, LogOut, Map, MessageCircleQuestion, MoreHorizontal, Moon,
   MessageSquareWarning, School, Settings, Sun, Swords, X, Zap,
 } from "lucide-react";
@@ -19,7 +20,17 @@ interface NavItem {
   icon: ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean }>;
   /** The dot behind the icon when the item is current. Each destination owns one. */
   tone: string;
-  /** Shown in the phone bar. The rest live behind "More". */
+  /**
+   * The four destinations that are the app: what is due, the course, the loop,
+   * the reference. Shown in the phone bar and standing at the top of the
+   * desktop rail; everything else lives behind "More" on both.
+   *
+   * The rail used to list all fifteen flat, which is a menu to read rather
+   * than a place to go, and eleven of them answer a question a learner does
+   * not have in their first week. Nothing is hidden: "More" is one press, it
+   * opens itself whenever the current page is inside it, and it stays open
+   * once somebody has opened it.
+   */
   primary?: boolean;
 }
 
@@ -50,7 +61,14 @@ const NAV: NavItem[] = [
     whether anybody reports a second one.
   */
   { href: "/suggestions", label: "Suggestions", icon: MessageSquareWarning, tone: "var(--peach)" },
+  { href: "/guide", label: "What this app is", icon: CircleHelp, tone: "var(--ink-3)" },
 ];
+
+/**
+ * Whether the rail's secondary group was left open. A per-browser convenience,
+ * never anything the app depends on knowing.
+ */
+const RAIL_OPEN_KEY = "railMoreOpen";
 
 /**
  * The rail, and the phone bar under it.
@@ -62,6 +80,7 @@ const NAV: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
   const [bar, setBar] = useState<HTMLElement | null>(null);
 
   // Published on <html> so the offline banner, the install prompt and the
@@ -69,6 +88,33 @@ export function Sidebar() {
   useDockClearance(bar);
 
   useEffect(() => setMoreOpen(false), [pathname]);
+
+  /*
+    The rail's own "More" remembers being opened, because somebody who has gone
+    looking for the mock exam once will go looking for it again, and a
+    disclosure that shuts itself on every navigation is a disclosure you learn
+    to distrust. Read once on mount rather than on every render: this is a
+    convenience, and a browser that refuses storage is not an error worth
+    surfacing.
+  */
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(RAIL_OPEN_KEY) === "1") setRailOpen(true);
+    } catch {
+      // Private windows and blocked site data. The rail simply starts shut.
+    }
+  }, []);
+
+  const toggleRail = () => {
+    setRailOpen((open) => {
+      try {
+        window.localStorage.setItem(RAIL_OPEN_KEY, open ? "0" : "1");
+      } catch {
+        // As above: the state still applies to this page.
+      }
+      return !open;
+    });
+  };
 
   // Escape closes the sheet. A sheet with no way out but a small X in its
   // corner is a sheet somebody taps around the edges of.
@@ -87,6 +133,12 @@ export function Sidebar() {
   const primary = NAV.filter((n) => n.primary);
   const secondary = NAV.filter((n) => !n.primary);
   const secondaryActive = secondary.some((n) => isActive(n.href));
+  /*
+    Open when the learner asked for it, and open regardless when the page they
+    are on lives inside it: a rail that does not contain the current page has
+    lost its one job, which is telling you where you are.
+  */
+  const showRest = railOpen || secondaryActive;
 
   return (
     <>
@@ -99,59 +151,41 @@ export function Sidebar() {
           <Wordmark subtitle="Estonian, daily" />
         </Link>
 
-        {NAV.map(({ href, label, icon: Icon, tone }) => {
-          const active = isActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className="flex items-center gap-3 rounded-full px-3 py-2 text-base transition-ui"
-              style={{
-                background: active ? "var(--surface)" : "transparent",
-                color: active ? "var(--ink)" : "var(--ink-2)",
-                fontWeight: active ? 700 : 500,
-                boxShadow: active ? "var(--shadow-sm)" : "none",
-              }}
-            >
-              <span
-                className="flex h-7 w-7 items-center justify-center rounded-full transition-colors"
-                style={{
-                  background: active ? tone : "var(--raised)",
-                  color: active ? "var(--surface)" : "var(--ink-3)",
-                }}
-              >
-                <Icon size={15} strokeWidth={2.2} aria-hidden />
-              </span>
-              {label}
-            </Link>
-          );
-        })}
+        {primary.map((item) => <RailLink key={item.href} item={item} active={isActive(item.href)} />)}
 
-        <Link
-          href="/review/sprint"
-          className="lift mt-3 flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-semibold"
-          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        <button
+          type="button"
+          onClick={toggleRail}
+          aria-expanded={showRest}
+          className="mt-1 flex items-center gap-3 rounded-full px-3 py-2 text-base transition-ui"
+          style={{ color: "var(--ink-3)", fontWeight: 500 }}
         >
-          <Zap size={15} strokeWidth={2.4} aria-hidden /> 60-second sprint
-        </Link>
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-full"
+            style={{ background: "var(--raised)", color: "var(--ink-3)" }}
+          >
+            <ChevronDown
+              size={15}
+              strokeWidth={2.2}
+              aria-hidden
+              className="transition-transform"
+              style={{ transform: showRest ? "rotate(180deg)" : "none" }}
+            />
+          </span>
+          {showRest ? "Less" : "More"}
+        </button>
+
+        {showRest &&
+          secondary.map((item) => <RailLink key={item.href} item={item} active={isActive(item.href)} />)}
 
         <p className="mt-4 px-3 text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Press{" "}
           <kbd
             className="rounded-md px-1.5 py-0.5 font-semibold"
             style={{ background: "var(--raised)", color: "var(--ink-2)" }}
           >
             ⌘K
           </kbd>{" "}
-          to jump anywhere or look a word up,{" "}
-          <kbd
-            className="rounded-md px-1.5 py-0.5 font-semibold"
-            style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-          >
-            ?
-          </kbd>{" "}
-          for every shortcut.
+          goes anywhere.
         </p>
 
         <div className="mt-auto flex items-center gap-1 pt-4">
@@ -312,6 +346,35 @@ export function Sidebar() {
         </div>
       )}
     </>
+  );
+}
+
+/** One row of the desktop rail. */
+function RailLink({ item, active }: { item: NavItem; active: boolean }) {
+  const { href, label, icon: Icon, tone } = item;
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className="flex items-center gap-3 rounded-full px-3 py-2 text-base transition-ui"
+      style={{
+        background: active ? "var(--surface)" : "transparent",
+        color: active ? "var(--ink)" : "var(--ink-2)",
+        fontWeight: active ? 700 : 500,
+        boxShadow: active ? "var(--shadow-sm)" : "none",
+      }}
+    >
+      <span
+        className="flex h-7 w-7 items-center justify-center rounded-full transition-colors"
+        style={{
+          background: active ? tone : "var(--raised)",
+          color: active ? "var(--surface)" : "var(--ink-3)",
+        }}
+      >
+        <Icon size={15} strokeWidth={2.2} aria-hidden />
+      </span>
+      {label}
+    </Link>
   );
 }
 

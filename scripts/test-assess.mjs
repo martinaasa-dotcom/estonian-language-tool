@@ -16,8 +16,8 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  * how few questions it came from.
  */
 const B = baseUrl();
-// Floor: 44, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 44 });
+// Floor: 42, measured in the state CI seeds, with first run not yet done.
+const { check, absent, done } = suite("Level check", { floor: 42 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -202,7 +202,7 @@ await page.goto(`${B}/start`, { waitUntil: "networkidle" });
 const onboarded = !page.url().includes("/start");
 
 if (onboarded) {
-  absent(18, "a learner who has not been through first run: this database has");
+  absent(16, "a learner who has not been through first run: this database has");
   /*
     A learner who has already been through it is sent to Today, which is the
     documented behaviour rather than a gap in this run: a wizard that reappears
@@ -211,25 +211,21 @@ if (onboarded) {
   */
   check("the walkthrough does not reappear for somebody who has done it", true, page.url());
 } else {
+  /*
+    Four screens: You, Level, Goal, Start. It was eight, and the order is the
+    argument. The limits are stated on the first screen, before anything is
+    asked for. The level is measured or estimated second, because the plan is
+    built on it. The plan sits under the answers that produce it rather than on
+    a screen of its own, and it is still seen before a single word is chosen,
+    which is the property that mattered about the old shape.
+  */
   check("first run opens the walkthrough", true, page.url());
+  const opening = await page.locator("body").innerText();
+  check("it states what the app cannot do before it asks for anything",
+    /will not score your pronunciation/i.test(opening));
+  check("and links both lists in full",
+    (await page.locator('a[href="/guide"]').count()) > 0);
   await page.getByLabel(/What should we call you/i).fill("Test");
-  await page.getByRole("button", { name: /^Continue$/ }).click();
-
-  check("it asks why, before it asks which level",
-    (await page.getByText(/Why Estonian\?/).count()) > 0);
-  check("one of the reasons is the one with an exam attached",
-    (await page.getByText(/Citizenship or residence/).count()) > 0);
-  await page.getByRole("button", { name: /Citizenship or residence/ }).click();
-  await page.getByRole("button", { name: /^Continue$/ }).click();
-
-  check("a level is described by what it lets you do",
-    (await page.getByText(/naturalisation exam asks for/i).count()) > 0);
-  check("and by what it still does not",
-    (await page.getByText(/Still out of reach/i).count()) > 0);
-  check("it asks for a deadline", (await page.getByText(/In six months/).count()) > 0);
-  check("and how many days a week are realistic",
-    (await page.getByText(/Days a week you will really practise/i).count()) > 0);
-  await page.getByRole("button", { name: /In a year/ }).click();
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   check("the level step offers a measurement first",
@@ -239,23 +235,25 @@ if (onboarded) {
   await page.getByRole("button", { name: /I get by/ }).click();
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
-  check("the pace step says what a daily goal actually buys",
-    (await page.getByText(/ten reviews over its first year/i).count()) > 0);
-  await page.getByRole("button", { name: /^Continue$/ }).click();
+  check("it asks why, and one of the reasons is the one with an exam attached",
+    (await page.getByText(/Citizenship or residence/).count()) > 0);
+  await page.getByRole("button", { name: /Citizenship or residence/ }).click();
 
-  const planStep = await page.locator("main, body").first().innerText();
-  check("the plan is shown before any words are chosen", /study hours to go/i.test(planStep));
+  const goalStep = await page.locator("body").innerText();
+  check("choosing a reason names the level it needs, by what it lets you do",
+    /naturalisation exam asks for/i.test(goalStep));
+  check("and by what it still does not", /Still out of reach/i.test(goalStep));
+  check("it asks for a deadline", (await page.getByText(/In six months/).count()) > 0);
+  check("and how many days a week are realistic",
+    (await page.getByText(/Days a week you will really practise/i).count()) > 0);
+  check("the plan sits under the answers that build it", /study hours to go/i.test(goalStep));
   check("an estimated level is flagged as estimated on the plan",
-    /Take the check when you have ten minutes/i.test(planStep));
-  await page.getByRole("button", { name: /^Continue$/ }).click();
-
-  const tourStep = await page.locator("body").innerText();
-  check("the walkthrough covers what the app does", /what it does/i.test(tourStep));
-  check("and what it does not", /what it does not/i.test(tourStep));
-  check("it names every screen", /Dictionary/.test(tourStep) && /Level check/.test(tourStep));
+    /Take the check when you have ten minutes/i.test(goalStep));
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   check("the deck step comes last", (await page.getByText(/Your first units/i).count()) > 0);
+  check("and the daily goal is a row on it rather than a screen of its own",
+    (await page.getByText(/ten reviews over its first year/i).count()) > 0);
   await page.getByRole("button", { name: /Start learning/ }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/start"), { timeout: 20000 });
   check("finishing lands in the app", !page.url().includes("/start"), page.url());

@@ -12,6 +12,7 @@ import {
 import { checkpointPassed } from "@/lib/collections/checkpoint";
 import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
+import { loadRecentMessages } from "@/lib/tutor/history";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
 import { upsertLexemeWithForms } from "@/lib/dict/upsert";
@@ -580,6 +581,20 @@ export async function checkAchievements(session?: { count: number; accuracy: num
   const ownerId = await requireUserId();
   const newBadges = await checkAchievementsFor(ownerId, session);
   return { ok: true as const, newBadges };
+}
+
+/**
+ * A learner's recent turns with Anu, for the floating Anu button.
+ *
+ * The full `/tutor` page loads this server-side on every visit; the floating
+ * button is chrome that stays mounted across navigation, so it fetches once,
+ * the first time it is opened, rather than on every page load. Same table,
+ * same shape, so a conversation continued from either one reads as one
+ * conversation.
+ */
+export async function getTutorHistory() {
+  const ownerId = await requireUserId();
+  return loadRecentMessages(ownerId);
 }
 
 /** Sets the review count that fills the daily-goal ring on Today. */
@@ -2284,13 +2299,16 @@ export async function reviewSuggestion(input: unknown) {
   });
 
   /*
-    NOT `/admin/suggestions`. Revalidating the queue re-renders it, which
-    unmounts the row that was just acted on along with the sentence saying
-    what it did: the reviewer clicked "Accept and apply" and the line vanished
-    with no word about whether a word had been added. Working through a queue
-    is also the one screen where rows must not reshuffle under the cursor
-    between clicks. The row reports its own outcome and the list is right
-    again on the next load.
+    NOT `/admin/suggestions`. Working through a queue is the one screen where
+    rows must not reshuffle under the cursor between clicks, and the list is
+    right again on the next load anyway.
+
+    That is not on its own enough to keep the reviewer informed, and the
+    browser suite is what proved it: any server action re-renders the tree the
+    page is on, so the row that was just accepted disappears from the server's
+    answer regardless of what this revalidates. `QueueRows` holds the outcome
+    a level above the row for that reason, and shows it for a row the server
+    has since dropped.
   */
   revalidatePath("/suggestions");
   if (applied) {

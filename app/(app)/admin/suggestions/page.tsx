@@ -121,19 +121,17 @@ export default async function SuggestionsQueuePage({
         ))}
       </div>
 
-      {queue.rows.length === 0 ? (
-        <Empty
-          mood="happy"
-          title={status === "OPEN" ? "Nothing waiting" : "Nothing here"}
-          body={
-            status === "OPEN"
-              ? "Every report has been acted on. New ones land here the moment somebody sends one from a dead end in the app."
-              : "No report has been given this outcome yet."
-          }
-        />
-      ) : (
-        <QueueRows rows={queue.rows} />
-      )}
+      {/*
+        Always mounted, empty state and all. The alternative is
+        `rows.length ? <QueueRows/> : <Empty/>`, and that swap is what wiped
+        the reviewer's own confirmation: acting on the last open report drops
+        the row count to zero, the branch flips, and the component holding
+        what just happened is unmounted by the page around it. So the empty
+        state lives inside the list, which is the only place that knows the
+        difference between "nothing to show" and "nothing left because you
+        have just dealt with it".
+      */}
+      <QueueRows rows={queue.rows} status={status} />
 
       {queue.groups > QUEUE_PAGE_SIZE && (
         <Card className="mt-6 flex items-center justify-between gap-3">

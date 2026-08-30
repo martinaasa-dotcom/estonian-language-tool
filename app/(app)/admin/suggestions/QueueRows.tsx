@@ -5,9 +5,10 @@ import Link from "next/link";
 import { Check, ChevronDown, ChevronRight, TriangleAlert, X } from "lucide-react";
 import { reviewSuggestion } from "@/app/actions";
 import { Button } from "@/components/Button";
-import { Card, Chip } from "@/components/ui";
+import { Card, Chip, Empty } from "@/components/ui";
 import { formatDateTime } from "@/lib/time/clock";
 import { SUGGESTION_CATEGORIES, summarisePatch } from "@/lib/suggestions/model";
+import type { SuggestionStatus } from "@/lib/suggestions/model";
 import type { QueueRow } from "@/lib/suggestions/queue";
 
 /**
@@ -29,20 +30,71 @@ import type { QueueRow } from "@/lib/suggestions/queue";
  * gloss somebody else has already corrected says exactly that, and the button
  * that would rewrite it is not there to press.
  */
-export function QueueRows({ rows }: { rows: QueueRow[] }) {
+export function QueueRows({ rows, status }: { rows: QueueRow[]; status: SuggestionStatus }) {
+  /*
+    WHAT THIS REVIEWER HAS JUST DONE, HELD HERE RATHER THAN IN THE ROW.
+
+    Any server action re-renders the tree the page is on, whatever it
+    revalidates, and the row that was just accepted is no longer in the
+    server's answer: it unmounts, taking the sentence saying what it did with
+    it. The reviewer clicks "Accept and apply" and the line vanishes with no
+    word about whether a word was added, which is exactly the feedback that
+    makes it safe to click quickly.
+
+    So the outcome lives one level up, keyed by id, and a confirmation is
+    rendered for an id the server has since dropped. It survives the refresh
+    because it never depended on the refresh not happening: the first version
+    did, and passed its browser check on timing alone.
+  */
+  const [done, setDone] = useState<{ id: string; message: string }[]>([]);
+  const settled = new Map(done.map((d) => [d.id, d.message]));
+  const stillListed = new Set(rows.map((r) => r.id));
+
+  if (rows.length === 0 && done.length === 0) {
+    return (
+      <Empty
+        mood="happy"
+        title={status === "OPEN" ? "Nothing waiting" : "Nothing here"}
+        body={
+          status === "OPEN"
+            ? "Every report has been acted on. New ones land here the moment somebody sends one from a dead end in the app."
+            : "No report has been given this outcome yet."
+        }
+      />
+    );
+  }
+
   return (
     <ul className="flex flex-col gap-3">
-      {rows.map((row) => (
-        <Row key={row.id} row={row} />
-      ))}
+      {done
+        .filter((d) => !stillListed.has(d.id))
+        .map((d) => <Settled key={d.id} message={d.message} />)
+        .reverse()}
+      {rows.map((row) => {
+        const message = settled.get(row.id);
+        return message
+          ? <Settled key={row.id} message={message} />
+          : <Row key={row.id} row={row} onDone={(m) => setDone((d) => [...d, { id: row.id, message: m }])} />;
+      })}
     </ul>
   );
 }
 
-function Row({ row }: { row: QueueRow }) {
+/** A decision, after it was made. The only thing left of a row that is gone. */
+function Settled({ message }: { message: string }) {
+  return (
+    <Card as="li" tone="mint">
+      <p className="flex items-start gap-2 text-sm" style={{ color: "var(--mint-ink)" }}>
+        <Check size={15} aria-hidden className="mt-0.5 shrink-0" />
+        <span>{message}</span>
+      </p>
+    </Card>
+  );
+}
+
+function Row({ row, onDone }: { row: QueueRow; onDone: (message: string) => void }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
-  const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -58,7 +110,7 @@ function Row({ row }: { row: QueueRow }) {
         return;
       }
       const many = result.resolved === 1 ? "1 report" : `${result.resolved} reports`;
-      setDone(
+      onDone(
         [
           decision === "ACCEPT" ? `Accepted, ${many} closed.` : `Declined, ${many} closed.`,
           result.applied,
@@ -66,17 +118,6 @@ function Row({ row }: { row: QueueRow }) {
       );
     });
   };
-
-  if (done) {
-    return (
-      <Card as="li" tone="mint">
-        <p className="flex items-start gap-2 text-sm" style={{ color: "var(--mint-ink)" }}>
-          <Check size={15} aria-hidden className="mt-0.5 shrink-0" />
-          <span>{done}</span>
-        </p>
-      </Card>
-    );
-  }
 
   return (
     <Card as="li" className="flex flex-col gap-3">
