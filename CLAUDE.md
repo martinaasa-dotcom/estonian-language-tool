@@ -964,6 +964,20 @@ exactly what you get when two people build the same thing in different lines,
 and that is the case that hurts, because nothing fails and you end up with two
 of everything.
 
+**A clean merge is not a merge that lost nothing, and `npm run audit:merge` is
+how you find out.** Twice in one afternoon a merge resolved with no conflict at
+all and silently reverted somebody's work: a `tap-tint` hover main had added to
+two of the three weakest-case panels a branch was extracting into one component,
+and an inset ring on Today's week strip that exists because mint on that card is
+2.52:1. Git had no reason to ask in either case, because one side changed lines
+the other side had moved or deleted. The script asks the question mechanically:
+for every line the other side added since the merge base, is it still in the
+tree? It reports rather than fails, because a branch that deliberately deletes a
+file the other side edited is doing nothing wrong and a check that fails on that
+is a check people learn to skip. Run it after every merge that touched files
+both sides own. It is the marker-grepping ritual below, done by a machine that
+does not have to remember which markers.
+
 When somebody else's work overlaps yours, one of them has to go. Keep the one
 that is safer or more precise and **delete the other outright** rather than
 leaving both: their fixture entry reaches four lapses in twelve reviews and
@@ -1012,6 +1026,7 @@ npm run test             # unit tests (Vitest), hermetic: no database, no networ
 npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
+npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
@@ -1038,6 +1053,38 @@ long as nobody reseeds it, and the person who can see that number is rarely the 
 checkout and the production password. It never pushes the schema: the deployment's own build does
 that, and a workflow that can reshape the production database is a bigger thing than one that can
 reload the dictionary inside it.
+
+**One character is still text, and the contrast pass was skipping every one of
+them.** `test-design.mjs` measured a text node only at `length > 1`, so no
+single-character run was ever checked, and the one that mattered was exactly
+that shape: the tick inside a reviewed day on Today's week strip, white on mint
+at 2.52:1, sitting in the app unseen by the suite whose job is finding that. It
+measures them now, and the exemption is `data-ornament` in the markup rather
+than a length: a 92px step numeral in a hue's own tint, behind a card that says
+the same thing in words, is decoration and has to say so. `aria-hidden` cannot
+stand in for it, because the tick carries that too and is still the thing a
+sighted reader looks at. The fix on the other side was `--on-mint`, since
+`--mint-ink` is the ink on mint's *tint* and there was nothing for its solid
+fill (docs/14-design-system.md §"Every hue has an ink").
+
+**A suite states its preconditions; it does not inherit them.** `letterBar` is a
+stored preference that decides whether a control is drawn at all, so a database
+where any earlier suite walked through first run and answered "I have them
+already" draws no letter bar, and `e2e.mjs` then spent thirty seconds waiting for
+a button that was correctly hidden before failing in Playwright's words rather
+than in ones that name the cause. CI escapes it only by seeding fresh, which
+means the one place it bites is somebody's own machine, in their own order, with
+the least context for reading it. `scripts/lib/prefs.mjs` holds `ensureLetterBar`
+and `requireLetterBar`: set the answer you depend on, and fail in seven
+milliseconds and in words when it is not there. The same rule covers data and
+not only preferences: `/review/government` builds its questions out of the
+learner's deck and correctly asks nothing when no verb in it carries a recorded
+government, and `smoke-interact.mjs` met that by clicking a button that was not
+there, which is thirty seconds of waiting, a throw, and the eight checks after
+it never running, all reported as one failure naming a regex. It reads the
+precondition and waives its three checks with the reason on screen instead. Cleaning up after yourself is the
+weaker version of the same idea, since it only works while every suite remembers
+and cannot help the first run on a machine somebody has been clicking around on.
 
 **A suite that ran nothing looks exactly like one that passed, so every suite
 counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what

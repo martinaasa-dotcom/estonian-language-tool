@@ -1,5 +1,6 @@
 import { eventually, launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ensureLetterBar, requireLetterBar } from "./lib/prefs.mjs";
 
 const B = baseUrl();
 const browser = await launchChromium();
@@ -11,6 +12,16 @@ page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 21, measured in the state CI seeds. A thinner database reads as short.
 const { check, done } = suite("The core flows", { floor: 21 });
+
+/*
+  Two checks below type through the Estonian letter bar, and whether that row is
+  drawn is a stored preference rather than a fact about the app. On a machine
+  where any earlier suite walked through first run and answered "I have them
+  already", it is off, and this suite spent thirty seconds waiting for a button
+  that was correctly hidden before failing in Playwright's words rather than in
+  ones that name the cause. State the precondition instead of inheriting it.
+*/
+await ensureLetterBar(browser, B, "on");
 
 // 1 — Dictionary: search, paradigm, add to deck
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
@@ -34,6 +45,7 @@ await page.waitForSelector("text=toaga", { timeout: 10000 });
 check("English search finds the Estonian word", page.url().includes("q=room"));
 
 await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+await requireLetterBar(page);
 await page.getByLabel("Search the dictionary").fill("s");
 await page.getByLabel("Insert õ").click();
 check("diacritic bar inserts õ",

@@ -271,7 +271,10 @@ export default async function TodayPage() {
                         */
                         style={{
                           background: d.done ? "var(--mint)" : "var(--raised)",
-                          color: d.done ? "var(--surface)" : "var(--ink-3)",
+                          // `--on-mint`, not `--surface`: white on this fill is
+                          // 2.52:1 and the tick is the channel carrying
+                          // "reviewed" without relying on the colour.
+                          color: d.done ? "var(--on-mint)" : "var(--ink-3)",
                           boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
                           outline: d.isToday ? "2px solid var(--accent)" : "none",
                           outlineOffset: 2,

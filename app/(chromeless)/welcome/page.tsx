@@ -502,7 +502,14 @@ function HowItWorks() {
                 aria-hidden
                 /* Ornament rather than type: a step number set large enough
                    to read as a shape behind the card. Off the scale on
-                   purpose — see docs/14-design-system.md §3. */
+                   purpose — see docs/14-design-system.md §3.
+
+                   `data-ornament` says the same thing to the contrast pass in
+                   scripts/test-design.mjs, which measures single characters
+                   now and would otherwise read a hue's own tint at 1.18:1 as a
+                   failure. It is decoration: the step is written in words
+                   inside the card this sits behind. */
+                data-ornament
                 className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
                 style={{ color: `var(--${s.tone}-soft)` }}
               >
