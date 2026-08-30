@@ -1407,6 +1407,117 @@ check("the root declares no overflow", () => {
   assert.match(CSS, /overflow-x:\s*clip/, "the body no longer clips sideways");
 });
 
+/*
+  TEXT AND ICONS STAY INSIDE THE BOXES THEY WERE DRAWN INTO.
+
+  The rules that make this true are four declarations in app/globals.css and
+  `lib/layout/containment.test.ts` asserts each of them against the
+  stylesheet. What is here is the part a stylesheet cannot promise on its own:
+  that nothing in the markup opts back out, and that the one exemption is
+  still paying for itself.
+
+  `scripts/test-containment.mjs` is the third leg and the only one that can
+  see a rectangle. It walks every text-bearing element, every lucide icon and
+  everything that arrives with a width of its own, on every route the app has
+  at 360, 768 and 1280, in the dark as well as the light, and asks whether any
+  of them is cut off by an ancestor that clips, drawn outside a border
+  somebody painted, drawn on top of something else, or resized away from the
+  size it declared. Then it swaps every run of text for a run of letters OF
+  THE SAME LENGTH with no space and no hyphen in it and asks all four again,
+  which is the question Estonian actually poses: a row fits today because the
+  gloss it happens to hold has commas in it, and the compound of the same
+  width has to fit as well.
+
+  768 is where it earns its keep. It is neither end, so it went unmeasured
+  longest, and it is the width at which the rail appears and the content
+  column is therefore narrowest: five faults were waiting there, one of them
+  in the shell every page is drawn inside. With the four declarations removed
+  it fails 395 of its 1010 checks, which is how anybody knows it is looking.
+*/
+check("nobody opts back out of the wrapping default", () => {
+  /*
+    `overflow-wrap: anywhere` is inherited from the body so that a screen has
+    to opt out rather than remember to opt in, and the only ways back out are
+    setting it to something else or asking for a word to be kept whole. Both
+    are findable, and both are how a card starts overflowing again on one
+    screen while every other screen stays right.
+
+    `white-space: nowrap` is deliberately NOT on this list. A one-line label is
+    a real thing to want and a short one cannot overflow anything; what is
+    banned is undoing the rule for text that is allowed to be any length.
+  */
+  for (const file of [...APP, ...COMPONENTS, ...LIB]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const source = read(file);
+    for (const found of source.matchAll(/overflowWrap:\s*"([a-z-]+)"/g)) {
+      assert.equal(
+        found[1],
+        "anywhere",
+        `${file} sets overflow-wrap to ${found[1]}, which takes the containment default off ` +
+        "for everything under it. The exemption for a paradigm is on `table` in app/globals.css.",
+      );
+    }
+    assert.equal(
+      /wordBreak:\s*"keep-all"/.test(source) || /\bbreak-keep\b/.test(source),
+      false,
+      `${file} asks for a word to be kept whole, which is the same opt-out by another name`,
+    );
+  }
+});
+
+check("no icon is given a flex of its own", () => {
+  /*
+    `svg.lucide { flex: none }` is one declaration standing in for `shrink-0`
+    on several hundred icons, and it is beaten by anything more specific. With
+    it off, `lucide-eye-off` was measured at 0x15 in a deck row and
+    `lucide-sun` at 28x16 in the rail: a flex item with no `flex` of its own
+    both shrinks and grows, so an icon is deformed by a label being too long
+    and by it being too short.
+
+    `shrink-0` on an icon is not a violation. It says the same thing the rule
+    says and costs nothing; what would break it is a `flex-1`, a `grow`, or a
+    `flexShrink` written into a style prop.
+  */
+  const ICON = /<[A-Z][A-Za-z0-9]*\b[^>]*\bsize=\{[0-9]+\}[^>]*>/g;
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const found of read(file).matchAll(ICON)) {
+      const tag = found[0];
+      assert.equal(
+        /\b(?:flex-1|flex-auto|grow)\b/.test(tag) || /flexShrink|flexGrow|flex:/.test(tag),
+        false,
+        `${file} gives an icon a flex of its own: ${tag.slice(0, 80)}`,
+      );
+    }
+  }
+});
+
+check("a table sits in a scroller, which is what buys it the exemption", () => {
+  /*
+    A table is the one thing allowed to keep its words whole, because a
+    paradigm is read by comparing forms down a column and a form broken across
+    two lines has to be reassembled before it can be compared. That is only an
+    honest trade while the table has something to give instead, and what it
+    gives is a sideways scroll of its own rather than the page's.
+
+    The worksheet's table was the one that did not, and it was not a near
+    miss: a blank to write on is 110px because that is what a hand needs, so
+    three of them and their padding came to 103px more than a 360px phone has.
+  */
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = read(file);
+    for (const found of source.matchAll(/<table\b/g)) {
+      const before = source.slice(Math.max(0, found.index - 400), found.index);
+      assert.match(
+        before,
+        /overflow-x-auto/,
+        `${file} has a table with no scroller around it. A table keeps its words whole ` +
+        "(app/globals.css), so a table too wide for a phone has to have a way out.",
+      );
+    }
+  }
+});
+
 check("nothing fixed over content carries a backdrop filter", () => {
   /*
     That pairing re-filters its backdrop on every frame of every scroll.

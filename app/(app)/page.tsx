@@ -241,9 +241,17 @@ export default async function TodayPage() {
                 {/* A week at a glance: the streak, made concrete. */}
                 <div className="flex min-w-[210px] flex-1 items-center justify-between gap-2">
                   {week.map((d) => (
-                    <div key={d.day} className="flex flex-1 flex-col items-center gap-1.5">
+                    <div key={d.day} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                      {/*
+                        Sized to the column it is in, up to 36px, rather than
+                        36px whatever the column turned out to be. Seven of
+                        these, six gaps and the card's own padding come to more
+                        than a 360px phone has, so the last circle was drawn 2px
+                        over the card's right border. `aspect-square` keeps it a
+                        circle at whatever width it ends up with.
+                      */}
                       <span
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
+                        className="flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold"
                         /*
                           The ring is what makes a reviewed day visible.
 

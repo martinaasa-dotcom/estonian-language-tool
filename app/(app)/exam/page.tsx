@@ -184,8 +184,12 @@ export default async function ExamPage() {
             return (
               <Card as="li" key={level.level} hover>
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
+                  {/* `min-w-0` so the level's own column can give: without it
+                      the three chips below set a floor the card cannot meet at
+                      768, where the rail is drawn and the card is at its
+                      narrowest, and they were 11px over its border. */}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
                         {level.level}
                       </span>

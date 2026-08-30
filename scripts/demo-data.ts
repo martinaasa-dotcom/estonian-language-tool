@@ -31,6 +31,9 @@ const HISTORIES: number[][] = [
   [3, 3, 1, 3, 3, 1, 3, 3, 1, 3, 3, 1],
 ];
 
+/** Fixed, so re-running the fixture reuses the one class rather than adding another. */
+const DEMO_CLASS_CODE = "DEMOAA";
+
 async function main() {
   // Cards/tasks are per-user now (docs/03-architecture.md ADR-012), so this script
   // only ever touches one account's data — find your user id in the Supabase
@@ -118,6 +121,28 @@ async function main() {
       { ownerId, title: "Listen to Vikerraadio for 20 minutes", tag: "LISTENING", classWeek: 6 },
       { ownerId, title: "Write 5 sentences using the comitative", tag: "HOMEWORK", classWeek: 5, completed: true, completedAt: new Date() },
     ],
+  });
+
+  /*
+    A class, with this learner in it as its teacher.
+
+    Not decoration. In local mode `/class` deliberately replaces the create and
+    join forms with the reason there is nobody to share with, so
+    `/class/[classroomId]` is a screen no browser suite can reach by driving
+    the app: it needs a row to exist first. Without one,
+    `scripts/test-containment.mjs` waives twenty checks on a real screen for
+    want of a fixture, which is the sort of hole a waiver is supposed to
+    report rather than create.
+  */
+  const classroom = await prisma.classroom.upsert({
+    where: { code: DEMO_CLASS_CODE },
+    update: {},
+    create: { name: "Eesti keel A2, teisipäev", code: DEMO_CLASS_CODE, ownerId },
+  });
+  await prisma.classroomMember.upsert({
+    where: { classroomId_ownerId: { classroomId: classroom.id, ownerId } },
+    update: {},
+    create: { classroomId: classroom.id, ownerId, role: "TEACHER", displayName: "You" },
   });
 
   console.log("cards:", await prisma.card.count({ where: { ownerId } }), "reviews:", await prisma.review.count({ where: { ownerId } }));
