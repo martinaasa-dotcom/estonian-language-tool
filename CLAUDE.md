@@ -334,6 +334,20 @@ needed the same thing; a second copy of the pattern is where the `finally` gets 
 bad minute upstream is remembered as a failure until the next deploy. A joiner is not charged for
 a request it did not make, which is why `singleFlightTagged` reports which caller it was.
 
+**Every cache the service worker keeps has a ceiling, and the one that does not is the reason
+why.** `lib/audio/clipCache.ts` was written because a cache that never evicts is a leak with a hit
+rate, and one layer down the worker had the same shape twice over with nothing watching either.
+Speech is a WAV per phrase and review plays audio on nearly every card, so a phone kept every clip
+it had ever heard; the build-output cache was worse, since `_next/static` names are hashed per build
+while the cache name is typed by hand, so every deploy added a set of chunks and nothing removed the
+last one's. The cost is not a slow app, it is a lost fallback: a browser evicting an origin's
+storage takes all of it, and `/offline` is the entry with nothing behind it. So `/offline` and the
+icon live in their own cache which is **never** trimmed, and everything else has a count in `LIMITS`
+with a trim after every write. Oldest first rather than least-recently-used, because the Cache API
+cannot record a read and re-putting on every hit would make a lookup a write on the busiest path in
+the app. `VERSION` is what clears the arrears, and it is the only thing that has ever removed a
+stale entry here.
+
 **The service worker warms the page you were on when it took over.** The page cache fills as a
 side effect of a navigation the worker intercepts, and the worker never serves the navigation
 that installed it: the page is fetched, the worker installs behind it, and `clients.claim()`

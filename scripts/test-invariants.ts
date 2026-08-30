@@ -2020,6 +2020,64 @@ check("every browser suite that exists is a browser suite CI runs", () => {
   }
 });
 
+/**
+ * The worker's caches have ceilings too.
+ *
+ * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never
+ * revokes one is a leak with a hit rate", and its invariant watches components
+ * that mint an object URL. One layer down, the service worker had exactly the
+ * same shape twice over and nothing was watching either: speech is a WAV per
+ * phrase and review plays audio on nearly every card, so a phone kept every
+ * clip it had ever heard, and the build-output cache was worse, because
+ * `_next/static` names are hashed per build while the cache name is typed by
+ * hand, so every deploy added a set of chunks and nothing ever removed the
+ * previous one's.
+ *
+ * The consequence is not a slow app, it is a lost fallback: when the browser
+ * finally evicts storage for an origin it takes all of it, and /offline is the
+ * one entry in here with nothing behind it.
+ *
+ * So every cache the worker writes to has a ceiling, except the shell, whose
+ * exemption is the point rather than an oversight: it holds /offline, and
+ * trimming the thing that has no fallback is what a ceiling must never do.
+ */
+check("every cache the service worker writes to is bounded, except the one that must not be", () => {
+  const sw = read(join("public", "sw.js"));
+
+  const names = [...sw.matchAll(/^const (SHELL|STATIC|PAGES|AUDIO) = /gm)].map((m) => m[1]);
+  assert.ok(names.length >= 4, `expected the worker's four caches, found ${names.join(", ") || "none"}`);
+
+  const limits = sw.match(/const LIMITS = \{([^}]*)\}/)?.[1] ?? "";
+  for (const name of names) {
+    if (name === "SHELL") {
+      assert.ok(
+        !new RegExp(`\\[${name}\\]`).test(limits),
+        "the shell cache has a ceiling, so /offline can be evicted to make room for a chunk",
+      );
+      continue;
+    }
+    assert.match(limits, new RegExp(`\\[${name}\\]:\\s*\\d+`), `${name} has no ceiling`);
+  }
+
+  // And every write is followed by a trim. A ceiling nothing enforces is a
+  // comment, which is what the previous version of this file amounted to.
+  const puts = [...sw.matchAll(/cache\.put\([^)]*\)/g)].length;
+  const trims = [...sw.matchAll(/trim\(/g)].length;
+  assert.ok(
+    trims >= puts,
+    `${puts} cache writes and only ${trims - 1} trims, so at least one cache grows without a ceiling`,
+  );
+
+  // The version is what clears whatever a previous one accumulated, and
+  // `activate` is the only thing that has ever removed a stale entry here.
+  assert.match(sw, /const VERSION = "kodukeel-v\d+"/, "the worker's caches are no longer versioned");
+  assert.match(
+    sw,
+    /keys\.filter\(\(k\) => k\.startsWith\("kodukeel-"\) && !k\.startsWith\(VERSION\)\)/,
+    "activate stopped deleting the caches of previous versions",
+  );
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
