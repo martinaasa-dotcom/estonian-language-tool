@@ -181,3 +181,37 @@ one colour, or cut in vinyl. 03b is how the flag is actually explained to Estoni
 **The cost is real and worth naming.** Nine of the thirteen are not flat fills and four leave the
 violet entirely. Adopting one means widening the design system rather than picking from it, and a
 gradient mark needs its maskable variant checked separately because the launcher crops to a circle.
+
+## Round five
+
+The horizon and the page of writing were the two of round four that landed, and the gradient
+underneath the first one was what was wrong with it. Round four had reached for depth because three
+rounds of flat pictograms had converged, and that was the wrong lever: the problem was the subject
+matter, not the finish.
+
+So round five keeps the subjects and drops the rendering. Ten in `design/icons/round5/`, drawn by
+`node scripts/make-icon-round5.mjs`, and there is not a gradient, a glow or a soft edge among them.
+
+| # | Name | About | What it is |
+|---|---|---|---|
+| 04a | **Horisont** | landscape | the flag as sky, soil and snow, in hard bands |
+| 04b | **Horisont, oo** | landscape | the same country in the half of the year it is dark |
+| 04c | **Vali** | landscape | the soil down to a line between sky and snow |
+| 04i | **Kaldu** | landscape | the three colours pitched off the horizontal |
+| 04j | **Vagu** | landscape | a ploughed field from where you stand in it |
+| 04d | **Kiri** | the page | Estonian seen from too far to read |
+| 04e | **Kiri, tume** | the page | the same page at the hour it is usually read |
+| 04f | **Uks sona** | the page | the same page with one word lit |
+| 04g | **Lehekulg** | the page | the rows go pale down the page: read, and not yet |
+| 04h | **Tabel** | the system | fourteen cells, one filled |
+
+Three were reworked before they were shown. The lit word was too narrow to read as a word. The
+fourteen cells were too small to count. And the furrows were parallel, which is a barcode; converging,
+they are a field.
+
+**04f is the one worth arguing hardest for.** Five rounds have drawn the language, the country and
+the alphabet. This is the first that draws *learning* it, and the only mark in any round that could
+not belong to some other app.
+
+**04j gets to use both meanings of one word.** *Kiri* means writing and it means pattern, and a
+ploughed field running away from you is a page of lines running away from you.

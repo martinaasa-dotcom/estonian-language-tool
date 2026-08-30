@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs><clipPath id="t"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <g clip-path="url(#t)">
+    <rect width="64" height="64" fill="#1b1b22"/>
+    <rect x="6" y="13" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="17" y="13" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="28" y="13" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="39" y="13" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="50" y="13" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="6" y="27" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="17" y="27" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="28" y="27" width="9" height="11" rx="2.5"
+    fill="#7a6bf0"/>
+    <rect x="39" y="27" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="50" y="27" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="6" y="41" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="17" y="41" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="28" y="41" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+    <rect x="39" y="41" width="9" height="11" rx="2.5"
+    fill="#3a3550"/>
+  </g>
+</svg>
