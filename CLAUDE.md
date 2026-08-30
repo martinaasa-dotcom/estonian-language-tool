@@ -763,7 +763,8 @@ local learner; with them, every route is gated. It keys off the absence of confi
   and since the body clips sideways there was not even a scrollbar to find the missing half with.
   Then a case row whose fixed columns came to more than its card had inside it, an exam card whose
   chips set a floor it could not meet, the landing page's ornaments swallowing taps on the card
-  they are tucked over, and `Chip` itself.
+  they are tucked over, and `Chip` itself. With the four declarations removed the suite fails 395
+  of its 1010 checks, which is how anybody knows it is looking.
 - **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
   container, and every library that positions a floating element works in document coordinates
   instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is

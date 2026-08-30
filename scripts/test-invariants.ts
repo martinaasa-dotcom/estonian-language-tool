@@ -1431,7 +1431,8 @@ check("the root declares no overflow", () => {
   768 is where it earns its keep. It is neither end, so it went unmeasured
   longest, and it is the width at which the rail appears and the content
   column is therefore narrowest: five faults were waiting there, one of them
-  in the shell every page is drawn inside.
+  in the shell every page is drawn inside. With the four declarations removed
+  it fails 395 of its 1010 checks, which is how anybody knows it is looking.
 */
 check("nobody opts back out of the wrapping default", () => {
   /*
