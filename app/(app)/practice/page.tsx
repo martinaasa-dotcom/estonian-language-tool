@@ -14,6 +14,8 @@ import { icon } from "@/components/icons";
 import { WeakestCases } from "@/components/WeakestCases";
 import { Card, Chip, Empty, Page, SectionTitle, Stack } from "@/components/ui";
 
+export const metadata = { title: "Practice" };
+
 export const dynamic = "force-dynamic";
 
 /**

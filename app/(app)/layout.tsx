@@ -5,11 +5,12 @@ import { Shortcuts } from "@/components/Shortcuts";
 import { Sidebar } from "@/components/Sidebar";
 import { Wash } from "@/components/ui";
 import { AnuFab } from "@/components/anu/AnuFab";
+import { TimeZoneSync } from "@/components/TimeZoneSync";
 import { LetterBarScope } from "@/components/DiacriticBar";
 import { resolveProviders } from "@/lib/tutor/provider";
-import { supabaseConfigured } from "@/lib/auth/mode";
 import { requireUserId } from "@/lib/auth/session";
-import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { supabaseConfigured } from "@/lib/auth/mode";
 import { letterBarFrom } from "@/lib/ux/letterBar";
 
 // Not cached at build time: `configured` below is read from the environment,
@@ -26,10 +27,26 @@ export const dynamic = "force-dynamic";
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const chain = resolveProviders();
-  // One indexed read, on a request that is already dynamic. It has to be here
-  // rather than on each page: Anu's floating input and the command palette are
-  // outside every page, and they carry Estonian fields too.
-  const letters = letterBarFrom(await readSetting(await requireUserId(), SETTING_KEYS.letterBar));
+  /*
+    Two settings the shell needs, in one read rather than two.
+
+    The letter bar has to be resolved here rather than on each page, because
+    Anu's floating input and the command palette sit outside every page and
+    carry Estonian fields too. The timezone has to be here for the same shape
+    of reason: the heatmap, the badges, the class roster and the share card all
+    count days, so a value collected on one screen would be missing for anybody
+    whose first visit landed on another. `readSettings` takes both keys in one
+    indexed query, on a request that is already dynamic.
+
+    See lib/ux/letterBar.ts for why the bar is a question at all, and
+    lib/time/day.ts for what the zone is worth.
+  */
+  const settings = await readSettings(
+    await requireUserId(),
+    [SETTING_KEYS.letterBar, SETTING_KEYS.timeZone],
+  );
+  const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
+  const storedZone = settings[SETTING_KEYS.timeZone] ?? null;
   return (
     <LetterBarScope value={letters} dismissible>
       <a
@@ -50,6 +67,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           none` in globals.css, and there is no setting that keeps one and not
           the other. Installed to a home screen there is no address bar and so
           no reload button anywhere in this app. */}
+      <TimeZoneSync stored={storedZone} />
       <PullToRefresh />
       <CommandPalette />
       {/* `?` anywhere. Documentation with a keyboard binding — see the component. */}

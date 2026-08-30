@@ -13,6 +13,8 @@ import { formatDateTime } from "@/lib/time/clock";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
 
+export const metadata = { title: "Mock state exam" };
+
 export const dynamic = "force-dynamic";
 
 /**

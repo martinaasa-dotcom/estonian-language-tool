@@ -28,6 +28,8 @@ import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS } from "../lib/tutor/prompt";
+// @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
+import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
 let failures = 0;
 let checks = 0;
@@ -217,6 +219,56 @@ check("the model may never supply a form that becomes a card", () => {
   assert.match(translate, /Translate this Estonian sentence into natural English/, "the sentence prompt changed direction");
   const writesForms = /prisma\.(form|lexeme)\.(create|update|upsert)/;
   assert.equal(writesForms.test(translate), false, "the model's output reaches a form row directly");
+});
+
+check("a withheld note claims Estonian only when it caught Estonian", () => {
+  /*
+    ADR-005 amendment 2. `verifyComment` withholds on two different findings
+    and they are not the same claim. A word carrying one of õäöüšž is Estonian
+    whatever else it is. A word of five letters or more that nothing supplied
+    is `looksInflected`'s guess, deliberately biased towards withholding, and
+    on `/api/exam/write` it is handed no glosses, no paradigm and an allowlist
+    of the learner's own text, so an English word Anu quoted back is the thing
+    it usually catches. Both drop the note, which is the safe error either way.
+
+    Only one of them may be reported to the learner as Anu having written
+    Estonian. A guard that overstates what it caught is a guard nobody believes
+    on the day it catches something real, and both screens used to say the
+    stronger sentence unconditionally.
+  */
+  const verify = read("lib/tutor/verify.ts");
+  assert.match(
+    verify,
+    /reason:\s*certain \? "estonian-form" : "unvouched-word"/,
+    "the verifier stopped distinguishing a certain find from a guess",
+  );
+  assert.match(
+    verify,
+    /certain = true/,
+    "nothing raises the certain flag, so every withhold now reports the same reason",
+  );
+
+  // Both routes have to carry it out to the client, and both screens have to
+  // branch on it. Anchored on the member rather than on a sentence, because
+  // the wording is copy and a copy sweep may rewrite it.
+  for (const file of [
+    "app/api/write/route.ts",
+    "app/api/exam/write/route.ts",
+    "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/exam/result/[id]/AnuReading.tsx",
+  ]) {
+    assert.match(read(file), /withheldReason/, `${file} dropped the withhold reason`);
+  }
+  for (const file of [
+    "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/exam/result/[id]/AnuReading.tsx",
+  ]) {
+    assert.match(
+      read(file),
+      /withheldReason === "unvouched-word"/,
+      `${file} tells every withheld learner that Anu wrote Estonian, including when she did not`,
+    );
+  }
 });
 
 check("nothing derived from a stem is stored", () => {
@@ -2164,6 +2216,450 @@ check("a screen that names a case in Latin names it in Estonian too", () => {
   }
 });
 
+/**
+ * A day boundary rendered on a server belongs to the learner, not to the box.
+ *
+ * Every day-shaped figure in this app is derived on the server: the streak,
+ * the daily goal, the quests, the week strip, the heatmap, the two badges
+ * about the hour of the day. `lib/time/day.ts` had a header saying its days
+ * were "the learner's own calendar days" and a body reading
+ * `date.getFullYear()`, which is the day boundary of whichever process is
+ * running. On Vercel that process is UTC, so the shortcut the file was written
+ * to forbid was being taken one layer down.
+ *
+ * The bill it ran up: a learner in Tallinn who studied on Monday morning, at
+ * one in the morning on Tuesday and again on Wednesday morning kept a
+ * three-day streak. Those sittings fall in two UTC days with a hole between
+ * them, so the app reported a streak of 1 and, with a shield banked, spent it
+ * bridging a Tuesday they had not missed.
+ *
+ * So the rule is: a module that reaches the database is a module rendering for
+ * somebody, and it takes a `DayClock` rather than calling the process-bound
+ * free functions. Anchored on the import, because that is what a new caller
+ * writes first and it is the one line a person adding a fifth day-shaped panel
+ * would copy from a fourth.
+ */
+check("a day boundary on the server is the learner's, never the deployment's", () => {
+  const PROCESS_BOUND = /\bimport\s*\{([^}]*)\}\s*from\s*"@\/lib\/time\/day"/g;
+  const FREE = ["dayKey", "startOfDay", "shiftDay", "recentDayKeys", "daysBetween"];
+
+  for (const file of [...APP, ...LIB]) {
+    if (file.endsWith(".test.ts") || file.endsWith(".itest.ts")) continue;
+    if (file === join("lib", "time", "day.ts")) continue;
+    const source = code(file);
+    // Reaching the database is what makes a module one that renders for a
+    // particular person. A pure module with no owner in sight has no learner
+    // whose clock it could be reading.
+    if (!/@\/lib\/db|prisma\./.test(source)) continue;
+
+    for (const match of source.matchAll(PROCESS_BOUND)) {
+      const named = (match[1] ?? "").split(",").map((n) => n.trim().replace(/^type\s+/, ""));
+      const bare = named.filter((n) => FREE.includes(n));
+      assert.equal(
+        bare.length, 0,
+        `${file} counts days with ${bare.join(", ")}, which reads the server's midnight. ` +
+        `Take a DayClock (lib/progress/dayClock.ts) instead.`,
+      );
+    }
+  }
+
+  // And the module itself still offers one, so the check above cannot be
+  // satisfied by there being nothing to take.
+  const day = code(join("lib", "time", "day.ts"));
+  assert.match(day, /export function dayClock/, "there is no clock to pass any more");
+  assert.match(day, /timeZone: zone/, "the clock stopped reading a zone at all");
+
+  /*
+    The naive-timestamp trap, asserted where it bit. Prisma maps `DateTime` to
+    `timestamp without time zone`, and on a naive value `AT TIME ZONE z`
+    *interprets* rather than converts: a single one read 22:00 UTC as 22:00 in
+    Tallinn and filed the review under the wrong day. The correct form labels
+    the column as the UTC it is and only then converts.
+  */
+  const summary = code(join("lib", "progress", "summary.ts"));
+  const single = /"reviewedAt"\s+AT TIME ZONE\s+\$\{/;
+  assert.doesNotMatch(
+    summary, single,
+    "the streak converts a naive timestamp with one AT TIME ZONE, which interprets it instead",
+  );
+  assert.match(
+    summary,
+    /\("reviewedAt" AT TIME ZONE 'UTC'\) AT TIME ZONE/,
+    "the streak no longer labels its naive column as UTC before converting it",
+  );
+});
+
+/**
+ * A screen says which screen it is, in the tab and in the history.
+ *
+ * Thirty-four of the forty-five routes here set no title at all, so Next fell
+ * back to the one in the root layout and every one of them was called
+ * "Kodukeel. Estonian that finally sticks". That is the landing page's
+ * marketing line, and it was the name of /review, /settings, /progress, the
+ * dictionary and the exam alike: two tabs open side by side were
+ * indistinguishable, a bookmark said nothing about what had been bookmarked,
+ * and a screen reader announcing the document name announced the pitch.
+ *
+ * The three that did set one each invented their own suffix, which is what the
+ * `title.template` in `app/layout.tsx` is now for: a page states its own name
+ * and the app's name is added for it.
+ *
+ * Asserted on every `page.tsx` because this is exactly the kind of thing that
+ * is remembered on the first four screens of a feature and forgotten on the
+ * fifth.
+ */
+check("every screen names itself in the browser tab", () => {
+  const pages = APP.filter((file) => file.endsWith(`${"/"}page.tsx`) || file.endsWith("\\page.tsx"));
+  assert.ok(pages.length > 30, `only found ${pages.length} pages, so this check stopped looking`);
+
+  for (const file of pages) {
+    const source = code(file);
+    assert.match(
+      source,
+      /export const metadata|export async function generateMetadata|export function generateMetadata/,
+      `${file} sets no title, so its tab reads as the landing page`,
+    );
+  }
+
+  /*
+    And the template exists, so a page that sets "Review" is not a page whose
+    tab says only "Review". Checked on the layout rather than on a rendered
+    page: this suite reads source, and a template that is deleted would leave
+    every check above passing.
+  */
+  const layout = code(join("app", "layout.tsx"));
+  assert.match(layout, /template:\s*"%s/, "the root layout no longer adds the app's name to a page title");
+  assert.match(layout, /default:/, "the root layout has no fallback title for a route without one");
+});
+
+/**
+ * A suite that exists is a suite CI runs.
+ *
+ * The workflow's own comment names this fault: "This list is written out
+ * rather than deferring to `npm run test:browser`, so a suite added to that
+ * script alone is a suite CI never runs: `test-exam.mjs` sat here unrun for
+ * its first two builds, floor and all." That is the drift in one direction.
+ * It had also drifted in the other, and nothing was counting: the npm scripts
+ * named seventeen suites and the workflow ran eleven, so five of them had
+ * nothing watching them at all. Among the five was `test-restore.mjs`, the
+ * wipe-and-restore round trip, which guards the only failure in this app that
+ * cannot be recovered from.
+ *
+ * They were all green when somebody finally ran them, which is the least
+ * useful moment to find that out: a suite nobody runs reports on the code it
+ * was written against rather than on the code you have. That is the same
+ * sentence `scripts/lib/checks.mjs` opens with, one level up.
+ *
+ * The source of truth is the filesystem rather than either list, so a new
+ * suite fails this until somebody decides where it runs. An exemption carries
+ * a written reason, on the shape of `lib/legal/exportCoverage.ts`: appending
+ * a filename is not a way to make a check pass.
+ */
+check("every browser suite that exists is a browser suite CI runs", () => {
+  const declared = readdirSync("scripts")
+    .filter((f) => f.endsWith(".mjs"))
+    .filter((f) => DECLARES_SUITE.test(read(join("scripts", f))));
+  assert.ok(declared.length > 10, `only found ${declared.length} suites, so this check stopped looking`);
+
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const exempt = NOT_IN_CI as Record<string, string>;
+
+  for (const file of declared) {
+    if (workflow.includes(`scripts/${file}`)) continue;
+    const reason = exempt[file];
+    assert.ok(reason, `scripts/${file} declares a suite that nothing in CI runs, and no reason is written down`);
+    assert.ok(
+      reason.length > 80,
+      `the reason scripts/${file} is out of CI is too short to be one`,
+    );
+  }
+
+  // And nothing is exempted that CI turns out to run after all, which is how
+  // a reason outlives the thing it was a reason for.
+  for (const file of Object.keys(exempt)) {
+    assert.ok(
+      declared.includes(file),
+      `scripts/lib/suites.mjs exempts scripts/${file}, which is not a suite any more`,
+    );
+    if (file === "load-test.mjs") continue;
+    assert.ok(
+      !workflow.includes(`node scripts/${file}`),
+      `scripts/${file} is exempted from CI and CI runs it`,
+    );
+  }
+
+  /*
+    And every suite is reachable by a person too, through one of the two npm
+    scripts. `test-anu.mjs` was in neither: a whole suite that no command in
+    the repository ran, discoverable only by listing the directory.
+  */
+  const pkg = read("package.json");
+  for (const file of declared) {
+    if (file === "load-test.mjs") continue;
+    assert.ok(
+      pkg.includes(`scripts/${file}`),
+      `scripts/${file} is in no npm script, so nobody can run it without knowing it is there`,
+    );
+  }
+});
+
+/**
+ * The worker's caches have ceilings too.
+ *
+ * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never
+ * revokes one is a leak with a hit rate", and its invariant watches components
+ * that mint an object URL. One layer down, the service worker had exactly the
+ * same shape twice over and nothing was watching either: speech is a WAV per
+ * phrase and review plays audio on nearly every card, so a phone kept every
+ * clip it had ever heard, and the build-output cache was worse, because
+ * `_next/static` names are hashed per build while the cache name is typed by
+ * hand, so every deploy added a set of chunks and nothing ever removed the
+ * previous one's.
+ *
+ * The consequence is not a slow app, it is a lost fallback: when the browser
+ * finally evicts storage for an origin it takes all of it, and /offline is the
+ * one entry in here with nothing behind it.
+ *
+ * So every cache the worker writes to has a ceiling, except the shell, whose
+ * exemption is the point rather than an oversight: it holds /offline, and
+ * trimming the thing that has no fallback is what a ceiling must never do.
+ */
+check("every cache the service worker writes to is bounded, except the one that must not be", () => {
+  const sw = read(join("public", "sw.js"));
+
+  const names = [...sw.matchAll(/^const (SHELL|STATIC|PAGES|AUDIO) = /gm)].map((m) => m[1]);
+  assert.ok(names.length >= 4, `expected the worker's four caches, found ${names.join(", ") || "none"}`);
+
+  const limits = sw.match(/const LIMITS = \{([^}]*)\}/)?.[1] ?? "";
+  for (const name of names) {
+    if (name === "SHELL") {
+      assert.ok(
+        !new RegExp(`\\[${name}\\]`).test(limits),
+        "the shell cache has a ceiling, so /offline can be evicted to make room for a chunk",
+      );
+      continue;
+    }
+    assert.match(limits, new RegExp(`\\[${name}\\]:\\s*\\d+`), `${name} has no ceiling`);
+  }
+
+  // And every write is followed by a trim. A ceiling nothing enforces is a
+  // comment, which is what the previous version of this file amounted to.
+  const puts = [...sw.matchAll(/cache\.put\([^)]*\)/g)].length;
+  const trims = [...sw.matchAll(/trim\(/g)].length;
+  assert.ok(
+    trims >= puts,
+    `${puts} cache writes and only ${trims - 1} trims, so at least one cache grows without a ceiling`,
+  );
+
+  // The version is what clears whatever a previous one accumulated, and
+  // `activate` is the only thing that has ever removed a stale entry here.
+  assert.match(sw, /const VERSION = "kodukeel-v\d+"/, "the worker's caches are no longer versioned");
+  assert.match(
+    sw,
+    /keys\.filter\(\(k\) => k\.startsWith\("kodukeel-"\) && !k\.startsWith\(VERSION\)\)/,
+    "activate stopped deleting the caches of previous versions",
+  );
+});
+
+/**
+ * A route that spends something is a route with a ceiling in front of it.
+ *
+ * `lib/security/rateLimit.ts` opened by saying "three of them do" and naming
+ * three, and there were five by then. That drift is exactly how `/api/write`
+ * ended up without one: it is `/api/exam/write` with a different prompt, its
+ * twin has been throttled since the day it landed, and the only difference
+ * between them was which had been written first. Meanwhile `/api/restore` read
+ * a body of any size the caller liked and handed it to `JSON.parse` before
+ * anything had counted the request.
+ *
+ * The ledger is what actually bounds the spend, and this is not a second
+ * ledger. It is the thing that refuses an obvious loop before it makes a
+ * database round trip per attempt, and the only ceiling at all on the routes
+ * the ledger does not price: speech, the share card, the export and the
+ * restore.
+ *
+ * Read from the routes rather than from the prose, on the shape of the ledger
+ * check above and for the same reason: a paragraph kept four of these honest
+ * and did not catch the fifth.
+ */
+check("a route that spends something is throttled", () => {
+  const routes = APP.filter((file) => /[\\/]api[\\/].*route\.tsx?$/.test(file));
+  assert.ok(routes.length >= 8, `only found ${routes.length} route handlers, so this check stopped looking`);
+
+  /*
+    Exempt, each for a reason that is a fact about the route:
+
+    metrics  carries its own bearer token, 404s when none is configured, and is
+             read by whoever runs the deployment rather than by a learner.
+    reminder is one indexed read and some string building, so a ceiling there
+             would be met by a person tapping twice and by nobody else, which
+             is the same argument `lib/security/actionLimits.ts` makes about
+             grading a card.
+  */
+  const exempt = new Set(["metrics", "reminder"]);
+
+  for (const file of routes) {
+    const name = file.split(/[\\/]/).slice(-2, -1)[0] ?? file;
+    if (exempt.has(name)) continue;
+    const source = code(file);
+    assert.match(
+      source,
+      /checkRateLimit\(/,
+      `${file} does per-call expensive work with no ceiling in front of it`,
+    );
+    /*
+      And charged to the learner rather than to their address. Twenty-five
+      students on one school network are one IP, so an address bucket would
+      refuse a whole classroom in its first few seconds.
+    */
+    assert.match(
+      source,
+      /bucketForOwner\(|bucketForRequest\(/,
+      `${file} throttles against something other than the account it resolved`,
+    );
+  }
+
+  /*
+    And the file that reads a whole upload states a ceiling on it. Without one
+    `request.text()` reads whatever arrives, which is one signed-in account
+    away from holding an arbitrary amount of a server's memory per request.
+  */
+  const restore = code(join("app", "api", "restore", "route.ts"));
+  assert.match(restore, /MAX_BACKUP_BYTES/, "the restore route reads an upload of any size again");
+  assert.match(restore, /content-length/, "the restore route no longer refuses an oversized upload before reading it");
+});
+
+/**
+ * Every route group has a loading state.
+ *
+ * `docs/08-ux-ia-a11y.md` §4 asks each view for four states, and CLAUDE.md
+ * repeats it: "A view without an empty state is not finished." Loading is one
+ * of the four and it is the one a route group can lose wholesale, because it
+ * is a file rather than a branch in a component. `app/(app)/` had one. The
+ * chromeless group and the two policy pages had none, so the landing page,
+ * sign-in, first run, /privacy and /terms each showed a blank screen until
+ * their data arrived.
+ *
+ * First run is the worst of those to lose. It builds a whole level check on
+ * the server before rendering, which is a handful of queries paid for
+ * deliberately, and what it showed for the length of them was nothing at all,
+ * as the first screen this app puts in front of anybody.
+ *
+ * Checked per group rather than per page, because that is the granularity
+ * Next resolves a `loading.tsx` at and therefore the granularity at which one
+ * can go missing.
+ */
+check("every route group says it is loading rather than showing nothing", () => {
+  /*
+    A directory owns a loading state if it or an ancestor up to `app/` has one.
+    Only directories that hold a page need one; a bare segment inherits.
+  */
+  const owners = new Set(
+    APP.filter((file) => /[\\/]loading\.tsx$/.test(file)).map((file) => file.replace(/[\\/]loading\.tsx$/, "")),
+  );
+
+  const covered = (dir: string): boolean => {
+    let at = dir;
+    for (;;) {
+      if (owners.has(at)) return true;
+      const up = at.replace(/[\\/][^\\/]+$/, "");
+      if (up === at || up.length < "app".length) return false;
+      at = up;
+    }
+  };
+
+  for (const file of APP.filter((f) => /[\\/]page\.tsx$/.test(f))) {
+    const dir = file.replace(/[\\/]page\.tsx$/, "");
+    // The offline page is static by construction and renders from the service
+    // worker's cache, where there is nothing to wait for.
+    if (dir.endsWith("offline")) continue;
+    assert.ok(covered(dir), `${file} has no loading state above it, so a slow request shows a blank screen`);
+  }
+});
+
+/**
+ * The screen a learner spends the round on has a heading too.
+ *
+ * A browser run only ever sees the state the database happens to produce, and
+ * that is precisely what hid this. Every one of these files renders three or
+ * four screens from one component: an empty state, sometimes a start screen,
+ * the round itself, and a finished screen. The empty and finished ones each
+ * carried an `h1`, so an accessibility run that met an empty deck saw a
+ * heading and passed, and a run against a full one saw none. The whole set was
+ * caught in two passes for that reason: five modes on a deck with cards in it,
+ * and four more the next time the fixture put them into a different state.
+ *
+ * So it is asserted from the source, where every branch is visible at once,
+ * rather than from whichever branch a fixture happened to render. Anchored on
+ * the visually hidden heading, because on these screens that is what the rule
+ * has to mean: there is nothing on a progress bar and a card that a visible
+ * heading could be added to without taking space from the card, which is why
+ * they were written without one.
+ */
+check("a practice round has a heading, not only its empty and finished screens", () => {
+  const sessions = APP.filter((file) =>
+    /[\\/]review[\\/].*Session\.tsx$/.test(file));
+  assert.ok(
+    sessions.length >= 10,
+    `only found ${sessions.length} review session components, so this check stopped looking`,
+  );
+
+  for (const file of sessions) {
+    assert.match(
+      code(file),
+      /<h1 className="sr-only">/,
+      `${file} renders a round with no heading on it; only its empty or finished screen has one`,
+    );
+  }
+});
+
+/**
+ * A date is written the way the reader writes dates.
+ *
+ * `lib/time/clock.ts` pins the hour and deliberately leaves date order and
+ * month names to the reader, "because those are genuinely theirs". That is
+ * true of a client component and was false of the two places this app
+ * formatted a date on the server, where `undefined` as a locale means the
+ * deployment's: on a machine set to en-US, Today's greeting line read "Sunday,
+ * August 30" to a learner in Tartu who writes "pühapäev, 30. august".
+ *
+ * The same class of mistake as the day boundary and one notch less severe,
+ * because it is the shape of a reading rather than which day it names. It is
+ * checked separately because the fix is different: a zone can be stored and
+ * passed to the server, and a locale is a list of preferences that only the
+ * browser has.
+ */
+check("a date is written in the reader's own locale, not the server's", () => {
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    /*
+      Only a call that leaves the locale to the runtime. A literal locale is a
+      deliberate choice and is usually not about a date at all: the landing
+      page writes a word count with `toLocaleString("en-GB")` so the thousands
+      separator does not move about, which is the opposite of this fault.
+    */
+    const LEFT_TO_THE_RUNTIME = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/;
+    if (!LEFT_TO_THE_RUNTIME.test(source)) continue;
+    /*
+      A client component is the reader's own machine, so there is nothing to
+      get wrong there. Anywhere else the call has to be handed to one, which
+      is what `LocalDate` is: a server rendering that a browser replaces with
+      its own on mount. A file that formats on the server AND mounts a
+      LocalDate is the shape of that fix, since the server's rendering is the
+      fallback.
+    */
+    if (/^\s*"use client"/m.test(read(file))) continue;
+    assert.match(
+      source,
+      /<LocalDate/,
+      `${file} formats a date on the server, so it is written in the deployment's locale rather than the reader's`,
+    );
+  }
+
+  const local = code(join("components", "LocalDate.tsx"));
+  assert.match(local, /^\s*"use client"/m, "LocalDate stopped being a client component");
+  assert.match(local, /fallback/, "LocalDate no longer renders what the server wrote while it waits");
+});
 
 /*
   A CONTROL LOOKS LIKE A CONTROL, AND A CHOSEN ONE LOOKS CHOSEN.
@@ -2280,6 +2776,43 @@ check("a hover makes a control more present, never less", () => {
   for (const name of [".choice-btn:hover", ".tap-tint:hover"]) {
     assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
   }
+});
+
+/**
+ * The accessibility sweep is axe, and it runs in both themes.
+ *
+ * This suite spent its whole life describing itself as "not a substitute for
+ * axe". That was honest and it was also the reason five real failures sat in
+ * the app unseen: the hand-rolled contrast pass scoped to `main`, so the
+ * navigation rail on every signed-in screen was outside it, and it read a
+ * colour's own alpha but not an `opacity` inherited from a parent, so a faded
+ * container reported as passing while its text sat at 2.63. axe found both in
+ * one run, plus an `<ol>` whose `<li>`s were behind a wrapper `div` and which
+ * therefore announced itself as an empty list.
+ *
+ * Asserted here because the alternative is a suite that quietly goes back to
+ * checking what it finds easy. `best-practice` is part of it on purpose: that
+ * is the tag the broken list came in under, and a list that says it is empty
+ * is not a matter of taste.
+ */
+check("the accessibility sweep runs axe, over both themes", () => {
+  const suite = code(join("scripts", "a11y-check.mjs"));
+  assert.match(suite, /axe-core\/axe\.min\.js/, "the a11y suite no longer loads axe");
+  assert.match(suite, /window\.axe\.run\(/, "the a11y suite loads axe and never runs it");
+  assert.match(
+    suite, /"best-practice"/,
+    "axe runs without best-practice, which is the tag the broken list came in under",
+  );
+  assert.match(
+    suite, /colorScheme:\s*"dark"/,
+    "the a11y suite stopped sweeping the dark palette, which is half of what ships",
+  );
+  // Both themes get the same sweep, so neither can be the one nobody looks at.
+  const runs = [...suite.matchAll(/axeViolations\(/g)].length;
+  assert.ok(runs >= 3, `axe is invoked ${runs} times; light and dark each need one plus the helper`);
+
+  const pkg = JSON.parse(read("package.json")) as { devDependencies?: Record<string, string> };
+  assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
 });
 
 console.log(

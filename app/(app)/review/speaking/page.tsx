@@ -3,6 +3,8 @@ import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { SpeakingSession, type SpeakingCard } from "./SpeakingSession";
 
+export const metadata = { title: "Speaking" };
+
 export const dynamic = "force-dynamic";
 
 const ROUND = 10;

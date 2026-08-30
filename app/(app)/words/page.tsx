@@ -7,6 +7,8 @@ import { STATE_LABELS } from "@/lib/srs/scheduler";
 import { Diagnosis } from "@/components/Diagnosis";
 import { WordsTable, type CardRow } from "./WordsTable";
 
+export const metadata = { title: "My words" };
+
 export const dynamic = "force-dynamic";
 
 export default async function WordsPage() {

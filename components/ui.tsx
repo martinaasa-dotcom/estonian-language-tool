@@ -26,7 +26,13 @@ export function Page({ title, titleLang, lead, actions, children, eyebrow }: {
    * titles it, and a screen reader needs telling which language to say it in.
    */
   titleLang?: string;
-  lead?: string; actions?: ReactNode; children: ReactNode; eyebrow?: string;
+  lead?: string; actions?: ReactNode; children: ReactNode;
+  /**
+   * The small line above the title. A node rather than a string, because
+   * Today's is a date and a date has to be written the way the reader writes
+   * dates, which only their own browser knows. See components/LocalDate.tsx.
+   */
+  eyebrow?: ReactNode;
 }) {
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 md:px-10 md:py-12">

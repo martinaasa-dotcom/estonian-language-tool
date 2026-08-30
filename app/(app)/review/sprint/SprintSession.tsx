@@ -179,6 +179,10 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">
+      {/* The heading a session screen has no room to draw. Same line as every
+          other mode: the start screen and the finished screen each carry one
+          and the round itself did not. */}
+      <h1 className="sr-only">Case sprint</h1>
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link
           href="/"

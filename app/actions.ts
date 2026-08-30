@@ -30,6 +30,8 @@ import { parseItems, sanitiseItems, serialiseItems } from "@/lib/scan/items";
 import { translateSentenceWithAnu } from "@/lib/tutor/translate";
 import { checkAchievementsFor } from "@/lib/progress/achievements";
 import { resolveStreakFor } from "@/lib/progress/summary";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { isTimeZone } from "@/lib/time/day";
 import {
   numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
@@ -561,7 +563,7 @@ export async function importWords(rows: { lemma: string; translation: string; po
  */
 export async function resolveStreak() {
   const ownerId = await requireUserId();
-  const result = await resolveStreakFor(ownerId);
+  const result = await resolveStreakFor(ownerId, new Date(), await learnerDayClock(ownerId));
   return { ok: true as const, ...result };
 }
 
@@ -634,6 +636,32 @@ export async function recordMatchTime(seconds: number) {
 }
 
 // ──────────────────────────── Learner preferences ──────────────────────────
+
+/**
+ * Records where the learner's midnight is, as their browser reports it.
+ *
+ * Not a preference anybody is asked for. Every day-shaped figure in this app —
+ * the streak, the daily goal, the quests, the heatmap, the two badges about
+ * the hour of the day — is derived on the server, and a server does not know
+ * what midnight means to the person reading it. Without this it used the
+ * deployment's zone, which on Vercel is UTC, so a learner in Tallinn who
+ * studied at one in the morning had it filed under yesterday and could watch a
+ * banked streak shield be spent on a day they had not missed.
+ *
+ * No throttle: it is one indexed upsert, the client only calls it when the
+ * stored value actually disagrees with the browser, and `lib/security/
+ * actionLimits.ts` says out loud that a limit on work that cheap is met by
+ * learners and by nobody else. Validated rather than trusted, because the
+ * value reaches a raw `AT TIME ZONE` in the streak query: anything `Intl`
+ * refuses is refused here.
+ */
+export async function setTimeZone(zone: string) {
+  const ownerId = await requireUserId();
+  if (!isTimeZone(zone)) return { ok: false as const, error: "That is not a timezone." };
+  await writeSetting(ownerId, SETTING_KEYS.timeZone, zone);
+  return { ok: true as const, zone };
+}
+
 
 /** How review sessions ask their questions: type the answer, or flip the card. */
 export async function setReviewMode(mode: ReviewMode) {

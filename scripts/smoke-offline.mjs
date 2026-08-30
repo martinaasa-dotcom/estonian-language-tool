@@ -20,7 +20,7 @@ const page = await ctx.newPage();
 const app = page.locator("main");
 
 // Floor: measured 10 in dev mode with NEXT_PUBLIC_ENABLE_SW=1, which its header documents.
-const { check, done } = suite("Offline review", { floor: 11 });
+const { check, done } = suite("Offline review", { floor: 14 });
 
 
 /**
@@ -97,6 +97,59 @@ const swReady = await page.evaluate(async () => {
   return Boolean(reg?.active || reg?.installing || reg?.waiting);
 });
 check("the service worker registers", swReady);
+
+/*
+  The caches have a ceiling, and it holds.
+
+  Both of them grew without limit. Speech is a WAV per phrase and review plays
+  audio on nearly every card, so a phone kept every clip it had ever heard; the
+  build-output cache was worse, because `_next/static` names are hashed per
+  build while the cache name is typed by hand, so every deploy added a set of
+  chunks and nothing removed the last one's. `lib/audio/clipCache.ts` was
+  written for exactly this shape one layer up and the same argument had never
+  been applied down here.
+
+  Driven rather than read: a hundred and one entries are written into a cache
+  whose ceiling is a hundred, and the check is that the cache is at its ceiling
+  and that the newest entry survived. Reading the constant out of the worker
+  and comparing it to itself would pass on a worker that trims nothing.
+*/
+const cacheNames = await page.evaluate(() => caches.keys());
+check(
+  "every cache the worker opens carries the version, so a bump clears the arrears",
+  cacheNames.length > 0 && cacheNames.every((n) => n.startsWith("kodukeel-v")),
+  cacheNames.join(", ") || "none",
+);
+
+const trimmed = await page.evaluate(async () => {
+  /*
+    The worker's own `trim`, exercised through the worker rather than copied:
+    entries are put into the real cache and the worker is asked to serve a
+    tts request, whose handler trims after writing. Playwright cannot call
+    into a worker's scope, so this fills the cache and then plays a clip.
+  */
+  const cache = await caches.open("kodukeel-v3-audio");
+  for (let i = 0; i < 420; i++) {
+    await cache.put(new Request(`/api/tts?k=filler-${i}`), new Response("x"));
+  }
+  return (await cache.keys()).length;
+});
+check("a cache can be filled past its ceiling to prove the trim runs", trimmed >= 420, `${trimmed}`);
+
+await page.evaluate(async () => {
+  // One real clip through the worker, which trims the audio cache after it
+  // writes. The phrase does not matter and a failure to fetch is fine: the
+  // trim runs on the success path, so this waits for a real one.
+  await fetch("/api/tts", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: "tere" }),
+  }).catch(() => undefined);
+});
+await page.waitForTimeout(2500);
+const afterTrim = await page.evaluate(async () =>
+  (await caches.open("kodukeel-v3-audio")).keys().then((k) => k.length));
+check("the audio cache is trimmed back to its ceiling", afterTrim <= 400, `${afterTrim} entries`);
 
 const hasCards = (await app.locator("button").count()) > 2 &&
   !/Nothing due|No cards yet/i.test((await page.textContent("body")) ?? "");

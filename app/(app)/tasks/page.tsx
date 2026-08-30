@@ -8,6 +8,8 @@ import { Card, Empty, Page, SectionTitle, Stack, Stat } from "@/components/ui";
 import { TaskRow } from "@/components/TaskRow";
 import { NewTaskForm } from "./NewTaskForm";
 
+export const metadata = { title: "Tasks" };
+
 export const dynamic = "force-dynamic";
 
 /**

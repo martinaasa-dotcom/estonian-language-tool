@@ -1,13 +1,26 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
-// Floor: 2, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Renaming", { floor: 2 });
+// Floor: 3, measured in the state CI seeds. A thinner database reads as short.
+const { check, done } = suite("Renaming", { floor: 3 });
 const browser = await launchChromium();
 const page = await (await browser.newContext()).newPage();
 
+/*
+  The brand is in the title, and the old name is nowhere.
+
+  This asked whether the title *started* with "Kodukeel", which was only ever
+  true because every route in the app shared one title. Now that a screen names
+  itself and the root layout's template appends the brand, Today reads "Today ·
+  Kodukeel" and the old assertion failed on a correct page. What it is actually
+  for is the rename, so that is what it asks: the brand is there, and the name
+  this app used to have is not.
+*/
 await page.goto(`${B}/`, { waitUntil: "networkidle" });
-check("the app is branded Kodukeel", (await page.title()).startsWith("Kodukeel"), await page.title());
+const title = await page.title();
+check("the app is branded Kodukeel", title.includes("Kodukeel"), title);
+check("and nothing still carries the old name",
+  !/sõnasepp|sonasepp/i.test(await page.content()), title);
 
 /**
  * A minimal backup in the *pre-rename* format, built here rather than read from

@@ -175,7 +175,12 @@ jobs:
   mobile:
     name: The browser suites
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Sixteen suites rather than eleven, and the five that were added are not
+    # the cheap ones: the restore round trip exports and re-imports the whole
+    # account. Measured at about seven and a half minutes of suites on top of
+    # the install, the browser download, the build and the seed, so the ceiling
+    # goes up rather than the list coming back down.
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -231,10 +236,9 @@ jobs:
       # quietly stops running a block fails here rather than printing nothing
       # and being read as a pass. See scripts/lib/checks.mjs.
       # The broadest walk first, so a route that stopped rendering says so
-      # before eleven narrower suites fail for the same reason. This one was
-      # not here, which is the fault this list's own comment describes further
-      # down: it is the only suite that opens the navigation and asks whether
-      # every place is reachable, and CI has never run that.
+      # before fifteen narrower suites fail for the same reason. It is also the
+      # only one that opens the navigation and asks whether every place in it
+      # is actually reachable.
       - run: node scripts/smoke-new.mjs
       - run: node scripts/test-mobile.mjs
       - run: node scripts/test-design.mjs
@@ -259,6 +263,25 @@ jobs:
       # nothing smaller than this can say the loop closes.
       - run: node scripts/test-suggestions.mjs
       - run: node scripts/a11y-check.mjs
+      # And the five this list had quietly lost. The comment above about
+      # `test-exam.mjs` sitting here unrun describes the drift in one
+      # direction; these are the same drift in the other, and nothing was
+      # counting. Every one of them was green when somebody finally ran them,
+      # which is the least useful moment to find that out.
+      #
+      # `test-restore.mjs` is last on purpose: it exports the whole account,
+      # wipes it and restores it, so anything after it would be looking at a
+      # deck that had just been rebuilt. It is also the one this list could
+      # least afford to be missing, since a backup that cannot be restored is
+      # the only failure in this app with nothing to recover from.
+      #
+      # `smoke-new.mjs` was the fifth and two branches added it at once, which
+      # a clean merge kept twice. It leads the list instead: it is the broadest
+      # walk of the routes, so a page that stopped rendering says so before
+      # fifteen narrower suites fail for the same reason.
+      - run: node scripts/smoke-interact.mjs
+      - run: node scripts/test-edit.mjs
+      - run: node scripts/test-rename.mjs
       # CLAUDE.md calls this the one worth keeping green above all, and until
       # now nothing ran it. It was red on main for an unknown length of time
       # with a real fault behind it: the page cache is filled as a side effect
@@ -266,6 +289,7 @@ jobs:
       # navigation that installs it, so a first visit had nothing to fall back
       # on. A suite nobody runs cannot tell you that.
       - run: node scripts/smoke-offline.mjs
+      - run: node scripts/test-restore.mjs
 
   load:
     name: The derived queries, at a size somebody reaches

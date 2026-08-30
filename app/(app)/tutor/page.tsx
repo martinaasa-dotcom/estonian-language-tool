@@ -5,6 +5,8 @@ import { loadRecentMessages } from "@/lib/tutor/history";
 import { Page } from "@/components/ui";
 import { TutorChat } from "./TutorChat";
 
+export const metadata = { title: "Anu" };
+
 export const dynamic = "force-dynamic";
 
 /** Anu, optionally opened with a question already written. */

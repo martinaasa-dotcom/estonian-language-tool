@@ -13,7 +13,7 @@ import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo"
 import { toneInk } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Kodukeel · Estonian that finally sticks",
+  title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
     "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real paradigms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
 };
@@ -74,8 +74,22 @@ export default async function WelcomePage() {
  * Fades a section up as it scrolls into view — CSS scroll timelines, so it costs
  * no JavaScript and degrades to "already visible" where they aren't supported.
  */
-function Reveal({ children }: { children: React.ReactNode }) {
-  return <div className="reveal">{children}</div>;
+/**
+ * Fades a block in as it scrolls into view.
+ *
+ * `as` exists because this wrapper broke a list. The three steps below are an
+ * `<ol>` of `<li>`s with a Reveal around each one, and a `div` between an `ol`
+ * and its `li` means the list is not a list: a screen reader announces an empty
+ * list and three stray items, which is worse than no list markup at all. The
+ * wrapper renders the `li` itself now, so the structure survives the animation.
+ */
+function Reveal({ as: Tag = "div", className = "", style, children }: {
+  as?: "div" | "li";
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  return <Tag className={`reveal ${className}`.trim()} style={style}>{children}</Tag>;
 }
 
 /* ─────────────────────────────────────────────────────────── nav ── */
@@ -447,27 +461,27 @@ function HowItWorks() {
 
         <ol className="mt-10 grid gap-4 md:grid-cols-3">
           {STEPS.map((s, i) => (
-            <Reveal key={s.title}>
-              <li
-                className="relative h-full overflow-hidden rounded-[var(--r-xl)] border p-6"
-                style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
+            <Reveal
+              key={s.title}
+              as="li"
+              className="relative h-full overflow-hidden rounded-[var(--r-xl)] border p-6"
+              style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
+            >
+              <span
+                aria-hidden
+                /* Ornament rather than type: a step number set large enough
+                   to read as a shape behind the card. Off the scale on
+                   purpose — see docs/14-design-system.md §3. */
+                className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
+                style={{ color: `var(--${s.tone}-soft)` }}
               >
-                <span
-                  aria-hidden
-                  /* Ornament rather than type: a step number set large enough
-                     to read as a shape behind the card. Off the scale on
-                     purpose — see docs/14-design-system.md §3. */
-                  className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
-                  style={{ color: `var(--${s.tone}-soft)` }}
-                >
-                  {i + 1}
-                </span>
-                <div className="relative">
-                  <span className="label-xs" style={{ color: toneInk(s.tone) }}>Step {i + 1}</span>
-                  <h3 className="est mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
-                  <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
-                </div>
-              </li>
+                {i + 1}
+              </span>
+              <div className="relative">
+                <span className="label-xs" style={{ color: toneInk(s.tone) }}>Step {i + 1}</span>
+                <h3 className="est mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
+                <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
+              </div>
             </Reveal>
           ))}
         </ol>

@@ -6,6 +6,8 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { WriteSession, type WritingPrompt } from "./WriteSession";
 
+export const metadata = { title: "Writing" };
+
 export const dynamic = "force-dynamic";
 
 const ROUND = 6;

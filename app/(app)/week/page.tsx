@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { getCurrentWeek } from "@/app/actions";
 
+export const metadata = { title: "This week" };
+
 export const dynamic = "force-dynamic";
 
 /**

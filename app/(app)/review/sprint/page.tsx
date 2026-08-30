@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { SprintSession, type SprintCard } from "./SprintSession";
 
+export const metadata = { title: "Case sprint" };
+
 export const dynamic = "force-dynamic";
 
 const POOL_SIZE = 40;

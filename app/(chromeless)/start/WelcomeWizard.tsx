@@ -193,7 +193,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   if (checking) {
     return (
       <LetterBarScope value={letters}>
-        <div className="min-h-screen" style={{ background: "var(--ground)" }}>
+        <main className="min-h-screen" style={{ background: "var(--ground)" }}>
           <AssessmentRunner
           items={paper.items}
           missing={paper.missing}
@@ -205,7 +205,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
             setStep(2);
           }}
         />
-        </div>
+        </main>
       </LetterBarScope>
     );
   }
@@ -214,9 +214,17 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
     (step !== 0 || name.trim().length > 0) &&
     (step !== 1 || level !== null);
 
+  /*
+    A `main` rather than a `div`, which is the whole of this change and was
+    worth making. First run is the only screen in the app with no landmark on
+    it at all: `app/(app)/layout.tsx` gives every signed-in route one and the
+    skip link that goes with it, and sign-in and the landing page have their
+    own. So the first screen anybody meets was the one screen a reader could
+    not jump into, and it is four steps of form.
+  */
   return (
     <LetterBarScope value={letters}>
-    <div className="relative flex min-h-screen flex-col justify-center px-5 py-10 md:px-8">
+      <main className="relative flex min-h-screen flex-col justify-center px-5 py-10 md:px-8">
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <span className="wash" style={{ background: "var(--wash-1)", width: 560, height: 560, top: -220, left: -160 }} />
         <span className="wash" style={{ background: "var(--wash-2)", width: 480, height: 480, bottom: -240, right: -160, opacity: 0.6 }} />
@@ -600,7 +608,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
           )}
         </div>
       </div>
-    </div>
+      </main>
     </LetterBarScope>
   );
 }

@@ -5,6 +5,8 @@ import { buildPlacement, type PlacementWord } from "@/lib/collections/placement"
 import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
 import { PlacementSession } from "./PlacementSession";
 
+export const metadata = { title: "Where to start" };
+
 export const dynamic = "force-dynamic";
 
 /**

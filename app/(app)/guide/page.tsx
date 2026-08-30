@@ -6,7 +6,7 @@ import { Card, Page, SectionTitle } from "@/components/ui";
 import { icon } from "@/components/icons";
 
 export const metadata = {
-  title: "What this app is · Kodukeel",
+  title: "What this app is",
   description:
     "Every screen in Kodukeel, what it is for, and the honest list of what this app cannot do for you.",
 };

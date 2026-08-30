@@ -7,6 +7,12 @@ import { parseExamples } from "@/lib/dict/examples";
 import { isPrincipalFormType } from "@/lib/estonian/types";
 import { LessonSession } from "./LessonSession";
 
+export async function generateMetadata({ params }: { params: Promise<{ unitId: string }> }) {
+  const { unitId } = await params;
+  const unit = unitById(unitId);
+  return { title: unit ? `${unit.title} · lesson` : "Lesson" };
+}
+
 export const dynamic = "force-dynamic";
 
 /** Words offered as wrong answers. Enough to vary, few enough to stay one query. */

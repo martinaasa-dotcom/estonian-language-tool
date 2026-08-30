@@ -4,6 +4,8 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ListeningSession, type ListeningCard } from "./ListeningSession";
 
+export const metadata = { title: "Listening" };
+
 export const dynamic = "force-dynamic";
 
 const POOL_SIZE = 20;

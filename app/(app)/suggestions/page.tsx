@@ -7,6 +7,8 @@ import { formatDateTime } from "@/lib/time/clock";
 import { CATEGORY_KEYS, SUGGESTION_CATEGORIES, parsePatch, summarisePatch } from "@/lib/suggestions/model";
 import type { SuggestionCategory } from "@/lib/suggestions/model";
 
+export const metadata = { title: "Your suggested fixes" };
+
 export const dynamic = "force-dynamic";
 
 /**

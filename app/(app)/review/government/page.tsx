@@ -7,6 +7,8 @@ import { Empty, Page } from "@/components/ui";
 import { GovernmentSession, type GovernmentQuestion } from "./GovernmentSession";
 import type { CaseKey } from "@/lib/estonian/types";
 
+export const metadata = { title: "Verb government" };
+
 export const dynamic = "force-dynamic";
 
 const ROUND = 12;
