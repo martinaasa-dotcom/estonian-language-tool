@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { loadRecentMessages } from "@/lib/tutor/history";
 import { Page } from "@/components/ui";
 import { TutorChat } from "./TutorChat";
 
@@ -14,12 +14,7 @@ export default async function TutorPage({ searchParams }: {
   const { q } = await searchParams;
   const ownerId = await requireUserId();
   const chain = resolveProviders();
-  const history = await prisma.message.findMany({
-    where: { ownerId },
-    orderBy: { createdAt: "desc" },
-    take: 30,
-    select: { role: true, content: true },
-  });
+  const history = await loadRecentMessages(ownerId);
 
   return (
     <Page
@@ -41,7 +36,7 @@ export default async function TutorPage({ searchParams }: {
         // What is configured, which is not yet what answered. The chat replaces
         // this with the model the reply actually came from as soon as one has.
         plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
-        history={history.reverse().map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))}
+        history={history}
         // Prefilled, not sent. A review card can hand Anu the question a
         // learner just failed to answer; pressing send is still their call,
         // and the wording is theirs to edit first.

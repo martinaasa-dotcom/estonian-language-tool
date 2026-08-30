@@ -8,14 +8,39 @@ import { caseAccuracy } from "@/lib/stats/history";
  * per student.
  *
  * The shape of this is a deliberate limit on what a class exposes. A teacher
- * sees effort and progress — reviews this week, streak, words known, the case
- * the group keeps missing — and nothing else. Not what a student looked up, not
- * their deck, not their mistakes one by one. A classroom tool that turned into
- * surveillance would be a worse product and a worse thing to build.
+ * sees effort and progress — reviews this week, streak, words known, which
+ * grammar case a student personally keeps missing — and nothing else. Not
+ * what a student looked up, not their deck, not their answers one by one. A
+ * classroom tool that turned into surveillance would be a worse product and a
+ * worse thing to build.
+ *
+ * The per-student weak case is a widening of that boundary, made deliberately
+ * rather than by drift. The line was originally "aggregate across the class,
+ * never attributed to one student", on the argument that "the group is weak
+ * on the partitive" is a lesson plan and "Kadri is" is a pillory. That is
+ * still true of a raw mistake, which is why this stays a rolled-up percentage
+ * over a student's own reviews at a case, gated on `MIN_STUDENT_CASE_REVIEWS`
+ * so one bad card is never enough to name somebody, and why it is still never
+ * an individual answer, a search or a deck. What changed is the judgement
+ * that a teacher who already sees a name, a streak and a word count is not
+ * meaningfully better protected by having the one actionable fact, which case
+ * to help with, withheld along with it: the aggregate alone told a teacher
+ * *that* the class struggles with the partitive and nothing about *who* to
+ * help, which is the harder problem in a room of twenty-five.
  */
 
 /** Streaks are computed from this window; longer than a term, short enough to stay one query. */
 const HISTORY_DAYS = 120;
+
+/**
+ * Reviews at a case, for one student, before naming it as their weak point.
+ *
+ * Lower than the class-wide threshold (10) on purpose: a class pools reviews
+ * across everyone, an individual does not, and a threshold tuned for the pool
+ * would mean this never fires for anybody. Still high enough that four wrong
+ * answers in five tries is a pattern rather than an unlucky evening.
+ */
+const MIN_STUDENT_CASE_REVIEWS = 5;
 
 export interface RosterEntry {
   ownerId: string;
@@ -29,6 +54,12 @@ export interface RosterEntry {
   wordsKnown: number;
   /** Days since their last review; null if they have never reviewed. */
   daysSinceLastReview: number | null;
+  /**
+   * This student's own weakest case, rolled up as a percentage over their own
+   * reviews. Null below `MIN_STUDENT_CASE_REVIEWS` at every case, which is the
+   * common state for anybody who joined recently. Never a specific answer.
+   */
+  weakestCase: { grammCase: string; accuracy: number; total: number } | null;
 }
 
 export interface ClassSummary {
@@ -65,13 +96,19 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
   ]);
 
   const knownByOwner = new Map(known.map((k) => [k.ownerId, k._count]));
-  const byOwner = new Map<string, { dates: Date[]; weekRatings: Record<number, number>; weekCount: number }>();
-  for (const id of ids) byOwner.set(id, { dates: [], weekRatings: {}, weekCount: 0 });
+  const byOwner = new Map<string, {
+    dates: Date[];
+    weekRatings: Record<number, number>;
+    weekCount: number;
+    caseReviews: { targetCase: string | null; rating: number }[];
+  }>();
+  for (const id of ids) byOwner.set(id, { dates: [], weekRatings: {}, weekCount: 0, caseReviews: [] });
 
   for (const review of reviews) {
     const entry = byOwner.get(review.ownerId);
     if (!entry) continue;
     entry.dates.push(review.reviewedAt);
+    entry.caseReviews.push({ targetCase: review.targetCase, rating: review.rating });
     if (review.reviewedAt >= weekAgo) {
       entry.weekRatings[review.rating] = (entry.weekRatings[review.rating] ?? 0) + 1;
       entry.weekCount++;
@@ -81,6 +118,7 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
   const entries: RosterEntry[] = members.map((member) => {
     const stats = byOwner.get(member.ownerId)!;
     const last = stats.dates.reduce<Date | null>((a, b) => (!a || b > a ? b : a), null);
+    const weakest = caseAccuracy(stats.caseReviews, MIN_STUDENT_CASE_REVIEWS)[0];
     return {
       ownerId: member.ownerId,
       displayName: member.displayName,
@@ -93,6 +131,7 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
       daysSinceLastReview: last
         ? Math.floor((now.getTime() - last.getTime()) / 86_400_000)
         : null,
+      weakestCase: weakest ?? null,
     };
   });
 
@@ -100,8 +139,8 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
 
   return {
     entries,
-    // Aggregated across the class, never attributed to one student: "the group
-    // is weak on the partitive" is a lesson plan, "Kadri is" is a pillory.
+    // The class-wide picture, for a lesson plan. entries[].weakestCase is the
+    // per-student one, for who to sit next to during it.
     weakestCases: caseAccuracy(
       reviews.map((r) => ({ targetCase: r.targetCase, rating: r.rating })),
       10,

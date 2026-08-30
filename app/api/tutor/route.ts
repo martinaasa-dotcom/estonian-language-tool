@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { candidatesFor } from "@/lib/dict/resolveScan";
+import { matchEstonianForm } from "@/lib/dict/search";
 import { ProseStream } from "@/lib/tutor/humanize";
 import { buildSystemPrompt } from "@/lib/tutor/prompt";
+import { chatEstonianTokens } from "@/lib/tutor/verify";
 import {
   openWithFallback,
   resolveProviders,
@@ -144,6 +147,7 @@ export async function POST(request: Request) {
       try {
         for await (const chunk of open.chunks) say(prose.push(chunk));
         say(prose.end());
+        await flagUnverifiedEstonian(say, full);
       } catch (error) {
         // A TutorError is an upstream condition already explained to the learner
         // (a bad key, a 429, an unknown model). Anything else is ours.
@@ -170,6 +174,36 @@ export async function POST(request: Request) {
       "x-model-id": open.config.model,
     },
   });
+}
+
+/**
+ * A last, best-effort check over Anu's finished reply.
+ *
+ * `verifyComment` withholds a graded comment before it is ever shown, which
+ * only a non-streaming answer can afford. This chat streams, on purpose, and
+ * by the time a reply is complete most of it is already on the learner's
+ * screen; there is no way to un-show it. So the check moves to after the
+ * fact: any Estonian-looking word in Anu's own prose (never a FIX: or VOCAB:
+ * line, both already boxed and tagged in the UI, so `chatEstonianTokens`
+ * skips them) is looked up the dictionary the same way a word read off a
+ * scanned page is (ADR-021), and anything it does not recognise gets named
+ * in a trailing line the learner actually sees, rather than trusted in
+ * silence.
+ *
+ * Best-effort in the literal sense: a lookup failure here must not turn an
+ * answer the learner already has into an error. The reply already arrived.
+ */
+async function flagUnverifiedEstonian(say: (text: string) => void, reply: string) {
+  const tokens = chatEstonianTokens(reply);
+  if (tokens.length === 0) return;
+  try {
+    const candidates = await candidatesFor(tokens);
+    const unverified = tokens.filter((token) => !matchEstonianForm(candidates, token));
+    if (unverified.length > 0) say(`\nUNVERIFIED: ${unverified.join(", ")}`);
+  } catch {
+    // Anu already answered. A second opinion that could not be reached is not
+    // a reason to put an error under an answer that worked.
+  }
 }
 
 async function persist(ownerId: string, messages: ChatMessage[], reply: string) {

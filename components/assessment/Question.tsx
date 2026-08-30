@@ -150,10 +150,12 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
               type="button"
               disabled={picked !== null || !played}
               onClick={() => choose(index)}
-              className="flex min-h-[52px] items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left transition-ui disabled:cursor-default"
+              className="choice-btn flex min-h-[52px] items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left disabled:cursor-default"
               style={{
-                borderColor: correct ? "var(--good-ink)" : wrong ? "var(--again-ink)" : "var(--rule)",
-                background: correct ? "var(--good-soft)" : wrong ? "var(--again-soft)" : "var(--surface)",
+                ...(correct || wrong ? {
+                  borderColor: correct ? "var(--good-ink)" : "var(--again-ink)",
+                  background: correct ? "var(--good-soft)" : "var(--again-soft)",
+                } : {}),
                 opacity: picked !== null && !chosen && !correct ? 0.55 : 1,
               }}
             >
@@ -415,8 +417,7 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
             key={rating.value}
             type="button"
             onClick={() => onAnswer({ credit: 0, selfRating: rating.value })}
-            className="tap min-h-[52px] rounded-[var(--r-lg)] border px-4 py-3 text-left"
-            style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+            className="choice-btn min-h-[52px] rounded-[var(--r-lg)] border px-4 py-3 text-left"
           >
             <span className="block text-base font-medium" style={{ color: "var(--ink)" }}>{rating.label}</span>
             <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{rating.detail}</span>

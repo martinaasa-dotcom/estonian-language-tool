@@ -48,8 +48,8 @@ await page.goto(`${B}/exam`, { waitUntil: "networkidle" });
 
 const body = await page.locator("body").innerText();
 
-check("the hub lists every level, the four official and the two that are not",
-  ["A1", "A2", "B1", "B2", "C1", "C2"].every((l) => body.includes(l)));
+check("the hub lists every level, the four official and the one that is not",
+  ["A1", "A2", "B1", "B2", "C1"].every((l) => body.includes(l)));
 
 // Scoped to the level cards: the page title says "state exam" too, and a bare
 // text count picked that up and read seven official levels.
@@ -59,8 +59,8 @@ check("it says which levels the state actually examines",
   (await officialCards.count()) === 4,
   `${await officialCards.count()} marked official`);
 
-check("it marks the two it invented as not examined",
-  (await levelCards.filter({ hasText: "Not examined" }).count()) === 2);
+check("it marks the one it invented as not examined",
+  (await levelCards.filter({ hasText: "Not examined" }).count()) === 1);
 
 check("it states the pass rule, both halves of it",
   /60 percent to pass/i.test(body) && /no part may score nothing/i.test(body));

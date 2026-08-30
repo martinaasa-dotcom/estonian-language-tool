@@ -14,7 +14,6 @@ function signals(over: Partial<ReadinessSignals> = {}): ReadinessSignals {
       B1: { known: 0, available: 100 },
       B2: { known: 0, available: 100 },
       C1: { known: 0, available: 100 },
-      C2: { known: 0, available: 100 },
     },
     accuracy: { pct: 0, reviews: 0 },
     cases: [],
@@ -40,7 +39,6 @@ function established(): ReadinessSignals {
       B1: { known: 40, available: 100 },
       B2: { known: 5, available: 100 },
       C1: { known: 0, available: 100 },
-      C2: { known: 0, available: 100 },
     },
     accuracy: { pct: 88, reviews: 1200 },
     skills: {
@@ -69,7 +67,7 @@ describe("how sure the app is allowed to be", () => {
       vocabulary: {
         A1: { known: 100, available: 100 }, A2: { known: 100, available: 100 },
         B1: { known: 100, available: 100 }, B2: { known: 100, available: 100 },
-        C1: { known: 100, available: 100 }, C2: { known: 100, available: 100 },
+        C1: { known: 100, available: 100 },
       },
       accuracy: { pct: 100, reviews: 10 },
       totalReviews: 10,
@@ -80,7 +78,7 @@ describe("how sure the app is allowed to be", () => {
   });
 
   it("is never zero and never certain", () => {
-    for (const level of ["A1", "C2"] as const) {
+    for (const level of ["A1", "C1"] as const) {
       const low = readinessFor(signals(), level);
       expect(low.confidence).toBeGreaterThanOrEqual(1);
       expect(low.confidence).toBeLessThanOrEqual(CEILING.good);
@@ -113,7 +111,6 @@ describe("reading a real history", () => {
     expect(at("A1")).toBeGreaterThanOrEqual(at("A2"));
     expect(at("A2")).toBeGreaterThan(at("B2"));
     expect(at("B2")).toBeGreaterThanOrEqual(at("C1"));
-    expect(at("C1")).toBeGreaterThanOrEqual(at("C2"));
   });
 
   it("names a level it would bet on, and the next one to aim at", () => {
@@ -303,7 +300,7 @@ describe("a placement check, which is the only thing that reaches listening and 
   });
 
   it("never returns a certainty from a ten minute check", () => {
-    for (const paper of ["A1", "A2", "B1", "B2", "C1", "C2"] as const) {
+    for (const paper of ["A1", "A2", "B1", "B2", "C1"] as const) {
       const value = expectationFromPlacement("pre-A1", paper)!;
       expect(value).toBeGreaterThan(0);
       expect(value).toBeLessThan(100);

@@ -29,7 +29,7 @@ export interface WizardUnit {
 
 /** The self-rated ladder, for a learner who would rather not sit the check now. */
 /*
-  All six, because the course now runs to C2 and stopping the list at B2 told
+  All five, because the course runs to C1 and stopping the list at B2 told
   anybody above it that the app was not for them. Each is described by what a
   person can already do rather than by its code, since somebody who needs to
   pick a level is exactly somebody who does not know what B2 means.
@@ -40,7 +40,6 @@ const LEVELS = [
   { key: "B1", label: "Conversational", detail: "I can hold a conversation and read the news slowly." },
   { key: "B2", label: "Confident", detail: "I follow a debate and want precision, not basics." },
   { key: "C1", label: "Fluent", detail: "I work in Estonian and want to write it well." },
-  { key: "C2", label: "Near-native", detail: "I want register, idiom and the last few percent." },
 ] as const;
 
 const GOALS = [

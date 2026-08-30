@@ -1057,12 +1057,12 @@ function Options({ name, options, selected, onSelect, columns, english }: {
         return (
           <label
             key={option.value}
-            className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r)] border px-3 py-2.5 text-sm"
-            style={{
-              borderColor: active ? "var(--accent)" : "var(--rule)",
-              background: active ? "var(--accent-soft)" : "var(--surface)",
-              color: active ? "var(--accent-deep)" : "var(--ink)",
-            }}
+            className="choice-btn flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r)] border px-3 py-2.5 text-sm"
+            style={active ? {
+              borderColor: "var(--accent)",
+              background: "var(--accent-soft)",
+              color: "var(--accent-deep)",
+            } : { color: "var(--ink)" }}
           >
             <input
               type="radio"
@@ -1121,7 +1121,7 @@ function OrderQuestion({ item, number, built, onBuild }: {
               key={`${word}-${index}`}
               type="button"
               onClick={() => onBuild(built.filter((_, i) => i !== index))}
-              className="min-h-[44px] rounded-[var(--r-sm)] px-3 py-2 text-md"
+              className="press min-h-[44px] rounded-[var(--r-sm)] px-3 py-2 text-md transition-ui hover:-translate-y-0.5"
               style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
               {word}
@@ -1134,8 +1134,8 @@ function OrderQuestion({ item, number, built, onBuild }: {
             key={`${word}-${index}`}
             type="button"
             onClick={() => onBuild([...built, word])}
-            className="est min-h-[44px] rounded-[var(--r-sm)] border px-3 py-2 text-md"
-            style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+            className="choice-btn est min-h-[44px] rounded-[var(--r-sm)] border px-3 py-2 text-md"
+            style={{ color: "var(--ink)" }}
             lang="et"
           >
             {word}
@@ -1281,12 +1281,12 @@ function ComposeQuestion({ item, response, onWrite }: {
           {item.variants.map((variant, index) => (
             <label
               key={variant.label}
-              className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-[var(--r)] border px-3 py-2 text-sm"
-              style={{
-                borderColor: chosen === index ? "var(--accent)" : "var(--rule)",
-                background: chosen === index ? "var(--accent-soft)" : "var(--surface)",
-                color: chosen === index ? "var(--accent-deep)" : "var(--ink)",
-              }}
+              className="choice-btn flex min-h-[44px] cursor-pointer items-center gap-2 rounded-[var(--r)] border px-3 py-2 text-sm"
+              style={chosen === index ? {
+                borderColor: "var(--accent)",
+                background: "var(--accent-soft)",
+                color: "var(--accent-deep)",
+              } : { color: "var(--ink)" }}
             >
               <input
                 type="radio"
@@ -1373,8 +1373,10 @@ function SpeakQuestion({ item, marks, response, onMark }: {
           {criteria.map((criterion, index) => (
             <label
               key={criterion}
-              className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r)] px-3 py-2 text-sm"
-              style={{ background: ticked[index] ? "var(--mint-soft)" : "var(--raised)", color: "var(--ink)" }}
+              className="choice-btn flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r)] px-3 py-2 text-sm"
+              style={ticked[index]
+                ? { background: "var(--mint-soft)", color: "var(--ink)" }
+                : { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties}
             >
               <input
                 type="checkbox"

@@ -174,13 +174,17 @@ Three things follow, and each has an invariant:
 - **Chosen inverts rather than tints, on a pill.** A luminance change survives both themes and
   anybody who cannot separate the two hues. A card keeps the tint, because its second line is
   `--ink-3` and a solid fill would swallow it, so it doubles its rule and shows a tick instead.
-- **The states are CSS, not a `style` prop.** `.choice` in `globals.css`. An inline style beats a
-  stylesheet, so a component that paints its resting background inline can never define a hover.
-  That is the mechanism that made the missing hover unfixable in place, rather than a detail.
+- **The states are CSS, not a `style` prop.** `.choice-btn` plus the two `[data-on]` rules in
+  `globals.css`. An inline style beats a stylesheet, so a component that paints its resting
+  background inline can never define a hover. That is the mechanism that made the missing hover
+  unfixable in place, rather than a detail, and it is why `.choice-btn` is shared with the
+  multiple-choice answers rather than copied: two sessions found the same cause the same day, and
+  main's fix reached it through a custom property, which is the more precise of the two.
 
-**A hover makes a control more present, never less.** `.tap` (a bordered box: raises and draws an
-accent rule inside its own edge) and `.tap-tint` (a bare row or icon button: a raised tint arrives
-under the pointer) replaced `transition-opacity hover:opacity-80` on twenty-odd controls. Fading a
+**A hover makes a control more present, never less.** `.choice-btn` (a bordered box: its tone comes
+in through `--choice-border`/`--choice-bg` so the hover can actually win) and `.tap-tint` (a bare
+row or icon button: a raised tint arrives under the pointer) replaced
+`transition-opacity hover:opacity-80` on twenty-odd controls. Fading a
 thing under the cursor is the one hover the rest of this interface uses for nothing else, because
 dimming is exactly how every disabled control here is drawn: the strongest signal a mouse got on
 those screens was the control appearing to switch off. A link may still fade, and a `<button>`

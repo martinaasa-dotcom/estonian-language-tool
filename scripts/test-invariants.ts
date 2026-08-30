@@ -23,9 +23,11 @@ import { extractEstonianSenses } from "../lib/dict/wiktionary";
 import { wordNote } from "../lib/estonian/dictation";
 import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
+import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
+import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS } from "../lib/tutor/prompt";
 
 let failures = 0;
 let checks = 0;
@@ -147,6 +149,57 @@ check("the module that writes about Estonian holds no Estonian", () => {
     .filter((line) => !/\b(et|estonianName|caseNames?):/i.test(line))
     .filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//"));
   assert.deepEqual(offenders, [], "an Estonian form is written into the grammar prose");
+});
+
+check("Anu's worked examples are sourced from a table the dictionary checks", () => {
+  /*
+    `lib/estonian/grammar.ts` holds no Estonian at all, checked above.
+    `lib/tutor/prompt.ts` is the other module that writes about Estonian at
+    length, and it used to type its worked examples straight into the
+    template: a wrong form there ships to every learner, at every level, in
+    every single conversation, and nothing ever re-checked it. `WORKED_FORMS`
+    is now the one place a claim is made, and `lib/tutor/prompt.itest.ts`
+    checks every one against a real stored `Form` row.
+
+    `CLOSED_CLASS_EXAMPLES` is the honest exception: a pronoun's oblique case,
+    a demonstrative and a particle, none of which the dictionary holds a
+    paradigm for at all, so they cannot be checked the same way and stay
+    hand-verified. Naming the list here, imported rather than retyped, is what
+    stops a sixth word joining it silently.
+  */
+  const prompt = read("lib/tutor/prompt.ts");
+  const table = between(prompt, "export const WORKED_FORMS");
+  assert.ok(table, "WORKED_FORMS is gone; the worked examples are typed loose again");
+  const outside = prompt.replace(table, "");
+
+  for (const word of CLOSED_CLASS_EXAMPLES) {
+    assert.ok(outside.includes(word), `"${word}" dropped out of CLOSED_CLASS_EXAMPLES`);
+  }
+
+  // Case names (sisseütlev, seesütlev, ...) are Estonian too, but they are the
+  // subject of a sentence about how Anu names things, not a form she could get
+  // wrong, and CASES is the one place that already governs what they are.
+  const caseNames = new Set(CASES.map((c) => c.et));
+  const estonianLetters = /[õäöüšž]/i;
+  const offenders = outside
+    .split("\n")
+    .filter((line) => estonianLetters.test(line))
+    .filter((line) => !CLOSED_CLASS_EXAMPLES.some((word) => line.includes(word)))
+    .filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//"))
+    .filter((line) => {
+      const words = line.match(/\p{L}[\p{L}\p{M}]*/gu) ?? [];
+      const diacriticWords = words.filter((w) => estonianLetters.test(w));
+      return !diacriticWords.every((w) => caseNames.has(w.toLowerCase()));
+    });
+  assert.deepEqual(offenders, [], "a hardcoded Estonian form appeared in Anu's system prompt, outside WORKED_FORMS and CLOSED_CLASS_EXAMPLES");
+
+  // Every entry on the table is actually quoted somewhere in the template; an
+  // entry nobody reads from is a claim nobody is relying on, which is a
+  // different thing from a claim that has been checked.
+  const template = prompt.slice(prompt.indexOf("return `"));
+  for (const key of Object.keys(WORKED_FORMS)) {
+    assert.ok(template.includes(`${key}.`), `WORKED_FORMS.${key} is on the table but never read in the prompt`);
+  }
 });
 
 check("the model may never supply a form that becomes a card", () => {
@@ -656,12 +709,38 @@ check("the chat says which model actually replied", () => {
   const route = read("app/api/tutor/route.ts");
   assert.match(route, /x-model-provider/, "the reply no longer carries which model wrote it");
   assert.match(route, /open\.config/, "the header names something other than the run that answered");
-  const chat = read("app/(app)/tutor/TutorChat.tsx");
+  // Shared by the full `/tutor` page and the floating Anu button, so both
+  // read it from the one place that actually asks the response for it.
+  const chat = read("components/anu/useAnuChat.ts");
   assert.match(chat, /x-model-provider/, "the chat no longer reads it back");
 });
 
 check("Anu's prose is cleaned on its way to the learner", () => {
   assert.match(read("app/api/tutor/route.ts"), /ProseStream/, "the humanize pass is gone");
+});
+
+check("Anu's free chat prose is checked against the dictionary, not just her graded comments", () => {
+  /*
+    `verifyComment` withholds a graded comment before it is ever shown
+    (app/api/write/route.ts, app/api/exam/write/route.ts, both checked
+    above). The main chat is the higher-traffic path, it is where the system
+    prompt asks Anu to give worked examples and minimal pairs inline, and
+    until now nothing checked a word of it: `ProseStream` cleans punctuation
+    and explicitly never touches Estonian, and the two lines that were boxed
+    and tagged, FIX: and VOCAB:, are the only ones a learner was ever told to
+    doubt. `scripts/eval-anu.mjs` already caught a model inventing a form on
+    exactly this kind of question, which is the whole argument for a check
+    here rather than a stronger request in the prompt.
+  */
+  const route = read("app/api/tutor/route.ts");
+  assert.match(route, /chatEstonianTokens\(/, "the chat route no longer extracts candidate Estonian tokens");
+  assert.match(route, /matchEstonianForm\(/, "the chat route no longer checks tokens against the dictionary");
+  assert.match(route, /UNVERIFIED:/, "the chat route no longer flags what it could not confirm");
+
+  // Shared by the full `/tutor` page and the floating Anu button, so both
+  // render the flag the same way.
+  const chat = read("components/anu/AnuParts.tsx");
+  assert.match(chat, /UNVERIFIED:/, "the chat screen no longer reads the flag back");
 });
 
 // ── Never re-add the iframes (docs/00-audit-v4.md section A) ─────────────────
@@ -1323,24 +1402,179 @@ check("the actions that do real work per call are throttled", () => {
   const keys = Object.keys(ACTION_LIMITS);
   assert.ok(keys.length >= 6, `expected the throttled actions, found ${keys.length}`);
 
+  /*
+    THE NAMES A THROTTLE MAY BE CHARGED TO, READ OFF THE FILE.
+
+    This used to require the literal `ownerId`, which was right while every
+    throttled action was a learner acting on their own data. The review queue
+    is the first one that is not: `reviewSuggestion` resolves an *admin*
+    through `requireAdminId`, and calling that binding `ownerId` to satisfy a
+    regex would be naming a variable after the check that reads it.
+
+    So what is asserted is the property the literal was standing in for: the
+    id was resolved here, by a `require...()` helper, and did not arrive as an
+    argument. Every export of a "use server" file is a public endpoint, so an
+    action taking the id to charge from its caller would let anybody spend
+    somebody else's allowance, or spend none at all by passing a fresh string
+    every time.
+  */
+  const resolvedIds = new Set(
+    [...source.matchAll(/const (\w+) = await require(\w*)\(/g)].map(([, name]) => name!),
+  );
+  assert.ok(
+    resolvedIds.size >= 1,
+    "no action resolves its own identity, which would make the check below vacuous",
+  );
+
   for (const key of keys) {
-    assert.match(
-      source,
-      new RegExp(`throttleAction\\(ownerId, "${key}"\\)`),
-      `${key} has an allowance in the table and no action applying it`,
+    const applied = new RegExp(`throttleAction\\((\\w+), "${key}"\\)`).exec(source);
+    assert.ok(applied, `${key} has an allowance in the table and no action applying it`);
+    assert.ok(
+      resolvedIds.has(applied[1]!),
+      `${key} is charged to ${applied[1]}, which this file never resolved for itself`,
     );
   }
 
+  for (const [, charged] of source.matchAll(/throttleAction\(([^,)]*),/g)) {
+    assert.ok(
+      resolvedIds.has(charged!.trim()),
+      `an action throttles against ${charged!.trim()}, which is not an identity it resolved`,
+    );
+  }
+});
+
+check("every dead end in the app offers a way to report it", () => {
   /*
-    And the throttle is charged to the resolved owner, never to an argument.
-    Every export in a "use server" file is a public endpoint, so an action that
-    took the id to charge from its caller would let anybody spend somebody
-    else's allowance, or spend none by passing a fresh string each time.
+    THE RULE: nothing here may tell somebody it cannot help them and then
+    stop. A search that found nothing, an answer marked wrong that was right, a
+    screen that threw, a link that went nowhere — each of those used to end in
+    a sentence and a back button, and the person who knew what was actually
+    wrong was the one person with nowhere to put it.
+
+    Asserted on the four screens where the dead end is structural rather than
+    incidental, and asserted in both halves: the failure copy has to still be
+    there, and the way out has to be beside it. Half of that on its own is
+    what decays. A file that stops rendering the failure is a screen that was
+    rewritten and should be looked at again; a file that keeps the failure and
+    loses the button is the regression this check exists for.
   */
+  const deadEnds: [string, RegExp, string][] = [
+    [
+      "app/(app)/dictionary/DictionaryClient.tsx",
+      /Nothing found for/,
+      "a search that found nothing",
+    ],
+    [
+      "app/error.tsx",
+      /didn&rsquo;t load|did not load/,
+      "a screen that threw",
+    ],
+    [
+      "app/not-found.tsx",
+      /There&rsquo;s no page here|no page here/,
+      "a link that led nowhere",
+    ],
+    [
+      "app/(app)/review/ReviewSession.tsx",
+      /verdict\.verdict !== "correct"/,
+      "an answer the app marked wrong",
+    ],
+  ];
+
+  for (const [file, failure, what] of deadEnds) {
+    const source = read(file);
+    assert.match(source, failure, `${file} no longer renders ${what}, so this check is watching nothing`);
+    assert.match(
+      source,
+      /<SuggestFix/,
+      `${file} shows ${what} and offers no way to tell anybody about it`,
+    );
+  }
+});
+
+check("a category nobody can send is not a tab in the review queue", () => {
+  /*
+    The same shape as the throttle table above, for the same reason. The
+    categories are what the queue filters, counts and reasons by, so one that
+    no screen can produce is a permanently empty tab and a branch in the apply
+    path that is never exercised. Reading the table rather than a list typed
+    here means adding a category is adding it in one place and using it.
+  */
+  /*
+    Read out of the mounted components rather than out of the files. A key
+    also appears in the queue's own fallback and in a filter, and matching
+    those would let a category pass this check while being unreachable from
+    any dead end, which is the exact failure it is here to catch.
+  */
+  const mounted = [...APP, ...COMPONENTS]
+    .flatMap((file) => [...read(file).matchAll(/<SuggestFix[\s\S]*?\/>/g)].map(([usage]) => usage))
+    .join("\n");
+  assert.ok(mounted.length > 0, "nothing in the app mounts the report button at all");
+
+  for (const key of CATEGORY_KEYS) {
+    assert.ok(
+      mounted.includes(`"${key}"`),
+      `${key} is a category in the review queue that no screen can send`,
+    );
+  }
+});
+
+check("pushing a change through the queue is gated on more than being signed in", () => {
+  /*
+    `reviewSuggestion` writes to the shared dictionary on one person's say-so,
+    and every export of a "use server" file is a public endpoint. So it
+    resolves a reviewer rather than a user, and it resolves them rather than
+    taking an id: an action that trusted an argument here would let anybody
+    accept their own suggestion.
+
+    `lib/auth/admin.ts` is the whole answer to who that is, and it may never
+    learn it from the request. A deployment with sign-in configured and nobody
+    named has no admins, which is why the empty list is checked too: falling
+    back to "anybody signed in" on an open sign-up would be the same hole with
+    a friendlier shape.
+  */
+  const review = between(read("app/actions.ts"), "export async function reviewSuggestion");
+  assert.match(review, /requireAdminId\(\)/, "the review action does not establish who is reviewing");
   assert.doesNotMatch(
-    source,
-    /throttleAction\((?!ownerId)/,
-    "an action throttles against something other than the owner it resolved",
+    review,
+    /requireUserId\(\)/,
+    "the review action settles for a signed-in user where it needs a reviewer",
+  );
+
+  const admin = read("lib/auth/admin.ts");
+  assert.match(
+    admin,
+    /admins\.length === 0\) return false/,
+    "a deployment that has named no reviewer no longer refuses everybody",
+  );
+});
+
+check("nothing a model wrote can reach the dictionary through the queue", () => {
+  /*
+    ADR-005 stated over the newest write path into the dictionary. Every
+    Estonian character an accepted suggestion writes was typed by a person, in
+    a form, exactly like a hand edit — and the way that stays true is that no
+    module in this feature can reach a provider at all.
+
+    The apply path also writes forms, so it carries the same restriction the
+    hand-edit path does: a principal part may be replaced and a retrieved
+    Ekilex paradigm may not. That is stated here as well as in the module,
+    because it is one `if` between a correction and a learner's paradigm being
+    overwritten by whoever shouted loudest.
+  */
+  for (const file of sourceFiles("lib/suggestions")) {
+    const source = read(file);
+    assert.doesNotMatch(
+      source,
+      /lib\/tutor|openWithFallback|ANTHROPIC|OPENAI|OPENROUTER/,
+      `${file} can reach a model, and this path writes Estonian into the shared dictionary`,
+    );
+  }
+  const apply = read("lib/suggestions/apply.ts");
+  assert.match(
+    apply,
+    /isPrincipalFormType\(/,
+    "an accepted correction can now overwrite a retrieved Ekilex form",
   );
 });
 
@@ -1825,7 +2059,7 @@ check("an option a learner picks is a control, not a label in a button", () => {
   assert.match(choice, /"aria-pressed"/, "the multi-select group stopped being toggle buttons");
   assert.match(choice, /tabIndex = r === stop \? 0 : -1/, "the radio group lost its roving tab stop");
 
-  for (const name of [".choice", ".choice-chip[data-on]", ".choice-card[data-on]", ".choice:hover"]) {
+  for (const name of [".choice-btn", ".choice-chip[data-on]", ".choice-card[data-on]", ".choice-btn:hover"]) {
     assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
   }
 });
@@ -1840,8 +2074,11 @@ check("an option a learner picks is a control, not a label in a button", () => {
   thing under the pointer is the one hover the rest of this interface uses for
   nothing else, because dimming is exactly how every disabled control here is
   drawn. So the strongest signal a mouse got on those screens was the control
-  appearing to switch off, which is worse than no hover at all. `.tap` and
-  `.tap-tint` in app/globals.css are the two replacements.
+  appearing to switch off, which is worse than no hover at all. `.choice-btn`
+  and `.tap-tint` in app/globals.css are the two replacements, and `.choice-btn`
+  is main's rather than this branch's: two sessions found the same fault the
+  same day from different ends, and a custom property is the better way to let
+  a caller's tone through a class hover.
 
   The exemption is a link, and it is deliberate rather than a hole: an `<a>`
   fading slightly is the oldest link hover there is, and a `<button>` that is
@@ -1858,12 +2095,12 @@ check("a hover makes a control more present, never less", () => {
         tag,
         /\bunderline\b/,
         `${file} fades a button on hover, which is how this app draws "disabled". ` +
-        "Use .tap (a box) or .tap-tint (a bare row or icon) from app/globals.css.",
+        "Use .choice-btn (a box) or .tap-tint (a bare row or icon) from app/globals.css.",
       );
     }
   }
 
-  for (const name of [".tap:hover", ".tap-tint:hover"]) {
+  for (const name of [".choice-btn:hover", ".tap-tint:hover"]) {
     assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
   }
 });

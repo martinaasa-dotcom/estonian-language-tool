@@ -187,6 +187,38 @@ describe("what a step is built from", () => {
     }
   });
 
+  it("reaches for the same part of speech before any other wrong answer", () => {
+    // A phrase like "Tere!" mixed with a noun's bare "salt" or a verb's "to
+    // put" is not a real question: the phrase is the only option shaped like
+    // an answer to "What does this mean?" and it gives itself away before a
+    // learner reads a word of it. With enough phrases in the pool, the wrong
+    // options should be other phrases, not the noun distractors sitting
+    // right beside them.
+    const greeting: LessonWord = {
+      lemma: "tere", gloss: "Hello!", pos: "PHRASE", examples: [], parts: {}, government: null,
+    };
+    const otherPhrases: LessonWord[] = [
+      { lemma: "aitäh", gloss: "Thank you!", pos: "PHRASE", examples: [], parts: {}, government: null },
+      { lemma: "palun", gloss: "Please!", pos: "PHRASE", examples: [], parts: {}, government: null },
+      { lemma: "vabandust", gloss: "Sorry!", pos: "PHRASE", examples: [], parts: {}, government: null },
+    ];
+    const steps = planLesson({
+      unit, words: [greeting], distractors: [...otherPhrases, ...DISTRACTORS], seed: 9,
+    });
+    const asked = steps.filter(
+      (s): s is Extract<LessonStep, { kind: "choose" | "listen" }> =>
+        (s.kind === "choose" || s.kind === "listen") && s.lemma === "tere",
+    );
+    expect(asked.length).toBeGreaterThan(0);
+    const phraseGlosses = new Set(otherPhrases.map((w) => w.gloss));
+    for (const step of asked) {
+      for (const option of step.options) {
+        if (option === greeting.gloss) continue;
+        expect(phraseGlosses.has(option), option).toBe(true);
+      }
+    }
+  });
+
   it("asks about government only where Ekilex recorded one", () => {
     const verbs: LessonWord[] = [
       { lemma: "aitama", gloss: "to help", pos: "VERB", examples: [], parts: { INF_MA: "aitama", GEN_SG: "" }, government: "keda" },

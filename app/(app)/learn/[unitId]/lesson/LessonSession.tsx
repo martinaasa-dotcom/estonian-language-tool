@@ -188,17 +188,17 @@ function Options({
         const isAnswer = i === answer;
         const picked = chosen === i;
         const settled = chosen !== null;
-        const tone = settled && isAnswer
-          ? "var(--mint-soft)"
-          : settled && picked ? "var(--peach-soft)" : "var(--surface)";
         return (
           <button
             key={option}
             type="button"
             disabled={settled}
             onClick={() => onChoose(i)}
-            className="flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
-            style={{ borderColor: settled && isAnswer ? "var(--mint)" : "var(--rule)", background: tone }}
+            className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
+            style={settled ? {
+              borderColor: isAnswer ? "var(--mint)" : "var(--rule)",
+              background: isAnswer ? "var(--mint-soft)" : picked ? "var(--peach-soft)" : "var(--surface)",
+            } : undefined}
           >
             <span
               className="grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-sm)] text-xs"
@@ -466,8 +466,7 @@ function StepCard({
                 <button
                   key={i} type="button" disabled={done}
                   onClick={() => setBuilt((b) => [...b, i])}
-                  className="min-h-[44px] rounded-[var(--r-md)] border px-3"
-                  style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
+                  className="choice-btn min-h-[44px] rounded-[var(--r-md)] border px-3"
                 >
                   <Et>{tile}</Et>
                 </button>

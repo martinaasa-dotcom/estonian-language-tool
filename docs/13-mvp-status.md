@@ -1083,7 +1083,128 @@ provider list.
 2. **A learner who imports a large deck on day one skips `arriving` the moment they grade a card.**
    That is the right answer for the common case and a slightly abrupt one for them: they meet the
    full dashboard in one step. Nothing is hidden from them that they cannot reach.
-3. **Settings is still a flat list of twelve sections.** It is not on the first-run path and every
-   section is a distinct control, so grouping it would be churn rather than clarity. Left alone on
-   purpose.
+3. ~~**Settings is still a flat list of twelve sections.**~~ **Grouped in §19** under four plain
+   headings once the list actually reached twelve. The original argument against grouping assumed
+   the cost was navigational churn; adding a label above a cluster of existing sections, with no
+   section moved out of view and no anchor broken, turned out not to carry that cost.
 
+## 19. The thirteenth pass: a course honest about where it stops
+
+§14 built a course to C2 and named the honest gap plainly: "1,266 words is a real course and not a
+real vocabulary," and the C2 units themselves were the thinnest ten in the whole syllabus, existing
+mostly to say that C2 is earned by living in the language rather than by finishing units. A course
+whose last fifth is a well-written admission that it cannot teach what it claims to cover is not
+a stronger course for having tried. It is cut here rather than left to keep failing gracefully.
+
+The course now runs **A1 to C1**, 73 units, dropping the ten C2 units and the words only they
+introduced. Everything that read the top of the level list, `EXAM_LEVELS`, `ExamLevel`, the mock
+exam's own now-removed C2 paper, the placement ladder, the onboarding self-rating ladder, now stops
+at C1 rather than quietly carrying a sixth rung nothing above it needs. `docs/16-exam.md` and
+`README.md` are corrected along with the code; this file's own earlier sections are left as the
+record of what was tried, per the rule at the top of this document about more than one session
+working here at once, except where a passage would otherwise assert something false about the app
+as it stands today.
+
+**What this does not touch.** A dictionary entry can still carry a `C2` CEFR tag: that is Ekilex's
+own grading of a word's real difficulty, sourced live, not a claim this app makes about its course.
+`lib/estonian/types.ts`'s `CefrLevel` keeps all six bands for exactly that reason, and the add-word
+form still offers C2 as an honest label for a word a person hand-adds. The distinction is the same
+one ADR-005 draws everywhere else: Ekilex's own data is trusted as far as Ekilex vouches for it, and
+this project does not add to it from memory. Nobody re-verified whether the ten deleted units'
+vocabulary belongs in the general dictionary; it was seeded there already and stays, since removing
+real, Ekilex-sourced words because their course unit was cut would be deleting correct data over an
+unrelated decision.
+
+**Settings, grouped.** The same pass grouped the twelve sections in `/settings` under four plain
+headings, Study, Progress and sharing, Words and Anu, Device and data, and §18's limitation above is
+struck rather than left standing. Every section keeps its own heading, its own anchor and its own
+content in the same order as before; nothing is collapsed and nothing moved off the page, which is
+the whole reason this is a landmark added rather than a restructure. The distinction from what §18
+warned against: that entry was arguing against turning Settings into tabs or an accordion that would
+hide a control behind a click, which is a real cost for a page nobody reaches through a menu. A label
+above four sections is not that.
+
+**ADR-019, amended.** The class boundary widened from "the group's weakest cases in aggregate" to
+also carry each student's own weakest case, still a rolled-up percentage over that student's own
+reviews and gated on a minimum review count, never a specific answer. `docs/03-architecture.md`
+records the amendment against the original ADR rather than silently reversing it, and the join
+screen's own consent copy names the new figure before anyone joins. The class-wide aggregate told a
+teacher which case the room struggles with and nothing about who to help with it; the per-student
+figure is the answer to the harder half of that question, in a room of twenty-five rather than one.
+
+## 19. The thirteenth pass: what to do when the app is wrong
+
+The dictionary is assembled rather than typed, which is what keeps invented
+Estonian out of it and is not the same thing as being right. Ekilex may have no
+entry for a word somebody is holding on a page in front of them; a Wiktionary
+sense order may put an everyday meaning under a later etymology; a mark is a
+string comparison against a form the dictionary vouches for, and it cannot know
+the dictionary is the thing that is wrong. Every one of those ended the same
+way: a sentence, a back button, and the one person who knew what was actually
+wrong with nowhere to put it.
+
+### What was added
+
+**A report from wherever the failure is.** `components/SuggestFix.tsx` mounts
+beside the dead end rather than under a contact page, on a search that found
+nothing, on a dictionary entry, on an answer marked wrong, on a word off a
+photographed page that nothing vouched for, on a grammar reference, on a mock
+paper's marking, on a failed import, on Anu failing to answer, on the error
+boundary and on a link that led nowhere. It sends the screen and what the app
+had just said along with the report, because a correction without the thing it
+corrects is a sentence out of context. The note is optional: pressing the button
+on that screen is already the useful half.
+
+**A queue built for the volume rather than for a demo.** `/admin/suggestions`
+shows one line per thing reported, ordered by how many people reported it,
+filtered by what a reviewer would do about it: dictionary, marking, teaching,
+faults. Each line carries what the entry says now beside what is proposed, so a
+decision does not need a second tab. Accepting acts on the whole group.
+
+**One click that is a real write.** Four of the eight categories carry a
+machine-applicable proposal, and accepting one goes through
+`lib/dict/upsert.ts`, the same function the hand-edit path uses: principal parts
+only, an Ekilex paradigm never touched, provenance never relabelled. An example
+sentence can be removed and never rewritten. Nothing under `lib/suggestions/`
+can reach a model.
+
+**And the learner is told what happened.** `/suggestions` lists what they sent,
+its outcome and the reviewer's words. A report that vanishes is a report nobody
+sends twice.
+
+### Things this pass refused to do
+
+1. **Route every dictionary edit through review.** A learner can still correct
+   an entry by hand, attributed, exactly as before. That is the right tool for a
+   typo in front of you, and taking it away would slow down the correction that
+   is most likely to be right in order to moderate the one least likely to be.
+   The queue is the channel for a judgement somebody should look at, and the two
+   sit side by side on the entry.
+2. **Let the app decide which reports are duplicates of each other.** Grouping
+   is mechanical and blunt: the entry, or the screen and the message with digits
+   flattened. Anything cleverer would merge two reports about different words on
+   a similarity score nobody could audit from the queue.
+3. **Invent a reviewer.** With sign-in configured and `ADMIN_EMAILS` unset,
+   nobody is an admin and the queue says so. Falling back to the first account,
+   or to anybody signed in, would turn an open sign-up into an open dictionary.
+4. **Reply to people.** A reviewer can leave a note and the sender sees it. There
+   is no thread, no email, and no promise about how long any of it takes, because
+   this app cannot keep one.
+
+### Known limitations, stated plainly
+
+1. **An accepted correction does not rewrite existing cards.** Nobody's deck is
+   touched by a review decision, on the same argument the hand-edit path makes
+   about strangers' data. A learner who already holds a card built from the old
+   gloss keeps it until they rebuild it.
+2. **A report cannot be sent offline.** Grades queue in the outbox and these do
+   not: a suggestion is not a fact with a timestamp that can be replayed, it is a
+   message, and one silently held for a week is worse than one that says it did
+   not send.
+3. **The queue has no full-text search.** It has status, category, grouping and
+   a pager. At the volume this was built for that is enough to work through, and
+   searching notes is a feature to add when somebody actually needs to find one.
+4. **A reviewer is trusted completely.** Accepting writes to the shared
+   dictionary with no second pair of eyes and no undo beyond editing the entry
+   back. The list is meant to be short enough to read aloud, which is why it is
+   exact addresses and why there is no way to grant it from inside the app.

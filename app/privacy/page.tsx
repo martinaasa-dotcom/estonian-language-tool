@@ -108,10 +108,11 @@ export default function PrivacyPage() {
           one place you can be under a name of your own choosing rather than your account.
           If you run a class, its name and its join code are stored against you. What a
           teacher sees of a pupil is only ever effort, never contents: reviews this week, a
-          streak, words known, when they were last here, and which grammar the class as a
-          whole is weakest at. Never a deck, a search or an answer. Leaving a class removes
-          your membership of it, and deleting your account removes every class you are in and
-          every class you run.
+          streak, words known, when they were last here, which grammar the class as a whole is
+          weakest at, and which grammar that pupil personally is weakest at, as a percentage
+          rolled up over their own reviews. Never a deck, a search or a specific answer.
+          Leaving a class removes your membership of it, and deleting your account removes
+          every class you are in and every class you run.
         </P>
         <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
@@ -132,6 +133,17 @@ export default function PrivacyPage() {
           allowance is the only thing standing between an open door and an unbounded bill.
           This is kept because there is a legitimate interest in a free service surviving
           the week, and there is no version of that cap which works without counting.
+        </P>
+        <P>
+          <strong>What you report as wrong.</strong> Anywhere the app cannot help you there
+          is a button to tell us so. What you send is kept: what kind of problem it was, the
+          screen you were on, what the app had just said to you, the correction you proposed
+          and anything you wrote. Whoever runs this installation reads it, so treat that box
+          as something another person will see, and please do not put anything private in it.
+          It is kept because a shared dictionary that nobody can correct goes wrong quietly,
+          and because you asked us to look at it. Your own reports and what happened to each
+          are on the <strong>Suggestions</strong> page, they are in the export, and they are
+          deleted with your account.
         </P>
         <P>
           <strong>Errors.</strong> When something breaks, the message and where it happened
@@ -244,7 +256,8 @@ export default function PrivacyPage() {
           <strong>A copy of everything (access, and portability).</strong> Settings has an{" "}
           <strong>Export</strong> button that gives you the whole thing as a JSON file: every
           card, review, task, setting, scanned page, level check, mock exam paper with your
-          composition in it, tutor message, starred word, badge and class membership. It is a
+          composition in it, tutor message, suggested fix, starred word, badge and class
+          membership. It is a
           real backup, and the same file restores into a fresh installation. One thing is held
           back and it is the spending record described above, which is this installation&rsquo;s
           accounting rather than your work; it is deleted with your account like everything
@@ -263,7 +276,8 @@ export default function PrivacyPage() {
           <strong>Correction.</strong> Anything you can see, you can change: your settings,
           your cards, your tasks, your goal. A dictionary entry can be corrected too, and
           because the dictionary is shared, that correction is attributed to you until you
-          delete your account.
+          delete your account. Where you would rather somebody looked at it first, the same
+          entry has a button to suggest the change instead of making it.
         </P>
         <P>
           <strong>Restriction and objection.</strong> You can ask for processing to be paused
@@ -326,8 +340,9 @@ export default function PrivacyPage() {
         <P>
           A school running this for a class is the controller of its pupils&rsquo; data and
           answers for that agreement. What a teacher can see is deliberately narrow: how much
-          work each pupil did and which grammar the class as a whole is weakest at, never an
-          individual&rsquo;s deck, their searches or their answers.
+          work each pupil did, which grammar the class as a whole is weakest at, and which
+          grammar each pupil personally is weakest at as a rolled-up percentage, never an
+          individual&rsquo;s deck, their searches or a specific answer.
         </P>
       </S>
 

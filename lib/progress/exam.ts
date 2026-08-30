@@ -19,7 +19,7 @@ import { deckSnapshot } from "./summary";
  * Prisma exists.
  */
 
-const RANK: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5 };
+const RANK: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4 };
 
 /** How many dictionary entries one paper is drawn from. */
 const POOL_SIZE = 500;
@@ -179,7 +179,7 @@ function emptyVocabulary(): ReadinessSignals["vocabulary"] {
   return {
     A1: { known: 0, available: 0 }, A2: { known: 0, available: 0 },
     B1: { known: 0, available: 0 }, B2: { known: 0, available: 0 },
-    C1: { known: 0, available: 0 }, C2: { known: 0, available: 0 },
+    C1: { known: 0, available: 0 },
   };
 }
 

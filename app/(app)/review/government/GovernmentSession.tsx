@@ -174,7 +174,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
               const isPicked = option === picked;
 
               const tone = !revealed
-                ? { background: "var(--raised)", color: "var(--ink)", borderColor: "var(--rule)" }
+                ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
                 : isAnswer
                   ? { background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }
                   : isPicked
@@ -187,7 +187,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   type="button"
                   disabled={revealed}
                   onClick={() => choose(option)}
-                  className="tap flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
+                  className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
                   <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>

@@ -146,14 +146,16 @@ function optionRole(select: Select, selected: boolean) {
 }
 
 /*
-  Every state lives in `.choice` in app/globals.css. Nothing here sets a
-  background, a border colour or a shadow through `style`, because an inline
-  style beats a stylesheet and a control that paints its resting look inline
-  can never define a hover — which is the fault this component was written to
-  clear.
+  Every state lives in `.choice-btn` and the two `[data-on]` rules beside it in
+  app/globals.css. Nothing here sets a background, a border colour or a shadow
+  through `style`, because an inline style beats a stylesheet and a control that
+  paints its resting look inline can never define a hover — which is the fault
+  this component was written to clear, and which main had already worked out
+  from the other end on the multiple-choice answers. `.choice-btn` is theirs;
+  this shares it rather than keeping a second copy of the same idea.
 */
 const base =
-  "choice inline-flex items-center justify-center gap-2 border font-semibold " +
+  "choice-btn inline-flex items-center justify-center gap-2 border font-semibold " +
   "disabled:pointer-events-none";
 
 /**

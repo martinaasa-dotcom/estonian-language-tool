@@ -43,7 +43,7 @@ export default async function LessonPage({
     prisma.lexeme.findMany({ where: { lemma: { in: [...unit.lemmas] } }, select }),
     prisma.lexeme.findMany({
       where: { cefr: unit.level, lemma: { notIn: [...unit.lemmas] } },
-      select: { lemma: true, translation: true },
+      select: { lemma: true, translation: true, pos: true },
       take: DISTRACTOR_POOL,
     }),
   ]);
@@ -76,7 +76,7 @@ export default async function LessonPage({
     unit,
     words: chosen,
     distractors: pool.map((p) => ({
-      lemma: p.lemma, gloss: p.translation, pos: "NOUN", examples: [], parts: {}, government: null,
+      lemma: p.lemma, gloss: p.translation, pos: p.pos, examples: [], parts: {}, government: null,
     })),
     // Stable for this unit and part, so re-entering a lesson gives the same one
     // rather than reshuffling the questions under someone who came back to it.

@@ -363,6 +363,17 @@ the app changes. *Rejected:* a teacher-owned deck pushed to students (it makes t
 of everyone's scheduling, which is exactly what FSRS must not have) and per-student answer logs (a
 study tool that becomes surveillance stops being used honestly).
 
+*Amended, 2026-08:* what a teacher may see now also includes each student's own weakest case, as a
+rolled-up percentage over that student's own reviews (`RosterEntry.weakestCase`), gated on a minimum
+review count so one bad card cannot name anybody. This is **not** the per-student answer log rejected
+above: it carries a case and a percentage, never a specific answer, a search, or a card, and it is
+still computed at request time rather than stored. The argument that moved: the class-wide aggregate
+told a teacher *that* the class struggles with the partitive and nothing about *who* to sit with
+during it, which is the harder problem in a room of twenty-five, and a teacher who already sees a
+name, a streak and a word count is not meaningfully better protected by withholding the one
+actionable fact alongside them. The join screen states this before joining, and leaving still deletes
+one membership row and nothing more.
+
 **ADR-020 — The placement check is assembled from the dictionary, marked without a model, and
 reports a level it refuses to certify.**
 *Context:* onboarding asked a stranger to self-rate as A1 to B2 and used the answer to pick their

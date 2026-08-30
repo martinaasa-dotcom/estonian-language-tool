@@ -270,7 +270,7 @@ export interface Paper {
 
 // ── Choosing the material ────────────────────────────────────────────────────
 
-const RANK: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5 };
+const RANK: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4 };
 
 /**
  * The topics the examination draws on, published with the specification.
