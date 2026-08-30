@@ -1107,6 +1107,18 @@ precondition and waives its three checks with the reason on screen instead. Clea
 weaker version of the same idea, since it only works while every suite remembers
 and cannot help the first run on a machine somebody has been clicking around on.
 
+**An agent branch does not deploy, because the account has a hundred deployments a day and there
+is only one production.** Vercel's free tier counts them across the whole account, and a session
+that pushes eight times to a branch spends eight of them; on 2026-08-30 the hundred ran out in an
+afternoon and every push after that answered `api-deployments-free-per-day`, which is the same
+answer production would have got. `vercel.json` turns preview deployments off for `claude/*` and
+nothing else, so `main` deploys exactly as it did and the cap is spent on the thing people visit.
+Upside Lab has the same two lines for the same reason and reached them the same way.
+
+The cost is real and worth stating: a `claude/*` pull request has no preview URL, so a change
+somebody wants to *look at* has to be run locally or pushed to a branch named something else. That
+is the trade, and it is the right way round while the alternative is production not deploying.
+
 **A suite that ran nothing looks exactly like one that passed, so every suite
 counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
 it reached and a `done` that refuses to pass below a declared floor. Two
