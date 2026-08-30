@@ -37,12 +37,24 @@ const VERDICT: Record<Projection["verdict"], { tone: "neutral" | "good" | "warn"
   open: { tone: "neutral", headline: "No deadline set, so here is what the distance looks like." },
 };
 
-export function PlanPanel({ level, goals, dailyGoal, now = new Date() }: {
+export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact = false }: {
   /** Where the learner is. Null when they have not been measured yet. */
   level: Level | null;
   goals: Goals;
   dailyGoal: number;
   now?: Date;
+  /**
+   * The verdict and the four figures, without the working behind them.
+   *
+   * First run is where this panel is most useful and least readable: an essay
+   * on where the hours come from and six cited facts, under the four questions
+   * that produced them, is a screen nobody finishes on the evening they
+   * install something. The arithmetic is the part that changes a decision, so
+   * that is the part that stays; the working is on the level check screen,
+   * linked from the bottom, where somebody who wants to argue with a number
+   * can go and find it.
+   */
+  compact?: boolean;
 }) {
   const target = goals.target ?? null;
   const from: Level = level ?? PRE_A1;
@@ -131,6 +143,18 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date() }: {
         </Note>
       )}
 
+      {compact && (
+        <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+          Published estimates for an English speaker, which are averages of other people on other
+          courses rather than a measurement of you.{" "}
+          <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
+            Where the numbers come from
+          </Link>
+          , and the research behind the pace, are on the level check screen.
+        </p>
+      )}
+
+      {!compact && (
       <Card>
         <SectionTitle hint="what the numbers assume">Where these come from</SectionTitle>
         <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -153,7 +177,9 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date() }: {
           the words arrive faster, it makes week six unbearable.
         </p>
       </Card>
+      )}
 
+      {!compact && (
       <div>
         <SectionTitle hint="checkable, not motivational">Facts worth knowing first</SectionTitle>
         <ul className="flex flex-col gap-3">
@@ -178,6 +204,7 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date() }: {
           })}
         </ul>
       </div>
+      )}
     </div>
   );
 }

@@ -11,7 +11,23 @@ import { badgeIcon } from "./icons";
  * change identity only when the server has genuinely awarded something new —
  * checkAchievements() is idempotent, so re-passing the same (empty) list on
  * every render never re-triggers this.
+ *
+ * Three at a time, and they go away on their own.
+ *
+ * The stack was unbounded and nothing retired a toast but a click on its own
+ * small X, so the moment it was worst was the moment it mattered most: the end
+ * of somebody's first ever session, when the first review, the first day, the
+ * first quests and a level all land together. Five cards then covered the right
+ * hand column of the page they had just earned them on, and clearing them was
+ * five separate presses. A reward you have to tidy up after is not a reward.
+ *
+ * So the newest three are shown, anything behind them is one counted line, and
+ * each retires itself after nine seconds. Nothing is lost by that: the shelf in
+ * Settings holds every badge, earned or not, for as long as the account exists.
  */
+const VISIBLE = 3;
+const LINGER_MS = 9000;
+
 export function AchievementToasts({ badges }: { badges: Badge[] }) {
   const [queue, setQueue] = useState<Badge[]>([]);
   const [burst, setBurst] = useState(false);
@@ -24,7 +40,18 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
     return () => clearTimeout(t);
   }, [badges]);
 
+  // One timer for the oldest toast rather than one per toast: they arrive
+  // together, and a timer per card means a queue that empties in a stutter.
+  useEffect(() => {
+    if (queue.length === 0) return;
+    const t = setTimeout(() => setQueue((q) => q.slice(1)), LINGER_MS);
+    return () => clearTimeout(t);
+  }, [queue]);
+
   if (queue.length === 0) return null;
+
+  const shown = queue.slice(0, VISIBLE);
+  const hidden = queue.length - shown.length;
 
   return (
     <>
@@ -34,7 +61,15 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
         role="status"
         aria-live="polite"
       >
-        {queue.map((b) => {
+        {hidden > 0 && (
+          <p
+            className="rounded-full px-4 py-2 text-center text-xs font-semibold"
+            style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+          >
+            {hidden} more badge{hidden === 1 ? "" : "s"} earned, all of them on the shelf in Settings.
+          </p>
+        )}
+        {shown.map((b) => {
           const Icon = badgeIcon(b.icon);
           return (
             <div

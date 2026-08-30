@@ -988,3 +988,71 @@ the instruction that already asked her to use both names.
    "Singular", "Answers" are labels on a table of Estonian, not names of
    grammatical categories, and translating them would be decoration.
 
+## 18. The twelfth pass: less of it, in front of the person who has just arrived
+
+The report was one sentence: the site feels overwhelming for somebody just getting started. It was
+right, and the interesting part is that no single screen was at fault. Every screen showed
+everything the app can do, to everybody, from the first minute, because each one had decided that on
+its own and every one of them had decided the same way.
+
+**The rule, in one module.** `lib/ux/disclosure.ts` answers "how far in is this learner" from two
+figures off the append-only review log, and holds a table of what each stage leads with. `arriving`
+until a card has been graded, `starting` until roughly three days at the default goal, `settled`
+after. On day one Today rendered eleven panels and ten of them were reporting on an empty log: a
+streak of nought, a goal ring at nought percent, an XP bar at nought, a week strip of seven empty
+circles, a task list nobody had filed anything in, and a "word to revisit, from your weakest cards"
+picked at random because there were no weak cards. It now shows the greeting, the button into the
+first review and the next unit on the path. Nothing is deleted for anybody: every withheld panel is
+in the rail, in the palette and on its own page, and the unit tests assert each stage is a superset
+of the one before, since a panel that appears and then vanishes reads as a bug rather than as
+restraint. The invariant fails both on Today ceasing to ask the module and on anybody else inventing
+a threshold of their own.
+
+**First run: eight screens to four.** Every answer it collected it still collects. What went is the
+spreading: four screens carrying one question each, a feature tour that is `/guide` word for word,
+and a plan whose six cited facts and essay on the source of the hours are now on `/assess` behind a
+`compact` flag. Why, how far, by when and how often are one screen with the plan live underneath
+them, which is a better argument for asking than a screen of answers followed by a screen of
+consequences. The order that mattered still holds and the browser suite still drives it: limits
+before any question, level before the plan, plan before a single word is chosen.
+
+**The landing page: ten sections to six.** The four-tile source credit and the four-figure stat
+panel are one line of evidence under the buttons, where they are a reason to believe the sentence
+above them rather than a section to scroll. Two of those figures were also wrong, and are now read
+from the course itself: it had said "eighteen units, A1 to C1" in three places since the course
+became eighty-three units to C2. Eight feature cards became five, three of them having been saying
+what the hero, the FAQ or each other already said, and one of them ("four ways to practise") having
+been wrong since the third practice mode shipped. The comparison grid is folded behind its own
+summary rather than removed, because it is the block that makes every other claim on the page
+checkable.
+
+**The rail and the practice hub.** Fifteen flat destinations became four and a disclosure that opens
+itself whenever the current page is inside it and remembers being opened. Thirteen practice modes in
+one grid became four groups, and the grouping is the answer to the question that page says it exists
+to answer.
+
+**The badge toasts.** Unbounded, and nothing retired one but a click on its own small X. The moment
+that was worst was the moment it mattered most: the end of a first session, when the first review,
+the first day, the quests and a level land together and five cards cover the column they were earned
+on. Three at a time, the rest counted in one line, and they go away on their own.
+
+### Found on the way, and fixed
+
+`scripts/e2e.mjs` checked that the tutor screen is honest about its key state by looking for one of
+three provider names. The chain has had five since Groq and Gemini joined `PROVIDER_KEY_ENV`, so on
+any machine carrying either of those keys the page was correct, the check was stale, and the failure
+read as a fault in the app. It matches the shape of the line now, which cannot fall behind a
+provider list.
+
+### Known limitations, stated plainly
+
+1. **The thresholds are counts, not comprehension.** Forty-five reviews is three days at the default
+   goal and a reasonable place to start drawing a retention chart. It is not evidence that anybody
+   has understood anything, and it is not meant to be.
+2. **A learner who imports a large deck on day one skips `arriving` the moment they grade a card.**
+   That is the right answer for the common case and a slightly abrupt one for them: they meet the
+   full dashboard in one step. Nothing is hidden from them that they cannot reach.
+3. **Settings is still a flat list of twelve sections.** It is not on the first-run path and every
+   section is a distinct control, so grouping it would be churn rather than clarity. Left alone on
+   purpose.
+

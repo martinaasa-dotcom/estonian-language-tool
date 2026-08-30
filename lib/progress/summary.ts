@@ -121,6 +121,15 @@ export interface DailySummary {
   reviewsToday: number;
   xpToday: number;
   totalXp: number;
+  /**
+   * Every review this learner has ever graded.
+   *
+   * Free: it is the sum of the rating counts already loaded for XP. It is here
+   * because `lib/ux/disclosure.ts` decides how much of the app a screen leads
+   * with from it, and a second query to answer "has this person started yet"
+   * would be a query on every render of the busiest page in the app.
+   */
+  reviewsAllTime: number;
   level: LevelInfo;
   quests: Quest[];
   questsDone: number;
@@ -163,6 +172,7 @@ export async function dailySummary(
     Object.fromEntries(rows.map((r) => [r.rating, r._count]));
 
   const totalXp = xpFromRatingCounts(toCounts(allRatings));
+  const reviewsAllTime = allRatings.reduce((sum, row) => sum + row._count, 0);
   const xpToday = xpFromRatingCounts(toCounts(todayRatings));
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
 
@@ -188,6 +198,7 @@ export async function dailySummary(
     reviewsToday: questStats.reviewsToday,
     xpToday,
     totalXp,
+    reviewsAllTime,
     level: levelFromXp(totalXp),
     quests,
     questsDone: quests.filter((q) => q.done).length,

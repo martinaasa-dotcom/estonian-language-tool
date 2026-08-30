@@ -132,7 +132,18 @@ check("export returns the full dataset", res.ok() && body.counts.cards > 0,
 // 7 — The tutor tab reflects whether a key is configured, either way
 await page.goto(`${B}/tutor`, { waitUntil: "networkidle" });
 const needsKey = (await page.getByText("Anu needs an API key").count()) > 0;
-const connected = (await page.getByText(/OpenRouter ·|Anthropic ·|OpenAI ·/).count()) > 0;
+/*
+  The shape of the line, not a list of provider names.
+
+  This named three providers and the chain has had five since Groq and Gemini
+  joined `PROVIDER_KEY_ENV`, so on any machine carrying one of those two keys
+  the page was correct, the check was stale, and the failure read as a fault in
+  the app. That is the same "a list in the test falls behind the chain" fault
+  the provider suite was fixed for. The tutor prints "Will ask <provider> ·
+  <model>" before a reply and "Answered by" after one, whoever answers, so
+  matching that shape cannot fall behind a new provider.
+*/
+const connected = (await page.getByText(/(Will ask|Answered by) .+ · .+/).count()) > 0;
 check("the tutor tab is honest about its key state", needsKey !== connected,
   needsKey ? "no key — shows setup guidance" : "key set — shows the provider");
 
