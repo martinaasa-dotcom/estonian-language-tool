@@ -29,8 +29,6 @@ const C = {
   ground: "#fbf9ff",
   white: "#ffffff",
   sky: "#2b93d8",
-  mint: "#1fb894",
-  butter: "#f0b429",
   flagBlue: "#0072ce",
   flagBlueDeep: "#00539a",
   flagBlack: "#14131c",
