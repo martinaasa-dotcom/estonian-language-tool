@@ -255,21 +255,41 @@ const aimed = await page.evaluate(async () => {
     .find((c) => c.getAttribute("href") === "/settings");
   const from = pane.getBoundingClientRect().top;
   const distance = to.getBoundingClientRect().top - from;
+  const rest = Math.round(pane.getBoundingClientRect().height);
   to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
   /*
     A press and nothing else: no click, so nothing navigates, and the marker
-    has only the bet to go on. Halfway through the travel it should be most of
-    the way there, since the curve spends nearly all of its distance early.
+    has only the bet to go on. The pill is sampled every frame for the length
+    of the travel rather than at one chosen instant, because how far along it
+    is at a given millisecond is a fact about the machine: the first version
+    of this read the stretch at 130ms, which is most of the way there on a
+    laptop and past the peak on a slower box, and it failed in CI at 56px
+    while passing here at 64. A peak over the whole journey is the same
+    measurement without the stopwatch in it.
   */
-  await new Promise((r) => setTimeout(r, 130));
-  const gone = pane.getBoundingClientRect().top - from;
-  return { covered: Math.round((gone / distance) * 100), stretched: Math.round(pane.getBoundingClientRect().height) };
+  let covered = 0;
+  let tallest = rest;
+  const until = performance.now() + 420;
+  await new Promise((done) => {
+    const tick = () => {
+      const box = pane.getBoundingClientRect();
+      tallest = Math.max(tallest, box.height);
+      covered = Math.max(covered, (box.top - from) / distance);
+      if (performance.now() < until) requestAnimationFrame(tick);
+      else done();
+    };
+    requestAnimationFrame(tick);
+  });
+  return { covered: Math.round(covered * 100), rest, tallest: Math.round(tallest) };
 });
 check("the marker leaves on the press, not on the page",
-  aimed.covered > 40 && page.url() === was,
-  `${aimed.covered}% of the way there 130ms after pointerdown, still on ${page.url().replace(BASE, "")}`);
-check("and it stretches across the ground it covers", aimed.stretched > 60,
-  `${aimed.stretched}px tall mid-travel, against a 40px row`);
+  aimed.covered > 90 && page.url() === was,
+  `${aimed.covered}% of the way there before the page was asked for anything, ` +
+  `still on ${page.url().replace(BASE, "")}`);
+check("and it stretches across the ground it covers",
+  aimed.tallest > aimed.rest * 1.2,
+  `${aimed.tallest}px at its longest against a ${aimed.rest}px row, ` +
+  `which is ${(aimed.tallest / aimed.rest).toFixed(2)}x`);
 
 /*
   ONE NAVIGATION IS ONE JOURNEY.
