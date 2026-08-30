@@ -208,7 +208,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
                 className="flex items-baseline justify-between gap-3 rounded-[var(--r)] px-4 py-2.5"
                 style={{ background: "var(--raised)" }}
               >
-                <span className="text-xs" style={{ color: "var(--ink-3)" }}>{p.label}</span>
+                <span lang="et" className="text-xs" style={{ color: "var(--ink-3)" }}>{p.label}</span>
                 <span lang="et" className="est text-lg font-bold" style={{ color: "var(--ink)" }}>{p.value}</span>
               </div>
             ))}
@@ -232,11 +232,11 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
           <ul key={word.lemma} className="fade-up grid grid-cols-2 gap-1.5">
             {word.cases.filter((c) => !c.principal && c.singular).map((c) => (
               <li
-                key={c.en}
+                key={c.et}
                 className="flex items-baseline justify-between gap-2 rounded-[var(--r-sm)] px-3 py-2"
                 style={{ background: "var(--accent-soft)" }}
               >
-                <span className="text-2xs" style={{ color: "var(--accent-deep)", opacity: 0.75 }}>{c.en}</span>
+                <span lang="et" className="text-2xs" style={{ color: "var(--accent-deep)", opacity: 0.75 }}>{c.et}</span>
                 <span lang="et" className="est text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {c.singular}
                 </span>

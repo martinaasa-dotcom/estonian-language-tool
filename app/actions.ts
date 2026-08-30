@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { throttleAction } from "@/lib/security/actionLimits";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
+import { formName } from "@/lib/estonian/morph";
 import {
   LEVELS, checkpointFor, levelIndex, unitById, wordsAtLevel,
 } from "@/lib/collections/syllabus";
@@ -1298,13 +1299,6 @@ export async function setWordWeek(lexemeId: string, week: number | null) {
 
 // ──────────────────────── Gap-fill from pasted reading ─────────────────────
 
-const PASSAGE_FORM_LABELS: Record<string, string> = {
-  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
-  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
-  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
-  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
-};
-
 /**
  * Turns a passage the learner pasted into gap-fill exercises.
  *
@@ -1369,7 +1363,7 @@ export async function buildClozeFromText(text: string) {
         lexemeId: lexeme.id,
         lemma: lexeme.lemma,
         translation: lexeme.translation,
-        formLabel: PASSAGE_FORM_LABELS[form.formType] ?? form.morphName ?? "form",
+        formLabel: formName(form)?.et ?? form.morphName ?? "form",
       });
     }
   }

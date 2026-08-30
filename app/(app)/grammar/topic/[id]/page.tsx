@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { TOPIC_NOTES, grammarTopic } from "@/lib/estonian/grammar";
+import { grammarTerm } from "@/lib/estonian/terms";
 import { SYLLABUS } from "@/lib/collections/syllabus";
 import { Card, Chip, Note, Page, SectionTitle } from "@/components/ui";
 
@@ -15,9 +16,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const topic = grammarTopic(id);
-  return topic
-    ? { title: `Grammar · ${topic.title}`, description: topic.summary }
-    : { title: "Grammar" };
+  if (!topic) return { title: "Grammar" };
+  const term = grammarTerm(id);
+  return {
+    title: `Grammar · ${term ? `${term.et}, ${topic.title.toLowerCase()}` : topic.title}`,
+    description: topic.summary,
+  };
 }
 
 /**
@@ -41,12 +45,15 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
 
   await requireUserId();
 
+  const term = grammarTerm(id);
+
   const units = SYLLABUS.filter((u) => u.grammar.includes(id));
 
   return (
     <Page
       eyebrow="Reference"
-      title={topic.title}
+      title={term?.et ?? topic.title}
+      titleLang={term ? "et" : undefined}
       lead={topic.summary}
       actions={
         <Link href="/grammar" className="flex items-center gap-1.5 text-sm" style={{ color: "var(--accent-deep)" }}>
@@ -55,17 +62,55 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
       }
     >
       <div className="flex flex-col gap-7">
-        {topic.marker && (
+        {(term || topic.marker) && (
           <Card tone="accent">
-            <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-              The ending that carries it
-            </p>
-            <p lang="et" className="est mt-1 text-2xl font-bold" style={{ color: "var(--ink)" }}>
-              {topic.marker}
-            </p>
-            <p className="mt-2 max-w-[62ch] text-sm" style={{ color: "var(--ink-2)" }}>
-              Named here as terminology. The forms themselves live on the dictionary entries, where
-              every one of them came from Ekilex rather than from this app.
+            <dl className="grid gap-4 sm:grid-cols-3">
+              {term?.question && (
+                <div>
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                    Answers
+                  </dt>
+                  <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    {term.question}
+                  </dd>
+                </div>
+              )}
+              <div>
+                <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                  In plain English
+                </dt>
+                <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  {topic.title}
+                </dd>
+              </div>
+              {term?.alsoCalled && (
+                <div>
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                    In English references
+                  </dt>
+                  <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    {term.alsoCalled}
+                  </dd>
+                </div>
+              )}
+              {topic.marker && (
+                <div>
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                    The ending that carries it
+                  </dt>
+                  <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    {topic.marker}
+                  </dd>
+                </div>
+              )}
+            </dl>
+            <p className="mt-4 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
+              {term
+                ? "The heading is what a course, a textbook and the state examination call this. The English name is here so that an English reference grammar is still usable, not because anybody teaching Estonian says it. "
+                : "There is no settled Estonian term a class would use for this one, so it keeps its English description rather than being given an invented name. "}
+              {topic.marker
+                ? "The ending above is named as terminology; the forms themselves live on the dictionary entries, where every one of them came from Ekilex rather than from this app."
+                : "Every Estonian form the app shows comes from the dictionary, never from this page."}
             </p>
           </Card>
         )}

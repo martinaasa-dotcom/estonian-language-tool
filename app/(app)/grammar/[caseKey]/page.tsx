@@ -21,7 +21,10 @@ export async function generateMetadata({ params }: { params: Promise<{ caseKey: 
   const { caseKey } = await params;
   const ref = caseReference(caseKey.toUpperCase());
   if (!ref) return { title: "Grammar" };
-  return { title: `${ref.spec.en} · Estonian grammar`, description: ref.summary };
+  return {
+    title: `${ref.spec.et} · ${ref.spec.question} · Estonian grammar`,
+    description: ref.summary,
+  };
 }
 
 const ORIGIN_LABEL: Record<CaseExample["origin"], { label: string; title: string }> = {
@@ -66,7 +69,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
   return (
     <Page
       eyebrow={`Case ${index + 1} of ${all.length}`}
-      title={ref.spec.en}
+      title={ref.spec.et}
+      titleLang="et"
       lead={ref.summary}
       actions={
         <Link
@@ -82,15 +86,17 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         <Card tone="accent">
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
-              <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Called</dt>
-              <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                {ref.spec.et}
-              </dd>
-            </div>
-            <div>
               <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>Answers</dt>
               <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.question}
+              </dd>
+            </div>
+            <div>
+              <dt className="label-xs" style={{ color: "var(--accent-deep)", opacity: 0.8 }}>
+                In English references
+              </dt>
+              <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                the {ref.spec.en.toLowerCase()}
               </dd>
             </div>
             <div>
@@ -158,7 +164,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               <table className="w-full min-w-[460px] text-sm">
                 <thead>
                   <tr>
-                    {["Word", "Genitive", ref.spec.en, "From"].map((h) => (
+                    {["Word", "Genitive", ref.spec.et, "From"].map((h) => (
                       <th
                         key={h}
                         className="label-xs px-3 py-2.5 text-left"
@@ -236,7 +242,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                     <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                       contains{" "}
                       <span lang="et" className="est" style={{ color: "var(--accent-deep)" }}>{example.form}</span>
-                      {", "}the {ref.spec.en.toLowerCase()} of{" "}
+                      {", "}the <span lang="et">{ref.spec.et}</span> of{" "}
                       <span lang="et" className="est">{example.lemma}</span>
                     </p>
                   </Card>
@@ -275,7 +281,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               className="flex items-center gap-1.5 text-sm"
               style={{ color: "var(--ink-2)" }}
             >
-              <ArrowLeft size={14} aria-hidden /> {previous.spec.en}
+              <ArrowLeft size={14} aria-hidden /> <span lang="et">{previous.spec.et}</span>
             </Link>
           ) : <span />}
           {next && (
@@ -284,7 +290,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               className="flex items-center gap-1.5 text-sm"
               style={{ color: "var(--ink-2)" }}
             >
-              {next.spec.en} <ArrowRight size={14} aria-hidden />
+              <span lang="et">{next.spec.et}</span> <ArrowRight size={14} aria-hidden />
             </Link>
           )}
         </nav>

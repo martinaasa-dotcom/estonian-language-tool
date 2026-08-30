@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CASES } from "@/lib/estonian/cases";
+import { formLabel } from "@/lib/estonian/morph";
 
 /** Strips Estonian diacritics so `sona` finds `sõna`. */
 export function fold(text: string): string {
@@ -21,13 +22,6 @@ export interface SearchHit {
   matchedAs?: string;
 }
 
-const FORM_LABELS: Record<string, string> = {
-  NOM_SG: "nominative", GEN_SG: "genitive", PART_SG: "partitive",
-  ILL_SG_SHORT: "short illative", PART_PL: "partitive plural", GEN_PL: "genitive plural",
-  INF_MA: "ma-infinitive", INF_DA: "da-infinitive",
-  PRES_1SG: "present 1sg", PAST_1SG: "past 1sg", PART_TUD: "tud-participle",
-};
-
 /** Case suffixes, longest first so `-sse` is tried before `-s`. */
 const CASE_SUFFIXES = CASES
   .filter((c) => c.suffix)
@@ -43,32 +37,6 @@ export interface Candidate {
   id: string; lemma: string; translation: string; pos: string;
   cefr: string | null; gradationNote: string | null;
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
-}
-
-/** Ekilex morph codes → a readable English name, for the "you typed the X of Y" note. */
-const MORPH_LABELS: Record<string, string> = {
-  SgN: "nominative", SgG: "genitive", SgP: "partitive", SgAdt: "short illative",
-  SgIll: "illative", SgIn: "inessive", SgEl: "elative", SgAll: "allative",
-  SgAd: "adessive", SgAbl: "ablative", SgTr: "translative", SgTer: "terminative",
-  SgEs: "essive", SgAb: "abessive", SgKom: "comitative",
-  PlN: "nominative plural", PlG: "genitive plural", PlP: "partitive plural",
-  PlIll: "illative plural", PlIn: "inessive plural", PlEl: "elative plural",
-  PlAll: "allative plural", PlAd: "adessive plural", PlAbl: "ablative plural",
-  PlTr: "translative plural", PlTer: "terminative plural", PlEs: "essive plural",
-  PlAb: "abessive plural", PlKom: "comitative plural",
-  Sup: "ma-infinitive", Inf: "da-infinitive",
-  IndPrSg1: "present 1sg", IndPrSg2: "present 2sg", IndPrSg3: "present 3sg",
-  IndPrPl1: "present 1pl", IndPrPl2: "present 2pl", IndPrPl3: "present 3pl",
-  IndIpfSg1: "past 1sg", IndIpfSg3: "past 3sg",
-  PtsPtIps: "tud-participle", PtsPtPs: "nud-participle",
-};
-
-/** Never shows an internal formType to the reader — that leaked as "EKILEX:SgIn" once. */
-function formLabel(form: { formType: string; morphCode: string | null; morphName: string | null }): string {
-  if (form.morphCode && MORPH_LABELS[form.morphCode]) return MORPH_LABELS[form.morphCode]!;
-  if (FORM_LABELS[form.formType]) return FORM_LABELS[form.formType]!;
-  if (form.morphName) return form.morphName;
-  return form.formType.replace(/^EKILEX:/, "");
 }
 
 /**
@@ -262,14 +230,18 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
 
   // A regular case form built on a genitive stem: `toas` → `toa` + -s, and
   // `tubadega` → `tubade` + -ga on the plural stem.
-  for (const [formType, number] of [["GEN_SG", ""], ["GEN_PL", " plural"]] as const) {
+  for (const [formType, plural] of [["GEN_SG", false], ["GEN_PL", true]] as const) {
     const stem = c.forms.find((f) => f.formType === formType)?.value;
     if (!stem) continue;
     const stemFolded = fold(stem);
     for (const { suffix, en, et } of CASE_SUFFIXES) {
       if (!folded.endsWith(suffix)) continue;
       if (folded.slice(0, folded.length - suffix.length) === stemFolded) {
-        return { score: 85, matchedAs: `${en}${number} (${et}) of ${c.lemma}` };
+        // Named the way a class names it. Estonian puts its word for the
+        // plural in front of the case name rather than after it, so the two
+        // halves cannot be concatenated the way the English pair can.
+        const name = plural ? `mitmuse ${et} (${en} plural)` : `${et} (${en})`;
+        return { score: 85, matchedAs: `${name} of ${c.lemma}` };
       }
     }
   }
@@ -277,7 +249,7 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
   // Nominative plural is the one regular plural: genitive singular + d.
   const genForPlural = c.forms.find((f) => f.formType === "GEN_SG")?.value;
   if (genForPlural && folded === fold(genForPlural) + "d") {
-    return { score: 85, matchedAs: `nominative plural of ${c.lemma}` };
+    return { score: 85, matchedAs: `mitmuse nimetav (nominative plural) of ${c.lemma}` };
   }
 
   if (l.startsWith(folded)) return { score: 70 };

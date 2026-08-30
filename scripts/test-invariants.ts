@@ -23,6 +23,9 @@ import { extractEstonianSenses } from "../lib/dict/wiktionary";
 import { wordNote } from "../lib/estonian/dictation";
 import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
+import { CASES } from "../lib/estonian/cases";
+import { TOPIC_GROUPS } from "../lib/estonian/grammar";
+import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 
 let failures = 0;
 let checks = 0;
@@ -1681,6 +1684,66 @@ check("one upstream request per thing, however many callers ask at once", () => 
       source,
       /\bsingleFlight(Tagged)?\(/,
       `${file} imports the deduplication and then does not call it`,
+    );
+  }
+});
+
+// ── Named the way Estonian is taught, not the way English names it ───────────
+
+/**
+ * Estonian is not taught anywhere by its Latin case names or by the English
+ * names of tenses it does not inflect for. A class, a textbook and the state
+ * examination all name a case by its Estonian name and, more often, by the
+ * question it answers, and they name the verb by mood, tense, voice and person
+ * as four separate axes rather than as a row of English-shaped tenses.
+ *
+ * This app is in English and keeps the English name, because a learner reading
+ * an English reference grammar needs it. What is asserted here is which one
+ * leads: a screen that shows a learner "the inessive" and nothing else has
+ * taught them a word their own teacher will not say.
+ */
+check("every grammar point the course can name carries the name a class uses", () => {
+  for (const spec of CASES) {
+    const term = grammarTerm(spec.key.toLowerCase());
+    assert.equal(term?.et, spec.et, `${spec.key} has no Estonian name`);
+    assert.ok(term?.question, `${spec.key} does not carry the question it answers`);
+  }
+  for (const group of TOPIC_GROUPS) {
+    assert.ok(grammarGroupTerm(group.id), `the ${group.id} group has no Estonian name`);
+  }
+  // The verb is where the English names were worst and where a new point is
+  // most likely to arrive carrying only one.
+  const verb = TOPIC_GROUPS.find((g) => g.id === "verb");
+  assert.ok(verb, "the grammar reference no longer groups the verb");
+  for (const id of verb!.ids) {
+    assert.ok(grammarTerm(id)?.et, `the verb point "${id}" has only an English name`);
+  }
+});
+
+/**
+ * The same rule where it is actually broken: a screen.
+ *
+ * Every place that puts a case in front of a learner holds both names already,
+ * so showing one is a choice rather than a shortage. This is the shape of the
+ * ledger check above, and for the same reason: prose in CLAUDE.md kept four
+ * screens honest and did not catch the fifth, which was the level check
+ * offering "Inessive, Elative, Allative" to somebody who had been learning for
+ * a week.
+ */
+check("a screen that names a case in Latin names it in Estonian too", () => {
+  // Anchored on a member access rather than on the word, because a file
+  // declaring `caseEt: string` in an interface and then never rendering it
+  // satisfied the first version of this check. That is the same fault the
+  // comment on `code()` above describes: naming a thing is not using it.
+  const LATIN = /\.caseEn\b|\bspec\.en\b/;
+  const ESTONIAN = /\.caseEt\b|\.caseQuestion\b|\bspec\.et\b|\bspec\.question\b|caseOptionLabel/;
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    if (!LATIN.test(source)) continue;
+    assert.match(
+      source,
+      ESTONIAN,
+      `${file} shows a learner the Latin case name with no Estonian name or question beside it`,
     );
   }
 });

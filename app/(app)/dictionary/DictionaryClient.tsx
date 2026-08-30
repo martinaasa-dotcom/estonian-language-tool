@@ -355,10 +355,10 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                           use it. It has to be here too, because a deployment
                           with no Ekilex key only ever renders this one, and
                           without the link its case table is a dead end. */}
-                      <Link href={`/grammar/${spec.key.toLowerCase()}`} className="hover:underline">
-                        {spec.en}
+                      <Link href={`/grammar/${spec.key.toLowerCase()}`} lang="et" className="hover:underline">
+                        {spec.et}
                       </Link>
-                      <span lang="et" className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.et}</span>
+                      <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.en.toLowerCase()}</span>
                     </td>
                     <td lang="et" className="est px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
                       {singular ?? NO_VALUE}
