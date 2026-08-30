@@ -63,12 +63,17 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, openedId, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
 }: {
   initialQuery: string;
   /** True when this word was pulled from Ekilex on this request. */
   justFetched?: boolean;
   hits: SearchHit[];
+  /**
+   * Which of the hits is the one on screen. Usually the first, and not when a
+   * link asked for another entry of the same lemma by name.
+   */
+  openedId: string | null;
   entry: EntryView | null;
   /** Set when the query was an inflected form — "inessive (seesütlev) of tuba". */
   matchedAs: string | null;
@@ -95,6 +100,24 @@ export function DictionaryClient({
     setQuery(q);
     start(() => router.push(q.trim() ? `/dictionary?q=${encodeURIComponent(q.trim())}` : "/dictionary"));
   };
+
+  /*
+    Open one specific match.
+
+    Searching the lemma again is enough for a different word and does nothing at
+    all for another entry of the *same* one: the search would return the same
+    list and open the same winner, so `hall` the frost was listed as an "other
+    match" and could not be reached from the chip that named it. The id says
+    which.
+  */
+  const openHit = (hit: SearchHit) => {
+    setQuery(hit.lemma);
+    start(() => router.push(
+      `/dictionary?q=${encodeURIComponent(hit.lemma)}&entry=${encodeURIComponent(hit.id)}`,
+    ));
+  };
+
+  const others = hits.filter((h) => h.id !== openedId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -229,21 +252,34 @@ export function DictionaryClient({
         </>
       )}
 
-      {hits.length > 1 && (
+      {others.length > 0 && (
         <div>
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            {hits.length - 1} other match{hits.length - 1 === 1 ? "" : "es"}
+            {others.length} other match{others.length === 1 ? "" : "es"}
           </p>
           <ul className="flex flex-wrap gap-2">
-            {hits.slice(1).map((h) => (
+            {others.map((h) => (
               <li key={h.id}>
                 <button
                   type="button"
-                  onClick={() => go(h.lemma)}
+                  onClick={() => openHit(h)}
                   className="press flex items-baseline gap-2 rounded-full border px-4 py-2 text-left transition-ui hover:-translate-y-px"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
                 >
                   <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{h.lemma}</span>
+                  {/*
+                    The part of speech, but only where it is the thing telling
+                    two chips apart. `hall` is grey and also frost, and both
+                    chips read "hall" with a gloss beside them; where the
+                    glosses are close, as they are across most of the pairs the
+                    dictionary carries, the two were indistinguishable and one
+                    of them looked like a rendering fault.
+                  */}
+                  {h.lemma === entry?.lemma && (
+                    <span className="text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                      {h.pos.toLowerCase()}
+                    </span>
+                  )}
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {h.matchedAs ? h.matchedAs : h.translation}
                   </span>

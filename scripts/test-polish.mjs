@@ -1,8 +1,9 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
-// Floor: 11, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Polish", { floor: 13 });
+// Floor: the count CI reaches in the state it seeds. A thinner database reads
+// as short, and the three about a second entry for one word waive by number.
+const { check, absent, done } = suite("Polish", { floor: 16 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
@@ -78,6 +79,45 @@ check("a review card links to the full dictionary entry",
 await page.getByRole("link", { name: /Full entry/ }).click();
 await page.waitForURL(/\/dictionary\?q=/, { timeout: 10000 }).catch(() => {});
 check("that link lands on the entry", page.url().includes("/dictionary?q="), page.url());
+
+/*
+  Two entries for one word, and both of them reachable.
+
+  A lemma can hold more than one entry, because `@@unique` is on `(lemma, pos)`:
+  `hall` is grey and also frost. The entry page shows one of them, listed the
+  rest under "other matches", and navigated those chips to `?q=<lemma>` — which
+  searched the same word, opened the same winner, and left the second entry
+  unreachable from anywhere in the app. The chips also read lemma and gloss
+  alone, so two of them said nearly the same thing twice and one looked like a
+  rendering fault.
+
+  Driven rather than reasoned about, because the whole bug was that the button
+  looked right and did nothing.
+
+  The precondition is stated: a database with no such pair cannot show this, and
+  a suite that clicks a chip that is not there waits thirty seconds and then
+  fails in Playwright's words rather than in ones that name the cause.
+*/
+await page.goto(`${B}/dictionary?q=vana`, { waitUntil: "networkidle" });
+const otherChip = page.locator("button", { hasText: /^vana/ }).first();
+const hasPair = (await page.getByText(/other match/).count()) > 0 && (await otherChip.count()) > 0;
+
+if (!hasPair) {
+  absent(3, "this dictionary holds one entry for `vana`, so there is no pair to choose between");
+} else {
+  const openedPos = (await page.locator("main").innerText()).toLowerCase();
+  check("a second entry for one word is offered", true);
+  check("and the chip says which one it is, since the glosses barely differ",
+    /adjective|noun|verb|other/i.test((await otherChip.innerText()).toLowerCase()),
+    (await otherChip.innerText()).replace(/\s+/g, " "));
+
+  await otherChip.click();
+  await page.waitForURL(/entry=/, { timeout: 10000 }).catch(() => {});
+  const nowPos = (await page.locator("main").innerText()).toLowerCase();
+  check("and clicking it actually opens the other one",
+    page.url().includes("entry=") && nowPos !== openedPos,
+    page.url().replace(B, ""));
+}
 
 // The answer must be announced, not silently inserted.
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });
