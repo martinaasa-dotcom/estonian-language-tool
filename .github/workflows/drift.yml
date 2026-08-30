@@ -42,6 +42,23 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm }
       - run: npm ci
+      # Carried between weeks, because a whole pass does not fit in one run.
+      #
+      # Wiktionary starts refusing part way through five thousand pages however
+      # politely they are asked: measured at about 3,800 before a batch would
+      # not come back. The script caches every page as it arrives and picks up
+      # where it stopped, so with the cache restored each week gets further and
+      # a cold start does not throw away the last run's work. Without this the
+      # job would be red every week for a fact about Wiktionary rather than a
+      # fact about a gloss, which is how a check becomes one nobody reads.
+      #
+      # `restore-keys` rather than an exact match, because the useful cache is
+      # the most recent one whatever week wrote it.
+      - uses: actions/cache@v4
+        with:
+          path: prisma/data/.cache
+          key: wiktionary-pages-${{ github.run_id }}
+          restore-keys: wiktionary-pages-
       # No database and no key: this reads prisma/data/expanded.json and asks
       # Wiktionary, which is why it is the one drift check that can run here.
       #
