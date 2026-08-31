@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { ReactNode } from "react";
 import { Bell, Download, Keyboard, Shield, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";

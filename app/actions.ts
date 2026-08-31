@@ -33,7 +33,7 @@ import { resolveStreakFor } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { isTimeZone } from "@/lib/time/day";
 import {
-  numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
+  forgetSettings, numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import {
@@ -1480,11 +1480,12 @@ const CURRENT_WEEK_KEY = SETTING_KEYS.currentWeek;
 
 /** The course week the learner says they are in. Null until they set one. */
 async function currentClassWeek(ownerId: string): Promise<number | null> {
-  const setting = await prisma.setting.findUnique({
-    where: { ownerId_key: { ownerId, key: CURRENT_WEEK_KEY } },
-  });
-  if (!setting) return null;
-  const week = Number(setting.value);
+  // Through the store rather than straight at the table, so this shares the
+  // one settings read the request has already paid for rather than adding a
+  // ninth round trip for one row. See lib/settings/store.ts.
+  const value = await readSetting(ownerId, CURRENT_WEEK_KEY);
+  if (value === null) return null;
+  const week = Number(value);
   return Number.isInteger(week) && week > 0 ? week : null;
 }
 
@@ -1500,13 +1501,11 @@ export async function setCurrentWeek(week: number | null) {
   const ownerId = await requireUserId();
   if (week === null) {
     await prisma.setting.deleteMany({ where: { ownerId, key: CURRENT_WEEK_KEY } });
+    // A delete is not a value, so there is nothing to correct the request's
+    // held settings with. Drop them. See lib/settings/store.ts.
+    forgetSettings(ownerId);
   } else {
-    const clamped = Math.max(1, Math.min(60, Math.round(week)));
-    await prisma.setting.upsert({
-      where: { ownerId_key: { ownerId, key: CURRENT_WEEK_KEY } },
-      create: { ownerId, key: CURRENT_WEEK_KEY, value: String(clamped) },
-      update: { value: String(clamped) },
-    });
+    await writeSetting(ownerId, CURRENT_WEEK_KEY, String(Math.max(1, Math.min(60, Math.round(week)))));
   }
   revalidatePath("/");
   revalidatePath("/week");
@@ -1646,6 +1645,7 @@ export async function deleteMyAccount(confirmation: string) {
       await tx.starredWord.deleteMany({ where: { ownerId } });
       await tx.achievement.deleteMany({ where: { ownerId } });
       await tx.setting.deleteMany({ where: { ownerId } });
+      forgetSettings(ownerId);
       await tx.usageEvent.deleteMany({ where: { ownerId } });
       await tx.scan.deleteMany({ where: { ownerId } });
       /*
@@ -1928,6 +1928,9 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
           update: { value },
         });
       }
+      // Written straight at the table rather than through `writeSetting`,
+      // because a restore replaces the lot. See lib/settings/store.ts.
+      forgetSettings(ownerId);
 
       for (const raw of backup.messages ?? []) {
         const data = revive(raw, ["createdAt"]);

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import {
   CUMULATIVE_HOURS, FACTS, FOUND_HOURS_PER_WEEK, project, sustainableNewCardsPerDay,
   weeksNeeded, type Projection,

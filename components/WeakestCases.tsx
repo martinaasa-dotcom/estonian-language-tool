@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { CircleHelp } from "lucide-react";
 import type { CaseAccuracy } from "@/lib/stats/history";
 import { Meter } from "@/components/ui";

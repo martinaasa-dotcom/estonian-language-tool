@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Timer, Trophy, X } from "lucide-react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { checkAchievements, gradeCard, recordSprintScore } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";

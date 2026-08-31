@@ -5076,6 +5076,92 @@ check("a hue's fill is never used as its ink", () => {
   assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
 });
 
+check("every link into this app fetches the page on intent, not just its skeleton", () => {
+  /*
+    Every route here is `force-dynamic`, correctly: a deck, a streak and a due
+    count are facts about the person reading. What that costs is what
+    `components/PrefetchLink.tsx` exists for. Next prefetches a link that is on
+    screen, but for a dynamic route it stops at the nearest `loading.tsx`,
+    which measured against this app is 150 bytes, seven milliseconds and no
+    query at all. So the skeleton arrived early and the page still started
+    being built at the moment of the click, which is what "the navigation feels
+    slow" turned out to be: 458ms from pressing Progress in the rail to reading
+    it, against 64ms once the pointer had rested there first.
+
+    `PrefetchLink` is a `next/link` that upgrades to a full prefetch when a
+    pointer settles or a link takes focus, and it is imported as `Link`
+    everywhere, so a screen reads exactly as it did. This is the half that
+    keeps it true: a new screen written with `import Link from "next/link"`
+    would be the one place in the app that waits, and nothing would say so.
+
+    The one file allowed to reach for the real thing is `PrefetchLink` itself,
+    which wraps it.
+  */
+  const HOME = "components/PrefetchLink.tsx";
+  assert.ok(existsSync(HOME), `the one link component has gone from ${HOME}`);
+
+  const offenders = [...APP, ...COMPONENTS]
+    .filter((file) => file !== HOME && /from ["']next\/link["']/.test(code(file)));
+
+  assert.deepEqual(
+    offenders, [],
+    `these import next/link directly. Import { PrefetchLink as Link } from `
+    + `"@/components/PrefetchLink" instead: a plain Link prefetches only the `
+    + `loading skeleton of a dynamic route, and every route here is dynamic.`,
+  );
+});
+
+check("a setting written outside the store tells the store it changed", () => {
+  /*
+    `lib/settings/store.ts` holds one read of a learner's settings for the
+    length of a request, because eight helpers wanted them and each was making
+    its own round trip. `writeSetting` corrects what it holds. Three paths do
+    not go through `writeSetting` and cannot: clearing the course week is a
+    delete rather than a value, and restoring a backup and erasing an account
+    replace or remove the lot inside a transaction.
+
+    Each of those has to say so, or a request that writes and then reads is
+    answered with what was there before it wrote. That is not hypothetical on
+    the page this was measured on: `resolveStreakFor` banks a shield and
+    `awardBadges` reads the count back, in one render of Today.
+  */
+  const writesSettings = /(?:prisma|tx)\.setting\.(?:upsert|create|createMany|update|updateMany|delete|deleteMany)\b/;
+  const offenders: string[] = [];
+  for (const file of [...APP, ...LIB]) {
+    if (file === "lib/settings/store.ts" || file.endsWith(".itest.ts")) continue;
+    const src = code(file);
+    if (!writesSettings.test(src)) continue;
+    if (!/forgetSettings\s*\(/.test(src)) offenders.push(file);
+  }
+  assert.deepEqual(
+    offenders, [],
+    "these write to Setting without going through writeSetting() and without calling "
+    + "forgetSettings(). A request holds one read of a learner's settings, so a write it "
+    + "is not told about is a value the rest of that request cannot see.",
+  );
+});
+
+check("nothing caches a learner's own rows in the dictionary's cache", () => {
+  /*
+    `lib/dict/facts.ts` holds answers across requests and across learners,
+    which is exactly right for the shared dictionary (ADR-012) and exactly
+    wrong for anything else: a value keyed on an `ownerId` and held in a
+    module-level map is one person's deck handed to the next person who asks.
+
+    So the whole module may not mention an owner. That is bluntly stated on
+    purpose: there is no version of "cache this per learner" that belongs here,
+    and `cache()` from React, which is scoped to the one request, is where a
+    per-learner memo goes instead (see `latestFor` and the settings store).
+  */
+  const src = code("lib/dict/facts.ts");
+  assert.ok(
+    !/ownerId/.test(src),
+    "lib/dict/facts.ts names an ownerId. It caches across requests and across "
+    + "learners, so anything scoped to a person served from here is served to "
+    + "everybody. Use cache() from react, which is scoped to one request.",
+  );
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

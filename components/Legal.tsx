@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 
 /** Shared shell for the policy pages, which are reachable without a session. */
 export function Legal({ title, updated, children }: {

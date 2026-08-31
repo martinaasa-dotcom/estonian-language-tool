@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ChevronDown } from "lucide-react";
 import { CASES } from "@/lib/estonian/cases";
 import { caseFromMorphCode, VERB_GROUP_LABELS, verbSlot, type VerbSlot } from "@/lib/estonian/morph";

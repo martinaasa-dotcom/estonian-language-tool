@@ -840,6 +840,57 @@ needed the same thing; a second copy of the pattern is where the `finally` gets 
 bad minute upstream is remembered as a failure until the next deploy. A joiner is not charged for
 a request it did not make, which is why `singleFlightTagged` reports which caller it was.
 
+**A round trip is the unit of a page, not a query.** Nothing here is slow. Measured against a
+socket on the same machine, Today's forty queries were eighty-eight milliseconds of database time
+in total, which is why nobody had ever looked. The deployment reads a Supabase pooler in another
+AWS region, and there each of those is a round trip: giving every query a 20ms delay and measuring
+again, Today was 400ms and fourteen of those trips happened **one after another**, because the page
+awaited the clock, then the deck, then the settings, then a batch, then another batch, then the
+badge check, then the level. Nine of the forty queries were the same read of the same fifteen
+settings rows.
+
+Three rules came out of it and each has an invariant or a module behind it. **A read that is a fact
+about the shared dictionary is not a fact about the person waiting**, so it is cached across
+requests in `lib/dict/facts.ts`: every lemma with its band, the decoy pools, the course words the
+dictionary can answer for, and the id-to-lemma map that lets a deck read resolve its words without
+Prisma's second statement. A minute's TTL rather than a call site per write path, because a cache
+cleared from six places goes stale the first time somebody adds a seventh, silently and for ever.
+Nothing keyed on an `ownerId` may live there, asserted, since that map is shared between learners.
+**A read that is a fact about one learner and is wanted twice in one render is memoised for that
+render**, with `cache()` from React, which is what `requireUserId` already did and what
+`lib/settings/store.ts` and `latestFor` do now; a write corrects the held value rather than
+dropping it, because a Server Action that banks a shield and then reads the count back is real and
+is on Today. And **two answers that do not need each other are asked at once**, which is most of
+what was wrong: the four opening reads of Today were four `await`s in a row and are one `Promise.all`.
+
+**And what a page does not need before its first byte goes behind a `Suspense`.** The badge check
+on Today is three round trips to decide whether to draw a toast over a page that has not rendered
+yet, and the class board on Progress is four to fill the last panel on a page of charts. Both now
+stream in behind the page rather than in front of it. This is not licence to wrap everything: a
+panel that can turn out to be nothing (`ExamCountdownCard` when no target was set, `StruggleAreas`
+with nothing to report) would show a skeleton and then vanish, which is a layout jump on somebody's
+home page, and that is worse than the wait it saves. A boundary is right where the fallback is
+honestly the same shape as the answer, or where there is nothing to hold a place for at all.
+
+**A prefetch that stops at the skeleton is not a prefetch, and every route here is dynamic.**
+`components/PrefetchLink.tsx` is the app's one link, imported as `Link` everywhere, asserted.
+Next fetches a link that is on screen, but for a dynamic route that answer is 150 bytes and no
+query: the grey rectangle, not the page. So a full fetch is asked for on intent instead, when a
+pointer has *settled* on a link for 90ms or a link takes keyboard focus, which is early enough to
+matter and late enough that a pointer crossing four rows to reach the fifth does not render four
+pages. Measured in a browser with the same 20ms per query: pressing Progress in the rail was 458ms
+and is 64ms after the pointer had rested there. Touch keeps the skeleton and the router cache,
+which is the other half: `staleTimes.dynamic` is **zero** by default, so going back to the page you
+were on ten seconds ago was a fresh render of it, queries and all. Thirty seconds is safe here
+because every mutation in this app is a Server Action and every one of them calls `revalidatePath`,
+which drops the client's copy too.
+
+**Where the app runs is part of this and is the largest single number in it.** `vercel.json` pins
+the functions to the region the database is in. A page is several sequential round trips and a
+reader's own distance is one, so colocation beats proximity by about the number of queries on the
+page; a deployment nearer its learners and further from its database is slower, not faster. See the
+deploy section of the README, which says what to do when the two can move together.
+
 **Every cache the service worker keeps has a ceiling, and the one that does not is the reason
 why.** `lib/audio/clipCache.ts` was written because a cache that never evicts is a leak with a hit
 rate, and one layer down the worker had the same shape twice over with nothing watching either.
@@ -1813,7 +1864,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
 `explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`, `teachingSentence`,
-`splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`. Most of them now
+`splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `PrefetchLink`,
+`lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`, `staleTimes`,
+`BadgeCheck`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

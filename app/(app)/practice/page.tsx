@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ClipboardCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";

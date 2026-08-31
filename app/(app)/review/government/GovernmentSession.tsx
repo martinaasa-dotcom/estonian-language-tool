@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Scale, X } from "lucide-react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { addToDeck, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";

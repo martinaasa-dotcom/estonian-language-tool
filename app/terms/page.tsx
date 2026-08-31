@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Legal, P, S } from "@/components/Legal";
 import { resolveOperator } from "@/lib/legal/operator";
 import { AI_TAG } from "@/lib/copy/values";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "soft";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight } from "lucide-react";
 import type { CaseAccuracy } from "@/lib/stats/history";
 import type { StickingPoint } from "@/lib/stats/sticking";

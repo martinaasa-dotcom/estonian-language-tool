@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Check, Ear, Sparkles, X } from "lucide-react";
 import { completeLesson } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";

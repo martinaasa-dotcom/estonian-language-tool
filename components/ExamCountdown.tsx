@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, CalendarClock } from "lucide-react";
 import type { ExamCountdown } from "@/lib/progress/countdown";
 import { EVIDENCE_LABEL } from "@/lib/exam/readiness";
