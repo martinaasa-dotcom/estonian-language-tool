@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { adminsConfigured, isAdmin } from "@/lib/auth/admin";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { readQueue, QUEUE_PAGE_SIZE } from "@/lib/suggestions/queue";

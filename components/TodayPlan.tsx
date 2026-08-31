@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, CalendarRange } from "lucide-react";
 import { agenda, overdueCount, type AgendaGroup } from "@/lib/ux/agenda";
 import type { DayClock } from "@/lib/time/day";

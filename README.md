@@ -206,6 +206,25 @@ rebuild, documented in `docs/03-architecture.md` ADR-011:
    want preview deploys to work): `DATABASE_URL`, `DIRECT_URL`, plus whichever of
    `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` and `EKILEX_API_KEY` you're using.
    Never prefix any of these `NEXT_PUBLIC_`, they must stay server-side.
+
+   **Run the app in the same region as the database, and put the pair as near Estonia as you
+   can.** Those are two rules and the first one comes first, because the two distances are not
+   paid the same number of times. This app derives everything from the review log on each request
+   (ADR-014), so a page is a handful of database round trips: Today makes about eight it cannot
+   avoid, and every one of them crosses whatever sits between the function and the database. A
+   learner's own distance to the function is crossed once per page. So a function 30ms nearer the
+   reader and 35ms further from the database is a page that got slower, by a factor of about eight.
+
+   `vercel.json` says `"regions": ["dub1"]`, which is Dublin, which is AWS `eu-west-1`, which is
+   where a Supabase project on `aws-*-eu-west-1.pooler.supabase.com` lives. Vercel's own default
+   is `iad1`, in Washington, and against a database in Ireland that is roughly 80ms a query, which
+   is most of a second on Today before the page has drawn anything.
+
+   Nearly everybody learning Estonian is in Estonia, and the nearest pair to Tallinn is Stockholm:
+   Supabase's `eu-north-1` and Vercel's `arn1`, about 400km away against Dublin's 1,800. Moving
+   there means moving the Supabase project, which is a migration rather than a setting, so **move
+   both or neither**. A deployment in `arn1` reading a database in Ireland is the worst of the
+   three arrangements, and it is the one you get by changing the easy half first.
 3. Deploy. Vercel's build runs `prisma generate && prisma db push && npm run db:seed:ensure &&
    next build` (see `package.json`), so a hosted deployment sets itself up: the schema is
    created/updated against `DIRECT_URL`, and a database with an empty dictionary gets the built-in

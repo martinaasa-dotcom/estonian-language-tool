@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { gradedLemmas, lemmaCountsByLevel } from "@/lib/dict/facts";
 import { caseByKey } from "@/lib/estonian/cases";
 import { caseAccuracy } from "@/lib/stats/history";
 import { buildPaper, type PoolWord, type Paper } from "@/lib/exam/paper";
@@ -135,8 +136,14 @@ export async function readinessSignals(
   const [snapshot, byLevel, knownRows, matureReviews, caseReviews, cardTypeRows, attempts, placed] =
     await Promise.all([
       known ?? deckSnapshot(ownerId),
-      prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
-      prisma.lexeme.findMany({ select: { lemma: true, cefr: true } }),
+      /*
+        Both of these are facts about the shared dictionary rather than about
+        the learner waiting for the page, and the second is every row in it.
+        They are read once per instance per minute now instead of once per
+        render: see lib/dict/facts.ts for what that trades.
+      */
+      lemmaCountsByLevel(),
+      gradedLemmas(),
       /*
         The most recent twenty thousand, not an arbitrary twenty thousand.
 
@@ -174,9 +181,9 @@ export async function readinessSignals(
     ]);
 
   const vocabulary = emptyVocabulary();
-  for (const row of byLevel) {
-    if (!row.cefr || !(row.cefr in vocabulary)) continue;
-    vocabulary[row.cefr as ExamLevel].available = row._count;
+  for (const [cefr, count] of byLevel) {
+    if (!(cefr in vocabulary)) continue;
+    vocabulary[cefr as ExamLevel].available = count;
   }
   for (const row of knownRows) {
     if (!row.cefr || !(row.cefr in vocabulary)) continue;

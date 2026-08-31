@@ -1,5 +1,8 @@
+import { cache } from "react";
+
 import { prisma } from "@/lib/db";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { lemmaCountsByLevel } from "@/lib/dict/facts";
 import { buildPaper, type Paper, type WordRow } from "@/lib/assessment/items";
 import { normaliseGoals, type Goals } from "@/lib/assessment/goals";
 import { BANDS, type Band, type Placement, type SkillResult } from "@/lib/assessment/types";
@@ -72,7 +75,10 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
     the paper it had just been shown the answers to. So the window starts
     wherever the seed points, which costs one count per band.
   */
-  const totals = await Promise.all(BANDS.map((band) => prisma.lexeme.count({ where: { cefr: band } })));
+  // Six `count(*)`s over the shared dictionary, which is the same six answers
+  // for everybody who sits this. One cached tally instead. lib/dict/facts.ts.
+  const byLevel = await lemmaCountsByLevel();
+  const totals = BANDS.map((band) => byLevel.get(band) ?? 0);
   const window = PER_BAND * 2;
 
   const perBand = await Promise.all(
@@ -162,10 +168,24 @@ export async function historyFor(ownerId: string, take = 10): Promise<StoredAsse
   return rows.map((row) => ({ ...row, skills: parseDetail(row.detail) }));
 }
 
-export async function latestFor(ownerId: string): Promise<StoredAssessment | null> {
+/**
+ * The most recent level check, asked once per request however many ask.
+ *
+ * Two things want it on Today and they want it for different reasons:
+ * `courseLevelFor` to decide which unit the course opens at, and
+ * `readinessSignals` because a measured level is the only source the exam hub
+ * has for listening and speaking. Neither knows about the other, and the row
+ * cannot change mid-render: `Assessment` is append-only and a sitting is
+ * written when it ends.
+ *
+ * React's `cache` is request-scoped, so this is one read on a page and no read
+ * held between two. Outside a request it does not memoize, which leaves a
+ * script and a test exactly as they were.
+ */
+export const latestFor = cache(async (ownerId: string): Promise<StoredAssessment | null> => {
   const [first] = await historyFor(ownerId, 1);
   return first ?? null;
-}
+});
 
 /** The goal answers, normalised, with the daily goal that goes with them. */
 export async function goalsFor(ownerId: string): Promise<Goals & { dailyGoal: number }> {

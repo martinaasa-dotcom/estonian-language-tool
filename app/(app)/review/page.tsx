@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
+import { decoyGlosses } from "@/lib/dict/facts";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
 import { isStillLearning } from "@/lib/srs/scheduler";
@@ -120,27 +121,39 @@ export default async function ReviewPage({
 
   // Due first, then a capped trickle of new cards. Uncapped new cards is the
   // classic way an SRS becomes an unsustainable workload three weeks in.
-  const due = await prisma.card.findMany({
-    where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
-    orderBy: { due: "asc" },
-    take: MAX_SESSION,
-    include,
-  });
+  /*
+    THREE READS THAT DO NOT NEED EACH OTHER'S ANSWERS, SO THEY ARE ONE ROUND.
 
-  // Ordered by lexeme as well as by date so a word's cards stay together: they
-  // share one `createdAt`, so date alone leaves them tied and the take can
-  // interleave two words. `inTeachingOrder` then settles the order *within* a
-  // word, which is what stops a conjugation card being somebody's first sight
-  // of a verb.
-  const fresh = await prisma.card.findMany({
-    where: { ownerId, suspended: false, state: 0 },
-    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
-    take: Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)),
-    include,
-  });
+    The new-card query used to wait for the due one, because its `take` is what
+    is left of the session after the due cards have filled it. That is a whole
+    round trip spent on an arithmetic that at most drops ten rows: the cap is
+    ten new cards either way, so the honest version asks for ten and keeps as
+    many as there is room for. Ten rows is less than the trip costs on any
+    hosted database, and the deck size below never depended on either.
+  */
+  const [due, freshPool, totalCards] = await Promise.all([
+    prisma.card.findMany({
+      where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
+      orderBy: { due: "asc" },
+      take: MAX_SESSION,
+      include,
+    }),
+    // Ordered by lexeme as well as by date so a word's cards stay together:
+    // they share one `createdAt`, so date alone leaves them tied and the take
+    // can interleave two words. `inTeachingOrder` then settles the order
+    // *within* a word, which is what stops a conjugation card being somebody's
+    // first sight of a verb.
+    prisma.card.findMany({
+      where: { ownerId, suspended: false, state: 0 },
+      orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
+      take: NEW_PER_SESSION,
+      include,
+    }),
+    prisma.card.count({ where: { ownerId } }),
+  ]);
 
+  const fresh = freshPool.slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
   const cards = await withChoices([...due, ...inTeachingOrder(fresh)].map(toReviewCard));
-  const totalCards = await prisma.card.count({ where: { ownerId } });
 
   return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
 }
@@ -243,18 +256,12 @@ async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
   if (!cards.some(wantsChoices)) return cards;
 
   /*
-    Two thousand words of a dictionary of about six thousand, so the cap binds
-    every time and which third was read decided what could ever be a decoy.
-    Easiest first, for the same reason the minimal-pairs pool is: a wrong
-    answer a learner has never met is a free question, and one at their own
-    level makes them read the Estonian.
+    Which words the dictionary holds is not a fact about the person being
+    asked, so the pool is read once per instance rather than once per session:
+    two thousand rows off the render path of the screen this app exists to get
+    people to. See lib/dict/facts.ts.
   */
-  const pool = await prisma.lexeme.findMany({
-    select: { translation: true },
-    orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
-    take: 2000,
-  });
-  const translations = [...new Set(pool.map((l) => l.translation))];
+  const translations = await decoyGlosses();
   if (translations.length < CHOICES) return cards;
 
   return cards.map((card) => {

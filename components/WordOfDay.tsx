@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { BookOpen, CalendarDays, Sprout } from "lucide-react";
 import { ALMANAC_SOURCE, type WordOfDay, type WordOfDayCollection } from "@/lib/progress/wordOfDay";
 import { AddWordButton } from "@/components/AddWordButton";

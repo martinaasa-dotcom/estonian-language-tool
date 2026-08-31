@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, GraduationCap, PlayCircle, Printer } from "lucide-react";
 import { prisma } from "@/lib/db";

@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { Compass, Flame, Trophy, Users } from "lucide-react";
+import { Suspense } from "react";
+import { Compass, Flame } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
-import { classRoster } from "@/lib/classroom/roster";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading,
@@ -18,6 +17,9 @@ import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
 import { caseReviewsFor } from "@/lib/progress/cases";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import { Board, BoardSkeleton } from "./Board";
+import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { Card, Chip, Empty, Meter, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
@@ -38,7 +40,7 @@ export default async function ProgressPage() {
   const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
 
-  const [summary, units, reviews, dueDates, cefrRows, caseReviews] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -50,9 +52,23 @@ export default async function ProgressPage() {
       where: { ownerId, suspended: false, state: { not: 0 } },
       select: { due: true },
     }),
+    /*
+      ONE READ OF THE DECK, NOT TWO, AND ONE ROUND TRIP RATHER THAN FOUR.
+
+      This page used to read every card twice: once here for the CEFR
+      breakdown and again below, sequentially, for the cards that keep coming
+      back. Both asked for the lemma through the relation, which Prisma serves
+      as a second statement carrying every lexeme id it just read, so the two
+      reads were four round trips over the same rows. They are one read with
+      both sets of columns, and the lemma comes out of the shared dictionary
+      (lib/dict/facts.ts).
+    */
     prisma.card.findMany({
       where: { ownerId },
-      select: { state: true, lexeme: { select: { lemma: true, cefr: true } } },
+      select: {
+        id: true, front: true, back: true, cardType: true, targetCase: true,
+        lapses: true, reps: true, suspended: true, state: true, lexemeId: true,
+      },
     }),
     /*
       Read separately from the charts above, and on purpose.
@@ -67,19 +83,17 @@ export default async function ProgressPage() {
     caseReviewsFor(ownerId, now),
   ]);
 
+  // The lemma behind each card, out of the dictionary the whole deployment
+  // shares rather than a second statement per deck read. lib/dict/facts.ts.
+  const entries = await lemmasByCardLexeme(deck.map((card) => card.lexemeId));
+  const lemmaOf = (id: string | null) =>
+    (id === null ? undefined : entries.get(id)?.lemma) ?? null;
+
   // The cards that keep coming back. Lapses live on the card's own FSRS state;
   // the accuracy beside them is counted from the log above.
-  const deck = await prisma.card.findMany({
-    where: { ownerId },
-    select: {
-      id: true, front: true, back: true, cardType: true, targetCase: true,
-      lapses: true, reps: true, suspended: true,
-      lexeme: { select: { lemma: true } },
-    },
-  });
   const sticking = stickingPoints(
     deck.map((c) => ({
-      id: c.id, lemma: c.lexeme?.lemma ?? null, front: c.front, back: c.back,
+      id: c.id, lemma: lemmaOf(c.lexemeId), front: c.front, back: c.back,
       cardType: c.cardType, targetCase: c.targetCase,
       lapses: c.lapses, reps: c.reps, suspended: c.suspended,
     })),
@@ -95,46 +109,14 @@ export default async function ProgressPage() {
   const retention = retentionReading(reviews);
   const cases = caseAccuracy(caseReviews);
   const hour = bestStudyHour(reviews, 20, clock);
-  /*
-    A CLASS IS THE ONLY BOARD THIS APP DRAWS, AND THAT IS THE FIX RATHER THAN
-    A NARROWING OF ONE.
-
-    Underneath the class board sat an instance-wide one: everybody on the
-    deployment who had ticked a box, ranked against each other. For one class
-    on one school's copy that was right, and sign-up here is open, so what it
-    actually drew was a table of strangers. Two things were wrong with it and
-    only one of them is about privacy.
-
-    It did not mean anything. The board was the top twenty of the first two
-    thousand opted-in learners by owner id, because ranking the whole
-    deployment is a tally of everybody, so past the cap who appeared was a
-    fact about a uuid. A number somebody measures themselves against has to
-    be measured against something.
-
-    And it was the one surface where a stranger chose what every other
-    stranger read. A display name is thirty-two characters of anybody's text,
-    there is no report button on a leaderboard row, and nobody is named to
-    review one. Deleting the board deletes the surface, which is cheaper and
-    more honest than moderating it.
-
-    Nothing that meant anything is lost: a class you joined is real people you
-    sit beside, and joining was itself the consent (ADR-019). Somebody
-    studying alone is offered the way into one rather than a table of
-    usernames.
-  */
-  const membership = await prisma.classroomMember.findFirst({
-    where: { ownerId, classroom: { archived: false } },
-    include: { classroom: { select: { id: true, name: true } } },
-    orderBy: { joinedAt: "desc" },
-  });
-  const classBoard = membership ? await classRoster(membership.classroomId, now) : null;
 
   // Vocabulary reach by CEFR: known words per level, against what the deck holds.
   const byLevel = new Map<string, { total: Set<string>; known: Set<string> }>();
-  for (const card of cefrRows) {
-    const lemma = card.lexeme?.lemma;
-    if (!lemma) continue;
-    const level = card.lexeme?.cefr ?? NO_VALUE;
+  for (const card of deck) {
+    const word = card.lexemeId === null ? undefined : entries.get(card.lexemeId);
+    if (!word) continue;
+    const { lemma } = word;
+    const level = word.cefr ?? NO_VALUE;
     const entry = byLevel.get(level) ?? { total: new Set<string>(), known: new Set<string>() };
     entry.total.add(lemma);
     if (snapshot.knownLemmas.has(lemma)) entry.known.add(lemma);
@@ -374,54 +356,19 @@ export default async function ProgressPage() {
           </section>
         </div>
 
-        <section>
-          <SectionTitle hint="this week">
-            {classBoard ? membership?.classroom.name : "Class leaderboard"}
-          </SectionTitle>
-          <Card>
-            {classBoard && membership ? (
-              <>
-                <ol className="flex flex-col gap-1.5">
-                  {classBoard.entries.slice(0, 8).map((row, i) => (
-                    <li
-                      key={row.ownerId}
-                      className="flex items-center gap-3 rounded-md px-3 py-2"
-                      style={{
-                        background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
-                        color: row.ownerId === ownerId ? "var(--accent-deep)" : "var(--ink-2)",
-                      }}
-                    >
-                      <span className="tnum w-6 text-xs">{i + 1}</span>
-                      {i === 0 && row.weeklyXp > 0
-                        ? <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
-                        : <Users size={15} aria-hidden style={{ opacity: 0.5 }} />}
-                      <span className="min-w-0 flex-1 truncate text-sm">{row.displayName}</span>
-                      <span className="tnum text-xs">{row.weeklyXp} XP</span>
-                    </li>
-                  ))}
-                </ol>
-                <Link
-                  href={`/class/${membership.classroomId}`}
-                  className="mt-3 inline-block text-xs"
-                  style={{ color: "var(--accent-deep)" }}
-                >
-                  Open the class
-                </Link>
-              </>
-            ) : (
-              <>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                  A board is worth reading when you know the people on it. Start a class and share
-                  the code, or join the one your teacher gave you, and this shows the week for
-                  everybody in it.
-                </p>
-                <ButtonLink href="/class" className="mt-4">Start or join a class</ButtonLink>
-              </>
-            )}
-          </Card>
-        </section>
+        {/*
+          THE BOARD IS THE LAST THING ON THIS PAGE AND IT WAS FOUR ROUND TRIPS
+          IN FRONT OF THE FIRST.
+
+          Finding the class, reading its name, then the roster: a chain nothing
+          above it needed the answer to, at the bottom of a page of charts.
+          Behind a boundary it is fetched while the rest of the page is already
+          being read, which is what a `Suspense` is for. See ./Board.
+        */}
+        <Suspense fallback={<BoardSkeleton />}>
+          <Board ownerId={ownerId} now={now} />
+        </Suspense>
       </Stack>
     </Page>
   );
 }
-

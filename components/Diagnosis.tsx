@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Microscope } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { diagnose, reviewsNeeded, type ReviewFact } from "@/lib/analysis/diagnosis";

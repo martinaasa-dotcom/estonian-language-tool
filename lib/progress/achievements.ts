@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { BADGES, earnedBadgeKeys, type Badge, type BadgeStats } from "@/lib/achievements/badges";
+import { dictionarySize } from "@/lib/dict/facts";
 import { caseAccuracy } from "@/lib/stats/history";
 import { numberSetting, readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
 import { learnerDayClock } from "@/lib/progress/dayClock";
@@ -32,7 +33,9 @@ export interface BadgeContext {
 export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promise<BadgeStats> {
   const [totalReviews, totalWords, settings, caseReviews] = await Promise.all([
     prisma.review.count({ where: { ownerId } }),
-    prisma.lexeme.count(),
+    // A fact about the shared dictionary, not about this learner: read once
+    // per instance per minute rather than once per render. lib/dict/facts.ts.
+    dictionarySize(),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     /*
       Ordered, because a badge that can appear and disappear is worse than one
