@@ -286,7 +286,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Only used to greet you, and on the class leaderboard if you ever turn that on.
+              Only used to greet you, and shown beside your XP if you ever join a class.
             </p>
 
             {/*

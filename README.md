@@ -258,7 +258,7 @@ that; with sign-in configured and nobody named, the queue says so instead of sho
 Running locally there is one learner and they review their own. Anyone can see what they sent, and
 what happened to it, at `/suggestions`.
 
-### Adding Google sign-in (multi-user)
+### Adding sign-in (multi-user)
 
 Every route is gated behind sign-in (`middleware.ts`); each Google account gets its own dictionary
 deck, tasks and review history, while the dictionary itself stays shared, see ADR-012. Two accounts
@@ -280,6 +280,28 @@ to set up, both one-time:
 
 Neither Google credential nor the Supabase service role key is ever needed in this app's own code, 
 the OAuth exchange happens entirely inside Supabase.
+
+**A mailed link, so a Google account is not the price of entry.** Anyone without one, or unwilling
+to attach one to a language app, could not reach the product at all. Supabase dashboard →
+**Authentication → Providers → Email**: turn it on and leave "Confirm email" as it is. Then
+**Authentication → URL Configuration → Redirect URLs**: add `https://<your-app>/auth/callback`,
+which is the one address either way in lands on, so the allowlist is checked in a single place.
+
+**Set up your own SMTP before you tell anybody about it.** Supabase's built-in email service sends
+a couple of messages an hour for the whole project and says itself it is for testing, so on a
+public copy the second person to ask for a link does not get one. **Project Settings → Auth → SMTP
+Settings** takes any provider (Resend, Postmark, SES).
+
+Which is why the mailed link is **off until `EMAIL_SIGN_IN="on"`**, and why off is the default. A
+form that takes an address, says "check your email" and mails nobody is worse than no form: the
+learner waits, checks their spam and decides the app is broken. Google is the door that works
+until the day your mail does, and on that day this is a one-word change.
+
+The link is opened in the browser that asked for it, because that is where the verifier lives, and
+the sign-in screen says so. If you would rather it survived being forwarded to a phone, change the
+magic-link email template to point at
+`{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`. `app/auth/callback/route.ts`
+already answers that shape; nothing in the app needs changing.
 
 ## The way it looks
 

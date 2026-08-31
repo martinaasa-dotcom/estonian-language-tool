@@ -18,7 +18,7 @@ import { EkilexSetupGuide } from "./EkilexSetupGuide";
 import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
-import { LeaderboardPanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
+import { ClassNamePanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 import { providerResilience } from "@/lib/tutor/provider";
@@ -88,7 +88,7 @@ export default async function SettingsPage() {
     readSettings(ownerId, [
       SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,
       SETTING_KEYS.letterBar,
-      SETTING_KEYS.displayName, SETTING_KEYS.leaderboard,
+      SETTING_KEYS.displayName,
     ]),
     currentLearner(),
     goalsFor(ownerId),
@@ -101,7 +101,6 @@ export default async function SettingsPage() {
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
-  const optedIn = settings[SETTING_KEYS.leaderboard] === "1";
 
   return (
     <Page
@@ -216,9 +215,9 @@ export default async function SettingsPage() {
           </section>
 
           <section>
-            <SectionTitle hint={optedIn ? "you're on it" : "off"}>Class leaderboard</SectionTitle>
+            <SectionTitle>Your name in a class</SectionTitle>
             <Card>
-              <LeaderboardPanel currentName={displayName} optedIn={optedIn} />
+              <ClassNamePanel currentName={displayName} />
             </Card>
           </section>
         </Group>
