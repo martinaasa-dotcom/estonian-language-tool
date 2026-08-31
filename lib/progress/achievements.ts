@@ -91,7 +91,34 @@ export async function awardBadges(ownerId: string, stats: BadgeStats): Promise<B
   const newKeys = earnedKeys.filter((k) => !alreadySet.has(k));
   if (newKeys.length === 0) return [];
 
-  await prisma.achievement.createMany({ data: newKeys.map((key) => ({ ownerId, key })) });
+  /*
+    `skipDuplicates`, because the four lines above are check-then-act and this
+    runs on every render of Today.
+
+    Read what is already earned, filter, insert the rest: two renders inside
+    that gap both see a badge as unearned and both insert it, and the second
+    one violates `@@id([ownerId, key])` and throws. `BadgeCheck` runs this
+    behind a `Suspense`, so the throw costs the toast rather than the page,
+    and that component's header calls this check idempotent. It is, now. That is not hypothetical
+    and it is not rare. It is in this repository's own CI logs, twice, as
+    `duplicate key value violates unique constraint "Achievement_pkey"` on
+    `(local-single-user, deck_50)`, and the page it takes down is the one a
+    learner opens every morning, at the exact moment they earned something.
+
+    The ledger took an advisory lock for this shape and `addCardsFor` took one
+    too, because both had a count to get right. Nothing is counted here: the
+    composite primary key already says a badge is earned once, so the honest
+    fix is to let the database enforce it and stop treating a duplicate as an
+    error. What that costs is that two concurrent renders can each report the
+    same badge as new, which is one extra congratulation rather than a 500.
+
+    The doc comment above has always said this function is idempotent. It says
+    it in the code now.
+  */
+  await prisma.achievement.createMany({
+    data: newKeys.map((key) => ({ ownerId, key })),
+    skipDuplicates: true,
+  });
 
   // Reaching a streak milestone banks a shield: the streak worth protecting is
   // exactly the one just reached.

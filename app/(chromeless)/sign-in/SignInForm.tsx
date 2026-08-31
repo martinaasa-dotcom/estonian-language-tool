@@ -100,11 +100,20 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/*
+        `size="lg"` rather than a padding of its own. The ad-hoc `px-6 py-3`
+        this carried put the button at 41px tall on a 360px phone, under the
+        44px floor every other control in the app clears, and nothing had ever
+        measured it: in local mode this screen draws a panel about local mode
+        instead, so no browser suite reached the button until
+        `scripts/test-signin.mjs` did.
+      */}
       <Button
         variant="primary"
+        size="lg"
         onClick={signInWithGoogle}
         disabled={pending !== null}
-        className="w-full px-6 py-3"
+        className="w-full"
       >
         {pending === "google" ? "Redirecting…" : "Continue with Google"}
       </Button>
@@ -135,8 +144,9 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
             <Button
               type="submit"
               variant="secondary"
+              size="lg"
               disabled={pending !== null || email.trim() === ""}
-              className="mt-3 w-full px-6 py-3"
+              className="mt-3 w-full"
             >
               {pending === "email" ? "Sending…" : "Email me a link"}
             </Button>

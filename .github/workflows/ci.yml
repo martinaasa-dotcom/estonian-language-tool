@@ -340,6 +340,61 @@ jobs:
       - run: node scripts/test-error.mjs
       - run: node scripts/test-restore.mjs
 
+  signin:
+    name: The sign-in screen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # ITS OWN JOB, AND THAT IS ABOUT TIME RATHER THAN TIDINESS.
+    #
+    # `scripts/test-signin.mjs` needs a build of its own, because whether this
+    # app gates every route or runs as one local learner is decided when the
+    # bundle is built: `NEXT_PUBLIC_` variables are inlined, so a server told
+    # to forget them still gates every route. Every other browser suite runs
+    # against a local-mode build, which is why the hosted sign-in screen had
+    # no coverage at all.
+    #
+    # It first ran as one more step inside "The browser suites", which was
+    # already the longest job at about fifteen minutes. Adding a full
+    # `next build` to the end of it, on a runner that is simultaneously
+    # serving the app and driving Chromium, took that job past its
+    # thirty-minute ceiling. A job permanently at its limit is an
+    # intermittent red for everybody, and the fix is not a bigger number.
+    #
+    # Here the build runs beside the other jobs rather than after fifteen
+    # minutes of suites, so the wall clock of CI does not move.
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # The schema and the dictionary, but not a build: the suite makes its
+      # own, in hosted mode and into its own distDir, which is the whole
+      # reason it is a separate job.
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run db:seed:ensure
+      - run: node scripts/test-signin.mjs
+
   load:
     name: The derived queries, at a size somebody reaches
     runs-on: ubuntu-latest
