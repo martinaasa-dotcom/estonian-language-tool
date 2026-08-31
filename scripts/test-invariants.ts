@@ -5350,6 +5350,50 @@ check("a hue's fill is never used as its ink", () => {
   assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
 });
 
+check("a badge is written idempotently, not just described as idempotent", () => {
+  /*
+    `awardBadges` reads what a learner already holds, filters, and inserts the
+    rest. That is check-then-act, and it runs on every render of Today, so two
+    requests inside the gap both see a badge as unearned and both insert it.
+    `Achievement` is keyed `@@id([ownerId, key])`, so the second insert
+    violates the primary key and the render throws: a 500 on the page somebody
+    opens every morning, at the exact moment they earned something.
+
+    It is not hypothetical. It is in this repository's own CI logs, twice, as
+    `duplicate key value violates unique constraint "Achievement_pkey"` on
+    `(local-single-user, deck_50)`, and nothing failed, because no suite
+    asserts that Today renders while a badge is being earned.
+
+    THIS IS AN INVARIANT RATHER THAN AN INTEGRATION TEST, and the reason is
+    worth writing down. The obvious test fires N concurrent awards and expects
+    none to reject, and it passes with the fix and *also* without it: measured
+    at 8 and at 40 concurrent against a real Postgres with a pool wide enough
+    for all of them, and the race never lost locally, because the first insert
+    commits before the later reads are served and they take the early return.
+    A check that cannot be made to fail reports nothing, which this repository
+    says about its own suites in several places. So the property is asserted
+    where it can fail: delete the flag and this breaks.
+
+    The function's doc comment has always claimed idempotence. This is the
+    claim being kept in the code.
+  */
+  const source = code("lib/progress/achievements.ts");
+  const at = source.indexOf("achievement.createMany");
+  assert.notEqual(at, -1, "awardBadges no longer writes badges with createMany, so this check is stale");
+  /*
+    A window rather than a balanced match: the call's own argument contains
+    `({ ownerId, key })`, so the obvious non-greedy `\{...\}\)` stops inside it
+    and reads the flag as missing however the code is written. Asked the wrong
+    way, this check failed on the fixed source.
+  */
+  const write = source.slice(at, at + 300);
+  assert.match(
+    write,
+    /skipDuplicates:\s*true/,
+    "the badge write can throw on a duplicate, which is a 500 on Today when two renders race",
+  );
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
