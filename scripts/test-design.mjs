@@ -202,7 +202,7 @@ for (const url of ["/welcome"]) {
 }
 
 // Floor: 8, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Design system", { floor: 8 });
+const { check, done } = suite("Design system", { floor: 9 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
@@ -244,6 +244,46 @@ check("every tab stop shows its focus ring immediately", noFocus.length === 0,
 
 check("no gradient wraps the wrong colour round its own edge", wrapped.size === 0,
   [...wrapped].slice(0, 4).join(" | "));
+
+/*
+  A HOVERED ROW IS A STATE NOTHING ELSE SWEEPS.
+
+  The pass above walks pages as they arrive, and the rail's row under the
+  pointer is not a state a page arrives in: it paints the accent's softest
+  tint behind the row and writes the row in the accent's ink, and neither of
+  those readings exists until a pointer is on it. So it is hovered here, in
+  both themes, and measured against the pane actually behind the words
+  rather than against the page.
+*/
+const hovered = [];
+for (const theme of ["light", "dark"]) {
+  await p.goto(`${B}/grammar`, { waitUntil: "networkidle" });
+  await p.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+  await p.waitForTimeout(300);
+  const row = p.locator('nav[aria-label="Main"] a[href="/progress"]').first();
+  if ((await row.count()) === 0) continue;
+  await row.hover();
+  await p.waitForTimeout(350);
+  const seen = await p.evaluate(() => {
+    const nav = document.querySelector('nav[aria-label="Main"]');
+    const cell = nav?.querySelector('a[href="/progress"]');
+    const ghost = nav?.querySelector(".nav-ghost");
+    if (!cell || !ghost) return null;
+    return {
+      ink: getComputedStyle(cell).color,
+      pane: getComputedStyle(ghost).backgroundColor,
+      shown: getComputedStyle(ghost).opacity !== "0",
+    };
+  });
+  if (!seen || !seen.shown) {
+    hovered.push(`${theme}: no pane under the pointer`);
+    continue;
+  }
+  const cr = ratio(parse(seen.ink), parse(seen.pane));
+  if (cr < 4.5) hovered.push(`${theme}: ${cr.toFixed(2)}:1, ${seen.ink} on ${seen.pane}`);
+}
+check("a hovered row is drawn, and its words clear AA on the pill behind them",
+  hovered.length === 0, hovered.join(" | "));
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();

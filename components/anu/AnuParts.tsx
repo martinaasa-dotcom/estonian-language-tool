@@ -119,7 +119,7 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
 
   return (
     <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
-      {!isUser && <Mascot size={34} className="mt-1 shrink-0" blink={false} />}
+      {!isUser && <Mascot size={34} className="mt-1 shrink-0" animate={false} />}
       <div
         className="rounded-[var(--r-lg)] border px-4 py-3.5"
         style={{

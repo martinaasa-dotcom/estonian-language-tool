@@ -9,7 +9,8 @@ import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
-import { Mascot, Wordmark } from "@/components/brand";
+import { Wordmark } from "@/components/brand";
+import { MascotWatch } from "@/components/MascotWatch";
 import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo";
 import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
@@ -175,7 +176,7 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         >
           Estonian that
           <br />
-          finally <span className="grad-text">sticks</span>.
+          finally <span className="grad-text grad-sweep">sticks</span>.
         </h1>
 
         <p
@@ -871,7 +872,7 @@ function FinalCta() {
           <span aria-hidden className="wash" style={{ background: "var(--wash-3)", width: 380, height: 380, bottom: -200, left: -60, opacity: 0.5 }} />
 
           <div className="relative">
-            <Mascot size={68} mood="cheer" className="float mx-auto" />
+            <MascotWatch size={68} mood="cheer" className="float mx-auto" />
             <h2 className="est mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
               Fifteen minutes. Starting today.
             </h2>

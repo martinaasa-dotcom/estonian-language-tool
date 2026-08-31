@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./nav.css";
 
 /*
   Palette: "rukkilill sunrise" — a pastel system built around the cornflower
@@ -736,6 +737,20 @@
     color: transparent;
   }
 
+  /*
+    The headline's gradient, panning.
+
+    Only the position moves; the stops are the ones above, and the note there
+    says every one of them clears 4.5:1 against the page, so panning cannot
+    walk a failing colour under the text. Nine seconds because this sits under
+    the first sentence anybody reads and a fast sweep would pull the eye off
+    the words it is painting.
+  */
+  .grad-sweep {
+    background-size: 220% 100%;
+    animation: grad-sweep 9s ease-in-out infinite;
+  }
+
   /* Soft pastel light behind a section, so the ground never reads as flat grey. */
   .wash {
     position: absolute;
@@ -1000,10 +1015,84 @@
   to { background-position: -200% 0; }
 }
 
-/* The mascot's slow blink and the card flip, both used on the landing page. */
+/*
+  The mascot, alive.
+
+  Five loops rather than one, on periods that share no common multiple worth
+  seeing: 4.0, 5.5, 6.1, 7.3 and 4.2 seconds. One loop of any length reads as a
+  machine after about the third repeat, because you learn where it turns round.
+  Five that never line up twice read as something idling.
+
+  Each sits on its own group in components/brand.tsx, because they all write
+  `transform` and the last declaration on an element wins. Nesting is what lets
+  the eyes glance and blink at once.
+
+  The reduced-motion block near the top flattens every one of these.
+*/
+
+/* Two quick closes rather than one, which is what an eye actually does. */
 @keyframes blink {
-  0%, 92%, 100% { transform: scaleY(1); }
-  96% { transform: scaleY(0.1); }
+  0%, 88%, 100% { transform: scaleY(1); }
+  90.5% { transform: scaleY(0.08); }
+  93% { transform: scaleY(1); }
+  95.5% { transform: scaleY(0.08); }
+}
+
+/* A glance held for a moment at each end, not a pan. Eyes flick and settle. */
+@keyframes mascot-look {
+  0%, 26%, 100% { transform: translateX(0); }
+  36%, 50% { transform: translateX(1.4px); }
+  62%, 78% { transform: translateX(-1.4px); }
+}
+
+/* Breathing. Two and a half percent, on the head and the face together so the
+   features do not swim about inside it. */
+@keyframes mascot-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+
+/* The smile widening and settling. */
+@keyframes mascot-smile {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.07, 1.14); }
+}
+
+/*
+  The tilde, which is the only part that can move at all, because it is the only
+  part that is not touching anything.
+
+  It is deliberately not `float`, the 6s, 10px lift the landing page's
+  decorative letters use: that is a whole element moving against the page, and
+  this is one stroke moving inside a mark whose head stays put. Ten pixels there
+  would be a hat coming off. The `scaleX` is the squash that stops it reading as
+  a rigid object being slid up and down, and the second, smaller crest is what
+  makes it hair rather than a metronome.
+*/
+@keyframes tilde-drift {
+  0%, 100% { transform: translateY(0) rotate(0deg) scaleX(1); }
+  30% { transform: translateY(-2.4px) rotate(-3.5deg) scaleX(1.05); }
+  64% { transform: translateY(-0.5px) rotate(2.5deg) scaleX(0.97); }
+}
+
+/* Cheering: one real hop, then a smaller one, then settle. */
+@keyframes tilde-hop {
+  0%, 100% { transform: translateY(0) rotate(0deg) scaleX(1); }
+  16% { transform: translateY(-5.5px) rotate(-8deg) scaleX(1.09); }
+  34% { transform: translateY(0.8px) rotate(4deg) scaleX(0.92); }
+  56% { transform: translateY(-2.6px) rotate(-3deg) scaleX(1.03); }
+  78% { transform: translateY(0.3px) rotate(1deg) scaleX(0.98); }
+}
+
+/* Thinking: tipped over to one side and swaying, the way a head cocks. */
+@keyframes tilde-sway {
+  0%, 100% { transform: rotate(-7deg) translateY(0.5px); }
+  50% { transform: rotate(4deg) translateY(-1.4px); }
+}
+
+@keyframes grad-sweep {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes flip-in {
