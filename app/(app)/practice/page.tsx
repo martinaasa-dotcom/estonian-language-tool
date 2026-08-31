@@ -58,17 +58,21 @@ export default async function PracticePage() {
   ]);
 
   const sprintBest = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
-  // How many of the learner's own words carry a sentence worth rebuilding.
-  const sentenceCount = sentenceReady.filter((w) =>
-    usableExamples(parseExamples(w.examples)).some((e) => isBuildable(e.et)),
-  ).length;
-  // Dictation is stricter: only sentences short enough to hold in your head.
-  const dictationCount = sentenceReady.filter((w) =>
-    usableExamples(parseExamples(w.examples)).some((e) => {
-      const count = dictationWords(e.et).length;
-      return count >= 3 && count <= 9 && e.et.length <= 80;
-    }),
-  ).length;
+  /*
+    Parsed once and asked twice. Each of these used to call `parseExamples` for
+    itself, which is a `JSON.parse` per word per question, and the cap above is
+    now a real one at two thousand rather than a number that was not in the SQL.
+    Two thousand words is four thousand parses for two integers.
+
+    Sentence building wants a sentence worth rebuilding; dictation is stricter,
+    since it has to be short enough to hold in your head.
+  */
+  const usable = sentenceReady.map((w) => usableExamples(parseExamples(w.examples)));
+  const sentenceCount = usable.filter((es) => es.some((e) => isBuildable(e.et))).length;
+  const dictationCount = usable.filter((es) => es.some((e) => {
+    const count = dictationWords(e.et).length;
+    return count >= 3 && count <= 9 && e.et.length <= 80;
+  })).length;
   const matchBest = numberSetting(settings[SETTING_KEYS.matchBest], 0);
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
 

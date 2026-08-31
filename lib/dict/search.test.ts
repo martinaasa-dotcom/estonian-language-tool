@@ -370,6 +370,11 @@ describe("oneEntryPerLemma", () => {
     expect(oneEntryPerLemma(rows, ["tuba", "eiolemas"]).map((r) => r.lemma)).toEqual(["tuba"]);
   });
 
+  it("returns one row even when the caller names a lemma twice", () => {
+    const rows = [lexeme("tuba", "room", "NOUN", [["GEN_SG", "toa"]])];
+    expect(oneEntryPerLemma(rows, ["tuba", "tuba"]).map((r) => r.lemma)).toEqual(["tuba"]);
+  });
+
   it("ignores a row for a lemma nobody asked about", () => {
     const rows = [
       lexeme("tuba", "room", "NOUN", [["GEN_SG", "toa"]]),

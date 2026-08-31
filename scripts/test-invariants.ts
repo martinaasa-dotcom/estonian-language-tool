@@ -728,6 +728,44 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
+check("adding a word to a deck reads and writes under one lock", () => {
+  /*
+    "Is it already there" is check-then-act. `addCardsFor` read the learner's
+    existing cards for a word, filtered the generated ones against them, and
+    inserted the rest; two requests inside that gap both see an empty deck and
+    both insert. Measured against a real database rather than reasoned about:
+    two concurrent adds gave two cards, four gave four, and eight gave fourteen
+    where two is right. A learner meets it by double-tapping "Add to deck", and
+    `addUnitToDeck` walks this once per word with no throttle in front of it.
+
+    The lock is `lib/usage/ledger.ts`'s, for the reasons its header gives: the
+    *transaction* form, so a connection pooler cannot strand it, and the
+    blocking one, since the non-blocking form serialises nothing. With it, 16
+    concurrent adds make 2 cards in 28ms.
+
+    Asserted as the three things together, because each on its own is satisfied
+    by a version that still races: a transaction with no lock, a lock taken
+    outside the transaction, or a lock with the read left outside it.
+  */
+  const src = code("app/actions.ts");
+  const body = /async function addCardsFor\(([\s\S]*?)\n\}/.exec(src)?.[1] ?? "";
+  assert.ok(body, "addCardsFor has gone, or changed shape past recognition");
+
+  assert.match(body, /prisma\.\$transaction\(/, "addCardsFor no longer runs in one transaction");
+  assert.match(
+    body, /pg_advisory_xact_lock/,
+    "addCardsFor stopped taking the transaction advisory lock, so two tabs can both insert",
+  );
+  const lockAt = body.indexOf("pg_advisory_xact_lock");
+  const readAt = body.indexOf("card.findMany");
+  const writeAt = body.indexOf("card.createMany");
+  assert.ok(readAt >= 0 && writeAt >= 0, "addCardsFor no longer reads what it has before writing");
+  assert.ok(
+    lockAt < readAt && readAt < writeAt,
+    "addCardsFor takes its lock after the read it is meant to protect, which serialises nothing",
+  );
+});
+
 check("a screen built from a list of lemmas shows one entry per lemma", () => {
   /*
     `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one row, and
@@ -3097,11 +3135,31 @@ check("a date is written in the reader's own locale, not the server's", () => {
       fallback.
     */
     if (/^\s*"use client"/m.test(read(file))) continue;
-    assert.match(
-      source,
-      /<LocalDate/,
-      `${file} formats a date on the server, so it is written in the deployment's locale rather than the reader's`,
-    );
+    /*
+      EVERY SUCH CALL, NOT THE FILE.
+
+      This used to ask whether the file mentions `<LocalDate` anywhere, and a
+      file that hands one date to the browser and formats two others itself
+      passed. `app/(app)/class/[classroomId]/page.tsx` was exactly that: the
+      joined date went through `LocalDate` with a server-rendered fallback,
+      and the classwork history three sections above formatted `createdAt` and
+      `dueAt` on the server and shipped them as text. A teacher in Tartu read
+      their own homework list as "30 Aug".
+
+      So each call is checked where it stands. The legitimate one is the
+      `fallback` a `LocalDate` renders while it waits, which is what the server
+      is *supposed* to write, and it is the only shape that passes.
+    */
+    const call = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/g;
+    for (let m = call.exec(source); m; m = call.exec(source)) {
+      const before = source.slice(Math.max(0, m.index - 160), m.index);
+      assert.ok(
+        /fallback=\{?$|fallback=\{[^}]*$/.test(before),
+        `${file}: formats a date on the server outside a LocalDate fallback, so it is written `
+        + `in the deployment's locale rather than the reader's. Hand it to <LocalDate>, with `
+        + `this rendering as its fallback.`,
+      );
+    }
   }
 
   const local = code(join("components", "LocalDate.tsx"));

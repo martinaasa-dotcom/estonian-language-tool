@@ -298,7 +298,12 @@ export function oneEntryPerLemma<T extends Substantial & { lemma: string }>(
     const held = best.get(row.lemma);
     if (!held || bySubstance(row, held) < 0) best.set(row.lemma, row);
   }
-  return wanted.map((lemma) => best.get(lemma)).filter((row): row is T => row !== undefined);
+  // `wanted` deduplicated too, so the function honours its own name whatever it
+  // is handed. No unit of the syllabus repeats a lemma today, and a helper that
+  // is only correct while its callers are is not the helper this exists to be.
+  return [...new Set(wanted)]
+    .map((lemma) => best.get(lemma))
+    .filter((row): row is T => row !== undefined);
 }
 
 /**

@@ -394,6 +394,21 @@ fetched once per card rather than once per word. So the pairing is owner-scoped 
 happen, which is what the invariant asserts: one learner's own cards are bounded by their deck
 whatever the `take` says, and anything deployment-wide counts in Postgres.
 
+**"Is it already there" is check-then-act, and the deck had it too.** The ledger learned this about
+spending; `addCardsFor` had the same shape about cards. It read a learner's existing cards for a
+word, filtered the generated ones against them, and inserted the rest, so two requests inside that
+gap both see an empty deck and both insert. Measured against a real database: two concurrent adds
+gave two cards, four gave four, and eight gave fourteen where two is right. A learner meets it by
+double-tapping "Add to deck", and `addUnitToDeck` walks it once per word with no throttle in front,
+so one impatient second on a nineteen-word unit is the worst case rather than the unlikely one. The
+answer is the ledger's, for the reasons its header already gives: a *transaction* advisory lock, so
+a pooler cannot strand it, and the blocking form, since the non-blocking one serialises nothing.
+Keyed on the owner and the word rather than deployment-wide, because two learners adding two
+different words are not each other's concern; the ledger is deployment-wide because a shared budget
+is. With it, sixteen concurrent adds make two cards in 28ms. A unique index is the other answer and
+is the one not taken: a deck that already holds duplicates from this bug would fail the push, and
+the deployment's own build is what runs it.
+
 **The syllabus names a lemma; the dictionary may hold two entries for it.** `@@unique` is on
 `(lemma, pos)`, so `where: { lemma: { in: [...unit.lemmas] } }` can return more rows than the unit
 has words, and seven places rendered or wrote every one of them. Measured with a scanned `tuba`

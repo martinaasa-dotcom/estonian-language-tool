@@ -81,42 +81,76 @@ async function addCardsFor(
   });
   if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
 
-  const existing = await prisma.card.findMany({
-    where: { lexemeId, ownerId: owner },
-    select: { front: true, cardType: true },
-  });
-  const seen = new Set(existing.map((c) => `${c.cardType}|${c.front}`));
+  /*
+    READ AND WRITE UNDER ONE LOCK, BECAUSE "IS IT ALREADY THERE" IS CHECK-THEN-ACT.
 
-  const generated = generateCards(lexeme as LexemeForCards, types)
-    .filter((c) => !seen.has(`${c.cardType}|${c.front}`));
+    This read the learner's existing cards for the word, filtered the generated
+    ones against them, and inserted the rest. Two requests inside that gap both
+    see an empty deck and both insert. Measured against a real database, firing
+    the same shape concurrently: two adds gave two cards, four gave four, and
+    eight gave fourteen where two is right. A learner meets it by
+    double-tapping "Add to deck", and `addUnitToDeck` walks this once per word
+    with no throttle in front of it, so one impatient second on a nineteen-word
+    unit is the worst case rather than the unlikely one.
 
-  if (generated.length === 0) {
-    return { ok: true as const, added: 0, message: "Already in your deck." };
-  }
+    The answer is `lib/usage/ledger.ts`'s, for the reasons its own header gives:
+    a *transaction* advisory lock, so a connection pooler cannot strand it, and
+    the blocking form, since the non-blocking one serialises nothing. Keyed on
+    the owner and the word rather than deployment-wide, because two learners
+    adding two words are not each other's concern here; the ledger is
+    deployment-wide because a shared budget is. `hashtextextended` gives the
+    two-argument form Postgres wants, and it is a lock key rather than a
+    checksum, so a collision costs two unrelated adds a few milliseconds.
 
+    Held across one select and one insert, which is milliseconds, and the whole
+    of it is work this action was doing anyway.
+
+    A unique index would be the other answer and is the one not taken: an
+    existing deck that already holds duplicates from this bug would fail the
+    push, and the deployment's own build is what runs it.
+  */
   const now = new Date();
   const scheduling = emptyScheduling(now);
-  await prisma.card.createMany({
-    data: generated.map((c) => ({
-      ownerId: owner,
-      lexemeId,
-      cardType: c.cardType,
-      front: c.front,
-      back: c.back,
-      hint: c.hint,
-      targetCase: c.targetCase,
-      source,
-      due: scheduling.due,
-      stability: scheduling.stability,
-      difficulty: scheduling.difficulty,
-      state: scheduling.state,
-      learningSteps: scheduling.learningSteps,
-    })),
+  const added = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
+    await tx.$executeRaw`
+      SELECT pg_advisory_xact_lock(hashtextextended(${`${owner}:${lexemeId}`}, 0))`;
+
+    const existing = await tx.card.findMany({
+      where: { lexemeId, ownerId: owner },
+      select: { front: true, cardType: true },
+    });
+    const seen = new Set(existing.map((c) => `${c.cardType}|${c.front}`));
+
+    const generated = generateCards(lexeme as LexemeForCards, types)
+      .filter((c) => !seen.has(`${c.cardType}|${c.front}`));
+    if (generated.length === 0) return 0;
+
+    await tx.card.createMany({
+      data: generated.map((c) => ({
+        ownerId: owner,
+        lexemeId,
+        cardType: c.cardType,
+        front: c.front,
+        back: c.back,
+        hint: c.hint,
+        targetCase: c.targetCase,
+        source,
+        due: scheduling.due,
+        stability: scheduling.stability,
+        difficulty: scheduling.difficulty,
+        state: scheduling.state,
+        learningSteps: scheduling.learningSteps,
+      })),
+    });
+    return generated.length;
   });
+
+  if (added === 0) return { ok: true as const, added: 0, message: "Already in your deck." };
 
   revalidatePath("/");
   revalidatePath("/words");
-  return { ok: true as const, added: generated.length };
+  return { ok: true as const, added };
 }
 
 /** The scheduling fields a client hands back to undo a grade. */
