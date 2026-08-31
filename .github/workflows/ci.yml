@@ -310,6 +310,12 @@ jobs:
       # navigation that installs it, so a first visit had nothing to fall back
       # on. A suite nobody runs cannot tell you that.
       - run: node scripts/smoke-offline.mjs
+      # The error state, which is the one of the four that nothing ever put on a
+      # screen. It starts its own server on a spare port against a database that
+      # is not there, so it needs the build but not this job's database, and it
+      # leaves the one on 3000 alone. Before `test-restore.mjs` because that one
+      # wipes and rebuilds the account and anything after it reads a fresh deck.
+      - run: node scripts/test-error.mjs
       - run: node scripts/test-restore.mjs
 
   load:

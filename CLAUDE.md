@@ -442,6 +442,26 @@ fetched once per card rather than once per word. So the pairing is owner-scoped 
 happen, which is what the invariant asserts: one learner's own cards are bounded by their deck
 whatever the `take` says, and anything deployment-wide counts in Postgres.
 
+**A cap on rows is not a cap on time, and a loop of queries is where the difference lives.** Three
+loops were measured against a real database rather than reasoned about, and they did not all need
+the same answer. The offline replay asked "have I seen this grade before" once per item, which is
+the one query in it that does not depend on what the previous grade did: a `Review` id is generated
+on the client and the only rows that loop writes are its own, so the answer for a whole batch is one
+read. The rest of it stays per item, because that part genuinely is what the grade before left
+behind. The word importer asked the dictionary about every pasted row on its own, five hundred of
+them at the cap, and `@@unique` on `(lemma, pos)` means one `IN` answers all of it; what is left per
+word is `addCardsFor`, which takes a lock and is half the cost, and collapsing that would mean a
+second path that writes cards. And `addUnitToDeck` was measured and left alone: twenty words and
+seventy-three cards in 117ms, so the lock it takes per word costs nothing worth restructuring for.
+
+Where a loop cannot be collapsed, the route needs a budget: `MAX_IMPORT_ROWS` is 500 and the time
+those rows imply is not something a platform's default ten seconds covers, so
+`app/(app)/settings/page.tsx` says `maxDuration`. Deduplicating the input belongs there too, and for
+the reason that is easy to get wrong: `createMany` with `skipDuplicates` makes the *write*
+indifferent to a repeated line, so what a missing dedupe breaks is the *counting*, and a paste of a
+new word beside a repeated old one reads "Skipped 2 you already had" about one word. The first check
+written for that asserted the created count, which is 1 either way and so could not fail.
+
 **"Is it already there" is check-then-act, and the deck had it too.** The ledger learned this about
 spending; `addCardsFor` had the same shape about cards. It read a learner's existing cards for a
 word, filtered the generated ones against them, and inserted the rest, so two requests inside that
@@ -538,6 +558,29 @@ the method and the body. The Content Security Policy is set there too, on every 
 including the refusals; the static headers are in `next.config.ts` so they cover the files the
 matcher skips. `Permissions-Policy` keeps `microphone=(self)` on purpose: speaking practice
 records, and denying it would switch that off with no error anybody could act on.
+
+**The error state is a screen, so something has to render it.** `app/error.tsx` is one of the four
+states every view owes a reader and it was the only one nothing ever put on a screen: an invariant
+read its source for the failure copy and the report button, which is a different question from
+whether a client component that throws while rendering leaves a learner with a blank page. Driving
+it needs a server that genuinely fails, so `scripts/test-error.mjs` starts its own on a spare port
+against a database that is not there, which is the case the page was written for. That is also how
+the page turned out to be wrong about itself. Its header argued that showing the message turns a
+fixable problem, "usually a missing DATABASE_URL", into something a self-hoster can act on; what a
+production build actually shows is Next's own line saying the message was withheld, so the sentence
+promising the useful part below it pointed at boilerplate. Keeping the message on the server is the
+right default, since one can carry a connection string. What crosses is the digest, the same digest
+sits beside the full error in the server log, and the page says so.
+
+**A check that reads a file reads its code, not its prose.** This is the oldest recurring mistake in
+this repository's own checks and it has now been made four times: the marker sweep whose haystack
+included the list naming the markers, the `AI_TAG` assertion that matched its own import line, the
+lemma check that fired on a paragraph describing the query it had removed, and a suite explaining in
+a comment why it does not call `baseUrl()`, which satisfied a check looking for that call. Strip
+comments first; `code()` in `scripts/test-invariants.ts` is what does it. And the other half of the
+same discipline: a check that fires on honest code gets waived, so when one does, widen the rule
+rather than contorting the code. The lemma check learned a third answer that way, since keying rows
+on `(lemma, pos)` is the unique key itself and stronger than either answer it knew.
 
 **A suite that exists is a suite CI runs.** The workflow names its suites one line at a time, and
 its own comment says why: "a suite added to `npm run test:browser` alone is a suite CI never runs".

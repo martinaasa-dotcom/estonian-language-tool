@@ -817,12 +817,25 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
         at = src.indexOf("lemma: { in:", at + 1);
         continue;
       }
+      /*
+        Three answers, not two. `oneEntryPerLemma` picks the row the app leads
+        with; a `Set` counts lemmas and cannot double-count; and keying the rows
+        by lemma *and* part of speech addresses one specific row per pair, which
+        is the unique key itself and so the strongest of the three. The importer
+        does the last: it looks a paste up by lemma because that is the indexed
+        column, then reads `${lemma}|${pos}` out of the result, and asking it to
+        pick "the" entry for a lemma would be wrong, since a row it wants may be
+        the one that loses. This check fired on it, which is a check firing on
+        honest code, which is how a check becomes one everybody waives.
+      */
+      const keyedOnBoth = /\.lemma\b[\s\S]{0,40}\.pos\b|\.pos\b[\s\S]{0,40}\.lemma\b/.test(window);
       assert.ok(
-        /oneEntryPerLemma/.test(window) || /new Set\(/.test(window),
+        /oneEntryPerLemma/.test(window) || /new Set\(/.test(window) || keyedOnBoth,
         `${file}: looks a list of lemmas up and uses every row. A lemma can hold two `
         + `entries, so pass the result through oneEntryPerLemma() (lib/dict/search.ts), `
         + `which applies the same rule the dictionary leads with. Counting distinct `
-        + `lemmas into a Set is the other honest answer.`,
+        + `lemmas into a Set, or keying the rows on lemma and pos together, are the `
+        + `other two honest answers.`,
       );
       at = src.indexOf("lemma: { in:", at + 1);
     }
@@ -1551,9 +1564,24 @@ check("every browser suite can be pointed at a different server", () => {
     is what a pass looks like to anything reading the output.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
-    assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
+    /*
+      A suite that starts its own server is the one case this cannot ask for.
+      `test-error.mjs` runs a build against a database that is not there, which
+      is the whole of what it checks, so pointing it at the working server would
+      leave it nothing to see. What the rule is really about still applies and
+      is still asserted below: no suite is pinned to a server on port 3000 that
+      it did not start.
+    */
+    const startsItsOwn = /spawn\(/.test(source) && /"next", "start"/.test(source);
+    if (!startsItsOwn) assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
     assert.equal(
       /"http:\/\/localhost:3000"/.test(source.replace(/baseUrl[\s\S]*?\n/, "")),
       false,
@@ -1569,7 +1597,13 @@ check("every browser suite says how many checks it reached", () => {
     looked at. Both happened here. The floor is the count CI reaches.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
     const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
     assert.ok(floor, `${file} does not declare a check floor`);
@@ -1614,7 +1648,13 @@ check("a check a state cannot reach is waived by number, never by a printed word
     to the tally, so the block reads as handled and the floor never notices.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
     assert.equal(
       /console\.log\(\s*[`"'][^`"']*SKIP/.test(source),
