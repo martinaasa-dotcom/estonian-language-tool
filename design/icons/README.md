@@ -301,3 +301,36 @@ the ring of spines reads as a sun.
 **07d is a finding rather than a candidate.** Take the face off the hedgehog and it stops being an
 animal and becomes a sunrise. It is kept because it measures exactly what the face is doing across
 both animal rounds.
+
+## Round nine: the bear kept, with a flower and a bird
+
+Review kept the karu, so it is polished here rather than replaced. Twelve in `design/icons/round9/`,
+drawn by `node scripts/make-icon-round9.mjs`. Every hex is a token out of `app/globals.css`.
+
+**Sinilill and rukkilill are two different plants**, and the request named one while the reference
+showed the other, so both are drawn. **Rukkilill** is the cornflower, Centaurea cyanus, national
+flower since 1968 and the plant this app's palette is already named after: `globals.css` opens by
+calling the scheme "rukkilill sunrise", built around the cornflower "rather than the flag rendered
+literally". **Sinilill** is Hepatica nobilis, the liverleaf, a protected spring flower and the
+emblem of Estonian nature conservation. The cornflower has the stronger claim and the harder
+silhouette.
+
+**What "cuter" meant, item by item**, since it is a set of decisions rather than a mood: the head is
+wider than it is tall, the ears are smaller and set into it rather than balanced on top, the muzzle
+sits lower, the nose is a rounded wedge instead of an oval, and the eyes carry a glint. The default
+has no mouth. One variant does, and it is labelled, because a curve under a nose is the exact
+grammar of the mark this whole exercise is replacing. `08e` drops the glint, which is most of the
+distance between an animal and a toy.
+
+**The cornflower took two attempts.** Thin florets with a second ring inside them is a snowflake.
+Wide trumpet florets that nearly touch, notched into points, around a solid centre, is a cornflower.
+
+**The swallow reuses round one's profile rather than starting again.** Drawn from above a barn
+swallow is an aeroplane, which was proved three times; in profile it read on the first attempt. Only
+the colour, the rust throat and the pale underside are new. The throat is `--peach`, the palette's
+one warm hue, which happens to be the right colour for the bird, and without it the silhouette is
+just a dark bird.
+
+**`08f` is a lockup rather than an icon.** Bear plus cornflower is the most branded thing in nine
+rounds and the busiest; at 20px the bloom is a smudge. It belongs on a splash screen or a store
+listing, not a home screen.
