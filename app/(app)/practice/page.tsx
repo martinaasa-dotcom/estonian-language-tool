@@ -92,14 +92,11 @@ export default async function PracticePage() {
   const metaFor = (mode: PracticeMode) => live[mode.href] ?? mode.note;
 
   return (
-    <Page
-      title="Practice"
-      lead="Every mode here writes to the same review log, so nothing you do is a side game with a score of its own."
-    >
+    <Page title="Practice" lead="Every mode grades the same cards.">
       {snapshot.totalCards === 0 ? (
         <Empty
           title="Nothing to practise yet"
-          body="Every mode here draws on your own deck. Start a unit on the path and all of them light up at once."
+          body="Every mode here draws on your own deck."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       ) : (
@@ -110,7 +107,7 @@ export default async function PracticePage() {
             tone="accent"
             title="Review"
             subtitle="The daily loop"
-            body="Everything due, scheduled by FSRS. Type the answer or flip the card, your choice in Settings."
+            body="Everything due, scheduled by FSRS."
             meta={dailyMeta}
             primary={snapshot.dueCount > 0}
           />
@@ -118,72 +115,43 @@ export default async function PracticePage() {
           <section>
             <SectionTitle hint="a few minutes each">Quick rounds</SectionTitle>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {QUICK_MODES.map((m) => {
-                const Icon = icon(m.icon);
-                return (
-                  <Link
-                    key={m.href}
-                    href={m.href}
-                    className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
-                    style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
-                  >
-                    <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                      style={{ background: `var(--${m.tone})`, color: "var(--surface)" }}
-                    >
-                      <Icon size={18} aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>{m.title}</span>
-                      <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
-                        {m.subtitle} · {metaFor(m)}
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-
-          <section>
-            <SectionTitle hint="when you know what is wrong">Work a weakness</SectionTitle>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {TARGETED_MODES.map((m) => (
-                <ModeCard
-                  key={m.href}
-                  href={m.href}
-                  iconName={m.icon}
-                  tone={m.tone}
-                  title={m.title}
-                  subtitle={m.subtitle}
-                  body={m.blurb}
-                  meta={metaFor(m)}
-                />
+              {QUICK_MODES.map((m) => (
+                <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
               ))}
             </div>
           </section>
 
           <section>
-            <SectionTitle hint="an afternoon, not five minutes">Sit the paper</SectionTitle>
-            <Link
-              href="/exam"
-              className="lift flex items-center gap-4 rounded-[var(--r-lg)] border p-5"
-              style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
-            >
-              <span
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                style={{ background: "var(--blush)", color: "var(--surface)" }}
+            <SectionTitle hint="when you know what is wrong">Work a weakness</SectionTitle>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {TARGETED_MODES.map((m) => (
+                <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
+              ))}
+              {/*
+                The paper sits in the same grid rather than under a heading of
+                its own. It is a different size of commitment, which is what
+                the chip says; it is not a different kind of question, and a
+                section containing one row was three lines of chrome around it.
+              */}
+              <Link
+                href="/exam"
+                className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
+                style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
               >
-                <ClipboardCheck size={19} aria-hidden />
-              </span>
-              <span className="min-w-0">
-                <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
-                <span className="mt-1 block text-sm" style={{ color: "var(--ink-2)" }}>
-                  An imitation of the A2, B1, B2 or C1 state paper. Four parts, sixty percent to
-                  pass, and a zero anywhere fails the whole thing.
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                  style={{ background: "var(--blush)", color: "var(--surface)" }}
+                >
+                  <ClipboardCheck size={18} aria-hidden />
                 </span>
-              </span>
-            </Link>
+                <span className="min-w-0 flex-1">
+                  <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
+                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+                    A2 to C1 · an afternoon
+                  </span>
+                </span>
+              </Link>
+            </div>
           </section>
 
           <section>
@@ -193,10 +161,9 @@ export default async function PracticePage() {
                 cases={weakCases}
                 empty={
                   <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                    Once you have answered a few case-form cards, the cases you keep missing show up
-                    here with a one-click drill. Add a noun unit from the{" "}
-                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
-                    to start generating them.
+                    Answer a few case-form cards and the ones you keep missing show up here. Add a
+                    noun unit from the{" "}
+                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>.
                   </p>
                 }
               />
@@ -209,11 +176,47 @@ export default async function PracticePage() {
 }
 
 /**
- * A mode with a reason to open it: the daily loop, and the five that work one
- * specific weakness. The quick rounds do not get one, because a title and
- * whether there is anything ready is the whole decision there and a paragraph
- * beside it is a paragraph nobody reads twice.
+ * One mode, at the size the decision actually needs.
+ *
+ * Every mode but the daily loop is drawn this way now. The five targeted ones
+ * each carried `blurb` as a two or three line paragraph and the mock paper
+ * carried a sixth, on a page whose own promise is answering "what should I do
+ * with the next five minutes". Six paragraphs is not an answer to that, and
+ * the quick rounds sitting directly above them had already shown what is: a
+ * title, three words, and whether there is anything ready to play.
+ *
+ * The blurbs are not deleted, and this is the argument for the split rather
+ * than for cutting them. `components/CommandPalette.tsx` shows one as the hint
+ * under each mode and searches its words, which is where somebody is reading a
+ * description rather than scanning a grid. A sentence explaining rektsioon
+ * earns its place where you are looking for the thing; it does not earn its
+ * place eleven times over on the page you press.
  */
+function ModeTile({ mode, meta }: { mode: PracticeMode; meta: string }) {
+  const Icon = icon(mode.icon);
+  return (
+    <Link
+      href={mode.href}
+      className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
+      style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{ background: `var(--${mode.tone})`, color: "var(--surface)" }}
+      >
+        <Icon size={18} aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
+        <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+          {mode.subtitle} · {meta}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/** The daily loop, and only the daily loop. Everything else is a tile. */
 function ModeCard({ href, iconName, tone, title, subtitle, body, meta, primary }: {
   href: string;
   iconName: string;

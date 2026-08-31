@@ -108,7 +108,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
         <Page title="Case Sprint" lead="A 60-second speed round through your deck.">
           <Empty
             title="Nothing to sprint through yet"
-            body="Case Sprint draws from cards that are due or that you've slipped on before. Review a little first, or add some words."
+            body="This draws on cards that are due, or that you have slipped on before."
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>

@@ -140,6 +140,46 @@ Kind is not the same as encouraging. Somebody who has just sat ninety minutes wa
 they stand, and telling them 54 percent is fantastic is the one response that wastes the ninety
 minutes.
 
+### How much of it there is
+
+The examples above are about tone. This one is about volume, and it is the fault that survived every
+rule in this document: sentences that are warm, kind, concise and correct, and simply too many of
+them for the screen they are on.
+
+The dictation round with an empty deck:
+
+> Dictation uses the sentences Ekilex records against the words in your deck, and only the short
+> ones, a sentence you cannot hold in your head tests memory, not listening. Look a few of your
+> words up in the dictionary, or add a unit from the path.
+
+against
+
+> **No sentences short enough yet**
+> Dictation reads the short Ekilex sentences attached to words in your deck.
+> [ Open the dictionary ]
+
+Every clause in the first is true and worth knowing, and none of it is worth knowing *here*, to
+somebody who cannot use this screen yet and is looking for the way out of it. The reason long
+sentences are so tempting in an empty state is that there is nothing else on the screen to write,
+which is exactly the wrong reason.
+
+The level check, before anybody has taken one:
+
+> About ten minutes: a few questions each of reading, listening and writing, and a speaking section
+> you judge yourself because nothing here can honestly score a recording. It stops as soon as the
+> questions get clearly too hard, and no answer becomes a flashcard.
+
+against
+
+> About ten minutes of reading, listening and writing, plus speaking you judge yourself.
+
+Three of the four dropped facts are on the results screen, where they answer a question somebody is
+actually asking. The fourth, that no answer becomes a flashcard, is the honest kind of detail this
+app is careful about, and it belongs in the briefing rather than in front of the button.
+
+The test that holds this is a ceiling, not a target: 100 characters for a dead end's body, 95 for a
+page lead. Neither number makes a sentence good. What they do is catch the paragraph growing back.
+
 ## 4. What this rule does not cover
 
 **Comments, and code quoted inside a document.** Comments are for whoever maintains the code and may
@@ -196,6 +236,7 @@ swept in hand-written copy, and left alone in a stream.
 | Dashes and stock openers removed from Anu's stream | `lib/tutor/humanize.ts` |
 | The same rules given to Anu | `lib/tutor/prompt.ts` |
 | One table, one sweep, and the rules actually reaching the prompt | `scripts/test-invariants.ts` |
+| The ceiling on a dead end's body and a page lead | `lib/copy/readerCopy.test.ts` |
 
 Adding a tell means arguing that the phrase is never right on a screen in this app. `perfect` is not
 on the list, because taisminevik is the perfect tense and a grammar page has to be able to say so.

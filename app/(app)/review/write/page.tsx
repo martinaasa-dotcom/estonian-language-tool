@@ -99,7 +99,7 @@ export default async function WritePage() {
       <Page title="Writing" lead="Write your own Estonian, and have it marked.">
         <Empty
           title="No words to write about yet"
-          body="Writing practice draws on nouns and adjectives already in your deck, because the point is producing words you have met, not meeting new ones. Add a few from the dictionary."
+          body="This draws on nouns and adjectives already in your deck."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

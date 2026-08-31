@@ -92,7 +92,7 @@ export default async function SettingsPage() {
       lead={
         hosted
           ? "Your deck, reviews and tasks belong to your account and are visible only to you."
-          : "This copy runs locally: everything is stored in the database on this machine, and nothing is uploaded anywhere."
+          : "This copy runs locally. Nothing is uploaded anywhere."
       }
     >
       <Stack>

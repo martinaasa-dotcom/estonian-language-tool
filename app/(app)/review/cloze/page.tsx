@@ -25,7 +25,7 @@ export default async function ClozePage() {
       <Page title="From your reading" lead="Paste real Estonian and drill the words you already know.">
         <Empty
           title="Your deck is empty"
-          body="This blanks out words you are already learning, so there is nothing to look for yet. Add a few from the dictionary and come back with a news article or a page of homework."
+          body="This blanks out words you are already learning, so it needs a deck first."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

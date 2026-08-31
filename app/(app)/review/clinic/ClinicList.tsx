@@ -36,7 +36,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
   return (
     <Page
       title="Leech clinic"
-      lead="The cards you keep failing. Burying them is not a plan. Here is what the history actually says."
+      lead="The cards you keep failing, and what their history says."
     >
       <div className="flex flex-col gap-4">
         {items.map((leech) => {

@@ -115,8 +115,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <Empty
               title={isTeacher ? "Nobody has joined yet" : "You are the first one here"}
               body={isTeacher
-                ? "Put the join code on the board. As soon as someone joins and reviews, this fills with who is keeping up and who has gone quiet."
-                : "Once your classmates join, this shows how the week is going for everyone."}
+                ? "Put the join code on the board. This fills as people join and review."
+                : "This fills as your classmates join."}
             />
           ) : (
             <ul className="flex flex-col gap-1.5">

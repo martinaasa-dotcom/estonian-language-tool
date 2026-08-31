@@ -136,7 +136,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       <Page title="Dictation" lead="Hear a sentence, write it down.">
         <Empty
           title="No sentences short enough yet"
-          body="Dictation uses the sentences Ekilex records against the words in your deck, and only the short ones, a sentence you cannot hold in your head tests memory, not listening. Look a few of your words up in the dictionary, or add a unit from the path."
+          body="Dictation reads the short Ekilex sentences attached to words in your deck."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

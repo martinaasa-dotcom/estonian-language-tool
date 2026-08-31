@@ -99,7 +99,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
       <Page title="Listening" lead="Hear a word, pick its meaning.">
         <Empty
           title="Nothing to listen to yet"
-          body="Listening draws from cards that are due or that you've slipped on before. Review a little first, or add some words."
+          body="This draws on cards that are due, or that you have slipped on before."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

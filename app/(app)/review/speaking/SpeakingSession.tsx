@@ -104,7 +104,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
       <Page title="Speaking" lead="Say it out loud, then hear a native voice say the same thing.">
         <Empty
           title="Nothing to say yet"
-          body="Speaking practice draws on the words already in your deck. Add a unit from the path and come back."
+          body="This draws on the words already in your deck."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>

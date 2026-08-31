@@ -116,10 +116,10 @@ export default async function ProgressPage() {
 
   if (reviews.length === 0 && snapshot.totalCards === 0) {
     return (
-      <Page title="Progress" lead="Everything here is computed from your review log, nothing is stored, so nothing can drift.">
+      <Page title="Progress" lead="Computed live from your review log, never stored, so it cannot drift.">
         <Empty
           title="No history yet"
-          body="Charts appear after your first review. Start a unit and come back tomorrow, the interesting part is the shape over weeks."
+          body="Charts appear after your first review."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>
@@ -129,7 +129,7 @@ export default async function ProgressPage() {
   return (
     <Page
       title="Progress"
-      lead="Computed live from the review log. Nothing here is a stored score, so it cannot drift from what you actually did."
+      lead="Computed live from your review log, never stored, so it cannot drift."
       actions={
         <ButtonLink href="/assess">
           <Compass size={15} aria-hidden /> Level check
@@ -207,22 +207,24 @@ export default async function ProgressPage() {
           </Card>
         </section>
 
+        {/*
+          The hour used to be a sentence under the chart explaining that a
+          consistent time survives a busy week. The section title already has
+          a slot on the right for exactly this kind of fact, and a reader
+          skimming a column of charts reads the labels, not the footnotes.
+        */}
         <section>
-          <SectionTitle hint={`last ${HEATMAP_DAYS} days`}>Study history</SectionTitle>
+          <SectionTitle hint={hour === null ? `last ${HEATMAP_DAYS} days` : `${HEATMAP_DAYS} days · most at ${formatHour(hour)}`}>
+            Study history
+          </SectionTitle>
           <Card>
             <Heatmap days={heatmap} />
-            {hour !== null && (
-              <p className="mt-3 text-xs" style={{ color: "var(--ink-2)" }}>
-                You study most at {formatHour(hour)}. Reviews done at a consistent time are the ones
-                that survive a busy week.
-              </p>
-            )}
           </Card>
         </section>
 
         <div className="grid gap-5 md:grid-cols-2">
           <section>
-            <SectionTitle hint={`next ${FORECAST_DAYS} days`}>What&rsquo;s coming</SectionTitle>
+            <SectionTitle hint={`next ${FORECAST_DAYS} days · overdue counted as today`}>What&rsquo;s coming</SectionTitle>
             <Card>
               <div className="flex h-28 items-end gap-1.5">
                 {forecast.map((f) => (
@@ -241,11 +243,11 @@ export default async function ProgressPage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                {dueDates.length === 0
-                  ? "Nothing scheduled yet. This fills in as cards graduate out of the learning steps."
-                  : "Overdue cards are counted as today, because that is when the work is. A flat-ish shape means the scheduler has settled; a spike means a big day was added at once."}
-              </p>
+              {dueDates.length === 0 && (
+                <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
+                  This fills in as cards graduate out of the learning steps.
+                </p>
+              )}
             </Card>
           </section>
 
@@ -270,7 +272,7 @@ export default async function ProgressPage() {
               </div>
               {breakdown.total === 0 && (
                 <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  No reviews in this window yet. Each bar is a day, coloured by how much you recalled.
+                  No reviews yet. Each bar is a day, coloured by how much you recalled.
                 </p>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
@@ -285,12 +287,7 @@ export default async function ProgressPage() {
 
         {sticking.length > 0 && (
           <section>
-            <SectionTitle hint="worst first">Sticking points</SectionTitle>
-            <p className="mb-3 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
-              Cards you have learned and forgotten more than once. A card that keeps lapsing is
-              usually a grammar problem wearing a vocabulary costume, so the explanation comes
-              first, and setting it aside is the last resort rather than the first.
-            </p>
+            <SectionTitle hint="learned and forgotten more than once">Sticking points</SectionTitle>
             <StickingPoints points={sticking} />
           </section>
         )}
@@ -304,8 +301,7 @@ export default async function ProgressPage() {
                 empty={
                   <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                     No case-form cards answered yet. Add a noun unit from the{" "}
-                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
-                    and this becomes the most useful chart here.
+                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>.
                   </p>
                 }
               />
@@ -313,7 +309,7 @@ export default async function ProgressPage() {
           </section>
 
           <section>
-            <SectionTitle hint={`${pathKnown} of ${pathTotal} path words`}>Vocabulary reach</SectionTitle>
+            <SectionTitle hint={`${pathKnown} of ${pathTotal} path words · your deck only`}>Vocabulary reach</SectionTitle>
             <Card>
               <ul className="flex flex-col gap-2">
                 {CEFR_LEVELS.map((level) => {
@@ -334,8 +330,7 @@ export default async function ProgressPage() {
                 })}
               </ul>
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                Only counts words in your own deck, and only once every card made from them has
-                graduated. It is a floor on what you know, never a flattering estimate.
+                Counted once every card from a word has graduated, so it is a floor.
               </p>
             </Card>
           </section>

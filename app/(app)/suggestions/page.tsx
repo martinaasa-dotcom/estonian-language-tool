@@ -34,7 +34,7 @@ export default async function MySuggestionsPage() {
   return (
     <Page
       title="Your suggested fixes"
-      lead="Everything you have told us was wrong, and where each one got to. The dictionary is shared, so an accepted correction is a correction for everybody using this copy."
+      lead="Everything you have reported, and where each one got to."
       actions={
         reviewer ? (
           <Link href="/admin/suggestions" className="text-sm underline" style={{ color: "var(--accent-deep)" }}>
@@ -46,7 +46,7 @@ export default async function MySuggestionsPage() {
       {mine.length === 0 ? (
         <Empty
           title="Nothing sent yet"
-          body="Wherever the app cannot help you, whether a word is missing, a meaning looks wrong or a screen fails, there is a button to tell us. What you send lands here."
+          body="Anywhere the app cannot help, there is a button to tell us. What you send lands here."
         />
       ) : (
         <ul className="flex flex-col gap-3">

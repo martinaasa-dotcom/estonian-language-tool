@@ -65,10 +65,7 @@ export default async function ScanPage() {
           {scans.length === 0 ? (
             <Empty
               title="No pages yet"
-              body={
-                "Take a picture of a vocabulary list and it will appear here, as a set you can " +
-                "drill on its own."
-              }
+              body="Photograph a vocabulary list and it lands here as a set you can drill."
             />
           ) : (
             <ul className="flex flex-col gap-2">

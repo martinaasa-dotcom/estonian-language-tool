@@ -42,8 +42,8 @@ export function TutorChat({
       <Empty
         title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
         body={readerCanConfigure
-          ? "Everything else in the app works without one, the dictionary, your cards and audio are all local. Settings has a two-minute walkthrough for getting a free key."
-          : "Anu is not switched on for this site yet. Everything else here works without her: the dictionary, your cards and audio are all local."}
+          ? "Everything else works without one. Settings has a walkthrough for getting a free key."
+          : "Everything else here works without her."}
         action={
           <div className="flex flex-col items-center gap-4">
             {/* A question handed over by the card the learner just got wrong.

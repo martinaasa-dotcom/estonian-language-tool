@@ -391,7 +391,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         {drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}
-            body="Case-form cards are optional when you add a word, tick 'Case form' in the dictionary, or start a noun unit on the path, and they will show up here."
+            body="Tick &lsquo;Case form&rsquo; when you add a word, or start a noun unit on the path."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : drillUnit ? (
@@ -411,13 +411,13 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         ) : totalCards === 0 ? (
           <Empty
             title="No cards yet"
-            body="Start a unit on the path, or add words from the dictionary. Two cards are made per word, one each direction."
+            body="Start a unit on the path, or add words from the dictionary."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : (
           <Empty
             title="Nothing due, you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early doesn't help memory, so this is the app telling you to stop.`}
+            body={`All ${totalCards} cards are scheduled for later. Reviewing early does not help.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
         )}

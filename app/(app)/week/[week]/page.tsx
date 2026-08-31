@@ -100,8 +100,8 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
           title={`Nothing filed under week ${week} yet`}
           body={
             week === current
-              ? "Words you add to your deck from now on land here automatically, and tasks can be tagged with a week when you create them."
-              : "Set this as your current week in the picker above, then add the vocabulary and homework it covered."
+              ? "Words you add from now on land here, and a task can be tagged with a week."
+              : "Set this as your current week above, then add what it covered."
           }
           action={<ButtonLink href="/dictionary" variant="primary">Add words</ButtonLink>}
         />

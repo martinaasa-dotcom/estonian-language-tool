@@ -121,7 +121,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
       <Page title="Match" lead="Pair the Estonian with its meaning, against the clock.">
         <Empty
           title="Not enough cards to make a round"
-          body="Match needs at least four words in your deck. Start a unit on the path and come straight back."
+          body="Match needs four words in your deck."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>

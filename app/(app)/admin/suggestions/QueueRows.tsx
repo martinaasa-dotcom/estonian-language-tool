@@ -55,11 +55,7 @@ export function QueueRows({ rows, status }: { rows: QueueRow[]; status: Suggesti
       <Empty
         mood="happy"
         title={status === "OPEN" ? "Nothing waiting" : "Nothing here"}
-        body={
-          status === "OPEN"
-            ? "Every report has been acted on. New ones land here the moment somebody sends one from a dead end in the app."
-            : "No report has been given this outcome yet."
-        }
+        body={status === "OPEN" ? "Every report has been acted on." : "No report has this outcome yet."}
       />
     );
   }

@@ -41,7 +41,7 @@ export default async function GrammarIndexPage() {
     <Page
       eyebrow="Reference"
       title="Grammar"
-      lead="Named the way a course names them: the Estonian term and the question it answers first, the English name after it for when you are reading an English reference. Every Estonian word on these pages comes from the dictionary, the explanations are the only part this app wrote."
+      lead="Named the way a course names them: the Estonian term and the question it answers."
     >
       <Stack>
         <Card tone="accent">

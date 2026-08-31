@@ -236,6 +236,35 @@ show the copy it exists to prevent.
 twice as long as it needs to be. `docs/18-voice.md` is the other half, with worked before-and-after
 examples off real screens, and it is what to read before writing a sentence anybody will see.
 
+**How much of it there is is the other way copy stops being read, and no rule above can see it.**
+Every sentence in this app passed the voice rules and the app still felt like work, because there
+were too many good sentences. Thirty-nine dead ends each explained the whole feature to somebody
+who could not use it yet: the dictation screen spent forty-one words on where Ekilex sentences come
+from and why one you cannot hold in your head tests memory rather than listening, to a learner
+whose deck was empty and who wanted the button. The level check spent 260 characters on what it was
+before offering to start it. Practice put a paragraph beside each of five targeted modes, on a page
+whose own promise is answering "what should I do with the next five minutes". Progress explained
+each of its eight charts underneath itself, in prose, where the section title beside it had an
+empty slot on the right the whole time.
+
+So there is a ceiling and `readerCopy.test.ts` holds it: 100 characters on an `Empty` body, 95 on a
+page `lead`. Both are deliberately generous rather than tight. The measured worst in the tree after
+the pass that set them was 88 on each, so they are not caps anybody has to write around, they are
+caps that catch the paragraph growing back. `Empty`'s body is optional for the same reason, and
+that is the load-bearing half: where the title is the whole story there is no body at all, and the
+action is the way out that the deleted sentence used to describe in words.
+
+What is **not** capped is prose in the body of a screen, a grammar explanation or a policy page. A
+page whose subject is an explanation is allowed to explain. What is capped is the furniture around
+the thing a reader came for. And a cap cannot tell a short sentence from a good one, which is
+`docs/18-voice.md`'s job exactly as before.
+
+**A blurb belongs where somebody is reading, not where they are scanning.** The five targeted
+practice modes are drawn as the same compact tile the six quick rounds already used, and their
+`blurb` was not deleted with the paragraph: `components/CommandPalette.tsx` shows it as the hint
+under each mode and searches its words. A sentence explaining rektsioon earns its place where you
+are looking the thing up. It does not earn its place eleven times over on the page you press.
+
 **The chat guard is a notice; only the grader has a gate.** `verifyComment` withholds a whole reply
 before the learner sees it, which only a non-streaming answer can afford. The main chat streams, so
 `flagUnverifiedEstonian` checks Anu's prose against the dictionary after the fact and names what it

@@ -179,7 +179,7 @@ export function DictionaryClient({
         <div className="flex flex-col gap-4">
           <Empty
             title={`Nothing found for "${initialQuery}"`}
-            body="The built-in dictionary covers common words up to B2. Add this one yourself, put in the genitive and you get the whole case table, audio and cards, exactly like a built-in word."
+            body="The built-in dictionary covers common words to B2. Add this one with its genitive."
           />
           <AddWord initialLemma={initialQuery} />
           {/*
@@ -191,8 +191,7 @@ export function DictionaryClient({
           */}
           <div className="flex flex-col gap-2">
             <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-              Sure this word exists? Tell us and it goes to the Kodukeel team, who can put it in the
-              dictionary for everybody.
+              Sure it exists? Tell us, and it can go in the dictionary for everybody.
             </p>
             <div>
               <SuggestFix

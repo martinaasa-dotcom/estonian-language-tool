@@ -73,8 +73,8 @@ export default async function DictionaryPage({
       title="Dictionary"
       lead={
         ekilexConfigured()
-          ? "Search any Estonian word. Paradigms come from Ekilex, the Institute of the Estonian Language, and are stored so the next lookup works offline."
-          : `${total} words with full principal parts, gradation and audio. The eleven regular cases are worked out from the genitive.`
+          ? "Search any Estonian word. Paradigms come from Ekilex and are stored for offline."
+          : `${total} words with full principal parts, gradation and audio.`
       }
     >
       <DictionaryClient

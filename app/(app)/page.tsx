@@ -197,7 +197,7 @@ export default async function TodayPage() {
             {snapshot.totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
-                body="Start a unit on the path and you get real cards, full paradigm, audio, and both directions, in one click."
+                body="A unit becomes real cards, with the full paradigm and audio."
                 action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
               />
             ) : toReview > 0 ? (
@@ -490,10 +490,10 @@ export default async function TodayPage() {
               </div>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 {tutorReady
-                  ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
+                  ? "Which case to use, why a stem changed, whether your sentence is right."
                   : readerCanConfigure
-                    ? "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."
-                    : "Anu is not switched on for this site yet. Everything else here works without her."}
+                    ? "She needs a free API key first, about two minutes."
+                    : "Not switched on for this site. Everything else works without her."}
               </p>
               {(tutorReady || readerCanConfigure) && (
                 <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">

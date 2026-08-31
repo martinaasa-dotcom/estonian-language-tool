@@ -63,7 +63,7 @@ export default async function GovernmentPage() {
       <Page title="Verb government" lead="Which case a verb demands.">
         <Empty
           title="No governed verbs in the dictionary yet"
-          body="Government data comes from the dictionary. Look a verb up once and it is stored with the case it demands, or add one by hand with its government noted."
+          body="Look a verb up once and the case it demands is stored with it."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

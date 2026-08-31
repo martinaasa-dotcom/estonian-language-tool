@@ -94,7 +94,7 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
       {sheet.empty ? (
         <Empty
           title="Nothing to print for this unit yet"
-          body="A worksheet is built from what the dictionary holds: attested sentences to hide a word in, and principal parts to leave out of a table. Look these words up once and the sheet fills itself in."
+          body="Look these words up once and the sheet fills itself in from the dictionary."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       ) : (

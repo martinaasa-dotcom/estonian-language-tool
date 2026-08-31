@@ -243,6 +243,134 @@ describe("copy reads as a person wrote it", () => {
 });
 
 /*
+  HOW MUCH OF IT THERE IS, WHICH IS THE OTHER WAY COPY STOPS BEING READ.
+
+  Everything above this point is about how a sentence sounds. Nothing in it can
+  see the fault that actually made this app feel like work: there were simply
+  too many good sentences. Thirty-nine dead ends each explained the whole
+  feature to somebody who could not use it yet, and the dictation screen spent
+  forty-one words on where Ekilex sentences come from, and why a sentence you
+  cannot hold in your head tests memory rather than listening, to a learner
+  whose deck was empty and who wanted the button. Every one of those sentences
+  passes every rule above.
+
+  So there is a ceiling, and it is deliberately generous rather than tight: a
+  dead end may say one line, and a page may introduce itself in one line. The
+  measured worst in the tree when this was written was 88 characters on both,
+  so these are not caps somebody has to fight, they are caps that catch the
+  paragraph coming back. What they cannot do is make a short sentence a good
+  one, which is `docs/18-voice.md`'s job as before.
+
+  Deliberately NOT capped: prose in the body of a screen, a grammar
+  explanation, the policy pages. A page whose subject is an explanation is
+  allowed to explain. What is capped is the furniture around the thing a
+  reader came for.
+*/
+
+/** A dead end gets one line. */
+const EMPTY_BODY_MAX = 100;
+/** A page introduces itself in one line. */
+const LEAD_MAX = 95;
+
+/**
+ * The value of a JSX prop, as the strings a reader could end up seeing.
+ *
+ * `body="..."` is one string; `body={a ? "..." : "..."}` is two, and both
+ * reach a reader, so both are measured. A template literal is measured with
+ * its holes standing in at two characters, which is what a count or a level
+ * renders as: the point is to catch a paragraph, not to argue about whether
+ * a card total is one digit or three.
+ */
+function propStrings(source: string, prop: string): string[] {
+  const out: string[] = [];
+  const re = new RegExp(`\\b${prop}=`, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(source))) {
+    let i = m.index + m[0].length;
+    if (source[i] === '"') {
+      const end = source.indexOf('"', i + 1);
+      if (end !== -1) out.push(source.slice(i + 1, end));
+      continue;
+    }
+    if (source[i] !== "{") continue;
+    // Walk the braced expression, skipping over anything inside a string so a
+    // brace in a style object or a `${}` hole cannot end it early.
+    let depth = 0;
+    const start = i;
+    let quote: string | null = null;
+    for (; i < source.length; i += 1) {
+      const c = source[i]!;
+      if (quote) {
+        if (c === "\\") i += 1;
+        else if (c === quote) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      else if (c === "{") depth += 1;
+      else if (c === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    const expr = source.slice(start + 1, i);
+    // A JSX child of its own is markup rather than copy, and this is not a
+    // parser. Anything holding a tag is left to a person to judge.
+    if (/<[A-Za-z]/.test(expr)) continue;
+    for (const lit of expr.match(/"[^"\\]*"|`[^`\\]*`/g) ?? []) {
+      out.push(lit.slice(1, -1).replace(/\$\{[^}]*\}/g, "NN"));
+    }
+  }
+  return out;
+}
+
+/** Every `<Empty ... />` block in a file, markup and all. */
+function emptyBlocks(source: string): string[] {
+  const out: string[] = [];
+  for (const m of source.matchAll(/<Empty\b/g)) {
+    const rest = source.slice(m.index);
+    const selfClose = rest.indexOf("/>");
+    const paired = rest.indexOf("</Empty>");
+    const end = selfClose !== -1 && (paired === -1 || selfClose < paired) ? selfClose + 2 : paired + 8;
+    if (end > 1) out.push(rest.slice(0, end));
+  }
+  return out;
+}
+
+describe("there is not too much of it", () => {
+  /*
+    The same argument the sweep above makes about itself. A budget that has
+    stopped finding the components it measures is a budget that passes
+    everything, and it would do that silently on the day somebody renames a
+    prop.
+  */
+  it("finds the dead ends and the page leads it is supposed to be measuring", () => {
+    const empties = FILES.flatMap((f) => emptyBlocks(readFileSync(f, "utf8")));
+    const leads = FILES.flatMap((f) => propStrings(readFileSync(f, "utf8"), "lead"));
+    expect(empties.length).toBeGreaterThan(30);
+    expect(leads.length).toBeGreaterThan(20);
+  });
+
+  it("gives a dead end one line, not a paragraph", () => {
+    const over = FILES.flatMap((f) =>
+      emptyBlocks(readFileSync(f, "utf8"))
+        .flatMap((block) => propStrings(block, "body"))
+        .filter((body) => body.length > EMPTY_BODY_MAX)
+        .map((body) => `${f}: ${body.length} chars: ${body.slice(0, 70)}`),
+    );
+    expect(over).toEqual([]);
+  });
+
+  it("lets a page introduce itself in one line", () => {
+    const over = FILES.flatMap((f) =>
+      propStrings(readFileSync(f, "utf8"), "lead")
+        .filter((lead) => lead.length > LEAD_MAX)
+        .map((lead) => `${f}: ${lead.length} chars: ${lead.slice(0, 70)}`),
+    );
+    expect(over).toEqual([]);
+  });
+});
+
+/*
   The other half of the rule, and the half that bit twice while it was being
   applied.
 

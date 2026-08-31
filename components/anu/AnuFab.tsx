@@ -95,8 +95,8 @@ export function AnuFab({
               <Empty
                 title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
                 body={readerCanConfigure
-                  ? "Everything else in the app works without one. Settings has a two-minute walkthrough for getting a free key."
-                  : "Anu is not switched on for this site yet. Everything else here works without her."}
+                  ? "Everything else works without one. Settings has a walkthrough for a free key."
+                  : "Everything else here works without her."}
                 action={readerCanConfigure && (
                   <Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>
                 )}

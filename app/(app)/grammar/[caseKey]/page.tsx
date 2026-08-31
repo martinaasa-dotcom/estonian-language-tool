@@ -154,7 +154,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           {examples.length === 0 ? (
             <Empty
               title="No words to show it on yet"
-              body="This page builds its examples out of the dictionary. Look a noun up and it will have something to show, nothing here is written by the app."
+              body="Every example here is read from the dictionary. Look a noun up and this fills in."
               action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
             />
           ) : (

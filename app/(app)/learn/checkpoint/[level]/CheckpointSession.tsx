@@ -94,7 +94,7 @@ export function CheckpointSession({
       <Page title={title} lead={blurb}>
         <Empty
           title="Not enough of this level in your dictionary yet"
-          body="A checkpoint draws on the whole level. Work through some of its units first, or seed the dictionary."
+          body="A checkpoint draws on the whole level. Work through some of its units first."
           action={<ButtonLink href="/learn">Back to the course</ButtonLink>}
         />
       </Page>
