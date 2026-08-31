@@ -47,7 +47,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
           );
 
           return (
-            <Card key={leech.cardId} className={state ? "opacity-55" : undefined}>
+            <Card key={leech.cardId}>
               <div className="flex flex-wrap items-center gap-2">
                 <Chip tone="again"><Stethoscope size={12} aria-hidden /> {leech.lapses} lapses</Chip>
                 <Chip tone="hard">{SHAPE_LABEL[leech.shape]}</Chip>

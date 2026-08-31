@@ -3202,6 +3202,122 @@ check("the accessibility sweep runs axe, over both themes", () => {
   assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
 });
 
+/**
+ * Every custom property a screen reads is one something sets.
+ *
+ * This failure is silent by construction, which is the whole reason for the
+ * check. `var(--nothing)` is not a syntax error and does not warn: the
+ * declaration is invalid at computed-value time, so the property falls back to
+ * its inherited value or, where it does not inherit, to its initial one.
+ * Nothing throws, nothing logs, and the contrast pass happily measures whatever
+ * colour actually landed.
+ *
+ * Two were live when this was written, and they failed in the two different
+ * ways the fallback rule produces. `--ink-soft` was read 25 times across the
+ * lesson, checkpoint and placement screens; `color` inherits, so every caption
+ * meant to sit back from its content was drawn in the full body ink, and "A new
+ * word" carried the same weight as the word being taught. `--r-md` was read
+ * ten times; `border-radius` does not inherit, so it landed on 0 and ten padded
+ * boxes had square corners inside cards rounded to 16px, the lesson's own
+ * answer buttons among them.
+ *
+ * A token may be set from a stylesheet or written from a component, since
+ * `--dock-clearance`, the nav marker's material and the confetti's drift are
+ * all measured at runtime and set as inline styles. So what this asserts is
+ * that the name is set *somewhere*, not that it is in the palette.
+ */
+check("every custom property a screen reads is one something sets", () => {
+  const stylesheets = sourceFiles("app", /\.css$/).map(read).join("\n");
+
+  // Tailwind's @theme exposes `--color-ink` as `--ink`, `--radius-lg` as
+  // `--radius-lg` and so on, so a namespaced declaration sets the bare name too.
+  const declared = new Set<string>();
+  const add = (name: string | undefined) => {
+    if (!name) return;
+    declared.add(name);
+    declared.add(name.replace(/^--(?:color|radius|font|text|shadow|ease|animate)-/, "--"));
+  };
+  for (const match of stylesheets.matchAll(/(--[\w-]+)\s*:/g)) add(match[1]);
+  // A component that writes the property itself: style={{ "--dock-clearance": x }}
+  // or element.style.setProperty("--nav-marker-bg", …).
+  for (const file of ALL) {
+    for (const match of read(file).matchAll(/["'`](--[\w-]+)["'`]\s*[,:)]/g)) add(match[1]);
+  }
+  // next/font declares its own variable on <html> rather than in a stylesheet.
+  for (const match of read("app/layout.tsx").matchAll(/variable:\s*"(--[\w-]+)"/g)) add(match[1]);
+
+  const missing = new Map<string, string>();
+  for (const file of [...ALL, ...sourceFiles("app", /\.css$/)]) {
+    for (const match of read(file).matchAll(/var\(\s*(--[\w-]+)\s*[,)]/g)) {
+      const name = match[1];
+      if (name && !declared.has(name) && !missing.has(name)) missing.set(name, file);
+    }
+  }
+
+  assert.equal(
+    missing.size,
+    0,
+    `nothing sets ${[...missing].map(([n, f]) => `${n} (read in ${f})`).join(", ")}. ` +
+    "An unset custom property is not an error: the declaration is dropped and the " +
+    "property inherits or resets, so the screen renders in the wrong colour or shape " +
+    "with nothing to say so.",
+  );
+});
+
+/**
+ * A fade never goes on words.
+ *
+ * `opacity` multiplies through everything inside a box, so a fade meaning
+ * "secondary" is applied to the sentence as well as to the idea of it, and
+ * there is no way to reason about the result from the palette. CLAUDE.md and
+ * `docs/14-design-system.md` both say this; until now neither had anything
+ * behind it, and eleven runs of text were faded under the bar.
+ *
+ * The four grading buttons are what made the case for asserting it rather than
+ * writing it down again. Their ink is already the hue's own ink, which clears
+ * 4.5:1 on its tint by construction, so nothing in the palette was wrong: the
+ * fades on top of it were. Measured in a browser, the interval under each
+ * button read 3.49 to 3.75 in the light theme and the keyboard hint 2.45 to
+ * 2.62, on the screen a learner opens every day. axe reported four of those
+ * twelve runs, and `test-design.mjs` none, because it walks `/review` as the
+ * page arrives and the grading row is not drawn until a card is revealed.
+ *
+ * A fade is still how you quieten something that carries no words, which is
+ * what `aria-hidden` marks: the padlock on a locked course unit is faded and
+ * the sentence beside it is not. `disabled:` and `hover:` variants are a
+ * control's own states rather than a way of ranking content, and 0 and 100 are
+ * an animation's endpoints.
+ *
+ * This reads the utility form, which is how all eleven were written. An inline
+ * `style={{ opacity }}` is not covered and cannot be: whether a box holds words
+ * is not a question the source can answer once the value is computed.
+ */
+check("a fade never goes on words", () => {
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const match of read(file).matchAll(/<([a-zA-Z][^>]*?)\/?>/g)) {
+      const tag = match[1];
+      if (!tag || /aria-hidden/.test(tag)) continue;
+      for (const token of tag.split(/[\s"'`{}]+/)) {
+        // `disabled:opacity-40` is a control's own state, not a way of ranking
+        // content, so only a bare utility counts. 0 and 100 are an animation's
+        // endpoints rather than a fade.
+        const bare = /^opacity-(\d+)$/.exec(token);
+        if (!bare) continue;
+        const pct = Number(bare[1]);
+        if (pct === 0 || pct === 100) continue;
+        offenders.push(`${file}: ${tag.slice(0, 70).replace(/\s+/g, " ")}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders, [],
+    "a fade on an element that is not aria-hidden fades whatever words it holds. " +
+    "Quieten content with a defined ink instead, or move the fade onto the icon.",
+  );
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

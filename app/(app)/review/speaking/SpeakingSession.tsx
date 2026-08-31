@@ -242,7 +242,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
                   style={{ background: TONE_SOFT[r.value], color: TONE[r.value] }}
                 >
                   <span className="text-base font-bold">{r.label}</span>
-                  <span className="text-2xs opacity-80">{r.hint}</span>
+                  <span className="text-2xs">{r.hint}</span>
                 </button>
               ))}
             </div>

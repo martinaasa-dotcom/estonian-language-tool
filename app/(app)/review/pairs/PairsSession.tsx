@@ -238,10 +238,10 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                   className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
+                  <kbd className="tnum text-2xs">{i + 1}</kbd>
                   <span className="min-w-0">
                     <span lang="et" className="block text-[19px] font-semibold">{option.value}</span>
-                    <span className="block text-[12.5px] opacity-80">
+                    <span className="block text-[12.5px]">
                       {option.formLabel} of {option.lemma} · {option.translation}
                     </span>
                   </span>
@@ -271,7 +271,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             </div>
             <div className="mt-4">
               <Button variant="primary" onClick={next} autoFocus>
-                Next <kbd className="ml-1 opacity-70">↵</kbd>
+                Next <kbd className="ml-1">↵</kbd>
               </Button>
             </div>
           </div>

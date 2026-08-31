@@ -236,7 +236,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                 className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-base font-semibold transition-ui hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
                 style={tone}
               >
-                <kbd className="text-2xs opacity-60">{i + 1}</kbd>
+                <kbd className="text-2xs">{i + 1}</kbd>
                 <span className="flex-1">{choice}</span>
                 {answered && isCorrectChoice && <Check size={15} aria-hidden />}
                 {answered && isPicked && !isCorrectChoice && <X size={15} aria-hidden />}
@@ -249,7 +249,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
             <Button variant="primary" size="lg" className="w-full" onClick={next}>
               Continue
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(0 0 0 / 0.16)" }}>Space</kbd>
             </Button>
           </div>
         )}

@@ -195,14 +195,14 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
+                  <kbd className="tnum text-2xs">{i + 1}</kbd>
                   <span className="min-w-0">
                     {/* The question leads because the dictionary records
                         government as the question a verb answers, and because
                         that is how the answer is said out loud: "aitama" takes
                         "keda?", not "the partitive". */}
                     <span lang="et" className="block text-base font-medium">{spec?.question}</span>
-                    <span lang="et" className="block text-[12.5px] opacity-75">{spec?.et}</span>
+                    <span lang="et" className="block text-[12.5px]">{spec?.et}</span>
                   </span>
                   {revealed && isAnswer && <Check size={16} className="ml-auto shrink-0" aria-hidden />}
                 </button>
@@ -232,7 +232,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
 
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={next} autoFocus>
-                Next <kbd className="ml-1 opacity-70">↵</kbd>
+                Next <kbd className="ml-1">↵</kbd>
               </Button>
               {!question.inDeck && (
                 <Button

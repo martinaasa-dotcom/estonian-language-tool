@@ -121,7 +121,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             {topic.points.map((point) => (
               <li
                 key={point}
-                className="rounded-[var(--r-md)] border p-3 text-base leading-relaxed"
+                className="rounded-[var(--r-sm)] border p-3 text-base leading-relaxed"
                 style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
               >
                 {point}
@@ -150,7 +150,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
               {units.map((unit) => (
                 <li
                   key={unit.id}
-                  className="rounded-[var(--r-md)] border p-3"
+                  className="rounded-[var(--r-sm)] border p-3"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
                 >
                   <span className="flex flex-wrap items-baseline gap-2">

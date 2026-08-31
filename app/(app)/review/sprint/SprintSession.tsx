@@ -243,7 +243,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           {!revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(0 0 0 / 0.16)" }}>Space</kbd>
             </Button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -254,7 +254,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                 style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
               >
-                Missed it <kbd className="ml-1 opacity-70">⌫</kbd>
+                Missed it <kbd className="ml-1">⌫</kbd>
               </button>
               <button
                 type="button"
@@ -263,7 +263,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                 style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
               >
-                Got it <kbd className="ml-1 opacity-70">Enter</kbd>
+                Got it <kbd className="ml-1">Enter</kbd>
               </button>
             </div>
           )}

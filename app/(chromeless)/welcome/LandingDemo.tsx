@@ -144,7 +144,7 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
                   style={{ background: g.soft, color: g.tone }}
                 >
                   <span className="text-sm font-bold">{g.label}</span>
-                  <span className="tnum text-2xs opacity-80">{g.next}</span>
+                  <span className="tnum text-2xs">{g.next}</span>
                 </button>
               ))}
             </div>

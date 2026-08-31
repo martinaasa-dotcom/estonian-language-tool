@@ -712,7 +712,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           {ask === "type" && !verdict ? (
             <Button variant="primary" size="lg" className="w-full" onClick={checkTyped}>
               Check
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
                 Enter
               </kbd>
             </Button>
@@ -725,7 +725,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           ) : !revealed && ask !== "intro" ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
                 Space
               </kbd>
             </Button>
@@ -749,8 +749,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                     }}
                   >
                     <span className="text-base font-bold">{r.label}</span>
-                    <span className="tnum text-2xs opacity-80">{intervals?.[r.value as RatingValue]}</span>
-                    <kbd className="text-2xs opacity-60">{r.key}</kbd>
+                    <span className="tnum text-2xs">{intervals?.[r.value as RatingValue]}</span>
+                    <kbd className="text-2xs">{r.key}</kbd>
                   </button>
                 );
               })}
@@ -770,7 +770,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           className="flex items-center gap-1 rounded-md px-1.5 py-0.5 disabled:opacity-40"
           style={{ color: "var(--ink-3)" }}
         >
-          <Undo2 size={12} aria-hidden /> Undo <kbd className="opacity-60">u</kbd>
+          <Undo2 size={12} aria-hidden /> Undo <kbd>u</kbd>
         </button>
         <span className="hidden items-center gap-1 md:flex">
           <Keyboard size={12} aria-hidden />
