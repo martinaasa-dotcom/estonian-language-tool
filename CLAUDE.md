@@ -420,6 +420,19 @@ own verdict rather than a division by no time: it used to floor at one week and 
 your daily goal puts in about 0.4 of those hours" over a note asking for 1 099 hours a week. Two
 invariants and an exhaustive sweep of every combination in `plan.test.ts` hold all three.
 
+**And the unit is part of the number.** All of that arithmetic was then printed in hours to one
+decimal place, which at the top of the range is fine and at the bottom is a different quantity: a
+daily goal of ten cards three days a week is nine minutes, and it read `0.2h`, which is twelve.
+The shortfall note was worse, since it rounds a figure the panel only shows when it is above zero:
+`0.0218` hours a week still to find printed as "roughly 0 to 0 hours a week", under a headline
+saying there was study left to do. `lib/time/duration.ts` is the one module that units a stretch
+of study, minutes below an hour and hours above, with a range stepping back down a unit rather
+than rounding its smaller end to a zero it is not. It lives in `lib/time/` and not in `clock.ts`,
+because a duration is not a time of day and the 24-hour rule has nothing to say about it. Two
+spellings, `min` for a tile and `minutes` for a sentence, since the same figure is read in both.
+The invariant is that the pace never reaches a screen except through that module, and `weeksNeeded`
+is the one caller allowed the raw figure, because it divides by it rather than showing it.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -1155,7 +1168,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
-`FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`. Most of them now
+`FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `formatDuration`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

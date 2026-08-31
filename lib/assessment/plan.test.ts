@@ -4,6 +4,7 @@ import {
   sustainableNewCardsPerDay, weeksNeeded, weeksToLearn,
 } from "./plan";
 import { BANDS, PRE_A1, type Band, type Level } from "./types";
+import { formatDuration, formatDurationRange } from "@/lib/time/duration";
 
 describe("the hours table", () => {
   it("only ever goes up", () => {
@@ -145,6 +146,44 @@ describe("project", () => {
         }
       }
     }
+  });
+
+  /*
+    An hour is the wrong unit for the figures at the small end of this screen.
+    Nine minutes a week was printed as "0.2h", which is twelve, and a real
+    0.0218 hours a week still to find was printed as "0 hours a week" under a
+    headline saying there was study left to do. Every duration the plan can
+    print is swept here, because the fault is only visible at the ends.
+  */
+  it("prints no duration in a unit that rounds it away", () => {
+    const FROMS: Level[] = [PRE_A1, ...BANDS];
+    const wrong: string[] = [];
+    for (const from of FROMS) {
+      for (const to of BANDS as readonly Band[]) {
+        for (const minutes of [3, 5, 8, 13]) {
+          for (const days of [2, 3, 4, 5, 6, 7]) {
+            for (const weeks of [null, 0, 13, 26, 52, 104]) {
+              const p = project({ from, to, minutesPerDay: minutes, daysPerWeek: days, weeksAvailable: weeks });
+              const where = `${from}->${to} ${minutes}min x${days}d in ${weeks}wk`;
+
+              // The pace is a real amount of practice, so it never reads as none.
+              const pace = formatDuration(p.appHoursPerWeek);
+              if (p.appHoursPerWeek > 0 && /^0 /.test(pace)) wrong.push(`${where}: pace "${pace}"`);
+              // And it is read in minutes wherever an hour would be the wrong unit.
+              if (p.appHoursPerWeek < 1 && !pace.endsWith("min")) wrong.push(`${where}: pace "${pace}"`);
+
+              // The note only renders on a real shortfall, so it may not read as none either.
+              const other = p.otherHoursPerWeek;
+              if (!other || other.high <= 0) continue;
+              const found = formatDurationRange(other.low, other.high, "long");
+              if (/^0 (minutes?|hours?)$/.test(found)) wrong.push(`${where}: shortfall "${found}"`);
+              if (/to 0 (minutes?|hours?)$/.test(found)) wrong.push(`${where}: shortfall "${found}"`);
+            }
+          }
+        }
+      }
+    }
+    expect(wrong).toEqual([]);
   });
 
   it("never makes more practice take longer", () => {

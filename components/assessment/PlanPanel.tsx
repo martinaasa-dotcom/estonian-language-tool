@@ -4,6 +4,7 @@ import {
   weeksNeeded, type Projection,
 } from "@/lib/assessment/plan";
 import { targetByBand, weeksUntil, type Goals } from "@/lib/assessment/goals";
+import { formatDuration, formatDurationRange } from "@/lib/time/duration";
 import { PRE_A1, type Band, type Level } from "@/lib/assessment/types";
 import { Card, Note, SectionTitle, StatTile } from "@/components/ui";
 import { icon } from "@/components/icons";
@@ -40,11 +41,15 @@ function range(low: number, high: number, unit: string): string {
 }
 
 /**
- * An hours figure on its way to a screen.
+ * The hours a whole deadline's worth of daily goals adds up to.
  *
- * One decimal place, and this is the only place the rounding happens. The
- * projection keeps every figure exact precisely so that a number shaped for a
- * tile never becomes a divisor.
+ * One decimal place, and it stays a bare number because the sentence around it
+ * supplies the unit: "about 43.3 of those hours". `formatDuration` is what the
+ * small weekly figures get, since an hour is the wrong unit for nine minutes;
+ * this one is never below an hour and a bit, so hours is what it is read in.
+ *
+ * The projection keeps every figure exact precisely so that a number shaped
+ * for a screen never becomes a divisor. Rounding happens here, on the way out.
  */
 function hours1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -137,7 +142,7 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           hint="published estimates, not this app"
         />
         <StatTile
-          value={`${hours1(plan.appHoursPerWeek)}h`}
+          value={formatDuration(plan.appHoursPerWeek)}
           label="From this app a week"
           tone="sky"
           hint={`${minutesFor(dailyGoal)} minutes, ${goals.daysPerWeek} days`}
@@ -160,7 +165,7 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
         <Note tone="sky">
           To make that date you would need roughly{" "}
           <strong>
-            {range(hours1(plan.otherHoursPerWeek.low), hours1(plan.otherHoursPerWeek.high), "hours a week")}
+            {formatDurationRange(plan.otherHoursPerWeek.low, plan.otherHoursPerWeek.high, "long")} a week
           </strong>{" "}
           of Estonian beyond this app: a class, a conversation partner, reading, a film without
           subtitles. At a found {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, the
@@ -254,16 +259,16 @@ function sentence(plan: Projection, weeks: number | null, from: string, to: Band
     return `Your measured level is already ${to} or above. Pick a higher target, or keep the deck warm and sit the check again in a couple of months.`;
   }
   const distance = `Going from ${from} to ${to} is usually ${range(plan.hours.low, plan.hours.high, "hours")} of study.`;
-  const pace = hours1(plan.appHoursPerWeek);
+  const pace = formatDuration(plan.appHoursPerWeek, "long");
   if (weeks === null) {
-    return `${distance} At your stated pace this app covers ${pace} hours a week of that, so set a date and the rest of this becomes a real timeline.`;
+    return `${distance} At your stated pace this app covers ${pace} a week of that, so set a date and the rest of this becomes a real timeline.`;
   }
   /*
     A date behind them divides by nothing, so it gets the distance and the pace
     and no arithmetic over the deadline at all.
   */
   if (plan.verdict === "passed") {
-    return `${distance} At your stated pace this app covers ${pace} hours a week of that. Pick a date you can still get to and this becomes a timeline again.`;
+    return `${distance} At your stated pace this app covers ${pace} a week of that. Pick a date you can still get to and this becomes a timeline again.`;
   }
   const covered = hours1(plan.appHoursAvailable ?? 0);
   if (plan.verdict === "comfortable") {

@@ -3257,6 +3257,35 @@ check("the verdict band and the found-hours sentence read one constant", () => {
   );
 });
 
+/*
+  A duration is read in the unit that makes it honest.
+
+  The plan's pace tile printed hours to one decimal place, so nine minutes a
+  week came out as "0.2h", which is twelve, and the shortfall note reached
+  "roughly 0 to 0 hours a week" on a real 1.3 minutes. `lib/time/duration.ts`
+  picks minutes below an hour and hours above, and steps a range down a unit
+  rather than rounding its smaller end to a zero it is not.
+
+  The rule asserted is that the pace is never printed except through that
+  module: `weeksNeeded` may take the raw figure because it divides by it rather
+  than showing it, and everything else has to go through the formatter.
+*/
+check("the plan reads a duration through the one module that units it", () => {
+  const panel = read("components/assessment/PlanPanel.tsx");
+  assert.match(
+    panel, /from "@\/lib\/time\/duration"/,
+    "PlanPanel no longer reads the duration module, so it is spelling a unit itself",
+  );
+  const printed = panel
+    .split("\n")
+    .filter((line) => line.includes("appHoursPerWeek") && !line.trimStart().startsWith("*"))
+    .filter((line) => !/formatDuration|weeksNeeded/.test(line));
+  assert.deepEqual(
+    printed, [],
+    `the pace reaches a screen without a unit chosen for its size: ${printed.join(" | ")}`,
+  );
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
