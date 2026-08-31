@@ -137,7 +137,23 @@ of speech. The second is truer and is a schema change.
 **Default if unanswered:** leave it. It is wrong metadata rather than wrong teaching, and the
 gloss review deliberately did not widen into it.
 
-### Q9: A seeded dictionary is twelve words larger here than it is in CI
+### Q9: A seeded dictionary was twelve words larger here than in CI **(no longer reproducible)**
+
+**The file it was measured on no longer exists.** Answering Q8 rebuilt `prisma/data/expanded.json`
+with the part of speech read off the sense each gloss came from, and this machine now seeds **4,644**
+expansion entries from it, which is the number CI reported from the old file. That is not an answer.
+Twelve is also what `lib/collections/seedSize.ts` records the seed losing when twelve words stopped
+being labelled two ways, so the same number now has an explanation that has nothing to do with two
+machines disagreeing, and the coincidence is close enough to be worth naming rather than believing.
+
+What can still be said is what cannot be done: the original measurement compared two machines on one
+file, that file has been replaced, and no run of the new one can reproduce a difference in the old.
+If a discrepancy appears again on the current file it is worth chasing with the note below, which
+records everything already ruled out. Until then there is nothing to chase.
+
+The original entry follows.
+
+---
 
 Measured rather than suspected. `prisma/expanded.ts` reports how many rows it actually inserted, from
 `RETURNING`, and on this machine a fresh seed adds **4,656** expansion entries where the same commit
