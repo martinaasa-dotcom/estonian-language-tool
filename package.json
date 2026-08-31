@@ -26,6 +26,7 @@
     "test:invariants": "tsx scripts/test-invariants.ts",
     "audit:merge": "node scripts/audit-merge.mjs",
     "audit:glosses": "tsx scripts/audit-glosses.ts",
+    "audit:pos": "tsx scripts/audit-pos.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
     "test:containment": "node scripts/test-containment.mjs",
     "harvest": "tsx scripts/harvest-ekilex.ts",

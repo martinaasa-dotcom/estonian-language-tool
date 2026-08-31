@@ -60,7 +60,32 @@ Currently designed for exactly one user, which permits no auth, no onboarding an
 If classmates or a teacher might use it, that assumption needs revisiting **before** Phase 1, not
 after. It changes the data model, not just the UI.
 
-### Q8: Around 30 adjectives in the built dictionary are labelled `NOUN`
+### Q8: Around 30 adjectives in the built dictionary are labelled `NOUN` **(answered)**
+
+**Answered 2026-08-30: neither of the two options offered below.** Both were wrong, and measuring
+them is what showed it. The recommendation was to prefer the more specific category, and that
+would have relabelled 86 words and broken 25 of them: `lamp` is in Wiktionary's adjectives
+category for a colloquial sense meaning "random", `pea` and `kama` are in the adverbs category for
+senses they do not ship, and `mari`, `norm`, `seadus`, `kreem`, `kile` and `kogus` would all have
+been labelled against the very gloss printed beside them. The category says the word has *some*
+sense of that kind somewhere on its page, which is not the question being asked.
+
+The question being asked is what part of speech the **shipped gloss** is, and the page answers it
+directly: every definition sits under a `===Noun===` or `===Adjective===` heading, and the gloss is
+the first definition on the page. Reading both facts off the same line is what makes them unable to
+disagree. `lib/dict/wiktionary.ts` returns the heading with the sense, `lib/dict/pos.ts` decides,
+and `npm run audit:pos` re-runs it over the shipped file the way `audit:glosses` does for the
+English.
+
+61 labels were corrected, 60 of them NOUN to ADJECTIVE. The second option, letting a word carry
+more than one part of speech, was not needed and remains available: it is still the truer model and
+it is still a schema change. `hall` is the case for it, a noun meaning "frost" and an adjective
+meaning "grey", and it is correctly two entries today.
+
+Full write-up in `docs/17-gloss-audit.md` §6. The original question follows, unchanged.
+
+---
+
 
 Found during the A1 to B1 gloss review (`docs/17-gloss-audit.md` §4) and left alone there, because
 their glosses are right and the review was about glosses.

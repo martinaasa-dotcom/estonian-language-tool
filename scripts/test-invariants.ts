@@ -19,7 +19,8 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { extractEstonianSenses } from "../lib/dict/wiktionary";
+import { extractEstonianEntries, extractEstonianSenses } from "../lib/dict/wiktionary";
+import { resolvePos } from "../lib/dict/pos";
 import { wordNote } from "../lib/estonian/dictation";
 import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
@@ -2002,6 +2003,96 @@ check("the gloss parser unwraps an English link and never an Estonian one", () =
     the whole sense is compared.
   */
   assert.equal(senses[1], "to depend on", "an Estonian mention reached an English gloss");
+});
+
+check("a part of speech is read off the sense the gloss came from", () => {
+  /*
+    The gloss and the label are two facts about one definition line, and they
+    used to come from different places: the gloss from the first sense on the
+    page, the label from whichever of Wiktionary's four categories the
+    candidate happened to be drawn from first. Nouns were drawn first, so
+    `kallis`, `valge`, `sinine`, `noor` and 57 others shipped as NOUN, and
+    reversing the order would only have moved the fault onto `lamp` and `pea`,
+    which are in the adjective and adverb categories for senses they do not
+    ship.
+
+    Nothing looked wrong either way: every answer is a real part of speech
+    spelled correctly, and an Estonian adjective declines exactly like a noun.
+    Asserted against the parser, because the data is a snapshot and the rule is
+    not.
+  */
+  const page =
+    "==Estonian==\n\n===Noun===\n{{et-noun}}\n\n# [[head]]\n\n" +
+    "===Adverb===\n{{et-adv}}\n\n# [[almost]]\n";
+  const senses = extractEstonianEntries(page);
+  assert.equal(senses[0]?.pos, "NOUN", "a sense no longer carries its own heading");
+  assert.equal(senses[1]?.pos, "ADVERB", "a heading no longer applies to the senses under it");
+
+  // The four words where the heading and the headword template disagree, and
+  // the reason only one of them may overturn the other: `{{et-adj}}` carries a
+  // superlative and is a claim, `{{et-noun}}` is the declension an adjective
+  // shares and is a shrug.
+  const base = { ekilexSaysVerb: false, fallback: "NOUN" };
+  assert.equal(
+    resolvePos({ ...base, sensePos: "NOUN", headwordPos: "ADJECTIVE" }), "ADJECTIVE",
+    "an adjective headword no longer overturns a noun heading (võimas)",
+  );
+  assert.equal(
+    resolvePos({ ...base, sensePos: "ADJECTIVE", headwordPos: "NOUN" }), "ADJECTIVE",
+    "a noun headword now overturns an adjective heading (üksik, lämbe, lämmi)",
+  );
+  // And Ekilex still draws the one line it actually draws, because that line
+  // decides which principal parts the entry has.
+  assert.equal(
+    resolvePos({ ...base, sensePos: "NOUN", headwordPos: "VERB", ekilexSaysVerb: true }), "VERB",
+    "Ekilex no longer settles the verb question",
+  );
+  assert.equal(
+    resolvePos({ ...base, sensePos: "VERB", headwordPos: "VERB" }), "NOUN",
+    "a nominal can now be labelled a verb on the page's word alone",
+  );
+});
+
+check("every corrected label agrees with the dictionary it was corrected in", () => {
+  /*
+    `pos` is half of `Lexeme`'s conflict key, so `prisma/data/pos-corrections.json`
+    is not a changelog: the seed replays it to move an already-seeded row onto
+    the label this build carries. If the two ever disagree, the replay moves a
+    row onto a label the dictionary no longer uses and the insert then adds the
+    right one beside it, which is the duplicate entry the ledger exists to
+    prevent.
+  */
+  const corrections = JSON.parse(read("prisma/data/pos-corrections.json")) as
+    { lemma: string; from: string; to: string }[];
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as { lemma: string; pos: string }[];
+  const byLemma = new Map(entries.map((e) => [e.lemma, e.pos]));
+
+  for (const c of corrections) {
+    assert.notEqual(c.from, c.to, `${c.lemma} is recorded as moving to the label it already had`);
+    const shipped = byLemma.get(c.lemma);
+    // A word dropped from the dictionary since is fine; a word still in it
+    // wearing neither label is not.
+    if (shipped !== undefined) {
+      assert.equal(shipped, c.to, `${c.lemma} ships as ${shipped} but is recorded as moving to ${c.to}`);
+    }
+  }
+
+  // One hop per word, or the replay's order would decide the outcome.
+  const froms = new Map<string, string>();
+  for (const c of corrections) {
+    const seen = froms.get(c.lemma);
+    assert.equal(seen, undefined, `${c.lemma} is recorded as moving twice (${seen} and ${c.to})`);
+    froms.set(c.lemma, c.to);
+  }
+
+  // And the built file may never hold one key twice, which is what the seed
+  // would fail on rather than silently deduplicate.
+  const keys = new Set<string>();
+  for (const e of entries) {
+    const key = `${e.lemma} ${e.pos}`;
+    assert.ok(!keys.has(key), `${key} appears twice in the built dictionary`);
+    keys.add(key);
+  }
 });
 
 
