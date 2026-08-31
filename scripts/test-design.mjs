@@ -202,7 +202,7 @@ for (const url of ["/welcome"]) {
 }
 
 // Floor: 13, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Design system", { floor: 9 });
+const { check, done } = suite("Design system", { floor: 14 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
@@ -286,40 +286,167 @@ check("a hovered row is drawn, and its words clear AA on the pill behind them",
   hovered.length === 0, hovered.join(" | "));
 
 /*
-  THE LANDING PAGE'S FOUR LETTERS ARE GONE, AND SO ARE THEIR FOUR CHECKS.
+  THE LANDING PAGE'S FOUR LETTERS TOUCH THE CARD, AND NOTHING THE CARD SAYS.
 
-  õ, ä, ö and ü were tucked over the hero's demo card, one to a side, and four
-  checks here measured that: every letter over an edge, none on the "Show
-  answer" pill, none past the page, and the slant still there with the
-  animation stopped. They were worth having. They caught a letter that missed
-  the card by clear air, a letter drawn on the one loud action on the page, and
-  a slant that vanished for anybody who asked for less motion, none of which
-  anything else could see: the letters are absolutely positioned, so
+  õ, ä, ö and ü are tucked over the case explorer's four sides, one to a side,
+  which is the whole of what makes them read as placed rather than scattered.
+  They used to hang off the hero's flashcard; that card went when the page was
+  cut to five screens, and they moved to the only object left big enough to
+  carry them, which is also the one whose contents are the letters themselves.
+
+  Nothing else can see any of this. They are absolutely positioned, so
   test-containment skips them by design, and a square that misses the card is
   drawn exactly as correctly as one that meets it.
 
-  The card went when the landing page was cut to five screens, and the letters
-  went with it, because "they all touch the card" is the placement rule and
-  there is no card. So these checks measure nothing, and a check that measures
-  nothing passes for the wrong reason. The floor came down by exactly four,
-  which is the mirror of raising it when they arrived rather than lowering a bar
-  to let a run through: nothing that used to be measured is now unmeasured, the
-  thing itself is gone.
+  WHAT THEY MAY NOT TOUCH IS ANYTHING THE CARD SAYS, and that is a wider rule
+  than the one it replaces. On the flashcard it was a single named pill in the
+  footer. Here the card is a table of Estonian forms whose row count changes
+  when the reader presses a chip, so the check is against every run of text and
+  every control inside it, and against the glyphs rather than the boxes: a
+  heading's box spans its whole column, so a box comparison reports a letter
+  sitting quietly in the padding as if it were drawn over the words. Measured
+  with `Range.getClientRects`, which bounds the ink.
 
-  WHAT WENT WITH THEM WAS NEWER THAN THEY WERE, and that is worth writing down
-  rather than losing in a merge. The letters had just been given a wander of
-  their own, `.drift` in `app/globals.css`, each on its own clock between 7.5
-  and 11 seconds and all four drifting inward so none of them swings into the
-  edge of the window; and this block had been sharpened to step every letter
-  through twelve frames of that wander rather than reading it wherever it
-  happened to rest, which is the only way a check on a moving ornament is worth
-  anything. Both are gone here, and neither was wrong. They were work on a card
-  this branch removes on the way to five screens.
+  It earned itself immediately. The first placement put õ over "Try a word" at
+  every width and ä and ü over a form and a case name at 640, where the card
+  stacks into one column and brings its content out to both edges. None of it
+  was visible in a screenshot at 1280.
 
-  If an ornament earns its place on this page again, this is the block to bring
-  back, the wander is in the history beside it, and the floor goes back up with
-  both.
+  READ ACROSS THE WHOLE WANDER rather than where the letters happen to rest.
+  Each drifts on its own clock, so there is no single frame that is the worst
+  for all four, and a resting position with three pixels of clearance is not a
+  placement that holds. Every letter is stepped through twelve frames of its
+  own cycle and measured at each, which is also what keeps the wander honest: a
+  letter given a generous keyframe leaves the card, or lands on a word, at some
+  frame the eye would have to be quick to catch.
+
+  Three widths, because the offsets change at `sm` and because the card is a
+  different shape below `md`: 707px tall and single-column at 640, about 440
+  and two columns above it.
 */
+const adrift = [], onInk = [], clipped = [], sides = [];
+for (const width of [640, 768, 1280]) {
+  await p.setViewportSize({ width, height: 1000 });
+  await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
+  await p.waitForTimeout(200);
+  for (let frame = 0; frame < 12; frame++) {
+    const seen = await p.evaluate((frac) => {
+      const card = document.querySelector("#cases .overflow-hidden.rounded-\\[var\\(--r-xl\\)\\]");
+      const letters = [...document.querySelectorAll("#cases span.drift")];
+      if (!card || letters.length === 0) return null;
+
+      /* Hold every letter at the same fraction of its own cycle. The periods
+         differ on purpose, so a shared delay would sample four different
+         points and never the same one twice. */
+      for (const el of letters) {
+        const dur = parseFloat(getComputedStyle(el).animationDuration) || 9;
+        el.style.animationDelay = `${-frac * dur}s`;
+        el.style.animationPlayState = "paused";
+      }
+
+      const box = (e) => e.getBoundingClientRect();
+      const over = (a, c) => ({
+        x: Math.min(a.right, c.right) - Math.max(a.left, c.left),
+        y: Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top),
+      });
+
+      // Every glyph run and every control the card holds.
+      const ink = [];
+      const walk = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        if (!/\S/.test(n.textContent)) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        for (const q of range.getClientRects()) {
+          if (q.width > 0 && q.height > 0) ink.push({ q, what: n.textContent.trim().slice(0, 20) });
+        }
+      }
+      for (const c of card.querySelectorAll("button, a, input")) {
+        ink.push({ q: box(c), what: `the ${c.textContent.trim().slice(0, 14)} control` });
+      }
+
+      const c = box(card);
+      return letters.map((el) => {
+        const a = box(el);
+        const o = over(a, c);
+        const hit = ink.find((i) => { const q = over(a, i.q); return q.x > 0 && q.y > 0; });
+        /* Which side it hangs off, as the one edge it reaches past. A letter
+           drawn wholly inside the card overlaps it perfectly and hangs off
+           nothing, which is not "tucked over an edge" and is why the side is
+           read rather than the overlap alone. */
+        const out = { top: c.top - a.top, bottom: a.bottom - c.bottom, left: c.left - a.left, right: a.right - c.right };
+        const outside = Object.entries(out).filter(([, v]) => v > 1).map(([k]) => k);
+        return {
+          ch: el.textContent.trim(),
+          touches: Math.round(Math.min(o.x, o.y)),
+          side: outside.length === 1 ? outside[0] : outside.join("+") || "none",
+          on: hit ? hit.what : null,
+          past: Math.round(a.left < 0 ? -a.left : Math.max(0, a.right - innerWidth)),
+        };
+      });
+    }, frame / 12);
+
+    if (seen === null || seen.length !== 4) {
+      adrift.push(`${width}: expected four letters around the card, found ${seen?.length ?? "no card"}`);
+      break;
+    }
+    for (const l of seen) {
+      if (l.touches < 4) adrift.push(`${width} f${frame}: ${l.ch} misses the card by ${-l.touches}px`);
+      if (l.on) onInk.push(`${width} f${frame}: ${l.ch} over ${l.on}`);
+      if (l.past > 1) clipped.push(`${width} f${frame}: ${l.ch} ${l.past}px past the edge`);
+    }
+    if (frame === 0) {
+      const taken = seen.map((l) => l.side);
+      if (new Set(taken).size !== 4 || taken.includes("none")) {
+        sides.push(`${width}: ${seen.map((l) => `${l.ch}=${l.side}`).join(" ")}`);
+      }
+    }
+  }
+}
+await p.setViewportSize({ width: 1280, height: 1000 });
+
+check("every landing letter is tucked over an edge of the card", adrift.length === 0,
+  adrift.slice(0, 4).join(" | "));
+/* One to a side is the placement rule, not a description of where they sit.
+   Three on one edge and one adrift is what this looked like before it was a
+   rule, and every letter overlapping the card cannot tell the difference. */
+check("the four letters take one side each", sides.length === 0, sides.join(" | "));
+check("no landing letter is drawn on anything the card says", onInk.length === 0,
+  onInk.slice(0, 4).join(" | "));
+check("no landing letter is clipped by the edge of the page", clipped.length === 0,
+  clipped.slice(0, 4).join(" | "));
+/*
+  THE SLANT SURVIVES THE ANIMATION BEING TAKEN AWAY, which is the only form of
+  this question worth asking.
+
+  It used to be asked by reading `rotate` off a letter mid-wander and failing on
+  exactly 0. That can never fire. The wander rocks each letter by `--drift-turn`
+  about its declared angle, so a letter that has lost its slant entirely reads
+  0.22deg at one frame and -1.32deg at another, and never the 0 the check was
+  watching for. Measured that way here, with `--float-tilt` deliberately deleted
+  from one letter: four passes, no failure, on a page where a quarter of the
+  ornament was broken.
+
+  So the animation is actually stopped, the way a reader who asked for less
+  motion stops it. `prefers-reduced-motion` shortens every animation in this app
+  to 0.01ms with no fill, so whatever is left is what the element declares for
+  itself, which is the whole reason the slant is a `rotate` property rather than
+  a keyframe.
+*/
+await p.emulateMedia({ reducedMotion: "reduce" });
+await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
+await p.waitForTimeout(200);
+const unslanted = await p.evaluate(() =>
+  [...document.querySelectorAll("#cases span.drift")]
+    .filter((el) => {
+      const r = getComputedStyle(el).rotate;
+      return !r || r === "none" || Math.abs(parseFloat(r)) < 1;
+    })
+    .map((el) => el.textContent.trim()));
+await p.emulateMedia({ reducedMotion: null });
+
+check("every landing letter keeps its slant with the motion turned off",
+  unslanted.length === 0, unslanted.join(" "));
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();

@@ -279,7 +279,99 @@ function Cases({ words }: { words: DemoWord[] }) {
         </div>
       </Reveal>
       <Reveal>
-        <div className="mt-8">
+        <div className="relative mt-8">
+          {/*
+            THE FOUR VOWELS A UK OR US KEYBOARD CANNOT WRITE, over the four
+            sides of the card that is full of them.
+
+            They are the reason `lib/ux/letterBar.ts` exists and the first
+            thing anybody meets about this language, and they used to hang off
+            the hero's flashcard. That card went when this page was cut to five
+            screens, and the rule they are placed under is why they could not
+            simply stay where they were: THEY ALL TOUCH THE CARD, one to a
+            side. A letter with clear air around it reads as one that missed
+            rather than as one that was put there.
+
+            So they moved rather than went, and this is the card they belong
+            on: the only object left on the page big enough to carry them, and
+            the one whose contents are the letters themselves. The hero above
+            is a centred column with no box in it, and the closing panel is a
+            send-off rather than an introduction.
+
+            WHAT THEY MAY NOT TOUCH IS A CONTROL. On the old card that was one
+            full-width pill in the footer; here it is the two word chips near
+            the top left, which is why the letter on the top edge sits well
+            left of them and is checked against every button inside the card
+            rather than against one named pill.
+
+            THE CARD CHANGES SHAPE, which the flashcard did not: the explorer
+            stacks into one column below `md`, so it is 707px tall at 640 and
+            about 440 above it. The two side letters are therefore placed from
+            the top and the bottom rather than at a fraction of a height that
+            is not stable, and the gutter they hang in goes 20px, 32px, 96px
+            across the three widths, so the hang grows with it.
+
+            EVERY OFFSET IS DERIVED FROM THE CARD'S OWN PADDING rather than
+            from where the content happens to sit. The nearest run of text is
+            21px from the left edge, 17px from the top, 33px from the right and
+            22px from the bottom, measured at all three widths and for both
+            words the explorer can show. So a letter that reaches in by less
+            than its side's margin, wander included, cannot touch a glyph
+            whatever the reader presses: that is a property of the placement
+            rather than a lucky gap, which matters because pressing a chip
+            changes how many rows the card has. Each of these reaches in by 12
+            to 20px and drifts at most 4px further.
+
+            The hang is bounded by the other end: the gutter is 20px at 640,
+            and a rotated square is wider than its side, so 14deg on 40px puts
+            its corners about 4px past the box. That is the difference between
+            hanging inside the page's padding and being clipped against it, and
+            it is why the side letters are smaller below `md` than above it.
+
+            They are `pointer-events-none` and `aria-hidden`: an ornament that
+            eats a tap on the card underneath it is a decoration doing
+            something no decoration should, and the card underneath is the one
+            interactive thing on this page.
+
+            `scripts/test-design.mjs` measures all of it at 640, 768 and 1280,
+            stepping each letter through twelve frames of its own wander rather
+            than reading it where it happens to rest: every letter over an
+            edge, none on a control, none past the page, and the slant still
+            there with the animation stopped.
+
+            One hue each, and the fourth takes butter because it is the hue
+            left: blush, mint and sky are spoken for and peach means "missed"
+            on every other screen in the app.
+          */}
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -top-7 left-72 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-top-11 md:left-80 md:h-14 md:w-14 md:text-2xl"
+            style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg", "--drift-x": "2px", "--drift-y": "4px", "--drift-turn": "2deg", "--drift-time": "9s" } as React.CSSProperties}
+          >
+            õ
+          </span>
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -right-3 top-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:top-28 md:h-12 md:w-12 md:text-xl"
+            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "12deg", "--drift-x": "-4px", "--drift-y": "-3px", "--drift-turn": "1.6deg", "--drift-time": "7.5s" } as React.CSSProperties}
+          >
+            ä
+          </span>
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -left-3 bottom-24 z-20 hidden h-7 w-7 sm:flex items-center justify-center rounded-[var(--r-sm)] text-sm font-bold md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-lg"
+            style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "2.4s", "--float-tilt": "-9deg", "--drift-x": "4px", "--drift-y": "-3px", "--drift-turn": "2.2deg", "--drift-time": "11s" } as React.CSSProperties}
+          >
+            ü
+          </span>
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -bottom-5 right-14 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-bottom-6 md:right-20 md:h-9 md:w-9 md:text-lg"
+            style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3.6s", "--float-tilt": "15deg", "--drift-x": "-3px", "--drift-y": "-4px", "--drift-turn": "1.8deg", "--drift-time": "10s" } as React.CSSProperties}
+          >
+            ö
+          </span>
+
           <CaseExplorer words={derivable} />
         </div>
       </Reveal>
