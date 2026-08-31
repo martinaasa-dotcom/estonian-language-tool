@@ -226,14 +226,28 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
 
       <div className="fade-up relative" style={{ animationDelay: "320ms" }}>
         {/*
-          Floating diacritics: the six characters this whole app is built
-          around. They are tucked over the card's corners on purpose, by
-          between sixteen and forty pixels depending on the width, and they
-          are `pointer-events-none` because of it: they are `aria-hidden`
+          Floating diacritics: the four vowels a UK or US keyboard cannot
+          write, which is the reason `lib/ux/letterBar.ts` exists and the
+          first thing anybody meets about this language. There were three of
+          them for a while, under a comment claiming six, and a reader who
+          knows the language counts the set before they read a word of the
+          page: õ, ä, ü and a missing ö reads as a rendering fault on the one
+          screen that has to look finished. Six is the letter bar's set and
+          not this one, since š and ž turn up in borrowed words rather than
+          in the endings this app is about, and six squares around one card
+          is a border rather than an ornament.
+
+          They are tucked over the card's corners on purpose, by between
+          sixteen and forty pixels depending on the width, and they are
+          `pointer-events-none` because of it: they are `aria-hidden`
           ornament, and an ornament that eats a tap on the card underneath it
           is a decoration doing something no decoration should. At 768 the
-          bottom one lands on a tick rather than on a blank corner, which is
-          how this turned up.
+          bottom ones land on the tick and on the footnote rather than on a
+          blank corner, which is how this turned up.
+
+          One hue each, and the fourth takes butter because it is the hue
+          left: blush, mint and sky are spoken for and peach means "missed"
+          on every other screen in the app.
         */}
         <span
           aria-hidden
@@ -255,6 +269,13 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
         >
           ü
+        </span>
+        <span
+          aria-hidden
+          className="est float pointer-events-none absolute -right-3 bottom-3 z-20 hidden h-12 w-12 sm:flex md:-right-7 items-center justify-center rounded-[var(--r)] text-xl font-bold"
+          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.8s", "--float-tilt": "-7deg" } as React.CSSProperties}
+        >
+          ö
         </span>
 
         <DemoCard words={words} />
