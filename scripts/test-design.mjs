@@ -204,7 +204,7 @@ for (const url of ["/welcome"]) {
 // Floor: 13, measured in the state CI seeds. A thinner database reads as short.
 const { check, done } = suite("Design system", { floor: 15 });
 
-const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
+const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px", "88px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
 
 /*
@@ -480,7 +480,20 @@ check("every landing letter keeps its slant with the motion turned off",
   in is the opposite fault, two openings competing on one screen.
 */
 const heroFit = [];
-for (const [width, height] of [[390, 844], [768, 1024], [1280, 800], [1512, 982], [1920, 1080]]) {
+/*
+  The last two are the boundary of the display step, one pixel apart, because a
+  rule taken on two axes is a rule with a corner and the corner is where it is
+  wrong. 88px of headline over a 19px paragraph needs both the width for its
+  longest line and the height for the column: measured, 740 leaves 64px over
+  the headline and 739 has to fall back or the hero takes its own peek band
+  under the fold. Asserting the size at 1000x740 and 1000x739 is asserting that
+  the height half of the condition is really there, which a check at one
+  comfortable desktop size cannot see.
+*/
+for (const [width, height, display] of [
+  [390, 844, "52px"], [768, 1024, "88px"], [1024, 600, "68px"], [1280, 800, "88px"],
+  [1512, 982, "88px"], [1920, 1080, "88px"], [1000, 740, "88px"], [1000, 739, "68px"],
+]) {
   await p.setViewportSize({ width, height });
   await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
   await p.waitForTimeout(200);
@@ -490,16 +503,25 @@ for (const [width, height] of [[390, 844], [768, 1024], [1280, 800], [1512, 982]
     const nav = document.querySelector("header nav");
     const cases = document.querySelector("#cases");
     const hero = document.querySelector(".hero-screen");
+    const h1 = hero.querySelector("h1");
     const declared = getComputedStyle(hero).getPropertyValue("--landing-nav");
     return {
       navBottom: bottom(nav),
       declared: Math.round(parseFloat(declared)),
       casesTop: top(cases),
       headingTop: top(cases.querySelector("h2")),
+      display: getComputedStyle(h1).fontSize,
+      headlineTop: top(h1),
       fold: window.innerHeight,
     };
   });
   const at = `${width}x${height}`;
+  if (seen.display !== display) {
+    heroFit.push(`${at} the headline is ${seen.display}, not the ${display} this window has room for`);
+  }
+  if (seen.headlineTop - seen.navBottom < 32) {
+    heroFit.push(`${at} the headline is ${seen.headlineTop - seen.navBottom}px under the nav, which is not air`);
+  }
   if (Math.abs(seen.navBottom - seen.declared) > 1) {
     heroFit.push(`${at} nav is ${seen.navBottom}px, --landing-nav says ${seen.declared}px`);
   }

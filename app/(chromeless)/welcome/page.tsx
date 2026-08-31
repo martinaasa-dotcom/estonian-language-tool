@@ -208,7 +208,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         is a page saying its best line twice, second-best first.
       */}
       <h1
-        className="fade-up text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
+        className="fade-up hero-display font-bold leading-[1.02] tracking-[-0.02em]"
         style={{ color: "var(--ink)", animationDelay: "90ms" }}
       >
         Estonian that
@@ -217,7 +217,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
       </h1>
 
       <p
-        className="fade-up hero-lead max-w-[52ch] text-md leading-relaxed"
+        className="fade-up hero-lead hero-sub max-w-[52ch] leading-relaxed"
         style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
       >
         Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
@@ -239,7 +239,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         same jump under "The cases" for anybody who wants to aim.
       */}
       <div className="fade-up hero-action w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
-        <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
+        <ButtonLink href="/sign-in" variant="primary" size="lg" className="hero-cta w-full sm:w-auto">
           Start learning for free <ArrowRight size={17} aria-hidden />
         </ButtonLink>
       </div>
