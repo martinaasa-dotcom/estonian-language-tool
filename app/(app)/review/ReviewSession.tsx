@@ -802,8 +802,17 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                     */}
                     <span className="text-base font-bold">{r.label}</span>
                     <span className="tnum text-2xs">{intervals?.[r.value as RatingValue]}</span>
+                    {/* The same cap as the two above it, class for class.
+                        This one was `rounded-[5px]` with no padding on the
+                        cross axis, which is neither a token nor the shape it
+                        says it is copying: `rounded-md` is remapped onto
+                        `--r-sm` in `@theme`, so every other key in the app is
+                        already drawn at 10px and this was the one raw literal.
+                        `test-design.mjs` reads the rendered radius, so it
+                        called it out the moment a grade button was on a page
+                        the suite walks. */}
                     <kbd
-                      className="rounded-[5px] px-1.5 text-2xs font-semibold"
+                      className="rounded-md px-1.5 py-0.5 text-2xs font-semibold"
                       style={{ background: "var(--surface)" }}
                     >
                       {r.key}
