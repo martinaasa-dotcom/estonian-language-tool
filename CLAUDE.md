@@ -657,7 +657,24 @@ and the row wears it until `data-nav-marked` says the pane has taken it over, or
 would paint a rail with nothing marked and then flicker a card into place. The rail deliberately
 does **not** breathe on a travel the way the phone's capsule does, since a column lurching beside
 the page it just changed is arguing with a decision the reader has already made; what a pointer
-gets there instead is the fainter pane following it, which is the hover those rows never had.
+gets there instead is the pane following it, which is the hover those rows never had.
+
+**A pointer's pane has to be one you can see, and reading layout to place it is not free.** The
+pane started as the raised tint on the rail's own ground, two percent of lightness apart in the
+light theme, which is technically a hover and practically nothing on the surface a pointer spends
+most of its time over. It is the accent's softest tint now, the row's own words go to
+`--accent-deep`, and the pill reaches 3px past the row as a shadow spread rather than as geometry,
+so the measurement that places it stays the row's own box and the row appears to grow rather than
+merely tint. `test-design.mjs` hovers a row and measures the ink against the pill in both themes,
+because a hovered state is not one a page arrives in and nothing else sweeps it: 5.16 and 7.93
+against a bar of 4.5. And the measure that places the panes **runs on every render of the
+surface**, where `offsetTop` and `getClientRects` each force a style and layout recalculation of
+the whole document: measured at 26 to 37 forced reads for one navigation, on two surfaces at once,
+nearly all answering a question nothing asked. What moves a pane is the marked cell changing or
+the pointer moving, which is element identity and free to compare, and geometry moving under a
+still pane is the observer's job, so an ordinary re-render is two comparisons and a return. The
+same observer answers "does this surface have a box" for nothing, which takes that question off
+the render path too. Measured after: 11 to 15 reads, and one `getClientRects` rather than eleven.
 
 **Space is what says two things are separate, and it was saying five different things.** Pages
 stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote

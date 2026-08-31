@@ -88,6 +88,24 @@
     box-shadow: var(--nav-marker-shadow, none);
   }
 
+  /*
+    THE POINTER'S PANE IS A PILL, AND IT HAS TO BE ONE YOU CAN SEE.
+
+    It was the raised tint on the rail's own ground, which is two percent of
+    lightness apart in the light theme: technically a hover and practically
+    nothing, on the surface a pointer spends the most time over. So the well
+    declares what it is painted, the rail asks for the accent's softest tint,
+    and the pill reaches past the row it is under by `--nav-ghost-halo`,
+    drawn as a spread rather than as geometry so the measurement that places
+    it stays the row's own box. That is the expansion: the pill is bigger
+    than the row, so a row under the pointer grows a little rather than
+    merely tinting.
+  */
+  .nav-ghost {
+    background: var(--nav-ghost-bg, transparent);
+    box-shadow: 0 0 0 var(--nav-ghost-halo, 0px) var(--nav-ghost-bg, transparent);
+  }
+
   .nav-cell[data-nav-on] {
     background: var(--nav-marker-bg, transparent);
     box-shadow: var(--nav-marker-shadow, none);
@@ -134,14 +152,18 @@
     }
 
     /*
-      The rail's disc reads this rather than naming its own resting fill, so
-      the row under the pointer's pane does not lose its glyph into it: the
-      pane and the disc are both the raised tint, and one on the other is a
-      circle that vanishes. See `RailLink` for why it is a custom property
-      and not a background here.
+      The row under the pointer says so in three ways rather than one: the
+      pill behind it, its glyph a touch larger, and its own words in the
+      accent's ink. All three are custom properties because an inline style
+      beats a class hover, silently, which is the mechanism that left half
+      the controls in this app dead under a pointer. `scripts/test-design.mjs`
+      hovers a row and measures the ink against the pill, in both themes,
+      because a hovered state is not one a page arrives in and nothing else
+      sweeps it.
     */
     .nav-cell:hover {
       --nav-disc: var(--surface);
+      --nav-ink: var(--accent-deep);
     }
 
     .nav-cell:active .nav-glyph {

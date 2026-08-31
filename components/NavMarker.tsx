@@ -27,7 +27,6 @@ export function NavMarker({ state }: { state: NavMarkerState }) {
       <span
         aria-hidden
         className={`nav-ghost rounded-full ${hover && hovering ? "opacity-100" : "opacity-0"}`}
-        style={{ background: "var(--raised)" }}
         /* Every pixel of the geometry is written onto the element by
            `useNavMarker`, along both axes, so where a pane rests and how it
            travels are one story. See `glide` there, and `crossStyle` for why

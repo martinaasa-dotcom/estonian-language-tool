@@ -89,6 +89,20 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   const reverting = useRef(false);
   /** Whether this surface was off screen when it was last looked at. */
   const wasHidden = useRef(false);
+  /*
+    Whether the well has a box at all, kept rather than asked for. See
+    `onScreen`: asking costs a forced layout and this is read after every
+    render. The observer below keeps it current.
+  */
+  const visible = useRef<boolean | null>(null);
+  /*
+    The cell and the hovered cell this surface last measured, as ELEMENTS,
+    so the layout effect can tell "nothing I care about moved" from "measure
+    me" without reading layout to find out. See the early return in
+    `measure`.
+  */
+  const lastTarget = useRef<HTMLElement | null>(null);
+  const lastHoverEl = useRef<HTMLElement | null>(null);
 
   const markOf = useCallback(
     (cell: HTMLElement): NavMark =>
@@ -162,7 +176,8 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   const measure = useCallback(() => {
     const host = ref.current;
     if (!host) return;
-    if (!onScreen(host)) {
+    if (visible.current === null) visible.current = onScreen(host);
+    if (!visible.current) {
       // The surface the other breakpoint draws. See `onScreen`.
       wasHidden.current = true;
       aimed.current = null;
@@ -181,6 +196,37 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       aimed.current = null;
     }
     const target = aimed.current ?? on;
+
+    /*
+      NOTHING BELOW THIS LINE MAY RUN ON AN ORDINARY RE-RENDER, BECAUSE
+      EVERYTHING BELOW IT READS LAYOUT.
+
+      This effect has no dependency list on purpose, so it runs after every
+      render of the surface, and `markOf` reads `offsetTop` and
+      `offsetHeight`, each of which forces the browser to recompute style
+      and layout for the whole document before it can answer. A navigation
+      renders the rail many times and both surfaces are mounted at once:
+      measured on the production build at 4x CPU, one hop cost 26 to 37
+      forced layout reads, nearly all of them answering a question nothing
+      had asked.
+
+      What actually moves a pane is the marked cell changing or the pointer
+      moving, both of which are element identity and cost nothing to
+      compare. Geometry changing under a still pane is the observer's job
+      and always was. So an ordinary re-render is two comparisons and a
+      return.
+    */
+    if (
+      !arriving &&
+      lastMark.current &&
+      target === lastTarget.current &&
+      hoverCell.current === lastHoverEl.current
+    ) {
+      return;
+    }
+    lastTarget.current = target;
+    lastHoverEl.current = hoverCell.current;
+
     const next = target ? markOf(target) : null;
     if (!sameMark(lastMark.current, next)) {
       if (lastMark.current && next && !reverting.current && !arriving) {
@@ -235,7 +281,22 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   useEffect(() => {
     const host = ref.current;
     if (!host || typeof ResizeObserver === "undefined") return;
-    const watch = new ResizeObserver(() => measure());
+    const watch = new ResizeObserver((entries) => {
+      /*
+        The well's own entry answers "does this surface have a box" for
+        free, which is what keeps that question off the render path. A
+        surface the other breakpoint draws reports 0x0.
+      */
+      for (const entry of entries) {
+        if (entry.target === host) visible.current = entry.contentRect.width > 0;
+      }
+      /*
+        Geometry moved, which is the one thing the early return above cannot
+        see, so forget what was measured and measure again.
+      */
+      lastTarget.current = null;
+      measure();
+    });
     watch.observe(host);
     /*
       The cells, never every child. Both panes are children too and both of
@@ -501,6 +562,14 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
  * surface the reader is no longer looking at. And the first measure after a
  * surface comes back **arrives** rather than travels, because where its
  * marker was last is not a place anybody should watch it come back from.
+ *
+ * THE ANSWER IS REMEMBERED RATHER THAN ASKED FOR, AND THAT IS NOT TIDINESS.
+ * `getClientRects()` forces the browser to recompute style and layout for
+ * the whole document before it can answer, and the measure below runs after
+ * every render of the surface, of which a navigation causes many, on both
+ * surfaces at once. The ResizeObserver watching the well already has the
+ * answer for nothing, since a surface with no box reports 0x0, so this is
+ * asked once at mount and kept.
  */
 function onScreen(el: HTMLElement): boolean {
   return el.getClientRects().length > 0;

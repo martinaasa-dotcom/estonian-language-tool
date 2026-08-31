@@ -94,6 +94,8 @@ export function Sidebar() {
           {
             "--nav-marker-bg": "var(--surface)",
             "--nav-marker-shadow": "var(--shadow-sm)",
+            "--nav-ghost-bg": "var(--accent-soft)",
+            "--nav-ghost-halo": "3px",
           } as CSSProperties
         }
       >
@@ -215,6 +217,7 @@ export function Sidebar() {
               background: "var(--surface)",
               boxShadow: "var(--shadow)",
               "--nav-marker-bg": "var(--raised)",
+              "--nav-ghost-bg": "var(--accent-soft)",
             } as CSSProperties
           }
         >
@@ -367,7 +370,7 @@ function RailLink({ item, active }: { item: Destination; active: boolean }) {
       title={item.blurb}
       className="nav-cell flex items-center gap-3 rounded-full px-3 py-1.5 text-base"
       style={{
-        color: active ? "var(--ink)" : "var(--ink-2)",
+        color: active ? "var(--ink)" : "var(--nav-ink, var(--ink-2))",
         fontWeight: active ? 700 : 500,
       }}
     >
