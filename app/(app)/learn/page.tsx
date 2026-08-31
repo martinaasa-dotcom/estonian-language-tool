@@ -70,7 +70,7 @@ export default async function LearnPage() {
   return (
     <Page
       title="The course"
-      lead="Five levels, A1 to C1. Every unit teaches a lesson first, then puts its words into your review deck with real audio and full paradigms."
+      lead="Five levels, A1 to C1. Each unit teaches a lesson, then puts its words in your deck."
     >
       {/*
         Stacked on a phone, one row above it. `flex-wrap` alone looked right and
@@ -147,7 +147,7 @@ export default async function LearnPage() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline gap-2">
-                    <span lang="et" className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    <span lang="et" className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                       {info.title}
                     </span>
                     {level === placement && <Chip tone="accent">You are here</Chip>}
@@ -179,7 +179,7 @@ export default async function LearnPage() {
                   return (
                     <li
                       key={u.unit.id}
-                      className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border p-3"
+                      className="flex flex-wrap items-center gap-4 rounded-[var(--r-sm)] border p-3"
                       /*
                         A locked unit is quieter, and the quiet used to be an
                         `opacity: 0.6` on the whole row. That fades the words:
@@ -214,7 +214,7 @@ export default async function LearnPage() {
                         <Link
                           href={`/learn/${u.unit.id}`}
                           lang="et"
-                          className="est text-md font-bold hover:underline"
+                          className="text-md font-bold hover:underline"
                           style={{ color: "var(--ink)" }}
                         >
                           {u.unit.title}
@@ -245,7 +245,7 @@ export default async function LearnPage() {
 
                 {checkpoint && (
                   <li
-                    className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border border-dashed p-3"
+                    className="flex flex-wrap items-center gap-4 rounded-[var(--r-sm)] border border-dashed p-3"
                     style={{ borderColor: "var(--rule)" }}
                   >
                     <span className="min-w-0 flex-1">

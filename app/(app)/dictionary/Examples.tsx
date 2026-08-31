@@ -8,11 +8,12 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import type { Example } from "@/lib/dict/examples";
+import { AI_TAG } from "@/lib/copy/values";
 
 /**
  * Example sentences on a dictionary entry.
  *
- * These are the most valuable thing on the page after the paradigm: a case
+ * These are the most valuable thing on the page after the forms: a case
  * table tells you `toas` exists, a sentence tells you when an Estonian would
  * actually say it. Every one of them is attested — recorded by lexicographers
  * and served by Ekilex — which is why the app can build cloze exercises from
@@ -116,7 +117,7 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
       style={{ background: "var(--raised)" }}
     >
       <div className="flex items-start gap-2">
-        <p lang="et" className="est flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
+        <p lang="et" className="flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
           {example.et}
         </p>
         <Speak text={example.et} label={`Hear "${example.et}"`} />
@@ -126,7 +127,7 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
         <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
           {example.en}
           <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
-            AI
+            {AI_TAG}
           </Chip>
         </p>
       ) : tutorReady ? (

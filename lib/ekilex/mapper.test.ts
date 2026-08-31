@@ -20,7 +20,7 @@ import type { EkilexDetails } from "./client";
 const verb = (governments: string[], overrides: Partial<EkilexDetails> = {}): EkilexDetails => ({
   wordId: 1,
   wordValue: "tänama",
-  paradigms: [
+  formSets: [
     {
       inflectionType: null,
       wordClass: "verb",
@@ -102,7 +102,7 @@ describe("what the mapper carries across", () => {
     expect(mapped?.examples.map((e) => e.et)).toContain(sentence);
   });
 
-  it("returns null for a word with no usable paradigm", () => {
-    expect(mapEkilexDetails(verb([], { paradigms: [] }))).toBeNull();
+  it("returns null for a word with no usable form set", () => {
+    expect(mapEkilexDetails(verb([], { formSets: [] }))).toBeNull();
   });
 });

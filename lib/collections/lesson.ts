@@ -40,6 +40,7 @@ import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
 import { deriveCase } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
+import { shuffle } from "@/lib/random/shuffle";
 
 export type StepKind =
   | "intro" | "meet" | "choose" | "produce" | "type"
@@ -208,18 +209,6 @@ function rng(seed: number): () => number {
   };
 }
 
-function shuffled<T>(items: readonly T[], rand: () => number): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    const a = out[i]!;
-    const b = out[j]!;
-    out[i] = b;
-    out[j] = a;
-  }
-  return out;
-}
-
 /** Up to `count` distinct candidates, skipping anything already in `seen`. */
 function pickWrong(
   candidates: readonly string[],
@@ -228,7 +217,7 @@ function pickWrong(
   seen: Set<string>,
 ): string[] {
   const out: string[] = [];
-  for (const candidate of shuffled(candidates, rand)) {
+  for (const candidate of shuffle(candidates, rand)) {
     const key = candidate.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -254,7 +243,7 @@ function choiceOf(
   const seen = new Set([correct.toLowerCase()]);
   const wrong = pickWrong(pool, OPTIONS - 1, rand, seen);
   if (wrong.length < OPTIONS - 1) return null;
-  const options = shuffled([correct, ...wrong], rand);
+  const options = shuffle([correct, ...wrong], rand);
   return { options, answer: options.indexOf(correct) };
 }
 
@@ -284,7 +273,7 @@ function choiceOfNear(
     wrong.push(...pickWrong(far, OPTIONS - 1 - wrong.length, rand, seen));
   }
   if (wrong.length < OPTIONS - 1) return null;
-  const options = shuffled([correct, ...wrong], rand);
+  const options = shuffle([correct, ...wrong], rand);
   return { options, answer: options.indexOf(correct) };
 }
 
@@ -348,7 +337,7 @@ function buildStep(word: LessonWord, id: string, rand: () => number): BuildStep 
     if (!isBuildable(sentence)) continue;
     const tiles = sentenceTiles(sentence);
     if (tiles.length < 3 || tiles.length > 9) continue;
-    return { id, kind: "build", lemma: word.lemma, tiles: shuffled(tiles, rand), sentence };
+    return { id, kind: "build", lemma: word.lemma, tiles: shuffle(tiles, rand), sentence };
   }
   return null;
 }
@@ -357,7 +346,7 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
   if (!isInflecting(word)) return null;
   const genitive = word.parts.GEN_SG;
   if (!genitive) return null;
-  for (const key of shuffled(DRILL_CASES, rand)) {
+  for (const key of shuffle(DRILL_CASES, rand)) {
     const answer = deriveCase(genitive, key);
     const spec = CASES.find((c) => c.key === key);
     if (!answer || !spec) continue;

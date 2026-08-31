@@ -505,7 +505,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
       "A few borrowed adjectives do not decline at all",
     ],
     watchOut:
-      "Every adjective learned is therefore worth a whole paradigm, not one word. Leaving an adjective in the dictionary form beside a declined noun is the commonest beginner tell.",
+      "Every adjective learned is therefore worth a whole set of forms, not one word. Leaving an adjective in the dictionary form beside a declined noun is the commonest beginner tell.",
   },
   {
     id: "comparative",

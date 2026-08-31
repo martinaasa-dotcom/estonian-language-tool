@@ -34,7 +34,7 @@ export const ADJECTIVES: readonly AdjSeed[] = [
   ["võimalik", "possible", "B1", "võimalik", "võimaliku", "võimalikku"],
 ] as const;
 
-/** Fixed expressions: [estonian, english, cefr, note?]. No paradigm to store. */
+/** Fixed expressions: [estonian, english, cefr, note?]. No forms to store. */
 export type PhraseSeed = readonly [string, string, string, string?];
 
 export const PHRASES: readonly PhraseSeed[] = [

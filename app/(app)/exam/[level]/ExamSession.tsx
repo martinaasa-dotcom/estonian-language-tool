@@ -235,7 +235,7 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
             <p className="label-xs" style={{ color: "var(--ink-3)" }}>
               {paper.level} · part {partIndex + 1} of {paper.parts.length} · {SKILL_ET[part.spec.skill]}
             </p>
-            <h1 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+            <h1 className="text-xl font-bold" style={{ color: "var(--ink)" }}>
               {part.spec.label}
             </h1>
           </div>
@@ -248,7 +248,7 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
               live region, and they change three times in the whole part.
             */}
             <p
-              className="est tnum text-2xl font-bold leading-none"
+              className="tnum text-2xl font-bold leading-none"
               style={{ color: warning === "gone" || warning === "last" ? "var(--peach-ink)" : "var(--ink)" }}
               role="timer"
             >
@@ -437,7 +437,7 @@ function Break({ until, now, nextLabel, onResume }: {
       <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>
         Between the halves
       </p>
-      <h1 className="est text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+      <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
         <Coffee size={26} className="mr-2 inline" aria-hidden />
         Break
       </h1>
@@ -448,7 +448,7 @@ function Break({ until, now, nextLabel, onResume }: {
       </p>
 
       <p
-        className="est tnum mt-8 text-5xl font-bold"
+        className="tnum mt-8 text-5xl font-bold"
         style={{ color: over ? "var(--mint-ink)" : "var(--ink)" }}
         role="timer"
       >
@@ -499,7 +499,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
       {resumable && resumePart && (
         <div className="mb-6">
           <Card tone="accent">
-            <p className="est text-md font-semibold" style={{ color: "var(--ink)" }}>
+            <p className="text-md font-semibold" style={{ color: "var(--ink)" }}>
               <RotateCcw size={16} className="mr-2 inline" aria-hidden />
               You left this paper part way through
             </p>
@@ -521,7 +521,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
       <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>
         {paper.spec.official ? "Mock state examination" : "Not a state examination"}
       </p>
-      <h1 className="est text-3xl font-bold tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+      <h1 className="text-3xl font-bold tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
         {paper.level}
       </h1>
       <p className="mt-3 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -536,7 +536,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
                 <span className="label-xs mr-2" style={{ color: "var(--ink-3)" }}>
                   Part {index + 1}
                 </span>
-                <span className="est text-md font-semibold" style={{ color: "var(--ink)" }}>
+                <span className="text-md font-semibold" style={{ color: "var(--ink)" }}>
                   {part.spec.label}
                 </span>
                 <span className="ml-2 text-sm" style={{ color: "var(--ink-3)" }}>
@@ -763,7 +763,7 @@ function ItemView({ item, number, marks, choices, response, canPlay, onAnswer }:
     case "match-usage":
       return (
         <div>
-          <p className="est mb-3 text-md leading-relaxed" style={{ color: "var(--ink)" }} lang="et">
+          <p className="mb-3 text-md leading-relaxed" style={{ color: "var(--ink)" }} lang="et">
             {stem}{item.sentence}
           </p>
           <Options
@@ -779,7 +779,7 @@ function ItemView({ item, number, marks, choices, response, canPlay, onAnswer }:
     case "gap-choice":
       return (
         <div>
-          <p className="est mb-3 text-md leading-relaxed" style={{ color: "var(--ink)" }} lang="et">
+          <p className="mb-3 text-md leading-relaxed" style={{ color: "var(--ink)" }} lang="et">
             {stem}{item.sentence}
           </p>
           <Options
@@ -809,7 +809,7 @@ function ItemView({ item, number, marks, choices, response, canPlay, onAnswer }:
         <div>
           <p className="mb-3 text-md" style={{ color: "var(--ink)" }}>
             {stem}
-            <span className="est font-semibold" lang="et">{item.word}</span>
+            <span className="font-semibold" lang="et">{item.word}</span>
           </p>
           <Options
             name={item.id}
@@ -827,7 +827,7 @@ function ItemView({ item, number, marks, choices, response, canPlay, onAnswer }:
         <div>
           <p className="mb-3 text-md" style={{ color: "var(--ink)" }}>
             {stem}
-            <span className="est font-semibold" lang="et">{item.lemma}</span>
+            <span className="font-semibold" lang="et">{item.lemma}</span>
             <span style={{ color: "var(--ink-3)" }}> {item.translation}</span>
             <span className="ml-2">
               in the <span lang="et">{item.caseEt}</span>
@@ -850,11 +850,11 @@ function ItemView({ item, number, marks, choices, response, canPlay, onAnswer }:
         <div>
           <p className="mb-1 text-md" style={{ color: "var(--ink)" }}>
             {stem}
-            <span className="est font-semibold" lang="et">{item.lemma}</span>
+            <span className="font-semibold" lang="et">{item.lemma}</span>
             <span style={{ color: "var(--ink-3)" }}> {item.translation}</span>
           </p>
           {item.cue && (
-            <p className="est mb-3 text-sm" style={{ color: "var(--ink-3)" }} lang="et">{item.cue}</p>
+            <p className="mb-3 text-sm" style={{ color: "var(--ink-3)" }} lang="et">{item.cue}</p>
           )}
           <Options
             name={item.id}
@@ -871,7 +871,7 @@ function ItemView({ item, number, marks, choices, response, canPlay, onAnswer }:
         <div>
           <p className="mb-3 text-md" style={{ color: "var(--ink)" }}>
             {stem}
-            <span className="est font-semibold" lang="et">{item.lemma}</span>
+            <span className="font-semibold" lang="et">{item.lemma}</span>
             <span style={{ color: "var(--ink-3)" }}> {item.translation}</span>
             <span className="ml-2">
               in the <span lang="et">{item.caseEt}</span>
@@ -1074,7 +1074,7 @@ function Options({ name, options, selected, onSelect, columns, english }: {
               className="size-4 shrink-0 accent-[var(--accent)]"
             />
             <span className="min-w-0">
-              <span className={english ? "" : "est"} lang={english ? undefined : "et"}>
+              <span lang={english ? undefined : "et"}>
                 {option.label}
               </span>
               {option.hint && (
@@ -1111,7 +1111,7 @@ function OrderQuestion({ item, number, built, onBuild }: {
         Tap the words in order. Tap one you have placed to take it back.
       </p>
       <div
-        className="est mb-3 flex min-h-[52px] flex-wrap items-center gap-2 rounded-[var(--r)] border border-dashed p-3"
+        className="mb-3 flex min-h-[52px] flex-wrap items-center gap-2 rounded-[var(--r)] border border-dashed p-3"
         style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
         lang="et"
       >
@@ -1135,7 +1135,7 @@ function OrderQuestion({ item, number, built, onBuild }: {
             key={`${word}-${index}`}
             type="button"
             onClick={() => onBuild([...built, word])}
-            className="choice-btn est min-h-[44px] rounded-[var(--r-sm)] border px-3 py-2 text-md"
+            className="choice-btn min-h-[44px] rounded-[var(--r-sm)] border px-3 py-2 text-md"
             style={{ color: "var(--ink)" }}
             lang="et"
           >
@@ -1177,7 +1177,7 @@ function RequiredWords({ words, text }: {
           // `wrap`, because this chip carries a full dictionary gloss rather
           // than a label, and a gloss is as long as the word needs.
           <Chip key={word.lexemeId} tone={done ? "good" : "neutral"} caseSensitive>
-            <span className="est" lang="et">{word.lemma}</span>
+            <span lang="et">{word.lemma}</span>
             <span style={{ opacity: 0.75 }}>{word.translation}</span>
           </Chip>
         );
@@ -1241,7 +1241,7 @@ function MessageQuestion({ item, text, onWrite }: {
         rows={5}
         aria-label={`Write ${item.scenario}`}
         placeholder="Write in Estonian."
-        className="est mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed outline-none focus:shadow-[var(--shadow)]"
+        className="mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed outline-none focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         lang="et"
       />
@@ -1314,7 +1314,7 @@ function ComposeQuestion({ item, response, onWrite }: {
         rows={10}
         aria-label={`Write about ${item.topic}`}
         placeholder="Write in Estonian."
-        className="est mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed outline-none focus:shadow-[var(--shadow)]"
+        className="mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed outline-none focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         lang="et"
       />
@@ -1356,7 +1356,7 @@ function SpeakQuestion({ item, marks, response, onMark }: {
         <span>Idea card:</span>
         {item.ideas.map((idea) => (
           <Chip key={idea.lexemeId} caseSensitive>
-            <span className="est" lang="et">{idea.lemma}</span>
+            <span lang="et">{idea.lemma}</span>
             <span style={{ opacity: 0.75 }}>{idea.translation}</span>
           </Chip>
         ))}

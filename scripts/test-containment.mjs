@@ -60,6 +60,7 @@
  */
 import { eventually, launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { revealAnswer } from "./lib/review.mjs";
 import { ensureLetterBar } from "./lib/prefs.mjs";
 
 const B = baseUrl();
@@ -234,6 +235,25 @@ await ensureLetterBar(browser, B, "on");
  * meant to be: `Assessment` is append-only, and `scripts/test-exam.mjs` hands
  * one in on every run for the same reason.
  */
+/**
+ * The word the stubbed photograph is read as.
+ *
+ * IT MUST BE A WORD NO DICTIONARY HAS, and it must not look like one either.
+ * `lexemeId: null` says the dictionary did not vouch for it, so ticking it
+ * makes the learner their own `Lexeme` row, and `Lexeme` is unique on
+ * `[lemma, pos]` rather than on the lemma alone. This fixture used to say
+ * `tuba`, so it left a second `tuba` in the shared dictionary with no
+ * paradigm behind it, sitting beside the seeded noun. `e2e.mjs` opens with
+ * three checks on `/dictionary?q=tuba` and CI runs it two steps after this
+ * suite, on the same database.
+ *
+ * `test-scan.mjs` and `test-suggestions.mjs` both worked this out already and
+ * each carries an invented string of its own. This is the third, and it is
+ * spelled so that nobody could mistake it for Estonian: the app writes none
+ * (ADR-005) and neither do its fixtures.
+ */
+const UNVOUCHED = "kodukeelcontainmenttest";
+
 async function screensToMake() {
   const made = [];
   const missing = [];
@@ -317,7 +337,7 @@ async function screensToMake() {
       contentType: "application/json",
       headers: { "x-model-provider": "Stub", "x-model-id": "test" },
       body: JSON.stringify({
-        items: [{ et: "tuba", en: "room", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
+        items: [{ et: UNVOUCHED, en: "a word off the page", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
         summary: { total: 1, known: 0, unknown: 1, inflected: 0 },
       }),
     }));
@@ -886,14 +906,32 @@ async function askedForStates(ctx, at) {
     absent(5, `Anu's panel ${at}, which needs the tutor to be reachable`);
   }
 
+  /*
+    A REVEALED CARD, WHICHEVER OF THE THREE SHAPES IT CAME IN.
+
+    This pressed "Show answer" and waived when there was none, on the reason
+    that the deck had nothing due. The deck had forty cards due. Review asks a
+    card as a flip, as multiple choice or as typing, decided per card, and the
+    one that comes up on the demo fixture is a choice card, which has no flip
+    button at all. So these ten checks, five at each width, had never once run,
+    and the line saying why told anybody reading it to go and seed a database
+    that was already seeded.
+
+    The revealed layout is the same whichever way the question was asked, and
+    it is the one with the most in it: the answer, the note about why this
+    card, and four rating buttons across a 360px phone.
+
+    It reveals and never grades. This suite runs third and everything after it
+    reads the same deck.
+  */
   await page.goto(`${B}/review`, { waitUntil: "networkidle", timeout: 60000 });
-  const show = page.getByRole("button", { name: /Show answer/ }).first();
-  if (await show.count()) {
-    await show.click();
+  const shape = await revealAnswer(page);
+  if (shape) {
     await page.waitForTimeout(450);
-    await measure(page, `a review card with its answer shown ${at}`);
+    await measure(page, `a review card with its answer shown ${at}, asked as ${shape}`);
   } else {
-    absent(5, `a revealed review card ${at}, because the deck had nothing due`);
+    absent(5, `a revealed review card ${at}: /review offered no card of any shape, ` +
+      "so this deck genuinely has nothing due. Run `npm run demo`");
   }
 
   await page.close();

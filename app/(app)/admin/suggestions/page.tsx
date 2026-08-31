@@ -38,8 +38,8 @@ export default async function SuggestionsQueuePage({
           title="Not this account"
           body={
             adminsConfigured()
-              ? "Suggestions are reviewed by whoever runs this copy of Kodukeel. Your own are on the page below, with what happened to each."
-              : "Nobody has been named as a reviewer on this deployment. Whoever runs it sets ADMIN_EMAILS to the addresses that may review suggestions. Until then, reports are collected and nothing is lost."
+              ? "Suggestions are reviewed by whoever runs this copy."
+              : "Nobody has been named a reviewer here. Reports are still collected, and nothing is lost."
           }
           action={<Link href="/suggestions" className="text-sm underline" style={{ color: "var(--accent-deep)" }}>Your own suggestions</Link>}
         />

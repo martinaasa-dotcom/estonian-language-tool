@@ -11,7 +11,7 @@ import { grammarPoint } from "@/lib/estonian/grammar";
  * The course references the dictionary by lemma, and a typo would silently
  * shrink a unit rather than fail loudly. So the words are checked here against
  * the data the seed actually writes — the harvested set for everything Ekilex
- * has a paradigm for, and the hand-checked phrase list for the greetings, which
+ * has forms for, and the hand-checked phrase list for the greetings, which
  * are not headwords and so cannot be harvested.
  *
  * This is the test that makes the no-Estonian rule mechanical rather than
@@ -219,7 +219,7 @@ describe("the harvested dictionary behind the course", () => {
     }
   });
 
-  it("gives every inflecting word the parts its paradigm is derived from", () => {
+  it("gives every inflecting word the parts its other forms are derived from", () => {
     for (const w of HARVESTED) {
       if (w.pos === "VERB") {
         for (const p of ["INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG"]) {

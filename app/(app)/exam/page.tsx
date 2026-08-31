@@ -4,7 +4,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { goalsFor } from "@/lib/progress/assessment";
 import { weeksUntil, targetByBand } from "@/lib/assessment/goals";
 import { readinessSignals, recentAttempts } from "@/lib/progress/exam";
-import { assessReadiness } from "@/lib/exam/readiness";
+import { EVIDENCE_NOTE, assessReadiness } from "@/lib/exam/readiness";
 import {
   OFFICIAL_LEVELS, PASS_PCT, bandFor, specFor, writtenMinutes,
 } from "@/lib/exam/spec";
@@ -54,11 +54,10 @@ export default async function ExamPage() {
     ? [...SKILLS].sort((a, b) => targetLevel.expected[a] - targetLevel.expected[b])[0]
     : undefined;
 
-  const evidenceNote = {
-    thin: "We have very little to go on yet, so these are guesses and are capped to say so.",
-    fair: "There is enough history here for a rough estimate, not a confident one.",
-    good: "There is enough history here for these numbers to mean something.",
-  }[readiness.evidence];
+  // The words live beside the tier in `readiness.ts`, because Today prints the
+  // same percentage and two copies of "what this number is worth" is how one
+  // screen ends up quietly more confident than the other.
+  const evidenceNote = EVIDENCE_NOTE[readiness.evidence];
 
   return (
     <Page
@@ -85,12 +84,12 @@ export default async function ExamPage() {
                 tone={targetLevel.confidence >= PASS_PCT ? "var(--mint)" : "var(--accent)"}
                 label={`${targetLevel.confidence} percent likely to pass ${target.band}`}
               >
-                <span className="est tnum text-md font-bold" style={{ color: "var(--ink)" }}>
+                <span className="tnum text-md font-bold" style={{ color: "var(--ink)" }}>
                   {targetLevel.confidence}%
                 </span>
               </Ring>
               <div className="min-w-[16rem] flex-1">
-                <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+                <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>
                   {target.band}, {target.label.toLowerCase()}
                 </p>
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -134,12 +133,12 @@ export default async function ExamPage() {
               tone={readiness.assessed ? "var(--mint)" : "var(--accent)"}
               label={readiness.assessed ? `Assessed at ${readiness.assessed}` : "No level assessed yet"}
             >
-              <span className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+              <span className="text-xl font-bold" style={{ color: "var(--ink)" }}>
                 {readiness.assessed ?? "?"}
               </span>
             </Ring>
             <div className="min-w-[16rem] flex-1">
-              <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+              <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>
                 {readiness.assessed
                   ? `We would bet on you passing ${readiness.assessed} today.`
                   : "We would not bet on any paper yet."}
@@ -190,7 +189,7 @@ export default async function ExamPage() {
                       narrowest, and they were 11px over its border. */}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+                      <span className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
                         {level.level}
                       </span>
                       {official
@@ -208,7 +207,7 @@ export default async function ExamPage() {
                     tone={level.confidence >= PASS_PCT ? "var(--mint)" : "var(--accent)"}
                     label={`${level.confidence} percent likely to pass ${level.level}`}
                   >
-                    <span className="est tnum text-md font-bold" style={{ color: "var(--ink)" }}>
+                    <span className="tnum text-md font-bold" style={{ color: "var(--ink)" }}>
                       {level.confidence}%
                     </span>
                   </Ring>
@@ -320,7 +319,7 @@ export default async function ExamPage() {
               <li key={`${attempt.level}-${attempt.at}-${index}`}>
                 <Card className="flex flex-wrap items-center justify-between gap-3 !py-3">
                   <span className="flex items-center gap-3">
-                    <span className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    <span className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                       {attempt.level}
                     </span>
                     <Chip tone={attempt.passed ? "good" : "again"}>

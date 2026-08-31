@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Camera, Check, Plus, Search, Star } from "lucide-react";
+import { Camera, Check, Plus, ScissorsLineDashed, Search, Star } from "lucide-react";
 import { addToDeck, toggleStar } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
@@ -13,12 +13,13 @@ import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { Examples } from "./Examples";
-import { Paradigm } from "./Paradigm";
+import { WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
 import { SuggestFix } from "@/components/SuggestFix";
-import { NO_VALUE } from "@/lib/copy/values";
+import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
+import type { Suggestions } from "@/lib/dict/suggest";
 
 export interface EntryForm {
   formType: string;
@@ -63,16 +64,28 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, openedId, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
 }: {
   initialQuery: string;
   /** True when this word was pulled from Ekilex on this request. */
   justFetched?: boolean;
   hits: SearchHit[];
+  /**
+   * Which of the hits is the one on screen. Usually the first, and not when a
+   * link asked for another entry of the same lemma by name.
+   */
+  openedId: string | null;
   entry: EntryView | null;
   /** Set when the query was an inflected form — "inessive (seesütlev) of tuba". */
   matchedAs: string | null;
-  suggestions: string[];
+  /**
+   * A dozen words worth looking up, and the line saying why these ones.
+   *
+   * The label is doing real work rather than decorating: the words change on
+   * every visit now, and a row that changes without saying why reads as
+   * random. "In the news today" earns the same twelve chips a second look.
+   */
+  suggestions: Suggestions;
   /** Words this learner has starred — shown on the landing view. */
   starred: { lemma: string; translation: string }[];
   /** Whether Anu can be asked to translate an example sentence. */
@@ -95,6 +108,24 @@ export function DictionaryClient({
     setQuery(q);
     start(() => router.push(q.trim() ? `/dictionary?q=${encodeURIComponent(q.trim())}` : "/dictionary"));
   };
+
+  /*
+    Open one specific match.
+
+    Searching the lemma again is enough for a different word and does nothing at
+    all for another entry of the *same* one: the search would return the same
+    list and open the same winner, so `hall` the frost was listed as an "other
+    match" and could not be reached from the chip that named it. The id says
+    which.
+  */
+  const openHit = (hit: SearchHit) => {
+    setQuery(hit.lemma);
+    start(() => router.push(
+      `/dictionary?q=${encodeURIComponent(hit.lemma)}&entry=${encodeURIComponent(hit.id)}`,
+    ));
+  };
+
+  const others = hits.filter((h) => h.id !== openedId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -128,7 +159,7 @@ export function DictionaryClient({
                   onClick={() => go(s.lemma)}
                   className="choice-btn flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left"
                 >
-                  <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
+                  <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>{s.translation}</span>
                 </button>
               </li>
@@ -154,24 +185,44 @@ export function DictionaryClient({
               stored.
             </p>
           )}
+          {/* The other way of bringing your own Estonian in, and the reason it
+              is here rather than on the practice menu: both of these turn
+              something you already have into something you can study, which is
+              what this page is for. */}
+          <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+            Reading something already?{" "}
+            <Link
+              href="/review/cloze"
+              className="inline-flex items-center gap-1.5 font-semibold underline underline-offset-2"
+              style={{ color: "var(--accent-deep)" }}
+            >
+              <ScissorsLineDashed size={14} aria-hidden /> Paste a passage
+            </Link>{" "}
+            and the words already in your deck are blanked out for you to fill back in.
+          </p>
         </div>
       )}
 
-      {!initialQuery && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="label-xs" style={{ color: "var(--ink-3)" }}>Try</span>
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => go(s)}
-              lang="et"
-              className="est press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
-              style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
-            >
-              {s}
-            </button>
-          ))}
+      {!initialQuery && suggestions.words.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p id="try-these" className="label-xs" style={{ color: "var(--ink-3)" }}>
+            {suggestions.label}
+          </p>
+          <ul aria-labelledby="try-these" className="flex flex-wrap gap-2">
+            {suggestions.words.map((s) => (
+              <li key={s}>
+                <button
+                  type="button"
+                  onClick={() => go(s)}
+                  lang="et"
+                  className="press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
+                  style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
+                >
+                  {s}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -179,7 +230,7 @@ export function DictionaryClient({
         <div className="flex flex-col gap-4">
           <Empty
             title={`Nothing found for "${initialQuery}"`}
-            body="The built-in dictionary covers common words up to B2. Add this one yourself, put in the genitive and you get the whole case table, audio and cards, exactly like a built-in word."
+            body="The built-in dictionary covers common words to B2. Add this one with its genitive."
           />
           <AddWord initialLemma={initialQuery} />
           {/*
@@ -191,8 +242,7 @@ export function DictionaryClient({
           */}
           <div className="flex flex-col gap-2">
             <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-              Sure this word exists? Tell us and it goes to the Kodukeel team, who can put it in the
-              dictionary for everybody.
+              Sure it exists? Tell us, and it can go in the dictionary for everybody.
             </p>
             <div>
               <SuggestFix
@@ -222,28 +272,41 @@ export function DictionaryClient({
               className="rounded-[var(--r)] px-4 py-3 text-sm"
               style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
-              <Et serif={false} className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
+              <Et className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
             </p>
           )}
           <Entry entry={entry} tutorReady={tutorReady} />
         </>
       )}
 
-      {hits.length > 1 && (
+      {others.length > 0 && (
         <div>
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            {hits.length - 1} other match{hits.length - 1 === 1 ? "" : "es"}
+            {others.length} other match{others.length === 1 ? "" : "es"}
           </p>
           <ul className="flex flex-wrap gap-2">
-            {hits.slice(1).map((h) => (
+            {others.map((h) => (
               <li key={h.id}>
                 <button
                   type="button"
-                  onClick={() => go(h.lemma)}
+                  onClick={() => openHit(h)}
                   className="press flex items-baseline gap-2 rounded-full border px-4 py-2 text-left transition-ui hover:-translate-y-px"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
                 >
-                  <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{h.lemma}</span>
+                  <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>{h.lemma}</span>
+                  {/*
+                    The part of speech, but only where it is the thing telling
+                    two chips apart. `hall` is grey and also frost, and both
+                    chips read "hall" with a gloss beside them; where the
+                    glosses are close, as they are across most of the pairs the
+                    dictionary carries, the two were indistinguishable and one
+                    of them looked like a rendering fault.
+                  */}
+                  {h.lemma === entry?.lemma && (
+                    <span className="text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                      {h.pos.toLowerCase()}
+                    </span>
+                  )}
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {h.matchedAs ? h.matchedAs : h.translation}
                   </span>
@@ -263,7 +326,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
   const form = (t: string) => entry.forms.find((f) => f.formType === t)?.value;
 
-  // Ekilex hands over the whole paradigm, so when we have it there is nothing to
+  // Ekilex hands over every form, so when we have them there is nothing to
   // derive — we show the authoritative forms, including irregular plurals and the
   // parallel forms Estonian genuinely has (raamatutes / raamatuis).
   // Every form Ekilex labelled, principal parts included: the 1sg present is
@@ -283,7 +346,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 lang="et" className="est text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
+            <h2 lang="et" className="text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
               {entry.lemma}
             </h2>
             <SpeakPair text={entry.lemma} />
@@ -297,7 +360,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 gradation {entry.gradationNote}
               </Chip>
             )}
-            {entry.provenance === "AI" && <Chip tone="again">AI · verify</Chip>}
+            {entry.provenance === "AI" && <Chip tone="again">{AI_TAG}</Chip>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -362,11 +425,11 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 >
                   {value ? (
                     <>
-                      <span lang="et" className="est block text-lg font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
+                      <span lang="et" className="block text-lg font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
                       <Speak text={value} />
                     </>
                   ) : (
-                    <span className="est block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
+                    <span className="block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
                   )}
                   <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
                   <span lang="et" className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{et}</span>
@@ -378,7 +441,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       )}
 
       {retrieved.length > 0 ? (
-        <Paradigm
+        <WordForms
           pos={entry.pos}
           forms={retrieved.map((f) => ({ value: f.value, morphCode: f.morphCode, morphName: f.morphName }))}
         />
@@ -405,7 +468,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 {table.map(({ spec, singular, plural, origin }) => (
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                      {/* The same way in the retrieved paradigm gives: this
+                      {/* The same way the retrieved forms give: this
                           table says what the form is, that page says when to
                           use it. It has to be here too, because a deployment
                           with no Ekilex key only ever renders this one, and
@@ -415,10 +478,10 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                       </Link>
                       <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.en.toLowerCase()}</span>
                     </td>
-                    <td lang="et" className="est px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
+                    <td lang="et" className="px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
                       {singular ?? NO_VALUE}
                     </td>
-                    <td lang="et" className="est px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
+                    <td lang="et" className="px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
                     </td>
                     <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>

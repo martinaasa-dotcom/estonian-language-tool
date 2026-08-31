@@ -55,11 +55,7 @@ export function QueueRows({ rows, status }: { rows: QueueRow[]; status: Suggesti
       <Empty
         mood="happy"
         title={status === "OPEN" ? "Nothing waiting" : "Nothing here"}
-        body={
-          status === "OPEN"
-            ? "Every report has been acted on. New ones land here the moment somebody sends one from a dead end in the app."
-            : "No report has been given this outcome yet."
-        }
+        body={status === "OPEN" ? "Every report has been acted on." : "No report has this outcome yet."}
       />
     );
   }
@@ -129,7 +125,7 @@ function Row({ row, onDone }: { row: QueueRow; onDone: (message: string) => void
               <Chip tone="hard">{row.reports} people</Chip>
             )}
             {row.lemma && (
-              <span lang="et" className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+              <span lang="et" className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {row.lemma}
               </span>
             )}
@@ -166,9 +162,9 @@ function Row({ row, onDone }: { row: QueueRow; onDone: (message: string) => void
           <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-base">
             <span className="label-xs" style={{ color: "var(--ink-3)" }}>{summary.field}</span>
             {row.before && (
-              <span className="est line-through" style={{ color: "var(--ink-3)" }}>{row.before}</span>
+              <span className="line-through" style={{ color: "var(--ink-3)" }}>{row.before}</span>
             )}
-            <span className="est font-semibold" style={{ color: "var(--ink)" }}>{summary.after}</span>
+            <span className="font-semibold" style={{ color: "var(--ink)" }}>{summary.after}</span>
           </div>
         </div>
       )}

@@ -16,8 +16,8 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  * how few questions it came from.
  */
 const B = baseUrl();
-// Floor: 42, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 42 });
+// Floor: 52, measured in the state CI seeds, with first run not yet done.
+const { check, absent, done } = suite("Level check", { floor: 52 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -68,7 +68,20 @@ const provenance = [];
 let asked = 0;
 let sawSpeaking = false;
 let sawWriting = false;
+let sawWritingGap = false;
 let saidNotScored = false;
+let namedACase = false;
+
+/*
+  The Estonian case names, which may appear in an explanation after an answer
+  and never in a question. `docs/16-exam.md` has the published task types the
+  state examination sets, and naming a case is not one of them.
+*/
+const CASE_NAMES = [
+  "nimetav", "omastav", "osastav", "sisseütlev", "seesütlev", "seestütlev",
+  "alaleütlev", "alalütlev", "alaltütlev", "saav", "rajav", "olev",
+  "ilmaütlev", "kaasaütlev",
+];
 
 for (let step = 0; step < 80; step++) {
   if ((await page.getByText("Skill by skill").count()) > 0) break;
@@ -82,11 +95,13 @@ for (let step = 0; step < 80; step++) {
     continue;
   }
 
-  // A written answer: the form is checked against the dictionary, no AI involved.
-  const sentence = page.getByLabel("Your sentence");
-  if (await sentence.count()) {
+  // A written answer: a gap in a recorded sentence, typed. The form is checked
+  // against the dictionary by string comparison, so no AI is involved.
+  const missing = page.getByLabel("The missing word");
+  if (await missing.count()) {
     sawWriting = true;
-    await sentence.fill("Ma olen kodus ja loen.");
+    sawWritingGap ||= (await page.locator("main .sr-only", { hasText: "blank" }).count()) > 0;
+    await missing.fill("toas");
     await page.getByRole("button", { name: /^Check$/ }).click();
     await page.waitForTimeout(150);
     const next = page.getByRole("button", { name: /Next question/ });
@@ -126,6 +141,20 @@ for (let step = 0; step < 80; step++) {
   // Multiple choice. Every question carries where its Estonian came from.
   const choice = page.locator("main button:not([disabled])").filter({ hasText: /^[1-4]\S/ });
   if (await choice.count()) {
+    /*
+      A placement question may not be a grammar quiz. Nobody sitting a real
+      Estonian test is asked to name a case, and this check used to spend half
+      of its reading section doing exactly that, in a section that is supposed
+      to measure reading. Asserted from the screen rather than from the source,
+      because the source check cannot see a case name arriving through an
+      interpolated option.
+    */
+    const asking = (await page.locator("main").innerText()).toLowerCase();
+    for (const name of CASE_NAMES) {
+      if (asking.includes(`which case`) || new RegExp(`in the ${name}\\b`).test(asking)) {
+        namedACase = true;
+      }
+    }
     await choice.first().click();
     await page.waitForTimeout(150);
     const note = await page.getByText(/No Estonian on this screen was written/i).count();
@@ -146,6 +175,8 @@ check("every question says where its Estonian came from",
 check("the paper reaches the writing section", sawWriting);
 check("the paper reaches the speaking section", sawSpeaking);
 check("speaking says out loud that it is not scored", saidNotScored);
+check("no question asks a learner to name a case", !namedACase);
+check("the writing section is a gap in a real sentence, not an essay prompt", sawWritingGap);
 
 // ─── The result ───────────────────────────────────────────────────────────────
 
@@ -205,7 +236,44 @@ await page.goto(`${B}/start`, { waitUntil: "networkidle" });
 const onboarded = !page.url().includes("/start");
 
 if (onboarded) {
-  absent(16, "a learner who has not been through first run: this database has");
+  /*
+    A WAIVER THAT FIRED ON EVERY RUN, WHICH IS A HOLE RATHER THAN A WAIVER.
+
+    `/start` redirects anyone carrying `onboardedAt` *or a single card*. CI
+    built the demo deck before starting the server, so this branch was the only
+    one that had ever been taken: the whole of first run waived here, and waived
+    the same way on anybody's machine, for as long as this suite has existed.
+    Honestly reported and under the half that fails a suite outright, so nothing
+    complained, and first run was verified by nothing. The checks below all
+    pass; they had simply never been asked.
+
+    The fixture moved after this suite in `.github/workflows/ci.yml`, which is
+    the precondition this branch is now stating rather than inheriting, and an
+    invariant asserts that ordering. Locally the deck is usually already there,
+    so this branch is still the one a developer takes.
+
+    THE COUNT IS THE BLOCK'S OWN, and it had drifted. It said 18 against a
+    branch holding 25, which is the one arithmetic error a waiver must not make:
+    the floor comes down by less than the run lost, so a suite that waived
+    honestly failed anyway, and it failed on the machine of whoever ran the
+    fixture before the suite rather than on CI, where the ordering above keeps
+    this branch untaken. The prose beside it had drifted the same way, still
+    naming a sixteen and a forty-two from before the merge that made this
+    fifty-two. Numbers in a comment are checked by nobody, so they are gone; the
+    one number left is the one `absent` reads, and it is the count of `check`
+    calls between here and the end of the else below.
+  */
+  /*
+    24 is the checks inside the `else` branch below, minus the one this branch
+    runs in their place. It was 18, which is the figure from before #58 rewrote
+    the deck step: that turned two checks into nine inside that branch and took
+    it from 17 to 25, and the waiver was never recounted. 52 minus 18 is 34, a
+    waived run reaches 28, and the suite failed reporting a block having stopped
+    running when nothing had. Measured in a browser in both states rather than
+    counted by eye, because counting by eye is what produced 18.
+  */
+  absent(24, "a learner who has not been through first run: this database has a deck, " +
+    "so /start correctly redirects. CI runs this suite before the demo fixture");
   /*
     A learner who has already been through it is sent to Today, which is the
     documented behaviour rather than a gap in this run: a wizard that reappears
@@ -254,16 +322,67 @@ if (onboarded) {
     /Take the check when you have ten minutes/i.test(goalStep));
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
-  check("the deck step comes last", (await page.getByText(/Your first units/i).count()) > 0);
-  check("and the daily goal is a row on it rather than a screen of its own",
-    (await page.getByText(/ten reviews over its first year/i).count()) > 0);
+  const deckStep = await page.locator("body").innerText();
+  check("the deck step comes last", (await page.getByText(/Your first words/i).count()) > 0);
+
+  /*
+    The deck is stated, not chosen. It used to be fourteen units with
+    checkboxes, which is fourteen decisions handed to somebody ninety seconds
+    into the app, and the honest reading of a list like that is "tick
+    everything": at A1 that is 2063 cards, which at the pace this app itself
+    calls sustainable is a four year backlog built by accident. So the course
+    picks the first three units, names them, and says how big they are.
+  */
+  check("it names the units it is giving rather than asking which to take",
+    /Tervitused|Minevik|Sihitis/.test(deckStep));
+  check("and asks nobody to pick, because a stranger cannot answer that yet",
+    (await page.getByRole("button", { name: /Units to start with/i }).count()) === 0);
+
+  /*
+    The count and the timeline. `words * 2` was the old estimate and it is out
+    by a factor of four at A2, where every unit drills seven cases and up to two
+    recorded sentences on top of recognition and production. A screen promising
+    a hundred cards where the deck is four hundred and sixty has misdescribed
+    the next year of somebody's evenings, so the server builds the cards and
+    counts them.
+  */
+  check("it says how many cards that actually is", /\d+ words, \d+ cards/.test(deckStep));
+  check("and how long they take at the chosen pace", /\d+ weeks to work through/.test(deckStep));
+  check("and that the rest of the course is still there",
+    /on the path whenever you want them/i.test(deckStep));
+
+  /*
+    The sentence this screen exists to get right. It read "setting this higher
+    does not make words arrive faster", which is the reverse of what
+    `sustainableNewCardsPerDay` computes: forty a day introduces four new cards
+    where ten introduces one. What is true is that a goal counts reviews rather
+    than new words, and that is what it has to say.
+  */
+  check("the daily goal is a row on it rather than a screen of its own",
+    (await page.getByRole("radio", { name: /Regular/ }).count()) > 0);
+  check("and it says a goal counts reviews, not new words",
+    /not \d+ new ones/i.test(deckStep));
+  check("and no longer claims a faster pace changes nothing",
+    !/does not make words arrive faster/i.test(deckStep));
   await page.getByRole("button", { name: /Start learning/ }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/start"), { timeout: 20000 });
   check("finishing lands in the app", !page.url().includes("/start"), page.url());
 
+  /*
+    What the wizard collected, read back off a different screen in a different
+    request. This asked whether the string "Why you are learning" appeared,
+    which is the `ChoiceGroup`'s own label and is drawn whether or not anybody
+    ever answered it: the check passed on an empty panel and could not fail.
+    The chosen chip carries `aria-checked`, and the name is an input's value, so
+    both of these are the wizard's answers having survived a round trip through
+    the database rather than the panel having rendered.
+  */
   await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
-  const saved = await page.locator("main").innerText();
-  check("the goals the wizard asked for were kept", /Why you are learning/i.test(saved));
+  const chosen = page.getByRole("radio", { name: /Citizenship or residence/ }).first();
+  check("the reason the wizard asked for was kept",
+    (await chosen.getAttribute("aria-checked")) === "true");
+  check("and the name they gave is the name the app uses",
+    (await page.getByLabel(/Name shown on the board/i).inputValue()) === "Test");
   check("and the level check is offered from settings too",
     (await page.locator('a[href="/assess"]').count()) > 0);
 }

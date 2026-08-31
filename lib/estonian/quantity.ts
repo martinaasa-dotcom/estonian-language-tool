@@ -46,8 +46,8 @@ export interface QuantityPair {
    * nominative against the short illative.
    *
    * These turn out to be almost all of them, and they are the better lesson:
-   * the learner is not distinguishing two vocabulary items but two *slots of
-   * the same paradigm* that mean "house" and "into the house". Getting the
+   * the learner is not distinguishing two vocabulary items but two *forms of
+   * the same word* that mean "house" and "into the house". Getting the
    * length wrong there changes the grammar of the sentence, not just the word.
    */
   sameWord: boolean;
@@ -70,7 +70,7 @@ export function isLengthPair(a: string, b: string): boolean {
 /**
  * Finds every length contrast among the supplied forms.
  *
- * Both kinds count. Within one paradigm the contrast carries grammar — `mere`
+ * Both kinds count. Within one word the contrast carries grammar — `mere`
  * is "of the sea" and `merre` is "into the sea" — and across two words it
  * carries meaning. The first kind is far more common in practice and is what
  * the built-in dictionary mostly yields.

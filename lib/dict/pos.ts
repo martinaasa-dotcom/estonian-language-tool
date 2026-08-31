@@ -48,7 +48,7 @@ export interface PosInputs {
  * label an entry a verb while its stored principal parts are a noun's, so the
  * heading is dropped and the fallback answers. That is the conservative side:
  * a word wearing the wrong nominal label is wrong metadata, and a word wearing
- * a verb label over a noun's paradigm is a card that cannot be answered.
+ * a verb label over a noun's forms is a card that cannot be answered.
  *
  * Between the heading and the headword template, an adjective claim from either
  * one is enough, and that is an asymmetry in the sources rather than a thumb on

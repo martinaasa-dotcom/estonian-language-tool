@@ -26,7 +26,15 @@ export interface EkilexForm {
   morphValue: string;
 }
 
-export interface EkilexParadigm {
+/**
+ * One set of inflected forms for a word, as Ekilex groups them.
+ *
+ * A word can have more than one: a noun set and a verb set where the same
+ * spelling is both. Ekilex's own JSON calls this group by a linguist's word,
+ * which is the one place in this app that word survives, because renaming a
+ * key we do not own would be renaming their data rather than ours.
+ */
+export interface EkilexFormSet {
   inflectionType: string | null;
   wordClass: string | null;
   forms: EkilexForm[];
@@ -35,7 +43,7 @@ export interface EkilexParadigm {
 export interface EkilexDetails {
   wordId: number;
   wordValue: string;
-  paradigms: EkilexParadigm[];
+  formSets: EkilexFormSet[];
   /** Estonian explanatory definitions — Ekilex has no English glosses on this key. */
   definitions: string[];
   /** Question words encoding a verb's case government, e.g. "mida", "kellele". */
@@ -109,7 +117,7 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
   return {
     wordId: data.word.wordId,
     wordValue: data.word.wordValue,
-    paradigms: (data.word.paradigms ?? []).map((p) => ({
+    formSets: (data.word.paradigms ?? []).map((p) => ({
       inflectionType: p.inflectionType ?? null,
       wordClass: p.wordClass ?? null,
       // Ekilex writes "-" for a form that does not exist for this word — the short

@@ -34,7 +34,7 @@ export default async function ClinicPage() {
       <Page title="Leech clinic" lead="The cards you keep failing, taken apart.">
         <Empty
           title="No leeches, which is the good outcome"
-          body={`A card lands here after ${LEECH_LAPSES} lapses. Nothing in your deck has failed that often, so there is nothing to fix.`}
+          body={`Nothing in your deck has lapsed ${LEECH_LAPSES} times.`}
           action={<ButtonLink href="/review" variant="primary">Carry on reviewing</ButtonLink>}
         />
       </Page>
@@ -74,9 +74,13 @@ export default async function ClinicPage() {
 
   // The rest of the deck, for the interference check. Cheap and orthographic —
   // it only ever claims "these look alike".
+  // Ordered, so a deck past the cap compares the same thousand words every
+  // time: "these two look alike" is a warning a learner should be able to see
+  // twice rather than one that comes and goes with the plan.
   const deck = await prisma.card.findMany({
     where: { ownerId, lexemeId: { not: null } },
     select: { lexeme: { select: { lemma: true } } },
+    orderBy: { createdAt: "asc" },
     take: 1000,
   });
   const lemmas = [...new Set(deck.map((d) => d.lexeme?.lemma).filter((l): l is string => !!l))];

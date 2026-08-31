@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ChangeEvent, type KeyboardEvent } from "react";
+import { useRef, type ChangeEvent, type KeyboardEvent, type RefObject } from "react";
 import { DiacriticBar } from "@/components/DiacriticBar";
 
 /**
@@ -13,9 +13,16 @@ import { DiacriticBar } from "@/components/DiacriticBar";
  * `fallbackRef` is this field, which is what preserves the behaviour the copy
  * had. The shared bar types into whatever has focus, and a learner who presses
  * õ before clicking anywhere would otherwise be typing into nothing.
+ *
+ * `inputRef` is for a caller that has to reach the field itself, which so far
+ * is Anu: picking one of her starters writes a half-written question into a box
+ * somewhere else on the panel, and a learner who is not put in it has to work
+ * out for themselves that anything happened. The bar still needs a field to
+ * fall back to, so the caller's ref is used as this component's own rather than
+ * kept alongside it: two refs on one input is how they come apart.
  */
 export function EstonianInput({
-  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large,
+  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large, inputRef,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -25,8 +32,10 @@ export function EstonianInput({
   id?: string;
   ariaLabel?: string;
   large?: boolean;
+  inputRef?: RefObject<HTMLInputElement | null>;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
+  const own = useRef<HTMLInputElement>(null);
+  const ref = inputRef ?? own;
 
   return (
     <div className="flex flex-col gap-2">
@@ -41,7 +50,7 @@ export function EstonianInput({
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
         }}
-        className={`est w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-xl" : "py-3 text-md"}`}
+        className={`w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-xl" : "py-3 text-md"}`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
       />
       <DiacriticBar standalone={false} fallbackRef={ref} />

@@ -14,7 +14,7 @@
  * `toas` and `lugesin`, not `tuba` and `lugema`, and the inflected-form search
  * this app already had (`matchEstonianForm`) resolves both and says which case
  * or person it recognised. So the photograph of an exercise becomes a set of
- * headwords with real paradigms behind them, and the learner is told, per word,
+ * headwords with real forms behind them, and the learner is told, per word,
  * what they were actually looking at.
  */
 
@@ -137,6 +137,11 @@ export async function candidatesFor(words: string[]): Promise<Candidate[]> {
           AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
               IN (${Prisma.join(stems.length ? stems : [""])})
     ) AS candidates
+    -- Ordered because it is truncated, exactly as the search's own union is.
+    -- This function's header already says the fault "went unnoticed until it
+    -- started failing at random"; which rows survive a ceiling is the same
+    -- question one paragraph on.
+    ORDER BY id
     LIMIT ${CANDIDATE_CEILING}
   `;
   if (rows.length === 0) return [];
@@ -145,7 +150,7 @@ export async function candidatesFor(words: string[]): Promise<Candidate[]> {
     where: { id: { in: rows.map((r) => r.id) } },
     select: {
       id: true, lemma: true, translation: true, pos: true,
-      cefr: true, gradationNote: true,
+      cefr: true, gradationNote: true, provenance: true,
       forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
     },
   });

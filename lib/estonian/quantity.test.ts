@@ -68,7 +68,7 @@ describe("findQuantityPairs", () => {
     expect([pairs[0]?.a.value, pairs[0]?.b.value].sort()).toEqual(["lina", "linna"]);
   });
 
-  it("pairs two slots of one paradigm and marks them as such", () => {
+  it("pairs two forms of one word and marks them as such", () => {
     // maja / majja is the commonest shape in the real dictionary, and the
     // better lesson: the length carries the grammar, not just the word.
     const pairs = findQuantityPairs([

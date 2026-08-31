@@ -14,6 +14,7 @@ import type { Badge } from "@/lib/achievements/badges";
 import { checkDictation, wordNote, type DictationResult, type WordStatus } from "@/lib/estonian/dictation";
 import { xpForRating } from "@/lib/gamification/xp";
 import type { RatingValue } from "@/lib/srs/scheduler";
+import { AI_TAG } from "@/lib/copy/values";
 
 export interface DictationTask {
   /** The card this counts against — every mode grades through the same log. */
@@ -136,7 +137,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       <Page title="Dictation" lead="Hear a sentence, write it down.">
         <Empty
           title="No sentences short enough yet"
-          body="Dictation uses the sentences Ekilex records against the words in your deck, and only the short ones, a sentence you cannot hold in your head tests memory, not listening. Look a few of your words up in the dictionary, or add a unit from the path."
+          body="Dictation reads the short Ekilex sentences attached to words in your deck."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -150,7 +151,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Dictation done
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -247,7 +248,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
                 style={{ background: "var(--hard-soft)" }}
               >
                 <p className="label-xs" style={{ color: "var(--hard-ink)" }}>No audio right now</p>
-                <p lang="et" className="est text-lg" style={{ color: "var(--ink)" }}>{task.et}</p>
+                <p lang="et" className="text-lg" style={{ color: "var(--ink)" }}>{task.et}</p>
                 <p className="max-w-[42ch] text-xs" style={{ color: "var(--ink-2)" }}>
                   The pronunciation service could not be reached, so the sentence is shown instead of
                   played. Copying it out still drills the spelling. Come back for the listening half.
@@ -299,7 +300,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
             <p className="text-center text-sm" style={{ color: "var(--ink-2)" }}>
               {task.en}
               <Chip tone="again" title="Machine translation, the Estonian is authoritative, this is not">
-                AI
+                {AI_TAG}
               </Chip>
             </p>
           )}
@@ -374,7 +375,7 @@ function Marked({ result }: { result: DictationResult }) {
             >
               <span
                 lang="et"
-                className="est text-md"
+                className="text-md"
                 style={{
                   color: tone.color,
                   textDecoration: word.status === "extra" ? "line-through" : undefined,

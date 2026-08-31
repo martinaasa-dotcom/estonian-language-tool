@@ -69,6 +69,30 @@ describe("applyGradeBatch", () => {
     expect(afterSecond.due.getTime()).toBe(afterFirst.due.getTime());
   });
 
+  /*
+    A batch that repeats an id, which a device with a half-written queue can
+    send. This used to work by accident: the second copy asked the database
+    whether the id existed and found the row the first copy had just written.
+    The existence check is one query for the whole batch now, so the second
+    copy would not be in that answer and would try to insert the same primary
+    key twice, failing the whole replay rather than one grade. It is dropped
+    before the loop instead.
+  */
+  it("keeps one grade when a batch repeats an id", async () => {
+    const card = await makeCard();
+    const at = Date.now();
+    const result = await applyGradeBatch(OWNER, [
+      { id: "g1", cardId: card.id, rating: 3, durationMs: 2000, reviewedAt: at },
+      { id: "g1", cardId: card.id, rating: 3, durationMs: 2000, reviewedAt: at },
+    ]);
+
+    expect(result.ok).toBe(true);
+    expect(result.settled).toEqual(["g1"]);
+    expect(await prisma.review.count({ where: { ownerId: OWNER } })).toBe(1);
+    const after = await prisma.card.findUniqueOrThrow({ where: { id: card.id } });
+    expect(after.reps).toBe(1);
+  });
+
   it("applies two grades of one card in time order, not array order", async () => {
     const card = await makeCard();
     const t0 = Date.parse("2026-08-20T09:00:00Z");

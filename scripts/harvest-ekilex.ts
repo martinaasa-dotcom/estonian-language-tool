@@ -9,16 +9,16 @@
  * sentence-building modes are built from.
  *
  * The important property is the direction of authority. A lemma in the syllabus
- * is a *request*, not a fact: if Ekilex does not know it, or knows it with a
- * paradigm that does not match the part of speech we asked for, it is dropped
+ * is a *request*, not a fact: if Ekilex does not know it, or knows it with
+ * forms that do not match the part of speech we asked for, it is dropped
  * and reported. So a word this project has misspelled or imagined cannot reach
  * the dictionary — it can only fail to arrive, loudly. That is the mechanical
  * version of ADR-005, and it is why the vocabulary could grow by an order of
  * magnitude in one pass without a single generated form.
  *
- * Only principal parts are written. The full retrieved paradigm is deliberately
+ * Only principal parts are written. Everything else Ekilex returns is deliberately
  * *not* stored: the regular cases are derived from the genitive stem at render
- * time, and a word is upgraded to its authoritative Ekilex paradigm the first
+ * time, and a word is upgraded to its authoritative Ekilex forms the first
  * time somebody looks at it. Storing all of it here would be the second source
  * of truth the schema notes forbid.
  *
@@ -79,8 +79,9 @@ if (!KEY) {
 const API_KEY: string = KEY;
 
 interface RawForm { value?: string; morphCode?: string }
-interface RawParadigm { wordClass?: string | null; forms?: RawForm[] }
-interface RawWord { wordId: number; wordValue: string; lang: string; paradigms?: RawParadigm[] }
+/** One set of forms, as Ekilex groups them. Their JSON's own key is `paradigms`. */
+interface RawFormSet { wordClass?: string | null; forms?: RawForm[] }
+interface RawWord { wordId: number; wordValue: string; lang: string; paradigms?: RawFormSet[] }
 interface RawUsage { value?: string; lang?: string; public?: boolean }
 interface RawLexeme {
   lexemeProficiencyLevelCode?: string | null;
@@ -149,10 +150,10 @@ const search = (lemma: string) =>
 const details = (wordId: number) =>
   cached(`details-${wordId}`, () => call<RawDetails>(`/word/details/${wordId}`));
 
-/** The forms of a paradigm, flattened to a morphCode to value map. */
-function formMap(paradigm: RawParadigm): Map<string, string> {
+/** One set of forms, flattened to a morphCode to value map. */
+function formMap(formSet: RawFormSet): Map<string, string> {
   const map = new Map<string, string>();
-  for (const f of paradigm.forms ?? []) {
+  for (const f of formSet.forms ?? []) {
     // Ekilex writes "-" where a form genuinely does not exist for this word,
     // most often the short illative. That is an absence, not a value.
     if (!f.value || f.value === "-" || !f.morphCode) continue;
@@ -161,20 +162,20 @@ function formMap(paradigm: RawParadigm): Map<string, string> {
   return map;
 }
 
-const isVerbParadigm = (p: RawParadigm) =>
+const isVerbFormSet = (p: RawFormSet) =>
   (p.wordClass ?? "").toLowerCase() === "verb" || (p.forms ?? []).some((f) => f.morphCode === "Sup");
 
 /**
- * Picks the paradigm to read from, given what the syllabus said the word is.
+ * Picks the set of forms to read from, given what the syllabus said the word is.
  *
- * Homonyms are the reason this exists. Asking for a verb and being handed a noun
- * paradigm is a mismatch we drop rather than guess through.
+ * Homonyms are the reason this exists. Asking for a verb and being handed a noun's
+ * forms is a mismatch we drop rather than guess through.
  */
-function pickParadigm(detail: RawDetails | null, wantVerb: boolean): RawParadigm | null {
-  const paradigms = detail?.word?.paradigms ?? [];
-  const matching = paradigms.filter((p) => isVerbParadigm(p) === wantVerb);
-  // Prefer the paradigm carrying the most forms — a stub with three forms is a
-  // lexicographic placeholder, not a usable paradigm.
+function pickFormSet(detail: RawDetails | null, wantVerb: boolean): RawFormSet | null {
+  const sets = detail?.word?.paradigms ?? [];
+  const matching = sets.filter((p) => isVerbFormSet(p) === wantVerb);
+  // Prefer the set carrying the most forms — a stub with three forms is a
+  // lexicographic placeholder, not a usable set.
   const sorted = [...matching].sort((a, b) => (b.forms?.length ?? 0) - (a.forms?.length ?? 0));
   return sorted[0] ?? null;
 }
@@ -234,7 +235,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
   const candidates = (found?.words ?? []).filter((w) => w.lang === "est" && w.wordValue === lemma);
   if (candidates.length === 0) return { lemma, gloss, pos, error: "not in Ekilex" };
 
-  // An Estonian adverb does not inflect, so demanding a paradigm of one would
+  // An Estonian adverb does not inflect, so demanding a set of forms for one would
   // drop every single connective in the course. Existing in Ekilex is the whole
   // check that matters here: it is still the authority deciding the word is real,
   // and there are no forms to get wrong.
@@ -256,17 +257,17 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
 
   for (const candidate of candidates) {
     const detail = await details(candidate.wordId);
-    const paradigm = pickParadigm(detail, wantVerb);
-    if (!paradigm) continue;
+    const formSet = pickFormSet(detail, wantVerb);
+    if (!formSet) continue;
 
-    const forms = formMap(paradigm);
+    const forms = formMap(formSet);
     const wanted = wantVerb ? VERB_PARTS : NOMINAL_PARTS;
     const parts: Record<string, string> = {};
     for (const [formType, code] of Object.entries(wanted)) {
       const value = forms.get(code);
       if (value) parts[formType] = value;
     }
-    // The forms that make a word teachable at all. Without them the paradigm
+    // The forms that make a word teachable at all. Without them the rest
     // cannot be derived, so the word is dropped rather than half-added.
     const required = wantVerb
       ? ["INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG"]
@@ -284,7 +285,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       note: extra.definition,
     };
   }
-  return { lemma, gloss, pos, error: wantVerb ? "no verb paradigm" : "no nominal paradigm" };
+  return { lemma, gloss, pos, error: wantVerb ? "no verb forms" : "no nominal forms" };
 }
 
 /** Runs `worker` over `items` with a fixed number of workers in flight. */
@@ -316,7 +317,7 @@ function render(rows: readonly Harvested[]): string {
  * project is allowed to write (ADR-005).
  *
  * Only principal parts are stored. The regular cases are derived from the
- * genitive stem at render time, and the full paradigm is fetched from Ekilex the
+ * genitive stem at render time, and every other form is fetched from Ekilex the
  * first time a word is viewed — storing it here would be a second source of
  * truth that goes stale.
  *
@@ -364,7 +365,7 @@ async function main() {
   await mkdir(CACHE, { recursive: true });
 
   // Phrases are the one part of speech that is not a headword, so Ekilex has no
-  // paradigm for them. They stay in the hand-checked built-in list.
+  // forms for them. They stay in the hand-checked built-in list.
   let requests = courseWords().filter((w) => w.pos !== "PHRASE");
   if (ONLY) requests = requests.filter((w) => w.units.includes(ONLY));
 

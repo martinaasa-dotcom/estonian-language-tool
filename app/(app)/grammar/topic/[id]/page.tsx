@@ -6,6 +6,23 @@ import { TOPIC_NOTES, grammarTopic } from "@/lib/estonian/grammar";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { SYLLABUS } from "@/lib/collections/syllabus";
 import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
+import { DrillLink } from "@/components/DrillLink";
+
+/**
+ * The grammar topics with a drill of their own.
+ *
+ * Two, and both are things you cannot learn from a page about them. Rektsioon
+ * has to be met verb by verb, because `aitan sind` and `helistan sulle` look
+ * identical in English and only the drill tells them apart. Quantitative
+ * gradation is a length distinction Estonian spelling only half records, so
+ * `maja` against `majja` is a question about what you can hear rather than what
+ * you can read. Both drills used to sit on the practice menu, which is the one
+ * screen that cannot tell you either of them is what you are getting wrong.
+ */
+const TOPIC_DRILL: Record<string, string> = {
+  government: "/review/government",
+  gradation: "/review/pairs",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +87,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     Answers
                   </dt>
-                  <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                     {term.question}
                   </dd>
                 </div>
@@ -79,7 +96,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                 <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                   In plain English
                 </dt>
-                <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                   {topic.title}
                 </dd>
               </div>
@@ -88,7 +105,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     In English references
                   </dt>
-                  <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                     {term.alsoCalled}
                   </dd>
                 </div>
@@ -98,7 +115,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     The ending that carries it
                   </dt>
-                  <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                     {topic.marker}
                   </dd>
                 </div>
@@ -121,7 +138,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             {topic.points.map((point) => (
               <li
                 key={point}
-                className="rounded-[var(--r-md)] border p-3 text-base leading-relaxed"
+                className="rounded-[var(--r-sm)] border p-3 text-base leading-relaxed"
                 style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
               >
                 {point}
@@ -150,14 +167,14 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
               {units.map((unit) => (
                 <li
                   key={unit.id}
-                  className="rounded-[var(--r-md)] border p-3"
+                  className="rounded-[var(--r-sm)] border p-3"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
                 >
                   <span className="flex flex-wrap items-baseline gap-2">
                     <Link
                       href={`/learn/${unit.id}`}
                       lang="et"
-                      className="est text-md font-bold hover:underline"
+                      className="text-md font-bold hover:underline"
                       style={{ color: "var(--ink)" }}
                     >
                       {unit.title}
@@ -179,6 +196,13 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             </ul>
           )}
         </section>
+
+        {TOPIC_DRILL[id] && (
+          <section>
+            <SectionTitle hint="from your own deck">Drill it</SectionTitle>
+            <DrillLink href={TOPIC_DRILL[id]!} />
+          </section>
+        )}
       </Stack>
     </Page>
   );

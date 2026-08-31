@@ -154,7 +154,7 @@ export default async function ScanSetPage({ params }: { params: Promise<{ scanId
                 <Card as="div" className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   <Speak text={lexeme!.lemma} label={`Say ${lexeme!.lemma}`} />
                   <Link href={`/dictionary?q=${encodeURIComponent(lexeme!.lemma)}`} className="min-w-0 flex-1">
-                    <span lang="et" className="est block text-lg" style={{ color: "var(--ink)" }}>
+                    <span lang="et" className="block text-lg" style={{ color: "var(--ink)" }}>
                       {lexeme!.lemma}
                     </span>
                     <span className="block text-sm" style={{ color: "var(--ink-2)" }}>

@@ -119,7 +119,7 @@ export function Shortcuts() {
           style={{ borderColor: "var(--rule-soft)", background: "var(--surface)" }}
         >
           <Keyboard size={17} aria-hidden style={{ color: "var(--accent-deep)" }} />
-          <h2 className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+          <h2 className="text-md font-bold" style={{ color: "var(--ink)" }}>
             Keyboard shortcuts
           </h2>
           <button

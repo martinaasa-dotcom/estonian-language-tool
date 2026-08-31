@@ -98,7 +98,7 @@ export function PlacementSession({
       <Page title="Where to start" lead="A quick check of what you already know.">
         <Empty
           title="Not enough words to place you yet"
-          body="The placement test needs a full set of words at each level. Seed the dictionary, or pick a level yourself on the path."
+          body="This needs a full set of words at each level in the dictionary."
           action={<ButtonLink href="/learn">Go to the path</ButtonLink>}
         />
       </Page>
@@ -115,7 +115,7 @@ export function PlacementSession({
           </div>
           <h2 className="text-3xl">{done.level} · {info.title}</h2>
           <p className="text-lg">{info.summary}</p>
-          <p style={{ color: "var(--ink-soft)" }}>{placementSummary(done.level, done.scores)}</p>
+          <p style={{ color: "var(--ink-2)" }}>{placementSummary(done.level, done.scores)}</p>
           <ul className="flex flex-wrap gap-2 text-sm">
             {done.scores.map((s) => (
               <li
@@ -155,7 +155,7 @@ export function PlacementSession({
       <div className="flex flex-col gap-5">
         <Meter pct={Math.round((askedSoFar / ceiling) * 100)} label={`${askedSoFar} questions answered`} />
         <Card className="flex flex-col gap-4">
-          <div className="flex items-center justify-between text-sm" style={{ color: "var(--ink-soft)" }}>
+          <div className="flex items-center justify-between text-sm" style={{ color: "var(--ink-3)" }}>
             <span>What does this mean?</span>
             <span>{currentStage.level}</span>
           </div>
@@ -173,7 +173,7 @@ export function PlacementSession({
                   type="button"
                   disabled={settled}
                   onClick={() => answer(i)}
-                  className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
+                  className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-sm)] border p-3 text-left"
                   style={settled ? {
                     borderColor: isAnswer ? "var(--mint)" : "var(--rule)",
                     background: isAnswer ? "var(--mint-soft)" : chosen === i ? "var(--peach-soft)" : "var(--surface)",
@@ -196,7 +196,7 @@ export function PlacementSession({
             the one above. You can start anywhere on the path whatever it says.
             {current && ` You are currently set to ${current}.`}
           </p>
-          {saving && <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Working out where to start you…</p>}
+          {saving && <p className="text-sm" style={{ color: "var(--ink-3)" }}>Working out where to start you…</p>}
           {error && (
             <p className="text-sm" role="alert" style={{ color: "var(--peach-ink)" }}>{error}</p>
           )}

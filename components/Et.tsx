@@ -7,14 +7,17 @@ import type { ReactNode } from "react";
  * pronounces `tuba` and `õppima` with English phonics, which is useless to
  * someone learning the language. It also stops browser translation mangling the
  * very words being studied.
+ *
+ * It is the whole of what this marks. Estonian used to be set in a second face,
+ * which put two typefaces inside one card wherever a prompt and its answers are
+ * in different languages, and that is most of the app.
  */
-export function Et({ children, className = "", serif = true }: {
+export function Et({ children, className = "" }: {
   children: ReactNode;
   className?: string;
-  serif?: boolean;
 }) {
   return (
-    <span lang="et" className={`${serif ? "est " : ""}${className}`.trim()}>
+    <span lang="et" className={className}>
       {children}
     </span>
   );

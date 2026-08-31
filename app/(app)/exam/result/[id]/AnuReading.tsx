@@ -76,7 +76,7 @@ export function AnuReading({ text, level, title, marks }: {
         </p>
       )}
       <p
-        className="est whitespace-pre-wrap text-md leading-relaxed"
+        className="whitespace-pre-wrap text-md leading-relaxed"
         style={{ color: "var(--ink)" }}
         lang="et"
       >

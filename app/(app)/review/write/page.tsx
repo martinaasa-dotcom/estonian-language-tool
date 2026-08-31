@@ -5,6 +5,7 @@ import { writingTasksFor } from "@/lib/estonian/writing";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { WriteSession, type WritingPrompt } from "./WriteSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Writing" };
 
@@ -84,11 +85,14 @@ export default async function WritePage() {
     }
   }
 
-  // Weak cases first, then shuffled, so a round is varied but pointed.
-  const shuffled = pool
-    .map((p) => ({ p, k: Math.random() - (p.weak ? 1 : 0) }))
-    .sort((a, b) => a.k - b.k)
-    .map(({ p }) => p);
+  // Weak cases first, then shuffled, so a round is varied but pointed. Two
+  // shuffles rather than one sort keyed on `Math.random() - (weak ? 1 : 0)`:
+  // same distribution, and it says what it does instead of leaving the reader
+  // to notice that [-1, 0) and [0, 1) cannot interleave.
+  const shuffled = [
+    ...shuffle(pool.filter((p) => p.weak)),
+    ...shuffle(pool.filter((p) => !p.weak)),
+  ];
 
   // At most one prompt per word, so a round is six different words.
   const seen = new Set<string>();
@@ -99,7 +103,7 @@ export default async function WritePage() {
       <Page title="Writing" lead="Write your own Estonian, and have it marked.">
         <Empty
           title="No words to write about yet"
-          body="Writing practice draws on nouns and adjectives already in your deck, because the point is producing words you have met, not meeting new ones. Add a few from the dictionary."
+          body="This draws on nouns and adjectives already in your deck."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

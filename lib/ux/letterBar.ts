@@ -48,15 +48,11 @@ export const LETTER_BAR_CHOICES: { value: LetterBar; label: string; detail: stri
   {
     value: "on",
     label: "Show the letters",
-    detail:
-      "A row under every Estonian field, one press per letter. The right answer on a UK or US " +
-      "keyboard, where õ is not a key at all.",
+    detail: "My keyboard does not have õ, ä, ö or ü.",
   },
   {
     value: "off",
     label: "I have them already",
-    detail:
-      "For an Estonian keyboard, where these are keys and the row is a line of buttons you will " +
-      "never press.",
+    detail: "I have an Estonian keyboard.",
   },
 ];

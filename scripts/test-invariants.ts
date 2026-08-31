@@ -26,10 +26,13 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
+import { allGlosses, occasionsFor } from "../lib/copy/almanac";
+import { glossSenses } from "../lib/dict/gloss";
 // @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
 import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
@@ -74,7 +77,18 @@ const read = (file: string) => readFileSync(file, "utf8");
  * compliance with it.
  */
 const code = (file: string) =>
-  read(file).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  read(file)
+    /*
+      A comment is replaced by the newlines it spanned, not by a space. Several
+      checks report `file:line` from this, and collapsing a forty-line header
+      into one space put every one of those numbers well above the line it was
+      naming, which sends a reader to the wrong part of the file to look for a
+      fault they were told the name of. A single-line block comment still
+      becomes a space, since it has no newline to stand in and two tokens must
+      not be joined.
+    */
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => "\n".repeat(m.split("\n").length - 1) || " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
 /**
  * One exported function's body, from its signature to the next export.
@@ -83,6 +97,36 @@ const code = (file: string) =>
  * a syntax nobody thought about; this only needs to know which half of a file
  * a call site is in.
  */
+/**
+ * Every lemma the shipped dictionary carries, lower-cased.
+ *
+ * Read off the two files the seed loads rather than out of a database, so this
+ * suite stays hermetic like the rest of it.
+ */
+function seededLemmas(): Set<string> {
+  const out = new Set<string>();
+
+  const expanded = "prisma/data/expanded.json";
+  if (existsSync(expanded)) {
+    const parsed: unknown = JSON.parse(readFileSync(expanded, "utf8"));
+    const rows = Array.isArray(parsed) ? parsed : (parsed as { entries?: unknown[] }).entries ?? [];
+    for (const row of rows) {
+      const lemma = (row as { lemma?: unknown }).lemma;
+      if (typeof lemma === "string") out.add(lemma.toLowerCase());
+    }
+  }
+
+  // The course harvest is a TypeScript module, so its lemmas are read as text.
+  const harvested = "prisma/data/harvested.ts";
+  if (existsSync(harvested)) {
+    for (const m of readFileSync(harvested, "utf8").matchAll(/\blemma:\s*"((?:[^"\\]|\\.)*)"/g)) {
+      out.add((m[1] ?? "").toLowerCase());
+    }
+  }
+
+  return out;
+}
+
 function between(source: string, from: string): string {
   const start = source.indexOf(from);
   if (start < 0) return "";
@@ -167,7 +211,7 @@ check("Anu's worked examples are sourced from a table the dictionary checks", ()
 
     `CLOSED_CLASS_EXAMPLES` is the honest exception: a pronoun's oblique case,
     a demonstrative and a particle, none of which the dictionary holds a
-    paradigm for at all, so they cannot be checked the same way and stay
+    form for at all, so they cannot be checked the same way and stay
     hand-verified. Naming the list here, imported rather than retyped, is what
     stops a sixth word joining it silently.
   */
@@ -229,7 +273,7 @@ check("a withheld note claims Estonian only when it caught Estonian", () => {
     and they are not the same claim. A word carrying one of õäöüšž is Estonian
     whatever else it is. A word of five letters or more that nothing supplied
     is `looksInflected`'s guess, deliberately biased towards withholding, and
-    on `/api/exam/write` it is handed no glosses, no paradigm and an allowlist
+    on `/api/exam/write` it is handed no glosses, no forms and an allowlist
     of the learner's own text, so an English word Anu quoted back is the thing
     it usually catches. Both drop the note, which is the safe error either way.
 
@@ -623,6 +667,94 @@ check("the public path allowlist is the only way past the gate", () => {
   }
 });
 
+// ── And the gate answers in a bounded time, or says it could not ─────────────
+
+check("nothing on the request path waits on the auth service without a deadline", () => {
+  /*
+    The middleware asked Supabase who was signed in on every request, over the
+    network, with nothing capping the wait. A slow minute at that service was
+    a slow minute for the whole app, and a minute where it stopped answering
+    was a 504 from the platform twenty-five seconds later, which is the least
+    useful sentence available for "the login server is busy".
+
+    The deadline lives on the transport rather than on one call, because the
+    calls are not all in sight: a claims check can refresh a token underneath
+    itself, and the allowlist path signs somebody out. A client built without
+    it is a client with no ceiling on any of that.
+
+    The shape, not the spelling: whoever resolves an identity builds the client
+    with `boundedTransport` and hands its fetch over.
+  */
+  for (const file of ["middleware.ts", "lib/auth/session.ts"]) {
+    const source = read(file);
+    assert.match(source, /boundedTransport\(/, `${file} builds its auth client with no deadline on it`);
+    assert.match(
+      source,
+      /fetch:\s*transport\.fetch|createClient\(transport\.fetch\)/,
+      `${file} has a bounded transport it does not hand to the client`,
+    );
+  }
+  const identity = read("lib/auth/identity.ts");
+  assert.match(identity, /AUTH_TIMEOUT_MS/, "the deadline is no longer a named number");
+  assert.match(identity, /signal/, "the bounded transport stopped putting a signal on the request");
+});
+
+check("a public page does not pay for an identity it never reads", () => {
+  /*
+    The landing page, the two policy pages, the offline fallback and the OAuth
+    callback render the same whoever is reading, and every one of them was
+    costing a round trip to the auth service to establish something nothing on
+    the page used. The callback is the expensive one: it is a step of signing
+    in, and it was waiting to be told about the session it had not created
+    yet.
+
+    /sign-in is the one public path that does read the identity, because a
+    learner who is already signed in gets sent home rather than offered a
+    button. So the check is positional: the early return for the rest has to
+    come before a client is built, or it is not saving anything.
+  */
+  const middleware = read("middleware.ts");
+  const skip = middleware.indexOf("isPublicPath && !path.startsWith(\"/sign-in\")");
+  const cookie = middleware.indexOf("hasSessionCookie(");
+  const client = middleware.indexOf("createServerClient(");
+  assert.ok(skip > 0, "a public page with nothing to read is resolving an identity again");
+  assert.ok(cookie > 0, "a request with no session cookie is asking the auth service about it");
+  assert.ok(skip < client, "the public path skip runs after the client it exists to avoid");
+  assert.ok(cookie < client, "the cookie check runs after the client it exists to avoid");
+});
+
+check("an auth service that did not answer is not a sign-out", () => {
+  /*
+    Three answers, because "we could not tell" is not "signed out". Reading a
+    timeout as a sign-out would take a learner's own deck away from them over
+    a bad minute at somebody else's server, on the screen they open every day,
+    and it would do it at exactly the moment the sign-in page it redirects to
+    could not sign them back in either.
+
+    Letting it through costs nothing, because the middleware is not the check
+    that decides: every page, action and route resolves its own owner through
+    `requireUserId()`, which throws when the session cannot be verified.
+
+    `!== "in"` is the shape that breaks this, and it is the natural thing to
+    write. The middleware has to key its refusals on the positive answer.
+  */
+  const identity = read("lib/auth/identity.ts");
+  for (const state of ["\"in\"", "\"out\"", "\"unreachable\""]) {
+    assert.ok(identity.includes(state), `the ${state} answer is gone from Identity`);
+  }
+  const middleware = read("middleware.ts");
+  assert.match(
+    middleware,
+    /identity\.state === "out"/,
+    "the middleware stopped refusing on a definite sign-out",
+  );
+  assert.equal(
+    /identity\.state !== "in"/.test(middleware),
+    false,
+    "the middleware folds an unreachable auth service back into being signed out",
+  );
+});
+
 // ── The security layer added on top of those ─────────────────────────────────
 
 check("the forged-request gate runs before anything else looks at the request", () => {
@@ -729,6 +861,298 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
+check("adding a word to a deck reads and writes under one lock", () => {
+  /*
+    "Is it already there" is check-then-act. `addCardsFor` read the learner's
+    existing cards for a word, filtered the generated ones against them, and
+    inserted the rest; two requests inside that gap both see an empty deck and
+    both insert. Measured against a real database rather than reasoned about:
+    two concurrent adds gave two cards, four gave four, and eight gave fourteen
+    where two is right. A learner meets it by double-tapping "Add to deck", and
+    `addUnitToDeck` walks this once per word with no throttle in front of it.
+
+    The lock is `lib/usage/ledger.ts`'s, for the reasons its header gives: the
+    *transaction* form, so a connection pooler cannot strand it, and the
+    blocking one, since the non-blocking form serialises nothing. With it, 16
+    concurrent adds make 2 cards in 28ms.
+
+    Asserted as the three things together, because each on its own is satisfied
+    by a version that still races: a transaction with no lock, a lock taken
+    outside the transaction, or a lock with the read left outside it.
+  */
+  const src = code("app/actions.ts");
+  const body = /async function addCardsFor\(([\s\S]*?)\n\}/.exec(src)?.[1] ?? "";
+  assert.ok(body, "addCardsFor has gone, or changed shape past recognition");
+
+  assert.match(body, /prisma\.\$transaction\(/, "addCardsFor no longer runs in one transaction");
+  assert.match(
+    body, /pg_advisory_xact_lock/,
+    "addCardsFor stopped taking the transaction advisory lock, so two tabs can both insert",
+  );
+  const lockAt = body.indexOf("pg_advisory_xact_lock");
+  const readAt = body.indexOf("card.findMany");
+  const writeAt = body.indexOf("card.createMany");
+  assert.ok(readAt >= 0 && writeAt >= 0, "addCardsFor no longer reads what it has before writing");
+  assert.ok(
+    lockAt < readAt && readAt < writeAt,
+    "addCardsFor takes its lock after the read it is meant to protect, which serialises nothing",
+  );
+});
+
+check("a screen built from a list of lemmas shows one entry per lemma", () => {
+  /*
+    `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one row, and
+    the syllabus names lemmas. Every screen built from a unit's word list asked
+    `where: { lemma: { in: [...unit.lemmas] } }` and rendered whatever came
+    back, so a lemma with two entries appeared twice on all of them. Measured
+    with a scanned `tuba` confirmed beside the Ekilex one: `/learn/kodu` listed
+    the word twice, its printable worksheet printed it six times, the unit
+    counted more words than it teaches, the lesson planner split the duplicate
+    into the sitting, `addUnitToDeck` built two sets of cards for one word (one
+    of them unanswerable, the stub having no forms), and React warned about two
+    children with the same key, which it says may duplicate or omit a row. The
+    landing page demonstrates `tuba` and would have shown an empty paradigm.
+
+    The adjective/noun pairs of open question Q8 are the same shape and ship
+    with a fresh seed. There were thirteen when this was written and the answer
+    to Q8 took it to two, which changes how often this fires and not whether it
+    has to: a word confirmed off a photograph makes a pair for any lemma at
+    all, and no upstream correction reaches that.
+
+    A `Set` of lemmas is fine and two places legitimately build one: asking
+    which of a unit's words the dictionary has at all cannot double-count.
+    What may not happen is rows reaching a render or a write.
+  */
+  for (const file of ALL) {
+    // A test builds its own fixture and may want both rows on purpose.
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    let at = src.indexOf("lemma: { in:");
+    while (at !== -1) {
+      // The statement this query is part of, which is where the answer to
+      // "and then what" has to be.
+      const from = src.lastIndexOf("prisma.", at);
+      /*
+        Back to the start of the statement, not just to the `prisma.` call: two
+        of these read `oneEntryPerLemma(await prisma.lexeme.findMany({...}))`,
+        so the answer sits to the *left* of the query rather than under it.
+      */
+      const statement = Math.max(0, src.lastIndexOf("\n\n", from), from - 400);
+      const window = src.slice(statement, at + 900);
+      /*
+        Only a query for the *words*. `/review?unit=` filters the learner's own
+        cards by their lexeme's lemma, and one row per card is right there:
+        those cards exist and are due. What creates them is `addUnitToDeck`,
+        which is a lexeme query and is checked.
+      */
+      if (!src.slice(from, at).includes("prisma.lexeme.")) {
+        at = src.indexOf("lemma: { in:", at + 1);
+        continue;
+      }
+      /*
+        Three answers, not two. `oneEntryPerLemma` picks the row the app leads
+        with; a `Set` counts lemmas and cannot double-count; and keying the rows
+        by lemma *and* part of speech addresses one specific row per pair, which
+        is the unique key itself and so the strongest of the three. The importer
+        does the last: it looks a paste up by lemma because that is the indexed
+        column, then reads `${lemma}|${pos}` out of the result, and asking it to
+        pick "the" entry for a lemma would be wrong, since a row it wants may be
+        the one that loses. This check fired on it, which is a check firing on
+        honest code, which is how a check becomes one everybody waives.
+      */
+      const keyedOnBoth = /\.lemma\b[\s\S]{0,40}\.pos\b|\.pos\b[\s\S]{0,40}\.lemma\b/.test(window);
+      assert.ok(
+        /oneEntryPerLemma/.test(window) || /new Set\(/.test(window) || keyedOnBoth,
+        `${file}: looks a list of lemmas up and uses every row. A lemma can hold two `
+        + `entries, so pass the result through oneEntryPerLemma() (lib/dict/search.ts), `
+        + `which applies the same rule the dictionary leads with. Counting distinct `
+        + `lemmas into a Set, or keying the rows on lemma and pos together, are the `
+        + `other two honest answers.`,
+      );
+      at = src.indexOf("lemma: { in:", at + 1);
+    }
+  }
+});
+
+check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
+  /*
+    There were ten, in three implementations. Four in `app/` were Fisher-Yates
+    character for character, four in `lib/` were the same again with an rng
+    passed in, and two places used a comparator instead:
+
+        [...cards].sort(() => Math.random() - 0.5)
+
+    A comparator is asked about a pair and expected to answer the same way each
+    time. One that answers at random leaves the sort finishing early over runs
+    it believes are ordered, so an element stays near where it started.
+    Measured over 200,000 rounds at the sizes the app uses: in the 40-card
+    sprint the first card led 7.0% of rounds against a uniform 2.5%; in the
+    20-card listening round, 11.7% against 5.0%. Those pools arrive
+    `orderBy: { due: "asc" }`, so that is the most overdue card leading about
+    three times as often as chance while the tail went under-practised.
+
+    Both halves are asserted, because fixing the two wrong copies and leaving
+    eight right ones is how a ninth gets written. `lib/exam/paper.ts` is the one
+    exception and says why in its own header: the server rebuilds a paper from
+    its seed to mark it, so changing how that one draws would mis-mark a paper
+    somebody started before a deploy.
+  */
+  const SHUFFLE_HOME = "lib/random/shuffle.ts";
+  const EXCEPTION = "lib/exam/paper.ts";
+
+  assert.ok(existsSync(SHUFFLE_HOME), "the one shuffle has gone from lib/random/shuffle.ts");
+
+  for (const file of ALL) {
+    if (file === SHUFFLE_HOME || file === EXCEPTION) continue;
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+    assert.ok(
+      !/\.sort\(\s*\(\s*\)\s*=>/.test(src),
+      `${file}: sorting with a comparator that ignores its arguments is not a shuffle. `
+      + `It leaves elements near where they started. Use shuffle() from ${SHUFFLE_HOME}.`,
+    );
+    assert.ok(
+      !/function shuffled?\s*</.test(src),
+      `${file}: a hand-rolled shuffle. There is one in ${SHUFFLE_HOME} and it takes the `
+      + `generator as a parameter, so a seeded caller passes its own.`,
+    );
+    /*
+      And the third implementation, which was inline six times and has no
+      function to name: decorate each item with a random key, sort on it,
+      undecorate. Sorting on independent random keys is a fair shuffle, unlike
+      the comparator above, so this is about there being one of these rather
+      than about correctness. The tell is the decorate step, a property whose
+      value is a draw *and nothing else*: `left: Math.random() * 100` is a
+      confetti piece's position and was the first thing this caught.
+    */
+    assert.ok(
+      !/[{,]\s*\w+:\s*(Math\.)?random\(\)\s*[,}]/.test(src),
+      `${file}: an inline shuffle, keyed on a random draw and sorted. Use shuffle() from `
+      + `${SHUFFLE_HOME}. Two of these were weighted ("the deck's own words first"), and `
+      + `that reads better as two shuffles concatenated than as a key trick whose two `
+      + `ranges happen not to overlap.`,
+    );
+  }
+
+  // And the exception carries its reason, so nobody reads it as an oversight.
+  assert.match(
+    read(EXCEPTION),
+    /rebuilds the paper from that seed to mark it/,
+    `${EXCEPTION} keeps its own shuffle and its header stopped saying why`,
+  );
+});
+
+check("a `take` beside a `distinct` bounds nothing, so it is scoped to one owner", () => {
+  /*
+    Prisma applies `distinct` in the client. A `LIMIT` would cut rows before the
+    deduplication, so it emits none: `findMany({ distinct, take })` reads every
+    matching row, adds an id column of its own to deduplicate with, sorts, and
+    throws the surplus away in JavaScript. The `take` reads exactly like a bound
+    and is not in the query at all.
+
+    Measured, not inferred. `countGroups` in the suggestion queue carried a
+    comment saying a `groupBy` "would read every matching group to count them,
+    which at the volume this queue is built for is the one query that would stop
+    being cheap", and its replacement emitted
+    `SELECT id, groupKey FROM Suggestion WHERE status = $1 ORDER BY id` for a
+    single number. It read every row where the query it replaced read one per
+    group, on the one table open sign-up lets strangers grow.
+
+    So the rule is not "never pair them", because a query for one learner's own
+    cards is bounded by the size of their deck whatever the `take` says, and two
+    of those are honest. It is that the pairing may only ever be owner-scoped:
+    an unscoped one reads the whole table however small the number beside it
+    looks. Anything deployment-wide counts in Postgres.
+  */
+  for (const file of ALL) {
+    // Comments out, or this fires on the paragraph in `practice/page.tsx` that
+    // describes the query it stopped making. Which it did, once.
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    let at = src.indexOf("distinct: [");
+    while (at !== -1) {
+      // The enclosing call: back to the `prisma.` that opened it, forward to
+      // the end of that argument object.
+      const opened = src.lastIndexOf("prisma.", at);
+      const call = src.slice(opened, src.indexOf("})", at) + 2);
+      assert.ok(
+        /ownerId/.test(call),
+        `${file}: a Prisma \`distinct\` with no ownerId in its where. That reads the whole `
+        + `table however small the \`take\` beside it looks, because Prisma emits no LIMIT `
+        + `next to a distinct. Count it in Postgres instead.`,
+      );
+      at = src.indexOf("distinct: [", at + 1);
+    }
+  }
+});
+
+check("which of two entries for one word wins is decided, not left to the rows", () => {
+  /*
+    `@@unique` is on `(lemma, pos)`, so one lemma can hold more than one entry
+    and sometimes should: `hall` is grey and also frost. What may not happen is
+    the app having no rule about which of them it leads with, because the entry
+    page renders `hits[0]` and nothing else.
+
+    It had none. Both rows score 100, the tiebreak compared `lemma` against
+    `lemma` and returned 0, and neither query behind the search carried an
+    `ORDER BY`, so the winner came out of the plan. A fresh seed shipped thirteen
+    such pairs (open question Q8, since answered, which takes it to two), and a
+    learner confirming a scanned word the dictionary already knows makes another
+    with no forms in it, which took the whole paradigm off the entry page for a
+    word the app knows perfectly well. That second path is why this rule is not
+    retired by the part-of-speech fix.
+    Three browser suites failed on it in one run and passed in the next with
+    nothing changed.
+
+    Asserted on both comparators, because the search box and the gate in front
+    of a flashcard had the same fault in different words: one sorted, the other
+    kept whichever candidate the array listed first.
+  */
+  const search = read("lib/dict/search.ts");
+
+  assert.match(
+    search,
+    /function bySubstance\([\s\S]*?a\.id\.localeCompare\(b\.id\)/,
+    "the tiebreak stopped ending on id, so it can return 0 for two different rows",
+  );
+  /*
+    And the order of its first two tests, which is not a detail. Provenance has
+    to come second: a word confirmed off a photograph is filed as USER, which
+    counts as written by a person and has no forms in it, so ranking provenance
+    first hands a formless stub the entry page again. Ranking forms before
+    provenance is the other way to get it wrong, and did: `vana` the built noun
+    has six principal parts and the hand-checked course adjective has five.
+  */
+  const body = /function bySubstance\(([\s\S]*?)\n\}/.exec(search)?.[1] ?? "";
+  const posAt = body.indexOf('pos !== "OTHER"');
+  const provAt = body.indexOf("HAND_WRITTEN.has");
+  const formsAt = body.indexOf("forms.length");
+  assert.ok(posAt >= 0 && provAt >= 0 && formsAt >= 0, "bySubstance lost one of its three tests");
+  assert.ok(
+    posAt < provAt && provAt < formsAt,
+    "bySubstance reordered: a known part of speech, then a hand-written source, then how much is stored",
+  );
+  assert.match(
+    search,
+    /\.sort\(\(a, b\) =>[\s\S]{0,200}?bySubstance\(a\.hit, b\.hit\)\)/,
+    "rankCandidates no longer breaks a tie between two entries for one word",
+  );
+  assert.match(
+    search,
+    /scored\.score === best\.score && bySubstance\(/,
+    "matchEstonianForm is back to keeping whichever equal candidate came first",
+  );
+  /*
+    And the candidate set itself is ordered, because it is truncated: which 600
+    of a broad match you get was otherwise the plan's choice, and the ranker can
+    only rank what it was handed.
+  */
+  assert.match(
+    search,
+    /ORDER BY id\s*\n\s*LIMIT 600/,
+    "the truncated candidate query lost its order, so it can return a different 600",
+  );
+});
+
 check("the photograph itself is never stored", () => {
   /*
     A picture of somebody's homework has their name at the top of it, and the
@@ -749,6 +1173,118 @@ check("the photograph itself is never stored", () => {
     /prisma\.\w+\.(create|createMany|update|upsert)/.test(route),
     false,
     "the scan route writes to the database, which is where the picture would land",
+  );
+});
+
+// ── A headline is read, never believed ───────────────────────────────────────
+
+check("a word off a news feed reaches the screen only as a word the dictionary holds", () => {
+  /*
+    THE SAME RULE AS THE PHOTOGRAPH ABOVE, ON THE SECOND PATH WHERE ESTONIAN
+    THIS APP DID NOT WRITE COMES IN FROM OUTSIDE.
+
+    The dictionary's suggestion row offers words that are in the news this
+    morning, which means a text nobody here wrote is proposing Estonian. It
+    proposes and nothing more: `matchEstonianForm` decides, at the same
+    confidence floor a photographed page has to clear, and what is offered is
+    the dictionary's own headword rather than the spelling the headline used.
+    A feed could carry anything and the worst case is a shorter row.
+  */
+  const suggest = read("lib/dict/suggest.ts");
+  const vouching = between(suggest, "async function vouchNews");
+  assert.match(vouching, /matchEstonianForm\(/, "news words no longer go through the vouched matcher");
+  assert.match(
+    vouching,
+    /lemma: match\.lemma/,
+    "the row carries something other than the lemma the dictionary matched",
+  );
+  assert.equal(
+    /(push|add)\(\s*word\b|lemma: word\b/.test(vouching),
+    false,
+    "a word as the headline spelled it is being carried through to the row",
+  );
+
+  /*
+    And the reading of the feed stays a reading. Nothing under lib/news/ may
+    touch the database or run in a browser: it turns XML into candidate
+    strings and hands them on.
+  */
+  for (const file of sourceFiles("lib/news")) {
+    if (/\.i?test\.tsx?$/.test(file)) continue;
+    const source = read(file);
+    assert.equal(
+      /@\/lib\/db|prisma\./.test(source),
+      false,
+      `${file} reaches the database, so the feed could write to it`,
+    );
+    assert.equal(
+      /"use client"/.test(source),
+      false,
+      `${file} runs in a browser, so a learner's own address would fetch the feed`,
+    );
+  }
+});
+
+check("nothing is suggested that the dictionary has not graded", () => {
+  /*
+    THE ROW OFFERED `aberratsioon` FOR THE WHOLE LIFE OF THE APP.
+
+    It read the first forty rows of an alphabetical list and drew twelve of
+    them, so the invitation to use the dictionary was `aasialane`,
+    `aastatuhat` and `aatomipomm`. Two filters keep that from coming back and
+    they apply to all three sources: a word carries a CEFR level, which is the
+    record that the course or the graded seed vouched for it rather than the
+    tail of the Wiktionary expansion, and it is a noun, a verb or an
+    adjective, which are the entries with a paradigm for the chip to open.
+
+    Asserted against every read of the table rather than against one query,
+    because a fourth source added without both filters is exactly how this
+    comes back.
+  */
+  const suggest = read("lib/dict/suggest.ts");
+  assert.match(suggest, /const POS = \[/, "the suggestion row stopped naming which parts of speech it offers");
+
+  for (const read_ of suggest.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
+    const window = suggest.slice(read_.index, read_.index + 400);
+    assert.match(window, /cefr/, "a suggestion query does not constrain the CEFR level");
+    assert.match(window, /pos/i, "a suggestion query does not constrain the part of speech");
+  }
+
+  /*
+    The news source filters in TypeScript rather than in SQL, because the
+    matcher has already returned the row. Both halves still have to be there.
+  */
+  const news = between(suggest, "async function vouchNews");
+  assert.match(news, /match\.cefr/, "a news word is offered without a level behind it");
+  assert.match(news, /POS\.includes\(match\.pos\)/, "a news word is offered whatever its part of speech");
+});
+
+check("the seasonal row names units of the course, never words of its own", () => {
+  /*
+    A hand-written seasonal word list would be this app writing Estonian
+    (ADR-005), and the first misspelling would ship in silence. So the
+    calendar names unit ids and the words come out of the syllabus, where a
+    lemma is a request the Ekilex harvest either honoured or reported.
+    `topical.test.ts` checks every id is a real unit; this checks the table
+    has not started carrying words instead.
+  */
+  const topical = read("lib/collections/topical.ts");
+  const table = between(topical, "export const THEMES");
+  for (const units of table.matchAll(/units: \[([^\]]*)\]/g)) {
+    for (const id of units[1]!.split(",")) {
+      const trimmed = id.trim().replace(/^"|"$/g, "");
+      if (!trimmed) continue;
+      assert.equal(
+        /[\u00C0-\u024F]/.test(trimmed),
+        false,
+        `${trimmed} is spelled like a word rather than like a unit id`,
+      );
+    }
+  }
+  assert.match(
+    topical,
+    /import \{ SYLLABUS \} from "\.\/syllabus"/,
+    "the seasonal table stopped reading its words out of the course",
   );
 });
 
@@ -976,7 +1512,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "scan", "security", "stats", "time", "ux",
+    "random", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -1175,7 +1711,7 @@ check("an empty cell goes through NO_VALUE, never a literal", () => {
 
     Ten call sites used an em dash to mean "no value here". A mechanical sweep
     of reader copy cannot tell that from a dash used as punctuation, so both
-    times it rewrote them into `", "`: a bare comma sitting in a paradigm cell
+    times it rewrote them into `", "`: a bare comma sitting in a table of forms
     where a form should be. `readerCopy.test.ts` passes on that happily,
     because a comma is not a dash, which is exactly why the rule needs its own
     assertion rather than relying on the other one.
@@ -1327,9 +1863,24 @@ check("every browser suite can be pointed at a different server", () => {
     is what a pass looks like to anything reading the output.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
-    assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
+    /*
+      A suite that starts its own server is the one case this cannot ask for.
+      `test-error.mjs` runs a build against a database that is not there, which
+      is the whole of what it checks, so pointing it at the working server would
+      leave it nothing to see. What the rule is really about still applies and
+      is still asserted below: no suite is pinned to a server on port 3000 that
+      it did not start.
+    */
+    const startsItsOwn = /spawn\(/.test(source) && /"next", "start"/.test(source);
+    if (!startsItsOwn) assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
     assert.equal(
       /"http:\/\/localhost:3000"/.test(source.replace(/baseUrl[\s\S]*?\n/, "")),
       false,
@@ -1345,7 +1896,13 @@ check("every browser suite says how many checks it reached", () => {
     looked at. Both happened here. The floor is the count CI reaches.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
     const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
     assert.ok(floor, `${file} does not declare a check floor`);
@@ -1390,7 +1947,13 @@ check("a check a state cannot reach is waived by number, never by a printed word
     to the tally, so the block reads as handled and the floor never notices.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
     assert.equal(
       /console\.log\(\s*[`"'][^`"']*SKIP/.test(source),
@@ -1401,6 +1964,103 @@ check("a check a state cannot reach is waived by number, never by a printed word
     // function's clothes: it would leave the target where it was.
     for (const waiver of source.matchAll(/\babsent\(\s*([^,]+),/g)) {
       assert.match((waiver[1] ?? "").trim(), /^[1-9]\d*$/, `${file} waives a count that is not a positive number`);
+    }
+  }
+});
+
+check("a rating key works wherever a rating button is drawn", () => {
+  /*
+    A CONTROL'S VISIBILITY AND ITS SHORTCUT ARE ONE CONDITION.
+
+    The fault this is about: a card nobody has seen used to lead with its
+    answer and its rating buttons while `revealed` stayed false, because
+    nothing had been revealed. The render worked that out in four places and
+    spelled it out longhand in each; the keydown handler is where the fifth
+    copy should have been and was not, so it read `!revealed` and returned
+    before the rating branch. The buttons sat there, the mouse graded the card,
+    and the number keys did nothing at all on the one shape a learner meets
+    every time they start a new word.
+
+    The screen has since been reshaped so that a first meeting teaches and
+    carries on rather than being graded, and only a flip card asks the learner
+    for a grade. That dissolves the old shape rather than fixing it, so what is
+    asserted is the rule underneath rather than the name the old fix used.
+
+    The strong form is that one table drives both. `SELF_GRADES` is what the
+    buttons are drawn from and what the keydown handler looks a key up in, so
+    the two cannot come to disagree about which keys exist or what they grade;
+    a handler matching digits by hand is how they would.
+  */
+  const source = read("app/(app)/review/ReviewSession.tsx");
+
+  assert.match(
+    source, /SELF_GRADES\.map\(/,
+    "the rating buttons are no longer drawn from SELF_GRADES, so the keys can disagree with them",
+  );
+  assert.match(
+    source, /SELF_GRADES\.find\(/,
+    "the keydown handler no longer looks its key up in SELF_GRADES, which is how the two drift apart",
+  );
+
+  /*
+    And the guard in front of those keys is the condition the buttons render
+    under: revealed, and a flip card. On a typed or picked card the app has
+    already marked the answer, so a stray digit must not overrule it.
+  */
+  const beforeGrade = source.slice(0, source.indexOf("SELF_GRADES.find("));
+  assert.match(
+    beforeGrade.slice(-400),
+    /if \(!revealed\) return;/,
+    "the rating keys are not gated on the answer being revealed",
+  );
+  assert.match(
+    beforeGrade.slice(-400),
+    /if \(ask !== "flip"\) return;/,
+    "the rating keys are not gated on the shape that actually draws them",
+  );
+});
+
+check("a suite that writes to the shared dictionary invents the word it writes", () => {
+  /*
+    A BROWSER SUITE MAY NOT LEAVE A ROW THAT SHADOWS A SEEDED ENTRY.
+
+    Ticking a word the dictionary did not vouch for is how `saveScan` makes a
+    learner their own entry, and it is a path worth driving. But `Lexeme` is
+    unique on `[lemma, pos]` rather than on the lemma alone, deliberately,
+    because `hall` is a noun meaning frost and an adjective meaning grey. So a
+    fixture that ticks a word the seed already holds does not collide with it,
+    it sits *beside* it, with no paradigm behind it, in a dictionary every
+    later suite shares.
+
+    `test-containment.mjs` ticked `tuba`. `e2e.mjs` opens with three checks on
+    `/dictionary?q=tuba`, and CI runs it two steps later on the same database.
+    The cost was not one wrong check: the suite threw on its first wait and
+    reported a Playwright timeout with none of its twenty-one checks run.
+
+    `test-scan.mjs` and `test-suggestions.mjs` each worked this out for
+    themselves and each carries an invented string. This is the rule they were
+    both following, written down: the Estonian in a fixture that will be
+    written to the dictionary has to be a word no dictionary has.
+  */
+  const lemmas = seededLemmas();
+  assert.ok(lemmas.size > 100, "the built dictionary could not be read, so this check sees nothing");
+
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    const source = read(file);
+    /*
+      An item the dictionary did not vouch for, in a stubbed scan response.
+      `lexemeId: null` is what makes it one, and the `et` beside it is what
+      would be written. Matched in either order, because an object literal has
+      no canonical one.
+    */
+    for (const item of source.matchAll(/\{[^{}]*lexemeId:\s*null[^{}]*\}/g)) {
+      const et = /\bet:\s*"([^"]+)"/.exec(item[0])?.[1];
+      if (!et) continue;
+      assert.equal(
+        lemmas.has(et.toLowerCase()),
+        false,
+        `${file} ticks "${et}", which the dictionary already holds, so it leaves a second entry beside it`,
+      );
     }
   }
 });
@@ -1420,33 +2080,30 @@ check("every type size in the tree is a step on the scale", () => {
     literal that happens to land on a step is still worth turning into
     `text-sm`; what fails here is a size that is not a step at all.
   */
-  // The one thing off the scale on purpose, as §3 says in as many words: a
-  // numeral set large enough to read as a shape behind a card, aria-hidden,
-  // ornament rather than type. Listed rather than pattern-matched, and the
-  // check below fails if it stops being there, so it cannot quietly become a
-  // place to park a size somebody could not be bothered to fit.
-  const ORNAMENT = { file: "app/(chromeless)/welcome/page.tsx", size: "92px" };
+  // There is no exception any more. There was one, for a 92px step numeral set
+  // large enough to read as a shape behind a card on the landing page, and the
+  // rule it was granted under is unchanged (docs/14-design-system.md §3): an
+  // aria-hidden ornament may be off the scale because it is not type. That
+  // section of the page went when the landing page was shortened, so the
+  // exception went with it rather than staying behind as a size somebody could
+  // park a literal on. `data-ornament` in the markup is still what tells the
+  // contrast pass in test-design.mjs the same thing, and the next ornament that
+  // earns its place gets its exception back here, named and argued for.
   const STEPS = new Set([
     "11.5px", "12.5px", "13.5px", "15px", "17px", "19px",
     "22px", "27px", "32px", "40px", "52px", "68px",
   ]);
 
   const offScale: string[] = [];
-  let ornamentSeen = false;
   for (const file of [...sourceFiles("app", /\.tsx$/), ...sourceFiles("components", /\.tsx$/)]) {
     const source = read(file);
     for (const found of source.matchAll(/text-\[([0-9.]+px)\]/g)) {
       const size = found[1] ?? "";
       if (STEPS.has(size)) continue;
-      if (file === ORNAMENT.file && size === ORNAMENT.size) { ornamentSeen = true; continue; }
       offScale.push(`${file} ${size}`);
     }
   }
   assert.deepEqual(offScale, [], "type sizes that are not a step on the scale");
-  assert.ok(
-    ornamentSeen,
-    `${ORNAMENT.file} no longer carries the ${ORNAMENT.size} ornament, so the exception for it is dead and should go`,
-  );
 });
 
 // ── The phone, and the faults that were measured on it ───────────────────────
@@ -1510,7 +2167,7 @@ check("nobody opts back out of the wrapping default", () => {
         found[1],
         "anywhere",
         `${file} sets overflow-wrap to ${found[1]}, which takes the containment default off ` +
-        "for everything under it. The exemption for a paradigm is on `table` in app/globals.css.",
+        "for everything under it. The exemption for a table of forms is on `table` in app/globals.css.",
       );
     }
     assert.equal(
@@ -1551,7 +2208,7 @@ check("no icon is given a flex of its own", () => {
 check("a table sits in a scroller, which is what buys it the exemption", () => {
   /*
     A table is the one thing allowed to keep its words whole, because a
-    paradigm is read by comparing forms down a column and a form broken across
+    table of forms is read by comparing them down a column and a form broken across
     two lines has to be reassembled before it can be compared. That is only an
     honest trade while the table has something to give instead, and what it
     gives is a sideways scroll of its own rather than the page's.
@@ -1638,6 +2295,189 @@ check("no model decides anybody's level", () => {
   // The routes that run a check may not either.
   for (const file of APP.filter((f) => f.includes("/assess/"))) {
     assert.equal(/resolveProvider|openWithFallback/.test(read(file)), false, `${file} calls a model`);
+  }
+});
+
+check("a question never fills itself with free eliminations", () => {
+  /*
+    ADR-020 amendment 1, and the same fault in the mock exam. The wrong answers
+    used to be the first three a shuffle handed back: the placement check drew
+    them from the whole dictionary, so "black" was asked against a plastic bag
+    and two C1 nouns, and the exam drew them from a deck spanning four levels
+    and could offer a word's own synonym. Both questions could be answered
+    without reading the Estonian, and a level or a mark built on those measured
+    nothing.
+
+    `lib/questions/distractors.ts` is the one table of what makes a wrong
+    answer hard to cross out, and what is asserted is that every builder still
+    reads it and that none of them goes back to assembling its own options,
+    since that is the shape the fault had and the shape a new question kind
+    would arrive in.
+  */
+  const builders = ["lib/assessment/items.ts", "lib/exam/paper.ts", "lib/estonian/government.ts"];
+  for (const file of builders) {
+    assert.match(
+      read(file),
+      /from "@\/lib\/questions\/distractors"/,
+      `${file} decides what a wrong answer is worth on its own`,
+    );
+  }
+
+  for (const file of ["lib/assessment/items.ts", "lib/exam/paper.ts"]) {
+    const source = read(file);
+    // A field assigned in an item, rather than declared in an interface: the
+    // declaration ends in a semicolon and the assignment in a comma.
+    const optionLines = source.split("\n").filter((line) => /^\s*options:.*,\s*$/.test(line));
+    assert.ok(optionLines.length >= 5, `${file}: expected the choice questions, found ${optionLines.length}`);
+    for (const line of optionLines) {
+      assert.match(line, /set\.options/, `${file} builds its own options: ${line.trim()}`);
+    }
+
+    const picks = source.match(/pickOptions\(\{/g) ?? [];
+    assert.equal(picks.length, optionLines.length, `${file} asks a question without picking its options`);
+    assert.equal(
+      picks.length,
+      (source.match(/nearness:/g) ?? []).length,
+      `${file} picks wrong answers without ranking them`,
+    );
+  }
+
+  // And the ranking may not become a filter. A question the dictionary can
+  // fill has to stay askable, which is what keeps a thin section honest.
+  const distractors = read("lib/questions/distractors.ts");
+  assert.match(distractors, /wrong\.length < WRONG/, "the picker stopped refusing what it cannot fill");
+});
+
+check("a placement question is answered in Estonian, not about it", () => {
+  /*
+    Nobody sitting a real Estonian placement test is asked to name a case.
+    The state examination's published reading tasks are `valikvastustega
+    ülesanne`, `valikvastustega lünkülesanne` and `sobitamine`; the placement
+    tests Estonian language schools set are almost entirely the middle one, a
+    sentence with a hole in it and three or four forms of one word to choose
+    between. Grammatical terminology is what a teacher uses to *talk* about the
+    answer, afterwards.
+
+    This module used to lead with it, and half of every reading section was
+    metalanguage. It cost more than tone. "Which case does the verb kõlbama
+    demand of its object?" was asked of 45 entries that are nouns and
+    adjectives rather than verbs, and of verbs that take no object at all; and
+    18 of those questions offered a second genuinely correct case as a wrong
+    answer, because a word's government string names every case it governs and
+    the distractors were drawn from all of them. `segama` governs the partitive
+    and the comitative, and a learner who knew the comitative was marked wrong
+    for it.
+
+    So: a case name may appear in the explanation after an answer, where it is
+    a cross-reference for somebody who is also taking a course, and it may not
+    appear in a question. Anchored on the question strings the builders write,
+    because that is the thing a learner has to answer.
+  */
+  const source = read("lib/assessment/items.ts");
+  const questions = [...source.matchAll(/^\s*question:\s*(.+?),?$/gm)].map((m) => m[1] ?? "");
+  assert.ok(questions.length >= 5, `expected the item questions, found ${questions.length}`);
+
+  const NAMES = [...CASES.map((c) => c.et), ...CASES.map((c) => c.en.toLowerCase())];
+  for (const question of questions) {
+    const lower = question.toLowerCase();
+    for (const name of NAMES) {
+      assert.equal(
+        lower.includes(name),
+        false,
+        `a placement question names the ${name}: ${question}`,
+      );
+    }
+    // `caseOptionLabel` builds "seesütlev · milles? kus?", so a question
+    // interpolating it names a case without spelling one out.
+    assert.equal(
+      /caseOptionLabel|spec\.(et|en|question)/.test(question),
+      false,
+      `a placement question is built out of a case name: ${question}`,
+    );
+  }
+
+  // And the options a learner picks between are never a list of case names.
+  assert.equal(
+    /const caseNames\b|CASES\.map\(caseOptionLabel\)/.test(source),
+    false,
+    "the placement check offers case names as multiple choice again",
+  );
+});
+
+check("a government question never offers a case the word itself governs", () => {
+  /*
+    The same fault as the placement check's, in the two drills that keep asking
+    the question rather than replacing it: the mock exam's `rektsioon` task and
+    `/review/government`. An Ekilex entry records a word's whole government,
+    not one case, and `parseGovernment` returns the primary. `buildOptions`
+    used to filter only that one out of the distractor pool, so any of the
+    others could stand as a wrong answer.
+
+    Measured over the shipped dictionary, 60 of the 268 governed verbs name
+    more than one case: `aitama` is "keda/mida* (partitive) · millest
+    (elative)" and takes both, so a learner who knew `see ei aita millestki`
+    chose the elative and was marked wrong. `alustama` governs three and could
+    be shown two of them as distractors at once. Government is the one thing
+    an English speaker has no way to reason out, so a drill that marks them
+    wrong for being right is the drill teaching them to ignore it.
+
+    Asserted against the real dictionary rather than a fixture, because the
+    fault was in the data's shape rather than in any one entry, and drawn many
+    times because the options are shuffled: a single draw passes by luck.
+  */
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as
+    { lemma: string; pos: string; government: string | null }[];
+
+  const verbs = entries
+    .filter((e) => e.pos === "VERB" && e.government)
+    .map((e) => ({ lemma: e.lemma, government: parseGovernment(e.government) }))
+    .filter((e): e is { lemma: string; government: Government } => e.government !== null);
+  assert.ok(verbs.length > 100, `expected the governed verbs, found ${verbs.length}`);
+
+  const multi = verbs.filter((v) => v.government.alsoGoverned.length > 0);
+  assert.ok(
+    multi.length > 20,
+    `expected verbs governing more than one case, found ${multi.length}: either the dictionary ` +
+    "changed shape or the parser stopped reading past the first case name",
+  );
+
+  const pool = verbs.map((v) => v.government.caseKey);
+  for (const verb of multi) {
+    const alsoTrue = new Set<string>(verb.government.alsoGoverned);
+    for (let draw = 0; draw < 40; draw++) {
+      const options = buildOptions(verb.government, pool, 4, Math.random);
+      if (!options) continue; // dropped rather than padded, which is allowed
+      const wrong = options.find((o) => alsoTrue.has(o));
+      assert.equal(
+        wrong,
+        undefined,
+        `${verb.lemma} governs the ${wrong} as well as the ${verb.government.caseKey}, and it ` +
+        "was offered as a wrong answer",
+      );
+      assert.ok(options.includes(verb.government.caseKey), `${verb.lemma} lost its own answer`);
+      assert.equal(new Set(options).size, options.length, `${verb.lemma} was offered a repeat`);
+    }
+  }
+});
+
+/**
+ * The other half of the same question: it says "the verb", so it asks a verb.
+ *
+ * The dictionary records a government for 36 nouns and 12 adjectives too, and
+ * they are real: `osa` takes the partitive and the elative. But the task is
+ * titled "Which case does the verb take?", and asking that about a noun is a
+ * question worded as a fact the entry does not support. The review drill has
+ * filtered on part of speech since it was written; the exam builder never did.
+ */
+check("a question that says \"the verb\" is asked about a verb", () => {
+  for (const file of ["lib/exam/paper.ts", "app/(app)/review/government/page.tsx"]) {
+    const source = code(file);
+    const builder = /buildGovernment[\s\S]*?\n}/.exec(source)?.[0] ?? source;
+    assert.match(
+      builder,
+      /pos === "VERB"|pos: "VERB"/,
+      `${file} builds a verb-government question without filtering to verbs`,
+    );
   }
 });
 
@@ -2145,8 +2985,8 @@ check("nothing a model wrote can reach the dictionary through the queue", () => 
 
     The apply path also writes forms, so it carries the same restriction the
     hand-edit path does: a principal part may be replaced and a retrieved
-    Ekilex paradigm may not. That is stated here as well as in the module,
-    because it is one `if` between a correction and a learner's paradigm being
+    Ekilex form may not. That is stated here as well as in the module,
+    because it is one `if` between a correction and a learner's forms being
     overwritten by whoever shouted loudest.
   */
   for (const file of sourceFiles("lib/suggestions")) {
@@ -2762,6 +3602,311 @@ check("every browser suite that exists is a browser suite CI runs", () => {
 });
 
 /**
+ * And the one suite whose *position* in that list is the whole of its value.
+ *
+ * `/start` redirects anyone carrying `onboardedAt` or a single card, which is
+ * right: a first-run wizard reappearing for an established learner is worse
+ * than no wizard. It also means the demo fixture closes that door. CI built
+ * the fixture before it started the server, so `test-assess.mjs` had never
+ * once reached the walkthrough — sixteen of its forty-two checks waived on
+ * every run there has ever been, honestly reported, under the half that fails
+ * a suite outright, and therefore silent. The screen a learner meets before
+ * any other was verified by nothing at all. All nineteen of those checks pass;
+ * they had simply never been asked.
+ *
+ * This is the `absent()` machinery's one blind spot and worth naming as its
+ * own rule: a waiver states a fact about the run, and a waiver that is true on
+ * every possible run is a hole wearing a waiver's clothes. The suite reaches
+ * 43 checks before the fixture and 26 after it.
+ *
+ * Asserted on the order of the two lines rather than on either alone, because
+ * both will still be present when somebody tidies them back together.
+ */
+check("first run is exercised, which means one suite runs before the fixture", () => {
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const suite = workflow.indexOf("node scripts/test-assess.mjs");
+  const fixture = workflow.indexOf("scripts/demo-data.ts");
+  const server = workflow.indexOf("Start the server");
+
+  assert.ok(suite > 0, "CI does not run scripts/test-assess.mjs at all");
+  assert.ok(fixture > 0, "CI does not build the demo fixture");
+  assert.ok(
+    suite < fixture,
+    "CI builds the demo deck before test-assess.mjs runs, so /start redirects and the " +
+    "first-run walkthrough is waived rather than checked. It has to run against an empty deck.",
+  );
+  assert.ok(
+    server < suite,
+    "test-assess.mjs is a browser suite and CI runs it before the server is up",
+  );
+
+  /*
+    And the suite still says what it needs, so the developer who takes the
+    other branch on their own seeded machine reads a precondition rather than
+    a number. `scripts/lib/prefs.mjs` makes the same argument about a stored
+    preference: a suite states its preconditions, it does not inherit them.
+  */
+  const assess = read(join("scripts", "test-assess.mjs"));
+  assert.match(
+    assess,
+    /absent\(\s*\d+[\s\S]{0,200}?demo fixture/,
+    "test-assess.mjs waives its first-run checks without saying which state would reach them",
+  );
+});
+
+/**
+ * And the other waiver that fired on every run, which was worse: it was not
+ * true.
+ *
+ * `test-containment.mjs` waived ten checks — five at each width — with the
+ * reason "the deck had nothing due", while the deck had forty cards due. A
+ * review card is asked as a flip, as multiple choice or as typing, decided per
+ * card, and the only thing that suite knew how to press was the flip. So the
+ * revealed layout, the one with the most in it (the answer, the note about why
+ * this card, and four rating buttons across a 360px phone) was never measured,
+ * and the line explaining why sent anybody reading it off to seed a database
+ * that was already seeded.
+ *
+ * `smoke-offline.mjs` had found this first and its own comment says it plainly:
+ * "a test that only knows about `Show answer` silently stops testing anything
+ * the day the default changes. It did." Four more suites had each worked it out
+ * separately, and `test-teaching.mjs` had two of the three shapes and got the
+ * third by accident, its `3` keypress landing on the third option rather than
+ * on a grade.
+ *
+ * So there is one definition, `scripts/lib/review.mjs`, and this asserts that a
+ * suite reaching for the flip knows there are others. Read comment-blind,
+ * because four checks in this repository's history have been satisfied by
+ * prose, one of them mine.
+ */
+check("a suite that reveals a review card knows all the shapes it comes in", () => {
+  const suites = readdirSync("scripts")
+    .filter((f) => f.endsWith(".mjs"))
+    .filter((f) => DECLARES_SUITE.test(read(join("scripts", f))));
+  assert.ok(suites.length > 10, `only found ${suites.length} suites, so this check stopped looking`);
+
+  let drivers = 0;
+  for (const file of suites) {
+    const source = code(join("scripts", file));
+    /*
+      A suite that *presses* the pill, which is the one that can stop driving.
+      Reaching for it through a Playwright locator is what pressing looks like;
+      naming it inside `page.evaluate` is measuring the drawn page, which is
+      what the landing page's letter check does to the demo card's own footer
+      button, and that suite reveals no card at all.
+    */
+    if (!/(?:getByRole|getByText|getByLabel|locator)\([^;]*?Show answer/i.test(source)) continue;
+    drivers += 1;
+    const knowsTheRest =
+      /revealAnswer/.test(source) || /Pick the meaning/.test(source);
+    assert.ok(
+      knowsTheRest,
+      `scripts/${file} presses "Show answer" and knows no other shape, so it stops driving ` +
+      `the moment a choice or typed card comes up first. Use revealAnswer from lib/review.mjs.`,
+    );
+  }
+  assert.ok(drivers > 0, "no suite drives a review card any more, so this check stopped looking");
+
+  /*
+    And the helper is one helper. It reveals and never grades: the containment
+    suite runs third and everything after it reads the same deck, so a shared
+    driver that graded would quietly change what the rest of them measure.
+  */
+  const helper = code(join("scripts", "lib", "review.mjs"));
+  assert.doesNotMatch(
+    helper,
+    /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
+    "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
+  );
+});
+
+/**
+ * A query that is cut short is ordered all the way down to the primary key.
+ *
+ * CLAUDE.md has said for a while that "a query that is cut short says where to
+ * cut", and nothing asserted it, so eleven queries in the derived-progress
+ * layer had drifted from it or had never been brought in line. Every one of
+ * them ordered on a column that is not unique and then took the first N.
+ *
+ * Two of those ties are not theoretical. `Card` was ordered by
+ * `(createdAt, lexemeId)`, and `addCardsFor` writes a word's recognition and
+ * production cards in one `createMany`, so both share both keys exactly. And
+ * `Lexeme` was ordered by `(fetchedAt, lemma)` while `@@unique` is on
+ * `(lemma, pos)`: on a freshly seeded deployment every `fetchedAt` is null, so
+ * the two entries for `hall` tied outright.
+ *
+ * The exam pool is the one where that is a correctness fault rather than an
+ * inconsistency. `submitExam` rebuilds the paper from (level, seed, pool) in
+ * order to mark it, so a pool that comes back in another order marks a learner
+ * on questions they were never asked, and the `take` means a tie at the five
+ * hundredth row decides which of a pair is in the paper at all.
+ *
+ * Ordering is free where the index is already there, and it was in all eleven.
+ * What is not free is a number that moves on its own.
+ *
+ * Scoped to `lib/progress/`, which is where every derived figure is read, and
+ * asserted on the *last* key, because an order that is total in the middle and
+ * loose at the end is loose.
+ */
+check("a truncated query in the progress layer ends on the primary key", () => {
+  const dir = join("lib", "progress");
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith(".ts") && !f.includes(".test.") && !f.includes(".itest."));
+  assert.ok(files.length > 3, `only found ${files.length} files, so this check stopped looking`);
+
+  let looked = 0;
+  for (const file of files) {
+    const src = code(join(dir, file));
+    for (const found of src.matchAll(/\.findMany\(\{/g)) {
+      // The block this call opens, by brace depth.
+      let depth = 0;
+      let end = found.index + found[0].length - 1;
+      for (let i = end; i < src.length; i += 1) {
+        if (src[i] === "{") depth += 1;
+        else if (src[i] === "}") { depth -= 1; if (depth === 0) { end = i; break; } }
+      }
+      const block = src.slice(found.index, end + 1);
+      if (!/\btake:/.test(block) && !/\bskip:/.test(block)) continue;
+      looked += 1;
+
+      const line = src.slice(0, found.index).split("\n").length;
+      const where = `lib/progress/${file}:${line}`;
+      /*
+        The outermost `orderBy`, not a relation's. A nested one (`forms:
+        { orderBy: ... }`) sorts rows inside one parent and is never the thing
+        `take` cuts, so matching the first `orderBy:` in the text would read
+        the wrong one and pass.
+      */
+      const top = /\n    orderBy:\s*(\[[\s\S]*?\]|\{[\s\S]*?\}),/.exec(block)
+        ?? /orderBy:\s*(\[[\s\S]*?\]|\{[^{}]*\}),/.exec(block);
+      assert.ok(top, `${where} takes a slice of an unordered query, so which rows it gets is Postgres's choice`);
+      assert.match(
+        top[1]!.replace(/\s+/g, " "),
+        /\{ id: "(asc|desc)" \} *\]$|^\{ id: "(asc|desc)" \}$/,
+        `${where} orders on ${top[1]!.replace(/\s+/g, " ")} and then cuts. None of those keys is unique, ` +
+        "so two tied rows are ordered by whatever the plan did that day. End it on { id: \"asc\" }.",
+      );
+    }
+  }
+  assert.ok(looked > 8, `only ${looked} truncated queries found, so this check stopped looking`);
+});
+
+/**
+ * The layers that are pure are still pure, which nothing was checking.
+ *
+ * CLAUDE.md names thirteen directories that "stay free of React, Next.js and
+ * Prisma: pure functions, unit tested", and that was prose alone. All thirteen
+ * hold today, which is the moment to assert it rather than the moment after
+ * one of them stops.
+ *
+ * It is not a tidiness rule. The unit suite gates every commit on being
+ * hermetic, with no database, no network and no clock nobody controls, and it
+ * has to stay fast enough that nobody is tempted to skip it. One
+ * `import { prisma }` inside `lib/stats/` puts a database behind a function
+ * that four hundred unit tests call, and the suite does not fail: it gets
+ * slower, or it passes against whatever rows happen to be there. A React
+ * import is the same boundary from the other side, since these modules are
+ * what a Server Component and a Route Handler share.
+ *
+ * The directories are listed rather than discovered, because "which layers are
+ * pure" is a decision rather than a fact about the filesystem, and each is
+ * checked to exist so a rename fails here instead of silently covering
+ * nothing.
+ */
+check("the layers that promise to be pure import no database, React or Next", () => {
+  const pure = [
+    "assessment", "estonian", "gamification", "stats", "collections", "time",
+    "offline", "security", "scan", "questions", "ux", "random", "copy",
+  ];
+  const banned = [
+    [/from "@\/lib\/db"/, "the database"],
+    [/from "@prisma\/client"/, "Prisma"],
+    [/from "react"|from "react\//, "React"],
+    [/from "next\//, "Next"],
+    [/from "server-only"/, "a server-only marker, which is a Next concern"],
+  ] as const;
+
+  let looked = 0;
+  for (const name of pure) {
+    const dir = join("lib", name);
+    assert.ok(
+      existsSync(dir),
+      `lib/${name} is named as a pure layer and is not there. Rename it here or put it back.`,
+    );
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".ts") && !file.endsWith(".tsx")) continue;
+      if (file.includes(".test.") || file.includes(".itest.")) continue;
+      looked += 1;
+      const src = code(join(dir, file));
+      for (const [pattern, what] of banned) {
+        assert.doesNotMatch(
+          src,
+          pattern,
+          `lib/${name}/${file} imports ${what}. That layer is unit tested hermetically, ` +
+          "so anything needing the database belongs in lib/progress/ or a route.",
+        );
+      }
+    }
+  }
+  assert.ok(looked > 40, `only read ${looked} files in the pure layers, so this check stopped looking`);
+});
+
+/**
+ * Nothing hands a raw error message back to a browser.
+ *
+ * `restoreBackup` and `deleteMyAccount` both end in "and nothing was changed"
+ * followed by whatever the database said, which is the right shape: those are
+ * the two operations where somebody is owed a reason. What the database says
+ * is the problem. Prisma quotes the datasource in an initialisation failure,
+ * and a restore runs a two-minute transaction, which is exactly the window a
+ * connection drops in, so the sentence on a learner's Settings screen could
+ * carry the deployment's own host, user and password.
+ *
+ * `redact` in lib/observability already knows a DSN is a credential, because
+ * the error log has to be safe to post to a webhook. A message rendered in
+ * somebody's browser is at least as public as that log, and it was the one
+ * path not going through it. `safeMessage` is that function plus a length, and
+ * this asserts every `"use server"` export uses it rather than reaching for
+ * `.message` itself.
+ *
+ * Read comment-blind, and scoped to the file that is a public endpoint by
+ * definition: every export of `app/actions.ts` is reachable by anybody who can
+ * POST to a page path.
+ */
+check("no server action returns an error message it has not redacted", () => {
+  const actions = code(join("app", "actions.ts"));
+  assert.match(actions, /"use server"/, "app/actions.ts is not a server action file any more");
+
+  const raw = [...actions.matchAll(/\berror(?:\s+instanceof\s+Error\s*\?)?\s*\.?message\b/g)];
+  for (const found of raw) {
+    const line = actions.slice(0, found.index).split("\n").length;
+    assert.fail(
+      `app/actions.ts:${line} puts an error's own message into a value the browser reads. ` +
+      "Use safeMessage from lib/observability/report: a Prisma failure can name the " +
+      "deployment's database host, user and password.",
+    );
+  }
+
+  assert.match(
+    actions,
+    /safeMessage\(/,
+    "app/actions.ts explains no failure at all any more, which is the dead end SuggestFix exists for",
+  );
+
+  /*
+    And the helper still redacts. A `safeMessage` that stopped calling `redact`
+    would satisfy the name and nothing else, which is this repository's oldest
+    lesson about checks.
+  */
+  const reporter = code(join("lib", "observability", "report.ts"));
+  assert.match(
+    reporter,
+    /function safeMessage[\s\S]{0,400}?redact\(/,
+    "safeMessage no longer redacts, so the name is the only thing protecting the connection string",
+  );
+});
+
+/**
  * The worker's caches have ceilings too.
  *
  * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never
@@ -3007,11 +4152,31 @@ check("a date is written in the reader's own locale, not the server's", () => {
       fallback.
     */
     if (/^\s*"use client"/m.test(read(file))) continue;
-    assert.match(
-      source,
-      /<LocalDate/,
-      `${file} formats a date on the server, so it is written in the deployment's locale rather than the reader's`,
-    );
+    /*
+      EVERY SUCH CALL, NOT THE FILE.
+
+      This used to ask whether the file mentions `<LocalDate` anywhere, and a
+      file that hands one date to the browser and formats two others itself
+      passed. `app/(app)/class/[classroomId]/page.tsx` was exactly that: the
+      joined date went through `LocalDate` with a server-rendered fallback,
+      and the classwork history three sections above formatted `createdAt` and
+      `dueAt` on the server and shipped them as text. A teacher in Tartu read
+      their own homework list as "30 Aug".
+
+      So each call is checked where it stands. The legitimate one is the
+      `fallback` a `LocalDate` renders while it waits, which is what the server
+      is *supposed* to write, and it is the only shape that passes.
+    */
+    const call = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/g;
+    for (let m = call.exec(source); m; m = call.exec(source)) {
+      const before = source.slice(Math.max(0, m.index - 160), m.index);
+      assert.ok(
+        /fallback=\{?$|fallback=\{[^}]*$/.test(before),
+        `${file}: formats a date on the server outside a LocalDate fallback, so it is written `
+        + `in the deployment's locale rather than the reader's. Hand it to <LocalDate>, with `
+        + `this rendering as its fallback.`,
+      );
+    }
   }
 
   const local = code(join("components", "LocalDate.tsx"));
@@ -3166,6 +4331,66 @@ check("a control inflated to the tap-target floor centres its own content", () =
 });
 
 /**
+ * A pointer over something pressable says so.
+ *
+ * Tailwind 3's preflight put `cursor: pointer` on every button. Tailwind 4's
+ * hands the element back to the browser, whose default for a `<button>` is the
+ * arrow, and this app is built almost entirely out of real buttons: the rail,
+ * the practice chips, the four rating keys, the multiple-choice answers, the
+ * letter bar and every close cross drew the same arrow as the paragraph beside
+ * them. The only things in the whole interface that changed under a mouse were
+ * the handful of plain `<a href>`s, so a learner working out what is pressable
+ * by hovering it was told "nothing here", everywhere, wrongly.
+ *
+ * Asserted as the shape rather than as the selector list, because the way this
+ * comes back is somebody restoring it on a class. `.press` and `.tap-tint` are
+ * how a control moves, which is not the same set as the controls that can be
+ * pressed, and a rule keyed on one of them reaches only the controls that
+ * remembered to ask for it. A control is covered here by being a control.
+ */
+check("a pointer over something pressable says so", () => {
+  const css = code(join("app", "globals.css"));
+  const pointer = css.match(/([^{}]*)\{\s*cursor:\s*pointer;\s*\}/);
+  assert.ok(
+    pointer,
+    "nothing in app/globals.css gives a control a pointer cursor, and Tailwind 4's " +
+    "preflight does not either, so every button in the app draws the arrow",
+  );
+
+  const selector = pointer[1]!;
+  for (const control of ["button", '[role="button"]', "summary", 'input[type="checkbox"]']) {
+    assert.ok(
+      new RegExp(`(^|[,\\s])${control.replace(/[[\]"^$.*+?()|{}\\]/g, "\\$&")}\\s*(,|$)`, "m").test(selector),
+      `the pointer-cursor rule no longer reaches ${control}`,
+    );
+  }
+  assert.ok(
+    !/\.[a-zA-Z]/.test(selector),
+    "the pointer cursor is keyed on a class, so it reaches only the controls that " +
+    "remembered to carry it. Key it on what a control is.",
+  );
+
+  /*
+    And a disabled control goes back to the arrow rather than to a rebuke.
+    Everything disabled in this app is waiting for the learner (a send button
+    with an empty box, a rating key before the answer is shown), never refusing
+    them.
+  */
+  const off = css.match(/([^{}]*)\{\s*cursor:\s*default;\s*\}/);
+  assert.ok(off, "app/globals.css no longer takes the pointer back off a disabled control");
+  assert.match(off[1]!, /:disabled/, "the disabled-cursor rule stopped reading :disabled");
+  assert.match(
+    off[1]!, /\[aria-disabled="true"\]/,
+    'the disabled-cursor rule stopped reading [aria-disabled="true"], which is how ' +
+    "this app disables anything that is not a form control",
+  );
+  assert.ok(
+    !css.includes("not-allowed"),
+    "a control is drawn as refusing the learner. Nothing here refuses them; use the arrow.",
+  );
+});
+
+/**
  * The accessibility sweep is axe, and it runs in both themes.
  *
  * This suite spent its whole life describing itself as "not a substitute for
@@ -3255,6 +4480,600 @@ check("the verdict band and the found-hours sentence read one constant", () => {
     panel, /weeksNeeded\([^)]*FOUND_HOURS_PER_WEEK\s*\)/,
     "PlanPanel passes its own number to weeksNeeded rather than the constant the band is drawn at",
   );
+});
+
+// ── Checks about the checks ──────────────────────────────────────────────────
+
+check("anything a model wrote carries the mark the terms page promises", () => {
+  /*
+    `/terms` says what the AI suggests "is marked *AI · verify* and needs your
+    confirmation". That is a promise on a page somebody can hold the app to, so
+    every screen showing a model's words has to actually say it.
+
+    It had already drifted. Six places said `AI · verify` and three said a bare
+    `AI` with the rest in a `title`, which is a hover: this app is measured at
+    360px and its README leads with "works on a phone", where a hover does not
+    exist, so on the grammar case page, the dictation round and the dictionary's
+    own examples the useful half of the tag was not there at all. The word that
+    matters is `verify`, because `AI` says where a sentence came from and
+    `verify` says what to do about it.
+
+    One constant, read from `lib/copy/values.ts`, on the argument `NO_VALUE`
+    already makes next to it: a phrase retyped in nine places drifts in one of
+    them, and this one had. Asserted as "nobody retypes it" rather than "the
+    string is right", because a literal is exactly how it came apart.
+  */
+  const tagged = [...APP, ...COMPONENTS].filter((f) => read(f).includes("AI_TAG"));
+  assert.ok(
+    tagged.length >= 6,
+    `only ${tagged.length} screens read AI_TAG; the tag is being written some other way`,
+  );
+
+  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(read(f)));
+  assert.deepEqual(
+    retyped, [],
+    `the AI tag is typed out rather than read from lib/copy/values: ${retyped.join(", ")}`,
+  );
+
+  /*
+    And no screen marks a model's words with a bare `AI` and leaves the rest to
+    a tooltip, which is the shape the three drifted ones had.
+  */
+  const bare = [...APP, ...COMPONENTS].filter((f) =>
+    /<Chip[^>]*title="Machine translation[^"]*">\s*AI\s*<\/Chip>/.test(read(f)));
+  assert.deepEqual(
+    bare, [],
+    `a machine translation is marked "AI" with its meaning in a hover: ${bare.join(", ")}`,
+  );
+
+  /*
+    The terms page has to be making the promise this is holding it to.
+
+    Asserted on the rendered `{AI_TAG}` rather than on the token, and with the
+    imports stripped first: the first version matched the import line, so it
+    passed on a terms page that had stopped saying it. A check that cannot fail
+    is the thing this file exists to prevent, and writing one while adding a
+    check is a good argument for the discipline of taking each new rule away
+    once and watching it complain.
+  */
+  const terms = read("app/terms/page.tsx").replace(/^import [^\n]*\n/gm, "");
+  assert.match(
+    terms,
+    /\{AI_TAG\}/,
+    "the terms page stopped naming the mark, so there is no promise to keep",
+  );
+});
+
+check("every marker the merge ritual names is still somewhere in the tree", () => {
+  /*
+    CLAUDE.md ends its section on more than one session at a time with a list of
+    markers to grep for after a merge, learned from an afternoon when two clean
+    conflict-free merges each silently reverted somebody's work: git had no
+    reason to ask, because one side changed lines the other side had moved.
+
+    It was good guidance that depended entirely on a person remembering to run
+    it, which is the same shape as every rule this file exists to take out of
+    prose. So the list is read from CLAUDE.md rather than copied here: a copy is
+    the drift `PROVIDER_KEY_ENV` was consolidated to prevent, and a list that
+    can fall behind the paragraph naming it is worse than no list.
+
+    This is deliberately the blunt question, "is it still here at all", not
+    "does it still work" — most of these have an invariant of their own further
+    up, and the ones that do not are markers precisely because what they protect
+    is hard to assert. A marker that vanished in a merge is the one thing a
+    machine can see that a reviewer reading a green diff cannot.
+
+    CLAUDE.md is not in the haystack, and that is the whole check: the list
+    names each marker in backticks, so searching a corpus that includes the list
+    finds every marker in the list by definition and passes for ever. The first
+    version of this did exactly that, and the way it was found is the way this
+    repository says to find it, by renaming a marker and watching nothing fail.
+  */
+  const claude = read("CLAUDE.md");
+  const ritual = between(claude, "Grep the markers the branch owns");
+  const markers = [...ritual.slice(0, ritual.indexOf("Most of them now"))
+    .matchAll(/`([^`]+)`/g)].map((m) => m[1]!);
+
+  assert.ok(
+    markers.length >= 25,
+    `only ${markers.length} markers parsed out of CLAUDE.md; the list or its wording moved`,
+  );
+
+  const haystack = [
+    ...ALL, ...sourceFiles("scripts", /\.(ts|tsx|mjs)$/), ...sourceFiles("prisma"),
+    "middleware.ts", "next.config.ts", "app/globals.css",
+  ].filter((f) => existsSync(f)).map(read).join("\n");
+
+  const gone = markers.filter((marker) => !haystack.includes(marker));
+  assert.deepEqual(
+    gone, [],
+    `named in the merge ritual and no longer anywhere in the tree: ${gone.join(", ")}`,
+  );
+});
+
+check("every script a workflow runs is a script that exists", () => {
+  /*
+    The invariants already assert that a browser suite CI can run is one CI does
+    run. One layer up, nothing checked the workflow files themselves: a job
+    calling `npm run test:whatever` after somebody renamed the script fails at
+    the point where a failure looks like the code being broken, and a job that
+    quietly stopped being the thing it claims to run does not fail at all.
+
+    Both directions, because they are different faults. A workflow naming a
+    script that is gone is a broken job; a `scripts/*` path that no longer
+    exists is the same thing wearing the other spelling.
+  */
+  const workflows = sourceFiles(".github/workflows", /\.ya?ml$/);
+  assert.ok(workflows.length >= 1, "no workflow files found, so this check is looking in the wrong place");
+  const yaml = workflows.map(read).join("\n");
+
+  const scripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> }).scripts;
+  const named = [...new Set([...yaml.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]!))];
+  const missing = named.filter((name) => !(name in scripts));
+  assert.deepEqual(missing, [], `a workflow runs an npm script that no longer exists: ${missing.join(", ")}`);
+
+  const paths = [...new Set([...yaml.matchAll(/scripts\/([\w.-]+\.(?:mjs|ts))/g)].map((m) => m[1]!))];
+  assert.ok(paths.length >= 5, `only ${paths.length} script paths found in the workflows; the pattern moved`);
+  const absent = paths.filter((file) => !existsSync(join("scripts", file)));
+  assert.deepEqual(absent, [], `a workflow runs a script file that is not there: ${absent.join(", ")}`);
+});
+
+// ── A deck is counted by building it, and built in a bounded number of queries ─
+
+/*
+  THE NUMBER ON THE SCREEN AND THE DECK IT DESCRIBES COME FROM ONE PLACE.
+
+  First run offered a starter deck and printed `words * 2` under it as the card
+  count. Two is what a unit that drills nothing builds: a recognition card and a
+  production card. Every A1 unit but the first also drills seven cases and up to
+  two recorded sentences, so the deck it was describing as 104 cards was 404, and
+  a learner budgeting their evenings off that number was out by a factor of four
+  before they started. Measured across the course the multiplier runs from 2.00
+  to 10.94, which is the argument against any constant at all: it is a property
+  of the unit and of what the dictionary happens to hold for each word.
+
+  So the count is `previewUnits`, which runs the same generator the deck builder
+  runs and counts what comes out. This asserts the arithmetic did not come back
+  rather than asserting today's markup: a screen offering a deck may not
+  multiply a word count by anything.
+*/
+check("a deck is counted by building it, not by a cards-per-word guess", () => {
+  const wizard = code("app/(chromeless)/start/WelcomeWizard.tsx");
+  const page = code("app/(chromeless)/start/page.tsx");
+
+  assert.match(
+    page, /previewUnits\(/,
+    "first run stopped counting its starter deck with previewUnits, so its card count is a guess again",
+  );
+  assert.doesNotMatch(
+    wizard, /\bword(Count|s)\s*\*\s*\d/,
+    "first run is multiplying a word count into a card count again; cards per word runs 2 to 11 across the course",
+  );
+  assert.doesNotMatch(
+    code("lib/assessment/plan.ts"), /\*\s*2\s*;/,
+    "weeksToLearn is doubling a word count again; it takes cards for the same reason",
+  );
+});
+
+/*
+  AND THE BUILD IS A FIXED NUMBER OF QUERIES, NOT ONE PER WORD.
+
+  `completeOnboarding` used to call `addUnitToDeck` in a loop, and that resolved
+  the session again, read the dictionary a word at a time, read the learner's
+  cards a word at a time and revalidated three paths, per unit. Six units of
+  eighteen words measured 330 queries against 5 for the same 982 cards. On a
+  socket that is half a second; on a hosted database at a 25ms round trip it is
+  eight seconds of latency before anything else, and it was reported as the
+  screen having hung. It is the one place in the app where a stranger is asked
+  to wait with nothing to look at, so the loop may not come back.
+*/
+check("first run builds a deck in a fixed number of queries, not one set per word", () => {
+  const actions = code("app/actions.ts");
+  const onboarding = between(actions, "export async function completeOnboarding");
+
+  assert.match(
+    onboarding, /addUnitsToDeck\(/,
+    "completeOnboarding stopped using the batched builder",
+  );
+  assert.doesNotMatch(
+    onboarding, /for\s*\([^)]*\)\s*\{[\s\S]{0,400}?addUnitToDeck\(/,
+    "completeOnboarding is calling addUnitToDeck in a loop again, which is a session check and three reads per unit",
+  );
+
+  const deck = code("lib/srs/deck.ts");
+  assert.doesNotMatch(
+    between(deck, "export async function addUnitsToDeck"),
+    /for\s*\([^)]*\)\s*\{[\s\S]{0,300}?await\s+prisma\.lexeme\./,
+    "the deck builder is reading the dictionary inside a loop, which is the shape it was written to remove",
+  );
+  assert.match(
+    deck, /INSERT_CHUNK/,
+    "the deck builder inserts unchunked; a whole level is over 2000 rows and Postgres binds at most 65535 parameters",
+  );
+});
+
+/*
+  A duration is read in the unit that makes it honest.
+
+  The plan's pace tile printed hours to one decimal place, so nine minutes a
+  week came out as "0.2h", which is twelve, and the shortfall note reached
+  "roughly 0 to 0 hours a week" on a real 1.3 minutes. `lib/time/duration.ts`
+  picks minutes below an hour and hours above, and steps a range down a unit
+  rather than rounding its smaller end to a zero it is not.
+
+  The rule asserted is that the pace is never printed except through that
+  module: `weeksNeeded` may take the raw figure because it divides by it rather
+  than showing it, and everything else has to go through the formatter.
+*/
+check("the plan reads a duration through the one module that units it", () => {
+  const panel = read("components/assessment/PlanPanel.tsx");
+  assert.match(
+    panel, /from "@\/lib\/time\/duration"/,
+    "PlanPanel no longer reads the duration module, so it is spelling a unit itself",
+  );
+  const printed = panel
+    .split("\n")
+    .filter((line) => line.includes("appHoursPerWeek") && !line.trimStart().startsWith("*"))
+    .filter((line) => !/formatDuration|weeksNeeded/.test(line));
+  assert.deepEqual(
+    printed, [],
+    `the pace reaches a screen without a unit chosen for its size: ${printed.join(" | ")}`,
+  );
+});
+
+/**
+ * Every custom property a screen reads is one something sets.
+ *
+ * This failure is silent by construction, which is the whole reason for the
+ * check. `var(--nothing)` is not a syntax error and does not warn: the
+ * declaration is invalid at computed-value time, so the property falls back to
+ * its inherited value or, where it does not inherit, to its initial one.
+ * Nothing throws, nothing logs, and the contrast pass happily measures whatever
+ * colour actually landed.
+ *
+ * Two were live when this was written, and they failed in the two different
+ * ways the fallback rule produces. `--ink-soft` was read 25 times across the
+ * lesson, checkpoint and placement screens; `color` inherits, so every caption
+ * meant to sit back from its content was drawn in the full body ink, and "A new
+ * word" carried the same weight as the word being taught. `--r-md` was read
+ * ten times; `border-radius` does not inherit, so it landed on 0 and ten padded
+ * boxes had square corners inside cards rounded to 16px, the lesson's own
+ * answer buttons among them.
+ *
+ * A token may be set from a stylesheet or written from a component, since
+ * `--dock-clearance`, the nav marker's material and the confetti's drift are
+ * all measured at runtime and set as inline styles. So what this asserts is
+ * that the name is set *somewhere*, not that it is in the palette.
+ */
+check("every custom property a screen reads is one something sets", () => {
+  const stylesheets = sourceFiles("app", /\.css$/).map(read).join("\n");
+
+  // Tailwind's @theme exposes `--color-ink` as `--ink`, `--radius-lg` as
+  // `--radius-lg` and so on, so a namespaced declaration sets the bare name too.
+  const declared = new Set<string>();
+  const add = (name: string | undefined) => {
+    if (!name) return;
+    declared.add(name);
+    declared.add(name.replace(/^--(?:color|radius|font|text|shadow|ease|animate)-/, "--"));
+  };
+  for (const match of stylesheets.matchAll(/(--[\w-]+)\s*:/g)) add(match[1]);
+  // A component that writes the property itself: style={{ "--dock-clearance": x }}
+  // or element.style.setProperty("--nav-marker-bg", …).
+  for (const file of ALL) {
+    for (const match of read(file).matchAll(/["'`](--[\w-]+)["'`]\s*[,:)]/g)) add(match[1]);
+  }
+  // next/font declares its own variable on <html> rather than in a stylesheet.
+  for (const match of read("app/layout.tsx").matchAll(/variable:\s*"(--[\w-]+)"/g)) add(match[1]);
+
+  const missing = new Map<string, string>();
+  for (const file of [...ALL, ...sourceFiles("app", /\.css$/)]) {
+    for (const match of read(file).matchAll(/var\(\s*(--[\w-]+)\s*[,)]/g)) {
+      const name = match[1];
+      if (name && !declared.has(name) && !missing.has(name)) missing.set(name, file);
+    }
+  }
+
+  assert.equal(
+    missing.size,
+    0,
+    `nothing sets ${[...missing].map(([n, f]) => `${n} (read in ${f})`).join(", ")}. ` +
+    "An unset custom property is not an error: the declaration is dropped and the " +
+    "property inherits or resets, so the screen renders in the wrong colour or shape " +
+    "with nothing to say so.",
+  );
+});
+
+/**
+ * A fade never goes on words.
+ *
+ * `opacity` multiplies through everything inside a box, so a fade meaning
+ * "secondary" is applied to the sentence as well as to the idea of it, and
+ * there is no way to reason about the result from the palette. CLAUDE.md and
+ * `docs/14-design-system.md` both say this; until now neither had anything
+ * behind it.
+ *
+ * The four grading buttons are what made the case for asserting it rather than
+ * writing it down again. Their ink is already the hue's own ink, which clears
+ * 4.5:1 on its tint by construction, so nothing in the palette was wrong: the
+ * fades on top of it were. Measured in a browser, the interval under each
+ * button read 3.49 to 3.75 in the light theme and the keyboard hint 2.45 to
+ * 2.62, on the screen a learner opens every day. axe reported four of those
+ * twelve runs, and `test-design.mjs` none, because it walks `/review` as the
+ * page arrives and the grading row is not drawn until a card is revealed.
+ *
+ * A fade is still how you quieten something that carries no words, which is
+ * what `aria-hidden` marks: the padlock on a locked course unit is faded and
+ * the sentence beside it is not. `disabled:` and `hover:` variants are a
+ * control's own states rather than a way of ranking content, and 0 and 100 are
+ * an animation's endpoints.
+ *
+ * This reads the utility form. An inline `style={{ opacity }}` is not covered
+ * and cannot be: whether a box holds words is not a question the source can
+ * answer once the value is computed.
+ */
+check("a fade never goes on words", () => {
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const match of read(file).matchAll(/<([a-zA-Z][^>]*?)\/?>/g)) {
+      const tag = match[1];
+      if (!tag || /aria-hidden/.test(tag)) continue;
+      for (const token of tag.split(/[\s"'`{}]+/)) {
+        const bare = /^opacity-(\d+)$/.exec(token);
+        if (!bare) continue;
+        const pct = Number(bare[1]);
+        if (pct === 0 || pct === 100) continue;
+        offenders.push(`${file}: ${tag.slice(0, 70).replace(/\s+/g, " ")}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders, [],
+    "a fade on an element that is not aria-hidden fades whatever words it holds. " +
+    "Quieten content with a defined ink instead, or move the fade onto the icon.",
+  );
+});
+
+// ── The word of the day ──────────────────────────────────────────────────────
+
+check("the almanac asks for a meaning and never supplies a word", () => {
+  /*
+    ADR-005 on the newest path onto the home page.
+
+    `lib/copy/almanac.ts` decides what today is and therefore which word gets
+    printed on Today every morning, which makes it the single most-read piece
+    of copy in the app. A word typed into it would be this project inventing
+    Estonian vocabulary and presenting it under a heading saying it was chosen
+    for you, with nothing between the invention and the learner.
+
+    So the table is English. It names a *meaning*, `lib/progress/wordOfDay.ts`
+    asks the dictionary who carries that meaning, and every Estonian character
+    on the card came from Ekilex or the built expansion. The English gloss is
+    the only authored column, which is exactly the latitude the syllabus takes.
+  */
+  const almanac = read("lib/copy/almanac.ts");
+  const estonianLetters = /[õäöüšž]/i;
+  const offenders = almanac.split("\n").filter((line) => estonianLetters.test(line));
+  assert.deepEqual(offenders, [], "an Estonian word was typed into the almanac");
+
+  // And the module that resolves it cannot ask a model instead of the dictionary.
+  for (const file of ["lib/progress/wordOfDay.ts", "lib/copy/almanac.ts", "lib/dict/gloss.ts"]) {
+    assert.doesNotMatch(
+      code(file),
+      /lib\/tutor|openWithFallback|ANTHROPIC|OPENAI|OPENROUTER/,
+      `${file} can reach a model, and this path decides what Estonian goes on the home page`,
+    );
+  }
+});
+
+check("every meaning the almanac can ask for is one the dictionary can answer", () => {
+  /*
+    The same argument the syllabus makes about itself: a lemma in a unit is a
+    request and Ekilex decides whether it exists, so a misspelled word cannot
+    reach the dictionary, it can only fail to arrive, loudly.
+
+    A gloss here is a request too. One the shipped dictionary cannot meet is
+    not a crash, because every occasion carries several and there is always a
+    month underneath, and that is exactly what makes it worth checking: a dead
+    gloss fails silently and for ever, and the card quietly stops being about
+    the date. Five were dead when this table was first written, "star" and
+    "bonfire" and "elk" among them.
+  */
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as { translation: string }[];
+  const senses = new Set(entries.flatMap((e) => glossSenses(e.translation)));
+  const dead = allGlosses().filter((gloss) => !glossSenses(gloss).every((s) => senses.has(s)));
+  assert.deepEqual(dead, [], "the almanac asks for a meaning no word in the dictionary carries");
+
+  // And every day of the year reaches something, so the card is never blank.
+  for (const year of [2026, 2027, 2028]) {
+    for (let month = 1; month <= 12; month++) {
+      for (let day = 1; day <= 31; day++) {
+        const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        if (new Date(`${key}T00:00:00Z`).getUTCDate() !== day) continue;
+        assert.ok(occasionsFor(key).length > 0, `${key} reaches no occasion at all`);
+      }
+    }
+  }
+});
+
+check("the word of the day is one the learner has not met", () => {
+  /*
+    The whole claim of the panel. It is the one thing on Today that the rest of
+    the app is not already going to show you, and a word that turns out to be
+    card four of this afternoon's review is a coincidence rather than a
+    present.
+
+    Three ways to have met a word and all three are excluded: a card in the
+    deck, a star, and a row in the review log. The log is checked separately
+    because `Review` deliberately has no relation to `Card` (it outlives one),
+    so a word whose card was deleted last month has no card and has certainly
+    been met.
+  */
+  const source = code("lib/progress/wordOfDay.ts");
+  assert.match(source, /cards:\s*\{\s*none:/, "the word of the day no longer skips words in the deck");
+  assert.match(source, /stars:\s*\{\s*none:/, "the word of the day no longer skips starred words");
+  assert.match(source, /withoutReviewed\(/, "the review log is no longer consulted");
+  // Both ways of picking one go through it, not just the themed path.
+  const uses = [...source.matchAll(/withoutReviewed\(/g)].length;
+  assert.ok(uses >= 3, `withoutReviewed is used ${uses} times; it is defined once and called on both paths`);
+
+  /*
+    And the card says where its sentence came from. Every Estonian sentence in
+    this app was recorded by a lexicographer, and a page that prints one
+    without saying so is asking to be trusted rather than checked, which is the
+    rule the grammar pages already keep.
+  */
+  const card = read("components/WordOfDay.tsx");
+  assert.match(card, /SENTENCE_SOURCE/, "the word of the day prints a sentence with no provenance");
+  assert.match(card, /Ekilex/, "the sentence's provenance no longer names its source");
+});
+
+check("late is decided in one place, against the learner's own day", () => {
+  /*
+    A due date is typed into `<input type="date">`, so it is stored at midnight
+    UTC of that day. `TaskRow` compared it against `new Date()` and therefore
+    marked everything due today as overdue from midnight onwards, and from
+    three in the morning for a learner in Tallinn. The heading above the row
+    now comes from `bucketFor`, so a row and its heading disagreeing is the
+    failure this is watching for.
+
+    Anything comparing a due date against the clock is doing the arithmetic a
+    second time, and getting it wrong is the default.
+  */
+  const agenda = read("lib/ux/agenda.ts");
+  assert.match(agenda, /daysBetween\(/, "the agenda stopped counting in whole days");
+
+  for (const file of ALL) {
+    if (file === "lib/ux/agenda.ts") continue;
+    assert.doesNotMatch(
+      code(file),
+      /due(At|Date)?\s*<\s*new Date\(\)|new Date\(\)\s*>\s*due(At|Date)?\b/,
+      `${file} decides for itself whether something is late, against the clock rather than the day`,
+    );
+  }
+});
+
+
+check("a confidence figure carries its evidence, on every screen that prints one", () => {
+  /*
+    ADR-022's headline rule: a percentage whose basis is not stated is the one
+    thing this feature must not ship. "72 percent likely to pass B2" after nine
+    reviews is an invented number and a learner has no way of telling it apart
+    from one that means something.
+
+    It held while the examination hub was the only screen printing the figure,
+    and it stopped being a property the moment Today printed the same number.
+    The hub kept its own object literal of what each tier means, so two screens
+    would have had two accounts of what one number was worth, and nothing in the
+    app would have said which was right. The words live beside the tier now, and
+    what this asserts is that every screen printing a confidence reads them from
+    there rather than phrasing its own.
+  */
+  const readiness = read("lib/exam/readiness.ts");
+  assert.match(readiness, /export const EVIDENCE_NOTE/, "the tier's own copy has left the module that owns the tier");
+  assert.match(readiness, /export const EVIDENCE_LABEL/, "the short form a card prints beside a number is gone");
+
+  /*
+    The screens that actually read the number, which is what obliges them to say
+    what it is worth. Two conditions, and both were arrived at by getting it
+    wrong: grepping for the word alone reached `Assessment.confidence`, a stored
+    string like "indicative" and a different fact altogether, and dropping the
+    property access caught Today, which loads the countdown and hands it
+    straight to a card without printing a digit of it.
+  */
+  const screens = [...APP, ...COMPONENTS].filter((file) => {
+    const source = read(file);
+    return /from "@\/lib\/exam\/readiness"|from "@\/lib\/progress\/countdown"/.test(source)
+      && /\.confidence\b/.test(code(file));
+  });
+  assert.ok(
+    screens.length >= 2,
+    `only ${screens.length} screens read the readiness modules; this check has stopped finding them`,
+  );
+
+  for (const file of screens) {
+    const source = code(file);
+    /*
+      A member access, not the word. Written the loose way first, and the word
+      "evidence" sitting in a sentence of copy on the card was enough to satisfy
+      it after the tier label had been deleted: prose about a rule is not
+      compliance with it, which is the same trap `code()` exists for one layer
+      up.
+    */
+    assert.match(
+      source,
+      /EVIDENCE_(NOTE|LABEL)|\.measured\b|\.evidence\b/,
+      `${file} prints a confidence figure with no account of what it rests on`,
+    );
+    // And it may not write its own words for a tier.
+    assert.doesNotMatch(
+      source,
+      /thin:\s*["'`]/,
+      `${file} phrases its own evidence tiers instead of reading the one table`,
+    );
+  }
+});
+
+check("what the learner has kept is counted, never stored", () => {
+  /*
+    ADR-014 over the newest number on Today. The word of the day panel says how
+    many words the learner has taken from it, and the obvious way to do that is
+    a counter that goes up on a click. A stored count drifts, survives a card
+    being deleted, and can be awarded for something that did not happen.
+
+    So a card added from the panel carries its own `source` and the count is a
+    query over `createdAt`, which is what every other figure in this app does.
+    `computeStreak` is the run-of-days function the review streak already uses,
+    so a run counted here and a run counted there break at the same midnight.
+  */
+  const resolver = code("lib/progress/wordOfDay.ts");
+  assert.match(resolver, /export const ALMANAC_SOURCE/, "the panel's cards no longer say where they came from");
+  assert.match(resolver, /computeStreak\(/, "the collection counts a run of days with a function of its own");
+
+  // The button that adds one and the query that counts them read one constant.
+  const card = code("components/WordOfDay.tsx");
+  assert.match(card, /ALMANAC_SOURCE/, "the card labels its cards with a literal rather than the shared constant");
+
+  // And nothing was added to the schema to hold the total.
+  assert.doesNotMatch(
+    SCHEMA,
+    /^\s*(kept|collected|wordOfDay\w*)\s+Int/im,
+    "the schema stores what the panel has kept, which the cards already answer",
+  );
+});
+
+
+check("a hue's fill is never used as its ink", () => {
+  /*
+    `docs/14-design-system.md`: every hue reads as colour at full strength and
+    lands around 2.5:1 as *text on its own tint*, so each one has an ink walked
+    down until it clears 4.5:1. The fill paints a bar, a ring, a dot or a
+    button; the ink writes a word. They are two tokens and they are one
+    character apart, which is why this kept happening.
+
+    Six places had it wrong and the browser suite had seen none of them,
+    because a contrast pass can only measure a state it can reach: the two on
+    `/week` and `/tasks` only render once a learner has set a class week, and
+    the fixture never set one. A rule that is only enforced where a fixture
+    happens to walk is a rule that holds on about half the app.
+
+    A `tone` prop is included because `Stat` takes a colour rather than a tone
+    name, which is exactly how `/tasks` came to draw its "Known" figure in mint
+    at 2.52:1 while `/week` drew the same figure correctly in the ink beside it.
+    `Diagnosis` passes both, a fill for its bar and an ink for its label, which
+    is the pairing this is protecting rather than a violation of it.
+  */
+  const fillAsInk = /(?:color:\s*|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    for (const line of read(file).split("\n")) {
+      // A bar and its label side by side: the fill is the bar's, the ink is the
+      // label's, and naming both on one line is the correct shape.
+      if (/\bink=/.test(line)) continue;
+      if (fillAsInk.test(line)) offenders.push(`${file}: ${line.trim().slice(0, 90)}`);
+    }
+  }
+  assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
 });
 
 console.log(

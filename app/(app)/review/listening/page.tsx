@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ListeningSession, type ListeningCard } from "./ListeningSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Listening" };
 
@@ -64,7 +65,7 @@ export default async function ListeningPage() {
         <Page title="Listening" lead="Hear a word, pick its meaning.">
           <Empty
             title="Not quite enough words yet"
-            body={`Listening needs at least ${MIN_LEXEMES_FOR_CHOICES} different words in the dictionary to build multiple-choice answers. Add a few more and come back.`}
+            body={`The wrong answers come from other words, and there are fewer than ${MIN_LEXEMES_FOR_CHOICES} to draw on.`}
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>
@@ -81,7 +82,7 @@ export default async function ListeningPage() {
     }
     const allTranslations = [...distinctTranslations];
 
-    const shuffled = [...cards].sort(() => Math.random() - 0.5);
+    const shuffled = shuffle(cards);
     const listeningCards: ListeningCard[] = shuffled.map((c) => {
       const correct = c.back;
       const pos = c.lexeme?.pos ?? "OTHER";
@@ -104,6 +105,3 @@ function pickDecoys(
   return [...sameOrder, ...rest].slice(0, count);
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}

@@ -10,7 +10,7 @@ const word = (over: Partial<WorksheetWord> = {}): WorksheetWord => ({
     { formType: "NOM_SG", value: "tuba" },
     { formType: "GEN_SG", value: "toa" },
     { formType: "PART_SG", value: "tuba" },
-    // A retrieved paradigm form, as Ekilex supplies them. A gap can only hide a
+    // A retrieved form, as Ekilex supplies them. A gap can only hide a
     // form we actually hold — the same rule the cloze cards follow.
     { formType: "EKILEX:SgIn", value: "toas" },
   ],

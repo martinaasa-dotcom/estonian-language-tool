@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { SentenceSession, type SentenceTask } from "./SentenceSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Sentences" };
 
@@ -75,11 +76,3 @@ export default async function SentencesPage() {
   return <SentenceSession tasks={[...translated, ...untranslated].slice(0, ROUND)} />;
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}

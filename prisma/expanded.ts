@@ -24,7 +24,7 @@ import { Prisma, type PrismaClient } from "@prisma/client";
  *
  * The consequences are the ones that matter: a hand-written entry always wins,
  * because it is already there. A word a learner has corrected is untouched. A
- * paradigm the live Ekilex lookup has already cached is untouched. Running
+ * form the live Ekilex lookup has already cached is untouched. Running
  * this twice changes nothing the second time.
  *
  * `applyPosCorrections` is the one write here that is not an insert, and it
@@ -92,7 +92,7 @@ export function readPosCorrections(): PosCorrection[] {
  * and inserts it beside the `kallis` NOUN already there. Two of the same word
  * in the dictionary, each with its own id, forms and cards, and no error
  * anywhere. This repoints the existing row instead, which writes no content at
- * all: the translation, the paradigm, the examples and the provenance stay
+ * all: the translation, the forms, the examples and the provenance stay
  * exactly as they were, and only the label this pipeline itself got wrong
  * moves.
  *

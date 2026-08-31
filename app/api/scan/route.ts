@@ -33,7 +33,7 @@ const SCANS_PER_MINUTE = 4;
  * A model reads the picture, and then the *dictionary* decides which of the
  * words it claims to have seen the app is prepared to vouch for. Nothing the
  * model wrote reaches a flashcard: a word the dictionary recognises brings its
- * own principal parts and paradigm with it, and a word it does not is handed
+ * own principal parts and retrieved forms with it, and a word it does not is handed
  * back marked as exactly that, for the person holding the paper to confirm or
  * correct. ADR-005 says a model may never supply an Estonian form; reading one
  * off a page is transcription rather than authorship, but a misread and an

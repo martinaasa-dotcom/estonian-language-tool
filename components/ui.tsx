@@ -41,7 +41,7 @@ export function Page({ title, titleLang, lead, actions, children, eyebrow }: {
           {eyebrow && (
             <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>{eyebrow}</p>
           )}
-          <h1 lang={titleLang} className="est text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+          <h1 lang={titleLang} className="text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             {title}
           </h1>
           {lead && <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{lead}</p>}
@@ -177,12 +177,27 @@ export function Chip({ children, tone = "neutral", title, caseSensitive }: {
 }
 
 /** Empty state. Every view has one — a view without an empty state is not finished. */
+/**
+ * A dead end, and the way out of it.
+ *
+ * `body` is optional, and that is the whole rule. Every one of these used to
+ * explain the entire feature to somebody who cannot use it yet: the dictation
+ * screen spent forty-one words on where Ekilex sentences come from and why
+ * long ones are a memory test, to a learner whose deck is empty. A person who
+ * has arrived somewhere with nothing in it wants to know what to do next, and
+ * a paragraph is in the way of the button that says it.
+ *
+ * So the title names what is missing, the body is one line at most and only
+ * where it says something the title cannot, and the action is the way out.
+ * Where the title is the whole story there is no body at all.
+ * `lib/copy/readerCopy.test.ts` holds the length.
+ */
 export function Empty({ title, body, action, mood = "thinking" }: {
-  title: string; body: string; action?: ReactNode; mood?: "happy" | "thinking" | "cheer";
+  title: string; body?: string; action?: ReactNode; mood?: "happy" | "thinking" | "cheer";
 }) {
   return (
     <div
-      className="pop-in relative overflow-hidden rounded-[var(--r-xl)] border border-dashed px-6 py-12 text-center"
+      className="pop-in relative overflow-hidden rounded-[var(--r-xl)] border border-dashed px-6 py-9 text-center"
       style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
     >
       <span
@@ -192,9 +207,11 @@ export function Empty({ title, body, action, mood = "thinking" }: {
       />
       <div className="relative">
         <Mascot size={54} mood={mood} className="mx-auto float" />
-        <p className="est mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>{title}</p>
-        <p className="mx-auto mt-2 max-w-[48ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
-        {action && <div className="mt-6 flex justify-center">{action}</div>}
+        <p className="mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>{title}</p>
+        {body && (
+          <p className="mx-auto mt-2 max-w-[48ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+        )}
+        {action && <div className="mt-5 flex justify-center">{action}</div>}
       </div>
     </div>
   );
@@ -206,7 +223,7 @@ export function Stat({ value, label, tone, icon }: {
   return (
     <div>
       {icon && <div className="mb-2">{icon}</div>}
-      <div className="est tnum text-3xl font-bold leading-none tracking-tight" style={{ color: tone ?? "var(--ink)" }}>
+      <div className="tnum text-3xl font-bold leading-none tracking-tight" style={{ color: tone ?? "var(--ink)" }}>
         {value}
       </div>
       <div className="label-xs mt-2" style={{ color: "var(--ink-3)" }}>{label}</div>
@@ -237,7 +254,7 @@ export function StatTile({ value, label, tone = "accent", icon, hint }: {
         <span className="label-xs min-w-0" style={{ color: fg }}>{label}</span>
         {icon && <span className="shrink-0" style={{ color: fg, opacity: 0.75 }}>{icon}</span>}
       </div>
-      <span className="est tnum text-2xl font-bold leading-none" style={{ color: fg }}>{value}</span>
+      <span className="tnum text-2xl font-bold leading-none" style={{ color: fg }}>{value}</span>
       {hint && <span className="text-2xs" style={{ color: fg }}>{hint}</span>}
     </div>
   );

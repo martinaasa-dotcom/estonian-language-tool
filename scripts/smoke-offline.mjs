@@ -13,66 +13,84 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 
+
 const BASE = baseUrl();
 const browser = await launchChromium();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
 const page = await ctx.newPage();
 const app = page.locator("main");
 
-// Floor: measured 10 in dev mode with NEXT_PUBLIC_ENABLE_SW=1, which its header documents.
-const { check, done } = suite("Offline review", { floor: 14 });
+// Floor: the count CI reaches, which is every check here, including the one
+// about the cache that is deliberately never trimmed.
+const { check, done } = suite("Offline review", { floor: 15 });
 
 
 /**
- * Answers whichever kind of card is on screen.
+ * How many cards this session says it has graded.
  *
- * Review has three shapes — flip, typed, and multiple choice — chosen per card
- * and per preference, so a test that only knows about "Show answer" silently
- * stops testing anything the day the default changes. It did.
+ * Read rather than assumed, because the counter moves offline too: `submit`
+ * enqueues to the outbox in its own catch and increments regardless, which is
+ * the whole property this suite exists to check.
+ */
+async function gradedCount() {
+  const body = await page.textContent("body");
+  const found = /(\d+) graded/.exec(body ?? "");
+  return found ? Number(found[1]) : -1;
+}
+
+/**
+ * Answers whichever kind of card is on screen, and says whether it really
+ * graded one.
+ *
+ * Review has four shapes now and this function has already been wrong about
+ * that once, in the way that costs the most: it reported a completed answer
+ * having graded nothing, the outbox came back empty, and the check read as "a
+ * grade taken offline is held on the device: 0 queued", which looks like the
+ * offline queue is broken when it is working perfectly. Two of the three
+ * checks around it are satisfied by zero.
+ *
+ * So it no longer returns true for having pressed something. It reads the
+ * session's own graded counter before and after, and a shape it does not
+ * recognise reports false rather than passing quietly. The shapes:
+ *
+ *   - a first meeting, which teaches rather than asks and offers one button;
+ *   - a flip card, the one shape the app cannot mark, which reveals and then
+ *     asks the learner;
+ *   - a multiple choice, where a right pick grades itself on a timer and a
+ *     wrong one waits on a button;
+ *   - a typed answer, the same, checked against the dictionary.
  */
 async function answerOneCard() {
+  const before = await gradedCount();
+
   const show = app.getByRole("button", { name: /Show answer/ });
   if (await show.count()) {
     await show.first().click();
     await page.waitForTimeout(250);
-    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard)/ });
-    if (await rate.count()) { await rate.first().click(); return true; }
-  }
-
-  /*
-    Multiple choice: the card says "1-4 to pick", so press one, and then grade.
-
-    Picking an option only *reveals* the answer. The grade is the second
-    interaction, on Again/Hard/Good/Easy, and without it this function reported
-    a completed answer having graded nothing: the outbox was empty and the
-    check read as "a grade taken offline is held on the device: 0 queued",
-    which looks like the offline queue is broken when it is working perfectly.
-    It surfaced when the dictionary grew, because a multiple choice card
-    started coming up first where a "Show answer" card used to, and that branch
-    above does both steps.
-
-    The keyboard rather than a click on the option, because it is what the app
-    itself offers and what test-modes.mjs drives.
-  */
-  if (await page.getByText(/Pick the meaning/).count()) {
+    // Two buttons, not four: "Not yet" and "Got it".
+    const got = app.getByRole("button", { name: /^Got it$/ });
+    if (await got.count()) await got.first().click();
+  } else if (await page.getByText(/Pick the meaning/).count()) {
+    // The keyboard rather than a click on the option, because it is what the
+    // app itself offers and what test-modes.mjs drives.
     await page.keyboard.press("1");
     await page.waitForTimeout(900);
-    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
-    if (await rate.count()) { await rate.first().click(); }
-    return true;
+  } else {
+    const input = page.locator("main input[type='text'], main input:not([type])").first();
+    if (await input.count()) {
+      await input.fill("zzz");
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(300);
+    }
   }
 
-  // Typed: fill something wrong and submit — a wrong answer still grades.
-  const input = page.locator("main input[type='text'], main input:not([type])").first();
-  if (await input.count()) {
-    await input.fill("zzz");
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(250);
-    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
-    if (await rate.count()) { await rate.first().click(); }
-    return true;
-  }
-  return false;
+  // A miss and a first meeting both end on this one button. A clean hit and a
+  // right pick have already graded themselves and moved on.
+  const carryOn = app.getByRole("button", { name: /Got it, next/ });
+  if (await carryOn.count()) await carryOn.first().click();
+
+  await page.waitForTimeout(700);
+  return (await gradedCount()) > before;
 }
 
 const outboxSize = () => page.evaluate(() => new Promise((resolve) => {
@@ -150,6 +168,24 @@ await page.waitForTimeout(2500);
 const afterTrim = await page.evaluate(async () =>
   (await caches.open("kodukeel-v3-audio")).keys().then((k) => k.length));
 check("the audio cache is trimmed back to its ceiling", afterTrim <= 400, `${afterTrim} entries`);
+
+/*
+  And the other half of that rule: the one cache with no ceiling still has what
+  it is for in it.
+
+  Every cache the worker keeps has a `LIMITS` entry except the shell, and the
+  reason is the whole point of the ceilings. A browser evicting an origin's
+  storage takes all of it, and `/offline` is the entry with nothing behind it,
+  so it and the icon live in a cache that is never trimmed. Checked right after
+  a trim that just deleted twenty entries from the cache next door, because
+  "never trimmed" is only worth asserting where a trim has actually run.
+*/
+const shellIntact = await page.evaluate(async () => {
+  const shell = (await caches.keys()).find((n) => n.endsWith("-shell"));
+  if (!shell) return false;
+  return Boolean(await (await caches.open(shell)).match("/offline"));
+});
+check("the cache with no ceiling still holds the page it exists for", shellIntact);
 
 const hasCards = (await app.locator("button").count()) > 2 &&
   !/Nothing due|No cards yet/i.test((await page.textContent("body")) ?? "");
@@ -230,7 +266,7 @@ await page.reload({ waitUntil: "domcontentloaded" }).catch(() => {});
 await page.waitForTimeout(2000);
 const offlineBody = (await page.textContent("body")) ?? "";
 check("review still renders with the network gone",
-  /left|Show answer|Pick the meaning/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
+  /left|Show answer|Pick the meaning|Got it, next/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
   offlineBody.slice(0, 60).replace(/\s+/g, " "));
 
 // The outbox must survive the reload.

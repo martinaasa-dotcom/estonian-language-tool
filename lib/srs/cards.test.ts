@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { availableCardTypes, generateCards, type LexemeForCards } from "./cards";
+import {
+  availableCardTypes, generateCards, inTeachingOrder, teachingRank, type LexemeForCards,
+} from "./cards";
 
 const tuba: LexemeForCards = {
   lemma: "tuba", translation: "room", pos: "NOUN",
@@ -178,5 +180,47 @@ describe("generateCards — CONJUGATION", () => {
   it("is offered only for a verb whose forms are actually held", () => {
     expect(availableCardTypes(lugema)).toContain("CONJUGATION");
     expect(availableCardTypes({ ...lugema, forms: [] })).not.toContain("CONJUGATION");
+  });
+});
+
+describe("inTeachingOrder", () => {
+  const card = (lexemeId: string | null, cardType: string) => ({ lexemeId, cardType });
+
+  it("puts a word's own cards in the order a lesson teaches them", () => {
+    // The fault this exists for: every card of a word is written in one
+    // createMany with one createdAt, so ordering the queue by that column
+    // leaves them tied and the database returns them in whatever order it
+    // likes. A learner's first sight of `juhtuma` was a conjugation card.
+    const ordered = inTeachingOrder([
+      card("a", "CONJUGATION"), card("a", "PRODUCTION"), card("a", "RECOGNITION"), card("a", "CLOZE"),
+    ]);
+    expect(ordered.map((c) => c.cardType)).toEqual([
+      "RECOGNITION", "PRODUCTION", "CLOZE", "CONJUGATION",
+    ]);
+  });
+
+  it("keeps the order the queue chose between words", () => {
+    // It settles ties inside one word and never reorders across words: which
+    // words come first was decided by the query, and this has no opinion.
+    const ordered = inTeachingOrder([
+      card("b", "CONJUGATION"), card("a", "CONJUGATION"), card("b", "RECOGNITION"),
+    ]);
+    expect(ordered.map((c) => c.lexemeId)).toEqual(["b", "b", "a"]);
+    expect(ordered.map((c) => c.cardType)).toEqual(["RECOGNITION", "CONJUGATION", "CONJUGATION"]);
+  });
+
+  it("is stable for two cards of one word and one type", () => {
+    const first = card("a", "CASE_FORM");
+    const second = card("a", "CASE_FORM");
+    expect(inTeachingOrder([first, second])).toEqual([first, second]);
+  });
+
+  it("treats a card with no word behind it as its own group", () => {
+    const ordered = inTeachingOrder([card(null, "CONJUGATION"), card(null, "RECOGNITION")]);
+    expect(ordered.map((c) => c.cardType)).toEqual(["CONJUGATION", "RECOGNITION"]);
+  });
+
+  it("sorts a type nobody has thought about to the end rather than the front", () => {
+    expect(teachingRank("SOMETHING_NEW")).toBeGreaterThan(teachingRank("GOVERNMENT"));
   });
 });

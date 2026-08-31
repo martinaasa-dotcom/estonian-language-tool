@@ -98,7 +98,7 @@ async function main() {
   // The harvested words go in last of the authored sets, and that ordering is
   // the point: where a word appears both in the hand-typed lists above and in
   // what Ekilex sent back, Ekilex wins. `dedupe` keeps the last entry for a key,
-  // so the authoritative paradigm supersedes the transcribed one rather than
+  // so the authoritative forms supersede the transcribed ones rather than
   // racing it.
   //
   // The legacy entries it supersedes are dropped here rather than left to
@@ -146,7 +146,7 @@ async function main() {
 
     It runs last because it inserts with ON CONFLICT DO NOTHING, so anything
     already present wins by being there: a hand-written gloss chosen for a
-    learner, and a harvested paradigm that came back from Ekilex against a word
+    learner, and harvested forms that came back from Ekilex against a word
     the course actually teaches. A built gloss is Wiktionary's first sense and
     is occasionally the wrong homonym, so it is the one that should yield.
   */

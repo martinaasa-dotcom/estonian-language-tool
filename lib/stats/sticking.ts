@@ -55,8 +55,15 @@ export const LAPSE_THRESHOLD = 4;
 export const MIN_REVIEWS_FOR_ACCURACY = 6;
 export const POOR_ACCURACY = 50;
 
-/** Below this many repetitions a card is simply new, not stuck. */
-const MIN_REPS = 3;
+/**
+ * Below this many repetitions a card is simply new, not stuck.
+ *
+ * Exported because Today narrows the deck in SQL before calling this rather
+ * than loading every card a learner owns to show three rows. That narrowing has
+ * to use this number and not one typed beside the query, or the home page and
+ * Progress quietly disagree about what counts as stuck.
+ */
+export const MIN_REPS = 3;
 
 export function stickingPoints(
   cards: readonly StickingInput[],

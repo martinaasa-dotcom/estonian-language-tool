@@ -17,12 +17,14 @@ import { chromium } from "playwright";
   there, then Playwright's own resolution, which finds whatever `npx playwright
   install` put in the cache.
 
-  Neither half is hypothetical. `make-icons.mjs` arrived carrying its own copy
-  of this, and a better one: a list of real locations rather than the single
-  path this file started with, including a system Chromium, which is what saves
-  a machine that has a browser but has never run `playwright install`. That
-  list is here now and its copy is gone, because two of anything is how they
-  drift.
+  Neither half is hypothetical, and the list below is not this file's own. A
+  second copy of this logic had grown up inside the script that rasterised the
+  app icon into PNGs, and it was the better copy: a list of real locations
+  rather than the single path this file started with, including a system
+  Chromium, which is what saves a machine that has a browser but has never run
+  `playwright install`. The list moved here and that copy went, because two of
+  anything is how they drift. The script itself has gone since, for a different
+  reason: nothing ever read the PNGs it wrote.
 */
 const CANDIDATES = [
   "/opt/pw-browsers/chromium",

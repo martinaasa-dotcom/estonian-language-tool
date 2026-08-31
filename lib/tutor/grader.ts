@@ -30,7 +30,7 @@ export interface GradedSentence {
 export interface GraderInput {
   task: WritingTask;
   sentence: string;
-  /** The whole authoritative paradigm, so the model never has to guess a form. */
+  /** Every authoritative form, so the model never has to guess one. */
   knownForms: { label: string; value: string }[];
   level: string;
 }

@@ -8,11 +8,11 @@ import { deckSnapshot } from "@/lib/progress/summary";
 import { unitProgress } from "@/lib/collections/syllabus";
 import { splitIntoLessons } from "@/lib/collections/lesson";
 import { grammarPoint } from "@/lib/estonian/grammar";
-import { AddUnitButton } from "@/components/AddUnitButton";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, Chip, Meter, Page, Ring } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export async function generateMetadata({ params }: { params: Promise<{ unitId: string }> }) {
   const { unitId } = await params;
@@ -36,26 +36,30 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
   if (!unit) notFound();
 
   const ownerId = await requireUserId();
-  const [snapshot, lexemes] = await Promise.all([
+  const [snapshot, rows] = await Promise.all([
     deckSnapshot(ownerId),
     prisma.lexeme.findMany({
       where: { lemma: { in: [...unit.lemmas] } },
-      select: { id: true, lemma: true, translation: true, pos: true, cefr: true, gradationNote: true, government: true },
+      select: {
+        id: true, lemma: true, translation: true, pos: true, cefr: true, gradationNote: true,
+        government: true, provenance: true, forms: { select: { formType: true } },
+      },
     }),
   ]);
 
-  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
-  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
+  // One row per lemma, in the unit's own order. A lemma can hold two entries
+  // and this page counted both.
+  const words = oneEntryPerLemma(rows, unit.lemmas);
 
   const progress = unitProgress({
-    availableLemmas: lexemes.map((l) => l.lemma),
+    availableLemmas: words.map((l) => l.lemma),
     startedLemmas: [...snapshot.startedLemmas],
     knownLemmas: [...snapshot.knownLemmas],
   });
 
   const Icon = icon(unit.icon);
-  const missing = unit.lemmas.length - lexemes.length;
-  const lessons = splitIntoLessons(lexemes).length;
+  const missing = unit.lemmas.length - words.length;
+  const lessons = splitIntoLessons(words).length;
 
   return (
     <Page
@@ -93,13 +97,26 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-52">
             {/*
-              The lesson leads, and adding the words raw is the secondary action
-              now. Before this, a unit's only two doors were "put 19 words into
-              your deck" and "drill them", so meeting a word for the first time
-              and being tested on it were the same screen.
+              One way in, and it is the lesson.
+
+              There were two doors here and they did different things: "start
+              the lesson", which teaches a word with a sentence before asking
+              anything about it, and "add 19 words", which wrote the cards
+              straight into the deck. The second one made the first optional,
+              and `lib/collections/lesson.ts` opens by stating the rule the
+              second one broke: nothing is asked before it is taught. Every
+              learner who took the quicker-looking door met their first sight of
+              a word as a flashcard testing them on it.
+
+              The lesson already adds its own words as it finishes
+              (`completeLesson`), so nothing is lost by taking the shortcut
+              away, and a unit that is half done says "continue" rather than
+              starting again. Words that arrive by another door entirely, first
+              run's starter units, the scanner, the dictionary, a paste import,
+              are taught by the first-meeting screen in review instead.
             */}
             {progress.available > 0 && (
-              <ButtonLink href={`/learn/${unit.id}/lesson`} className="justify-center">
+              <ButtonLink href={`/learn/${unit.id}/lesson`} variant="primary" className="justify-center">
                 <PlayCircle size={15} aria-hidden />
                 {progress.started > 0 ? "Continue the lesson" : "Start the lesson"}
               </ButtonLink>
@@ -109,7 +126,6 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
                 <GraduationCap size={15} aria-hidden /> Drill this unit
               </ButtonLink>
             )}
-            <AddUnitButton unitId={unit.id} words={progress.available} started={progress.started > 0} />
             {/* For the half of a class that happens on paper. */}
             <ButtonLink href={`/learn/${unit.id}/worksheet`} variant="ghost" size="sm" className="justify-center">
               <Printer size={14} aria-hidden /> Printable worksheet
@@ -142,10 +158,10 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
 
         <div>
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            {lexemes.length} words · {unit.cardTypes.map(cardTypeLabel).join(", ")} cards
+            {words.length} words · {unit.cardTypes.map(cardTypeLabel).join(", ")} cards
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
-            {lexemes.map((l) => {
+            {words.map((l) => {
               const known = snapshot.knownLemmas.has(l.lemma);
               const started = snapshot.startedLemmas.has(l.lemma);
               return (
@@ -161,7 +177,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
                     <Link
                       href={`/dictionary?q=${encodeURIComponent(l.lemma)}`}
                       lang="et"
-                      className="est text-md font-semibold hover:underline"
+                      className="text-md font-semibold hover:underline"
                       style={{ color: "var(--ink)" }}
                     >
                       {l.lemma}

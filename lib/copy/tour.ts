@@ -62,7 +62,7 @@ export const TOUR: readonly TourStop[] = [
   {
     href: "/dictionary",
     what:
-      "Any word, with its full paradigm. Type an inflected form and it tells you which word it is and " +
+      "Any word, with every form it takes. Type an inflected form and it tells you which word it is and " +
       "which case you found. Forms come from Ekilex or from the stored principal parts, never from a model.",
     when: "The moment you meet a word anywhere else. Add it to your deck from here.",
   },
@@ -145,7 +145,7 @@ export const CAN: readonly Claim[] = [
   {
     icon: "BookOpen",
     text:
-      "Give you authoritative forms. Every paradigm comes from Ekilex or from hand checked principal " +
+      "Give you authoritative forms. Every one of them comes from Ekilex or from hand checked principal " +
       "parts, and the eleven regular cases are computed from the genitive stem rather than stored.",
   },
   {
@@ -206,8 +206,28 @@ export const CANNOT: readonly Claim[] = [
   },
 ];
 
+/**
+ * First run gets a line, the walkthrough gets the paragraph.
+ *
+ * They are two different jobs and one string was doing both. The screen at
+ * /guide is read by somebody who came looking for an explanation, so a
+ * paragraph is what they asked for. The first screen of setup is read by
+ * somebody who has not decided to read anything yet, and three sentences of
+ * what the app is before the first question is a wall to get past rather than
+ * a welcome.
+ *
+ * The line is the name, because the name is the promise and almost nobody
+ * arriving knows what it means. Once somebody has been told that kodukeel is
+ * the language of a home, what this app is for needs no further explaining,
+ * and every screen after it reads as part of that rather than as a feature.
+ * The README has opened this way since the first commit; this is the same
+ * sentence reaching the first screen anybody actually sees.
+ */
+export const WHAT_IT_IS_SHORT =
+  "Kodukeel means home language. This is how Estonian becomes yours.";
+
 /** The one paragraph version, for the top of the walkthrough. */
 export const WHAT_IT_IS =
-  "Kodukeel is a memory and a reference, not a course. It holds an Estonian dictionary with real " +
-  "paradigms, turns the words you choose into flashcards, and asks you for them at the moment you are " +
+  "Kodukeel is a memory and a reference, not a course. It holds an Estonian dictionary with every " +
+  "form a word takes, turns the words you choose into flashcards, and asks you for them at the moment you are " +
   "about to forget. Everything else here exists to make that fifteen minutes a day worth more.";
