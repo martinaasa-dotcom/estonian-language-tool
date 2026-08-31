@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CASES } from "@/lib/estonian/cases";
 import { assemble, buildPaper, listeningItems, mulberry32, readingItems, speakingItems, writingItems, type WordRow } from "./items";
 import { BANDS, type ChoiceItem, type Item } from "./types";
 
@@ -187,5 +188,88 @@ describe("buildPaper", () => {
     const a = buildPaper(WORDS, 3).items.map((i) => i.id).join();
     const b = buildPaper(WORDS, 99).items.map((i) => i.id).join();
     expect(a === b).toBe(false);
+  });
+});
+
+/**
+ * The question from the report, with the pool it was drawn out of.
+ *
+ * Real rows again: the six colours the course teaches in one unit, the noun
+ * that shares `hall` with the grey one, and the three far entries that turned
+ * up beside "black" in the version that shipped. A learner who has never seen
+ * an Estonian word can cross out a plastic bag and a C1 abstract noun from an
+ * A1 question, so the answer was the only option left worth reading.
+ */
+const NEIGHBOURS: WordRow[] = [
+  { id: "must", lemma: "must", translation: "black", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "must" }, { formType: "GEN_SG", value: "musta" }, { formType: "PART_SG", value: "musta" }], examples: [] },
+  { id: "valge", lemma: "valge", translation: "white", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "valge" }, { formType: "GEN_SG", value: "valge" }, { formType: "PART_SG", value: "valget" }], examples: [] },
+  { id: "punane", lemma: "punane", translation: "red", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "punane" }, { formType: "GEN_SG", value: "punase" }, { formType: "PART_SG", value: "punast" }], examples: [] },
+  { id: "sinine", lemma: "sinine", translation: "blue", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "sinine" }, { formType: "GEN_SG", value: "sinise" }, { formType: "PART_SG", value: "sinist" }], examples: [] },
+  { id: "roheline", lemma: "roheline", translation: "green", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "roheline" }, { formType: "GEN_SG", value: "rohelise" }, { formType: "PART_SG", value: "rohelist" }], examples: [] },
+  { id: "kollane", lemma: "kollane", translation: "yellow", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "kollane" }, { formType: "GEN_SG", value: "kollase" }, { formType: "PART_SG", value: "kollast" }], examples: [] },
+  { id: "hall", lemma: "hall", translation: "frost", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "hall" }, { formType: "GEN_SG", value: "halli" }, { formType: "PART_SG", value: "halli" }], examples: [] },
+  { id: "kilekott", lemma: "kilekott", translation: "plastic bag", pos: "NOUN", cefr: "A2", government: null,
+    forms: [{ formType: "NOM_SG", value: "kilekott" }, { formType: "GEN_SG", value: "kilekoti" }, { formType: "PART_SG", value: "kilekotti" }], examples: [] },
+  { id: "narkomaania", lemma: "narkomaania", translation: "narcomania, drug addiction, substance abuse", pos: "NOUN", cefr: "B2", government: null,
+    forms: [{ formType: "NOM_SG", value: "narkomaania" }, { formType: "GEN_SG", value: "narkomaania" }, { formType: "PART_SG", value: "narkomaaniat" }], examples: [] },
+  { id: "asula", lemma: "asula", translation: "settlement, city, town, village", pos: "NOUN", cefr: "B2", government: null,
+    forms: [{ formType: "NOM_SG", value: "asula" }, { formType: "GEN_SG", value: "asula" }, { formType: "PART_SG", value: "asulat" }], examples: [] },
+];
+
+const FAR_GLOSSES = ["plastic bag", "narcomania, drug addiction, substance abuse", "settlement, city, town, village"];
+
+describe("the wrong answers are worth reading", () => {
+  it("asks what a colour means among colours, at every seed", () => {
+    for (let seed = 1; seed < 30; seed++) {
+      const heard = listeningItems(NEIGHBOURS, mulberry32(seed))
+        .find((i): i is ChoiceItem => i.id === "l-word-must");
+      expect(heard, `seed ${seed} asked nothing about must`).toBeDefined();
+      for (const gloss of FAR_GLOSSES) expect(heard!.options).not.toContain(gloss);
+      expect(heard!.options).toContain("black");
+    }
+  });
+
+  it("does not hand a beginner three C1 nouns to cross out", () => {
+    for (let seed = 1; seed < 30; seed++) {
+      for (const item of readingItems(NEIGHBOURS, mulberry32(seed))) {
+        if (!item.id.startsWith("r-mean-") || item.band !== "A1") continue;
+        const far = item.options.filter((o) => FAR_GLOSSES.includes(o));
+        expect(far, `${item.id} at seed ${seed}`).toHaveLength(0);
+      }
+    }
+  });
+
+  it("offers a case against the cases it is confused with", () => {
+    // Every case a beginner has not met, which is what an option must not be
+    // when the answer is one they have.
+    const unreached = ["rajav", "olev", "ilmaütlev"];
+    for (let seed = 1; seed < 20; seed++) {
+      const items = readingItems(NEIGHBOURS, mulberry32(seed)).filter((i) => i.id.startsWith("r-ident-"));
+      expect(items.length).toBeGreaterThan(0);
+      for (const item of items) {
+        const answer = item.options[item.answer]!;
+        if (unreached.some((name) => answer.startsWith(name))) continue;
+        for (const option of item.options) {
+          expect(unreached.some((name) => option.startsWith(name)), `${option} beside ${answer}`).toBe(false);
+        }
+
+        // And where a second case answers the same question word, that is the
+        // one the learner has to tell it from, so it is always in the four.
+        const asked = answer.split("· ")[1]!.split(" ");
+        const partners = CASES.filter(
+          (c) => !answer.startsWith(c.et) && c.question.split(" ").some((q) => asked.includes(q)),
+        );
+        for (const partner of partners) {
+          expect(item.options.some((o) => o.startsWith(partner.et)), `${partner.et} missing beside ${answer}`).toBe(true);
+        }
+      }
+    }
   });
 });

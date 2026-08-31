@@ -1,9 +1,26 @@
-import { CASES, caseByKey, caseOptionLabel } from "@/lib/estonian/cases";
+import { courseWords } from "@/lib/collections/syllabus";
+import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { deriveCase } from "@/lib/estonian/derive";
 import { parseGovernment } from "@/lib/estonian/government";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { authoritativeForm } from "@/lib/estonian/writing";
 import type { CaseKey } from "@/lib/estonian/types";
+import {
+  CASE_OPTIONS,
+  caseNearness,
+  caseOptionFor,
+  differentMeaning,
+  differentSentence,
+  differentText,
+  formNearness,
+  glossNearness,
+  glossOption,
+  pickOptions,
+  sentenceNearness,
+  sentenceOption,
+  shuffled,
+  type GlossOption,
+} from "./distractors";
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
 
 /**
@@ -88,55 +105,38 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-function shuffled<T>(list: readonly T[], rng: () => number): T[] {
-  const out = [...list];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    const a = out[i]!;
-    out[i] = out[j]!;
-    out[j] = a;
-  }
-  return out;
-}
-
-/** Loose enough to catch "a car" against "car", which is not a distractor. */
-function sameMeaning(a: string, b: string): boolean {
-  const words = (s: string) =>
-    new Set(s.toLowerCase().replace(/[^\p{L}\s]/gu, " ").split(/\s+/).filter((w) => w.length > 2));
-  const x = words(a);
-  const y = words(b);
-  if (x.size === 0 || y.size === 0) return a.trim().toLowerCase() === b.trim().toLowerCase();
-  for (const w of x) if (y.has(w)) return true;
-  return false;
-}
-
 /**
- * Three wrong answers and the right one, in a random order.
+ * The course unit that introduces a word, which is the nearest thing this app
+ * has to a topic.
  *
- * Returns null rather than padding when the pool cannot supply three genuinely
- * different options. A question with two plausible answers marks a learner
- * wrong for being right, which is the one thing a placement test may never do.
+ * `lib/collections/syllabus/` is a course rather than a thesaurus, and for this
+ * it is the better source of the two: a unit is a dozen words a teacher put in
+ * one lesson because they turn up together, which makes them exactly the words
+ * a learner has to be able to tell apart. Reading it adds nothing to the
+ * dictionary and asks nothing of it. A word the course does not teach has no
+ * theme and is ranked on everything else, which is most of what the signal is
+ * worth anyway.
  */
-function choices(
-  answer: string,
-  pool: readonly string[],
-  rng: () => number,
-  distinct: (a: string, b: string) => boolean,
-): { options: string[]; answer: number } | null {
-  const wrong: string[] = [];
-  for (const candidate of shuffled(pool, rng)) {
-    if (!distinct(candidate, answer)) continue;
-    if (wrong.some((w) => !distinct(w, candidate))) continue;
-    wrong.push(candidate);
-    if (wrong.length === 3) break;
+const COURSE_UNIT = (() => {
+  const byLemma = new Map<string, string>();
+  for (const word of courseWords()) {
+    const lemma = word.lemma.trim().toLowerCase();
+    byLemma.set(`${lemma}|${word.pos}`, word.unitId);
+    if (!byLemma.has(lemma)) byLemma.set(lemma, word.unitId);
   }
-  if (wrong.length < 3) return null;
-  const options = shuffled([answer, ...wrong], rng);
-  return { options, answer: options.indexOf(answer) };
-}
+  return byLemma;
+})();
 
-const differentText = (a: string, b: string) => a.trim().toLowerCase() !== b.trim().toLowerCase();
-const differentMeaning = (a: string, b: string) => !sameMeaning(a, b);
+/** A gloss with what a learner would otherwise eliminate it by. */
+function glossFor(word: WordRow): GlossOption {
+  const lemma = word.lemma.trim().toLowerCase();
+  return glossOption({
+    text: word.translation,
+    pos: word.pos,
+    band: bandOf(word.cefr),
+    theme: COURSE_UNIT.get(`${lemma}|${word.pos}`) ?? COURSE_UNIT.get(lemma) ?? null,
+  });
+}
 
 /** Every form of a word that the app can vouch for, for near-miss messages. */
 function knownForms(word: WordRow): string[] {
@@ -164,12 +164,15 @@ function usableWords(words: readonly WordRow[]): WordRow[] {
  */
 export function readingItems(words: readonly WordRow[], rng: () => number): ChoiceItem[] {
   const pool = usableWords(words);
-  const glosses = pool.map((w) => w.translation);
+  const glosses = pool.map(glossFor);
   const out: ChoiceItem[] = [];
 
   for (const word of shuffled(pool, rng)) {
     const band = bandOf(word.cefr)!;
-    const set = choices(word.translation, glosses, rng, differentMeaning);
+    const set = pickOptions({
+      answer: glossFor(word), candidates: glosses, rng,
+      distinct: differentMeaning, nearness: glossNearness,
+    });
     if (!set) continue;
     out.push({
       id: `r-mean-${word.id}`,
@@ -190,7 +193,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
 
   for (const word of shuffled(pool, rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
-    const forms = knownForms(word);
+    const forms = knownForms(word).map((text) => ({ text }));
     for (const caseKey of shuffled(ASKABLE, rng)) {
       const form = authoritativeForm(
         { lemma: word.lemma, translation: word.translation, pos: word.pos, forms: [...word.forms] },
@@ -199,7 +202,10 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
       if (!form) continue;
       if (form.value.toLowerCase() === word.lemma.toLowerCase()) continue;
       const spec = caseByKey(caseKey)!;
-      const set = choices(form.value, forms, rng, differentText);
+      const set = pickOptions({
+        answer: { text: form.value }, candidates: forms, rng,
+        distinct: differentText, nearness: formNearness,
+      });
       if (!set) continue;
       out.push({
         id: `r-case-${word.id}-${caseKey}`,
@@ -220,7 +226,6 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     }
   }
 
-  const caseNames = CASES.map(caseOptionLabel);
   for (const word of shuffled(pool, rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
     const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
@@ -230,7 +235,10 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
       if (spec.principal) continue;
       const value = deriveCase(gen, caseKey);
       if (!value || value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const set = choices(caseOptionLabel(spec), caseNames, rng, differentText);
+      const set = pickOptions({
+        answer: caseOptionFor(spec), candidates: CASE_OPTIONS, rng,
+        distinct: differentText, nearness: caseNearness,
+      });
       if (!set) continue;
       out.push({
         id: `r-ident-${word.id}-${caseKey}`,
@@ -256,7 +264,10 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     if (!government) continue;
     const govSpec = caseByKey(government.caseKey);
     if (!govSpec) continue;
-    const set = choices(caseOptionLabel(govSpec), caseNames, rng, differentText);
+    const set = pickOptions({
+      answer: caseOptionFor(govSpec), candidates: CASE_OPTIONS, rng,
+      distinct: differentText, nearness: caseNearness,
+    });
     if (!set) continue;
     out.push({
       id: `r-gov-${word.id}`,
@@ -280,9 +291,19 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   const translated = pool.flatMap((w) =>
     w.examples.filter((e) => e.en && e.en.trim()).map((e) => ({ word: w, et: e.et, en: e.en!.trim() })),
   );
-  const sentenceGlosses = translated.map((t) => t.en);
+  /*
+    A sentence is never offered against another sentence about the same word.
+    Two usages recorded under one headword are the likeliest pair in the whole
+    dictionary to be two ways of saying one thing, and a distractor that is
+    arguably right is worse than an easy one.
+  */
+  const sentenceOptions = translated.map((t) => ({ ...sentenceOption(t.en), from: t.word.id }));
   for (const sentence of shuffled(translated, rng)) {
-    const set = choices(sentence.en, sentenceGlosses, rng, differentMeaning);
+    const set = pickOptions({
+      answer: { ...sentenceOption(sentence.en), from: sentence.word.id },
+      candidates: sentenceOptions.filter((o) => o.from !== sentence.word.id),
+      rng, distinct: differentSentence, nearness: sentenceNearness,
+    });
     if (!set) continue;
     out.push({
       id: `r-sent-${sentence.word.id}-${sentence.et.length}`,
@@ -314,12 +335,14 @@ export function dictatable(sentence: string): boolean {
 
 export function listeningItems(words: readonly WordRow[], rng: () => number): (ChoiceItem | DictationItem)[] {
   const pool = usableWords(words);
-  const glosses = pool.map((w) => w.translation);
-  const caseNames = CASES.map(caseOptionLabel);
+  const glosses = pool.map(glossFor);
   const out: (ChoiceItem | DictationItem)[] = [];
 
   for (const word of shuffled(pool, rng)) {
-    const set = choices(word.translation, glosses, rng, differentMeaning);
+    const set = pickOptions({
+      answer: glossFor(word), candidates: glosses, rng,
+      distinct: differentMeaning, nearness: glossNearness,
+    });
     if (!set) continue;
     out.push({
       id: `l-word-${word.id}`,
@@ -347,7 +370,10 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
       if (spec.principal) continue;
       const value = deriveCase(gen, caseKey);
       if (!value || value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const set = choices(caseOptionLabel(spec), caseNames, rng, differentText);
+      const set = pickOptions({
+        answer: caseOptionFor(spec), candidates: CASE_OPTIONS, rng,
+        distinct: differentText, nearness: caseNearness,
+      });
       if (!set) continue;
       out.push({
         id: `l-case-${word.id}-${caseKey}`,

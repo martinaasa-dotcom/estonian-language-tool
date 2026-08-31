@@ -1010,6 +1010,38 @@ is the one that is confused, so the machine is never the judge. The overall leve
 **weakest** measured skill, because a CEFR level is a claim about everything you can do at it.
 (ADR-020.)
 
+**A question is only as hard as its second best option, and three of the four were free.** The
+check filled its wrong answers out of the whole dictionary in shuffle order, so a beginner asked
+what `must` means chose between "black", "plastic bag", "narcomania, drug addiction, substance
+abuse" and "user experience": two C1 nouns and a three-sense gloss beside a one-word A1 adjective,
+every one of them crossable by somebody who has never seen an Estonian word. Over sixty pools drawn
+the way `paperFor` draws one, 99% of the meaning questions carried at least one option a learner
+could eliminate on part of speech, on a CEFR band two or more away, or on the number of senses in
+the line. It is 19% now, and the count of questions that cannot be asked at all is unchanged at
+zero, because `lib/assessment/distractors.ts` **ranks rather than filters**: the candidates that
+survive the caller's own test of what counts as the same answer are the same ones as before, and
+this only decides which three of them are worth printing. A gloss is ranked on the course unit that
+teaches the word, its part of speech, its band and the shape of the line, which is how "black" ends
+up beside "white" and "grey" rather than beside a plastic bag; `lib/collections/syllabus/` supplies
+the unit, and a word the course does not teach is ranked on the other three. A case is ranked on
+the cases answering the same question word, since `kus?` is answered by seesütlev and alalütlev
+both and telling those two apart is the whole of what that question asks. A form is ranked on how
+much of the stem it shares, so `toast` and `toasse` are offered where `tuba` used to be.
+
+**Nearer options mean a stricter test of what counts as one answer, never a looser one.** Two
+glosses sharing a content word are one meaning and cannot appear together, which is the rule that
+was already there; what changed is that a word carrying no meaning of its own no longer counts as
+shared, so "in the morning" and "in the evening" can finally be offered against each other, and
+both sides fall back to the full reading the moment either is left with nothing, or "one" would
+empty out while "one, single" kept `single` and the two would be offered as different answers. A
+sentence is rejected on **containment** rather than on one shared word, because sharing a word is
+what makes two sentences worth reading and containing one is what makes them both right, and a
+sentence is never offered against another sentence recorded under the same headword, which is the
+likeliest pair in the dictionary to be two ways of saying one thing. And a signal that marks an
+option as familiar has to be a *match* rather than a bonus: rewarding the first-year cases outright
+put three of them around every answer, so a question about kaasaütlev became one odd option among
+three the learner had met, which hands back the elimination the ranking exists to remove.
+
 **`Assessment` is append-only, like `Review`.** A sitting is written once when it ends; a later
 check is another row, and there is no update path. The one deletion path is the same one `Review`
 has, somebody erasing their own account, because the promise on `/privacy` outranks the append-only

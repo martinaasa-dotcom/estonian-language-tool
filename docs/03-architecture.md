@@ -438,6 +438,22 @@ this app has), a single number rather than a profile (it hides which skill is be
 one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest
 recogniser did not change because a test wanted one).
 
+*Amendment 1 (a wrong answer is chosen, not shuffled).* The three rules above make a mark
+trustworthy and say nothing about whether the question was worth marking. The wrong answers were
+taken from the whole dictionary in shuffle order, so a beginner asked what `must` means chose
+between "black", "plastic bag", "narcomania, drug addiction, substance abuse" and "user
+experience", and 99% of the meaning questions over sixty pools carried at least one option that
+could be crossed out on part of speech, on a band two or more away, or on the number of senses in
+the line. A level built on questions answered by elimination is wrong about somebody's Estonian on
+the day they are deciding where to start. `lib/assessment/distractors.ts` ranks each candidate on
+what a learner cannot eliminate it by: for a gloss the course unit that teaches the word, the part
+of speech, the band and the shape of the line; for a case the cases that answer the same question
+word and the endings from the same series; for a form how much of the stem it shares. It ranks
+rather than filters, so the set of questions that can be asked is unchanged and only the choice
+among the survivors moves, and the test of what counts as the same answer got stricter as the
+options got closer, never looser: a shared content word for a gloss, containment for a sentence,
+and no sentence offered against another recorded under the same headword.
+
 **ADR-021: A photograph is read by a model; whether it is *believed* is decided by the dictionary.**
 *Context:* half of an Estonian course is on paper (a handout, a textbook page, a list copied off a
 whiteboard) and typing it back in is the step where a learner stops. Reading it needs optical

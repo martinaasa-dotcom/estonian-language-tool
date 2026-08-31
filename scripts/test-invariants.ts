@@ -1641,6 +1641,37 @@ check("no model decides anybody's level", () => {
   }
 });
 
+check("a placement question never fills itself with free eliminations", () => {
+  /*
+    ADR-020 amendment 1. The wrong answers used to be the first three the
+    shuffle handed back out of the whole dictionary, so "black" was asked
+    against a plastic bag and two C1 nouns and the question could be answered
+    without reading it. Every question that offers a choice now ranks its
+    candidates in `lib/assessment/distractors.ts`, and what is asserted is that
+    no builder goes back to assembling its own options, since that is the shape
+    the fault had and the shape a sixth question kind would arrive in.
+  */
+  const items = read("lib/assessment/items.ts");
+  const optionLines = items.split("\n").filter((line) => /^\s*options:/.test(line));
+  assert.ok(optionLines.length >= 5, `expected the choice questions, found ${optionLines.length}`);
+  for (const line of optionLines) {
+    assert.match(line, /set\.options/, `a question builds its own options: ${line.trim()}`);
+  }
+
+  const picks = items.match(/pickOptions\(\{/g) ?? [];
+  assert.equal(picks.length, optionLines.length, "a question was asked without picking its options");
+  assert.equal(
+    picks.length,
+    (items.match(/nearness:/g) ?? []).length,
+    "a question picks its wrong answers without ranking them",
+  );
+
+  // And the ranking may not become a filter. A question the dictionary can
+  // fill has to stay askable, which is what keeps a thin section honest.
+  const distractors = read("lib/assessment/distractors.ts");
+  assert.match(distractors, /wrong\.length < WRONG/, "the picker stopped refusing what it cannot fill");
+});
+
 check("a recording never moves a level", () => {
   /*
     ADR-018: there is no verified Estonian speech recogniser available here, so
