@@ -3204,6 +3204,60 @@ check("the accessibility sweep runs axe, over both themes", () => {
   assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
 });
 
+/*
+  A figure shaped for a screen is never a divisor.
+
+  `project` rounded the learner's pace to one decimal place and then divided
+  the published hours by it. Three minutes a day three days a week is 0.15
+  hours; it was shown and used as 0.2, which is a third more study than the
+  learner said they would do and took a quarter off the weeks the app alone
+  would need. The rule is that the projection is exact and `PlanPanel` rounds
+  on the way to a tile, so the check is that the arithmetic module does no
+  rounding at all and the panel does some.
+*/
+check("the plan is arithmetic on exact figures, rounded only on its way to a screen", () => {
+  const plan = read("lib/assessment/plan.ts");
+  const projectBody = plan.slice(plan.indexOf("export function project("));
+  assert.doesNotMatch(
+    projectBody.slice(0, projectBody.indexOf("\nexport function weeksNeeded")),
+    /Math\.round\(/,
+    "project() rounds a figure it goes on to divide by, which is the fault this rule exists for",
+  );
+  const panel = read("components/assessment/PlanPanel.tsx");
+  assert.match(
+    panel, /Math\.round\(n \* 10\) \/ 10/,
+    "PlanPanel no longer rounds, so an exact projection reaches a tile with every decimal it has",
+  );
+});
+
+/*
+  The headline and the sentence under it are one claim.
+
+  "It fits, but only with study outside this app" was drawn at ten hours a week
+  measured against the optimistic end of the range, while the note under it
+  quoted the distance at five found hours a week. 335 of the 704 combinations a
+  learner could click said the plan fitted over a sentence saying the date was
+  years out. Both now read FOUND_HOURS_PER_WEEK, so the band and the copy
+  cannot drift apart again. Asserted on the constant reaching both, not on the
+  number, which is the thing that is allowed to change.
+*/
+check("the verdict band and the found-hours sentence read one constant", () => {
+  const plan = read("lib/assessment/plan.ts");
+  assert.match(
+    plan, /export const FOUND_HOURS_PER_WEEK/,
+    "the found-hours figure has stopped being a named constant, so the copy can quote a different one",
+  );
+  const verdictLine = plan.slice(plan.indexOf("const verdict: Verdict"), plan.indexOf("const verdict: Verdict") + 240);
+  assert.match(
+    verdictLine, /FOUND_HOURS_PER_WEEK/,
+    "the verdict band no longer reads the constant the plan's own copy quotes",
+  );
+  const panel = read("components/assessment/PlanPanel.tsx");
+  assert.match(
+    panel, /weeksNeeded\([^)]*FOUND_HOURS_PER_WEEK\s*\)/,
+    "PlanPanel passes its own number to weeksNeeded rather than the constant the band is drawn at",
+  );
+});
 
 // ── The word of the day ──────────────────────────────────────────────────────
 
