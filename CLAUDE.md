@@ -1056,16 +1056,30 @@ open first, and a phone reaches every place a desktop does. `icon()` falling bac
 why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
 before a screenshot caught them.
 
-**Where you are is one pill that travels, and it leaves on the press rather than on the page.**
+**Where you are is one pane, and under a pointer it arrives rather than travelling.**
 The rail and the phone bar used to say it by painting the row you arrived on and unpainting the one
 you left, which is two things happening at once and reads as two things: a light going out over
 here and another coming on over there, with nothing connecting them. What connects them is a marker
-that moves, borrowed from Upside Lab's dock with its measurements intact, and three things carry it.
-Its **leading edge sets off before its trailing edge follows**, so the pill stretches across the
+that moves, borrowed from Upside Lab's dock with its measurements intact.
+
+**Whether it travels is a question about the input, not about the design**, and the two surfaces
+answer it differently for the reason Lab's two docks do. A thumb has nothing else to do while a
+server answers, so the phone bar's pill slides from the cell you left to the cell you asked for. A
+pointer has already arrived: you clicked one row, you know which, and watching a marker take a
+quarter of a second to agree with you is the rail being slower than you are, next to the page it
+just changed. So `NAV_MOTION.rail.travelMs` is zero, `glide` writes the resting geometry and
+returns, and the marker is simply there on the row you pressed. What carries the movement on that
+surface instead is the pointer's own pane, which has been following the cursor down the column all
+along, so by the time you press, the card is already where the marker lands and clicking only
+settles it. Measured on the rail: a press puts the pane exactly on the row with **no animation in
+flight at all**, where it used to run a 260ms journey.
+
+On the bar, where it does travel, three things carry it. Its **leading edge sets off before its
+trailing edge follows**, so the pill stretches across the
 ground it is covering and gathers itself up on arrival, which is why a mark is two edges rather
 than a position and a size: the stretch falls out of the arithmetic and scales with the distance,
-1.20x for one row and 4.28x for the length of the rail, where a fixed keyframe would give both the
-same. It is a **transform animation handed to the compositor**, never a transition on `top` or
+measured at 1.40x for one cell of the phone bar, where a fixed keyframe would give every distance
+the same. It is a **transform animation handed to the compositor**, never a transition on `top` or
 `left`: those are laid out and painted on the main thread, and the main thread is exactly what a
 page navigation is busy with, which Lab measured as three frames of travel, five frames frozen
 while the new room rendered, then the rest of the way in one. And it **leaves on `pointerdown`**,
@@ -1077,9 +1091,36 @@ though, and that one is not a refinement: calling a bet off puts the marker back
 still marked, which during a navigation is the row you are *leaving*, so before this any pointer
 event landing off the cell while the new page rendered sent the pill all the way home and all the
 way back. Measured on this rail at three travels for one tap, 127 to 817, 817 to 127, then 127 to
-817 again, and on a phone the browser taking the gesture for a scroll does it on an ordinary tap. A
-cancel *before* the click is still a genuinely abandoned press, and a bet that loses **arrives
-rather than travels**, because reverting is a correction and not a journey.
+817 again, and on a phone the browser taking the gesture for a scroll does it on an ordinary tap. A bet that loses **arrives
+rather than travels**, because reverting is a correction and not a journey. A cancel *before* the
+click used to be read as an abandoned press outright, and on a bar a finger reaches that is wrong:
+the browser fires one at a finger that has done nothing at all, having taken the touch to stop the
+page's momentum. What tells the two apart is whether the pointer wandered, which is the same
+question the click deadline below asks.
+
+**And the page settles the bet, never the marked cell, because the bet is what moves the marked
+cell.** Reading it as "the marked cell is now the pressed one" holds only while that comes from the
+path alone, and the moment anything else lights the pressed cell the next measure declares the bet
+won about two frames after it was placed. That is not cosmetic: every way this has of standing down
+begins by asking whether a bet is outstanding, so a release off the cell, a `pointercancel` and the
+four-second backstop all quietly become no-ops. Lab measured the same shape at four seconds of the
+wrong room on screen. It is the address changing that settles it, to this cell's page or, on a
+redirect, to another one. And **the pressed cell is an address rather than a node**, since the
+surface re-renders between the press and the events that settle it, the bet itself being what makes
+it re-render.
+
+**A tap is a tap the first time, and on a phone the browser often does not make one.** A press
+becomes a navigation by becoming a click, and a touch landing while the page is still flinging is
+spent stopping the fling, while a drag begun on a fixed bar pans the document. Both leave an
+ordinary `pointerup` on the cell and no click behind it, which is invisible to the release rule and
+to `pointercancel` alike, so the tap did nothing and then took back the page it had already shown.
+A tab bar is not page content, so it judges the tap on its own evidence, landed on a cell, released
+on that cell or taken from it without ever having wandered past `TAP_SLOP`, and not held past
+`TAP_HOLD_MS`, which is somebody asking for the browser's link preview. It navigates itself and
+`preventDefault`s a click that arrives afterwards, so nothing is entered twice, measured as one
+history entry per tap. The hold is read off `Event.timeStamp` and never a wall clock, because the
+render the press itself starts is part of what is keeping the main thread busy and a perfectly
+ordinary tap can reach its handler hundreds of milliseconds later.
 `lib/ux/navMotion.ts` is the arithmetic and is
 pure, `lib/layout/navMarker.ts` measures the cells and plays it, `app/nav.css` says how a pane
 behaves once placed, and both surfaces read all three, because a second marker is two answers to
@@ -1110,19 +1151,31 @@ section they are in, which is the same measurement fault arriving through the do
 marker cannot be placed on a server, so the well declares the material once as `--nav-marker-bg`
 and the row wears it until `data-nav-marked` says the pane has taken it over, or every hard load
 would paint a rail with nothing marked and then flicker a card into place. The rail deliberately
-does **not** breathe on a travel the way the phone's capsule does, since a column lurching beside
+does **not** breathe the way the phone's capsule does, since a column lurching beside
 the page it just changed is arguing with a decision the reader has already made; what a pointer
 gets there instead is the pane following it, which is the hover those rows never had.
 
-**A pointer's pane has to be one you can see, and reading layout to place it is not free.** The
-pane started as the raised tint on the rail's own ground, two percent of lightness apart in the
-light theme, which is technically a hover and practically nothing on the surface a pointer spends
-most of its time over. It is the accent's softest tint now, the row's own words go to
-`--accent-deep`, and the pill reaches 3px past the row as a shadow spread rather than as geometry,
-so the measurement that places it stays the row's own box and the row appears to grow rather than
-merely tint. `test-design.mjs` hovers a row and measures the ink against the pill in both themes,
-because a hovered state is not one a page arrives in and nothing else sweeps it: 5.16 and 7.93
-against a bar of 4.5. And the measure that places the panes **runs on every render of the
+**Reaching and arriving are one object at two weights, and that took two goes.** The pointer's pane
+started as the raised tint on the rail's own ground, two percent of lightness apart in the light
+theme, which is technically a hover and practically nothing on the surface a pointer spends most of
+its time over. The answer to that was a second material: the accent's softest tint, the row's words
+in `--accent-deep`, and a 3px shadow spread so the pill reached past the row. It was visible and it
+was wrong, because it made the two states of one row two different objects. Point at a row and a
+lavender pill appeared; click it and a white card appeared somewhere else; and on the row you were
+already on, which is the row a pointer is nearest most of the time, the tint stuck out round the
+card as a second outline. That doubled ring is what a reader sees first.
+
+So both panes read one fill, `--nav-marker-bg`, and the marker's own `--nav-marker-shadow` is the
+whole of the difference: pointing at a row is a preview of pressing it, and pressing it settles what
+was already under the cursor. Neither pane reaches past the cell it was measured on, which is also
+what lets the two stack invisibly on the row you are on rather than ringing each other. The hovered
+row's ink goes to `--ink`, the ink the marked row wears, rather than to a hue of its own, since a
+row you are reaching for being a different colour from the row you are about to make it was the
+other half of the same fault. What still tells the two apart is what a pane cannot say: the marked
+row is bold and its glyph wears its own colour. `test-design.mjs` hovers a row and measures the ink
+against the pane in both themes, because a hovered state is not one a page arrives in and nothing
+else sweeps it: 15.88 and 15.39 against a bar of 4.5, where the tint it replaced measured 5.16 and
+7.93. And the measure that places the panes **runs on every render of the
 surface**, where `offsetTop` and `getClientRects` each force a style and layout recalculation of
 the whole document: measured at 26 to 37 forced reads for one navigation, on two surfaces at once,
 nearly all answering a question nothing asked. What moves a pane is the marked cell changing or

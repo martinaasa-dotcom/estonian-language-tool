@@ -222,12 +222,17 @@ Small, physical, and never blocking:
   letter off the card or drops it on the button.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
-- The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pill that travels from the
-  place you left to the place you asked for, down the rail and across the phone bar. Borrowed from
-  Upside Lab's dock with its measurements intact, and three things carry it. Its leading edge sets
-  off before its trailing edge follows, so it stretches across the ground it covers and gathers
-  itself up on arrival, by a distance rather than by a fixed keyframe: one row up is 1.20x and the
-  length of the rail is 4.28x, measured. It runs as a transform animation handed to the compositor,
+- The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pane that says where you are,
+  down the rail and across the phone bar, and a second fainter one that says what you are reaching
+  for. Borrowed from Upside Lab's dock with its measurements intact.
+  **Whether the marker travels is a question about the input.** A thumb has nothing else to do while
+  a server answers, so the phone bar's pill slides from the cell you left to the cell you asked for.
+  A pointer has already arrived and its own pane has been following it down the column all along,
+  so the rail's marker does not travel at all: it is written straight to its resting geometry and is
+  simply there on the row you pressed. On the bar, where it does travel, its leading edge sets off
+  before its trailing edge follows, so it stretches across the ground it covers and gathers itself
+  up on arrival, by a distance rather than by a fixed keyframe: one cell of the phone bar is 1.40x,
+  measured. That runs as a transform animation handed to the compositor,
   never a transition on `top` or `left`, because those are laid out and painted on the main thread
   and the main thread is exactly what a page navigation is busy with. And it leaves on the press
   rather than on the page, since these pages are rendered on a server and the wait is real; a press
@@ -235,9 +240,14 @@ Small, physical, and never blocking:
   while a click on the cell ends the betting, since calling a bet off mid-navigation puts the pill
   back on the row you are leaving and then sends it out again. A bet that loses arrives rather than
   travels: reverting is a correction and not a journey.
-  A pointer drags a second pane on the same physics, which is the hover the rail never had: the
-  accent's softest tint, the row's words in the accent's ink, and the pill reaching 3px past the
-  row as a shadow spread, so a row under the pointer grows rather than merely tinting.
+  **Reaching and arriving are one object at two weights.** The pointer's pane was a second material
+  once, the accent's softest tint reaching 3px past the row with the words in the accent's ink, and
+  that made the two states of one row two different objects: a lavender pill where you were
+  pointing, a white card where you had clicked, and on the row you were already on the tint stuck
+  out round the card as a second outline. Both panes read one fill now, `--nav-marker-bg`, and the
+  marker's own `--nav-marker-shadow` is the whole difference, so pointing at a row previews pressing
+  it. What tells them apart is what a pane cannot say: the marked row is bold and its glyph wears
+  its own colour.
   The phone bar's capsule also breathes, three percent uniformly on both axes over 460ms with a
   slight undershoot; the rail does not, because a column that lurched beside the page it just
   changed would be arguing with a decision the reader has already made.
