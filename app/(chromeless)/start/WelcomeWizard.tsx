@@ -337,8 +337,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               Where are you now?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Measure it in about ten minutes, or estimate it and move on. Nothing is locked either
-              way, and the check is on the Level check screen whenever you want it.
+              Take the ten-minute level check now, or just estimate and move on. Nothing here is
+              locked in, and you can always come back and take the check later.
             </p>
 
             {measured ? (
@@ -357,8 +357,9 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
                 ) : (
                   <div className="mt-6">
                     <Note tone="sky">
-                      The level check needs a dictionary with levelled entries and this deployment
-                      has none yet, so estimating is the only option right now.
+                      The level check needs dictionary entries that are tagged with a level, and
+                      this copy of Kodukeel does not have that yet. Estimating is your only
+                      option for now.
                     </Note>
                   </div>
                 )}
@@ -388,7 +389,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
               This is not a personality quiz. Different reasons need different levels, one of them
-              has an exam attached, and the hours underneath change with every answer.
+              has a real exam attached, and the numbers below will change as you answer.
             </p>
 
             {/*
@@ -476,8 +477,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               {!measured && (
                 <div className="mb-4">
                   <Note tone="sky">
-                    Built on the level you estimated. Take the check when you have ten minutes and
-                    the plan is rebuilt on a measurement instead.
+                    This plan is built on the level you estimated. Take the ten-minute check
+                    whenever you like, and it rebuilds around a real measurement instead.
                   </Note>
                 </div>
               )}
@@ -499,9 +500,10 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               Your first words
             </h1>
             <Note tone="hard">
-              The dictionary on this installation has no words in it yet, so there is no starter deck
+              There is no dictionary loaded yet on this installation, so there is no starter deck
               to hand you. Whoever runs it can load one with <code>npm run db:seed</code>. You can
-              still set your pace below, and add words from the dictionary as you meet them.
+              still choose your pace below, and add words from the dictionary as you come across
+              them.
             </Note>
 
             <div className="mt-7">
@@ -516,8 +518,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             </ChoiceGroup>
             <p className="mt-2.5 max-w-[62ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
               {minutesFor(goal)} minutes a day, {daysPerWeek} days a week. That is {goal} cards to
-              answer, not {goal} new ones: about nine in ten will be words you have already met,
-              coming back at the moment you were starting to forget them.
+              answer, not {goal} new ones. About nine in ten will be words you have already met,
+              coming back right when you are starting to forget them.
             </p>
           </section>
         )}
@@ -528,9 +530,9 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               Your first words
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              The course starts you here, at {startBand}. These are the words a day actually needs,
-              in the order they are usually taught, and each one becomes real flashcards with audio
-              and every form of the word.
+              The course starts you here, at {startBand}. These are the words you actually need to
+              begin, taught in the order a course teaches them, and each one turns into real
+              flashcards with audio and every form of the word.
             </p>
 
             {/*
@@ -614,11 +616,12 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             */}
             <p className="mt-2.5 max-w-[62ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
               {minutesFor(goal)} minutes a day, {daysPerWeek} days a week. That is {goal} cards to
-              answer, not {goal} new ones: about nine in ten will be words you have already met,
-              coming back at the moment you were starting to forget them. So these {deck.cards} cards
-              take roughly {weeksToLearn(deck.cards, goal, daysPerWeek)} weeks to work through, and a
-              faster setting really does bring them in faster. It also makes every day after this one
-              longer, for a year. Pick the one you would still open on a bad Wednesday.
+              answer, not {goal} new ones. About nine in ten will be words you have already met,
+              coming back right when you are starting to forget them. These {deck.cards} cards take
+              roughly {weeksToLearn(deck.cards, goal, daysPerWeek)} weeks to work through this way,
+              and a faster setting really does bring them in sooner. It also makes every day&rsquo;s
+              session longer, for the next year. Pick the one you would still open on a bad
+              Wednesday.
             </p>
           </section>
         )}

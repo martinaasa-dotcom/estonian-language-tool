@@ -117,11 +117,11 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
       <div className="mt-8">
         <SectionTitle>Why this exists</SectionTitle>
         <p className="max-w-[62ch] text-[13.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          A spaced-repetition system normally handles a card like this by burying it after a set
-          number of lapses. That removes it from your queue and teaches you nothing. The review log
-          already knows how each of these is failing (steadily, or after a good run, or in
-          alternation) and that is usually enough to work out what to do about it. Deleting a card
-          keeps its review history: the log is append-only.
+          A normal spaced-repetition app deals with a card like this by quietly burying it after too
+          many lapses. That clears your queue, but you never actually learn the word. The review log
+          already shows how each one here is failing, steadily, after a good run, or back and forth,
+          and that&rsquo;s usually enough to know what to do about it. Deleting a card never touches
+          its review history: nothing in that log is ever deleted or changed.
         </p>
       </div>
     </Page>

@@ -91,8 +91,8 @@ export default async function LearnPage() {
             You are working at {placement} · {knownWords} of {totalWords} words known
           </p>
           <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
-            A word counts as known once every card made from it has graduated in the scheduler,
-            not just answered right once.
+            A word counts as known once every card made from it has moved past the learning stage,
+            not just been answered right once.
           </p>
           <Link
             href="/assess"
@@ -273,8 +273,8 @@ export default async function LearnPage() {
       </div>
 
       <p className="mt-6 text-xs" style={{ color: "var(--ink-3)" }}>
-        Units are shortcuts into the same dictionary, not a separate course, everything in them can
-        also be found by searching, and anything the dictionary is missing you can{" "}
+        Units are shortcuts into the same dictionary, not a separate course. Everything in them can
+        also be found by searching, and anything missing you can{" "}
         <Link href="/dictionary" className="underline" style={{ color: "var(--accent-deep)" }}>add yourself</Link>.
         Nothing is ever truly locked: a unit above your level shows what it builds on, and opens anyway.
       </p>

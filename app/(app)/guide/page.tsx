@@ -116,13 +116,14 @@ export default function GuidePage() {
         <Card>
           <SectionTitle>The rule the whole thing is built on</SectionTitle>
           <p className="max-w-[70ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            No Estonian in this app is written by this app. Forms come from Ekilex or from hand
-            checked principal parts, the eleven regular cases are computed from the genitive stem at
-            the moment they are shown, and example sentences are ones lexicographers recorded. The AI
-            explains and translates into English, and is checked against the dictionary before any
-            Estonian it writes reaches you. This is not caution for its own sake: a model asked for an
-            Estonian example once produced a sentence that is not Estonian, and a wrong form does not
-            sit there being wrong, the scheduler drills it into you.
+            No Estonian in this app is written by this app. Forms come from Ekilex, or from
+            principal parts checked by hand. The eleven regular cases are worked out from the
+            genitive stem each time they are shown, and every example sentence is one a
+            lexicographer actually recorded. The AI explains and translates into English, and
+            everything it writes is checked against the dictionary before it reaches you. This is
+            not caution for its own sake: a model asked for an Estonian example once made up a
+            sentence that is not real Estonian, and a wrong form does not just sit there being
+            wrong. It gets drilled into you.
           </p>
         </Card>
       </div>

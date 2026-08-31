@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   const chain = resolveProviders();
   if (chain.length === 0) {
     return Response.json(
-      { error: "No AI key configured yet. Add one in .env, and Settings has the two-minute version." },
+      { error: "No AI key set up yet. Add one in .env, or Settings has a two-minute walkthrough." },
       { status: 503 },
     );
   }
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
     if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
   } catch {
-    return Response.json({ error: "Malformed request." }, { status: 400 });
+    return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   // The learner's text is user content, never spliced into the system prompt.

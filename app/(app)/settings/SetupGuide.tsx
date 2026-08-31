@@ -27,9 +27,9 @@ export function SetupGuide() {
   return (
     <div>
       <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-        Anu needs an API key to answer questions. Everything else (the dictionary, your cards,
-        audio) works without one. The key is free and needs no card: Anu asks free models, and
-        moves to the next one when the first is busy. Here is the whole process:
+        Anu needs a free key to answer questions. Everything else (the dictionary, your cards,
+        audio) works without one. The key costs nothing and needs no card: Anu asks free models,
+        and moves on to the next one when the first is busy. Here is the whole thing, step by step:
       </p>
 
       <ol className="mt-4 flex flex-col gap-3">

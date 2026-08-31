@@ -52,7 +52,7 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
       options: { redirectTo: callbackUrl() },
     });
     if (error) {
-      setError(`${error.message}. If this keeps happening, the Google provider may not be enabled in Supabase yet.`);
+      setError(`${error.message}. If this keeps happening, Google sign-in may not be turned on for this copy yet.`);
       setPending(null);
     }
   }

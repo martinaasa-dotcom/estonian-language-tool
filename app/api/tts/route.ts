@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     text = body.text.trim().slice(0, MAX_CHARS);
     if (typeof body.speed === "number" && body.speed >= 0.5 && body.speed <= 2) speed = body.speed;
   } catch {
-    return NextResponse.json({ error: "Malformed request." }, { status: 400 });
+    return NextResponse.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   const speaker = process.env.TTS_SPEAKER ?? "mari";

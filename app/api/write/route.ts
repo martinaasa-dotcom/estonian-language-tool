@@ -51,14 +51,14 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Record<string, unknown>;
     if (typeof body.lexemeId !== "string" || typeof body.caseKey !== "string" ||
         typeof body.sentence !== "string") {
-      return Response.json({ error: "Malformed request." }, { status: 400 });
+      return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
     }
     lexemeId = body.lexemeId;
     caseKey = body.caseKey as CaseKey;
     sentence = body.sentence.trim().slice(0, MAX_SENTENCE_CHARS);
     if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
   } catch {
-    return Response.json({ error: "Malformed request." }, { status: 400 });
+    return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   if (!looksLikeSentence(sentence)) {

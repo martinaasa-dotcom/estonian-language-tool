@@ -91,7 +91,7 @@ export function LessonSession({
       <Page title={unitTitle} lead="Nothing to teach here yet.">
         <Empty
           title="This unit has no words in the dictionary yet"
-          body="Its words arrive with an Ekilex key, or you can add them by hand."
+          body="Its words show up once Ekilex is connected, or you can add them yourself."
           action={<ButtonLink href={`/learn/${unitId}`}>Back to the unit</ButtonLink>}
         />
       </Page>
@@ -276,7 +276,7 @@ function StepCard({
               </ul>
             </div>
           )}
-          <Continue onNext={onNext} label={`Start ${step.words} words`} />
+          <Continue onNext={onNext} label={`Start these ${step.words} words`} />
         </Card>
       );
 
@@ -515,7 +515,7 @@ function StepCard({
           </p>
           {summary.saving && <p className="text-sm" style={{ color: "var(--ink-3)" }}>Saving your answers…</p>}
           {summary.saved && !summary.saved.ok && (
-            <Verdict ok={false} note={summary.saved.error ?? "Your answers could not be saved."} />
+            <Verdict ok={false} note={summary.saved.error ?? "We couldn't save your answers."} />
           )}
           <div className="flex flex-wrap gap-2">
             <ButtonLink href="/learn">Back to the path</ButtonLink>

@@ -106,7 +106,7 @@ export const SECTIONS: NavSection[] = [
         keywords: "home dashboard streak quests goal xp", bar: true,
       },
       {
-        href: "/review", label: "Review", blurb: "Everything due, scheduled by FSRS", icon: "GraduationCap",
+        href: "/review", label: "Review", blurb: "Everything due, timed to when you are about to forget", icon: "GraduationCap",
         tone: "accent", keywords: "flashcards srs study due", bar: true,
       },
       {
@@ -130,7 +130,7 @@ export const SECTIONS: NavSection[] = [
         within: "Today, which lists what is outstanding",
       },
       {
-        href: "/week", label: "This week", blurb: "The words and work filed under this week",
+        href: "/week", label: "This week", blurb: "The words and work saved under this week",
         icon: "CalendarRange", tone: "butter", keywords: "week class lesson current",
         within: "/tasks",
       },
@@ -199,7 +199,7 @@ export const SECTIONS: NavSection[] = [
   {
     id: "app",
     title: "This app",
-    blurb: "Your settings, your reports, and an honest account of what this cannot do.",
+    blurb: "Your settings, your reports, and the honest list of what this cannot do.",
     items: [
       {
         href: "/settings", label: "Settings", blurb: "Goal, review mode, backup", icon: "Settings", tone: "ink",

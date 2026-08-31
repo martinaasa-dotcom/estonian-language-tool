@@ -41,7 +41,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         That screen didn&rsquo;t load
       </h1>
       <p className="text-base" style={{ color: "var(--ink-2)" }}>
-        Nothing has been lost, your deck and review history are untouched. Trying again usually
+        Nothing has been lost. Your deck and review history are untouched. Trying again usually
         works.
       </p>
       {/*

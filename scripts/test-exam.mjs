@@ -63,7 +63,7 @@ check("it marks the one it invented as not examined",
   (await levelCards.filter({ hasText: "Not examined" }).count()) === 1);
 
 check("it states the pass rule, both halves of it",
-  /60 percent to pass/i.test(body) && /no part may score nothing/i.test(body));
+  /60 percent to pass/i.test(body) && /no part can be a zero/i.test(body));
 
 check("every level carries a confidence figure",
   (await page.getByRole("img", { name: /percent likely to pass/ }).count()) >= 6);
@@ -72,7 +72,7 @@ check("the confidence figures carry the evidence behind them, not just a number"
   /go on yet|rough estimate|mean something/i.test(body));
 
 check("it says whether it would bet on a level at all",
-  /would bet on|would not bet on/i.test(body));
+  /bet on you passing|bet on any paper/i.test(body));
 
 // Case-insensitively: the part labels are `label-xs`, which uppercases, and
 // `innerText` reports what is rendered rather than what is in the markup.
@@ -80,10 +80,10 @@ check("it predicts all four parts, so no quarter of the paper is unaccounted for
   ["writing", "listening", "reading", "speaking"].every((s) => body.toLowerCase().includes(s)));
 
 check("it says the questions are not the real questions",
-  /questions are not the real questions/i.test(body));
+  /aren.t the real ones/i.test(body));
 
 check("it says nothing scores pronunciation",
-  /Nothing scores your pronunciation/i.test(body));
+  /Nothing here scores your pronunciation/i.test(body));
 
 check("it offers advice rather than only a verdict",
   (await page.getByText("What is standing in the way").count()) > 0);
@@ -119,7 +119,7 @@ check("every task says which official task it stands in for",
   `${(brief.match(/stands for/g) ?? []).length} declared`);
 
 check("the briefing says the spoken part is marked by the learner",
-  /marked by you/i.test(brief));
+  /you mark the spoken part yourself/i.test(brief));
 
 /*
   Four tasks sit under a clock the real paper gives to two. The drills are the
@@ -128,7 +128,7 @@ check("the briefing says the spoken part is marked by the learner",
   discovered at task three.
 */
 check("the briefing says the writing clock belongs to the two texts",
-  /clock is for those two/i.test(brief) && /accuracy questions after them/i.test(brief));
+  /clock is only for those two/i.test(brief) && /grammar questions after them/i.test(brief));
 
 check("the clock has not started before the learner starts it",
   !/\d\d:\d\d/.test(await page.locator("header").innerText().catch(() => "")));
@@ -414,7 +414,7 @@ check("a paper left part way through is offered back rather than lost",
   /left this paper part way through/i.test(returning));
 
 check("it says how much of the part's time is left, because the clock kept running",
-  /of that part is left|time has run out/i.test(returning));
+  /is left on that part|part.s time ran out/i.test(returning));
 
 const carryOn = page.getByRole("button", { name: /Carry on/ });
 check("carrying on is one press away", (await carryOn.count()) > 0);

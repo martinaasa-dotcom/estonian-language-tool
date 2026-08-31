@@ -107,8 +107,8 @@ export default async function SettingsPage() {
       title="Settings"
       lead={
         hosted
-          ? "Your deck, reviews and tasks belong to your account and are visible only to you."
-          : "This copy runs locally. Nothing is uploaded anywhere."
+          ? "Your deck, reviews and tasks are yours alone. Nobody else can see them."
+          : "This is running on your own computer. Nothing is uploaded anywhere."
       }
     >
       <Stack>
@@ -117,7 +117,7 @@ export default async function SettingsPage() {
             <SectionTitle hint={mode === "type" ? "typing" : "flipping"}>How review asks</SectionTitle>
             <ReviewModePanel current={mode} />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Either way, brand-new cards are shown with their answer first, being asked to produce a
+              Either way, brand-new cards are shown with their answer first. Being asked to produce a
               word you have never seen teaches nothing.
             </p>
           </section>
@@ -130,9 +130,9 @@ export default async function SettingsPage() {
             </SectionTitle>
             <Card>
               <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                These answers build the timeline on the level check screen: how many hours the level you
-                want usually takes, how many of them your daily goal covers, and what is left to find
-                elsewhere. Change them whenever the answer changes.
+                These answers shape the timeline on the level check screen: how many hours the level
+                you want usually takes, how many of them your daily goal covers, and what is left to
+                find elsewhere. Change them whenever the answer changes.
               </p>
               <GoalsPanel current={goals} />
               <p className="mt-5 text-sm" style={{ color: "var(--ink-3)" }}>
@@ -152,8 +152,8 @@ export default async function SettingsPage() {
             <SectionTitle hint={`${dailyGoal} reviews/day`}>Daily goal</SectionTitle>
             <Card>
               <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
-                Sets how full the ring on Today fills up, and the target of your first daily quest.
-                Purely motivational. It never caps or blocks a session.
+                This sets how full the ring on Today gets, and what your first daily quest aims for.
+                It is only there to motivate you. It never stops you from reviewing more.
               </p>
               <DailyGoalPanel currentGoal={dailyGoal} />
             </Card>
@@ -173,18 +173,18 @@ export default async function SettingsPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <Chip tone="good">Connected</Chip>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-                    Words beyond the built-in set are fetched live from Ekilex, at the Institute of the
-                    Estonian Language, and stored as they arrive so the next lookup is local and works
-                    offline. Example sentences, dictation and the fuller mock exam all draw on this.
+                    Words beyond the built-in set come straight from Ekilex, at the Institute of the
+                    Estonian Language, and are saved here so the next lookup works offline too.
+                    Example sentences, dictation and the fuller mock exam all draw on this.
                   </p>
                 </div>
               ) : (
                 <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
                   <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
-                    No Ekilex key is configured on this deployment, so search stops at the {words}{" "}
+                    There is no Ekilex key set up here yet, so search stops at the {words}{" "}
                     built-in words: nothing outside that set can be looked up, and dictation, the
                     sentence builder and the mock exam&rsquo;s reading and listening parts stay thin or
-                    empty because the built-in set carries almost no attested sentences.
+                    empty, because the built-in set has almost no real example sentences.
                   </p>
                   <EkilexSetupGuide />
                 </div>
@@ -206,7 +206,7 @@ export default async function SettingsPage() {
                   </p>
                   <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
                     Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
-                    through a single day you miss entirely, no action needed, it is spent
+                    through a single day you miss entirely. Nothing to do. It is spent
                     automatically the next time you&rsquo;re back.
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default async function SettingsPage() {
                   </div>
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     {resilience.models === 1
-                      ? "One model is configured."
+                      ? "Just one model is set up right now."
                       : `${resilience.models} models are tried in order, across ${resilience.providers.join(" and ")}.`}
                   </p>
                   {/*
@@ -253,14 +253,15 @@ export default async function SettingsPage() {
                   */}
                   {resilience.singlePointOfFailure && (
                     <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                      Everything above is {resilience.providers[0]}, on one account. If that key stops
-                      answering, whether it runs out of credit or has a bad minute, Anu stops with it.
+                      Everything above runs through {resilience.providers[0]}, on one account. If
+                      that key stops answering, whether it runs out of credit or just has a bad
+                      minute, Anu stops with it.
                       Adding <code className="text-xs">GROQ_API_KEY</code> or{" "}
                       <code className="text-xs">GEMINI_API_KEY</code> to <code className="text-xs">.env</code>{" "}
-                      gives the chain somewhere to fall through to. Both have a free tier and neither
-                      asks for a card. Read the note beside them in{" "}
-                      <code className="text-xs">.env.example</code> first: a free tier is usually free
-                      because the provider may look at what goes through it.
+                      gives Anu somewhere else to turn. Both are free and neither asks for a card.
+                      Read the note beside them in{" "}
+                      <code className="text-xs">.env.example</code> first: free usually means the
+                      provider may look at what goes through it.
                     </p>
                   )}
                 </div>
@@ -308,8 +309,9 @@ export default async function SettingsPage() {
             <SectionTitle hint={letters === "on" ? "shown" : "hidden"}>Typing Estonian</SectionTitle>
             <LetterBarPanel current={letters} />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Only ever on a computer. A phone keyboard already has these letters, on a long press
-              or a keyboard switched to Estonian, so no row is drawn there either way.
+              Only ever shows up on a computer. A phone keyboard already has these letters, on a
+              long press or a keyboard switched to Estonian, so there is nothing to show on a phone
+              either way.
             </p>
           </section>
 
@@ -370,8 +372,9 @@ export default async function SettingsPage() {
                     clocks change.
                   </p>
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                    Web push was the alternative. It needs a server that stays awake and still does
-                    nothing on an iPhone unless the app is installed. A calendar entry just works.
+                    We considered push notifications instead. They need a server that is always
+                    switched on, and still do nothing on an iPhone unless the app is installed. A
+                    calendar entry just works.
                   </p>
                 </div>
               </div>

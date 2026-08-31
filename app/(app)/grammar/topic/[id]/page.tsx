@@ -126,7 +126,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                 ? "The heading is what a course, a textbook and the state examination call this. The English name is here so that an English reference grammar is still usable, not because anybody teaching Estonian says it. "
                 : "There is no settled Estonian term a class would use for this one, so it keeps its English description rather than being given an invented name. "}
               {topic.marker
-                ? "The ending above is named as terminology; the forms themselves live on the dictionary entries, where every one of them came from Ekilex rather than from this app."
+                ? "The ending above is named as terminology. The forms themselves live on the dictionary entries, where every one of them came from Ekilex rather than from this app."
                 : "Every Estonian form the app shows comes from the dictionary, never from this page."}
             </p>
           </Card>

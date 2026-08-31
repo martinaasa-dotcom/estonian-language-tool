@@ -50,15 +50,15 @@ export async function UsagePanel({ ownerId }: { ownerId: string }) {
         </div>
 
         <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
-          Only the tutor is metered. Review, the dictionary and your deck have no limit and keep
-          working when this runs out.
+          Only asking Anu counts against this. Review, the dictionary and your deck have no
+          limit, and keep working even after this runs out.
         </p>
 
         {!audioCacheIsDurable() && (
           <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
-            Pronunciation audio is cached on local disk. Set{" "}
-            <code>SUPABASE_SERVICE_ROLE_KEY</code> to share one cache across every instance and
-            stop re-asking TartuNLP for words it has already spoken.
+            Pronunciation audio is saved on this machine&rsquo;s disk. Set{" "}
+            <code>SUPABASE_SERVICE_ROLE_KEY</code> so every copy of the app can share one saved
+            set, instead of asking TartuNLP again for words it has already spoken.
           </p>
         )}
       </Card>

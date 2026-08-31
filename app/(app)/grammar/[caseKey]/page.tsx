@@ -237,7 +237,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                     {example.sentence!.en && (
                       <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
-                        <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
+                        <Chip tone="again" title="Machine translation. Trust the Estonian above, not this.">
                           {AI_TAG}
                         </Chip>
                       </p>
@@ -275,8 +275,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
 
         <Note tone="neutral">
           A drill only opens for words in your deck that carry this case. If nothing comes up, add a
-          noun unit from the path, the case cards are generated from the forms the dictionary
-          holds, never from a pattern applied blindly.
+          noun unit from the path. The case cards come from forms the dictionary actually holds,
+          never from a pattern applied blindly.
         </Note>
 
         {/*

@@ -16,8 +16,8 @@ const STEPS = [
  * because it is the thing every other feature is built on top of.
  */
 const UNLOCKS = [
-  "Search reaches the whole Estonian lexicon, not the built-in set, with the authoritative forms, gradation, verb government and CEFR level.",
-  "Attested example sentences arrive. That is what powers gap-fill cards, dictation and the sentence builder, since the built-in set alone carries almost none.",
+  "Search reaches all of Estonian, not just the built-in set, with checked forms, gradation, verb government and CEFR level.",
+  "Real example sentences arrive too. Gap-fill cards, dictation and the sentence builder all depend on these, and the built-in set alone has almost none.",
   "The mock exam's reading and listening parts use real sentences instead of falling back to single words.",
   "The grammar reference's oblique-case tables (the inside and outside cases) show a real form instead of a dead end.",
 ];
@@ -98,8 +98,8 @@ export function EkilexSetupGuide() {
       </div>
 
       <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-        Every word already in the deck gets upgraded to the real forms the next time it is opened,
-        nothing has to be re-added. A word Ekilex had nothing to say about the last time it was
+        Every word already in the deck gets upgraded to the real forms the next time it is opened.
+        Nothing has to be re-added. A word Ekilex had nothing to say about the last time it was
         looked up is remembered as a miss for a day, so it will not retry until then.
       </p>
     </div>

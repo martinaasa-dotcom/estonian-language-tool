@@ -20,9 +20,16 @@ import { DiacriticBar } from "@/components/DiacriticBar";
  * out for themselves that anything happened. The bar still needs a field to
  * fall back to, so the caller's ref is used as this component's own rather than
  * kept alongside it: two refs on one input is how they come apart.
+ *
+ * `compact` is the floating Anu panel, the one place this field sits beside a
+ * button inside a 26rem card rather than across a page. At the default size a
+ * long placeholder such as "Why is it raamatut and not raamatu?" ran past the
+ * edge of that narrow box and was clipped mid-word, so `compact` drops to the
+ * dense-UI type step and tighter padding, the same step `Button`'s own default
+ * size reads from.
  */
 export function EstonianInput({
-  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large, inputRef,
+  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large, compact, inputRef,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -32,6 +39,7 @@ export function EstonianInput({
   id?: string;
   ariaLabel?: string;
   large?: boolean;
+  compact?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
 }) {
   const own = useRef<HTMLInputElement>(null);
@@ -50,7 +58,9 @@ export function EstonianInput({
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
         }}
-        className={`w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-xl" : "py-3 text-md"}`}
+        className={`w-full rounded-[var(--r-lg)] border outline-none transition-shadow focus:shadow-[var(--shadow)] ${
+          large ? "px-5 py-3.5 text-xl" : compact ? "px-4 py-2.5 text-sm" : "px-5 py-3 text-md"
+        }`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
       />
       <DiacriticBar standalone={false} fallbackRef={ref} />

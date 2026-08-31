@@ -127,12 +127,13 @@ export default function PrivacyPage() {
           top of it.
         </P>
         <P>
-          <strong>What the tutor cost.</strong> A record per AI request of which model was
-          asked, roughly how much text went in and out, and the estimated cost. The tutor
-          runs on somebody&rsquo;s paid key and sign-up is open, so a per-person daily
-          allowance is the only thing standing between an open door and an unbounded bill.
-          This is kept because there is a legitimate interest in a free service surviving
-          the week, and there is no version of that cap which works without counting.
+          <strong>What the tutor cost.</strong> For every request to the AI, we keep a record:
+          which model answered, roughly how much text went in and out, and what it is
+          estimated to have cost. The tutor runs on somebody&rsquo;s paid key and sign-up is
+          open, so a per-person daily allowance is the only thing standing between an open
+          door and an unbounded bill. This is kept because there is a legitimate interest in
+          a free service surviving the week, and there is no version of that cap which works
+          without counting.
         </P>
         <P>
           <strong>What you report as wrong.</strong> Anywhere the app cannot help you there
@@ -146,10 +147,10 @@ export default function PrivacyPage() {
           deleted with your account.
         </P>
         <P>
-          <strong>Errors.</strong> When something breaks, the message and where it happened
-          are logged, with your opaque user id and never your email. Values that look like a
-          credential are stripped before anything is written. Same reason: an app nobody can
-          debug is an app that stays broken.
+          <strong>Errors.</strong> When something breaks, we log the error message and where
+          it happened, along with your account id, never your email. Anything that looks like
+          a password or key is stripped out before it is written down. Same reason: an app
+          nobody can debug is an app that stays broken.
         </P>
         <P>
           <strong>What is not stored.</strong> No analytics, no advertising identifiers, no
@@ -194,8 +195,8 @@ export default function PrivacyPage() {
 
       <S title="Who else sees it">
         <P>
-          This installation is configured to reach the services below, and nobody else. Each
-          gets only what is described beside it, and none of them is paid to profile you.
+          This installation only talks to the services below, and nobody else. Each gets only
+          what is described beside it, and none of them is paid to profile you.
         </P>
         <ul className="space-y-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           {recipients.map((r) => (
@@ -218,17 +219,17 @@ export default function PrivacyPage() {
             <strong>Some of that leaves the European Economic Area.</strong> The AI providers
             are established outside it, so what you type to Anu and any page you photograph
             crosses a border to be read. That transfer rests on the standard contractual
-            clauses the provider publishes and on nothing else, and it is worth knowing that
+            clauses the provider publishes, and nothing else. It is worth knowing that
             protection there is not identical to protection here. It is also avoidable: the
             tutor and the page scanner are the only features that do it, and using neither
             means nothing of yours leaves.
           </P>
         )}
         <P>
-          None of it is sold, and none of it is used by us to train a model. What a provider
-          does with an API request is governed by their own terms, which is a real limit on
-          this promise rather than a formality: some free tiers are free because the provider
-          reserves the right to look at what goes through them.
+          None of it is sold, and we never use it to train a model ourselves. What a provider
+          does with what we send them is governed by their own terms, and that is a real
+          limit on this promise, not just a formality: some free tiers are free because the
+          provider keeps the right to look at what goes through them.
         </P>
       </S>
 
@@ -259,16 +260,16 @@ export default function PrivacyPage() {
           composition in it, tutor message, suggested fix, starred word, badge and class
           membership. It is a
           real backup, and the same file restores into a fresh installation. One thing is held
-          back and it is the spending record described above, which is this installation&rsquo;s
-          accounting rather than your work; it is deleted with your account like everything
+          back: the spending record described above, since that is this installation&rsquo;s
+          accounting rather than your work. It is deleted with your account like everything
           else.
         </P>
         <P>
           <strong>Erasure.</strong> <strong>Settings → Deleting your data</strong> removes all
-          of that in one transaction, immediately, along with your sign-in record. The shared
+          of that immediately, in one go, along with your sign-in record. The shared
           dictionary stays, because other learners have cards built on it, but any entry you
           edited stops being attributed to you. Take an export first: this keeps no copy. If
-          the installation is not configured to delete the sign-in record itself, the button
+          this installation is not set up to delete the sign-in record itself, the button
           says so plainly rather than pretending, and the address at the top of this page is
           who to ask.
         </P>
@@ -294,12 +295,12 @@ export default function PrivacyPage() {
 
       <S title="Nothing here decides anything about you">
         <P>
-          The app estimates a CEFR level from what you answered and predicts your chance of
-          passing a mock exam. Neither is a decision with any legal or comparable effect: they
-          are study advice, they are marked by string comparison against the dictionary rather
-          than by a model, and every figure says how thin the evidence behind it is. No
-          qualification, no admission and no result depends on them. There is no automated
-          decision-making in the sense the law means, and no profiling.
+          The app estimates a CEFR level from what you answered, and predicts your chance of
+          passing a mock exam. Neither is a decision with any legal or similar effect: they
+          are study advice, checked directly against the dictionary rather than judged by a
+          model, and every figure says how thin the evidence behind it is. No qualification,
+          no admission and no result depends on them. There is no automated decision-making in
+          the sense the law means, and no profiling.
         </P>
       </S>
 

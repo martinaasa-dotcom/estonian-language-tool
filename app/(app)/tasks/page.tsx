@@ -71,7 +71,7 @@ export default async function TasksPage() {
   return (
     <Page
       title="Tasks"
-      lead="Homework and study goals from class, beside the week they belong to."
+      lead="Homework and study goals from class, next to the week they belong to."
     >
       <Stack>
         {week && (
@@ -137,7 +137,7 @@ export default async function TasksPage() {
             <Link href="/week" className="font-semibold underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
               Set which week you are in
             </Link>{" "}
-            and everything you add from then on is filed under it, so you can revise a week at a time.
+            and everything you add from then on is grouped under it, so you can revise a week at a time.
           </p>
         )}
       </Stack>

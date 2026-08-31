@@ -78,8 +78,8 @@ export default async function SuggestionsQueuePage({
     >
       {!supabaseConfigured() && (
         <p className="mb-6 rounded-[var(--r)] px-4 py-3 text-sm" style={{ background: "var(--butter-soft)", color: "var(--butter-ink)" }}>
-          This copy runs with no sign-in configured, so it is one learner on one machine and that
-          learner reviews their own queue.
+          This copy has no sign-in set up, so it is just one learner on one machine, reviewing
+          their own queue.
         </p>
       )}
 

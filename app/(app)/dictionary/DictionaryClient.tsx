@@ -264,7 +264,7 @@ export function DictionaryClient({
               className="rounded-[var(--r)] px-4 py-3 text-sm font-medium"
               style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
             >
-              Fetched from Ekilex and saved, this word now works offline too.
+              We got this from Ekilex and saved it. It works offline now too.
             </p>
           )}
           {matchedAs && (
@@ -493,7 +493,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           {!form("GEN_PL") && (
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
               Plural forms need the genitive plural, which isn&rsquo;t stored for this word. We leave
-              them blank rather than guess, an invented form is worse than a gap.
+              them blank rather than guess. An invented form is worse than a gap.
             </p>
           )}
         </div>
@@ -517,7 +517,7 @@ function EntryProblem({ entry }: { entry: EntryView }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-        Something here wrong?
+        Something wrong here?
       </p>
       <SuggestFix
         category="WRONG_MEANING"

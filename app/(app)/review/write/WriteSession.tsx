@@ -84,7 +84,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.error ?? "That could not be marked.");
+        setError(body.error ?? "Couldn't mark that.");
         return;
       }
       const result = body as Marked;
@@ -121,8 +121,8 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Tubli töö. Writing your own sentences is the slowest kind of practice and the one that
-          actually transfers to speaking.
+          Tubli töö. Writing your own sentences takes longer, but it&rsquo;s what really helps with
+          speaking.
         </p>
         <div
           className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
@@ -247,7 +247,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
 
       {!aiAvailable && (
         <p className="mt-4 text-center text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-          Anu is not configured, so only the form is checked. That check is the reliable half.
+          Anu isn&rsquo;t available here, so only the form is checked. That check is the reliable half.
         </p>
       )}
     </div>
@@ -291,15 +291,15 @@ function Feedback({ marked }: { marked: Marked }) {
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             {withheldReason === "unvouched-word" ? (
               <>
-                Anu&rsquo;s note was withheld: it quoted a word the dictionary could not vouch for.
-                That word may have been English rather than an Estonian form, and the check does not
-                gamble on which. The verdict above comes from the dictionary and stands.
+                Anu&rsquo;s note is hidden here. It used a word we couldn&rsquo;t confirm as Estonian,
+                it might just have been English. The check above comes straight from the
+                dictionary, so it stands.
               </>
             ) : (
               <>
-                Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give
-                it, and an unverified form is exactly what this app will not show you. The verdict
-                above comes from the dictionary and stands.
+                Anu&rsquo;s note is hidden here. It used an Estonian form we couldn&rsquo;t confirm,
+                and we never show a form we haven&rsquo;t checked. The check above comes straight
+                from the dictionary, so it stands.
               </>
             )}
           </p>

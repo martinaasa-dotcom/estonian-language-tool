@@ -192,8 +192,8 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                   {card.lemma}
                 </p>
                 <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
-                  No audio right now, the pronunciation service could not be reached, so the word is
-                  shown instead. Still worth answering; come back for the listening part.
+                  We couldn&rsquo;t reach the audio, so the word is shown instead. It&rsquo;s still
+                  worth answering, come back later for the listening part.
                 </p>
               </>
             ) : (

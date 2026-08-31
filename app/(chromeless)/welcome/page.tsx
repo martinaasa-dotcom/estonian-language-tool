@@ -288,7 +288,7 @@ function Cases({ words }: { words: DemoWord[] }) {
             <span lang="et" className="font-semibold">majja</span>,{" "}
             <span lang="et" className="font-semibold">majas</span> or{" "}
             <span lang="et" className="font-semibold">majast</span>. Three principal parts are
-            unpredictable, so you memorise those; the other eleven are regular endings on the
+            unpredictable, so you memorise those. The other eleven are just regular endings on the
             genitive stem. Press a word.
           </p>
         </div>
@@ -443,7 +443,7 @@ function Features() {
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
             title="A dictionary that shows the whole word"
-            body="Search a form you half-remember from class and it finds the word, says which one you typed, and lays out all the rest with gradation marked and every form spoken aloud."
+            body="Type in a form you half remember from class and it finds the word, tells you which form that was, and lays out every other form too, gradation marked, with audio for each one."
           />
         </Reveal>
         <Reveal>
@@ -451,7 +451,7 @@ function Features() {
             tone="mint"
             icon={<MapIcon size={18} aria-hidden />}
             title={`A course of ${PATH.length} units that schedules itself`}
-            body="Each unit is a sitting's worth of words that becomes real cards in one press. FSRS brings each one back on the day you were going to forget it, then tells you you're done. Sprint, dictation and listening all grade those same cards."
+            body="Each unit is a sitting's worth of words that becomes real cards in one press. The scheduler brings each one back on the day you were about to forget it, then tells you you're done. Sprint, dictation and listening all grade those same cards."
           />
         </Reveal>
         <Reveal>
@@ -459,7 +459,7 @@ function Features() {
             tone="blush"
             icon={<Sparkles size={18} aria-hidden />}
             title="Anu explains the rule"
-            body="Ask a chatbot for an inflected form and you get a confident, wrong one. Anu explains the rule and checks your sentence, and she may never supply an Estonian form: those come from the dictionary."
+            body="Ask most chatbots for a word form and they'll often give you a confident, wrong one. Anu explains the rule and checks your sentence instead. The actual Estonian word always comes from the dictionary, never from her guessing."
           >
             <TutorPeek />
           </Feature>
@@ -579,7 +579,7 @@ const CREDITS = [
   {
     name: "Speakly",
     body:
-      "Built in Estonia, and the closest thing here to a like for like comparison. It teaches the 4,000 words you will meet most often in the order you will meet them, with audio, grammar notes and its own spaced repetition, in ten languages. For getting words into your ear quickly it is good, and it is a subscription: its App Store listing runs from 9.99 euros a month to 69.99 euros once.",
+      "Built in Estonia, and the closest match here to a fair comparison. It teaches the 4,000 words you'll meet most often, in the order you'll meet them, with audio, grammar notes and its own spaced repetition, in ten languages. It's good for getting words into your ear fast, but it costs money: its App Store listing runs from 9.99 euros a month to a one-off 69.99 euros.",
   },
   {
     name: "Keeleklikk and Keeletee",
@@ -589,7 +589,7 @@ const CREDITS = [
   {
     name: "Anki",
     body:
-      "Free, open source, works offline, and it will schedule anything you are willing to type onto a card. What it will not do is supply the Estonian: every form is yours to find, and yours to get wrong. The desktop and Android apps cost nothing; the iPhone one is a single purchase.",
+      "Free, open source, works offline, and it will schedule anything you are willing to type onto a card. What it will not do is supply the Estonian: every form is yours to find, and yours to get wrong. The desktop and Android apps cost nothing. The iPhone one is a single purchase.",
   },
   {
     name: "The vocabulary apps",
@@ -658,9 +658,9 @@ function Comparison() {
         for by name.
       */}
       <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-        Duolingo has never offered an Estonian course, so the choice you actually face is between
-        the tools that do. {CLAIM_COUNT} claims, checked against their own public pages, and on{" "}
-        {SHARED_ROWS} of them somebody else ticks too.
+        Duolingo has never offered Estonian, so the real choice is between the tools that do. We
+        checked {CLAIM_COUNT} claims against their own public pages, and on{" "}
+        {SHARED_ROWS} of them, somebody else earns a tick too.
       </p>
       <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
         None of them is trying to do quite this: get you to the point of saying{" "}
@@ -747,11 +747,11 @@ function Comparison() {
       </div>
 
       <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-        A tick means yes, a dash means not from anything its own public pages say, and a question
-        mark means we could not tell and would rather say so. Checked in August 2026 against each
-        product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
-        is not affiliated with any of them and none of them has endorsed it. If something is out
-        of date or simply wrong, tell us and it gets corrected.
+        A tick means yes. A dash means their own public pages did not say so. A question mark
+        means we could not tell, and we would rather say so than guess. Checked in August 2026
+        against each product&rsquo;s own site and store listing. Every name here belongs to its
+        owner: Kodukeel is not affiliated with any of them, and none of them has endorsed it. If
+        something is out of date or simply wrong, tell us and we will fix it.
       </p>
     </FaqItem>
   );
@@ -762,19 +762,19 @@ function Comparison() {
 const FAQS = [
   [
     "Do I need to pay for anything?",
-    "No, and there is nothing to set up either. Sign in with Google and the dictionary, the flashcards, every practice mode, the mock exam and your exports are yours with nothing counted. What is counted is the handful of things that cost this site money each time they run, and they carry a day's allowance rather than a price: ten questions to Anu, thirty notes back from the writing grader, twenty photographed pages, and three hundred phrases of speech nobody has asked for before. Audio is cached once it has been spoken, so a review session never reaches that last number.",
+    "No, and there is nothing to set up either. Sign in with Google and everything is yours: the dictionary, the flashcards, every practice mode, the mock exam, your exports. None of that is limited. The only things with a daily limit are the handful that cost this site real money to run: ten questions to Anu, thirty notes back from the writing grader, twenty photographed pages, and three hundred phrases spoken for the first time. Once a sentence has been read aloud once, it is saved, so a normal review session never gets close to that last number.",
   ],
   [
     "Where do the Estonian forms come from?",
-    "Ekilex, the Institute of the Estonian Language, for every Estonian form and every example sentence; English Wiktionary for the English, checked word by word against its own page; plus a hand-checked built-in set of common words. The eleven regular cases are worked out from the genitive by a function with its own unit tests. An AI is never allowed to supply an Estonian form: it invents plausible, wrong ones, and a flashcard would then drill the mistake in.",
+    "Every Estonian form and example sentence comes from Ekilex, run by the Institute of the Estonian Language. Every English translation comes from English Wiktionary, checked word by word against its own page. On top of that, there is a small, hand-checked set of common words built right in. The eleven regular cases follow automatically from the genitive, using the same rule for every word. An AI is never allowed to supply an Estonian form. It invents plausible ones that are simply wrong, and a flashcard would drill that mistake straight in.",
   ],
   [
     "Is this only for beginners?",
-    "It covers A1 to C1. The parts that make Estonian hard later (consonant gradation, verb government, total versus partial objects) each get their own card type rather than being left to guesswork. There is a ten-minute placement check if you would rather not guess where you are, and a mock paper for the state examination at A2, B1, B2 and C1, assembled from recorded sentences and marked by comparison against the dictionary.",
+    "It covers A1 to C1. The parts that make Estonian hard later on (consonant gradation, verb government, whether an object is total or partial) each get their own kind of card, instead of being left to guesswork. There is a ten-minute placement check if you would rather not guess where you are, and a mock paper for the state examination at A2, B1, B2 and C1, built from recorded sentences and marked by comparing your answers against the dictionary.",
   ],
   [
     "What happens to my data?",
-    "It stays in your account, scoped to you, and you can download the whole thing as JSON from Settings at any time. Your review history is the one thing here that cannot be recreated, so it is append-only and never overwritten.",
+    "It stays in your account. You can download the whole thing as a JSON file from Settings, any time you like. Your review history is the one thing here we can never rebuild if it is lost, so nothing in it is ever deleted or changed once it is written.",
   ],
 ] as const;
 

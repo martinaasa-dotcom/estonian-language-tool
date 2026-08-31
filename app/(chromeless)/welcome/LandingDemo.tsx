@@ -107,7 +107,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
             ))}
           </ul>
           <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
-            Derived live by the same function the app uses, never invented by an AI.
+            Worked out live, the same way the app always does it. Never invented by an AI.
           </p>
         </div>
       </div>
@@ -135,10 +135,10 @@ export function TutorPeek() {
           style={{ background: "var(--surface)", borderColor: "var(--rule)", color: "var(--ink-2)" }}
         >
           <span className="label-xs mb-1.5 block" style={{ color: "var(--blush-ink)" }}>Anu</span>
-          Because the action is unfinished. <span lang="et" className="font-semibold">Ma loen raamatut</span>{" "}
-          is “I am reading a book”: partitive, still going. Swap in the genitive and you get{" "}
+          Because the action is not finished yet. <span lang="et" className="font-semibold">Ma loen raamatut</span>{" "}
+          means “I am reading a book”: partitive, so it is still going. Swap in the genitive and you get{" "}
           <span lang="et" className="font-semibold">Ma loen raamatu läbi</span>, a whole book,
-          finished. The object case is where Estonian hides its aspect.
+          finished. In Estonian, the case of the object is what tells you whether the action is done.
         </div>
       ) : (
         <button

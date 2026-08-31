@@ -161,8 +161,8 @@ export function Shortcuts() {
         </div>
 
         <p className="border-t px-5 py-3 text-xs" style={{ borderColor: "var(--rule-soft)", color: "var(--ink-3)" }}>
-          Every control is reachable by tab as well, with a visible focus ring, the shortcuts are a
-          shortcut, never the only way in.
+          You can also tab to every control, with a clear focus ring. These shortcuts are just a
+          faster way in, never the only way.
         </p>
       </div>
     </div>

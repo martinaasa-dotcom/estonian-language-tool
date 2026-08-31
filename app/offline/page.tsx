@@ -21,8 +21,8 @@ export default function OfflinePage() {
         This screen needs a connection
       </h1>
       <p className="text-base" style={{ color: "var(--ink-2)" }}>
-        Screens you have already opened still work offline, and so does reviewing, anything you
-        grade while offline is saved on this device and sent the moment you reconnect.
+        Pages you have already opened still work offline, and so does review. Anything you grade
+        is saved on this device and sent the moment you are back online.
       </p>
       <a
         href="/review"

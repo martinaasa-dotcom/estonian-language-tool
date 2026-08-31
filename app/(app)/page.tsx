@@ -241,7 +241,7 @@ export default async function TodayPage() {
       {snapshot.totalCards === 0 ? (
         <Empty
           title="Your deck is empty"
-          body="A unit becomes real cards, with every form and audio."
+          body="A unit becomes real cards, with every form and its audio."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       ) : toReview > 0 ? (
@@ -343,7 +343,7 @@ export default async function TodayPage() {
       {summary.shieldsAvailable > 0 && (
         <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
           <Shield size={13} aria-hidden style={{ color: "var(--accent-deep)" }} />
-          {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked, one
+          {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked. One
           missed day won&rsquo;t break your streak.
         </p>
       )}
@@ -507,9 +507,9 @@ export default async function TodayPage() {
       </div>
       <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {tutorReady
-          ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
+          ? "Anu explains Estonian grammar, which case to use, why a stem changed, and whether your sentence is right."
           : readerCanConfigure
-            ? "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."
+            ? "Anu can explain which case to use and why a stem changed. She needs a free key first, which takes about two minutes to set up."
             : "Anu is not switched on for this site yet. Everything else here works without her."}
       </p>
       {(tutorReady || readerCanConfigure) && (

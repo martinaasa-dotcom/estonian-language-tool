@@ -186,8 +186,8 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         <div>
           <p className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>Principal parts</p>
           <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-            Fill in what you know, the genitive alone unlocks all eleven regular cases. Blanks stay
-            blank; nothing is guessed.
+            Fill in what you know. The genitive alone unlocks all eleven regular cases. Blanks stay
+            blank. Nothing is guessed.
           </p>
           <div className="grid gap-2 md:grid-cols-3">
             {fields.map(([key, label, example]) => (
@@ -212,7 +212,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         <Button variant="primary" onClick={submit} disabled={pending || !lemma.trim() || !translation.trim()}>
           {pending ? "Saving…" : edit ? "Save changes" : "Save word"}
         </Button>
-        <DiacriticBar label="Insert an Estonian character into the field you are typing in" />
+        <DiacriticBar label="Insert an Estonian letter into the field you're typing in" />
       </div>
     </Card>
   );

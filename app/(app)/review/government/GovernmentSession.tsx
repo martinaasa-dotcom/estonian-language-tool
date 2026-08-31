@@ -97,8 +97,8 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Rektsioon is memorised per verb, not derived, so a round every few days beats an hour
-          once.
+          There&rsquo;s no rule for rektsioon, you just remember it verb by verb. A little often
+          beats a lot at once.
         </p>
         <div
           className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
@@ -234,7 +234,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
             )}
             <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
               {question.experiencer
-                ? `An experiencer construction: the person goes in the ${question.answerEt} and the thing is the grammatical subject.`
+                ? `Here the person goes in the ${question.answerEt}, and the thing itself is the subject.`
                 : `${question.lemma} governs the ${question.answerEt}, the ${question.answerEn.toLowerCase()}. English gives you no clue here, so it has to be learned with the verb.`}
             </p>
             {/*
@@ -254,8 +254,8 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   </span>
                 ))}{" "}
                 {question.alsoGoverned.length === 1
-                  ? "too, in another sense, so it is kept out of the answers rather than offered as a wrong one."
-                  : "too, in other senses, so those are kept out of the answers rather than offered as wrong ones."}
+                  ? "too, in another sense. Picking that wouldn't have been wrong, just a different sense."
+                  : "too, in other senses. Picking one of those wouldn't have been wrong, just a different sense."}
               </p>
             )}
 
