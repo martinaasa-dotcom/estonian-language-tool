@@ -26,6 +26,7 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
@@ -2253,6 +2254,83 @@ check("a placement question is answered in Estonian, not about it", () => {
     false,
     "the placement check offers case names as multiple choice again",
   );
+});
+
+check("a government question never offers a case the word itself governs", () => {
+  /*
+    The same fault as the placement check's, in the two drills that keep asking
+    the question rather than replacing it: the mock exam's `rektsioon` task and
+    `/review/government`. An Ekilex entry records a word's whole government,
+    not one case, and `parseGovernment` returns the primary. `buildOptions`
+    used to filter only that one out of the distractor pool, so any of the
+    others could stand as a wrong answer.
+
+    Measured over the shipped dictionary, 60 of the 268 governed verbs name
+    more than one case: `aitama` is "keda/mida* (partitive) · millest
+    (elative)" and takes both, so a learner who knew `see ei aita millestki`
+    chose the elative and was marked wrong. `alustama` governs three and could
+    be shown two of them as distractors at once. Government is the one thing
+    an English speaker has no way to reason out, so a drill that marks them
+    wrong for being right is the drill teaching them to ignore it.
+
+    Asserted against the real dictionary rather than a fixture, because the
+    fault was in the data's shape rather than in any one entry, and drawn many
+    times because the options are shuffled: a single draw passes by luck.
+  */
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as
+    { lemma: string; pos: string; government: string | null }[];
+
+  const verbs = entries
+    .filter((e) => e.pos === "VERB" && e.government)
+    .map((e) => ({ lemma: e.lemma, government: parseGovernment(e.government) }))
+    .filter((e): e is { lemma: string; government: Government } => e.government !== null);
+  assert.ok(verbs.length > 100, `expected the governed verbs, found ${verbs.length}`);
+
+  const multi = verbs.filter((v) => v.government.alsoGoverned.length > 0);
+  assert.ok(
+    multi.length > 20,
+    `expected verbs governing more than one case, found ${multi.length}: either the dictionary ` +
+    "changed shape or the parser stopped reading past the first case name",
+  );
+
+  const pool = verbs.map((v) => v.government.caseKey);
+  for (const verb of multi) {
+    const alsoTrue = new Set<string>(verb.government.alsoGoverned);
+    for (let draw = 0; draw < 40; draw++) {
+      const options = buildOptions(verb.government, pool, 4, Math.random);
+      if (!options) continue; // dropped rather than padded, which is allowed
+      const wrong = options.find((o) => alsoTrue.has(o));
+      assert.equal(
+        wrong,
+        undefined,
+        `${verb.lemma} governs the ${wrong} as well as the ${verb.government.caseKey}, and it ` +
+        "was offered as a wrong answer",
+      );
+      assert.ok(options.includes(verb.government.caseKey), `${verb.lemma} lost its own answer`);
+      assert.equal(new Set(options).size, options.length, `${verb.lemma} was offered a repeat`);
+    }
+  }
+});
+
+/**
+ * The other half of the same question: it says "the verb", so it asks a verb.
+ *
+ * The dictionary records a government for 36 nouns and 12 adjectives too, and
+ * they are real: `osa` takes the partitive and the elative. But the task is
+ * titled "Which case does the verb take?", and asking that about a noun is a
+ * question worded as a fact the entry does not support. The review drill has
+ * filtered on part of speech since it was written; the exam builder never did.
+ */
+check("a question that says \"the verb\" is asked about a verb", () => {
+  for (const file of ["lib/exam/paper.ts", "app/(app)/review/government/page.tsx"]) {
+    const source = code(file);
+    const builder = /buildGovernment[\s\S]*?\n}/.exec(source)?.[0] ?? source;
+    assert.match(
+      builder,
+      /pos === "VERB"|pos: "VERB"/,
+      `${file} builds a verb-government question without filtering to verbs`,
+    );
+  }
 });
 
 check("a recording never moves a level", () => {

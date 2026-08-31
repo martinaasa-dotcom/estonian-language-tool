@@ -98,7 +98,7 @@ is standing in for, and the briefing screen prints it before the clock starts.
 | Write a short message | teate koostamine |
 | Write a text | loovkirjutamine või isikliku kirja koostamine, and the choice is offered |
 | Write the form | **nothing the real paper sets**: grammatiline korrektsus, marked inside the texts |
-| Which case does the verb take? | **nothing the real paper sets**: rektsioon, marked inside the texts |
+| Which case does the verb take? | **nothing the real paper sets**: rektsioon, marked inside the texts, and asked only of verbs |
 | Write down what you hear | puuduva infoga ülesanne |
 | Which sentence was it? | valikvastustega kuulamisülesanne |
 | Speak | suuline esinemine ja dialoog |

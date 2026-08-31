@@ -580,6 +580,15 @@ function buildCaseForm(spec: TaskSpec, ctx: BuildContext): ExamTask {
 
 function buildGovernment(spec: TaskSpec, ctx: BuildContext): ExamTask {
   const governed = ctx.words
+    /*
+      Verbs only. The task asks "which case does the verb take", and the
+      dictionary records a government for 36 nouns and 12 adjectives too:
+      `osa` genuinely takes the partitive and the elative, but asking about it
+      as a verb is a question worded as a fact the entry does not support. The
+      government drill at /review/government has always filtered this way and
+      this builder never did.
+    */
+    .filter((word) => word.pos === "VERB")
     .map((word) => ({ word, government: parseGovernment(word.government) }))
     .filter((row): row is { word: PoolWord; government: NonNullable<ReturnType<typeof parseGovernment>> } =>
       row.government !== null);
@@ -589,8 +598,12 @@ function buildGovernment(spec: TaskSpec, ctx: BuildContext): ExamTask {
   for (const row of shuffle(governed, ctx.random)) {
     if (items.length >= spec.items) break;
     if (ctx.spent.has(row.word.lexemeId)) continue;
+    // Null when the word governs so much that no honest distractor is left.
+    // Dropped rather than padded, and reported as a shortfall like any other.
+    const keys = buildOptions(row.government, casePool, 4, ctx.random);
+    if (!keys) continue;
     ctx.spent.add(row.word.lexemeId);
-    const options = buildOptions(row.government.caseKey, casePool, 4, ctx.random).map((key) => {
+    const options = keys.map((key) => {
       const named = caseByKey(key);
       return {
         key,

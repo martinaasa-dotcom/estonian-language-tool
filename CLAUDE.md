@@ -1402,6 +1402,30 @@ osastav, and the version that named whichever the dictionary listed first called
 `scripts/test-assess.mjs` asks the same thing of the rendered screen, because a source check cannot
 see a name arriving through an interpolated option.
 
+**A word governs every case its entry names, so none of them is a wrong answer.** The two drills
+that keep asking the question rather than replacing it, the mock exam's `rektsioon` task and
+`/review/government`, had the same fault the placement check did. An Ekilex entry records a word's
+whole government and `parseGovernment` returns the primary; `buildOptions` filtered only that one
+out of the distractor pool, so any of the others could stand as a wrong answer. 60 of the 268
+governed verbs in the shipped dictionary name more than one case: `aitama` is `keda/mida*
+(partitive) · millest (elative)` and takes both, so somebody who knew `see ei aita millestki` chose
+the elative and was marked wrong, and `alustama` governs three and could be shown two of them at
+once. Government is the one thing an English speaker cannot reason out, so a drill that marks them
+wrong for being right is the drill teaching them to ignore it.
+
+`buildOptions` takes the parsed `Government` rather than a case key, which is what makes that
+unforgettable: the type cannot be satisfied by a caller holding only the answer, so a fifth drill
+cannot reintroduce the fault by not knowing about it. It returns null rather than padding when
+nothing honest is left, and the caller drops the question. **Reading the cases out of the string is
+a scan, not a substring search**: `adessive` ends in `essive` and `abessive` contains it, so a
+`indexOf` per name invents a government the entry never mentions, and `hakkama` grew a third out of
+its `(adessive)`. One left-to-right scan taking the longest name at each position answers both
+"which is primary" and "which else", because two scans over one string are two answers waiting to
+disagree. And a task titled "which case does the verb take" asks a **verb**: the dictionary records
+a government for 36 nouns and 12 adjectives too, `osa` genuinely takes the partitive and the
+elative, and the exam builder was asking about them as verbs. Two invariants, both made to fail
+first.
+
 **A level is never decided by a model, and never built out of Estonian we wrote.** The placement
 check at `/assess` is assembled from `Lexeme`, `Form` and recorded `usages`; every question says
 which of those its Estonian came from. Marking is a stored index, a recorded sentence, or a string
@@ -1571,7 +1595,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
-`explainGap`, `ESTONIAN_WORD`, `formatDuration`. Most of them now
+`explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
