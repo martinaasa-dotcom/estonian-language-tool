@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs><clipPath id="t"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <g clip-path="url(#t)">
+    <rect width="64" height="64" fill="#fbf9ff"/>
+    <circle cx="32" cy="32" r="21" fill="#7a6bf0"/>
+    <path d="M51.93 30.29 L59.5 32 L51.93 33.71 Z" fill="#7a6bf0"/>
+    <path d="M51.9 33.99 L59.03 37.06 L51.27 37.35 Z" fill="#7a6bf0"/>
+    <path d="M51.2 37.62 L57.64 41.95 L49.96 40.8 Z" fill="#7a6bf0"/>
+    <path d="M49.83 41.05 L55.37 46.5 L48.03 43.96 Z" fill="#7a6bf0"/>
+    <path d="M47.86 44.18 L52.3 50.55 L45.56 46.7 Z" fill="#7a6bf0"/>
+    <path d="M45.35 46.89 L48.54 53.97 L42.62 48.95 Z" fill="#7a6bf0"/>
+    <path d="M42.38 49.1 L44.21 56.64 L39.32 50.61 Z" fill="#7a6bf0"/>
+    <path d="M39.06 50.71 L39.47 58.47 L35.77 51.64 Z" fill="#7a6bf0"/>
+    <path d="M35.49 51.69 L34.47 59.39 L32.09 52 Z" fill="#7a6bf0"/>
+    <path d="M31.81 52 L29.39 59.38 L28.4 51.67 Z" fill="#7a6bf0"/>
+    <path d="M28.13 51.62 L24.39 58.43 L24.84 50.68 Z" fill="#7a6bf0"/>
+    <path d="M24.58 50.57 L19.66 56.57 L21.53 49.04 Z" fill="#7a6bf0"/>
+    <path d="M21.29 48.89 L15.35 53.88 L18.57 46.82 Z" fill="#7a6bf0"/>
+    <path d="M12.83 26.28 L6.42 21.91 L14.09 23.1 Z" fill="#7a6bf0"/>
+    <path d="M14.21 22.85 L8.71 17.38 L16.03 19.96 Z" fill="#7a6bf0"/>
+    <path d="M16.2 19.73 L11.8 13.34 L18.52 17.22 Z" fill="#7a6bf0"/>
+    <path d="M18.73 17.04 L15.58 9.94 L21.47 15 Z" fill="#7a6bf0"/>
+    <path d="M21.71 14.85 L19.92 7.3 L24.78 13.35 Z" fill="#7a6bf0"/>
+    <path d="M25.04 13.25 L24.67 5.49 L28.34 12.34 Z" fill="#7a6bf0"/>
+    <path d="M28.61 12.29 L29.68 4.6 L32.02 12 Z" fill="#7a6bf0"/>
+    <path d="M32.3 12 L34.76 4.64 L35.7 12.35 Z" fill="#7a6bf0"/>
+    <path d="M35.97 12.4 L39.75 5.61 L39.25 13.36 Z" fill="#7a6bf0"/>
+    <path d="M39.51 13.47 L44.47 7.49 L42.56 15.02 Z" fill="#7a6bf0"/>
+    <path d="M42.8 15.16 L48.77 10.2 L45.51 17.25 Z" fill="#7a6bf0"/>
+    <path d="M45.71 17.44 L52.49 13.66 L47.99 19.99 Z" fill="#7a6bf0"/>
+    <path d="M48.16 20.21 L55.52 17.75 L49.93 23.14 Z" fill="#7a6bf0"/>
+    <path d="M50.05 23.39 L57.74 22.32 L51.25 26.59 Z" fill="#7a6bf0"/>
+    <path d="M51.33 26.86 L59.08 27.22 L51.92 30.22 Z" fill="#7a6bf0"/>
+    <path d="M22 40 C17 46 11 50 4 51 C6 45 8 40 11 35 Z" fill="#5b4bd6"/>
+    <circle cx="6" cy="49" r="2.6" fill="#fbf9ff"/>
+    <circle cx="19.5" cy="38.5" r="3.2" fill="#241f35"/>
+  </g>
+</svg>

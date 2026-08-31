@@ -266,3 +266,38 @@ ruff are the only two things separating a lynx from a house cat, so both are dra
 
 The wolf, national animal since 2018, is absent. It was drawn three times in round one and read as
 a cat, then a fox, then a leaf.
+
+## Round eight: on the palette
+
+Review kept three animals, the bear, the seal and the hedgehog, and asked for the hedgehog to be
+drawn differently. Twelve in `design/icons/round8/`, drawn by `node scripts/make-icon-round8.mjs`.
+
+**Every colour comes out of `app/globals.css` and nowhere else.** The animal is `--accent`, which
+the design system calls the app's own voice, and the field is `--ink` or `--ground`, with
+`--accent-soft` and `--accent-deep` as the secondary tones. A mark is one hue at three depths
+rather than a palette of its own. The first pass used an invented `#4b3fc4` for the deep tone; the
+real `--accent-deep` is `#5b4bd6` and that is what ships.
+
+**The one place the palette pushes back.** The five hues carry fixed meanings: mint is recalled,
+peach is missed, butter is nearly, sky is easy, blush is Anu. An icon is not a chip and not a tile,
+so nothing here breaks a rule, but a seal on a sky field still borrows a colour that means
+something six screens away. The accent is the only hue whose meaning is simply "this app", so every
+mark leads with it and `07k` is labelled as the exception.
+
+| # | Mark | Reads as |
+|---|---|---|
+| 07a | **Siil, kerra** | the strongest of the set: curled, geometric before it is an animal |
+| 07e | Siil, kerra, hele | the same drawing on the ground |
+| 07c | Siil, teravad | the side view with the scruff taken out |
+| 07b | Siil, eest | workable; the first pass gave it a jaw the width of its head |
+| 07d | Siil, ilma naota | a sunrise |
+| 07f-h | Karu | three arrangements of the same three tokens |
+| 07i-l | Hyljes | four, of which the pale seal on solid accent is the most finished |
+
+**Curled is the answer for the hedgehog.** It is the shape the animal is famous for, it holds at
+20px where the side view softens, and the snout is load-bearing rather than decorative: without it
+the ring of spines reads as a sun.
+
+**07d is a finding rather than a candidate.** Take the face off the hedgehog and it stops being an
+animal and becomes a sunrise. It is kept because it measures exactly what the face is doing across
+both animal rounds.

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs><clipPath id="t"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <g clip-path="url(#t)">
+    <rect width="64" height="64" fill="#241f35"/>
+    <path d="M13.07 36.37 L6.89 33.57 L13.65 33.06 Z" fill="#7a6bf0"/>
+    <path d="M13.77 32.65 L8.26 28.68 L15 29.52 Z" fill="#7a6bf0"/>
+    <path d="M15.19 29.15 L10.58 24.17 L17.01 26.32 Z" fill="#7a6bf0"/>
+    <path d="M17.28 25.99 L13.75 20.19 L19.63 23.58 Z" fill="#7a6bf0"/>
+    <path d="M19.95 23.31 L17.64 16.93 L22.73 21.42 Z" fill="#7a6bf0"/>
+    <path d="M23.1 21.21 L22.09 14.5 L26.2 19.91 Z" fill="#7a6bf0"/>
+    <path d="M26.6 19.78 L26.95 13.01 L29.9 19.12 Z" fill="#7a6bf0"/>
+    <path d="M30.32 19.07 L32 12.5 L33.68 19.07 Z" fill="#7a6bf0"/>
+    <path d="M34.1 19.12 L37.05 13.01 L37.4 19.78 Z" fill="#7a6bf0"/>
+    <path d="M37.8 19.91 L41.91 14.5 L40.9 21.21 Z" fill="#7a6bf0"/>
+    <path d="M41.27 21.42 L46.36 16.93 L44.05 23.31 Z" fill="#7a6bf0"/>
+    <path d="M44.37 23.58 L50.25 20.19 L46.72 25.99 Z" fill="#7a6bf0"/>
+    <path d="M46.99 26.32 L53.42 24.17 L48.81 29.15 Z" fill="#7a6bf0"/>
+    <path d="M49 29.52 L55.74 28.68 L50.23 32.65 Z" fill="#7a6bf0"/>
+    <path d="M50.35 33.06 L57.11 33.57 L50.93 36.37 Z" fill="#7a6bf0"/>
+    <ellipse cx="32" cy="38" rx="19.5" ry="17.5" fill="#7a6bf0"/>
+    <ellipse cx="32" cy="48" rx="9" ry="6.5" fill="#ece9ff"/>
+    <circle cx="24" cy="40" r="4.2" fill="#241f35"/>
+    <circle cx="36" cy="40" r="4.2" fill="#241f35"/>
+    <ellipse cx="32" cy="46" rx="3" ry="2.4" fill="#5b4bd6"/>
+  </g>
+</svg>
