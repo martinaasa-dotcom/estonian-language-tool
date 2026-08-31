@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BAR, DESTINATIONS, isUnder, LISTED, PLACES, SECTIONS, sectionOf } from "./nav";
+import { BAR, DESTINATIONS, isUnder, LISTED, PLACES, SECTIONS } from "./nav";
 import { PRACTICE_MODES, QUICK_MODES, TARGETED_MODES } from "./modes";
 import { ICONS } from "../../components/icons";
 
@@ -121,28 +121,6 @@ describe("isUnder", () => {
     // than a `startsWith` at each call site.
     expect(isUnder("/word", "/words")).toBe(false);
     expect(isUnder("/class", "/classes")).toBe(false);
-  });
-});
-
-describe("sectionOf", () => {
-  it("finds the section a page lives in", () => {
-    expect(sectionOf("/")?.id).toBe("daily");
-    expect(sectionOf("/grammar/inessive")?.id).toBe("lookup");
-    // Where you stand on the course and how far along it you are turned out to
-    // be one question rather than two sections, so the mock exam is under the
-    // course it measures.
-    expect(sectionOf("/exam/b1")?.id).toBe("course");
-  });
-
-  it("answers nothing for a page outside the rail", () => {
-    expect(sectionOf("/placement")).toBeUndefined();
-  });
-
-  it("prefers the longest match", () => {
-    // /review is in `daily` and /review/sprint is a practice mode rather than a
-    // destination, so this is really a guard on the rule: the deepest href
-    // wins, not whichever the table happens to list first.
-    expect(sectionOf("/review/sprint")?.id).toBe("daily");
   });
 });
 
