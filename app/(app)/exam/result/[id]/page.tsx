@@ -41,7 +41,7 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
     return (
       <Page title="That result cannot be read" eyebrow="Mock examination">
         <Note tone="again">
-          The stored paper is in a shape this version of the app does not understand. The score is
+          This result was saved in a format this version of the app can no longer read. The score is
           still {attempt.pct} percent, which counted as {attempt.passed ? "a pass" : "a fail"}.
         </Note>
       </Page>
@@ -113,8 +113,8 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               {result.thin && (
                 <p className="mt-2 flex items-center gap-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
                   <FileWarning size={14} aria-hidden />
-                  The dictionary could not fill every task, so this is a percentage of a shorter
-                  paper than the specification sets.
+                  The dictionary could not fill every task, so this percentage is out of a shorter
+                  paper than a full one would be.
                 </p>
               )}
             </div>
@@ -299,9 +299,9 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               <Info size={14} className="mr-1.5 inline" aria-hidden />
               These marks are for length and for using the words you were given. Whether the
               Estonian itself is right is what an examiner marks and what nothing here may judge, so
-              treat this part of your score as the most you could have got rather than what you
-              would have got. Anu will read either text back and say what she thinks, and her note
-              carries no marks.
+              treat this part of your score as a ceiling: the most you could have got, not a
+              guarantee of what an examiner would actually give you. Anu will read either text back
+              and say what she thinks, and her note carries no marks.
             </Note>
           </div>
           <ul className="grid gap-4">

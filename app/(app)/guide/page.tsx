@@ -117,12 +117,12 @@ export default function GuidePage() {
           <SectionTitle>The rule the whole thing is built on</SectionTitle>
           <p className="max-w-[70ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             No Estonian in this app is written by this app. Forms come from Ekilex or from hand
-            checked principal parts, the eleven regular cases are computed from the genitive stem at
+            checked principal parts. The eleven regular cases are computed from the genitive stem at
             the moment they are shown, and example sentences are ones lexicographers recorded. The AI
             explains and translates into English, and is checked against the dictionary before any
             Estonian it writes reaches you. This is not caution for its own sake: a model asked for an
             Estonian example once produced a sentence that is not Estonian, and a wrong form does not
-            sit there being wrong, the scheduler drills it into you.
+            just sit there being wrong. The scheduler drills it into you.
           </p>
         </Card>
       </div>

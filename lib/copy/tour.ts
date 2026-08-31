@@ -195,8 +195,8 @@ export const CANNOT: readonly Claim[] = [
     icon: "Sparkles",
     text:
       "Write Estonian for you. The AI may explain grammar and translate into English. It may never invent " +
-      "an Estonian form, because a model asked for an example once produced a sentence that is not Estonian, " +
-      "and an unverified form does not sit there being wrong, the scheduler drills it in.",
+      "an Estonian form, because a model asked for an example once produced a sentence that is not Estonian. " +
+      "An unverified form does not just sit there being wrong: the scheduler drills it in.",
   },
   {
     icon: "Stamp",

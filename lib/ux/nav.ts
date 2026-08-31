@@ -106,7 +106,7 @@ export const SECTIONS: NavSection[] = [
         keywords: "home dashboard streak quests goal xp", bar: true,
       },
       {
-        href: "/review", label: "Review", blurb: "Everything due, scheduled by FSRS", icon: "GraduationCap",
+        href: "/review", label: "Review", blurb: "Everything due, timed to when you are about to forget", icon: "GraduationCap",
         tone: "accent", keywords: "flashcards srs study due", bar: true,
       },
       {

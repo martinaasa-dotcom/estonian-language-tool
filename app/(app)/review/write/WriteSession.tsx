@@ -292,13 +292,13 @@ function Feedback({ marked }: { marked: Marked }) {
             {withheldReason === "unvouched-word" ? (
               <>
                 Anu&rsquo;s note was withheld: it quoted a word the dictionary could not vouch for.
-                That word may have been English rather than an Estonian form, and the check does not
-                gamble on which. The verdict above comes from the dictionary and stands.
+                That word may have been English rather than an Estonian form, and there was no safe
+                way to tell which. The verdict above comes from the dictionary and stands.
               </>
             ) : (
               <>
-                Anu&rsquo;s note was withheld: it used an Estonian form the dictionary did not give
-                it, and an unverified form is exactly what this app will not show you. The verdict
+                Anu&rsquo;s note was withheld: it used an Estonian form the dictionary could not
+                confirm, and an unchecked form is never shown here. The verdict
                 above comes from the dictionary and stands.
               </>
             )}

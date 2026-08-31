@@ -517,7 +517,7 @@ function EntryProblem({ entry }: { entry: EntryView }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-        Something here wrong?
+        Something wrong here?
       </p>
       <SuggestFix
         category="WRONG_MEANING"

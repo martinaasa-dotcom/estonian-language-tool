@@ -290,6 +290,6 @@ export function retentionReading(
     reviews: count, recalled, retention, target,
     verdict: "on-target",
     headline: "The schedule is working",
-    advice: `${retention}% of mature cards recalled against a ${target}% target, which is exactly what FSRS is steering for. Nothing to change.`,
+    advice: `${retention}% of mature cards recalled against a ${target}% target, which is exactly where the scheduler is aiming. Nothing to change.`,
   };
 }

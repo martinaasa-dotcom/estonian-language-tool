@@ -600,7 +600,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
         </Note>
         <Note tone="neutral">
           <WifiOff size={14} className="mr-1.5 inline" aria-hidden />
-          This one needs a connection, which review deliberately does not. The recordings are
+          Unlike review, this part needs a live connection. The recordings are
           fetched as you play them and the paper is marked on the server, so sit it somewhere with
           signal. If handing in fails, your answers stay on the page and the button can be pressed
           again.
@@ -617,8 +617,8 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
           <Note tone="hard">
             <FileWarning size={14} className="mr-1.5 inline" aria-hidden />
             Some tasks are set from words rather than from sentences. Recorded example sentences
-            reach this app from Ekilex, and without a key there are none, so the tasks that need one
-            fall back to a shape the dictionary can always fill. Each of them says so above. The
+            come from Ekilex, and this copy of Kodukeel has no key set up for it, so those tasks
+            fall back to a version the dictionary can always fill. Each one says so above. The
             paper is easier than the one it imitates, and that is worth knowing before you read your
             score.
           </Note>
@@ -627,9 +627,10 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
           <Note tone="again">
             <FileWarning size={14} className="mr-1.5 inline" aria-hidden />
             The dictionary could only fill {fillRate} percent of this paper, so some tasks are
-            shorter than the specification asks for. Each part is marked out of what was actually
-            set rather than out of what was intended, and the result names the shortfall. Adding an
-            Ekilex key, or more words to the deck, fills the rest.
+            shorter than a full paper would be. Each part is marked out of what was actually
+            set rather than out of what was intended, and the result names the shortfall. More
+            words in your deck fill this in over time. If you run this copy of Kodukeel yourself,
+            adding an Ekilex key fills it in right away.
           </Note>
         )}
       </div>

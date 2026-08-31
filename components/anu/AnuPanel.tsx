@@ -118,7 +118,7 @@ export function AnuPanel({
             answeredBy
               ? <Provenance compact label={answeredBy} answered />
               : <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-                  Names the rule, and marks her own Estonian.
+                  Explains the rule, and flags any Estonian she writes.
                 </p>
           )}
         </div>
@@ -217,10 +217,11 @@ export function AnuPanel({
           <div className="flex items-start gap-2.5">
             <div className="flex-1">
               <EstonianInput
+                compact
                 value={input}
                 onChange={setInput}
                 onEnter={() => { void send(input); setInput(""); }}
-                placeholder="Why is it raamatut and not raamatu?"
+                placeholder="Why raamatut and not raamatu?"
                 ariaLabel="Ask Anu a question"
                 inputRef={boxRef}
               />

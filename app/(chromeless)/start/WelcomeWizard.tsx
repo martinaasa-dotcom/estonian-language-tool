@@ -357,8 +357,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
                 ) : (
                   <div className="mt-6">
                     <Note tone="sky">
-                      The level check needs a dictionary with levelled entries and this deployment
-                      has none yet, so estimating is the only option right now.
+                      The level check needs a dictionary with levelled entries and this copy of
+                      Kodukeel has none yet, so estimating is the only option right now.
                     </Note>
                   </div>
                 )}

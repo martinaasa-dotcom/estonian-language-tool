@@ -121,7 +121,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
           number of lapses. That removes it from your queue and teaches you nothing. The review log
           already knows how each of these is failing (steadily, or after a good run, or in
           alternation) and that is usually enough to work out what to do about it. Deleting a card
-          keeps its review history: the log is append-only.
+          keeps its review history: nothing in that log is ever deleted or changed.
         </p>
       </div>
     </Page>

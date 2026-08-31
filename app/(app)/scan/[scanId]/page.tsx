@@ -117,7 +117,7 @@ export default async function ScanSetPage({ params }: { params: Promise<{ scanId
                 href={`/review?scan=${scan.id}`}
                 tone="accent"
                 title="Drill the page"
-                body="Just these words, scheduling ignored, graded into the same log as everything else."
+                body="Just the words from this page, regardless of when they are due, graded the same as any other review."
               />
               <PractiseTile
                 href="/review/match"

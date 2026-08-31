@@ -521,7 +521,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
 
   if (wasEmptyAtStart) {
     return (
-      <Page title="Review" lead="Spaced repetition, scheduled by FSRS.">
+      <Page title="Review" lead="Spaced repetition, timed to when you are about to forget.">
         {drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}

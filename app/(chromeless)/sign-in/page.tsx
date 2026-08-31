@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 const PROMISES = [
   "A dictionary that answers with every form of the word",
-  "Cards scheduled by FSRS, plus sprints, listening and match",
+  "Cards timed to when you are about to forget, plus sprints, listening and match",
   "Anu explains the grammar, and never invents a form",
 ];
 
@@ -101,7 +101,7 @@ export default async function SignInPage({ searchParams }: {
             ) : (
               <div className="rounded-[var(--r-lg)] p-5 text-left" style={{ background: "var(--raised)" }}>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                  This copy is running in local mode, no accounts, no sign-in, everything stored in
+                  This copy is running in local mode: no accounts, no sign-in, everything stored in
                   the database on this machine. Add{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your{" "}

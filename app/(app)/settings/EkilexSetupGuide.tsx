@@ -98,8 +98,8 @@ export function EkilexSetupGuide() {
       </div>
 
       <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-        Every word already in the deck gets upgraded to the real forms the next time it is opened,
-        nothing has to be re-added. A word Ekilex had nothing to say about the last time it was
+        Every word already in the deck gets upgraded to the real forms the next time it is opened.
+        Nothing has to be re-added. A word Ekilex had nothing to say about the last time it was
         looked up is remembered as a miss for a day, so it will not retry until then.
       </p>
     </div>

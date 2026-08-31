@@ -216,7 +216,7 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
           </p>
           {missing.includes(item.skill) && (
             <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
-              This section is shorter than usual: the dictionary on this deployment could not fill it.
+              This section is shorter than usual: the dictionary here could not fill it.
             </p>
           )}
           <div className="mt-6 flex flex-wrap gap-3">

@@ -62,7 +62,7 @@ export default async function ExamPage() {
   return (
     <Page
       eyebrow="Mock examination"
-      title="Sit the state exam, before you sit the state exam"
+      title="Practise the state exam, before you sit the real one"
       lead={
         "Estonia examines at A2, B1, B2 and C1. Each paper is four parts, sixty percent to pass, " +
         "and a zero in any one part fails the whole thing. These are imitations of those papers, " +
@@ -255,7 +255,7 @@ export default async function ExamPage() {
           <SectionTitle>What you are already good at</SectionTitle>
           {readiness.strengths.length === 0 ? (
             <Note tone="neutral">
-              Nothing to report yet. Review for a week or two and this fills in.
+              Nothing here yet. Review for a week or two and it will start to fill in.
             </Note>
           ) : (
             <ul className="grid gap-3">
@@ -277,7 +277,7 @@ export default async function ExamPage() {
         <section>
           <SectionTitle>What is standing in the way</SectionTitle>
           {readiness.gaps.length === 0 ? (
-            <Note tone="good">Nothing this app can find. Book the paper.</Note>
+            <Note tone="good">Nothing here is holding you back. Go sit the paper.</Note>
           ) : (
             <ul className="grid gap-3">
               {readiness.gaps.map((item) => (
@@ -350,7 +350,8 @@ export default async function ExamPage() {
           <li>
             The questions are not the real questions. Every Estonian word in them came out of the
             dictionary, because this app never writes Estonian, so the reading part is built from
-            recorded sentences rather than a magazine article and the examiner is a microphone.
+            recorded sentences rather than a magazine article, and in the speaking part a microphone
+            stands in for the examiner.
           </li>
           <li>
             <CircleAlert size={13} className="mr-1 inline" aria-hidden />

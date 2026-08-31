@@ -254,8 +254,8 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   </span>
                 ))}{" "}
                 {question.alsoGoverned.length === 1
-                  ? "too, in another sense, so it is kept out of the answers rather than offered as a wrong one."
-                  : "too, in other senses, so those are kept out of the answers rather than offered as wrong ones."}
+                  ? "too, in another sense. Reaching for it would not have been wrong, just a different sense."
+                  : "too, in other senses. Reaching for one of them would not have been wrong, just a different sense."}
               </p>
             )}
 

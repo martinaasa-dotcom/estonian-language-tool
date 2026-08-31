@@ -117,7 +117,7 @@ export default async function SettingsPage() {
             <SectionTitle hint={mode === "type" ? "typing" : "flipping"}>How review asks</SectionTitle>
             <ReviewModePanel current={mode} />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Either way, brand-new cards are shown with their answer first, being asked to produce a
+              Either way, brand-new cards are shown with their answer first. Being asked to produce a
               word you have never seen teaches nothing.
             </p>
           </section>
@@ -206,7 +206,7 @@ export default async function SettingsPage() {
                   </p>
                   <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
                     Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
-                    through a single day you miss entirely, no action needed, it is spent
+                    through a single day you miss entirely. Nothing to do. It is spent
                     automatically the next time you&rsquo;re back.
                   </p>
                 </div>
