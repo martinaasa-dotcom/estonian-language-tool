@@ -117,27 +117,48 @@ const before = await page.getByText(/\d+ left/).textContent();
 const graded = async () => Number(/(\d+) graded/.exec(await page.locator("main").innerText())?.[1] ?? 0);
 const gradedBefore = await graded();
 
+/*
+  Which of the four shapes is in front of us, named rather than fallen through.
+
+  The chain here used to be three `else if`s, so an `intro` card matched none
+  of them and the suite pressed nothing without knowing it had not. That is
+  the shape the whole check turns on: a new word leads with its answer, so its
+  rating buttons are already drawn and pressing anything first would step past
+  the state being tested. Falling into that by accident is how a real bug hid
+  behind what looked like deck-state flakiness for as long as it did, and it
+  is also why the shape is printed on both checks below: a failure should say
+  which of the four it met.
+*/
 const answerBox = page.getByLabel("Type your answer");
-if (await answerBox.count()) {
+const shape =
+  (await answerBox.count()) ? "type"
+  : (await page.getByText(/Pick the meaning/).count()) ? "choice"
+  : (await page.getByRole("button", { name: /Show answer/ }).count()) ? "flip"
+  : "intro";
+
+if (shape === "type") {
   await answerBox.fill("ükskõik");
   await page.keyboard.press("Enter");
-} else if (await page.getByText(/Pick the meaning/).count()) {
+} else if (shape === "choice") {
   await page.keyboard.press("1");
-} else if (await page.getByRole("button", { name: /Show answer/ }).count()) {
+} else if (shape === "flip") {
   await page.keyboard.press("Space");
 }
+// `intro` presses nothing, deliberately: the answer and the ratings are both
+// already on screen, and this is the one shape where the rating keys were
+// unreachable.
 await page.waitForTimeout(900);
 
 const rateable = (await page.getByRole("button", { name: /^Good/ }).count()) > 0;
 const alreadyGraded = (await graded()) > gradedBefore;
 check("the answer is reachable from the keyboard", rateable || alreadyGraded,
-  rateable ? "rating offered" : alreadyGraded ? "auto-advanced on a correct pick" : "neither");
+  `${shape}: ${rateable ? "rating offered" : alreadyGraded ? "auto-advanced on a correct pick" : "neither"}`);
 
 if (rateable) await page.keyboard.press("3");
 const advanced = await eventually(async () =>
   (await page.getByText(/\d+ left/).textContent()) !== before);
 const after = await page.getByText(/\d+ left/).textContent();
-check("number key grades and advances", advanced, `${before} -> ${after}`);
+check("number key grades and advances", advanced, `${shape}: ${before} -> ${after}`);
 
 // 4 — Tasks
 await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });

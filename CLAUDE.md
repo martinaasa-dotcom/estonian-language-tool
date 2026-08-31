@@ -883,6 +883,17 @@ local learner; with them, every route is gated. It keys off the absence of confi
   to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
   pointer every one of them clears 44px.
+- **A shortcut works wherever the control it presses is drawn, and "drawn" is one question with one
+  name.** A new card in review leads with its answer, because a card you have never seen cannot be
+  recalled, only met, so `askFor` returns `intro` and the rating buttons arrive with it. `revealed`
+  stays false, since nothing was revealed. The render worked that out in four places and wrote
+  `revealed || ask === "intro"` longhand in each of them; the keydown handler is where the fifth copy
+  should have been and was not, so it read `!revealed`, returned before the rating branch, and the
+  number keys did nothing at all on the one shape a learner meets every time they start a new word.
+  The buttons were right there and the mouse graded them, which is what kept it invisible. It is
+  `answerShown` now, defined once, and the invariant fails on a sixth reader spelling it out again
+  rather than on today's markup. The lesson generalises past this screen: a control's visibility and
+  its shortcut are one condition, and two copies of it are a bug with a delay on it.
 - **Text and icons stay inside the boxes they were drawn into, and that is four declarations rather
   than a habit.** Every other rule here about the shape of a page is about the page, and none of
   them can see this fault: it happens inside a card that is itself exactly the right size, so the
