@@ -35,6 +35,24 @@ describe("deadlines", () => {
     expect(deadlineFrom(none, now)).toBeNull();
   });
 
+  /*
+    `setMonth` overflows: 31 August plus six months was 3 March, which is the
+    month after the one the preset names. The day is pinned to the end of the
+    shorter month instead.
+  */
+  it("does not overflow past the month a preset names", () => {
+    const sixMonths = DEADLINES.find((d) => d.id === "6m")!;
+    const endOfAugust = new Date("2026-08-31T12:00:00Z");
+    expect(deadlineFrom(sixMonths, endOfAugust)?.slice(0, 10)).toBe("2027-02-28");
+    const threeMonths = DEADLINES.find((d) => d.id === "3m")!;
+    expect(deadlineFrom(threeMonths, new Date("2026-01-31T12:00:00Z"))?.slice(0, 10)).toBe("2026-04-30");
+  });
+
+  it("keeps the same day of the month where that day exists", () => {
+    const year = DEADLINES.find((d) => d.id === "1y")!;
+    expect(deadlineFrom(year, new Date("2026-05-15T12:00:00Z"))?.slice(0, 10)).toBe("2027-05-15");
+  });
+
   it("counts whole weeks, and never counts backwards", () => {
     expect(weeksUntil("2026-04-16T10:00:00Z", now)).toBe(13);
     expect(weeksUntil("2025-01-01T10:00:00Z", now)).toBe(0);

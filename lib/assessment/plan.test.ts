@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CUMULATIVE_HOURS, FACTS, hoursBetween, project, sustainableNewCardsPerDay, weeksNeeded, weeksToLearn } from "./plan";
-import { BANDS } from "./types";
+import {
+  CUMULATIVE_HOURS, FACTS, FOUND_HOURS_PER_WEEK, hoursBetween, project,
+  sustainableNewCardsPerDay, weeksNeeded, weeksToLearn,
+} from "./plan";
+import { BANDS, PRE_A1, type Band, type Level } from "./types";
 
 describe("the hours table", () => {
   it("only ever goes up", () => {
@@ -30,16 +33,30 @@ describe("project", () => {
 
   it("says how long the app alone would take, which is the sobering number", () => {
     const plan = project({ ...base, weeksAvailable: null });
-    expect(plan.appHoursPerWeek).toBe(1.3);
+    expect(plan.appHoursPerWeek).toBeCloseTo(1.25, 10);
     expect(plan.weeksOnAppAlone.low).toBeGreaterThan(150);
     expect(plan.verdict).toBe("open");
   });
 
+  /*
+    The pace used to be rounded to one decimal before anything divided by it,
+    which is a display decision leaking into arithmetic. Three minutes a day
+    three days a week is 0.15 hours and was shown and used as 0.2, a third more
+    study than the learner said they would do, and it took a quarter off the
+    weeks the app alone would need. Every figure here is exact now, and the
+    panel rounds on the way to a tile.
+  */
+  it("never rounds a pace before dividing by it", () => {
+    const plan = project({ from: "A1", to: "A2", minutesPerDay: 3, daysPerWeek: 3, weeksAvailable: null });
+    expect(plan.appHoursPerWeek).toBeCloseTo(0.15, 10);
+    expect(plan.weeksOnAppAlone).toEqual({ low: Math.ceil(120 / 0.15), high: Math.ceil(170 / 0.15) });
+  });
+
   it("turns a deadline into hours a week to find elsewhere", () => {
     const plan = project({ ...base, weeksAvailable: 26 });
-    expect(plan.appHoursAvailable).toBe(33.8);
-    expect(plan.otherHoursPerWeek?.low).toBeCloseTo(7.5, 1);
-    expect(plan.verdict).toBe("tight");
+    expect(plan.appHoursAvailable).toBeCloseTo(32.5, 10);
+    expect(plan.otherHoursPerWeek?.low).toBeCloseTo((230 - 32.5) / 26, 10);
+    expect(plan.verdict).toBe("short");
   });
 
   it("calls an impossible deadline impossible", () => {
@@ -63,6 +80,84 @@ describe("project", () => {
     const plan = project({ ...base, minutesPerDay: 0, weeksAvailable: 10 });
     expect(plan.weeksOnAppAlone).toEqual({ low: 0, high: 0 });
     expect(Number.isFinite(plan.otherHoursPerWeek?.low ?? 0)).toBe(true);
+  });
+
+  /*
+    A deadline that has gone leaves nothing to divide by. It used to be floored
+    at one week, so the screen said "in 0 weeks your daily goal puts in about
+    0.4 of those hours" over a note asking for 1 099 hours a week.
+  */
+  it("says a date has gone rather than dividing the distance by no time", () => {
+    const plan = project({ from: "A2", to: "C1", minutesPerDay: 5, daysPerWeek: 5, weeksAvailable: 0 });
+    expect(plan.verdict).toBe("passed");
+    expect(plan.otherHoursPerWeek).toBeNull();
+    expect(plan.appHoursAvailable).toBe(0);
+  });
+
+  /*
+    The headline and the sentence under it are one claim. "It fits" is only
+    said where the found hours the note goes on to quote actually land inside
+    the deadline, which is what drawing the band at the pessimistic end buys.
+  */
+  it("never calls a plan tight that its own found-hours figure cannot make", () => {
+    const FROMS: Level[] = [PRE_A1, ...BANDS];
+    const cases: string[] = [];
+    for (const from of FROMS) {
+      for (const to of BANDS as readonly Band[]) {
+        for (const minutes of [3, 5, 8, 13]) {
+          for (const days of [2, 3, 4, 5, 6, 7]) {
+            for (const weeks of [13, 26, 52, 104]) {
+              const plan = project({ from, to, minutesPerDay: minutes, daysPerWeek: days, weeksAvailable: weeks });
+              if (plan.verdict !== "tight") continue;
+              const found = weeksNeeded(plan.hours, plan.appHoursPerWeek, FOUND_HOURS_PER_WEEK);
+              if (found.high > weeks) cases.push(`${from}->${to} ${minutes}min x${days}d in ${weeks}wk`);
+            }
+          }
+        }
+      }
+    }
+    expect(cases).toEqual([]);
+  });
+
+  it("keeps every figure finite, positive and the right way round, whatever is clicked", () => {
+    const FROMS: Level[] = [PRE_A1, ...BANDS];
+    for (const from of FROMS) {
+      for (const to of BANDS as readonly Band[]) {
+        for (const minutes of [3, 5, 8, 13]) {
+          for (const days of [2, 3, 4, 5, 6, 7]) {
+            for (const weeks of [null, 0, 13, 26, 52, 104]) {
+              const p = project({ from, to, minutesPerDay: minutes, daysPerWeek: days, weeksAvailable: weeks });
+              const figures = [
+                p.appHoursPerWeek, p.weeksOnAppAlone.low, p.weeksOnAppAlone.high,
+                p.appHoursAvailable ?? 0, p.otherHoursPerWeek?.low ?? 0, p.otherHoursPerWeek?.high ?? 0,
+              ];
+              for (const n of figures) {
+                expect(Number.isFinite(n)).toBe(true);
+                expect(n).toBeGreaterThanOrEqual(0);
+              }
+              expect(p.hours.low).toBeLessThanOrEqual(p.hours.high);
+              expect(p.weeksOnAppAlone.low).toBeLessThanOrEqual(p.weeksOnAppAlone.high);
+              if (p.otherHoursPerWeek) {
+                expect(p.otherHoursPerWeek.low).toBeLessThanOrEqual(p.otherHoursPerWeek.high);
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it("never makes more practice take longer", () => {
+    for (const to of BANDS as readonly Band[]) {
+      for (const minutes of [3, 5, 8, 13]) {
+        let previous = Infinity;
+        for (const days of [2, 3, 4, 5, 6, 7]) {
+          const p = project({ from: PRE_A1, to, minutesPerDay: minutes, daysPerWeek: days, weeksAvailable: null });
+          expect(p.weeksOnAppAlone.high).toBeLessThanOrEqual(previous);
+          previous = p.weeksOnAppAlone.high;
+        }
+      }
+    }
   });
 });
 

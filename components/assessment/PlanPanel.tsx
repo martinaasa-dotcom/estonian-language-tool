@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { CUMULATIVE_HOURS, FACTS, project, sustainableNewCardsPerDay, weeksNeeded, type Projection } from "@/lib/assessment/plan";
+import {
+  CUMULATIVE_HOURS, FACTS, FOUND_HOURS_PER_WEEK, project, sustainableNewCardsPerDay,
+  weeksNeeded, type Projection,
+} from "@/lib/assessment/plan";
 import { targetByBand, weeksUntil, type Goals } from "@/lib/assessment/goals";
 import { PRE_A1, type Band, type Level } from "@/lib/assessment/types";
 import { Card, Note, SectionTitle, StatTile } from "@/components/ui";
@@ -24,9 +27,27 @@ export function levelLabel(level: Level | null): string {
   return level === PRE_A1 ? "below A1" : level;
 }
 
+/**
+ * A range, with the unit left off when the tile above it already says it.
+ *
+ * The unit used to be interpolated unconditionally, so the two tiles that pass
+ * an empty one rendered "880 to 1170 " with a space hanging off the end of the
+ * number.
+ */
 function range(low: number, high: number, unit: string): string {
-  if (low === high) return `${low} ${unit}`;
-  return `${low} to ${high} ${unit}`;
+  const body = low === high ? `${low}` : `${low} to ${high}`;
+  return unit ? `${body} ${unit}` : body;
+}
+
+/**
+ * An hours figure on its way to a screen.
+ *
+ * One decimal place, and this is the only place the rounding happens. The
+ * projection keeps every figure exact precisely so that a number shaped for a
+ * tile never becomes a divisor.
+ */
+function hours1(n: number): number {
+  return Math.round(n * 10) / 10;
 }
 
 const VERDICT: Record<Projection["verdict"], { tone: "neutral" | "good" | "warn"; headline: string }> = {
@@ -35,6 +56,7 @@ const VERDICT: Record<Projection["verdict"], { tone: "neutral" | "good" | "warn"
   tight: { tone: "warn", headline: "It fits, but only with study outside this app." },
   short: { tone: "warn", headline: "Not by that date, at that pace. Here is what would change it." },
   open: { tone: "neutral", headline: "No deadline set, so here is what the distance looks like." },
+  passed: { tone: "neutral", headline: "That date has gone by. Set a new one and this is a plan again." },
 };
 
 export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact = false }: {
@@ -89,6 +111,12 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
   const verdict = VERDICT[plan.verdict];
   const spec = targetByBand(target);
   const newCards = sustainableNewCardsPerDay(dailyGoal);
+  /*
+    The date this pace would actually land on with a normal amount of study
+    found elsewhere. It is the same constant the verdict band is drawn at, so
+    the headline above and this sentence can never disagree again.
+  */
+  const found = weeksNeeded(plan.hours, plan.appHoursPerWeek, FOUND_HOURS_PER_WEEK);
 
   return (
     <div className="flex flex-col gap-4">
@@ -109,7 +137,7 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           hint="published estimates, not this app"
         />
         <StatTile
-          value={`${plan.appHoursPerWeek}h`}
+          value={`${hours1(plan.appHoursPerWeek)}h`}
           label="From this app a week"
           tone="sky"
           hint={`${minutesFor(dailyGoal)} minutes, ${goals.daysPerWeek} days`}
@@ -124,22 +152,19 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           value={weeks === null ? "open" : `${weeks}`}
           label="Weeks until your date"
           tone="butter"
-          hint={weeks === null ? "no deadline set" : "from today"}
+          hint={weeks === null ? "no deadline set" : weeks === 0 ? "that date has gone" : "from today"}
         />
       </div>
 
       {plan.otherHoursPerWeek && plan.otherHoursPerWeek.high > 0 && (
         <Note tone="sky">
           To make that date you would need roughly{" "}
-          <strong>{range(plan.otherHoursPerWeek.low, plan.otherHoursPerWeek.high, "hours a week")}</strong>{" "}
+          <strong>
+            {range(hours1(plan.otherHoursPerWeek.low), hours1(plan.otherHoursPerWeek.high), "hours a week")}
+          </strong>{" "}
           of Estonian beyond this app: a class, a conversation partner, reading, a film without
-          subtitles. At a found five hours a week on top of your daily goal, the distance is about{" "}
-          {range(
-            weeksNeeded(plan.hours, plan.appHoursPerWeek, 5).low,
-            weeksNeeded(plan.hours, plan.appHoursPerWeek, 5).high,
-            "weeks",
-          )}
-          .
+          subtitles. At a found {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, the
+          distance is about {range(found.low, found.high, "weeks")}.
         </Note>
       )}
 
@@ -242,11 +267,20 @@ function sentence(plan: Projection, weeks: number | null, from: string, to: Band
     return `Your measured level is already ${to} or above. Pick a higher target, or keep the deck warm and sit the check again in a couple of months.`;
   }
   const distance = `Going from ${from} to ${to} is usually ${range(plan.hours.low, plan.hours.high, "hours")} of study.`;
+  const pace = hours1(plan.appHoursPerWeek);
   if (weeks === null) {
-    return `${distance} At your stated pace this app covers ${plan.appHoursPerWeek} hours a week of that, so set a date and the rest of this becomes a real timeline.`;
+    return `${distance} At your stated pace this app covers ${pace} hours a week of that, so set a date and the rest of this becomes a real timeline.`;
   }
+  /*
+    A date behind them divides by nothing, so it gets the distance and the pace
+    and no arithmetic over the deadline at all.
+  */
+  if (plan.verdict === "passed") {
+    return `${distance} At your stated pace this app covers ${pace} hours a week of that. Pick a date you can still get to and this becomes a timeline again.`;
+  }
+  const covered = hours1(plan.appHoursAvailable ?? 0);
   if (plan.verdict === "comfortable") {
-    return `${distance} In ${weeks} weeks your daily goal alone puts in about ${plan.appHoursAvailable} hours, which covers it.`;
+    return `${distance} In ${weeks} weeks your daily goal alone puts in about ${covered} hours, which covers it.`;
   }
-  return `${distance} In ${weeks} weeks your daily goal puts in about ${plan.appHoursAvailable} of those hours. The rest has to come from somewhere else, or the date has to move.`;
+  return `${distance} In ${weeks} weeks your daily goal puts in about ${covered} of those hours. The rest has to come from somewhere else, or the date has to move.`;
 }
