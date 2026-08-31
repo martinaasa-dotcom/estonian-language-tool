@@ -530,7 +530,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
               The course starts you here, at {startBand}. These are the words a day actually needs,
               in the order they are usually taught, and each one becomes real flashcards with audio
-              and full paradigms.
+              and every form of the word.
             </p>
 
             {/*
