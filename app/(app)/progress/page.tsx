@@ -360,10 +360,12 @@ export default async function ProgressPage() {
           THE BOARD IS THE LAST THING ON THIS PAGE AND IT WAS FOUR ROUND TRIPS
           IN FRONT OF THE FIRST.
 
-          Finding the class, reading its name, then the roster: a chain nothing
-          above it needed the answer to, at the bottom of a page of charts.
-          Behind a boundary it is fetched while the rest of the page is already
-          being read, which is what a `Suspense` is for. See ./Board.
+          Finding the class, reading its name through the relation, then the
+          roster: a chain nothing above it needed the answer to, at the bottom
+          of a page of charts. Behind a boundary it is fetched while the rest
+          of the page is already being read, which is what a `Suspense` is
+          for, and it is three trips rather than four now that the name comes
+          back beside the roster instead of in front of it. See ./Board.
         */}
         <Suspense fallback={<BoardSkeleton />}>
           <Board ownerId={ownerId} now={now} />
