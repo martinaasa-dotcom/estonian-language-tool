@@ -197,6 +197,18 @@
     --shadow: 0 1px 2px rgb(36 31 53 / 0.04), 0 14px 34px -18px rgb(66 48 150 / 0.28);
     --shadow-lg: 0 2px 4px rgb(36 31 53 / 0.04), 0 30px 60px -28px rgb(66 48 150 / 0.38);
     --shadow-accent: 0 10px 24px -12px rgb(122 107 240 / 0.65);
+
+    /*
+      The key cap on a primary button, which is the one surface whose ink
+      flips. `--accent-ink` is white in the light theme and #171229 in the
+      dark, so a cap tinted one way cannot serve both: measured against the
+      worst of the accent ramp's three stops, white at 22% reads 3.32 under
+      white text and black at 16% reads 2.65 under dark text. The cap has to
+      tint away from the ink rather than toward it, so it is a token that
+      flips with the rest of the palette: 6.49 in the light theme and 5.79 in
+      the dark.
+    */
+    --key-cap: rgb(0 0 0 / 0.16);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -256,6 +268,8 @@
       --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
       --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
       --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
+
+      --key-cap: rgb(255 255 255 / 0.28);
     }
   }
 
@@ -306,6 +320,8 @@
     --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
     --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
     --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
+
+    --key-cap: rgb(255 255 255 / 0.28);
   }
 
   * { box-sizing: border-box; }
@@ -737,6 +753,7 @@
     touch-action: pan-y;
   }
 
+  .key-cap { background: var(--key-cap); }
   .tnum { font-variant-numeric: tabular-nums; }
 
   .label-xs {

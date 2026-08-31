@@ -868,14 +868,14 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           {ask === "intro" ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(3)} disabled={busy}>
               Got it, next
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Space
               </kbd>
             </Button>
           ) : ask === "type" && !verdict ? (
             <Button variant="primary" size="lg" className="w-full" onClick={checkTyped}>
               Check
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Enter
               </kbd>
             </Button>
@@ -886,7 +886,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                this button is an acknowledgement, not a grade. */
             <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(verdict.suggestedRating)} disabled={busy}>
               Got it, next
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Enter
               </kbd>
             </Button>
@@ -901,14 +901,14 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                the screen and the card comes back later in this session. */
             <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(1)} disabled={busy}>
               Got it, next
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Enter
               </kbd>
             </Button>
           ) : !revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Space
               </kbd>
             </Button>
