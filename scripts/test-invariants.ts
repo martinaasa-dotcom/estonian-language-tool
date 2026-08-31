@@ -74,7 +74,18 @@ const read = (file: string) => readFileSync(file, "utf8");
  * compliance with it.
  */
 const code = (file: string) =>
-  read(file).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  read(file)
+    /*
+      A comment is replaced by the newlines it spanned, not by a space. Several
+      checks report `file:line` from this, and collapsing a forty-line header
+      into one space put every one of those numbers well above the line it was
+      naming, which sends a reader to the wrong part of the file to look for a
+      fault they were told the name of. A single-line block comment still
+      becomes a space, since it has no newline to stand in and two tokens must
+      not be joined.
+    */
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => "\n".repeat(m.split("\n").length - 1) || " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
 /**
  * One exported function's body, from its signature to the next export.
@@ -3135,6 +3146,77 @@ check("a suite that reveals a review card knows all the shapes it comes in", () 
     /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
     "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
   );
+});
+
+/**
+ * A query that is cut short is ordered all the way down to the primary key.
+ *
+ * CLAUDE.md has said for a while that "a query that is cut short says where to
+ * cut", and nothing asserted it, so eleven queries in the derived-progress
+ * layer had drifted from it or had never been brought in line. Every one of
+ * them ordered on a column that is not unique and then took the first N.
+ *
+ * Two of those ties are not theoretical. `Card` was ordered by
+ * `(createdAt, lexemeId)`, and `addCardsFor` writes a word's recognition and
+ * production cards in one `createMany`, so both share both keys exactly. And
+ * `Lexeme` was ordered by `(fetchedAt, lemma)` while `@@unique` is on
+ * `(lemma, pos)`: on a freshly seeded deployment every `fetchedAt` is null, so
+ * the two entries for `hall` tied outright.
+ *
+ * The exam pool is the one where that is a correctness fault rather than an
+ * inconsistency. `submitExam` rebuilds the paper from (level, seed, pool) in
+ * order to mark it, so a pool that comes back in another order marks a learner
+ * on questions they were never asked, and the `take` means a tie at the five
+ * hundredth row decides which of a pair is in the paper at all.
+ *
+ * Ordering is free where the index is already there, and it was in all eleven.
+ * What is not free is a number that moves on its own.
+ *
+ * Scoped to `lib/progress/`, which is where every derived figure is read, and
+ * asserted on the *last* key, because an order that is total in the middle and
+ * loose at the end is loose.
+ */
+check("a truncated query in the progress layer ends on the primary key", () => {
+  const dir = join("lib", "progress");
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith(".ts") && !f.includes(".test.") && !f.includes(".itest."));
+  assert.ok(files.length > 3, `only found ${files.length} files, so this check stopped looking`);
+
+  let looked = 0;
+  for (const file of files) {
+    const src = code(join(dir, file));
+    for (const found of src.matchAll(/\.findMany\(\{/g)) {
+      // The block this call opens, by brace depth.
+      let depth = 0;
+      let end = found.index + found[0].length - 1;
+      for (let i = end; i < src.length; i += 1) {
+        if (src[i] === "{") depth += 1;
+        else if (src[i] === "}") { depth -= 1; if (depth === 0) { end = i; break; } }
+      }
+      const block = src.slice(found.index, end + 1);
+      if (!/\btake:/.test(block) && !/\bskip:/.test(block)) continue;
+      looked += 1;
+
+      const line = src.slice(0, found.index).split("\n").length;
+      const where = `lib/progress/${file}:${line}`;
+      /*
+        The outermost `orderBy`, not a relation's. A nested one (`forms:
+        { orderBy: ... }`) sorts rows inside one parent and is never the thing
+        `take` cuts, so matching the first `orderBy:` in the text would read
+        the wrong one and pass.
+      */
+      const top = /\n    orderBy:\s*(\[[\s\S]*?\]|\{[\s\S]*?\}),/.exec(block)
+        ?? /orderBy:\s*(\[[\s\S]*?\]|\{[^{}]*\}),/.exec(block);
+      assert.ok(top, `${where} takes a slice of an unordered query, so which rows it gets is Postgres's choice`);
+      assert.match(
+        top[1]!.replace(/\s+/g, " "),
+        /\{ id: "(asc|desc)" \} *\]$|^\{ id: "(asc|desc)" \}$/,
+        `${where} orders on ${top[1]!.replace(/\s+/g, " ")} and then cuts. None of those keys is unique, ` +
+        "so two tied rows are ordered by whatever the plan did that day. End it on { id: \"asc\" }.",
+      );
+    }
+  }
+  assert.ok(looked > 8, `only ${looked} truncated queries found, so this check stopped looking`);
 });
 
 /**

@@ -48,7 +48,7 @@ export function caseReviewsFor(
       reviewedAt: { gte: new Date(now.getTime() - WINDOW_DAYS * 86_400_000) },
     },
     select: { targetCase: true, rating: true },
-    orderBy: { reviewedAt: "desc" },
+    orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
     take: CAP,
   });
 }

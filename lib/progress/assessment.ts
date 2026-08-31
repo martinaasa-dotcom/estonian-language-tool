@@ -57,7 +57,7 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
     where: { ownerId, lexemeId: { not: null } },
     select: { lexemeId: true },
     distinct: ["lexemeId"],
-    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }, { id: "asc" }],
     take: 5000,
   });
   const ownedIds = new Set(owned.map((c) => c.lexemeId).filter((id): id is string => !!id));
@@ -85,7 +85,7 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
           government: true, examples: true,
           forms: { select: { formType: true, value: true, morphCode: true } },
         },
-        orderBy: { lemma: "asc" },
+        orderBy: [{ lemma: "asc" }, { id: "asc" }],
         skip: total > window ? seed % (total - window) : 0,
         take: window,
       });
@@ -156,7 +156,7 @@ export async function saveResult(ownerId: string, placement: Placement): Promise
 export async function historyFor(ownerId: string, take = 10): Promise<StoredAssessment[]> {
   const rows = await prisma.assessment.findMany({
     where: { ownerId },
-    orderBy: { takenAt: "desc" },
+    orderBy: [{ takenAt: "desc" }, { id: "asc" }],
     take,
   });
   return rows.map((row) => ({ ...row, skills: parseDetail(row.detail) }));

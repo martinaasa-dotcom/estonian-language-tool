@@ -94,7 +94,7 @@ export async function caseExamples(
   const deckIds = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { not: null }, lexeme: { pos: "NOUN" } },
     distinct: ["lexemeId"],
-    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }, { id: "asc" }],
     take: CANDIDATES,
     select: { lexemeId: true },
   });
@@ -110,7 +110,7 @@ export async function caseExamples(
   // gets a page worth reading on day one.
   const rest: Candidate[] = await prisma.lexeme.findMany({
     where: { pos: "NOUN", id: { notIn: owned.length ? owned : ["-"] } },
-    orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
+    orderBy: [{ cefr: "asc" }, { lemma: "asc" }, { id: "asc" }],
     take: CANDIDATES,
     select,
   });

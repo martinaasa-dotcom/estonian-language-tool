@@ -430,6 +430,19 @@ screens answer one question, the query is a function they share rather than a qu
 (`lib/progress/cases.ts`). Ordering is free wherever the index is already there, and it was in every
 one of these. What is not free is a number that moves on its own.
 
+**And the rule had nothing behind it, so eleven queries had drifted from it.** Every truncated
+read in `lib/progress/` ordered on a column that is not unique and then took the first N. Two of
+those ties are not theoretical: `Card` was ordered by `(createdAt, lexemeId)` and `addCardsFor`
+writes a word's recognition and production cards in one `createMany`, so both share both keys
+exactly; and `Lexeme` was ordered by `(fetchedAt, lemma)` while `@@unique` is on `(lemma, pos)`,
+so on a freshly seeded deployment, where every `fetchedAt` is null, the two entries for `hall`
+tied outright. The exam pool is the one where that is a correctness fault rather than an
+inconsistency, because `submitExam` rebuilds the paper from (level, seed, pool) in order to mark
+it: a pool that comes back in another order marks somebody on questions they were never asked,
+and the `take` means a tie at the five hundredth row decides which of a pair is in the paper at
+all. All eleven end on `{ id: "asc" }` now and an invariant reads the *last* key, because an
+order that is total in the middle and loose at the end is loose.
+
 **And a `take` beside a `distinct` bounds nothing at all.** Prisma deduplicates in the client, so a
 `LIMIT` would cut rows before the deduplication and it emits none: the query reads every matching
 row, adds an id column of its own to deduplicate with, sorts, and throws the surplus away in

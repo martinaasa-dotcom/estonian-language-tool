@@ -45,7 +45,7 @@ export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promi
     prisma.review.findMany({
       where: { targetCase: { not: null }, ownerId },
       select: { targetCase: true, rating: true },
-      orderBy: { reviewedAt: "desc" },
+      orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
       take: 5000,
     }),
   ]);
