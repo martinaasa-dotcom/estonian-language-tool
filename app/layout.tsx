@@ -103,7 +103,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             it has to sit above both route groups — the offline fallback is
             reachable from either. */}
         <OfflineProvider>{children}</OfflineProvider>
-        <Analytics />
+        {/* The beacon it loads, /_vercel/insights/script.js, is served by
+            Vercel's own edge network rather than by this app, so it 404s
+            under `next start` off Vercel: a local build, a self-host, or
+            this repo's own CI running the built app to test it. `VERCEL` is
+            set to "1" only in a build or a function actually running there. */}
+        {process.env.VERCEL === "1" && <Analytics />}
       </body>
     </html>
   );
