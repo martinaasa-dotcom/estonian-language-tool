@@ -159,11 +159,22 @@ export const DEADLINES: readonly DeadlinePreset[] = [
   { id: "none", label: "No deadline, I am in no hurry", months: null },
 ];
 
-/** The date a preset lands on, so a stored deadline is always a real date. */
+/**
+ * The date a preset lands on, so a stored deadline is always a real date.
+ *
+ * `setMonth` overflows rather than clamping, so on the 31st of a month "in six
+ * months" landed three days into the month after the one it named: from 31
+ * August it gave 3 March, not 28 February. The day is pinned to the end of the
+ * shorter month instead, which is what somebody choosing a preset means.
+ */
 export function deadlineFrom(preset: DeadlinePreset, now: Date): string | null {
   if (preset.months === null) return null;
   const date = new Date(now.getTime());
+  const day = date.getDate();
+  date.setDate(1);
   date.setMonth(date.getMonth() + preset.months);
+  const lastOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0)).getUTCDate();
+  date.setDate(Math.min(day, lastOfMonth));
   return date.toISOString();
 }
 

@@ -402,6 +402,24 @@ saying what it did: the reviewer clicked "Accept and apply" and the line vanishe
 whether a word had been added. Rows must not reshuffle under the cursor between clicks either. The
 row reports its own outcome and the list is right again on the next load.
 
+**A number shaped for a screen is never a divisor, and a headline is never a second opinion on
+the sentence under it.** The plan at `/assess` and on the last screen of first run is arithmetic
+somebody is going to make a decision on, and it was wrong in two ways that both look like rounding
+and are not. `project` rounded the learner's pace to one decimal and then divided the published
+hours by it: three minutes a day three days a week is 0.15 hours, was shown and used as 0.2, and
+that is a third more study than the learner said they would do and a quarter off the weeks the app
+alone would need. So `lib/assessment/plan.ts` returns every figure exact and
+`components/assessment/PlanPanel.tsx` rounds on the way to a tile, which is where a question about
+a screen belongs. And the verdict band was drawn at ten hours a week measured against the
+*optimistic* end of the range while the note under it quoted the distance at five found hours a
+week, so 335 of the 704 combinations a learner could click said "It fits, but only with study
+outside this app" over a sentence putting the date three years out. Both read
+`FOUND_HOURS_PER_WEEK` now, and the band sits at the pessimistic end, which makes those two
+sentences the same claim rather than two answers to one question. A deadline already gone is its
+own verdict rather than a division by no time: it used to floor at one week and print "in 0 weeks
+your daily goal puts in about 0.4 of those hours" over a note asking for 1 099 hours a week. Two
+invariants and an exhaustive sweep of every combination in `plan.test.ts` hold all three.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -1161,8 +1179,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
-`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`, `gapFrom`,
-`explainGap`, `ESTONIAN_WORD`. Most of them now
+`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
+`FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `gapFrom`, `explainGap`, `ESTONIAN_WORD`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
