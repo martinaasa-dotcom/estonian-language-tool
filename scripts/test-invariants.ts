@@ -781,8 +781,11 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
     children with the same key, which it says may duplicate or omit a row. The
     landing page demonstrates `tuba` and would have shown an empty paradigm.
 
-    The thirteen adjective/noun pairs of open question Q8 ship with a fresh
-    seed, so this is the ordinary case rather than the odd one.
+    The adjective/noun pairs of open question Q8 are the same shape and ship
+    with a fresh seed. There were thirteen when this was written and the answer
+    to Q8 took it to two, which changes how often this fires and not whether it
+    has to: a word confirmed off a photograph makes a pair for any lemma at
+    all, and no upstream correction reaches that.
 
     A `Set` of lemmas is fine and two places legitimately build one: asking
     which of a unit's words the dictionary has at all cannot double-count.
@@ -946,10 +949,12 @@ check("which of two entries for one word wins is decided, not left to the rows",
 
     It had none. Both rows score 100, the tiebreak compared `lemma` against
     `lemma` and returned 0, and neither query behind the search carried an
-    `ORDER BY`, so the winner came out of the plan. A fresh seed ships thirteen
-    such pairs (open question Q8), and a learner confirming a scanned word the
-    dictionary already knows makes another with no forms in it, which took the
-    whole paradigm off the entry page for a word the app knows perfectly well.
+    `ORDER BY`, so the winner came out of the plan. A fresh seed shipped thirteen
+    such pairs (open question Q8, since answered, which takes it to two), and a
+    learner confirming a scanned word the dictionary already knows makes another
+    with no forms in it, which took the whole paradigm off the entry page for a
+    word the app knows perfectly well. That second path is why this rule is not
+    retired by the part-of-speech fix.
     Three browser suites failed on it in one run and passed in the next with
     nothing changed.
 

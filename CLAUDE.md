@@ -466,8 +466,11 @@ counted more words than it teaches, the lesson planner split the duplicate into 
 `addUnitToDeck` and `recordLesson` each built two sets of cards for one word with one of them
 unanswerable, the landing page's own three-word demo could have shown an empty paradigm, and React
 was warning about two children with the same key, which it says may duplicate or omit a row. The
-thirteen adjective/noun pairs of open question Q8 ship with a fresh seed, so this is the ordinary
-case and not the odd one. `oneEntryPerLemma` in `lib/dict/search.ts` is the one answer and it is
+adjective/noun pairs of open question Q8 are the same shape and ship with a fresh seed: there were
+thirteen when this was written, and answering Q8 by reading the part of speech off the sense the
+gloss came from took it to two, `hall` and `rõõmus`. That changes how often this fires and not
+whether it has to, because a word confirmed off a photograph makes a pair for any lemma at all and
+no upstream correction reaches that. `oneEntryPerLemma` in `lib/dict/search.ts` is the one answer and it is
 `bySubstance`, the rule the search already leads with, because a course screen and the search box
 disagreeing about which `vana` is the real one would be worse than either answer on its own. It
 also returns the caller's order, since the sort it replaced (`order.get(a.lemma) -

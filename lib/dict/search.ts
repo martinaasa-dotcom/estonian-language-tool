@@ -209,12 +209,16 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
  * The winner was whatever order Postgres returned, which is stable enough to
  * look decided and arbitrary enough to change under a reindex or a restore.
  *
- * Two things went wrong with that. A fresh seed ships thirteen lemmas holding
+ * Two things went wrong with that. A fresh seed shipped thirteen lemmas holding
  * two rows each, the A1 and A2 adjectives of open question Q8 where the course
- * harvest says ADJECTIVE and the built expansion says NOUN. And a learner who
- * confirms a scanned word the dictionary already knows gets a second, formless
- * row that could shadow the real one, so the paradigm disappeared from the
- * entry page for a word the app knows perfectly well.
+ * harvest said ADJECTIVE and the built expansion said NOUN; Q8 has since been
+ * answered and the builder reads the part of speech off the sense the gloss
+ * came from, which takes that to **two**, `hall` and `rõõmus`. And a learner
+ * who confirms a scanned word the dictionary already knows gets a second,
+ * formless row that could shadow the real one, so the paradigm disappeared
+ * from the entry page for a word the app knows perfectly well. That second one
+ * is the case this function cannot be relieved of: any learner can make one in
+ * a minute, for any word, and no upstream correction reaches it.
  *
  * So: an entry there is something to teach from wins. A known part of speech
  * beats OTHER, which is what an unvouched scanned word is filed as. Then a
@@ -225,12 +229,16 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
  *
  * WRITTEN BY HAND BEFORE COUNTED, AND THE ORDER OF THOSE TWO IS THE POINT.
  *
- * Ranking on the number of stored forms alone got this backwards on the
- * thirteen pairs it was written for. `vana` has a hand-checked A1 adjective
- * from the course with five principal parts, and a noun from the built
- * expansion with six, glossed "an old person; guy, dude, chap". So a learner
- * searching the commonest adjective in the language was handed the noun, every
- * time and by rule, which is worse than the arbitrary answer it replaced.
+ * Ranking on the number of stored forms alone got this backwards on the pairs
+ * it was written for. Measured when there were thirteen of them: `vana` had a
+ * hand-checked A1 adjective from the course with five principal parts, and a
+ * noun from the built expansion with six, glossed "an old person; guy, dude,
+ * chap". So a learner searching the commonest adjective in the language was
+ * handed the noun, every time and by rule, which is worse than the arbitrary
+ * answer it replaced. The part-of-speech fix has since made `vana` one entry;
+ * `hall` is the same shape and still two, the course teaching grey and the
+ * expansion holding frost, and a confirmed scan is the same shape again with
+ * no forms at all.
  *
  * `prisma/expanded.ts` already states the precedence this restores: the
  * expansion loads with `ON CONFLICT DO NOTHING` and never an update, "so a
@@ -276,8 +284,10 @@ export function bySubstance(a: Substantial, b: Substantial): number {
  * split a duplicate into its own sitting; and React was warning about two
  * children with the same key, which it says may duplicate or omit a row.
  *
- * The thirteen adjective/noun pairs of open question Q8 are the same shape and
- * ship with a fresh seed, so this is the ordinary case rather than the odd one.
+ * The adjective/noun pairs of open question Q8 are the same shape and ship with
+ * a fresh seed. There were thirteen when this was written and the answer to Q8
+ * took it to two, which lowers how often this fires and not whether it has to:
+ * a word confirmed off a photograph makes a pair for any lemma at all.
  *
  * Which of the two wins is not a new decision: it is `bySubstance`, the rule
  * the dictionary already uses to choose what a search leads with. A course

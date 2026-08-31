@@ -104,30 +104,52 @@ check("that link lands on the entry", page.url().includes("/dictionary?q="), pag
   layer up, which is a good reason to say exactly what you mean.
 
   The precondition is stated rather than assumed, and it is the real one: not
-  "are there other matches", since searching `vana` finds `vanaadium` whatever
-  else is true, but "is one of them this same word". A database holding one
-  entry for `vana` cannot show any of this, and a suite that clicks a chip that
-  is not there waits thirty seconds and then fails in Playwright's words rather
-  than in ones that name the cause.
+  "are there other matches", since searching a short word finds longer ones
+  whatever else is true, but "is one of them this same word". A database
+  holding one entry cannot show any of this, and a suite that clicks a chip
+  that is not there waits thirty seconds and then fails in Playwright's words
+  rather than in ones that name the cause.
+
+  AND IT NO LONGER NAMES THE WORD, BECAUSE THE WORD MOVED.
+
+  This asked about `vana`, which shipped as a pair when it was written. Open
+  question Q8 has since been answered: the builder reads a word's part of
+  speech off the sense its gloss came from, 61 labels were corrected, and a
+  fresh seed now holds two pairs rather than thirteen. `vana` is one entry, so
+  this block waived its three checks and would have gone on waiving them for
+  ever, which is a check that has quietly stopped looking.
+
+  So it asks for what it is actually about: a lemma this dictionary holds
+  twice. `hall` and `rõõmus` are what a fresh seed ships, and `tuba` is what
+  `test-containment` makes by confirming a scanned word, which is the path that
+  produces a pair for any word at all and the one no upstream correction
+  reaches. The first that is really a pair is the one driven, and its name is
+  printed so a reader knows which. Only when none of them is does it waive.
 */
-await page.goto(`${B}/dictionary?q=vana`, { waitUntil: "networkidle" });
-const chips = page.locator('button:has(span[lang="et"])');
+const PAIR_CANDIDATES = ["hall", "rõõmus", "tuba", "vana"];
+let pairLemma = null;
 let otherChip = null;
-for (let i = 0; i < (await chips.count()); i++) {
-  const chip = chips.nth(i);
-  const lemma = (await chip.locator('span[lang="et"]').first().innerText()).trim();
-  if (lemma === "vana") { otherChip = chip; break; }
+for (const lemma of PAIR_CANDIDATES) {
+  await page.goto(`${B}/dictionary?q=${encodeURIComponent(lemma)}`, { waitUntil: "networkidle" });
+  const chips = page.locator('button:has(span[lang="et"])');
+  for (let i = 0; i < (await chips.count()); i++) {
+    const chip = chips.nth(i);
+    const text = (await chip.locator('span[lang="et"]').first().innerText()).trim();
+    if (text === lemma) { otherChip = chip; pairLemma = lemma; break; }
+  }
+  if (otherChip) break;
 }
 
 if (!otherChip) {
-  absent(3, "this dictionary holds one entry for `vana`, so there is no pair to choose between");
+  absent(3, `this dictionary holds one entry for each of ${PAIR_CANDIDATES.join(", ")}, `
+    + "so there is no pair to choose between");
 } else {
   const chipText = (await otherChip.innerText()).replace(/\s+/g, " ").trim();
   const openedBefore = (await page.locator("main").innerText()).toLowerCase();
 
   check("a second entry for one word is offered, and it is the same word",
-    (await page.getByText(/other match/).count()) > 0 && chipText.startsWith("vana "),
-    chipText);
+    (await page.getByText(/other match/).count()) > 0 && chipText.startsWith(`${pairLemma} `),
+    `${pairLemma}: ${chipText}`);
   check("and the chip says which one it is, since the glosses barely differ",
     /adjective|noun|verb|other/i.test(chipText), chipText);
 
@@ -135,7 +157,7 @@ if (!otherChip) {
   await page.waitForURL(/entry=/, { timeout: 10000 }).catch(() => {});
   const openedAfter = (await page.locator("main").innerText()).toLowerCase();
   check("and clicking it actually opens the other one",
-    /[?&]q=vana(&|$)/.test(page.url()) && page.url().includes("entry=")
+    page.url().includes(`q=${encodeURIComponent(pairLemma)}`) && page.url().includes("entry=")
       && openedAfter !== openedBefore,
     page.url().replace(B, ""));
 }

@@ -82,6 +82,28 @@ more than one part of speech, was not needed and remains available: it is still 
 it is still a schema change. `hall` is the case for it, a noun meaning "frost" and an adjective
 meaning "grey", and it is correctly two entries today.
 
+**What the app does with a pair that remains.** Two lemmas still land twice, `hall` and `rõõmus`,
+measured against a freshly seeded database rather than counted from the file. The original entry
+below says "thirteen" and names fourteen, which is a miscount in the entry rather than a change in
+the data: fourteen minus these two is the twelve `lib/collections/seedSize.ts` records the seed
+losing when the labels were corrected. A third path makes a pair for *any* word: confirming a scanned word the dictionary already knows
+writes a second, formless row. So which of two entries a learner meets still has to be decided, and
+it is, by `bySubstance` in `lib/dict/search.ts`: a known part of speech, then a hand-written entry,
+then more stored principal parts, then `id` so the comparator is total. The other entry is reachable
+from the chip that names it rather than merely listed.
+
+**And the search was not the only screen that had to choose.** The syllabus names *lemmas*, so
+`where: { lemma: { in: [...unit.lemmas] } }` returns a row per entry, and seven places used every
+one: `/learn/[unit]` listed a word twice and counted it twice, its worksheet printed it six times,
+the lesson planner gave the duplicate a place in the sitting, `addUnitToDeck` and `recordLesson`
+each built two sets of cards for the one word, the landing page's three-word demo could have picked
+the entry with no forms, and React warned about two children with one key. `oneEntryPerLemma` is
+the one answer and it is `bySubstance` again, so a course screen and the search box cannot disagree
+about which `hall` is real. Found by a browser suite reading the console rather than by looking,
+which is worth knowing: the pages looked right on a database that happened to hold one row. It was
+measured on a confirmed scan of `tuba` rather than on a Q8 pair, which is why answering Q8 lowers
+how often it happens without retiring the fix.
+
 Full write-up in `docs/17-gloss-audit.md` §6. The original question follows, unchanged.
 
 ---
@@ -104,24 +126,6 @@ both land. Thirteen lemmas ship with **two entries each** (`hall`, `kallis`, `ke
 `kuiv`, `lilla`, `must`, `noor`, `paks`, `roosa`, `rõõmus`, `sinine`, `valge`, `vana`), most of them
 saying nearly the same thing twice: `must` is "black" and "black", `vana` is "old" and "old". Four
 of the words named above are still `NOUN` alone (`magus`, `tark`, `vale`, `võõras`).
-
-Which of a pair a learner met was decided by nothing at all until the search was given a tiebreak,
-because the entry page renders one hit. That half is fixed (`bySubstance` in `lib/dict/search.ts`),
-so the answer is stable and the course's own entry leads, and the other one is reachable from the
-chip that names it rather than merely listed. What is left is this question: two of the
-thirteen look like real pairs rather than mislabels, since `hall` is grey and also frost and
-`keskmine` is average and also the middle, and telling those apart from `must` twice is the decision
-nobody has made.
-
-**And the search was not the only screen that had to choose.** The syllabus names *lemmas*, so
-`where: { lemma: { in: [...unit.lemmas] } }` returns a row per entry, and seven places used every
-one: `/learn/[unit]` listed a word twice and counted it twice, its worksheet printed it six times,
-the lesson planner gave the duplicate a place in the sitting, `addUnitToDeck` and `recordLesson`
-each built two sets of cards for the one word, the landing page's three-word demo could have picked
-the entry with no forms, and React warned about two children with one key. `oneEntryPerLemma` is
-the one answer and it is `bySubstance` again, so a course screen and the search box cannot disagree
-about which `vana` is real. Found by a browser suite reading the console rather than by looking,
-which is worth knowing: the pages looked right on a database that happened to hold one row.
 
 It also still matters wherever the part of speech is the point rather than the shape: which practice
 modes a word is eligible for, and any future rule that reads `pos`.
