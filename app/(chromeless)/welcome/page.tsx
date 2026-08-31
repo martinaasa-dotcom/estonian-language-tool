@@ -241,11 +241,18 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           identical squares evenly spaced are a frame, and a frame is a border
           with gaps in it.
 
-          THE SLANT IS A `rotate` OF ITS OWN, not a frame of the float
-          (`app/globals.css`). Both used to live in the keyframes, and
-          `prefers-reduced-motion` shortens every animation here to 0.01ms with
-          no fill, so a reader who asked for less motion got four upright
-          squares and lost the one thing about them that was not motion.
+          EACH ONE WANDERS ON ITS OWN CLOCK (`.drift`, `app/globals.css`),
+          six or seven pixels and about two degrees, over periods between 7.5
+          and 11 seconds so the four are never in step. They all drift inward,
+          because a letter hangs in the page's own padding and an outward
+          swing of three pixels is a letter clipped against the edge of the
+          window.
+
+          THE SLANT IS A `rotate` OF ITS OWN, which is what lets the wander
+          rock it without it being lost: `prefers-reduced-motion` shortens
+          every animation here to 0.01ms with no fill, so an animated tilt
+          leaves four upright squares while a declared one is what the element
+          falls back to.
 
           WHAT THEY MAY NOT TOUCH IS THE BUTTON. The footer is a full-width
           pill with 15px of padding around it, so a letter tucked deeply into
@@ -270,9 +277,11 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           is anchored far enough in to still reach it there. That width is the
           one to check first.
 
-          `scripts/test-design.mjs` measures all of it at 640, 768 and 1280:
-          every letter over an edge, none on the pill, none past the page, and
-          the slant still there with the animation stopped.
+          `scripts/test-design.mjs` measures all of it at 640, 768 and 1280,
+          stepping each letter through twelve frames of its own wander rather
+          than reading it where it happens to rest: every letter over an edge,
+          none on the pill, none past the page, and the slant still there with
+          the animation stopped.
 
           One hue each, and the fourth takes butter because it is the hue
           left: blush, mint and sky are spoken for and peach means "missed"
@@ -280,29 +289,29 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         */}
         <span
           aria-hidden
-          className="float pointer-events-none absolute -left-2 -top-6 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-10 md:-top-8 md:h-14 md:w-14 md:text-2xl"
-          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg" } as React.CSSProperties}
+          className="drift pointer-events-none absolute -left-2 -top-6 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-10 md:-top-8 md:h-14 md:w-14 md:text-2xl"
+          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg", "--drift-x": "4px", "--drift-y": "-6px", "--drift-turn": "2deg", "--drift-time": "9s" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="float pointer-events-none absolute -right-3 top-20 z-20 hidden h-11 w-11 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-6 md:top-24 md:h-12 md:w-12"
-          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.5s", "--float-tilt": "12deg" } as React.CSSProperties}
+          className="drift pointer-events-none absolute -right-3 top-20 z-20 hidden h-11 w-11 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-6 md:top-24 md:h-12 md:w-12"
+          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "12deg", "--drift-x": "-3px", "--drift-y": "-7px", "--drift-turn": "1.6deg", "--drift-time": "7.5s" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="float pointer-events-none absolute -left-3 top-52 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-6 md:top-56 md:h-11 md:w-11 md:text-xl"
-          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3s", "--float-tilt": "-9deg" } as React.CSSProperties}
+          className="drift pointer-events-none absolute -left-3 top-52 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-6 md:top-56 md:h-11 md:w-11 md:text-xl"
+          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "2.4s", "--float-tilt": "-9deg", "--drift-x": "4px", "--drift-y": "-5px", "--drift-turn": "2.2deg", "--drift-time": "11s" } as React.CSSProperties}
         >
           ü
         </span>
         <span
           aria-hidden
-          className="float pointer-events-none absolute -right-3 bottom-7 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:bottom-10 md:h-9 md:w-9 md:text-lg"
-          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "4.5s", "--float-tilt": "15deg" } as React.CSSProperties}
+          className="drift pointer-events-none absolute -right-3 bottom-7 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:h-9 md:w-9 md:text-lg"
+          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3.6s", "--float-tilt": "15deg", "--drift-x": "-3px", "--drift-y": "-4px", "--drift-turn": "1.8deg", "--drift-time": "8.5s" } as React.CSSProperties}
         >
           ö
         </span>

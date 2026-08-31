@@ -1003,18 +1003,42 @@
      lands rather than early. */
   .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
+  .float { animation: float 6s ease-in-out infinite; }
   /*
-    The slant is a `rotate` of its own and only the lift is animated.
+    THE MASCOT BOBS; THE LANDING PAGE'S LETTERS WANDER.
 
-    Both used to live in the keyframes, which meant the tilt was a frame of an
-    animation rather than a property of the element: `prefers-reduced-motion`
-    shortens every animation here to 0.01ms with no fill, so a reader who asks
-    for less motion got four upright squares and lost the one thing about them
-    that was not motion. `rotate` and `transform` are separate properties, so
-    the letters stay slanted while the lift is what gets turned off. A caller
-    that sets no `--float-tilt` rotates by 0deg, which is every mascot.
+    Four squares rising and falling together on one six-second bob is a
+    machine, and a machine is the one thing this page is arguing it is not.
+    `drift` gives each letter a small wander of its own and, more to the
+    point, its own period, so the four are never in step: the shortest is
+    7.5s and the longest 11s, which puts them back in phase about once every
+    twenty minutes rather than on every cycle.
+
+    IT IS SMALL ON PURPOSE. Six or seven pixels and about two degrees, which
+    is enough that a reader notices the page is alive and not enough to pull
+    the eye off the sentence beside it. Everything about the placement is
+    within a few pixels of a real edge, so a wander that reads as generous
+    in a keyframe is one that lifts a letter off the card, drops it on the
+    button or hangs it past the page: `scripts/test-design.mjs` steps every
+    letter through twelve frames of its own cycle and measures all three.
+
+    THE SLANT IS A `rotate` OF ITS OWN, and that is why it can be rocked here
+    without being lost. `prefers-reduced-motion` shortens every animation to
+    0.01ms with no fill, so an animated tilt leaves four upright squares; a
+    declared one is what the element falls back to, which is the slant a
+    reader who asked for less motion still gets. The wander uses `translate`
+    rather than `transform` for the same reason: they are separate properties
+    and neither has to know about the other.
+
+    IT DRIFTS INWARD, never further out than it was placed. A letter hangs in
+    the page's own padding, which below `sm` is 20px and mostly spent, so an
+    outward swing of three pixels is a letter clipped flat against the edge
+    of the window. `--drift-x` points at the card on every one of them.
   */
-  .float { rotate: var(--float-tilt, 0deg); animation: float 6s ease-in-out infinite; }
+  .drift {
+    rotate: var(--float-tilt, 0deg);
+    animation: drift var(--drift-time, 9s) ease-in-out infinite;
+  }
   .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 }
 
@@ -1092,6 +1116,21 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+/* Out, over, and back by a different route: three stops rather than two, so
+   the return is not the outward leg reversed and the letter never looks like
+   it is on rails. */
+@keyframes drift {
+  0%, 100% { translate: 0 0; rotate: var(--float-tilt, 0deg); }
+  30% {
+    translate: var(--drift-x, 0px) var(--drift-y, -6px);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 1.6deg));
+  }
+  65% {
+    translate: calc(var(--drift-x, 0px) * 0.35) calc(var(--drift-y, -6px) * 0.4);
+    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 1.6deg));
+  }
 }
 
 @keyframes pop-in {

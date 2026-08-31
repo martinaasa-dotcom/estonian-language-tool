@@ -302,16 +302,22 @@ check("a hovered row is drawn, and its words clear AA on the pill behind them",
   it is rather than as its box, since the corner a letter tucks into is
   transparent and refusing it would price the whole corner out.
 
-  Read at the top of the lift, which is the frame closest to both faults, and
-  at three widths because the offsets change at `sm` and the column is
-  narrowest at 768, where the footnote wraps and moves the card's bottom edge
-  up inside the block the letters are positioned against.
+  Read across the whole wander rather than where the letters happen to rest.
+  Each one drifts on its own clock, so there is no single frame that is the
+  worst for all four, and a resting position with three pixels of clearance
+  is not a placement that holds. Every letter is stepped through twelve
+  frames of its own animation and measured at each, which is also what keeps
+  the wander honest: a letter given a generous keyframe leaves the card, or
+  lands on the pill, at some frame the eye would have to be quick to catch.
+
+  Three widths, because the offsets change at `sm` and the column is narrowest
+  at 768, where the footnote wraps and moves the card's bottom edge up inside
+  the block the letters are positioned against.
 */
 const adrift = [], onButton = [], clipped = [], upright = [];
 for (const width of [640, 768, 1280]) {
   await p.setViewportSize({ width, height: 1000 });
   await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
-  await p.addStyleTag({ content: ".float{animation-delay:-3s!important;animation-play-state:paused!important}" });
   await p.waitForTimeout(200);
   const seen = await p.evaluate(() => {
     const box = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
@@ -333,19 +339,30 @@ for (const width of [640, 768, 1280]) {
     const button = [...document.querySelectorAll("main button")].find((b) => /Show answer/.test(b.textContent));
     if (!card || !button) return null;
     const pill = box(button), r = Math.min(pill.r - pill.l, pill.b - pill.t) / 2;
-    return [...document.querySelectorAll("span")]
+    const letters = [...document.querySelectorAll("span")]
       .filter((e) => e.textContent.trim().length === 1 && "õäöü".includes(e.textContent.trim())
-        && getComputedStyle(e).position === "absolute")
-      .map((e) => {
-        const a = box(e), on = overlap(a, box(card));
-        return {
-          ch: e.textContent.trim(),
-          touches: Math.round(Math.min(on.x, on.y)),
-          onButton: hitsPill(a, pill, r),
-          past: Math.round(a.l < 0 ? -a.l : Math.max(0, a.r - innerWidth)),
-          rotate: getComputedStyle(e).rotate,
-        };
+        && getComputedStyle(e).position === "absolute");
+    const seat = box(card);
+    /* Every letter at the same twelve points of its own cycle, held still by
+       the timeline rather than by a delay: the periods differ, so one delay
+       is one arbitrary frame per letter and not the same moment twice. */
+    const runs = letters.map((e) => e.getAnimations());
+    for (const run of runs) for (const a of run) a.pause();
+    const span = (a) => { const d = a.effect?.getTiming().duration; return typeof d === "number" ? d : 0; };
+    const worst = letters.map((e) => ({
+      ch: e.textContent.trim(), touches: Infinity, onButton: false, past: 0,
+    }));
+    for (let frame = 0; frame < 12; frame++) {
+      for (const run of runs) for (const a of run) a.currentTime = (span(a) * frame) / 12;
+      letters.forEach((e, i) => {
+        const a = box(e), on = overlap(a, seat), w = worst[i];
+        w.touches = Math.min(w.touches, Math.round(Math.min(on.x, on.y)));
+        w.onButton = w.onButton || hitsPill(a, pill, r);
+        w.past = Math.max(w.past, Math.round(a.l < 0 ? -a.l : Math.max(0, a.r - innerWidth)));
       });
+    }
+    for (const run of runs) for (const a of run) a.play();
+    return worst;
   });
   if (seen === null || seen.length !== 4) {
     adrift.push(`${width}: expected four letters around the card, found ${seen?.length ?? "no card"}`);
@@ -355,8 +372,17 @@ for (const width of [640, 768, 1280]) {
     if (l.touches < 4) adrift.push(`${width}: ${l.ch} misses the card by ${-l.touches}px`);
     if (l.onButton) onButton.push(`${width}: ${l.ch}`);
     if (l.past > 1) clipped.push(`${width}: ${l.ch} ${l.past}px past the edge`);
-    if (!l.rotate || l.rotate === "none" || parseFloat(l.rotate) === 0) upright.push(`${width}: ${l.ch}`);
   }
+  /* With the animation off, which is what a reader who asked for less motion
+     gets: the slant has to be the element's own rather than a frame of it. */
+  await p.addStyleTag({ content: ".drift{animation:none!important}" });
+  await p.waitForTimeout(100);
+  upright.push(...await p.evaluate((w) =>
+    [...document.querySelectorAll("span")]
+      .filter((e) => e.textContent.trim().length === 1 && "õäöü".includes(e.textContent.trim())
+        && getComputedStyle(e).position === "absolute")
+      .filter((e) => { const rot = getComputedStyle(e).rotate; return !rot || rot === "none" || parseFloat(rot) === 0; })
+      .map((e) => `${w}: ${e.textContent.trim()}`), width));
 }
 await p.setViewportSize({ width: 1280, height: 1000 });
 
