@@ -78,7 +78,21 @@ export type Verdict =
   /** It does not fit, and pretending otherwise helps nobody. */
   | "short"
   /** No deadline was given, so there is nothing to fit into. */
-  | "open";
+  | "open"
+  /** The date has already gone. There is no span left to divide by. */
+  | "passed";
+
+/**
+ * The study a normal week absorbs outside this app.
+ *
+ * A class and some reading, which is what a life with a language in it looks
+ * like for most people. It is the figure the plan offers as the realistic
+ * addition, and it is also where the line between "it fits" and "not by that
+ * date" is drawn, so it lives here rather than being typed into the copy: a
+ * headline saying the plan fits and a sentence under it quoting a different
+ * number were two answers to one question, and the sentence was right.
+ */
+export const FOUND_HOURS_PER_WEEK = 5;
 
 export interface PlanInput {
   from: Level;
@@ -96,18 +110,25 @@ export interface Projection {
   to: Band;
   /** Study hours between the two levels, from the table above. */
   hours: HourRange;
-  /** Hours a week the learner's stated pace puts into this app. */
+  /**
+   * Hours a week the learner's stated pace puts into this app.
+   *
+   * Exact, not rounded. Everything below divides by it, and a figure rounded
+   * for a tile is a figure that lies when it is used as a divisor: at three
+   * minutes a day three days a week the true pace is 0.15 hours and the
+   * rounded one is 0.2, which is a third more study than the learner said they
+   * would do and took a quarter off the weeks it would take. Rounding is a
+   * question about a screen, so `PlanPanel` answers it.
+   */
   appHoursPerWeek: number;
   /** Weeks to the target if the app were the only study. It will not be. */
   weeksOnAppAlone: HourRange;
-  /** Hours the app will contribute inside the deadline. */
+  /** Hours the app will contribute inside the deadline. Exact, as above. */
   appHoursAvailable: number | null;
   /** Study hours a week still to find elsewhere, to make the deadline. */
   otherHoursPerWeek: HourRange | null;
   verdict: Verdict;
 }
-
-const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /**
  * The projection.
@@ -117,11 +138,14 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
  * shocking number. `otherHoursPerWeek` is the real answer: how much study has
  * to happen outside this app for the deadline to survive contact with the
  * hours above. Both are ranges, because the hours they come from are.
+ *
+ * Every figure it returns is exact. The panel rounds them on the way to a
+ * screen, and nothing here rounds on the way to a division.
  */
 export function project(input: PlanInput): Projection {
   const hours = hoursBetween(input.from, input.to);
   const daysPerWeek = Math.min(7, Math.max(1, input.daysPerWeek));
-  const appHoursPerWeek = round1((Math.max(0, input.minutesPerDay) * daysPerWeek) / 60);
+  const appHoursPerWeek = (Math.max(0, input.minutesPerDay) * daysPerWeek) / 60;
 
   const weeksOnAppAlone: HourRange = appHoursPerWeek > 0
     ? { low: Math.ceil(hours.low / appHoursPerWeek), high: Math.ceil(hours.high / appHoursPerWeek) }
@@ -144,20 +168,48 @@ export function project(input: PlanInput): Projection {
     };
   }
 
-  const weeks = Math.max(1, input.weeksAvailable);
-  const appHoursAvailable = round1(appHoursPerWeek * weeks);
+  /*
+    A date that has gone is not a short deadline, it is no deadline at all, and
+    the arithmetic below has nothing to divide by. Treating it as one week left
+    is what produced "in 0 weeks your daily goal puts in about 0.4 of those
+    hours" over a note asking for 1 099 hours a week, which is a screen nobody
+    can act on. The honest answer is that the date is behind them.
+  */
+  if (input.weeksAvailable <= 0) {
+    return {
+      from: input.from, to: input.to, hours, appHoursPerWeek, weeksOnAppAlone,
+      appHoursAvailable: 0, otherHoursPerWeek: null, verdict: "passed",
+    };
+  }
+
+  const weeks = input.weeksAvailable;
+  const appHoursAvailable = appHoursPerWeek * weeks;
   const other: HourRange = {
-    low: round1(Math.max(0, (hours.low - appHoursAvailable) / weeks)),
-    high: round1(Math.max(0, (hours.high - appHoursAvailable) / weeks)),
+    low: Math.max(0, (hours.low - appHoursAvailable) / weeks),
+    high: Math.max(0, (hours.high - appHoursAvailable) / weeks),
   };
 
   /*
-    The bands are drawn where a person's week actually breaks. Nothing more to
-    find is "comfortable". Up to five hours a week is a class and some reading,
-    which is a normal life with a language in it. Past ten hours a week, on top
-    of a job, is not a plan, it is a wish, and saying so now is the useful thing.
+    The bands are drawn where a person's week actually breaks, and they are
+    drawn at the pessimistic end of the range, because "it fits" is a claim and
+    a claim is only worth making about the whole range. Nothing more to find is
+    "comfortable". Everything still inside FOUND_HOURS_PER_WEEK is a class and
+    some reading, which is a normal life with a language in it. Past that, on
+    top of a job, is not a plan, it is a wish, and saying so now is the useful
+    thing.
+
+    The threshold used to be ten hours a week measured against the *optimistic*
+    end, which called a plan needing ten to fourteen hours a week of found
+    study "It fits", directly over a sentence saying that at five found hours
+    the date was three years out. 335 of the 704 combinations a learner could
+    click contradicted themselves that way. Drawing the band here makes the
+    headline and that sentence the same claim: `other.high` at or under the
+    found figure is exactly the condition for `weeksNeeded` to land inside the
+    deadline.
   */
-  const verdict: Verdict = other.high === 0 ? "comfortable" : other.low > 10 ? "short" : "tight";
+  const verdict: Verdict = other.high === 0
+    ? "comfortable"
+    : other.high <= FOUND_HOURS_PER_WEEK ? "tight" : "short";
 
   return {
     from: input.from, to: input.to, hours, appHoursPerWeek, weeksOnAppAlone,
