@@ -92,8 +92,8 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
       <Card>
         <SectionTitle>Your plan</SectionTitle>
         <p className="text-base" style={{ color: "var(--ink-2)" }}>
-          Pick a level to aim for and this becomes a timeline: how many hours the distance usually
-          takes, how many of them your daily goal covers, and how many are left to find elsewhere.
+          Pick a level to aim for, and this turns into a timeline: how many hours the distance
+          usually takes, how many your daily goal covers, and how many are left to find elsewhere.
         </p>
         <Link
           href="/settings#goals"
@@ -163,24 +163,24 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
 
       {plan.otherHoursPerWeek && plan.otherHoursPerWeek.high > 0 && (
         <Note tone="sky">
-          To make that date you would need roughly{" "}
+          To make that date, you would need roughly{" "}
           <strong>
             {formatDurationRange(plan.otherHoursPerWeek.low, plan.otherHoursPerWeek.high, "long")} a week
           </strong>{" "}
           of Estonian beyond this app: a class, a conversation partner, reading, a film without
-          subtitles. At a found {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, the
-          distance is about {range(found.low, found.high, "weeks")}.
+          subtitles. Find {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, and that
+          distance drops to about {range(found.low, found.high, "weeks")}.
         </Note>
       )}
 
       {compact && (
         <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Published estimates for an English speaker, which are averages of other people on other
-          courses rather than a measurement of you.{" "}
+          These are published estimates for an English speaker, averages from other people on
+          other courses rather than a measurement of you.{" "}
           <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
             Where the numbers come from
           </Link>
-          , and the research behind the pace, are on the level check screen.
+          , and the research behind the pace, live on the level check screen.
         </p>
       )}
 
@@ -212,12 +212,13 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           they will not have. Both halves are said now.
         */}
         <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          A daily goal of {dailyGoal} cards is {dailyGoal} cards to answer, not {dailyGoal} new ones.
-          A card you learn today costs roughly ten reviews over its first year, so once the reviews
-          arrive this settles at about {newCards} genuinely new{" "}
-          {newCards === 1 ? "card" : "cards"} a day. Raising it does bring words in faster, in
-          proportion. It also raises every day from here on, which is where week six goes wrong.
-          The goal worth setting is the one you would still meet on a bad Wednesday.
+          A daily goal of {dailyGoal} cards means {dailyGoal} cards to answer, not {dailyGoal} new
+          ones. A card you learn today needs roughly ten more reviews over its first year. Once
+          those reviews pile up, your daily goal settles into about {newCards} genuinely new{" "}
+          {newCards === 1 ? "card" : "cards"} a day. Raising the goal does bring new words in
+          faster, in proportion, but it also makes every day from here on longer, which is where
+          week six goes wrong. The goal worth choosing is the one you would still keep on a bad
+          Wednesday.
         </p>
       </Card>
       )}

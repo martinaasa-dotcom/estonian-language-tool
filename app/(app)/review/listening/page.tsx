@@ -68,7 +68,7 @@ export default async function ListeningPage() {
         <Page title="Listening" lead="Hear a word, pick its meaning.">
           <Empty
             title="Not quite enough words yet"
-            body={`The wrong answers come from other words, and there are fewer than ${MIN_LEXEMES_FOR_CHOICES} to draw on.`}
+            body={`The wrong answers come from other words, and there aren't ${MIN_LEXEMES_FOR_CHOICES} yet to pick from.`}
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>

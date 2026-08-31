@@ -91,8 +91,8 @@ export default async function LearnPage() {
             You are working at {placement} · {knownWords} of {totalWords} words known
           </p>
           <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
-            A word counts as known once every card made from it has graduated in the scheduler,
-            not just answered right once.
+            A word counts as known once every card made from it has moved past the learning stage,
+            not just been answered right once.
           </p>
           <Link
             href="/assess"

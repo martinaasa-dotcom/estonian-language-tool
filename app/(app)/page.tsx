@@ -509,7 +509,7 @@ export default async function TodayPage() {
         {tutorReady
           ? "Anu explains Estonian grammar, which case to use, why a stem changed, and whether your sentence is right."
           : readerCanConfigure
-            ? "Anu can explain which case to use and why a stem changed. She needs a free API key first, which takes about two minutes."
+            ? "Anu can explain which case to use and why a stem changed. She needs a free key first, which takes about two minutes to set up."
             : "Anu is not switched on for this site yet. Everything else here works without her."}
       </p>
       {(tutorReady || readerCanConfigure) && (

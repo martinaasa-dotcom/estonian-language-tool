@@ -120,8 +120,8 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           No audio, no drill
         </h1>
         <p className="mx-auto mt-2 max-w-[44ch] text-base" style={{ color: "var(--ink-2)" }}>
-          This exercise is entirely about what a word sounds like, so without the speech service
-          there is nothing honest to show. It runs on TartuNLP and needs a connection.
+          This exercise is all about what a word sounds like, so without audio there&rsquo;s nothing
+          to show you. It runs on TartuNLP and needs a connection.
         </p>
         <div className="mt-6 flex justify-center">
           <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
@@ -139,7 +139,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Length is phonemic in Estonian: <span lang="et">maja</span> and{" "}
+          In Estonian, length changes the word: <span lang="et">maja</span> and{" "}
           <span lang="et">majja</span> are different words, not the same word said twice. Ears take
           longer than eyes.
         </p>
@@ -270,10 +270,10 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {question.letter
-                ? <>The two differ only in how long the <strong lang="et">{question.letter}</strong> is.
-                    The doubled spelling (<strong lang="et">{question.longer}</strong>) is the longer one.</>
-                : <>The two differ only in length.</>}
-              {question.sameWord && " Both are forms of one word, so the length is carrying the grammar here, not the meaning."}
+                ? <>The two only differ in how long the <strong lang="et">{question.letter}</strong> sounds.
+                    The doubled spelling, <strong lang="et">{question.longer}</strong>, is the longer one.</>
+                : <>The two only differ in length.</>}
+              {question.sameWord && " Both are forms of the same word. Here the length shows the grammar, not a different meaning."}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {question.options.map((o) => (

@@ -118,7 +118,7 @@ export function AnuPanel({
             answeredBy
               ? <Provenance compact label={answeredBy} answered />
               : <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-                  Explains the rule, and flags any Estonian she writes.
+                  Explains the rule, not just the answer.
                 </p>
           )}
         </div>
@@ -147,7 +147,7 @@ export function AnuPanel({
       <div className="scroll-host flex flex-1 flex-col overflow-y-auto px-5 py-5">
         {!configured ? (
           <Empty
-            title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
+            title={readerCanConfigure ? "Anu needs a key" : "Anu is not available"}
             body={readerCanConfigure
               ? "Everything else works without one. Settings has a walkthrough for a free key."
               : "Everything else here works without her."}

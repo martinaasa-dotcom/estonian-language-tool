@@ -83,10 +83,10 @@ export function classifyShape(history: { rating: number }[]): LeechShape {
 }
 
 const PATTERNS: Record<LeechShape, string> = {
-  "never-stuck": "has never held, failing consistently from the first review",
-  regressed: "was reliable and then started failing, which usually means a similar word is interfering",
-  unstable: "alternates between recalled and forgotten from one review to the next",
-  early: "has been failing recently, on only a few reviews so far",
+  "never-stuck": "hasn't stuck at all, right from the first time you saw it",
+  regressed: "used to stick, but a similar word seems to be interfering now",
+  unstable: "keeps flipping, right one day and wrong the next",
+  early: "has only slipped a few times so far, too early to be sure of the pattern yet",
 };
 
 export function toLeech(candidate: LeechCandidate): Leech {

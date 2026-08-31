@@ -42,7 +42,7 @@ export function ClozeSession() {
       setPhase("drill");
       startedAt.current = Date.now();
     } catch {
-      setError("That could not be processed. Check your connection and try again.");
+      setError("Couldn't read that text. Check your connection and try again.");
     } finally {
       setBusy(false);
     }
@@ -131,7 +131,7 @@ export function ClozeSession() {
           </div>
 
           <p className="mt-4 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-            The text is not saved. It is processed to find your words and then discarded.
+            Your text isn&rsquo;t saved. It&rsquo;s just used to find your words, then thrown away.
           </p>
         </div>
       </Page>

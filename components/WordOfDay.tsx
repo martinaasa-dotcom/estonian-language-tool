@@ -44,8 +44,8 @@ export function WordOfDayCard({ word, collection, className }: {
       <Card className={className}>
         <SectionTitle>Word of the day</SectionTitle>
         <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          You have met every word the dictionary can offer here, which is a first. Look one up and
-          it gets cached, and this has something to say again tomorrow.
+          You have met every word this panel can offer today, which is a first. Look one up in the
+          dictionary, and there will be something new here tomorrow.
         </p>
         <Link
           href="/dictionary"
@@ -87,7 +87,7 @@ export function WordOfDayCard({ word, collection, className }: {
         <span>
           {word.occasion
             ? word.occasion.note
-            : "Nothing about the date asked for a particular word today, so here is one you have not met."}
+            : "Nothing special about today, so here is a word you have not met yet."}
         </span>
       </p>
 

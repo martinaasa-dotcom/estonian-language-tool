@@ -72,7 +72,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
       {countdown.deadline && (
         <p className="mt-3.5 flex items-center gap-1.5 text-sm" style={{ color: "var(--ink-2)" }}>
           <CalendarClock size={14} aria-hidden style={{ color: "var(--ink-3)" }} />
-          {gone ? "The date you set has gone: " : "The date you set: "}
+          {gone ? "That date has already passed: " : "Your date: "}
           {/*
             The reader's own date order and month names, which only their
             browser knows. Rendered on a server, `undefined` as a locale is the
@@ -98,7 +98,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
       */}
       <p className="mt-2.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {passing ? (
-          "We would put you through it today, on the evidence there is."
+          "Based on what we've seen so far, you would pass if you sat it today."
         ) : countdown.gap ? (
           <>
             {countdown.gap.title}.{" "}
@@ -113,7 +113,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
             )}
           </>
         ) : (
-          "There is not enough here yet to say what is standing in the way."
+          "We don't have enough here yet to tell you what's slowing you down."
         )}
       </p>
 

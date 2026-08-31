@@ -79,10 +79,10 @@ export default async function PairsPage() {
 
   if (pairs.length === 0) {
     return (
-      <Page title="Minimal pairs" lead="The length distinctions spelling half-records.">
+      <Page title="Minimal pairs" lead="Length differences that spelling can't always show.">
         <Empty
-          title="No length contrasts in the dictionary yet"
-          body="A pair is two forms that differ only in how long a sound is, as in maja against majja."
+          title="No length pairs in the dictionary yet"
+          body="A pair is two forms where only the length of one sound changes, such as maja and majja."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

@@ -41,7 +41,7 @@ export default async function AssessPage({
         <Page title="Level check" lead="Reading, listening, writing and speaking, measured against the dictionary.">
           <Empty
             title="No questions could be built"
-            body="The questions are built from dictionary entries tagged with a level, and there are none."
+            body="Questions come from dictionary entries that have a level set, and there are none yet."
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>
@@ -135,10 +135,10 @@ export default async function AssessPage({
         <Card>
           <SectionTitle>Before you read too much into it</SectionTitle>
           <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            This is an estimate from a handful of questions, and it is built out of words this
-            dictionary happens to hold. It is not a state exam and it certifies nothing. What it is
-            good for is direction: which of the four skills is behind, and whether the date you have
-            in mind survives contact with the hours the level actually takes.
+            This is an estimate from a handful of questions, built out of words this dictionary
+            happens to hold. It is not a state exam, and it certifies nothing. What it is good for
+            is direction: which of the four skills is behind, and whether the date you have in
+            mind is realistic, given how many hours that level actually takes.
           </p>
           <Link
             href="/guide"

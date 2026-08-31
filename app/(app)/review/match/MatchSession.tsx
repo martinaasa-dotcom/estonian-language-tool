@@ -175,7 +175,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <Confetti count={40} />
         <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
-          All matched!
+          All matched.
         </h1>
         <p className="mt-2 flex items-center gap-2 text-base" style={{ color: "var(--ink-2)" }}>
           {isNewBest && <Trophy size={17} aria-hidden style={{ color: "var(--hard-ink)" }} />}

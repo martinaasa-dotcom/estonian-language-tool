@@ -130,7 +130,7 @@ export default async function ProgressPage() {
 
   if (reviews.length === 0 && snapshot.totalCards === 0) {
     return (
-      <Page title="Progress" lead="Computed live from your review log, never stored, so it cannot drift.">
+      <Page title="Progress" lead="Worked out fresh from your reviews every time you check.">
         <Empty
           title="No history yet"
           body="Charts appear after your first review."
@@ -143,7 +143,7 @@ export default async function ProgressPage() {
   return (
     <Page
       title="Progress"
-      lead="Computed live from your review log, never stored, so it cannot drift."
+      lead="Worked out fresh from your reviews every time you check."
       actions={
         <ButtonLink href="/assess">
           <Compass size={15} aria-hidden /> Level check
@@ -259,7 +259,7 @@ export default async function ProgressPage() {
               </div>
               {dueDates.length === 0 && (
                 <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  This fills in as cards graduate out of the learning steps.
+                  This fills in as you review more cards.
                 </p>
               )}
             </Card>
@@ -350,7 +350,8 @@ export default async function ProgressPage() {
                 })}
               </ul>
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                Counted once every card from a word has graduated, so it is a floor.
+                This counts a word only once you know every card for it, so the real number could
+                be a little higher.
               </p>
             </Card>
           </section>

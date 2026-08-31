@@ -167,7 +167,7 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
       setSubmitting(false);
       setError(
         result?.error ??
-        "Handing in needs a connection, and yours is not there. Your answers are still on this page.",
+        "You need a connection to hand this in, and you don't have one right now. Your answers are still here on the page.",
       );
       return;
     }
@@ -290,8 +290,8 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
         <div className="mb-5">
           <Note tone="again">
             <TriangleAlert size={14} className="mr-1.5 inline" aria-hidden />
-            Time. In the hall the paper would be taken away now, so it has been: this part is
-            closed and anything still blank scores nothing.{" "}
+            Time's up. This part is closed now, the way it would be in a real exam hall. Anything
+            you left blank scores nothing.{" "}
             {last ? "Hand in below." : "Move on when you are ready."}
           </Note>
         </div>
@@ -349,9 +349,9 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
               ? "One question on this part is still blank."
               : `${questions - answered} questions on this part are still blank.`}{" "}
             {last
-              ? "Handing in now marks them as nothing."
-              : "You cannot come back to this part once you leave it."}{" "}
-            A guess is worth more than a blank on every question here, and costs nothing.
+              ? "Handing in now means they score nothing."
+              : "You can't come back to this part once you leave it."}{" "}
+            A guess beats a blank here, and it costs you nothing.
             <span className="mt-3 flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
                 Go back and fill them in
@@ -371,10 +371,10 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5" style={{ borderColor: "var(--rule)" }}>
         <p className="text-sm" style={{ color: "var(--ink-3)" }}>
           {last
-            ? `Handing in marks the whole paper. ${PASS_PCT} percent to pass, and no part may score nothing.`
+            ? `Handing in marks the whole paper. You need ${PASS_PCT} percent to pass, and no part can be a zero.`
             : paper.parts[partIndex + 1]?.spec.skill === "speaking"
-              ? `Moving on ends the written half. There is a ${BREAK_MINUTES} minute break, then the spoken part.`
-              : "Moving on ends this part. You cannot come back to it, which is how the real paper works."}
+              ? `Moving on ends the written half. There's a ${BREAK_MINUTES} minute break, then the spoken part.`
+              : "Moving on ends this part. You can't come back to it, just like the real exam."}
         </p>
         {last ? (
           <Button
@@ -443,9 +443,9 @@ function Break({ until, now, nextLabel, onResume }: {
         Break
       </h1>
       <p className="mt-3 max-w-[56ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-        The written half is done and nothing on it is running. On the day the written parts are sat
-        first and the spoken part follows after a short break, so this is that break. Stand up, get a
-        glass of water, and come back for {nextLabel.toLowerCase()}.
+        The written half is done, and its clock has stopped. On the real exam day, a short break
+        comes before the spoken part, so this is it. Stand up, get some water, and come back for{" "}
+        {nextLabel.toLowerCase()}.
       </p>
 
       <p
@@ -458,7 +458,7 @@ function Break({ until, now, nextLabel, onResume }: {
       <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
         {over
           ? "The break is over whenever you are."
-          : `${BREAK_MINUTES} minutes, which is this app's own figure: the Board publishes "a short break" and no number. Go early if you are ready.`}
+          : `${BREAK_MINUTES} minutes. The real exam board just says "a short break" with no number, so we picked one. Go early if you're ready.`}
       </p>
 
       <p className="sr-only" aria-live="polite">{over ? "The break is over." : ""}</p>
@@ -505,10 +505,10 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
               You left this paper part way through
             </p>
             <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              {answeredIn(resumable)} answered, and you were on {resumePart.spec.label.toLowerCase()}.{" "}
+              {answeredIn(resumable)} answered so far. You were on {resumePart.spec.label.toLowerCase()}.{" "}
               {resumeLeft > 0
-                ? `${formatRemaining(resumeLeft)} of that part is left: the clock kept running, which is what it would have done in the hall.`
-                : "That part's time has run out while the paper was closed, as it would have in the hall, so it will open closed."}
+                ? `${formatRemaining(resumeLeft)} is left on that part. The clock kept running while you were away, just like it would in a real exam hall.`
+                : "That part's time ran out while you were away. It'll open closed, just like it would in a real exam hall."}
             </p>
             <span className="mt-3 flex flex-wrap gap-2">
               <Button variant="primary" size="sm" onClick={onResume}>Carry on</Button>
@@ -558,8 +558,8 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
                   </span>
                   {task.fallbackFrom && (
                     <span style={{ color: "var(--butter-ink)" }}>
-                      {" · "}set from words rather than sentences, because the dictionary here
-                      holds no recorded sentence to build the intended task from
+                      {" · "}made from single words, not full sentences, since we don't have a
+                      recorded sentence for this one yet
                     </span>
                   )}
                   {task.shortfall > 0 && (
@@ -577,60 +577,58 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
       <div className="mt-6 grid gap-3">
         <Note tone="sky">
           {writtenMinutes(paper.spec)} minutes of written paper, then a {BREAK_MINUTES} minute
-          break, then {speaking?.spec.minutes ?? 15} minutes of speaking, which is the order and
-          the shape of the day. Each part runs on its own clock, you cannot go back to one you have
-          left, and when a part&apos;s time goes it closes. Your answers are kept on this device as you
-          go, so a reload or a closed tab does not lose the paper. The clock does not stop while it
-          is shut.
+          break, then {speaking?.spec.minutes ?? 15} minutes of speaking. That&apos;s the order, and
+          that&apos;s the whole day. Each part runs on its own clock, and once you leave a part you
+          can&apos;t go back to it. When a part&apos;s time runs out, it closes. Your answers are saved on
+          this device as you go, so closing the tab or reloading won&apos;t lose your paper, and the
+          clock keeps running even while it is closed.
         </Note>
         <Note tone="neutral">
           <PenLine size={14} className="mr-1.5 inline" aria-hidden />
-          The writing part of the real paper is two pieces of writing and nothing else, and its
-          clock is for those two. The accuracy questions after them are this app&apos;s own, because
-          the accuracy an examiner marks inside your texts is the one thing nothing here may judge.
-          They sit last for that reason, and the time to spend on them is the time the two texts
-          leave you.
+          The real writing part is just two pieces of writing, and the clock is only for those two.
+          The grammar questions after them are ours, not the real exam&apos;s: a real examiner checks
+          your grammar by reading what you wrote, and nothing here can do that. They come last, so
+          use whatever time the two texts leave you.
         </Note>
         <Note tone="neutral">
           <Headphones size={14} className="mr-1.5 inline" aria-hidden />
-          Each recording plays {LISTEN_PLAYS} times and no more, which is what the specifications
-          set, and each listening task opens with {READ_QUESTIONS_SECONDS} seconds to read the
-          questions before the audio unlocks. The C1 paper sets one task to a single listen; that
-          one is not imitated here, so this listening part is a shade easier than a C1 candidate&apos;s.
+          Each recording plays {LISTEN_PLAYS} times and no more, just like the real exam. Every
+          listening task gives you {READ_QUESTIONS_SECONDS} seconds to read the questions before
+          the audio starts. The real C1 paper plays one task only once; we don&apos;t do that here, so
+          this listening part is a little easier than the real C1 exam.
         </Note>
         <Note tone="neutral">
           <WifiOff size={14} className="mr-1.5 inline" aria-hidden />
-          Unlike review, this part needs a live connection. The recordings are
-          fetched as you play them and the paper is marked on the server, so sit it somewhere with
-          signal. If handing in fails, your answers stay on the page and the button can be pressed
-          again.
+          Unlike everyday review, this needs a live connection. The recordings load as you play
+          them, and the paper is marked on our server, so make sure you&apos;re somewhere with signal.
+          If handing in fails, your answers stay right here on the page, and you can just press the
+          button again.
         </Note>
         <Note tone="neutral">
           <Mic size={14} className="mr-1.5 inline" aria-hidden />
-          The spoken part is marked by you. There is no verified Estonian speech recogniser
-          available to this app, so you record yourself, listen back, and tick the criteria you
-          met. The result says which quarter of your score came from that. The real spoken part
-          opens with a few minutes of conversation with the examiner before the tasks, and there is
-          no examiner here, so it opens straight on the first task instead.
+          You mark the spoken part yourself. We tested a speech recogniser for Estonian and it
+          wasn&apos;t accurate enough, so instead you record yourself, listen back, and tick off what
+          you managed. Your result will show which quarter of your score came from this part. The
+          real spoken exam opens with a few minutes of chat with the examiner before the tasks
+          start. There&apos;s no examiner here, so we go straight to the first task.
         </Note>
         {paper.substituted && (
           <Note tone="hard">
             <FileWarning size={14} className="mr-1.5 inline" aria-hidden />
-            Some tasks are set from words rather than from sentences. Recorded example sentences
-            come from Ekilex, and this copy of Kodukeel has no key set up for it, so those tasks
-            fall back to a version the dictionary can always fill. Each one says so above. The
-            paper is easier than the one it imitates, and that is worth knowing before you read your
-            score.
+            Some tasks use single words instead of full sentences. We don&apos;t have a recorded
+            sentence for every word yet, so those tasks fall back to a version we can always build.
+            Each one says so above. This makes the paper a little easier than the one it&apos;s
+            copying, which is worth knowing before you look at your score.
           </Note>
         )}
         {paper.thin && (
           <Note tone="again">
             <FileWarning size={14} className="mr-1.5 inline" aria-hidden />
             The dictionary could only fill {fillRate} percent of this paper, so some tasks are
-            shorter than a full paper would be. Each part is marked out of what was actually
-            set rather than out of what was intended, and the result names the shortfall. More
-            words in your deck fill this in over time. If you run this copy of Kodukeel yourself,
-            adding an Ekilex key fills it in right away.
+            shorter than a full paper. Each part is marked on what was actually set, not on what
+            should have been there, and your result will explain the shortfall. Add more words to
+            your deck and this fills in over time. Running this yourself? Adding an Ekilex key
+            fills it in right away.
           </Note>
         )}
       </div>

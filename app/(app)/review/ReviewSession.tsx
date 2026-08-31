@@ -154,7 +154,7 @@ function MeetWord({ card }: { card: ReviewCard }) {
             </p>
           )}
           <p className="mt-2 text-2xs" style={{ color: "var(--ink-3)" }}>
-            Attested sentence, from Ekilex. Read it out loud.
+            A real sentence, from Ekilex. Try reading it out loud.
           </p>
         </div>
       ) : (
@@ -571,11 +571,11 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             {drillCase
-              ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done, these cards keep their normal schedule too.</>
+              ? <>Tubli töö. That&rsquo;s the {drillCase.toLowerCase()} drill done. These cards still follow their normal schedule.</>
               : drillUnit
-                ? <>Tubli töö. That&rsquo;s this unit drilled, the cards keep their normal schedule too.</>
+                ? <>Tubli töö. That&rsquo;s this unit drilled. Its cards still follow their normal schedule.</>
                 : drillScan
-                  ? <>Tubli töö. That&rsquo;s the whole page drilled, the cards keep their normal schedule too.</>
+                  ? <>Tubli töö. That&rsquo;s the whole page drilled. Its cards still follow their normal schedule.</>
                   : <>Tubli töö. That&rsquo;s everything due right now.</>}
           </p>
         </div>
@@ -591,8 +591,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             className="mt-4 rounded-[var(--r)] px-4 py-3 text-sm"
             style={{ background: "var(--hard-soft)", color: "var(--hard-ink)" }}
           >
-            {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved on this device while offline.
-            They will be sent the moment you are back online. You can close the tab.
+            {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here while you were offline.
+            They&rsquo;ll be sent the moment you&rsquo;re back online. You can close the tab.
           </p>
         )}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -968,7 +968,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
 
       {pendingOffline > 0 && (
         <p className="mt-3 text-center text-xs" style={{ color: "var(--hard-ink)" }}>
-          Offline, {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here and sent when you reconnect.
+          You&rsquo;re offline. {pendingOffline} grade{pendingOffline === 1 ? "" : "s"} saved here, sent once you reconnect.
         </p>
       )}
       {verdict && countsAsRecalled(verdict.verdict) && verdict.verdict !== "correct" && (

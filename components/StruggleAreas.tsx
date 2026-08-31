@@ -55,7 +55,7 @@ export function StruggleAreas({ sticking, cases, className }: {
         className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold"
         style={{ color: "var(--accent-deep)" }}
       >
-        The whole picture, with the charts behind it <ArrowRight size={13} aria-hidden />
+        See the whole picture on Progress <ArrowRight size={13} aria-hidden />
       </Link>
     </Card>
   );

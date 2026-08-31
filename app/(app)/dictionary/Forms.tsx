@@ -35,8 +35,8 @@ export function WordForms({ forms, pos }: { forms: WordForm[]; pos: string }) {
         Every form, from Ekilex
       </h3>
       <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-        These are the authoritative forms, not worked out from a stem, irregular plurals and the
-        parallel forms Estonian really has, included.
+        These are the authoritative forms, not worked out from a stem. Irregular plurals and the
+        parallel forms Estonian really has are included.
       </p>
       {isVerb ? <VerbTable forms={forms} /> : <CaseTable forms={forms} />}
       <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>

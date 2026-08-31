@@ -18,7 +18,7 @@ import { levelLabel } from "./PlanPanel";
 const SKILL_META: Record<string, { icon: typeof BookOpen; label: string; note: string }> = {
   reading: { icon: BookOpen, label: "Reading", note: "Words, endings and sentences from the dictionary." },
   listening: { icon: Headphones, label: "Listening", note: "Estonian audio with nothing written down." },
-  writing: { icon: PenLine, label: "Writing", note: "Your own sentence, marked on the form it had to contain." },
+  writing: { icon: PenLine, label: "Writing", note: "Your own sentence, checked for the form it needed to contain." },
   speaking: { icon: Mic, label: "Speaking", note: "Your own rating. Never scored here, and never part of the level." },
 };
 
@@ -88,8 +88,8 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
           {result.overall === null
             ? "Nothing was measured, so there is no level to report. That is an honest blank rather than a zero."
             : result.overall === PRE_A1
-              ? "The first band was not reached yet, which is where almost everybody starts. It is a starting point, not a verdict."
-              : `That is the level your weakest measured skill reached. A CEFR level is a claim about everything you can do at it, so it follows the floor rather than the average.`}
+              ? "You have not reached the first band yet, which is where almost everybody starts. It is a starting point, not a verdict."
+              : `That is the level your weakest measured skill reached. A CEFR level is a claim about everything you can do, so it goes by your weakest skill, not the average.`}
           {result.ceiling && result.ceiling !== result.overall && (
             <> Your strongest measured skill looks like {levelLabel(result.ceiling)}, which is worth knowing too.</>
           )}
@@ -119,8 +119,9 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
             speaking line is your own judgement and is kept out of the level entirely.
           </li>
           <li>
-            Not a measurement of conversation. Nothing in this app talks back at speed, and reading a
-            sentence you can take your time over is an easier thing than following one.
+            Not a measurement of conversation. Nothing in this app talks back to you at real speed,
+            and reading a sentence when you can take your time is easier than following one as it
+            is spoken.
           </li>
           <li>
             Built from this dictionary. The words came from the same set the rest of the app teaches

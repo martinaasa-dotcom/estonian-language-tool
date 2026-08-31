@@ -101,12 +101,12 @@ export default async function SignInPage({ searchParams }: {
             ) : (
               <div className="rounded-[var(--r-lg)] p-5 text-left" style={{ background: "var(--raised)" }}>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                  This copy is running in local mode: no accounts, no sign-in, everything stored in
-                  the database on this machine. Add{" "}
+                  This copy is running in local mode: no accounts, no signing in, everything just
+                  stored right here on this machine. Add{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your{" "}
                   <code className="text-xs">.env</code> to turn on sign-in and
-                  per-person decks.
+                  separate decks for each person.
                 </p>
                 <ButtonLink href="/" variant="primary" className="mt-4 w-full">Start studying</ButtonLink>
               </div>

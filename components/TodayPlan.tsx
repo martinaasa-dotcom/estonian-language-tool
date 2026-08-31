@@ -49,7 +49,7 @@ export function TodayPlan({ tasks, classWeek, clock, now, className }: {
   return (
     <Card className={className}>
       <SectionTitle
-        hint={late > 0 ? `${late} late` : tasks.length > 0 ? `${tasks.length} outstanding` : undefined}
+        hint={late > 0 ? `${late} late` : tasks.length > 0 ? `${tasks.length} left` : undefined}
       >
         On today
       </SectionTitle>

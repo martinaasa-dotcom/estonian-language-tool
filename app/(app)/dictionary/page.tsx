@@ -92,7 +92,7 @@ export default async function DictionaryPage({
       title="Dictionary"
       lead={
         ekilexConfigured()
-          ? "Search any Estonian word. The forms come from Ekilex and are stored for offline."
+          ? "Search any Estonian word. The forms come from Ekilex and are stored for offline use."
           : `${total} words with full principal parts, gradation and audio.`
       }
     >

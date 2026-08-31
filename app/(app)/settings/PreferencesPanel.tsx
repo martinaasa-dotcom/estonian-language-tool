@@ -14,7 +14,7 @@ const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof Pe
   {
     value: "type",
     label: "Type the answer",
-    detail: "Stronger recall, and near misses are explained: a dropped õ is told apart from a wrong word.",
+    detail: "Stronger recall. Near misses get explained too, so a dropped õ isn't marked the same as a wrong word.",
     icon: PenLine,
   },
   {
