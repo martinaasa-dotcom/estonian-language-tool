@@ -83,9 +83,27 @@ describe("the daily goal a learner can actually sustain", () => {
     expect(sustainableNewCardsPerDay(1)).toBe(1);
   });
 
-  it("turns a word count into weeks at two cards a word", () => {
-    expect(weeksToLearn(50, 15, 5)).toBe(10);
+  it("turns a card count into weeks at the sustainable rate", () => {
+    // 15 a day sustains 2 new cards, 5 days a week, so 100 cards is 10 weeks.
+    expect(weeksToLearn(100, 15, 5)).toBe(10);
     expect(weeksToLearn(0, 15, 5)).toBe(0);
+  });
+
+  /*
+    The regression this signature exists for. It took words and doubled them,
+    which is the card count for a unit that drills nothing; a real A1 unit is
+    nearer nine cards a word, so the old call understated a starter deck by a
+    factor of four and a half and told a beginner nine weeks where the answer
+    was forty.
+  */
+  it("counts the cards it was given rather than doubling them", () => {
+    // The A1 starter deck, measured: 52 words build 404 cards, not 104.
+    expect(weeksToLearn(404, 25, 5)).toBe(27);
+    expect(weeksToLearn(50, 15, 5)).toBe(5);
+  });
+
+  it("is faster at a higher goal, which is what the copy now says", () => {
+    expect(weeksToLearn(400, 40, 5)).toBeLessThan(weeksToLearn(400, 10, 5));
   });
 });
 

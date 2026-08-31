@@ -695,13 +695,55 @@ and the five thousand row query behind it and points at Progress instead, which 
 
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still
-collects: what to call you, where you are, why, how far, by when, how often, the daily goal and the
-first units. What went is four screens that each carried one question, a screen of feature tour that
-is `/guide` word for word, and a plan panel whose six cited facts and essay on where the hours come
-from now live on `/assess` behind `compact`. The order is still the argument: the limits are stated
-before anything is asked for, the level is measured before the plan is built on it, and the plan is
-seen before a single word is chosen. `test-assess.mjs` drives all four screens and would fail if the
-deck step ever moved above the plan.
+collects: what to call you, where you are, why, how far, by when, how often and the daily goal. What
+went is four screens that each carried one question, a screen of feature tour that is `/guide` word
+for word, and a plan panel whose six cited facts and essay on where the hours come from now live on
+`/assess` behind `compact`. The order is still the argument: the limits are stated before anything
+is asked for, the level is measured before the plan is built on it, and the plan is seen before a
+deck is built on it. `test-assess.mjs` drives all four screens and would fail if the deck step ever
+moved above the plan.
+
+**The one answer it stopped collecting is which units to start with, because a stranger cannot
+answer it.** The last screen was fourteen units with checkboxes and three of them ticked. Somebody
+ninety seconds into an app has no way to know whether they need `Riided` before `Ilm`, and at A1 the
+honest answer is that it does not matter: the units are ordered and the order is the answer. What a
+list like that actually invites is ticking everything, and ticking everything at A1 builds 2,063
+cards, which at the pace this app itself calls sustainable is a four year backlog assembled by
+accident on the evening somebody installed it. `lib/collections/starter.ts` is the one table: the
+first three units at the learner's level, named on screen rather than hidden, with the rest of the
+course two clicks away on `/learn`. That is a default, not a restriction, and the difference is that
+the screen says which units it chose and where to change them.
+
+**A screen that offers a deck says how big it is, and the only honest way to say so is to build the
+cards and count them.** It printed `words * 2`, and two is the count for a unit that drills nothing:
+a recognition card and a production card. Every A1 unit but the first also drills seven cases and up
+to two recorded sentences, so the deck described as 104 cards is 404, and the multiplier runs from
+2.00 to 10.94 across the course depending on the unit and on what the dictionary happens to hold for
+each word. There is no constant to correct it to. `previewUnits` in `lib/srs/deck.ts` runs the same
+generator the builder runs, so the number promised and the deck delivered are the same number, which
+was checked by building one: the screen said 404 and the deck came out 404. `weeksToLearn` takes
+cards rather than words for the same reason.
+
+**And a deck is built in a fixed number of queries, because this is the one screen where a stranger
+waits with nothing to look at.** `completeOnboarding` called `addUnitToDeck` per unit, which
+re-resolved the session, read the dictionary a word at a time, read that learner's cards a word at a
+time and revalidated three paths. Six units of eighteen words measured 330 queries against 5 for the
+same 982 cards; on a socket that is half a second, and on a hosted database at a 25ms round trip it
+is eight seconds of latency before anything else, which is what "Building your deck..." hanging
+turned out to be. `addUnitsToDeck` reads the lexemes once, reads the existing cards once and inserts
+in chunks of 500, since a whole level is over 2,000 rows and Postgres binds at most 65,535
+parameters in one statement. Both halves of this have an invariant, and both were made to fail once.
+
+**A daily goal counts reviews, and raising it does bring words in faster.** The copy said the
+opposite, on two screens: "setting this higher does not make words arrive faster". The app's own
+arithmetic is `sustainableNewCardsPerDay`, which is the goal over ten, so Intense introduces four
+new cards a day where Casual introduces one. Four times is not "no faster". The true half had been
+compressed out of it: a goal of fifteen is fifteen *reviews*, and nine in ten of those are words
+already met, so it is not fifteen new words a day and a beginner who reads it that way is planning a
+year they will not have. Both halves are said now, with this learner's own deck in the sentence
+rather than a general warning. The minutes are `minutesFor` and are no longer also written out per
+row, which is where "About about 8 minutes a day" came from: a figure written down twice is a figure
+nobody is checking.
 
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)

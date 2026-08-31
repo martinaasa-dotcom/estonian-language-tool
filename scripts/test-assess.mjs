@@ -17,7 +17,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 42, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 42 });
+const { check, absent, done } = suite("Level check", { floor: 49 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -254,9 +254,48 @@ if (onboarded) {
     /Take the check when you have ten minutes/i.test(goalStep));
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
-  check("the deck step comes last", (await page.getByText(/Your first units/i).count()) > 0);
-  check("and the daily goal is a row on it rather than a screen of its own",
-    (await page.getByText(/ten reviews over its first year/i).count()) > 0);
+  const deckStep = await page.locator("body").innerText();
+  check("the deck step comes last", (await page.getByText(/Your first words/i).count()) > 0);
+
+  /*
+    The deck is stated, not chosen. It used to be fourteen units with
+    checkboxes, which is fourteen decisions handed to somebody ninety seconds
+    into the app, and the honest reading of a list like that is "tick
+    everything": at A1 that is 2063 cards, which at the pace this app itself
+    calls sustainable is a four year backlog built by accident. So the course
+    picks the first three units, names them, and says how big they are.
+  */
+  check("it names the units it is giving rather than asking which to take",
+    /Tervitused|Minevik|Sihitis/.test(deckStep));
+  check("and asks nobody to pick, because a stranger cannot answer that yet",
+    (await page.getByRole("button", { name: /Units to start with/i }).count()) === 0);
+
+  /*
+    The count and the timeline. `words * 2` was the old estimate and it is out
+    by a factor of four at A2, where every unit drills seven cases and up to two
+    recorded sentences on top of recognition and production. A screen promising
+    a hundred cards where the deck is four hundred and sixty has misdescribed
+    the next year of somebody's evenings, so the server builds the cards and
+    counts them.
+  */
+  check("it says how many cards that actually is", /\d+ words, \d+ cards/.test(deckStep));
+  check("and how long they take at the chosen pace", /\d+ weeks to work through/.test(deckStep));
+  check("and that the rest of the course is still there",
+    /on the path whenever you want them/i.test(deckStep));
+
+  /*
+    The sentence this screen exists to get right. It read "setting this higher
+    does not make words arrive faster", which is the reverse of what
+    `sustainableNewCardsPerDay` computes: forty a day introduces four new cards
+    where ten introduces one. What is true is that a goal counts reviews rather
+    than new words, and that is what it has to say.
+  */
+  check("the daily goal is a row on it rather than a screen of its own",
+    (await page.getByRole("radio", { name: /Regular/ }).count()) > 0);
+  check("and it says a goal counts reviews, not new words",
+    /not \d+ new ones/i.test(deckStep));
+  check("and no longer claims a faster pace changes nothing",
+    !/does not make words arrive faster/i.test(deckStep));
   await page.getByRole("button", { name: /Start learning/ }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/start"), { timeout: 20000 });
   check("finishing lands in the app", !page.url().includes("/start"), page.url());

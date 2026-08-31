@@ -3202,6 +3202,80 @@ check("the accessibility sweep runs axe, over both themes", () => {
   assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
 });
 
+// ── A deck is counted by building it, and built in a bounded number of queries ─
+
+/*
+  THE NUMBER ON THE SCREEN AND THE DECK IT DESCRIBES COME FROM ONE PLACE.
+
+  First run offered a starter deck and printed `words * 2` under it as the card
+  count. Two is what a unit that drills nothing builds: a recognition card and a
+  production card. Every A1 unit but the first also drills seven cases and up to
+  two recorded sentences, so the deck it was describing as 104 cards was 404, and
+  a learner budgeting their evenings off that number was out by a factor of four
+  before they started. Measured across the course the multiplier runs from 2.00
+  to 10.94, which is the argument against any constant at all: it is a property
+  of the unit and of what the dictionary happens to hold for each word.
+
+  So the count is `previewUnits`, which runs the same generator the deck builder
+  runs and counts what comes out. This asserts the arithmetic did not come back
+  rather than asserting today's markup: a screen offering a deck may not
+  multiply a word count by anything.
+*/
+check("a deck is counted by building it, not by a cards-per-word guess", () => {
+  const wizard = code("app/(chromeless)/start/WelcomeWizard.tsx");
+  const page = code("app/(chromeless)/start/page.tsx");
+
+  assert.match(
+    page, /previewUnits\(/,
+    "first run stopped counting its starter deck with previewUnits, so its card count is a guess again",
+  );
+  assert.doesNotMatch(
+    wizard, /\bword(Count|s)\s*\*\s*\d/,
+    "first run is multiplying a word count into a card count again; cards per word runs 2 to 11 across the course",
+  );
+  assert.doesNotMatch(
+    code("lib/assessment/plan.ts"), /\*\s*2\s*;/,
+    "weeksToLearn is doubling a word count again; it takes cards for the same reason",
+  );
+});
+
+/*
+  AND THE BUILD IS A FIXED NUMBER OF QUERIES, NOT ONE PER WORD.
+
+  `completeOnboarding` used to call `addUnitToDeck` in a loop, and that resolved
+  the session again, read the dictionary a word at a time, read the learner's
+  cards a word at a time and revalidated three paths, per unit. Six units of
+  eighteen words measured 330 queries against 5 for the same 982 cards. On a
+  socket that is half a second; on a hosted database at a 25ms round trip it is
+  eight seconds of latency before anything else, and it was reported as the
+  screen having hung. It is the one place in the app where a stranger is asked
+  to wait with nothing to look at, so the loop may not come back.
+*/
+check("first run builds a deck in a fixed number of queries, not one set per word", () => {
+  const actions = code("app/actions.ts");
+  const onboarding = between(actions, "export async function completeOnboarding");
+
+  assert.match(
+    onboarding, /addUnitsToDeck\(/,
+    "completeOnboarding stopped using the batched builder",
+  );
+  assert.doesNotMatch(
+    onboarding, /for\s*\([^)]*\)\s*\{[\s\S]{0,400}?addUnitToDeck\(/,
+    "completeOnboarding is calling addUnitToDeck in a loop again, which is a session check and three reads per unit",
+  );
+
+  const deck = code("lib/srs/deck.ts");
+  assert.doesNotMatch(
+    between(deck, "export async function addUnitsToDeck"),
+    /for\s*\([^)]*\)\s*\{[\s\S]{0,300}?await\s+prisma\.lexeme\./,
+    "the deck builder is reading the dictionary inside a loop, which is the shape it was written to remove",
+  );
+  assert.match(
+    deck, /INSERT_CHUNK/,
+    "the deck builder inserts unchunked; a whole level is over 2000 rows and Postgres binds at most 65535 parameters",
+  );
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

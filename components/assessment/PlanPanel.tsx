@@ -170,11 +170,24 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
             get you: {lowerFirst(spec.cannot)}
           </p>
         )}
+        {/*
+          This paragraph said "setting the goal higher does not make the words
+          arrive faster", and the module directly above computes the opposite:
+          `sustainableNewCardsPerDay` is the goal over ten, so forty a day
+          introduces four new cards where ten a day introduces one. It does make
+          them arrive faster, four times over. What is true is the part that had
+          been compressed out of it: a goal is a count of *reviews*, and nine in
+          ten of those are words already met, so fifteen a day is not fifteen new
+          words a day and a beginner who reads it that way is planning a year
+          they will not have. Both halves are said now.
+        */}
         <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          A daily goal of {dailyGoal} cards settles at about {newCards} genuinely new{" "}
-          {newCards === 1 ? "card" : "cards"} a day once the reviews arrive, because a card you learn
-          today costs roughly ten reviews over its first year. Setting the goal higher does not make
-          the words arrive faster, it makes week six unbearable.
+          A daily goal of {dailyGoal} cards is {dailyGoal} cards to answer, not {dailyGoal} new ones.
+          A card you learn today costs roughly ten reviews over its first year, so once the reviews
+          arrive this settles at about {newCards} genuinely new{" "}
+          {newCards === 1 ? "card" : "cards"} a day. Raising it does bring words in faster, in
+          proportion. It also raises every day from here on, which is where week six goes wrong.
+          The goal worth setting is the one you would still meet on a bad Wednesday.
         </p>
       </Card>
       )}

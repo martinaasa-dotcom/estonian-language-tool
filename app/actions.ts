@@ -40,6 +40,8 @@ import {
   availableCardTypes, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { addUnitsToDeck } from "@/lib/srs/deck";
+import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
 import { MAX_PASSAGE_CHARS, buildPassageCloze, type KnownForm } from "@/lib/estonian/passage";
@@ -764,11 +766,16 @@ export async function completeOnboarding(input: {
       : Promise.resolve(),
   ]);
 
-  let added = 0;
-  for (const unitId of input.unitIds.slice(0, 6)) {
-    const result = await addUnitToDeck(unitId);
-    if (result.ok) added += result.added;
-  }
+  /*
+    One batched build rather than a call per unit.
+
+    The per-unit version re-resolved the session, re-read the dictionary a word
+    at a time and revalidated three paths on every pass, which on a hosted
+    database left a stranger watching "Building your deck..." for tens of
+    seconds on the one screen where the app is asking them to trust it. See
+    `lib/srs/deck.ts` for the shape.
+  */
+  const { added } = await addUnitsToDeck(ownerId, input.unitIds.slice(0, MAX_STARTER_UNITS));
 
   revalidatePath("/");
   revalidatePath("/learn");
@@ -794,28 +801,12 @@ export async function addUnitToDeck(unitId: string) {
   const unit = unitById(unitId);
   if (!unit) return { ok: false as const, error: "That unit does not exist." };
 
-  const lexemes = await prisma.lexeme.findMany({
-    where: { lemma: { in: [...unit.lemmas] } },
-    select: { id: true, lemma: true },
-  });
-  // Keep the unit's own order: the first cards someone sees should be the ones
-  // the unit leads with, not whatever order Postgres returned.
-  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
-  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
-
-  // addCardsFor rather than addToDeck: the owner is already resolved here, and
-  // re-resolving it per word would validate the session with Supabase 20 times
-  // for one click.
-  let added = 0;
-  for (const lexeme of lexemes) {
-    const result = await addCardsFor(ownerId, lexeme.id, [...unit.cardTypes], "DICTIONARY");
-    if (result.ok) added += result.added ?? 0;
-  }
+  const { added, words } = await addUnitsToDeck(ownerId, [unitId]);
 
   revalidatePath("/learn");
   revalidatePath("/words");
   revalidatePath("/");
-  return { ok: true as const, added, words: lexemes.length };
+  return { ok: true as const, added, words };
 }
 
 /**

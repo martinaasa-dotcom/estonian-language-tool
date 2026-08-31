@@ -196,11 +196,21 @@ export function sustainableNewCardsPerDay(dailyGoal: number): number {
   return Math.max(1, Math.round(dailyGoal / REVIEWS_PER_CARD_FIRST_YEAR));
 }
 
-/** Weeks to add a number of words, at a sustainable rate, two cards per word. */
-export function weeksToLearn(words: number, dailyGoal: number, daysPerWeek: number): number {
+/**
+ * Weeks to work through a number of cards, at a sustainable rate.
+ *
+ * Takes cards, not words, and that is the correction rather than a refactor.
+ * It used to take words and multiply by two, which is the count for a unit that
+ * drills nothing at all: a recognition card and a production card. Every A1
+ * unit but the first also drills seven cases and up to two recorded sentences,
+ * so the real figure there is near nine cards a word and near seven across the
+ * course. A caller that has words and wants an answer should count the cards
+ * those words build (`previewUnits` does), because the multiplier is a property
+ * of the unit rather than a constant.
+ */
+export function weeksToLearn(cards: number, dailyGoal: number, daysPerWeek: number): number {
   const cardsPerWeek = sustainableNewCardsPerDay(dailyGoal) * Math.min(7, Math.max(1, daysPerWeek));
-  const cards = Math.max(0, words) * 2;
-  return cardsPerWeek === 0 ? 0 : Math.ceil(cards / cardsPerWeek);
+  return cardsPerWeek === 0 ? 0 : Math.ceil(Math.max(0, cards) / cardsPerWeek);
 }
 
 /**
