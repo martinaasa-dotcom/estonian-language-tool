@@ -297,11 +297,11 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
           <div className="mb-4">
             <Note tone="neutral">
               <Info size={14} className="mr-1.5 inline" aria-hidden />
-              These marks are for length and for using the words you were given. Whether the
-              Estonian itself is right is what an examiner marks and what nothing here may judge, so
-              treat this part of your score as a ceiling: the most you could have got, not a
-              guarantee of what an examiner would actually give you. Anu will read either text back
-              and say what she thinks, and her note carries no marks.
+              These marks are for length, and for using the words you were given. A real examiner
+              also checks whether your Estonian itself is correct, and nothing here can judge that.
+              So treat this score as a ceiling, not a guarantee: it&apos;s the most you could get, not
+              what an examiner would actually give you. Anu can read either text back and tell you
+              what she thinks. Her note carries no marks.
             </Note>
           </div>
           <ul className="grid gap-4">
@@ -386,8 +386,8 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
 
       <p className="mt-8 text-sm" style={{ color: "var(--ink-3)" }}>
         {spec.official
-          ? "The frame of this paper is the real one. The questions are not."
-          : "The state does not examine at this level, so nothing about this paper is official."}
+          ? "The structure of this paper is real. The questions aren't."
+          : "Estonia doesn't test at this level, so nothing about this paper is official."}
         {" "}
         <Link href="/exam" className="underline underline-offset-4">Back to the exam hub</Link>
       </p>

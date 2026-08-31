@@ -56,12 +56,12 @@ export function AnuReading({ text, level, title, marks }: {
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.error ?? "That could not be read.");
+        setError(body.error ?? "We couldn't read that.");
         return;
       }
       setReading(body as Reading);
     } catch {
-      setError("Reading your text needs a connection. Your result is not affected.");
+      setError("Reading your text needs a connection. Your result isn't affected.");
     } finally {
       setBusy(false);
     }
@@ -88,7 +88,7 @@ export function AnuReading({ text, level, title, marks }: {
           <div>
             <p className="label-xs mb-2" style={{ color: "var(--blush-ink)" }}>
               <MessageCircleQuestion size={12} className="mr-1 inline" aria-hidden />
-              Anu, and none of this changed your marks
+              Anu read it back. None of this changed your marks.
             </p>
             {reading.comment ? (
               <p className="text-md leading-relaxed" style={{ color: "var(--ink)" }}>
@@ -99,16 +99,16 @@ export function AnuReading({ text, level, title, marks }: {
                 <ShieldCheck size={14} className="mr-1.5 inline" aria-hidden />
                 {reading.withheldReason === "unvouched-word" ? (
                   <>
-                    Anu quoted a word the dictionary could not vouch for, so her note was withheld.
-                    It may have been English rather than an Estonian form, and the check does not
-                    gamble on which. That is the app working, not failing: an unverified form in
-                    feedback is the one thing this app will not show you.
+                    Anu used a word the dictionary couldn&apos;t vouch for, so we held back her
+                    note. It might just be English rather than an Estonian word, and we&apos;d
+                    rather not guess. This is the app working as it should, not failing: an
+                    unverified Estonian word is the one thing we&apos;ll never show you in feedback.
                   </>
                 ) : (
                   <>
-                    Anu reached for an Estonian form the dictionary could not vouch for, so her note
-                    was withheld. That is the app working, not failing: an unverified form in
-                    feedback is the one thing this app will not show you.
+                    Anu used an Estonian word the dictionary couldn&apos;t vouch for, so we held
+                    back her note. This is the app working as it should, not failing: an unverified
+                    Estonian word is the one thing we&apos;ll never show you in feedback.
                   </>
                 )}
               </Note>
@@ -128,7 +128,7 @@ export function AnuReading({ text, level, title, marks }: {
                 : <><MessageCircleQuestion size={15} aria-hidden /> Ask Anu to read it</>}
             </Button>
             <span className="text-sm" style={{ color: "var(--ink-3)" }}>
-              Her opinion carries no marks and cannot change your result.
+              Her opinion carries no marks. It can&apos;t change your result.
             </span>
           </div>
         )}

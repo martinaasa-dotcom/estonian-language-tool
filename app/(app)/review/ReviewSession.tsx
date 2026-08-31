@@ -525,7 +525,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         {drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}
-            body="Tick &lsquo;Case form&rsquo; when you add a word, or start a noun unit on the path."
+            body="Tick 'Case form' when you add a word, or start a noun unit on the path."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : drillUnit ? (

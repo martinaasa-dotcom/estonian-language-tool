@@ -29,9 +29,9 @@ import { AI_TAG } from "@/lib/copy/values";
  * are the same pairing for the same reason.
  */
 export const CHIPS = [
-  { label: "Break this sentence down", short: "Break it down", prompt: "Break this Estonian sentence down morpheme by morpheme, labelling each case: " },
+  { label: "Break this sentence down", short: "Break it down", prompt: "Break this Estonian sentence down piece by piece, labelling each case: " },
   { label: "Which case, and why?", short: "Which case?", prompt: "Which case should I use here, and what is the rule? " },
-  { label: "Object case check", short: "Object case", prompt: "Is the object case right in this sentence, total or partial? Explain the aspect: " },
+  { label: "Object case check", short: "Object case", prompt: "Is the object case right in this sentence, total or partial? Explain why: " },
   { label: "Explain this gradation", short: "Gradation", prompt: "Explain the consonant gradation in this word and name the pattern: " },
   { label: "Correct my Estonian", short: "Correct me", prompt: "Correct my Estonian and explain each change: " },
   { label: "Quiz me", short: "Quiz me", prompt: "Quiz me with five short B1-level Estonian questions, one at a time." },
@@ -99,7 +99,7 @@ export function Provenance({ label, answered, compact = false }: {
   return (
     <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
       {answered ? "Answered by" : "Will ask"} {label}.
-      {!compact && " Anu explains grammar; every inflected form in the dictionary is stored data from Ekilex, never written by a model."}
+      {!compact && " Anu explains grammar. Every form in the dictionary comes from Ekilex, never from a model."}
     </p>
   );
 }
@@ -218,7 +218,7 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
           <div className="mt-3 rounded-[var(--r)] px-4 py-3" style={{ background: "var(--accent-soft)" }}>
             <div className="mb-1 flex items-center gap-2">
               <span className="label-xs" style={{ color: "var(--accent-deep)" }}>Corrected</span>
-              <Chip tone="again" title="Anu wrote this. The dictionary's forms are stored data; this is not.">
+              <Chip tone="again" title="Anu wrote this, it isn't a dictionary form.">
                 {AI_TAG}
               </Chip>
             </div>
@@ -432,7 +432,7 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
     <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--rule-soft)" }}>
       <div className="mb-2 flex items-center gap-2">
         <span className="label-xs" style={{ color: "var(--ink-3)" }}>Vocabulary</span>
-        <Chip tone="again" title="Anu's forms are not authoritative, check them in the dictionary">
+        <Chip tone="again" title="Anu's forms haven't been checked. Look them up in the dictionary to be sure.">
           {AI_TAG}
         </Chip>
       </div>

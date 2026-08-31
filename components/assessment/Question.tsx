@@ -45,7 +45,7 @@ const WORD_TONE: Record<WordStatus, { background: string; color: string; title: 
 const SOURCE_LABEL: Record<Item["source"], string> = {
   dictionary: "From the dictionary",
   ekilex: "A form from Ekilex",
-  derived: "Computed from the genitive stem",
+  derived: "Worked out from the genitive stem",
   usage: "A sentence recorded by a lexicographer",
 };
 
@@ -168,8 +168,8 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
       {silent && (
         <div className="mt-4">
           <Note tone="sky">
-            The audio could not be produced. That is a fault here, not an answer about your
-            listening, so this section will be left unmeasured rather than marked at zero.
+            The audio could not be made. That is a problem here, not an answer about your
+            listening, so this section stays unmeasured instead of being marked at zero.
           </Note>
         </div>
       )}
@@ -284,8 +284,8 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
       {silent && (
         <div className="mt-4">
           <Note tone="sky">
-            No audio, so there is nothing to write down. Skip this one and the listening section
-            stays unmeasured rather than being marked at zero.
+            No audio, so there is nothing to write down. Skip this one, and the listening section
+            stays unmeasured instead of being marked at zero.
           </Note>
         </div>
       )}
@@ -372,8 +372,8 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
             onEnter={() => setMark(gradeWrite(item, text))}
           />
           <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-            Marked against the word a lexicographer put in this sentence, by string comparison, so
-            no AI is involved and none is needed.
+            Checked directly against the word a lexicographer put in this sentence, so no AI is
+            involved, and none is needed.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button variant="primary" size="lg" onClick={() => setMark(gradeWrite(item, text))}>
@@ -449,9 +449,9 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
       </div>
 
       <Note tone="neutral">
-        Nothing here scores your pronunciation, and nothing you record leaves this device. There is
-        no Estonian speech recogniser this app can honestly use, so your own rating is what gets
-        recorded, marked as yours, and it never moves your level.
+        Nothing here scores your pronunciation, and nothing you record ever leaves this device.
+        There is no Estonian speech recognition we can honestly trust, so your own rating is what
+        gets recorded. It is marked as yours, and it never moves your level.
       </Note>
 
       <div className="mt-5 grid gap-2 sm:grid-cols-2">

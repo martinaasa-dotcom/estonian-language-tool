@@ -47,17 +47,17 @@ export default function TermsPage() {
           </P>
         )}
         <P>
-          The service costs nothing and there is nothing to buy, so no consumer purchase, no
-          right of withdrawal and no payment terms arise. If an installation ever starts
-          charging, that is a different arrangement and these terms do not cover it.
+          The service costs nothing and there is nothing to buy, so none of the usual consumer
+          purchase rules apply: no right of withdrawal, no payment terms. If an installation
+          ever starts charging, that is a different arrangement and these terms do not cover it.
         </P>
       </S>
 
       <S title="What it promises">
         <P>
-          Inflected Estonian forms come from Ekilex, the lexicographic database of the
-          Institute of the Estonian Language. They are not generated. Where a form is
-          shown as derived from a stored genitive stem, it is labelled as derived.
+          Every Estonian word form here comes from Ekilex, the dictionary database run by the
+          Institute of the Estonian Language. None of it is generated. Where a form is shown
+          as derived from a stored genitive stem, it is labelled as derived.
         </P>
         <P>
           <strong>Anu is a machine, and says so on every screen it speaks from.</strong> You
@@ -66,11 +66,11 @@ export default function TermsPage() {
           each reply, because a screen naming the wrong one would be worse than naming none.
         </P>
         <P>
-          Anu, the AI tutor, is not authoritative. It may explain grammar and suggest an
-          English translation, and it is structurally prevented from supplying an
-          Estonian dictionary form, but its explanations can still be wrong. Anything
-          it suggests is marked <em>{AI_TAG}</em> and needs your confirmation before
-          it becomes a card. Do not rely on it for an exam answer without checking.
+          Anu, the AI tutor, is not the final word on anything. She can explain grammar and
+          suggest an English translation, and she is built so she can never hand you an
+          Estonian dictionary form, but her explanations can still be wrong. Anything she
+          suggests is marked <em>{AI_TAG}</em> and needs your confirmation before it becomes
+          a card. Do not rely on her for an exam answer without checking it yourself.
         </P>
         <P>
           The app is provided as it is, with no warranty. It is a learning aid, not a
@@ -81,13 +81,14 @@ export default function TermsPage() {
       <S title="What is asked of you">
         <P>
           Use one account, and use it yourself. Do not use the tutor to generate content
-          unrelated to learning Estonian. It runs on a metered key, and a per-day quota
-          applies to every account so that one person cannot exhaust it for everyone.
+          unrelated to learning Estonian. It runs on a key that costs money per use, so
+          there is a daily limit on every account, to stop one person using it all up for
+          everyone else.
         </P>
         <P>
-          Do not automate bulk requests against the dictionary, the speech service or the
-          tutor. Ekilex and TartuNLP are free academic services; the whole project depends
-          on them not being abused.
+          Do not write scripts to hammer the dictionary, the speech service or the tutor
+          with requests. Ekilex and TartuNLP are free academic services, and this whole
+          project depends on nobody abusing them.
         </P>
       </S>
 

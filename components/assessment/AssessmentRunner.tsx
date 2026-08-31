@@ -34,33 +34,34 @@ const SECTIONS: Record<Skill, { icon: typeof Compass; title: string; body: strin
     icon: Compass,
     title: "Reading",
     body:
-      "What a word means, and which form a sentence needs. The sentences are ones a lexicographer " +
-      "recorded, with a word taken out of them, which is the task the state examination calls a " +
-      "lünkülesanne. Nothing here was written for the test.",
+      "What a word means, and which form a sentence needs. These are sentences a lexicographer " +
+      "actually recorded, with one word taken out, the same task the state exam calls a " +
+      "lünkülesanne. None of it was written just for this test.",
   },
   listening: {
     icon: Headphones,
     title: "Listening",
     body:
-      "Estonian audio with nothing written down: single words, then whole sentences at speed. If the " +
-      "audio will not play, say so and this section is left unmeasured rather than counted as a " +
-      "failure, because a silent speaker is not a fact about your listening.",
+      "Estonian audio with nothing written down: single words first, then whole sentences at " +
+      "normal speed. If the audio will not play, tell us, and this section is left unmeasured " +
+      "instead of being marked as a failure. A silent speaker is not a fact about your listening.",
   },
   writing: {
     icon: PenLine,
     title: "Writing",
     body:
-      "A sentence with a word missing, and you type the form it needs. It is marked against the word " +
-      "a lexicographer actually wrote there, by string comparison, so the verdict is certain and no " +
-      "AI reads your answer.",
+      "A sentence with a word missing, and you type in the form it needs. It is checked directly " +
+      "against the word a lexicographer actually wrote there, so the verdict is certain and no AI " +
+      "ever reads your answer.",
   },
   speaking: {
     icon: Mic,
     title: "Speaking",
     body:
-      "This one cannot be scored, and it is not going to pretend otherwise. There is no verified " +
-      "Estonian speech recogniser available here, so you will hear a native voice, record yourself, " +
-      "compare the two and rate it. Your rating is reported as yours and never moves your level.",
+      "This one cannot be scored, and it is not going to pretend otherwise. There is no Estonian " +
+      "speech recognition here we can honestly trust, so instead you will hear a native voice, " +
+      "record yourself, compare the two, and rate it yourself. That rating is reported as yours " +
+      "and never moves your level.",
   },
 };
 
@@ -263,9 +264,9 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
       <div className="mt-8">
         <SectionTitle>How this is marked</SectionTitle>
         <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Questions climb through the levels and stop when a level is clearly past you, so this takes
-          about ten minutes rather than forty. Nothing you answer here becomes a flashcard, and no
-          answer is sent to an AI.
+          Questions get harder as you go, and stop once a level is clearly past you, so this takes
+          about ten minutes instead of forty. Nothing you answer here becomes a flashcard, and
+          none of it is sent to an AI.
         </p>
       </div>
     </div>

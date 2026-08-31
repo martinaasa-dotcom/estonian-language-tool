@@ -137,10 +137,10 @@ export default async function ScanSetPage({ params }: { params: Promise<{ scanId
 
         {unverified > 0 && (
           <Note tone="again">
-            {unverified} of these {unverified === 1 ? "word was" : "words were"} not in the
-            dictionary when this page was read, so {unverified === 1 ? "it carries" : "they carry"} the
-            English from the photo and no verified forms. Open one in the dictionary to correct it,
-            and it is corrected everywhere.
+            {unverified} of these {unverified === 1 ? "word wasn't" : "words weren't"} in the
+            dictionary when we read this page, so {unverified === 1 ? "it has" : "they have"} just
+            the English from the photo, and no verified forms. Open one in the dictionary to fix it,
+            and the fix applies everywhere.
           </Note>
         )}
 

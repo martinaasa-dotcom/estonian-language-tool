@@ -697,11 +697,10 @@ function TaskBlock({ task, number, responses, onAnswer, frozen }: {
           <Note tone="hard">
             <Ear size={14} className="mr-1.5 inline" aria-hidden />
             Read the questions first. The recordings unlock in{" "}
-            <span className="tnum font-semibold">{left}</span> seconds, which is the pause the real
-            paper gives you before a listening task.
+            <span className="tnum font-semibold">{left}</span> seconds, just like on the real exam.
             <span className="mt-3 flex">
               <Button variant="ghost" size="sm" onClick={() => setReading(false)}>
-                I have read them, unlock the recordings
+                I&apos;ve read them, unlock the recordings
               </Button>
             </span>
           </Note>
@@ -716,8 +715,8 @@ function TaskBlock({ task, number, responses, onAnswer, frozen }: {
 
       {task.items.length === 0 ? (
         <Note tone="neutral">
-          Nothing could be set for this task, so it carries no marks and the part is marked out of
-          the rest.
+          We couldn&apos;t set anything for this task, so it carries no marks. The part is marked
+          on what&apos;s left.
         </Note>
       ) : (
         <ol className="grid gap-4">
@@ -982,7 +981,7 @@ function Audible({ item, number, response, canPlay, onAnswer, slow, children }: 
         <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>
           <span className="label-xs mr-2" style={{ color: "var(--ink-3)" }}>{number}</span>
           <VolumeX size={14} className="mr-1.5 inline" aria-hidden />
-          The recording would not play, so this question is left out of the marks rather than
+          The recording wouldn&apos;t play, so this question is left out of the marks rather than
           counted against you.
         </p>
       </div>
@@ -1030,7 +1029,7 @@ function Audible({ item, number, response, canPlay, onAnswer, slow, children }: 
               style={{ color: spent ? "var(--peach-ink)" : "var(--ink-3)" }}
             >
               {spent
-                ? "Both plays used, as in the hall. Answer from what you heard."
+                ? "Both plays used, same as the real exam. Answer with what you heard."
                 : `${LISTEN_PLAYS - played} of ${LISTEN_PLAYS} plays left.`}
             </span>
           )}
@@ -1108,7 +1107,7 @@ function OrderQuestion({ item, number, built, onBuild }: {
     <div>
       <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
         <span className="label-xs mr-2" style={{ color: "var(--ink-3)" }}>{number}</span>
-        Tap the words in order. Tap one you have placed to take it back.
+        Tap the words in order. Tap one you&apos;ve placed to take it back.
       </p>
       <div
         className="mb-3 flex min-h-[52px] flex-wrap items-center gap-2 rounded-[var(--r)] border border-dashed p-3"
@@ -1201,9 +1200,9 @@ function LengthMeter({ text, minWords }: { text: string; minWords: number }) {
         />
       </div>
       <p className="mt-2 text-xs" style={{ color: there ? "var(--mint-ink)" : "var(--ink-3)" }}>
-        {words} of {minWords} words{there ? ", which is the length" : ""}. Length carries most of the
-        marks here and the words above carry the rest, pro rata: half the length is half those
-        marks rather than none. Nothing about your Estonian is judged by a model.
+        {words} of {minWords} words{there ? ". That's enough" : ""}. Length is most of your mark
+        here, and the required words above make up the rest. Write half the length and you still
+        get about half those marks, not none. No model judges your Estonian.
       </p>
     </>
   );
@@ -1250,8 +1249,8 @@ function MessageQuestion({ item, text, onWrite }: {
       </div>
       <LengthMeter text={text} minWords={item.minWords} />
       <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
-        Whether you covered all three points is for you to check when you read it back. A machine
-        cannot tell without judging your Estonian, and nothing here judges your Estonian.
+        Check for yourself whether you covered all three points when you read it back. A machine
+        can&apos;t tell without judging your Estonian, and nothing here does that.
       </p>
     </div>
   );
@@ -1396,8 +1395,8 @@ function SpeakQuestion({ item, marks, response, onMark }: {
         </div>
         {!recorded && (
           <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-            Record something first. Ticking boxes about a thing you did not do is not a self
-            assessment, and this task would score nothing anyway.
+            Record something first. Ticking boxes for something you haven&apos;t done isn&apos;t
+            really judging yourself, and this task would score nothing anyway.
           </p>
         )}
       </fieldset>

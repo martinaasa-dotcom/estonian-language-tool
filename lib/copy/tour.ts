@@ -41,9 +41,9 @@ export const TOUR: readonly TourStop[] = [
   {
     href: "/review",
     what:
-      "The daily loop. Cards scheduled by FSRS, which decides when you are about to forget something " +
-      "and asks you then. It works with the network off, and grades made offline are replayed with the " +
-      "time you actually answered them.",
+      "The daily loop. Cards come back right when you are about to forget them, not before, not " +
+      "after. It works with no internet too: anything you grade offline is saved and sent later, " +
+      "with the real time you answered.",
     when: "Every day, before anything else. Fifteen minutes here beats an hour on Sunday.",
   },
   {
@@ -84,16 +84,16 @@ export const TOUR: readonly TourStop[] = [
   {
     href: "/progress",
     what:
-      "Charts computed from your review log every time you load them. Nothing is stored as a score, so " +
-      "nothing can drift out of step with what you actually did.",
+      "Charts built fresh from your reviews every time you open this page. Nothing is stored as a " +
+      "score, so the numbers can never end up wrong.",
     when: "Weekly. It is the honest mirror, including the weeks you did nothing.",
   },
   {
     href: "/assess",
     what:
-      "Reading, listening, writing and speaking, measured rather than guessed, out of the dictionary the " +
-      "rest of the app runs on. Take it whenever you want to know where you are.",
-    when: "Now, and then every couple of months. Sooner and you are measuring noise.",
+      "Reading, listening, writing and speaking, measured rather than guessed, from the same " +
+      "dictionary the rest of the app uses. Take it whenever you want to know where you stand.",
+    when: "Now, and then every couple of months. Sooner than that and the result will not mean much.",
   },
 ];
 
@@ -145,14 +145,15 @@ export const CAN: readonly Claim[] = [
   {
     icon: "BookOpen",
     text:
-      "Give you authoritative forms. Every one of them comes from Ekilex or from hand checked principal " +
-      "parts, and the eleven regular cases are computed from the genitive stem rather than stored.",
+      "Give you real, checked forms. Every one of them comes from Ekilex or from principal parts " +
+      "checked by hand, and the eleven regular cases are worked out from the genitive stem each " +
+      "time, never stored.",
   },
   {
     icon: "PenLine",
     text:
-      "Mark whether you produced the right form. That check is a string comparison against the " +
-      "dictionary, made before any AI is involved, so it is right even when the AI is switched off.",
+      "Mark whether you got the form right. That check compares your answer straight against the " +
+      "dictionary, before any AI is involved, so it works even when the AI is switched off.",
   },
   {
     icon: "Headphones",
@@ -160,7 +161,7 @@ export const CAN: readonly Claim[] = [
   },
   {
     icon: "WifiOff",
-    text: "Work with no network. Review offline and the grades queue up and replay in order when you return.",
+    text: "Work with no internet. Review offline, and your answers are saved and sent in order once you are back.",
   },
   {
     icon: "Compass",
@@ -173,17 +174,17 @@ export const CANNOT: readonly Claim[] = [
   {
     icon: "Mic",
     text:
-      "Score your pronunciation. There is no verified Estonian speech recogniser available to this app, " +
-      "so speaking practice plays your recording next to a native one and leaves the judgement to you. A " +
-      "confidence number invented on top of a recogniser that does not handle Estonian would be worse " +
-      "than silence, because you would believe it.",
+      "Score your pronunciation. Nothing we could find recognises spoken Estonian reliably enough, " +
+      "so speaking practice plays your recording next to a native one and leaves the judging to " +
+      "you. A made-up confidence score on top of a tool that cannot really hear Estonian would be " +
+      "worse than nothing, because you would believe it.",
   },
   {
     icon: "MessagesSquare",
     text:
-      "Teach you to hold a conversation. Nothing here talks back at speed, interrupts you, or misunderstands " +
-      "you. That happens with people, and it is the part of the hours a level takes that this app cannot " +
-      "take on for you.",
+      "Teach you to hold a conversation. Nothing here talks back at speed, interrupts you, or " +
+      "misunderstands you the way a real person does. That part of learning a language only " +
+      "happens with people, and this app cannot do it for you.",
   },
   {
     icon: "School",
@@ -194,9 +195,10 @@ export const CANNOT: readonly Claim[] = [
   {
     icon: "Sparkles",
     text:
-      "Write Estonian for you. The AI may explain grammar and translate into English. It may never invent " +
-      "an Estonian form, because a model asked for an example once produced a sentence that is not Estonian. " +
-      "An unverified form does not just sit there being wrong: the scheduler drills it in.",
+      "Write Estonian for you. The AI may explain grammar and translate into English. It may never " +
+      "invent an Estonian form: a model asked for an example once made up a sentence that is not " +
+      "real Estonian. An unverified form does not just sit there being wrong. You get asked it " +
+      "again and again until it sticks.",
   },
   {
     icon: "Stamp",
