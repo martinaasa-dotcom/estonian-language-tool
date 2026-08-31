@@ -62,8 +62,3 @@ export function starterUnitsFor(level: string | null): readonly SyllabusUnit[] {
   const units = unitsAtLevel(band).slice(0, STARTER_UNITS);
   return units.length > 0 ? units : unitsAtLevel("A1").slice(0, STARTER_UNITS);
 }
-
-/** The same thing as ids, which is what the deck builder and the action take. */
-export function starterUnitIdsFor(level: string | null): string[] {
-  return starterUnitsFor(level).map((u) => u.id);
-}

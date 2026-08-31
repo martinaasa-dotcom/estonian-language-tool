@@ -256,8 +256,3 @@ export function glossesByPos(): Promise<{ byPos: Map<string, string[]>; all: str
     };
   });
 }
-
-/** For tests and for a script that has just written to the dictionary. */
-export function forgetDictionaryFacts(): void {
-  held.clear();
-}

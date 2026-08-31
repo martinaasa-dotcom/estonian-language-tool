@@ -262,20 +262,3 @@ export function isUnder(href: string, pathname: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
-
-/** The section a path belongs to, or undefined for a page outside the rail. */
-export function sectionOf(pathname: string): NavSection | undefined {
-  /*
-    Longest href first. `/review` and `/review/sprint` are both destinations in
-    principle and `/learn/greetings` is under `/learn`, so a first match on the
-    table's own order would answer whichever happened to be written higher up.
-  */
-  let found: { section: NavSection; length: number } | undefined;
-  for (const section of SECTIONS) {
-    for (const item of section.items) {
-      if (!isUnder(item.href, pathname)) continue;
-      if (!found || item.href.length > found.length) found = { section, length: item.href.length };
-    }
-  }
-  return found?.section;
-}

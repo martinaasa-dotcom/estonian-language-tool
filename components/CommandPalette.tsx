@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { PATH } from "@/lib/collections/syllabus";
 import { PRACTICE_MODES } from "@/lib/ux/modes";
 import { SECTIONS } from "@/lib/ux/nav";
 import { SHORTCUTS_EVENT } from "@/components/Shortcuts";
@@ -63,14 +62,28 @@ const COMMANDS: Command[] = [
   },
 ];
 
-const UNIT_COMMANDS: Command[] = PATH.map((u) => ({
-  id: `unit-${u.id}`,
-  label: `${u.title}, ${u.subtitle}`,
-  hint: u.cefr,
-  group: "Units",
-  href: `/learn/${u.id}`,
-  keywords: `${u.lemmas.join(" ")} unit ${u.cefr}`,
-}));
+/*
+  The whole course, in every unit's own words: about 20KB gzipped, and useful
+  only once somebody has actually opened this box and typed something. Loaded
+  from `lib/collections/syllabus` on first open rather than imported at the
+  top of the file, so it is not in the bundle every signed-in page ships
+  whether or not anybody ever presses the key that opens it.
+*/
+let unitCommands: Command[] | null = null;
+function loadUnitCommands(): Promise<Command[]> {
+  if (unitCommands) return Promise.resolve(unitCommands);
+  return import("@/lib/collections/syllabus").then(({ PATH }) => {
+    unitCommands = PATH.map((u) => ({
+      id: `unit-${u.id}`,
+      label: `${u.title}, ${u.subtitle}`,
+      hint: u.cefr,
+      group: "Units",
+      href: `/learn/${u.id}`,
+      keywords: `${u.lemmas.join(" ")} unit ${u.cefr}`,
+    }));
+    return unitCommands;
+  });
+}
 
 /**
  * ⌘K / Ctrl-K.
@@ -89,6 +102,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  const [units, setUnits] = useState<Command[] | null>(unitCommands);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -109,6 +123,12 @@ export function CommandPalette() {
     if (open) requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
 
+  // Fetched once, the first time the box actually opens, and kept in the
+  // module-level cache above so a second open in the same session is free.
+  useEffect(() => {
+    if (open && !units) loadUnitCommands().then(setUnits);
+  }, [open, units]);
+
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) {
@@ -122,7 +142,7 @@ export function CommandPalette() {
       */
       return PLACE_COMMANDS;
     }
-    const pool = [...COMMANDS, ...UNIT_COMMANDS];
+    const pool = [...COMMANDS, ...(units ?? [])];
     const matches = pool
       .filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q))
       .slice(0, 8);
@@ -139,7 +159,7 @@ export function CommandPalette() {
         keywords: "",
       },
     ];
-  }, [query]);
+  }, [query, units]);
 
   /*
     Grouped for the eye, flat for the keyboard. The arrow keys walk `results`

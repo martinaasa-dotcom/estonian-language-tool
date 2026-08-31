@@ -13,6 +13,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Recorder } from "@/components/Recorder";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Meter, Note, SectionTitle } from "@/components/ui";
+import { partOf } from "@/lib/exam/paper";
 import type { ExamItem, ExamTask, Paper } from "@/lib/exam/paper";
 import type { Response } from "@/lib/exam/score";
 import { usesRequiredWord, wordsOf } from "@/lib/exam/written";
@@ -488,7 +489,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
   onDiscard: () => void;
   onStart: () => void;
 }) {
-  const speaking = paper.parts.find((p) => p.spec.skill === "speaking");
+  const speaking = partOf(paper, "speaking");
   const resumePart = resumable ? paper.parts[resumable.partIndex] : undefined;
   const resumeLeft = resumable && resumePart
     ? Math.max(0, Math.round(((resumable.deadlines?.[resumable.partIndex] ?? 0) - Date.now()) / 1000))

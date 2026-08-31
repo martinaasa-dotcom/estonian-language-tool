@@ -131,11 +131,3 @@ export function classifyVerbGradation(infMa: string, pres1sg: string): Gradation
   if (!a || !b) return { type: "NONE", note: undefined };
   return classifyGradation(a, b);
 }
-
-/**
- * Quantitative gradation (vältevaheldus) is a change in duration that Estonian
- * orthography does not record — `linna` (Q3) and `linna` (Q2) are spelled alike.
- * It is therefore undetectable from text, and this module only ever reports the
- * qualitative kind. The UI says so rather than implying a word has no alternation.
- */
-export const DETECTS_ONLY_QUALITATIVE = true;
