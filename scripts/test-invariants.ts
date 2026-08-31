@@ -95,6 +95,36 @@ const code = (file: string) =>
  * a syntax nobody thought about; this only needs to know which half of a file
  * a call site is in.
  */
+/**
+ * Every lemma the shipped dictionary carries, lower-cased.
+ *
+ * Read off the two files the seed loads rather than out of a database, so this
+ * suite stays hermetic like the rest of it.
+ */
+function seededLemmas(): Set<string> {
+  const out = new Set<string>();
+
+  const expanded = "prisma/data/expanded.json";
+  if (existsSync(expanded)) {
+    const parsed: unknown = JSON.parse(readFileSync(expanded, "utf8"));
+    const rows = Array.isArray(parsed) ? parsed : (parsed as { entries?: unknown[] }).entries ?? [];
+    for (const row of rows) {
+      const lemma = (row as { lemma?: unknown }).lemma;
+      if (typeof lemma === "string") out.add(lemma.toLowerCase());
+    }
+  }
+
+  // The course harvest is a TypeScript module, so its lemmas are read as text.
+  const harvested = "prisma/data/harvested.ts";
+  if (existsSync(harvested)) {
+    for (const m of readFileSync(harvested, "utf8").matchAll(/\blemma:\s*"((?:[^"\\]|\\.)*)"/g)) {
+      out.add((m[1] ?? "").toLowerCase());
+    }
+  }
+
+  return out;
+}
+
 function between(source: string, from: string): string {
   const start = source.indexOf(from);
   if (start < 0) return "";
@@ -1932,6 +1962,95 @@ check("a check a state cannot reach is waived by number, never by a printed word
     // function's clothes: it would leave the target where it was.
     for (const waiver of source.matchAll(/\babsent\(\s*([^,]+),/g)) {
       assert.match((waiver[1] ?? "").trim(), /^[1-9]\d*$/, `${file} waives a count that is not a positive number`);
+    }
+  }
+});
+
+check("a rating key works wherever a rating button is drawn", () => {
+  /*
+    A NEW CARD LEADS WITH ITS ANSWER, AND THE KEYBOARD DID NOT KNOW.
+
+    `askFor` returns `intro` for a card nobody has seen, because "a card you
+    have never seen cannot be recalled, only met". Its answer is printed and
+    its rating buttons are drawn immediately, but `revealed` is false, since
+    nothing was revealed. The render worked that out in four places and spelled
+    it out longhand in each; the keydown handler is where the fifth copy should
+    have been and was not, so it read `!revealed` and returned before the
+    rating branch. The buttons sat there, the mouse graded the card, and the
+    number keys did nothing at all on the one shape a learner meets every time
+    they start a new word.
+
+    So the concept has a name, and this asserts nobody spells it out again.
+    A fifth reader writing `revealed || ask === "intro"` by hand is exactly how
+    the fourth copy came to disagree with the other three, and a sixth would
+    disagree the same way.
+  */
+  const source = read("app/(app)/review/ReviewSession.tsx");
+  const definition = /const answerShown = .*/.exec(source);
+  assert.ok(definition, "the review screen no longer names when the answer is on screen");
+
+  // Everywhere but the one line that is allowed to say it.
+  const elsewhere = source.replace(definition[0], "");
+  assert.equal(
+    /revealed\s*\|\|\s*ask === "intro"|!revealed\s*&&\s*ask !== "intro"/.test(elsewhere),
+    false,
+    "the review screen spells out `the answer is on screen` again instead of using answerShown",
+  );
+
+  /*
+    And the guard in front of the rating keys is that name rather than
+    `revealed`, which is the bug itself: the buttons drawn and the keys that
+    press them have to agree about when they exist.
+  */
+  const beforeRatings = source.slice(0, source.indexOf("n >= 1 && n <= 4"));
+  assert.match(
+    beforeRatings.slice(-260),
+    /if \(!answerShown\) return;/,
+    "the number keys are gated on something other than whether the answer is on screen",
+  );
+});
+
+check("a suite that writes to the shared dictionary invents the word it writes", () => {
+  /*
+    A BROWSER SUITE MAY NOT LEAVE A ROW THAT SHADOWS A SEEDED ENTRY.
+
+    Ticking a word the dictionary did not vouch for is how `saveScan` makes a
+    learner their own entry, and it is a path worth driving. But `Lexeme` is
+    unique on `[lemma, pos]` rather than on the lemma alone, deliberately,
+    because `hall` is a noun meaning frost and an adjective meaning grey. So a
+    fixture that ticks a word the seed already holds does not collide with it,
+    it sits *beside* it, with no paradigm behind it, in a dictionary every
+    later suite shares.
+
+    `test-containment.mjs` ticked `tuba`. `e2e.mjs` opens with three checks on
+    `/dictionary?q=tuba`, and CI runs it two steps later on the same database.
+    The cost was not one wrong check: the suite threw on its first wait and
+    reported a Playwright timeout with none of its twenty-one checks run.
+
+    `test-scan.mjs` and `test-suggestions.mjs` each worked this out for
+    themselves and each carries an invented string. This is the rule they were
+    both following, written down: the Estonian in a fixture that will be
+    written to the dictionary has to be a word no dictionary has.
+  */
+  const lemmas = seededLemmas();
+  assert.ok(lemmas.size > 100, "the built dictionary could not be read, so this check sees nothing");
+
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    const source = read(file);
+    /*
+      An item the dictionary did not vouch for, in a stubbed scan response.
+      `lexemeId: null` is what makes it one, and the `et` beside it is what
+      would be written. Matched in either order, because an object literal has
+      no canonical one.
+    */
+    for (const item of source.matchAll(/\{[^{}]*lexemeId:\s*null[^{}]*\}/g)) {
+      const et = /\bet:\s*"([^"]+)"/.exec(item[0])?.[1];
+      if (!et) continue;
+      assert.equal(
+        lemmas.has(et.toLowerCase()),
+        false,
+        `${file} ticks "${et}", which the dictionary already holds, so it leaves a second entry beside it`,
+      );
     }
   }
 });
@@ -4589,6 +4708,119 @@ check("the plan reads a duration through the one module that units it", () => {
   assert.deepEqual(
     printed, [],
     `the pace reaches a screen without a unit chosen for its size: ${printed.join(" | ")}`,
+  );
+});
+
+/**
+ * Every custom property a screen reads is one something sets.
+ *
+ * This failure is silent by construction, which is the whole reason for the
+ * check. `var(--nothing)` is not a syntax error and does not warn: the
+ * declaration is invalid at computed-value time, so the property falls back to
+ * its inherited value or, where it does not inherit, to its initial one.
+ * Nothing throws, nothing logs, and the contrast pass happily measures whatever
+ * colour actually landed.
+ *
+ * Two were live when this was written, and they failed in the two different
+ * ways the fallback rule produces. `--ink-soft` was read 25 times across the
+ * lesson, checkpoint and placement screens; `color` inherits, so every caption
+ * meant to sit back from its content was drawn in the full body ink, and "A new
+ * word" carried the same weight as the word being taught. `--r-md` was read
+ * ten times; `border-radius` does not inherit, so it landed on 0 and ten padded
+ * boxes had square corners inside cards rounded to 16px, the lesson's own
+ * answer buttons among them.
+ *
+ * A token may be set from a stylesheet or written from a component, since
+ * `--dock-clearance`, the nav marker's material and the confetti's drift are
+ * all measured at runtime and set as inline styles. So what this asserts is
+ * that the name is set *somewhere*, not that it is in the palette.
+ */
+check("every custom property a screen reads is one something sets", () => {
+  const stylesheets = sourceFiles("app", /\.css$/).map(read).join("\n");
+
+  // Tailwind's @theme exposes `--color-ink` as `--ink`, `--radius-lg` as
+  // `--radius-lg` and so on, so a namespaced declaration sets the bare name too.
+  const declared = new Set<string>();
+  const add = (name: string | undefined) => {
+    if (!name) return;
+    declared.add(name);
+    declared.add(name.replace(/^--(?:color|radius|font|text|shadow|ease|animate)-/, "--"));
+  };
+  for (const match of stylesheets.matchAll(/(--[\w-]+)\s*:/g)) add(match[1]);
+  // A component that writes the property itself: style={{ "--dock-clearance": x }}
+  // or element.style.setProperty("--nav-marker-bg", …).
+  for (const file of ALL) {
+    for (const match of read(file).matchAll(/["'`](--[\w-]+)["'`]\s*[,:)]/g)) add(match[1]);
+  }
+  // next/font declares its own variable on <html> rather than in a stylesheet.
+  for (const match of read("app/layout.tsx").matchAll(/variable:\s*"(--[\w-]+)"/g)) add(match[1]);
+
+  const missing = new Map<string, string>();
+  for (const file of [...ALL, ...sourceFiles("app", /\.css$/)]) {
+    for (const match of read(file).matchAll(/var\(\s*(--[\w-]+)\s*[,)]/g)) {
+      const name = match[1];
+      if (name && !declared.has(name) && !missing.has(name)) missing.set(name, file);
+    }
+  }
+
+  assert.equal(
+    missing.size,
+    0,
+    `nothing sets ${[...missing].map(([n, f]) => `${n} (read in ${f})`).join(", ")}. ` +
+    "An unset custom property is not an error: the declaration is dropped and the " +
+    "property inherits or resets, so the screen renders in the wrong colour or shape " +
+    "with nothing to say so.",
+  );
+});
+
+/**
+ * A fade never goes on words.
+ *
+ * `opacity` multiplies through everything inside a box, so a fade meaning
+ * "secondary" is applied to the sentence as well as to the idea of it, and
+ * there is no way to reason about the result from the palette. CLAUDE.md and
+ * `docs/14-design-system.md` both say this; until now neither had anything
+ * behind it.
+ *
+ * The four grading buttons are what made the case for asserting it rather than
+ * writing it down again. Their ink is already the hue's own ink, which clears
+ * 4.5:1 on its tint by construction, so nothing in the palette was wrong: the
+ * fades on top of it were. Measured in a browser, the interval under each
+ * button read 3.49 to 3.75 in the light theme and the keyboard hint 2.45 to
+ * 2.62, on the screen a learner opens every day. axe reported four of those
+ * twelve runs, and `test-design.mjs` none, because it walks `/review` as the
+ * page arrives and the grading row is not drawn until a card is revealed.
+ *
+ * A fade is still how you quieten something that carries no words, which is
+ * what `aria-hidden` marks: the padlock on a locked course unit is faded and
+ * the sentence beside it is not. `disabled:` and `hover:` variants are a
+ * control's own states rather than a way of ranking content, and 0 and 100 are
+ * an animation's endpoints.
+ *
+ * This reads the utility form. An inline `style={{ opacity }}` is not covered
+ * and cannot be: whether a box holds words is not a question the source can
+ * answer once the value is computed.
+ */
+check("a fade never goes on words", () => {
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const match of read(file).matchAll(/<([a-zA-Z][^>]*?)\/?>/g)) {
+      const tag = match[1];
+      if (!tag || /aria-hidden/.test(tag)) continue;
+      for (const token of tag.split(/[\s"'`{}]+/)) {
+        const bare = /^opacity-(\d+)$/.exec(token);
+        if (!bare) continue;
+        const pct = Number(bare[1]);
+        if (pct === 0 || pct === 100) continue;
+        offenders.push(`${file}: ${tag.slice(0, 70).replace(/\s+/g, " ")}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders, [],
+    "a fade on an element that is not aria-hidden fades whatever words it holds. " +
+    "Quieten content with a defined ink instead, or move the fade onto the icon.",
   );
 });
 

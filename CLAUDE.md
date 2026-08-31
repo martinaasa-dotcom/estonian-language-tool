@@ -428,6 +428,21 @@ knowing. Signed-in work never touches any of it.
 public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
 belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
 
+**A comparator that returns 0 is not a tie, it is the database deciding.** Two entries can share a
+lemma, by design and by accident: `hall` is a noun and an adjective, and a learner adding a word by
+hand or off a photograph gets their own row beside the seeded one. Both score 100 for the exact
+lemma, and `localeCompare` of a word with itself is 0, so `rankCandidates` used to return 0 for the
+pair. `sort` is stable, so that means "keep the order you were given", and the order it was given
+came from a `findMany` with no `orderBy`: a fact about the query plan and the physical layout of the
+table rather than about Estonian. `/dictionary` opens `hits[0]` without asking, so which entry a
+learner was shown for their own search was settled by the planner, and could differ between two
+identical requests. It is the fault `resolveScan.ts` has a comment about, one layer up. The order is
+total now: it ends on `bySubstance`, the same rule `oneEntryPerLemma` reads, so the entry with a
+stated part of speech, a hand-written provenance and the most forms leads, and the id settles what
+is left. One comparator rather than two, because a course screen and the search box disagreeing
+about which `vana` is the real one would be worse than either answer alone. Do not add a ranking
+key without asking what happens when it ties.
+
 **The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
 learner sees, so an edit to one is an edit for everybody. It is attributed (`editedBy`), it may
 replace only the principal parts, and it must never touch a form retrieved from Ekilex. Anything
@@ -1229,6 +1244,17 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
   pointer every one of them clears 44px.
+- **A shortcut works wherever the control it presses is drawn, and "drawn" is one question with one
+  name.** A new card in review leads with its answer, because a card you have never seen cannot be
+  recalled, only met, so `askFor` returns `intro` and the rating buttons arrive with it. `revealed`
+  stays false, since nothing was revealed. The render worked that out in four places and wrote
+  `revealed || ask === "intro"` longhand in each of them; the keydown handler is where the fifth copy
+  should have been and was not, so it read `!revealed`, returned before the rating branch, and the
+  number keys did nothing at all on the one shape a learner meets every time they start a new word.
+  The buttons were right there and the mouse graded them, which is what kept it invisible. It is
+  `answerShown` now, defined once, and the invariant fails on a sixth reader spelling it out again
+  rather than on today's markup. The lesson generalises past this screen: a control's visibility and
+  its shortcut are one condition, and two copies of it are a bug with a delay on it.
 - **Text and icons stay inside the boxes they were drawn into, and that is four declarations rather
   than a habit.** Every other rule here about the shape of a page is about the page, and none of
   them can see this fault: it happens inside a card that is itself exactly the right size, so the
@@ -1690,6 +1716,18 @@ it never running, all reported as one failure naming a regex. It reads the
 precondition and waives its three checks with the reason on screen instead. Cleaning up after yourself is the
 weaker version of the same idea, since it only works while every suite remembers
 and cannot help the first run on a machine somebody has been clicking around on.
+
+**A suite that writes to the shared dictionary invents the word it writes.** `Lexeme` is unique on
+`[lemma, pos]` rather than on the lemma, deliberately, because `hall` is a noun meaning frost and an
+adjective meaning grey. So a fixture that ticks a word the seed already holds does not collide with
+it, it sits *beside* it with no forms behind it, in a dictionary every later suite shares.
+`test-containment.mjs` ticked `tuba`; `e2e.mjs` opens with four checks on `/dictionary?q=tuba` and CI
+runs it two steps later on the same database. The cost was never one wrong check, it was a suite that
+threw on its first wait and reported a Playwright timeout with none of its twenty-one checks run.
+`test-scan.mjs` and `test-suggestions.mjs` had each worked this out alone and each carries an
+invented string; the invariant reads the built dictionary and fails on a third suite that does not.
+Spell it so nobody could mistake it for Estonian, because the app writes none (ADR-005) and neither
+do its fixtures.
 
 **An agent branch does not deploy, because the account has a hundred deployments a day and there
 is only one production.** Vercel's free tier counts them across the whole account, and a session

@@ -118,7 +118,7 @@ export function CheckpointSession({
           </p>
           {wrong.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>What to look at again:</p>
+              <p className="text-sm" style={{ color: "var(--ink-3)" }}>What to look at again:</p>
               <ul className="flex flex-col gap-1 text-sm">
                 {wrong.map((w, i) => (
                   <li key={`${w.lemma}-${i}`} className="flex flex-wrap gap-2">
@@ -151,14 +151,14 @@ export function CheckpointSession({
       <div className="flex flex-col gap-5">
         <Meter pct={Math.round((at / total) * 100)} label={`Question ${at + 1} of ${total}`} />
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>
             Question {at + 1} of {total}
             {question.kind === "gap" ? " · fill the gap" : " · write it in Estonian"}
           </span>
           {question.kind === "gap" ? (
             <>
               <p className="text-xl"><Et>{question.sentence}</Et></p>
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+              <p className="text-sm" style={{ color: "var(--ink-3)" }}>
                 The word is <Et>{question.lemma}</Et> ({question.gloss}), in the form the sentence needs.
               </p>
             </>
@@ -178,7 +178,7 @@ export function CheckpointSession({
           <Button onClick={submit} className="self-start" disabled={saving}>
             {at + 1 === total ? "Finish" : "Next"}
           </Button>
-          {saving && <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Marking…</p>}
+          {saving && <p className="text-sm" style={{ color: "var(--ink-3)" }}>Marking…</p>}
           {error && <p className="text-sm" role="alert" style={{ color: "var(--peach-ink)" }}>{error}</p>}
           <p className="text-xs" style={{ color: "var(--ink-3)" }}>
             Passing moves you up a level. Failing changes nothing: a bad evening is not evidence

@@ -251,6 +251,17 @@ if (onboarded) {
     the precondition this branch is now stating rather than inheriting, and an
     invariant asserts that ordering. Locally the deck is usually already there,
     so this branch is still the one a developer takes.
+
+    THE COUNT IS THE BLOCK'S OWN, and it had drifted. It said 18 against a
+    branch holding 25, which is the one arithmetic error a waiver must not make:
+    the floor comes down by less than the run lost, so a suite that waived
+    honestly failed anyway, and it failed on the machine of whoever ran the
+    fixture before the suite rather than on CI, where the ordering above keeps
+    this branch untaken. The prose beside it had drifted the same way, still
+    naming a sixteen and a forty-two from before the merge that made this
+    fifty-two. Numbers in a comment are checked by nobody, so they are gone; the
+    one number left is the one `absent` reads, and it is the count of `check`
+    calls between here and the end of the else below.
   */
   /*
     24 is the checks inside the `else` branch below, minus the one this branch

@@ -253,7 +253,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
             <Button variant="primary" size="lg" className="w-full" onClick={next}>
               Continue
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(0 0 0 / 0.16)" }}>Space</kbd>
             </Button>
           </div>
         )}
