@@ -65,6 +65,18 @@ export const SETTING_KEYS = {
    * re-checked on every load so it follows somebody who moves.
    */
   timeZone: "timeZone",
+
+  /**
+   * The week of their course the learner says they are in.
+   *
+   * It was a literal in `app/actions.ts`, which is a `"use server"` file, so
+   * the constant holding it could not be exported: every export there is a
+   * public endpoint and a string is not one. That was fine while one file read
+   * it and stopped being fine the moment Today wanted to say which week you are
+   * in, because the only way to read it from a second place was to type
+   * "currentWeek" again. Keys live here for exactly that reason.
+   */
+  currentWeek: "currentWeek",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

@@ -364,7 +364,15 @@ check("under reduced motion it arrives rather than travels",
 
 const flat = await browser.newContext({ viewport: { width: 1280, height: 1000 }, javaScriptEnabled: false });
 const unscripted = await flat.newPage();
-await unscripted.goto(`${BASE}/grammar`, { waitUntil: "domcontentloaded" });
+/*
+  `load`, not `domcontentloaded`, and the difference is the whole reliability of
+  this check. What it asks is whether the row is marked with no script at all,
+  which it answers by reading a *computed* style, and a computed style needs the
+  stylesheet: at `domcontentloaded` the document is parsed and the CSS may not
+  have arrived, so the cell reads back transparent and the check fails for a
+  reason that has nothing to do with the rule. It failed about one run in two.
+*/
+await unscripted.goto(`${BASE}/grammar`, { waitUntil: "load" });
 const fallback = await unscripted.evaluate(() => {
   const cell = document.querySelector('nav[aria-label="Main"] [data-nav-on]');
   if (!cell) return null;

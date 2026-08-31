@@ -1372,9 +1372,10 @@ export async function deleteTask(id: string) {
 
 // ─────────────────────────────── The course week ──────────────────────────
 
-// Not exported: every export of a "use server" file is a public endpoint, and a
-// constant is not an endpoint.
-const CURRENT_WEEK_KEY = "currentWeek";
+// From `lib/settings/store.ts`, which is where keys live, rather than a literal
+// typed here: this file is `"use server"` so it cannot export one of its own,
+// and Today needs to read the same key to say which week you are in.
+const CURRENT_WEEK_KEY = SETTING_KEYS.currentWeek;
 
 /** The course week the learner says they are in. Null until they set one. */
 async function currentClassWeek(ownerId: string): Promise<number | null> {

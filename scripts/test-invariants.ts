@@ -3378,6 +3378,129 @@ check("late is decided in one place, against the learner's own day", () => {
   }
 });
 
+
+check("a confidence figure carries its evidence, on every screen that prints one", () => {
+  /*
+    ADR-022's headline rule: a percentage whose basis is not stated is the one
+    thing this feature must not ship. "72 percent likely to pass B2" after nine
+    reviews is an invented number and a learner has no way of telling it apart
+    from one that means something.
+
+    It held while the examination hub was the only screen printing the figure,
+    and it stopped being a property the moment Today printed the same number.
+    The hub kept its own object literal of what each tier means, so two screens
+    would have had two accounts of what one number was worth, and nothing in the
+    app would have said which was right. The words live beside the tier now, and
+    what this asserts is that every screen printing a confidence reads them from
+    there rather than phrasing its own.
+  */
+  const readiness = read("lib/exam/readiness.ts");
+  assert.match(readiness, /export const EVIDENCE_NOTE/, "the tier's own copy has left the module that owns the tier");
+  assert.match(readiness, /export const EVIDENCE_LABEL/, "the short form a card prints beside a number is gone");
+
+  /*
+    The screens that actually read the number, which is what obliges them to say
+    what it is worth. Two conditions, and both were arrived at by getting it
+    wrong: grepping for the word alone reached `Assessment.confidence`, a stored
+    string like "indicative" and a different fact altogether, and dropping the
+    property access caught Today, which loads the countdown and hands it
+    straight to a card without printing a digit of it.
+  */
+  const screens = [...APP, ...COMPONENTS].filter((file) => {
+    const source = read(file);
+    return /from "@\/lib\/exam\/readiness"|from "@\/lib\/progress\/countdown"/.test(source)
+      && /\.confidence\b/.test(code(file));
+  });
+  assert.ok(
+    screens.length >= 2,
+    `only ${screens.length} screens read the readiness modules; this check has stopped finding them`,
+  );
+
+  for (const file of screens) {
+    const source = code(file);
+    /*
+      A member access, not the word. Written the loose way first, and the word
+      "evidence" sitting in a sentence of copy on the card was enough to satisfy
+      it after the tier label had been deleted: prose about a rule is not
+      compliance with it, which is the same trap `code()` exists for one layer
+      up.
+    */
+    assert.match(
+      source,
+      /EVIDENCE_(NOTE|LABEL)|\.measured\b|\.evidence\b/,
+      `${file} prints a confidence figure with no account of what it rests on`,
+    );
+    // And it may not write its own words for a tier.
+    assert.doesNotMatch(
+      source,
+      /thin:\s*["'`]/,
+      `${file} phrases its own evidence tiers instead of reading the one table`,
+    );
+  }
+});
+
+check("what the learner has kept is counted, never stored", () => {
+  /*
+    ADR-014 over the newest number on Today. The word of the day panel says how
+    many words the learner has taken from it, and the obvious way to do that is
+    a counter that goes up on a click. A stored count drifts, survives a card
+    being deleted, and can be awarded for something that did not happen.
+
+    So a card added from the panel carries its own `source` and the count is a
+    query over `createdAt`, which is what every other figure in this app does.
+    `computeStreak` is the run-of-days function the review streak already uses,
+    so a run counted here and a run counted there break at the same midnight.
+  */
+  const resolver = code("lib/progress/wordOfDay.ts");
+  assert.match(resolver, /export const ALMANAC_SOURCE/, "the panel's cards no longer say where they came from");
+  assert.match(resolver, /computeStreak\(/, "the collection counts a run of days with a function of its own");
+
+  // The button that adds one and the query that counts them read one constant.
+  const card = code("components/WordOfDay.tsx");
+  assert.match(card, /ALMANAC_SOURCE/, "the card labels its cards with a literal rather than the shared constant");
+
+  // And nothing was added to the schema to hold the total.
+  assert.doesNotMatch(
+    SCHEMA,
+    /^\s*(kept|collected|wordOfDay\w*)\s+Int/im,
+    "the schema stores what the panel has kept, which the cards already answer",
+  );
+});
+
+
+check("a hue's fill is never used as its ink", () => {
+  /*
+    `docs/14-design-system.md`: every hue reads as colour at full strength and
+    lands around 2.5:1 as *text on its own tint*, so each one has an ink walked
+    down until it clears 4.5:1. The fill paints a bar, a ring, a dot or a
+    button; the ink writes a word. They are two tokens and they are one
+    character apart, which is why this kept happening.
+
+    Six places had it wrong and the browser suite had seen none of them,
+    because a contrast pass can only measure a state it can reach: the two on
+    `/week` and `/tasks` only render once a learner has set a class week, and
+    the fixture never set one. A rule that is only enforced where a fixture
+    happens to walk is a rule that holds on about half the app.
+
+    A `tone` prop is included because `Stat` takes a colour rather than a tone
+    name, which is exactly how `/tasks` came to draw its "Known" figure in mint
+    at 2.52:1 while `/week` drew the same figure correctly in the ink beside it.
+    `Diagnosis` passes both, a fill for its bar and an ink for its label, which
+    is the pairing this is protecting rather than a violation of it.
+  */
+  const fillAsInk = /(?:color:\s*|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    for (const line of read(file).split("\n")) {
+      // A bar and its label side by side: the fill is the bar's, the ink is the
+      // label's, and naming both on one line is the correct shape.
+      if (/\bink=/.test(line)) continue;
+      if (fillAsInk.test(line)) offenders.push(`${file}: ${line.trim().slice(0, 90)}`);
+    }
+  }
+  assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

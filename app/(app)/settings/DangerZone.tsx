@@ -76,7 +76,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
         {remaining ? (
           <div
             className="mt-4 rounded-md px-3.5 py-3.5"
-            style={{ background: "var(--again-soft)", color: "var(--again)" }}
+            style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
           >
             <p role="status" className="text-[13.5px]">{remaining}</p>
             <div className="mt-3">
@@ -100,7 +100,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
         ) : (
           <div
             className="mt-4 rounded-md px-3.5 py-3.5"
-            style={{ background: "var(--again-soft)", color: "var(--again)" }}
+            style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
           >
             <p className="flex items-start gap-2 text-[13.5px]">
               <AlertTriangle size={15} className="mt-0.5 shrink-0" aria-hidden />

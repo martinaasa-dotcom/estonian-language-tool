@@ -76,7 +76,7 @@ export default async function TasksPage() {
             <Card>
               <div className="flex flex-wrap gap-8">
                 <Stat value={words.size} label="Words" />
-                <Stat value={known} label="Known" tone="var(--good)" />
+                <Stat value={known} label="Known" tone="var(--good-ink)" />
                 <Stat value={`${weekDone}/${weekTasks.length}`} label="Tasks done" />
               </div>
               <div

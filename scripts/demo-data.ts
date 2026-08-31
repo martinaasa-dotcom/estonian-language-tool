@@ -145,6 +145,28 @@ async function main() {
     create: { classroomId: classroom.id, ownerId, role: "TEACHER", displayName: "You" },
   });
 
+  /*
+    The week this learner says they are in, and a level they are aiming at.
+
+    Both are preconditions rather than decoration, and both were missing. The
+    week decides whether `/week` renders its picker at all, so the two contrast
+    faults sitting on that screen were invisible to every suite: a pass can only
+    measure a state it can reach, and nothing here had ever set one. The target
+    and the deadline are what Today's countdown needs before it draws anything,
+    for the same reason.
+  */
+  for (const [key, value] of [
+    ["currentWeek", "6"],
+    ["goalTarget", "B1"],
+    ["goalDeadline", new Date(Date.now() + 47 * 86_400_000).toISOString()],
+  ] as const) {
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key } },
+      update: { value },
+      create: { ownerId, key, value },
+    });
+  }
+
   console.log("cards:", await prisma.card.count({ where: { ownerId } }), "reviews:", await prisma.review.count({ where: { ownerId } }));
   await prisma.$disconnect();
 }

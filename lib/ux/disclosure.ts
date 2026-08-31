@@ -106,6 +106,15 @@ export const PANELS = [
   "tasks",
   /** The words and the cases that keep going wrong. */
   "struggle",
+  /**
+   * The level the learner is aiming at, how long they have, and the chance of
+   * clearing it.
+   *
+   * Held to `settled` for the reason the figure itself gives: the confidence is
+   * capped by how much evidence stands behind it, and on a thin log it is a
+   * number the app has to caveat rather than one it can lead with.
+   */
+  "exam",
   /** Anu, and the pitch for her when she is not set up. */
   "tutor",
 ] as const;

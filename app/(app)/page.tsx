@@ -8,7 +8,8 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
-import { wordOfDay } from "@/lib/progress/wordOfDay";
+import { examCountdown } from "@/lib/progress/countdown";
+import { wordOfDay, wordOfDayCollection } from "@/lib/progress/wordOfDay";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -23,6 +24,7 @@ import { icon } from "@/components/icons";
 import { Card, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
 import type { TaskView } from "@/components/TaskRow";
+import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
 import { WordOfDayCard } from "@/components/WordOfDay";
@@ -81,6 +83,7 @@ export default async function TodayPage() {
   const snapshot = await deckSnapshot(ownerId, now);
   const settings = await readSettings(ownerId, [
     SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
+    SETTING_KEYS.currentWeek,
   ]);
 
   // A brand-new learner gets the wizard instead of an empty dashboard. Anyone
@@ -116,9 +119,13 @@ export default async function TodayPage() {
     disclosure rule is to stop rendering panels nobody can read yet, and a page
     that still runs their queries has kept the cost and thrown away the reason.
   */
-  const [word, struggle] = await Promise.all([
+  const [word, collection, struggle, countdown] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now)) : null,
+    shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
     shows(stage, "struggle") ? loadStruggle(ownerId) : null,
+    // The snapshot is handed over rather than fetched again: this page already
+    // has one for the due counts, and the readiness figures only need the deck.
+    shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
   ]);
 
   // Streak and deck-size badges can be earned just by reaching a milestone, so
@@ -139,6 +146,10 @@ export default async function TodayPage() {
   const readerCanConfigure = !supabaseConfigured();
   const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
+  // Written by `setCurrentWeek`, which clamps to 1..60, so anything else in the
+  // column is a value from before that clamp or from a restored backup.
+  const storedWeek = Number(settings[SETTING_KEYS.currentWeek]);
+  const classWeek = Number.isInteger(storedWeek) && storedWeek > 0 ? storedWeek : null;
   /*
     The course decides what comes next, not this page. Its own rule respects
     where the learner placed: picking the first unfinished unit in order sent a
@@ -345,7 +356,7 @@ export default async function TodayPage() {
 
   /* What is written down for today, under headings rather than four loose dates. */
   const planCard = shows(stage, "tasks") ? (
-    <TodayPlan tasks={tasks.map(taskView)} clock={clock} now={now} />
+    <TodayPlan tasks={tasks.map(taskView)} classWeek={classWeek} clock={clock} now={now} />
   ) : null;
 
   const questsCard = shows(stage, "quests") ? (
@@ -407,8 +418,18 @@ export default async function TodayPage() {
     <StruggleAreas sticking={struggle.sticking} cases={struggle.cases} />
   ) : null;
 
+  /*
+    The date they gave us at first run, and whether they are going to make it.
+    Null rather than an empty card when nobody named a level: declining to set
+    one is an answer, and a panel that argues with it is the app talking over
+    the person using it.
+  */
+  const examCard = countdown ? <ExamCountdownCard countdown={countdown} zone={clock.zone} /> : null;
+
   /* The one panel here that is not about this learner's own deck. */
-  const wordCard = shows(stage, "word") ? <WordOfDayCard word={word} /> : null;
+  const wordCard = shows(stage, "word")
+    ? <WordOfDayCard word={word} collection={collection} />
+    : null;
 
   const nextCard = shows(stage, "next") && nextUnit ? (
 
@@ -505,11 +526,16 @@ export default async function TodayPage() {
       {/*
         TWO COLUMNS, AND WHICH COLUMN A MODULE SITS IN IS ABOUT WHAT IT IS FOR.
 
-        The wide column is the day: what is due, what is written down, what is
-        going wrong, how the run of days is going. The narrow one is the
-        material: a word, the next unit, the practice modes, and Anu. So
-        reading down the left answers "what do I have to do" and reading down
-        the right answers "what could I learn".
+        The wide column is today: what is due, what is written down, what is
+        going wrong, how the run of days is going. The narrow one is what is
+        ahead: the exam somebody said they were aiming at, a word they have not
+        met, the next unit, the practice modes, and Anu. So reading down the
+        left answers "what do I have to do" and reading down the right answers
+        "where is this going".
+
+        The two cards at the top of the columns are deliberately level with each
+        other, because they are the pair somebody actually decides on: "43 cards
+        waiting" on the left and "B1 in 47 days, 62 percent" on the right.
 
         Inside the left column the two you can act on come before the two that
         report on you. The words that keep lapsing are a thing to go and fix;
@@ -534,6 +560,7 @@ export default async function TodayPage() {
         </Stack>
 
         <Stack className="min-w-0">
+          {examCard}
           {wordCard}
           {nextCard}
           {stage !== "arriving" && practiceCard}

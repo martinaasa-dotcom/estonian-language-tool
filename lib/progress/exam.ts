@@ -8,7 +8,7 @@ import type { ExamLevel } from "@/lib/exam/spec";
 import type { PastAttempt, ReadinessSignals, SkillEvidence } from "@/lib/exam/readiness";
 import { SKILLS, type SkillKey } from "@/lib/exam/types";
 import { latestFor } from "./assessment";
-import { deckSnapshot } from "./summary";
+import { deckSnapshot, type DeckSnapshot } from "./summary";
 
 /**
  * The database half of the mock examination.
@@ -96,10 +96,19 @@ const MATURE_STATE = 2;
  * makes the number trustworthy: there is no path by which a confidence
  * percentage can drift away from the reviews that justify it.
  */
-export async function readinessSignals(ownerId: string): Promise<ReadinessSignals> {
+/**
+ * `known` is a fact about the deck, not about the hour, so a caller that has
+ * already loaded one may hand it over. Today does: it needs a snapshot for the
+ * due counts anyway, and asking for a second one on the render path of the page
+ * somebody opens every morning is a query bought and thrown away.
+ */
+export async function readinessSignals(
+  ownerId: string,
+  known?: DeckSnapshot,
+): Promise<ReadinessSignals> {
   const [snapshot, byLevel, knownRows, matureReviews, caseReviews, cardTypeRows, attempts, placed] =
     await Promise.all([
-      deckSnapshot(ownerId),
+      known ?? deckSnapshot(ownerId),
       prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
       prisma.lexeme.findMany({ select: { lemma: true, cefr: true } }),
       prisma.review.findMany({

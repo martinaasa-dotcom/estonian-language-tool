@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/db";
+import { computeStreak } from "@/lib/achievements/badges";
 import { occasionsFor, type Occasion } from "@/lib/copy/almanac";
 import { matchesGloss, senseIndex } from "@/lib/dict/gloss";
 import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
-import type { DayKey } from "@/lib/time/day";
+import type { DayClock, DayKey } from "@/lib/time/day";
 
 /**
  * THE WORD OF THE DAY, AND WHY IT IS THAT WORD.
@@ -34,6 +35,27 @@ import type { DayKey } from "@/lib/time/day";
  * module joins them and invents nothing, exactly as `scripts/expand-seed.ts`
  * does one layer down.
  */
+
+/**
+ * WHERE A CARD ADDED FROM THIS PANEL SAYS IT CAME FROM.
+ *
+ * `Card.source` already separates a word taken from the dictionary, a unit of
+ * the path, a pasted list, a scan and one Anu suggested, so the panel gets its
+ * own value rather than a counter somewhere. That is the whole of how the
+ * collection is counted: no column, no total, no stored streak, just cards that
+ * know where they came from and `createdAt`, which is the rule progress in this
+ * app has always followed (ADR-014). A number that is added up from what
+ * actually happened cannot be awarded for something that did not.
+ */
+export const ALMANAC_SOURCE = "ALMANAC";
+
+/** What the learner has kept from the panel. Derived, like everything else. */
+export interface WordOfDayCollection {
+  /** Words taken into the deck from this panel, ever. */
+  kept: number;
+  /** Days in a row one was taken, counting from today or yesterday. */
+  streak: number;
+}
 
 export interface WordOfDay {
   lexemeId: string;
@@ -71,6 +93,38 @@ export async function wordOfDay(ownerId: string, day: DayKey, dayStart: Date): P
 
   const themed = glosses.length > 0 ? await pickThemed(ownerId, day, dayStart, occasions, glosses) : null;
   return themed ?? (await pickAny(ownerId, day, dayStart));
+}
+
+/**
+ * How many the learner has kept, and whether they are keeping one a day.
+ *
+ * A count makes the panel a habit rather than a decoration, which is the whole
+ * argument for having it: somebody who has kept eleven words this way opens the
+ * card looking for the twelfth. It costs one indexed read and no schema.
+ *
+ * `computeStreak` is the app's own run-of-days function, the one the review
+ * streak uses, so a run counted here and a run counted there mean the same
+ * thing and break at the same midnight. Bounded at 800 rows, which is a card
+ * type or two a day for well over the 400 days a streak can reach.
+ */
+export async function wordOfDayCollection(
+  ownerId: string,
+  now: Date,
+  clock: DayClock,
+): Promise<WordOfDayCollection> {
+  const cards = await prisma.card.findMany({
+    where: { ownerId, source: ALMANAC_SOURCE },
+    select: { createdAt: true, lexemeId: true },
+    orderBy: { createdAt: "desc" },
+    take: 800,
+  });
+  // Words, not cards: one press adds a recognition card and a production card,
+  // and "kept 22" for eleven words would be counting the machinery.
+  const words = new Set(cards.map((c) => c.lexemeId ?? "")).size;
+  return {
+    kept: words,
+    streak: computeStreak(cards.map((c) => c.createdAt), now, clock),
+  };
 }
 
 interface Candidate {

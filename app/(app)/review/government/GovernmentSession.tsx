@@ -181,9 +181,9 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
               const tone = !revealed
                 ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
                 : isAnswer
-                  ? { background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }
+                  ? { background: "var(--good-soft)", color: "var(--good-ink)", borderColor: "transparent" }
                   : isPicked
-                    ? { background: "var(--again-soft)", color: "var(--again)", borderColor: "transparent" }
+                    ? { background: "var(--again-soft)", color: "var(--again-ink)", borderColor: "transparent" }
                     : { background: "transparent", color: "var(--ink-3)", borderColor: "var(--rule-soft)" };
 
               return (

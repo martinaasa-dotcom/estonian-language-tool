@@ -632,6 +632,60 @@ a substring, because a gloss is a comma-separated list and a substring runs thro
 `contains` match on "dark" reaches a slur four rows down and one on "love" reaches "love child",
 and either would have been printed as today's word.
 
+**The date somebody gave us belongs on the screen they open.** A learner answers two questions in
+their first five minutes here, what they want to reach and by when, and the app then stored both and
+never mentioned them again on the one page they see every morning. `lib/progress/countdown.ts` puts
+the target band, the days left and the chance of clearing it on Today, and it is not a second
+calculation: `goalsFor` reads the goal, `readinessSignals` gathers the evidence and `assessReadiness`
+does the arithmetic, the same three the examination hub uses. It is held to `settled` for the reason
+the figure itself gives, since the confidence is capped by the evidence behind it and on a thin log
+it is a number the app has to caveat rather than lead with. It runs only once there is a target to
+spend it on, and it is handed the deck snapshot the page already has rather than fetching a second.
+
+**A confidence figure carries its evidence, and that stopped being a property the moment two screens
+printed one.** ADR-022's headline rule held while the hub was the only place the number appeared,
+and the hub kept its own object literal of what each tier was worth. So `EVIDENCE_NOTE` and
+`EVIDENCE_LABEL` live beside `Evidence` in `lib/exam/readiness.ts`, in two lengths because there are
+two shapes of room, and the invariant finds every screen that reads `.confidence` off those modules
+and fails on one that does not also read the tier. It is anchored on a **member access**, not on the
+word: written loosely first, the word "evidence" sitting in a sentence of copy on the card satisfied
+it after the tier had been deleted, which is the same trap `code()` exists for one layer up.
+
+**And the card does not write its own advice.** It said "speaking is the part standing in the way,
+predicted at 0 against the 60 a pass needs", which for somebody who has never sat a paper is not a
+prediction: a `Review` row carries no note of which mode wrote it, so the app cannot tell a dictation
+from a flip of the same card and genuinely has nothing on speaking. Reporting nothing as a zero tells
+a learner they are failing a part they never attempted. `assessReadiness` already knows that
+difference and already ranks its advice, so the card prints the first thing off `readiness.gaps`
+with its own way through, rather than a second opinion beside it.
+
+**What the learner has kept from the word of the day is counted, never stored.** The obvious way to
+put "11 kept" on that panel is a counter that goes up on a click, and a stored count drifts, survives
+the card being deleted and can be awarded for something that did not happen (ADR-014). So a card
+added from the panel carries `ALMANAC_SOURCE` in the `source` column `Card` already has, and the
+count is a query over `createdAt`. It counts **words rather than cards**, since one press adds a
+recognition card and a production card and "22 kept" for eleven words is counting the machinery, and
+the run of days is `computeStreak`, the same function the review streak uses, so two runs in this app
+break at the same midnight.
+
+**A hue has a fill and an ink, and that rule finally has something behind it.** It was in
+`docs/14-design-system.md` and in the design suite, which can only measure a state it can reach: six
+places were painting words in a hue's fill and the browser had seen none of them, because the two on
+`/week` and `/tasks` only render once a learner has set a class week and no fixture ever set one. The
+invariant reads the source instead and covers a `tone` prop as well as a `color`, because `Stat`
+takes a colour rather than a tone name, which is exactly how `/tasks` came to draw its "Known" figure
+in mint at 2.52:1 while `/week` drew the same figure correctly in the ink beside it. A line naming
+both, a fill for a bar and an ink for its label, is the pairing this protects rather than a breach of
+it. `scripts/demo-data.ts` now sets the week and the goal for the same reason: a rule enforced only
+where a fixture happens to walk holds on about half the app.
+
+**Where a screen lives and what a card is are still two questions, and so are the week and the
+homework.** `lib/ux/nav.ts` says the class week lives inside Tasks, so Today does not get a panel for
+it; the "On today" card carries one line saying which week you are in, because that card is already
+"what is due" and the week is the frame that gives it a date. `SETTING_KEYS.currentWeek` moved out of
+`app/actions.ts` for it: that file is `"use server"` so it cannot export a constant, every export
+there being a public endpoint, and the only other way to read the key was to type it again.
+
 **Late is decided in one place, and it was being decided twice and wrongly.** A due date is typed
 into `<input type="date">` and stored at midnight UTC, so `TaskRow`'s `due < new Date()` marked
 everything due today as overdue from midnight onwards, and from three in the morning for a learner

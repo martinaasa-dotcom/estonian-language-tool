@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { BookOpen, CalendarDays } from "lucide-react";
-import type { WordOfDay } from "@/lib/progress/wordOfDay";
+import { BookOpen, CalendarDays, Sprout } from "lucide-react";
+import { ALMANAC_SOURCE, type WordOfDay, type WordOfDayCollection } from "@/lib/progress/wordOfDay";
 import { AddWordButton } from "@/components/AddWordButton";
 import { Speak } from "@/components/Speak";
 import { Card, Chip, SectionTitle } from "@/components/ui";
@@ -27,7 +27,18 @@ import { Card, Chip, SectionTitle } from "@/components/ui";
  * day the card claims pancakes over the word for a cupboard is the day nobody
  * reads it again.
  */
-export function WordOfDayCard({ word, className }: { word: WordOfDay | null; className?: string }) {
+export function WordOfDayCard({ word, collection, className }: {
+  word: WordOfDay | null;
+  /**
+   * What the learner has kept from this panel so far.
+   *
+   * A count is what turns a card you read into a card you use: somebody who has
+   * kept eleven words this way opens it looking for the twelfth. It says nothing
+   * at nought, because "kept 0 so far" is a scoreboard for not having started.
+   */
+  collection: WordOfDayCollection;
+  className?: string;
+}) {
   if (!word) {
     return (
       <Card className={className}>
@@ -99,14 +110,27 @@ export function WordOfDayCard({ word, className }: { word: WordOfDay | null; cla
         </figure>
       )}
 
-      <AddWordButton lexemeId={word.lexemeId} lemma={word.lemma} source="DICTIONARY" className="mt-4" />
-      <Link
-        href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}
-        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
-        style={{ color: "var(--accent-deep)" }}
-      >
-        <BookOpen size={14} aria-hidden /> See the full entry
-      </Link>
+      {/*
+        Marked as this panel's own, which is the only reason the count below can
+        exist without a column to store it in.
+      */}
+      <AddWordButton lexemeId={word.lexemeId} lemma={word.lemma} source={ALMANAC_SOURCE} className="mt-4" />
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+        <Link
+          href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold"
+          style={{ color: "var(--accent-deep)" }}
+        >
+          <BookOpen size={14} aria-hidden /> See the full entry
+        </Link>
+        {collection.kept > 0 && (
+          <p className="inline-flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
+            <Sprout size={13} aria-hidden />
+            {collection.kept} kept
+            {collection.streak > 1 ? `, ${collection.streak} days running` : ""}
+          </p>
+        )}
+      </div>
     </Card>
   );
 }

@@ -35,6 +35,14 @@ describe("shows", () => {
     expect(led).toEqual(["review", "next", "word", "practice"]);
   });
 
+  it("holds the exam countdown back until its own number is worth printing", () => {
+    // The confidence is capped by the evidence behind it, so on a thin log it
+    // is a figure the app has to caveat rather than one it can lead with.
+    expect(shows("arriving", "exam")).toBe(false);
+    expect(shows("starting", "exam")).toBe(false);
+    expect(shows("settled", "exam")).toBe(true);
+  });
+
   it("never withholds the daily loop from anybody", () => {
     for (const stage of ["arriving", "starting", "settled"] as const) {
       expect(shows(stage, "review")).toBe(true);
@@ -45,7 +53,7 @@ describe("shows", () => {
     // The ones that read as a nought on day one, which is what this module is
     // for. Not the word of the day: that is a dictionary lookup keyed on the
     // date and it reads the same on the first morning as in the second year.
-    const furniture: Panel[] = ["streak", "level", "quests", "tasks", "struggle"];
+    const furniture: Panel[] = ["streak", "level", "quests", "tasks", "struggle", "exam"];
     for (const panel of furniture) expect(shows("arriving", panel)).toBe(false);
   });
 

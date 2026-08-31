@@ -4,7 +4,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { goalsFor } from "@/lib/progress/assessment";
 import { weeksUntil, targetByBand } from "@/lib/assessment/goals";
 import { readinessSignals, recentAttempts } from "@/lib/progress/exam";
-import { assessReadiness } from "@/lib/exam/readiness";
+import { EVIDENCE_NOTE, assessReadiness } from "@/lib/exam/readiness";
 import {
   OFFICIAL_LEVELS, PASS_PCT, bandFor, specFor, writtenMinutes,
 } from "@/lib/exam/spec";
@@ -54,11 +54,10 @@ export default async function ExamPage() {
     ? [...SKILLS].sort((a, b) => targetLevel.expected[a] - targetLevel.expected[b])[0]
     : undefined;
 
-  const evidenceNote = {
-    thin: "We have very little to go on yet, so these are guesses and are capped to say so.",
-    fair: "There is enough history here for a rough estimate, not a confident one.",
-    good: "There is enough history here for these numbers to mean something.",
-  }[readiness.evidence];
+  // The words live beside the tier in `readiness.ts`, because Today prints the
+  // same percentage and two copies of "what this number is worth" is how one
+  // screen ends up quietly more confident than the other.
+  const evidenceNote = EVIDENCE_NOTE[readiness.evidence];
 
   return (
     <Page
