@@ -12,6 +12,7 @@ import { ButtonLink } from "@/components/Button";
 import { Mascot, Wordmark } from "@/components/brand";
 import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo";
 import { toneInk } from "@/components/ui";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const metadata: Metadata = {
   title: { absolute: "Kodukeel. Estonian that finally sticks" },
@@ -942,10 +943,15 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       prisma.form.count(),
     ]);
 
-    const byLemma = new Map(lexemes.map((l) => [l.lemma, l]));
-    const words = DEMO_LEMMAS.flatMap((lemma) => {
-      const lex = byLemma.get(lemma);
-      if (!lex) return [];
+    /*
+      One entry per lemma. `new Map(lexemes.map(...))` kept whichever row came
+      last, which is the plan's choice, and `tuba` is both one of the three
+      words this page demonstrates and a lemma the dictionary can hold twice:
+      once from Ekilex with thirty forms, and once as a formless stub the
+      moment somebody confirms it off a photograph. The paradigm table under it
+      is the whole argument this page makes, and it would have been empty.
+    */
+    const words = oneEntryPerLemma(lexemes, DEMO_LEMMAS).flatMap((lex) => {
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 

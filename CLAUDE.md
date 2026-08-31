@@ -382,6 +382,36 @@ screens answer one question, the query is a function they share rather than a qu
 (`lib/progress/cases.ts`). Ordering is free wherever the index is already there, and it was in every
 one of these. What is not free is a number that moves on its own.
 
+**And a `take` beside a `distinct` bounds nothing at all.** Prisma deduplicates in the client, so a
+`LIMIT` would cut rows before the deduplication and it emits none: the query reads every matching
+row, adds an id column of its own to deduplicate with, sorts, and throws the surplus away in
+JavaScript. The number beside `take` reads exactly like a bound and is not in the SQL. `countGroups`
+in the suggestion queue carried a comment saying a `groupBy` "would read every matching group to
+count them, which at the volume this queue is built for is the one query that would stop being
+cheap", and what replaced it read every *row* to produce one number, on the one table open sign-up
+lets strangers grow. Practice had the same shape over `examples`, the longest column in the schema,
+fetched once per card rather than once per word. So the pairing is owner-scoped or it does not
+happen, which is what the invariant asserts: one learner's own cards are bounded by their deck
+whatever the `take` says, and anything deployment-wide counts in Postgres.
+
+**The syllabus names a lemma; the dictionary may hold two entries for it.** `@@unique` is on
+`(lemma, pos)`, so `where: { lemma: { in: [...unit.lemmas] } }` can return more rows than the unit
+has words, and seven places rendered or wrote every one of them. Measured with a scanned `tuba`
+confirmed into the dictionary beside the Ekilex one, which is a thing any learner can do in a
+minute: `/learn/kodu` listed the word twice, its printable worksheet printed it six times, the unit
+counted more words than it teaches, the lesson planner split the duplicate into the sitting,
+`addUnitToDeck` and `recordLesson` each built two sets of cards for one word with one of them
+unanswerable, the landing page's own three-word demo could have shown an empty paradigm, and React
+was warning about two children with the same key, which it says may duplicate or omit a row. The
+thirteen adjective/noun pairs of open question Q8 ship with a fresh seed, so this is the ordinary
+case and not the odd one. `oneEntryPerLemma` in `lib/dict/search.ts` is the one answer and it is
+`bySubstance`, the rule the search already leads with, because a course screen and the search box
+disagreeing about which `vana` is the real one would be worse than either answer on its own. It
+also returns the caller's order, since the sort it replaced (`order.get(a.lemma) -
+order.get(b.lemma)`) returned 0 for exactly the pair that is the problem. Counting distinct lemmas
+into a `Set` is the other honest answer and two places do that; what may not happen is rows reaching
+a render or a write.
+
 **There is one shuffle, and `sort(() => Math.random() - 0.5)` is not one.** There were ten copies of
 this function in three implementations: four in `app/` that were Fisher-Yates character for
 character, four in `lib/` that were the same again with an rng passed in, and two places that used a
@@ -398,6 +428,15 @@ exception and its header says why: the server rebuilds a paper from its seed to 
 how that one draws would mis-mark a paper somebody started before a deploy and handed in after.
 Both halves are asserted, because fixing the two wrong copies and leaving eight right ones is how a
 ninth gets written.
+
+**A seed is only as fixed as what it is seeded over.** `planLesson` promises the same seed gives the
+same lesson, and the wrong answers came from an unordered sixty of the 478 words at A1 or the 1,302
+at B1. Measured: a bulk touch of the level, which is what re-running `npm run harvest` does, swapped
+seven of the sixty, and the seven that left were `Tere hommikust!`, `Aitäh!`, `Palun`, `Head aega!`,
+`Nägemist!`, `kohv` and `elu`. Ordering by lemma alone fixes the drift and reads badly for the reason
+the grammar reference did, since every lesson at a level would then draw its decoys from the same
+sixty words at the front of the alphabet. The window starts where the unit points, which is the
+answer `paperFor` had already reached one file over.
 
 **A day is the learner's day, and every screen that counts one is rendered on a server.** The
 streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour

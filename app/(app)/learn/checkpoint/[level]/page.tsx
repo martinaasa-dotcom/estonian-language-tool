@@ -6,6 +6,7 @@ import { buildCheckpoint, type CheckpointWord } from "@/lib/collections/checkpoi
 import { parseExamples } from "@/lib/dict/examples";
 import { isPrincipalFormType } from "@/lib/estonian/types";
 import { CheckpointSession } from "./CheckpointSession";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export async function generateMetadata({ params }: { params: Promise<{ level: string }> }) {
   const { level } = await params;
@@ -35,13 +36,15 @@ export default async function CheckpointPage({
   const checkpoint = checkpointFor(level);
 
   const lemmas = wordsAtLevel(level).map((w) => w.lemma);
-  const rows = await prisma.lexeme.findMany({
+  const found = await prisma.lexeme.findMany({
     where: { lemma: { in: lemmas } },
     select: {
-      lemma: true, translation: true, pos: true, examples: true,
+      id: true, lemma: true, translation: true, pos: true, provenance: true, examples: true,
       forms: { select: { formType: true, value: true } },
     },
   });
+  // One row per lemma: a lemma can hold two entries and both were being asked.
+  const rows = oneEntryPerLemma(found, lemmas);
 
   const words: CheckpointWord[] = rows.map((row) => ({
     lemma: row.lemma,

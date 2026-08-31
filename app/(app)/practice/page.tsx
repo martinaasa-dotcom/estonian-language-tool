@@ -33,22 +33,38 @@ export default async function PracticePage() {
     // The one reader, so Practice and Progress cannot disagree about which case
     // a learner is worst at. See lib/progress/cases.ts.
     caseReviewsFor(ownerId),
-    prisma.card.findMany({
-      where: { ownerId, suspended: false, lexemeId: { not: null } },
-      distinct: ["lexemeId"],
-      take: 300,
-      select: { lexeme: { select: { examples: true } } },
+    /*
+      The learner's own words, asked for as words.
+
+      This was a `findMany` over their cards with `distinct: ["lexemeId"]` and
+      `take: 300`, which is the page's heaviest read and only looked bounded.
+      Prisma deduplicates in the client, so a `LIMIT` would cut rows before the
+      deduplication and it emits none: the SQL was every card this learner
+      owns, and then `examples`, the longest column in the schema, fetched once
+      per card rather than once per word. A word with five card types was read
+      five times.
+
+      Asking Lexeme instead is one row per word by construction, so the cap is
+      a real `LIMIT` and the join happens once. Two thousand is past any deck
+      somebody has actually built, and ordered, so a learner who does get there
+      is told the same number twice rather than a different one each load.
+    */
+    prisma.lexeme.findMany({
+      where: { cards: { some: { ownerId, suspended: false } } },
+      orderBy: { lemma: "asc" },
+      take: 2000,
+      select: { examples: true },
     }),
   ]);
 
   const sprintBest = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
   // How many of the learner's own words carry a sentence worth rebuilding.
-  const sentenceCount = sentenceReady.filter((c) =>
-    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => isBuildable(e.et)),
+  const sentenceCount = sentenceReady.filter((w) =>
+    usableExamples(parseExamples(w.examples)).some((e) => isBuildable(e.et)),
   ).length;
   // Dictation is stricter: only sentences short enough to hold in your head.
-  const dictationCount = sentenceReady.filter((c) =>
-    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => {
+  const dictationCount = sentenceReady.filter((w) =>
+    usableExamples(parseExamples(w.examples)).some((e) => {
       const count = dictationWords(e.et).length;
       return count >= 3 && count <= 9 && e.et.length <= 80;
     }),

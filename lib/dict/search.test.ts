@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type Candidate, fold, likeLiteral, matchEstonianForm, rankCandidates } from "./search";
+import {
+  type Candidate, fold, likeLiteral, matchEstonianForm, oneEntryPerLemma, rankCandidates,
+} from "./search";
 
 describe("fold", () => {
   it.each([
@@ -321,5 +323,58 @@ describe("likeLiteral", () => {
   it("leaves an ordinary Estonian query alone", () => {
     expect(likeLiteral("õues")).toBe("õues");
     expect(likeLiteral("kõrvits")).toBe("kõrvits");
+  });
+});
+
+/*
+  The syllabus names lemmas and the dictionary is keyed on `(lemma, pos)`, so a
+  unit's word list can resolve to more rows than it has words. Five screens
+  rendered every row: `/learn/kodu` listed `tuba` twice, its worksheet printed
+  it six times, `addUnitToDeck` built two sets of cards for the one word, and
+  React warned about two children with the same key.
+*/
+describe("oneEntryPerLemma", () => {
+  const withId = (c: Candidate, id: string): Candidate => ({ ...c, id });
+
+  it("keeps the unit's own order rather than the rows'", () => {
+    const rows = [
+      lexeme("tuba", "room", "NOUN", [["GEN_SG", "toa"]]),
+      lexeme("aken", "window", "NOUN", [["GEN_SG", "akna"]]),
+      lexeme("uks", "door", "NOUN", [["GEN_SG", "ukse"]]),
+    ];
+    expect(oneEntryPerLemma(rows, ["uks", "tuba", "aken"]).map((r) => r.lemma))
+      .toEqual(["uks", "tuba", "aken"]);
+  });
+
+  it("returns one row for a lemma the dictionary holds twice", () => {
+    const real = withId(lexeme("tuba", "room", "NOUN", [["GEN_SG", "toa"], ["PART_SG", "tuba"]], "EKILEX"), "real");
+    const stub = withId(lexeme("tuba", "room", "OTHER", [], "USER"), "stub");
+    expect(oneEntryPerLemma([stub, real], ["tuba"]).map((r) => r.id)).toEqual(["real"]);
+    // and the same answer whichever order the rows arrived in
+    expect(oneEntryPerLemma([real, stub], ["tuba"]).map((r) => r.id)).toEqual(["real"]);
+  });
+
+  it("prefers the hand-written entry, as the search does", () => {
+    const built = withId(lexeme("vana", "an old person", "NOUN",
+      [["NOM_SG", "vana"], ["GEN_SG", "vana"], ["PART_SG", "vana"], ["PART_PL", "vanu"],
+       ["GEN_PL", "vanade"], ["NOM_PL", "vanad"]], "EKILEX"), "built");
+    const course = withId(lexeme("vana", "old", "ADJECTIVE",
+      [["NOM_SG", "vana"], ["GEN_SG", "vana"], ["PART_SG", "vana"], ["PART_PL", "vanu"],
+       ["GEN_PL", "vanade"]], "SEED"), "course");
+    expect(oneEntryPerLemma([built, course], ["vana"]).map((r) => r.id)).toEqual(["course"]);
+    expect(oneEntryPerLemma([course, built], ["vana"]).map((r) => r.id)).toEqual(["course"]);
+  });
+
+  it("leaves out a lemma the dictionary does not have", () => {
+    const rows = [lexeme("tuba", "room", "NOUN", [["GEN_SG", "toa"]])];
+    expect(oneEntryPerLemma(rows, ["tuba", "eiolemas"]).map((r) => r.lemma)).toEqual(["tuba"]);
+  });
+
+  it("ignores a row for a lemma nobody asked about", () => {
+    const rows = [
+      lexeme("tuba", "room", "NOUN", [["GEN_SG", "toa"]]),
+      lexeme("vanaadium", "vanadium", "NOUN", [["GEN_SG", "vanaadiumi"]]),
+    ];
+    expect(oneEntryPerLemma(rows, ["tuba"]).map((r) => r.lemma)).toEqual(["tuba"]);
   });
 });

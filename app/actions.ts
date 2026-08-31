@@ -51,6 +51,7 @@ import { REPLAY_BATCH } from "@/lib/offline/outbox";
 import { paperFor as examPaperFor, recordAttempt } from "@/lib/progress/exam";
 import { gradesFrom, markPaper, type Response as ExamResponse } from "@/lib/exam/score";
 import { isExamLevel } from "@/lib/exam/spec";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -794,14 +795,19 @@ export async function addUnitToDeck(unitId: string) {
   const unit = unitById(unitId);
   if (!unit) return { ok: false as const, error: "That unit does not exist." };
 
-  const lexemes = await prisma.lexeme.findMany({
+  /*
+    Keep the unit's own order: the first cards someone sees should be the ones
+    the unit leads with, not whatever order Postgres returned. And one row per
+    lemma, which this did not do: `@@unique` is on `(lemma, pos)`, so a lemma
+    with two entries added two sets of cards for one word, and where the second
+    was a scan stub with no forms one of them could not be answered at all. The
+    sort that used to stand here returned 0 for exactly that pair.
+  */
+  const found = await prisma.lexeme.findMany({
     where: { lemma: { in: [...unit.lemmas] } },
-    select: { id: true, lemma: true },
+    select: { id: true, lemma: true, pos: true, provenance: true, forms: { select: { formType: true } } },
   });
-  // Keep the unit's own order: the first cards someone sees should be the ones
-  // the unit leads with, not whatever order Postgres returned.
-  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
-  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
+  const lexemes = oneEntryPerLemma(found, unit.lemmas);
 
   // addCardsFor rather than addToDeck: the owner is already resolved here, and
   // re-resolving it per word would validate the session with Supabase 20 times
@@ -873,10 +879,15 @@ async function gradeAnswers(
   answers: readonly { id: string; lemma: string; kind: string; correct: boolean; durationMs: number }[],
 ) {
   const lemmas = [...new Set(answers.map((a) => a.lemma))];
-  const lexemes = await prisma.lexeme.findMany({
-    where: { lemma: { in: lemmas } },
-    select: { id: true, lemma: true },
-  });
+  // One entry per lemma, by the same rule the dictionary leads with, so an
+  // answer about `vana` is credited to the word the learner was shown.
+  const lexemes = oneEntryPerLemma(
+    await prisma.lexeme.findMany({
+      where: { lemma: { in: lemmas } },
+      select: { id: true, lemma: true, pos: true, provenance: true, forms: { select: { formType: true } } },
+    }),
+    lemmas,
+  );
   const cards = await prisma.card.findMany({
     where: { ownerId, lexemeId: { in: lexemes.map((l) => l.id) }, suspended: false },
     select: { id: true, cardType: true, lexemeId: true },
@@ -957,10 +968,15 @@ export async function completeLesson(
   if (answers.length === 0) return { ok: true as const, graded: 0, added: 0 };
 
   const lemmas = [...new Set(answers.map((r) => r.lemma))];
-  const lexemes = await prisma.lexeme.findMany({
-    where: { lemma: { in: lemmas } },
-    select: { id: true, lemma: true },
-  });
+  // One entry per lemma, or a lemma holding two rows adds two sets of cards for
+  // the one word the lesson taught.
+  const lexemes = oneEntryPerLemma(
+    await prisma.lexeme.findMany({
+      where: { lemma: { in: lemmas } },
+      select: { id: true, lemma: true, pos: true, provenance: true, forms: { select: { formType: true } } },
+    }),
+    lemmas,
+  );
 
   let added = 0;
   for (const lexeme of lexemes) {
@@ -1442,9 +1458,14 @@ export async function buildClozeFromText(text: string) {
   const passage = text.slice(0, MAX_PASSAGE_CHARS);
   if (!passage.trim()) return { ok: false as const, error: "Paste some Estonian first." };
 
+  // Ordered, because past the cap which of somebody's words could be blanked
+  // was the plan's choice, so the same passage pasted twice gave two different
+  // exercises. Oldest card first: on a deck bigger than this the words they
+  // have held longest are the ones a gap-fill is worth building on.
   const cards = await prisma.card.findMany({
     where: { ownerId, lexemeId: { not: null } },
     select: { id: true, lexemeId: true, cardType: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     take: 4000,
   });
   const lexemeIds = [...new Set(cards.map((c) => c.lexemeId).filter((id): id is string => !!id))];

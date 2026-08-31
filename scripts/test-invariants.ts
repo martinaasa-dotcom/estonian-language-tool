@@ -728,6 +728,65 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
+check("a screen built from a list of lemmas shows one entry per lemma", () => {
+  /*
+    `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one row, and
+    the syllabus names lemmas. Every screen built from a unit's word list asked
+    `where: { lemma: { in: [...unit.lemmas] } }` and rendered whatever came
+    back, so a lemma with two entries appeared twice on all of them. Measured
+    with a scanned `tuba` confirmed beside the Ekilex one: `/learn/kodu` listed
+    the word twice, its printable worksheet printed it six times, the unit
+    counted more words than it teaches, the lesson planner split the duplicate
+    into the sitting, `addUnitToDeck` built two sets of cards for one word (one
+    of them unanswerable, the stub having no forms), and React warned about two
+    children with the same key, which it says may duplicate or omit a row. The
+    landing page demonstrates `tuba` and would have shown an empty paradigm.
+
+    The thirteen adjective/noun pairs of open question Q8 ship with a fresh
+    seed, so this is the ordinary case rather than the odd one.
+
+    A `Set` of lemmas is fine and two places legitimately build one: asking
+    which of a unit's words the dictionary has at all cannot double-count.
+    What may not happen is rows reaching a render or a write.
+  */
+  for (const file of ALL) {
+    // A test builds its own fixture and may want both rows on purpose.
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    let at = src.indexOf("lemma: { in:");
+    while (at !== -1) {
+      // The statement this query is part of, which is where the answer to
+      // "and then what" has to be.
+      const from = src.lastIndexOf("prisma.", at);
+      /*
+        Back to the start of the statement, not just to the `prisma.` call: two
+        of these read `oneEntryPerLemma(await prisma.lexeme.findMany({...}))`,
+        so the answer sits to the *left* of the query rather than under it.
+      */
+      const statement = Math.max(0, src.lastIndexOf("\n\n", from), from - 400);
+      const window = src.slice(statement, at + 900);
+      /*
+        Only a query for the *words*. `/review?unit=` filters the learner's own
+        cards by their lexeme's lemma, and one row per card is right there:
+        those cards exist and are due. What creates them is `addUnitToDeck`,
+        which is a lexeme query and is checked.
+      */
+      if (!src.slice(from, at).includes("prisma.lexeme.")) {
+        at = src.indexOf("lemma: { in:", at + 1);
+        continue;
+      }
+      assert.ok(
+        /oneEntryPerLemma/.test(window) || /new Set\(/.test(window),
+        `${file}: looks a list of lemmas up and uses every row. A lemma can hold two `
+        + `entries, so pass the result through oneEntryPerLemma() (lib/dict/search.ts), `
+        + `which applies the same rule the dictionary leads with. Counting distinct `
+        + `lemmas into a Set is the other honest answer.`,
+      );
+      at = src.indexOf("lemma: { in:", at + 1);
+    }
+  }
+});
+
 check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
   /*
     There were ten, in three implementations. Four in `app/` were Fisher-Yates
@@ -794,6 +853,49 @@ check("there is one shuffle, and the sort-comparator kind is not a shuffle at al
     /rebuilds the paper from that seed to mark it/,
     `${EXCEPTION} keeps its own shuffle and its header stopped saying why`,
   );
+});
+
+check("a `take` beside a `distinct` bounds nothing, so it is scoped to one owner", () => {
+  /*
+    Prisma applies `distinct` in the client. A `LIMIT` would cut rows before the
+    deduplication, so it emits none: `findMany({ distinct, take })` reads every
+    matching row, adds an id column of its own to deduplicate with, sorts, and
+    throws the surplus away in JavaScript. The `take` reads exactly like a bound
+    and is not in the query at all.
+
+    Measured, not inferred. `countGroups` in the suggestion queue carried a
+    comment saying a `groupBy` "would read every matching group to count them,
+    which at the volume this queue is built for is the one query that would stop
+    being cheap", and its replacement emitted
+    `SELECT id, groupKey FROM Suggestion WHERE status = $1 ORDER BY id` for a
+    single number. It read every row where the query it replaced read one per
+    group, on the one table open sign-up lets strangers grow.
+
+    So the rule is not "never pair them", because a query for one learner's own
+    cards is bounded by the size of their deck whatever the `take` says, and two
+    of those are honest. It is that the pairing may only ever be owner-scoped:
+    an unscoped one reads the whole table however small the number beside it
+    looks. Anything deployment-wide counts in Postgres.
+  */
+  for (const file of ALL) {
+    // Comments out, or this fires on the paragraph in `practice/page.tsx` that
+    // describes the query it stopped making. Which it did, once.
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    let at = src.indexOf("distinct: [");
+    while (at !== -1) {
+      // The enclosing call: back to the `prisma.` that opened it, forward to
+      // the end of that argument object.
+      const opened = src.lastIndexOf("prisma.", at);
+      const call = src.slice(opened, src.indexOf("})", at) + 2);
+      assert.ok(
+        /ownerId/.test(call),
+        `${file}: a Prisma \`distinct\` with no ownerId in its where. That reads the whole `
+        + `table however small the \`take\` beside it looks, because Prisma emits no LIMIT `
+        + `next to a distinct. Count it in Postgres instead.`,
+      );
+      at = src.indexOf("distinct: [", at + 1);
+    }
+  }
 });
 
 check("which of two entries for one word wins is decided, not left to the rows", () => {

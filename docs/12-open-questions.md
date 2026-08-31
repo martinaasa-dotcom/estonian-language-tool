@@ -88,6 +88,16 @@ thirteen look like real pairs rather than mislabels, since `hall` is grey and al
 `keskmine` is average and also the middle, and telling those apart from `must` twice is the decision
 nobody has made.
 
+**And the search was not the only screen that had to choose.** The syllabus names *lemmas*, so
+`where: { lemma: { in: [...unit.lemmas] } }` returns a row per entry, and seven places used every
+one: `/learn/[unit]` listed a word twice and counted it twice, its worksheet printed it six times,
+the lesson planner gave the duplicate a place in the sitting, `addUnitToDeck` and `recordLesson`
+each built two sets of cards for the one word, the landing page's three-word demo could have picked
+the entry with no forms, and React warned about two children with one key. `oneEntryPerLemma` is
+the one answer and it is `bySubstance` again, so a course screen and the search box cannot disagree
+about which `vana` is real. Found by a browser suite reading the console rather than by looking,
+which is worth knowing: the pages looked right on a database that happened to hold one row.
+
 It also still matters wherever the part of speech is the point rather than the shape: which practice
 modes a word is eligible for, and any future rule that reads `pos`.
 

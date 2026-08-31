@@ -247,11 +247,58 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
  */
 const HAND_WRITTEN = new Set(["SEED", "USER"]);
 
-function bySubstance(a: Candidate, b: Candidate): number {
+/** The least a row has to carry for the rule above to have an opinion about it. */
+export interface Substantial {
+  id: string;
+  pos: string;
+  provenance: string;
+  forms: readonly unknown[];
+}
+
+export function bySubstance(a: Substantial, b: Substantial): number {
   return Number(b.pos !== "OTHER") - Number(a.pos !== "OTHER")
     || Number(HAND_WRITTEN.has(b.provenance)) - Number(HAND_WRITTEN.has(a.provenance))
     || b.forms.length - a.forms.length
     || a.id.localeCompare(b.id);
+}
+
+/**
+ * One entry per lemma, in the order the caller asked for them.
+ *
+ * `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one row, and a
+ * unit of the syllabus names *lemmas*. Five screens looked their unit's words
+ * up with `where: { lemma: { in: [...unit.lemmas] } }` and rendered whatever
+ * came back, so a lemma with two entries appeared twice on every one of them.
+ * Not theoretical: with a scanned `tuba` confirmed into the dictionary beside
+ * the Ekilex one, `/learn/kodu` listed the word twice and its printable
+ * worksheet printed it six times, once per section. The unit page also counted
+ * it twice, so a unit reported more words than it teaches; the lesson planner
+ * split a duplicate into its own sitting; and React was warning about two
+ * children with the same key, which it says may duplicate or omit a row.
+ *
+ * The thirteen adjective/noun pairs of open question Q8 are the same shape and
+ * ship with a fresh seed, so this is the ordinary case rather than the odd one.
+ *
+ * Which of the two wins is not a new decision: it is `bySubstance`, the rule
+ * the dictionary already uses to choose what a search leads with. A course
+ * screen and the search box disagreeing about which `vana` is the real one
+ * would be worse than either answer.
+ *
+ * The order is the caller's, because a unit's word list is taught in the order
+ * it was written and the sort that used to do this (`order.get(a.lemma) -
+ * order.get(b.lemma)`) returned 0 for exactly the two rows that are the
+ * problem.
+ */
+export function oneEntryPerLemma<T extends Substantial & { lemma: string }>(
+  rows: readonly T[],
+  wanted: readonly string[],
+): T[] {
+  const best = new Map<string, T>();
+  for (const row of rows) {
+    const held = best.get(row.lemma);
+    if (!held || bySubstance(row, held) < 0) best.set(row.lemma, row);
+  }
+  return wanted.map((lemma) => best.get(lemma)).filter((row): row is T => row !== undefined);
 }
 
 /**

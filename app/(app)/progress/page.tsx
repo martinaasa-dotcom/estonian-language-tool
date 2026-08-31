@@ -431,42 +431,64 @@ export default async function ProgressPage() {
   );
 }
 
+/** How many opted-in learners the weekly board is ranked from. */
+const BOARD_CANDIDATES = 2000;
+
 /**
  * This week's XP for everyone who has opted in.
  *
  * Only opted-in learners are read at all, and only their chosen display name
  * and a number leave the query — a leaderboard that leaked email addresses
- * would be a privacy incident, not a feature. Capped at a class-sized group,
- * since the whole thing is tallied in memory.
+ * would be a privacy incident, not a feature.
+ *
+ * The cap said it was there "since the whole thing is tallied in memory", and
+ * the tallying was the reason it had to be so small: this read every review
+ * every opted-in learner had written all week, which for two hundred people is
+ * tens of thousands of rows fetched to produce four numbers each. Postgres
+ * counts them now, so what comes back is at most four rows per learner and the
+ * cap can be a bound on the `IN` list rather than on the work.
  */
 async function weeklyLeaderboard(now: Date) {
   const since = new Date(now.getTime() - 7 * 86_400_000);
+  /*
+    Ordered, because which learners the board is drawn from was the plan's
+    choice: past the cap somebody could be on it one week and gone the next
+    having done nothing differently.
+
+    There is nothing on `Setting` that ranks people, so this is stable rather
+    than meaningful, and worth saying plainly: past the cap the board is the
+    top twenty of a fixed two thousand opted-in learners rather than of the
+    whole deployment. Ranking properly would mean tallying everybody first,
+    which is the query this function just stopped doing.
+  */
   const optedIn = await prisma.setting.findMany({
     where: { key: SETTING_KEYS.leaderboard, value: "1" },
     select: { ownerId: true },
-    take: 200,
+    orderBy: { ownerId: "asc" },
+    take: BOARD_CANDIDATES,
   });
   const ids = optedIn.map((s) => s.ownerId);
   if (ids.length === 0) return [];
 
-  const [names, reviews] = await Promise.all([
+  const [names, counts] = await Promise.all([
     prisma.setting.findMany({
       where: { key: SETTING_KEYS.displayName, ownerId: { in: ids } },
       select: { ownerId: true, value: true },
     }),
-    prisma.review.findMany({
+    prisma.review.groupBy({
+      by: ["ownerId", "rating"],
       where: { reviewedAt: { gte: since }, ownerId: { in: ids } },
-      select: { rating: true, ownerId: true },
+      _count: { _all: true },
     }),
   ]);
 
   const nameByOwner = new Map(names.map((n) => [n.ownerId, n.value]));
   const tally = new Map<string, Record<number, number>>();
-  for (const r of reviews) {
-    const owner = r.ownerId;
-    const counts = tally.get(owner) ?? {};
-    counts[r.rating] = (counts[r.rating] ?? 0) + 1;
-    tally.set(owner, counts);
+  for (const row of counts) {
+    const owner = row.ownerId;
+    const forOwner = tally.get(owner) ?? {};
+    forOwner[row.rating] = (forOwner[row.rating] ?? 0) + row._count._all;
+    tally.set(owner, forOwner);
   }
 
   return ids
@@ -475,6 +497,9 @@ async function weeklyLeaderboard(now: Date) {
       name: nameByOwner.get(ownerId)?.trim() || "A learner",
       xp: xpFromRatingCounts(tally.get(ownerId) ?? {}),
     }))
-    .sort((a, b) => b.xp - a.xp)
+    // Total, so two learners level on the week are not ordered by whatever the
+    // rows arrived in. Same rule as `bySubstance` in the dictionary: a
+    // comparator that can return 0 for two different rows decides nothing.
+    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name) || a.ownerId.localeCompare(b.ownerId))
     .slice(0, 20);
 }
