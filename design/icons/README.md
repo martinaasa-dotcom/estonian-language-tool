@@ -215,3 +215,54 @@ not belong to some other app.
 
 **04j gets to use both meanings of one word.** *Kiri* means writing and it means pattern, and a
 ploughed field running away from you is a page of lines running away from you.
+
+## Round six: the abstract pivot
+
+Five rounds branded around three things and only three: the country's symbols, the letter and the
+number, and the landscape. Round six drops all of them and brands around what the app does to a
+person over a year. Ten in `design/icons/round6/`, drawn by `node scripts/make-icon-round6.mjs`,
+flat throughout.
+
+Aastarongad (a cut log, one ring a year), Kontuur (contour lines), Tempel (the state stamp, since
+the examination is why people come), Malu (a form dissolving at one edge, which is the forgetting
+curve the scheduler exists to fight), Syvis (a core drilled out and read downward), Suur Vanker
+(the Plough), Rada (a route across open ground), Solmed (a knot tied for each thing counted), Kuu
+faasid (the same face differently lit, coming back), and Prisma (one form goes in, fourteen come
+out, which is the single sentence that explains Estonian to somebody who has never met a case).
+
+## Round seven: animals
+
+Ten in `design/icons/round7/`, drawn by `node scripts/make-icon-round7.mjs`.
+
+Estonia's list is short and three of it are unusually good for a mark. The **lendorav**, the
+Siberian flying squirrel, survives in the European Union in this country and Finland and nowhere
+else. The **ilves** has one of the densest lynx populations in Europe here. And there are around
+nine hundred brown bears, also among the densest.
+
+**The risk is the whole reason this exercise started.** The mark being replaced is a face and it
+reads as an app for toddlers; a cute animal is one step from exactly that. So every face here is
+geometric and none of them smiles: round eyes, no mouth, no brows, no blush. Three carry no face at
+all, to make the cost of the face visible rather than arguable.
+
+| # | Animal | Reads as |
+|---|---|---|
+| 06g | **Karu** | reads instantly, clearest at every size |
+| 06i | **Viigerhyljes** | reads instantly |
+| 06e | **Ilves, korvad** | the most brand-like: tufts, two flat eyes, no glint |
+| 06d | **Ilves** | reads as a lynx, once the tufts and ruff are drawn hard |
+| 06f | **Ilves, istumas** | reads as a lynx |
+| 06h | **Siil** | reads instantly |
+| 06j | **Suitsupaasuke** | reads as a bird |
+| 06a | **Lendorav** | reads as a panda |
+| 06b | **Lendorav, libisemas** | does not read |
+| 06c | **Lendorav, ilma naota** | does not read |
+
+**The lendorav is the best story and the worst drawing.** It is the most Estonian animal available
+and it would not read: face on it is a panda, gliding it is a blob, and with the eyes removed it is
+nothing at all. The third one is kept deliberately, as the measure of what the face is doing.
+
+**The lynx needed its tufts.** The first attempt was a tabby. Long ear tufts and a flared cheek
+ruff are the only two things separating a lynx from a house cat, so both are drawn hard.
+
+The wolf, national animal since 2018, is absent. It was drawn three times in round one and read as
+a cat, then a fox, then a leaf.
