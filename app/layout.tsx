@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { OfflineProvider } from "@/components/OfflineProvider";
 import "./globals.css";
 
@@ -102,6 +103,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             it has to sit above both route groups — the offline fallback is
             reachable from either. */}
         <OfflineProvider>{children}</OfflineProvider>
+        <Analytics />
       </body>
     </html>
   );
