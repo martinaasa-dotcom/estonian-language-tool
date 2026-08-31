@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
+import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
@@ -145,7 +146,16 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
     line from going stale the way "eighteen units, A1 to C1" once did.
   */
   const claims = [
-    `${stats.words.toLocaleString("en-GB")} words, every form from Ekilex`,
+    /*
+      "Every form from Ekilex" was one source too few, and the half it left out
+      is the half a stranger meets first: the built-in set is hand-typed
+      principal parts checked against a reference, the course vocabulary is
+      Ekilex's, and the English on all of it is Wiktionary's. What every one of
+      them has in common is the thing worth claiming, which is that a person or
+      a dictionary put each form there and no model did. The FAQ names the three
+      sources one screen down; this line is the promise they add up to.
+    */
+    `${stats.words.toLocaleString("en-GB")} words, ${stats.forms.toLocaleString("en-GB")} forms, none from a model`,
     `${PATH.length} units, ${LEVELS[0]} to ${LEVELS[LEVELS.length - 1]}`,
     "Free, and it works offline",
   ];
@@ -177,16 +187,28 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           the rule instead of just marking you wrong.
         </p>
 
-        <div className="fade-up mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: "210ms" }}>
-          <ButtonLink href="/sign-in" variant="primary" size="lg">
+        {/*
+          One loud action, and a quiet way out of it.
+
+          These were two heavy pills of different widths, which on a 360px
+          screen wrap into a lopsided stack: a gradient button, then a bordered
+          white one under it ending somewhere else entirely, both shouting at
+          the same volume about two things that are not equally important. The
+          rule the button primitive is written under is one loud action per
+          screen, and a second pill with its own shadow is a second one. So the
+          call to action fills the line on a phone and sits at its natural width
+          above that, and "show me a word" is what it always was: a link.
+        */}
+        <div className="fade-up mt-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-5" style={{ animationDelay: "210ms" }}>
+          <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
             Start learning, free <ArrowRight size={17} aria-hidden />
           </ButtonLink>
           <a
             href="#cases"
-            className="press inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-base font-semibold transition-ui hover:-translate-y-px"
-            style={{ background: "var(--surface)", borderColor: "var(--rule)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
+            className="inline-flex items-center gap-2 px-1 py-2 text-base font-semibold underline underline-offset-4 transition-opacity hover:opacity-70"
+            style={{ color: "var(--ink-2)" }}
           >
-            Show me a word <BookOpen size={16} aria-hidden />
+            <BookOpen size={16} aria-hidden /> Show me a word
           </a>
         </div>
 
@@ -203,24 +225,33 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
       </div>
 
       <div className="fade-up relative" style={{ animationDelay: "320ms" }}>
-        {/* Floating diacritics: the six characters this whole app is built around. */}
+        {/*
+          Floating diacritics: the six characters this whole app is built
+          around. They are tucked over the card's corners on purpose, by
+          between sixteen and forty pixels depending on the width, and they
+          are `pointer-events-none` because of it: they are `aria-hidden`
+          ornament, and an ornament that eats a tap on the card underneath it
+          is a decoration doing something no decoration should. At 768 the
+          bottom one lands on a tick rather than on a blank corner, which is
+          how this turned up.
+        */}
         <span
           aria-hidden
-          className="est float diacritic absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
+          className="est float pointer-events-none absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
           style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="est float diacritic absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
+          className="est float pointer-events-none absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
           style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="est float diacritic absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
+          className="est float pointer-events-none absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
           style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
         >
           ü
@@ -432,7 +463,7 @@ function Feature({ tone, icon, title, body, className = "" }: {
 const STEPS = [
   {
     title: "Pick a unit, or look a word up",
-    body: "A course from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class.",
+    body: "A course from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class. You can also photograph the page you were set and tick the words off it.",
     tone: "sky",
   },
   {
@@ -472,7 +503,14 @@ function HowItWorks() {
                 aria-hidden
                 /* Ornament rather than type: a step number set large enough
                    to read as a shape behind the card. Off the scale on
-                   purpose — see docs/14-design-system.md §3. */
+                   purpose — see docs/14-design-system.md §3.
+
+                   `data-ornament` says the same thing to the contrast pass in
+                   scripts/test-design.mjs, which measures single characters
+                   now and would otherwise read a hue's own tint at 1.18:1 as a
+                   failure. It is decoration: the step is written in words
+                   inside the card this sits behind. */
+                data-ornament
                 className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
                 style={{ color: `var(--${s.tone}-soft)` }}
               >
@@ -511,8 +549,13 @@ function HowItWorks() {
  * the cells we could not confirm rather than a guess in our own favour. No
  * logos, no borrowed branding, nothing about price beyond what their own store
  * listing says, and a credit line under the table for what each of them does
- * better than Kodukeel does. Three of the eight rows are ticks for somebody
- * else, which is what a comparison looks like when it is not rigged.
+ * better than Kodukeel does. On most of these rows somebody else ticks too,
+ * which is what a comparison looks like when it is not rigged.
+ *
+ * How many is counted from the rows rather than written under them. It said
+ * three, the table had grown since, and the true figure was seven: a sentence
+ * claiming to be an honest comparison was the one sentence on the page nobody
+ * had rechecked. `SHARED_ROWS` cannot drift from the grid it describes.
  *
  * If you add a row, it has to be checkable by a stranger in an afternoon. A row
  * that can only be settled by opinion belongs in the prose, not the grid.
@@ -538,6 +581,20 @@ const ROWS: readonly { label: string; cells: readonly [Verdict, Verdict, Verdict
   { label: "Explains why the answer was wrong", cells: ["yes", "yes", "yes", "no"] },
   { label: "Keeps working with no connection", cells: ["yes", "unsure", "no", "yes"] },
 ];
+
+/**
+ * Rows where a product other than ours also earns a tick. Read off `ROWS`,
+ * because the summary above the table says the number out loud.
+ *
+ * Spelled rather than printed as a digit, because the sentence around it is
+ * prose and the rest of this page counts in words. The table is eight rows
+ * long, so the list only has to reach as far as the table can.
+ */
+const COUNTED = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight"] as const;
+const shared = ROWS.filter((row) => row.cells.slice(1).includes("yes")).length;
+/** It opens the sentence, so it opens with a capital. */
+const CLAIM_COUNT = (COUNTED[ROWS.length] ?? String(ROWS.length)).replace(/^./, (c) => c.toUpperCase());
+const SHARED_ROWS = COUNTED[shared] ?? String(shared);
 
 const CREDITS = [
   {
@@ -624,8 +681,8 @@ function Comparison() {
               </span>
               <span className="mt-2 block max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 Duolingo has never offered an Estonian course, so the choice you actually face is
-                between the tools that do. Eight claims, checked against their own public pages,
-                three of them ticks for somebody else.
+                between the tools that do. {CLAIM_COUNT} claims, checked against their own public
+                pages, and on {SHARED_ROWS} of them somebody else ticks too.
               </span>
             </span>
             <span
@@ -747,7 +804,7 @@ function Comparison() {
 const FAQS = [
   [
     "Do I need to pay for anything?",
-    "No, and there is nothing to set up either. Sign in with Google and the dictionary, flashcards, audio, every practice mode and your exports are all there, with no limit on any of them. Anu, the tutor, is the one part that costs this site money to run, so she answers ten questions a day per person. Everything else is unmetered.",
+    "No, and there is nothing to set up either. Sign in with Google and the dictionary, the flashcards, every practice mode, the mock exam and your exports are yours with nothing counted. What is counted is the handful of things that cost this site money each time they run, and they carry a day's allowance rather than a price: ten questions to Anu, thirty notes back from the writing grader, twenty photographed pages, and three hundred phrases of speech nobody has asked for before. Audio is cached once it has been spoken, so a review session never reaches that last number.",
   ],
   [
     "Where do the Estonian forms come from?",
@@ -755,7 +812,7 @@ const FAQS = [
   ],
   [
     "Is this only for beginners?",
-    "It covers A1 to C1. The parts that make Estonian hard later (consonant gradation, verb government, total versus partial objects) each get their own card type rather than being left to guesswork.",
+    "It covers A1 to C1. The parts that make Estonian hard later (consonant gradation, verb government, total versus partial objects) each get their own card type rather than being left to guesswork. There is a ten-minute placement check if you would rather not guess where you are, and a mock paper for the state examination at A2, B1, B2 and C1, assembled from recorded sentences and marked by comparison against the dictionary.",
   ],
   [
     "What happens to my data?",
@@ -822,14 +879,14 @@ function FinalCta() {
               Look up one word, add it, and let the scheduler do the remembering. That is the whole
               commitment.
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <ButtonLink href="/sign-in" variant="primary" size="lg">
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-5">
+              <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
                 Start learning, free <ArrowRight size={17} aria-hidden />
               </ButtonLink>
               <a
                 href="#cases"
-                className="press inline-flex items-center gap-2 rounded-full border px-6 py-3.5 text-base font-semibold transition-ui hover:-translate-y-px"
-                style={{ background: "var(--surface)", borderColor: "transparent", color: "var(--ink)" }}
+                className="inline-flex items-center gap-2 px-1 py-2 text-base font-semibold underline underline-offset-4 transition-opacity hover:opacity-70"
+                style={{ color: "var(--ink-2)" }}
               >
                 <Headphones size={16} aria-hidden /> See it first
               </a>
@@ -947,7 +1004,6 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  * is derived by `buildCaseTable()`, exactly as the live path does it. Nothing
  * here is a hand-written Estonian form.
  */
-const SEED_SET_SIZE = { words: 360, forms: 1568 };
 
 const FALLBACK_STEMS = [
   { lemma: "tuba", translation: "room", cefr: "A1", gradationNote: "b : ∅",

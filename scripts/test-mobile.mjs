@@ -12,6 +12,7 @@
  */
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ensureLetterBar } from "./lib/prefs.mjs";
 
 const B = baseUrl();
 
@@ -304,17 +305,12 @@ for (const path of ["/learn", "/learn/kodu", "/placement"]) {
 //     check here then fails on the next run for a reason that has nothing to
 //     do with the code. Setting it on first costs one page load and makes this
 //     block say the same thing twice in a row.
-async function letterBarOn(browser) {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const page = await ctx.newPage();
-  await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
-  const on = page.getByRole("radio", { name: /Show the letters/ }).first();
-  if ((await on.getAttribute("aria-checked")) !== "true") {
-    await on.click();
-    await page.waitForTimeout(1500);
-  }
-  await ctx.close();
-}
+//
+//     `ensureLetterBar` lives in scripts/lib/prefs.mjs now rather than here.
+//     The rule it embodies turned out to belong to every suite and not to this
+//     one: e2e types through the same row and inherited whatever this or first
+//     run had left, which cost a real thirty-second failure on an app with
+//     nothing wrong with it.
 
 const letterBar = (page) => page.evaluate(() => {
   const bars = [...document.querySelectorAll(".letter-bar")];
@@ -324,7 +320,7 @@ const letterBar = (page) => page.evaluate(() => {
   };
 });
 
-await letterBarOn(browser);
+await ensureLetterBar(browser, B, "on");
 
 for (const width of PHONES) {
   const { ctx, page } = await open(width, 844, "/dictionary");

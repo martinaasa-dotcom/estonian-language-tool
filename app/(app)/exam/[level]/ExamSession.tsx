@@ -11,7 +11,7 @@ import { Button } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Recorder } from "@/components/Recorder";
-import { Speak } from "@/components/Speak";
+import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Meter, Note, SectionTitle } from "@/components/ui";
 import type { ExamItem, ExamTask, Paper } from "@/lib/exam/paper";
 import type { Response } from "@/lib/exam/score";
@@ -993,18 +993,19 @@ function Audible({ item, number, response, canPlay, onAnswer, slow, children }: 
     <div>
       <p className="mb-3 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
         <span className="label-xs" style={{ color: "var(--ink-3)" }}>{number}</span>
-        <Speak
-          text={item.answer}
-          label={`Play recording ${number}`}
-          disabled={!canPlay || spent}
-          onPlay={() => setPlayed((n) => n + 1)}
-          onUnavailable={lose}
-        />
-        {slow && (
+        {slow ? (
+          <SpeakPair
+            text={item.answer}
+            label={`Play recording ${number}`}
+            slowLabel={`Play recording ${number} slowly`}
+            disabled={!canPlay || spent}
+            onPlay={() => setPlayed((n) => n + 1)}
+            onUnavailable={lose}
+          />
+        ) : (
           <Speak
             text={item.answer}
-            slow
-            label={`Play recording ${number} slowly`}
+            label={`Play recording ${number}`}
             disabled={!canPlay || spent}
             onPlay={() => setPlayed((n) => n + 1)}
             onUnavailable={lose}
@@ -1175,7 +1176,7 @@ function RequiredWords({ words, text }: {
         return (
           // `wrap`, because this chip carries a full dictionary gloss rather
           // than a label, and a gloss is as long as the word needs.
-          <Chip key={word.lexemeId} tone={done ? "good" : "neutral"} caseSensitive wrap>
+          <Chip key={word.lexemeId} tone={done ? "good" : "neutral"} caseSensitive>
             <span className="est" lang="et">{word.lemma}</span>
             <span style={{ opacity: 0.75 }}>{word.translation}</span>
           </Chip>

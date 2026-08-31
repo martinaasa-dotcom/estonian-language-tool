@@ -1,8 +1,8 @@
-# Design System — "rukkilill sunrise"
+# Design System: "rukkilill sunrise"
 
 The visual language the app was rebuilt on in 2026-08. It replaces the birch-and-cornflower
 neutral scheme described in `08-ux-ia-a11y.md` §6; everything that document says about
-*behaviour* — the four states, the keyboard model, the diacritic bar — still holds.
+*behaviour* (the four states, the keyboard model, the diacritic bar) still holds.
 
 ## 1. Why it looks like this
 
@@ -24,25 +24,25 @@ of pastel light behind everything so the ground never reads as grey.
 | Butter | `--butter` / `--hard` | nearly, timed, a warning that isn't a failure |
 | Peach | `--peach` / `--again` | missed, overdue, destructive |
 | Sky | `--sky` / `--easy` | easy, new, reference material |
-| Blush | `--blush` | Anu, the tutor — the one part of the app that talks back |
+| Blush | `--blush` | Anu, the tutor, the one part of the app that talks back |
 
 Grading colours are aliases (`--again` → `--peach`), so the rating scale and the rest of the UI
 can never drift apart.
 
 Two uses of colour, and only one of them carries meaning:
 
-- **A chip's hue is a claim.** `again` on a chip says "this is not authoritative" — it is what
+- **A chip's hue is a claim.** `again` on a chip says "this is not authoritative", and it is what
   every AI-written translation wears, in the dictionary, in Anu's replies, on the grammar pages
   and in dictation. `hard` says "there is an irregularity here to learn", which is what gradation
   notes and the memorised principal parts wear. Reach for a hue on a chip only when you mean the
   thing that hue means.
 - **A tile in a set of tiles is just telling itself apart from its neighbours.** The four figures
   in a session summary, and the practice modes on Today, cycle the palette so they can be scanned
-  — XP is blush there because it is the fifth tile, not because Anu is involved.
+  apart. XP is blush there because it is the fifth tile, not because Anu is involved.
 
 ### Every hue has an ink
 
-The five hues are chosen to read as *colour* at full strength — a bar, a ring, a
+The five hues are chosen to read as *colour* at full strength: a bar, a ring, a
 dot, a filled button. Set as **text on their own 8% tint** they land around
 2.5:1, which is decoration pretending to be a label. So each hue also has an
 ink: the same colour walked down until it clears 4.5:1 on its own tint.
@@ -52,6 +52,16 @@ ink: the same colour walked down until it clears 4.5:1 on its own tint.
 | A bar, ring, dot, or filled surface | `--mint`, `--peach`, `--butter`, `--sky`, `--blush`, `--accent` |
 | Text or a meaningful icon on that hue's tint | `--mint-ink`, `--peach-ink`, `--butter-ink`, `--sky-ink`, `--blush-ink`, **`--accent-deep`** |
 | Text on the *solid* accent | `--accent-ink` (white) |
+| Text on the *solid* mint | `--on-mint` (near-black, the same in both themes) |
+
+Mint is the other half of that trap and did not have its own answer until a
+contrast pass found the hole: the tick inside a reviewed day on Today's week
+strip was `--surface`, which is white on `#1fb894` at 2.52:1. `--mint-ink` is
+the ink on mint's *tint* and is no use on the solid fill, so `--on-mint` is the
+one for that, and it is a single value in both themes rather than a light and a
+dark, because both mints are light enough for it: 7.40:1 on `#1fb894` and
+11.70:1 on the dark theme's `#5fe3bc`. It is written out rather than
+`var(--ink)`, which inverts with the theme and would take the tick with it.
 
 The accent is the trap: `--accent-ink` was already the white that sits on the
 solid button, so the accent's *tint* ink is `--accent-deep`. Anything building a
@@ -59,7 +69,7 @@ token name from a tone must go through `toneInk()` in `components/ui.tsx`, or it
 paints white text on a pale lilac tile.
 
 The grading aliases follow: `--good-ink`, `--hard-ink`, `--again-ink`,
-`--easy-ink`. In dark mode each ink is the hue itself — the dark tints are deep
+`--easy-ink`. In dark mode each ink is the hue itself, since the dark tints are deep
 enough that the hue already clears 7:1 on them.
 
 `--ink-3` is picked against every surface in the system rather than against
@@ -115,10 +125,10 @@ one gradient button.
 
 ## 3. Type
 
-- **Fraunces** (`.est`) — headings, numbers that matter, and every Estonian word in the app.
-- **Plus Jakarta Sans** — the interface around it.
+- **Fraunces** (`.est`): headings, numbers that matter, and every Estonian word in the app.
+- **Plus Jakarta Sans**: the interface around it.
 
-**Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes —
+**Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes,
 13px and 13.5px and 14px appearing inside one card, each chosen once and never compared with the
 others. A reader does not see half a pixel; they see a page that will not settle.
 
@@ -139,28 +149,66 @@ others. A reader does not see half a pixel; they see a page that will not settle
 11.5px is a floor, not a suggestion: below it an uppercase label stops being readable on a phone
 held at arm's length in the evening, which is when this app is actually used. `.label-xs` sits on
 that floor. The one thing off the scale is the step numeral behind the landing page's how-it-works
-cards — that is ornament, not type.
+cards. That is ornament, not type.
 
 Both are loaded with `latin-ext`, which is not optional: without it `õ ä ö ü š ž` fall back to a
 different face mid-word. The font variables are attached to `<html>`, not `<body>`, because
-`--font-serif` is declared on `:root` and references them — a custom property is substituted
+`--font-serif` is declared on `:root` and references them, and a custom property is substituted
 where it is declared, so the face has to be in scope there.
+
+### Text stays in its box
+
+Four declarations in `app/globals.css`, and between them they are the reason no screen here has a
+word sitting on the ground behind a card.
+
+- **`overflow-wrap: anywhere`, inherited from the body.** A word that will not fit breaks.
+  `anywhere` rather than `break-word` because only `anywhere` counts towards min-content, which is
+  what a flex or grid item's automatic minimum is: with `break-word` one long word is a floor under
+  the whole row and the row leaves the card having broken nothing. Estonian is why this is not
+  academic. The dictionary holds compounds past twenty characters and the row holding one is three
+  or four columns wide on a phone.
+- **`table { overflow-wrap: break-word }` is the single exemption.** A paradigm is read by
+  comparing forms down a column, so a form split across two lines has to be reassembled before it
+  can be compared. The table pays for that with a scroller of its own, which every table in the app
+  sits in and `scripts/test-invariants.ts` checks.
+- **`svg.lucide { flex: none }`.** An icon is a square and a flex item with no `flex` of its own
+  both shrinks and grows: measured with the rule off, `lucide-eye-off` was drawn 0x15 in a deck row
+  and `lucide-sun` 28x16 in the rail. `shrink-0` was on about a fifth of the icons in the app,
+  which is what a rule kept by remembering looks like from the inside.
+- **`img, video, canvas, iframe, input, select, textarea { max-width: 100% }`.** The one thing
+  wrapping cannot reach: a replaced element brings its own width. Settings' backup picker is an
+  `<input type="file">`, laid out at 336px from its button label and room for a filename, and it
+  was in a 278px card on a 360px phone.
+
+`scripts/test-containment.mjs` is the half that measures rectangles: every text-bearing element,
+every icon and everything with a width of its own, across every route the app has at 360, 768 and
+1280, in the dark as well as the light, in the states a route does not arrive in, and on the three
+screens that need a row made before they can be visited. Four questions each time, of which the
+fourth is whether anything is drawn on top of anything else. Then the same four again with every
+run of text swapped for one of the same length with no space or hyphen in it. Same length is the
+discipline: a stress test that hands every element a forty-character word is unfalsifiable, since a
+ring whose middle says "42%" fails it and no markup would pass. Same length asks what the language
+actually asks.
+
+768 earns its place: it is the width at which the rail appears, so the content column is narrower
+there than at any other width the app is used at, and every fault this suite has found since it
+started measuring three widths has been at that one.
 
 ## 4. Motion
 
 Small, physical, and never blocking:
 
-- `.lift` — cards that are themselves a link rise 3px on hover.
-- `.press` — every button dips on `:active`. This is most of what makes the app feel responsive.
-- `.transition-ui` — the shared transition, with its properties named. Never `transition-all`:
+- `.lift`: cards that are themselves a link rise 3px on hover.
+- `.press`: every button dips on `:active`. This is most of what makes the app feel responsive.
+- `.transition-ui`: the shared transition, with its properties named. Never `transition-all`:
   that animates `outline-width` too, so a focus ring fades in over 200ms and a keyboard user
   watches it arrive.
-- `.fade-up`, `.pop-in` — entrances for content that has just arrived (a flipped card, a summary).
-- `.float` — the mascot and the landing page's decorative letters.
-- `.reveal` — the landing page's scroll-driven section reveal, done with CSS scroll timelines so
+- `.fade-up`, `.pop-in`: entrances for content that has just arrived (a flipped card, a summary).
+- `.float`: the mascot and the landing page's decorative letters.
+- `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
 
-`prefers-reduced-motion: reduce` flattens all of it, and switches `.reveal` off outright — a
+`prefers-reduced-motion: reduce` flattens all of it, and switches `.reveal` off outright, because a
 scroll-driven animation has no duration to shorten, so it needs removing rather than shrinking.
 
 ## 5. Components
@@ -214,14 +262,14 @@ component rather than an asset so it inherits the theme and can change mood.
 
 Two route groups:
 
-- `app/(app)/` — the signed-in shell: rail, floating mobile bar, pastel wash.
-- `app/(chromeless)/` — `/welcome`, `/sign-in` and `/start` (first-run setup), which own the
+- `app/(app)/`: the signed-in shell, with rail, floating mobile bar, pastel wash.
+- `app/(chromeless)/`: `/welcome`, `/sign-in` and `/start` (first-run setup), which own the
   whole screen and get none of that chrome. Being in this group is what decides it: the rail is
   rendered by `(app)/layout.tsx` and never has a path list to keep in sync.
 
 `/welcome` is public (see `middleware.ts`) and is the front door for a signed-out visitor
 arriving at `/`. Every Estonian form on it is read from the real dictionary and run through
-`buildCaseTable()` — the same function the app uses. Nothing on that page is a mock-up, and no
+`buildCaseTable()`, the same function the app uses. Nothing on that page is a mock-up, and no
 Estonian form on it was typed into marketing copy by hand. If the database is unreachable it
 falls back to principal parts copied verbatim from the checked seed set, and shows no derived
 forms at all.
@@ -229,7 +277,7 @@ forms at all.
 ## 7. What has not changed
 
 - Every view still implements the four states from `08-ux-ia-a11y.md` §4.
-- Every interactive element is still keyboard-reachable, with a visible focus ring — now 2.5px,
+- Every interactive element is still keyboard-reachable, with a visible focus ring, now 2.5px,
   offset 3px.
 - Estonian text still carries `lang="et"`, and every Estonian input still has the letter bar,
   on a desktop and for a learner who has not turned it off.
@@ -237,7 +285,7 @@ forms at all.
 
 ## 8. Session screens
 
-Every practice mode — review, sprint, match, listening, sentences, speaking, dictation — wears the
+Every practice mode (review, sprint, match, listening, sentences, speaking, dictation) wears the
 same chrome, because they are the same activity seen from different angles and a learner should not
 have to re-learn the frame:
 
@@ -255,15 +303,15 @@ toast has somewhere to land.
 ## 9. Screens brought into the system
 
 The pastel rebuild and the teaching-in-context pass (`13-mvp-status.md` §7) were built in
-parallel and merged. The screens that arrived from the second of those — classes, the sentence
-builder, speaking, the paradigm tables, example sentences, the install prompt — were restyled
+parallel and merged. The screens that arrived from the second of those (classes, the sentence
+builder, speaking, the paradigm tables, example sentences, the install prompt) were restyled
 onto the primitives above rather than kept as they were: token radii instead of hand-rolled ones,
 `Card` tones instead of bordered boxes, `StatTile` summaries, and `press`/`lift` on anything that
 can be clicked.
 
 One rule came out of that merge and is worth keeping: **a flex or grid item that holds text needs
 `min-w-0`**. Without it the item refuses to shrink below its own content, and a single long task
-title widens the whole page on a phone. The mobile sweep in `scripts/` checks for exactly this —
+title widens the whole page on a phone. The mobile sweep in `scripts/` checks for exactly this,
 no horizontal overflow at 390px on any route.
 
 ## 10. Paper
@@ -312,3 +360,42 @@ being said in the way of somebody who has not decided yet.
 
 What none of this licenses is hiding a thing because a screen looks busy. The test is whether the
 panel can say anything yet to the person in front of it. Where the answer is yes, it stays.
+
+## 12. Voice
+
+Everything above is what the app looks like. This is what it sounds like, and it is part of the
+design system for the same reason type and colour are: it is a property of every screen, decided
+once, and a screen that gets it wrong is off-system even when every token in it is right.
+
+The standard is **warm, kind, concise, and unmistakably a person**. `docs/18-voice.md` is the full
+version with worked before-and-after examples, and it is the one to read before writing a sentence
+anybody will see. The short version:
+
+**Warmth is attention, not enthusiasm.** `Six days in a row` is warmer than `Amazing work!`
+because
+it is about the learner and required us to have been looking. Praise adjectives and exclamation
+marks are the cheap substitute and read as such.
+
+**Kindness is where the news is bad**, which is most of the copy on any screen worth designing: the
+wrong answer, the empty deck, the search that found nothing, the paper that did not pass. Say the
+true thing plainly, then say what to do next. Never soften a correction into vagueness, because a
+learner left unsure whether they were wrong will rehearse the error.
+
+**Concise has no word count.** Cut anything that restates the heading, anything explaining why we
+are telling them, and any sentence that exists to round the paragraph off.
+
+**Never sound generated.** `lib/copy/voice.ts` is the one table: no em dash or en dash, no stock
+openers (`It's important to note that`, `Moreover`, `In conclusion`), no inflated shapes
+(`not just a rule, but a pattern`), no brochure vocabulary (`delve`, `leverage`, `seamless`, `empower`,
+`embark on`, `your journey`, `a plethora of`, `whether you're a beginner or`), and no emoji. It is swept over every
+reader-facing line of `app/`, `lib/`, `components/` and the README, and Anu is given the same rules
+from the same table.
+
+Two of these bind the visual system directly. **Emoji are banned because there is already an icon
+system**: data that drives UI carries a lucide icon name and `components/icons.tsx` is the only
+place one becomes a component, so an emoji in a heading is a second icon set with no tokens behind
+it. The check is narrow on purpose, since the arrow in "Estonian to English", the return key in a
+keyboard hint and the tick on the week strip are typographic glyphs in one colour doing a job no
+word does as well. And **an empty cell is `NO_VALUE`**, which is "n/a" from `lib/copy/values.ts`,
+never a typed dash: in a paradigm table a bare hyphen reads as a one-character form, and beside a
+percentage as a minus sign whose digits failed to load.

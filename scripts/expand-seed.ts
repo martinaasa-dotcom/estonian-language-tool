@@ -33,14 +33,34 @@ import { dirname } from "node:path";
 
 import { fetchEkilexDetails, searchEkilex } from "../lib/ekilex/client";
 import { mapEkilexDetails } from "../lib/ekilex/mapper";
-import { extractEstonianSenses } from "../lib/dict/wiktionary";
+import { extractEstonianEntries, type EstonianSense } from "../lib/dict/wiktionary";
+import { resolvePos } from "../lib/dict/pos";
 
 const CACHE = "prisma/data/.cache/expand.jsonl";
 const CATEGORY_CACHE = "prisma/data/.cache/categories.json";
 const OUT = "prisma/data/expanded.json";
 const UA = "Kodukeel/0.1 (Estonian learning tool; seed builder)";
 
-/** Wiktionary categories to draw candidates from, and the part of speech each implies. */
+/**
+ * Wiktionary categories to draw candidates from, and the part of speech each
+ * suggests for a word found only there.
+ *
+ * A category is a *candidate source*, not the answer, and reading it as the
+ * answer is the fault this list used to carry. Candidates were collected in
+ * this order and deduplicated first-wins, so any word in two categories came
+ * out as whichever is higher up, and nouns are first: `kallis`, `valge`,
+ * `sinine`, `noor`, `tark` and 74 others shipped as NOUN because they are also
+ * listed as nouns somewhere on their page. Reversing the order does not fix
+ * it, it moves it: `lamp` is in the adjectives category for a colloquial sense
+ * meaning "random", `pea` is in the adverbs category for a sense meaning
+ * "almost", and both would then have been labelled against the very gloss
+ * shipped beside them.
+ *
+ * `build()` reads the part of speech off the heading the chosen gloss sits
+ * under instead, which is the one fact that cannot disagree with the gloss.
+ * This stays as the fallback for a page whose senses carry no heading this app
+ * has a label for.
+ */
 const CATEGORIES: { category: string; pos: string }[] = [
   { category: "Estonian_nouns", pos: "NOUN" },
   { category: "Estonian_verbs", pos: "VERB" },
@@ -203,9 +223,10 @@ async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> 
   // would be deriving from a stem it does not actually have.
   if (principal.length < 3) return null;
 
-  const senses = await englishSenses(lemma);
-  const short = senses[0];
-  if (!short) return null;
+  const senses = await englishEntries(lemma);
+  const first = senses[0];
+  const short = first?.gloss;
+  if (!first || !short) return null;
   /*
     A "gloss" that is punctuation and nothing else. Two of these reached the
     dictionary as the single word `.`, from Wiktionary entries whose Estonian
@@ -217,27 +238,23 @@ async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> 
   return {
     lemma,
     /*
-      Wiktionary's category is more specific than Ekilex's word class and wins
-      where it disagrees.
-
-      Ekilex calls a word a "noomen", which is every nominal: `punane` (red) and
-      `raamat` (book) come back identically, so the mapper reports both as
-      NOUN. That is fine for the paradigm, since an Estonian adjective declines
-      like a noun, and wrong everywhere the part of speech is the point. The
-      first full run labelled every adjective a noun and produced no adverbs at
-      all.
-
-      Ekilex still decides between a nominal and a verb, which is the
-      distinction it actually draws and the one that changes which principal
-      parts a word has.
+      The part of speech of the sense the gloss came from, which is the only
+      one that cannot contradict the gloss. See `lib/dict/pos.ts` for who gets
+      to answer what; the short version is that Ekilex draws the verb line and
+      the page's own heading draws the rest.
     */
-    pos: mapped.pos === "VERB" ? "VERB" : pos,
+    pos: resolvePos({
+      sensePos: first.pos,
+      headwordPos: first.headword,
+      ekilexSaysVerb: mapped.pos === "VERB",
+      fallback: pos,
+    }),
     translation: short,
     cefr: mapped.cefr,
     gradation: mapped.gradation,
     gradationNote: mapped.gradationNote,
     government: mapped.government,
-    notes: senses.length > 1 ? senses.slice(1, 4).join("; ") : null,
+    notes: senses.length > 1 ? senses.slice(1, 4).map((s) => s.gloss).join("; ") : null,
     examples: mapped.examples.slice(0, 3).map((e) => ({ et: e.et, en: e.en ?? null })),
     forms: principal.map((f) => ({ formType: f.formType, value: f.value })),
     ekilexWordId: exact.wordId,
@@ -257,7 +274,7 @@ async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> 
  * So a 404 is a miss, and anything else that is not a success is thrown, which
  * leaves the word uncached and picked up by the next run.
  */
-async function englishSenses(lemma: string): Promise<string[]> {
+async function englishEntries(lemma: string): Promise<EstonianSense[]> {
   const url =
     `https://en.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(lemma)}` +
     `&prop=wikitext&format=json&formatversion=2`;
@@ -272,7 +289,7 @@ async function englishSenses(lemma: string): Promise<string[]> {
       const data = (await res.json()) as { parse?: { wikitext?: string }; error?: unknown };
       // A page that does not exist comes back as an error object, not a 404.
       if (data.error) return [];
-      return extractEstonianSenses(data.parse?.wikitext ?? "");
+      return extractEstonianEntries(data.parse?.wikitext ?? "");
     }
     await sleep(Math.min(30_000, 1500 * 2 ** attempt));
   }

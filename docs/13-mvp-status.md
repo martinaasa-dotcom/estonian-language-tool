@@ -3,12 +3,12 @@
 What was actually built, what was deliberately left out, and which planning decisions changed once
 the answers to `12-open-questions.md` came back.
 
-**§11 to §14 are the current state.** §1–5 describe the first MVP, §6 the pass that made it usable
+**§11 to §14 are the current state.** §1-5 describe the first MVP, §6 the pass that made it usable
 by a stranger, §7 the pass that made it teach in context, §9 and §10 the teaching and diagnostic
 layers, §11 the pass that measured the learner and stated what the app costs, §12 the pass that let
 a photographed page become a set of words, §13 the mock state examination, and §14 the pass that
 turned the path into a course covering A1 to C2. Those four were built at the same time against the
-same main and landed one after another. Word counts in §1–7 are the numbers of their own time and
+same main and landed one after another. Word counts in §1-7 are the numbers of their own time and
 §14 supersedes them.
 
 ## 1. The answers, and what they changed
@@ -16,14 +16,14 @@ same main and landed one after another. Word counts in §1–7 are the numbers o
 | Question | Answer | Effect |
 |---|---|---|
 | Q1 Local or hosted? | **Local only** at MVP time; **reversed 2026-08** to hosted (Vercel + Supabase), with Google sign-in. | ADR-002 confirmed for v1, superseded by ADR-011. Schema was already Postgres-portable, so this was a datasource swap, not a rebuild |
-| Q2 Level? | Learner is at **B1–B2**, but the app should cover **A1–C2** | 2,271 of about 5,400 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling: C2 words drop in without a schema change |
+| Q2 Level? | Learner is at **B1-B2**, but the app should cover **A1-C2** | 2,271 of about 5,400 entries are B1 or above, including a C1 layer and the verb-government cases that trip up English speakers at that level. The model has no ceiling: C2 words drop in without a schema change |
 | Q3 Digital class materials? | **None.** | The importer stayed generic and cheap. No time spent on a parser for a format that does not exist |
-| Q4 Speakly? | Subscription exists, **not currently used** — "difficult to use" | Confirms ADR-006. Speakly has no public API (audit A3), so the paste importer handles it like any other source. Nothing Speakly-specific was built |
-| Q5 AI budget? | **No cap — but free for now.** OpenRouter/OpenAI, and later "whatever works best" | ADR-004 reversed, see §2 |
+| Q4 Speakly? | Subscription exists, **not currently used**, "difficult to use" | Confirms ADR-006. Speakly has no public API (audit A3), so the paste importer handles it like any other source. Nothing Speakly-specific was built |
+| Q5 AI budget? | **No cap, but free for now.** OpenRouter/OpenAI, and later "whatever works best" | ADR-004 reversed, see §2 |
 | Q6 Browser extension? | **Gone.** | Confirmed out of scope |
 | Q7 Other users? | **Reversed 2026-08**: real multi-user, Google sign-in via Supabase Auth | ADR-012. Cards/Tasks/Messages gained `ownerId` and are scoped per query; the dictionary (Lexeme/Form) stays shared, as anticipated |
 
-## 2. ADR-004 reversed — provider-agnostic, not Anthropic-only
+## 2. ADR-004 reversed: provider-agnostic, not Anthropic-only
 
 **Original decision:** `claude-opus-5` with adaptive thinking and prompt caching.
 
@@ -34,7 +34,7 @@ Pinning one paid provider fails that.
 
 | Key in `.env` | Used | Default model |
 |---|---|---|
-| `OPENROUTER_API_KEY` | OpenRouter (OpenAI-compatible) | `z-ai/glm-5.2:free` — genuinely free |
+| `OPENROUTER_API_KEY` | OpenRouter (OpenAI-compatible) | `z-ai/glm-5.2:free`, genuinely free |
 | `ANTHROPIC_API_KEY` | Anthropic Messages API | `claude-sonnet-5` |
 | `OPENAI_API_KEY` | OpenAI | `gpt-4o-mini` |
 
@@ -46,8 +46,8 @@ The daily spend cap from the original plan was dropped at MVP time: with a free 
 nothing to cap, and a cap on an unmetered path is dead code.
 
 **Added back, 2026-08.** The default model is a paid one and sign-up is open, so the unmetered path
-became one stranger away from an unbounded invoice. `lib/usage` now meters every call — a burst
-window, a per-user day, and a global day cap — and there is no way to switch it off. It fails
+became one stranger away from an unbounded invoice. `lib/usage` now meters every call (a burst
+window, a per-user day, and a global day cap) and there is no way to switch it off. It fails
 closed, and an unrecognised model prices at the dearest rate in the table rather than at zero,
 because a cap that fails open is not a cap.
 
@@ -55,34 +55,34 @@ because a cap that fails open is not a cap.
 
 | Area | State |
 |---|---|
-| `lib/estonian/` — cases, principal parts, gradation, derivation | Complete, 56 unit tests |
-| Dictionary — search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,970 words |
-| Ekilex integration — live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
-| English translations — layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
-| Inflected-form search — `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
-| Built-in dictionary, about 5,970 entries and 34,500 stored forms | Grown twice over by two pipelines that turned out to be complements: 360 hand-checked entries, 1,248 fetched against the syllabus by `scripts/harvest-ekilex.ts` with authored English glosses, and the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C2 (478 / 693 / 1,226 / 1,243 / 180 / 76, the rest ungraded by either source). 461 verbs carry government, up from 24, and 5,405 entries carry an attested Estonian sentence |
-| Speech — TartuNLP, server-proxied, content-addressed cache | Complete and verified end to end. Now durable in object storage rather than per-instance; see §4b |
-| Flashcards — FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
-| Today — due counts, streak, tasks, weak-word pick | Complete |
-| My words — deck management, filters, weak-case breakdown | Complete |
-| Anu — streaming chat, prompt chips, vocabulary bridge with AI provenance | Complete; needs a key |
-| Tasks — tagged, week, due dates | Complete |
-| Import — paste TSV/CSV/dash/semicolon lines, with dedupe | Complete |
+| `lib/estonian/`: cases, principal parts, gradation, derivation | Complete, 56 unit tests |
+| Dictionary: search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,960 words |
+| Ekilex integration: live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
+| English translations, layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
+| Inflected-form search: `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
+| Built-in dictionary, about 5,960 entries and 34,500 stored forms | Grown twice over by two pipelines that turned out to be complements: 360 hand-checked entries, 1,248 fetched against the syllabus by `scripts/harvest-ekilex.ts` with authored English glosses, and the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C2 (478 / 693 / 1,226 / 1,243 / 180 / 76, the rest ungraded by either source). 461 verbs carry government, up from 24, and 5,405 entries carry an attested Estonian sentence |
+| Speech: TartuNLP, server-proxied, content-addressed cache | Complete and verified end to end. Now durable in object storage rather than per-instance; see §4b |
+| Flashcards: FSRS, 5 card types, keyboard-only review, undo-by-requeue | Complete |
+| Today: due counts, streak, tasks, weak-word pick | Complete |
+| My words: deck management, filters, weak-case breakdown | Complete |
+| Anu: streaming chat, prompt chips, vocabulary bridge with AI provenance | Complete; needs a key |
+| Tasks: tagged, week, due dates | Complete |
+| Import: paste TSV/CSV/dash/semicolon lines, with dedupe | Complete |
 | Add a word by hand, with principal parts and auto-classified gradation | Complete |
-| Edit an existing entry — corrections rewrite its cards' text but never its FSRS scheduling | Complete |
-| Export — full JSON backup | Complete |
-| Visual design — pastel system, mascot, light/dark | Rebuilt 2026-08; see `14-design-system.md` |
+| Edit an existing entry: corrections rewrite its cards' text but never its FSRS scheduling | Complete |
+| Export: full JSON backup | Complete |
+| Visual design: pastel system, mascot, light/dark | Rebuilt 2026-08; see `14-design-system.md` |
 | Public landing page at `/welcome` | Complete. Its demo reads real dictionary data and derives cases with the app's own code |
-| Restore from a backup — merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
-| Weak-case drill — click a case in the heatmap to review just those cards | Complete |
-| Light and dark themes, keyboard operation, mobile layout | Complete; verified on an iPhone 13 viewport — no sideways scroll, 73×79px rating targets |
+| Restore from a backup: merge (safe, idempotent) or replace (guarded) | Complete, verified by a wipe-and-restore round trip |
+| Weak-case drill: click a case in the heatmap to review just those cards | Complete |
+| Light and dark themes, keyboard operation, mobile layout | Complete; verified on an iPhone 13 viewport, with no sideways scroll and 73×79px rating targets |
 | Estonian text marked `lang="et"` so screen readers do not read it with English phonics | Complete |
 
 ## 4. What is deliberately not built
 
 Each of these is a decision, not an omission.
 
-- ~~Ekilex live search.~~ **Now built** — the key arrived, the response shape was read from real
+- ~~Ekilex live search.~~ **Now built**. The key arrived, the response shape was read from real
   data rather than guessed, and the mapper is covered by contract tests.
 - **Calendar / iCal.** No digital class schedule exists (Q3), so it would sync nothing.
 - **Speech-to-text.** Unverified for Estonian (audit A5). Still a spike, not a feature.
@@ -99,15 +99,15 @@ Each of these is a decision, not an omission.
 
 | Area | State |
 |---|---|
-| CI — typecheck, hermetic unit tests, integration tests on real Postgres, build, credential scan | Complete. The credential rule this file's rules section always claimed had no enforcement until now |
-| Spend ledger — per-user burst, per-user day, global day cap | Complete, fails closed. An unrecognised model prices at the dearest known rate rather than zero |
+| CI: typecheck, hermetic unit tests, integration tests on real Postgres, build, credential scan | Complete. The credential rule this file's rules section always claimed had no enforcement until now |
+| Spend ledger: per-user burst, per-user day, global day cap | Complete, fails closed. An unrecognised model prices at the dearest known rate rather than zero |
 | Sign-in allowlist, open by default | Complete. A quota, not a guest list, is what makes an open door safe |
 | Offline review (PWA, outbox, ordered replay) | Complete, and the append-only log is what made it cheap |
 | Durable audio cache in object storage | Complete. The previous `/tmp` path was per-instance and wiped on every cold start |
 | Error reporting with redaction; error, global-error and not-found boundaries | Complete, no third-party script |
 | Privacy and terms, written from the schema | Complete |
-| **Writing** — free production, marked mechanically first and by AI second | Complete. The forms check runs before any model call and works with no key |
-| **Grader output verified against the dictionary** | Complete. `lib/tutor/verify.ts` — the prompt is a request, this is the check |
+| **Writing**: free production, marked mechanically first and by AI second | Complete. The forms check runs before any model call and works with no key |
+| **Grader output verified against the dictionary** | Complete, in `lib/tutor/verify.ts`. The prompt is a request, this is the check |
 | **Verb government drill** | Complete, distractors drawn from the real distribution |
 | **Minimal pairs** | Complete. Pairs are found in the dictionary, never authored |
 | **Cloze from pasted reading** | Complete. The passage is not stored |
@@ -119,12 +119,12 @@ Each of these is a decision, not an omission.
 
 0. **Anu's Estonian depends entirely on the model.** Measured with `npm run eval:anu` against six
    grammar questions with known answers: `openai/gpt-4o` 6/6, `anthropic/claude-sonnet-5` 5/6,
-   `openai/gpt-4o-mini` 5/6 — but the mini model invented "Ma söön aitamat", which is not Estonian.
+   `openai/gpt-4o-mini` 5/6, but the mini model invented "Ma söön aitamat", which is not Estonian.
    Free models are rate-limited hard enough upstream that they cannot be evaluated reliably, let
    alone relied on. This is exactly why the model is never allowed to supply an inflected form.
 
-1. **The built-in dictionary is about 5,970 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary and by the course harvest, it works offline, but it is short of the full
-   lexicon. Anything outside it can be added by hand — the add-word form takes principal parts and
+1. **The built-in dictionary is about 5,960 words.** Built by `scripts/expand-seed.ts` from Ekilex and Wiktionary and by the course harvest, it works offline, but it is short of the full
+   lexicon. Anything outside it can be added by hand: the add-word form takes principal parts and
    classifies gradation itself, so a hand-added word behaves exactly like a built-in one. An Ekilex
    key would close the gap properly.
 2. **Gradation detection is orthographic.** Quantitative gradation (*vältevaheldus*) is a change in
@@ -134,26 +134,26 @@ Each of these is a decision, not an omission.
    Partly answered rather than fixed: the minimal-pairs drill teaches the part of the contrast that
    *is* written (`maja` / `majja`, `pika` / `pikka`) through audio, which is the only channel that
    can carry it. It deliberately does not claim to teach the second-versus-third quantity
-   distinction, where both spellings are identical — speech synthesis is handed the same string and
+   distinction, where both spellings are identical, so speech synthesis is handed the same string and
    would say the same thing twice, so a drill built on it would be a lie.
 3. **Plural oblique cases need a stored genitive plural.** Where it is missing the table shows a gap.
-   `tuba : toa` yields `tubade`, not `toade` — it is not derivable, so it is not derived.
+   `tuba : toa` yields `tubade`, not `toade`. It is not derivable, so it is not derived.
 4. **Anu's Estonian is only as good as the model behind it.** The free model is decent, not
    authoritative. Everything it suggests is tagged `AI · verify`, and it never supplies a dictionary
-   form — that boundary is enforced in the data model, not just in the prompt.
+   form, and that boundary is enforced in the data model, not just in the prompt.
 5. **Editing a word does not regenerate its case-form cards.** Recognition and production cards
    follow a correction; a case-form card built from an old genitive keeps the old answer. Deleting
-   and re-adding the card fixes it — and now costs nothing, since deleting a card no longer
+   and re-adding the card fixes it, and now costs nothing, since deleting a card no longer
    destroys its review history. Regenerating automatically would mean either losing the card's
    scheduling or silently changing what a card asks mid-schedule, and neither is obviously right.
-6. ~~**A review needs the server.**~~ **Fixed in §6** — the app installs as a PWA and grades made
+6. ~~**A review needs the server.**~~ **Fixed in §6**. The app installs as a PWA and grades made
    offline are queued on the device and replayed with their real timestamps (ADR-015).
 
 
 ## 6. The second pass: usable by someone who is not you
 
 The first MVP was complete for one learner who already knew what to study. Handing it to a stranger
-exposed a different set of gaps — an empty deck with no obvious first move, self-graded flashcards, a
+exposed a different set of gaps: an empty deck with no obvious first move, self-graded flashcards, a
 streak and nothing else to show for six weeks of work, and a promise about offline that the hosted
 deployment had quietly broken. This pass closes those.
 
@@ -161,32 +161,32 @@ deployment had quietly broken. This pass closes those.
 
 | Area | What it is | Why it earns its place |
 |---|---|---|
-| **Onboarding** (`/welcome`) | Four steps — name, level, pace, starter units — ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
+| **Onboarding** (`/welcome`) | Four steps (name, level, pace, starter units) ending in a real deck | An empty deck is where a new learner gives up. Setup now finishes with cards, not with a tour |
 | **Learning path** (`/learn`) | 18 units, A1→C1, over the same dictionary. Rebuilt in §14 as `lib/collections/syllabus/`: 83 units, A1 to C2 | "Here are five thousand words, good luck" is not a course. Units are references, not copies, so nothing duplicates and a correction still lands everywhere |
 | **Typed answers** | `lib/estonian/answer.ts` grades what you type, telling a dropped diacritic from a typo from a wrong word | Self-grading is the weakest part of a flashcard app. `sõda` is not `soda`, so a diacritic slip is called out by name rather than waved through or failed flat |
 | **Multiple choice + first-look intros** | New cards lead with their answer; recognition cards can be asked as four options | Asking someone to produce a word they have never been shown is a guessing game |
-| **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling — which is derived — not the history |
+| **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling, which is derived, and not the history |
 | **Match** (`/review/match`) | Eight pairs against the clock | The only mode that makes you scan a *set* of words at once |
 | **Practice hub** (`/practice`) | Every mode with its live state, plus one-click drills for weak cases | Answers "what should I do with five minutes" instead of listing modes |
-| **XP, levels, quests** | `lib/gamification/` — derived from the review log, never stored (ADR-014) | A streak alone says nothing about six weeks of work. Three quests a day, chosen deterministically from the date |
+| **XP, levels, quests** | `lib/gamification/`: derived from the review log, never stored (ADR-014) | A streak alone says nothing about six weeks of work. Three quests a day, chosen deterministically from the date |
 | **Progress** (`/progress`) | Six-month heatmap, 14-day forecast, accuracy trend, per-case accuracy, CEFR reach | The forecast in particular is what stops an SRS becoming an unsustainable pile |
 | **Class leaderboard** | Opt-in, name chosen by the learner, weekly XP only | The one feature a class actually asks for. Off by default; no email or history is ever shared |
 | **Offline PWA** | Manifest, service worker, and a localStorage grade queue (ADR-015) | Restores the standing rule that review works with no network |
 | **Local mode** | No Supabase keys → one learner, no sign-in (ADR-013) | `npm run setup && npm run dev` is a complete installation again |
-| **⌘K palette, skip link, loading/error/not-found routes, phone nav sheet** | — | The difference between a demo and something you use on a Tuesday |
+| **⌘K palette, skip link, loading/error/not-found routes, phone nav sheet** | n/a | The difference between a demo and something you use on a Tuesday |
 
 ### What this pass deliberately did *not* do
 
 - **No new Estonian content was written.** Every word, form and example still comes from the seeded
   dictionary or Ekilex. The path references lemmas and `lib/collections/path.test.ts` fails if one
-  does not exist — an invented unit word would be an invented Estonian word by the back door.
+  does not exist, and an invented unit word would be an invented Estonian word by the back door.
 - **No cloze or sentence-building mode.** It needs example sentences the dictionary does not carry
   for every word, and the honest source for those is Ekilex, not a model (ADR-005). Still shelved.
 - **No speech-to-text.** Unverified for Estonian (audit A5). Unchanged.
 - **No hearts, no lost streaks, no punishment mechanics.** Quests only add. The streak shield already
   covers the anxiety a study app is entitled to create.
 - **No schema change.** Everything above rides on the existing tables plus the `Setting` key/value
-  bag — which is why none of it needed a migration, and why a backup taken before this pass restores
+  bag, which is why none of it needed a migration, and why a backup taken before this pass restores
   into it unchanged.
 
 ### Known limitations, still
@@ -199,7 +199,7 @@ deployment had quietly broken. This pass closes those.
    public instance it would need class codes, which is a feature, not a fix.
 3. **Undo trusts the client for the previous card state.** It is range-validated and can only ever be
    applied to a card the caller already owns, so the worst case is someone rewinding their own
-   scheduling — which the button does anyway.
+   scheduling, which the button does anyway.
 4. **The service worker keeps the app openable, not the data fresh.** A screen you have never opened
    while online shows the offline fallback. Review, the one path that has to work, does not depend on
    it: the queue does.
@@ -213,7 +213,7 @@ sentence.
 
 ### What changed the picture
 
-Ekilex's `/word/details` response carries **usages** — attested sentences recorded against each
+Ekilex's `/word/details` response carries **usages**, attested sentences recorded against each
 meaning, `public`-flagged for display. That single fact is behind most of this pass: the app can
 teach in context without writing a word of Estonian, because it only ever hides or reorders text a
 lexicographer wrote (ADR-017).
@@ -222,17 +222,17 @@ lexicographer wrote (ADR-017).
 |---|---|
 | **Example sentences** | Stored per word, shown on the entry with audio, translated one at a time on request and tagged `AI`. A learner can add one of their own from class |
 | **Gap-fill cards** (`CLOZE`) | A form we hold, hidden inside a sentence Ekilex recorded. The lemma is the hint, so it asks for the *form*; the case it drills feeds the weak-case breakdown |
-| **Sentence builder** (`/review/sentences`) | The word bank, over real Estonian. With a translation it is "say this in Estonian"; without one it shows the sentence, then scrambles it — and says which it is doing |
-| **Speaking** (`/review/speaking`) | Shadowing: say it, then hear a native voice and your own recording back to back. No score — see below |
+| **Sentence builder** (`/review/sentences`) | The word bank, over real Estonian. With a translation it is "say this in Estonian"; without one it shows the sentence, then scrambles it, and says which it is doing |
+| **Speaking** (`/review/speaking`) | Shadowing: say it, then hear a native voice and your own recording back to back. No score, see below |
 | **Classes** (`/class`) | A join code, a roster of effort, the group's weakest cases, and units set as homework into each student's own task list (ADR-019) |
-| **Conjugation** | The verb paradigm as a table — persons down, present/past/conditional across — plus a `CONJUGATION` card type over stored forms |
+| **Conjugation** | The verb paradigm as a table (persons down, present/past/conditional across) plus a `CONJUGATION` card type over stored forms |
 | **Share card** (`/api/share`) | A 1200×630 PNG of streak, cards known and XP, generated per request for the signed-in learner |
 | **Install and remind** | Apple touch icon, safe-area insets, 16px inputs (iOS zoom), a one-time install prompt, and a daily reminder as a calendar file rather than a push subscription |
 | **Anu: check a sentence** | A structured check that names the rule before the fix, and boxes the corrected sentence as the model's own work rather than letting it read as dictionary data |
 
 ### Things this pass refused to do
 
-- **Score pronunciation.** No verified Estonian speech recogniser is available to this app —
+- **Score pronunciation.** No verified Estonian speech recogniser is available to this app,
   TartuNLP publish TTS and nothing comparable the other way, and the browser's own recogniser has no
   dependable `et-EE`. A number invented on top of that would be trusted, so speaking compares
   instead of grading (ADR-018).
@@ -248,7 +248,7 @@ lexicographer wrote (ADR-017).
    gap-fill and sentence modes stay empty and say so. A free reader key fills them in as words are
    looked up.
 2. **Translations of examples are machine-made.** Tagged `AI`, stored so they are fetched once, and
-   overwritable — but they are not a translator's work and the app does not claim otherwise.
+   overwritable, but they are not a translator's work and the app does not claim otherwise.
 3. **A class is per instance, not per school.** One deployment, many classes; there is no
    organisation layer, no roles beyond teacher and student, and no way to move a class between
    instances.
@@ -256,7 +256,7 @@ lexicographer wrote (ADR-017).
    than offering forms that could not work.
 5. **Installable, but not in the App Store.** Kodukeel installs to a home screen as a PWA and works
    offline there. An actual App Store listing needs a native shell (Capacitor or similar) around
-   this same web app — that is a packaging and review exercise, not a rewrite, and it has not been
+   this same web app, which is a packaging and review exercise rather than a rewrite, and it has not been
    done.
 
 ## 8. The merge: one app, not two
@@ -271,7 +271,7 @@ What that meant in practice:
 - The new routes moved into the `(app)` route group, so they get the rail, the mobile bar and the
   wash from the layout rather than each rendering their own chrome.
 - Sentences and Speaking joined the Today page's quick-practice grid and the Practice hub, each
-  with its own hue — six modes, six colours, no two the same.
+  with its own hue: six modes, six colours, no two the same.
 - The screens listed in §7 were restyled onto `components/ui.tsx` (see `14-design-system.md` §9).
 - Two responsive bugs the merge exposed were fixed rather than papered over: the Today hero packed
   three stat tiles and the goal ring onto one row at 390px, and a grid column without `min-w-0`
@@ -283,22 +283,22 @@ overflow asserted against.
 
 ## 9. The fourth pass: the teaching layer
 
-Three passes built an app that tests. This one built the half that teaches — the parts a learner
+Three passes built an app that tests. This one built the half that teaches, the parts a learner
 reaches for when a flashcard has stopped helping, and the part a teacher reaches for when the
 lesson is not on a screen at all.
 
 | Area | What it is |
 |---|---|
 | **Grammar reference** (`/grammar`, `/grammar/[case]`) | One page per case: what it is for, where it turns up, the mistake an English speaker makes, and the case shown on real words with the provenance of every form. Linked from the dictionary's case table, the weak-case drills and the Progress breakdown |
-| **Dictation** (`/review/dictation`) | Hear an attested sentence, write it down. Marked word by word — green for exact, butter for a word heard but misspelled, peach for one missed — so the learner sees *which* ending they lost |
+| **Dictation** (`/review/dictation`) | Hear an attested sentence, write it down. Marked word by word (green for exact, butter for a word heard but misspelled, peach for one missed) so the learner sees *which* ending they lost |
 | **Printable worksheet** (`/learn/[unitId]/worksheet`) | A unit as paper: vocabulary, gap-fills from attested sentences, a principal-parts table, and an answer key on its own sheet. The rail and the wash come off in print |
-| **True retention** (on `/progress`) | Of the cards FSRS believed you had learned, how many came back — measured from `Review.stateBefore`, compared with the 90% the scheduler targets, and turned into one instruction |
+| **True retention** (on `/progress`) | Of the cards FSRS believed you had learned, how many came back, measured from `Review.stateBefore`, compared with the 90% the scheduler targets, and turned into one instruction |
 | **Shortcut sheet** (`?`) | Every binding the app implements, grouped by where it works |
 
 ### Why the grammar page is allowed to exist
 
 ADR-005 forbids the app from writing Estonian. A grammar reference is the obvious place to break
-that rule by accident — one "for example, *majas*" and the page is presenting an unattested form
+that rule by accident. One "for example, *majas*" and the page is presenting an unattested form
 next to real ones. So the split is structural:
 
 - `lib/estonian/grammar.ts` is English prose and holds no Estonian at all. A test keeps a tripwire
@@ -333,7 +333,7 @@ spaced-repetition deck cannot do without.
 
 | Area | What it is |
 |---|---|
-| **Sticking points** (on `/progress`) | The handful of cards that keep lapsing, one row per word, each saying what is wrong with it. Actions in order of what usually helps: the case explanation, the dictionary entry, and only then setting it aside — reversibly |
+| **Sticking points** (on `/progress`) | The handful of cards that keep lapsing, one row per word, each saying what is wrong with it. Actions in order of what usually helps: the case explanation, the dictionary entry, and only then setting it aside, reversibly |
 | **"Why?" on a revealed card** | A review card that has just shown its answer offers the grammar page for the case it drills, and Anu with the question already written |
 | **Print from dark mode** | Fixed: the dark palette followed the page onto paper, so a teacher reading in dark mode printed white ink on white paper |
 | **Two guards on the restore suite** | It refuses to run against a non-local database, and writes the export to disk before deleting anything |
@@ -343,7 +343,7 @@ spaced-repetition deck cannot do without.
 Anki's leech handling suspends a card after eight lapses. The instinct is right and the number is
 wrong for a language course: by the eighth lapse the learner has spent twenty minutes on one word
 and drawn a conclusion about themselves rather than about the card. So the threshold is four, and
-the framing is diagnostic — a card that keeps lapsing after being learned is usually a grammar
+the framing is diagnostic: a card that keeps lapsing after being learned is usually a grammar
 problem wearing a vocabulary costume, which is why the explanation is the first action offered and
 the off switch is the last.
 
@@ -357,7 +357,7 @@ the rest and says how many.
    cards; the button suspends the one it names. Suspending everything for a word is still done from
    My words.
 2. **The undo is only good for the visit.** The list is built from unsuspended cards, so a
-   suspended one is gone on the next load — `Put it back` is offered while the page is open, and
+   suspended one is gone on the next load. `Put it back` is offered while the page is open, and
    after that the card lives in My words like any other suspended card.
 3. **Anu is handed the question, not the card.** She gets a sentence naming the case and the word;
    she does not see the learner's answer, their history, or the rest of the deck.
@@ -581,7 +581,7 @@ dictionary could not grow by anybody sitting down and typing more of it.
 
 `scripts/harvest-ekilex.ts` is the way round that, and the direction of
 authority is the whole design. The syllabus names lemmas and glosses them in
-English — the one language this project is allowed to write — and Ekilex
+English (the one language this project is allowed to write) and Ekilex
 supplies every Estonian character that follows: principal parts, CEFR level,
 verb government, and attested sentences. A lemma in a unit is a *request*, not a
 fact. If Ekilex does not know it, or knows it with a paradigm that does not match
@@ -597,7 +597,7 @@ that the part-of-speech heuristic had confidently called verbs.
 | | Before | After |
 |---|---|---|
 | Units | 18 | 83 |
-| Levels with real coverage | A1–B1 | A1–C2 |
+| Levels with real coverage | A1-B1 | A1-C2 |
 | Distinct course words | 239 | 1 266 |
 | Dictionary entries seeded | 360 | 1 315 |
 | Stored forms | 1 568 | 6 927 |
@@ -1321,3 +1321,120 @@ the design system rather than decisions about it. The week strip's reviewed-day 
 would swallow the contrast, double the rule instead. The leech clinic's failure strip told a failure
 from a recall by hue with a tooltip as the fallback, which is the pairing the dictation drill's own
 rule forbids; a failure is a taller mark now, and the count is visible rather than only announced.
+
+## 22. The sixteenth pass: the label that was read from the wrong place
+
+`docs/12-open-questions.md` Q8, answered. It was carrying a default of "leave it", on the grounds
+that the glosses were right and this was wrong metadata rather than wrong teaching, and that was
+true of the symptom and wrong about the cause.
+
+### What was wrong
+
+A word's English gloss and its part of speech are two facts about one definition line, and they
+were read from two different places. The gloss is the first definition on the word's Wiktionary
+page. The label was whichever of Wiktionary's four part-of-speech categories the seed builder drew
+the candidate from first, which is a statement about the word having *some* sense of that kind
+somewhere, and nouns are drawn first. So every word listed in two categories came out a noun:
+`kallis`, `valge`, `sinine`, `noor`, `tark`, `vana`, `magus`, `lilla` and 53 others.
+
+Nothing looked broken, which is why it survived a full gloss audit sitting right beside it. Every
+wrong answer is a real part of speech spelled correctly, and an Estonian adjective declines exactly
+like a noun, so the paradigm on the entry page was right and no screen contradicted itself. What it
+reached was `lib/srs/cards.ts`, which prints the label as a card's hint, and every rule that filters
+on `pos`: which practice modes a word is eligible for, and which words `lib/progress/caseExamples.ts`
+is allowed to draw a noun case example from.
+
+### The recommended fix was measured and was worse
+
+Q8's own default was to prefer the more specific category, adjective over noun. Over the whole
+dictionary that relabels 86 entries and breaks 25 of them, because a category is not a claim about
+the sense being shipped. `lamp` is in the adjectives category for a colloquial sense meaning
+"random", which is the exact sense the gloss audit had just finished removing from its answer side;
+`pea` and `kama` are in the adverbs category; `mari`, `norm`, `seadus`, `kreem`, `kile` and `kogus`
+would every one have been labelled against the gloss printed beside them. Reversing the category
+order does not fix that, it moves it onto a different set of words.
+
+### What was built
+
+The page answers the question directly: every definition sits under a `===Noun===` or
+`===Adjective===` heading. `extractEstonianEntries` returns each sense with its own heading, so the
+two facts come out of one parse and cannot disagree, and `extractEstonianSenses` is now that
+function with the headings dropped rather than a second reader of the same markup.
+`lib/dict/pos.ts` is the one table of who answers what. Ekilex draws the verb line, because it is
+the line Ekilex actually draws and the one that decides which principal parts a word has. The
+heading decides among the nominals. The category survives only as a fallback for a page headed
+`Participle` or `Postposition`, which are true things this app has no column for, and 7 entries
+took it.
+
+One asymmetry, in the sources rather than in the rule. The heading and the headword template
+disagree on 13 pages of 5,363 and neither wins them all: `võimas` is headed `===Noun===` and
+declared `{{et-adj|võimsa|võimsat|s=võimsaim}}`, while `üksik`, `lämbe` and `lämmi` are headed
+`===Adjective===` and declared `{{et-noun}}`. All four are adjectives. `{{et-adj}}` carries a
+comparative and a superlative, which only an adjective has; `{{et-noun}}` is the ordinary nominal
+declension that an adjective shares, so an editor writing out the forms of `üksik` reaches for it
+with nothing implied. One is a statement and the other is a shrug, so an adjective claim from
+either source counts and a noun claim from the template alone does not.
+
+`npm run audit:pos` is that pass kept, the sibling of `npm run audit:glosses`, sharing its page
+cache so whichever runs second is free. **61 labels corrected**, 60 NOUN to ADJECTIVE and one
+ADVERB to ADJECTIVE.
+
+### Twelve words were in the dictionary twice
+
+Found by running the reseed rather than by reading it. `pos` is half of `Lexeme`'s conflict key, so
+a word the course harvest labels `ADJECTIVE` and the builder labelled `NOUN` never collided: it was
+inserted twice, as two entries with two ids and two sets of cards, and nothing anywhere reported
+it. `kallis`, `valge` and `noor` were among them. They are one entry each now, which is why
+`SEED_SET_SIZE` went down by twelve without a word being dropped, and it is the only time that
+number has ever fallen.
+
+That same key is why `prisma/data/pos-corrections.json` exists. A deployment seeded before this
+holds `kallis` as a NOUN, and a reseed looking for the ADJECTIVE finds no conflict and puts a
+second one beside it, so the fix would have shipped the bug. `applyPosCorrections` repoints the
+existing row first. Two things about when it runs were both found by testing rather than by
+reasoning: it is before the early return `--only-if-empty` takes, for the same reason
+`ensureSearchIndexes` is, since a correction only matters to a database that was already seeded
+with the old label and that is exactly the case a normal deploy skips; and it is before the course
+harvest is written, because run afterwards the harvest has already inserted its own correct
+`kallis` and the guard against moving a row onto an occupied key then correctly declines, leaving
+the duplicate in place.
+
+It writes no content. The translation, paradigm, examples and provenance stay as they were, the row
+keeps its id, and a card and its review history follow it. It never touches a row somebody edited by
+hand, and never moves a row onto a key another row holds, because `hall` is legitimately both a noun
+meaning "frost" and an adjective meaning "grey".
+
+### What was deliberately not changed
+
+`rõõmus` is headed `===Noun===` with `{{et-noun}}` under it and glossed "happy". Both signals agree
+and both are wrong, so no rule separates it from a genuine noun, and writing one would be this
+pipeline making the lexical judgement it does not get to make. It is the `kõrb` case in a new
+column, and it is left for a person, which the dictionary is editable for. The course harvest
+carries the correct adjective independently, so a learner meets the right one anyway.
+
+The second option Q8 offered, letting a word carry more than one part of speech, was not needed and
+is still available. It is still the truer model and still a schema change, and `hall` is the case
+for it.
+
+### And the course harvest, which turned out not to have the fault
+
+Checked afterwards, because the same question is worth asking of the other file that carries a part
+of speech. It does not have the fault, and the reason is structural rather than lucky.
+`prisma/data/harvested.ts` is generated and its `pos` is a passthrough: `harvestWord` reads the
+label off the syllabus entry and returns it untouched, so the label and the English gloss are
+authored by the same person in the same line of `lib/collections/syllabus/`. The failure above needs
+two sources that can disagree, and here there is one.
+
+Checked rather than asserted, since "by construction" is a claim like any other. An authored gloss
+has no heading it came from, so it is matched to the Wiktionary sense it describes and that sense's
+heading is compared against the label. 673 of the 1,248 could be checked and none disagreed. The
+other 575 have no Estonian Wiktionary entry or no sense matching the gloss, which is the same
+silence the gloss review met, and it is reported rather than filled in. The one review list worth
+printing came back empty: the 41 nominals whose lemma ends the way an Estonian adjective often does
+are all `-mine` and `-nne` nominalisations, which are nouns.
+
+That pass is kept inside `npm run audit:pos` and it reports without ever writing, because the file
+is generated and a correction belongs in the syllabus. Nothing new asserts the link, because
+`syllabus.test.ts` already keys the course's vocabulary on `lemma|pos` against the harvest alone: a
+label changed in one file and not the other fails `npm test`, which was confirmed by changing one
+and watching it fail. A second check of the same thing is how the first one rots.

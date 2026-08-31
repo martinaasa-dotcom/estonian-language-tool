@@ -4,6 +4,19 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Run the whole suite by hand against any ref, from the Actions tab.
+  #
+  # A pull request opened by a GitHub App does not create a workflow run: the
+  # events an installation token generates are not allowed to trigger one, and
+  # the result is a PR with no CI at all rather than a red one, which is the
+  # harder thing to notice. This is the way back in. It needs write access to
+  # invoke, it takes no inputs, and it runs exactly the jobs below, so it
+  # widens who can start CI and not what CI can reach.
+  #
+  # GitHub only offers a workflow for dispatch once the trigger is on the
+  # default branch, so this does nothing until it lands on main. After that it
+  # covers every branch, including any this one cannot reach today.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -235,7 +248,20 @@ jobs:
       # than a job. Every one declares a floor, so a suite that dies early or
       # quietly stops running a block fails here rather than printing nothing
       # and being read as a pass. See scripts/lib/checks.mjs.
+      # The broadest walk first, so a route that stopped rendering says so
+      # before fifteen narrower suites fail for the same reason. It is also the
+      # only one that opens the navigation and asks whether every place in it
+      # is actually reachable.
+      - run: node scripts/smoke-new.mjs
       - run: node scripts/test-mobile.mjs
+      # Text and icons inside their boxes, which is the fault none of the
+      # page-shaped checks above can see: a word over a card's border, an icon
+      # squeezed into an oval by the label beside it, a file picker 58px wider
+      # than the card holding it. Then the same three questions with every run
+      # of text swapped for one of the same length with nothing in it to break
+      # on, because a row that fits today fits on the accident of where the
+      # spaces in a gloss fell.
+      - run: node scripts/test-containment.mjs
       - run: node scripts/test-design.mjs
       - run: node scripts/e2e.mjs
       - run: node scripts/test-modes.mjs
@@ -269,7 +295,11 @@ jobs:
       # deck that had just been rebuilt. It is also the one this list could
       # least afford to be missing, since a backup that cannot be restored is
       # the only failure in this app with nothing to recover from.
-      - run: node scripts/smoke-new.mjs
+      #
+      # `smoke-new.mjs` was the fifth and two branches added it at once, which
+      # a clean merge kept twice. It leads the list instead: it is the broadest
+      # walk of the routes, so a page that stopped rendering says so before
+      # fifteen narrower suites fail for the same reason.
       - run: node scripts/smoke-interact.mjs
       - run: node scripts/test-edit.mjs
       - run: node scripts/test-rename.mjs

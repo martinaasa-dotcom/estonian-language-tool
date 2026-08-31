@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractEstonianSenses } from "./wiktionary";
+import { extractEstonianEntries, extractEstonianSenses } from "./wiktionary";
 
 /**
  * Every case here is markup that was live on Wiktionary during the A1 to B1
@@ -146,5 +146,77 @@ describe("extractEstonianSenses", () => {
     it("does not read past the end of the Estonian section", () => {
       expect(extractEstonianSenses(page("# [[harbour]]"))).toEqual(["harbour"]);
     });
+  });
+});
+
+/**
+ * Every page quoted here was live on Wiktionary when the part-of-speech audit
+ * ran, and each one is a shape that produced a wrong label before it.
+ *
+ * The gloss and the part of speech are two facts about one definition line, so
+ * they are read in one pass. A label read from anywhere else can contradict the
+ * gloss shipped beside it, which is exactly what the categories used to do.
+ */
+describe("extractEstonianEntries", () => {
+  it("reports the heading each sense sits under", () => {
+    const wikitext =
+      "==Estonian==\n\n===Noun===\n{{et-noun}}\n\n# [[head]]\n\n" +
+      "===Adverb===\n{{et-adv}}\n\n# [[almost]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext).map((s) => [s.gloss, s.pos])).toEqual([
+      ["head", "NOUN"],
+      ["almost", "ADVERB"],
+    ]);
+  });
+
+  it("reads the headword template beside the heading", () => {
+    // `kallis`: the adjective block comes first, and its gloss is the one shipped.
+    const wikitext =
+      "==Estonian==\n\n===Adjective===\n{{et-adj|kalli|kallist}}\n\n# [[expensive]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]).toEqual({
+      gloss: "expensive",
+      pos: "ADJECTIVE",
+      headword: "ADJECTIVE",
+    });
+  });
+
+  it("does not carry a headword across into the next block", () => {
+    // `oma`: an adjective block, then a noun block. The noun's sense must not
+    // inherit the adjective's headword template.
+    const wikitext =
+      "==Estonian==\n\n===Adjective===\n{{et-adj|oma}}\n\n# [[own]]\n\n" +
+      "===Noun===\n{{et-noun|oma}}\n\n# [[property]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext).map((s) => [s.pos, s.headword])).toEqual([
+      ["ADJECTIVE", "ADJECTIVE"],
+      ["NOUN", "NOUN"],
+    ]);
+  });
+
+  it("reads a heading nested under an etymology", () => {
+    // Multi-etymology pages are the ones where the answer changes, so the
+    // four-equals depth has to be read as well as the three.
+    const wikitext =
+      "==Estonian==\n\n===Etymology 1===\n\n====Adjective====\n{{et-adj}}\n\n# [[cool]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]?.pos).toBe("ADJECTIVE");
+  });
+
+  it("leaves a heading this app has no label for as null", () => {
+    // `saav` opens under `===Participle===`. Guessing NOUN because the word
+    // declines would invent the fact the heading exists to supply.
+    const wikitext = "==Estonian==\n\n===Participle===\n\n# [[becoming]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]?.pos).toBeNull();
+  });
+
+  it("never reads Proper noun as Noun", () => {
+    const wikitext = "==Estonian==\n\n===Proper noun===\n\n# [[Estonia]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]?.pos).toBeNull();
+  });
+
+  it("ignores the declension table further down the block", () => {
+    // `{{et-decl-...}}` is inflection, not a headword, and `====Declension====`
+    // is a heading with no part of speech in it.
+    const wikitext =
+      "==Estonian==\n\n===Adjective===\n{{et-adj|üksiku}}\n\n# [[lonely]]\n\n" +
+      "====Declension====\n{{et-decl-õnnelik|üksik}}\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]?.headword).toBe("ADJECTIVE");
   });
 });

@@ -19,7 +19,8 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { extractEstonianSenses } from "../lib/dict/wiktionary";
+import { extractEstonianEntries, extractEstonianSenses } from "../lib/dict/wiktionary";
+import { resolvePos } from "../lib/dict/pos";
 import { wordNote } from "../lib/estonian/dictation";
 import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
@@ -27,7 +28,8 @@ import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
-import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS } from "../lib/tutor/prompt";
+import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
+import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
 // @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
 import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
@@ -838,6 +840,80 @@ check("how much of the app a screen leads with is decided in one place", () => {
   }
 });
 
+check("where a screen lives is decided in one table", () => {
+  /*
+    The rail, the phone sheet, the command palette and the guide are four
+    answers to "where does this live", and for a while they were four lists.
+    The palette offered six practice modes while the hub offered eleven, so the
+    Leech clinic was reachable from one screen and unfindable from the box that
+    promises to go anywhere; `components/PracticeModes.tsx` held a seventh copy
+    of them that no screen rendered at all; and `lib/copy/tour.ts` named nine
+    screens a second time with their own icons.
+
+    Two shapes fail here. A navigation surface that stops reading
+    `lib/ux/nav.ts` or `lib/ux/modes.ts`, and anybody else collecting this
+    app's own routes into a table that also names them. Prose keyed by route is
+    fine, and so is a link: it is the second copy of the *names* that rots.
+  */
+  const readers: [string, RegExp][] = [
+    ["components/Sidebar.tsx", /lib\/ux\/nav/],
+    ["components/CommandPalette.tsx", /lib\/ux\/nav/],
+    ["app/(app)/guide/page.tsx", /lib\/copy\/tour/],
+    ["app/(app)/practice/page.tsx", /lib\/ux\/modes/],
+    ["app/(app)/page.tsx", /lib\/ux\/modes/],
+  ];
+  for (const [file, table] of readers) {
+    assert.match(code(file), table, `${file} navigates by a list of its own again`);
+  }
+
+  for (const file of ALL) {
+    if (file.startsWith("lib/ux/")) continue;
+    // The syllabus, the badges and the quests carry a route into their own
+    // page beside their own content. That is content with a link on it.
+    if (/^lib\/(collections|achievements|gamification)\//.test(file)) continue;
+    for (const literal of code(file).match(/\[[^[\]]*\]/g) ?? []) {
+      const routes = literal.match(/href:\s*"\/[a-z]/g)?.length ?? 0;
+      const named = /\b(label|title):\s*"/.test(literal) && /\bicon:\s*"/.test(literal);
+      assert.ok(
+        routes < 3 || !named,
+        `${file} names ${routes} destinations in a table of its own instead of reading lib/ux/nav.ts`,
+      );
+    }
+  }
+});
+
+check("the rail shows every place, rather than hiding some behind a button", () => {
+  /*
+    The rail used to promote four destinations and put the other twelve behind
+    a button marked "More", and the button had a bug that only showed up in
+    use: the group opened itself whenever the current page was inside it, so on
+    Practice or Progress the label read "Less" and pressing it did nothing.
+    `showRest` was `railOpen || secondaryActive`, the click flipped `railOpen`,
+    and the second half of that held it open regardless.
+
+    Fixing the toggle was the small half. Sixteen links behind a disclosure are
+    the same sixteen links somewhere a learner has to remember, so the rail
+    draws every section it is given. This fails on the shape that came back:
+    the rail keeping a piece of state that decides which links exist. The phone
+    sheet keeps its button, because five cells across a phone is a different
+    problem from a column with a screen of height in it, and what it opens is
+    the same sections under the same headings.
+
+    `scripts/smoke-new.mjs` is the other half of this and the one that counts:
+    it opens the app at desktop width and asserts every destination in the
+    table is a link you can see.
+  */
+  const rail = code("components/Sidebar.tsx");
+  assert.match(rail, /PLACES\.map/, "the rail stopped drawing the sections it is given");
+  for (const gate of ["railOpen", "showRest", "secondaryActive"]) {
+    assert.equal(
+      rail.includes(gate),
+      false,
+      `the rail hides some of its links behind ${gate} again`,
+    );
+  }
+});
+
 check("the pure modules stay free of React, Next and Prisma", () => {
   /*
     These are the ones with unit tests around them, and a test is only cheap
@@ -1064,6 +1140,106 @@ check("an empty cell goes through NO_VALUE, never a literal", () => {
   assert.deepEqual(offenders, [], "a placeholder is typed in rather than read from NO_VALUE");
 });
 
+check("the voice is one table, and everything that speaks reads from it", () => {
+  /*
+    THE RULE THAT KEEPS THE COPY SOUNDING LIKE A PERSON, AND THE WAY IT ROTS.
+
+    Three files stated it and no two of them agreed. `humanize.ts` held seven
+    stock openers it stripped out of Anu's stream; `prompt.ts` asked the model
+    for roughly the same thing in a sentence of its own; `readerCopy.test.ts`
+    swept hand-written copy for nine brochure words across six hand-listed
+    public files. So "delve" was banned in Anu's answer and fine in the panel
+    beside it, the 73-unit course page and every empty state were outside the
+    sweep entirely, and nobody reading any one of those files could see any of
+    that. The same fault `PROVIDER_KEY_ENV` was consolidated for.
+
+    `lib/copy/voice.ts` is the table. This asserts the shape rather than the
+    contents: the table exports what its readers import, the stream and the
+    prompt both read it rather than carrying a copy, and the sweep runs over
+    the whole file set rather than a list somebody typed.
+  */
+  const table = "lib/copy/voice.ts";
+  assert.ok(TELLS.length > 20, `${table} has been emptied out`);
+  assert.ok(VOICE_RULES.length >= 5, `${table} no longer states the voice`);
+
+  const humanize = code("lib/tutor/humanize.ts");
+  assert.match(humanize, /from "@\/lib\/copy\/voice"/, "the stream stopped reading the voice table");
+  assert.doesNotMatch(
+    humanize,
+    /(important to note|at the end of the day|great question)/i,
+    "the stream has grown its own copy of the opener list again",
+  );
+
+  /*
+    The prompt has to carry the rules, not merely import them. A file that
+    imports a constant and never interpolates it type-checks perfectly and
+    asks the model for nothing, which is the failure worth catching here.
+  */
+  const prompt = buildSystemPrompt("A2");
+  for (const rule of VOICE_RULES) {
+    assert.ok(prompt.includes(rule), `Anu is not given the rule: ${rule.slice(0, 48)}`);
+  }
+  assert.doesNotMatch(
+    code("lib/tutor/prompt.ts"),
+    /Never use an em dash/,
+    "the prompt has gone back to typing the voice rules out beside the table",
+  );
+
+  /*
+    And the sweep still sweeps everything. Narrowing it back to a hand-listed
+    set of public files is exactly how it spent its first life, and a list is
+    what a rule decays into: it covers the screens somebody was looking at on
+    the day they wrote it and nothing added since.
+  */
+  const sweep = read("lib/copy/readerCopy.test.ts");
+  assert.match(sweep, /FILES[\s\S]{0,300}findTells/, "hand-written copy is no longer swept for tells");
+  assert.match(sweep, /FILES[\s\S]{0,300}EMOJI/, "the emoji rule no longer runs over the tree");
+
+  /*
+    And it still reaches the documentation. `docs/` was outside this rule until
+    somebody counted: 388 dashes, plus three empty table cells written as a bare
+    dash, which is the `NO_VALUE` fault from the source tree wearing a different
+    hat. The pages a contributor reads first are the ones that teach them which
+    of a project's rules are real, so the shape asserted is that the markdown
+    set is built by walking `docs/` rather than by listing what somebody
+    remembered.
+  */
+  assert.match(sweep, /sourceFiles\("docs"/, "the documentation sweep no longer walks docs/");
+  assert.match(sweep, /MARKDOWN[\s\S]{0,300}findTells/, "the docs are no longer swept for tells");
+
+  /*
+    The half a machine cannot hold has to be written down somewhere a person
+    will find it, or the enforceable half becomes the whole rule and the copy
+    gets cold while passing every check.
+  */
+  assert.ok(existsSync("docs/18-voice.md"), "the voice standard has no written half");
+  assert.match(read("CLAUDE.md"), /18-voice\.md/, "CLAUDE.md does not point at the voice standard");
+});
+
+check("the app does not talk about itself the way a brochure would", () => {
+  /*
+    The behavioural end of the same rule, asserted against what a stranger
+    actually meets first rather than against the source tree the unit sweep
+    walks. `readerCopy.test.ts` is the sweep; this is the check that the sweep
+    is pointed at the right thing, since a table with no reader passes every
+    test in it.
+  */
+  const publicSurfaces = [
+    "app/(chromeless)/welcome/page.tsx",
+    "app/(chromeless)/sign-in/page.tsx",
+    "app/(chromeless)/start/WelcomeWizard.tsx",
+    "README.md",
+  ];
+  const offenders: string[] = [];
+  for (const file of publicSurfaces) {
+    assert.ok(existsSync(file), `${file} is gone, so this check is pointed at nothing`);
+    for (const [i, line] of read(file).split("\n").entries()) {
+      for (const tell of findTells(line)) offenders.push(`${file}:${i + 1}: ${tell.name}`);
+    }
+  }
+  assert.deepEqual(offenders, [], "the first thing a stranger reads is written in brochure");
+});
+
 // ── The browser suites, and the two ways one can lie ─────────────────────────
 
 check("no browser suite hardcodes one machine's Chromium", () => {
@@ -1230,6 +1406,117 @@ check("the root declares no overflow", () => {
     "an overflow has gone back on html",
   );
   assert.match(CSS, /overflow-x:\s*clip/, "the body no longer clips sideways");
+});
+
+/*
+  TEXT AND ICONS STAY INSIDE THE BOXES THEY WERE DRAWN INTO.
+
+  The rules that make this true are four declarations in app/globals.css and
+  `lib/layout/containment.test.ts` asserts each of them against the
+  stylesheet. What is here is the part a stylesheet cannot promise on its own:
+  that nothing in the markup opts back out, and that the one exemption is
+  still paying for itself.
+
+  `scripts/test-containment.mjs` is the third leg and the only one that can
+  see a rectangle. It walks every text-bearing element, every lucide icon and
+  everything that arrives with a width of its own, on every route the app has
+  at 360, 768 and 1280, in the dark as well as the light, and asks whether any
+  of them is cut off by an ancestor that clips, drawn outside a border
+  somebody painted, drawn on top of something else, or resized away from the
+  size it declared. Then it swaps every run of text for a run of letters OF
+  THE SAME LENGTH with no space and no hyphen in it and asks all four again,
+  which is the question Estonian actually poses: a row fits today because the
+  gloss it happens to hold has commas in it, and the compound of the same
+  width has to fit as well.
+
+  768 is where it earns its keep. It is neither end, so it went unmeasured
+  longest, and it is the width at which the rail appears and the content
+  column is therefore narrowest: five faults were waiting there, one of them
+  in the shell every page is drawn inside. With the four declarations removed
+  it fails 395 of its 1010 checks, which is how anybody knows it is looking.
+*/
+check("nobody opts back out of the wrapping default", () => {
+  /*
+    `overflow-wrap: anywhere` is inherited from the body so that a screen has
+    to opt out rather than remember to opt in, and the only ways back out are
+    setting it to something else or asking for a word to be kept whole. Both
+    are findable, and both are how a card starts overflowing again on one
+    screen while every other screen stays right.
+
+    `white-space: nowrap` is deliberately NOT on this list. A one-line label is
+    a real thing to want and a short one cannot overflow anything; what is
+    banned is undoing the rule for text that is allowed to be any length.
+  */
+  for (const file of [...APP, ...COMPONENTS, ...LIB]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const source = read(file);
+    for (const found of source.matchAll(/overflowWrap:\s*"([a-z-]+)"/g)) {
+      assert.equal(
+        found[1],
+        "anywhere",
+        `${file} sets overflow-wrap to ${found[1]}, which takes the containment default off ` +
+        "for everything under it. The exemption for a paradigm is on `table` in app/globals.css.",
+      );
+    }
+    assert.equal(
+      /wordBreak:\s*"keep-all"/.test(source) || /\bbreak-keep\b/.test(source),
+      false,
+      `${file} asks for a word to be kept whole, which is the same opt-out by another name`,
+    );
+  }
+});
+
+check("no icon is given a flex of its own", () => {
+  /*
+    `svg.lucide { flex: none }` is one declaration standing in for `shrink-0`
+    on several hundred icons, and it is beaten by anything more specific. With
+    it off, `lucide-eye-off` was measured at 0x15 in a deck row and
+    `lucide-sun` at 28x16 in the rail: a flex item with no `flex` of its own
+    both shrinks and grows, so an icon is deformed by a label being too long
+    and by it being too short.
+
+    `shrink-0` on an icon is not a violation. It says the same thing the rule
+    says and costs nothing; what would break it is a `flex-1`, a `grow`, or a
+    `flexShrink` written into a style prop.
+  */
+  const ICON = /<[A-Z][A-Za-z0-9]*\b[^>]*\bsize=\{[0-9]+\}[^>]*>/g;
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    for (const found of read(file).matchAll(ICON)) {
+      const tag = found[0];
+      assert.equal(
+        /\b(?:flex-1|flex-auto|grow)\b/.test(tag) || /flexShrink|flexGrow|flex:/.test(tag),
+        false,
+        `${file} gives an icon a flex of its own: ${tag.slice(0, 80)}`,
+      );
+    }
+  }
+});
+
+check("a table sits in a scroller, which is what buys it the exemption", () => {
+  /*
+    A table is the one thing allowed to keep its words whole, because a
+    paradigm is read by comparing forms down a column and a form broken across
+    two lines has to be reassembled before it can be compared. That is only an
+    honest trade while the table has something to give instead, and what it
+    gives is a sideways scroll of its own rather than the page's.
+
+    The worksheet's table was the one that did not, and it was not a near
+    miss: a blank to write on is 110px because that is what a hand needs, so
+    three of them and their padding came to 103px more than a 360px phone has.
+  */
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = read(file);
+    for (const found of source.matchAll(/<table\b/g)) {
+      const before = source.slice(Math.max(0, found.index - 400), found.index);
+      assert.match(
+        before,
+        /overflow-x-auto/,
+        `${file} has a table with no scroller around it. A table keeps its words whole ` +
+        "(app/globals.css), so a table too wide for a phone has to have a way out.",
+      );
+    }
+  }
 });
 
 check("nothing fixed over content carries a backdrop filter", () => {
@@ -1442,6 +1729,96 @@ check("the gloss parser unwraps an English link and never an Estonian one", () =
     the whole sense is compared.
   */
   assert.equal(senses[1], "to depend on", "an Estonian mention reached an English gloss");
+});
+
+check("a part of speech is read off the sense the gloss came from", () => {
+  /*
+    The gloss and the label are two facts about one definition line, and they
+    used to come from different places: the gloss from the first sense on the
+    page, the label from whichever of Wiktionary's four categories the
+    candidate happened to be drawn from first. Nouns were drawn first, so
+    `kallis`, `valge`, `sinine`, `noor` and 57 others shipped as NOUN, and
+    reversing the order would only have moved the fault onto `lamp` and `pea`,
+    which are in the adjective and adverb categories for senses they do not
+    ship.
+
+    Nothing looked wrong either way: every answer is a real part of speech
+    spelled correctly, and an Estonian adjective declines exactly like a noun.
+    Asserted against the parser, because the data is a snapshot and the rule is
+    not.
+  */
+  const page =
+    "==Estonian==\n\n===Noun===\n{{et-noun}}\n\n# [[head]]\n\n" +
+    "===Adverb===\n{{et-adv}}\n\n# [[almost]]\n";
+  const senses = extractEstonianEntries(page);
+  assert.equal(senses[0]?.pos, "NOUN", "a sense no longer carries its own heading");
+  assert.equal(senses[1]?.pos, "ADVERB", "a heading no longer applies to the senses under it");
+
+  // The four words where the heading and the headword template disagree, and
+  // the reason only one of them may overturn the other: `{{et-adj}}` carries a
+  // superlative and is a claim, `{{et-noun}}` is the declension an adjective
+  // shares and is a shrug.
+  const base = { ekilexSaysVerb: false, fallback: "NOUN" };
+  assert.equal(
+    resolvePos({ ...base, sensePos: "NOUN", headwordPos: "ADJECTIVE" }), "ADJECTIVE",
+    "an adjective headword no longer overturns a noun heading (võimas)",
+  );
+  assert.equal(
+    resolvePos({ ...base, sensePos: "ADJECTIVE", headwordPos: "NOUN" }), "ADJECTIVE",
+    "a noun headword now overturns an adjective heading (üksik, lämbe, lämmi)",
+  );
+  // And Ekilex still draws the one line it actually draws, because that line
+  // decides which principal parts the entry has.
+  assert.equal(
+    resolvePos({ ...base, sensePos: "NOUN", headwordPos: "VERB", ekilexSaysVerb: true }), "VERB",
+    "Ekilex no longer settles the verb question",
+  );
+  assert.equal(
+    resolvePos({ ...base, sensePos: "VERB", headwordPos: "VERB" }), "NOUN",
+    "a nominal can now be labelled a verb on the page's word alone",
+  );
+});
+
+check("every corrected label agrees with the dictionary it was corrected in", () => {
+  /*
+    `pos` is half of `Lexeme`'s conflict key, so `prisma/data/pos-corrections.json`
+    is not a changelog: the seed replays it to move an already-seeded row onto
+    the label this build carries. If the two ever disagree, the replay moves a
+    row onto a label the dictionary no longer uses and the insert then adds the
+    right one beside it, which is the duplicate entry the ledger exists to
+    prevent.
+  */
+  const corrections = JSON.parse(read("prisma/data/pos-corrections.json")) as
+    { lemma: string; from: string; to: string }[];
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as { lemma: string; pos: string }[];
+  const byLemma = new Map(entries.map((e) => [e.lemma, e.pos]));
+
+  for (const c of corrections) {
+    assert.notEqual(c.from, c.to, `${c.lemma} is recorded as moving to the label it already had`);
+    const shipped = byLemma.get(c.lemma);
+    // A word dropped from the dictionary since is fine; a word still in it
+    // wearing neither label is not.
+    if (shipped !== undefined) {
+      assert.equal(shipped, c.to, `${c.lemma} ships as ${shipped} but is recorded as moving to ${c.to}`);
+    }
+  }
+
+  // One hop per word, or the replay's order would decide the outcome.
+  const froms = new Map<string, string>();
+  for (const c of corrections) {
+    const seen = froms.get(c.lemma);
+    assert.equal(seen, undefined, `${c.lemma} is recorded as moving twice (${seen} and ${c.to})`);
+    froms.set(c.lemma, c.to);
+  }
+
+  // And the built file may never hold one key twice, which is what the seed
+  // would fail on rather than silently deduplicate.
+  const keys = new Set<string>();
+  for (const e of entries) {
+    const key = `${e.lemma} ${e.pos}`;
+    assert.ok(!keys.has(key), `${key} appears twice in the built dictionary`);
+    keys.add(key);
+  }
 });
 
 
@@ -2701,6 +3078,35 @@ check("a hover makes a control more present, never less", () => {
 
   for (const name of [".choice-btn:hover", ".tap-tint:hover"]) {
     assert.ok(CSS.includes(name), `app/globals.css no longer defines ${name}`);
+  }
+});
+
+/**
+ * A control the 44px floor makes bigger still centres what is inside it.
+ *
+ * The floor is a `min-width` and a `min-height`, and an inline box lays its
+ * content out from the top left, so on an icon-only button all of the slack
+ * lands on two sides. Measured in a browser at 390px, the cross on the phone's
+ * More sheet sat six pixels left of the middle of the circle it was drawn in,
+ * and every other icon-only control that had not thought to say `flex` for
+ * itself was drawn the same way. It reads as a rendering fault because it is
+ * one.
+ *
+ * Asserted as the pairing rather than as one rule: a floor that inflates a box
+ * with no rule centring the box's content is the state that produced this, and
+ * a later edit that keeps the floor and drops the centring would put it back.
+ */
+check("a control inflated to the tap-target floor centres its own content", () => {
+  const floor = /@media\s*\(pointer:\s*coarse\)\s*\{[^]*?min-width:\s*2\.75rem/;
+  assert.match(CSS, floor, "the 44px tap-target floor is gone from app/globals.css");
+
+  const centred = CSS.match(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/);
+  assert.ok(centred, "nothing in app/globals.css centres an icon-only control's content");
+  for (const declaration of ["display: inline-flex", "align-items: center", "justify-content: center"]) {
+    assert.ok(
+      centred[1]!.includes(declaration),
+      `the icon-only rule no longer sets ${declaration}, so the floor's slack lands on one side`,
+    );
   }
 });
 

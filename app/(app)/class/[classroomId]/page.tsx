@@ -7,7 +7,7 @@ import { classworkHistory } from "@/app/actions";
 import { PATH } from "@/lib/collections/syllabus";
 import { classRoster } from "@/lib/classroom/roster";
 import { LocalDate } from "@/components/LocalDate";
-import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, StatTile } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, Stack, StatTile } from "@/components/ui";
 import { ArchiveClass, AssignHomework, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
 
 /*
@@ -77,7 +77,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
         </Link>
       }
     >
-      <div className="flex flex-col gap-6">
+      <Stack>
         {classroom.archived && (
           <Note tone="hard">
             This class is archived. The join code no longer works. Everything already here stays.
@@ -272,7 +272,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             />
           </Chip>
         </div>
-      </div>
+      </Stack>
     </Page>
   );
 }

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Check, Plus, Search, Star } from "lucide-react";
+import { Camera, Check, Plus, Search, Star } from "lucide-react";
 import { addToDeck, toggleStar } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Speak } from "@/components/Speak";
+import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
@@ -63,7 +63,7 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, entry, matchedAs, suggestions, starred, tutorReady, justFetched,
+  initialQuery, hits, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
 }: {
   initialQuery: string;
   /** True when this word was pulled from Ekilex on this request. */
@@ -77,6 +77,13 @@ export function DictionaryClient({
   starred: { lemma: string; translation: string }[];
   /** Whether Anu can be asked to translate an example sentence. */
   tutorReady: boolean;
+  /**
+   * Whether a page can be photographed, which needs a model configured. Offered
+   * here rather than from the rail: scanning is a way of getting words *in*,
+   * and this is where getting words in happens. A row in the navigation called
+   * "Scan a page" sat under "Look it up", which is not what it is for.
+   */
+  canScan?: boolean;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -130,7 +137,25 @@ export function DictionaryClient({
         </div>
       )}
 
-      {!showingEntry && initialQuery === "" && <AddWord />}
+      {!showingEntry && initialQuery === "" && (
+        <div className="flex flex-col gap-3">
+          <AddWord />
+          {canScan && (
+            <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+              Got it on paper?{" "}
+              <Link
+                href="/scan"
+                className="inline-flex items-center gap-1.5 font-semibold underline underline-offset-2"
+                style={{ color: "var(--accent-deep)" }}
+              >
+                <Camera size={14} aria-hidden /> Photograph a word list
+              </Link>{" "}
+              and tick the words you want. Nothing is added until you do, and the picture is never
+              stored.
+            </p>
+          )}
+        </div>
+      )}
 
       {!initialQuery && (
         <div className="flex flex-wrap items-center gap-2">
@@ -261,8 +286,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
             <h2 lang="et" className="est text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
               {entry.lemma}
             </h2>
-            <Speak text={entry.lemma} />
-            <Speak text={entry.lemma} slow label={`Hear "${entry.lemma}" slowly`} />
+            <SpeakPair text={entry.lemma} />
           </div>
           <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">

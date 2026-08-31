@@ -2,7 +2,7 @@ import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
 // Floor: 11, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Polish", { floor: 12 });
+const { check, done } = suite("Polish", { floor: 13 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
@@ -34,8 +34,21 @@ for (const [query, lemma, why] of [
     heading === lemma && why.test(note), note || "no explanation shown");
 }
 
-// The weak-case heatmap is an action, not a readout.
+/*
+  The weak-case panel is an action, not a readout.
+
+  It used to be drawn three ways on three pages, and My words drew its own with
+  a second copy of the arithmetic behind it, so one learner could read two
+  different numbers for one case. Progress owns it now and Practice draws the
+  same component; My words keeps the deck and points at it. This drives the
+  panel where it lives, and then checks that the page it left still says where
+  it went, because a consolidation that drops the signpost is just a removal.
+*/
 await page.goto(`${B}/words`, { waitUntil: "networkidle" });
+check("the deck page points at where the case analysis went",
+  (await page.locator('a[href="/progress"]').count()) > 0);
+
+await page.goto(`${B}/progress`, { waitUntil: "networkidle" });
 const drillLink = page.locator('a[href^="/review?case="]').first();
 check("weak cases link to a drill", (await drillLink.count()) > 0);
 const href = await drillLink.getAttribute("href");

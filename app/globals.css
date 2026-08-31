@@ -153,6 +153,24 @@
     --again-ink: var(--peach-ink);
     --easy-ink: var(--sky-ink);
 
+    /*
+      Ink for text sitting on a *solid* mint fill, as opposed to on its tint.
+
+      The accent already had this pair and the doc calls it the trap:
+      `--accent-ink` is the white on the solid button and `--accent-deep` is the
+      ink on the tint. Mint needed the other half and did not have it, so the
+      tick inside a reviewed day on Today's week strip was `--surface`, which is
+      white on #1fb894 at 2.52:1. The mint fill and its ring say "recalled" in
+      colour; the tick is the channel that says it without colour, which is the
+      one thing CLAUDE.md will not let a distinction do without.
+
+      One value in both themes rather than a light and a dark, because both
+      mints are light enough for it: 7.40:1 on #1fb894 and 11.70:1 on the dark
+      theme's #5fe3bc. It is the light theme's `--ink`, written out, because
+      `var(--ink)` inverts with the theme and would take the tick with it.
+    */
+    --on-mint: #151021;
+
     --again: var(--peach);
     --hard: var(--butter);
     --good: var(--mint);
@@ -290,6 +308,88 @@
   * { box-sizing: border-box; }
 
   /*
+    NOTHING BLEEDS OUT OF THE BOX IT WAS DRAWN INTO, AND THAT IS FOUR
+    DECLARATIONS RATHER THAN A HABIT.
+
+    Every other rule here about the shape of a page is about the page: the
+    root declares no overflow, the body clips sideways, the document cannot be
+    dragged. None of them can see the fault these four are for, because it
+    happens inside a card that is itself exactly the right size. A word runs
+    over the border and onto the ground behind it. A label meets an icon in a
+    flex row and squeezes the icon into an oval. Neither makes the page any
+    wider, so every check that measures the page reads a clean pass while the
+    screen looks broken.
+
+    A WORD THAT WILL NOT FIT BREAKS, RATHER THAN PUSHING ITS BOX WIDE.
+    `anywhere` and not `break-word`, and the difference is the whole point:
+    both break a word that has overflowed, but only `anywhere` tells the
+    layout that the word *can* break when it works out how narrow the box is
+    allowed to be. A flex or grid item's automatic minimum is its min-content
+    width, so with `break-word` a single long word is a floor under the whole
+    row and the row pushes out of the card. This is not a hypothetical in
+    Estonian: the dictionary holds compounds past twenty characters, a learner
+    names their own class, and the paste importer takes whatever was on the
+    clipboard.
+
+    Inherited from the body, so it is the default everywhere and a screen has
+    to opt out rather than remember to opt in. `white-space: nowrap` and
+    `truncate` still win where a line is deliberately one line.
+
+    THE ONE EXEMPTION IS A TABLE, two rules below. The declaration itself
+    sits in the `body` rule further down, because there is one of those and a
+    second would be the sort of thing that gets edited without the first.
+
+    AN ICON IS NEVER SQUEEZED BY THE TEXT BESIDE IT. A lucide icon is a square
+    with `width` and `height` attributes, and a flex item with no `flex-shrink`
+    of its own shrinks: put an icon in a row beside a label long enough and the
+    icon is drawn as an oval, or at nothing wide at all, which was measured on
+    the unit page at 0x15. `shrink-0` was on maybe a fifth of the icons in the
+    app, which is what a rule kept by remembering it looks like. It is one
+    declaration and it cannot be forgotten. An icon set inline in prose is not
+    a flex item, so this leaves it alone.
+  */
+  svg.lucide {
+    flex: none;
+  }
+
+  /*
+    AND NOTHING WITH A SIZE OF ITS OWN IS WIDER THAN WHAT IT IS IN.
+
+    A word can be broken and a flex row can be told to shrink, but a replaced
+    element brings its own width and no amount of wrapping touches it. The one
+    in this app is the backup picker on Settings: an `<input type="file">` is
+    laid out from its button label plus room for a filename, which Chromium
+    makes 336px, and it was sitting in a 278px card on a 360px phone. The body
+    clips sideways so the page never scrolled and nothing looked wrong from
+    the outside, while the right-hand end of the control a learner is supposed
+    to press was off the card and off the screen.
+
+    Not `svg`, deliberately. An icon here is a fixed square that has just been
+    told not to shrink, and capping it at the width of a narrow row would
+    squeeze it by a second route.
+  */
+  img, video, canvas, iframe, input, select, textarea {
+    max-width: 100%;
+  }
+
+  /*
+    A TABLE KEEPS ITS WORDS WHOLE, BECAUSE IT ALREADY HAS A WAY OUT.
+
+    A paradigm is a column of Estonian forms and the reader's job is to
+    compare them, so a form split across two lines to save forty pixels is a
+    form they have to reassemble before they can read it. `break-word` keeps
+    the word's own width in the column's minimum, so a table too wide for a
+    phone stays too wide and the scroller it is already sitting in is what
+    gives; the word still breaks if there is genuinely nowhere to put it.
+
+    That is only honest while every table really is in a scroller, and
+    `scripts/test-invariants.ts` is what checks it.
+  */
+  table {
+    overflow-wrap: break-word;
+  }
+
+  /*
     NO OVERFLOW ON THE ROOT, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
 
     Setting either axis on `html` makes it a scroll container, and every
@@ -311,6 +411,8 @@
   */
   body {
     overflow-x: clip;
+    /* The containment default, explained above the `svg.lucide` rule. */
+    overflow-wrap: anywhere;
     background: var(--ground);
     color: var(--ink);
     font-family: var(--font-sans);
@@ -373,6 +475,37 @@
       min-height: 2.75rem;
       min-width: 2.75rem;
     }
+  }
+
+  /*
+    An inflated box still has to centre what is in it.
+
+    The floor above is a `min-width` and a `min-height` on a control that is,
+    by default, an inline box laying its content out from the top left. On a
+    button holding nothing but an icon that is a quarter of an inch of slack
+    put entirely on one side: measured at 390px, the close button on the phone's
+    More sheet drew its cross six pixels left of the middle of the circle it
+    sits in, and so did every other icon-only control in the app that had not
+    thought to say `flex` for itself. It looks like a rendering fault because it
+    is one.
+
+    So an icon-only control centres its own content, everywhere rather than
+    only under a thumb, since padding rounds unevenly on a mouse too. Written
+    inside `:where()` so it carries no specificity at all: any component that
+    lays its own icon out (a full-width button, a row that pushes its icon to
+    one end) keeps doing exactly what it says, and this only reaches the
+    controls that never said anything.
+
+    `[aria-label]` is what makes "icon only" checkable: a control whose whole
+    content is one glyph has to carry its name in an attribute or it has no
+    name at all, and a control with words in it does not. So a button that says
+    something *and* points at it keeps laying itself out, and this reaches the
+    ones that are nothing but the icon.
+  */
+  :where(button, summary, [role="button"], a, label):where([aria-label]):where(:has(> svg:only-child)) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* A tap is a tap: no grey flash, and none of the 300ms double-tap-to-zoom
@@ -615,19 +748,6 @@
   .grad-sweep {
     background-size: 220% 100%;
     animation: grad-sweep 9s ease-in-out infinite;
-  }
-
-  /*
-    The three floating diacritics in the hero.
-
-    They already carry `.float`, and an animation beats a static transform, so a
-    hover cannot simply add a scale: it has to replace the animation outright.
-    That is why this is a second keyframe rather than a transition, and why the
-    keyframe starts and ends exactly where `float` does, so handing control back
-    at the end of the hover does not jump.
-  */
-  .diacritic:hover {
-    animation: diacritic-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* Soft pastel light behind a section, so the ground never reads as flat grey. */
@@ -972,12 +1092,6 @@
 @keyframes grad-sweep {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-}
-
-@keyframes diacritic-pop {
-  0% { transform: translateY(0) rotate(var(--float-tilt, 0deg)) scale(1); }
-  38% { transform: translateY(-13px) rotate(calc(var(--float-tilt, 0deg) - 15deg)) scale(1.15); }
-  100% { transform: translateY(0) rotate(var(--float-tilt, 0deg)) scale(1); }
 }
 
 @keyframes flip-in {

@@ -2,19 +2,21 @@
 
 ## What this is
 
-An Estonian learning app — dictionary, learning path, spaced-repetition review, practice games and a
+An Estonian learning app: dictionary, learning path, spaced-repetition review, practice games and a
 grammar tutor. `docs/` holds the plan it was built from; `docs/13-mvp-status.md` says what is built,
-what is deliberately not, and the known limitations. Read that first, and §6 of it especially — that
+what is deliberately not, and the known limitations. Read that first, and §6 of it especially. That
 is the current state.
 
 ## Read before writing code
 
-1. `docs/09-roadmap.md` — what phase we are in and what "done" means for it.
-2. `docs/02-estonian-domain.md` — the linguistic model. Non-obvious and load-bearing.
-3. `docs/04-data-model.md` — the schema.
-4. `docs/03-architecture.md` §6 — the ADRs. Do not silently reverse one.
-5. `docs/14-design-system.md` — the visual language: palette, tokens, motion, and what each colour
-   is allowed to mean. Read it before adding a colour, a radius or a shadow.
+1. `docs/09-roadmap.md`: what phase we are in and what "done" means for it.
+2. `docs/02-estonian-domain.md`: the linguistic model. Non-obvious and load-bearing.
+3. `docs/04-data-model.md`: the schema.
+4. `docs/03-architecture.md` §6: the ADRs. Do not silently reverse one.
+5. `docs/14-design-system.md`: the visual language. Palette, tokens, motion, and what each
+   colour is allowed to mean. Read it before adding a colour, a radius or a shadow.
+6. `docs/18-voice.md`: how the app speaks. Warm, kind, concise, and never in a way that reads
+   as generated. Read it before writing a sentence anybody will see, which is most changes.
 
 ## Rules that are not negotiable
 
@@ -32,7 +34,7 @@ seeded principal parts; example sentences come from Ekilex `usages` and are only
 *reordered* to make an exercise (`lib/estonian/cloze.ts`). The model may translate into English and
 explain grammar; anything Estonian it produces in chat is boxed and tagged, and never stored as a
 form. (ADR-005, ADR-017.) The one module that writes *about* Estonian at length,
-`lib/estonian/grammar.ts`, holds no Estonian at all — every form on the grammar pages is read from
+`lib/estonian/grammar.ts`, holds no Estonian at all. Every form on the grammar pages is read from
 the dictionary by `lib/progress/caseExamples.ts` and rendered with its provenance.
 
 **Estonian is taught in Estonian, and the Latin names are the cross-reference.** Nobody teaching
@@ -82,7 +84,7 @@ balanced templates wholesale, and an emptied line sent the picker to the next se
 page with more than one etymology belongs to another word. Where the template sat mid-line the
 gloss survived with a hole in it instead, which is worse: `segama` read "to , to , to" and `vana`
 read "an person", and nothing watching this file could tell a hole from a short gloss. Both
-shapes are invariants now. **Only an English-tagged link is ever unwrapped** — `{{m|et|kohta}}`
+shapes are invariants now. **Only an English-tagged link is ever unwrapped**: `{{m|et|kohta}}`
 is an Estonian word quoted inside an English note, and unwrapping it by a language-blind rule
 would write Estonian into a gloss (ADR-005). That guard has its own invariant, and it took two
 attempts: the first quoted an Estonian word with no diacritic in it inside a trailing
@@ -100,6 +102,54 @@ correcting: of the 684 with an independent English gloss, 657 agree outright and
 not are a choice between synonyms. Those are authored rather than parsed, so no fault above can
 reach them, which is the argument for the division of labour and not for skipping the check.
 
+**A word's gloss and its part of speech are two facts about one line, so they are read off one
+line.** They were not, and that is the whole of what went wrong. The gloss is the first definition
+on the page; the label was whichever of Wiktionary's four part-of-speech categories the candidate
+was drawn from first, and nouns are drawn first, so every word listed as both came out a noun:
+`kallis`, `valge`, `sinine`, `noor`, `tark`, `vana` and 55 more. The obvious fix is to prefer the
+more specific category, and it was measured and is worse. It relabels 86 words and breaks 25 of
+them, because a category says only that the word has *some* sense of that kind somewhere on its
+page: `lamp` is in the adjectives category for a colloquial sense meaning "random", `pea` and
+`kama` are in the adverbs category, and `mari`, `norm` and `seadus` would all have been labelled
+against the very gloss printed beside them. Reversing the order moves the fault rather than fixing
+it.
+
+Every definition sits under a `===Noun===` or `===Adjective===` heading, so
+`extractEstonianEntries` returns each sense with its own, and `lib/dict/pos.ts` is the one table of
+who answers what: Ekilex draws the verb line, because that is the line it actually draws and the
+one that decides which principal parts a word has; the page's heading decides among the nominals;
+the category is a fallback for a page headed `Participle` or `Postposition`, which are true things
+this app has no column for. `npm run audit:pos` re-runs it over the shipped file, 61 labels
+corrected.
+
+**The course harvest cannot be wrong this way, and is checked anyway.** `harvested.ts` is generated
+and its `pos` is a passthrough: `harvestWord` reads the label off the syllabus entry and returns it
+untouched, so the label and the English gloss are authored by one person in one line of
+`lib/collections/syllabus/` and cannot come apart the way a parsed gloss and a category can. The
+audit checks it regardless, matching each authored gloss to the Wiktionary sense it describes and
+comparing that sense's heading: 673 of 1,248 checkable, none wrong. It **reports and never writes**,
+because a correction belongs in the syllabus, and because `syllabus.test.ts` keys the course on
+`lemma|pos` against the harvest alone, so editing one file and not the other already fails
+`npm test`. Do not add an invariant for that; it is the same check twice. **An adjective claim from either the heading or the `{{et-adj}}` headword is enough,
+and a noun claim from the headword alone is not**, which is an asymmetry in the sources rather
+than a thumb on the scale: `{{et-adj}}` carries a superlative, which only an adjective has, while
+`{{et-noun}}` is the ordinary nominal declension an adjective shares, so one is a statement and
+the other is a shrug. That is what keeps `võimas` an adjective under its `===Noun===` heading and
+`üksik`, `lämbe` and `lämmi` adjectives under their `{{et-noun}}`.
+
+**`pos` is half of `Lexeme`'s conflict key, so correcting one is not an edit, it is a move.** Twelve
+of those 61 words were already in the dictionary *twice*, because the course harvest labelled
+`kallis` an adjective and the builder labelled it a noun, and two labels means two rows with two
+ids and two sets of cards. Nothing reported it. They are one entry each now, which is the only
+reason `SEED_SET_SIZE` has ever gone down. The same key is why `prisma/data/pos-corrections.json`
+exists: a deployment seeded before this holds the old label, a reseed finds no conflict and adds a
+second row beside it, so `applyPosCorrections` repoints the existing one first. It runs before the
+early return `--only-if-empty` takes, for the reason `ensureSearchIndexes` does, and before the
+harvest is written, because the harvest inserting its own correct label first strands the stale row
+this was meant to replace. It writes no content, never touches a row somebody edited by hand, and
+never moves a row onto a key another row holds, since `hall` is legitimately a noun meaning "frost"
+and an adjective meaning "grey".
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
@@ -115,7 +165,7 @@ bring back, which is what makes this mechanical rather than aspirational. Re-run
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
-is tagged and needs confirmation before becoming a flashcard answer — an unverified form does not
+is tagged and needs confirmation before becoming a flashcard answer. An unverified form does not
 just sit there being wrong, the SRS drills it in. (ADR-005.)
 
 In the writing grader this is *enforced*, not requested: `lib/tutor/verify.ts` checks every Estonian
@@ -132,6 +182,59 @@ way for every word that takes the ending, so it is one bug found once, and the f
 that it was derived. A model is wrong about one word, unpredictably, in output that looks exactly
 like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
 only" and three later decisions had already been reading it the narrower way.
+
+**Nothing a person reads may sound like a machine wrote it.** Every screen, every error, every
+empty state, the README, the policy pages and Anu are one person explaining Estonian to another.
+Almost everybody using this is also sitting in a class or working through a textbook, and they read
+a teacher carefully and skim marketing, deciding which a screen is inside about a sentence. So a
+panel that opens `Unlock the power of spaced repetition` has already been sorted into the second
+pile and the useful thing underneath it goes unread.
+
+The standard is **warm, kind, concise, and unmistakably a person**, and each of those is a decision
+rather than a mood. Warm is attention, not enthusiasm: `six days in a row` is warmer than `amazing work`
+because one of them is about the learner and required us to have been looking. Kind is where
+the news is bad, which is most of the copy in this app, and it is never softening a correction into
+vagueness, since a learner left unsure whether they were wrong rehearses the error. Concise has no
+word count; it is that every sentence does work for the person in front of it, and two sentences
+that answer the question are kinder than six that circle it.
+
+`lib/copy/voice.ts` is the one table of what gives a sentence away: the em dash and the en dash,
+the stock openers (`It's important to note that`, `Moreover`, `In conclusion`), the inflated
+shapes (`not just a rule, but a pattern`, `more than just`, `that's where X comes in`), the
+brochure vocabulary (`delve`, `leverage`, `seamless`, `empower`, `embark on`, `your journey`,
+`unleash`, `a plethora of`, `whether you're a beginner or`), the praise adjectives, and emoji. Three files used to state this
+and no two of them agreed: `humanize.ts` stripped seven openers out of Anu, `prompt.ts` asked the
+model for roughly the same thing in its own words, and the sweep over hand-written copy covered
+nine brochure words across **six hand-listed files out of four hundred**. So a phrase Anu was
+forbidden from using was fine in the panel beside her, and the 73-unit course page, the exam
+briefing and every empty state were outside the check entirely. There is one table now,
+`readerCopy.test.ts` sweeps the whole of `app/`, `lib/`, `components/`, the README, this file and
+`docs/` against it, and `VOICE_RULES` is interpolated into Anu's system prompt so what the model is
+asked for is what the sweep enforces. An invariant fails if any of those three stops reading the table, if the sweep
+narrows back to a list, or if a rule stops reaching the prompt.
+
+Adding a tell means arguing that the phrase is never right on a screen here. `perfect` is not on
+the list, because taisminevik is the perfect tense and a grammar page has to say so; `unlock` is
+not, because the exam recordings genuinely unlock. A check that fires on honest copy gets waived,
+and a check everybody waives is a check nobody reads. The emoji rule is drawn the same way: the
+arrow in "Estonian to English", the return key in a keyboard hint and the tick on the week strip
+are typographic glyphs doing a job, and only the pictographic kind is banned.
+
+**`docs/` is not exempt, and was.** The sweep skipped it on the argument that those pages are read
+by contributors rather than by learners, which was true and was not a reason: they are still
+somebody explaining something to somebody, they are the first thing a new contributor reads, and a
+project whose own documentation is written in the voice it forbids on screen has told that person
+which of its rules are real. There were 388 dashes behind that argument, and three of them were the
+`NO_VALUE` fault wearing a different hat, an empty cell in a paradigm table written as a bare dash
+that a mechanical sweep turns into a comma sitting where a form should be. A fenced block and an
+inline code span are still skipped, because a document quoting the Prisma schema or the secret
+scan's own grep is quoting code, and because backticks are how a page names a banned phrase without
+using one. `docs/18-voice.md` is the one exemption and only from the phrase rule, since it has to
+show the copy it exists to prevent.
+
+**The table is half the rule.** No regex tells kind from cold, or notices a paragraph that is
+twice as long as it needs to be. `docs/18-voice.md` is the other half, with worked before-and-after
+examples off real screens, and it is what to read before writing a sentence anybody will see.
 
 **The chat guard is a notice; only the grader has a gate.** `verifyComment` withholds a whole reply
 before the learner sees it, which only a non-streaming answer can afford. The main chat streams, so
@@ -175,7 +278,7 @@ and it is the input to FSRS parameter optimisation.
 This is now a property rather than a hope: `Review` has *no foreign key* to `Card`. It carries its
 own `ownerId` and `lexemeId` and keeps `cardId` as a plain column, so deleting a card or restoring a
 backup over a deck cannot cascade the history away. Do not re-add the relation for the convenience
-of a join — `lib/srs/replay.itest.ts` will fail, which is the point. The same property is what makes
+of a join. `lib/srs/replay.itest.ts` will fail, which is the point. The same property is what makes
 offline sync conflict-free: grades are facts with timestamps, and replaying them in order reproduces
 the state exactly, because `grade()` takes `now` as a parameter.
 
@@ -184,18 +287,18 @@ API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 
 **Review must work offline.** It is the daily path, and it may not depend on any network call.
 A grade that cannot reach the server goes into the IndexedDB outbox (`lib/offline/db.ts`) and is
-replayed in order by `replayGrades` with the timestamp it was actually answered at — never dropped,
+replayed in order by `replayGrades` with the timestamp it was actually answered at, never dropped,
 never re-stamped. Replay is idempotent because the client generates each grade's id. Anything added
 to the review path must survive `navigator.onLine === false`, and `scripts/smoke-offline.mjs`
 checks that in a browser. (ADR-015.)
 
 **AI spending is always metered.** `lib/usage` has no off switch and fails closed, because sign-up
 is open by default. Any new path that calls a paid provider goes through `authoriseCall` before the
-call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table — a
+call and `recordUsage` after it. An unrecognised model prices at the dearest rate in the table. A
 cap that fails open is not a cap. This is asserted now rather than asked for: the invariant finds
 every module that opens the provider chain and fails on one that does not mention the ledger,
 because prose had been enough to keep four routes honest and not enough to catch the fifth path.
-That fifth was `lib/tutor/translate.ts`, reachable from the dictionary search box — a word the
+That fifth was `lib/tutor/translate.ts`, reachable from the dictionary search box. A word the
 local table and Wiktionary both missed fired a real completion with no burst limit, no daily
 allowance, no global budget check, and no row written afterwards, so the Settings usage meter
 reported nothing spent because from the ledger's view nothing was. The meter lives inside `ask()`
@@ -203,7 +306,7 @@ rather than in its two callers, so the next short helper that wants a sentence f
 inherits it by reaching for the function.
 
 **The ledger writes the call down when it authorises it, not when it finishes.** `authoriseCall`
-used to read four aggregates, return a verdict, and leave the row to `recordUsage` — which for a
+used to read four aggregates, return a verdict, and leave the row to `recordUsage`, which for a
 streamed answer on a two-minute route lands tens of seconds later. That is check-then-act: ten
 tabs read the same "under the limit" inside the gap and all ten went ahead, and the global budget,
 the one that is supposed to be the hard backstop on the whole deployment's bill, had the widest
@@ -222,7 +325,7 @@ Route Handlers called `checkRateLimit` and none of the forty-odd actions did, wh
 the quiet door again. `lib/security/actionLimits.ts` is the one table of what the per-call
 expensive work is allowed, and the invariant reads that table: an allowance with no action
 applying it fails, and so does an action throttling against anything but the owner it resolved.
-Most actions must **not** have one — grading a card is a single indexed write and a limit there
+Most actions must **not** have one. Grading a card is a single indexed write and a limit there
 would be met by learners and nobody else.
 
 **A bucket key the caller chooses is worse than no bucket key.** `clientIp` read
@@ -238,9 +341,9 @@ public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one
 belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
 
 **The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
-learner sees, so an edit to one is an edit for everybody — it is attributed (`editedBy`), it may
+learner sees, so an edit to one is an edit for everybody. It is attributed (`editedBy`), it may
 replace only the principal parts, and it must never touch a retrieved Ekilex paradigm. Anything
-scoped to a person — cards, reviews, tasks — is always filtered by `ownerId`, including in an
+scoped to a person (cards, reviews, tasks) is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
 **A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
@@ -325,7 +428,7 @@ a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC s
 on any other.
 
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
-own scores — they write to the same review log, so the scheduler sees what was actually practised.
+own scores. They write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)
 
 **Every mutation goes through the forged-request gate, and it is not an `/api/` rule.** Every
@@ -393,7 +496,7 @@ new table fails until a person decides about it. `UsageEvent` is the one deliber
 /privacy names it.
 
 **And then the check's own skip list became the hole.** Three models had been added to the
-exemption rather than to the query — mock exam sittings, classes and class memberships — so the
+exemption rather than to the query (mock exam sittings, classes and class memberships), so the
 backup stopped at ten tables out of thirteen and the invariant called it complete. A sat paper
 carries the composition the learner wrote, which is the single least reconstructable thing in the
 schema, and it was in no backup and, worse, survived "delete everything" entirely. Exemptions live
@@ -464,6 +567,57 @@ appears and then vanishes reads as a bug rather than as restraint. The invariant
 that stops asking the module, and on anybody outside it comparing a review count against a number
 of their own, since a second answer to "has this learner started yet" is how the first one rots.
 
+**Where a screen lives is one table, and nothing lives behind a button marked "More".** The rail
+promoted four destinations and hid the other twelve behind a disclosure, which is not fewer links,
+it is the same links somewhere a learner has to remember. It also had a bug you only met by using
+it: `showRest` was `railOpen || secondaryActive`, so on any page *inside* the hidden group the
+button read "Less" and pressing it did nothing at all, because the click flipped the first half and
+the second held it open. Fixing the toggle was the small half. `lib/ux/nav.ts` is the one table of
+what the app contains and which of four questions each destination answers, the desktop rail draws
+every one of them under its heading, and the phone keeps one button only because five cells across
+a phone is a different problem from a column with a screen of height in it: what it opens is the
+same sections with the same headings. This is not `lib/ux/disclosure.ts` and does not overlap it.
+That module decides what a *screen leads with* by how far in the learner is; this one decides where
+a thing lives, and the answer is the same in the first minute as in the first year.
+
+A place that lives *inside* another place carries `within` and keeps its row out of the rail
+without leaving the table, so the palette still reaches it. Three do: Anu, because her button is in
+the corner of every signed-in screen and a row saying "Ask Anu" was a second door onto a room whose
+door is always open; the class week, which now leads the Tasks page where its homework already was;
+and the scanner, which is a way of getting words *into* the dictionary and sat under "Look it up",
+which is not what it does. This is not the "More" button coming back: each is on the screen a
+learner is already standing on when they want it, and `within` has to say which, asserted.
+
+The table is read by the rail, the phone sheet, the command palette and the guide, because it was
+four lists and they had drifted. The palette offered six practice modes while `/practice` offered
+eleven, so the Leech clinic was reachable from one screen and unfindable from the box that promises
+to go anywhere; `components/PracticeModes.tsx` held a seventh copy that no screen rendered at all
+and has been deleted; `lib/copy/tour.ts` named nine screens a second time with their own icons, and
+now carries the prose and joins the rest. `lib/ux/modes.ts` did the same for the practice modes, and
+the split is deliberate: what a mode *is* lives there, what it is like *right now* is a database
+question and stays in the page. Two invariants hold it, plus `scripts/smoke-new.mjs`, which opens
+the app and asks the two questions no source check can: the rail draws its links with nothing to
+open first, and a phone reaches every place a desktop does. `icon()` falling back to a sparkle is
+why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
+before a screenshot caught them.
+
+**Space is what says two things are separate, and it was saying five different things.** Pages
+stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
+them, so moving from Progress to Practice changed how tightly the app breathed for no reason a
+reader could name. `Stack` in `components/ui.tsx` is the one rhythm and it is the generous one: 32px
+between sections, against 20px inside a card and 8px between rows in a list. Only the outermost
+column uses it, because proximity is what says a grid of cards or a list of rows belongs together.
+The rail follows the same rule at 28px between its groups, which is the largest space in that
+column on purpose: four groups two rows apart read as one list with words in it.
+
+**And a panel drawn three times is three answers.** "Your weakest cases, click to drill" was on
+Progress, Practice and My words, each with its own markup, and My words tallied the review log in a
+local function of its own instead of calling `caseAccuracy`, so one learner could read two different
+numbers for one case and nothing in the app would disagree with either. `components/WeakestCases.tsx`
+is the one component and `lib/stats/history.ts` is the one calculation. My words dropped the panel
+and the five thousand row query behind it and points at Progress instead, which is what
+`test-polish.mjs` drives now: a consolidation that drops the signpost is just a removal.
+
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still
 collects: what to call you, where you are, why, how far, by when, how often, the daily goal and the
@@ -475,15 +629,14 @@ seen before a single word is chosen. `test-assess.mjs` drives all four screens a
 deck step ever moved above the plan.
 
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
-local learner; with them, every route is gated. It keys off the absence of configuration only —
-never add a flag that can disable auth on a deployment that has it. (ADR-013.)
+local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
   `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/` and `lib/copy/` stay free of
-  React, Next.js and Prisma — pure functions, unit tested. Anything that
+  React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
@@ -543,20 +696,38 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   never define one. Main's answer is the one kept, because a `--choice-bg` custom property is how a
   caller passes a tone *through* a hover, where an inset ring is only how you avoid needing to.
   The second copy was deleted rather than left beside it.
+- **A control the 44px floor makes bigger centres its own content.** The floor under a coarse
+  pointer is a `min-width` and a `min-height`, and an inline box lays its content out from the top
+  left, so on a button holding nothing but an icon all of the slack lands on one side: measured at
+  390px, the cross on the phone's More sheet sat six pixels left of the middle of the circle around
+  it, and so did every other icon-only control that had not thought to say `flex` for itself. One
+  rule in `app/globals.css` centres them, written inside `:where()` and keyed on `[aria-label]` plus
+  a lone `svg` child, so it carries no specificity and reaches only the controls whose whole content
+  is the icon. A control that lays its own icon out keeps doing exactly what it says. The invariant
+  asserts the pairing rather than the rule, because a floor that inflates a box with nothing
+  centring what is inside it is the state that produced this.
+- **Two speeds are one control, not the same icon twice.** Normal and slow were two identical
+  speaker buttons side by side on the dictionary entry, the speaking round and the listening part of
+  the mock exam, which reads as a rendering fault rather than as a choice, and the only way to find
+  out what the second one did was to press it. `SpeakPair` in `components/Speak.tsx` is one pill with
+  a divider whose slow half says "Slow" in words, since a `title` attribute is a hover and this app
+  is measured on a phone. It goes away as a pair: both halves ask the same service for the same
+  sentence, so a failure is a fact about the service and not about a speed.
 - **A colour may not be the only thing carrying a distinction, and a tooltip is not text.**
   Dictation's `diacritics` and `typo` share a hue on purpose, because the palette has one colour
   for "nearly" and inventing a sixth to carry a distinction is what the design system forbids. So
   the two were told apart by a `title` attribute, which is a hover tooltip, in an app measured at
-  360px whose README leads with "works on a phone" — and telling them apart is the entire
+  360px whose README leads with "works on a phone". And telling them apart is the entire
   pedagogical claim of that exercise. `wordNote` in `lib/estonian/dictation.ts` says which in
   words, reusing `droppedDiacritics` rather than rewriting the loop that knows which letters
   exist.
 - **No em dash or en dash in anything a person reads**, anywhere in `app/`, `lib/`, `components/`
   or the README. A dash used as a clause break is the loudest single tell that a sentence was
   generated, and every screen here is one person explaining Estonian to another.
-  `lib/copy/readerCopy.test.ts` walks the whole tree and fails on one; its `ALLOWED` list is three
-  files where the character is data, and a test fails if an entry there stops containing one, so
-  it cannot become a parking space. Replacing a dash between two independent clauses with a comma
+  `lib/copy/readerCopy.test.ts` walks the whole tree and fails on one, alongside every other tell
+  in `lib/copy/voice.ts`; its `ALLOWED` list is now the table itself, the one file that has to name
+  what it bans, and a test fails if an entry there stops containing one, so it cannot become a
+  parking space. Replacing a dash between two independent clauses with a comma
   makes a splice and reads worse than the dash did: use a full stop. A separator in a label takes
   the middot the app already uses.
 - **Some code reads a dash rather than writing one, and a sweep cannot tell those apart.** The word
@@ -582,7 +753,7 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
   rather than `hour12: false`, which renders midnight as "24:00" in en-US.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
-  meanings (`docs/14-design-system.md` §1) — mint is "recalled", peach is "missed", and neither is
+  meanings (`docs/14-design-system.md` §1). Mint is "recalled", peach is "missed", and neither is
   free for decoration. **A hue has a fill and an ink and they are not interchangeable**: `--accent`
   is what a button is painted, `--accent-deep` is what a word is written in, and text set in the
   fill measured 3.87 on the week header and 4.05 in the leech clinic against a bar of 4.5. Contrast
@@ -602,11 +773,46 @@ never add a flag that can disable auth on a deployment that has it. (ADR-013.)
   found both in one run, plus an `<ol>` on the landing page whose `<li>`s sat behind a wrapper `div`,
   so the list announced itself as empty. What stays hand-written is only what axe has no opinion
   about: exactly one `main` and one `h1` per screen, and a title that is not the landing page's.
-- Signed-in routes live in `app/(app)/`; pages that own the whole screen — the landing
-  page, sign-in, first-run setup — live in `app/(chromeless)/`. A new public page has
+- Signed-in routes live in `app/(app)/`; pages that own the whole screen (the landing
+  page, sign-in, first-run setup) live in `app/(chromeless)/`. A new public page has
   to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
   pointer every one of them clears 44px.
+- **Text and icons stay inside the boxes they were drawn into, and that is four declarations rather
+  than a habit.** Every other rule here about the shape of a page is about the page, and none of
+  them can see this fault: it happens inside a card that is itself exactly the right size, so the
+  document never scrolls sideways and every check that measures the document reads a clean pass
+  while a word sits on the ground behind the card. `overflow-wrap: anywhere` is inherited from the
+  body, and `anywhere` rather than `break-word` is the whole point: both break a word that has
+  already overflowed, but only `anywhere` counts towards min-content, which is what a flex or grid
+  item's automatic minimum is, so with `break-word` one long word is a floor under the row and the
+  row leaves the card having broken nothing. `svg.lucide { flex: none }` stands in for `shrink-0`
+  on several hundred icons, which was on about a fifth of them: an icon with no `flex` of its own
+  both shrinks and grows, measured at 0x15 in a deck row and 28x16 in the rail. A replaced element
+  is capped at its box, because nothing about wrapping reaches one: Settings' backup picker is an
+  `<input type="file">` laid out at 336px inside a 278px card. And **a table is the one exemption**,
+  because a paradigm is read by comparing forms down a column and a form broken across two lines
+  has to be reassembled first. It buys that with a scroller of its own, which every table in the
+  app sits in and an invariant checks, since the worksheet's did not and was 103px over a phone.
+  `scripts/test-containment.mjs` measures the rectangles, on **every route the app has** at 360,
+  768 and 1280, in the dark as well as the light, in the states a route does not arrive in, and on
+  the three screens that need a row made before they can be visited at all. Four questions each
+  time: cut off by something that clips, drawn over a border somebody painted, drawn on top of
+  something else, or resized away from the size it declared. Then the same four again with every
+  run of text swapped for one **of the same length** with no space or hyphen in it. Same length is
+  the discipline: a stress test that hands every element a forty-character word is unfalsifiable,
+  since a ring whose middle says "42%" fails it and no markup would pass, while same length asks
+  the question Estonian actually poses.
+
+  **768 is where the faults were**, and it went unmeasured for a while because it is neither end.
+  It is the width at which the rail appears and the content column is therefore at its narrowest,
+  and five things were wrong there. The worst was the shell: `main` is a flex item and had no
+  `min-w-0`, so from `md:` up a paradigm table or a row of chips made it wider than the window,
+  and since the body clips sideways there was not even a scrollbar to find the missing half with.
+  Then a case row whose fixed columns came to more than its card had inside it, an exam card whose
+  chips set a floor it could not meet, the landing page's ornaments swallowing taps on the card
+  they are tucked over, and `Chip` itself. With the four declarations removed the suite fails 395
+  of its 1010 checks, which is how anybody knows it is looking.
 - **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
   container, and every library that positions a floating element works in document coordinates
   instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is
@@ -684,8 +890,12 @@ a reply has arrived and "Answered by" after. A trailer was tried and is not an o
 browser exposes one.
 
 **Anu's English is cleaned on its way past, and her Estonian never is.** `lib/tutor/humanize.ts`
-strips dashes used as clause breaks and stock openers. It streams, holding text back only where a
-rule could still change it, so it costs the learner nothing they would notice. `FIX:` and `VOCAB:`
+strips dashes used as clause breaks and stock openers, reading both from `lib/copy/voice.ts` rather
+than keeping a list of its own. It streams, holding text back only where a
+rule could still change it, so it costs the learner nothing they would notice. Only the phrases
+carrying no information are rewritten: there is no mechanical translation from `seamless` back into
+whatever was meant, so a brochure word is asked against in the prompt and swept in hand-written
+copy rather than replaced mid-sentence with something Anu did not say. `FIX:` and `VOCAB:`
 lines pass through byte for byte: rewriting punctuation inside a corrected sentence would be the
 app editing Estonian, which is the rule the whole project is built on. The first version of the
 stream got that wrong in the way only a test finds, rewriting a corrected sentence one chunk
@@ -802,6 +1012,20 @@ exactly what you get when two people build the same thing in different lines,
 and that is the case that hurts, because nothing fails and you end up with two
 of everything.
 
+**A clean merge is not a merge that lost nothing, and `npm run audit:merge` is
+how you find out.** Twice in one afternoon a merge resolved with no conflict at
+all and silently reverted somebody's work: a `tap-tint` hover main had added to
+two of the three weakest-case panels a branch was extracting into one component,
+and an inset ring on Today's week strip that exists because mint on that card is
+2.52:1. Git had no reason to ask in either case, because one side changed lines
+the other side had moved or deleted. The script asks the question mechanically:
+for every line the other side added since the merge base, is it still in the
+tree? It reports rather than fails, because a branch that deliberately deletes a
+file the other side edited is doing nothing wrong and a check that fails on that
+is a check people learn to skip. Run it after every merge that touched files
+both sides own. It is the marker-grepping ritual below, done by a machine that
+does not have to remember which markers.
+
 When somebody else's work overlaps yours, one of them has to go. Keep the one
 that is safer or more precise and **delete the other outright** rather than
 leaving both: their fixture entry reaches four lapses in twelve reviews and
@@ -833,9 +1057,11 @@ passes on that happily: a comma is not a dash. Grep the markers the branch owns
 after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
+`overflow-wrap`, `svg.lucide`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
-`requireAdminId`, `upsertLexemeWithForms`. Most of them now
+`requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
+`VOICE_RULES`, `findTells`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -848,6 +1074,8 @@ npm run test             # unit tests (Vitest), hermetic: no database, no networ
 npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
+npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
+npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
@@ -857,10 +1085,55 @@ npm run test:browser     # the newer browser suites: routes, modes, offline, sca
 
 npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
+npm run test:containment # text and icons inside their boxes, measured; needs the server running
 ```
 
 With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the
 browser suites possible without driving a Google sign-in from Playwright.
+
+**Reloading a deployed dictionary is a button, and it is the one workflow that reads a secret.**
+`.github/workflows/seed-production.yml` runs `npm run db:seed` against the deployment, by hand,
+after somebody types a word into the confirmation box. `ci.yml` says of itself that nothing in it
+maps a repository secret into a job, so a workflow file cannot become a way to read one; this file
+is the exception and keeps what it can of that, being `workflow_dispatch` only and mapping the
+connection string into the three steps that need a database and no others. It exists because a
+deployment seeded before the harvest and the built expansion keeps saying it has 360 words for as
+long as nobody reseeds it, and the person who can see that number is rarely the person with a
+checkout and the production password. It never pushes the schema: the deployment's own build does
+that, and a workflow that can reshape the production database is a bigger thing than one that can
+reload the dictionary inside it.
+
+**One character is still text, and the contrast pass was skipping every one of
+them.** `test-design.mjs` measured a text node only at `length > 1`, so no
+single-character run was ever checked, and the one that mattered was exactly
+that shape: the tick inside a reviewed day on Today's week strip, white on mint
+at 2.52:1, sitting in the app unseen by the suite whose job is finding that. It
+measures them now, and the exemption is `data-ornament` in the markup rather
+than a length: a 92px step numeral in a hue's own tint, behind a card that says
+the same thing in words, is decoration and has to say so. `aria-hidden` cannot
+stand in for it, because the tick carries that too and is still the thing a
+sighted reader looks at. The fix on the other side was `--on-mint`, since
+`--mint-ink` is the ink on mint's *tint* and there was nothing for its solid
+fill (docs/14-design-system.md §"Every hue has an ink").
+
+**A suite states its preconditions; it does not inherit them.** `letterBar` is a
+stored preference that decides whether a control is drawn at all, so a database
+where any earlier suite walked through first run and answered "I have them
+already" draws no letter bar, and `e2e.mjs` then spent thirty seconds waiting for
+a button that was correctly hidden before failing in Playwright's words rather
+than in ones that name the cause. CI escapes it only by seeding fresh, which
+means the one place it bites is somebody's own machine, in their own order, with
+the least context for reading it. `scripts/lib/prefs.mjs` holds `ensureLetterBar`
+and `requireLetterBar`: set the answer you depend on, and fail in seven
+milliseconds and in words when it is not there. The same rule covers data and
+not only preferences: `/review/government` builds its questions out of the
+learner's deck and correctly asks nothing when no verb in it carries a recorded
+government, and `smoke-interact.mjs` met that by clicking a button that was not
+there, which is thirty seconds of waiting, a throw, and the eight checks after
+it never running, all reported as one failure naming a regex. It reads the
+precondition and waives its three checks with the reason on screen instead. Cleaning up after yourself is the
+weaker version of the same idea, since it only works while every suite remembers
+and cannot help the first run on a machine somebody has been clicking around on.
 
 **A suite that ran nothing looks exactly like one that passed, so every suite
 counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
@@ -902,6 +1175,49 @@ no-key empty state dropped the question a review card had just handed her, so
 the key was the price of even seeing what you were about to ask. Neither was
 reachable on a machine with the keys set, which is the argument for running a
 suite in the state a stranger installs into.
+
+`scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
+walks every text-bearing element, every icon and everything that arrives with a width of its own,
+on **every route the app has** at 360 and 1280, plus the landing page with its disclosures open
+and a paper actually being sat, and asks four things: whether anything is cut off by an ancestor
+that clips, whether anything is drawn outside a border somebody painted, whether anything is drawn
+on top of anything else, and whether any icon is drawn at other than the size it declared. A
+scroller ends the first question rather than answering it, and so does a `truncate`, because both
+are a way out that somebody chose. Then it asks all four again with the text swapped for text of
+the same length that cannot break, which is how it caught the streak circles 2px over the card on
+a 360px phone and the backup picker 58px over its own.
+
+Every route rather than a chosen spread, because the first version of the list was twelve screens
+picked for carrying text from somewhere other than a designer, and the third fault it found was on
+a printable worksheet nobody would have thought to check. A route costs about two seconds and a
+route left out is a screen where the whole rule is unenforced. The count of things on a page is
+part of each pass for the same reason: a route that rendered its 404 has a heading and a button
+and passes everything on the strength of having nothing to look at, which is exactly what
+`/grammar/topic/rektsioon` did for one run before the count said so.
+
+**Three screens need a row before they can be visited**, so the suite makes them: a classroom, a
+paper sat and handed in, and a page scanned with the model stubbed the way `test-scan.mjs` stubs
+it. The classroom is the one worth knowing about. In local mode `/class` deliberately replaces the
+create and join forms with the reason there is nobody to share with, so that screen is unreachable
+by driving the app and `scripts/demo-data.ts` lays one down instead. Without it the suite would
+waive twenty checks on a real screen for want of a fixture, which is the sort of hole a waiver is
+supposed to report rather than create. Each maker has a time budget and says what it did, because
+this runs before the first check and a suite that dies before its first check prints nothing at
+all.
+
+**And the states a route does not arrive in**: the command palette, Anu's panel, a review card with
+its answer shown, and the landing page with its disclosures open. A modal drawn over the page is
+not a fault and is not reported as one, since the hit test skips anything under something `fixed`
+or `sticky`; what is asked is whether the modal contains its own contents.
+
+The fourth question is asked by hit-testing the letters, not by comparing rectangles, and that was
+arrived at the hard way. Sibling rectangles report a wrapped inline as one box spanning every line
+it touches, and an inline whose font changes mid-run (any Estonian prompt with an arrow in it) as
+overlapping fragments; excluding inline elements clears both and leaves the check blind, since the
+painted text here is nearly all inline. What it excludes now is what a reader cannot see anyway or
+what is layered on purpose: text past an ellipsis, an absolutely positioned ornament, and anything
+under the fixed bar or the paper's own sticky header. It was made to fail once, by covering a deck
+row in the browser.
 
 `scripts/test-mobile.mjs` is the phone measured rather than eyeballed, at 360, 390, 430, 768 and
 1280: no horizontal overflow, nothing fixed carrying a filter, the bar's clearance published on

@@ -1,8 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowRight, BadgeCheck, CalendarClock, CircleAlert, ClipboardCheck, Clock, Info, Lightbulb,
-  TriangleAlert,
-} from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarClock, CircleAlert, ClipboardCheck, Clock, Compass, Info, Lightbulb, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { goalsFor } from "@/lib/progress/assessment";
 import { weeksUntil, targetByBand } from "@/lib/assessment/goals";
@@ -154,6 +151,22 @@ export default async function ExamPage() {
                     ? `The next one up is ${readiness.next}, and the gaps below are what stands between you and it.`
                     : `${readiness.next} is the one to aim at first, and the gaps below are what stands between you and it.`}
               </p>
+              {/*
+                A page that says "no level assessed yet" and offers no way to be
+                assessed is a dead end, and this one was: the figure it leads
+                with comes from the level check, and nothing on it said so or
+                said where to take one. Ten minutes against the three hours a
+                paper costs, so the difference is worth printing.
+              */}
+              <p className="mt-3 flex flex-wrap items-center gap-3">
+                <ButtonLink href="/assess" variant={readiness.assessed ? "secondary" : "primary"} size="sm">
+                  <Compass size={14} aria-hidden />
+                  {readiness.assessed ? "Check your level again" : "Take the level check"}
+                </ButtonLink>
+                <span className="text-sm" style={{ color: "var(--ink-3)" }}>
+                  About ten minutes, and it is what this figure is built on.
+                </span>
+              </p>
             </div>
           </div>
         </Card>
@@ -171,8 +184,12 @@ export default async function ExamPage() {
             return (
               <Card as="li" key={level.level} hover>
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
+                  {/* `min-w-0` so the level's own column can give: without it
+                      the three chips below set a floor the card cannot meet at
+                      768, where the rail is drawn and the card is at its
+                      narrowest, and they were 11px over its border. */}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
                         {level.level}
                       </span>

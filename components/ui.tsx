@@ -101,6 +101,28 @@ export function Card({ children, className = "", as: Tag = "div", tone = "plain"
   );
 }
 
+/**
+ * The top-level column of a page: one section under another, with air between.
+ *
+ * There were five rhythms doing this job. Pages stacked their sections at
+ * gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote them, so moving
+ * between Progress and Practice changed how tightly the app breathed for no
+ * reason a reader could name. A rhythm nobody can predict is one more thing to
+ * absorb on every screen.
+ *
+ * So this is the rhythm, and it is deliberately generous: 32px between one
+ * section and the next, which is comfortably more than the 20px inside a card
+ * and the 8px between rows in a list. Space is what says "these are separate
+ * things" before a heading has to.
+ *
+ * It is only for the outermost column. Grids of cards, rows in a list and the
+ * inside of a card keep their own tighter spacing, because proximity is what
+ * says those belong together.
+ */
+export function Stack({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`flex flex-col gap-8 ${className}`}>{children}</div>;
+}
+
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -120,30 +142,33 @@ const TONES = {
   blush: ["var(--blush-soft)", "var(--blush-ink)"],
 } as const;
 
-export function Chip({ children, tone = "neutral", title, caseSensitive, wrap }: {
+export function Chip({ children, tone = "neutral", title, caseSensitive }: {
   children: ReactNode; tone?: keyof typeof TONES; title?: string;
   /** Keeps the label as written — uppercasing mangles forms like `b : ∅`. */
   caseSensitive?: boolean;
-  /**
-   * Lets a chip run onto a second line instead of holding one.
-   *
-   * A chip is a short label, so not wrapping is the right default and stays
-   * the default. It is wrong for the one place a chip carries a dictionary
-   * gloss: those are as long as the word needs, and "gymnasium, secondary
-   * school, high school" is 404px of unbreakable line inside a 350px card. It
-   * pushed 76px of the exam paper off the side of a 390px phone, and only
-   * once the course dictionary replaced the shorter seeded glosses, so the
-   * markup had been correct about everything except how long a real gloss is.
-   */
-  wrap?: boolean;
 }) {
+  /*
+    A CHIP NEVER LEAVES THE BOX IT IS IN, AND THAT USED TO BE A PROP.
+
+    It held one line whatever that cost, with a `wrap` prop for the one caller
+    that had been caught out. That default was wrong twice. First on the
+    examination paper, where a chip carries a dictionary gloss: "gymnasium,
+    secondary school, high school" is 404px of unbreakable line inside a 350px
+    card, and it pushed 76px of the paper off the side of a 390px phone, but
+    only once the course dictionary replaced the shorter seeded glosses. Then
+    on Practice, where a tile's chip went 4px past the card at 768.
+
+    Ninety-two call sites cannot each be asked to know how long their own
+    label might get, and the one that was asked had already been caught. So
+    the chip wraps: a short label ("A2", "Sat") still sits on one line because
+    it fits, and a long one now takes a second line rather than the card's
+    border. `scripts/test-containment.mjs` is what measures that.
+  */
   const [bg, fg] = TONES[tone];
   return (
     <span
       title={title}
-      className={`label-xs inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
-        wrap ? "max-w-full whitespace-normal" : "whitespace-nowrap"
-      }`}
+      className="label-xs inline-flex max-w-full items-center gap-1.5 whitespace-normal rounded-full px-2.5 py-1"
       style={{ background: bg, color: fg, textTransform: caseSensitive ? "none" : undefined }}
     >
       {children}
