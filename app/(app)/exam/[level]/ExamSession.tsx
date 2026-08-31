@@ -290,7 +290,7 @@ export function ExamSession({ paper: initialPaper, fillRate }: {
         <div className="mb-5">
           <Note tone="again">
             <TriangleAlert size={14} className="mr-1.5 inline" aria-hidden />
-            Time's up. This part is closed now, the way it would be in a real exam hall. Anything
+            Time&apos;s up. This part is closed now, the way it would be in a real exam hall. Anything
             you left blank scores nothing.{" "}
             {last ? "Hand in below." : "Move on when you are ready."}
           </Note>
@@ -558,7 +558,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
                   </span>
                   {task.fallbackFrom && (
                     <span style={{ color: "var(--butter-ink)" }}>
-                      {" · "}made from single words, not full sentences, since we don't have a
+                      {" · "}made from single words, not full sentences, since we don&apos;t have a
                       recorded sentence for this one yet
                     </span>
                   )}

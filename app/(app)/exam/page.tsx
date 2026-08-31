@@ -164,7 +164,7 @@ export default async function ExamPage() {
                   {readiness.assessed ? "Check your level again" : "Take the level check"}
                 </ButtonLink>
                 <span className="text-sm" style={{ color: "var(--ink-3)" }}>
-                  About ten minutes. It's what this number comes from.
+                  About ten minutes. It&apos;s what this number comes from.
                 </span>
               </p>
             </div>
@@ -311,8 +311,8 @@ export default async function ExamPage() {
         {attempts.length === 0 ? (
           <Note tone="neutral">
             <ClipboardCheck size={14} className="mr-1.5 inline" aria-hidden />
-            None yet. One paper tells us more than a month of flashcards, since it's the only thing
-            here that tests all four parts at once.
+            None yet. One paper tells us more than a month of flashcards, since it&apos;s the only
+            thing here that tests all four parts at once.
           </Note>
         ) : (
           <ul className="grid gap-2">
@@ -345,24 +345,25 @@ export default async function ExamPage() {
         <ul className="mt-2 grid gap-1.5 text-sm leading-relaxed" style={{ color: "var(--sky-ink)" }}>
           <li>
             The structure is real: the parts, the timing, the points, the sixty percent to pass, and
-            a zero on any part failing you, just like the real exam. Sit one of these and you'll know
-            what the real exam feels like.
+            a zero on any part failing you, just like the real exam. Sit one of these and
+            you&apos;ll know what the real exam feels like.
           </li>
           <li>
-            The questions themselves aren't the real ones, but every word in them is real Estonian,
+            The questions themselves aren&apos;t the real ones, but every word in them is real Estonian,
             straight from the dictionary. The reading part uses real recorded sentences instead of a
             magazine article, and in the speaking part a microphone stands in for the examiner.
           </li>
           <li>
             <CircleAlert size={13} className="mr-1 inline" aria-hidden />
-            Nothing here scores your pronunciation. We tested a speech recogniser and it wasn't
-            accurate enough, so instead you record yourself, listen back, and judge how you did.
-            You'll see this note again on your result.
+            Nothing here scores your pronunciation. We tested a speech recogniser and it
+            wasn&apos;t accurate enough, so instead you record yourself, listen back, and judge how
+            you did. You&apos;ll see this note again on your result.
           </li>
           <li>
             <Lightbulb size={13} className="mr-1 inline" aria-hidden />
-            The A1 paper is ours, not the state's. Estonia doesn't test at that level, so we made it
-            like the A2 paper but a little easier, so your first attempt is one you can pass.
+            The A1 paper is ours, not the state&apos;s. Estonia doesn&apos;t test at that level, so
+            we made it like the A2 paper but a little easier, so your first attempt is one you can
+            pass.
           </li>
         </ul>
       </Card>

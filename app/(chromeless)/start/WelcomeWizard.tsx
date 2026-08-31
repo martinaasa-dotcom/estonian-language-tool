@@ -619,7 +619,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               answer, not {goal} new ones. About nine in ten will be words you have already met,
               coming back right when you are starting to forget them. These {deck.cards} cards take
               roughly {weeksToLearn(deck.cards, goal, daysPerWeek)} weeks to work through this way,
-              and a faster setting really does bring them in sooner. It also makes every day's
+              and a faster setting really does bring them in sooner. It also makes every day&rsquo;s
               session longer, for the next year. Pick the one you would still open on a bad
               Wednesday.
             </p>
