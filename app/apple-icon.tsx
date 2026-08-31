@@ -30,7 +30,7 @@ const MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width=
   </defs>
   <rect width="64" height="64" fill="#fbf9ff"/>
   <circle cx="32" cy="40" r="18" fill="url(#g)"/>
-  <path d="M21 11.65q5.5 -6.5 11 0t11 0" fill="none" stroke="url(#g)" stroke-width="4.2" stroke-linecap="round"/>
+  <path d="M21 15.15q5.5 -6.5 11 0t11 0" fill="none" stroke="url(#g)" stroke-width="4.2" stroke-linecap="round"/>
   <circle cx="26" cy="37" r="2.9" fill="#ffffff"/>
   <circle cx="38" cy="37" r="2.9" fill="#ffffff"/>
   <path d="M26.6 45.4c1.9 3.2 8.9 3.2 10.8 0" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>

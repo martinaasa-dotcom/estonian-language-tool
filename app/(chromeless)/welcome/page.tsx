@@ -8,7 +8,8 @@ import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
-import { Mascot, Wordmark } from "@/components/brand";
+import { Wordmark } from "@/components/brand";
+import { MascotWatch } from "@/components/MascotWatch";
 import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo";
 import { toneInk } from "@/components/ui";
 
@@ -164,7 +165,7 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         >
           Estonian that
           <br />
-          finally <span className="grad-text">sticks</span>.
+          finally <span className="grad-text grad-sweep">sticks</span>.
         </h1>
 
         <p
@@ -205,21 +206,21 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         {/* Floating diacritics: the six characters this whole app is built around. */}
         <span
           aria-hidden
-          className="est float absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
+          className="est float diacritic absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
           style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="est float absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
+          className="est float diacritic absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
           style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="est float absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
+          className="est float diacritic absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
           style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
         >
           ü
@@ -813,7 +814,7 @@ function FinalCta() {
           <span aria-hidden className="wash" style={{ background: "var(--wash-3)", width: 380, height: 380, bottom: -200, left: -60, opacity: 0.5 }} />
 
           <div className="relative">
-            <Mascot size={68} mood="cheer" className="float mx-auto" />
+            <MascotWatch size={68} mood="cheer" className="float mx-auto" />
             <h2 className="est mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
               Fifteen minutes. Starting today.
             </h2>

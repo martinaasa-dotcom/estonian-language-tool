@@ -35,7 +35,7 @@ const GRADIENT = `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="12" 
     </linearGradient>`;
 
 const FACE = `<circle cx="32" cy="40" r="18" fill="url(#g)"/>
-    <path d="M21 11.65q5.5 -6.5 11 0t11 0" fill="none" stroke="url(#g)"
+    <path d="M21 15.15q5.5 -6.5 11 0t11 0" fill="none" stroke="url(#g)"
           stroke-width="4.2" stroke-linecap="round"/>
     <circle cx="26" cy="37" r="2.9" fill="#ffffff"/>
     <circle cx="38" cy="37" r="2.9" fill="#ffffff"/>
@@ -53,17 +53,17 @@ const standard = (size) => `
   Full-bleed background, mark scaled into the centre 80%.
 
   Android guarantees only a circle of 80% the icon's width, a radius of 25.6 in
-  a 64 unit box. At full size the chin sits at 26.0 and the tilde's crest at
-  25.7, so neither is cut off and both are shaved by a couple of tenths on a
-  circular mask. 0.8 puts every extreme about five units inside instead, and the
-  background bleeds to the edge because the rounded tile's corners are
-  transparent and a mask wider than that radius would show through them.
+  a 64 unit box. At full size the chin sits at 26.0, so it is shaved by four
+  tenths on a circular mask; the tilde's crest is comfortably inside at 22.2.
+  0.8 puts every extreme four units or more inside instead, and the background
+  bleeds to the edge because the rounded tile's corners are transparent and a
+  mask wider than that radius would show through them.
 */
 const maskable = (size) => `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
     <defs>${GRADIENT}</defs>
     <rect width="64" height="64" fill="#fbf9ff"/>
-    <g transform="translate(6.4 6.43) scale(0.8)">${FACE}</g>
+    <g transform="translate(6.4 6.78) scale(0.8)">${FACE}</g>
   </svg>`;
 
 const TARGETS = [

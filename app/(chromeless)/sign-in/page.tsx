@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { ButtonLink } from "@/components/Button";
-import { Mascot } from "@/components/brand";
+import { MascotWatch } from "@/components/MascotWatch";
 import { SignInForm } from "./SignInForm";
 
 export const metadata = { title: "Sign in" };
@@ -38,7 +38,7 @@ export default function SignInPage() {
           className="pop-in rounded-[var(--r-xl)] border p-8 text-center"
           style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-lg)" }}
         >
-          <Mascot size={62} className="float mx-auto" />
+          <MascotWatch size={62} className="float mx-auto" />
           <h1 className="est mt-5 text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
             Tere tulemast tagasi
           </h1>

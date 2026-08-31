@@ -87,10 +87,14 @@ const SET = [
   ["00-praegune", NOW],
   /* Just off the head. The smallest move that stops the two touching. */
   ["01-veidi", mark({ gap: 2.5, w: 9, h: 7, sw: 4.4 })],
-  /* Clear, and the tilde widened to about six tenths of the bowl, which is
-     roughly where it sits on a real õ. Narrow, it is a cowlick; at this width
-     it is the letter's own diacritic. */
+  /* The tilde widened to about six tenths of the bowl, which is roughly where
+     it sits on a real õ. Narrow, it is a cowlick; at this width it is the
+     letter's own diacritic. */
   ["02-selge", mark({ gap: 5, w: 11, h: 6.5, sw: 4.2 })],
+  /* What review picked off the dial, and what ships: daylight rather than
+     distance. Enough that the two are separate objects and the hair can move,
+     little enough that it still reads as one mark at 20px. */
+  ["05-valitud", mark({ gap: 1.5, w: 11, h: 6.5, sw: 4.2 })],
   /* Properly floating. The bowl gives up a unit so the tilde is not pressed
      against the top of the tile. */
   ["03-korgel", mark({ cy: 41, r: 17, gap: 8, w: 11, h: 6, sw: 4 })],
