@@ -1,13 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Eczar, Plus_Jakarta_Sans } from "next/font/google";
 import { OfflineProvider } from "@/components/OfflineProvider";
 import "./globals.css";
 
 /**
- * Fraunces for anything that should feel written — headings, and every Estonian
- * word in the app. Plus Jakarta Sans for the interface around it. Both carry
- * latin-ext, which is not optional here: without it õ ä ö ü š ž fall back to a
- * different face mid-word.
+ * Eczar for anything that should feel written: headings, the numbers a screen
+ * is about, and every Estonian word in the app. Plus Jakarta Sans for the
+ * interface around it. Both carry latin-ext, which is not optional here.
+ * Without it õ ä ö ü š ž fall back to a different face mid-word.
+ *
+ * This was Fraunces, and the reason it is not is worth writing down, because
+ * the obvious fix does not exist. Fraunces hangs a ball terminal off the f,
+ * the j, the y and the r, and the f's is large enough to read as a swash: at
+ * the 68px of the landing hero it is the first thing anybody sees. There is no
+ * switching it off. The font holds exactly one f, its WONK axis substitutes
+ * alternates for h, m, n, s, ampersand and ntilde and never touches the f, and
+ * the terminal survives every optical size from 9 to 144. Checked against the
+ * shipped woff2 rather than assumed.
+ *
+ * Eczar keeps what that was for. It is heavy where Fraunces was heavy, its
+ * figures carry the same weight on a stat tile, and it holds 400 to 800 in one
+ * variable file, which `.est` needs: it is set bold in 125 places, semibold in
+ * 41 and unweighted in 68, so a display face with one weight would flatten a
+ * dictionary headword into its own example sentence. That is what rules out
+ * the faces closest to Fraunces in character.
  */
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
@@ -15,11 +31,10 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const fraunces = Fraunces({
+const eczar = Eczar({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-fraunces",
+  variable: "--font-eczar",
   display: "swap",
-  axes: ["SOFT", "WONK"],
 });
 
 export const metadata: Metadata = {
@@ -96,9 +111,9 @@ const THEME_SCRIPT =
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // The font variables go on <html>, not <body>: `--font-serif` is declared on
-    // :root and references `--font-fraunces`, and a custom property is
+    // :root and references `--font-eczar`, and a custom property is
     // substituted where it is *declared*, so the face has to be in scope there.
-    <html lang="en" className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${jakarta.variable} ${eczar.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

@@ -125,7 +125,7 @@ one gradient button.
 
 ## 3. Type
 
-- **Fraunces** (`.est`): headings, numbers that matter, and every Estonian word in the app.
+- **Eczar** (`.est`): headings, numbers that matter, and every Estonian word in the app.
 - **Plus Jakarta Sans**: the interface around it.
 
 **Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes,
