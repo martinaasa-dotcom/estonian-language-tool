@@ -504,7 +504,9 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               still set your pace below, and add words from the dictionary as you meet them.
             </Note>
 
-            <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            <div className="mt-7">
+              <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            </div>
             <ChoiceGroup ariaLabel="How much a day">
               {GOALS.map((g) => (
                 <ChoiceChip key={g.value} selected={goal === g.value} onSelect={() => setGoal(g.value)}>
@@ -583,7 +585,9 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               clicks, so a whole step for it was a step spent on the least
               consequential answer in the walkthrough.
             */}
-            <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            <div className="mt-7">
+              <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            </div>
             <ChoiceGroup ariaLabel="How much a day">
               {GOALS.map((g) => (
                 <ChoiceChip key={g.value} selected={goal === g.value} onSelect={() => setGoal(g.value)}>
