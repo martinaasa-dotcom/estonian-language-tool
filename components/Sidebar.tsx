@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, MoreHorizontal, Moon, Sun, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { useDockClearance } from "@/lib/layout/dockClearance";
+import { useNavMarker } from "@/lib/layout/navMarker";
 import { createClient } from "@/lib/supabase/client";
 import { BAR, isUnder, LISTED, PLACES, SECTIONS, type Destination, type NavSection } from "@/lib/ux/nav";
+import { NavMarker } from "@/components/NavMarker";
 import { Wordmark } from "@/components/brand";
 import { icon } from "@/components/icons";
 
@@ -40,6 +42,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const [bar, setBar] = useState<HTMLElement | null>(null);
+  /*
+    One pill per surface, travelling from the place you left to the place you
+    asked for. The rail runs down its column and the bar runs across, which is
+    the only difference between the two: `lib/layout/navMarker.ts` measures the
+    cells and `app/nav.css` says how a pane behaves once it has been placed.
+  */
+  const railMarker = useNavMarker("rail", "y");
+  const barMarker = useNavMarker("bar", "x");
 
   // Published on <html> so the offline banner, the install prompt and the
   // toasts can sit clear of this bar rather than each guessing its height.
@@ -76,9 +86,28 @@ export function Sidebar() {
     <>
       {/* Desktop rail */}
       <nav
+        ref={railMarker.ref}
         aria-label="Main"
+        data-nav-marked={railMarker.mark ? "" : undefined}
         className="scroll-host sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto p-4 md:flex"
+        style={
+          {
+            "--nav-marker-bg": "var(--surface)",
+            "--nav-marker-shadow": "var(--shadow-sm)",
+            "--nav-ghost-bg": "var(--accent-soft)",
+            "--nav-ghost-halo": "3px",
+          } as CSSProperties
+        }
       >
+        {/*
+          The panes come before the rows, since a row draws over whichever pane
+          it is standing on. Both are placed entirely by measurement, so the
+          pill is exactly the row it is under. The marker is the card the
+          current row used to paint for itself, and one of them travelling is
+          the whole difference between this and a light going out over here as
+          another comes on over there.
+        */}
+        <NavMarker state={railMarker} />
         <Link href="/" className="mb-7 block rounded-[var(--r)] px-2 pt-3">
           <Wordmark subtitle="Estonian, daily" />
         </Link>
@@ -160,56 +189,93 @@ export function Sidebar() {
       <nav
         ref={measure}
         aria-label="Main"
-        className="fixed left-3 right-3 z-40 flex justify-around rounded-full border px-1.5 py-1.5 md:hidden"
-        style={{
-          bottom: "max(0.75rem, env(safe-area-inset-bottom))",
-          borderColor: "var(--rule)",
-          background: "var(--surface)",
-          boxShadow: "var(--shadow)",
-        }}
+        className="fixed left-3 right-3 z-40 md:hidden"
+        style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
-        {BAR.map((item) => {
-          const Icon = icon(item.icon);
-          const on = active(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={on ? "page" : undefined}
-              className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold transition-colors"
-              style={{ color: on ? "var(--ink)" : "var(--ink-3)" }}
-            >
-              <span
-                className="flex h-7 w-7 items-center justify-center rounded-full"
-                style={{
-                  background: on ? `var(--${item.tone})` : "transparent",
-                  color: on ? "var(--surface)" : "var(--ink-3)",
-                }}
-              >
-                <Icon size={16} strokeWidth={2.2} aria-hidden />
-              </span>
-              {item.label}
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          aria-expanded={moreOpen}
-          className="flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold"
-          style={{ color: restActive ? "var(--ink)" : "var(--ink-3)" }}
+        {/*
+          THE CAPSULE IS INSIDE THE NAV RATHER THAN BEING IT, AND THAT IS WHAT
+          KEEPS THE BREATH FROM LYING TO THE MEASUREMENT. `useDockClearance`
+          reads a bounding rectangle, which a transform changes: the bar
+          swelling three percent while the window happened to be resizing
+          would publish a clearance three percent too tall to everything that
+          sits clear of it. The nav lays out and is measured, the capsule
+          inside it is what scales, and the two are the same size whenever
+          anybody asks.
+
+          `isolate` is load-bearing too. The panes sit at a negative z-index
+          so the cells can stay unpositioned and keep reporting their offsets
+          against this element; with no stacking context here they would fall
+          behind the capsule's own fill and never be seen again.
+        */}
+        <div
+          ref={barMarker.ref}
+          data-nav-marked={barMarker.mark ? "" : undefined}
+          className="relative isolate flex justify-around rounded-full border px-1.5 py-1.5"
+          style={
+            {
+              borderColor: "var(--rule)",
+              background: "var(--surface)",
+              boxShadow: "var(--shadow)",
+              "--nav-marker-bg": "var(--raised)",
+              "--nav-ghost-bg": "var(--accent-soft)",
+            } as CSSProperties
+          }
         >
-          <span
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={{
-              background: restActive ? "var(--accent)" : "transparent",
-              color: restActive ? "var(--surface)" : "var(--ink-3)",
-            }}
+          <NavMarker state={barMarker} />
+          {BAR.map((item) => {
+            const Icon = icon(item.icon);
+            const on = active(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                data-nav-cell
+                data-nav-goes
+                data-nav-on={on ? "" : undefined}
+                aria-current={on ? "page" : undefined}
+                className="nav-cell flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold"
+                style={{ color: on ? "var(--ink)" : "var(--ink-3)" }}
+              >
+                <span
+                  className="nav-glyph flex h-7 w-7 items-center justify-center rounded-full"
+                  style={{
+                    background: on ? `var(--${item.tone})` : "transparent",
+                    color: on ? "var(--surface)" : "var(--ink-3)",
+                  }}
+                >
+                  <Icon size={16} strokeWidth={2.2} aria-hidden />
+                </span>
+                {item.label}
+              </Link>
+            );
+          })}
+          {/*
+            A cell the marker may stand on and never travels to on a press,
+            because it opens a sheet rather than a page and there is nothing
+            for a bet to be right about. `data-nav-goes` is what says a cell
+            goes somewhere, and this one deliberately does not carry it.
+          */}
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            aria-expanded={moreOpen}
+            data-nav-cell
+            data-nav-on={restActive ? "" : undefined}
+            className="nav-cell flex flex-1 flex-col items-center gap-1 rounded-full py-1.5 text-2xs font-semibold"
+            style={{ color: restActive ? "var(--ink)" : "var(--ink-3)" }}
           >
-            <MoreHorizontal size={16} strokeWidth={2.2} aria-hidden />
-          </span>
-          More
-        </button>
+            <span
+              className="nav-glyph flex h-7 w-7 items-center justify-center rounded-full"
+              style={{
+                background: restActive ? "var(--accent)" : "transparent",
+                color: restActive ? "var(--surface)" : "var(--ink-3)",
+              }}
+            >
+              <MoreHorizontal size={16} strokeWidth={2.2} aria-hidden />
+            </span>
+            More
+          </button>
+        </div>
       </nav>
 
       {moreOpen && (
@@ -277,26 +343,41 @@ export function Sidebar() {
   );
 }
 
-/** One row of the desktop rail. */
+/**
+ * One row of the desktop rail.
+ *
+ * It paints no background of its own in either state now. The card the
+ * current row used to draw for itself is one pane that travels between them,
+ * and a row that also painted itself would be a second answer to the same
+ * question arriving a beat later. What is left here is what a pane cannot
+ * say: which row is bold, and which glyph wears its own colour.
+ *
+ * The disc reads `--nav-disc` rather than naming its resting fill, because an
+ * inline style beats a class hover, silently, which is the mechanism that
+ * left half the controls in this app dead under a pointer. A custom property
+ * is how a caller passes a tone *through* one, and `app/nav.css` spends it
+ * when the pointer's pane arrives underneath.
+ */
 function RailLink({ item, active }: { item: Destination; active: boolean }) {
   const Icon = icon(item.icon);
   return (
     <Link
       href={item.href}
+      data-nav-cell
+      data-nav-goes
+      data-nav-on={active ? "" : undefined}
       aria-current={active ? "page" : undefined}
       title={item.blurb}
-      className="flex items-center gap-3 rounded-full px-3 py-1.5 text-base transition-ui"
+      className="nav-cell flex items-center gap-3 rounded-full px-3 py-1.5 text-base"
       style={{
-        background: active ? "var(--surface)" : "transparent",
-        color: active ? "var(--ink)" : "var(--ink-2)",
+        color: active ? "var(--ink)" : "var(--nav-ink, var(--ink-2))",
         fontWeight: active ? 700 : 500,
-        boxShadow: active ? "var(--shadow-sm)" : "none",
       }}
     >
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
+        className="nav-glyph flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
         style={{
-          background: active ? `var(--${item.tone})` : "var(--raised)",
+          background: active ? `var(--${item.tone})` : "var(--nav-disc, var(--raised))",
           color: active ? "var(--surface)" : "var(--ink-3)",
         }}
       >
