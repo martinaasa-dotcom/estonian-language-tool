@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs><clipPath id="t"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <g clip-path="url(#t)">
+    <rect width="64" height="64" fill="#241f35"/>
+    <path d="M30.62 27.19 Q24.68 15.56 32 7 Q39.32 15.56 33.38 27.19 Z" fill="#7a6bf0"/>
+    <path d="M34.9 27.93 Q40.29 16.02 51.55 16.41 Q49.42 27.47 36.62 30.08 Z" fill="#7a6bf0"/>
+    <path d="M36.99 31.73 Q49.66 28.52 56.37 37.56 Q46.4 42.8 36.38 34.41 Z" fill="#7a6bf0"/>
+    <path d="M35.33 35.73 Q45.73 43.64 42.85 54.52 Q32.54 49.99 32.84 36.93 Z" fill="#7a6bf0"/>
+    <path d="M31.16 36.93 Q31.46 49.99 21.15 54.52 Q18.27 43.64 28.67 35.73 Z" fill="#7a6bf0"/>
+    <path d="M27.62 34.41 Q17.6 42.8 7.63 37.56 Q14.34 28.52 27.01 31.73 Z" fill="#7a6bf0"/>
+    <path d="M27.38 30.08 Q14.58 27.47 12.45 16.41 Q23.71 16.02 29.1 27.93 Z" fill="#7a6bf0"/>
+    <circle cx="32" cy="32" r="7" fill="#ece9ff"/>
+    <circle cx="32" cy="27.4" r="1.5" fill="#5b4bd6"/>
+    <circle cx="35.25" cy="28.75" r="1.5" fill="#5b4bd6"/>
+    <circle cx="36.6" cy="32" r="1.5" fill="#5b4bd6"/>
+    <circle cx="35.25" cy="35.25" r="1.5" fill="#5b4bd6"/>
+    <circle cx="32" cy="36.6" r="1.5" fill="#5b4bd6"/>
+    <circle cx="28.75" cy="35.25" r="1.5" fill="#5b4bd6"/>
+    <circle cx="27.4" cy="32" r="1.5" fill="#5b4bd6"/>
+    <circle cx="28.75" cy="28.75" r="1.5" fill="#5b4bd6"/>
+  </g>
+</svg>

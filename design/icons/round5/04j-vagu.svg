@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs><clipPath id="t"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <g clip-path="url(#t)">
+    <rect width="64" height="64" fill="#2f7fd4"/>
+    <rect y="22" width="64" height="42" fill="#f1ebdf"/>
+    <path d="M32 22 L-26 64 L-19 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L-11.5 64 L-4.5 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L3 64 L10 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L17.5 64 L24.5 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L32 64 L39 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L46.5 64 L53.5 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L61 64 L68 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L75.5 64 L82.5 64 Z" fill="#1b1b22"/>
+    <path d="M32 22 L90 64 L97 64 Z" fill="#1b1b22"/>
+  </g>
+</svg>

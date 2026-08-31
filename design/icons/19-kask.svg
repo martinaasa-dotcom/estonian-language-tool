@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#fbf9ff"/>
+  <rect x="0" y="10" width="64" height="1.2" fill="#241f35" opacity="0.14"/>
+  <rect x="0" y="21.5" width="64" height="1.2" fill="#241f35" opacity="0.14"/>
+  <rect x="0" y="33" width="64" height="1.2" fill="#241f35" opacity="0.14"/>
+  <rect x="0" y="44.5" width="64" height="1.2" fill="#241f35" opacity="0.14"/>
+  <rect x="0" y="56" width="64" height="1.2" fill="#241f35" opacity="0.14"/>
+  <path d="M8 15 Q15.5 11.4 23 15 Q15.5 18.6 8 15 Z" fill="#241f35"/>
+  <path d="M30 15 Q39.5 11.4 49 15 Q39.5 18.6 30 15 Z" fill="#241f35"/>
+  <path d="M14 26.5 Q26 22.9 38 26.5 Q26 30.1 14 26.5 Z" fill="#241f35"/>
+  <path d="M45 26.5 Q51.5 22.9 58 26.5 Q51.5 30.1 45 26.5 Z" fill="#241f35"/>
+  <path d="M6 38 Q14.5 34.4 23 38 Q14.5 41.6 6 38 Z" fill="#241f35"/>
+  <path d="M29 38 Q42 34.4 55 38 Q42 41.6 29 38 Z" fill="#241f35"/>
+  <path d="M18 49.5 Q28.5 45.9 39 49.5 Q28.5 53.1 18 49.5 Z" fill="#241f35"/>
+  <path d="M45 49.5 Q52 45.9 59 49.5 Q52 53.1 45 49.5 Z" fill="#241f35"/>
+</svg>
