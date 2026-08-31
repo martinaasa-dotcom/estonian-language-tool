@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Empty } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { useAnuChat, type Msg } from "@/components/anu/useAnuChat";
-import { AnuFailure, Bubble, CHIPS, Provenance, SentenceCheck, sentenceCheckPrompt } from "@/components/anu/AnuParts";
+import { useStickToBottom } from "@/components/anu/useStickToBottom";
+import { AnuFailure, Bubble, Provenance, SentenceCheck, Starters, sentenceCheckPrompt } from "@/components/anu/AnuParts";
 
 export function TutorChat({
   configured, readerCanConfigure, plannedLabel, history, initialQuestion,
@@ -31,11 +32,15 @@ export function TutorChat({
   const [checkOpen, setCheckOpen] = useState(false);
   const [checkEt, setCheckEt] = useState("");
   const [checkEn, setCheckEn] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, streaming]);
+  /*
+    The page scrolls the document and the panel scrolls a box, which is why
+    this used to be two pieces of code and is now one: the hook is handed the
+    conversation and finds whichever ancestor owns the overflow. It also stops
+    following once the reader scrolls up, which the version here did not, so
+    re-reading the middle of a long answer while the next one streams no longer
+    pulls the page out from under them.
+  */
+  const conversation = useStickToBottom(messages);
 
   if (!configured) {
     return (
@@ -81,9 +86,14 @@ export function TutorChat({
           </div>
         </Card>
       ) : (
-        <div className="flex flex-col gap-4" role="log" aria-live="polite" aria-label="Conversation with Anu">
+        <div
+          ref={conversation}
+          className="flex flex-col gap-4"
+          role="log"
+          aria-live="polite"
+          aria-label="Conversation with Anu"
+        >
           {messages.map((m, i) => <Bubble key={i} message={m} streaming={streaming && i === messages.length - 1} />)}
-          <div ref={endRef} />
         </div>
       )}
 
@@ -104,19 +114,7 @@ export function TutorChat({
         }}
       />
 
-      <div className="flex flex-wrap gap-2">
-        {CHIPS.map((c) => (
-          <button
-            key={c.label}
-            type="button"
-            onClick={() => setInput(c.prompt)}
-            className="press rounded-full px-3.5 py-2 text-xs font-semibold transition-ui hover:-translate-y-px"
-            style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      <Starters onPick={setInput} />
 
       <div className="flex flex-col gap-3 md:flex-row md:items-start">
         <div className="flex-1">

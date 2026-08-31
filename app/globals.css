@@ -508,6 +508,62 @@
     justify-content: center;
   }
 
+  /*
+    A POINTER OVER SOMETHING PRESSABLE SAYS SO.
+
+    Tailwind 3's preflight set `cursor: pointer` on every button. Tailwind 4's
+    does not: it hands the element back to the browser's own default, which for
+    a `<button>` is the arrow. This app is built almost entirely out of real
+    buttons, so the change landed on nearly every control in it at once. The
+    rail, the practice chips, the four rating keys, the multiple-choice
+    answers, the letter bar, every close cross and every "Add to deck" drew the
+    same arrow as the paragraph beside them, and the only things in the whole
+    interface that changed under a mouse were the handful of plain `<a href>`s.
+    A learner working out what is pressable by hovering it was told "nothing
+    here", everywhere, wrongly.
+
+    Keyed on what a thing IS rather than on a class, so a control written next
+    year is covered by being a control and never by remembering this rule. That
+    is also why the list is roles and input types rather than `.press` or
+    `.tap-tint`: those are how a control moves, and a control that moves is not
+    the same set as a control that can be pressed.
+
+    A label is on the list only where clicking it operates something, which is
+    a checkbox or a radio. The dozens of `label-xs` captions sitting above a
+    text field move a caret rather than press anything, and a pointer over one
+    would promise a button that is not there.
+
+    A DISABLED CONTROL GOES BACK TO THE ARROW, not to `not-allowed`. Every
+    disabled thing in this app is waiting for the learner (a send button with
+    an empty box, a rating key before the answer is shown) rather than refusing
+    them, and a crossed-out circle is a rebuke. This is where `.choice-btn`'s
+    own `cursor: default` used to live, and it is one declaration now rather
+    than one per control that thought of it.
+  */
+  button,
+  summary,
+  select,
+  [role="button"],
+  [role="tab"],
+  [role="radio"],
+  [role="option"],
+  [role="switch"],
+  [role="menuitem"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled="true"] {
+    cursor: default;
+  }
+
   /* A tap is a tap: no grey flash, and none of the 300ms double-tap-to-zoom
      wait on the rating buttons, which are pressed hundreds of times a session. */
   button, a, [role="button"] {
@@ -804,7 +860,6 @@
     box-shadow: var(--shadow-sm);
   }
   .choice-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
-  .choice-btn:disabled { cursor: default; }
 
   /*
     An option that stays chosen, which a multiple-choice answer never is.

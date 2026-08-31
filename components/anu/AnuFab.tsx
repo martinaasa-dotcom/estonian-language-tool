@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { getTutorHistory } from "@/app/actions";
@@ -9,7 +9,8 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Empty } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { useAnuChat } from "./useAnuChat";
-import { AnuFailure, Bubble, CHIPS, Provenance, SentenceCheck, sentenceCheckPrompt } from "./AnuParts";
+import { useStickToBottom } from "./useStickToBottom";
+import { AnuFailure, Bubble, Provenance, SentenceCheck, Starters, sentenceCheckPrompt } from "./AnuParts";
 
 /**
  * Anu, reachable from anywhere: a button in the bottom right corner of every
@@ -38,6 +39,29 @@ export function AnuFab({
   const [checkOpen, setCheckOpen] = useState(false);
   const [checkEt, setCheckEt] = useState("");
   const [checkEn, setCheckEn] = useState("");
+  const boxRef = useRef<HTMLInputElement>(null);
+  const conversation = useStickToBottom(messages);
+
+  /*
+    Whether this panel is still an invitation or is now a conversation.
+
+    Everything that says "here is how to begin" belongs to the first state and
+    nothing else does. The panel used to carry all of it at once: a greeting, a
+    bordered button offering to check a sentence, six starters over three rows
+    and three lines of grey provenance, stacked under whatever was being said,
+    so a learner reading an answer about the partitive was reading it through a
+    menu they had already used. That is the whole of why it read as busy.
+
+    Withheld rather than deleted, which is the same distinction `lib/ux/`
+    draws: this is the compact surface, and `/tutor` is the same conversation
+    with room around it and every starter always on screen.
+  */
+  const asked = messages.length > 0;
+
+  const pick = (prompt: string) => {
+    setInput(prompt);
+    boxRef.current?.focus();
+  };
 
   // Loaded once, the first time the panel opens, rather than on every page:
   // this component stays mounted across navigation, so fetching on mount
@@ -101,19 +125,52 @@ export function AnuFab({
                   <Button onClick={() => { window.location.href = "/settings"; }}>Open Settings</Button>
                 )}
               />
-            ) : messages.length === 0 ? (
-              <Card tone="blush" className="flex items-start gap-3 p-4">
-                <Mascot size={36} className="float shrink-0" />
-                <div>
+            ) : !asked ? (
+              <div className="flex flex-col gap-4">
+                {/* No second mascot, and no `p-4`. The panel's own header carries
+                    a mascot three centimetres above this card, and at 36px in a
+                    column of its own it spent a sixth of a 24rem panel's width
+                    saying a thing already on screen. The padding was a class that
+                    did nothing: `Card` sets `p-5 md:p-6`, and a `md:` variant beats
+                    an unprefixed utility whatever order they are written in, so
+                    every desktop reading of this card was `p-6` while the source
+                    said otherwise. The full page has no header of its own and keeps
+                    her mascot. */}
+                <Card tone="blush">
                   <p className="est text-base font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
                   <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                    Ask me anything about Estonian grammar. I&rsquo;ll say so if I&rsquo;m not sure of a
-                    form rather than guessing.
+                    Ask me anything about Estonian grammar. I&rsquo;ll name the rule, say when
+                    I&rsquo;m unsure rather than guessing, and mark any Estonian I write as mine.
                   </p>
-                </div>
-              </Card>
+                </Card>
+
+                <SentenceCheck
+                  open={checkOpen}
+                  estonian={checkEt}
+                  meaning={checkEn}
+                  streaming={streaming}
+                  onOpen={() => setCheckOpen(true)}
+                  onClose={() => setCheckOpen(false)}
+                  onEstonian={setCheckEt}
+                  onMeaning={setCheckEn}
+                  onSubmit={() => {
+                    void send(sentenceCheckPrompt(checkEt, checkEn));
+                    setCheckEt("");
+                    setCheckEn("");
+                    setCheckOpen(false);
+                  }}
+                />
+
+                <Starters compact onPick={pick} />
+              </div>
             ) : (
-              <div className="flex flex-col gap-3" role="log" aria-live="polite" aria-label="Conversation with Anu">
+              <div
+                ref={conversation}
+                className="flex flex-col gap-3"
+                role="log"
+                aria-live="polite"
+                aria-label="Conversation with Anu"
+              >
                 {messages.map((m, i) => (
                   <Bubble key={i} message={m} streaming={streaming && i === messages.length - 1} />
                 ))}
@@ -123,37 +180,6 @@ export function AnuFab({
 
           {configured && (
             <div className="flex flex-col gap-2.5 border-t px-4 py-3" style={{ borderColor: "var(--rule)" }}>
-              <SentenceCheck
-                open={checkOpen}
-                estonian={checkEt}
-                meaning={checkEn}
-                streaming={streaming}
-                onOpen={() => setCheckOpen(true)}
-                onClose={() => setCheckOpen(false)}
-                onEstonian={setCheckEt}
-                onMeaning={setCheckEn}
-                onSubmit={() => {
-                  void send(sentenceCheckPrompt(checkEt, checkEn));
-                  setCheckEt("");
-                  setCheckEn("");
-                  setCheckOpen(false);
-                }}
-              />
-
-              <div className="flex flex-wrap gap-1.5">
-                {CHIPS.map((c) => (
-                  <button
-                    key={c.label}
-                    type="button"
-                    onClick={() => setInput(c.prompt)}
-                    className="press rounded-full px-3 py-1.5 text-2xs font-semibold transition-ui hover:-translate-y-px"
-                    style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-
               <div className="flex items-start gap-2">
                 <div className="flex-1">
                   <EstonianInput
@@ -162,6 +188,7 @@ export function AnuFab({
                     onEnter={() => { void send(input); setInput(""); }}
                     placeholder="Why is it raamatut and not raamatu?"
                     ariaLabel="Ask Anu a question"
+                    inputRef={boxRef}
                   />
                 </div>
                 <Button
@@ -175,7 +202,7 @@ export function AnuFab({
               </div>
 
               <AnuFailure failure={failure} />
-              <Provenance label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
+              <Provenance compact label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
             </div>
           )}
         </section>

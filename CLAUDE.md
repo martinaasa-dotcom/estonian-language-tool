@@ -696,6 +696,24 @@ local learner; with them, every route is gated. It keys off the absence of confi
   never define one. Main's answer is the one kept, because a `--choice-bg` custom property is how a
   caller passes a tone *through* a hover, where an inset ring is only how you avoid needing to.
   The second copy was deleted rather than left beside it.
+- **A pointer over something pressable says so.** Tailwind 3's preflight put `cursor: pointer` on
+  every button. Tailwind 4's hands the element back to the browser, whose default for a `<button>`
+  is the arrow, and this app is built almost entirely out of real buttons: the rail, the practice
+  chips, the four rating keys, the multiple-choice answers, the letter bar and every close cross
+  all drew the same arrow as the paragraph beside them. The only things in the whole interface that
+  changed under a mouse were the handful of plain `<a href>`s, so a learner working out what is
+  pressable by hovering it was told "nothing here", everywhere, wrongly. Measured rather than
+  assumed: with the rule stripped out of the compiled stylesheet a bare `<button>` reads `default`,
+  a `<summary>` and a `[role="button"]` read `auto`, and the file picker reads `default`.
+  One rule in `app/globals.css`, keyed on roles and input types rather than on a class. `.press`
+  and `.tap-tint` are how a control *moves*, which is not the same set as the controls that can be
+  pressed, so a rule keyed on either reaches only the ones that remembered to ask for it; a control
+  is covered here by being a control. A `<label>` is on the list only where clicking it operates
+  something, since the `label-xs` caption over a text field moves a caret and a pointer there
+  promises a button that is not present. And a disabled control goes back to the arrow rather than
+  to `not-allowed`: everything disabled in this app is waiting for the learner, a send button with
+  an empty box or a rating key before the answer is shown, never refusing them. That is the one
+  declaration `.choice-btn` used to carry for itself, and it is one declaration now.
 - **A control the 44px floor makes bigger centres its own content.** The floor under a coarse
   pointer is a `min-width` and a `min-height`, and an inline box lays its content out from the top
   left, so on a button holding nothing but an icon all of the slack lands on one side: measured at
@@ -1057,7 +1075,7 @@ passes on that happily: a comma is not a dash. Grep the markers the branch owns
 after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
 `useDockClearance`, `PULL_REFRESH_EVENT`, `ProseStream`, `openWithFallback`,
-`overflow-wrap`, `svg.lucide`,
+`overflow-wrap`, `svg.lucide`, `useStickToBottom`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,

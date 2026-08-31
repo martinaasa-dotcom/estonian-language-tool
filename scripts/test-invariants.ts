@@ -3111,6 +3111,66 @@ check("a control inflated to the tap-target floor centres its own content", () =
 });
 
 /**
+ * A pointer over something pressable says so.
+ *
+ * Tailwind 3's preflight put `cursor: pointer` on every button. Tailwind 4's
+ * hands the element back to the browser, whose default for a `<button>` is the
+ * arrow, and this app is built almost entirely out of real buttons: the rail,
+ * the practice chips, the four rating keys, the multiple-choice answers, the
+ * letter bar and every close cross drew the same arrow as the paragraph beside
+ * them. The only things in the whole interface that changed under a mouse were
+ * the handful of plain `<a href>`s, so a learner working out what is pressable
+ * by hovering it was told "nothing here", everywhere, wrongly.
+ *
+ * Asserted as the shape rather than as the selector list, because the way this
+ * comes back is somebody restoring it on a class. `.press` and `.tap-tint` are
+ * how a control moves, which is not the same set as the controls that can be
+ * pressed, and a rule keyed on one of them reaches only the controls that
+ * remembered to ask for it. A control is covered here by being a control.
+ */
+check("a pointer over something pressable says so", () => {
+  const css = code(join("app", "globals.css"));
+  const pointer = css.match(/([^{}]*)\{\s*cursor:\s*pointer;\s*\}/);
+  assert.ok(
+    pointer,
+    "nothing in app/globals.css gives a control a pointer cursor, and Tailwind 4's " +
+    "preflight does not either, so every button in the app draws the arrow",
+  );
+
+  const selector = pointer[1]!;
+  for (const control of ["button", '[role="button"]', "summary", 'input[type="checkbox"]']) {
+    assert.ok(
+      new RegExp(`(^|[,\\s])${control.replace(/[[\]"^$.*+?()|{}\\]/g, "\\$&")}\\s*(,|$)`, "m").test(selector),
+      `the pointer-cursor rule no longer reaches ${control}`,
+    );
+  }
+  assert.ok(
+    !/\.[a-zA-Z]/.test(selector),
+    "the pointer cursor is keyed on a class, so it reaches only the controls that " +
+    "remembered to carry it. Key it on what a control is.",
+  );
+
+  /*
+    And a disabled control goes back to the arrow rather than to a rebuke.
+    Everything disabled in this app is waiting for the learner (a send button
+    with an empty box, a rating key before the answer is shown), never refusing
+    them.
+  */
+  const off = css.match(/([^{}]*)\{\s*cursor:\s*default;\s*\}/);
+  assert.ok(off, "app/globals.css no longer takes the pointer back off a disabled control");
+  assert.match(off[1]!, /:disabled/, "the disabled-cursor rule stopped reading :disabled");
+  assert.match(
+    off[1]!, /\[aria-disabled="true"\]/,
+    'the disabled-cursor rule stopped reading [aria-disabled="true"], which is how ' +
+    "this app disables anything that is not a form control",
+  );
+  assert.ok(
+    !css.includes("not-allowed"),
+    "a control is drawn as refusing the learner. Nothing here refuses them; use the arrow.",
+  );
+});
+
+/**
  * The accessibility sweep is axe, and it runs in both themes.
  *
  * This suite spent its whole life describing itself as "not a substitute for
