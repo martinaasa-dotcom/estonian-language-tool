@@ -252,7 +252,16 @@ if (onboarded) {
     invariant asserts that ordering. Locally the deck is usually already there,
     so this branch is still the one a developer takes.
   */
-  absent(18, "a learner who has not been through first run: this database has a deck, " +
+  /*
+    24 is the checks inside the `else` branch below, minus the one this branch
+    runs in their place. It was 18, which is the figure from before #58 rewrote
+    the deck step: that turned two checks into nine inside that branch and took
+    it from 17 to 25, and the waiver was never recounted. 52 minus 18 is 34, a
+    waived run reaches 28, and the suite failed reporting a block having stopped
+    running when nothing had. Measured in a browser in both states rather than
+    counted by eye, because counting by eye is what produced 18.
+  */
+  absent(24, "a learner who has not been through first run: this database has a deck, " +
     "so /start correctly redirects. CI runs this suite before the demo fixture");
   /*
     A learner who has already been through it is sent to Today, which is the
