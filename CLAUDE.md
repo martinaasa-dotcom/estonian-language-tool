@@ -1316,6 +1316,20 @@ the key was the price of even seeing what you were about to ask. Neither was
 reachable on a machine with the keys set, which is the argument for running a
 suite in the state a stranger installs into.
 
+**And a waiver that fires on every possible run is a hole wearing a waiver's clothes.** That
+is the one thing the machinery above cannot see: `absent(n, why)` states a fact about *this*
+run, and it never asks whether some run exists where the fact is false. `test-assess.mjs`
+waived sixteen of its forty-two checks every time it had ever been run, on any machine and in
+CI, because `/start` correctly redirects anyone holding `onboardedAt` **or a single card** and
+CI built the demo deck before it started the server. The reason was true, it was well under the
+half that fails a suite outright, and nothing complained. So the wizard, the four screens a
+learner meets before any other and the one place this app asks for anything, was verified by
+nothing at all. All nineteen of those checks pass; they had simply never been asked. The
+fixture is built *after* that suite now, which is a fact about the order of two lines in
+`.github/workflows/ci.yml` and therefore asserted, because an ordering that matters and lives
+only in a comment is an ordering that drifts. When you write a waiver, say which state would
+lift it, and then go and find out whether anything ever reaches that state.
+
 `scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
 walks every text-bearing element, every icon and everything that arrives with a width of its own,
 on **every route the app has** at 360 and 1280, plus the landing page with its disclosures open

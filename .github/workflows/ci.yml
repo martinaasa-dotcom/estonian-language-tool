@@ -221,9 +221,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      # A deck with something in it, so the review screen has cards and the
-      # phone bar has a page under it to scroll.
-      - run: npx tsx scripts/demo-data.ts
       # A shell loop rather than a `wait-on` dependency: this is the only
       # place anything would wait for a port, and it is four lines.
       - name: Start the server
@@ -240,6 +237,32 @@ jobs:
           done
           echo "::error::The server never came up."
           exit 1
+      # THE ONE SUITE THAT RUNS BEFORE THE FIXTURE, AND THE REASON THE FIXTURE
+      # MOVED DOWN HERE.
+      #
+      # `/start` redirects anyone who has `onboardedAt` *or a single card*, on
+      # the argument that a wizard reappearing for an established learner is
+      # worse than no wizard. The fixture below gives this learner ninety-odd
+      # cards, so with it in place first run correctly never opens, and the
+      # nineteen checks that walk it were waived on every run this suite has
+      # ever had: locally, and here. Sixteen of forty-two, honestly reported,
+      # under the half that fails a suite outright, and permanent. The screen
+      # a learner meets before any other was verified by nothing.
+      #
+      # So it goes first, against an empty deck, and the fixture is built
+      # afterwards. It reaches 43 checks in that state rather than 26. What it
+      # leaves behind is what any learner leaves behind: an onboarded flag, a
+      # name, a placement row and a few units of cards, and `demo-data.ts`
+      # clears the deck before rebuilding it.
+      #
+      # This ordering is load-bearing and `scripts/test-invariants.ts` asserts
+      # it, because an ordering that matters and is only written in a comment
+      # is an ordering that drifts. See the note above about `test-exam.mjs`
+      # sitting in `test:browser` unrun for two builds.
+      - run: node scripts/test-assess.mjs
+      # A deck with something in it, so the review screen has cards and the
+      # phone bar has a page under it to scroll.
+      - run: npx tsx scripts/demo-data.ts
       # Every check here is a fault that was measured on a device: a menu
       # drawn off the top of the screen, a bar over the home indicator, a
       # backdrop filter repainting the bottom of the window on every frame of
@@ -271,12 +294,11 @@ jobs:
       # picture leaving the device, the confirmation list, a ticked word
       # becoming a card, and the review session asking about it.
       - run: node scripts/test-scan.mjs
-      # The two newest suites. This list is written out rather than deferring to
+      # The mock paper. This list is written out rather than deferring to
       # `npm run test:browser`, so a suite added to that script alone is a suite
       # CI never runs: `test-exam.mjs` sat here unrun for its first two builds,
       # floor and all, which is precisely the shape of failure `checks.mjs`
       # exists to make visible.
-      - run: node scripts/test-assess.mjs
       - run: node scripts/test-exam.mjs
       # The loop that starts at a dead end and ends in the shared dictionary:
       # a report sent from a failed search, accepted in the review queue, and

@@ -3026,6 +3026,59 @@ check("every browser suite that exists is a browser suite CI runs", () => {
 });
 
 /**
+ * And the one suite whose *position* in that list is the whole of its value.
+ *
+ * `/start` redirects anyone carrying `onboardedAt` or a single card, which is
+ * right: a first-run wizard reappearing for an established learner is worse
+ * than no wizard. It also means the demo fixture closes that door. CI built
+ * the fixture before it started the server, so `test-assess.mjs` had never
+ * once reached the walkthrough — sixteen of its forty-two checks waived on
+ * every run there has ever been, honestly reported, under the half that fails
+ * a suite outright, and therefore silent. The screen a learner meets before
+ * any other was verified by nothing at all. All nineteen of those checks pass;
+ * they had simply never been asked.
+ *
+ * This is the `absent()` machinery's one blind spot and worth naming as its
+ * own rule: a waiver states a fact about the run, and a waiver that is true on
+ * every possible run is a hole wearing a waiver's clothes. The suite reaches
+ * 43 checks before the fixture and 26 after it.
+ *
+ * Asserted on the order of the two lines rather than on either alone, because
+ * both will still be present when somebody tidies them back together.
+ */
+check("first run is exercised, which means one suite runs before the fixture", () => {
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const suite = workflow.indexOf("node scripts/test-assess.mjs");
+  const fixture = workflow.indexOf("scripts/demo-data.ts");
+  const server = workflow.indexOf("Start the server");
+
+  assert.ok(suite > 0, "CI does not run scripts/test-assess.mjs at all");
+  assert.ok(fixture > 0, "CI does not build the demo fixture");
+  assert.ok(
+    suite < fixture,
+    "CI builds the demo deck before test-assess.mjs runs, so /start redirects and the " +
+    "first-run walkthrough is waived rather than checked. It has to run against an empty deck.",
+  );
+  assert.ok(
+    server < suite,
+    "test-assess.mjs is a browser suite and CI runs it before the server is up",
+  );
+
+  /*
+    And the suite still says what it needs, so the developer who takes the
+    other branch on their own seeded machine reads a precondition rather than
+    a number. `scripts/lib/prefs.mjs` makes the same argument about a stored
+    preference: a suite states its preconditions, it does not inherit them.
+  */
+  const assess = read(join("scripts", "test-assess.mjs"));
+  assert.match(
+    assess,
+    /absent\(\s*\d+[\s\S]{0,200}?demo fixture/,
+    "test-assess.mjs waives its first-run checks without saying which state would reach them",
+  );
+});
+
+/**
  * The worker's caches have ceilings too.
  *
  * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never
