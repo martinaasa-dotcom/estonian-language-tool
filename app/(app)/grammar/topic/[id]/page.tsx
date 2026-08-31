@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";

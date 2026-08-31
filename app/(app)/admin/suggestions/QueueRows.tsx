@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Check, ChevronDown, ChevronRight, TriangleAlert, X } from "lucide-react";
 import { reviewSuggestion } from "@/app/actions";
 import { Button } from "@/components/Button";

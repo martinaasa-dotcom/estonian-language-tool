@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, MoreHorizontal, Moon, Sun, X } from "lucide-react";
 import { type CSSProperties, useCallback, useEffect, useState } from "react";

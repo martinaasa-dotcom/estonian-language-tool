@@ -87,6 +87,36 @@ const config: NextConfig = {
       one needs to find the other in the same glance.
     */
     middlewareClientMaxBodySize: "16mb",
+
+    /*
+      HOW LONG THE BROWSER MAY REUSE A PAGE IT HAS ALREADY FETCHED.
+
+      Next's default for a dynamic route is **zero**, and every route in this
+      app is dynamic, correctly: a deck, a streak and a due count are facts
+      about the person reading. Zero means the router cache holds nothing, so
+      going back to the page you were on ten seconds ago is a fresh render of
+      it, queries and all. Somebody moving between Today, Practice and their
+      deck the way this app is meant to be used paid full price for every one
+      of those, in both directions, and that is what "the navigation feels
+      slow" turned out to mean.
+
+      Thirty seconds is chosen against what a stale panel actually costs here.
+      A mutation is not covered by it and does not have to be: every one in
+      this app is a Server Action and every one of them calls
+      `revalidatePath`, which drops the client's copy of those routes as well
+      as the server's. So grading a card, adding a word or ticking a task
+      still shows up immediately on Today. What thirty seconds buys is the
+      case with no mutation in it at all. Reading the grammar page, going
+      back, opening the dictionary, going back: that is most of what moving
+      around an app is.
+
+      `static` is what a link marked `prefetch` is held under, which here means
+      a page fetched because a pointer settled on it (components/PrefetchLink).
+      Two minutes rather than the default five: a page fetched on a hover is
+      still a page somebody is about to read, and it should not be able to be
+      much older than the moment they reached for it.
+    */
+    staleTimes: { dynamic: 30, static: 120 },
   },
   async headers() {
     return [{ source: "/:path*", headers: STATIC_SECURITY_HEADERS }];

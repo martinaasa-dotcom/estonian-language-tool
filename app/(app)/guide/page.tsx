@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Check, X } from "lucide-react";
 import { CAN, CANNOT, tourBySection, WHAT_IT_IS } from "@/lib/copy/tour";
 import { ButtonLink } from "@/components/Button";

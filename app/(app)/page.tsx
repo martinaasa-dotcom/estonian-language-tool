@@ -1,11 +1,11 @@
-import Link from "next/link";
+import { Suspense } from "react";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
 import { ArrowRight, Flame, Shield, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
-import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { examCountdown } from "@/lib/progress/countdown";
@@ -15,11 +15,11 @@ import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
 import { caseReviewsFor } from "@/lib/progress/cases";
+import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
 import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
@@ -29,6 +29,7 @@ import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
 import { WordOfDayCard } from "@/components/WordOfDay";
+import { BadgeCheck } from "./BadgeCheck";
 
 export const metadata = { title: "Today" };
 
@@ -74,17 +75,39 @@ export default async function TodayPage() {
   const ownerId = await requireUserId();
   const now = new Date();
   /*
-    The learner's own midnight, not this server's. Every day-shaped figure on
-    this page reads it: the streak, the goal ring, the quests and the week
-    strip. Without it they all break at the deployment's midnight, which on
-    Vercel is UTC — see lib/time/day.ts for what that cost.
-  */
-  const clock = await learnerDayClock(ownerId);
+    FOUR ANSWERS THAT NEED NOTHING FROM EACH OTHER, SO THEY ARE ASKED AT ONCE.
 
-  const snapshot = await deckSnapshot(ownerId, now);
-  const settings = await readSettings(ownerId, [
-    SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
-    SETTING_KEYS.currentWeek,
+    Three of them were `await`s in a row and the fourth was read at the very
+    end of the page, after everything else had finished. On a socket on the
+    same machine that is a rounding error; against a hosted Postgres each one
+    is a round trip, and this page made fourteen of them one after another,
+    which was measured by giving every query a 20ms delay and watching the page
+    take four hundred milliseconds to answer a database that was idle.
+
+    The clock is a settings read and the settings are the same read, so those
+    two are now one query between them (lib/settings/store.ts). What is left is
+    the deck, and the level this learner placed at.
+  */
+  const [clock, snapshot, settings, placement] = await Promise.all([
+    /*
+      The learner's own midnight, not this server's. Every day-shaped figure on
+      this page reads it: the streak, the goal ring, the quests and the week
+      strip. Without it they all break at the deployment's midnight, which on
+      Vercel is UTC — see lib/time/day.ts for what that cost.
+    */
+    learnerDayClock(ownerId),
+    deckSnapshot(ownerId, now),
+    readSettings(ownerId, [
+      SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
+      SETTING_KEYS.currentWeek,
+    ]),
+    /*
+      Which level the course opens at. It was read last, after everything else
+      on the page had finished, and it depends on none of it: the placement and
+      the latest level check, both of which this request can ask for straight
+      away.
+    */
+    courseLevelFor(ownerId),
   ]);
 
   // A brand-new learner gets the wizard instead of an empty dashboard. Anyone
@@ -123,17 +146,11 @@ export default async function TodayPage() {
   const [word, collection, struggle, countdown] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now)) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
-    shows(stage, "struggle") ? loadStruggle(ownerId) : null,
+    shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already
     // has one for the due counts, and the readiness figures only need the deck.
     shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
   ]);
-
-  // Streak and deck-size badges can be earned just by reaching a milestone, so
-  // Today checks on every load. Idempotent, and it reuses the data this page
-  // already loaded rather than asking for it all over again.
-  const stats = await buildBadgeStats(ownerId, { snapshot, summary, units });
-  const newBadges = await awardBadges(ownerId, stats);
 
   const tutorReady = resolveProvider() !== null;
   /*
@@ -158,7 +175,6 @@ export default async function TodayPage() {
     for them. `nextUnit` prefers finishing something already started, then the
     first open unit at or above their level.
   */
-  const placement = await courseLevelFor(ownerId);
   const nextSyllabusUnit = pickNextUnit({
     doneUnitIds: new Set(units.filter((u) => u.state === "done").map((u) => u.unit.id)),
     startedUnitIds: new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id)),
@@ -568,7 +584,11 @@ export default async function TodayPage() {
           {tutorCard}
         </Stack>
       </div>
-      <AchievementToasts badges={newBadges} />
+      {/* Behind a Suspense boundary so three round trips of badge checking do
+          not sit in front of the first byte of this page. See ./BadgeCheck. */}
+      <Suspense fallback={null}>
+        <BadgeCheck ownerId={ownerId} snapshot={snapshot} summary={summary} units={units} />
+      </Suspense>
     </Page>
   );
 }
@@ -678,7 +698,7 @@ function taskView(task: {
  * this page and found on Progress, which is why the panel links there and calls
  * it the whole picture.
  */
-async function loadStruggle(ownerId: string) {
+async function loadStruggle(ownerId: string, now: Date) {
   const [deck, caseReviews] = await Promise.all([
     prisma.card.findMany({
       where: {
@@ -694,24 +714,40 @@ async function loadStruggle(ownerId: string) {
       take: 60,
       select: {
         id: true, front: true, back: true, cardType: true, targetCase: true,
-        lapses: true, reps: true, suspended: true,
-        lexeme: { select: { lemma: true } },
+        lapses: true, reps: true, suspended: true, lexemeId: true,
       },
     }),
-    caseReviewsFor(ownerId),
+    /*
+      THE SAME QUERY THE OTHER TWO SCREENS ASK, RATHER THAN A FOURTH OF ITS OWN.
+
+      This drew `WeakestCases`, the component Progress and Practice draw, off
+      five thousand rows of all time with no `orderBy` between them: the exact
+      shape `lib/progress/cases.ts` was written to remove, still here on the
+      one page everybody opens. So a learner could be told one number on Today
+      and another on Progress about the same case on the same day, and which
+      five thousand rows decided it was the plan's answer rather than theirs.
+    */
+    caseReviewsFor(ownerId, now),
   ]);
 
-  const reviews = deck.length
-    ? await prisma.review.findMany({
-        where: { ownerId, cardId: { in: deck.map((c) => c.id) } },
-        select: { cardId: true, rating: true },
-      })
-    : [];
+  const [reviews, entries] = await Promise.all([
+    deck.length
+      ? prisma.review.findMany({
+          where: { ownerId, cardId: { in: deck.map((c) => c.id) } },
+          select: { cardId: true, rating: true },
+        })
+      : [],
+    // Out of the shared dictionary rather than through the relation, which
+    // Prisma serves as a second statement. See lib/dict/facts.ts.
+    lemmasByCardLexeme(deck.map((c) => c.lexemeId)),
+  ]);
 
   return {
     sticking: stickingPoints(
       deck.map((c) => ({
-        id: c.id, lemma: c.lexeme?.lemma ?? null, front: c.front, back: c.back,
+        id: c.id,
+        lemma: (c.lexemeId === null ? undefined : entries.get(c.lexemeId)?.lemma) ?? null,
+        front: c.front, back: c.back,
         cardType: c.cardType, targetCase: c.targetCase,
         lapses: c.lapses, reps: c.reps, suspended: c.suspended,
       })),

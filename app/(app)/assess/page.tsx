@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Compass, History } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { goalsFor, historyFor, latestFor, paperFor } from "@/lib/progress/assessment";

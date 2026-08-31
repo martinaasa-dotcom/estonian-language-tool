@@ -159,10 +159,119 @@ on takeover, that it reaches the client that installed it
 (`includeUncontrolled`), and that the shell is never cached atomically. All
 three were made to fail before being trusted.
 
+## The round trip is the unit, not the query
+
+Everything above says the queries are fast, and every one of those numbers is
+true. The section below it used to say that none of it measured "network
+latency to a hosted database", which was the honest caveat and was also where
+the whole cost had been sitting.
+
+Against a socket on the same machine, one load of Today ran forty queries for
+eighty-eight milliseconds of database time in total. The deployment reads a
+Supabase pooler in another AWS region, where each of those is a round trip, and
+a page that asks forty things is only as fast as the number of times it has to
+wait.
+
+**How to see it.** Give every query a fixed delay and the waterfall stops being
+invisible. Wrap the client in a Prisma `$extends` that sleeps before each
+operation, log each with a timestamp, and read the timestamps as clusters: a
+cluster is one round trip, and the number of clusters is what the page costs.
+
+```ts
+base.$extends({ query: { async $allOperations({ args, query }) {
+  await new Promise((r) => setTimeout(r, 20));
+  return query(args);
+} } });
+```
+
+At 20ms, which is about what a pooled connection to a neighbouring region
+costs, Today was 400ms and made **fourteen** waits one after another: the
+clock, then the deck, then the settings, then a batch, then another batch, then
+the badge check, then the level. It is now 220ms and about five, and the badge
+check is not one of them.
+
+| Route | Before | After | Queries |
+|---|---|---|---|
+| `/` | 400ms | 220ms | 40 → 26 |
+| `/progress` | 291ms | 254ms | 27 → 18 |
+| `/review` | 158ms | 67ms | 8 → 6 |
+| `/exam` | 144ms | 128ms | 14 → 10 |
+| `/learn` | 150ms | 127ms | 6 → 3 |
+
+`/progress` looks like the poor relation and is not: the class board it used to
+wait four round trips for is behind a `Suspense` boundary now, so the number
+above still counts it and a reader does not.
+
+Where the queries went is three answers. A read that is a fact about the
+**shared dictionary** rather than about the person waiting is held across
+requests in `lib/dict/facts.ts`; the whole `Lexeme` table was being fetched on
+every load of Today, to count how many words the learner already knew. A read
+that is a fact about **one learner** and is wanted twice in one render is
+memoised for that render with `cache()` from React; nine of Today's forty were
+the same read of the same fifteen settings rows. And two answers that do not
+need each other are **asked at once**, which is most of the rest.
+
+The one worth stating on its own is `select: { lexeme: { select: { lemma:
+true } } }`. That reads as part of a query and is two: Prisma fetches the
+cards, collects their lexeme ids and sends a second statement carrying every
+one of them. On a deck of two thousand that is a round trip and two thousand
+uuids on the wire, and `deckSnapshot` alone did it on five screens.
+`lemmasByCardLexeme` answers out of the dictionary the request already shares
+and asks only about what it does not know, which on an ordinary request is
+nothing.
+
+## And a navigation is a round trip too
+
+Every route here is `force-dynamic`, correctly. What that costs is what a
+prefetch is worth: Next fetches a link that scrolls into view, but for a
+dynamic route it stops at the nearest `loading.tsx`. Measured against this app
+that answer is 150 bytes, seven milliseconds and no query at all. It is the
+skeleton. So the skeleton arrived early and the page still started being built
+when the click landed.
+
+`components/PrefetchLink.tsx` is the app's one link and asks for the page
+itself on intent: a pointer that has *settled* for 90ms, or keyboard focus.
+Settled rather than merely crossed, because a pointer passes four rows to reach
+the fifth. In a browser, with the same 20ms per query:
+
+| Rail row, click to heading | Before | After |
+|---|---|---|
+| cold, no pause | ~370ms | ~390ms |
+| after the pointer rested there | ~360ms | 75ms |
+| a page seen seconds ago | 461ms | 80ms |
+
+The cold row is unchanged and is meant to be: nothing was prefetched, so it is
+the same page fetched the same way. What moved is the two cases that are what
+using an app actually looks like.
+
+The last row is `experimental.staleTimes`, whose `dynamic` default is **zero**:
+the router cache held nothing, so going back to the page you were on ten
+seconds ago was a fresh render of it, queries and all. Thirty seconds is safe
+here because every mutation in this app is a Server Action and every one of
+them calls `revalidatePath`, which drops the client's copy along with the
+server's.
+
+## Which leaves the largest number, and it is a setting
+
+A page is several sequential round trips to the database and one from the
+reader. So the distance between the function and the database is multiplied by
+the number of queries on the page, and the distance between the reader and the
+function is not. A deployment moved nearer its learners and further from its
+database is slower, by about the number of queries.
+
+`vercel.json` pins the functions to the region the database is in. Vercel's own
+default is `iad1`, in Washington, which against a Supabase project in Ireland is
+roughly 80ms a query: on the eight round trips Today cannot avoid, most of a
+second before the page has drawn anything. The README's deploy section says
+what to do when the two can move together, which for an app whose learners are
+almost all in Estonia means Stockholm, and says plainly that moving the easy
+half first is the worst of the three arrangements.
+
 ## What this does not measure
 
 This runs one Postgres on the same machine as the app. It measures the shape of
 the queries, which is where an accidental scan over every review would show up,
-and it does not measure a connection pooler under real concurrency, network
-latency to a hosted database, or a cold serverless start. Those need a staging
-deployment, and nothing here should be read as evidence about them.
+and the number of times a page waits, which is what the injected delay above is
+for. It does not measure a connection pooler under real concurrency or a cold
+serverless start. Those need a staging deployment, and nothing here should be
+read as evidence about them.
