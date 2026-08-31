@@ -6,11 +6,11 @@ import { X } from "lucide-react";
 import { getTutorHistory } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Card, Empty } from "@/components/ui";
+import { Empty } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { useAnuChat } from "./useAnuChat";
 import { useStickToBottom } from "./useStickToBottom";
-import { AnuFailure, Bubble, Provenance, SentenceCheck, Starters, sentenceCheckPrompt } from "./AnuParts";
+import { AnuFailure, Bubble, CheckStarter, Provenance, SentenceCheck, Starters, sentenceCheckPrompt } from "./AnuParts";
 
 /**
  * Anu, reachable from anywhere: a button in the bottom right corner of every
@@ -25,11 +25,10 @@ import { AnuFailure, Bubble, Provenance, SentenceCheck, Starters, sentenceCheckP
  * into.
  */
 export function AnuFab({
-  configured, readerCanConfigure, plannedLabel,
+  configured, readerCanConfigure,
 }: {
   configured: boolean;
   readerCanConfigure: boolean;
-  plannedLabel: string | null;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -50,7 +49,10 @@ export function AnuFab({
     bordered button offering to check a sentence, six starters over three rows
     and three lines of grey provenance, stacked under whatever was being said,
     so a learner reading an answer about the partitive was reading it through a
-    menu they had already used. That is the whole of why it read as busy.
+    menu they had already used. That is where this started, and withholding the
+    lot once a question has been asked was only half of it: on the first screen
+    of a panel nobody had asked anything on yet, all of it was still there at
+    once. What is left is one row of ways in.
 
     Withheld rather than deleted, which is the same distinction `lib/ux/`
     draws: this is the compact surface, and `/tutor` is the same conversation
@@ -92,17 +94,56 @@ export function AnuFab({
           role="dialog"
           aria-modal="true"
           aria-label="Ask Anu"
-          className="flex w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[var(--r-xl)] border"
+          /*
+            A CHAT PANEL OPENS AT THE SIZE IT WILL BE USED AT.
+
+            It had a maximum and no minimum, so it was exactly as tall as
+            whatever was in it: a short panel on opening, then a taller one
+            after the first question, then taller again, growing under the
+            reader a message at a time and finally jumping to a scroller. Every
+            one of those is a different window and none of them was the one they
+            opened. A floor rather than a fixed height, because a panel that
+            cannot grow at all is the same fault at the other end.
+
+            The floor is what a conversation needs before it has to scroll: two
+            exchanges of the length Anu actually writes, which is a paragraph of
+            grammar and a boxed correction under it. Both ends give way to a
+            short window first, so the arithmetic is the same expression twice
+            and the floor can never end up above the ceiling.
+          */
+          className="flex w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[var(--r-xl)] border"
           style={{
-            maxHeight: "min(36rem, calc(100dvh - 7rem))",
+            minHeight: "min(32rem, calc(100dvh - 7rem))",
+            maxHeight: "min(44rem, calc(100dvh - 7rem))",
             borderColor: "var(--rule)",
             background: "var(--surface)",
             boxShadow: "var(--shadow-lg)",
           }}
         >
-          <header className="flex items-center gap-2.5 border-b px-4 py-3" style={{ borderColor: "var(--rule)" }}>
-            <Mascot size={26} className="shrink-0" animate={false} />
-            <p className="flex-1 text-base font-bold" style={{ color: "var(--ink)" }}>Anu</p>
+          {/*
+            One line under her name, and it says whichever of two things is
+            true. Before a reply it is what Anu is for and how to read her,
+            which is the useful half of the greeting card that used to open
+            this panel; after one it names the model that actually wrote what
+            is on screen. Neither belongs in the conversation: the greeting was
+            a card the width of the panel that a learner scrolled past to reach
+            the answer they asked for, and the provider line was three lines of
+            grey under the box they type into. Both are facts about Anu rather
+            than turns in the conversation, so they sit in her chrome, where
+            they cost the thread nothing.
+          */}
+          <header className="flex items-center gap-3 border-b px-5 py-4" style={{ borderColor: "var(--rule)" }}>
+            <Mascot size={28} className="shrink-0" animate={false} />
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-bold leading-snug" style={{ color: "var(--ink)" }}>Anu</p>
+              {configured && (
+                answeredBy
+                  ? <Provenance compact label={answeredBy} answered />
+                  : <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+                      Names the rule, and marks her own Estonian.
+                    </p>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -114,7 +155,18 @@ export function AnuFab({
             </button>
           </header>
 
-          <div className="scroll-host flex-1 overflow-y-auto px-4 py-4">
+          {/*
+            The well is a column and its contents are pushed to the bottom by
+            `mt-auto` below, which is what a floor under the panel's height
+            makes necessary: a thread anchored to the top of a 44rem window
+            leaves a first answer stranded at the ceiling with a screen of
+            nothing between it and the box it was typed into. Growing upward
+            off the input is what every chat does and it is where the next
+            message is going to appear anyway. `mt-auto` rather than
+            `justify-end`, which on a scroll container puts the overflowing top
+            of a long conversation out of reach in Chromium.
+          */}
+          <div className="scroll-host flex flex-1 flex-col overflow-y-auto px-5 py-5">
             {!configured ? (
               <Empty
                 title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
@@ -126,47 +178,51 @@ export function AnuFab({
                 )}
               />
             ) : !asked ? (
-              <div className="flex flex-col gap-4">
-                {/* No second mascot, and no `p-4`. The panel's own header carries
-                    a mascot three centimetres above this card, and at 36px in a
-                    column of its own it spent a sixth of a 24rem panel's width
-                    saying a thing already on screen. The padding was a class that
-                    did nothing: `Card` sets `p-5 md:p-6`, and a `md:` variant beats
-                    an unprefixed utility whatever order they are written in, so
-                    every desktop reading of this card was `p-6` while the source
-                    said otherwise. The full page has no header of its own and keeps
-                    her mascot. */}
-                <Card tone="blush">
-                  <p className="text-base font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
-                  <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                    Ask me anything about Estonian grammar. I&rsquo;ll name the rule, say when
-                    I&rsquo;m unsure rather than guessing, and mark any Estonian I write as mine.
-                  </p>
-                </Card>
+              /*
+                Seven ways in, in one row of pills, and nothing else.
 
-                <SentenceCheck
-                  open={checkOpen}
-                  estonian={checkEt}
-                  meaning={checkEn}
-                  streaming={streaming}
-                  onOpen={() => setCheckOpen(true)}
-                  onClose={() => setCheckOpen(false)}
-                  onEstonian={setCheckEt}
-                  onMeaning={setCheckEn}
-                  onSubmit={() => {
-                    void send(sentenceCheckPrompt(checkEt, checkEn));
-                    setCheckEt("");
-                    setCheckEn("");
-                    setCheckOpen(false);
-                  }}
-                />
-
-                <Starters compact onPick={pick} />
-              </div>
+                The greeting is gone from here: a card the width of the panel,
+                a bordered button on a line of its own and six long starters
+                over three rows meant that opening Anu showed a learner four
+                separate blocks before the box they type into. What each of
+                those said was true; there was simply too much of it, which is
+                the one way copy stops being read that no voice rule can see.
+                What survives is every way in that was here, at the length this
+                surface has room for, plus the check that leads them.
+              */
+              checkOpen ? (
+                <div className="mt-auto">
+                  <SentenceCheck
+                    open
+                    compact
+                    estonian={checkEt}
+                    meaning={checkEn}
+                    streaming={streaming}
+                    onOpen={() => setCheckOpen(true)}
+                    onClose={() => setCheckOpen(false)}
+                    onEstonian={setCheckEt}
+                    onMeaning={setCheckEn}
+                    onSubmit={() => {
+                      void send(sentenceCheckPrompt(checkEt, checkEn));
+                      setCheckEt("");
+                      setCheckEn("");
+                      setCheckOpen(false);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="mt-auto">
+                  <Starters
+                    compact
+                    onPick={pick}
+                    lead={<CheckStarter compact onOpen={() => setCheckOpen(true)} />}
+                  />
+                </div>
+              )
             ) : (
               <div
                 ref={conversation}
-                className="flex flex-col gap-3"
+                className="mt-auto flex flex-col gap-4"
                 role="log"
                 aria-live="polite"
                 aria-label="Conversation with Anu"
@@ -179,8 +235,8 @@ export function AnuFab({
           </div>
 
           {configured && (
-            <div className="flex flex-col gap-2.5 border-t px-4 py-3" style={{ borderColor: "var(--rule)" }}>
-              <div className="flex items-start gap-2">
+            <div className="flex flex-col gap-3 border-t px-5 py-4" style={{ borderColor: "var(--rule)" }}>
+              <div className="flex items-start gap-2.5">
                 <div className="flex-1">
                   <EstonianInput
                     value={input}
@@ -202,7 +258,6 @@ export function AnuFab({
               </div>
 
               <AnuFailure failure={failure} />
-              <Provenance compact label={answeredBy ?? plannedLabel} answered={answeredBy !== null} />
             </div>
           )}
         </section>

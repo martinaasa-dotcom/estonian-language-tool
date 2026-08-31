@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, type ReactNode } from "react";
 import { CheckCheck, Plus } from "lucide-react";
 import { createLexeme, addToDeck } from "@/app/actions";
 import { Button } from "@/components/Button";
@@ -17,13 +17,24 @@ import { AI_TAG } from "@/lib/copy/values";
  * line reads and behaves identically wherever the conversation is shown.
  */
 
+/**
+ * The starters, in two lengths, for the two shapes of room.
+ *
+ * One table, as before: a starter added here still arrives on the full page
+ * and in the floating panel, and how one behaves cannot drift from the other.
+ * What is per-surface is only how much of the label there is space for. At
+ * 24rem the long ones wrapped to three rows of pills under a greeting card and
+ * a bordered button, which was most of what a learner met on opening Anu; the
+ * page has the width to be more inviting. `EVIDENCE_NOTE` and `EVIDENCE_LABEL`
+ * are the same pairing for the same reason.
+ */
 export const CHIPS = [
-  { label: "Break this sentence down", prompt: "Break this Estonian sentence down morpheme by morpheme, labelling each case: " },
-  { label: "Which case, and why?", prompt: "Which case should I use here, and what is the rule? " },
-  { label: "Object case check", prompt: "Is the object case right in this sentence, total or partial? Explain the aspect: " },
-  { label: "Explain this gradation", prompt: "Explain the consonant gradation in this word and name the pattern: " },
-  { label: "Correct my Estonian", prompt: "Correct my Estonian and explain each change: " },
-  { label: "Quiz me", prompt: "Quiz me with five short B1-level Estonian questions, one at a time." },
+  { label: "Break this sentence down", short: "Break it down", prompt: "Break this Estonian sentence down morpheme by morpheme, labelling each case: " },
+  { label: "Which case, and why?", short: "Which case?", prompt: "Which case should I use here, and what is the rule? " },
+  { label: "Object case check", short: "Object case", prompt: "Is the object case right in this sentence, total or partial? Explain the aspect: " },
+  { label: "Explain this gradation", short: "Gradation", prompt: "Explain the consonant gradation in this word and name the pattern: " },
+  { label: "Correct my Estonian", short: "Correct me", prompt: "Correct my Estonian and explain each change: " },
+  { label: "Quiz me", short: "Quiz me", prompt: "Quiz me with five short B1-level Estonian questions, one at a time." },
 ] as const;
 
 /**
@@ -62,18 +73,21 @@ export function sentenceCheckPrompt(estonian: string, meaning: string): string {
  * actually wrote what is on screen, read off the reply's own headers, which
  * with a fallback chain configured is not always the same thing.
  *
- * `compact` is the floating panel, and it drops the second sentence rather
- * than shortening it. Two different things were being said in one line: which
- * model answered, which is a fact about the reply on screen and belongs under
- * it, and where Estonian forms come from, which is a standing fact about Anu
- * and is the same on the day she is installed as on the thousandth question.
- * Under a 24rem panel the pair ran to three lines of grey text below the box
- * the learner types in, which is the largest single thing on that screen that
- * nobody was reading. So the standing fact is said once, in the greeting, where
- * somebody meeting Anu is actually looking, and what stays here is the fact
- * about the answer. Nothing is softened by the move: what makes Anu's Estonian
- * checkable is that each piece of it is boxed and tagged in the reply itself,
- * and that is untouched.
+ * `compact` is the floating panel, and it keeps only the half that is a fact
+ * about something on screen. Three things were being said in one grey block
+ * under the box a learner types into: where Estonian forms come from, which is
+ * a standing fact about Anu rather than about any answer; which provider the
+ * deployment *would* ask, which is a prediction about a reply that does not
+ * exist yet; and which model actually wrote what is on screen. Only the last
+ * is a fact about the answer, and it is the only one a 24rem panel has room
+ * for. So the standing fact is said once, in the line under her name in the
+ * panel's header, and the prediction is not made at all: "Will ask OpenRouter
+ * · google/gemma-4-31b-it:free." was the largest thing on the panel a learner
+ * had not asked anything yet, and it named a model that had answered nothing.
+ *
+ * Nothing is softened by dropping it. What makes Anu's Estonian checkable is
+ * that each piece of it is boxed and tagged in the reply itself, and the full
+ * `/tutor` page, which has the room, still says all three.
  */
 export function Provenance({ label, answered, compact = false }: {
   label: string | null;
@@ -81,6 +95,7 @@ export function Provenance({ label, answered, compact = false }: {
   compact?: boolean;
 }) {
   if (!label) return null;
+  if (compact && !answered) return null;
   return (
     <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
       {answered ? "Answered by" : "Will ask"} {label}.
@@ -99,24 +114,32 @@ export function Provenance({ label, answered, compact = false }: {
  * that was missing: on the panel the starters and the field are now at opposite
  * ends of the screen, and a chip that silently fills something you are not
  * looking at reads as a chip that did nothing.
+ *
+ * `lead` is how "Check a sentence I wrote" joins the row rather than sitting
+ * above it in a bordered pill of its own. It is the same kind of offer as the
+ * six beside it, so on the narrow surface it is one of them, drawn a little
+ * heavier because it is the one worth pressing first. The transparent border on
+ * every chip is what keeps that row an even height.
  */
-export function Starters({ compact = false, onPick }: {
+export function Starters({ compact = false, lead, onPick }: {
   compact?: boolean;
+  lead?: ReactNode;
   onPick: (prompt: string) => void;
 }) {
   return (
-    <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
+    <div className="flex flex-wrap gap-2">
+      {lead}
       {CHIPS.map((c) => (
         <button
           key={c.label}
           type="button"
           onClick={() => onPick(c.prompt)}
-          className={`press rounded-full font-semibold transition-ui hover:-translate-y-px ${
+          className={`press rounded-full border border-transparent font-semibold transition-ui hover:-translate-y-px ${
             compact ? "px-3 py-1.5 text-2xs" : "px-3.5 py-2 text-xs"
           }`}
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
-          {c.label}
+          {compact ? c.short : c.label}
         </button>
       ))}
     </div>
@@ -293,31 +316,48 @@ function splitFix(content: string): { rest: string; fix: string | null } {
   };
 }
 
+/**
+ * The way into "check a sentence", drawn once.
+ *
+ * The panel puts it at the head of the starter row rather than in a bordered
+ * pill on a line of its own, so it is defined here rather than inside
+ * `SentenceCheck`: two copies of one button is how the page and the panel drift
+ * apart a padding at a time. Heavier than the six beside it, by a border and by
+ * the icon, because it is the one worth pressing first; not a second solid
+ * accent, because the panel already has one loud action and that is the Ask
+ * button under the box.
+ */
+export function CheckStarter({ compact = false, onOpen }: { compact?: boolean; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`press flex items-center gap-1.5 self-start rounded-full border font-semibold transition-ui hover:-translate-y-px ${
+        compact ? "px-3 py-1.5 text-2xs" : "px-4 py-2 text-sm"
+      }`}
+      style={{ borderColor: "var(--accent)", color: "var(--accent-deep)", background: "var(--accent-soft)" }}
+    >
+      <CheckCheck size={compact ? 13 : 15} aria-hidden />
+      {compact ? "Check a sentence" : "Check a sentence I wrote"}
+    </button>
+  );
+}
+
 export function SentenceCheck({
-  open, estonian, meaning, streaming, onOpen, onClose, onEstonian, onMeaning, onSubmit,
+  open, estonian, meaning, streaming, compact = false, onOpen, onClose, onEstonian, onMeaning, onSubmit,
 }: {
   open: boolean;
   estonian: string;
   meaning: string;
   streaming: boolean;
+  compact?: boolean;
   onOpen: () => void;
   onClose: () => void;
   onEstonian: (value: string) => void;
   onMeaning: (value: string) => void;
   onSubmit: () => void;
 }) {
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex items-center gap-2 self-start rounded-full border px-4 py-2 text-sm font-medium"
-        style={{ borderColor: "var(--accent)", color: "var(--accent-deep)", background: "var(--accent-soft)" }}
-      >
-        <CheckCheck size={15} aria-hidden /> Check a sentence I wrote
-      </button>
-    );
-  }
+  if (!open) return <CheckStarter compact={compact} onOpen={onOpen} />;
 
   return (
     <Card>
@@ -342,13 +382,31 @@ export function SentenceCheck({
         className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-base"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
+      {/*
+        `shrink-0` because a flex item shrinks below its content by default, and
+        this row is a button beside a sentence. At 22rem inside the floating
+        panel the button was squeezed to the width of one character and drew
+        "Check it" down the screen a letter per line, which is a fault inside a
+        card that is itself the right size, so nothing measuring the document
+        could see it. The note goes entirely on the narrow surface rather than
+        wrapping to four lines: it says what the line under her name in the
+        panel's header already says, and saying it twice on one small screen is
+        how a panel comes to read as busy.
+      */}
       <div className="mt-3 flex items-center gap-3">
-        <Button variant="primary" onClick={onSubmit} disabled={streaming || estonian.trim().length < 3}>
+        <Button
+          variant="primary"
+          className="shrink-0"
+          onClick={onSubmit}
+          disabled={streaming || estonian.trim().length < 3}
+        >
           <CheckCheck size={15} aria-hidden /> Check it
         </Button>
-        <span className="text-xs" style={{ color: "var(--ink-3)" }}>
-          Anu names the rule before the fix, and says so when she is unsure rather than guessing.
-        </span>
+        {!compact && (
+          <span className="text-xs" style={{ color: "var(--ink-3)" }}>
+            Anu names the rule before the fix, and says so when she is unsure rather than guessing.
+          </span>
+        )}
       </div>
     </Card>
   );

@@ -87,11 +87,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Offered once, inside the app only: someone still reading the landing
           page has not decided they want this on their home screen. */}
       <InstallPrompt />
-      <AnuFab
-        configured={chain.length > 0}
-        readerCanConfigure={!supabaseConfigured()}
-        plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
-      />
+      {/* No planned label: the panel names the model that answered and makes no
+          prediction about one that has not. `/tutor` has the room for both. */}
+      <AnuFab configured={chain.length > 0} readerCanConfigure={!supabaseConfigured()} />
     </LetterBarScope>
   );
 }
