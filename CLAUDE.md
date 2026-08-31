@@ -1001,6 +1001,31 @@ same rule: it collects the learner's own rating, reports it as theirs, and contr
 to the level. `SCORED_SKILLS` in `lib/assessment/score.ts` names the three that count, and
 `scripts/test-invariants.ts` fails if speaking ever joins them.
 
+**A placement question is answered in Estonian, not about it.** Nobody sitting a real Estonian test
+is asked to name a case. The state examination's published reading tasks are `valikvastustega
+ülesanne`, `valikvastustega lünkülesanne` and `sobitamine`; the placement tests Estonian language
+schools set are almost entirely the middle one, a sentence with a hole in it and three or four forms
+of one word underneath. The level check led with the terminology instead, and half of every reading
+section was metalanguage: which case is this ending, which form does this case call for, which case
+does this verb govern. It cost more than tone. "Which case does the verb kõlbama demand of its
+object?" was asked of 45 entries that are nouns and adjectives, and of verbs that take no object at
+all; and 18 of those questions offered a second genuinely correct case as a *wrong* answer, because
+a word's government string names every case it governs and the distractors were drawn from all of
+them, so a learner who knew that `segama` takes the comitative was marked wrong for it. The writing
+section had the same shape and worse feedback: it asked for `kolmandik` in the seesütlev and then
+answered "why that form" with "the seesütlev answers milles? kus?", which is the question again.
+
+So every one of those is a gap now, in a sentence a lexicographer recorded, with forms of one word
+to choose between or to type. `lib/estonian/cloze.ts` was already hiding words out of sentences for
+the mock exam and both callers use it rather than keeping a copy. The Estonian names still appear in
+the **explanation** after an answer, where they are the cross-reference `lib/estonian/terms.ts`
+exists for, alongside `CASE_NOTES`'s one line on what the case is *for*, which is the half that was
+missing. A form that is two cases at once is named as neither: `ajalugu` is the nimetav and the
+osastav, and the version that named whichever the dictionary listed first called a partitive object
+"the subject of a sentence". An invariant fails on a case name in a question, and
+`scripts/test-assess.mjs` asks the same thing of the rendered screen, because a source check cannot
+see a name arriving through an interpolated option.
+
 **A level is never decided by a model, and never built out of Estonian we wrote.** The placement
 check at `/assess` is assembled from `Lexeme`, `Form` and recorded `usages`; every question says
 which of those its Estonian came from. Marking is a stored index, a recorded sentence, or a string
@@ -1136,7 +1161,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
-`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`. Most of them now
+`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`, `gapFrom`,
+`explainGap`, `ESTONIAN_WORD`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

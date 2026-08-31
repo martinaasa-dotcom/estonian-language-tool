@@ -1,8 +1,9 @@
-import { CASES, caseByKey, caseOptionLabel } from "@/lib/estonian/cases";
+import { CASES } from "@/lib/estonian/cases";
+import { buildCloze, ESTONIAN_WORD } from "@/lib/estonian/cloze";
 import { deriveCase } from "@/lib/estonian/derive";
-import { parseGovernment } from "@/lib/estonian/government";
 import { dictationWords } from "@/lib/estonian/dictation";
-import { authoritativeForm } from "@/lib/estonian/writing";
+import { CASE_NOTES } from "@/lib/estonian/grammar";
+import { formName } from "@/lib/estonian/morph";
 import type { CaseKey } from "@/lib/estonian/types";
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
 
@@ -37,29 +38,6 @@ export interface WordRow {
   forms: readonly { formType: string; value: string; morphCode?: string | null }[];
   examples: readonly { et: string; en?: string | null }[];
 }
-
-/**
- * How hard a case is, independently of how hard its word is.
- *
- * A band is a claim about the whole question, so an A1 noun in the terminative
- * is not an A1 question. The three principal parts sit at A2 because they are
- * the unpredictable ones every beginner meets and nobody gets right by rule;
- * the six local cases are the regular payoff of learning the genitive; the last
- * four are the ones a B1 syllabus reaches and a beginner has never needed.
- */
-const CASE_BAND: Partial<Record<CaseKey, Band>> = {
-  GENITIVE: "A2", PARTITIVE: "A2",
-  ILLATIVE: "A2", INESSIVE: "A2", ELATIVE: "A2",
-  ALLATIVE: "A2", ADESSIVE: "A2", ABLATIVE: "A2",
-  COMITATIVE: "A2",
-  TRANSLATIVE: "B1", TERMINATIVE: "B1", ESSIVE: "B1", ABESSIVE: "B1",
-};
-
-/** Cases worth asking about: the ones a learner actually produces. */
-const ASKABLE: readonly CaseKey[] = [
-  "GENITIVE", "PARTITIVE", "ILLATIVE", "INESSIVE", "ELATIVE",
-  "ALLATIVE", "ADESSIVE", "ABLATIVE", "TRANSLATIVE", "COMITATIVE",
-];
 
 export function bandOf(cefr: string | null | undefined): Band | null {
   return BANDS.includes(cefr as Band) ? (cefr as Band) : null;
@@ -138,29 +116,237 @@ function choices(
 const differentText = (a: string, b: string) => a.trim().toLowerCase() !== b.trim().toLowerCase();
 const differentMeaning = (a: string, b: string) => !sameMeaning(a, b);
 
-/** Every form of a word that the app can vouch for, for near-miss messages. */
-function knownForms(word: WordRow): string[] {
-  const out = new Set<string>(word.forms.map((f) => f.value));
+/**
+ * Every spelling of a word the dictionary can vouch for.
+ *
+ * The stored principal parts, whatever paradigm Ekilex returned, and the ten
+ * regular cases the app computes off the genitive stem. Nothing here is
+ * generated in the sense ADR-005 forbids: a derivation is a deterministic rule
+ * over a form already stored, wrong the same way for every word that takes the
+ * ending, where a model is wrong about one word unpredictably.
+ */
+function vouchedForms(word: WordRow): string[] {
+  const out = new Set<string>([word.lemma, ...word.forms.map((f) => f.value)]);
   const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
   for (const spec of CASES) {
     const value = deriveCase(gen, spec.key);
     if (value) out.add(value);
   }
-  out.delete(word.lemma);
-  return [...out];
+  return [...out].filter((f) => f.trim());
+}
+
+/** Forms a lexicographer actually wrote down, as opposed to computed ones. */
+function attestedForms(word: WordRow): Set<string> {
+  return new Set([word.lemma, ...word.forms.map((f) => f.value)].map((f) => f.toLowerCase()));
 }
 
 function usableWords(words: readonly WordRow[]): WordRow[] {
   return words.filter((w) => w.lemma.trim() && w.translation.trim() && bandOf(w.cefr));
 }
 
+// ── Gaps ─────────────────────────────────────────────────────────────────────
+
+/**
+ * A sentence worth putting a hole in.
+ *
+ * Long enough that the context can decide the answer and short enough to hold
+ * in your head, which is the whole premise of the task: nobody is being asked
+ * to remember an ending, they are being asked to read. Ekilex records phrase
+ * fragments alongside whole sentences, and a gap in a fragment is a question
+ * with nothing to answer it from.
+ */
+export function gappable(sentence: string): boolean {
+  const count = dictationWords(sentence).length;
+  return count >= 3 && count <= 12 && sentence.trim().length <= 90;
+}
+
+export interface Gap {
+  /** The sentence with one word replaced by a blank. */
+  text: string;
+  /** The whole sentence, restored, which is the explanation afterwards. */
+  full: string;
+  /** The form that was taken out, spelled exactly as the sentence spelled it. */
+  answer: string;
+  /** Other forms of the same word, none of them standing in the sentence. */
+  siblings: string[];
+}
+
+/**
+ * Takes one word out of a sentence a lexicographer recorded.
+ *
+ * **This is what a placement test is actually made of.** The state examination
+ * calls it `valikvastustega lünkülesanne` and sets ten of them in the B1
+ * reading part; every Estonian school's own placement test is a page of them.
+ * A sentence with a hole in it, and a few forms of one word to choose between.
+ * What none of them do, anywhere, is ask a learner to name a case, which is
+ * what this module used to spend half of its reading section on.
+ *
+ * Nothing is written and nothing is inflected: `buildCloze` hides a word that
+ * a lexicographer put there, and the options are forms the dictionary already
+ * vouches for. That is the same latitude the mock exam takes with the same
+ * function, and the two call it rather than each keeping a copy.
+ *
+ * Two guards beyond the exam's, both learned from reading what came out.
+ *
+ * A blank at the very start of the sentence hands the answer over, because the
+ * word standing there is capitalised and none of the distractors is: `____ eas
+ * naine` offered `Viljakas`, `viljaka`, `viljakat` and `viljakate`, and the
+ * capital letter answers it without a word of Estonian.
+ *
+ * And the answer has to be the only form that fits. Estonian syncretism means
+ * two of a word's forms are often the same string, which `differentText`
+ * already catches, but two *different* forms can both be grammatical in one
+ * slot: an object is genitive or partitive depending on whether the action
+ * finished. So a sibling that is the answer's partner in that pair is dropped
+ * rather than offered. It costs a distractor and it is the one ambiguity this
+ * shape can actually be rid of.
+ */
+export function gapFrom(word: WordRow): Gap | null {
+  const forms = vouchedForms(word);
+  const attested = attestedForms(word);
+  const objectPair = new Set(
+    [word.forms.find((f) => f.formType === "GEN_SG")?.value,
+     word.forms.find((f) => f.formType === "PART_SG")?.value,
+     deriveCase(word.forms.find((f) => f.formType === "GEN_SG")?.value, "GENITIVE")]
+      .filter((f): f is string => !!f)
+      .map((f) => f.toLowerCase()),
+  );
+
+  for (const example of word.examples) {
+    const sentence = example.et.trim().replace(/\s+/g, " ");
+    if (!gappable(sentence)) continue;
+
+    const cloze = buildCloze(sentence, forms);
+    if (!cloze || cloze.index === 0) continue;
+
+    const standing = new Set(
+      [...cloze.text.matchAll(ESTONIAN_WORD)].map((m) => m[0].toLowerCase()),
+    );
+    const answer = cloze.answer.toLowerCase();
+    const ambiguous = objectPair.has(answer);
+    const siblings = forms.filter((f) => {
+      const lower = f.toLowerCase();
+      if (lower === answer || standing.has(lower)) return false;
+      return !(ambiguous && objectPair.has(lower));
+    });
+
+    // Attested forms make better wrong answers than computed ones, so they are
+    // offered alone wherever there are enough of them. The right answer is
+    // always the word the sentence itself used, whichever way this falls.
+    const written = siblings.filter((f) => attested.has(f.toLowerCase()));
+    const pool = written.length >= 3 ? written : siblings;
+    if (pool.length < 3) continue;
+
+    return { text: cloze.text, full: cloze.full, answer: cloze.answer, siblings: pool };
+  }
+  return null;
+}
+
+/**
+ * What to call the form that was taken out, and what that form is for.
+ *
+ * Read off the dictionary first, because a stored form knows its own slot, and
+ * only then off the derivation, because a form the app computed is named by
+ * the case that computed it. Returns null where neither can say, which is the
+ * honest answer for a participle nobody stored, and is why the explanation
+ * below is written to work without it.
+ */
+function nameForm(word: WordRow, value: string): { et: string; en: string; summary?: string } | null {
+  const lower = value.toLowerCase();
+  const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
+
+  /*
+    Estonian syncretism means one spelling is often two cases: `trammi` is both
+    the omastav and the osastav, and `tuba` is both the nimetav and the
+    osastav. Naming whichever the dictionary happens to list first would state
+    the wrong one about half the time, in the sentence the learner is being
+    told is the explanation. So a spelling that is more than one case is named
+    without claiming which, and the sentence carries the explanation on its own.
+  */
+  const claimed = new Set<CaseKey>();
+  for (const form of word.forms) {
+    if (form.value.toLowerCase() !== lower) continue;
+    const key = CASE_BY_FORM_TYPE[form.formType];
+    if (key) claimed.add(key);
+  }
+  for (const spec of CASES) {
+    if (deriveCase(gen, spec.key)?.toLowerCase() === lower) claimed.add(spec.key);
+  }
+  const only = claimed.size === 1 ? [...claimed][0] : undefined;
+
+  // A verb form is not a case and cannot be syncretic with one, so the stored
+  // slot names it outright: `aidata` is the da-tegevusnimi and nothing else.
+  const stored = word.forms.find((f) => f.value.toLowerCase() === lower);
+  if (stored && !CASE_BY_FORM_TYPE[stored.formType] && claimed.size === 0) {
+    const named = formName(stored);
+    if (named) return named;
+  }
+
+  if (!only) return null;
+  const spec = CASES.find((c) => c.key === only);
+  if (!spec) return null;
+  // The plural slots name a case the app has no plural derivation for, so the
+  // stored name is the precise one where there is one: "mitmuse osastav".
+  const named = stored ? formName(stored) : null;
+  return {
+    et: named?.et ?? spec.et,
+    en: named?.en ?? spec.en.toLowerCase(),
+    summary: CASE_NOTES.find((n) => n.key === only)?.summary,
+  };
+}
+
+/** The stored slots that are a case, so the case's own note can explain them. */
+const CASE_BY_FORM_TYPE: Record<string, CaseKey | undefined> = {
+  NOM_SG: "NOMINATIVE", GEN_SG: "GENITIVE", PART_SG: "PARTITIVE",
+  GEN_PL: "GENITIVE", PART_PL: "PARTITIVE", ILL_SG_SHORT: "ILLATIVE",
+};
+
+/**
+ * Why that word and not one of the others.
+ *
+ * The sentence leads, because the sentence is the reason: put the word back
+ * and a learner can see what the ending is doing. Then the form is named the
+ * way a class names it, and `CASE_NOTES` says in one line what the case is
+ * for. That table is the grammar reference's own, so the explanation here and
+ * the page somebody opens next cannot say two different things.
+ *
+ * Where the form cannot be named the sentence stands alone, which is still an
+ * answer. What the old version did instead was restate the question: it told
+ * somebody the seesütlev answers `milles? kus?` when the question had just
+ * told them the same thing, and never once said why this word wanted it.
+ */
+export function explainGap(word: WordRow, gap: Gap): string {
+  const named = nameForm(word, gap.answer);
+  if (!named) return gap.full;
+  const what = named.summary ? ` ${named.summary}` : "";
+  return `${gap.full} Here ${word.lemma} is in the ${named.et}, the ${named.en}.${what}`;
+}
+
 // ── Reading ──────────────────────────────────────────────────────────────────
 
 /**
- * Reading is asked in four ways, because "can you read Estonian" is four
- * different questions and only the first is about vocabulary: knowing a word,
- * knowing which case an ending marks, knowing which form a case calls for, and
- * understanding a whole recorded sentence.
+ * Reading is asked in three ways, and all three are shapes a real test sets.
+ *
+ * Knowing a word, choosing the form a sentence needs, and understanding a
+ * whole recorded sentence. The state examination's published reading tasks are
+ * `valikvastustega ülesanne`, `valikvastustega lünkülesanne` and `sobitamine`;
+ * the placement tests Estonian language schools set are almost entirely the
+ * middle one. None of them asks what a case is called.
+ *
+ * This module used to. Half of every reading section was metalanguage: which
+ * case is this ending, which form does this case call for, which case does
+ * this verb govern. Three faults came with it, and the third is the one that
+ * matters. The questions named the grammar rather than using it, which is not
+ * how anybody is taught or examined. They were worded as facts the dictionary
+ * could not support, asking "which case does the verb demand of its object"
+ * about 45 entries that are nouns and adjectives, and about verbs like
+ * `kõlbama` that take no object at all. And 18 of them offered a second
+ * genuinely correct case as a wrong answer, because a word's government string
+ * names every case it governs and the distractor pool drew from all of them:
+ * `segama` governs the partitive and the comitative, and a learner who knew
+ * the comitative was marked wrong for it. A placement test that marks somebody
+ * wrong for being right is the one thing this file's own comment says it may
+ * never do.
  */
 export function readingItems(words: readonly WordRow[], rng: () => number): ChoiceItem[] {
   const pool = usableWords(words);
@@ -189,91 +375,33 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   }
 
   for (const word of shuffled(pool, rng)) {
-    if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
-    const forms = knownForms(word);
-    for (const caseKey of shuffled(ASKABLE, rng)) {
-      const form = authoritativeForm(
-        { lemma: word.lemma, translation: word.translation, pos: word.pos, forms: [...word.forms] },
-        caseKey,
-      );
-      if (!form) continue;
-      if (form.value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const spec = caseByKey(caseKey)!;
-      const set = choices(form.value, forms, rng, differentText);
-      if (!set) continue;
-      out.push({
-        id: `r-case-${word.id}-${caseKey}`,
-        kind: "choice",
-        skill: "reading",
-        band: raise(bandOf(word.cefr)!, CASE_BAND[caseKey]),
-        lemma: word.lemma,
-        question: `Which one is "${word.lemma}" (${word.translation}) in the ${spec.et}, the case that answers ${spec.question}?`,
-        et: "",
-        heard: false,
-        options: set.options,
-        estonianOptions: true,
-        answer: set.answer,
-        source: form.provenance === "ekilex" ? "ekilex" : "derived",
-        because: `The ${spec.et}, the ${spec.en.toLowerCase()}, of ${word.lemma} is ${form.value}.`,
-      });
-      break;
-    }
-  }
-
-  const caseNames = CASES.map(caseOptionLabel);
-  for (const word of shuffled(pool, rng)) {
-    if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
-    const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
-    if (!gen) continue;
-    for (const caseKey of shuffled(ASKABLE, rng)) {
-      const spec = caseByKey(caseKey)!;
-      if (spec.principal) continue;
-      const value = deriveCase(gen, caseKey);
-      if (!value || value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const set = choices(caseOptionLabel(spec), caseNames, rng, differentText);
-      if (!set) continue;
-      out.push({
-        id: `r-ident-${word.id}-${caseKey}`,
-        kind: "choice",
-        skill: "reading",
-        band: raise(bandOf(word.cefr)!, CASE_BAND[caseKey]),
-        lemma: word.lemma,
-        question: `"${value}" is a form of ${word.lemma} (${word.translation}). Which case is it?`,
-        et: value,
-        heard: false,
-        options: set.options,
-        estonianOptions: false,
-        answer: set.answer,
-        source: "derived",
-        because: `The ending marks the ${spec.et}, the ${spec.en.toLowerCase()}, which answers ${spec.question}.`,
-      });
-      break;
-    }
-  }
-
-  for (const word of shuffled(pool, rng)) {
-    const government = parseGovernment(word.government);
-    if (!government) continue;
-    const govSpec = caseByKey(government.caseKey);
-    if (!govSpec) continue;
-    const set = choices(caseOptionLabel(govSpec), caseNames, rng, differentText);
+    const gap = gapFrom(word);
+    if (!gap) continue;
+    const set = choices(gap.answer, gap.siblings, rng, differentText);
     if (!set) continue;
     out.push({
-      id: `r-gov-${word.id}`,
+      id: `r-gap-${word.id}`,
       kind: "choice",
       skill: "reading",
-      band: raise(bandOf(word.cefr)!, "B1"),
+      /*
+        Never A1. Choosing between four endings of a word asks for more than
+        the word, so the easiest gap is still a step past the vocabulary
+        question above it, and the first band stays what it should be: can you
+        read this word at all.
+      */
+      band: raise(bandOf(word.cefr)!, "A2"),
       lemma: word.lemma,
-      question: `Which case does the verb "${word.lemma}" (${word.translation}) demand of its object?`,
-      et: "",
+      question: "Which one fits the gap?",
+      et: gap.text,
       heard: false,
       options: set.options,
-      estonianOptions: false,
+      estonianOptions: true,
       answer: set.answer,
-      source: "dictionary",
-      because: government.example
-        ? `${word.lemma} takes the ${government.caseEt}, the ${government.caseEn.toLowerCase()}: ${government.example}`
-        : `${word.lemma} takes the ${government.caseEt}, the ${government.caseEn.toLowerCase()}.`,
+      // The sentence is what is being read, and a lexicographer wrote it. Some
+      // of the wrong answers may be computed from the genitive stem; the right
+      // one is always the word that was standing in the sentence.
+      source: "usage",
+      because: explainGap(word, gap),
     });
   }
 
@@ -312,10 +440,25 @@ export function dictatable(sentence: string): boolean {
   return count >= 3 && count <= 9 && sentence.length <= 80;
 }
 
+/**
+ * Listening is a word, a sentence and a dictation.
+ *
+ * The A2 and B1 listening papers are short spoken excerpts answered from two
+ * to four verbal options, plus a task with information to write down. So: hear
+ * a word and pick its meaning, hear a sentence and pick the word that is in
+ * it, and write down what you heard.
+ *
+ * The middle one replaces a question that asked which case the learner had
+ * just heard, with the fourteen Estonian case names as options. Estonian
+ * listening is genuinely hard, and it is hard because of consonant length and
+ * word boundaries rather than because case names are difficult to recall.
+ * Asking a beginner to identify `alaltütlev` from audio measured how much
+ * grammatical vocabulary they had, in the section that is supposed to measure
+ * whether they can follow somebody speaking.
+ */
 export function listeningItems(words: readonly WordRow[], rng: () => number): (ChoiceItem | DictationItem)[] {
   const pool = usableWords(words);
   const glosses = pool.map((w) => w.translation);
-  const caseNames = CASES.map(caseOptionLabel);
   const out: (ChoiceItem | DictationItem)[] = [];
 
   for (const word of shuffled(pool, rng)) {
@@ -339,33 +482,27 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   }
 
   for (const word of shuffled(pool, rng)) {
-    if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
-    const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
-    if (!gen) continue;
-    for (const caseKey of shuffled(ASKABLE, rng)) {
-      const spec = caseByKey(caseKey)!;
-      if (spec.principal) continue;
-      const value = deriveCase(gen, caseKey);
-      if (!value || value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const set = choices(caseOptionLabel(spec), caseNames, rng, differentText);
-      if (!set) continue;
-      out.push({
-        id: `l-case-${word.id}-${caseKey}`,
-        kind: "choice",
-        skill: "listening",
-        band: raise(bandOf(word.cefr)!, CASE_BAND[caseKey]),
-        lemma: word.lemma,
-        question: `Listen to a form of ${word.lemma} (${word.translation}). Which case did you hear?`,
-        et: value,
-        heard: true,
-        options: set.options,
-        estonianOptions: false,
-        answer: set.answer,
-        source: "derived",
-        because: `You heard ${value}, the ${spec.et}, which an English grammar calls the ${spec.en.toLowerCase()}.`,
-      });
-      break;
-    }
+    const sentence = word.examples.find((e) => gappable(e.et));
+    if (!sentence) continue;
+    const set = choices(word.translation, glosses, rng, differentMeaning);
+    if (!set) continue;
+    out.push({
+      id: `l-use-${word.id}`,
+      kind: "choice",
+      skill: "listening",
+      // A word at sentence speed is harder than the same word on its own, which
+      // is most of what makes listening hard in the first place.
+      band: raise(bandOf(word.cefr)!, "A2"),
+      lemma: word.lemma,
+      question: "Listen to the whole sentence. Which of these is in it?",
+      et: sentence.et,
+      heard: true,
+      options: set.options,
+      estonianOptions: false,
+      answer: set.answer,
+      source: "usage",
+      because: `${sentence.et} That sentence is about ${word.lemma}, which is ${word.translation}.`,
+    });
   }
 
   for (const word of shuffled(pool, rng)) {
@@ -388,36 +525,50 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
 
 // ── Writing ──────────────────────────────────────────────────────────────────
 
+/**
+ * The same gap, typed rather than chosen.
+ *
+ * `lünkülesanne` is a task the real paper sets, and it is the only shape in
+ * which this app can ask somebody to *produce* a form and still mark it with
+ * certainty: the sentence decides which form it wants, and a lexicographer
+ * already wrote down which one that is.
+ *
+ * What it replaces was "write one Estonian sentence using kolmandik (third) in
+ * the seesütlev (milles? kus?)", marked on whether `kolmandikus` turned up
+ * anywhere in the answer. Three things were wrong with it. It asked for a case
+ * by name, so it measured whether somebody had memorised fourteen labels
+ * before it measured any Estonian. It asked for forms nobody would ever write,
+ * because every noun in the dictionary has a grammatical inessive and almost
+ * nothing is ever said to be inside a third. And its feedback restated the
+ * question: it answered "why this form" with "because the seesütlev answers
+ * milles?", which is the same sentence the learner had just read.
+ *
+ * A gap answers all three at once. The case is never named in the question, it
+ * is the sentence's job to imply it; the form asked for is one somebody
+ * actually wrote; and the explanation is the sentence with the word put back.
+ */
 export function writingItems(words: readonly WordRow[], rng: () => number): WriteItem[] {
   const out: WriteItem[] = [];
   for (const word of shuffled(usableWords(words), rng)) {
-    if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
-    for (const caseKey of shuffled(ASKABLE, rng)) {
-      const form = authoritativeForm(
-        { lemma: word.lemma, translation: word.translation, pos: word.pos, forms: [...word.forms] },
-        caseKey,
-      );
-      if (!form) continue;
-      if (form.value.toLowerCase() === word.lemma.toLowerCase()) continue;
-      const spec = caseByKey(caseKey)!;
-      out.push({
-        id: `w-${word.id}-${caseKey}`,
-        skill: "writing",
-        band: raise(bandOf(word.cefr)!, CASE_BAND[caseKey]),
-        lemma: word.lemma,
-        question: `Write one Estonian sentence using ${word.lemma} (${word.translation}) in the ${spec.et} (${spec.question}).`,
-        translation: word.translation,
-        caseKey,
-        caseEn: spec.en,
-        caseEt: spec.et,
-        caseQuestion: spec.question,
-        targetForm: form.value,
-        otherForms: knownForms(word).filter((f) => f !== form.value),
-        source: form.provenance === "ekilex" ? "ekilex" : "derived",
-        kind: "write",
-      });
-      break;
-    }
+    const gap = gapFrom(word);
+    if (!gap) continue;
+    out.push({
+      id: `w-${word.id}`,
+      skill: "writing",
+      band: raise(bandOf(word.cefr)!, "A2"),
+      lemma: word.lemma,
+      // The word itself is not interpolated in here: it is Estonian, and the
+      // screen prints it under the question with `lang="et"` on it, beside
+      // what it means. A question string is metalanguage and stays English.
+      question: "Put this word into the gap, in the form the sentence needs.",
+      translation: word.translation,
+      sentence: gap.text,
+      full: gap.full,
+      targetForm: gap.answer,
+      otherForms: gap.siblings,
+      source: "usage",
+      kind: "write",
+    });
   }
   return out;
 }
@@ -477,9 +628,20 @@ export const BLUEPRINT = {
  * it is also the kinder shape: a test that opens with C1 vocabulary tells a
  * beginner nothing except that they were right to be nervous.
  */
-export function assemble(candidates: readonly Item[], limit: { total: number; perBand: number }): Item[] {
+export function assemble(
+  candidates: readonly Item[],
+  limit: { total: number; perBand: number },
+  /*
+    Lemmas the paper has already asked about, shared across the four sections
+    rather than reset for each. Each section used to keep its own, so one word
+    could carry a reading question, a listening question and a written gap on
+    the same paper, and with the gap questions that means the same recorded
+    sentence three times over. Passing one set through makes a paper as wide as
+    the dictionary allows.
+  */
+  usedLemmas: Set<string> = new Set(),
+): Item[] {
   const perBand = new Map<Band, number>();
-  const usedLemmas = new Set<string>();
   const out: Item[] = [];
 
   for (const band of BANDS) {
@@ -510,10 +672,26 @@ export interface Paper {
  */
 export function buildPaper(words: readonly WordRow[], seed: number): Paper {
   const rng = mulberry32(seed);
-  const reading = assemble(interleave(readingItems(words, rng)), BLUEPRINT.reading);
-  const listening = assemble(interleave(listeningItems(words, rng)), BLUEPRINT.listening);
-  const writing = assemble(writingItems(words, rng), BLUEPRINT.writing);
-  const speaking = assemble(speakingItems(words, rng), BLUEPRINT.speaking);
+  const spent = new Set<string>();
+
+  /*
+    Each section takes words the sections before it did not, which is what
+    stops one word carrying a reading question, a listening question and a
+    written gap on the same paper. On a thin dictionary that can exhaust the
+    pool before the last section is reached, and an empty writing section is a
+    worse outcome than a word asked about twice, so a section that comes out
+    with nothing is built again without the restriction. `missing` still
+    reports a section the dictionary genuinely cannot fill.
+  */
+  const section = (candidates: Item[], limit: { total: number; perBand: number }) => {
+    const first = assemble(candidates, limit, spent);
+    return first.length > 0 ? first : assemble(candidates, limit);
+  };
+
+  const reading = section(interleave(readingItems(words, rng)), BLUEPRINT.reading);
+  const listening = section(interleave(listeningItems(words, rng)), BLUEPRINT.listening);
+  const writing = section(writingItems(words, rng), BLUEPRINT.writing);
+  const speaking = section(speakingItems(words, rng), BLUEPRINT.speaking);
 
   const missing: string[] = [];
   if (reading.length === 0) missing.push("reading");

@@ -1641,6 +1641,62 @@ check("no model decides anybody's level", () => {
   }
 });
 
+check("a placement question is answered in Estonian, not about it", () => {
+  /*
+    Nobody sitting a real Estonian placement test is asked to name a case.
+    The state examination's published reading tasks are `valikvastustega
+    ülesanne`, `valikvastustega lünkülesanne` and `sobitamine`; the placement
+    tests Estonian language schools set are almost entirely the middle one, a
+    sentence with a hole in it and three or four forms of one word to choose
+    between. Grammatical terminology is what a teacher uses to *talk* about the
+    answer, afterwards.
+
+    This module used to lead with it, and half of every reading section was
+    metalanguage. It cost more than tone. "Which case does the verb kõlbama
+    demand of its object?" was asked of 45 entries that are nouns and
+    adjectives rather than verbs, and of verbs that take no object at all; and
+    18 of those questions offered a second genuinely correct case as a wrong
+    answer, because a word's government string names every case it governs and
+    the distractors were drawn from all of them. `segama` governs the partitive
+    and the comitative, and a learner who knew the comitative was marked wrong
+    for it.
+
+    So: a case name may appear in the explanation after an answer, where it is
+    a cross-reference for somebody who is also taking a course, and it may not
+    appear in a question. Anchored on the question strings the builders write,
+    because that is the thing a learner has to answer.
+  */
+  const source = read("lib/assessment/items.ts");
+  const questions = [...source.matchAll(/^\s*question:\s*(.+?),?$/gm)].map((m) => m[1] ?? "");
+  assert.ok(questions.length >= 5, `expected the item questions, found ${questions.length}`);
+
+  const NAMES = [...CASES.map((c) => c.et), ...CASES.map((c) => c.en.toLowerCase())];
+  for (const question of questions) {
+    const lower = question.toLowerCase();
+    for (const name of NAMES) {
+      assert.equal(
+        lower.includes(name),
+        false,
+        `a placement question names the ${name}: ${question}`,
+      );
+    }
+    // `caseOptionLabel` builds "seesütlev · milles? kus?", so a question
+    // interpolating it names a case without spelling one out.
+    assert.equal(
+      /caseOptionLabel|spec\.(et|en|question)/.test(question),
+      false,
+      `a placement question is built out of a case name: ${question}`,
+    );
+  }
+
+  // And the options a learner picks between are never a list of case names.
+  assert.equal(
+    /const caseNames\b|CASES\.map\(caseOptionLabel\)/.test(source),
+    false,
+    "the placement check offers case names as multiple choice again",
+  );
+});
+
 check("a recording never moves a level", () => {
   /*
     ADR-018: there is no verified Estonian speech recogniser available here, so

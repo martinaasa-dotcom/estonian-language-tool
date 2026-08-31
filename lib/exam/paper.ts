@@ -1,4 +1,4 @@
-import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
+import { buildCloze, ESTONIAN_WORD, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { caseByKey } from "@/lib/estonian/cases";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -375,9 +375,6 @@ export function formsOf(word: PoolWord): string[] {
   return [...new Set([word.lemma, ...word.forms.map((f) => f.value)])].filter(Boolean);
 }
 
-/** Letters, plus the marks that live inside an Estonian word. Mirrors cloze.ts. */
-const WORD_RE = /[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu;
-
 export const BLANK = "____";
 
 /**
@@ -393,7 +390,7 @@ export function maskForms(sentence: string, forms: readonly string[]): string {
   if (wanted.size === 0) return sentence;
   let out = "";
   let cursor = 0;
-  for (const token of sentence.matchAll(WORD_RE)) {
+  for (const token of sentence.matchAll(ESTONIAN_WORD)) {
     const value = token[0];
     if (!wanted.has(value.toLowerCase())) continue;
     const start = token.index;
@@ -490,7 +487,7 @@ function buildGapChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
       standing in the sentence is excluded, or two options look right at once.
     */
     const inSentence = new Set(
-      [...cloze.text.matchAll(WORD_RE)].map((m) => m[0].toLowerCase()),
+      [...cloze.text.matchAll(ESTONIAN_WORD)].map((m) => m[0].toLowerCase()),
     );
     const answerLower = cloze.answer.toLowerCase();
     const siblings = forms.filter(

@@ -34,25 +34,25 @@ const SECTIONS: Record<Skill, { icon: typeof Compass; title: string; body: strin
     icon: Compass,
     title: "Reading",
     body:
-      "Words, endings and, where the dictionary has them, whole sentences a lexicographer recorded. " +
-      "Every option you are offered is real Estonian from the dictionary this app runs on. Nothing " +
-      "here was written for the test.",
+      "What a word means, and which form a sentence needs. The sentences are ones a lexicographer " +
+      "recorded, with a word taken out of them, which is the task the state examination calls a " +
+      "lünkülesanne. Nothing here was written for the test.",
   },
   listening: {
     icon: Headphones,
     title: "Listening",
     body:
-      "Estonian audio with nothing written down. If the audio will not play, say so and this section " +
-      "is left unmeasured rather than counted as a failure, because a silent speaker is not a fact " +
-      "about your listening.",
+      "Estonian audio with nothing written down: single words, then whole sentences at speed. If the " +
+      "audio will not play, say so and this section is left unmeasured rather than counted as a " +
+      "failure, because a silent speaker is not a fact about your listening.",
   },
   writing: {
     icon: PenLine,
     title: "Writing",
     body:
-      "You write a whole sentence putting a word in a named case. It is marked on one thing: whether " +
-      "the right form is in it. That is a string comparison against the dictionary, so the verdict is " +
-      "certain and no AI sees your sentence.",
+      "A sentence with a word missing, and you type the form it needs. It is marked against the word " +
+      "a lexicographer actually wrote there, by string comparison, so the verdict is certain and no " +
+      "AI reads your answer.",
   },
   speaking: {
     icon: Mic,

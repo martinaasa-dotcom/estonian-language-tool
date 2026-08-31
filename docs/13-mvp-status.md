@@ -979,6 +979,14 @@ in the hint, the reference called `lihtminevik` "the imperfect", which is a
 Latin category this language does not have, and the placement check offered
 somebody in their first week "Inessive, Elative, Allative" as multiple choice.
 
+That last one turned out to have a second fault underneath the first, found by
+somebody sitting the check rather than reading the code. Translating the options
+into Estonian made them the names a class uses and left them names: the question
+was still "which case is this", which is not a question any Estonian placement
+test asks. It is gaps now, in sentences a lexicographer recorded, and the
+Estonian names appear where they belong, in the explanation after an answer.
+See ADR-020 amendment 1.
+
 None of that is how Estonian is taught anywhere. A course, a school textbook
 and the state examination name a case by its Estonian name and, more often, by
 the question it answers, and they name the verb by four axes kept apart, of

@@ -17,7 +17,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 42, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 42 });
+const { check, absent, done } = suite("Level check", { floor: 44 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -68,7 +68,20 @@ const provenance = [];
 let asked = 0;
 let sawSpeaking = false;
 let sawWriting = false;
+let sawWritingGap = false;
 let saidNotScored = false;
+let namedACase = false;
+
+/*
+  The Estonian case names, which may appear in an explanation after an answer
+  and never in a question. `docs/16-exam.md` has the published task types the
+  state examination sets, and naming a case is not one of them.
+*/
+const CASE_NAMES = [
+  "nimetav", "omastav", "osastav", "sisseütlev", "seesütlev", "seestütlev",
+  "alaleütlev", "alalütlev", "alaltütlev", "saav", "rajav", "olev",
+  "ilmaütlev", "kaasaütlev",
+];
 
 for (let step = 0; step < 80; step++) {
   if ((await page.getByText("Skill by skill").count()) > 0) break;
@@ -82,11 +95,13 @@ for (let step = 0; step < 80; step++) {
     continue;
   }
 
-  // A written answer: the form is checked against the dictionary, no AI involved.
-  const sentence = page.getByLabel("Your sentence");
-  if (await sentence.count()) {
+  // A written answer: a gap in a recorded sentence, typed. The form is checked
+  // against the dictionary by string comparison, so no AI is involved.
+  const missing = page.getByLabel("The missing word");
+  if (await missing.count()) {
     sawWriting = true;
-    await sentence.fill("Ma olen kodus ja loen.");
+    sawWritingGap ||= (await page.locator("main .sr-only", { hasText: "blank" }).count()) > 0;
+    await missing.fill("toas");
     await page.getByRole("button", { name: /^Check$/ }).click();
     await page.waitForTimeout(150);
     const next = page.getByRole("button", { name: /Next question/ });
@@ -126,6 +141,20 @@ for (let step = 0; step < 80; step++) {
   // Multiple choice. Every question carries where its Estonian came from.
   const choice = page.locator("main button:not([disabled])").filter({ hasText: /^[1-4]\S/ });
   if (await choice.count()) {
+    /*
+      A placement question may not be a grammar quiz. Nobody sitting a real
+      Estonian test is asked to name a case, and this check used to spend half
+      of its reading section doing exactly that, in a section that is supposed
+      to measure reading. Asserted from the screen rather than from the source,
+      because the source check cannot see a case name arriving through an
+      interpolated option.
+    */
+    const asking = (await page.locator("main").innerText()).toLowerCase();
+    for (const name of CASE_NAMES) {
+      if (asking.includes(`which case`) || new RegExp(`in the ${name}\\b`).test(asking)) {
+        namedACase = true;
+      }
+    }
     await choice.first().click();
     await page.waitForTimeout(150);
     const note = await page.getByText(/No Estonian on this screen was written/i).count();
@@ -146,6 +175,8 @@ check("every question says where its Estonian came from",
 check("the paper reaches the writing section", sawWriting);
 check("the paper reaches the speaking section", sawSpeaking);
 check("speaking says out loud that it is not scored", saidNotScored);
+check("no question asks a learner to name a case", !namedACase);
+check("the writing section is a gap in a real sentence, not an essay prompt", sawWritingGap);
 
 // ─── The result ───────────────────────────────────────────────────────────────
 

@@ -1,5 +1,3 @@
-import type { CaseKey } from "@/lib/estonian/types";
-
 /**
  * What a placement check is made of.
  *
@@ -75,14 +73,23 @@ export interface DictationItem extends ItemBase {
   et: string;
 }
 
-/** Write a sentence putting a word in a named case. Marked by string match. */
+/**
+ * Fill the gap in a recorded sentence. Marked by string match.
+ *
+ * The productive half of the check, and the only shape in which this app can
+ * ask for a form and still mark it with certainty: the sentence decides which
+ * form it wants and a lexicographer already wrote down which one that is. It
+ * is the state examination's own `lünkülesanne`, and it names no case, because
+ * a learner who can put the right ending on a word in a real sentence has
+ * shown the thing a case name is only a label for.
+ */
 export interface WriteItem extends ItemBase {
   kind: "write";
   translation: string;
-  caseKey: CaseKey;
-  caseEn: string;
-  caseEt: string;
-  caseQuestion: string;
+  /** The sentence with the word taken out. */
+  sentence: string;
+  /** The sentence whole, which is the explanation afterwards. */
+  full: string;
   /** The form the learner has to produce. Authoritative, never generated. */
   targetForm: string;
   /** Every other form of the word, so a near miss can be named as one. */

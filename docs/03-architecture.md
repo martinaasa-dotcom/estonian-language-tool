@@ -414,10 +414,26 @@ reports a level it refuses to certify.**
 first units. That is the one question a beginner is least able to answer, and every downstream
 number, including the timeline this pass added, inherits the guess. *Decision:* a check that
 measures four skills, at `/assess` and inside first run, built out of `Lexeme`, `Form` and the
-recorded `usages` the dictionary already holds. Reading is asked as meanings, case forms, case
-identification, verb government and, where a translated sentence exists, comprehension; listening
-is the same material with nothing written down, plus dictation; writing is a sentence that has to
-contain a named case of a named word; speaking is shadowing. Questions climb the bands in order and
+recorded `usages` the dictionary already holds. Reading is asked as meanings, as a gap in a
+recorded sentence with four forms of one word to choose between, and, where a translated sentence
+exists, comprehension; listening is a word and then a whole sentence with nothing written down,
+plus dictation; writing is the same gap, typed; speaking is shadowing.
+
+**Amendment 1 (2026-08-31): no question names a case.** The first version asked which case an
+ending marked, which form a case called for, and which case a verb governed, and it was wrong on
+three counts. Nobody is examined that way: the state examination's published reading tasks are
+`valikvastustega ülesanne`, `valikvastustega lünkülesanne` and `sobitamine`, and the placement
+tests Estonian language schools set are almost entirely the middle one, a sentence with a hole in
+it and three or four forms of one word under it. The government question was worded as a fact the
+dictionary could not support, asking what case a verb "demands of its object" about 45 entries
+that are nouns or adjectives and about verbs like `kõlbama` that take no object at all. And 18 of
+those questions offered a second genuinely correct case as a wrong answer, because a word's
+government string names every case it governs while the distractors were drawn from all of them:
+`segama` governs the partitive and the comitative, and a learner who knew the comitative was
+marked wrong for it. So the questions are gaps now, in sentences a lexicographer recorded, which
+`lib/estonian/cloze.ts` already hid words out of for the mock exam. A case is named in the
+explanation *after* an answer, where it is a cross-reference for somebody also taking a course,
+and `scripts/test-invariants.ts` fails on one in a question. Questions climb the bands in order and
 a skill stops as soon as a whole band comes in under half, so the paper is about ten minutes rather
 than forty. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
 form is retrieved, stored or derived from the genitive stem by the app's own derivation, and every
