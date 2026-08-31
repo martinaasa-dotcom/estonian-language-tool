@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
   /**
    * Every form the app itself vouches for: the stored principal parts and any
-   * Ekilex paradigm, plus the cases derived from the genitive stem.
+   * form retrieved from Ekilex, plus the cases derived from the genitive stem.
    *
    * The derived ones matter. They are not rows in `Form` — that is ADR-009,
    * derived forms are never persisted — so an allowlist built from the table

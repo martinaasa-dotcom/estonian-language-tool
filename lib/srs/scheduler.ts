@@ -18,6 +18,33 @@ export const RATINGS = [
 
 export type RatingValue = 1 | 2 | 3 | 4;
 
+/**
+ * The two answers a person actually has about their own recall, and the one
+ * table every screen that has to ask reads.
+ *
+ * `RATINGS` is unchanged and still the scheduler's own vocabulary: `submit`
+ * takes any of the four, `checkAnswer` still returns 2 for a near miss, and
+ * `Review` carries exactly what it always did. What changed is who gets asked.
+ * Four buttons sat under every card in the app, and on most of them they were
+ * putting a question the app had already answered for itself: a typed answer is
+ * compared against a form the dictionary vouches for, and a multiple choice is
+ * right or it is not. Where nothing can be compared, the honest choice is two
+ * options rather than four, because the difference between Hard and Good is the
+ * difference between a six and a ten minute interval, which is a question about
+ * a scheduler nobody can see, put to somebody who is trying to learn Estonian.
+ *
+ * Two screens reach this: a flip card in review, and speaking, where ADR-018
+ * says the learner is the only judge there is. One table rather than a copy
+ * each, so the two cannot drift into asking differently worded questions about
+ * the same thing.
+ *
+ * Keyed 1 and 2 in the order they are drawn, so the digit and the button agree.
+ */
+export const SELF_GRADES = [
+  { rating: 1 as RatingValue, key: "1", label: "Not yet" },
+  { rating: 3 as RatingValue, key: "2", label: "Got it" },
+] as const;
+
 /** The FSRS scheduling fields we persist on a Card row. */
 export interface SchedulingState {
   due: Date;

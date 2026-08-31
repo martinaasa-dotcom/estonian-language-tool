@@ -227,7 +227,7 @@ const BROCHURE: Tell[] = [
   },
   {
     name: "transformative",
-    find: /\btransformative\b|\bholistic\b|\bsyner(gy|gies|gistic)\b|\bparadigm shift\b/i,
+    find: /\btransformative\b|\bholistic\b|\bsyner(gy|gies|gistic)\b/i,
     instead: "Plain words. There is no holistic way to learn the partitive.",
   },
   {
@@ -309,6 +309,25 @@ const BROCHURE: Tell[] = [
 ];
 
 /**
+ * The linguist's word for a thing a class already has a word for.
+ *
+ * This one is not brochure and it is not an opener. It is the shape of tell
+ * that comes from writing *about* a subject rather than teaching it, and it
+ * fails the same way: a learner who meets a word they have never heard in
+ * class stops reading the sentence and starts wondering whether they missed a
+ * lesson. Estonian is taught here in the words a teacher uses out loud, which
+ * is the same argument `lib/estonian/terms.ts` makes about the case names.
+ */
+const JARGON: Tell[] = [
+  {
+    name: "paradigm",
+    find: /\bparadigm(s|atic|atically)?\b/i,
+    instead:
+      "The forms of a word, the case table, the whole set of forms. A learner says 'all the forms'.",
+  },
+];
+
+/**
  * Everything, in the order a reader would notice it.
  *
  * The dash is not in here. It is checked separately and against every line of
@@ -316,7 +335,7 @@ const BROCHURE: Tell[] = [
  * it needs no `instead`: a comma, a full stop or a pair of brackets, decided
  * per sentence.
  */
-export const TELLS: readonly Tell[] = [...OPENERS, ...SHAPES, ...BROCHURE];
+export const TELLS: readonly Tell[] = [...OPENERS, ...SHAPES, ...BROCHURE, ...JARGON];
 
 /**
  * The rewritable subset, in the shape `humanize.ts` applies them in.
@@ -364,6 +383,7 @@ export const VOICE_RULES: readonly string[] = [
   `Never open with "It's important to note that", "At the end of the day", "In essence", "Great question", "Moreover", "Furthermore" or anything else that carries no information. Start with the answer.`,
   `Never inflate a small claim by denying it first. "Not just a rule, but a pattern" is "a rule, and a pattern". Say what a thing is.`,
   `Never reach for a brochure word: delve, leverage, utilise, seamless, cutting-edge, groundbreaking, holistic, bespoke, meticulously, a plethora of, embark on, unleash, empower, elevate. Use the plain word a teacher would use out loud.`,
+  `Never say "paradigm". A learner has met "the forms of a word", "the case endings" and "the table" in class and has not met that one, so use theirs. The same goes for any other word that belongs to writing about a language rather than to teaching it.`,
   `No emoji. No exclamation-mark praise. "Six days in a row" is warmer than "amazing", because it is about the learner and not about you.`,
   `Be warm, and be short. Warmth is attention: notice what they got right, name the specific thing, and stop. It is not enthusiasm, and it is never padding. Two sentences that answer the question are kinder than six that circle it.`,
 ];

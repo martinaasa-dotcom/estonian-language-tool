@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Flame, Headphones, Minus,
-  Map as MapIcon, Sparkles, Volume2,
+  ArrowRight, BookOpen, Check, CircleHelp, Minus,
+  Map as MapIcon, Sparkles,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
@@ -11,13 +11,14 @@ import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
-import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo";
+import { CaseExplorer, TutorPeek, type DemoWord } from "./LandingDemo";
 import { toneInk } from "@/components/ui";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const metadata: Metadata = {
   title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
-    "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real paradigms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
+    "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real forms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
 };
 
 /** The landing page is public and read-only, so it can be cached hard. */
@@ -40,30 +41,34 @@ export default async function WelcomePage() {
       <Nav />
 
       {/*
-        Ten sections became six.
+        Ten sections became eight, and eight became five.
 
         The page was answering every question a visitor could have, in the order
-        somebody thought of them, and a first-time reader had to scroll past a
-        four-tile source credit, a four-figure stat panel and an eight-row
-        comparison grid to reach the part that shows what the app actually does.
-        Nothing here was wrong; there was simply too much of it before the
-        decision.
+        somebody thought of them. The first cut took out a four-tile source
+        credit and a four-figure stat panel, and left a page that still had to be
+        scrolled four times before it stopped introducing itself. Nothing in it
+        was wrong; there was simply more of it than anybody deciding whether to
+        try an app will read.
 
-        So: the sources and the figures are one line in the hero, where they are
-        evidence rather than a section. The comparison is behind its own summary,
-        because it answers a question only a comparison shopper is asking and it
-        is the longest block on the page. Everything cut from here is still said
-        somewhere it is read: the credits in the footer and on /terms, the
-        comparison one press away, the feature list on /guide in full.
+        Two sections went, and neither lost its argument. "You didn't fail
+        Estonian. Your tools did." was three cards making three complaints, and
+        each complaint was answered somewhere further down by the thing that
+        answers it: the case demo, the scheduler card, the line about a model
+        never supplying a form. So each one now sits next to its answer instead
+        of a screen and a half above it. "How a day goes" was three steps that
+        the feature grid and the closing sentence already described, in the same
+        words, twice.
+
+        What is left is the five beats somebody actually needs: what this is,
+        why the cases are the hard part, what you get, what the catch is, and
+        where to start. The comparison is one of the questions now rather than a
+        section of its own, which is where the person asking it looks.
       */}
       <main className="relative">
-        <Hero words={words} stats={stats} />
-        <Problem />
+        <Hero stats={stats} />
         <Cases words={words} />
         <Features />
-        <HowItWorks />
-        <Comparison />
-        <Faq />
+        <Questions />
         <FinalCta />
       </main>
 
@@ -73,25 +78,17 @@ export default async function WelcomePage() {
 }
 
 /**
- * Fades a section up as it scrolls into view — CSS scroll timelines, so it costs
+ * Fades a block in as it scrolls into view. CSS scroll timelines, so it costs
  * no JavaScript and degrades to "already visible" where they aren't supported.
- */
-/**
- * Fades a block in as it scrolls into view.
  *
- * `as` exists because this wrapper broke a list. The three steps below are an
- * `<ol>` of `<li>`s with a Reveal around each one, and a `div` between an `ol`
- * and its `li` means the list is not a list: a screen reader announces an empty
- * list and three stray items, which is worse than no list markup at all. The
- * wrapper renders the `li` itself now, so the structure survives the animation.
+ * It renders a `div` and nothing else, which is a constraint on where it may go
+ * rather than a detail. It once wrapped the `<li>`s of an ordered list, and a
+ * `div` between an `ol` and its `li` means the list is not a list: a screen
+ * reader announces an empty list and three stray items. If a list ever needs
+ * this again, the wrapper has to render the list item itself.
  */
-function Reveal({ as: Tag = "div", className = "", style, children }: {
-  as?: "div" | "li";
-  className?: string;
-  style?: React.CSSProperties;
-  children: React.ReactNode;
-}) {
-  return <Tag className={`reveal ${className}`.trim()} style={style}>{children}</Tag>;
+function Reveal({ children }: { children: React.ReactNode }) {
+  return <div className="reveal">{children}</div>;
 }
 
 /* ─────────────────────────────────────────────────────────── nav ── */
@@ -114,7 +111,6 @@ function Nav() {
         <div className="hidden items-center gap-7 text-sm font-medium md:flex" style={{ color: "var(--ink-2)" }}>
           <a href="#cases" className="transition-opacity hover:opacity-60">The cases</a>
           <a href="#features" className="transition-opacity hover:opacity-60">What you get</a>
-          <a href="#how" className="transition-opacity hover:opacity-60">How it works</a>
           <a href="#faq" className="transition-opacity hover:opacity-60">Questions</a>
         </div>
         <div className="flex items-center gap-2">
@@ -136,10 +132,37 @@ function Nav() {
 
 /* ────────────────────────────────────────────────────────── hero ── */
 
-function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; forms: number } }) {
+/**
+ * The hero, with nothing beside it.
+ *
+ * It carried a live flashcard: a real card, flipped and graded, with the real
+ * scheduling intervals under it, so a visitor had done a review before signing
+ * up for anything. It was the best thing on the page and it is gone anyway.
+ * It cost 413px of a phone, the page was still six screens after everything
+ * else had been cut, and it is the second demonstration rather than the first.
+ * The case explorer one section down is what this app is actually for. A page
+ * that shows two things shows neither, and of the two, spaced repetition is
+ * the part a stranger already understands.
+ *
+ * THE FOUR LETTERS WENT WITH IT, and that is the card's doing rather than a
+ * verdict on them. They were tucked over the card's four sides, one to a side,
+ * and the argument for that arrangement is the argument against keeping them:
+ * a letter with clear air around it reads as a square that missed rather than
+ * as one that was put there. With no card there is no edge, and the two other
+ * cards big enough to hang them on are a table of Estonian forms and the
+ * closing panel, neither of which is the hero. What carries this language's
+ * character on the page now is the explorer, which is full of the real thing.
+ * Their four checks in `scripts/test-design.mjs` went too, and the suite's
+ * floor came down by exactly four.
+ *
+ * So one centred column, which is the shape a hero takes when it has no second
+ * half: the eye goes down the middle to the button rather than across to a card
+ * and back.
+ */
+function Hero({ stats }: { stats: { words: number; forms: number } }) {
   /*
     The four figures that were a panel of their own, as one line of evidence
-    under the buttons. A stat panel three screens down is a claim nobody has a
+    under the button. A stat panel three screens down is a claim nobody has a
     reason to read; the same numbers beside the call to action are the reason to
     believe the sentence above them. The unit count and the level range are read
     from the course itself rather than written by hand, which is what kept this
@@ -160,186 +183,195 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
     "Free, and it works offline",
   ];
   return (
-    <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-8 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:px-8 md:pb-16 md:pt-20">
-      <div>
-        <p
-          className="fade-up label-xs inline-flex items-center gap-2 rounded-full px-3.5 py-2"
-          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", animationDelay: "40ms" }}
-        >
-          <Sparkles size={13} aria-hidden /> For everyone who bounced off Estonian once already
-        </p>
+    <section className="mx-auto flex max-w-3xl flex-col items-center px-5 pb-6 pt-14 text-center md:px-8 md:pb-10 md:pt-20">
+      {/*
+        No badge over the headline. It read "for everyone who bounced off
+        Estonian once already", which is the same sentiment as the heading one
+        section down, in weaker words: "You didn't fail Estonian. Your tools
+        did." They used to be two screens apart and the echo was a theme; on a
+        page this length they are within one screen of each other, and the echo
+        is a page saying its best line twice, second-best first.
+      */}
+      <h1
+        className="fade-up text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
+        style={{ color: "var(--ink)", animationDelay: "90ms" }}
+      >
+        Estonian that
+        <br />
+        finally <span className="grad-text grad-sweep">sticks</span>.
+      </h1>
 
-        <h1
-          className="est fade-up mt-6 text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
-          style={{ color: "var(--ink)", animationDelay: "90ms" }}
-        >
-          Estonian that
-          <br />
-          finally <span className="grad-text grad-sweep">sticks</span>.
-        </h1>
+      <p
+        className="fade-up mt-5 max-w-[52ch] text-md leading-relaxed"
+        style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
+      >
+        Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
+        day, real forms from Ekilex, native audio, and a tutor who tells you the rule instead of
+        marking you wrong.
+      </p>
 
-        <p
-          className="fade-up mt-6 max-w-[54ch] text-md leading-relaxed md:text-md"
-          style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
-        >
-          Fourteen cases. A stem that changes shape when you look at it. Kodukeel turns all of it
-          into fifteen quiet minutes a day, real paradigms, native audio, and a tutor who tells you
-          the rule instead of just marking you wrong.
-        </p>
+      {/*
+        One loud action, and nothing beside it.
 
-        {/*
-          One loud action, and a quiet way out of it.
-
-          These were two heavy pills of different widths, which on a 360px
-          screen wrap into a lopsided stack: a gradient button, then a bordered
-          white one under it ending somewhere else entirely, both shouting at
-          the same volume about two things that are not equally important. The
-          rule the button primitive is written under is one loud action per
-          screen, and a second pill with its own shadow is a second one. So the
-          call to action fills the line on a phone and sits at its natural width
-          above that, and "show me a word" is what it always was: a link.
-        */}
-        <div className="fade-up mt-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-5" style={{ animationDelay: "210ms" }}>
-          <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
-            Start learning, free <ArrowRight size={17} aria-hidden />
-          </ButtonLink>
-          <a
-            href="#cases"
-            className="inline-flex items-center gap-2 px-1 py-2 text-base font-semibold underline underline-offset-4 transition-opacity hover:opacity-70"
-            style={{ color: "var(--ink-2)" }}
-          >
-            <BookOpen size={16} aria-hidden /> Show me a word
-          </a>
-        </div>
-
-        <ul
-          className="fade-up mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs"
-          style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
-        >
-          {claims.map((t) => (
-            <li key={t} className="flex items-center gap-1.5">
-              <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
-            </li>
-          ))}
-        </ul>
+        It was two heavy pills of different widths, which on a 360px screen wrap
+        into a lopsided stack: a gradient button, then a bordered white one
+        under it ending somewhere else entirely, both shouting at the same
+        volume about two things that are not equally important. The rule the
+        button primitive is written under is one loud action per screen. So the
+        second became a link, "Show me a word", and now it is gone too: it
+        jumped to the case explorer, which on a page this length is one flick
+        down and the next thing a reader meets anyway, and the nav carries the
+        same jump under "The cases" for anybody who wants to aim.
+      */}
+      <div className="fade-up mt-7 w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
+        <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
+          Start learning, free <ArrowRight size={17} aria-hidden />
+        </ButtonLink>
       </div>
 
-      <div className="fade-up relative" style={{ animationDelay: "320ms" }}>
-        {/*
-          Floating diacritics: the six characters this whole app is built
-          around. They are tucked over the card's corners on purpose, by
-          between sixteen and forty pixels depending on the width, and they
-          are `pointer-events-none` because of it: they are `aria-hidden`
-          ornament, and an ornament that eats a tap on the card underneath it
-          is a decoration doing something no decoration should. At 768 the
-          bottom one lands on a tick rather than on a blank corner, which is
-          how this turned up.
-        */}
-        <span
-          aria-hidden
-          className="est float pointer-events-none absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
-          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
-        >
-          õ
-        </span>
-        <span
-          aria-hidden
-          className="est float pointer-events-none absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
-          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
-        >
-          ä
-        </span>
-        <span
-          aria-hidden
-          className="est float pointer-events-none absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
-          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
-        >
-          ü
-        </span>
-
-        <DemoCard words={words} />
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────── problem ── */
-
-const PROBLEMS = [
-  {
-    tone: "peach",
-    title: "Streak apps don’t teach cases",
-    body: "You can hold a 400-day streak and still not know whether it is majja, majas or majast. Kodukeel drills the case itself, and tracks which one keeps failing.",
-  },
-  {
-    tone: "butter",
-    title: "Textbooks don’t schedule",
-    body: "Week six pushes out week two. Nothing brings a word back on the day you were about to forget it, which is the only day repetition is worth doing.",
-  },
-  {
-    tone: "sky",
-    title: "Translation apps invent Estonian",
-    body: "Ask a chatbot for an inflected form and you will get a confident, wrong one. Every form here comes from a dictionary, never from a model.",
-  },
-] as const;
-
-function Problem() {
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-      <Reveal>
-        <h2 className="est mx-auto max-w-[20ch] text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-          You didn’t fail Estonian. Your tools did.
-        </h2>
-      </Reveal>
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
-        {PROBLEMS.map((p, i) => (
-          <Reveal key={p.title}>
-            <div
-              className="lift h-full rounded-[var(--r-xl)] p-6"
-              style={{ background: `var(--${p.tone}-soft)` }}
-            >
-              <span
-                className="est flex h-11 w-11 items-center justify-center rounded-full text-md font-bold"
-                style={{ background: "var(--surface)", color: toneInk(p.tone) }}
-              >
-                {i + 1}
-              </span>
-              <h3 className="est mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
-                {p.title}
-              </h3>
-              <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                {p.body}
-              </p>
-            </div>
-          </Reveal>
+      <ul
+        className="fade-up mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
+        style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
+      >
+        {claims.map((t) => (
+          <li key={t} className="flex items-center gap-1.5">
+            <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }
 
 /* ───────────────────────────────────────────────────────── cases ── */
 
+/**
+ * The problem and the demonstration of it, in one section.
+ *
+ * The complaint used to be a section of its own three cards above this one:
+ * streak apps do not teach cases, textbooks do not schedule, chatbots invent
+ * Estonian. All three are still made, and each is now made where it is
+ * answered. The first is this heading, standing over the thing that answers it.
+ * The second is on the scheduling card below, which was already saying half of
+ * it. The third is on Anu's card and in the line of evidence under the hero,
+ * where it is a promise about the whole app rather than one grievance in three.
+ */
 function Cases({ words }: { words: DemoWord[] }) {
   const derivable = words.filter((w) => w.cases.some((c) => !c.principal && c.singular));
   if (derivable.length === 0) return null;
 
   return (
-    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
       <Reveal>
-        <div className="mx-auto max-w-[46ch] text-center">
+        <div className="mx-auto max-w-[48ch] text-center">
           <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn one form, get eleven</p>
-          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            The fourteen cases, finally on your side
+          <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+            You didn&rsquo;t fail Estonian. Your tools did.
           </h2>
           <p className="mt-4 text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            Three principal parts are genuinely unpredictable, so you memorise those. The other
-            eleven are regular endings on the genitive stem. Press a word and watch them fall out.
+            You can hold a 400-day streak and still not know whether it is{" "}
+            <span lang="et" className="font-semibold">majja</span>,{" "}
+            <span lang="et" className="font-semibold">majas</span> or{" "}
+            <span lang="et" className="font-semibold">majast</span>. Three principal parts are
+            unpredictable, so you memorise those; the other eleven are regular endings on the
+            genitive stem. Press a word.
           </p>
         </div>
       </Reveal>
       <Reveal>
-        <div className="mt-9">
+        <div className="relative mt-8">
+          {/*
+            THE FOUR VOWELS A UK OR US KEYBOARD CANNOT WRITE, over the four
+            sides of the card that is full of them.
+
+            They are the reason `lib/ux/letterBar.ts` exists and the first
+            thing anybody meets about this language, and they used to hang off
+            the hero's flashcard. That card went when this page was cut to five
+            screens, and the rule they are placed under is why they could not
+            simply stay where they were: THEY ALL TOUCH THE CARD, one to a
+            side. A letter with clear air around it reads as one that missed
+            rather than as one that was put there.
+
+            So they moved rather than went, and this is the card they belong
+            on: the only object left on the page big enough to carry them, and
+            the one whose contents are the letters themselves. The hero above
+            is a centred column with no box in it, and the closing panel is a
+            send-off rather than an introduction.
+
+            WHAT THEY MAY NOT TOUCH IS A CONTROL. On the old card that was one
+            full-width pill in the footer; here it is the two word chips near
+            the top left, which is why the letter on the top edge sits well
+            left of them and is checked against every button inside the card
+            rather than against one named pill.
+
+            THE CARD CHANGES SHAPE, which the flashcard did not: the explorer
+            stacks into one column below `md`, so it is 707px tall at 640 and
+            about 440 above it. The two side letters are therefore placed from
+            the top and the bottom rather than at a fraction of a height that
+            is not stable, and the gutter they hang in goes 20px, 32px, 96px
+            across the three widths, so the hang grows with it.
+
+            EVERY OFFSET IS DERIVED FROM THE CARD'S OWN PADDING rather than
+            from where the content happens to sit. The nearest run of text is
+            21px from the left edge, 17px from the top, 33px from the right and
+            22px from the bottom, measured at all three widths and for both
+            words the explorer can show. So a letter that reaches in by less
+            than its side's margin, wander included, cannot touch a glyph
+            whatever the reader presses: that is a property of the placement
+            rather than a lucky gap, which matters because pressing a chip
+            changes how many rows the card has. Each of these reaches in by 12
+            to 20px and drifts at most 4px further.
+
+            The hang is bounded by the other end: the gutter is 20px at 640,
+            and a rotated square is wider than its side, so 14deg on 40px puts
+            its corners about 4px past the box. That is the difference between
+            hanging inside the page's padding and being clipped against it, and
+            it is why the side letters are smaller below `md` than above it.
+
+            They are `pointer-events-none` and `aria-hidden`: an ornament that
+            eats a tap on the card underneath it is a decoration doing
+            something no decoration should, and the card underneath is the one
+            interactive thing on this page.
+
+            `scripts/test-design.mjs` measures all of it at 640, 768 and 1280,
+            stepping each letter through twelve frames of its own wander rather
+            than reading it where it happens to rest: every letter over an
+            edge, none on a control, none past the page, and the slant still
+            there with the animation stopped.
+
+            One hue each, and the fourth takes butter because it is the hue
+            left: blush, mint and sky are spoken for and peach means "missed"
+            on every other screen in the app.
+          */}
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -top-7 left-72 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-top-11 md:left-80 md:h-14 md:w-14 md:text-2xl"
+            style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg", "--drift-x": "2px", "--drift-y": "4px", "--drift-turn": "2deg", "--drift-time": "9s" } as React.CSSProperties}
+          >
+            õ
+          </span>
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -right-3 top-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:top-28 md:h-12 md:w-12 md:text-xl"
+            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "12deg", "--drift-x": "-4px", "--drift-y": "-3px", "--drift-turn": "1.6deg", "--drift-time": "7.5s" } as React.CSSProperties}
+          >
+            ä
+          </span>
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -left-3 bottom-24 z-20 hidden h-7 w-7 sm:flex items-center justify-center rounded-[var(--r-sm)] text-sm font-bold md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-lg"
+            style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "2.4s", "--float-tilt": "-9deg", "--drift-x": "4px", "--drift-y": "-3px", "--drift-turn": "2.2deg", "--drift-time": "11s" } as React.CSSProperties}
+          >
+            ü
+          </span>
+          <span
+            aria-hidden
+            className="drift pointer-events-none absolute -bottom-5 right-14 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-bottom-6 md:right-20 md:h-9 md:w-9 md:text-lg"
+            style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3.6s", "--float-tilt": "15deg", "--drift-x": "-3px", "--drift-y": "-4px", "--drift-turn": "1.8deg", "--drift-time": "10s" } as React.CSSProperties}
+          >
+            ö
+          </span>
+
           <CaseExplorer words={derivable} />
         </div>
       </Reveal>
@@ -351,181 +383,113 @@ function Cases({ words }: { words: DemoWord[] }) {
 
 function Features() {
   /*
-    Eight cards became five.
+    Eight cards became five, five became four, four became three.
 
-    Three of them were saying the same thing as the hero, the FAQ or each other:
-    a portability card beside an offline tick, a progress card beside an XP
-    card, a "four ways to practise" card that had been wrong since the third
-    practice mode shipped. What is left is the five things somebody could not
-    guess from the sentence at the top of the page, and the two that were merged
-    are stronger together than either was alone.
+    Three of the original eight said what the hero, the FAQ or another card was
+    already saying: a portability card beside an offline tick, a progress card
+    beside an XP card, and a "four ways to practise" card that had been wrong
+    since the third practice mode shipped. Then the speech card, which is not a
+    thing of its own: it is what the dictionary entry does when you press a
+    form, so it is a clause on the dictionary card.
+
+    The last to go is the seam between the course and the scheduler, and they
+    were never two things. A unit is a sitting's worth of words, adding one
+    makes cards, and the scheduler is what brings those cards back: that is one
+    loop described twice, once as "here is a syllabus" and once as "here is a
+    scheduler", with the sentence joining them left for the reader to write.
+
+    What the bodies carry now is the section that used to sit under this one.
+    "How a day goes" was three steps, and all three were already here in other
+    words: picking a unit and looking a word up is the first card, adding it in
+    a press is the second, and being told you are done for the day is the second
+    card's whole point. A step somebody reads twice is a step they read neither
+    time.
+
+    Three is also what makes the grid a row again, with no hole to explain.
+    `md:col-span-2` on Anu's card had done nothing since the day it was written,
+    because the grid item is the `Reveal` wrapper and the span was on the card
+    inside it: the layout everybody had been looking at was three cards, then
+    two, then a gap where the sixth would go.
   */
   return (
-    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
-          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Five things, each doing one job well
+          <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+            Three things, each doing one job well
           </h2>
         </div>
       </Reveal>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
         <Reveal>
           <Feature
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
             title="A dictionary that shows the whole word"
-            body="Search an inflected form you met in class (toas, lugesin) and it finds the word, tells you which form you typed, and lays out the full paradigm with gradation marked."
+            body="Search a form you half-remember from class and it finds the word, says which one you typed, and lays out all the rest with gradation marked and every form spoken aloud."
           />
         </Reveal>
-        <Reveal>
-          <Feature
-            tone="butter"
-            icon={<Flame size={18} aria-hidden />}
-            title="Repetition that knows when to stop"
-            body="FSRS schedules every card for the day you were about to forget it, then tells you you're done. New cards are capped, so week three never becomes an hour."
-          />
-        </Reveal>
-        <Reveal>
-          <Feature
-            tone="sky"
-            icon={<Volume2 size={18} aria-hidden />}
-            title="Hear every single form"
-            body="Estonian neural speech from the University of Tartu, on every word and every form, at normal or slow speed. No key, no per-word charge."
-          />
-        </Reveal>
-
-        <Reveal>
-          <div
-            className="lift flex h-full flex-col rounded-[var(--r-xl)] border p-6 md:col-span-2"
-            style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--blush-soft)", color: "var(--blush-ink)" }}>
-                <Sparkles size={18} aria-hidden />
-              </span>
-              <h3 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>Anu explains the rule</h3>
-            </div>
-            <p className="mt-2.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              A grammar tutor for the questions a textbook answers on page 240. She explains, checks
-              your sentence and names the pattern, and she is never allowed to invent an Estonian
-              form, because those come from the dictionary.
-            </p>
-            <div className="mt-5">
-              <TutorPeek />
-            </div>
-          </div>
-        </Reveal>
-
         <Reveal>
           <Feature
             tone="mint"
             icon={<MapIcon size={18} aria-hidden />}
-            title={`A course of ${PATH.length} units, and a dozen ways to drill it`}
-            body="Each unit is a sitting's worth of words that becomes real cards in one click. Sprint, dictation, listening, word order, minimal pairs and the rest all grade the same cards, so practice is never a side game with a score of its own."
+            title={`A course of ${PATH.length} units that schedules itself`}
+            body="Each unit is a sitting's worth of words that becomes real cards in one press. FSRS brings each one back on the day you were going to forget it, then tells you you're done. Sprint, dictation and listening all grade those same cards."
           />
+        </Reveal>
+        <Reveal>
+          <Feature
+            tone="blush"
+            icon={<Sparkles size={18} aria-hidden />}
+            title="Anu explains the rule"
+            body="Ask a chatbot for an inflected form and you get a confident, wrong one. Anu explains the rule and checks your sentence, and she may never supply an Estonian form: those come from the dictionary."
+          >
+            <TutorPeek />
+          </Feature>
         </Reveal>
       </div>
     </section>
   );
 }
 
-function Feature({ tone, icon, title, body, className = "" }: {
+/**
+ * One card, and `children` for the one that shows its work.
+ *
+ * Anu's card used to be a hand-written copy of this with its icon beside the
+ * heading instead of above it, which is how it came to be the only card in the
+ * grid laid out differently from its neighbours. A slot under the body is the
+ * whole of what it needed, and the icon it was laying out its own way is the
+ * arrangement every card takes now: a circle stacked over a heading spends 52px
+ * of a phone on saying nothing the heading does not, once per card.
+ */
+function Feature({ tone, icon, title, body, children }: {
   tone: "accent" | "mint" | "sky" | "butter" | "peach" | "blush";
   icon: React.ReactNode;
   title: React.ReactNode;
   body: string;
-  className?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div
-      className={`lift flex h-full flex-col rounded-[var(--r-xl)] border p-6 ${className}`}
+      className="lift flex h-full flex-col rounded-[var(--r-xl)] border p-6"
       style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
     >
-      <span
-        className="flex h-9 w-9 items-center justify-center rounded-full"
-        style={{ background: `var(--${tone}-soft)`, color: toneInk(tone) }}
-      >
-        {icon}
-      </span>
-      <h3 className="est mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
-        {title}
-      </h3>
-      <p className="mt-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
-    </div>
-  );
-}
-
-/* ───────────────────────────────────────────────────── how it works ── */
-
-const STEPS = [
-  {
-    title: "Pick a unit, or look a word up",
-    body: "A course from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class. You can also photograph the page you were set and tick the words off it.",
-    tone: "sky",
-  },
-  {
-    title: "Add it in one click",
-    body: "Real cards with the full paradigm and audio, both directions. Add a case-form or gradation card when a word deserves the extra attention.",
-    tone: "accent",
-  },
-  {
-    title: "Show up for fifteen minutes",
-    body: "Today tells you exactly what is due and how long it will take. When you are caught up, it says so and sends you away.",
-    tone: "mint",
-  },
-] as const;
-
-function HowItWorks() {
-  return (
-    <section id="how" className="scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
-      <div className="mx-auto max-w-6xl">
-        <Reveal>
-          <div className="mx-auto max-w-[42ch] text-center">
-            <p className="label-xs" style={{ color: "var(--mint-ink)" }}>Three steps, then a habit</p>
-            <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-              How a day with Kodukeel goes
-            </h2>
-          </div>
-        </Reveal>
-
-        <ol className="mt-10 grid gap-4 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <Reveal
-              key={s.title}
-              as="li"
-              className="relative h-full overflow-hidden rounded-[var(--r-xl)] border p-6"
-              style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-            >
-              <span
-                aria-hidden
-                /* Ornament rather than type: a step number set large enough
-                   to read as a shape behind the card. Off the scale on
-                   purpose — see docs/14-design-system.md §3.
-
-                   `data-ornament` says the same thing to the contrast pass in
-                   scripts/test-design.mjs, which measures single characters
-                   now and would otherwise read a hue's own tint at 1.18:1 as a
-                   failure. It is decoration: the step is written in words
-                   inside the card this sits behind. */
-                data-ornament
-                className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
-                style={{ color: `var(--${s.tone}-soft)` }}
-              >
-                {i + 1}
-              </span>
-              <div className="relative">
-                <span className="label-xs" style={{ color: toneInk(s.tone) }}>Step {i + 1}</span>
-                <h3 className="est mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
-                <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </ol>
+      <div className="flex items-start gap-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+          style={{ background: `var(--${tone}-soft)`, color: toneInk(tone) }}
+        >
+          {icon}
+        </span>
+        <h3 className="text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
+          {title}
+        </h3>
       </div>
-    </section>
+      <p className="mt-3 max-w-[52ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+      {children ? <div className="mt-4">{children}</div> : null}
+    </div>
   );
 }
 
@@ -651,15 +615,17 @@ function Mark({ verdict }: { verdict: Verdict }) {
 }
 
 /**
- * The comparison, folded shut.
+ * The comparison, folded into the questions.
  *
  * Every claim in it is still here, and so is the credit paragraph for each of
- * the four tools. What changed is that it no longer sits in the scroll of
- * somebody who has not yet worked out what this app is: an eight-row grid
- * against three products, four credit cards and a dated methodology note is the
- * longest block on the page, and it answers a question only a person already
- * choosing between tools is asking. That person will open it. Everybody else
- * gets one honest sentence and their evening back.
+ * the four tools. What changed is where it sits. It was a section of its own
+ * with its own heading and its own summary paragraph, second from the bottom of
+ * the page, and an eight-row grid against three products with four credit cards
+ * and a dated methodology note is the longest block here by a distance. It also
+ * answers a question only somebody already choosing between tools is asking,
+ * which is exactly the shape of the four questions above it. So it is the fifth
+ * one, wearing the same shell: the person asking it finds it where they look
+ * for it, and everybody else gets a line in a list instead of a screen.
  *
  * Shut by default rather than removed, because the argument in the comment
  * below still holds: a page that will not say what it is not better at is a
@@ -667,139 +633,116 @@ function Mark({ verdict }: { verdict: Verdict }) {
  */
 function Comparison() {
   return (
-    <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
-      <Reveal>
-        <details
-          className="group rounded-[var(--r-xl)] border px-5 py-5 md:px-8 md:py-7"
-          style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-        >
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-5">
-            <span className="min-w-0">
-              <span className="label-xs block" style={{ color: "var(--peach-ink)" }}>An honest comparison</span>
-              <span className="est mt-2 block text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
-                How it sits next to Speakly, Keeleklikk and Anki
-              </span>
-              <span className="mt-2 block max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                Duolingo has never offered an Estonian course, so the choice you actually face is
-                between the tools that do. {CLAIM_COUNT} claims, checked against their own public
-                pages, and on {SHARED_ROWS} of them somebody else ticks too.
-              </span>
-            </span>
-            <span
-              aria-hidden
-              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform group-open:rotate-180"
-              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-            >
-              <ChevronDown size={17} aria-hidden />
-            </span>
-          </summary>
+    <FaqItem question="How does it compare with Speakly, Keeleklikk and Anki?">
+      {/*
+        No Reveal inside here. It fades a section up as it enters the
+        viewport, and an element that is display:none until somebody opens
+        a disclosure has no entry to animate on a page already scrolled
+        past it. The one thing worse than an animation nobody sees is one
+        that leaves the content half-faded, which the design suite checks
+        for by name.
+      */}
+      <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        Duolingo has never offered an Estonian course, so the choice you actually face is between
+        the tools that do. {CLAIM_COUNT} claims, checked against their own public pages, and on{" "}
+        {SHARED_ROWS} of them somebody else ticks too.
+      </p>
+      <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        None of them is trying to do quite this: get you to the point of saying{" "}
+        <span lang="et" className="font-semibold">ma lähen tuppa</span> and knowing why it
+        is not <span lang="et" className="font-semibold">tuba</span>.
+      </p>
 
-          {/*
-            No Reveal inside here. It fades a section up as it enters the
-            viewport, and an element that is display:none until somebody opens
-            a disclosure has no entry to animate on a page already scrolled
-            past it. The one thing worse than an animation nobody sees is one
-            that leaves the content half-faded, which the design suite checks
-            for by name.
-          */}
-          <p className="mt-6 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            None of them is trying to do quite this: get you to the point of saying{" "}
-            <span lang="et" className="est font-semibold">ma lähen tuppa</span> and knowing why it
-            is not <span lang="et" className="est font-semibold">tuba</span>.
-          </p>
-
-          {/* Phones get a card per claim: four columns of ticks at 390px would
-              leave the labels a third of a line wide, and this page may not
-              scroll sideways. */}
-          <div className="mt-7 flex flex-col gap-3 md:hidden">
-            {ROWS.map((row) => (
-              <div
-                key={row.label}
-                className="rounded-[var(--r-lg)] border p-4"
-                style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
-              >
-                <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {TOOLS.map((tool, i) => (
-                    <span key={tool.name} className="flex items-center gap-2">
-                      <Mark verdict={row.cells[i] ?? "unsure"} />
-                      <span
-                        className="text-xs font-semibold"
-                        style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
-                      >
-                        {tool.short}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
+      {/* Phones get a card per claim: four columns of ticks at 390px would
+          leave the labels a third of a line wide, and this page may not
+          scroll sideways. */}
+      <div className="mt-7 flex flex-col gap-3 md:hidden">
+        {ROWS.map((row) => (
           <div
-            className="mt-7 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
-            style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
+            key={row.label}
+            className="rounded-[var(--r-lg)] border p-4"
+            style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
           >
-            <div
-              className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
-              style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
-            >
-              <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
-              {TOOLS.map((tool) =>
-                tool.ours ? (
-                  <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
-                    {tool.name}
+            <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {TOOLS.map((tool, i) => (
+                <span key={tool.name} className="flex items-center gap-2">
+                  <Mark verdict={row.cells[i] ?? "unsure"} />
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
+                  >
+                    {tool.short}
                   </span>
-                ) : (
-                  <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
-                    {tool.name}
-                  </span>
-                ),
-              )}
+                </span>
+              ))}
             </div>
-            {ROWS.map((row) => (
-              <div
-                key={row.label}
-                className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
-                style={{ borderTop: "1px solid var(--rule-soft)" }}
-              >
-                <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
-                {TOOLS.map((tool, i) => (
-                  <span key={tool.name} className="flex justify-center">
-                    <Mark verdict={row.cells[i] ?? "unsure"} />
-                  </span>
-                ))}
-              </div>
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="mt-7 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
+        style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
+      >
+        <div
+          className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
+          style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
+        >
+          <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
+          {TOOLS.map((tool) =>
+            tool.ours ? (
+              <span key={tool.name} className="text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
+                {tool.name}
+              </span>
+            ) : (
+              <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
+                {tool.name}
+              </span>
+            ),
+          )}
+        </div>
+        {ROWS.map((row) => (
+          <div
+            key={row.label}
+            className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
+            style={{ borderTop: "1px solid var(--rule-soft)" }}
+          >
+            <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
+            {TOOLS.map((tool, i) => (
+              <span key={tool.name} className="flex justify-center">
+                <Mark verdict={row.cells[i] ?? "unsure"} />
+              </span>
             ))}
           </div>
+        ))}
+      </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {CREDITS.map((credit) => (
-              <div
-                key={credit.name}
-                className="rounded-[var(--r-lg)] border px-4 py-3.5"
-                style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
-              >
-                <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
-                <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
-              </div>
-            ))}
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {CREDITS.map((credit) => (
+          <div
+            key={credit.name}
+            className="rounded-[var(--r-lg)] border px-4 py-3.5"
+            style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
+          >
+            <p className="text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
+            <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
           </div>
+        ))}
+      </div>
 
-          <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-            A tick means yes, a dash means not from anything its own public pages say, and a question
-            mark means we could not tell and would rather say so. Checked in August 2026 against each
-            product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
-            is not affiliated with any of them and none of them has endorsed it. If something is out
-            of date or simply wrong, tell us and it gets corrected.
-          </p>
-        </details>
-      </Reveal>
-    </section>
+      <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+        A tick means yes, a dash means not from anything its own public pages say, and a question
+        mark means we could not tell and would rather say so. Checked in August 2026 against each
+        product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
+        is not affiliated with any of them and none of them has endorsed it. If something is out
+        of date or simply wrong, tell us and it gets corrected.
+      </p>
+    </FaqItem>
   );
 }
 
-/* ─────────────────────────────────────────────────────────── faq ── */
+/* ───────────────────────────────────────────────────── questions ── */
 
 const FAQS = [
   [
@@ -820,38 +763,62 @@ const FAQS = [
   ],
 ] as const;
 
-function Faq() {
+/**
+ * One shell for every question, the comparison included.
+ *
+ * It exists because the comparison used to be its own section with its own
+ * heading, its own eyebrow and its own chevron, and folding it in beside four
+ * questions that look nothing like it would have read as two designs meeting
+ * rather than as one list. A shared shell is also the reason the comparison
+ * costs a line rather than a screen: shut, it is exactly as tall as "What
+ * happens to my data?".
+ */
+function FaqItem({ question, children }: { question: string; children: React.ReactNode }) {
   return (
-    <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <details
+      className="group rounded-[var(--r-lg)] border px-5 py-4"
+      style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <summary
+        className="flex cursor-pointer list-none items-center justify-between gap-4 text-md font-semibold"
+        style={{ color: "var(--ink)" }}
+      >
+        {question}
+        <span
+          aria-hidden
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-md leading-none transition-transform group-open:rotate-45"
+          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        >
+          +
+        </span>
+      </summary>
+      {children}
+    </details>
+  );
+}
+
+function Questions() {
+  return (
+    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
       <Reveal>
-        <h2 className="est text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+        <h2 className="text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           The questions people ask
         </h2>
       </Reveal>
-      <div className="mt-9 flex flex-col gap-3">
+      <div className="mt-8 flex flex-col gap-3">
         {FAQS.map(([q, a]) => (
           <Reveal key={q}>
-            <details
-              className="group rounded-[var(--r-lg)] border px-5 py-4"
-              style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-            >
-              <summary
-                className="flex cursor-pointer list-none items-center justify-between gap-4 text-md font-semibold"
-                style={{ color: "var(--ink)" }}
-              >
-                {q}
-                <span
-                  aria-hidden
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-md leading-none transition-transform group-open:rotate-45"
-                  style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-                >
-                  +
-                </span>
-              </summary>
-              <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{a}</p>
-            </details>
+            <FaqItem question={q}>
+              {/* Capped, because the section is as wide as the comparison table
+                  inside it and a hundred characters to the line is not a width
+                  anybody reads a paragraph at. */}
+              <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{a}</p>
+            </FaqItem>
           </Reveal>
         ))}
+        <Reveal>
+          <Comparison />
+        </Reveal>
       </div>
     </section>
   );
@@ -859,12 +826,24 @@ function Faq() {
 
 /* ──────────────────────────────────────────────────── final call ── */
 
+/**
+ * The close, and the one line the cut sections left behind.
+ *
+ * "How a day with Kodukeel goes" was three cards saying pick a unit, add it in
+ * a press, and show up for fifteen minutes. That is one sentence, and it reads
+ * better as one: it belongs at the point where somebody is deciding, not three
+ * scrolls earlier where it is a feature list with numbers on it.
+ *
+ * The second button went with it. A page this length has its demonstration two
+ * screens up rather than eight, and a "see it first" link at the bottom of a
+ * short page is an invitation to leave the one screen that asks for a decision.
+ */
 function FinalCta() {
   return (
-    <section className="px-5 py-14 md:px-8 md:py-20">
+    <section className="px-5 py-10 md:px-8 md:py-14">
       <Reveal>
         <div
-          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-14 text-center md:px-16 md:py-20"
+          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-9 text-center md:px-16 md:py-12"
           style={{ background: "var(--accent-soft)" }}
         >
           <span aria-hidden className="wash" style={{ background: "var(--wash-2)", width: 420, height: 420, top: -160, right: -80 }} />
@@ -872,27 +851,20 @@ function FinalCta() {
 
           <div className="relative">
             <MascotWatch size={68} mood="cheer" className="float mx-auto" />
-            <h2 className="est mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
+            <h2 className="mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
               Fifteen minutes. Starting today.
             </h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Look up one word, add it, and let the scheduler do the remembering. That is the whole
-              commitment.
+              Look up one word, add it in a press, and let the scheduler do the remembering. That
+              is the whole commitment.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-5">
+            <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
                 Start learning, free <ArrowRight size={17} aria-hidden />
               </ButtonLink>
-              <a
-                href="#cases"
-                className="inline-flex items-center gap-2 px-1 py-2 text-base font-semibold underline underline-offset-4 transition-opacity hover:opacity-70"
-                style={{ color: "var(--ink-2)" }}
-              >
-                <Headphones size={16} aria-hidden /> See it first
-              </a>
             </div>
             <p className="mt-5 text-xs" style={{ color: "var(--ink-3)" }}>
-              Google sign-in · nothing to install · export whenever you like
+              Google sign-in &middot; nothing to install &middot; export whenever you like
             </p>
           </div>
         </div>
@@ -943,10 +915,15 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       prisma.form.count(),
     ]);
 
-    const byLemma = new Map(lexemes.map((l) => [l.lemma, l]));
-    const words = DEMO_LEMMAS.flatMap((lemma) => {
-      const lex = byLemma.get(lemma);
-      if (!lex) return [];
+    /*
+      One entry per lemma. `new Map(lexemes.map(...))` kept whichever row came
+      last, which is the plan's choice, and `tuba` is both one of the three
+      words this page demonstrates and a lemma the dictionary can hold twice:
+      once from Ekilex with thirty forms, and once as a formless stub the
+      moment somebody confirms it off a photograph. The case table under it
+      is the whole argument this page makes, and it would have been empty.
+    */
+    const words = oneEntryPerLemma(lexemes, DEMO_LEMMAS).flatMap((lex) => {
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 
@@ -974,9 +951,6 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
       return [{
         lemma: lex.lemma,
-        translation: lex.translation,
-        cefr: lex.cefr,
-        gradationNote: lex.gradationNote,
         genitive: form("GEN_SG") ?? null,
         principal,
         cases,
@@ -1006,17 +980,14 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  */
 
 const FALLBACK_STEMS = [
-  { lemma: "tuba", translation: "room", cefr: "A1", gradationNote: "b : ∅",
+  { lemma: "tuba",
     nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
-  { lemma: "raamat", translation: "book", cefr: "A1", gradationNote: null,
+  { lemma: "raamat",
     nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
 ] as const;
 
 const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
   lemma: w.lemma,
-  translation: w.translation,
-  cefr: w.cefr,
-  gradationNote: w.gradationNote,
   genitive: w.genSg,
   principal: [
     { label: "nimetav · kes? mis?", value: w.nomSg },

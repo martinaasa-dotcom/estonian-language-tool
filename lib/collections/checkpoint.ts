@@ -19,6 +19,7 @@
 import { buildCloze } from "@/lib/estonian/cloze";
 import { deriveCase } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
+import { shuffle } from "@/lib/random/shuffle";
 
 export interface CheckpointWord {
   lemma: string;
@@ -59,18 +60,6 @@ function rng(seed: number): () => number {
   };
 }
 
-function shuffled<T>(items: readonly T[], rand: () => number): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    const a = out[i]!;
-    const b = out[j]!;
-    out[i] = b;
-    out[j] = a;
-  }
-  return out;
-}
-
 /** Every form of a word we hold or can derive, for finding it inside a sentence. */
 function knownForms(word: CheckpointWord): string[] {
   const forms = new Set<string>([word.lemma, ...Object.values(word.parts)]);
@@ -99,7 +88,7 @@ export function buildCheckpoint(
   seed = 1,
 ): CheckpointQuestion[] {
   const rand = rng(seed);
-  const chosen = shuffled(words, rand).slice(0, count);
+  const chosen = shuffle(words, rand).slice(0, count);
   const wantGaps = Math.round(chosen.length * GAP_SHARE);
 
   const questions: CheckpointQuestion[] = [];

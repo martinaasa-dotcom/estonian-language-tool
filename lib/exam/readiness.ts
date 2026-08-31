@@ -122,6 +122,33 @@ export function expectationFromPlacement(placed: string, paper: ExamLevel): numb
 
 export type Evidence = "thin" | "fair" | "good";
 
+/**
+ * WHAT A TIER MEANS, IN WORDS, AND THERE IS ONE COPY OF IT.
+ *
+ * A confidence figure carries the evidence behind it, which is the whole reason
+ * `Evidence` exists: "72 percent likely to pass B2" after nine reviews is an
+ * invented number and the learner has no way of telling it apart from one that
+ * means something. The exam hub said this in a sentence it kept to itself, and
+ * the moment a second screen printed the same percentage the app had two
+ * answers to what it was worth. So the words live next to the tier.
+ *
+ * Two lengths because there are two shapes of room. The note is a sentence
+ * under a heading; the label goes beside a number where a sentence will not
+ * fit, and it is printed rather than hidden in a `title`, because a hover is
+ * not text and this app is measured on a phone.
+ */
+export const EVIDENCE_NOTE: Record<Evidence, string> = {
+  thin: "We have very little to go on yet, so these are guesses and are capped to say so.",
+  fair: "There is enough history here for a rough estimate, not a confident one.",
+  good: "There is enough history here for these numbers to mean something.",
+};
+
+export const EVIDENCE_LABEL: Record<Evidence, string> = {
+  thin: "a guess for now",
+  fair: "a rough estimate",
+  good: "on a real record",
+};
+
 export interface Feedback {
   id: string;
   title: string;

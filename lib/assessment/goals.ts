@@ -1,3 +1,4 @@
+import type { DayClock } from "@/lib/time/day";
 import { BANDS, type Band } from "./types";
 
 /**
@@ -185,6 +186,54 @@ export function deadlineFrom(preset: DeadlinePreset, now: Date): string | null {
  * negative number because a plan screen has nothing useful to say about
  * negative time, and the copy handles "no weeks left" honestly.
  */
+/**
+ * Whole days until a deadline, on the learner's own calendar.
+ *
+ * Weeks are the right unit for a plan and the wrong one for a countdown. "Seven
+ * weeks" and "47 days" are the same fact and only one of them makes anybody
+ * open the app, which is why Today counts in days and the plan screen does not.
+ *
+ * It takes a clock and `weeksUntil` does not, and that is a difference in what
+ * they are for rather than an oversight: a week's granularity swallows a
+ * midnight, a day's does not, and a countdown that reads 47 in Tallinn and 48
+ * in Lisbon for the same deadline is the fault `lib/time/day.ts` exists to
+ * prevent. Negative when the date has gone, because a countdown has something
+ * to say about that and `weeksUntil` deliberately clamps.
+ */
+export function daysUntil(
+  deadline: string | null | undefined,
+  now: Date,
+  clock: DayClock,
+): number | null {
+  if (!deadline) return null;
+  const then = new Date(deadline);
+  if (Number.isNaN(then.getTime())) return null;
+  return clock.daysBetween(now, then);
+}
+
+/**
+ * How long that is, said the way somebody would say it.
+ *
+ * Days close in and larger units further out, because "312 days" is a number
+ * nobody holds in their head and "ten months" is a feeling. Sixty is the
+ * changeover: two months out, a day still means something to a candidate; six
+ * months out it does not. The exact date is printed beside this wherever it
+ * appears, so precision is never actually lost, only spent where it is worth
+ * something.
+ */
+export function countdownPhrase(days: number): string {
+  if (days < 0) return "that date has gone";
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  if (days <= 60) return `${days} days`;
+  const weeks = Math.round(days / 7);
+  if (weeks <= 26) return `${weeks} weeks`;
+  const months = Math.round(days / 30.44);
+  return months >= 12 && months % 12 === 0
+    ? `${months / 12} ${months === 12 ? "year" : "years"}`
+    : `${months} months`;
+}
+
 export function weeksUntil(deadline: string | null | undefined, now: Date): number | null {
   if (!deadline) return null;
   const then = new Date(deadline);

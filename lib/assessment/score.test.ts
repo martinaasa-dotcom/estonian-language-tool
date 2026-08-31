@@ -16,9 +16,9 @@ const dictation: DictationItem = {
 
 const write: WriteItem = {
   id: "w1", kind: "write", skill: "writing", band: "A2", lemma: "tuba",
-  question: "Use tuba in the inessive.", translation: "room",
-  caseKey: "INESSIVE", caseEn: "Inessive", caseEt: "seesütlev", caseQuestion: "milles? kus?",
-  targetForm: "toas", otherForms: ["toa", "tuppa", "toast"], source: "derived",
+  question: "Write tuba in the form this sentence needs.", translation: "room",
+  sentence: "Ma olen praegu ____.", full: "Ma olen praegu toas.",
+  targetForm: "toas", otherForms: ["toa", "tuppa", "toast"], source: "usage",
 };
 
 const answer = (over: Partial<Response>): Response =>
@@ -45,15 +45,28 @@ describe("marking", () => {
     expect(mark.credit).toBeGreaterThanOrEqual(0.8);
   });
 
-  it("marks a written sentence on the form, not on the prose", () => {
-    expect(gradeWrite(write, "Ma olen toas ja loen raamatut.").credit).toBe(1);
-    // The right word, the wrong case: a near miss, and named as one.
-    const near = gradeWrite(write, "Ma lähen tuppa kohe.");
+  it("marks a typed gap against the word the sentence had", () => {
+    expect(gradeWrite(write, "toas").credit).toBe(1);
+    expect(gradeWrite(write, " Toas ").credit).toBe(1);
+    expect(gradeWrite(write, "").credit).toBe(0);
+    expect(gradeWrite(write, "raamat").credit).toBe(0);
+  });
+
+  it("calls a different form of the right word a near miss, and says which", () => {
+    // The mistake the task exists to find: the word is known, the sentence is not.
+    const near = gradeWrite(write, "tuppa");
     expect(near.credit).toBeGreaterThan(0);
     expect(near.credit).toBeLessThan(1);
     expect(near.usedAnotherForm).toBe(true);
-    // Not a sentence at all.
-    expect(gradeWrite(write, "toas").credit).toBe(0);
+    expect(near.note).toContain("toas");
+  });
+
+  it("does not fail somebody for a keyboard without Estonian letters", () => {
+    const item = { ...write, targetForm: "õues", otherForms: ["õue"] };
+    const mark = gradeWrite(item, "oues");
+    expect(mark.right).toBe(true);
+    expect(mark.credit).toBeGreaterThanOrEqual(0.8);
+    expect(mark.credit).toBeLessThan(1);
   });
 });
 

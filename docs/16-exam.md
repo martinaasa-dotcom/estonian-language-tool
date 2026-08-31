@@ -98,7 +98,7 @@ is standing in for, and the briefing screen prints it before the clock starts.
 | Write a short message | teate koostamine |
 | Write a text | loovkirjutamine või isikliku kirja koostamine, and the choice is offered |
 | Write the form | **nothing the real paper sets**: grammatiline korrektsus, marked inside the texts |
-| Which case does the verb take? | **nothing the real paper sets**: rektsioon, marked inside the texts |
+| Which case does the verb take? | **nothing the real paper sets**: rektsioon, marked inside the texts, and asked only of verbs |
 | Write down what you hear | puuduva infoga ülesanne |
 | Which sentence was it? | valikvastustega kuulamisülesanne |
 | Speak | suuline esinemine ja dialoog |
@@ -216,6 +216,36 @@ the target is neither stopped nor penalised, because the examiner does not stop 
 **What is still not imitated** is said out loud on the briefing rather than left to be discovered:
 the C1 paper's single-listen task, and the few minutes of conversation with an examiner that the real
 spoken part opens with.
+
+## 2b. The wrong answers
+
+A multiple choice question is as hard as its second best option, and four of this paper's tasks used
+to have none. The three wrong answers were the first three a shuffle handed back out of the whole
+deck, so a meaning question could put a one-word A1 noun beside a three-sense B2 abstract one, and a
+listening question could hide a spoken word among three that look nothing like it. Both are answered
+without the Estonian being read or heard at all, and a mark built on those is a mark about nothing.
+
+`lib/questions/distractors.ts` ranks each candidate by what a learner cannot use to eliminate it,
+and it is the same module the placement check reads, so the two papers cannot drift apart on what a
+wrong answer is worth. What near means depends on the question:
+
+| Task | What makes a wrong answer hard |
+| --- | --- |
+| `gloss-choice` | The same part of speech, CEFR band and shape of line, and the same course unit where the syllabus teaches the word |
+| `listen-choose` | A sentence sharing words with the one played, or a word spelled like it: `tõusen` against `tõusin` rather than against `teksti` |
+| `gap-choice` | Another form of the word being asked about, because the claim of the task is that the learner is choosing an ending |
+| `form-choice` | The same, and the nearest strangers when the word has too few forms of its own |
+
+Measured over 120 papers built from the shipped dictionary: 90% of the meaning questions carried a
+free elimination and 16% do now, and 2% of the spoken word questions had an option spelled like the
+answer against 77% now. The number of questions asked is unchanged, because this ranks the
+candidates rather than filtering them.
+
+Nearer options need a stricter test of what counts as one answer, and the meaning task had none at
+all: a deck holding `auto` and `masin` could offer "car, automobile" against "car, machine" and mark
+a candidate wrong for choosing the second. Two glosses sharing a content word are one answer now,
+and a question that cannot find three genuinely wrong options is not asked, which the task reports
+as a shortfall like any other.
 
 ## 3. A short paper says so
 

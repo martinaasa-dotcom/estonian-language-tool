@@ -108,7 +108,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
         <Page title="Case Sprint" lead="A 60-second speed round through your deck.">
           <Empty
             title="Nothing to sprint through yet"
-            body="Case Sprint draws from cards that are due or that you've slipped on before. Review a little first, or add some words."
+            body="This draws on cards that are due, or that you have slipped on before."
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>
@@ -126,7 +126,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           >
             <Timer size={30} aria-hidden />
           </span>
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Case Sprint
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -153,7 +153,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood={isNewBest ? "cheer" : "happy"} className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Time&rsquo;s up!
           </h1>
           <p className="mt-2 flex items-center justify-center gap-2 text-base" style={{ color: "var(--ink-2)" }}>
@@ -214,7 +214,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           <div className="flex items-center gap-2">
             <p
               lang={estonianSide(card.cardType, "front") ? "et" : "en"}
-              className="est text-3xl font-semibold leading-tight md:text-4xl"
+              className="text-3xl font-semibold leading-tight md:text-4xl"
               style={{ color: "var(--ink)" }}
             >
               {card.front}
@@ -228,7 +228,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
               <div className="flex items-center gap-2">
                 <p
                   lang={estonianSide(card.cardType, "back") ? "et" : "en"}
-                  className="est text-2xl font-semibold md:text-3xl"
+                  className="text-2xl font-semibold md:text-3xl"
                   style={{ color: "var(--accent-deep)" }}
                 >
                   {card.back}
@@ -243,7 +243,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           {!revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(255 255 255 / 0.22)" }}>Space</kbd>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs" style={{ background: "rgb(0 0 0 / 0.16)" }}>Space</kbd>
             </Button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -254,7 +254,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                 style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
               >
-                Missed it <kbd className="ml-1 opacity-70">⌫</kbd>
+                Missed it <kbd className="ml-1">⌫</kbd>
               </button>
               <button
                 type="button"
@@ -263,7 +263,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
                 style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
               >
-                Got it <kbd className="ml-1 opacity-70">Enter</kbd>
+                Got it <kbd className="ml-1">Enter</kbd>
               </button>
             </div>
           )}

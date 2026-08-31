@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Compass, Loader2 } from "lucide-react";
 import { completeOnboarding, skipOnboarding } from "@/app/actions";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
-import { PlanPanel } from "@/components/assessment/PlanPanel";
+import { PlanPanel, minutesFor } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { Button } from "@/components/Button";
 import { LetterBarScope, LetterSample } from "@/components/DiacriticBar";
@@ -13,20 +13,31 @@ import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
-import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
+import { weeksToLearn } from "@/lib/assessment/plan";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
-import { WHAT_IT_IS } from "@/lib/copy/tour";
+import { WHAT_IT_IS_SHORT } from "@/lib/copy/tour";
 import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 
-export interface WizardUnit {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-  cefr: string;
-  blurb: string;
+/**
+ * The deck a learner at one level starts with, sized by the server.
+ *
+ * `cards` is built rather than estimated: `previewUnits` runs the same card
+ * generator the deck builder runs and counts what comes out. The screen used to
+ * print `words * 2`, which is right only for a unit that drills nothing and is
+ * out by a factor of five at A1, where every unit drills cases.
+ */
+export interface StarterDeck {
+  /** The CEFR band this deck is the starting point for. */
+  level: string;
+  unitIds: string[];
+  units: { id: string; title: string; subtitle: string; icon: string }[];
+  /** Words the dictionary can actually fill. */
   words: number;
+  /** Cards those words build. */
+  cards: number;
+  /** Units left at this level, so the screen can say what it is not giving them. */
+  remaining: number;
 }
 
 /** The self-rated ladder, for a learner who would rather not sit the check now. */
@@ -44,28 +55,22 @@ const LEVELS = [
   { key: "C1", label: "Fluent", detail: "I work in Estonian and want to write it well." },
 ] as const;
 
-const GOALS = [
-  { value: 10, label: "Casual", detail: "about 3 minutes a day" },
-  { value: 15, label: "Regular", detail: "about 5 minutes a day" },
-  { value: 25, label: "Serious", detail: "about 8 minutes a day" },
-  { value: 40, label: "Intense", detail: "about 13 minutes a day" },
-] as const;
-
 /**
- * Units suggested for each starting level, which is where that learner's next
- * work is.
+ * The four paces, as review counts.
  *
- * Derived from the syllabus rather than hand-listed. The list it replaced named
- * unit ids in a string literal and stopped at B2, so it could rot silently when
- * the course grew. Below A1 starts where A1 does, because the first sensible
- * thing to do is the same either way.
+ * The minutes are not listed here. They were, as a hand-written string per row,
+ * beside a `minutesFor` in `PlanPanel` that computes the same number from the
+ * same goal, and two of them printed as "About about 8 minutes a day" because
+ * the sentence around them supplied the "About" as well. One of those is a
+ * typo and the other is the reason it survived: a figure written down twice is
+ * a figure nobody is checking. `minutesFor` is the one answer.
  */
-const SUGGESTED: Record<string, string[]> = {
-  ...Object.fromEntries(
-    CEFR_LEVELS.map((level) => [level, unitsAtLevel(level).slice(0, 3).map((u) => u.id)]),
-  ),
-  [PRE_A1]: unitsAtLevel("A1").slice(0, 3).map((u) => u.id),
-};
+const GOALS = [
+  { value: 10, label: "Casual" },
+  { value: 15, label: "Regular" },
+  { value: 25, label: "Serious" },
+  { value: 40, label: "Intense" },
+] as const;
 
 const STEPS = ["You", "Level", "Goal", "Start"] as const;
 
@@ -98,8 +103,9 @@ const STEPS = ["You", "Level", "Goal", "Start"] as const;
  * because that is where they earn their place: before the investment, not
  * after seven screens of it.
  */
-export function WelcomeWizard({ units, suggestedName, paper }: {
-  units: WizardUnit[];
+export function WelcomeWizard({ starters, suggestedName, paper }: {
+  /** The starter deck for each level, sized by the server. */
+  starters: StarterDeck[];
   suggestedName: string;
   /** The level check, built server side. Empty when the dictionary cannot fill one. */
   paper: { items: Item[]; missing: string[] };
@@ -119,7 +125,6 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   const [estimated, setEstimated] = useState<string | null>(null);
 
   const [goal, setGoal] = useState<number>(15);
-  const [picked, setPicked] = useState<string[]>(SUGGESTED.A1 ?? []);
   const [pending, start] = useTransition();
 
   /** The level everything downstream uses: measured if it was, stated if not. */
@@ -138,11 +143,6 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
   const chooseLevel = (key: string) => {
     setEstimated(key);
     setMeasured(null);
-    setPicked((current) => {
-      const suggestion = SUGGESTED[key] ?? [];
-      const manual = current.filter((id) => !Object.values(SUGGESTED).flat().includes(id));
-      return [...new Set([...suggestion, ...manual])];
-    });
   };
 
   const chooseReason = (id: string) => {
@@ -153,10 +153,11 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
     setTarget((current) => current ?? implied);
   };
 
-  const toggleUnit = (id: string) =>
-    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-
-  const wordCount = units.filter((u) => picked.includes(u.id)).reduce((sum, u) => sum + u.words, 0);
+  /*
+    The deck follows the level, and the level is the answer to the question two
+    screens back. Nothing here is chosen twice.
+  */
+  const deck = starters.find((d) => d.level === startBand) ?? starters[0] ?? null;
   const chosenTarget = TARGETS.find((t) => t.band === target);
 
   const finish = () => {
@@ -165,7 +166,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
         displayName: name,
         cefr: startBand,
         dailyGoal: goal,
-        unitIds: picked,
+        unitIds: deck?.unitIds ?? [],
         letterBar: letters,
         goals: {
           reason: goals.reason,
@@ -199,8 +200,6 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
           missing={paper.missing}
           onFinish={(result) => {
             setMeasured(result);
-            const band = result.overall === PRE_A1 || result.overall === null ? "A1" : result.overall;
-            setPicked((current) => [...new Set([...(SUGGESTED[band] ?? []), ...current])]);
             setChecking(false);
             setStep(2);
           }}
@@ -246,11 +245,11 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 0 && (
           <section>
-            <h1 lang="et" className="est text-3xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 lang="et" className="text-3xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Tere tulemast!
             </h1>
             <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              {WHAT_IT_IS}
+              {WHAT_IT_IS_SHORT}
             </p>
             <div className="mt-5">
               {/*
@@ -334,7 +333,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 1 && (
           <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Where are you now?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -384,7 +383,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 2 && (
           <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Why Estonian, and how far?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -487,49 +486,97 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
           </section>
         )}
 
-        {step === 3 && (
+        {/*
+          The empty state, which is a deployment rather than a learner: with no
+          dictionary seeded there is nothing to build a deck out of, and the
+          screen has to say so rather than offer "0 words, 0 cards" as though
+          that were a choice somebody made. First run still finishes, because
+          the alternative is a stranger stuck on step four of four.
+        */}
+        {step === 3 && (!deck || deck.cards === 0) && (
           <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              Your first units
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+              Your first words
+            </h1>
+            <Note tone="hard">
+              The dictionary on this installation has no words in it yet, so there is no starter deck
+              to hand you. Whoever runs it can load one with <code>npm run db:seed</code>. You can
+              still set your pace below, and add words from the dictionary as you meet them.
+            </Note>
+
+            <div className="mt-7">
+              <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            </div>
+            <ChoiceGroup ariaLabel="How much a day">
+              {GOALS.map((g) => (
+                <ChoiceChip key={g.value} selected={goal === g.value} onSelect={() => setGoal(g.value)}>
+                  {g.label} · {g.value} cards
+                </ChoiceChip>
+              ))}
+            </ChoiceGroup>
+            <p className="mt-2.5 max-w-[62ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+              {minutesFor(goal)} minutes a day, {daysPerWeek} days a week. That is {goal} cards to
+              answer, not {goal} new ones: about nine in ten will be words you have already met,
+              coming back at the moment you were starting to forget them.
+            </p>
+          </section>
+        )}
+
+        {step === 3 && deck && deck.cards > 0 && (
+          <section>
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+              Your first words
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Picked for {startBand}. Each one becomes real flashcards with audio and full
-              paradigms, and you can add or drop units later on the path.
+              The course starts you here, at {startBand}. These are the words a day actually needs,
+              in the order they are usually taught, and each one becomes real flashcards with audio
+              and every form of the word.
             </p>
+
             {/*
-              Any number of units, so these are toggle buttons and say so:
-              `aria-pressed` is what a checkbox-shaped answer means, and it is
-              the one group on this screen it was ever right for.
+              WHAT THIS SCREEN USED TO BE, AND WHY IT IS NOT THAT ANY MORE.
+
+              Fourteen units with checkboxes, three ticked, and `words * 2`
+              underneath as the card count. Somebody ninety seconds into an app
+              cannot tell whether they need `Riided` before `Ilm`, so the honest
+              reading of that list is "tick everything", and ticking everything
+              built two thousand cards: at the pace this app itself calls
+              sustainable, a backlog into 2028 assembled by accident on a
+              Tuesday evening. The count under it said four hundred, because two
+              cards a word is only true of a unit that drills nothing.
+
+              So the course picks, the server counts, and the screen says what
+              it is handing over. The units are named rather than hidden, and
+              the sentence under them says where to change it, because a default
+              somebody cannot see is indistinguishable from no choice at all.
             */}
-            <ChoiceGroup
-              select="many"
-              ariaLabel="Units to start with"
-              className="scroll-host mt-5 flex max-h-[38vh] flex-col gap-2"
-            >
-              {/*
-                This level's units only. The course is eighty-three of them
-                across six levels, and a first-run picker listing all of them is
-                a wall rather than a choice.
-              */}
-              {units.filter((u) => u.cefr === startBand || u.cefr === level).map((u) => {
+            <ul className="mt-5 flex flex-col gap-2">
+              {deck.units.map((u) => {
                 const Icon = icon(u.icon);
                 return (
-                  <ChoiceCard
+                  <li
                     key={u.id}
-                    selected={picked.includes(u.id)}
-                    onSelect={() => toggleUnit(u.id)}
-                    icon={<Icon size={18} aria-hidden />}
-                    title={u.title}
-                    titleLang="et"
-                    detail={`${u.subtitle} · ${u.words} words · ${u.cefr}`}
-                  />
+                    className="flex items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3"
+                    style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
+                  >
+                    <Icon size={18} aria-hidden style={{ color: "var(--accent-deep)" }} />
+                    <div className="min-w-0">
+                      <p lang="et" className="text-base font-semibold" style={{ color: "var(--ink)" }}>
+                        {u.title}
+                      </p>
+                      <p className="text-xs" style={{ color: "var(--ink-3)" }}>{u.subtitle}</p>
+                    </div>
+                  </li>
                 );
               })}
-            </ChoiceGroup>
+            </ul>
             <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-              {wordCount === 0
-                ? "Nothing selected. You can also start from the dictionary and add words as you meet them."
-                : `${wordCount} words, about ${wordCount * 2} cards to start with.`}
+              {deck.words} words, {deck.cards} cards.{" "}
+              {deck.remaining > 0 && (
+                <>The other {deck.remaining} units at {startBand}, and every other level, are on the
+                path whenever you want them. </>
+              )}
+              Nothing here is locked in.
             </p>
 
             {/*
@@ -538,7 +585,9 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               clicks, so a whole step for it was a step spent on the least
               consequential answer in the walkthrough.
             */}
-            <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            <div className="mt-7">
+              <SectionTitle hint="changeable any time in Settings">How much a day</SectionTitle>
+            </div>
             <ChoiceGroup ariaLabel="How much a day">
               {GOALS.map((g) => (
                 <ChoiceChip key={g.value} selected={goal === g.value} onSelect={() => setGoal(g.value)}>
@@ -546,10 +595,30 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
                 </ChoiceChip>
               ))}
             </ChoiceGroup>
-            <p className="mt-2.5 max-w-[60ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-              About {GOALS.find((g) => g.value === goal)?.detail ?? "five minutes a day"}. A card you
-              learn today costs roughly ten reviews over its first year, so setting this higher does
-              not make words arrive faster, it makes week six unbearable.
+            {/*
+              THE SENTENCE THIS SCREEN EXISTS TO GET RIGHT, AND IT WAS BACKWARDS.
+
+              It read "setting this higher does not make words arrive faster",
+              which is the opposite of what the app's own arithmetic does:
+              `sustainableNewCardsPerDay` is the goal divided by ten, so Intense
+              introduces four new cards a day where Casual introduces one. Four
+              times faster is not "no faster". The true half of it is the half
+              that got lost: a goal of fifteen is fifteen *reviews*, not fifteen
+              new words, because nine of every ten cards you answer are ones you
+              have already met. That is the thing nobody is told, and it is why
+              a beginner sets Intense in week one and meets two hundred due
+              cards in week six.
+
+              So it says both: what the pace buys, and what it costs, with the
+              number for this learner's own deck rather than a general warning.
+            */}
+            <p className="mt-2.5 max-w-[62ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+              {minutesFor(goal)} minutes a day, {daysPerWeek} days a week. That is {goal} cards to
+              answer, not {goal} new ones: about nine in ten will be words you have already met,
+              coming back at the moment you were starting to forget them. So these {deck.cards} cards
+              take roughly {weeksToLearn(deck.cards, goal, daysPerWeek)} weeks to work through, and a
+              faster setting really does bring them in faster. It also makes every day after this one
+              longer, for a year. Pick the one you would still open on a bad Wednesday.
             </p>
           </section>
         )}

@@ -37,7 +37,7 @@ const QUERY_MISS_TTL_MS = 10 * 60 * 1_000;
  *
  * No single source has everything, so each supplies what it is actually good at:
  *
- *   Ekilex      the full authoritative paradigm, CEFR level, verb government and
+ *   Ekilex      every authoritative form, CEFR level, verb government and
  *               an Estonian definition — but no English on a reader key
  *   Wiktionary  the English gloss Ekilex lacks, for most everyday vocabulary
  *   Anu         the remaining gaps, tagged as unverified because it is a guess
@@ -54,11 +54,11 @@ export interface LookupResult {
 }
 
 /**
- * Upgrades a locally-held word to Ekilex's authoritative paradigm.
+ * Upgrades a locally-held word to Ekilex's authoritative forms.
  *
  * The built-in dictionary is a warm start, not the truth: its forms are
  * hand-written and it holds only principal parts. The first time a seeded word is
- * actually looked at, we replace them with the real paradigm and keep the
+ * actually looked at, we replace them with the real forms and keep the
  * translation the learner already has. Every word she uses becomes authoritative;
  * words she never opens cost nothing.
  */
@@ -73,7 +73,7 @@ export interface LookupResult {
  * two of them in sequence, which means a slow minute upstream could hold a
  * dictionary render for half a minute with nothing on the screen. Measured
  * here, the upgrade normally takes about 1.4 seconds and every later visit to
- * the same word takes 35 milliseconds, because the paradigm is then stored.
+ * the same word takes 35 milliseconds, because the forms are then stored.
  *
  * Past this deadline the page renders what it has. Nothing is lost: the
  * request that was in flight still finishes and still writes its cache, and
@@ -135,7 +135,7 @@ async function runEnrich(lexemeId: string): Promise<boolean> {
   if (!lexeme) return false;
   // Typed in by hand — hers, not ours to overwrite.
   if (lexeme.provenance === "USER") return false;
-  // Already carries a retrieved paradigm.
+  // Already carries the forms Ekilex supplied.
   if (lexeme.ekilexWordId && lexeme.forms.length > 0) return false;
   /*
     Asked recently, and Ekilex had nothing. Not an error and not a permanent
@@ -285,7 +285,7 @@ async function runLookup(ownerId: string, query: string): Promise<LookupResult |
     ? await prisma.lexeme.update({ where: { id: existing.id }, data })
     : await prisma.lexeme.create({ data });
 
-  // Ekilex is authoritative, so its paradigm replaces whatever we held.
+  // Ekilex is authoritative, so its forms replace whatever we held.
   await prisma.form.deleteMany({ where: { lexemeId: lexeme.id } });
   await prisma.form.createMany({
     data: mapped.forms.map((f) => ({ ...f, lexemeId: lexeme.id })),
@@ -339,14 +339,14 @@ async function resolveTranslation(
     row behind saying so.
 
     A refusal reads exactly like the model not knowing the word, which is
-    correct here. The entry is written either way, with the full paradigm and
+    correct here. The entry is written either way, with every form and
     the Estonian definition, and the English left honestly blank for the
     learner to fill in. Nothing about a quota belongs on a dictionary entry.
   */
   const guess = await translateWithAnu(ownerId, lemma);
   if (guess.ok) return { translation: guess.text, source: "AI" };
 
-  // Better an honest blank than a wrong word: the entry still carries the full
-  // paradigm and the Estonian definition, and the learner can type the English.
+  // Better an honest blank than a wrong word: the entry still carries every
+  // form and the Estonian definition, and the learner can type the English.
   return { translation: NEEDS_TRANSLATION, source: "NONE" };
 }

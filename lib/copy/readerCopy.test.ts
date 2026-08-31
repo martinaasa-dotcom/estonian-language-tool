@@ -39,13 +39,19 @@ import { EM_DASH as EM, EMOJI, EN_DASH as EN, TELLS, findTells } from "./voice";
 /**
  * Files allowed to break one of these rules, which rule, and why.
  *
- * Per rule rather than per file, because the two exemptions here are not the
- * same exemption: the table has to name the characters it strips, and the
- * standard has to name the phrases it bans and show the copy it exists to
- * prevent. Neither has any business carrying a dash it did not mean, and
+ * Per rule rather than per file, because these exemptions are not the same
+ * exemption: the table has to name the characters it strips, and the standard
+ * has to name the phrases it bans and show the copy it exists to prevent.
+ * Neither has any business carrying a dash it did not mean, and
  * `docs/18-voice.md` is swept for one like anything else.
+ *
+ * `only` narrows it further, to the tells a file is excused for by name. That
+ * exists because the third entry is not a file about the voice at all: it
+ * parses somebody else's JSON, and one key of it is spelled with a word this
+ * table bans. Excusing that file from the whole list would have handed it
+ * every brochure word as well, for one key it does not own.
  */
-const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; why: string }>([
+const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; only?: string[]; why: string }>([
   [
     "lib/copy/voice.ts",
     {
@@ -60,11 +66,33 @@ const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; why: string }>([
       why: "Is the standard. It names every banned phrase and quotes the generated copy it exists to prevent.",
     },
   ],
+  [
+    "lib/ekilex/client.ts",
+    {
+      rules: ["tell"],
+      only: ["paradigm"],
+      why: "Types Ekilex's own response, and their key for a set of forms is the word this table bans. Renaming a key we do not own would be renaming their data rather than ours.",
+    },
+  ],
 ]);
 
-/** Whether a file is excused from one rule. */
+/**
+ * Whether a file is excused from a rule outright.
+ *
+ * A file excused from named tells only is not excused from the rule, which is
+ * what keeps the emoji sweep (the visual form of the same rule) reaching it.
+ */
 function excused(file: string, rule: "dash" | "tell"): boolean {
-  return ALLOWED.get(file)?.rules.includes(rule) ?? false;
+  const entry = ALLOWED.get(file);
+  if (!entry?.rules.includes(rule)) return false;
+  return rule === "dash" || entry.only === undefined;
+}
+
+/** Whether a file is excused from one tell, by that tell's name. */
+function excusedTell(file: string, name: string): boolean {
+  const entry = ALLOWED.get(file);
+  if (!entry?.rules.includes("tell")) return false;
+  return entry.only === undefined || entry.only.includes(name);
 }
 
 /**
@@ -175,8 +203,8 @@ function markdownProse(file: string): { line: number; text: string }[] {
  * a project whose own documentation is written in the voice it forbids on
  * screen is teaching the next person which of its rules are real. There were
  * 388 dashes behind that argument, and three of them were the `NO_VALUE` fault
- * from the source tree wearing a different hat: an empty cell in a paradigm
- * table, in the four-states table and in the degradation table, each written as
+ * from the source tree wearing a different hat: an empty cell in a table of
+ * forms, in the four-states table and in the degradation table, each written as
  * a bare dash that a mechanical sweep would have turned into a comma.
  */
 const MARKDOWN = ["CLAUDE.md", "README.md", ...sourceFiles("docs", /\.md$/)];
@@ -232,13 +260,143 @@ describe("copy reads as a person wrote it", () => {
     person to need one will add theirs beside it.
   */
   it("has no stale exception", () => {
-    const stale = [...ALLOWED.entries()].filter(([file, { rules }]) => {
+    const stale = [...ALLOWED.entries()].filter(([file, entry]) => {
       const source = readFileSync(file, "utf8");
-      const needsDash = source.includes(EM) || source.includes(EN);
-      const needsTell = findTells(source).length > 0;
-      return rules.some((r) => (r === "dash" ? !needsDash : !needsTell));
+      const found = findTells(source).map((t) => t.name);
+      return entry.rules.some((r) => {
+        if (r === "dash") return !(source.includes(EM) || source.includes(EN));
+        return entry.only ? !entry.only.some((n) => found.includes(n)) : found.length === 0;
+      });
     });
     expect(stale.map(([f]) => f)).toEqual([]);
+  });
+});
+
+/*
+  HOW MUCH OF IT THERE IS, WHICH IS THE OTHER WAY COPY STOPS BEING READ.
+
+  Everything above this point is about how a sentence sounds. Nothing in it can
+  see the fault that actually made this app feel like work: there were simply
+  too many good sentences. Thirty-nine dead ends each explained the whole
+  feature to somebody who could not use it yet, and the dictation screen spent
+  forty-one words on where Ekilex sentences come from, and why a sentence you
+  cannot hold in your head tests memory rather than listening, to a learner
+  whose deck was empty and who wanted the button. Every one of those sentences
+  passes every rule above.
+
+  So there is a ceiling, and it is deliberately generous rather than tight: a
+  dead end may say one line, and a page may introduce itself in one line. The
+  measured worst in the tree when this was written was 88 characters on both,
+  so these are not caps somebody has to fight, they are caps that catch the
+  paragraph coming back. What they cannot do is make a short sentence a good
+  one, which is `docs/18-voice.md`'s job as before.
+
+  Deliberately NOT capped: prose in the body of a screen, a grammar
+  explanation, the policy pages. A page whose subject is an explanation is
+  allowed to explain. What is capped is the furniture around the thing a
+  reader came for.
+*/
+
+/** A dead end gets one line. */
+const EMPTY_BODY_MAX = 100;
+/** A page introduces itself in one line. */
+const LEAD_MAX = 95;
+
+/**
+ * The value of a JSX prop, as the strings a reader could end up seeing.
+ *
+ * `body="..."` is one string; `body={a ? "..." : "..."}` is two, and both
+ * reach a reader, so both are measured. A template literal is measured with
+ * its holes standing in at two characters, which is what a count or a level
+ * renders as: the point is to catch a paragraph, not to argue about whether
+ * a card total is one digit or three.
+ */
+function propStrings(source: string, prop: string): string[] {
+  const out: string[] = [];
+  const re = new RegExp(`\\b${prop}=`, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(source))) {
+    let i = m.index + m[0].length;
+    if (source[i] === '"') {
+      const end = source.indexOf('"', i + 1);
+      if (end !== -1) out.push(source.slice(i + 1, end));
+      continue;
+    }
+    if (source[i] !== "{") continue;
+    // Walk the braced expression, skipping over anything inside a string so a
+    // brace in a style object or a `${}` hole cannot end it early.
+    let depth = 0;
+    const start = i;
+    let quote: string | null = null;
+    for (; i < source.length; i += 1) {
+      const c = source[i]!;
+      if (quote) {
+        if (c === "\\") i += 1;
+        else if (c === quote) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      else if (c === "{") depth += 1;
+      else if (c === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    const expr = source.slice(start + 1, i);
+    // A JSX child of its own is markup rather than copy, and this is not a
+    // parser. Anything holding a tag is left to a person to judge.
+    if (/<[A-Za-z]/.test(expr)) continue;
+    for (const lit of expr.match(/"[^"\\]*"|`[^`\\]*`/g) ?? []) {
+      out.push(lit.slice(1, -1).replace(/\$\{[^}]*\}/g, "NN"));
+    }
+  }
+  return out;
+}
+
+/** Every `<Empty ... />` block in a file, markup and all. */
+function emptyBlocks(source: string): string[] {
+  const out: string[] = [];
+  for (const m of source.matchAll(/<Empty\b/g)) {
+    const rest = source.slice(m.index);
+    const selfClose = rest.indexOf("/>");
+    const paired = rest.indexOf("</Empty>");
+    const end = selfClose !== -1 && (paired === -1 || selfClose < paired) ? selfClose + 2 : paired + 8;
+    if (end > 1) out.push(rest.slice(0, end));
+  }
+  return out;
+}
+
+describe("there is not too much of it", () => {
+  /*
+    The same argument the sweep above makes about itself. A budget that has
+    stopped finding the components it measures is a budget that passes
+    everything, and it would do that silently on the day somebody renames a
+    prop.
+  */
+  it("finds the dead ends and the page leads it is supposed to be measuring", () => {
+    const empties = FILES.flatMap((f) => emptyBlocks(readFileSync(f, "utf8")));
+    const leads = FILES.flatMap((f) => propStrings(readFileSync(f, "utf8"), "lead"));
+    expect(empties.length).toBeGreaterThan(30);
+    expect(leads.length).toBeGreaterThan(20);
+  });
+
+  it("gives a dead end one line, not a paragraph", () => {
+    const over = FILES.flatMap((f) =>
+      emptyBlocks(readFileSync(f, "utf8"))
+        .flatMap((block) => propStrings(block, "body"))
+        .filter((body) => body.length > EMPTY_BODY_MAX)
+        .map((body) => `${f}: ${body.length} chars: ${body.slice(0, 70)}`),
+    );
+    expect(over).toEqual([]);
+  });
+
+  it("lets a page introduce itself in one line", () => {
+    const over = FILES.flatMap((f) =>
+      propStrings(readFileSync(f, "utf8"), "lead")
+        .filter((lead) => lead.length > LEAD_MAX)
+        .map((lead) => `${f}: ${lead.length} chars: ${lead.slice(0, 70)}`),
+    );
+    expect(over).toEqual([]);
   });
 });
 
@@ -309,18 +467,22 @@ describe("nothing a reader sees is written in brochure", () => {
     so what she may not say is what a panel may not say.
   */
   it("says the plain thing, on every screen", () => {
-    const bad = FILES.filter((f) => !excused(f, "tell")).flatMap((f) =>
+    const bad = FILES.flatMap((f) =>
       readerFacingLines(f).flatMap((l) =>
-        findTells(l.text).map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
+        findTells(l.text)
+          .filter((t) => !excusedTell(f, t.name))
+          .map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
       ),
     );
     expect(bad).toEqual([]);
   });
 
   it("says the plain thing in the README and the docs too", () => {
-    const bad = MARKDOWN.filter((f) => !excused(f, "tell")).flatMap((f) =>
+    const bad = MARKDOWN.flatMap((f) =>
       markdownProse(f).flatMap((l) =>
-        findTells(l.text).map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
+        findTells(l.text)
+          .filter((t) => !excusedTell(f, t.name))
+          .map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
       ),
     );
     expect(bad).toEqual([]);
@@ -374,7 +536,7 @@ describe("the voice table catches what it claims to and nothing else", () => {
       "At the end of the day, practice is what matters.",
       "Great question! The partitive is used here.",
       "In conclusion, keep reviewing every day.",
-      "Moreover, the genitive stem carries the whole paradigm.",
+      "Moreover, the genitive stem carries the whole set of forms.",
       "This is not just a rule, but a pattern you will see everywhere.",
       "Estonian is more than just a language.",
       "Let's delve into the partitive.",
@@ -384,6 +546,7 @@ describe("the voice table catches what it claims to and nothing else", () => {
       "Whether you're a beginner or an advanced speaker, we've got you covered.",
       "Amazing work! That was fantastic.",
       "As an AI, I cannot be certain about that form.",
+      "Learn the genitive and the rest of the paradigm follows.",
     ];
     for (const line of generated) {
       expect(findTells(line).map((t) => t.name), `nothing caught: ${line}`).not.toEqual([]);
@@ -399,7 +562,7 @@ describe("the voice table catches what it claims to and nothing else", () => {
       "Not just answered right once.",
       "The perfect tense is taisminevik, and it is built on the tud-participle.",
       "Six days in a row. Your longest run so far.",
-      "We could not reach Ekilex, so this word has no paradigm yet.",
+      "We could not reach Ekilex, so this word has no forms yet.",
       "Fill in what you know. The genitive alone unlocks all eleven regular cases.",
     ];
     for (const line of written) {

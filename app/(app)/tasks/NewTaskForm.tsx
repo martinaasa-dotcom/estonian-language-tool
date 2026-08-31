@@ -43,7 +43,7 @@ export function NewTaskForm() {
           the time the action's response carries it and the list updates; twice
           in CI it did not, and a task that was saved was not on the screen
           fifteen seconds later, which for the reader is a task they have to
-          type again. ClassForms, WeekPicker and AddUnitButton all ask for it
+          type again. ClassForms and WeekPicker both ask for it
           out loud after a write; this form was the one that did not.
         */
         router.refresh();

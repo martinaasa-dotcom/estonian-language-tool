@@ -189,7 +189,7 @@ holds `kallis` as a NOUN, and a reseed looking for the ADJECTIVE finds no confli
 second one beside it. `applyPosCorrections` repoints the existing row instead, before anything else
 the seed does and before the early return a normal deploy takes, so the correction reaches the
 deployments that need it and skips the ones that do not. It writes no content: the translation, the
-paradigm, the examples and the provenance are the ones that were already there, the row keeps its
+forms, the examples and the provenance are the ones that were already there, the row keeps its
 id, and every card and review still points at it.
 
 **What was deliberately not changed**, on the same reasoning as §4. `rõõmus` is headed

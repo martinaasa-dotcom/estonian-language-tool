@@ -62,12 +62,28 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
               opacity: isSuspended ? 0.7 : 1,
             }}
           >
-            <div className="min-w-0 flex-1">
+            {/*
+              A FLOOR, NOT JUST `min-w-0`.
+
+              The row wraps and the actions keep their own width, so with only
+              `flex-1` the text side is whatever is left: 110px on a 360px
+              phone, which broke `aatomipomm` across two lines and stacked
+              "Estonian" over the arrow and "English". Every row was four lines
+              tall and the word, which is the thing you are looking for, was the
+              hardest part of it to read.
+
+              A basis of 13rem is more than the actions and the text can share
+              at that width, so the actions take a line of their own and the
+              word gets the first one. It is inside a 280px card at its
+              narrowest, so nothing leaves the box, and above `sm` there is room
+              for both and the row is one line again.
+            */}
+            <div className="min-w-0 flex-1 basis-52">
               <p className="flex flex-wrap items-baseline gap-2">
                 <Link
                   href={`/dictionary?q=${encodeURIComponent(word)}`}
                   lang="et"
-                  className="est text-md font-semibold hover:underline"
+                  className="text-md font-semibold hover:underline"
                   style={{ color: "var(--ink)" }}
                 >
                   {word}

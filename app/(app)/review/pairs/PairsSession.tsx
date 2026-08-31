@@ -116,7 +116,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   if (audioFailed) {
     return (
       <div className="mx-auto max-w-lg px-5 py-20 text-center">
-        <h1 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+        <h1 className="text-xl font-bold" style={{ color: "var(--ink)" }}>
           No audio, no drill
         </h1>
         <p className="mx-auto mt-2 max-w-[44ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -135,7 +135,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
     const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
@@ -224,9 +224,19 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
               const tone = !revealed
                 ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
                 : isAnswer
-                  ? { background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }
+                  /*
+                    The ink, not the hue. `--good` set as text on `--good-soft`
+                    measures 2.23:1 on the light theme and `--again` on its own
+                    tint 2.50:1, which is what the token block in globals.css
+                    says will happen: the five hues are chosen to read as
+                    colour at full strength, and every one of them has an ink
+                    for the case where it has to be read as words instead.
+                    Dark is unaffected either way, since there the ink is the
+                    hue.
+                  */
+                  ? { background: "var(--good-soft)", color: "var(--good-ink)", borderColor: "transparent" }
                   : isPicked
-                    ? { background: "var(--again-soft)", color: "var(--again)", borderColor: "transparent" }
+                    ? { background: "var(--again-soft)", color: "var(--again-ink)", borderColor: "transparent" }
                     : { background: "transparent", color: "var(--ink-3)", borderColor: "var(--rule-soft)" };
 
               return (
@@ -238,10 +248,14 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                   className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
+                  {/* Neither of these fades any more. The key hint is one
+                      character, which axe declines to rule on, and it measured
+                      1.62 to 4.12; the gloss under the word measured 1.90 to
+                      3.85 once the tone above it was corrected. */}
+                  <kbd className="tnum text-2xs">{i + 1}</kbd>
                   <span className="min-w-0">
-                    <span lang="et" className="est block text-[19px] font-semibold">{option.value}</span>
-                    <span className="block text-[12.5px] opacity-80">
+                    <span lang="et" className="block text-[19px] font-semibold">{option.value}</span>
+                    <span className="block text-[12.5px]">
                       {option.formLabel} of {option.lemma} · {option.translation}
                     </span>
                   </span>
@@ -264,14 +278,14 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {question.options.map((o) => (
                 <span key={o.value} className="flex items-center gap-1.5">
-                  <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{o.value}</span>
+                  <span lang="et" className="text-[15px]" style={{ color: "var(--ink)" }}>{o.value}</span>
                   <Speak text={o.value} />
                 </span>
               ))}
             </div>
             <div className="mt-4">
               <Button variant="primary" onClick={next} autoFocus>
-                Next <kbd className="ml-1 opacity-70">↵</kbd>
+                Next <kbd className="ml-1">↵</kbd>
               </Button>
             </div>
           </div>

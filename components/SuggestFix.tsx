@@ -186,7 +186,7 @@ export function SuggestFix({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+          <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>
             Tell the Kodukeel team
           </p>
           <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>
@@ -326,7 +326,7 @@ export function SuggestFix({
             value={sentence}
             onChange={(e) => setSentence(e.target.value)}
             lang="et"
-            className="est w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+            className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           >
             {examples.map((s) => (

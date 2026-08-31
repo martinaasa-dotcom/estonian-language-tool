@@ -27,7 +27,23 @@ export function Confetti({ count = 60 }: { count?: number }) {
       {pieces.map((p) => (
         <span
           key={p.id}
-          className="absolute top-[-12px] block h-2.5 w-1.5 rounded-[1px]"
+          /*
+            2px rather than 1px, and rather than a token.
+
+            A piece is 10px by 6px, so `--r-sm` at 10px would round it into a
+            dot and the burst would read as bubbles. That is the same argument
+            the heatmap cell makes for its own corners
+            (docs/14-design-system.md), and 2px is the value already granted
+            for it, so this reuses that exception instead of asking the design
+            system to carry a second sub-token number. At six pixels wide the
+            two are indistinguishable.
+
+            It was not caught for a long time because it is only ever on screen
+            for a second and a half, and only after somebody earns something:
+            `test-design.mjs` reads the rendered radius, so it saw this the
+            first time a run happened to have a badge toast open.
+          */
+          className="absolute top-[-12px] block h-2.5 w-1.5 rounded-[2px]"
           style={{
             left: `${p.left}%`,
             background: p.color,

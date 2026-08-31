@@ -7,6 +7,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Recorder } from "@/components/Recorder";
 import { Speak } from "@/components/Speak";
 import { Chip, Note } from "@/components/ui";
+import { BLANK } from "@/lib/estonian/cloze";
 import { gradeChoice, gradeDictation, gradeWrite } from "@/lib/assessment/score";
 import type { ChoiceItem, DictationItem, Item, SpeakItem, WriteItem } from "@/lib/assessment/types";
 import type { WordStatus } from "@/lib/estonian/dictation";
@@ -43,10 +44,46 @@ const WORD_TONE: Record<WordStatus, { background: string; color: string; title: 
 /** The provenance line. Every Estonian string on screen says where it is from. */
 const SOURCE_LABEL: Record<Item["source"], string> = {
   dictionary: "From the dictionary",
-  ekilex: "Paradigm from Ekilex",
+  ekilex: "A form from Ekilex",
   derived: "Computed from the genitive stem",
   usage: "A sentence recorded by a lexicographer",
 };
+
+/**
+ * A sentence with a hole in it, or a plain one.
+ *
+ * The blank is drawn rather than spelled, because four underscores in the
+ * middle of a line of Estonian read as a rendering fault. It is the one place
+ * on these screens where the accent is carrying meaning rather than decorating,
+ * so it says what it is to a screen reader too: the run is announced as "blank"
+ * instead of as whatever four underscores are pronounced as.
+ *
+ * A whole sentence is set smaller than a single word. Both used to be `3xl`,
+ * which is right for `aken` on its own and is most of a phone screen for a
+ * sentence.
+ */
+export function EstonianPrompt({ text }: { text: string }) {
+  const parts = text.split(BLANK);
+  const size = text.includes(" ") ? "text-2xl" : "text-3xl";
+  return (
+    <p lang="et" className={`mt-5 ${size} font-bold leading-snug`} style={{ color: "var(--ink)" }}>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 && (
+            <span
+              className="mx-0.5 inline-block rounded-[var(--r-sm)] px-3 align-baseline"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+            >
+              <span className="sr-only">blank</span>
+              <span aria-hidden>&nbsp;&nbsp;&nbsp;</span>
+            </span>
+          )}
+          {part}
+        </span>
+      ))}
+    </p>
+  );
+}
 
 export function Provenance({ source }: { source: Item["source"] }) {
   return (
@@ -125,9 +162,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
           </span>
         </div>
       ) : item.et ? (
-        <p lang="et" className="est mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
-          {item.et}
-        </p>
+        <EstonianPrompt text={item.et} />
       ) : null}
 
       {silent && (
@@ -167,7 +202,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
               </span>
               <span
                 lang={item.estonianOptions ? "et" : undefined}
-                className={`min-w-0 flex-1 text-base ${item.estonianOptions ? "est font-semibold" : ""}`}
+                className={`min-w-0 flex-1 text-base ${item.estonianOptions ? "font-semibold" : ""}`}
                 style={{ color: "var(--ink)" }}
               >
                 {option}
@@ -188,7 +223,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
             sentence is Estonian would have it read the English with Estonian
             phonics, which is worse than leaving the two words unmarked.
           */}
-          <p className="est mt-3 text-base" style={{ color: "var(--ink-2)" }}>{item.because}</p>
+          <p className="mt-3 text-base" style={{ color: "var(--ink-2)" }}>{item.because}</p>
           <Provenance source={item.source} />
           <Button
             variant="primary"
@@ -288,7 +323,7 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
                   key={`${word.expected ?? word.typed ?? ""}-${i}`}
                   lang="et"
                   title={tone.title}
-                  className="est rounded-[var(--r-sm)] px-2 py-1 text-base"
+                  className="rounded-[var(--r-sm)] px-2 py-1 text-base"
                   style={{ background: tone.background, color: tone.color }}
                 >
                   {word.expected ?? word.typed}
@@ -296,7 +331,7 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
               );
             })}
           </div>
-          <p lang="et" className="est mt-4 text-base" style={{ color: "var(--ink-2)" }}>{item.et}</p>
+          <p lang="et" className="mt-4 text-base" style={{ color: "var(--ink-2)" }}>{item.et}</p>
           <Provenance source={item.source} />
           <Button variant="primary" size="lg" className="mt-5" autoFocus onClick={() => onAnswer({ credit: mark.credit })}>
             Next question
@@ -318,25 +353,27 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
   return (
     <div>
       <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.question}</p>
-      <p className="mt-3 text-base" style={{ color: "var(--ink-3)" }}>
-        The {item.caseEn.toLowerCase()} (<span lang="et" className="est">{item.caseEt}</span>) answers{" "}
-        <span lang="et" className="est">{item.caseQuestion}</span>
+      <p className="mt-2 text-lg" style={{ color: "var(--ink-2)" }}>
+        <span lang="et" className="font-bold" style={{ color: "var(--ink)" }}>{item.lemma}</span>
+        <span className="text-base" style={{ color: "var(--ink-3)" }}> means {item.translation}</span>
       </p>
+
+      <EstonianPrompt text={item.sentence} />
 
       {mark === null ? (
         <div className="mt-6">
           <EstonianInput
             value={text}
             onChange={setText}
-            ariaLabel="Your sentence"
-            placeholder="Write a whole sentence"
+            ariaLabel="The missing word"
+            placeholder="One word"
             large
             autoFocus
             onEnter={() => setMark(gradeWrite(item, text))}
           />
           <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-            Marked on one thing only: whether the right form is in your sentence. That check is a
-            string comparison against the dictionary, so no AI is involved and none is needed.
+            Marked against the word a lexicographer put in this sentence, by string comparison, so
+            no AI is involved and none is needed.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button variant="primary" size="lg" onClick={() => setMark(gradeWrite(item, text))}>
@@ -350,7 +387,13 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
       ) : (
         <div className="pop-in mt-6">
           <Chip tone={mark.credit === 1 ? "good" : mark.credit > 0 ? "hard" : "again"}>{mark.note}</Chip>
-          <p lang="et" className="est mt-4 text-2xl font-bold" style={{ color: "var(--ink)" }}>{item.targetForm}</p>
+          {/*
+            The sentence put back together is the answer to "why that form", so
+            it is what the screen shows rather than the form on its own.
+          */}
+          <p lang="et" className="mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
+            {item.full}
+          </p>
           <Provenance source={item.source} />
           <Button variant="primary" size="lg" className="mt-5" autoFocus onClick={() => onAnswer({ credit: mark.credit })}>
             Next question
@@ -390,7 +433,7 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
       <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.question}</p>
       <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>{item.translation}</p>
 
-      <p lang="et" className="est mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
+      <p lang="et" className="mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
         {item.et}
       </p>
 

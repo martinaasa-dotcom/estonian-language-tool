@@ -120,7 +120,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="est text-lg font-semibold" style={{ color: "var(--ink)" }}>
+        <h2 className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
           {edit ? `Edit ${edit.lemma}` : "Add a word"}
         </h2>
         <button type="button" onClick={() => setOpen(false)} className="text-xs" style={{ color: "var(--ink-3)" }}>
@@ -135,7 +135,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
             value={lemma}
             onChange={(e) => setLemma(e.target.value)}
             placeholder="sõna"
-            className="est rounded-md border px-3 py-2 text-md"
+            className="rounded-md border px-3 py-2 text-md"
             style={field}
           />
         </label>
@@ -197,7 +197,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
                   value={forms[key] ?? ""}
                   onChange={(e) => setForm(key, e.target.value)}
                   placeholder={example}
-                  className="est rounded-md border px-2.5 py-1.5 text-base"
+                  className="rounded-md border px-2.5 py-1.5 text-base"
                   style={field}
                 />
               </label>

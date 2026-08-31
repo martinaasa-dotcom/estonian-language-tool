@@ -12,7 +12,7 @@ import { Mascot } from "@/components/brand";
 import { SpeakPair } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { xpForRating } from "@/lib/gamification/xp";
-import { RATINGS, type RatingValue } from "@/lib/srs/scheduler";
+import { SELF_GRADES, type RatingValue } from "@/lib/srs/scheduler";
 
 export interface SpeakingCard {
   cardId: string;
@@ -104,7 +104,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
       <Page title="Speaking" lead="Say it out loud, then hear a native voice say the same thing.">
         <Empty
           title="Nothing to say yet"
-          body="Speaking practice draws on the words already in your deck. Add a unit from the path and come back."
+          body="This draws on the words already in your deck."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>
@@ -117,7 +117,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Well spoken
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -199,7 +199,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 px-6 py-10 text-center" aria-live="polite">
           <div>
             <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Say this in Estonian</p>
-            <p className="est text-2xl font-bold leading-snug tracking-tight md:text-3xl" style={{ color: "var(--ink)" }}>
+            <p className="text-2xl font-bold leading-snug tracking-tight md:text-3xl" style={{ color: "var(--ink)" }}>
               {card.prompt}
             </p>
           </div>
@@ -211,7 +211,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
                 className="pop-in flex flex-wrap items-center justify-center gap-2 rounded-[var(--r-lg)] px-5 py-4"
                 style={{ background: "var(--accent-soft)" }}
               >
-                <p lang="et" className="est text-2xl font-semibold md:text-2xl" style={{ color: "var(--accent-deep)" }}>
+                <p lang="et" className="text-2xl font-semibold md:text-2xl" style={{ color: "var(--accent-deep)" }}>
                   {card.et}
                 </p>
                 <SpeakPair text={card.et} size={17} />
@@ -231,18 +231,22 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
               I said it, show me
             </Button>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {RATINGS.map((r) => (
+            /* Two, from the one table in lib/srs/scheduler.ts. Nothing here can
+               mark a recording (ADR-018), so the learner is the judge, and the
+               four they were offered asked them to sort their own pronunciation
+               into a scheduler's grades. Whether it sounded like the native
+               rendering has two answers. */
+            <div className="grid grid-cols-2 gap-2.5">
+              {SELF_GRADES.map((g) => (
                 <button
-                  key={r.value}
+                  key={g.rating}
                   type="button"
                   disabled={busy}
-                  onClick={() => void submit(r.value as RatingValue)}
-                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                  style={{ background: TONE_SOFT[r.value], color: TONE[r.value] }}
+                  onClick={() => void submit(g.rating)}
+                  className="press flex items-center justify-center rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
+                  style={{ background: TONE_SOFT[g.rating], color: TONE[g.rating] }}
                 >
-                  <span className="text-base font-bold">{r.label}</span>
-                  <span className="text-2xs opacity-80">{r.hint}</span>
+                  <span className="text-base font-bold">{g.label}</span>
                 </button>
               ))}
             </div>

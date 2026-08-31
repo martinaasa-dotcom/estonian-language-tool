@@ -114,7 +114,7 @@ export function InstallPrompt() {
         <Download size={18} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="est text-base font-bold" style={{ color: "var(--ink)" }}>
+        <p className="text-base font-bold" style={{ color: "var(--ink)" }}>
           Keep Kodukeel on your home screen
         </p>
         <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>

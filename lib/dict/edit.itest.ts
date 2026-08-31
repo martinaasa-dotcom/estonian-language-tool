@@ -26,7 +26,7 @@ async function wipe() {
   await prisma.card.deleteMany({ where: { ownerId: { in: [MINE, THEIRS] } } });
 }
 
-/** A word as Ekilex leaves it: principal parts plus a retrieved paradigm. */
+/** A word as Ekilex leaves it: principal parts plus the retrieved forms. */
 async function seedWord() {
   const lexeme = await prisma.lexeme.create({
     data: {
@@ -75,9 +75,9 @@ describe("correcting a shared dictionary entry", () => {
     expect(genitive?.value).toBe("toa-corrected");
   });
 
-  it("does not destroy the Ekilex paradigm", async () => {
+  it("does not destroy the forms Ekilex supplied", async () => {
     // The old code deleted every form for the lexeme and rebuilt from what one
-    // person typed, throwing away the retrieved paradigm for everybody.
+    // person typed, throwing away the retrieved forms for everybody.
     const lexeme = await seedWord();
 
     await prisma.form.deleteMany({
@@ -116,7 +116,7 @@ describe("correcting a shared dictionary entry", () => {
   });
 
   it("keeps an Ekilex entry marked as Ekilex's after a correction", async () => {
-    // Relabelling it USER would quietly discard where the paradigm came from.
+    // Relabelling it USER would quietly discard where the forms came from.
     const lexeme = await seedWord();
     expect(lexeme.provenance).toBe("EKILEX");
     await prisma.lexeme.update({

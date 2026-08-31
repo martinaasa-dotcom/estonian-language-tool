@@ -15,11 +15,13 @@ import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { BLANK } from "@/lib/estonian/cloze";
+import { splitOnForm } from "@/lib/dict/examples";
 import { xpForRating } from "@/lib/gamification/xp";
 import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
 import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
-import { previewIntervals, RATINGS, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { AI_TAG } from "@/lib/copy/values";
 
 export interface ReviewCard {
   id: string;
@@ -30,6 +32,17 @@ export interface ReviewCard {
   targetCase: string | null;
   lemma: string | null;
   isNew: boolean;
+  /**
+   * What to show the first time this word is met, assembled by the page out of
+   * the dictionary. Null on a card that has been seen, and on the rare card
+   * with no dictionary entry behind it.
+   */
+  intro: {
+    lemma: string;
+    gloss: string;
+    /** An attested sentence, and which form of the word it carries. */
+    sentence: { et: string; en: string | null; form: string | null } | null;
+  } | null;
   /** Four options including the right one, when this card can be asked as multiple choice. */
   choices: string[] | null;
   scheduling: Omit<SchedulingState, "due" | "lastReview"> & { due: string; lastReview: string | null };
@@ -43,6 +56,7 @@ const TONE: Record<number, string> = {
 const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
 };
+
 
 /**
  * "Why?", at the only moment anyone asks it.
@@ -87,6 +101,90 @@ function WhyRow({ card }: { card: ReviewCard }) {
   );
 }
 
+/**
+ * A word's first outing: what it means, and it doing its job in a sentence
+ * somebody actually wrote.
+ *
+ * What stood here was the answer, a line of instructions, and the four grading
+ * buttons every other card carries. `askFor` had already worked out that this
+ * is wrong and says so in its own comment: a card you have never seen cannot be
+ * recalled, only met. It then handed over Again, Hard, Good and Easy anyway, so
+ * the screen asked how well a memory had held up four seconds after admitting
+ * there was no memory yet, and Easy scheduled the word a week out.
+ *
+ * So a first meeting teaches instead. The sentence is the part that does the
+ * work: a gloss makes a word a label, and a word in a sentence is a word you
+ * have seen behave. It is attested Estonian picked by `teachingSentence`, with
+ * the form the card is about to ask for marked in it, and nothing here is
+ * written or derived (ADR-005).
+ */
+function MeetWord({ card }: { card: ReviewCard }) {
+  const lemma = card.intro?.lemma ?? card.lemma ?? card.front;
+  const gloss = card.intro?.gloss ?? (card.cardType === "RECOGNITION" ? card.back : "");
+  const sentence = card.intro?.sentence ?? null;
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <p lang="et" className="text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+          {lemma}
+        </p>
+        <Speak text={lemma} />
+      </div>
+      {gloss && <p className="text-base" style={{ color: "var(--ink-2)" }}>{gloss}</p>}
+
+      <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
+
+      {sentence ? (
+        <div className="w-full max-w-md rounded-[var(--r)] px-4 py-3.5 text-left" style={{ background: "var(--raised)" }}>
+          <div className="flex items-start gap-2">
+            <p lang="et" className="flex-1 text-lg font-semibold leading-snug" style={{ color: "var(--ink)" }}>
+              {splitOnForm(sentence.et, sentence.form).map((run, i) => (
+                run.match
+                  ? <mark key={i} className="bg-transparent font-bold" style={{ color: "var(--accent-deep)" }}>{run.text}</mark>
+                  : <span key={i}>{run.text}</span>
+              ))}
+            </p>
+            <Speak text={sentence.et} label="Hear the sentence" />
+          </div>
+          {sentence.en && (
+            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
+              {sentence.en}
+              <Chip tone="again">{AI_TAG}</Chip>
+            </p>
+          )}
+          <p className="mt-2 text-2xs" style={{ color: "var(--ink-3)" }}>
+            Attested sentence, from Ekilex. Read it out loud.
+          </p>
+        </div>
+      ) : (
+        /* No sentence, said plainly. The dictionary carries examples for most
+           words and not for all of them, and a screen that quietly shows a word
+           on its own looks exactly like one that had nothing to say about it.
+           No report button: an absence is not a dead end, the word and its
+           meaning and its audio are all still here, and the nearest category
+           this app has covers an example that is *wrong* rather than one that
+           is missing. */
+        <p className="max-w-[38ch] text-sm" style={{ color: "var(--ink-3)" }}>
+          No example sentence for this one yet. Say it out loud a couple of times.
+        </p>
+      )}
+
+      {/* What this particular card will want back, once it starts asking. On a
+          recognition card that is the word and its meaning, which is the whole
+          screen already, so it would only be saying it twice. */}
+      {card.cardType !== "RECOGNITION" && (
+        <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+          Next time this card asks:{" "}
+          <span lang={estonianSide(card.cardType, "front") ? "et" : "en"} className="font-semibold">
+            {card.front}
+          </span>
+        </p>
+      )}
+    </>
+  );
+}
+
 const TYPE_LABEL: Record<string, string> = {
   RECOGNITION: "Estonian → English",
   PRODUCTION: "English → Estonian",
@@ -94,6 +192,7 @@ const TYPE_LABEL: Record<string, string> = {
   GRADATION: "Gradation",
   GOVERNMENT: "Verb government",
   CLOZE: "Fill the gap",
+  CONJUGATION: "Verb form",
 };
 
 /** Cards whose front or back is Estonian and therefore worth hearing. */
@@ -168,6 +267,25 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const card = queue[index];
   const finished = !card;
   const ask = card ? askFor(card, mode) : "flip";
+
+  /*
+    Whether the answer is on the screen, which is not the same question as
+    whether the learner turned it over.
+
+    A new card leads with its answer (`askFor`, "a card you have never seen
+    cannot be recalled, only met"), so `intro` arrives with the answer already
+    printed and the rating buttons already drawn. `revealed` stays false for
+    it, because nothing was revealed.
+
+    The render worked that out in four places and spelled it out in each of
+    them; the keyboard handler is where the fifth copy should have been and
+    was not, so it read `!revealed` and returned before the rating keys. The
+    rating buttons sat on screen, the mouse graded the card and the number
+    keys did nothing at all, on the one shape a learner meets every time they
+    start a new word. Naming it once is what stops a sixth reader getting it
+    wrong the same way.
+  */
+  const answerShown = revealed || ask === "intro";
 
   // Draining the queue is the provider's job, not this screen's — it has to keep
   // happening on pages that are not a review session. Here we only report it.
@@ -312,7 +430,15 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     if (result.verdict === "wrong" && typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(60);
     }
-  }, [card, typed, verdict]);
+    // Right answers move on by themselves, the way a picked choice already
+    // does. Typing the word correctly and then being asked to confirm that you
+    // typed the word correctly is a click on the most common outcome in the
+    // app. A miss keeps its screen: that is the one moment worth stopping at,
+    // and the correction needs reading before anything moves.
+    if (result.verdict === "correct") {
+      window.setTimeout(() => void submit(result.suggestedRating), 420);
+    }
+  }, [card, typed, verdict, submit]);
 
   const pickChoice = useCallback((choice: string) => {
     if (!card || chosen) return;
@@ -360,15 +486,18 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         // set — and would grade the card before it had been read.
         if (typing) return;
         e.preventDefault();
+        if (ask === "intro") { void submit(3); return; }
         if (ask === "type" && !verdict) { checkTyped(); return; }
         if (ask === "type" && verdict) { void submit(verdict.suggestedRating); return; }
-        if (ask === "choice") return; // choices are picked, not flipped
+        // A right pick grades itself on a timer; a wrong one waits here.
+        if (ask === "choice") { if (chosen && chosen !== card?.back) void submit(1); return; }
         if (!revealed) setRevealed(true);
         else void submit(3);
         return;
       }
 
       if (typing) return;
+      if (ask === "intro") return;
       if (ask === "choice" && !chosen && card?.choices) {
         const n = Number(e.key);
         if (n >= 1 && n <= card.choices.length) {
@@ -378,12 +507,17 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         return;
       }
       if (!revealed) return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= 4) { e.preventDefault(); void submit(n as RatingValue); }
+      // Only on a flip card, and only the two digits the buttons carry. On a
+      // typed or picked card the mark has already been made, so a stray digit
+      // must not overrule it: 4 used to grade any revealed card Easy, whatever
+      // the app had just decided about the answer.
+      if (ask !== "flip") return;
+      const chosenGrade = SELF_GRADES.find((g) => g.key === e.key);
+      if (chosenGrade) { e.preventDefault(); void submit(chosenGrade.rating); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
+  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
 
   if (wasEmptyAtStart) {
     return (
@@ -391,7 +525,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         {drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}
-            body="Case-form cards are optional when you add a word, tick 'Case form' in the dictionary, or start a noun unit on the path, and they will show up here."
+            body="Tick &lsquo;Case form&rsquo; when you add a word, or start a noun unit on the path."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : drillUnit ? (
@@ -411,13 +545,13 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         ) : totalCards === 0 ? (
           <Empty
             title="No cards yet"
-            body="Start a unit on the path, or add words from the dictionary. Two cards are made per word, one each direction."
+            body="Start a unit on the path, or add words from the dictionary."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : (
           <Empty
             title="Nothing due, you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early doesn't help memory, so this is the app telling you to stop.`}
+            body={`All ${totalCards} cards are scheduled for later. Reviewing early does not help.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
         )}
@@ -432,7 +566,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={72} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -533,6 +667,9 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           className="pop-in flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-11 text-center md:min-h-[320px]"
           aria-live="polite"
         >
+          {ask === "intro" && <MeetWord card={card} />}
+
+          {ask !== "intro" && (
           <div className="flex items-center gap-2">
             <p
               lang={frontLang}
@@ -540,8 +677,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 // A gap-fill prompt is a whole sentence: at flashcard size it
                 // wraps to four lines and stops being readable at a glance.
                 card.cardType === "CLOZE"
-                  ? "est text-xl font-semibold leading-snug tracking-tight md:text-2xl"
-                  : "est text-3xl font-bold leading-tight tracking-tight md:text-4xl"
+                  ? "text-xl font-semibold leading-snug tracking-tight md:text-2xl"
+                  : "text-3xl font-bold leading-tight tracking-tight md:text-4xl"
               }
               style={{ color: "var(--ink)" }}
             >
@@ -554,8 +691,9 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
               <Speak text={card.lemma ?? card.front} />
             )}
           </div>
+          )}
 
-          {card.hint && !revealed && ask !== "intro" && (
+          {card.hint && !answerShown && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
           )}
 
@@ -591,7 +729,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
               </p>
               {typed.trim() && verdict.verdict !== "correct" && (
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                  You typed <span lang={backLang} className="est">{typed.trim()}</span>
+                  You typed <span lang={backLang}>{typed.trim()}</span>
                 </p>
               )}
               {/*
@@ -667,7 +805,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </div>
           )}
 
-          {(revealed || ask === "intro") && ask !== "choice" && (
+          {revealed && ask !== "choice" && (
             <>
               <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
               {card.cardType === "CLOZE" ? (
@@ -675,7 +813,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                    so the reveal puts the word back where it came from and reads
                    the whole thing aloud. */
                 <div className="flex flex-col items-center gap-2">
-                  <p lang="et" className="est text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
                     {card.front.split(BLANK)[0]}
                     <span style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
                     {card.front.split(BLANK)[1]}
@@ -686,7 +824,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 <div className="flex items-center gap-2">
                   <p
                     lang={backLang}
-                    className="est text-2xl font-bold md:text-3xl"
+                    className="text-2xl font-bold md:text-3xl"
                     style={{ color: "var(--accent-deep)" }}
                   >
                     {card.back}
@@ -699,61 +837,98 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </>
           )}
 
-          {ask === "intro" && (
-            <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
-              First time seeing this one, read it, say it, then tell the scheduler how well it stuck.
-            </p>
-          )}
-
-          {(revealed || chosen) && <WhyRow card={card} />}
+          {/* A first meeting carries these too. "What is the kaasaütlev?" is a
+              question somebody has the moment they first see one, and the
+              screen that introduces the form is the obvious place to answer
+              it. */}
+          {(revealed || chosen || ask === "intro") && <WhyRow card={card} />}
         </div>
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
-          {ask === "type" && !verdict ? (
+          {/*
+            WHO DECIDES WHETHER THE ANSWER WAS RIGHT.
+
+            Four buttons used to sit here on every card in the app, and on most
+            of them they were asking a question the app had already answered.
+            `checkAnswer` compares what was typed against a form the dictionary
+            vouches for and returns the rating to use; a multiple choice is
+            right or it is not. The screen took that verdict, drew a ring round
+            one of the four buttons, and waited for somebody to press it anyway.
+
+            So the rule is: the app marks what it can mark, and the learner is
+            asked only about what it cannot. A flip card is the one shape with
+            nothing to compare, and there it is two buttons rather than four,
+            because "how well did that go" has two honest answers and the middle
+            two were guesses about a scheduler nobody can see.
+
+            RATINGS still carries all four values and `submit` still takes any
+            of them: the log, undo and the offline replay are unchanged, and
+            Hard is still what a near miss is graded. What went is the asking.
+          */}
+          {ask === "intro" ? (
+            <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(3)} disabled={busy}>
+              Got it, next
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+                Space
+              </kbd>
+            </Button>
+          ) : ask === "type" && !verdict ? (
             <Button variant="primary" size="lg" className="w-full" onClick={checkTyped}>
               Check
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
+                Enter
+              </kbd>
+            </Button>
+          ) : ask === "type" && verdict ? (
+            /* Marked already. A clean hit takes itself away (see `checkTyped`),
+               so what reaches here is a miss, and a miss is the one moment in a
+               review worth slowing down for: the correction is on screen and
+               this button is an acknowledgement, not a grade. */
+            <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(verdict.suggestedRating)} disabled={busy}>
+              Got it, next
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
                 Enter
               </kbd>
             </Button>
           ) : ask === "choice" && !chosen ? (
             <p className="text-center text-xs" style={{ color: "var(--ink-3)" }}>
-              Pick the meaning · keys 1, {card.choices?.length ?? 4}
+              Pick the meaning · keys 1 to {card.choices?.length ?? 4}
             </p>
           ) : ask === "choice" && chosen === card.back ? (
             <p className="text-center text-sm font-semibold" style={{ color: "var(--good-ink)" }}>Õige!</p>
-          ) : !revealed && ask !== "intro" ? (
+          ) : ask === "choice" ? (
+            /* Picked the wrong one. Nothing to grade: the right answer is on
+               the screen and the card comes back later in this session. */
+            <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(1)} disabled={busy}>
+              Got it, next
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+                Enter
+              </kbd>
+            </Button>
+          ) : !revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
                 Space
               </kbd>
             </Button>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {RATINGS.map((r) => {
-                const suggested = verdict?.suggestedRating === r.value;
-                return (
-                  <button
-                    key={r.value}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void submit(r.value as RatingValue)}
-                    aria-label={intervals ? `${r.label}, next in ${intervals[r.value as RatingValue]}` : r.label}
-                    className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                    style={{
-                      outline: suggested ? `2px solid ${TONE[r.value]!}` : "none",
-                      outlineOffset: -2,
-                      background: TONE_SOFT[r.value],
-                      color: TONE[r.value],
-                    }}
-                  >
-                    <span className="text-base font-bold">{r.label}</span>
-                    <span className="tnum text-2xs opacity-80">{intervals?.[r.value as RatingValue]}</span>
-                    <kbd className="text-2xs opacity-60">{r.key}</kbd>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-2 gap-2.5">
+              {SELF_GRADES.map((g) => (
+                <button
+                  key={g.rating}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void submit(g.rating)}
+                  aria-label={intervals ? `${g.label}, next in ${intervals[g.rating]}` : g.label}
+                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
+                  style={{ background: TONE_SOFT[g.rating], color: TONE[g.rating] }}
+                >
+                  <span className="text-base font-bold">{g.label}</span>
+                  <span className="tnum text-2xs">{intervals?.[g.rating]}</span>
+                  <kbd className="text-2xs">{g.key}</kbd>
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -770,7 +945,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           className="flex items-center gap-1 rounded-md px-1.5 py-0.5 disabled:opacity-40"
           style={{ color: "var(--ink-3)" }}
         >
-          <Undo2 size={12} aria-hidden /> Undo <kbd className="opacity-60">u</kbd>
+          <Undo2 size={12} aria-hidden /> Undo <kbd>u</kbd>
         </button>
         <span className="hidden items-center gap-1 md:flex">
           <Keyboard size={12} aria-hidden />
@@ -779,13 +954,15 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
               four shapes, which told anyone on a multiple-choice card to press
               Space to flip and 1-4 to grade, where nothing flips and 1-4 picks
               an option instead. */}
-          {ask === "type"
-            ? (verdict ? "1-4 to grade" : "Enter to check")
-            : ask === "choice" && !chosen
-              ? `1-${card?.choices?.length ?? 4} to pick`
-              : !revealed && ask !== "intro"
-                ? "Space to flip · 1-4 to grade"
-                : "1-4 to grade"}
+          {ask === "intro"
+            ? "Space for the next one"
+            : ask === "type"
+              ? (verdict ? "Enter to carry on" : "Enter to check")
+              : ask === "choice"
+                ? (chosen ? "Enter to carry on" : `1 to ${card?.choices?.length ?? 4} to pick`)
+                : !revealed
+                  ? "Space to flip"
+                  : "1 not yet · 2 got it"}
         </span>
       </div>
 

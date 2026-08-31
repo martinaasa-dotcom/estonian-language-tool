@@ -19,7 +19,7 @@ export function WeekPicker({ current, viewing }: { current: number | null; viewi
 
   if (current === viewing) {
     return (
-      <span className="flex items-center gap-1.5 text-sm" style={{ color: "var(--good)" }}>
+      <span className="flex items-center gap-1.5 text-sm" style={{ color: "var(--good-ink)" }}>
         <Check size={14} aria-hidden /> Current week
       </span>
     );

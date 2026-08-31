@@ -49,6 +49,31 @@ export function redact(value: unknown, depth = 0): unknown {
   return value;
 }
 
+/**
+ * An error's message, fit to hand back to a browser.
+ *
+ * `restoreBackup` and `deleteMyAccount` both end in "and nothing was changed"
+ * followed by whatever the database said, which is right: those are the two
+ * operations where somebody is owed a reason. What the database says can carry
+ * the deployment's own connection string, host and user — Prisma quotes the
+ * datasource in an initialisation failure, and a restore runs a two-minute
+ * transaction, which is exactly the window a connection drops in.
+ *
+ * `redact` above already knows a DSN is a credential, because the log has to
+ * be safe to send to an error webhook. A message going to a signed-in
+ * learner's screen is at least as public as that. So it is the same function,
+ * and the shape it scrubs is the shape CI greps the client bundle for.
+ *
+ * Shorter than the log's 500, because this is a sentence on a screen rather
+ * than a field in a record.
+ */
+export function safeMessage(error: unknown, limit = 200): string {
+  const raw = error instanceof Error ? error.message : String(error ?? "");
+  const scrubbed = String(redact(raw));
+  const oneLine = scrubbed.replace(/\s+/g, " ").trim();
+  return oneLine.length > limit ? `${oneLine.slice(0, limit)}…` : oneLine;
+}
+
 export interface ErrorRecord {
   level: "error";
   at: string;

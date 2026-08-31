@@ -5,10 +5,10 @@
  * somebody just getting started, and the cause was not any one screen. It was
  * that every screen showed everything the app can do to everybody, from the
  * first minute. Today led with three figures, a ring, an XP meter, a week
- * strip, three quests, a task list, a unit card, six practice tiles, a word of
- * the day and a tutor pitch, and eleven of those twelve are meaningless to
- * somebody who has never graded a card: a streak of nought, a goal ring at
- * nought percent, a "word to revisit" from a deck they have not read yet.
+ * strip, three quests, a task list, a unit card, six practice tiles, a word to
+ * revisit and a tutor pitch, and most of those are meaningless to somebody who
+ * has never graded a card: a streak of nought, a goal ring at nought percent,
+ * a "word to revisit" drawn from a deck they have not read yet.
  *
  * So the rule is one table rather than a ternary per panel, and it lives here
  * rather than in the pages, because the fault it fixes is precisely that each
@@ -16,9 +16,8 @@
  *
  * Two thresholds, and both are the learner's own history rather than a clock:
  *
- *   - `arriving` until they have graded a single card. There is exactly one
- *     useful thing on the screen at that point and it is the way in. A figure
- *     computed from an empty log is not information, it is furniture.
+ *   - `arriving` until they have graded a single card. A figure computed from
+ *     an empty log is not information, it is furniture.
  *   - `starting` until roughly three days at the default goal. The daily loop
  *     and the reason to come back tomorrow are what matter; the charts,
  *     history and long-run tools have nothing to say yet.
@@ -28,6 +27,25 @@
  * reachable from the navigation, the command palette and its own page. This
  * decides what a screen leads with, which is a different question from what
  * the app contains, and it is the question the first ten minutes turn on.
+ *
+ * WHAT "COMPUTED FROM AN EMPTY LOG" DOES AND DOES NOT COVER, because the first
+ * version of this table read it far too widely and day one paid for it.
+ *
+ * A streak of nought is furniture. A goal ring at nought percent is furniture.
+ * A level bar at 40 XP out of 300 is furniture. Those are the panels this rule
+ * was written for and they are still held back.
+ *
+ * The word of the day is not one of them: it comes out of the dictionary, it
+ * is chosen by the date rather than by anything the learner has done, and it
+ * reads exactly the same on the first morning as in the second year. Quick
+ * practice is not one of them either; it is four doors, and a door is not a
+ * measurement. Both were held back anyway, on the strength of not being the
+ * review button, and the result was a home page with two cards on it that a
+ * learner reasonably read as an app with nothing in it. Restraint that leaves
+ * a screen looking broken is not restraint.
+ *
+ * So the test a panel has to pass is "does this say something true and useful
+ * on a log with nothing in it", not "is this the way in".
  *
  * Pure: counts in, names out. No React, no Prisma, no clock.
  */
@@ -68,18 +86,35 @@ export const PANELS = [
   "review",
   /** The next unit of the course. */
   "next",
+  /**
+   * A word from the dictionary the learner has not met, chosen by the date.
+   *
+   * Not a figure and not a measurement: `lib/progress/wordOfDay.ts` reads the
+   * almanac and the dictionary, and neither of those knows how many cards
+   * anybody has graded.
+   */
+  "word",
+  /** The practice and game modes. */
+  "practice",
   /** Streak, week strip, banked shields. */
   "streak",
   /** XP, level and the bar towards the next one. */
   "level",
   /** The three daily quests. */
   "quests",
-  /** Homework and class tasks. */
+  /** Homework, class tasks and what is due when. */
   "tasks",
-  /** The practice and game modes. */
-  "practice",
-  /** A word from the weakest cards. */
-  "word",
+  /** The words and the cases that keep going wrong. */
+  "struggle",
+  /**
+   * The level the learner is aiming at, how long they have, and the chance of
+   * clearing it.
+   *
+   * Held to `settled` for the reason the figure itself gives: the confidence is
+   * capped by how much evidence stands behind it, and on a thin log it is a
+   * number the app has to caveat rather than one it can lead with.
+   */
+  "exam",
   /** Anu, and the pitch for her when she is not set up. */
   "tutor",
 ] as const;
@@ -88,17 +123,19 @@ export type Panel = (typeof PANELS)[number];
 
 const SHOWN: Record<Stage, readonly Panel[]> = {
   /*
-    One way in and one thing to learn. A learner at this stage has either no
-    deck or no history, and every other panel here would be reporting on a log
-    with nothing in it.
+    Four things that are all true on a log with nothing in it: the way in, what
+    the course does next, a word out of the dictionary with a reason attached
+    to it, and the doors to the practice modes. Everything else here would be
+    reporting a nought.
   */
-  arriving: ["review", "next"],
+  arriving: ["review", "next", "word", "practice"],
   /*
-    The daily loop, the reason to come back tomorrow, and somewhere to go when
-    stuck. Not the charts: a level bar at 40 XP and a word of the day drawn
-    from four cards are noise that has to be scrolled past.
+    The daily loop, the reason to come back tomorrow, what is due this week and
+    somewhere to go when stuck. Not the charts, and not the sticking points: a
+    level bar at 40 XP is noise, and four reviews is not enough to call any
+    word a problem.
   */
-  starting: ["review", "next", "streak", "quests", "tutor"],
+  starting: ["review", "next", "word", "practice", "streak", "quests", "tasks", "tutor"],
   /** Everything. By now every figure on it is drawn from enough to mean something. */
   settled: [...PANELS],
 };
@@ -111,8 +148,16 @@ export function shows(stage: Stage, panel: Panel): boolean {
  * How many practice tiles a stage puts on Today.
  *
  * Six was the whole palette laid out at once, which reads as a menu to study
- * rather than a thing to press. Three is a choice.
+ * rather than a thing to press. Four is still a choice on a screen that has a
+ * dozen other things on it, and two is a choice while everything else is new.
+ * The rounds a stage does not show are on /practice, one row of the rail away,
+ * which is where somebody looking for a game is already going.
+ *
+ * Both figures are even, and that is the grid rather than a taste: Today lays
+ * these out `grid-cols-2`, so an odd count leaves a hole in the corner. The
+ * cut from six came in wanting three, which is the right instinct about how
+ * many and the wrong number to draw two across.
  */
 export function practiceTiles(stage: Stage): number {
-  return stage === "settled" ? 6 : 3;
+  return stage === "settled" ? 4 : 2;
 }

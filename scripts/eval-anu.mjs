@@ -3,6 +3,8 @@
  * Each question has a fact the answer must contain; a wrong grammar explanation is
  * worse than none, because the SRS then drills it.
  */
+import { FREE_OPENROUTER_MODELS } from "../lib/tutor/provider.ts";
+
 const QUESTIONS = [
   { q: "Why is it 'Lugesin raamatut' and not 'Lugesin raamatu'?",
     must: [/partitiv/i], why: "object case / aspect" },
@@ -20,7 +22,37 @@ const QUESTIONS = [
 
 const system = "You are Anu, an Estonian teacher for English speakers. Answer briefly and name the grammar rule.";
 const key = process.env.OPENROUTER_API_KEY;
-const model = process.env.OPENROUTER_MODEL;
+
+/*
+  THE MODEL THIS ASKS IS THE ONE THE APP WOULD ASK, WHICH IT USED NOT TO BE.
+
+  It read `OPENROUTER_MODEL` and stopped there, where the app falls back to
+  `FREE_OPENROUTER_MODELS` when that is unset — and unset is the default, since
+  the shipped chain is the free one. So on any deployment that had not pinned a
+  model, every request went out as `"model": undefined`, came back 400, and the
+  script printed `0/0 correct on undefined`. It refuses to score a refusal, so
+  it failed honestly rather than reporting a model that knew nothing; but the
+  one check there is on whether Anu knows any Estonian could not be run at all
+  by the deployment shape that most needs it.
+
+  Imported from `provider.ts` rather than retyped here, which is the argument
+  `PROVIDER_KEY_ENV` already makes three lines above where it is read: a second
+  copy of the list is the same drift waiting to happen. That is what the `tsx`
+  in this script's `package.json` entry buys, exactly as it does for
+  `test:load`.
+*/
+const pinned = (process.env.OPENROUTER_MODEL ?? "")
+  .split(",").map((m) => m.trim()).filter(Boolean);
+const chain = pinned.length ? pinned : [...FREE_OPENROUTER_MODELS];
+
+// Six requests to be told six times that there is no key is not a measurement,
+// and the answer is one line rather than a stack trace.
+if (!key) {
+  console.log("Set OPENROUTER_API_KEY and run this again. It asks a real model six grammar");
+  console.log("questions with known answers, so without a key there is nothing to ask.");
+  console.log(`It would have asked ${chain[0]}. Set OPENROUTER_MODEL to pin a different one.`);
+  process.exit(1);
+}
 
 /*
   A REFUSAL IS NOT A WRONG ANSWER, AND THIS SCRIPT USED TO SCORE THEM THE SAME.
@@ -40,7 +72,7 @@ const model = process.env.OPENROUTER_MODEL;
   to come back in a moment is the ordinary state of a free model and not a
   fact about whether it knows Estonian.
 */
-async function ask(question) {
+async function askOne(model, question) {
   for (let attempt = 0; attempt < 4; attempt++) {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -63,6 +95,35 @@ async function ask(question) {
   return { refused: "rate-limited on every attempt" };
 }
 
+/**
+ * The same chain the app walks, for the same reason.
+ *
+ * `openWithFallback` moves past a link that is throttled or having a bad minute
+ * rather than reporting it as the answer, and this has to agree with it or it
+ * measures something a learner never meets: the shipped default leads with a
+ * free model, so the head of the chain being busy is the ordinary case, and
+ * giving up there reported "nothing measurable" about a deployment that would
+ * have answered from the next model down.
+ *
+ * Once one model has answered, every later question goes to that one, so the
+ * score at the end belongs to a model rather than being a blend of three.
+ */
+let answering = null;
+
+async function ask(question) {
+  if (answering) return askOne(answering, question);
+  let last = { refused: "no model was asked" };
+  for (const model of chain) {
+    const outcome = await askOne(model, question);
+    if (outcome.answer) {
+      answering = model;
+      return outcome;
+    }
+    last = outcome;
+  }
+  return last;
+}
+
 let pass = 0;
 let refused = 0;
 
@@ -80,7 +141,9 @@ for (const { q, must, why } of QUESTIONS) {
 }
 
 const asked = QUESTIONS.length - refused;
-console.log(`\n${pass}/${asked} correct on ${model}` +
+// The model that answered, never the head of the chain, which is the same rule
+// the chat follows when it labels a reply.
+console.log(`\n${pass}/${asked} correct on ${answering ?? `${chain[0]}, which would not answer`}` +
   (refused ? `, and ${refused} it would not answer, which says nothing about what it knows.` : "."));
 // A model that would not answer half its questions has not been measured.
 process.exit(refused * 2 > QUESTIONS.length || pass < asked ? 1 : 0);

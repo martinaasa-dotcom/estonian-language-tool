@@ -90,7 +90,7 @@ here, and moving the budget to match the new number is not the fix.
 Everything above measures Postgres. The most expensive thing on a dictionary
 page was not in it.
 
-`enrichFromEkilex` upgrades a locally held word to Ekilex's paradigm, and it
+`enrichFromEkilex` upgrades a locally held word to Ekilex's forms, and it
 recorded nothing when Ekilex had nothing to say. There was no column for that
 and no marker anywhere, so the word stayed in exactly the state that had
 prompted the question. Every subsequent render of that page asked again: a

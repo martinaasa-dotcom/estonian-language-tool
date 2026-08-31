@@ -43,8 +43,8 @@ function SkillRow({ result }: { result: SkillResult }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="est text-lg font-bold" style={{ color: "var(--ink)" }}>{meta.label}</span>
-          <span className="est tnum text-lg font-bold" style={{ color: "var(--accent-deep)" }}>
+          <span className="text-lg font-bold" style={{ color: "var(--ink)" }}>{meta.label}</span>
+          <span className="tnum text-lg font-bold" style={{ color: "var(--accent-deep)" }}>
             {speaking
               ? result.selfRating
                 ? `${Math.round(result.selfRating * 10) / 10} of 4, your own rating`
@@ -81,7 +81,7 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
     <div className="flex flex-col gap-5">
       <Card tone="accent">
         <p className="label-xs" style={{ color: "var(--accent-deep)" }}>{heading}</p>
-        <p className="est mt-2 text-5xl font-bold leading-none" style={{ color: "var(--ink)" }}>
+        <p className="mt-2 text-5xl font-bold leading-none" style={{ color: "var(--ink)" }}>
           {overall}
         </p>
         <p className="mt-3 max-w-[58ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>

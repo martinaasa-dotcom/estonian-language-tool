@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { GovernmentSession, type GovernmentQuestion } from "./GovernmentSession";
 import type { CaseKey } from "@/lib/estonian/types";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Verb government" };
 
@@ -30,9 +31,13 @@ export default async function GovernmentPage() {
   const ownerId = await requireUserId();
 
   const [governed, inDeck] = await Promise.all([
+    // Easiest first and stable, rather than whichever two hundred verbs the
+    // plan returned. This is a reference a learner comes back to, so the page
+    // should be the same page.
     prisma.lexeme.findMany({
       where: { pos: "VERB", government: { not: null } },
       select: { id: true, lemma: true, translation: true, government: true, cefr: true, examples: true },
+      orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
       take: 200,
     }),
     prisma.card.findMany({
@@ -63,7 +68,7 @@ export default async function GovernmentPage() {
       <Page title="Verb government" lead="Which case a verb demands.">
         <Empty
           title="No governed verbs in the dictionary yet"
-          body="Government data comes from the dictionary. Look a verb up once and it is stored with the case it demands, or add one by hand with its government noted."
+          body="Look a verb up once and the case it demands is stored with it."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -73,29 +78,51 @@ export default async function GovernmentPage() {
   // The distribution the distractors are drawn from: what verbs actually govern.
   const pool = parsed.map((p) => p.g.caseKey as CaseKey);
 
-  // Verbs already in the deck first — those are the ones being actively learned.
-  const ordered = parsed
-    .map((p) => ({ p, k: Math.random() - (mine.has(p.v.id) ? 1 : 0) }))
-    .sort((a, b) => a.k - b.k)
-    .map(({ p }) => p)
-    .slice(0, ROUND);
+  /*
+    Verbs already in the deck first, those being the ones actively learned, and
+    random within each group.
 
-  const questions: GovernmentQuestion[] = ordered.map(({ v, g }) => ({
-    cardId: cardFor.get(v.id) ?? null,
-    lexemeId: v.id,
-    lemma: v.lemma,
-    translation: v.translation,
-    cefr: v.cefr,
-    answer: g.caseKey,
-    answerEn: g.caseEn,
-    answerEt: g.caseEt,
-    example: exampleFor(v, g),
-    maskedExample: maskExample(exampleFor(v, g)),
-    gloss: g.gloss,
-    experiencer: g.experiencer,
-    inDeck: mine.has(v.id),
-    options: buildOptions(g.caseKey, pool),
-  }));
+    Written as two shuffles rather than as one sort on `Math.random() - (mine ? 1 : 0)`,
+    which is the same distribution and arrives at it by a trick: the two key
+    ranges are [-1, 0) and [0, 1), so they cannot interleave. That is correct
+    and it is not what the line says, and the reader has to work out that the
+    ranges are disjoint before they can believe it.
+  */
+  const ordered = [
+    ...shuffle(parsed.filter((p) => mine.has(p.v.id))),
+    ...shuffle(parsed.filter((p) => !mine.has(p.v.id))),
+  ].slice(0, ROUND);
+
+  /*
+    A question is dropped rather than padded when there is no honest set of
+    options for it, which `buildOptions` decides: every case the word itself
+    governs is true of it, so none of them may stand as a wrong answer, and a
+    word governing several can leave too few distractors behind. Losing one
+    verb from a round of twelve costs nothing; marking somebody wrong for
+    knowing that `aitama` also takes the seestütlev costs the drill its
+    credibility.
+  */
+  const questions: GovernmentQuestion[] = ordered.flatMap(({ v, g }) => {
+    const options = buildOptions(g, pool);
+    if (!options) return [];
+    return [{
+      cardId: cardFor.get(v.id) ?? null,
+      lexemeId: v.id,
+      lemma: v.lemma,
+      translation: v.translation,
+      cefr: v.cefr,
+      answer: g.caseKey,
+      answerEn: g.caseEn,
+      answerEt: g.caseEt,
+      alsoGoverned: [...g.alsoGoverned],
+      example: exampleFor(v, g),
+      maskedExample: maskExample(exampleFor(v, g)),
+      gloss: g.gloss,
+      experiencer: g.experiencer,
+      inDeck: mine.has(v.id),
+      options,
+    }];
+  });
 
   return <GovernmentSession questions={questions} />;
 }

@@ -118,7 +118,7 @@ export const SECTIONS: NavSection[] = [
   {
     id: "course",
     title: "Your course",
-    blurb: "The path through the levels, and the week you are in.",
+    blurb: "The path through the levels, and how far along it you are.",
     items: [
       {
         href: "/learn", label: "Learn", blurb: "Units from A1 to C1", icon: "Map", tone: "mint",
@@ -127,6 +127,7 @@ export const SECTIONS: NavSection[] = [
       {
         href: "/tasks", label: "Tasks", blurb: "Homework, and the week you are in", icon: "CalendarCheck",
         tone: "peach", keywords: "homework todo class due week current",
+        within: "Today, which lists what is outstanding",
       },
       {
         href: "/week", label: "This week", blurb: "The words and work filed under this week",
@@ -136,6 +137,37 @@ export const SECTIONS: NavSection[] = [
       {
         href: "/class", label: "Classes", blurb: "Teach a class, or join one", icon: "School", tone: "sky",
         keywords: "classroom teacher students join code school",
+        within: "/progress",
+      },
+
+      {
+        href: "/progress", label: "Progress", blurb: "Heatmap, forecast, weak cases", icon: "ChartNoAxesColumn",
+        tone: "accent", keywords: "stats charts history retention leaderboard",
+      },
+      /*
+        These four are all readings of the same question and Progress is where
+        it is asked, so they are reached from there rather than standing beside
+        it as four more rows. Each was already linked from that page or is now:
+        the deck under what has stuck, the level check under the CEFR reach it
+        reports, the mock exam under both, and a class beside the leaderboard
+        that only a class makes sense of.
+      */
+      {
+        href: "/words", label: "My words", blurb: "Your deck, card by card", icon: "Layers", tone: "mint",
+        keywords: "deck cards suspend delete lapses",
+        within: "/progress",
+      },
+      {
+        href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",
+        icon: "Compass", tone: "blush",
+        keywords: "assessment placement cefr level a1 a2 b1 b2 c1 goal plan timeline",
+        within: "/progress",
+      },
+      {
+        href: "/exam", label: "Mock exam", blurb: "An imitation of the state language exam",
+        icon: "ClipboardCheck", tone: "blush",
+        keywords: "tasemeeksam a2 b1 b2 c1 citizenship certificate ready confidence",
+        within: "/progress",
       },
     ],
   },
@@ -146,7 +178,7 @@ export const SECTIONS: NavSection[] = [
     items: [
       {
         href: "/dictionary", label: "Dictionary", blurb: "Search any word or inflected form", icon: "BookOpen",
-        tone: "sky", keywords: "search lookup paradigm cases forms", bar: true,
+        tone: "sky", keywords: "search lookup declension cases forms", bar: true,
       },
       {
         href: "/grammar", label: "Grammar", blurb: "What each of the fourteen cases is for", icon: "Languages",
@@ -161,31 +193,6 @@ export const SECTIONS: NavSection[] = [
         href: "/tutor", label: "Ask Anu", blurb: "Grammar questions, explained", icon: "MessageCircleQuestion",
         tone: "blush", keywords: "ai chat grammar help tutor explain",
         within: "the button in the corner of every screen",
-      },
-    ],
-  },
-  {
-    id: "standing",
-    title: "Where you stand",
-    blurb: "What has stuck, and what you are ready to sit.",
-    items: [
-      {
-        href: "/progress", label: "Progress", blurb: "Heatmap, forecast, weak cases", icon: "ChartNoAxesColumn",
-        tone: "accent", keywords: "stats charts history retention leaderboard",
-      },
-      {
-        href: "/words", label: "My words", blurb: "Your deck, card by card", icon: "Layers", tone: "mint",
-        keywords: "deck cards suspend delete lapses",
-      },
-      {
-        href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",
-        icon: "Compass", tone: "blush",
-        keywords: "assessment placement cefr level a1 a2 b1 b2 c1 goal plan timeline",
-      },
-      {
-        href: "/exam", label: "Mock exam", blurb: "An imitation of the state language exam",
-        icon: "ClipboardCheck", tone: "blush",
-        keywords: "tasemeeksam a2 b1 b2 c1 citizenship certificate ready confidence",
       },
     ],
   },

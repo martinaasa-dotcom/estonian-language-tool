@@ -66,16 +66,90 @@ async function main() {
   await prisma.card.deleteMany({ where: { ownerId } });
   await prisma.task.deleteMany({ where: { ownerId } });
 
+  /*
+    A DECK A BEGINNER COULD PLAUSIBLY HAVE, WHICH THIS HAD QUIETLY STOPPED BEING.
+
+    It took the alphabetically first thirty nouns and verbs in the dictionary,
+    and that was a fair sample of a 360-word seed. The harvest and the built
+    expansion took the dictionary past five thousand words and nobody re-read
+    what "alphabetically first" now meant: `aabe`, `aadressiraamat`, `aamissepp`,
+    `aardelaegas`, `aatomipomm`, `aberratsioon`, `abieluvaraleping`. A treasure
+    chest, an atom bomb, an aberration and a prenuptial agreement, in the deck
+    of somebody eight weeks into A1.
+
+    That is not only untidy. This fixture is what every screenshot shows, what
+    every browser suite reviews, and what the grammar reference draws its "in
+    real words" table from, so the app demonstrated itself in vocabulary that
+    argued against it.
+
+    The course's own A1 nouns and verbs instead, which is 244 words to draw
+    thirty from and gives `aitama`, `algama`, `alustama`, `andma`, `armastama`,
+    `armastus`, `arst`, `auto`, `buss`, `elama`, `ema`, `hommik`. Still
+    alphabetical, so the deck is the same deck on every run, which is what the
+    suites need. Which four of them get the whole card range is decided below
+    by what they can carry, not by where they sort.
+
+    The query cannot silently widen again: a word is in this deck because the
+    syllabus put it there and marked it A1, rather than because of where it
+    happens to sort.
+  */
   const lexemes = await prisma.lexeme.findMany({
-    where: { pos: { in: ["NOUN", "VERB"] } },
+    where: { pos: { in: ["NOUN", "VERB"] }, cefr: "A1", provenance: "SEED" },
     include: { forms: true },
     take: 30,
     orderBy: { lemma: "asc" },
   });
+  if (lexemes.length < 30) {
+    console.error(
+      `Only ${lexemes.length} A1 course words are seeded, so this deck would be thin.\n` +
+      `Run \`npm run db:seed\` first: the demo is built from the course vocabulary.`,
+    );
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+
+  /*
+    THE FOUR RICH WORDS ARE FOUR THAT CAN BE RICH.
+
+    This gave the whole card range to `i < 4`, the first four alphabetically,
+    which was right when the comment above was written and names `aeg` and
+    `aken` among them. It is not now: `aeg` and `aken` came back from Ekilex
+    at some point and are marked `EKILEX` rather than `SEED`, so the first
+    five this query returns are `aitama`, `algama`, `alustama`, `andma` and
+    `armastama` — verbs, every one. A verb has no genitive singular, so
+    `generateCards` correctly built no case-form card for any of them, and
+    this fixture has been laying down a deck with **no case-form cards at
+    all**.
+
+    That is the deck every browser suite reviews. `/review?case=INESSIVE`
+    correctly answered "No inessive cards yet", and the two suites that drill
+    a case were passing on cards other suites had added as a side effect,
+    which is how it stayed invisible: they failed the moment the order changed.
+
+    Chosen by what the word can carry rather than by where it sorts, which is
+    the same question `availableCardTypes` asks. Still deterministic: the pool
+    is ordered by lemma, so it is the same four words on every run.
+  */
+  const rich = new Set(
+    lexemes
+      .filter((lex) => lex.forms.some((f) => f.formType === "GEN_SG"))
+      .slice(0, 4)
+      .map((lex) => lex.id),
+  );
+  if (rich.size < 4) {
+    console.error(
+      `Only ${rich.size} of these thirty words carry a genitive singular, so this deck would ` +
+      "have no case-form cards in it and the drills built on them would have nothing to ask.\n" +
+      "Run `npm run db:seed` first: the demo is built from the course vocabulary.",
+    );
+    await prisma.$disconnect();
+    process.exit(1);
+  }
 
   for (const [i, lex] of lexemes.entries()) {
-    const types = i < 4 ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)
-                        : (["RECOGNITION", "PRODUCTION"] as const);
+    const types = rich.has(lex.id)
+      ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)
+      : (["RECOGNITION", "PRODUCTION"] as const);
     const cards = generateCards(lex as LexemeForCards, [...types]);
     for (const c of cards) {
       // Eight weeks of history rather than two, so the heatmap, the forecast and
@@ -116,7 +190,7 @@ async function main() {
 
   await prisma.task.createMany({
     data: [
-      { ownerId, title: "Exercise 4B — partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
+      { ownerId, title: "Exercise 4B, partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
       { ownerId, title: "Learn week 6 vocabulary (24 words)", tag: "VOCABULARY", classWeek: 6, dueAt: new Date(Date.now() - 86400000) },
       { ownerId, title: "Listen to Vikerraadio for 20 minutes", tag: "LISTENING", classWeek: 6 },
       { ownerId, title: "Write 5 sentences using the comitative", tag: "HOMEWORK", classWeek: 5, completed: true, completedAt: new Date() },
@@ -144,6 +218,28 @@ async function main() {
     update: {},
     create: { classroomId: classroom.id, ownerId, role: "TEACHER", displayName: "You" },
   });
+
+  /*
+    The week this learner says they are in, and a level they are aiming at.
+
+    Both are preconditions rather than decoration, and both were missing. The
+    week decides whether `/week` renders its picker at all, so the two contrast
+    faults sitting on that screen were invisible to every suite: a pass can only
+    measure a state it can reach, and nothing here had ever set one. The target
+    and the deadline are what Today's countdown needs before it draws anything,
+    for the same reason.
+  */
+  for (const [key, value] of [
+    ["currentWeek", "6"],
+    ["goalTarget", "B1"],
+    ["goalDeadline", new Date(Date.now() + 47 * 86_400_000).toISOString()],
+  ] as const) {
+    await prisma.setting.upsert({
+      where: { ownerId_key: { ownerId, key } },
+      update: { value },
+      create: { ownerId, key, value },
+    });
+  }
 
   console.log("cards:", await prisma.card.count({ where: { ownerId } }), "reviews:", await prisma.review.count({ where: { ownerId } }));
   await prisma.$disconnect();

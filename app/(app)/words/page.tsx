@@ -55,7 +55,7 @@ export default async function WordsPage() {
       {rows.length === 0 ? (
         <Empty
           title="No cards yet"
-          body="Add words from the dictionary, you get the paradigm and audio with them, or paste a list you already have from Settings."
+          body="Add words from the dictionary and every form and the audio come with them."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       ) : (

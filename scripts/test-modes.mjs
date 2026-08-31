@@ -27,19 +27,17 @@ page.on("console", (m) => {
 const { check, absent, done } = suite("Practice modes", { floor: 23 });
 
 /**
- * Answers whatever kind of card is on screen and grades it Good.
+ * Brings the current card to the point where it is waiting on the learner,
+ * without letting it move on.
  *
- * Review asks in three shapes — type it, pick it, flip it — and a test that
- * assumes one of them silently types "3" into the answer box instead of grading.
- */
-/**
- * Bring the current card to the point where the rating buttons are showing,
- * without grading it.
- *
- * Typed and flip cards get there deterministically — a deliberately wrong
- * answer, or Space. A multiple-choice card cannot: any pick reveals, but a
- * *correct* one grades itself and moves on (ReviewSession.pickChoice), so it is
- * answered and skipped rather than relied on.
+ * Review asks in four shapes now and only one of them still has grading buttons
+ * on it, so a driver that assumes one shape silently types "3" into the answer
+ * box instead of grading. A typed card and a flip card get there
+ * deterministically, with a deliberately wrong answer or Space; a
+ * multiple-choice card cannot, because any pick reveals but a *correct* one
+ * grades itself and moves on, so it is answered and skipped rather than relied
+ * on. A first meeting has nothing to reveal: it is already showing everything
+ * it has.
  */
 async function revealCurrentCard() {
   const box = page.getByLabel("Type your answer");
@@ -52,15 +50,31 @@ async function revealCurrentCard() {
     return false;
   }
   await page.waitForTimeout(800);
-  return (await page.getByRole("button", { name: /^Good/ }).count()) > 0;
+  return await waitingOnMe();
 }
 
+/** Whether the card is holding, rather than having graded itself and moved on. */
+async function waitingOnMe() {
+  const carryOn = await page.getByRole("button", { name: /Got it, next/ }).count();
+  const selfGrade = await page.getByRole("button", { name: /^Got it$/ }).count();
+  return carryOn + selfGrade > 0;
+}
+
+/**
+ * Answers whatever card is on screen and moves past it.
+ *
+ * The app marks what it can mark now, so most of these move on by themselves
+ * and there is nothing to press: a correct typed answer and a correct pick both
+ * grade themselves on a timer. What is left is one button on a miss and on a
+ * first meeting, and the two self-grade buttons on a flip card, which is the
+ * one shape with nothing to compare against.
+ */
 async function answerCurrentCard() {
   const box = page.getByLabel("Type your answer");
   if (await box.count()) {
     await box.fill("ükskõik");
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(600);
   } else if (await page.getByText(/Pick the meaning/).count()) {
     await page.keyboard.press("1");
     await page.waitForTimeout(900);
@@ -68,12 +82,20 @@ async function answerCurrentCard() {
     await page.keyboard.press("Space");
     await page.waitForTimeout(300);
   }
-  if (await page.getByRole("button", { name: /^Good/ }).count()) {
-    await page.keyboard.press("3");
+
+  // "Got it, next" on a miss or a first meeting, both of which answer to Enter.
+  if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+    await page.keyboard.press("Enter");
     await page.waitForTimeout(1400);
     return true;
   }
-  // A correct multiple-choice pick grades itself and moves on.
+  // A flip card, where the learner is the only judge: key 2 is "Got it".
+  if (await page.getByRole("button", { name: /^Got it$/ }).count()) {
+    await page.keyboard.press("2");
+    await page.waitForTimeout(1400);
+    return true;
+  }
+  // Marked correct, so it graded itself and moved on.
   await page.waitForTimeout(600);
   return true;
 }
@@ -125,8 +147,11 @@ for (let i = 0; i < 30 && !typedReached; i++) {
     await page.waitForTimeout(400);
     check("a typed answer gets a verdict before it is graded",
       (await page.getByText(/Not quite|Almost|So close/).count()) > 0);
-    check("the right answer is shown with it",
-      (await page.getByRole("button", { name: /^Again/ }).count()) > 0);
+    // And nothing asks who was right: the verdict is the app's, and the button
+    // under it acknowledges the correction rather than grading it.
+    check("a miss offers one way on rather than four grades",
+      (await page.getByRole("button", { name: /Got it, next/ }).count()) === 1
+      && (await page.getByRole("button", { name: /^(Again|Hard|Easy)/ }).count()) === 0);
     break;
   }
   await answerCurrentCard();
@@ -151,10 +176,17 @@ for (let i = 0; i < 12 && !rateable; i++) {
   rateable = await revealCurrentCard();
   if (!rateable) await answerCurrentCard();
 }
-check("a card can be brought to its rating buttons", rateable);
+check("a card can be brought to the point where it waits on an answer", rateable);
 
 if (rateable) {
-  await page.keyboard.press("3");
+  // Enter carries on from a miss or a first meeting, and 2 is "Got it" on a
+  // flip card. Both grade, which is all undo needs to have something to take
+  // back; pressing "3" blind used to answer a multiple-choice question instead.
+  if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+    await page.keyboard.press("Enter");
+  } else {
+    await page.keyboard.press("2");
+  }
   await page.waitForTimeout(1200);
   const gradedBefore = await page.getByText(/\d+ graded/).textContent();
   await page.keyboard.press("u");
@@ -162,7 +194,7 @@ if (rateable) {
   const gradedAfter = await page.getByText(/\d+ graded/).textContent();
   check("u undoes the last grade", gradedBefore !== gradedAfter, `${gradedBefore?.trim()} -> ${gradedAfter?.trim()}`);
 } else {
-  absent(1, "a card that reached its rating buttons, which none did here");
+  absent(1, "a card that reached the point of waiting on an answer, which none did here");
 }
 
 /**

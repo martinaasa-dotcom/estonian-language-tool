@@ -22,7 +22,7 @@ export function Legal({ title, updated, children }: {
         Kodukeel
       </Link>
       <h1
-        className="est mt-3 text-3xl font-bold leading-tight tracking-tight"
+        className="mt-3 text-3xl font-bold leading-tight tracking-tight"
         style={{ color: "var(--ink)" }}
       >
         {title}
@@ -45,7 +45,7 @@ export function Legal({ title, updated, children }: {
 export function S({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="est text-[19px] font-semibold" style={{ color: "var(--ink)" }}>
+      <h2 className="text-[19px] font-semibold" style={{ color: "var(--ink)" }}>
         {title}
       </h2>
       <div className="mt-2.5 space-y-3">{children}</div>

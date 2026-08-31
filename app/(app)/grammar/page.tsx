@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
-import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CASE_GROUPS, TOPIC_GROUPS, TOPIC_NOTES, caseReference, grammarTopic } from "@/lib/estonian/grammar";
 import { VERB_AXES, grammarGroupTerm, grammarTerm } from "@/lib/estonian/terms";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { Card, Chip, Meter, Note, Page, SectionTitle, Stack } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -30,25 +30,22 @@ export const metadata = {
 export default async function GrammarIndexPage() {
   const ownerId = await requireUserId();
 
-  const caseReviews = await prisma.review.findMany({
-    where: { targetCase: { not: null }, ownerId },
-    select: { targetCase: true, rating: true },
-    take: 5000,
-  });
-  const weakest = caseAccuracy(caseReviews).slice(0, 3);
+  // Through the one reader, so this page and Practice and Progress cannot name
+  // three different weakest cases at the same learner. See lib/progress/cases.ts.
+  const weakest = caseAccuracy(await caseReviewsFor(ownerId)).slice(0, 3);
 
   return (
     <Page
       eyebrow="Reference"
       title="Grammar"
-      lead="Named the way a course names them: the Estonian term and the question it answers first, the English name after it for when you are reading an English reference. Every Estonian word on these pages comes from the dictionary, the explanations are the only part this app wrote."
+      lead="Named the way a course names them: the Estonian term and the question it answers."
     >
       <Stack>
         <Card tone="accent">
           <div className="flex items-start gap-3">
             <Sparkles size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
             <div>
-              <p className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+              <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                 Learn one form, get eleven cases
               </p>
               <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -124,10 +121,10 @@ export default async function GrammarIndexPage() {
                       }}
                     >
                       <span className="flex flex-wrap items-baseline gap-2">
-                        <span lang="et" className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                        <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                           {ref.spec.et}
                         </span>
-                        <span lang="et" className="est text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
+                        <span lang="et" className="text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
                           {ref.spec.question}
                         </span>
                         <span className="ml-auto">
@@ -151,7 +148,7 @@ export default async function GrammarIndexPage() {
         ))}
 
         <Card tone="butter">
-          <p className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+          <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>
             Estonian does not have six tenses
           </p>
           <p className="mt-2 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -163,9 +160,9 @@ export default async function GrammarIndexPage() {
           </p>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
             {VERB_AXES.map((axis) => (
-              <div key={axis.et} className="rounded-[var(--r-md)] p-3" style={{ background: "var(--surface)" }}>
+              <div key={axis.et} className="rounded-[var(--r-sm)] p-3" style={{ background: "var(--surface)" }}>
                 <dt className="flex flex-wrap items-baseline gap-2">
-                  <span lang="et" className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                  <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                     {axis.et}
                   </span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>{axis.en}</span>
@@ -192,7 +189,7 @@ export default async function GrammarIndexPage() {
                 <div key={group.id}>
                   <h3 className="flex flex-wrap items-baseline gap-2">
                     {groupTerm && (
-                      <span lang="et" className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                      <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                         {groupTerm}
                       </span>
                     )}
@@ -220,13 +217,13 @@ export default async function GrammarIndexPage() {
                             <span className="flex flex-wrap items-baseline gap-2">
                               <span
                                 lang={term ? "et" : undefined}
-                                className="est text-md font-bold"
+                                className="text-md font-bold"
                                 style={{ color: "var(--ink)" }}
                               >
                                 {term?.et ?? topic.title}
                               </span>
                               {term?.question && (
-                                <span lang="et" className="est text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
+                                <span lang="et" className="text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
                                   {term.question}
                                 </span>
                               )}

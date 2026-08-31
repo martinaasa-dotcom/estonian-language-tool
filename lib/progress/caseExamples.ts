@@ -64,25 +64,53 @@ export async function caseExamples(
     forms: { select: { formType: true, value: true, morphCode: true } },
   } as const;
 
-  // The learner's own nouns first: a case is easier to believe in a word you
-  // are already studying than in whatever the dictionary happens to list first.
+  /*
+    The learner's own nouns first: a case is easier to believe in a word you
+    are already studying than in whatever the dictionary happens to list first.
+
+    Both of these are ordered, and neither was. This is a reference page a
+    learner comes back to, and the six words on it were decided by the order
+    Postgres returned rows in: `rank` below has four values and `sort` is
+    stable, so ties keep whatever order arrived, and the top-up query was the
+    only one of the three that said which order it wanted. It looked settled
+    because a plan for the same rows usually is, and it is not a promise. The
+    same shape as the dictionary leading with an arbitrary one of two entries,
+    one page along.
+
+    Oldest card first, because the words somebody has been studying longest are
+    the ones they can read a new case off, and that order is then *kept*.
+
+    Sorting the deck words by lemma afterwards was the first attempt and it
+    reads badly, which is the sort of thing only looking at the page tells you:
+    the six real words under `seesütlev` came out `aadress, aasta, abi,
+    abikaasa, aastapäev, abielu`, six words from the top of the alphabet under a
+    heading that says "words from your deck first". Deterministic, and it looks
+    like a bug. Postgres does not return `IN (…)` in the order the ids were
+    given, so keeping the deck's own order means putting it back by hand.
+
+    The top-up below stays on cefr and lemma. That is the empty-deck case, where
+    easiest-first is the right answer and there is no better order to preserve.
+  */
   const deckIds = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { not: null }, lexeme: { pos: "NOUN" } },
     distinct: ["lexemeId"],
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }, { id: "asc" }],
     take: CANDIDATES,
     select: { lexemeId: true },
   });
   const owned = deckIds.map((c) => c.lexemeId!).filter(Boolean);
+  const deckOrder = new Map(owned.map((id, at) => [id, at]));
 
   const mine: Candidate[] = owned.length
-    ? await prisma.lexeme.findMany({ where: { id: { in: owned } }, select })
+    ? (await prisma.lexeme.findMany({ where: { id: { in: owned } }, select }))
+      .sort((a, b) => (deckOrder.get(a.id) ?? 0) - (deckOrder.get(b.id) ?? 0))
     : [];
 
   // Topped up from the dictionary, easiest words first, so an empty deck still
   // gets a page worth reading on day one.
   const rest: Candidate[] = await prisma.lexeme.findMany({
     where: { pos: "NOUN", id: { notIn: owned.length ? owned : ["-"] } },
-    orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
+    orderBy: [{ cefr: "asc" }, { lemma: "asc" }, { id: "asc" }],
     take: CANDIDATES,
     select,
   });

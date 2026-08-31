@@ -88,7 +88,7 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="label-xs" style={{ color: "var(--ink-3)" }}>Badge earned</p>
-                <p className="est text-base font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
+                <p className="text-base font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
                 <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>{b.description}</p>
               </div>
               <button

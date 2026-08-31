@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { launchChromium, eventually } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+
 import { PrismaClient } from "@prisma/client";
 import { requireLocalDatabase } from "./lib/local-db.mjs";
 
@@ -42,7 +43,7 @@ const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("write and delete a scanned page and its cards"),
 });
 
-const { check, done } = suite("The paper path", { floor: 15 });
+const { check, done } = suite("The paper path", { floor: 17 });
 
 /** A word the seed definitely holds, with its real id, for the matched row. */
 const known = await prisma.lexeme.findFirst({
@@ -169,6 +170,30 @@ check(
 const madeCards = await prisma.card.count({ where: { ownerId: OWNER, source: "SCAN" } });
 check("ticking a word makes cards", madeCards >= 2, `${madeCards} cards`);
 
+/*
+  THE UNVOUCHED WORD BECAME AN ENTRY, WHICH IS THE HALF THIS DID NOT ASK.
+
+  The forms check below is the point of the whole path: nothing the model read
+  off a photograph may become an Estonian form. But counting zero forms passes
+  just as happily when the word was never written down at all, so the one
+  branch that turns a ticked-but-unmatched word into the learner's own entry
+  was covered by a check that could not tell the difference. Assert the entry
+  first, then that it carries nothing invented.
+*/
+const mine = await prisma.lexeme.findFirst({
+  where: { lemma: UNKNOWN },
+  select: { id: true, provenance: true, editedBy: true },
+});
+check(
+  "a ticked word the dictionary would not vouch for becomes the learner's own entry",
+  Boolean(mine) && mine.provenance === "USER" && mine.editedBy === OWNER,
+  mine ? `${mine.provenance}, edited by ${mine.editedBy}` : "no entry was written",
+);
+check(
+  "and it gets cards of its own, not just the matched word's",
+  mine ? (await prisma.card.count({ where: { ownerId: OWNER, lexemeId: mine.id } })) >= 2 : false,
+);
+
 const invented = await prisma.form.count({ where: { lexeme: { lemma: UNKNOWN } } });
 check(
   "a word the dictionary never vouched for gets no forms invented for it",
@@ -225,14 +250,28 @@ await page.waitForURL(/\/review\?scan=/, { timeout: 20_000 });
   `smoke-offline.mjs` learned this first and its comment says why in full: the
   shapes are chosen per card, so a driver that knows only "Show answer"
   silently stops testing anything the day another shape comes up first, and
-  what changed there was the dictionary growing. Not shared with it as one
-  helper, because that one goes on to grade and this must stop at the ratings
-  in order to count them.
+  what changed there was the dictionary growing.
 
-  Nothing is weakened: the assertion below is unchanged and still wants the
-  ordinary session's four ratings, now in every shape rather than one.
+  This kept its own copy on the reason that the other one goes on to grade and
+  this has to stop at the ratings in order to count them. That reason is gone:
+  `scripts/lib/review.mjs` reveals and never grades, which is exactly this, and
+  the grade is one line in the caller that wants it. `test-containment.mjs` is
+  why it exists, having waived ten checks on the claim that a deck holding
+  forty due cards had nothing due.
+
+  What the assertion below wants is that a scanned word reaches the *ordinary*
+  review session and can be answered there, rather than some path of its own.
+  It used to say that by counting four rating buttons, which stopped being what
+  the ordinary session looks like: the app marks what it can mark now, so a
+  typed answer and a pick grade themselves, a miss and a first meeting offer one
+  way on, and only a flip card asks the learner, in two options rather than
+  four. Counting buttons was always a proxy; what it stands for is that the
+  session got to the point of taking an answer for this card.
 */
-const ratings = page.getByRole("button", { name: /^(again|hard|good|easy)\b/i });
+// Unanchored at the end on purpose: these buttons carry their keyboard hint
+// inside them, so the accessible name of the one that says "Got it, next" is
+// "Got it, next Space" and a `$` matches none of them.
+const ratings = page.getByRole("button", { name: /^(got it|not yet)/i });
 const reveal = page.getByRole("button", { name: /show answer/i });
 const pick = page.getByText(/Pick the meaning/);
 const typed = page.locator("main input[type='text'], main input:not([type])").first();
@@ -250,9 +289,16 @@ if (await reveal.count()) {
   await typed.fill("zzz");
   await page.keyboard.press("Enter");
 }
-await ratings.first().waitFor({ timeout: 20_000 });
-const rated = await ratings.count();
-check("the page drills through the ordinary review session", rated === 4, `${rated} rating buttons`);
+// Either the session is waiting on the learner, or it marked the answer and
+// moved on by itself. Both are the ordinary session doing its job.
+const gradedNow = async () =>
+  Number(/(\d+) graded/.exec(await page.locator("main").innerText())?.[1] ?? 0);
+const answered = await eventually(
+  async () => (await ratings.count()) > 0 || (await gradedNow()) > 0,
+  { timeoutMs: 20_000 },
+);
+check("the page drills through the ordinary review session", answered,
+  `${await ratings.count()} ways on offered, ${await gradedNow()} graded`);
 const named = await page.getByText("Scan test page", { exact: true }).count();
 check("and the session says which page it is drilling", named > 0);
 

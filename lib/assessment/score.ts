@@ -1,5 +1,5 @@
 import { checkDictation, type DictationResult } from "@/lib/estonian/dictation";
-import { checkForm, looksLikeSentence } from "@/lib/estonian/writing";
+import { checkAnswer } from "@/lib/estonian/answer";
 import {
   BANDS, PRE_A1, type BandScore, type ChoiceItem, type Confidence,
   type DictationItem, type ItemRef, type Level, type Placement, type Response,
@@ -60,55 +60,60 @@ export function gradeDictation(item: DictationItem, typed: string): DictationMar
 
 export interface WriteMark {
   credit: number;
-  used: boolean;
+  /** Exactly the form the sentence had, allowing for a slipped diacritic. */
+  right: boolean;
+  /** A real form of the right word, but not the one this sentence wants. */
   usedAnotherForm: boolean;
-  isSentence: boolean;
   note: string;
 }
 
 /**
- * A written sentence is marked on the one thing that can be marked with
- * certainty: whether the required form is in it.
+ * A typed gap is marked against the word the sentence actually had in it.
  *
- * Whether the sentence is idiomatic is a separate question, and one only a
- * human or a model can answer. It is not asked here, because a placement level
- * built on a model's opinion of somebody's Estonian is a level built on sand.
+ * `checkAnswer` is the app's one table for grading typed Estonian, and it is
+ * what tells a dropped diacritic from a typo from a different word. Reusing it
+ * rather than comparing strings here means the level check is as forgiving as
+ * a flashcard is, and forgiving in the same way: `soidan` is not `sõidan`, but
+ * the learner who typed it knew the form.
+ *
+ * The middle mark is the interesting one. A different form of the right word
+ * is the mistake this task exists to find, so it is neither a blank page nor a
+ * pass: the learner knew the word and not what the sentence was doing with it.
  */
-export function gradeWrite(item: WriteItem, sentence: string): WriteMark {
-  const isSentence = looksLikeSentence(sentence);
-  const task = {
-    lemma: item.lemma,
-    translation: item.translation,
-    caseKey: item.caseKey,
-    caseEn: item.caseEn,
-    caseEt: item.caseEt,
-    caseQuestion: item.caseQuestion,
-    targetForm: item.targetForm,
-    provenance: "ekilex" as const,
-  };
-  const { used, usedAnotherForm } = checkForm(sentence, task, [...item.otherForms]);
-
-  if (!isSentence) {
-    return { credit: 0, used, usedAnotherForm, isSentence, note: "That is not a whole sentence yet." };
+export function gradeWrite(item: WriteItem, typed: string): WriteMark {
+  const answer = typed.trim();
+  if (!answer) {
+    return { credit: 0, right: false, usedAnotherForm: false, note: "Nothing typed yet." };
   }
-  if (used) {
+
+  const check = checkAnswer(answer, item.targetForm, "et");
+  if (check.verdict === "correct") {
+    return { credit: 1, right: true, usedAnotherForm: false, note: `${item.targetForm} is what the sentence had.` };
+  }
+  if (check.verdict === "diacritics" || check.verdict === "typo") {
     return {
-      credit: 1,
-      used, usedAnotherForm, isSentence,
-      note: `${item.targetForm} is the ${item.caseEt}, the ${item.caseEn.toLowerCase()}, and you used it.`,
+      credit: 0.8,
+      right: true,
+      usedAnotherForm: false,
+      note: `${check.note} The sentence had ${item.targetForm}.`,
     };
   }
-  if (usedAnotherForm) {
+
+  const other = item.otherForms.find((form) => checkAnswer(answer, form, "et").verdict === "correct");
+  if (other) {
     return {
       credit: 0.4,
-      used, usedAnotherForm, isSentence,
-      note: `A sentence, and the right word, but not the ${item.caseEn.toLowerCase()}. That is ${item.targetForm}.`,
+      right: false,
+      usedAnotherForm: true,
+      note: `${other} is a real form of ${item.lemma}, but this sentence wants ${item.targetForm}.`,
     };
   }
+
   return {
     credit: 0,
-    used, usedAnotherForm, isSentence,
-    note: `The ${item.caseEn.toLowerCase()} of ${item.lemma} is ${item.targetForm}.`,
+    right: false,
+    usedAnotherForm: false,
+    note: `The sentence had ${item.targetForm}.`,
   };
 }
 

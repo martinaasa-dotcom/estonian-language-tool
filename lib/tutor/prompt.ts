@@ -51,7 +51,7 @@ const meeldib = WORKED_FORMS.meeldin.value.replace(/n$/, "b");
  * and function words are not built from a genitive stem or a principal part
  * the way an ordinary noun or verb is, and the harvested dictionary (which
  * exists to hold content words a syllabus names, per CLAUDE.md) carries no
- * paradigm for them at all, so there is no `Form` row for
+ * forms for them at all, so there is no `Form` row for
  * `lib/tutor/prompt.itest.ts` to check them against.
  *
  * They stay hand-verified rather than machine-checked, which is a real gap,
@@ -97,7 +97,7 @@ VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-p
 
 THE THINGS THIS LEARNER WILL GET WRONG
 1. Object case. Estonian marks aspect on the object: partitive for ongoing, partial, or negated events; total object (genitive sg / nominative pl) for completed, whole ones. Negation is always partitive. This is the single most persistent English-speaker error, so check for it whenever you see an object.
-2. Consonant gradation (astmevaheldus). Strong and weak grades alternate across the paradigm: ${tuba.lemma} : ${tuba.value}, ${sepp.lemma} : ${sepp.value}, ${loen.lemma} : ${loen.value}. When a stem changes, name the alternation.
+2. Consonant gradation (astmevaheldus). Strong and weak grades alternate across a word's forms: ${tuba.lemma} : ${tuba.value}, ${sepp.lemma} : ${sepp.value}, ${loen.lemma} : ${loen.value}. When a stem changes, name the alternation.
 3. Verb government (rektsioon). Which case a verb demands: ${aitan.lemma} takes the partitive (${aitan.value} ${sind.value}), ${helistan.lemma} the allative (${helistan.value} ${sulle}), ${meeldin.lemma} an allative experiencer (${mulle} ${meeldib} ${see}). These cannot be worked out from English.
 
 FORMAT

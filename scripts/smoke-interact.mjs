@@ -53,7 +53,7 @@ await page.goto(`${BASE}/review/write`, { waitUntil: "networkidle" });
 // Read the task off the page and look the required form up in the dictionary,
 // so the test does not hard-code Estonian morphology of its own.
 const lemma = (await page.locator("strong").first().textContent())?.trim() ?? "";
-const caseName = (await page.locator("p.est").first().textContent())?.trim() ?? "";
+const caseName = (await page.locator("p[lang=\"et\"]").first().textContent())?.trim() ?? "";
 check("writing sets a task", lemma.length > 0 && caseName.length > 0, `${lemma} → ${caseName}`);
 
 // A sentence containing the *headword* rather than the required form: the
@@ -98,7 +98,7 @@ const options = app.getByRole("button", { name: CASE_OPTION });
 if ((await options.count()) === 0) {
   absent(3, "a deck with a verb whose government is recorded; this one asks nothing");
 } else {
-  const verb = (await page.locator("p.est").first().textContent())?.trim() ?? "";
+  const verb = (await page.locator("p[lang=\"et\"]").first().textContent())?.trim() ?? "";
   // Options are named the way a class names them: the question first, the
   // Estonian case name under it. Any option will do, this is checking that the
   // answer reveals the rule.

@@ -27,10 +27,58 @@ export const CARD_TYPES: readonly CardTypeSpec[] = [
 ];
 
 /**
+ * The order a word's own cards are worth meeting in.
+ *
+ * Every card a word generates is created in one `createMany` with one
+ * `createdAt`, so ordering the new-card queue by that column leaves the cards
+ * of a single word tied, and Postgres is free to return them in any order it
+ * likes. That is how a learner's first sight of `juhtuma` came to be a
+ * conjugation card asking for `olevik · ma`: a form of a verb whose meaning
+ * the app had not told them yet.
+ *
+ * So the tie is broken here rather than left to the database, and the order is
+ * the order a lesson teaches in: meet the word, then say it, then see it in a
+ * sentence, and only then produce a named form of it. A type missing from this
+ * table sorts last, which is the safe end for one nobody has thought about.
+ */
+const TEACHING_ORDER: readonly CardType[] = [
+  "RECOGNITION", "PRODUCTION", "CLOZE", "CASE_FORM", "CONJUGATION", "GRADATION", "GOVERNMENT",
+];
+
+export function teachingRank(cardType: string): number {
+  const at = TEACHING_ORDER.indexOf(cardType as CardType);
+  return at === -1 ? TEACHING_ORDER.length : at;
+}
+
+/**
+ * Sorts a batch of new cards so each word introduces itself before it examines
+ * anybody.
+ *
+ * Stable within a word, and it deliberately does not reorder *across* words:
+ * the queue's own ordering decided which words come first and this only settles
+ * the ties inside one. Cards with no lexeme are their own group, since a
+ * manually written card belongs to nothing.
+ */
+export function inTeachingOrder<T extends { lexemeId: string | null; cardType: string }>(cards: T[]): T[] {
+  // Decorated rather than compared in place: the comparator needs each card's
+  // original position, and looking that up with indexOf would be quadratic and
+  // would also collapse two equal objects onto one index.
+  const firstSeen = new Map<string, number>();
+  const decorated = cards.map((card, i) => {
+    const key = card.lexemeId ?? `#${i}`;
+    if (!firstSeen.has(key)) firstSeen.set(key, i);
+    return { card, i, group: firstSeen.get(key)!, rank: teachingRank(card.cardType) };
+  });
+
+  decorated.sort((a, b) => (a.group - b.group) || (a.rank - b.rank) || (a.i - b.i));
+  return decorated.map((d) => d.card);
+}
+
+/**
  * The verb forms worth drilling, and what to call them.
  *
  * Six, not sixty. These are the ones a beginner has to produce out loud in a
- * conversation; the rest of the paradigm is on the dictionary entry to be read,
+ * conversation; the rest of the forms are on the dictionary entry to be read,
  * not memorised. Every one is a form we actually hold — from Ekilex by its
  * morph code, or from the seeded principal parts — so nothing is derived.
  *

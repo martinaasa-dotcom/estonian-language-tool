@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
       <Mascot size={62} mood="thinking" className="float" />
-      <h1 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+      <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
         Seda lehte pole
       </h1>
       <p className="text-base" style={{ color: "var(--ink-2)" }}>

@@ -68,7 +68,7 @@ describe("writingTasksFor", () => {
     expect(inessive?.caseQuestion).toContain("kus?");
   });
 
-  it("sets no exercises for a verb, which has no case paradigm", () => {
+  it("sets no exercises for a verb, which has no case forms", () => {
     expect(writingTasksFor({
       lemma: "lugema", translation: "to read", pos: "VERB",
       forms: [{ formType: "GEN_SG", value: "x" }],

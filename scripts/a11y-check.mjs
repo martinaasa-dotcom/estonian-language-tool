@@ -27,6 +27,7 @@ import { createRequire } from "node:module";
 
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ratingButtons, revealAnswer } from "./lib/review.mjs";
 
 /*
   Read off disk and injected, rather than imported and called in Node: axe
@@ -42,15 +43,79 @@ const AXE = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.mi
  * `best-practice` is included on purpose. It is where the landing page's
  * `<ol>` full of `<div>`s turned up, and a list that announces itself as empty
  * is not a matter of taste.
+ *
+ * ONE CHARACTER IS STILL TEXT, AND AXE WILL NOT SAY SO.
+ *
+ * `test-design.mjs` learned this once already: its contrast pass measured a
+ * text node only at `length > 1`, so the tick on Today's week strip sat at
+ * 2.52:1 unseen by the suite whose job was finding it. That pass was replaced
+ * by axe, which is better at everything except this, and the same hole came
+ * back through the front door. axe files a one-character run as `incomplete`
+ * with `messageKey: "shortTextContent"` — it has *measured* the ratio and
+ * declines only to rule on whether a single glyph counts as text content —
+ * and a report that reads `violations` alone throws that measurement away.
+ *
+ * The four grade buttons under every review card are what it was throwing
+ * away: their keyboard hints are one digit each, `opacity-60` over an ink the
+ * palette had already walked down to just clear the bar, and they measured
+ * 2.45 to 2.61 against 4.5 on the busiest screen in the app. The interval
+ * above them, being two characters, was reported and failed; the fainter thing
+ * beside it was not.
+ *
+ * So a short run whose measured ratio is under the ratio axe itself expected
+ * is a violation here. Two things are still let through, and neither is a
+ * length. A node axe could not put a number on stays incomplete, which covers
+ * `elmPartiallyObscured` and anything else arriving with `contrastRatio: 0`
+ * and no colours: that is a genuine "cannot tell" rather than an answer being
+ * withheld. And `data-ornament` is honoured exactly as `test-design.mjs`
+ * honours it, because the two suites have to agree about what counts as text:
+ * a 92px step numeral in a hue's own tint, behind a card that says the same
+ * thing in words, is decoration and the markup says so out loud. `aria-hidden`
+ * is not that exemption and never stands in for it, since the tick on the week
+ * strip carries `aria-hidden` and is still the thing a sighted reader looks at.
  */
 async function axeViolations(page) {
   await page.addScriptTag({ content: AXE });
-  const result = await page.evaluate(async () => await window.axe.run(document, {
-    resultTypes: ["violations"],
-    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
-  }));
-  return result.violations.map((v) =>
-    `${v.id} (${v.impact}, ${v.nodes.length}): ${v.nodes[0]?.target.join(" ") ?? ""}`);
+  const result = await page.evaluate(async () => {
+    const run = await window.axe.run(document, {
+      // The element itself, so the ornament exemption can be read off the DOM
+      // rather than guessed at from a selector string.
+      elementRef: true,
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
+    });
+    const short = [];
+    for (const rule of run.incomplete) {
+      for (const node of rule.nodes) {
+        const data = node.any?.find((c) => c.data?.messageKey === "shortTextContent")?.data;
+        if (!data) continue;
+        // A measurement, not a shrug: axe reports 0 with no colours where it
+        // could not resolve a background at all.
+        if (!data.fgColor || !data.bgColor || !(data.contrastRatio > 0)) continue;
+        const want = parseFloat(String(data.expectedContrastRatio));
+        if (!Number.isFinite(want) || !(data.contrastRatio < want)) continue;
+        const el = node.element ?? document.querySelector(node.target.at(-1));
+        if (el?.closest("[data-ornament], .sr-only")) continue;
+        short.push({
+          id: rule.id,
+          target: node.target,
+          detail: `${data.contrastRatio}:1 against ${want}:1, ${data.fgColor} on ${data.bgColor}`,
+        });
+      }
+    }
+    return {
+      violations: run.violations.map((v) => ({
+        id: v.id, impact: v.impact, count: v.nodes.length, target: v.nodes[0]?.target ?? [],
+      })),
+      short,
+    };
+  });
+
+  const lines = result.violations.map((v) =>
+    `${v.id} (${v.impact}, ${v.count}): ${v.target.join(" ")}`);
+  for (const s of result.short) {
+    lines.push(`${s.id} (one-character text): ${s.target.join(" ")} at ${s.detail}`);
+  }
+  return lines;
 }
 
 const BASE = baseUrl();
@@ -90,7 +155,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, done } = suite("Accessibility", { floor: 335 });
+const { check, absent, done } = suite("Accessibility", { floor: 339 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -213,6 +278,54 @@ for (const route of ROUTES) {
     violations.length === 0, violations.slice(0, 2).join("; "));
 }
 await dark.close();
+
+/*
+  THE STATE A ROUTE DOES NOT ARRIVE IN, AND WHY ONE IS ENOUGH TO MATTER.
+
+  Everything above sweeps a page as it loads, and WCAG exempts a control that
+  is inactive: axe skips a disabled button's text on purpose, because nobody
+  is being asked to read it. That exemption was doing work nobody had asked it
+  to do here. Review's Undo button is `disabled` until a card has been graded,
+  which is exactly how every visit to `/review` begins, so its key hint was
+  outside this sweep for the whole of the app's life. Grade one card and the
+  same node measures 2.57:1 on the light theme and 3.06:1 on the dark, against
+  a bar of 4.5.
+
+  So the rule is that a control which is only ever live after somebody has
+  done something has to be swept after they have done it. One state rather
+  than a matrix: the point is not to enumerate the app, it is that a suite
+  which only ever sees arrival states cannot see this class of fault at all,
+  and the review screen is where the class lives.
+
+  It grades, which `lib/review.mjs` deliberately does not do for the suites
+  that only reveal, so this costs the shared deck one card. That is the whole
+  price of the state and it is stated here rather than discovered by whoever
+  runs the next suite.
+*/
+for (const theme of ["light", "dark"]) {
+  const graded = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: theme });
+  await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
+  await graded.waitForTimeout(300);
+  const shape = await revealAnswer(graded);
+  const ratings = ratingButtons(graded);
+  if (shape && (await ratings.count())) {
+    await ratings.first().click();
+    await graded.waitForTimeout(1200);
+    const live = await graded.evaluate(() => {
+      const btn = [...document.querySelectorAll("main button")].find((b) => /Undo/.test(b.textContent));
+      return btn ? !btn.disabled : null;
+    });
+    check(`/review once a card is graded, in ${theme}: the controls a grade unlocks are live`,
+      live === true, `Undo disabled: ${live === null ? "no button" : !live}`);
+    const violations = await axeViolations(graded);
+    check(`/review once a card is graded, in ${theme}: axe finds nothing`,
+      violations.length === 0, violations.slice(0, 2).join("; "));
+  } else {
+    absent(2, `/review with a card graded, in ${theme}: the deck had nothing due, ` +
+      "so the controls a grade unlocks were never drawn. Run `npm run demo`");
+  }
+  await graded.close();
+}
 
 // A visible focus ring on the primary action of the review path.
 await page.goto(`${BASE}/review/write`, { waitUntil: "networkidle" });

@@ -9,6 +9,7 @@ import { Card, Chip } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { SuggestFix } from "@/components/SuggestFix";
 import type { Msg } from "./useAnuChat";
+import { AI_TAG } from "@/lib/copy/values";
 
 /**
  * The pieces of an Anu conversation shared by the full `/tutor` page and the
@@ -60,14 +61,65 @@ export function sentenceCheckPrompt(estonian: string, meaning: string): string {
  * provider the deployment would ask. After one, it names the model that
  * actually wrote what is on screen, read off the reply's own headers, which
  * with a fallback chain configured is not always the same thing.
+ *
+ * `compact` is the floating panel, and it drops the second sentence rather
+ * than shortening it. Two different things were being said in one line: which
+ * model answered, which is a fact about the reply on screen and belongs under
+ * it, and where Estonian forms come from, which is a standing fact about Anu
+ * and is the same on the day she is installed as on the thousandth question.
+ * Under a 24rem panel the pair ran to three lines of grey text below the box
+ * the learner types in, which is the largest single thing on that screen that
+ * nobody was reading. So the standing fact is said once, in the greeting, where
+ * somebody meeting Anu is actually looking, and what stays here is the fact
+ * about the answer. Nothing is softened by the move: what makes Anu's Estonian
+ * checkable is that each piece of it is boxed and tagged in the reply itself,
+ * and that is untouched.
  */
-export function Provenance({ label, answered }: { label: string | null; answered: boolean }) {
+export function Provenance({ label, answered, compact = false }: {
+  label: string | null;
+  answered: boolean;
+  compact?: boolean;
+}) {
   if (!label) return null;
   return (
     <p className="text-2xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-      {answered ? "Answered by" : "Will ask"} {label}. Anu explains grammar; every inflected form in
-      the dictionary is stored data from Ekilex, never written by a model.
+      {answered ? "Answered by" : "Will ask"} {label}.
+      {!compact && " Anu explains grammar; every inflected form in the dictionary is stored data from Ekilex, never written by a model."}
     </p>
+  );
+}
+
+/**
+ * The half-written questions, offered as a way in.
+ *
+ * One row rather than the two that were here: the page drew it at one size and
+ * the panel at another, from the same table, so a starter added to `CHIPS`
+ * arrived in both and any change to how one behaves arrived in neither. Picking
+ * one writes it into the box and puts the learner in the box, which is the part
+ * that was missing: on the panel the starters and the field are now at opposite
+ * ends of the screen, and a chip that silently fills something you are not
+ * looking at reads as a chip that did nothing.
+ */
+export function Starters({ compact = false, onPick }: {
+  compact?: boolean;
+  onPick: (prompt: string) => void;
+}) {
+  return (
+    <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
+      {CHIPS.map((c) => (
+        <button
+          key={c.label}
+          type="button"
+          onClick={() => onPick(c.prompt)}
+          className={`press rounded-full font-semibold transition-ui hover:-translate-y-px ${
+            compact ? "px-3 py-1.5 text-2xs" : "px-3.5 py-2 text-xs"
+          }`}
+          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        >
+          {c.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -144,10 +196,10 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
             <div className="mb-1 flex items-center gap-2">
               <span className="label-xs" style={{ color: "var(--accent-deep)" }}>Corrected</span>
               <Chip tone="again" title="Anu wrote this. The dictionary's forms are stored data; this is not.">
-                AI · verify
+                {AI_TAG}
               </Chip>
             </div>
-            <p lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{fix}</p>
+            <p lang="et" className="text-md" style={{ color: "var(--ink)" }}>{fix}</p>
           </div>
         )}
         {unverified.length > 0 && <UnverifiedNotice words={unverified} />}
@@ -202,14 +254,14 @@ function UnverifiedNotice({ words }: { words: string[] }) {
       style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
     >
       <Chip tone="again" title="Not a stored form, so the dictionary could not confirm it">
-        AI · verify
+        {AI_TAG}
       </Chip>
       <span>{plural ? "Anu used words above" : "Anu used a word above"} the dictionary does not recognise yet:</span>
       <span>
         {words.map((w, i) => (
           <span key={w}>
             {i > 0 && ", "}
-            <span lang="et" className="est font-semibold">{w}</span>
+            <span lang="et" className="font-semibold">{w}</span>
           </span>
         ))}.
       </span>
@@ -323,14 +375,14 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
       <div className="mb-2 flex items-center gap-2">
         <span className="label-xs" style={{ color: "var(--ink-3)" }}>Vocabulary</span>
         <Chip tone="again" title="Anu's forms are not authoritative, check them in the dictionary">
-          AI · verify
+          {AI_TAG}
         </Chip>
       </div>
       <ul className="flex flex-col gap-1.5">
         {vocab.map((w) => (
           <li key={w.et} className="flex items-center justify-between gap-3">
             <span className="text-sm">
-              <span className="est font-semibold" style={{ color: "var(--ink)" }}>{w.et}</span>
+              <span className="font-semibold" style={{ color: "var(--ink)" }}>{w.et}</span>
               <span style={{ color: "var(--ink-3)" }}>, {w.en}</span>
             </span>
             <Button

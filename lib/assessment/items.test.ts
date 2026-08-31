@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { CASES } from "@/lib/estonian/cases";
 import { assemble, buildPaper, listeningItems, mulberry32, readingItems, speakingItems, writingItems, type WordRow } from "./items";
+import { BLANK } from "@/lib/estonian/cloze";
 import { BANDS, type ChoiceItem, type Item } from "./types";
 
 /**
@@ -11,20 +13,36 @@ import { BANDS, type ChoiceItem, type Item } from "./types";
  */
 const WORDS: WordRow[] = [
   {
-    id: "tuba", lemma: "tuba", translation: "room", pos: "NOUN", cefr: "A1", government: null,
+    id: "tuba", lemma: "tuba", translation: "room, chamber", pos: "NOUN", cefr: "A1", government: null,
     forms: [
       { formType: "NOM_SG", value: "tuba" },
       { formType: "GEN_SG", value: "toa" },
       { formType: "PART_SG", value: "tuba" },
+      { formType: "ILL_SG_SHORT", value: "tuppa" },
+      { formType: "GEN_PL", value: "tubade" },
+      { formType: "PART_PL", value: "tube" },
     ],
-    examples: [{ et: "Ma olen praegu toas.", en: "I am in the room right now." }],
+    examples: [{ et: "Koristasin toa ära." }, { et: "Ma olen praegu toas.", en: "I am in the room right now." }],
   },
   {
-    id: "raamat", lemma: "raamat", translation: "book", pos: "NOUN", cefr: "A1", government: null,
+    id: "tramm", lemma: "tramm", translation: "tram", pos: "NOUN", cefr: "A1", government: null,
+    forms: [
+      { formType: "NOM_SG", value: "tramm" },
+      { formType: "GEN_SG", value: "trammi" },
+      { formType: "PART_SG", value: "trammi" },
+      { formType: "GEN_PL", value: "trammide" },
+      { formType: "PART_PL", value: "tramme" },
+    ],
+    examples: [{ et: "Sõitsin trammiga koju." }, { et: "Nõmmele ei sõida tramm ega troll." }],
+  },
+  {
+    id: "raamat", lemma: "raamat", translation: "book", pos: "NOUN", cefr: "A2", government: null,
     forms: [
       { formType: "NOM_SG", value: "raamat" },
       { formType: "GEN_SG", value: "raamatu" },
       { formType: "PART_SG", value: "raamatut" },
+      { formType: "GEN_PL", value: "raamatute" },
+      { formType: "PART_PL", value: "raamatuid" },
     ],
     examples: [],
   },
@@ -34,8 +52,10 @@ const WORDS: WordRow[] = [
       { formType: "NOM_SG", value: "aken" },
       { formType: "GEN_SG", value: "akna" },
       { formType: "PART_SG", value: "akent" },
+      { formType: "GEN_PL", value: "akende" },
+      { formType: "PART_PL", value: "aknaid" },
     ],
-    examples: [],
+    examples: [{ et: "Hotelli aknast on näha vanalinna." }],
   },
   {
     id: "klient", lemma: "klient", translation: "client, customer", pos: "NOUN", cefr: "B1", government: null,
@@ -43,32 +63,51 @@ const WORDS: WordRow[] = [
       { formType: "NOM_SG", value: "klient" },
       { formType: "GEN_SG", value: "kliendi" },
       { formType: "PART_SG", value: "klienti" },
+      { formType: "GEN_PL", value: "klientide" },
+      { formType: "PART_PL", value: "kliente" },
     ],
-    examples: [],
+    examples: [{ et: "Rahulolev klient on iga firma unistus." }],
   },
   {
     id: "aitama", lemma: "aitama", translation: "to help", pos: "VERB", cefr: "A2",
     government: "partitive: aitan sind (I help you)",
-    forms: [{ formType: "INF_MA", value: "aitama" }],
-    examples: [],
+    forms: [
+      { formType: "INF_MA", value: "aitama" },
+      { formType: "INF_DA", value: "aidata" },
+      { formType: "PRES_1SG", value: "aitan" },
+      { formType: "PAST_1SG", value: "aitasin" },
+      { formType: "PART_TUD", value: "aidatud" },
+    ],
+    examples: [{ et: "Õpetaja aitab õpilast." }],
   },
 ];
 
-/** Every Estonian string an item puts on screen. */
+/**
+ * Every Estonian string an item puts on screen, one word at a time.
+ *
+ * A gapped sentence is checked word by word rather than whole, which is the
+ * stronger question: what is left standing has to be words of the sentence a
+ * lexicographer recorded, and the blank has to be the only thing missing. A
+ * whole-string check would have to give up on any prompt carrying a blank,
+ * which is now most of them.
+ */
 function estonianIn(item: Item): string[] {
   const out: string[] = [item.lemma];
-  if ("et" in item && item.et) out.push(item.et);
+  if ("et" in item && item.et) out.push(...words(item.et));
   if (item.kind === "choice" && item.estonianOptions) out.push(...item.options);
-  if (item.kind === "write") out.push(item.targetForm);
+  if (item.kind === "write") out.push(...words(item.sentence), ...words(item.full), item.targetForm);
   return out;
 }
 
-/** Everything the dictionary rows can vouch for, spelled out. */
+const words = (text: string) =>
+  text.replace(BLANK, " ").split(/[^\p{L}\p{M}'’-]+/u).filter(Boolean);
+
+/** Everything the dictionary rows can vouch for, word by word. */
 const ATTESTED = new Set(
   WORDS.flatMap((w) => [
     w.lemma,
     ...w.forms.map((f) => f.value),
-    ...w.examples.map((e) => e.et),
+    ...w.examples.flatMap((e) => words(e.et)),
   ].map((s) => s.toLowerCase())),
 );
 
@@ -97,12 +136,39 @@ describe("items are built out of the dictionary, never written", () => {
     }
   });
 
-  it("marks derived forms as derived and stored ones as dictionary", () => {
+  it("says which of the dictionary's sources each question came from", () => {
     const items = readingItems(WORDS, mulberry32(3));
-    const meaning = items.find((i) => i.id.startsWith("r-mean-"));
-    expect(meaning?.source).toBe("dictionary");
-    const identify = items.find((i) => i.id.startsWith("r-ident-"));
-    expect(identify?.source).toBe("derived");
+    expect(items.find((i) => i.id.startsWith("r-mean-"))?.source).toBe("dictionary");
+    // A gap is a sentence somebody recorded, whichever forms the wrong
+    // answers were computed from.
+    expect(items.find((i) => i.id.startsWith("r-gap-"))?.source).toBe("usage");
+  });
+
+  it("never asks about a case by name", () => {
+    /*
+      The whole point of the rewrite. Nobody sitting a real Estonian placement
+      test is asked to name a case, and this module used to spend half of its
+      reading section and all of its writing section doing exactly that. The
+      Estonian names still appear in the explanation after an answer, which is
+      a cross-reference for somebody who is also taking a course; what may not
+      happen is a *question* that cannot be answered without them.
+    */
+    const rng = mulberry32(13);
+    const asked = [
+      ...readingItems(WORDS, rng),
+      ...listeningItems(WORDS, rng),
+      ...writingItems(WORDS, rng),
+    ].map((i) => i.question);
+    expect(asked.length).toBeGreaterThan(5);
+    for (const question of asked) {
+      for (const spec of CASES) {
+        expect(question.toLowerCase(), question).not.toContain(spec.et);
+        expect(question.toLowerCase(), question).not.toContain(spec.en.toLowerCase());
+      }
+      // And no question mark doubled by a template appending one to a case
+      // question that already ended in it: "the case that answers kus??".
+      expect(question, question).not.toContain("??");
+    }
   });
 });
 
@@ -131,14 +197,16 @@ describe("a question always has exactly one right answer", () => {
 });
 
 describe("bands", () => {
-  it("raises a question to the harder of its word and its grammar", () => {
-    const items = readingItems(WORDS, mulberry32(5));
-    const terminative = items.find((i) => i.id === "r-case-tuba-TRANSLATIVE" || i.id.endsWith("-TRANSLATIVE"));
-    if (terminative) expect(BANDS.indexOf(terminative.band)).toBeGreaterThanOrEqual(BANDS.indexOf("B1"));
-
-    const government = items.find((i) => i.id.startsWith("r-gov-"));
-    // aitama is an A2 verb, but which case it governs is not an A2 question.
-    expect(government?.band).toBe("B1");
+  it("never puts a gap at the first band", () => {
+    // Reading an A1 word is an A1 question. Choosing between four of its
+    // endings is not, whatever the word, so the first band stays what it is
+    // supposed to be: can you read this word at all.
+    const items = [...readingItems(WORDS, mulberry32(5)), ...writingItems(WORDS, mulberry32(5))];
+    const gaps = items.filter((i) => i.id.startsWith("r-gap-") || i.id.startsWith("w-"));
+    expect(gaps.length).toBeGreaterThan(0);
+    for (const gap of gaps) {
+      expect(BANDS.indexOf(gap.band), gap.id).toBeGreaterThanOrEqual(BANDS.indexOf("A2"));
+    }
   });
 
   it("never asks a listening question about a word with no audio to play", () => {
@@ -188,4 +256,61 @@ describe("buildPaper", () => {
     const b = buildPaper(WORDS, 99).items.map((i) => i.id).join();
     expect(a === b).toBe(false);
   });
+});
+
+/**
+ * The question from the report, with the pool it was drawn out of.
+ *
+ * Real rows again: the six colours the course teaches in one unit, the noun
+ * that shares `hall` with the grey one, and the three far entries that turned
+ * up beside "black" in the version that shipped. A learner who has never seen
+ * an Estonian word can cross out a plastic bag and a C1 abstract noun from an
+ * A1 question, so the answer was the only option left worth reading.
+ */
+const NEIGHBOURS: WordRow[] = [
+  { id: "must", lemma: "must", translation: "black", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "must" }, { formType: "GEN_SG", value: "musta" }, { formType: "PART_SG", value: "musta" }], examples: [] },
+  { id: "valge", lemma: "valge", translation: "white", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "valge" }, { formType: "GEN_SG", value: "valge" }, { formType: "PART_SG", value: "valget" }], examples: [] },
+  { id: "punane", lemma: "punane", translation: "red", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "punane" }, { formType: "GEN_SG", value: "punase" }, { formType: "PART_SG", value: "punast" }], examples: [] },
+  { id: "sinine", lemma: "sinine", translation: "blue", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "sinine" }, { formType: "GEN_SG", value: "sinise" }, { formType: "PART_SG", value: "sinist" }], examples: [] },
+  { id: "roheline", lemma: "roheline", translation: "green", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "roheline" }, { formType: "GEN_SG", value: "rohelise" }, { formType: "PART_SG", value: "rohelist" }], examples: [] },
+  { id: "kollane", lemma: "kollane", translation: "yellow", pos: "ADJECTIVE", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "kollane" }, { formType: "GEN_SG", value: "kollase" }, { formType: "PART_SG", value: "kollast" }], examples: [] },
+  { id: "hall", lemma: "hall", translation: "frost", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "hall" }, { formType: "GEN_SG", value: "halli" }, { formType: "PART_SG", value: "halli" }], examples: [] },
+  { id: "kilekott", lemma: "kilekott", translation: "plastic bag", pos: "NOUN", cefr: "A2", government: null,
+    forms: [{ formType: "NOM_SG", value: "kilekott" }, { formType: "GEN_SG", value: "kilekoti" }, { formType: "PART_SG", value: "kilekotti" }], examples: [] },
+  { id: "narkomaania", lemma: "narkomaania", translation: "narcomania, drug addiction, substance abuse", pos: "NOUN", cefr: "B2", government: null,
+    forms: [{ formType: "NOM_SG", value: "narkomaania" }, { formType: "GEN_SG", value: "narkomaania" }, { formType: "PART_SG", value: "narkomaaniat" }], examples: [] },
+  { id: "asula", lemma: "asula", translation: "settlement, city, town, village", pos: "NOUN", cefr: "B2", government: null,
+    forms: [{ formType: "NOM_SG", value: "asula" }, { formType: "GEN_SG", value: "asula" }, { formType: "PART_SG", value: "asulat" }], examples: [] },
+];
+
+const FAR_GLOSSES = ["plastic bag", "narcomania, drug addiction, substance abuse", "settlement, city, town, village"];
+
+describe("the wrong answers are worth reading", () => {
+  it("asks what a colour means among colours, at every seed", () => {
+    for (let seed = 1; seed < 30; seed++) {
+      const heard = listeningItems(NEIGHBOURS, mulberry32(seed))
+        .find((i): i is ChoiceItem => i.id === "l-word-must");
+      expect(heard, `seed ${seed} asked nothing about must`).toBeDefined();
+      for (const gloss of FAR_GLOSSES) expect(heard!.options).not.toContain(gloss);
+      expect(heard!.options).toContain("black");
+    }
+  });
+
+  it("does not hand a beginner three C1 nouns to cross out", () => {
+    for (let seed = 1; seed < 30; seed++) {
+      for (const item of readingItems(NEIGHBOURS, mulberry32(seed))) {
+        if (!item.id.startsWith("r-mean-") || item.band !== "A1") continue;
+        const far = item.options.filter((o) => FAR_GLOSSES.includes(o));
+        expect(far, `${item.id} at seed ${seed}`).toHaveLength(0);
+      }
+    }
+  });
+
 });
