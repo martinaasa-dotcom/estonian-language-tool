@@ -215,9 +215,16 @@ export const CANNOT: readonly Claim[] = [
  * somebody who has not decided to read anything yet, and three sentences of
  * what the app is before the first question is a wall to get past rather than
  * a welcome.
+ *
+ * The line is the name, because the name is the promise and almost nobody
+ * arriving knows what it means. Once somebody has been told that kodukeel is
+ * the language of a home, what this app is for needs no further explaining,
+ * and every screen after it reads as part of that rather than as a feature.
+ * The README has opened this way since the first commit; this is the same
+ * sentence reaching the first screen anybody actually sees.
  */
 export const WHAT_IT_IS_SHORT =
-  "Pick the Estonian words you want to keep. Kodukeel asks you for them just before you forget.";
+  "Kodukeel means home language. This is how Estonian becomes yours.";
 
 /** The one paragraph version, for the top of the walkthrough. */
 export const WHAT_IT_IS =
