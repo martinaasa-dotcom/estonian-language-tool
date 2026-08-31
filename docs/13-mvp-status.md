@@ -194,9 +194,13 @@ deployment had quietly broken. This pass closes those.
 1. **Match grades on recognition, not production.** A pair found among eight is easier than producing
    the word cold; it is recorded as Good, which is generous but not dishonest. Sprint has the same
    shape and always did.
-2. **The leaderboard is a whole-instance board, not per class.** Everyone who opts in on one
-   deployment sees everyone else who opted in. For a single class that is the right behaviour; for a
-   public instance it would need class codes, which is a feature, not a fix.
+2. **The leaderboard is a whole-instance board, not per class, and it is ranked from a bounded
+   set.** Everyone who opts in on one deployment sees everyone else who opted in. For a single class
+   that is the right behaviour; for a public instance it would need class codes, which is a feature,
+   not a fix. Past `BOARD_CANDIDATES` opted-in learners the top twenty is the top twenty of that many
+   rather than of the whole deployment, and there is nothing on `Setting` that ranks people, so which
+   ones is stable rather than meaningful. Ranking properly would mean tallying everybody first, which
+   is the query the board stopped making when the tally moved into Postgres.
 3. **Undo trusts the client for the previous card state.** It is range-validated and can only ever be
    applied to a card the caller already owns, so the worst case is someone rewinding their own
    scheduling, which the button does anyway.
