@@ -205,7 +205,18 @@ for (let i = 0; i < 6 && !revealed; i++) {
   }
   await page.waitForTimeout(450);
   revealed = (await page.getByRole("link", { name: /Why the/ }).count()) > 0;
-  if (!revealed) { await page.keyboard.press("3"); await page.waitForTimeout(650); }
+  if (!revealed) {
+    // Enter carries on from a miss or a first meeting, 2 is "Got it" on a flip
+    // card. It used to press 3, which was Good when every card had four grading
+    // buttons under it; on a card that does not, that is a keystroke into the
+    // void and the loop spun six times over the same card.
+    if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+      await page.keyboard.press("Enter");
+    } else {
+      await page.keyboard.press("2");
+    }
+    await page.waitForTimeout(650);
+  }
 }
 check("a revealed case card offers the rule behind it", revealed);
 /*

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, BookOpen, MessageCircleQuestion, Target, TriangleAlert } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, BookOpen, MessageCircleQuestion, PenLine, Target, TriangleAlert,
+} from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { CASES } from "@/lib/estonian/cases";
 import { allCaseReferences, caseReference } from "@/lib/estonian/grammar";
@@ -256,6 +258,12 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         <div className="flex flex-wrap gap-3">
           <ButtonLink href={`/review?case=${ref.key}`} variant="primary">
             <Target size={15} aria-hidden /> Drill this case
+          </ButtonLink>
+          {/* Writing a sentence in a case is the hardest thing you can do with
+              one, so it belongs on the page that just explained it rather than
+              on a menu that cannot say which case you are stuck on. */}
+          <ButtonLink href="/review/write">
+            <PenLine size={15} aria-hidden /> Write a sentence with it
           </ButtonLink>
           <ButtonLink href="/dictionary">
             <BookOpen size={15} aria-hidden /> Look a word up

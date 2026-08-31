@@ -111,8 +111,11 @@ export function shows(stage: Stage, panel: Panel): boolean {
  * How many practice tiles a stage puts on Today.
  *
  * Six was the whole palette laid out at once, which reads as a menu to study
- * rather than a thing to press. Three is a choice.
+ * rather than a thing to press. Three is a choice, and four is still a choice
+ * on a screen that has a dozen other things on it. The rounds a stage does not
+ * show are on /practice, one row of the rail away, which is where somebody
+ * looking for a game is already going.
  */
 export function practiceTiles(stage: Stage): number {
-  return stage === "settled" ? 6 : 3;
+  return stage === "settled" ? 4 : 3;
 }

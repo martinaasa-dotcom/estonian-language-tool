@@ -14,6 +14,7 @@ import {
 } from "@/lib/stats/history";
 import { stickingPoints } from "@/lib/stats/sticking";
 import { ButtonLink } from "@/components/Button";
+import { DrillLink } from "@/components/DrillLink";
 import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
@@ -292,6 +293,12 @@ export default async function ProgressPage() {
               first, and setting it aside is the last resort rather than the first.
             </p>
             <StickingPoints points={sticking} />
+            {/* The drill for exactly the cards listed above it. It used to be
+                on the practice menu, five rows from anything saying which of
+                your cards keep failing. */}
+            <div className="mt-3">
+              <DrillLink href="/review/clinic" />
+            </div>
           </section>
         )}
 

@@ -6,6 +6,23 @@ import { TOPIC_NOTES, grammarTopic } from "@/lib/estonian/grammar";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { SYLLABUS } from "@/lib/collections/syllabus";
 import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
+import { DrillLink } from "@/components/DrillLink";
+
+/**
+ * The grammar topics with a drill of their own.
+ *
+ * Two, and both are things you cannot learn from a page about them. Rektsioon
+ * has to be met verb by verb, because `aitan sind` and `helistan sulle` look
+ * identical in English and only the drill tells them apart. Quantitative
+ * gradation is a length distinction Estonian spelling only half records, so
+ * `maja` against `majja` is a question about what you can hear rather than what
+ * you can read. Both drills used to sit on the practice menu, which is the one
+ * screen that cannot tell you either of them is what you are getting wrong.
+ */
+const TOPIC_DRILL: Record<string, string> = {
+  government: "/review/government",
+  gradation: "/review/pairs",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -179,6 +196,13 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             </ul>
           )}
         </section>
+
+        {TOPIC_DRILL[id] && (
+          <section>
+            <SectionTitle hint="from your own deck">Drill it</SectionTitle>
+            <DrillLink href={TOPIC_DRILL[id]!} />
+          </section>
+        )}
       </Stack>
     </Page>
   );

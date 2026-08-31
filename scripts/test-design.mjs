@@ -262,6 +262,18 @@ for (const theme of ["light", "dark"]) {
   await p.waitForTimeout(300);
   const row = p.locator('nav[aria-label="Main"] a[href="/progress"]').first();
   if ((await row.count()) === 0) continue;
+  /*
+    Park the pointer somewhere else first.
+
+    The pane is placed on a pointer *move*, and Playwright's hover only moves
+    the mouse if it is not already where it is going. On the second pass through
+    this loop it is: the first pass left it on this very row, so no move was
+    dispatched, no pane was drawn, and the dark theme was reported as having no
+    hover state at all. The suite has been red on that one reading rather than
+    on anything the app does.
+  */
+  await p.mouse.move(700, 700);
+  await p.waitForTimeout(120);
   await row.hover();
   await p.waitForTimeout(350);
   const seen = await p.evaluate(() => {

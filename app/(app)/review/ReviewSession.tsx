@@ -191,6 +191,7 @@ const TYPE_LABEL: Record<string, string> = {
   GRADATION: "Gradation",
   GOVERNMENT: "Verb government",
   CLOZE: "Fill the gap",
+  CONJUGATION: "Verb form",
 };
 
 /** Cards whose front or back is Estonian and therefore worth hearing. */
@@ -672,7 +673,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           </div>
           )}
 
-          {card.hint && !revealed && (
+          {card.hint && !revealed && ask !== "intro" && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
           )}
 
@@ -816,7 +817,11 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </>
           )}
 
-          {(revealed || chosen) && <WhyRow card={card} />}
+          {/* A first meeting carries these too. "What is the kaasaütlev?" is a
+              question somebody has the moment they first see one, and the
+              screen that introduces the form is the obvious place to answer
+              it. */}
+          {(revealed || chosen || ask === "intro") && <WhyRow card={card} />}
         </div>
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>

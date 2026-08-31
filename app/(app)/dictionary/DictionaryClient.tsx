@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Camera, Check, Plus, Search, Star } from "lucide-react";
+import { Camera, Check, Plus, ScissorsLineDashed, Search, Star } from "lucide-react";
 import { addToDeck, toggleStar } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
@@ -154,6 +154,21 @@ export function DictionaryClient({
               stored.
             </p>
           )}
+          {/* The other way of bringing your own Estonian in, and the reason it
+              is here rather than on the practice menu: both of these turn
+              something you already have into something you can study, which is
+              what this page is for. */}
+          <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+            Reading something already?{" "}
+            <Link
+              href="/review/cloze"
+              className="inline-flex items-center gap-1.5 font-semibold underline underline-offset-2"
+              style={{ color: "var(--accent-deep)" }}
+            >
+              <ScissorsLineDashed size={14} aria-hidden /> Paste a passage
+            </Link>{" "}
+            and the words already in your deck are blanked out for you to fill back in.
+          </p>
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BAR, DESTINATIONS, isUnder, LISTED, PLACES, SECTIONS, sectionOf } from "./nav";
@@ -22,6 +22,17 @@ function routes(): Set<string> {
   };
   walk(root, "");
   return found;
+}
+
+/** Every source file under a directory, recursively. */
+function filesUnder(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    if (statSync(path).isDirectory()) out.push(...filesUnder(path));
+    else if (/\.tsx?$/.test(entry)) out.push(path);
+  }
+  return out;
 }
 
 describe("the navigation table", () => {
@@ -117,7 +128,10 @@ describe("sectionOf", () => {
   it("finds the section a page lives in", () => {
     expect(sectionOf("/")?.id).toBe("daily");
     expect(sectionOf("/grammar/inessive")?.id).toBe("lookup");
-    expect(sectionOf("/exam/b1")?.id).toBe("standing");
+    // Where you stand on the course and how far along it you are turned out to
+    // be one question rather than two sections, so the mock exam is under the
+    // course it measures.
+    expect(sectionOf("/exam/b1")?.id).toBe("course");
   });
 
   it("answers nothing for a page outside the rail", () => {
@@ -154,6 +168,41 @@ describe("the practice modes", () => {
 
   it("splits every mode into one of the two groups", () => {
     expect(QUICK_MODES.length + TARGETED_MODES.length).toBe(PRACTICE_MODES.length);
+  });
+
+  it("offers a round on the menu and reaches a drill from what it drills", () => {
+    // `targeted` is described in modes.ts as "what you open when you already
+    // know what is going wrong", and all five of them used to sit on a menu
+    // under a heading saying so, which is a list of answers to a question the
+    // learner has not been asked. A round is offered; a drill is reached.
+    for (const mode of PRACTICE_MODES) {
+      expect(Boolean(mode.within), `${mode.href} is ${mode.group} and does not match its group`)
+        .toBe(mode.group === "targeted");
+    }
+    expect(TARGETED_MODES.length).toBeGreaterThan(0);
+  });
+
+  it("puts each drill on a page that really does link to it", () => {
+    /*
+      The half of the rule a table cannot state. Moving a drill off the menu is
+      only an improvement if the page it names actually offers it; a `within`
+      nobody wired up makes the mode unreachable except through the palette,
+      which is worse than the menu it left.
+
+      Asserted against the route's own directory rather than one file, because
+      a page splits into a client component as often as not: the dictionary's
+      offer lives in DictionaryClient.tsx and the drill for a case in the
+      grammar folder's own page.
+    */
+    for (const mode of TARGETED_MODES) {
+      const home = mode.within!.split("/").filter(Boolean)[0]!;
+      const dir = join("app/(app)", home);
+      expect(existsSync(dir), `${mode.href} says it is reached from ${mode.within}, which is not a route`)
+        .toBe(true);
+      const linked = filesUnder(dir).some((f) => readFileSync(f, "utf8").includes(mode.href));
+      expect(linked, `${mode.href} is reached from ${mode.within} and nothing there links to it`)
+        .toBe(true);
+    }
   });
 
   it("leads the quick rounds with the three that need only a deck", () => {

@@ -427,6 +427,40 @@ Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value on
 a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
 on any other.
 
+**A word is taught before it is asked, and the app marks what it can mark.** Two rules, one
+screen, and the code already believed both of them before it did either.
+
+`askFor` routes a card nobody has seen to `intro` under a comment saying a card you have never seen
+cannot be recalled, only met. It then handed over Again, Hard, Good and Easy anyway, so the screen
+asked how well a memory had held up four seconds after admitting there was no memory yet, and Easy
+scheduled the word a week out. A first meeting teaches now: the word, its gloss, and it doing its
+job in an attested sentence with the form the card is about to ask for marked inside it
+(`teachingSentence` and `splitOnForm`, next to the `sentenceContaining` the gap-fill cards already
+used). Nothing there is written or derived; the sentences had been sitting in `Lexeme.examples` all
+along and the review query simply never selected them. Where the dictionary has none, the screen
+says so, because a bare word looks the same as a word nothing could be said about.
+
+`inTeachingOrder` is the other half. Every card of a word is written in one `createMany` with one
+`createdAt`, so ordering the new-card queue by that column leaves them tied and Postgres answers in
+whatever order it likes: a learner's first sight of `juhtuma` could be a conjugation card asking for
+`olevik · ma`, a form of a verb whose meaning the app had not told them yet. The tie is broken in
+code, in the order a lesson teaches in.
+
+And the four buttons are gone from everywhere they were asking a question already answered.
+`checkAnswer` compares a typed answer against a form the dictionary vouches for and returns the
+rating to use; the screen took that verdict, drew a ring round one of the four, and waited. A clean
+hit grades itself and moves on, the way a picked choice already did, and a miss keeps its screen,
+because the correction is the one moment in a review worth stopping for. What is left is the flip
+card, the one shape with nothing to compare, and speaking, where ADR-018 says the learner is the
+only judge there is. Both read `SELF_GRADES` beside `RATINGS`: two options, not four, because the
+difference between Hard and Good is the difference between a six and a ten minute interval, which
+is a question about a scheduler nobody can see, put to somebody trying to learn Estonian.
+
+**`RATINGS` is untouched and so is the scheduler.** `submit` still takes any of the four, a near
+miss is still graded Hard by the marker, and `Review`, undo and the offline replay carry exactly
+what they always did. What went is the asking, and that distinction is what keeps this a change to
+one screen rather than to the append-only log underneath it.
+
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
 own scores. They write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)
@@ -581,12 +615,37 @@ That module decides what a *screen leads with* by how far in the learner is; thi
 a thing lives, and the answer is the same in the first minute as in the first year.
 
 A place that lives *inside* another place carries `within` and keeps its row out of the rail
-without leaving the table, so the palette still reaches it. Three do: Anu, because her button is in
-the corner of every signed-in screen and a row saying "Ask Anu" was a second door onto a room whose
-door is always open; the class week, which now leads the Tasks page where its homework already was;
-and the scanner, which is a way of getting words *into* the dictionary and sat under "Look it up",
-which is not what it does. This is not the "More" button coming back: each is on the screen a
-learner is already standing on when they want it, and `within` has to say which, asserted.
+without leaving the table, so the palette still reaches it. Eight do. Three were there from the
+start: Anu, because her button is in the corner of every signed-in screen and a row saying "Ask
+Anu" was a second door onto a room whose door is always open; the class week, which leads the Tasks
+page where its homework already was; and the scanner, which is a way of getting words *into* the
+dictionary and sat under "Look it up", which is not what it does.
+
+The other five are one question asked five ways. Homework is what Today already lists, and the
+deck, the level check, the mock exam and a class are four readings of "how am I doing", which is
+the question `/progress` exists to answer: standing them beside it as four more rows made the rail
+a list of every noun in the app rather than a set of places to go. Seven rows are left, under three
+headings rather than four, because a heading over a single row is furniture: a heading earns itself
+by telling two or three rows apart, and "where you are in the course" and "how far along it you
+are" turned out to be one question rather than two sections.
+
+This is not the "More" button coming back, and the difference is the whole point: a disclosure
+hides a link somewhere a learner has to *remember*, and each of these is on the screen they are
+already standing on when they want it. `within` has to say which, and that it really is linked
+from there is asserted rather than described, because a `within` nobody wired up leaves a screen
+reachable only through the palette, which is worse than the menu it left.
+
+**The same field, with the same meaning, cuts the practice menu.** `lib/ux/modes.ts` had already
+drawn the distinction and then ignored it: `targeted` is described there as "what you open when you
+already know what is going wrong", and all five of them sat on a menu under a heading saying so,
+which is a list of answers to a question the learner has not been asked yet. A verb government
+drill is worth pressing on the page explaining rektsioon and worth nothing beside four other
+things. So the five carry `within` and each is on the page that names the thing it drills: the
+leech clinic under the panel listing the cards you keep failing, minimal pairs under quantitative
+gradation, writing under the case it asks you to write in, and pasting your own Estonian beside the
+scanner, which is the other way of bringing your own text in. `components/DrillLink.tsx` is one
+drawing for all of them, reading the same table, so a mode renamed once is renamed everywhere it is
+offered. `/practice` is the six rounds, which is what a menu is the right shape for.
 
 The table is read by the rail, the phone sheet, the command palette and the guide, because it was
 four lists and they had drifted. The palette offered six practice modes while `/practice` offered
@@ -1136,7 +1195,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
-`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`. Most of them now
+`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`, `teachingSentence`, `splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

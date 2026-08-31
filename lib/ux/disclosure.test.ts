@@ -70,6 +70,6 @@ describe("shows", () => {
 describe("practiceTiles", () => {
   it("offers a choice rather than the whole palette while starting", () => {
     expect(practiceTiles("starting")).toBe(3);
-    expect(practiceTiles("settled")).toBe(6);
+    expect(practiceTiles("settled")).toBe(4);
   });
 });

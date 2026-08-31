@@ -8,7 +8,7 @@ import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { QUICK_MODES, TARGETED_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { WeakestCases } from "@/components/WeakestCases";
@@ -116,7 +116,7 @@ export default async function PracticePage() {
           />
 
           <section>
-            <SectionTitle hint="a few minutes each">Quick rounds</SectionTitle>
+            <SectionTitle hint="a few minutes each">Rounds</SectionTitle>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {QUICK_MODES.map((m) => {
                 const Icon = icon(m.icon);
@@ -142,24 +142,6 @@ export default async function PracticePage() {
                   </Link>
                 );
               })}
-            </div>
-          </section>
-
-          <section>
-            <SectionTitle hint="when you know what is wrong">Work a weakness</SectionTitle>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {TARGETED_MODES.map((m) => (
-                <ModeCard
-                  key={m.href}
-                  href={m.href}
-                  iconName={m.icon}
-                  tone={m.tone}
-                  title={m.title}
-                  subtitle={m.subtitle}
-                  body={m.blurb}
-                  meta={metaFor(m)}
-                />
-              ))}
             </div>
           </section>
 

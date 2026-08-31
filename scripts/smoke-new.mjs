@@ -189,14 +189,30 @@ check("the desktop rail is drawn", rail !== null);
 if (rail) {
   check("the rail shows its links with nothing to open first",
     rail.toggles === 0, `${rail.toggles} disclosures in the rail`);
+  /*
+    Three: what you do every day, where you are in the course, and looking
+    something up. It was four, and two of them had been reduced to a single row
+    each, which is a heading doing no work: a heading earns itself by telling
+    two or three rows apart, and one over a lone row is furniture. What this is
+    really guarding is that the rail groups at all rather than presenting a flat
+    column, which is the thing that made sixteen links unreadable.
+  */
   check("the rail groups what it shows under headings",
-    rail.headings.length >= 4, `${rail.headings.length} headings`);
-  // Sanity on the count: four sections of three or four, plus settings and the
-  // guide. Anything near the four the rail used to lead with is a regression.
-  check("the rail shows the whole app", rail.links.length >= 14, `${rail.links.length} links`);
+    rail.headings.length >= 3, `${rail.headings.length} headings`);
+  /*
+    Ten: seven places under those headings, then Settings, the reports queue and
+    the guide in the footer. It was fourteen, and the five that went are not
+    hidden, they are inside the place they belong to and carry `within` saying
+    which: homework under Today, and the deck, the level check, the mock exam
+    and a class under Progress, which is the screen that asks the question all
+    four of them answer. The number this floor is really guarding against is
+    four, which is what the rail led with when the rest sat behind a button
+    marked "More".
+  */
+  check("the rail shows the whole app", rail.links.length >= 10, `${rail.links.length} links`);
 }
 
-// The phone cannot show sixteen links at once, so it shows them under the same
+// The phone cannot show every link at once, so it shows them under the same
 // headings behind one button. Same map, less room, and nothing lost.
 await mobile.goto(`${BASE}/`, { waitUntil: "networkidle" });
 await mobile.getByRole("button", { name: "More" }).click();
