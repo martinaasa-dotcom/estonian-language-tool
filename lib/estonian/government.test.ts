@@ -163,6 +163,30 @@ describe("buildOptions", () => {
     expect(buildOptions(only("PARTITIVE"), [], 4, fixed)).toHaveLength(4);
   });
 
+  it("offers the cases an object could otherwise be in", () => {
+    /*
+      Which three of the deck's cases get printed is a ranking now, not a
+      shuffle: nimetav and omastav are the two other cases an Estonian object
+      is ever in, so a question about osastav that offers alaleütlev and
+      alaltütlev instead is asking whether the learner knows an object from a
+      direction, which they answered by knowing the verb was transitive.
+    */
+    const wide: CaseKey[] = ["ALLATIVE", "ELATIVE", "COMITATIVE", "GENITIVE", "NOMINATIVE", "ADESSIVE"];
+    const options = buildOptions(only("PARTITIVE"), wide, 4, fixed)!;
+    expect(options).toContain("GENITIVE");
+    expect(options).toContain("NOMINATIVE");
+  });
+
+  it("tops up with the near cases rather than the head of a list", () => {
+    // With an empty deck the fallback fills the question, and it is ordered by
+    // what is hard to tell from the answer rather than by how it was typed.
+    const options = buildOptions(only("ADESSIVE"), [], 4, fixed)!;
+    // -le beside -l is the hard one. Partitive heads the list and was always
+    // taken first, which for a question about alalütlev is the easy one.
+    expect(options).toContain("ALLATIVE");
+    expect(options).not.toContain("PARTITIVE");
+  });
+
   it("draws distractors from the deck's own distribution when it can", () => {
     const options = buildOptions(only("PARTITIVE"), ["ALLATIVE", "ELATIVE", "COMITATIVE"], 4, fixed)!;
     expect(options).toEqual(expect.arrayContaining(["PARTITIVE"]));

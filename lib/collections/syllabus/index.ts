@@ -166,6 +166,36 @@ const WORDS: readonly CourseWord[] = (() => {
 
 export const courseWords = (): readonly CourseWord[] => WORDS;
 
+const INTRODUCING = (() => {
+  const byLemma = new Map<string, string>();
+  for (const word of WORDS) {
+    const lemma = word.lemma.trim().toLowerCase();
+    byLemma.set(`${lemma}|${word.pos}`, word.unitId);
+    if (!byLemma.has(lemma)) byLemma.set(lemma, word.unitId);
+  }
+  return byLemma;
+})();
+
+/**
+ * The unit that introduces a word, which is the nearest thing this app has to
+ * a topic.
+ *
+ * A course is not a thesaurus and for this it is the better of the two: a unit
+ * is a dozen words a teacher put in one lesson because they turn up together,
+ * which makes them exactly the words a learner has to be able to tell apart.
+ * `lib/questions/distractors.ts` reads it to keep "black" among the colours.
+ *
+ * The part of speech is matched where the dictionary and the course agree on
+ * one, and ignored otherwise: `hall` is a noun meaning frost in the dictionary
+ * and an adjective meaning grey in the course, and it belongs to the colours
+ * either way. A word the course does not teach has no unit, which is the
+ * honest answer rather than a guess.
+ */
+export function unitIntroducing(lemma: string, pos?: string): string | null {
+  const key = lemma.trim().toLowerCase();
+  return (pos ? INTRODUCING.get(`${key}|${pos}`) : undefined) ?? INTRODUCING.get(key) ?? null;
+}
+
 /** Distinct lemmas the course teaches, in course order. */
 export const courseLemmas = (): readonly string[] => WORDS.map((w) => w.lemma);
 

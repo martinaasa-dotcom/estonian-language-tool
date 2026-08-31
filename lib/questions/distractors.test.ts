@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  differentMeaning, differentSentence, differentText,
+  caseNearness, differentMeaning, differentSentence, differentText,
   formNearness, glossNearness, glossOption, pickOptions, sameMeaning, sameSentence,
   sentenceNearness, sentenceOption, type GlossOption,
 } from "./distractors";
-import { mulberry32 } from "./items";
+import { CASES, caseByKey } from "@/lib/estonian/cases";
+import { mulberry32 } from "@/lib/assessment/items";
 
 /** The A1 colours, which is what a question about `must` should be built from. */
 const colour = (text: string): GlossOption => glossOption({ text, pos: "ADJECTIVE", band: "A1", theme: "varvid" });
@@ -98,6 +99,43 @@ describe("what counts as the same answer", () => {
     const overlapping = sentenceOption("The room is cold today.");
     const unrelated = sentenceOption("He sold his bicycle to a neighbour last year.");
     expect(sentenceNearness(overlapping, answer)).toBeGreaterThan(sentenceNearness(unrelated, answer));
+  });
+});
+
+describe("cases are offered against the cases they are confused with", () => {
+  /*
+    The level check no longer asks a case by name, so `buildOptions` in
+    `lib/estonian/government.ts` is what reads this: which case a verb demands
+    of its object, asked in the exam and in the government practice mode.
+  */
+  const spec = (key: string) => caseByKey(key)!;
+
+  it("leads with the other case that answers the same question word", () => {
+    const inessive = spec("INESSIVE");
+    const ranked = CASES
+      .filter((c) => c.key !== "INESSIVE")
+      .sort((a, b) => caseNearness(b, inessive) - caseNearness(a, inessive));
+    expect(ranked[0]!.key).toBe("ADESSIVE");
+    expect(ranked.slice(0, 3).map((c) => c.key).sort()).toEqual(["ADESSIVE", "ELATIVE", "ILLATIVE"]);
+  });
+
+  it("offers the object cases against an object case", () => {
+    const partitive = spec("PARTITIVE");
+    const ranked = CASES
+      .filter((c) => c.key !== "PARTITIVE")
+      .sort((a, b) => caseNearness(b, partitive) - caseNearness(a, partitive));
+    expect(ranked.slice(0, 2).map((c) => c.key).sort()).toEqual(["GENITIVE", "NOMINATIVE"]);
+  });
+
+  it("does not put a first-year case around a rarer answer, or the other way", () => {
+    // A familiar option is a match rather than a bonus: three cases a beginner
+    // has met, around one they have not, is the odd option out and the answer.
+    const comitative = spec("COMITATIVE");
+    const abessive = spec("ABESSIVE");
+    expect(caseNearness(spec("ELATIVE"), comitative))
+      .toBeGreaterThan(caseNearness(spec("ESSIVE"), comitative));
+    expect(caseNearness(spec("ESSIVE"), abessive))
+      .toBeGreaterThan(caseNearness(spec("ELATIVE"), abessive));
   });
 });
 
