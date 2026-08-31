@@ -169,6 +169,16 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const finished = !card;
   const ask = card ? askFor(card, mode) : "flip";
 
+  /*
+    Whether the answer is on screen, which is not the same question as whether
+    the learner turned it over: a new card leads with its answer, so `intro`
+    arrives with the rating buttons already drawn while `revealed` stays false.
+    The render spelled this out in four places and the keydown handler was the
+    copy that never got written, so it read `!revealed` and the number keys did
+    nothing at all on that shape. One name, so a fifth reader cannot disagree.
+  */
+  const answerShown = revealed || ask === "intro";
+
   // Draining the queue is the provider's job, not this screen's — it has to keep
   // happening on pages that are not a review session. Here we only report it.
   useEffect(() => { setPendingOffline(outboxPending); }, [outboxPending]);
@@ -377,13 +387,13 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         }
         return;
       }
-      if (!revealed) return;
+      if (!answerShown) return;
       const n = Number(e.key);
       if (n >= 1 && n <= 4) { e.preventDefault(); void submit(n as RatingValue); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
+  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
 
   if (wasEmptyAtStart) {
     return (
@@ -555,7 +565,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             )}
           </div>
 
-          {card.hint && !revealed && ask !== "intro" && (
+          {card.hint && !answerShown && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
           )}
 
@@ -667,7 +677,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </div>
           )}
 
-          {(revealed || ask === "intro") && ask !== "choice" && (
+          {answerShown && ask !== "choice" && (
             <>
               <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
               {card.cardType === "CLOZE" ? (
@@ -722,7 +732,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </p>
           ) : ask === "choice" && chosen === card.back ? (
             <p className="text-center text-sm font-semibold" style={{ color: "var(--good-ink)" }}>Õige!</p>
-          ) : !revealed && ask !== "intro" ? (
+          ) : !answerShown ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
@@ -783,7 +793,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             ? (verdict ? "1-4 to grade" : "Enter to check")
             : ask === "choice" && !chosen
               ? `1-${card?.choices?.length ?? 4} to pick`
-              : !revealed && ask !== "intro"
+              : !answerShown
                 ? "Space to flip · 1-4 to grade"
                 : "1-4 to grade"}
         </span>
