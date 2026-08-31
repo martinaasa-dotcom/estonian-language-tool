@@ -127,31 +127,37 @@ export default async function PracticePage() {
               {TARGETED_MODES.map((m) => (
                 <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
               ))}
-              {/*
-                The paper sits in the same grid rather than under a heading of
-                its own. It is a different size of commitment, which is what
-                the chip says; it is not a different kind of question, and a
-                section containing one row was three lines of chrome around it.
-              */}
-              <Link
-                href="/exam"
-                className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
-                style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
-              >
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                  style={{ background: "var(--blush)", color: "var(--surface)" }}
-                >
-                  <ClipboardCheck size={18} aria-hidden />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
-                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
-                    A2 to C1 · an afternoon
-                  </span>
-                </span>
-              </Link>
             </div>
+          </section>
+
+          {/*
+            The paper keeps a heading of its own, and that is a correction
+            rather than an oversight. Folding it into the grid above put it
+            under "when you know what is wrong", and a mock exam is exactly
+            what you sit when you do not: it is the thing that tells you. What
+            it does not need is the paragraph it used to carry, so it is the
+            same tile as everything else, one row wide.
+          */}
+          <section>
+            <SectionTitle hint="an afternoon, not five minutes">Sit the paper</SectionTitle>
+            <Link
+              href="/exam"
+              className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
+              style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+            >
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                style={{ background: "var(--blush)", color: "var(--surface)" }}
+              >
+                <ClipboardCheck size={18} aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
+                <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+                  A2 to C1 · four parts · sixty percent to pass
+                </span>
+              </span>
+            </Link>
           </section>
 
           <section>
