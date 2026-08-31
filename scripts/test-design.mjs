@@ -202,7 +202,7 @@ for (const url of ["/welcome"]) {
 }
 
 // Floor: 13, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Design system", { floor: 13 });
+const { check, done } = suite("Design system", { floor: 9 });
 
 const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
@@ -286,91 +286,27 @@ check("a hovered row is drawn, and its words clear AA on the pill behind them",
   hovered.length === 0, hovered.join(" | "));
 
 /*
-  THE LANDING PAGE'S FOUR LETTERS TOUCH THE CARD, AND NOT THE BUTTON.
+  THE LANDING PAGE'S FOUR LETTERS ARE GONE, AND SO ARE THEIR FOUR CHECKS.
 
-  õ, ä, ö and ü are tucked over the demo card's four sides, which is the whole
-  of what makes them read as placed rather than scattered. Three of them
-  overlapped an edge and the fourth sat below the deck with clear air around
-  it, and nothing here could tell: they are absolutely positioned, so
+  õ, ä, ö and ü were tucked over the hero's demo card, one to a side, and four
+  checks here measured that: every letter over an edge, none on the "Show
+  answer" pill, none past the page, and the slant still there with the
+  animation stopped. They were worth having. They caught a letter that missed
+  the card by clear air, a letter drawn on the one loud action on the page, and
+  a slant that vanished for anybody who asked for less motion, none of which
+  anything else could see: the letters are absolutely positioned, so
   test-containment skips them by design, and a square that misses the card is
   drawn exactly as correctly as one that meets it.
 
-  What they may not meet is the "Show answer" pill, which fills the footer to
-  15px of its edges. A letter tucked deeply enough into the bottom corner
-  lands on the one loud action on the page and makes it look clipped, which is
-  what the first placement did. The pill is measured as the rounded rectangle
-  it is rather than as its box, since the corner a letter tucks into is
-  transparent and refusing it would price the whole corner out.
-
-  Read at the top of the lift, which is the frame closest to both faults, and
-  at three widths because the offsets change at `sm` and the column is
-  narrowest at 768, where the footnote wraps and moves the card's bottom edge
-  up inside the block the letters are positioned against.
+  The card went when the landing page was cut to five screens, and the letters
+  went with it, because "they all touch the card" is the placement rule and
+  there is no card. So these checks measure nothing, and a check that measures
+  nothing passes for the wrong reason. The floor came down by exactly four,
+  which is the mirror of raising it when they arrived rather than lowering a bar
+  to let a run through: nothing that used to be measured is now unmeasured, the
+  thing itself is gone. If an ornament earns its place on this page again, this
+  is the block to bring back, and the floor goes back up with it.
 */
-const adrift = [], onButton = [], clipped = [], upright = [];
-for (const width of [640, 768, 1280]) {
-  await p.setViewportSize({ width, height: 1000 });
-  await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
-  await p.addStyleTag({ content: ".float{animation-delay:-3s!important;animation-play-state:paused!important}" });
-  await p.waitForTimeout(200);
-  const seen = await p.evaluate(() => {
-    const box = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
-    const overlap = (a, c) => ({ x: Math.min(a.r, c.r) - Math.max(a.l, c.l), y: Math.min(a.b, c.b) - Math.max(a.t, c.t) });
-    /* The pill minus its corners is two rectangles; what is left is four
-       quarter-circles, and a box is on the ink if it reaches any of them. */
-    const hitsPill = (a, pill, r) => {
-      const o = overlap(a, pill);
-      if (o.x <= 0 || o.y <= 0) return false;
-      if (Math.min(a.r, pill.r - r) - Math.max(a.l, pill.l + r) > 0) return true;
-      if (Math.min(a.b, pill.b - r) - Math.max(a.t, pill.t + r) > 0) return true;
-      return [[pill.l + r, pill.t + r], [pill.r - r, pill.t + r], [pill.l + r, pill.b - r], [pill.r - r, pill.b - r]]
-        .some(([cx, cy]) => {
-          const nx = Math.max(a.l, Math.min(cx, a.r)), ny = Math.max(a.t, Math.min(cy, a.b));
-          return (nx - cx) ** 2 + (ny - cy) ** 2 < r * r;
-        });
-    };
-    const card = document.querySelector("main .relative.overflow-hidden.rounded-\\[var\\(--r-xl\\)\\]");
-    const button = [...document.querySelectorAll("main button")].find((b) => /Show answer/.test(b.textContent));
-    if (!card || !button) return null;
-    const pill = box(button), r = Math.min(pill.r - pill.l, pill.b - pill.t) / 2;
-    return [...document.querySelectorAll("span")]
-      .filter((e) => e.textContent.trim().length === 1 && "õäöü".includes(e.textContent.trim())
-        && getComputedStyle(e).position === "absolute")
-      .map((e) => {
-        const a = box(e), on = overlap(a, box(card));
-        return {
-          ch: e.textContent.trim(),
-          touches: Math.round(Math.min(on.x, on.y)),
-          onButton: hitsPill(a, pill, r),
-          past: Math.round(a.l < 0 ? -a.l : Math.max(0, a.r - innerWidth)),
-          rotate: getComputedStyle(e).rotate,
-        };
-      });
-  });
-  if (seen === null || seen.length !== 4) {
-    adrift.push(`${width}: expected four letters around the card, found ${seen?.length ?? "no card"}`);
-    continue;
-  }
-  for (const l of seen) {
-    if (l.touches < 4) adrift.push(`${width}: ${l.ch} misses the card by ${-l.touches}px`);
-    if (l.onButton) onButton.push(`${width}: ${l.ch}`);
-    if (l.past > 1) clipped.push(`${width}: ${l.ch} ${l.past}px past the edge`);
-    if (!l.rotate || l.rotate === "none" || parseFloat(l.rotate) === 0) upright.push(`${width}: ${l.ch}`);
-  }
-}
-await p.setViewportSize({ width: 1280, height: 1000 });
-
-check("every landing letter is tucked over an edge of the card", adrift.length === 0,
-  adrift.join(" | "));
-check("no landing letter is drawn on the Show answer button", onButton.length === 0,
-  onButton.join(" | "));
-check("no landing letter is clipped by the edge of the page", clipped.length === 0,
-  clipped.join(" | "));
-/* The slant is a `rotate` of its own rather than a frame of the float, so a
-   reader who asks for less motion keeps it. Moving it back into the keyframes
-   leaves four upright squares and nothing else would say so. */
-check("every landing letter carries its slant outside the animation", upright.length === 0,
-  upright.join(" | "));
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();

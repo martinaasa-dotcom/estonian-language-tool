@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, RotateCcw, Sparkles, Volume2 } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export interface DemoCase {
   en: string;
@@ -14,153 +14,10 @@ export interface DemoCase {
 
 export interface DemoWord {
   lemma: string;
-  translation: string;
-  cefr: string | null;
-  gradationNote: string | null;
   genitive: string | null;
   /** Principal parts: the forms that genuinely have to be memorised. */
   principal: { label: string; value: string }[];
   cases: DemoCase[];
-}
-
-const GRADES = [
-  { label: "Again", key: "1", tone: "var(--peach-ink)", soft: "var(--peach-soft)", next: "in 1 min" },
-  { label: "Hard", key: "2", tone: "var(--butter-ink)", soft: "var(--butter-soft)", next: "in 4 days" },
-  { label: "Good", key: "3", tone: "var(--mint-ink)", soft: "var(--mint-soft)", next: "in 12 days" },
-  { label: "Easy", key: "4", tone: "var(--sky-ink)", soft: "var(--sky-soft)", next: "in 28 days" },
-] as const;
-
-/**
- * The hero's live flashcard.
- *
- * It is the real review interaction — flip, grade, next — with the scheduling
- * numbers a first-timer would actually see. Nothing here is a screenshot, so a
- * visitor has done a review before they have signed up for anything.
- */
-export function DemoCard({ words }: { words: DemoWord[] }) {
-  const [i, setI] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const [graded, setGraded] = useState(0);
-
-  // The page must render with an empty dictionary behind it — this is a
-  // public page, and a database that has not been seeded yet is not a reason
-  // to serve a 500.
-  const word = words.length > 0 ? words[i % words.length]! : null;
-  if (!word) return null;
-
-  const grade = () => {
-    setGraded((g) => g + 1);
-    setRevealed(false);
-    setI((n) => n + 1);
-  };
-
-  return (
-    <div className="relative">
-      {/* The two cards peeking out from underneath: a deck, not a single card. */}
-      <div
-        aria-hidden
-        className="absolute inset-x-6 bottom-9 h-24 rounded-[var(--r-xl)] border"
-        style={{ background: "var(--surface)", borderColor: "var(--rule)", opacity: 0.5, zIndex: 0 }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-x-3 bottom-11 h-24 rounded-[var(--r-xl)] border"
-        style={{ background: "var(--surface)", borderColor: "var(--rule)", opacity: 0.75, zIndex: 0 }}
-      />
-
-      <div
-        className="relative overflow-hidden rounded-[var(--r-xl)] border"
-        style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-lg)" }}
-      >
-        <div
-          className="flex items-center justify-between gap-3 border-b px-5 py-3"
-          style={{ borderColor: "var(--rule-soft)" }}
-        >
-          <span className="label-xs rounded-full px-2.5 py-1" style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}>
-            Estonian → English
-          </span>
-          <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
-            {graded} graded · {Math.max(1, 12 - graded)} left
-          </span>
-        </div>
-
-        <div key={`${i}-${revealed}`} className="pop-in flex min-h-[232px] flex-col items-center justify-center gap-3 px-6 py-9 text-center">
-          <div className="flex items-center gap-2">
-            <p lang="et" className="text-4xl font-bold leading-none tracking-tight" style={{ color: "var(--ink)" }}>
-              {word.lemma}
-            </p>
-            <span
-              aria-hidden
-              className="flex h-8 w-8 items-center justify-center rounded-full"
-              style={{ background: "var(--raised)", color: "var(--ink-3)" }}
-            >
-              <Volume2 size={15} />
-            </span>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {word.cefr && (
-              <span className="label-xs rounded-full px-2.5 py-1" style={{ background: "var(--sky-soft)", color: "var(--sky-ink)" }}>
-                {word.cefr}
-              </span>
-            )}
-            {word.gradationNote && (
-              <span
-                className="label-xs rounded-full px-2.5 py-1"
-                style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", textTransform: "none" }}
-              >
-                gradation {word.gradationNote}
-              </span>
-            )}
-          </div>
-
-          <div aria-live="polite" className="min-h-[44px]">
-            {revealed && (
-              <p className="pop-in text-2xl font-bold" style={{ color: "var(--accent-deep)" }}>
-                {word.translation}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="border-t p-3.5" style={{ borderColor: "var(--rule-soft)" }}>
-          {!revealed ? (
-            <button
-              type="button"
-              onClick={() => setRevealed(true)}
-              className="grad-accent press w-full rounded-full py-3 text-base font-semibold transition-ui hover:brightness-105"
-              style={{ color: "var(--accent-ink)", boxShadow: "var(--shadow-accent)" }}
-            >
-              Show answer
-            </button>
-          ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {GRADES.map((g) => (
-                <button
-                  key={g.label}
-                  type="button"
-                  onClick={grade}
-                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-1 py-2.5 transition-transform hover:-translate-y-0.5"
-                  style={{ background: g.soft, color: g.tone }}
-                >
-                  <span className="text-sm font-bold">{g.label}</span>
-                  {/* The real button's fade is gone, so this one's is too:
-                      the first thing anybody sees of this app should not be a
-                      demonstration of the control the review screen fixed. */}
-                  <span className="tnum text-2xs">{g.next}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <p className="relative mt-9 flex items-center justify-center gap-4 text-2xs" style={{ color: "var(--ink-3)" }}>
-        <span className="flex items-center gap-1"><Check size={12} aria-hidden /> real card, real scheduling</span>
-        <span className="flex items-center gap-1"><RotateCcw size={12} aria-hidden /> try it, it really works</span>
-      </p>
-    </div>
-  );
 }
 
 /**

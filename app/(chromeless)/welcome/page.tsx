@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight, BookOpen, Check, CircleHelp, Flame, Minus,
+  ArrowRight, BookOpen, Check, CircleHelp, Minus,
   Map as MapIcon, Sparkles,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -11,7 +11,7 @@ import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
-import { CaseExplorer, DemoCard, TutorPeek, type DemoWord } from "./LandingDemo";
+import { CaseExplorer, TutorPeek, type DemoWord } from "./LandingDemo";
 import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
@@ -65,7 +65,7 @@ export default async function WelcomePage() {
         section of its own, which is where the person asking it looks.
       */}
       <main className="relative">
-        <Hero words={words} stats={stats} />
+        <Hero stats={stats} />
         <Cases words={words} />
         <Features />
         <Questions />
@@ -132,10 +132,37 @@ function Nav() {
 
 /* ────────────────────────────────────────────────────────── hero ── */
 
-function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; forms: number } }) {
+/**
+ * The hero, with nothing beside it.
+ *
+ * It carried a live flashcard: a real card, flipped and graded, with the real
+ * scheduling intervals under it, so a visitor had done a review before signing
+ * up for anything. It was the best thing on the page and it is gone anyway.
+ * It cost 413px of a phone, the page was still six screens after everything
+ * else had been cut, and it is the second demonstration rather than the first.
+ * The case explorer one section down is what this app is actually for. A page
+ * that shows two things shows neither, and of the two, spaced repetition is
+ * the part a stranger already understands.
+ *
+ * THE FOUR LETTERS WENT WITH IT, and that is the card's doing rather than a
+ * verdict on them. They were tucked over the card's four sides, one to a side,
+ * and the argument for that arrangement is the argument against keeping them:
+ * a letter with clear air around it reads as a square that missed rather than
+ * as one that was put there. With no card there is no edge, and the two other
+ * cards big enough to hang them on are a table of Estonian forms and the
+ * closing panel, neither of which is the hero. What carries this language's
+ * character on the page now is the explorer, which is full of the real thing.
+ * Their four checks in `scripts/test-design.mjs` went too, and the suite's
+ * floor came down by exactly four.
+ *
+ * So one centred column, which is the shape a hero takes when it has no second
+ * half: the eye goes down the middle to the button rather than across to a card
+ * and back.
+ */
+function Hero({ stats }: { stats: { words: number; forms: number } }) {
   /*
     The four figures that were a panel of their own, as one line of evidence
-    under the buttons. A stat panel three screens down is a claim nobody has a
+    under the button. A stat panel three screens down is a claim nobody has a
     reason to read; the same numbers beside the call to action are the reason to
     believe the sentence above them. The unit count and the level range are read
     from the course itself rather than written by hand, which is what kept this
@@ -156,159 +183,62 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
     "Free, and it works offline",
   ];
   return (
-    <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-8 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:px-8 md:pb-12 md:pt-20">
-      <div>
-        <p
-          className="fade-up label-xs inline-flex items-center gap-2 rounded-full px-3.5 py-2"
-          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", animationDelay: "40ms" }}
-        >
-          <Sparkles size={13} aria-hidden /> For everyone who bounced off Estonian once already
-        </p>
+    <section className="mx-auto flex max-w-3xl flex-col items-center px-5 pb-6 pt-14 text-center md:px-8 md:pb-10 md:pt-20">
+      {/*
+        No badge over the headline. It read "for everyone who bounced off
+        Estonian once already", which is the same sentiment as the heading one
+        section down, in weaker words: "You didn't fail Estonian. Your tools
+        did." They used to be two screens apart and the echo was a theme; on a
+        page this length they are within one screen of each other, and the echo
+        is a page saying its best line twice, second-best first.
+      */}
+      <h1
+        className="fade-up text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
+        style={{ color: "var(--ink)", animationDelay: "90ms" }}
+      >
+        Estonian that
+        <br />
+        finally <span className="grad-text grad-sweep">sticks</span>.
+      </h1>
 
-        <h1
-          className="fade-up mt-6 text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
-          style={{ color: "var(--ink)", animationDelay: "90ms" }}
-        >
-          Estonian that
-          <br />
-          finally <span className="grad-text grad-sweep">sticks</span>.
-        </h1>
+      <p
+        className="fade-up mt-5 max-w-[52ch] text-md leading-relaxed"
+        style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
+      >
+        Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
+        day, real forms from Ekilex, native audio, and a tutor who tells you the rule instead of
+        marking you wrong.
+      </p>
 
-        <p
-          className="fade-up mt-6 max-w-[54ch] text-md leading-relaxed md:text-md"
-          style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
-        >
-          Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
-          day, real forms from Ekilex, native audio, and a tutor who tells you the rule instead of marking
-          you wrong.
-        </p>
+      {/*
+        One loud action, and nothing beside it.
 
-        {/*
-          One loud action, and a quiet way out of it.
-
-          These were two heavy pills of different widths, which on a 360px
-          screen wrap into a lopsided stack: a gradient button, then a bordered
-          white one under it ending somewhere else entirely, both shouting at
-          the same volume about two things that are not equally important. The
-          rule the button primitive is written under is one loud action per
-          screen, and a second pill with its own shadow is a second one. So the
-          call to action fills the line on a phone and sits at its natural width
-          above that, and "show me a word" is what it always was: a link.
-        */}
-        <div className="fade-up mt-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-5" style={{ animationDelay: "210ms" }}>
-          <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
-            Start learning, free <ArrowRight size={17} aria-hidden />
-          </ButtonLink>
-          <a
-            href="#cases"
-            className="inline-flex items-center gap-2 px-1 py-2 text-base font-semibold underline underline-offset-4 transition-opacity hover:opacity-70"
-            style={{ color: "var(--ink-2)" }}
-          >
-            <BookOpen size={16} aria-hidden /> Show me a word
-          </a>
-        </div>
-
-        <ul
-          className="fade-up mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs"
-          style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
-        >
-          {claims.map((t) => (
-            <li key={t} className="flex items-center gap-1.5">
-              <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
-            </li>
-          ))}
-        </ul>
+        It was two heavy pills of different widths, which on a 360px screen wrap
+        into a lopsided stack: a gradient button, then a bordered white one
+        under it ending somewhere else entirely, both shouting at the same
+        volume about two things that are not equally important. The rule the
+        button primitive is written under is one loud action per screen. So the
+        second became a link, "Show me a word", and now it is gone too: it
+        jumped to the case explorer, which on a page this length is one flick
+        down and the next thing a reader meets anyway, and the nav carries the
+        same jump under "The cases" for anybody who wants to aim.
+      */}
+      <div className="fade-up mt-7 w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
+        <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
+          Start learning, free <ArrowRight size={17} aria-hidden />
+        </ButtonLink>
       </div>
 
-      <div className="fade-up relative" style={{ animationDelay: "320ms" }}>
-        {/*
-          Floating diacritics: the four vowels a UK or US keyboard cannot
-          write, which is the reason `lib/ux/letterBar.ts` exists and the
-          first thing anybody meets about this language. There were three of
-          them for a while, under a comment claiming six, and a reader who
-          knows the language counts the set before they read a word of the
-          page: õ, ä, ü and a missing ö reads as a rendering fault on the one
-          screen that has to look finished. Six is the letter bar's set and
-          not this one, since š and ž turn up in borrowed words rather than
-          in the endings this app is about, and six squares around one card
-          is a border rather than an ornament.
-
-          THEY ALL TOUCH THE CARD, one to a side, and that is the placement
-          rule rather than a description of where they happen to sit. Three of
-          them met an edge and the fourth floated below the deck with clear air
-          around it, which reads as a square that missed rather than as one
-          that was put there. The sizes and the angles vary because four
-          identical squares evenly spaced are a frame, and a frame is a border
-          with gaps in it.
-
-          THE SLANT IS A `rotate` OF ITS OWN, not a frame of the float
-          (`app/globals.css`). Both used to live in the keyframes, and
-          `prefers-reduced-motion` shortens every animation here to 0.01ms with
-          no fill, so a reader who asked for less motion got four upright
-          squares and lost the one thing about them that was not motion.
-
-          WHAT THEY MAY NOT TOUCH IS THE BUTTON. The footer is a full-width
-          pill with 15px of padding around it, so a letter tucked deeply into
-          the bottom corner lands on the one loud action on the page and makes
-          it look clipped, which is what the first bottom-right placement did.
-          What buys the corner back is the pill's own 24px radius: the letter
-          is small enough, and sits low enough, that it passes outside that
-          curve. It is the smallest of the four for that reason and not by
-          eye, and it is smaller again below `sm`, where the card is the whole
-          column and there are only the page's 20px of padding to hang in.
-
-          The offsets are measured rather than guessed, because a rotated
-          square is wider than its side: 14deg on 48px puts its corners about
-          5px past the box, which is the difference between hanging inside the
-          page's padding and being clipped flat against it.
-
-          They are `pointer-events-none`, because they are `aria-hidden`
-          ornament and an ornament that eats a tap on the card underneath it is
-          a decoration doing something no decoration should. At 768 the
-          footnote wraps to two lines, which moves the card's bottom edge up
-          inside the block these are positioned against, so the bottom letter
-          is anchored far enough in to still reach it there. That width is the
-          one to check first.
-
-          `scripts/test-design.mjs` measures all of it at 640, 768 and 1280:
-          every letter over an edge, none on the pill, none past the page, and
-          the slant still there with the animation stopped.
-
-          One hue each, and the fourth takes butter because it is the hue
-          left: blush, mint and sky are spoken for and peach means "missed"
-          on every other screen in the app.
-        */}
-        <span
-          aria-hidden
-          className="float pointer-events-none absolute -left-2 -top-6 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-10 md:-top-8 md:h-14 md:w-14 md:text-2xl"
-          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg" } as React.CSSProperties}
-        >
-          õ
-        </span>
-        <span
-          aria-hidden
-          className="float pointer-events-none absolute -right-3 top-20 z-20 hidden h-11 w-11 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-6 md:top-24 md:h-12 md:w-12"
-          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.5s", "--float-tilt": "12deg" } as React.CSSProperties}
-        >
-          ä
-        </span>
-        <span
-          aria-hidden
-          className="float pointer-events-none absolute -left-3 top-52 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-6 md:top-56 md:h-11 md:w-11 md:text-xl"
-          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3s", "--float-tilt": "-9deg" } as React.CSSProperties}
-        >
-          ü
-        </span>
-        <span
-          aria-hidden
-          className="float pointer-events-none absolute -right-3 bottom-7 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:bottom-10 md:h-9 md:w-9 md:text-lg"
-          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "4.5s", "--float-tilt": "15deg" } as React.CSSProperties}
-        >
-          ö
-        </span>
-
-        <DemoCard words={words} />
-      </div>
+      <ul
+        className="fade-up mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
+        style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
+      >
+        {claims.map((t) => (
+          <li key={t} className="flex items-center gap-1.5">
+            <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -331,7 +261,7 @@ function Cases({ words }: { words: DemoWord[] }) {
   if (derivable.length === 0) return null;
 
   return (
-    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-16">
+    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
       <Reveal>
         <div className="mx-auto max-w-[48ch] text-center">
           <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn one form, get eleven</p>
@@ -343,13 +273,13 @@ function Cases({ words }: { words: DemoWord[] }) {
             <span lang="et" className="font-semibold">majja</span>,{" "}
             <span lang="et" className="font-semibold">majas</span> or{" "}
             <span lang="et" className="font-semibold">majast</span>. Three principal parts are
-            genuinely unpredictable, so you memorise those. The other eleven are regular endings on
-            the genitive stem. Press a word and watch them fall out.
+            unpredictable, so you memorise those; the other eleven are regular endings on the
+            genitive stem. Press a word.
           </p>
         </div>
       </Reveal>
       <Reveal>
-        <div className="mt-9">
+        <div className="mt-8">
           <CaseExplorer words={derivable} />
         </div>
       </Reveal>
@@ -361,41 +291,46 @@ function Cases({ words }: { words: DemoWord[] }) {
 
 function Features() {
   /*
-    Eight cards became five, and five became four.
+    Eight cards became five, five became four, four became three.
 
     Three of the original eight said what the hero, the FAQ or another card was
     already saying: a portability card beside an offline tick, a progress card
     beside an XP card, and a "four ways to practise" card that had been wrong
-    since the third practice mode shipped. The one that went this time is the
-    speech card, which is not a thing of its own: it is what the dictionary
-    entry does when you press a form, so it is a clause on the dictionary card
-    and the claim is unchanged.
+    since the third practice mode shipped. Then the speech card, which is not a
+    thing of its own: it is what the dictionary entry does when you press a
+    form, so it is a clause on the dictionary card.
+
+    The last to go is the seam between the course and the scheduler, and they
+    were never two things. A unit is a sitting's worth of words, adding one
+    makes cards, and the scheduler is what brings those cards back: that is one
+    loop described twice, once as "here is a syllabus" and once as "here is a
+    scheduler", with the sentence joining them left for the reader to write.
 
     What the bodies carry now is the section that used to sit under this one.
     "How a day goes" was three steps, and all three were already here in other
     words: picking a unit and looking a word up is the first card, adding it in
-    a press is the sentence that ends it, and being told you are done for the
-    day is the second card's whole point. A step somebody reads twice is a step
-    they read neither time.
+    a press is the second, and being told you are done for the day is the second
+    card's whole point. A step somebody reads twice is a step they read neither
+    time.
 
-    Four rather than five is also what makes the grid square. `md:col-span-2` on
-    Anu's card had done nothing since the day it was written, because the grid
-    item is the `Reveal` wrapper and the span was on the card inside it: the
-    layout everybody has been looking at is three cards, then two, then a hole
-    where the sixth would go. Two by two has no hole to explain.
+    Three is also what makes the grid a row again, with no hole to explain.
+    `md:col-span-2` on Anu's card had done nothing since the day it was written,
+    because the grid item is the `Reveal` wrapper and the span was on the card
+    inside it: the layout everybody had been looking at was three cards, then
+    two, then a gap where the sixth would go.
   */
   return (
-    <section id="features" className="mx-auto max-w-5xl scroll-mt-24 px-5 py-10 md:px-8 md:py-16">
+    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
           <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Four things, each doing one job well
+            Three things, each doing one job well
           </h2>
         </div>
       </Reveal>
 
-      <div className="mt-9 grid gap-4 md:grid-cols-2">
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
         <Reveal>
           <Feature
             tone="accent"
@@ -406,10 +341,10 @@ function Features() {
         </Reveal>
         <Reveal>
           <Feature
-            tone="butter"
-            icon={<Flame size={18} aria-hidden />}
-            title="Repetition that knows when to stop"
-            body="A textbook lets week six push out week two. FSRS brings each card back on the day you were going to forget it, caps what is new, and then tells you you're done."
+            tone="mint"
+            icon={<MapIcon size={18} aria-hidden />}
+            title={`A course of ${PATH.length} units that schedules itself`}
+            body="Each unit is a sitting's worth of words that becomes real cards in one press. FSRS brings each one back on the day you were going to forget it, then tells you you're done. Sprint, dictation and listening all grade those same cards."
           />
         </Reveal>
         <Reveal>
@@ -422,14 +357,6 @@ function Features() {
             <TutorPeek />
           </Feature>
         </Reveal>
-        <Reveal>
-          <Feature
-            tone="mint"
-            icon={<MapIcon size={18} aria-hidden />}
-            title={`A course of ${PATH.length} units, and a dozen ways to drill it`}
-            body="Each unit is a sitting's worth of words that becomes real cards in one press. Sprint, dictation, listening, word order and the rest all grade those same cards."
-          />
-        </Reveal>
       </div>
     </section>
   );
@@ -441,7 +368,9 @@ function Features() {
  * Anu's card used to be a hand-written copy of this with its icon beside the
  * heading instead of above it, which is how it came to be the only card in the
  * grid laid out differently from its neighbours. A slot under the body is the
- * whole of what it needed.
+ * whole of what it needed, and the icon it was laying out its own way is the
+ * arrangement every card takes now: a circle stacked over a heading spends 52px
+ * of a phone on saying nothing the heading does not, once per card.
  */
 function Feature({ tone, icon, title, body, children }: {
   tone: "accent" | "mint" | "sky" | "butter" | "peach" | "blush";
@@ -455,17 +384,19 @@ function Feature({ tone, icon, title, body, children }: {
       className="lift flex h-full flex-col rounded-[var(--r-xl)] border p-6"
       style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
     >
-      <span
-        className="flex h-9 w-9 items-center justify-center rounded-full"
-        style={{ background: `var(--${tone}-soft)`, color: toneInk(tone) }}
-      >
-        {icon}
-      </span>
-      <h3 className="mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
-        {title}
-      </h3>
-      <p className="mt-2 max-w-[52ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
-      {children ? <div className="mt-5">{children}</div> : null}
+      <div className="flex items-start gap-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+          style={{ background: `var(--${tone}-soft)`, color: toneInk(tone) }}
+        >
+          {icon}
+        </span>
+        <h3 className="text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
+          {title}
+        </h3>
+      </div>
+      <p className="mt-3 max-w-[52ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+      {children ? <div className="mt-4">{children}</div> : null}
     </div>
   );
 }
@@ -776,13 +707,13 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 
 function Questions() {
   return (
-    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-10 md:px-8 md:py-16">
+    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
       <Reveal>
         <h2 className="text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           The questions people ask
         </h2>
       </Reveal>
-      <div className="mt-9 flex flex-col gap-3">
+      <div className="mt-8 flex flex-col gap-3">
         {FAQS.map(([q, a]) => (
           <Reveal key={q}>
             <FaqItem question={q}>
@@ -817,10 +748,10 @@ function Questions() {
  */
 function FinalCta() {
   return (
-    <section className="px-5 py-10 md:px-8 md:py-16">
+    <section className="px-5 py-10 md:px-8 md:py-14">
       <Reveal>
         <div
-          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-10 text-center md:px-16 md:py-14"
+          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-9 text-center md:px-16 md:py-12"
           style={{ background: "var(--accent-soft)" }}
         >
           <span aria-hidden className="wash" style={{ background: "var(--wash-2)", width: 420, height: 420, top: -160, right: -80 }} />
@@ -928,9 +859,6 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
       return [{
         lemma: lex.lemma,
-        translation: lex.translation,
-        cefr: lex.cefr,
-        gradationNote: lex.gradationNote,
         genitive: form("GEN_SG") ?? null,
         principal,
         cases,
@@ -960,17 +888,14 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  */
 
 const FALLBACK_STEMS = [
-  { lemma: "tuba", translation: "room", cefr: "A1", gradationNote: "b : ∅",
+  { lemma: "tuba",
     nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
-  { lemma: "raamat", translation: "book", cefr: "A1", gradationNote: null,
+  { lemma: "raamat",
     nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
 ] as const;
 
 const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
   lemma: w.lemma,
-  translation: w.translation,
-  cefr: w.cefr,
-  gradationNote: w.gradationNote,
   genitive: w.genSg,
   principal: [
     { label: "nimetav · kes? mis?", value: w.nomSg },
