@@ -74,52 +74,95 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop rail */}
+      {/*
+        The desktop rail. Two boxes rather than one, and the split is the
+        whole point.
+
+        Every destination plus four headings and a rule comes to more than a
+        laptop is tall, so this column has always scrolled. The scroll was on
+        the nav itself, which meant the wordmark went with it: reach the
+        bottom of the list and the app's own name has left the screen, and the
+        one fixed thing in the layout is the piece that moved. It stays put
+        now. The nav holds the height and no longer scrolls, the wordmark is
+        its first child, and the list below it is the scroll container.
+
+        Split rather than `position: sticky` on the wordmark, because a sticky
+        header has to hide what passes beneath it and there is nothing here to
+        hide it with. This rail is transparent over the fixed pastel wash, so a
+        solid fill behind the wordmark would be a flat rectangle sitting on a
+        gradient, and the one thing that hides a moving backdrop without a fill
+        is a `backdrop-filter`, which this app does not put over moving content
+        (see the phone bar below). A second scroll container costs none of
+        that: the rows are simply clipped at its top edge, which is what every
+        other scroller in the app already does.
+      */}
       <nav
         aria-label="Main"
-        className="scroll-host sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto p-4 md:flex"
+        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col p-4 md:flex"
       >
-        <Link href="/" className="mb-7 block rounded-[var(--r)] px-2 pt-3">
-          <Wordmark subtitle="Estonian, daily" />
+        {/*
+          A link to Today, which nothing about it used to say. See `.brand-tap`
+          in app/globals.css for the tint and the growth, and `title` for where
+          it goes, which is what every row of this rail carries too.
+        */}
+        <Link
+          href="/"
+          title="Today"
+          className="brand-tap tap-tint mb-5 mr-1 block shrink-0 cursor-pointer rounded-[var(--r)] px-2 py-2.5"
+        >
+          <span className="brand-mark">
+            <Wordmark subtitle="Estonian, daily" />
+          </span>
         </Link>
 
         {/*
-          The gap between sections is doing the work the headings only label.
-          Four groups two rows apart read as one list with words in it; four
-          groups with air around them read as four, which is the whole point of
-          grouping them. It is the largest space in the column on purpose.
+          `min-h-0` is what makes this scroll at all: a flex item's automatic
+          minimum is its content, so without it the list sets the height of a
+          column that is already fixed to the screen and nothing overflows
+          anywhere. `-mr-4` gives the scrollbar back the nav's own right
+          padding, so the thumb sits at the edge of the rail rather than
+          floating a centimetre inside it; `.scroll-host` then puts the rows
+          back a comfortable distance from it.
         */}
-        {PLACES.map((section) => (
-          <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-7">
-            <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-2.5" style={{ color: "var(--ink-3)" }}>
-              {section.title}
-            </h2>
-            {section.items.map((item) => (
-              <RailLink key={item.href} item={item} active={active(item.href)} />
-            ))}
-          </section>
-        ))}
+        <div className="scroll-host -mr-4 flex min-h-0 flex-1 flex-col">
+          {/*
+            The gap between sections is doing the work the headings only label.
+            Four groups two rows apart read as one list with words in it; four
+            groups with air around them read as four, which is the whole point of
+            grouping them. It is the largest space in the column on purpose.
+          */}
+          {PLACES.map((section) => (
+            <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-7">
+              <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-2.5" style={{ color: "var(--ink-3)" }}>
+                {section.title}
+              </h2>
+              {section.items.map((item) => (
+                <RailLink key={item.href} item={item} active={active(item.href)} />
+              ))}
+            </section>
+          ))}
 
-        {/*
-          Settings, your reports, and what this thing is. Pinned under the
-          sections when they fit and simply last when they do not, since the
-          rail is a scroll container: fourteen rows with air between their
-          groups are taller than a short laptop, and the answer to that is a
-          scrollbar rather than a disclosure.
+          {/*
+            Settings, your reports, and what this thing is. Pinned under the
+            sections when they fit and simply last when they do not, since the
+            rail is a scroll container: fourteen rows with air between their
+            groups are taller than a short laptop, and the answer to that is a
+            scrollbar rather than a disclosure.
 
-          A rule rather than another heading. This is the quiet end of the
-          column and three more uppercase words at the bottom of it would be
-          one label too many.
-        */}
-        <div className="mt-auto border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
-          {SECTIONS.filter((s) => s.id === "app").map((section) =>
-            section.items.map((item) => (
-              <RailLink key={item.href} item={item} active={active(item.href)} />
-            )),
-          )}
-          <div className="mt-2 flex items-center gap-1 px-1">
-            <ThemeToggle labelled />
-            <SignOutButton />
+            A rule rather than another heading. This is the quiet end of the
+            column and three more uppercase words at the bottom of it would be
+            one label too many.
+          */}
+          <div className="mt-auto border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
+            {SECTIONS.filter((s) => s.id === "app").map((section) =>
+              section.items.map((item) => (
+                <RailLink key={item.href} item={item} active={active(item.href)} />
+              )),
+            )}
+            <div className="mt-2 flex items-center gap-1 px-1">
+              <ThemeToggle labelled />
+              <SignOutButton />
+            </div>
           </div>
         </div>
       </nav>

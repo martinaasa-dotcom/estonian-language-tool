@@ -882,6 +882,38 @@
   }
   .tap-tint:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
 
+  /*
+    THE SAME RULE AGAIN, FOR THE ONE THING IN THE RAIL THAT DID NOT LOOK LIKE
+    A CONTROL AT ALL.
+
+    The wordmark at the top of the column is a link to Today, and nothing on
+    it said so: no border, no fill, no row shape, and no hover state of any
+    kind, so the only way to find out was to click the app's own name and see
+    where you ended up. Every other bare row in this app answers a pointer
+    with `.tap-tint`, and this is that plus the growth, which is the part a
+    mark can carry and a row of text cannot: the tint arrives behind the whole
+    box while the name and the mascot lean up towards the pointer.
+
+    The growth goes on the mark rather than on the link, because the link is
+    the full width of the rail and scaling that would drag its tint out past
+    the rows underneath it. Left origin for the same reason: this sits in a
+    240px column against its left padding, and a centred scale walks the
+    mascot into the edge of the rail.
+
+    Small on purpose. 3.5% is about a pixel and a half on a 34px mascot, which
+    is enough to read as a response and not enough to look like the sidebar
+    twitched.
+  */
+  .brand-tap .brand-mark {
+    display: block;
+    transform-origin: left center;
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .brand-tap:hover .brand-mark,
+  .brand-tap:focus-visible .brand-mark {
+    transform: scale(1.035);
+  }
+
   .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
