@@ -317,7 +317,11 @@ async function screensToMake() {
       contentType: "application/json",
       headers: { "x-model-provider": "Stub", "x-model-id": "test" },
       body: JSON.stringify({
-        items: [{ et: "tuba", en: "room", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
+        // A word no dictionary has, like `test-scan.mjs` and `test-suggestions.mjs`
+        // use. `lexemeId: null` means ticking it writes a `Lexeme`, and `Lexeme`
+        // is unique on `[lemma, pos]`, so a real word leaves a second entry with
+        // no paradigm beside the seeded one for every later suite to trip over.
+        items: [{ et: "kodukeelcontainmenttest", en: "a word off the page", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
         summary: { total: 1, known: 0, unknown: 1, inflected: 0 },
       }),
     }));
