@@ -10,8 +10,8 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-// Floor: 21, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("The core flows", { floor: 24 });
+// Floor: 25, measured in the state CI seeds. A thinner database reads as short.
+const { check, absent, done } = suite("The core flows", { floor: 25 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -216,7 +216,7 @@ const rowOf = async () =>
 
 const first = await rowOf();
 if (first.length === 0) {
-  absent(3, "a seeded dictionary, which is what the suggestion row draws from");
+  absent(4, "a seeded dictionary, which is what the suggestion row draws from");
 } else {
   const label = (await page.locator("#try-these").innerText()).trim();
   check("the row says why it chose these words", label.length > 3, `label "${label}"`);
