@@ -3,10 +3,8 @@ import { Compass, Flame, Trophy, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
-import { xpFromRatingCounts } from "@/lib/gamification/xp";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
-import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { classRoster } from "@/lib/classroom/roster";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
@@ -20,7 +18,7 @@ import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
 import { caseReviewsFor } from "@/lib/progress/cases";
-import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
+import { Card, Chip, Empty, Meter, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
 
@@ -40,7 +38,7 @@ export default async function ProgressPage() {
   const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
 
-  const [summary, units, reviews, dueDates, cefrRows, learnerSettings, caseReviews] = await Promise.all([
+  const [summary, units, reviews, dueDates, cefrRows, caseReviews] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -56,7 +54,6 @@ export default async function ProgressPage() {
       where: { ownerId },
       select: { state: true, lexeme: { select: { lemma: true, cefr: true } } },
     }),
-    readSettings(ownerId, [SETTING_KEYS.leaderboard, SETTING_KEYS.displayName]),
     /*
       Read separately from the charts above, and on purpose.
 
@@ -98,17 +95,39 @@ export default async function ProgressPage() {
   const retention = retentionReading(reviews);
   const cases = caseAccuracy(caseReviews);
   const hour = bestStudyHour(reviews, 20, clock);
-  const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
-  // A class you have joined is the leaderboard that means something: real people
-  // you sit next to, and joining was itself the consent. The instance-wide
-  // opt-in board is the fallback for someone studying alone.
+  /*
+    A CLASS IS THE ONLY BOARD THIS APP DRAWS, AND THAT IS THE FIX RATHER THAN
+    A NARROWING OF ONE.
+
+    Underneath the class board sat an instance-wide one: everybody on the
+    deployment who had ticked a box, ranked against each other. For one class
+    on one school's copy that was right, and sign-up here is open, so what it
+    actually drew was a table of strangers. Two things were wrong with it and
+    only one of them is about privacy.
+
+    It did not mean anything. The board was the top twenty of the first two
+    thousand opted-in learners by owner id, because ranking the whole
+    deployment is a tally of everybody, so past the cap who appeared was a
+    fact about a uuid. A number somebody measures themselves against has to
+    be measured against something.
+
+    And it was the one surface where a stranger chose what every other
+    stranger read. A display name is thirty-two characters of anybody's text,
+    there is no report button on a leaderboard row, and nobody is named to
+    review one. Deleting the board deletes the surface, which is cheaper and
+    more honest than moderating it.
+
+    Nothing that meant anything is lost: a class you joined is real people you
+    sit beside, and joining was itself the consent (ADR-019). Somebody
+    studying alone is offered the way into one rather than a table of
+    usernames.
+  */
   const membership = await prisma.classroomMember.findFirst({
     where: { ownerId, classroom: { archived: false } },
     include: { classroom: { select: { id: true, name: true } } },
     orderBy: { joinedAt: "desc" },
   });
   const classBoard = membership ? await classRoster(membership.classroomId, now) : null;
-  const leaderboard = !membership && optedIn ? await weeklyLeaderboard(now) : [];
 
   // Vocabulary reach by CEFR: known words per level, against what the deck holds.
   const byLevel = new Map<string, { total: Set<string>; known: Set<string> }>();
@@ -389,42 +408,15 @@ export default async function ProgressPage() {
                   Open the class
                 </Link>
               </>
-            ) : !optedIn ? (
-              <>
-                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  Off by default. Turn it on and everyone else who has opted in (your class, say)
-                  sees the name you choose and your XP for the week. Nothing else is shared: no
-                  email, no word lists, no history.
-                </p>
-                <ButtonLink href="/settings" className="mt-4">Set a name and join</ButtonLink>
-              </>
-            ) : leaderboard.length <= 1 ? (
-              <Note tone="accent">
-                You are in. Nobody else has joined yet. Share the app with your class and this fills
-                up. Your XP this week: {leaderboard[0]?.xp ?? 0}.
-              </Note>
             ) : (
-              <ol className="flex flex-col gap-1.5">
-                {leaderboard.map((row, i) => (
-                  <li
-                    key={row.ownerId}
-                    className="flex items-center gap-3 rounded-[var(--r)] px-3 py-2"
-                    style={{
-                      background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
-                      color: row.ownerId === ownerId ? "var(--accent)" : "var(--ink-2)",
-                    }}
-                  >
-                    <span className="tnum w-6 text-xs">{i + 1}</span>
-                    {i === 0 ? (
-                      <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
-                    ) : (
-                      <Users size={15} aria-hidden style={{ opacity: 0.5 }} />
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-sm">{row.name}</span>
-                    <span className="tnum text-xs">{row.xp} XP</span>
-                  </li>
-                ))}
-              </ol>
+              <>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                  A board is worth reading when you know the people on it. Start a class and share
+                  the code, or join the one your teacher gave you, and this shows the week for
+                  everybody in it.
+                </p>
+                <ButtonLink href="/class" className="mt-4">Start or join a class</ButtonLink>
+              </>
             )}
           </Card>
         </section>
@@ -433,75 +425,3 @@ export default async function ProgressPage() {
   );
 }
 
-/** How many opted-in learners the weekly board is ranked from. */
-const BOARD_CANDIDATES = 2000;
-
-/**
- * This week's XP for everyone who has opted in.
- *
- * Only opted-in learners are read at all, and only their chosen display name
- * and a number leave the query — a leaderboard that leaked email addresses
- * would be a privacy incident, not a feature.
- *
- * The cap said it was there "since the whole thing is tallied in memory", and
- * the tallying was the reason it had to be so small: this read every review
- * every opted-in learner had written all week, which for two hundred people is
- * tens of thousands of rows fetched to produce four numbers each. Postgres
- * counts them now, so what comes back is at most four rows per learner and the
- * cap can be a bound on the `IN` list rather than on the work.
- */
-async function weeklyLeaderboard(now: Date) {
-  const since = new Date(now.getTime() - 7 * 86_400_000);
-  /*
-    Ordered, because which learners the board is drawn from was the plan's
-    choice: past the cap somebody could be on it one week and gone the next
-    having done nothing differently.
-
-    There is nothing on `Setting` that ranks people, so this is stable rather
-    than meaningful, and worth saying plainly: past the cap the board is the
-    top twenty of a fixed two thousand opted-in learners rather than of the
-    whole deployment. Ranking properly would mean tallying everybody first,
-    which is the query this function just stopped doing.
-  */
-  const optedIn = await prisma.setting.findMany({
-    where: { key: SETTING_KEYS.leaderboard, value: "1" },
-    select: { ownerId: true },
-    orderBy: { ownerId: "asc" },
-    take: BOARD_CANDIDATES,
-  });
-  const ids = optedIn.map((s) => s.ownerId);
-  if (ids.length === 0) return [];
-
-  const [names, counts] = await Promise.all([
-    prisma.setting.findMany({
-      where: { key: SETTING_KEYS.displayName, ownerId: { in: ids } },
-      select: { ownerId: true, value: true },
-    }),
-    prisma.review.groupBy({
-      by: ["ownerId", "rating"],
-      where: { reviewedAt: { gte: since }, ownerId: { in: ids } },
-      _count: { _all: true },
-    }),
-  ]);
-
-  const nameByOwner = new Map(names.map((n) => [n.ownerId, n.value]));
-  const tally = new Map<string, Record<number, number>>();
-  for (const row of counts) {
-    const owner = row.ownerId;
-    const forOwner = tally.get(owner) ?? {};
-    forOwner[row.rating] = (forOwner[row.rating] ?? 0) + row._count._all;
-    tally.set(owner, forOwner);
-  }
-
-  return ids
-    .map((ownerId) => ({
-      ownerId,
-      name: nameByOwner.get(ownerId)?.trim() || "A learner",
-      xp: xpFromRatingCounts(tally.get(ownerId) ?? {}),
-    }))
-    // Total, so two learners level on the week are not ordered by whatever the
-    // rows arrived in. Same rule as `bySubstance` in the dictionary: a
-    // comparator that can return 0 for two different rows decides nothing.
-    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name) || a.ownerId.localeCompare(b.ownerId))
-    .slice(0, 20);
-}

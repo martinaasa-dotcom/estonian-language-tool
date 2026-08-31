@@ -789,26 +789,26 @@ export async function setLetterBar(value: LetterBar) {
 }
 
 /**
- * The name shown on the class leaderboard, and whether to appear on it at all.
+ * The name a class sees, which is the learner's own text and not their
+ * Google account name.
  *
- * Opt-in, and off by default: a study app should never publish who studied how
- * much without being asked. The name is the learner's own text rather than
- * their Google account name, so appearing on a class board never means
- * publishing an email address or a legal name they did not choose to share.
+ * There is no opt-in beside it any more. The box this used to tick put
+ * somebody on a board of everybody else on the deployment who had ticked it,
+ * and that board is gone for the reasons written down in
+ * `app/(app)/progress/page.tsx`. A class board is what is left, and joining
+ * the class is the consent for it (ADR-019), so the only question left here
+ * is what to be called.
  */
-export async function setLeaderboardPreferences(input: { displayName: string; optIn: boolean }) {
+export async function setClassDisplayName(input: { displayName: string }) {
   const ownerId = await requireUserId();
   const name = input.displayName.trim().slice(0, 32);
-  if (input.optIn && !name) {
-    return { ok: false as const, error: "Pick a name to show before joining the leaderboard." };
+  if (!name) {
+    return { ok: false as const, error: "Pick a name your class will recognise." };
   }
-  await Promise.all([
-    writeSetting(ownerId, SETTING_KEYS.displayName, name),
-    writeSetting(ownerId, SETTING_KEYS.leaderboard, input.optIn ? "1" : "0"),
-  ]);
+  await writeSetting(ownerId, SETTING_KEYS.displayName, name);
   revalidatePath("/progress");
   revalidatePath("/settings");
-  return { ok: true as const, displayName: name, optIn: input.optIn };
+  return { ok: true as const, displayName: name };
 }
 
 // ───────────────────────────────── Onboarding ──────────────────────────────

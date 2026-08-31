@@ -55,8 +55,10 @@ const PRICES: Readonly<Record<string, ModelPrice>> = {
   // puts in front of a model, "openai/" or "qwen/", is stripped before lookup.
   "gpt-oss-120b": { inputPerMTok: 0, outputPerMTok: 0 },
   "qwen3.8-27b": { inputPerMTok: 0, outputPerMTok: 0 },
+  "compound-mini": { inputPerMTok: 0, outputPerMTok: 0 },
   "gemini-flash-latest": { inputPerMTok: 0, outputPerMTok: 0 },
   "gemini-3.6-flash": { inputPerMTok: 0, outputPerMTok: 0 },
+  "gemini-3.5-flash": { inputPerMTok: 0, outputPerMTok: 0 },
 };
 
 /** Charged when the model is not in the table. Deliberately the dearest rate. */

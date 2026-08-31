@@ -16,7 +16,6 @@ export const SETTING_KEYS = {
   streakShields: "streakShields",
   streakShieldDates: "streakShieldDates",
   displayName: "displayName",
-  leaderboard: "leaderboardOptIn",
   reviewMode: "reviewMode",
   onboardedAt: "onboardedAt",
   cefrGoal: "cefrGoal",

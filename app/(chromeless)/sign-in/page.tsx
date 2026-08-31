@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { resolveOperator } from "@/lib/legal/operator";
+import { Note } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { MascotWatch } from "@/components/MascotWatch";
 import { SignInForm } from "./SignInForm";
@@ -15,8 +17,36 @@ const PROMISES = [
   "Anu explains the grammar, and never invents a form",
 ];
 
-export default function SignInPage() {
+/**
+ * Two refusals used to be written into the URL and read by nothing.
+ *
+ * `/auth/callback` sends somebody to `?denied=1` when their address is not on
+ * this deployment's allowlist, and to `?error=1` when an exchange failed or a
+ * mailed link had already been used. Both landed on an ordinary sign-in
+ * screen that said nothing at all, so the one person who needed telling why
+ * they could not get in was shown the button that had just refused them.
+ * Every other dead end in this app says what happened; this one now does too,
+ * and where there is somebody to ask, it says who.
+ */
+export default async function SignInPage({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const configured = supabaseConfigured();
+  const params = await searchParams;
+  const operator = resolveOperator();
+  /*
+    EMAIL SIGN-IN IS OFF UNTIL SOMEBODY HAS SET UP SMTP, and that is a switch
+    rather than a guess because the app cannot see the mail configuration.
+
+    Supabase's built-in email service sends a couple of messages an hour for
+    the whole project and says itself it is for testing. A form that takes an
+    address, says "check your email" and mails nobody is worse than no form:
+    the learner waits, checks spam, and concludes the app is broken, which it
+    is not. So the door is only drawn once the operator says it opens.
+  */
+  const emailLink = (process.env.EMAIL_SIGN_IN ?? "").trim().toLowerCase() === "on";
+  const denied = params.denied !== undefined;
+  const failed = params.error !== undefined;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
@@ -47,9 +77,27 @@ export default function SignInPage() {
             your dictionary and every review you have ever done.
           </p>
 
+          {denied && (
+            <div className="mt-6 text-left">
+              <Note tone="again">
+                That address cannot use this copy of Kodukeel. It is set up for a named group, so
+                sign in with the account you were invited with
+                {operator.email ? <>, or ask {operator.email} to add you</> : null}.
+              </Note>
+            </div>
+          )}
+          {failed && !denied && (
+            <div className="mt-6 text-left">
+              <Note tone="hard">
+                That sign-in did not go through. A mailed link works once and lasts an hour, so if
+                yours is older than that, ask for a new one below.
+              </Note>
+            </div>
+          )}
+
           <div className="mt-7">
             {configured ? (
-              <SignInForm />
+              <SignInForm emailLink={emailLink} />
             ) : (
               <div className="rounded-[var(--r-lg)] p-5 text-left" style={{ background: "var(--raised)" }}>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -57,7 +105,7 @@ export default function SignInPage() {
                   the database on this machine. Add{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
                   <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your{" "}
-                  <code className="text-xs">.env</code> to turn on Google sign-in and
+                  <code className="text-xs">.env</code> to turn on sign-in and
                   per-person decks.
                 </p>
                 <ButtonLink href="/" variant="primary" className="mt-4 w-full">Start studying</ButtonLink>
