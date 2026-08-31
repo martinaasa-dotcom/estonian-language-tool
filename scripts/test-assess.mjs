@@ -205,7 +205,17 @@ await page.goto(`${B}/start`, { waitUntil: "networkidle" });
 const onboarded = !page.url().includes("/start");
 
 if (onboarded) {
-  absent(16, "a learner who has not been through first run: this database has");
+  /*
+    23, not the 16 this said before the deck step was rewritten.
+
+    The number is the checks inside the `else` branch below (24) minus the one
+    this branch runs in their place, and rewriting that branch moved it. CI runs
+    `test-scan.mjs` first, which onboards this learner, so CI is always the
+    waived path: the floor of 49 has to come down to the 26 reachable here, and
+    a stale waiver fails the suite on a run where nothing is wrong. Recount the
+    branch when you add a check to it.
+  */
+  absent(23, "a learner who has not been through first run: this database has");
   /*
     A learner who has already been through it is sent to Today, which is the
     documented behaviour rather than a gap in this run: a wizard that reappears
