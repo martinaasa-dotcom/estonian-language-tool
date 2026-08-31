@@ -249,11 +249,11 @@ check("no gradient wraps the wrong colour round its own edge", wrapped.size === 
   A HOVERED ROW IS A STATE NOTHING ELSE SWEEPS.
 
   The pass above walks pages as they arrive, and the rail's row under the
-  pointer is not a state a page arrives in: it paints the accent's softest
-  tint behind the row and writes the row in the accent's ink, and neither of
-  those readings exists until a pointer is on it. So it is hovered here, in
-  both themes, and measured against the pane actually behind the words
-  rather than against the page.
+  pointer is not a state a page arrives in: it draws the marker's own card
+  behind the row and writes the row in the ink the marked row wears, and
+  neither of those readings exists until a pointer is on it. So it is hovered
+  here, in both themes, and measured against the pane actually behind the
+  words rather than against the page.
 */
 const hovered = [];
 for (const theme of ["light", "dark"]) {

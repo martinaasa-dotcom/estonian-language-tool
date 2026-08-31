@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   crossStyle,
@@ -37,6 +38,54 @@ export type NavMarkerState = {
 const GIVES_UP_MS = 4000;
 
 /**
+ * How long after the finger comes up a click has to arrive before the press is
+ * judged not to have been a tap at all.
+ *
+ * A tap dispatches its click a couple of milliseconds after `pointerdown`, so
+ * any number here is generous; what it must not be is the four seconds above.
+ * On a phone a press on the bar very often does not become a click at all: a
+ * touch landing while the page is still flinging is spent stopping the fling,
+ * and a thumb that drifts two pixels has started a pan. Both leave an ordinary
+ * `pointerup` on the cell with no navigation behind it, which is the one way
+ * out of the three that neither the release rule nor `pointercancel` can see.
+ */
+const CLICK_FOLLOWS_MS = 300;
+
+/**
+ * How far a finger may wander and still have meant the cell it landed on. Ten
+ * pixels is what a platform calls a tap, and these cells are far bigger.
+ */
+const TAP_SLOP = 10;
+
+/**
+ * How long a press may be held and still be a tap. A long press on a link opens
+ * the browser's own preview, which arrives as a `pointercancel` from a finger
+ * that has not moved; the reader asked for the preview rather than the page, so
+ * past this the press is somebody else's.
+ */
+const TAP_HOLD_MS = 700;
+
+/**
+ * THE PRESSED CELL IS AN ADDRESS, NEVER A NODE.
+ *
+ * A press is settled by events that arrive later, and between them the surface
+ * re-renders, since the bet itself is what makes it re-render. React is free to
+ * hand back a different element for the same cell whenever the shape of the
+ * tree around it changes, and it does: a suspended route swaps a subtree, and
+ * the rail draws its rows from more than one branch. Comparing elements there
+ * judges the reader's finger by React's reconciliation, which has nothing to do
+ * with it. The address is the same before and after, so that is what identifies
+ * a cell.
+ */
+function cellByHref(host: HTMLElement, href: string | null): HTMLElement | null {
+  if (!href) return null;
+  for (const cell of Array.from(host.querySelectorAll<HTMLElement>("[data-nav-goes]"))) {
+    if (cell.getAttribute("href") === href) return cell;
+  }
+  return null;
+}
+
+/**
  * THE TWO PANES BEHIND THE NAVIGATION'S CELLS: the marker that says which
  * place you are in, and the fainter one that follows your pointer.
  *
@@ -54,6 +103,8 @@ const GIVES_UP_MS = 4000;
  */
 export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState {
   const tune = NAV_MOTION[surface];
+  const router = useRouter();
+  const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
   const [mark, setMark] = useState<NavMark | null>(null);
   const [hover, setHover] = useState<NavMark | null>(null);
@@ -77,7 +128,38 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
   const breathing = useRef<Animation | null>(null);
   /** The cell a press is betting on, until the page agrees or the bet is off. */
   const aimed = useRef<HTMLElement | null>(null);
+  /*
+    The address the surface was showing when the bet was placed, which is what
+    "the page answered" is read against. It cannot be read off `[data-nav-on]`,
+    because the bet is what moves `[data-nav-on]`.
+  */
+  const aimedFrom = useRef<string | null>(null);
+  /*
+    Where the press is going, kept beside the cell rather than read back off it,
+    since the element can be replaced while the press is still live.
+  */
+  const aimedHref = useRef<string | null>(null);
+  /** Where the finger landed, and whether it has wandered since. */
+  const pressPoint = useRef<{ x: number; y: number } | null>(null);
+  const strayed = useRef(false);
+  /*
+    How long the finger was down, on the browser's clock rather than ours.
+    `Event.timeStamp` is set when the browser makes the event, not when it gets
+    to hand it over, and the difference is the whole point: the press this
+    exists for is one on a phone whose main thread is busy rendering the page
+    the press asked for. On `Date.now()` an ordinary tap read as a long press
+    and was thrown away.
+  */
+  const pressedAt = useRef(0);
+  const heldMs = useRef(0);
+  /** This surface took the press itself, so a late click must not go again. */
+  const navigated = useRef(false);
   const aimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Waiting to see whether the release becomes a click. */
+  const clickWatch = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The address on screen, readable from a layout effect with no deps. */
+  const pathRef = useRef(pathname);
+  pathRef.current = pathname;
   /*
     Whether the press has already become a click, which is to say a navigation
     is under way. See the press effect at the bottom: a bet the page is about
@@ -141,6 +223,14 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     ) => {
       if (!el) return;
       Object.assign(el.style, crossStyle(cross, axis), restingStyle(to, axis));
+      /*
+        A duration of zero is a surface saying it does not travel: the resting
+        geometry above is already the whole answer, and the pane arrives on
+        the cell rather than crossing the well to reach it. The rail asks for
+        this; see `NAV_MOTION.rail.travelMs` for why a pointer gets that and a
+        finger does not.
+      */
+      if (opts.durationMs <= 0) return;
       if (!from || typeof el.animate !== "function" || stillMotion()) return;
       if (sameMark(from, to)) return;
       running.current?.cancel();
@@ -173,14 +263,41 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     [tune],
   );
 
+  /*
+    Everything a bet leaves behind, dropped in one place. Deliberately silent:
+    it is called when the page has answered, which is a moment the surface has
+    already settled by itself, and from `callOff`, which is the one that speaks.
+  */
+  const forgetAim = useCallback(() => {
+    aimed.current = null;
+    aimedFrom.current = null;
+    aimedHref.current = null;
+    pressPoint.current = null;
+    strayed.current = false;
+    navigated.current = false;
+    going.current = false;
+    if (aimTimer.current) {
+      clearTimeout(aimTimer.current);
+      aimTimer.current = null;
+    }
+    if (clickWatch.current) {
+      clearTimeout(clickWatch.current);
+      clickWatch.current = null;
+    }
+  }, []);
+
   const measure = useCallback(() => {
     const host = ref.current;
     if (!host) return;
     if (visible.current === null) visible.current = onScreen(host);
     if (!visible.current) {
-      // The surface the other breakpoint draws. See `onScreen`.
+      /*
+        The surface the other breakpoint draws. See `onScreen`. The bet goes
+        with it, since the press that placed it was on a surface the reader is
+        no longer looking at.
+      */
       wasHidden.current = true;
-      aimed.current = null;
+      forgetAim();
       return;
     }
     /* Back on screen: arrive on the cell rather than travel across to it. */
@@ -189,11 +306,26 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     const on = host.querySelector<HTMLElement>("[data-nav-on]");
     /*
       A press outstanding, so the marker is already where the reader aimed it
-      and the page has not caught up yet. The bet is settled when the page
-      answers with that same cell, or when the cell stops existing.
+      and the page has not caught up yet.
+
+      THE ROUTER SETTLES THE BET, AND `[data-nav-on]` CANNOT, BECAUSE THE BET IS
+      WHAT MOVES `[data-nav-on]`. This used to read `on === aimed.current`, and
+      that holds only while the marked cell comes from the path alone. The
+      moment anything else lights the pressed cell, the very next measure
+      declares the bet won, about two frames after it was placed and long before
+      the finger comes up, and every way this surface has of standing down
+      begins by asking whether a bet is outstanding: a release off the cell, a
+      `pointercancel` and the four-second backstop all quietly become no-ops.
+
+      So the bet is over when the address changes, to this cell's page or, on a
+      redirect, to another one, which is the page answering either way. A cell
+      re-rendered out from under the press is looked up again by address rather
+      than given up on.
     */
-    if (aimed.current && (on === aimed.current || !host.contains(aimed.current))) {
-      aimed.current = null;
+    if (aimed.current && pathRef.current !== aimedFrom.current) {
+      forgetAim();
+    } else if (aimed.current && !host.contains(aimed.current)) {
+      aimed.current = cellByHref(host, aimedHref.current);
     }
     const target = aimed.current ?? on;
 
@@ -266,7 +398,7 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       lastHover.current = overIt;
       setHover(overIt);
     }
-  }, [crossOf, glide, markOf, swell, tune]);
+  }, [crossOf, forgetAim, glide, markOf, swell, tune]);
 
   /*
     No dependency list on purpose. What moves the marker is not one value but
@@ -429,13 +561,10 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
     if (!host) return;
 
     const callOff = () => {
-      if (aimTimer.current) {
-        clearTimeout(aimTimer.current);
-        aimTimer.current = null;
-      }
-      if (!aimed.current) return;
-      aimed.current = null;
-      going.current = false;
+      const cell = aimed.current;
+      forgetAim();
+      document.removeEventListener("pointermove", wander);
+      if (!cell) return;
       reverting.current = true;
       try {
         measure();
@@ -444,13 +573,91 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       }
     };
 
+    /*
+      THE PRESS WAS A TAP, SO TAKE IT WHERE IT WAS GOING.
+
+      A press becomes a navigation by becoming a click, and the browser decides
+      whether to make one. On a phone it often decides not to, for reasons that
+      have nothing to do with what the reader meant: a touch landing while the
+      page is still flinging is spent stopping the fling, and a drag begun on
+      this bar pans the document, because a fixed element is still a pan target.
+      Both take the press and leave no click behind, and both are commonest in
+      the moment this bar matters most, which is while the page is still moving.
+
+      A tab bar is not page content, so it judges the tap on its own evidence:
+      landed on a cell, released on that cell or taken from it having never
+      wandered, and not held long enough to be somebody asking for the browser's
+      link preview. This is additive. When the click does arrive it does the
+      work exactly as before and `went` cancels the wait.
+    */
+    const go = () => {
+      const href = aimedHref.current;
+      if (!href) {
+        callOff();
+        return;
+      }
+      if (clickWatch.current) {
+        clearTimeout(clickWatch.current);
+        clickWatch.current = null;
+      }
+      /* Before the push, not after: it is what stops a second pointer event
+         settling a navigation that is already under way. */
+      going.current = true;
+      navigated.current = true;
+      document.removeEventListener("pointermove", wander);
+      router.push(href);
+    };
+
+    /*
+      A press that ended with no click. Whether it was a tap is the only
+      question, and the answer is the same on both roads here: released on its
+      own cell, never having wandered, inside the time a tap takes.
+    */
+    const endPress = () => {
+      if (strayed.current || heldMs.current > TAP_HOLD_MS) {
+        callOff();
+        return;
+      }
+      go();
+    };
+
+    /* A finger that has moved this far is panning, not pressing. */
+    function wander(event: PointerEvent) {
+      const from = pressPoint.current;
+      if (!from) return;
+      if (Math.hypot(event.clientX - from.x, event.clientY - from.y) > TAP_SLOP) {
+        strayed.current = true;
+      }
+    }
+
     const aim = (cell: HTMLElement) => {
       const well = ref.current;
       if (!well || !well.contains(cell)) return;
       if (cell === well.querySelector("[data-nav-on]")) return;
+      /*
+        WARM THE PAGE ON THE PRESS, NOT ON THE COMMIT. Every cell is a
+        prefetching `<Link>` and neither surface is ever out of the viewport, so
+        most of these are already warm; asking again about a warm address is a
+        no-op and the saving on a cold one is the whole round trip.
+      */
+      const href = cell.getAttribute("href");
+      if (href) {
+        try {
+          router.prefetch(href);
+        } catch {
+          /* A cell that opens a sheet has no address to warm. */
+        }
+      }
       aimed.current = cell;
+      aimedFrom.current = pathRef.current;
+      aimedHref.current = href;
       going.current = false;
+      navigated.current = false;
       if (aimTimer.current) clearTimeout(aimTimer.current);
+      if (clickWatch.current) {
+        clearTimeout(clickWatch.current);
+        clickWatch.current = null;
+      }
       aimTimer.current = setTimeout(callOff, GIVES_UP_MS);
       measure();
     };
@@ -469,17 +676,40 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
         return;
       }
       const cell = goes(event.target);
-      if (cell) aim(cell);
+      if (!cell) return;
+      pressPoint.current = { x: event.clientX, y: event.clientY };
+      strayed.current = false;
+      pressedAt.current = event.timeStamp;
+      heldMs.current = 0;
+      /* Only for the length of a press, and adding the same function twice is
+         a no-op, so a listener left behind costs the next press nothing. */
+      document.addEventListener("pointermove", wander, { passive: true });
+      aim(cell);
     };
 
     /*
       A release anywhere but on the cell it started on is not a tap, and no
       navigation follows it. On the document rather than the well, because a
       finger that wandered off has usually left the bar entirely.
+
+      A RELEASE ON THE CELL IS NOT YET A NAVIGATION EITHER, AND ON A PHONE IT
+      OFTEN IS NOT ONE AT ALL. Some of the ways a browser withholds a click
+      arrive as `pointercancel`, which `abandon` hears; the rest leave an
+      ordinary `pointerup` on the cell and simply never fire one, and that is
+      invisible to both of the rules above. So the click gets a deadline.
     */
     const release = (event: PointerEvent) => {
-      if (!aimed.current || going.current) return;
-      if (goes(event.target) !== aimed.current) callOff();
+      /* The address, not the element: this surface's own cell can have been
+         re-rendered by now, and the press is still its to settle. */
+      if (!aimedHref.current || going.current) return;
+      const over = goes(event.target);
+      if (!over || over.getAttribute("href") !== aimedHref.current) {
+        callOff();
+        return;
+      }
+      heldMs.current = event.timeStamp - pressedAt.current;
+      if (clickWatch.current) clearTimeout(clickWatch.current);
+      clickWatch.current = setTimeout(endPress, CLICK_FOLLOWS_MS);
     };
 
     /*
@@ -499,8 +729,25 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       127 to 817 again when the page arrived.
     */
     const went = (event: MouseEvent) => {
-      if (!aimed.current) return;
-      if (goes(event.target) === aimed.current) going.current = true;
+      if (!aimedHref.current) return;
+      const cell = goes(event.target);
+      if (!cell || cell.getAttribute("href") !== aimedHref.current) return;
+      /*
+        The surface already took this press. Next's `<Link>` stands down on a
+        click whose default is prevented, and this listener is on the well
+        rather than the anchor, so it runs first and the page is not entered
+        twice.
+      */
+      if (navigated.current) {
+        event.preventDefault();
+        return;
+      }
+      going.current = true;
+      if (clickWatch.current) {
+        clearTimeout(clickWatch.current);
+        clickWatch.current = null;
+      }
+      document.removeEventListener("pointermove", wander);
     };
 
     /* A keyboard never presses, and Enter is how it opens a link. */
@@ -510,10 +757,21 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       if (cell) aim(cell);
     };
 
-    /* A cancel before the click is a genuinely abandoned press. */
-    const abandon = () => {
+    /*
+      A cancel before the click. It used to mean the press was abandoned, and
+      for a row in a scrolling list it still does. Not on a fixed bar: the
+      browser fires this at a finger that has done nothing at all, because it
+      has taken the touch to stop the page's momentum. `endPress` is what tells
+      the two apart, and it is the same question the click deadline asks.
+    */
+    const abandon = (event: PointerEvent) => {
       if (going.current) return;
-      callOff();
+      if (!aimedHref.current) {
+        callOff();
+        return;
+      }
+      heldMs.current = event.timeStamp - pressedAt.current;
+      endPress();
     };
 
     host.addEventListener("pointerdown", press);
@@ -527,9 +785,11 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
       host.removeEventListener("keydown", key);
       document.removeEventListener("pointerup", release);
       document.removeEventListener("pointercancel", abandon);
+      document.removeEventListener("pointermove", wander);
       if (aimTimer.current) clearTimeout(aimTimer.current);
+      if (clickWatch.current) clearTimeout(clickWatch.current);
     };
-  }, [measure]);
+  }, [forgetAim, measure, router]);
 
   /*
     Held still until it has been placed once, or the first paint of every

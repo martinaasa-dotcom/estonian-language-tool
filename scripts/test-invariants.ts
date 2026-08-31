@@ -28,6 +28,7 @@ import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
+import { NAV_MOTION } from "../lib/ux/navMotion";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
@@ -1450,7 +1451,7 @@ check("the rail shows every place, rather than hiding some behind a button", () 
   }
 });
 
-check("where you are is one pill that travels, on the compositor", () => {
+check("where you are is one pane, and it arrives under a pointer", () => {
   /*
     The rail and the phone bar say where you are with one pane that moves
     between their cells, rather than each cell painting itself when its turn
@@ -1503,6 +1504,58 @@ check("where you are is one pill that travels, on the compositor", () => {
     "the current row stopped carrying its own card for the paint before hydration",
   );
   assert.match(rail, /data-nav-marked/, "nothing tells the row when a pane has taken the card over");
+
+  /*
+    REACHING AND ARRIVING ARE ONE OBJECT AT TWO WEIGHTS.
+
+    The pointer's pane was the accent's softest tint, three pixels bigger than
+    the row it sat under, while the marker was a white card the row's own size,
+    so the two states of one row were two different objects and on the row you
+    were already on the tint stuck out round the card as a second outline. They
+    read one fill now, `--nav-marker-bg`, and the marker's own lift is the only
+    difference; a pane painted from a fill of its own, or reaching past the cell
+    it was measured on, is the regression either way.
+  */
+  /* Comments first: this one carries commas and the word `box-shadow`. */
+  const rules = motion.replace(/\/\*[\s\S]*?\*\//g, "");
+  const ghost =
+    rules
+      .split("}")
+      .map((rule) => rule.split("{"))
+      .filter((parts) => parts.length === 2 && parts[0]!.trim().endsWith(".nav-ghost") &&
+        !parts[0]!.includes(","))
+      .map((parts) => parts[1]!)
+      .join("\n");
+  assert.match(
+    ghost,
+    /background:\s*var\(--nav-marker-bg/,
+    "the pointer's pane is painted something other than the marker's own fill",
+  );
+  assert.doesNotMatch(
+    ghost,
+    /box-shadow/,
+    "the pointer's pane reaches past the cell it was measured on again",
+  );
+
+  /*
+    A TRAVELLING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
+
+    A thumb has nothing else to do while a server answers, so the bar's pill
+    slides from the cell you left to the cell you asked for. A pointer has
+    already arrived, and its own pane has been following it down the rail all
+    along, so the rail is written straight to its resting geometry and the
+    marker is simply there on the row you pressed. Asserted as the pair rather
+    than as either number: what may not happen is the two surfaces answering
+    the same way, and `glide` has to have the zero-duration way out for the
+    rail's answer to mean anything at all.
+  */
+  assert.equal(NAV_MOTION.rail.travelMs, 0, "the rail's marker travels again under a pointer");
+  assert.ok(NAV_MOTION.bar.travelMs > 0, "the phone bar's marker stopped travelling");
+  assert.match(
+    code("lib/layout/navMarker.ts"),
+    /durationMs\s*<=\s*0/,
+    "a pane with no travel would animate anyway, since `glide` lost its way out",
+  );
 });
 
 check("the pure modules stay free of React, Next and Prisma", () => {

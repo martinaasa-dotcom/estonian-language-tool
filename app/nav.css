@@ -89,21 +89,25 @@
   }
 
   /*
-    THE POINTER'S PANE IS A PILL, AND IT HAS TO BE ONE YOU CAN SEE.
+    REACHING AND ARRIVING ARE ONE OBJECT AT TWO WEIGHTS.
 
-    It was the raised tint on the rail's own ground, which is two percent of
-    lightness apart in the light theme: technically a hover and practically
-    nothing, on the surface a pointer spends the most time over. So the well
-    declares what it is painted, the rail asks for the accent's softest tint,
-    and the pill reaches past the row it is under by `--nav-ghost-halo`,
-    drawn as a spread rather than as geometry so the measurement that places
-    it stays the row's own box. That is the expansion: the pill is bigger
-    than the row, so a row under the pointer grows a little rather than
-    merely tinting.
+    The pointer's pane was the accent's softest tint, three pixels bigger than
+    the row it sat under, while the marker was a white card the row's own
+    size. So the two states of one row were two different objects: point at a
+    row and a lavender pill appeared, click it and a white card appeared
+    somewhere else, and on the row you were already on the tint stuck out
+    round the card as a second outline. That last one is what a reader sees
+    first, because the row you are on is the row your pointer is nearest.
+
+    They are the same pane now: the same fill, the same box, the same radius,
+    and the only difference is the lift. `--nav-marker-bg` paints both and
+    `--nav-marker-shadow` is what the marker adds, so pointing at a row is a
+    preview of pressing it and pressing it only settles what was already
+    under the cursor. Nothing reaches past the cell it is measured on, which
+    is also what lets the two stack invisibly rather than ringing each other.
   */
   .nav-ghost {
-    background: var(--nav-ghost-bg, transparent);
-    box-shadow: 0 0 0 var(--nav-ghost-halo, 0px) var(--nav-ghost-bg, transparent);
+    background: var(--nav-marker-bg, transparent);
   }
 
   .nav-cell[data-nav-on] {
@@ -117,6 +121,14 @@
   }
 
   .nav-cell {
+    /*
+      The same declaration `app/globals.css` puts on every button, which a nav
+      cell misses because it is an anchor. It takes the double-tap-to-zoom
+      handling off the cell, which is one of the reasons a browser holds a
+      click back or withholds one entirely, and `manipulation` rather than
+      `none` so a drag beginning here still scrolls the page.
+    */
+    touch-action: manipulation;
     transition:
       transform 280ms cubic-bezier(0.32, 0.72, 0, 1),
       color 180ms ease-out;
@@ -152,18 +164,21 @@
     }
 
     /*
-      The row under the pointer says so in three ways rather than one: the
-      pill behind it, its glyph a touch larger, and its own words in the
-      accent's ink. All three are custom properties because an inline style
-      beats a class hover, silently, which is the mechanism that left half
-      the controls in this app dead under a pointer. `scripts/test-design.mjs`
-      hovers a row and measures the ink against the pill, in both themes,
-      because a hovered state is not one a page arrives in and nothing else
-      sweeps it.
+      The row under the pointer says so the way the row you are on says it,
+      one step short: the same pane behind it, its glyph a touch larger, and
+      its words in the ink the marked row wears rather than in a hue of their
+      own. An accent ink here was the other half of the two-objects problem,
+      since it made the row you were reaching for a different colour from the
+      row you were about to make it.
+
+      `--nav-ink` is a custom property because an inline style beats a class
+      hover, silently, which is the mechanism that left half the controls in
+      this app dead under a pointer. `scripts/test-design.mjs` hovers a row
+      and measures the ink against the pane, in both themes, because a hovered
+      state is not one a page arrives in and nothing else sweeps it.
     */
     .nav-cell:hover {
-      --nav-disc: var(--surface);
-      --nav-ink: var(--accent-deep);
+      --nav-ink: var(--ink);
     }
 
     .nav-cell:active .nav-glyph {
