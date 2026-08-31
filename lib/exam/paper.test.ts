@@ -33,9 +33,9 @@ function word(over: Partial<PoolWord> & { lemma: string }): PoolWord {
  * every builder that looks a form up in a sentence quietly finds nothing. A
  * fixture that cannot be found is a fixture that tests the empty path.
  */
-function nth(i: number): string {
+function nth(i: number, stem = "sona"): string {
   const letters = "abcdefghijklmnopqrstuvwxyz";
-  return `sona${letters[Math.floor(i / 26) % 26]}${letters[i % 26]}`;
+  return `${stem}${letters[Math.floor(i / 26) % 26]}${letters[i % 26]}`;
 }
 
 /** A pool big enough that the builders are not starved, built out of one shape. */
@@ -45,6 +45,14 @@ function pool(count: number): PoolWord[] {
     return word({
       lemma,
       lexemeId: `lex-${i}`,
+      /*
+        A meaning of its own for every word, because they are answers to each
+        other. With one gloss shared across the pool the meaning question can
+        offer nothing: every candidate reads as the same answer as the right
+        one, which is the guard working and is also a fixture that tests the
+        empty path, the same fault the digits in `nth` once caused.
+      */
+      translation: nth(i, "mean"),
       cefr: i % 3 === 0 ? "A1" : i % 3 === 1 ? "A2" : "B1",
       forms: [
         { formType: "NOM_SG", value: lemma, morphCode: null, morphName: null },
@@ -356,6 +364,118 @@ describe("a dictionary with no recorded sentences, which is what a keyless insta
         }
         expect(forms.has(item.lemma.toLowerCase())).toBe(true);
       }
+    }
+  });
+
+  it("offers a meaning among meanings of the same kind, not whatever came first", () => {
+    /*
+      The fault this shares with the placement check: the wrong answers were
+      three glosses out of a deck spanning four levels, in shuffle order, so a
+      B1 candidate asked what a noun meant chose between it, a verb and a
+      three-sense abstract noun and could cross two out without reading the
+      Estonian. A deck is the learner's own, so the levels are closer together
+      than the dictionary's, and the part of speech is what carries it here.
+    */
+    const mixed = [
+      ...Array.from({ length: 20 }, (_, i) => word({
+        lemma: nth(i), lexemeId: `n-${i}`, translation: nth(i, "mean"), pos: "NOUN", cefr: "B1",
+        forms: [{ formType: "GEN_SG", value: `${nth(i)}a`, morphCode: null, morphName: null }],
+      })),
+      ...Array.from({ length: 20 }, (_, i) => word({
+        lemma: nth(i, "tege"), lexemeId: `v-${i}`, translation: `to ${nth(i, "do")}`, pos: "VERB", cefr: "B1",
+      })),
+    ];
+    const paper = buildPaper("B1", mixed, "mixed-pos");
+    const glossItems = paper.parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .filter((i): i is Extract<typeof i, { kind: "gloss-choice" }> => i.kind === "gloss-choice");
+    expect(glossItems.length).toBeGreaterThan(0);
+
+    const posOf = new Map(mixed.map((w) => [w.translation, w.pos]));
+    for (const item of glossItems) {
+      for (const option of item.options) {
+        expect(posOf.get(option), `${option} beside ${item.answer}`).toBe(posOf.get(item.answer));
+      }
+    }
+  });
+
+  it("never offers a meaning that is also the right answer", () => {
+    /*
+      Twenty meanings, each held by two words and worded two ways, which is the
+      shape the dictionary really has: "car" and "a car" are one answer, and a
+      candidate who picks the other one is right and is marked wrong. The exam
+      had no test of what counts as the same answer at all, because it had no
+      such rule: it took whatever the shuffle handed back.
+
+      The pairs matter. A fixture where every word means the same thing proves
+      nothing, since a pool with two glosses in it cannot fill four options
+      either way, and the test would pass on a builder with no rule at all.
+    */
+    const paired = Array.from({ length: 40 }, (_, i) => word({
+      lemma: nth(i),
+      lexemeId: `p-${i}`,
+      // Two words for one meaning, worded two ways, and identical in shape to
+      // every other gloss in the pool, so nothing but the rule keeps a pair
+      // out of one question.
+      translation: `${nth(Math.floor(i / 2), "mean")}, ${nth(i, "sense")}`,
+      cefr: "B1",
+      forms: [
+        { formType: "NOM_SG", value: nth(i), morphCode: null, morphName: null },
+        { formType: "GEN_SG", value: `${nth(i)}a`, morphCode: null, morphName: null },
+        { formType: "PART_SG", value: `${nth(i)}at`, morphCode: null, morphName: null },
+      ],
+    }));
+    // Ten papers rather than one. Which words a paper asks about is the
+    // shuffle's business, so a single paper can miss a pair by luck and pass a
+    // builder with no rule at all.
+    const items = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+      .flatMap((seed) => buildPaper("B1", paired, `paired-${seed}`).parts)
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .filter((i): i is Extract<typeof i, { kind: "gloss-choice" }> => i.kind === "gloss-choice");
+    expect(items.length).toBeGreaterThan(40);
+
+    for (const item of items) {
+      const seen = new Set<string>();
+      for (const option of item.options) {
+        for (const sense of option.split(", ")) {
+          expect(seen.has(sense), `${item.options.join(" / ")}`).toBe(false);
+          seen.add(sense);
+        }
+      }
+    }
+  });
+
+  it("hides a spoken word among words spelled like it", () => {
+    /*
+      A recording is only a listening question while the four spellings are
+      close enough that hearing is the only way to tell them apart. These were
+      three words drawn at random out of the deck, so the answer could be found
+      by reading rather than by listening.
+
+      Two families of lemmas, one of them small: with the near family only six
+      words wide, filling a question out of it cannot happen by chance.
+    */
+    const families = [
+      ...Array.from({ length: 6 }, (_, i) => word({
+        lemma: nth(i, "kirjut"), lexemeId: `k-${i}`, translation: nth(i, "mean"), cefr: "B1",
+        forms: [{ formType: "GEN_SG", value: `${nth(i, "kirjut")}a`, morphCode: null, morphName: null }],
+      })),
+      ...Array.from({ length: 30 }, (_, i) => word({
+        lemma: nth(i, "veeren"), lexemeId: `v-${i}`, translation: nth(i + 6, "mean"), cefr: "B1",
+        forms: [{ formType: "GEN_SG", value: `${nth(i, "veeren")}a`, morphCode: null, morphName: null }],
+      })),
+    ];
+    const spoken = buildPaper("B1", families, "families").parts
+      .flatMap((p) => p.tasks)
+      .flatMap((t) => t.items)
+      .filter((i): i is Extract<typeof i, { kind: "listen-choose" }> => i.kind === "listen-choose")
+      .filter((i) => i.unit === "word" && i.answer.startsWith("kirjut"));
+    expect(spoken.length).toBeGreaterThan(0);
+    for (const item of spoken) {
+      const near = item.options.filter((o) => o.startsWith("kirjut"));
+      expect(near.length, `${item.answer}: ${item.options.join(" / ")}`).toBeGreaterThan(2);
     }
   });
 

@@ -20,6 +20,8 @@ export interface GovernmentQuestion {
   answer: CaseKey;
   answerEn: string;
   answerEt: string;
+  /** The other cases this word governs, kept out of the options and named after. */
+  alsoGoverned: CaseKey[];
   example: string | null;
   maskedExample: string | null;
   gloss: string | null;
@@ -235,6 +237,27 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                 ? `An experiencer construction: the person goes in the ${question.answerEt} and the thing is the grammatical subject.`
                 : `${question.lemma} governs the ${question.answerEt}, the ${question.answerEn.toLowerCase()}. English gives you no clue here, so it has to be learned with the verb.`}
             </p>
+            {/*
+              A verb often governs more than one case, in different senses.
+              Those are true of it, so they are kept out of the options rather
+              than offered as wrong answers, and saying so here is the useful
+              half: a learner who was reaching for one of them was not wrong,
+              they were thinking of the other sense.
+            */}
+            {question.alsoGoverned.length > 0 && (
+              <p className="mt-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
+                It takes{" "}
+                {question.alsoGoverned.map((key, i) => (
+                  <span key={key}>
+                    {i > 0 && (i === question.alsoGoverned.length - 1 ? " and " : ", ")}
+                    the <span lang="et" className="est">{caseLabel(key)?.et}</span>
+                  </span>
+                ))}{" "}
+                {question.alsoGoverned.length === 1
+                  ? "too, in another sense, so it is kept out of the answers rather than offered as a wrong one."
+                  : "too, in other senses, so those are kept out of the answers rather than offered as wrong ones."}
+              </p>
+            )}
 
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={next} autoFocus>

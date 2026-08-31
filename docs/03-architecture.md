@@ -491,10 +491,10 @@ between "black", "plastic bag", "narcomania, drug addiction, substance abuse" an
 experience", and 99% of the meaning questions over sixty pools carried at least one option that
 could be crossed out on part of speech, on a band two or more away, or on the number of senses in
 the line. A level built on questions answered by elimination is wrong about somebody's Estonian on
-the day they are deciding where to start. `lib/assessment/distractors.ts` ranks each candidate on
+the day they are deciding where to start. `lib/questions/distractors.ts` ranks each candidate on
 what a learner cannot eliminate it by: for a gloss the course unit that teaches the word, the part
-of speech, the band and the shape of the line; for a case the cases that answer the same question
-word and the endings from the same series; for a form how much of the stem it shares. It ranks
+of speech, the band and the shape of the line; for a form how much of the stem it shares; for a
+sentence the words it shares with the answer. It ranks
 rather than filters, so the set of questions that can be asked is unchanged and only the choice
 among the survivors moves, and the test of what counts as the same answer got stricter as the
 options got closer, never looser: a shared content word for a gloss, containment for a sentence,
@@ -556,6 +556,21 @@ and questions with a model (ADR-005, and the failure would be invisible precisel
 most); scoring an unset part as zero (it fails a candidate for a gap in the dictionary, and trips the
 one clause that is supposed to mean "you did not attempt this"); and letting the client send its own
 marks (a result anybody can type is not a measurement).
+
+*Amendment 1 (the wrong answers are ranked, and checked against the right one).* The rules above
+make a mark trustworthy and say nothing about whether the question was worth marking, which is the
+same gap ADR-020 amendment 1 closed in the placement check. Four of this paper's tasks offered the
+first three options a shuffle handed back: 90% of the meaning questions carried one that could be
+crossed out on part of speech, band or the shape of the line, and a spoken word was hidden among
+three drawn at random from the deck rather than among three spelled anything like it. Worse, the
+meaning task had no test of what counts as the same answer at all, so a deck holding `auto` and
+`masin` could offer "car, automobile" against "car, machine" and mark a candidate wrong for
+choosing the other. All four now rank through `lib/questions/distractors.ts`, the module the
+placement check reads, and the meaning task checks each option against the answer first. The gap
+task keeps the rule it already had, that a form of the word being asked about outranks a form of
+any other word, since the ending is what it is testing; the module supplies the order of the
+strangers it falls back on. The counts of questions asked are unchanged, because this ranks the
+candidates rather than filtering them.
 
 **ADR-023: A grammar point is named the way a class names it, and the Latin name is the
 cross-reference.**
