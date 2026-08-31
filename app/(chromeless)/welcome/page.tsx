@@ -237,13 +237,46 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           in the endings this app is about, and six squares around one card
           is a border rather than an ornament.
 
-          They are tucked over the card's corners on purpose, by between
-          sixteen and forty pixels depending on the width, and they are
-          `pointer-events-none` because of it: they are `aria-hidden`
-          ornament, and an ornament that eats a tap on the card underneath it
-          is a decoration doing something no decoration should. At 768 the
-          bottom ones land on the tick and on the footnote rather than on a
-          blank corner, which is how this turned up.
+          THEY ALL TOUCH THE CARD, one to a side, and that is the placement
+          rule rather than a description of where they happen to sit. Three of
+          them met an edge and the fourth floated below the deck with clear air
+          around it, which reads as a square that missed rather than as one
+          that was put there. The sizes and the angles vary because four
+          identical squares evenly spaced are a frame, and a frame is a border
+          with gaps in it.
+
+          THE SLANT IS A `rotate` OF ITS OWN, not a frame of the float
+          (`app/globals.css`). Both used to live in the keyframes, and
+          `prefers-reduced-motion` shortens every animation here to 0.01ms with
+          no fill, so a reader who asked for less motion got four upright
+          squares and lost the one thing about them that was not motion.
+
+          WHAT THEY MAY NOT TOUCH IS THE BUTTON. The footer is a full-width
+          pill with 15px of padding around it, so a letter tucked deeply into
+          the bottom corner lands on the one loud action on the page and makes
+          it look clipped, which is what the first bottom-right placement did.
+          What buys the corner back is the pill's own 24px radius: the letter
+          is small enough, and sits low enough, that it passes outside that
+          curve. It is the smallest of the four for that reason and not by
+          eye, and it is smaller again below `sm`, where the card is the whole
+          column and there are only the page's 20px of padding to hang in.
+
+          The offsets are measured rather than guessed, because a rotated
+          square is wider than its side: 14deg on 48px puts its corners about
+          5px past the box, which is the difference between hanging inside the
+          page's padding and being clipped flat against it.
+
+          They are `pointer-events-none`, because they are `aria-hidden`
+          ornament and an ornament that eats a tap on the card underneath it is
+          a decoration doing something no decoration should. At 768 the
+          footnote wraps to two lines, which moves the card's bottom edge up
+          inside the block these are positioned against, so the bottom letter
+          is anchored far enough in to still reach it there. That width is the
+          one to check first.
+
+          `scripts/test-design.mjs` measures all of it at 640, 768 and 1280:
+          every letter over an edge, none on the pill, none past the page, and
+          the slant still there with the animation stopped.
 
           One hue each, and the fourth takes butter because it is the hue
           left: blush, mint and sky are spoken for and peach means "missed"
@@ -251,29 +284,29 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         */}
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
-          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
+          className="est float pointer-events-none absolute -left-2 -top-6 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-10 md:-top-8 md:h-14 md:w-14 md:text-2xl"
+          style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
-          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
+          className="est float pointer-events-none absolute -right-3 top-20 z-20 hidden h-11 w-11 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-6 md:top-24 md:h-12 md:w-12"
+          style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.5s", "--float-tilt": "12deg" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
-          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
+          className="est float pointer-events-none absolute -left-3 top-52 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-left-6 md:top-56 md:h-11 md:w-11 md:text-xl"
+          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3s", "--float-tilt": "-9deg" } as React.CSSProperties}
         >
           ü
         </span>
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -right-3 bottom-3 z-20 hidden h-12 w-12 sm:flex md:-right-7 items-center justify-center rounded-[var(--r)] text-xl font-bold"
-          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.8s", "--float-tilt": "-7deg" } as React.CSSProperties}
+          className="est float pointer-events-none absolute -right-3 bottom-7 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:bottom-10 md:h-9 md:w-9 md:text-lg"
+          style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "4.5s", "--float-tilt": "15deg" } as React.CSSProperties}
         >
           ö
         </span>

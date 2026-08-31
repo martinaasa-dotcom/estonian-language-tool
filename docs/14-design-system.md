@@ -204,7 +204,10 @@ Small, physical, and never blocking:
   that animates `outline-width` too, so a focus ring fades in over 200ms and a keyboard user
   watches it arrive.
 - `.fade-up`, `.pop-in`: entrances for content that has just arrived (a flipped card, a summary).
-- `.float`: the mascot and the landing page's decorative letters.
+- `.float`: the mascot and the landing page's decorative letters. The lift is the animation;
+  the letters' slant is a `rotate` property of their own, so it survives `prefers-reduced-motion`
+  turning every animation here into 0.01ms. A caller that sets no `--float-tilt` rotates by 0deg,
+  which is every mascot.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
 - The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pill that travels from the
