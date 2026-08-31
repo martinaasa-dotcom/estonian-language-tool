@@ -873,6 +873,23 @@
   96% { transform: scaleY(0.1); }
 }
 
+/*
+  The mascot's tilde, drifting just clear of the head.
+
+  It is deliberately not `float`, which is the 6s, 10px lift the landing page's
+  decorative letters use: that is a whole element moving against the page, and
+  this is one stroke moving inside a mark whose head stays put. Ten pixels there
+  would be a hat coming off. Two and a bit user units, so it scales with the
+  mark rather than with the viewport, and 3.4s against the blink's 5.5s so the
+  two never settle into a rhythm with each other.
+
+  The reduced-motion block above flattens this with everything else.
+*/
+@keyframes tilde-drift {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2.2px) rotate(-2.5deg); }
+}
+
 @keyframes flip-in {
   from { opacity: 0; transform: rotateX(-35deg); }
   to { opacity: 1; transform: rotateX(0); }
