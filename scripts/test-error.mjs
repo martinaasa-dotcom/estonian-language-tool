@@ -32,7 +32,7 @@ import { suite } from "./lib/checks.mjs";
   else's machine, which is the same argument `baseUrl()` makes for the rest.
 */
 const PORT = Number(process.env.ERROR_SUITE_PORT ?? 3199);
-const { check, done, absent } = suite("The error state", { floor: 5 });
+const { check, done, absent } = suite("The error state", { floor: 6 });
 
 const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
   env: {
@@ -55,7 +55,7 @@ for (let i = 0; i < 60 && !up; i++) {
 }
 
 if (!up) {
-  absent(5, `no server came up on ${PORT}, so the error state could not be driven`);
+  absent(6, `no server came up on ${PORT}, so the error state could not be driven`);
   server.kill();
   done();
 } else {
@@ -82,8 +82,21 @@ if (!up) {
     this replaced.
   */
   check("and names the reference, and where the message really is",
-    /server log/i.test(body) && /\(\d+\)/.test(body),
+    /server log/i.test(body) && /Reference \d+/.test(body),
     body.slice(-140));
+
+  /*
+    AND NOT THE FRAMEWORK'S OWN THREE SENTENCES ABOUT ITSELF.
+
+    A production build replaces a server error's message with a paragraph about
+    Server Components renders, production builds and a digest property on the
+    error instance, and this screen printed it in a code block. Nothing else in
+    this repository could catch that: `readerCopy.test.ts` sweeps the copy we
+    wrote, and this sentence is React's.
+  */
+  check("and does not read the framework's own prose back to a learner",
+    !/Server Components render|digest property|omitted in production/i.test(body),
+    body.slice(0, 120));
 
   await browser.close();
   server.kill();

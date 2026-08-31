@@ -44,18 +44,40 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         Nothing has been lost, your deck and review history are untouched. Trying again usually
         works.
       </p>
-      <code
-        className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-xs"
-        style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-      >
-        {error.message || "Unknown error"}
-        {error.digest ? ` (${error.digest})` : ""}
-      </code>
-      {error.digest && (
+      {/*
+        WHAT THE FRAMEWORK PUTS IN `error.message` IS NOT A SENTENCE ANYBODY
+        SHOULD READ.
+
+        A production Next build withholds a server error and replaces the
+        message with three sentences of its own: "An error occurred in the
+        Server Components render. The specific message is omitted in production
+        builds to avoid leaking sensitive details. A digest property is included
+        on this error instance which may provide additional details about the
+        nature of the error." That was printed in a code block, in the middle of
+        this screen, to somebody who came here to learn Estonian. It is the
+        loudest machine voice anywhere in the app and no copy sweep could ever
+        have found it, because it is not our sentence.
+
+        A `digest` is exactly the mark of that redaction, so it is also the test
+        for it: with one, the message is the framework's and the reference is
+        the only true thing to offer. Without one the error came from the
+        browser, its message is real, and it is worth showing.
+      */}
+      {error.digest ? (
         <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-          If you run this copy of Kodukeel, the server log holds the full message under that
-          reference.
+          Reference{" "}
+          <code className="rounded px-1.5 py-0.5" style={{ background: "var(--raised)" }}>
+            {error.digest}
+          </code>
+          . If you run this copy of Kodukeel, the server log holds what actually went wrong.
         </p>
+      ) : (
+        <code
+          className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-xs"
+          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+        >
+          {error.message || "Unknown error"}
+        </code>
       )}
       <div className="mt-2 flex gap-3">
         <Button variant="primary" onClick={reset}>Try again</Button>
@@ -71,7 +93,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <div className="mt-2 w-full">
         <SuggestFix
           category="BROKEN"
-          trigger={`${error.message || "Unknown error"}${error.digest ? ` (${error.digest})` : ""}`}
+          /* The reference where the message was withheld, the message where it
+             was not: the same rule as the screen, so a reviewer is never sent
+             three sentences of framework prose as the description of a fault. */
+          trigger={error.digest ? `Reference ${error.digest}` : (error.message || "Unknown error")}
           label="Tell the Kodukeel team"
           tone="loud"
         />
