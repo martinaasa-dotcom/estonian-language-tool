@@ -10,7 +10,7 @@ export const metadata = { title: "Offline" };
 export default function OfflinePage() {
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
-      <Mascot size={58} mood="thinking" blink={false} />
+      <Mascot size={58} mood="thinking" animate={false} />
       <span
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
         style={{ background: "var(--butter-soft)", color: "var(--butter-ink)" }}

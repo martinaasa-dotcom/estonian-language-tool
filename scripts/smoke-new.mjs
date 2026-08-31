@@ -24,12 +24,13 @@ mkdirSync(SHOTS, { recursive: true });
 const browser = await launchChromium();
 
 /*
-  Floor: 45 before the navigation checks below, plus the seven they add. This
-  box reaches 54 against a seeded database, so the two above the floor are the
-  ones gated on the deck holding enough to build a government drill and a
-  minimal pair, which a thin database does not.
+  Floor: 45 before the navigation checks below, plus the seven they add, plus
+  the five the travelling marker adds. This box reaches 59 against a seeded
+  database, so the two above the floor are the ones gated on the deck holding
+  enough to build a government drill and a minimal pair, which a thin database
+  does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 52 });
+const { check, done } = suite("The new routes, rendered", { floor: 61 });
 
 const ROUTES = [
   ["/", "today"],
@@ -214,6 +215,222 @@ if (sheet && rail) {
   check("a phone reaches every place a desktop does", missing.length === 0, missing.join(", "));
   check("the sheet groups what it holds", sheet.headings.length >= 4, `${sheet.headings.length} headings`);
 }
+
+/*
+  THE MARKER: ONE PILL THAT TRAVELS, RATHER THAN A ROW LIGHTING UP AS ANOTHER
+  GOES OUT.
+
+  Written in a browser because none of it is visible to a source check. The
+  pane is placed by measuring, so the questions that matter are whether it
+  lands on the row it is meant to be under, whether it leaves on the press
+  rather than on the page, and whether the row still carries its own card in
+  the window before any of that can have run. The last one is not theoretical:
+  a marker cannot be placed on a server, and every hard load paints once
+  before it is.
+*/
+await page.goto(`${BASE}/grammar`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+const marker = await page.evaluate(() => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav?.querySelector(".nav-marker");
+  const cell = nav?.querySelector("[data-nav-on]");
+  if (!pane || !cell) return null;
+  const p = pane.getBoundingClientRect();
+  const c = cell.getBoundingClientRect();
+  return {
+    row: cell.getAttribute("href"),
+    off: Math.max(Math.abs(p.top - c.top), Math.abs(p.left - c.left),
+                  Math.abs(p.width - c.width), Math.abs(p.height - c.height)),
+    painted: getComputedStyle(pane).backgroundColor,
+  };
+});
+check("the marker sits on the row you are on", marker !== null && marker.off <= 1,
+  marker ? `${marker.row}, out by ${marker.off.toFixed(1)}px` : "no marker");
+
+const was = page.url();
+const aimed = await page.evaluate(async () => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")]
+    .find((c) => c.getAttribute("href") === "/settings");
+  const from = pane.getBoundingClientRect().top;
+  const distance = to.getBoundingClientRect().top - from;
+  const rest = Math.round(pane.getBoundingClientRect().height);
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+  /*
+    A press and nothing else: no click, so nothing navigates, and the marker
+    has only the bet to go on. The pill is sampled every frame for the length
+    of the travel rather than at one chosen instant, because how far along it
+    is at a given millisecond is a fact about the machine: the first version
+    of this read the stretch at 130ms, which is most of the way there on a
+    laptop and past the peak on a slower box, and it failed in CI at 56px
+    while passing here at 64. A peak over the whole journey is the same
+    measurement without the stopwatch in it.
+  */
+  let covered = 0;
+  let tallest = rest;
+  const until = performance.now() + 420;
+  await new Promise((done) => {
+    const tick = () => {
+      const box = pane.getBoundingClientRect();
+      tallest = Math.max(tallest, box.height);
+      covered = Math.max(covered, (box.top - from) / distance);
+      if (performance.now() < until) requestAnimationFrame(tick);
+      else done();
+    };
+    requestAnimationFrame(tick);
+  });
+  return { covered: Math.round(covered * 100), rest, tallest: Math.round(tallest) };
+});
+check("the marker leaves on the press, not on the page",
+  aimed.covered > 90 && page.url() === was,
+  `${aimed.covered}% of the way there before the page was asked for anything, ` +
+  `still on ${page.url().replace(BASE, "")}`);
+check("and it stretches across the ground it covers",
+  aimed.tallest > aimed.rest * 1.2,
+  `${aimed.tallest}px at its longest against a ${aimed.rest}px row, ` +
+  `which is ${(aimed.tallest / aimed.rest).toFixed(2)}x`);
+
+/*
+  ONE NAVIGATION IS ONE JOURNEY.
+
+  A press bets the marker on the cell before the page answers, and calling
+  that bet off puts the marker back on whatever is still marked, which during
+  a navigation is the row you are LEAVING. So any pointer event landing off
+  the cell while the new page renders used to send the pill all the way home
+  and all the way back: measured on this rail at three travels for one tap,
+  127 to 817, 817 to 127, then 127 to 817 again. On a phone the browser taking
+  the gesture for a scroll does it on an ordinary tap.
+*/
+await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await page.evaluate(() => {
+  const pane = document.querySelector('nav[aria-label="Main"] .nav-marker');
+  window.__travels = [];
+  const real = pane.animate.bind(pane);
+  pane.animate = (frames, opts) => {
+    window.__travels.push(String(frames[frames.length - 1]?.transform ?? ""));
+    return real(frames, opts);
+  };
+});
+await page.locator('nav[aria-label="Main"] a[href="/settings"]').click();
+await page.waitForTimeout(60);
+await page.evaluate(() =>
+  document.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerType: "touch" })),
+);
+await page.waitForURL("**/settings", { timeout: 15000 }).catch(() => {});
+await page.waitForTimeout(900);
+const travels = await page.evaluate(() => window.__travels ?? []);
+check("a navigation is one journey, not three", travels.length === 1,
+  `${travels.length} travels: ${travels.join(" then ")}`);
+
+const abandoned = await page.evaluate(async () => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")].find((c) => c.getAttribute("href") === "/");
+  const at = () => Math.round(pane.getBoundingClientRect().top);
+  const home = at();
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "touch" }));
+  await new Promise((r) => setTimeout(r, 400));
+  const aimed = at();
+  document.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerType: "touch" }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return { home, aimed, back: at(), running: pane.getAnimations().length };
+});
+check("an abandoned press arrives home rather than travelling back",
+  abandoned.aimed !== abandoned.home && abandoned.back === abandoned.home && abandoned.running === 0,
+  `aimed at ${abandoned.aimed}, back at ${abandoned.back} against ${abandoned.home}, ` +
+  `${abandoned.running} animations`);
+
+const still = await browser.newContext({ viewport: { width: 1280, height: 1000 }, reducedMotion: "reduce" });
+const calm = await still.newPage();
+await calm.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await calm.waitForTimeout(400);
+const arrived = await calm.evaluate(async () => {
+  const nav = document.querySelector('nav[aria-label="Main"]');
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")]
+    .find((c) => c.getAttribute("href") === "/settings");
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return {
+    onto: Math.round(pane.getBoundingClientRect().top - to.getBoundingClientRect().top),
+    running: pane.getAnimations().length,
+  };
+});
+check("under reduced motion it arrives rather than travels",
+  arrived.running === 0 && Math.abs(arrived.onto) <= 1,
+  `${arrived.running} animations, out by ${arrived.onto}px`);
+
+const flat = await browser.newContext({ viewport: { width: 1280, height: 1000 }, javaScriptEnabled: false });
+const unscripted = await flat.newPage();
+await unscripted.goto(`${BASE}/grammar`, { waitUntil: "domcontentloaded" });
+const fallback = await unscripted.evaluate(() => {
+  const cell = document.querySelector('nav[aria-label="Main"] [data-nav-on]');
+  if (!cell) return null;
+  const seen = getComputedStyle(cell);
+  return { background: seen.backgroundColor, shadow: seen.boxShadow };
+});
+check("the row you are on is marked before any of that has run",
+  fallback !== null && !/rgba\(0, 0, 0, 0\)|transparent/.test(fallback.background),
+  fallback ? fallback.background : "no row marked");
+
+/*
+  A SURFACE NOBODY IS LOOKING AT MUST NOT MEASURE ITSELF.
+
+  Both are always mounted, and at every width one of the two is
+  `display: none`. An element with no layout box reports its offsets as zero,
+  so a hidden surface that measures itself writes a collapsed marker at the
+  far edge down as its last known place, and the first travel after the
+  breakpoint is crossed sweeps the whole width from there. Measured before the
+  gate: `x 0 scaleX 0.01 -> x 288`.
+*/
+await page.setViewportSize({ width: 1280, height: 1000 });
+await page.goto(`${BASE}/grammar`, { waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+await page.evaluate(() => {
+  const hidden = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display === "none");
+  window.__crossed = [];
+  const pane = hidden?.querySelector(".nav-marker");
+  if (!pane) return;
+  const real = pane.animate.bind(pane);
+  pane.animate = (frames, opts) => {
+    window.__crossed.push(String(frames[0]?.transform ?? ""));
+    return real(frames, opts);
+  };
+});
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(700);
+const crossing = await page.evaluate(() => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  const pane = nav.querySelector(".nav-marker");
+  const cell = nav.querySelector("[data-nav-on]");
+  const p = pane.getBoundingClientRect();
+  const c = cell.getBoundingClientRect();
+  return {
+    travels: window.__crossed ?? [],
+    off: Math.max(Math.abs(p.left - c.left), Math.abs(p.width - c.width)),
+  };
+});
+check("a surface coming back arrives rather than sweeping the width",
+  crossing.travels.length === 0 && crossing.off <= 1,
+  `${crossing.travels.length} travels: ${crossing.travels.join(", ")}; out by ${crossing.off.toFixed(1)}px`);
+await page.setViewportSize({ width: 1280, height: 1000 });
+
+const barMark = await mobile.evaluate(() => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  const pane = nav?.querySelector(".nav-marker");
+  const cell = nav?.querySelector("[data-nav-on]");
+  if (!pane || !cell) return null;
+  const p = pane.getBoundingClientRect();
+  const c = cell.getBoundingClientRect();
+  return Math.max(Math.abs(p.left - c.left), Math.abs(p.width - c.width));
+});
+check("the phone bar marks the cell you are on too", barMark !== null && barMark <= 1,
+  barMark === null ? "no marker" : `out by ${barMark.toFixed(1)}px`);
 
 console.log(`\nScreenshots in ${SHOTS}`);
 console.log(errors.length ? `\nConsole errors:\n${errors.join("\n")}` : "\nNo console errors.");
