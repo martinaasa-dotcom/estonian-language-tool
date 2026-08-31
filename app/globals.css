@@ -490,8 +490,7 @@
     button:not(.inline-edit),
     [role="button"]:not(.inline-edit),
     a[role="button"],
-    summary,
-    .touch-target {
+    summary {
       min-height: 2.75rem;
       min-width: 2.75rem;
     }
@@ -1266,9 +1265,6 @@
   /* The rail, the phone bar, and anything a page marks as screen-only. */
   nav[aria-label="Main"], .no-print { display: none !important; }
   .wash { display: none !important; }
-
-  /* Ink, not toner: the pastel tiles turn into thin rules on paper. */
-  .print-plain { background: #fff !important; box-shadow: none !important; }
 
   .page-break { break-before: page; }
   .avoid-break { break-inside: avoid; }

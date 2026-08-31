@@ -157,6 +157,8 @@ async function callForJson(
   let text = "";
 
   if (config.name === "anthropic") {
+    // config always comes from resolveProvider()/resolveProviders(), which
+    // only ever offers "anthropic" when this key was set.
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -189,6 +191,7 @@ async function callForJson(
     }
   } else {
     const isOpenRouter = config.name === "openrouter";
+    // Same invariant as the anthropic branch above.
     const key = isOpenRouter ? process.env.OPENROUTER_API_KEY! : process.env.OPENAI_API_KEY!;
     const url = isOpenRouter
       ? "https://openrouter.ai/api/v1/chat/completions"

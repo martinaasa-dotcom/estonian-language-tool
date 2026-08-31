@@ -563,6 +563,8 @@ async function callOpenAiCompatible(
   patient = true,
 ) {
   const { url, keyEnv, usageFrames } = openAiCompatible(config);
+  // Safe only because every config reaching here came from resolveProviders(),
+  // which pushes a provider onto the chain exactly when this key was set.
   const key = process.env[keyEnv]!;
 
   const res = await withRetry(() => fetch(url, {
@@ -783,6 +785,8 @@ async function readImageOpenAiCompatible(
   // Same table as the chat path, so a provider cannot be reachable for one and
   // silently pointed at OpenAI for the other.
   const { url, keyEnv } = openAiCompatible(config);
+  // Same invariant as callOpenAiCompatible above: the chain only ever offers
+  // a config whose key env var was set.
   const key = process.env[keyEnv]!;
   const isOpenRouter = config.name === "openrouter";
 
