@@ -21,3 +21,6 @@ prisma/data/.cache/
 
 # Local before/after screenshots taken while working on a change.
 .shots/
+
+# The hosted-mode build scripts/test-signin.mjs makes for itself.
+.next-signin/

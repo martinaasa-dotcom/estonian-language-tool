@@ -10,6 +10,26 @@ import { STATIC_SECURITY_HEADERS } from "./lib/security/headers";
  */
 const config: NextConfig = {
   /*
+    WHERE THE BUILD GOES, WHICH IS ONLY EVER A QUESTION FOR ONE SUITE.
+
+    Whether this app gates every route or runs as one local learner is decided
+    by `supabaseConfigured()`, and `NEXT_PUBLIC_` variables are inlined when
+    the bundle is built rather than read when it starts. So the mode is a
+    property of the build: a server started with the keys cleared still gates
+    every route if the build had them, which was measured rather than assumed.
+
+    Every browser suite runs against a local-mode build, which is why the
+    hosted sign-in screen, the first thing any stranger meets, had never been
+    rendered by anything. `scripts/test-signin.mjs` builds its own in hosted
+    mode, and it needs somewhere to put it that is not the build the other
+    suites are running against.
+
+    Defaults to `.next`, so nothing else in the repository or on a deployment
+    sees any of this.
+  */
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+
+  /*
     LINT IS PART OF THE BUILD, NOT ONLY PART OF CI.
 
     This was `ignoreDuringBuilds: true`, and the `lint` job in CI was the only
