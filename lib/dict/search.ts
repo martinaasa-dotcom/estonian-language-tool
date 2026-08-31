@@ -36,6 +36,8 @@ const CASE_SUFFIXES = CASES
 export interface Candidate {
   id: string; lemma: string; translation: string; pos: string;
   cefr: string | null; gradationNote: string | null;
+  /** SEED | EKILEX | AI | USER, as `prisma/schema.prisma` defines it. */
+  provenance: string;
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
 }
 
@@ -169,6 +171,16 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
           AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
               IN (${Prisma.join(stems.length ? stems : [""])})
     ) AS candidates
+    -- Ordered because it is truncated. Which 600 of a broad match you got was
+    -- otherwise decided by the plan, so one query could answer differently
+    -- after a reindex, and the ranker can only rank what it was handed.
+    -- Arbitrary-but-stable beats arbitrary: a search is a function of the
+    -- dictionary now, which is what makes a wrong result reproducible.
+    -- Measured on the full dictionary, both ways, since the split-branch union
+    -- above was won on exactly this ground: an ordinary word is 3ms either way,
+    -- and a single letter, which is the only query that reaches 600, is 49ms
+    -- against 50ms. The sort is off the end of a set the LIMIT already caps.
+    ORDER BY id
     LIMIT 600
   `;
 
@@ -178,12 +190,130 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
     where: { id: { in: rows.map((r) => r.id) } },
     select: {
       id: true, lemma: true, translation: true, pos: true,
-      cefr: true, gradationNote: true,
+      cefr: true, gradationNote: true, provenance: true,
       forms: { select: { formType: true, value: true, morphCode: true, morphName: true } },
     },
   });
 
   return rankCandidates(candidates, q, limit);
+}
+
+/**
+ * Which of two entries for the *same word* the app should lead with.
+ *
+ * More than one row can hold one lemma, and that is on purpose: `@@unique` is
+ * on `(lemma, pos)`, so `hall` is grey and also frost. What was not on purpose
+ * is that nothing chose between them. The scores are equal, the old tiebreak
+ * compared `lemma` against `lemma` and got 0, neither query behind the search
+ * carries an `ORDER BY`, and the entry page renders `hits[0]` and nothing else.
+ * The winner was whatever order Postgres returned, which is stable enough to
+ * look decided and arbitrary enough to change under a reindex or a restore.
+ *
+ * Two things went wrong with that. A fresh seed shipped thirteen lemmas holding
+ * two rows each, the A1 and A2 adjectives of open question Q8 where the course
+ * harvest said ADJECTIVE and the built expansion said NOUN; Q8 has since been
+ * answered and the builder reads the part of speech off the sense the gloss
+ * came from, which takes that to **two**, `hall` and `rõõmus`. And a learner
+ * who confirms a scanned word the dictionary already knows gets a second,
+ * formless row that could shadow the real one, so the paradigm disappeared
+ * from the entry page for a word the app knows perfectly well. That second one
+ * is the case this function cannot be relieved of: any learner can make one in
+ * a minute, for any word, and no upstream correction reaches it.
+ *
+ * So: an entry there is something to teach from wins. A known part of speech
+ * beats OTHER, which is what an unvouched scanned word is filed as. Then a
+ * hand-written entry beats a built one. Then more stored principal parts beats
+ * fewer. `id` last makes the order *total*, which is the property that actually
+ * matters — a comparator that can return 0 for two different rows leaves the
+ * answer to the array it was handed.
+ *
+ * WRITTEN BY HAND BEFORE COUNTED, AND THE ORDER OF THOSE TWO IS THE POINT.
+ *
+ * Ranking on the number of stored forms alone got this backwards on the pairs
+ * it was written for. Measured when there were thirteen of them: `vana` had a
+ * hand-checked A1 adjective from the course with five principal parts, and a
+ * noun from the built expansion with six, glossed "an old person; guy, dude,
+ * chap". So a learner searching the commonest adjective in the language was
+ * handed the noun, every time and by rule, which is worse than the arbitrary
+ * answer it replaced. The part-of-speech fix has since made `vana` one entry;
+ * `hall` is the same shape and still two, the course teaching grey and the
+ * expansion holding frost, and a confirmed scan is the same shape again with
+ * no forms at all.
+ *
+ * `prisma/expanded.ts` already states the precedence this restores: the
+ * expansion loads with `ON CONFLICT DO NOTHING` and never an update, "so a
+ * hand-written entry, a learner's correction and a live Ekilex fetch all win
+ * over it". That was a rule about writes and it is just as true about reads.
+ * SEED and USER are the rows a person wrote; EKILEX is the built expansion, which is
+ * every row it wrote and is where a wrong part of speech comes from in the
+ * first place.
+ *
+ * It sits *after* the OTHER test on purpose. An unvouched word confirmed off a
+ * photograph is USER and is filed as OTHER, so putting provenance first would
+ * hand a formless stub the entry page again, which is the bug this function
+ * exists for.
+ */
+const HAND_WRITTEN = new Set(["SEED", "USER"]);
+
+/** The least a row has to carry for the rule above to have an opinion about it. */
+export interface Substantial {
+  id: string;
+  pos: string;
+  provenance: string;
+  forms: readonly unknown[];
+}
+
+export function bySubstance(a: Substantial, b: Substantial): number {
+  return Number(b.pos !== "OTHER") - Number(a.pos !== "OTHER")
+    || Number(HAND_WRITTEN.has(b.provenance)) - Number(HAND_WRITTEN.has(a.provenance))
+    || b.forms.length - a.forms.length
+    || a.id.localeCompare(b.id);
+}
+
+/**
+ * One entry per lemma, in the order the caller asked for them.
+ *
+ * `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one row, and a
+ * unit of the syllabus names *lemmas*. Five screens looked their unit's words
+ * up with `where: { lemma: { in: [...unit.lemmas] } }` and rendered whatever
+ * came back, so a lemma with two entries appeared twice on every one of them.
+ * Not theoretical: with a scanned `tuba` confirmed into the dictionary beside
+ * the Ekilex one, `/learn/kodu` listed the word twice and its printable
+ * worksheet printed it six times, once per section. The unit page also counted
+ * it twice, so a unit reported more words than it teaches; the lesson planner
+ * split a duplicate into its own sitting; and React was warning about two
+ * children with the same key, which it says may duplicate or omit a row.
+ *
+ * The adjective/noun pairs of open question Q8 are the same shape and ship with
+ * a fresh seed. There were thirteen when this was written and the answer to Q8
+ * took it to two, which lowers how often this fires and not whether it has to:
+ * a word confirmed off a photograph makes a pair for any lemma at all.
+ *
+ * Which of the two wins is not a new decision: it is `bySubstance`, the rule
+ * the dictionary already uses to choose what a search leads with. A course
+ * screen and the search box disagreeing about which `vana` is the real one
+ * would be worse than either answer.
+ *
+ * The order is the caller's, because a unit's word list is taught in the order
+ * it was written and the sort that used to do this (`order.get(a.lemma) -
+ * order.get(b.lemma)`) returned 0 for exactly the two rows that are the
+ * problem.
+ */
+export function oneEntryPerLemma<T extends Substantial & { lemma: string }>(
+  rows: readonly T[],
+  wanted: readonly string[],
+): T[] {
+  const best = new Map<string, T>();
+  for (const row of rows) {
+    const held = best.get(row.lemma);
+    if (!held || bySubstance(row, held) < 0) best.set(row.lemma, row);
+  }
+  // `wanted` deduplicated too, so the function honours its own name whatever it
+  // is handed. No unit of the syllabus repeats a lemma today, and a helper that
+  // is only correct while its callers are is not the helper this exists to be.
+  return [...new Set(wanted)]
+    .map((lemma) => best.get(lemma))
+    .filter((row): row is T => row !== undefined);
 }
 
 /**
@@ -199,7 +329,13 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
   const scored = candidates
     .map((c) => ({ hit: c, ...rank(c, q, folded) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.hit.lemma.localeCompare(b.hit.lemma, "et"));
+    // Lemma before substance, so a prefix search stays alphabetical across
+    // *different* words and only falls through to `bySubstance` for two rows
+    // that are the same word.
+    .sort((a, b) =>
+      b.score - a.score
+      || a.hit.lemma.localeCompare(b.hit.lemma, "et")
+      || bySubstance(a.hit, b.hit));
 
   return scored.slice(0, limit).map(({ hit, matchedAs }) => ({
     id: hit.id,
@@ -315,7 +451,19 @@ export function matchEstonianForm(candidates: Candidate[], word: string): FormMa
     // The English tier: right for a search box, wrong here.
     if (scored.score === 95 && candidate.translation.toLowerCase() === lower) continue;
     if (scored.score < VOUCHED_SCORE) continue;
-    if (!best || scored.score > best.score) best = { hit: candidate, ...scored };
+    /*
+      `>` alone kept whichever of two equal candidates the array happened to
+      hold first, which is the same fault `bySubstance` exists for and worse
+      here than in a search box: this is the check that stands between a
+      photograph and a flashcard, so an arbitrary winner means the word a
+      learner ticks off their own homework brings back an arbitrary paradigm.
+      A tie now goes to the entry with something in it.
+    */
+    if (!best
+      || scored.score > best.score
+      || (scored.score === best.score && bySubstance(candidate, best.hit) < 0)) {
+      best = { hit: candidate, ...scored };
+    }
   }
   if (!best) return null;
 

@@ -92,6 +92,19 @@ export function rng(seed: number): () => number {
   };
 }
 
+/**
+ * The one shuffle not folded into `lib/random/shuffle.ts`, on purpose.
+ *
+ * The client never sends a mark, only a level, a seed and its answers, so the
+ * server rebuilds the paper from that seed to mark it (ADR-022). A paper is a
+ * long sitting: change how this draws and a candidate who started before a
+ * deploy and handed in after it has their answers marked against a different
+ * paper from the one they sat. That is the worst mark this app could produce,
+ * on the feature where a wrong one matters most.
+ *
+ * So it stays where it is and keeps its own algorithm, and the invariant that
+ * bans a hand-rolled shuffle names this function as its single exception.
+ */
 function shuffle<T>(items: readonly T[], random: () => number): T[] {
   return items
     .map((item) => ({ item, k: random() }))

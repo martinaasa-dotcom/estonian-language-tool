@@ -9,6 +9,7 @@ import { parseExamples } from "@/lib/dict/examples";
 import { Empty, Note } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { PrintButton } from "@/components/PrintButton";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const dynamic = "force-dynamic";
 
@@ -54,19 +55,22 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
   // dictionary, not published.
   await requireUserId();
 
-  const lexemes = await prisma.lexeme.findMany({
+  const rows = await prisma.lexeme.findMany({
     where: { lemma: { in: [...unit.lemmas] } },
     select: {
+      id: true,
       lemma: true,
       translation: true,
       pos: true,
+      provenance: true,
       examples: true,
       forms: { select: { formType: true, value: true } },
     },
   });
 
-  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
-  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
+  // One row per lemma, in the unit's own order. This printed `tuba` six times,
+  // once per section, wherever the dictionary held two entries for a word.
+  const lexemes = oneEntryPerLemma(rows, unit.lemmas);
 
   const words: WorksheetWord[] = lexemes.map((l) => ({
     lemma: l.lemma,

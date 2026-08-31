@@ -44,17 +44,52 @@ export async function applyGradeBatch(
   const now = Date.now();
   const settled: string[] = [];
 
+  /*
+    ONE QUESTION ASKED ONCE, NOT FIFTY TIMES.
+
+    "Have I seen this grade before" was a `findUnique` per item. It is the one
+    query in this loop that does not depend on what the previous grade did:
+    a `Review` id is generated on the client and the only rows this loop
+    creates are its own, so the answer for the whole batch can be read up
+    front. Measured against a real database, and a *local* one where a round
+    trip is a tenth of a millisecond: fifty grades took 420ms, and the check
+    is a quarter of the queries. A deployment reaches its database over a
+    pooler, where that quarter costs a great deal more, and this runs on
+    reconnect when a learner is waiting to see their streak.
+
+    The read-modify-write below stays per item, because that one *is* what the
+    previous grade left behind.
+
+    Deduplicated by id first, which was free before and is not now: a batch
+    that repeats an id used to work by accident, since the second copy found
+    the row the first had just written. Against a set read before the loop it
+    would try to insert twice and fail the whole batch. `orderForReplay` sorts
+    by time then id, so the copy kept is the earliest.
+  */
+  const ordered = orderForReplay(batch.filter(isValidPending));
+  const wanted: typeof ordered = [];
+  const seenIds = new Set<string>();
+  for (const item of ordered) {
+    if (seenIds.has(item.id)) continue;
+    seenIds.add(item.id);
+    wanted.push(item);
+  }
+
+  const alreadyHere = new Map(
+    (await prisma.review.findMany({
+      where: { id: { in: wanted.map((i) => i.id) } },
+      select: { id: true, ownerId: true },
+    })).map((r) => [r.id, r.ownerId]),
+  );
+
   // Sequential on purpose. Each grade reads the state the previous one left
   // behind, which is exactly what makes a replay equal to having been online.
-  for (const item of orderForReplay(batch.filter(isValidPending))) {
-    const existing = await prisma.review.findUnique({
-      where: { id: item.id },
-      select: { ownerId: true },
-    });
-    if (existing) {
+  for (const item of wanted) {
+    const existingOwner = alreadyHere.get(item.id);
+    if (existingOwner !== undefined) {
       // Settle it only if it is genuinely this user's, so a guessed id cannot be
       // used to probe whether someone else's review exists.
-      if (existing.ownerId === ownerId) settled.push(item.id);
+      if (existingOwner === ownerId) settled.push(item.id);
       continue;
     }
 

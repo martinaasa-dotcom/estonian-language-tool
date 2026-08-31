@@ -6,6 +6,7 @@ import { parseItems } from "@/lib/scan/items";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Review" };
 
@@ -193,7 +194,18 @@ function wantsChoices(card: ReviewCard): boolean {
 async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
   if (!cards.some(wantsChoices)) return cards;
 
-  const pool = await prisma.lexeme.findMany({ select: { translation: true }, take: 2000 });
+  /*
+    Two thousand words of a dictionary of about six thousand, so the cap binds
+    every time and which third was read decided what could ever be a decoy.
+    Easiest first, for the same reason the minimal-pairs pool is: a wrong
+    answer a learner has never met is a free question, and one at their own
+    level makes them read the Estonian.
+  */
+  const pool = await prisma.lexeme.findMany({
+    select: { translation: true },
+    orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
+    take: 2000,
+  });
   const translations = [...new Set(pool.map((l) => l.translation))];
   if (translations.length < CHOICES) return cards;
 
@@ -204,11 +216,3 @@ async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
   });
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}

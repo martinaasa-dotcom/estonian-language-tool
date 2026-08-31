@@ -74,7 +74,18 @@ const read = (file: string) => readFileSync(file, "utf8");
  * compliance with it.
  */
 const code = (file: string) =>
-  read(file).replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+  read(file)
+    /*
+      A comment is replaced by the newlines it spanned, not by a space. Several
+      checks report `file:line` from this, and collapsing a forty-line header
+      into one space put every one of those numbers well above the line it was
+      naming, which sends a reader to the wrong part of the file to look for a
+      fault they were told the name of. A single-line block comment still
+      becomes a space, since it has no newline to stand in and two tokens must
+      not be joined.
+    */
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => "\n".repeat(m.split("\n").length - 1) || " ")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 
 /**
  * One exported function's body, from its signature to the next export.
@@ -729,6 +740,298 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
+check("adding a word to a deck reads and writes under one lock", () => {
+  /*
+    "Is it already there" is check-then-act. `addCardsFor` read the learner's
+    existing cards for a word, filtered the generated ones against them, and
+    inserted the rest; two requests inside that gap both see an empty deck and
+    both insert. Measured against a real database rather than reasoned about:
+    two concurrent adds gave two cards, four gave four, and eight gave fourteen
+    where two is right. A learner meets it by double-tapping "Add to deck", and
+    `addUnitToDeck` walks this once per word with no throttle in front of it.
+
+    The lock is `lib/usage/ledger.ts`'s, for the reasons its header gives: the
+    *transaction* form, so a connection pooler cannot strand it, and the
+    blocking one, since the non-blocking form serialises nothing. With it, 16
+    concurrent adds make 2 cards in 28ms.
+
+    Asserted as the three things together, because each on its own is satisfied
+    by a version that still races: a transaction with no lock, a lock taken
+    outside the transaction, or a lock with the read left outside it.
+  */
+  const src = code("app/actions.ts");
+  const body = /async function addCardsFor\(([\s\S]*?)\n\}/.exec(src)?.[1] ?? "";
+  assert.ok(body, "addCardsFor has gone, or changed shape past recognition");
+
+  assert.match(body, /prisma\.\$transaction\(/, "addCardsFor no longer runs in one transaction");
+  assert.match(
+    body, /pg_advisory_xact_lock/,
+    "addCardsFor stopped taking the transaction advisory lock, so two tabs can both insert",
+  );
+  const lockAt = body.indexOf("pg_advisory_xact_lock");
+  const readAt = body.indexOf("card.findMany");
+  const writeAt = body.indexOf("card.createMany");
+  assert.ok(readAt >= 0 && writeAt >= 0, "addCardsFor no longer reads what it has before writing");
+  assert.ok(
+    lockAt < readAt && readAt < writeAt,
+    "addCardsFor takes its lock after the read it is meant to protect, which serialises nothing",
+  );
+});
+
+check("a screen built from a list of lemmas shows one entry per lemma", () => {
+  /*
+    `@@unique` is on `(lemma, pos)`, so a lemma can hold more than one row, and
+    the syllabus names lemmas. Every screen built from a unit's word list asked
+    `where: { lemma: { in: [...unit.lemmas] } }` and rendered whatever came
+    back, so a lemma with two entries appeared twice on all of them. Measured
+    with a scanned `tuba` confirmed beside the Ekilex one: `/learn/kodu` listed
+    the word twice, its printable worksheet printed it six times, the unit
+    counted more words than it teaches, the lesson planner split the duplicate
+    into the sitting, `addUnitToDeck` built two sets of cards for one word (one
+    of them unanswerable, the stub having no forms), and React warned about two
+    children with the same key, which it says may duplicate or omit a row. The
+    landing page demonstrates `tuba` and would have shown an empty paradigm.
+
+    The adjective/noun pairs of open question Q8 are the same shape and ship
+    with a fresh seed. There were thirteen when this was written and the answer
+    to Q8 took it to two, which changes how often this fires and not whether it
+    has to: a word confirmed off a photograph makes a pair for any lemma at
+    all, and no upstream correction reaches that.
+
+    A `Set` of lemmas is fine and two places legitimately build one: asking
+    which of a unit's words the dictionary has at all cannot double-count.
+    What may not happen is rows reaching a render or a write.
+  */
+  for (const file of ALL) {
+    // A test builds its own fixture and may want both rows on purpose.
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    let at = src.indexOf("lemma: { in:");
+    while (at !== -1) {
+      // The statement this query is part of, which is where the answer to
+      // "and then what" has to be.
+      const from = src.lastIndexOf("prisma.", at);
+      /*
+        Back to the start of the statement, not just to the `prisma.` call: two
+        of these read `oneEntryPerLemma(await prisma.lexeme.findMany({...}))`,
+        so the answer sits to the *left* of the query rather than under it.
+      */
+      const statement = Math.max(0, src.lastIndexOf("\n\n", from), from - 400);
+      const window = src.slice(statement, at + 900);
+      /*
+        Only a query for the *words*. `/review?unit=` filters the learner's own
+        cards by their lexeme's lemma, and one row per card is right there:
+        those cards exist and are due. What creates them is `addUnitToDeck`,
+        which is a lexeme query and is checked.
+      */
+      if (!src.slice(from, at).includes("prisma.lexeme.")) {
+        at = src.indexOf("lemma: { in:", at + 1);
+        continue;
+      }
+      /*
+        Three answers, not two. `oneEntryPerLemma` picks the row the app leads
+        with; a `Set` counts lemmas and cannot double-count; and keying the rows
+        by lemma *and* part of speech addresses one specific row per pair, which
+        is the unique key itself and so the strongest of the three. The importer
+        does the last: it looks a paste up by lemma because that is the indexed
+        column, then reads `${lemma}|${pos}` out of the result, and asking it to
+        pick "the" entry for a lemma would be wrong, since a row it wants may be
+        the one that loses. This check fired on it, which is a check firing on
+        honest code, which is how a check becomes one everybody waives.
+      */
+      const keyedOnBoth = /\.lemma\b[\s\S]{0,40}\.pos\b|\.pos\b[\s\S]{0,40}\.lemma\b/.test(window);
+      assert.ok(
+        /oneEntryPerLemma/.test(window) || /new Set\(/.test(window) || keyedOnBoth,
+        `${file}: looks a list of lemmas up and uses every row. A lemma can hold two `
+        + `entries, so pass the result through oneEntryPerLemma() (lib/dict/search.ts), `
+        + `which applies the same rule the dictionary leads with. Counting distinct `
+        + `lemmas into a Set, or keying the rows on lemma and pos together, are the `
+        + `other two honest answers.`,
+      );
+      at = src.indexOf("lemma: { in:", at + 1);
+    }
+  }
+});
+
+check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
+  /*
+    There were ten, in three implementations. Four in `app/` were Fisher-Yates
+    character for character, four in `lib/` were the same again with an rng
+    passed in, and two places used a comparator instead:
+
+        [...cards].sort(() => Math.random() - 0.5)
+
+    A comparator is asked about a pair and expected to answer the same way each
+    time. One that answers at random leaves the sort finishing early over runs
+    it believes are ordered, so an element stays near where it started.
+    Measured over 200,000 rounds at the sizes the app uses: in the 40-card
+    sprint the first card led 7.0% of rounds against a uniform 2.5%; in the
+    20-card listening round, 11.7% against 5.0%. Those pools arrive
+    `orderBy: { due: "asc" }`, so that is the most overdue card leading about
+    three times as often as chance while the tail went under-practised.
+
+    Both halves are asserted, because fixing the two wrong copies and leaving
+    eight right ones is how a ninth gets written. `lib/exam/paper.ts` is the one
+    exception and says why in its own header: the server rebuilds a paper from
+    its seed to mark it, so changing how that one draws would mis-mark a paper
+    somebody started before a deploy.
+  */
+  const SHUFFLE_HOME = "lib/random/shuffle.ts";
+  const EXCEPTION = "lib/exam/paper.ts";
+
+  assert.ok(existsSync(SHUFFLE_HOME), "the one shuffle has gone from lib/random/shuffle.ts");
+
+  for (const file of ALL) {
+    if (file === SHUFFLE_HOME || file === EXCEPTION) continue;
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+    assert.ok(
+      !/\.sort\(\s*\(\s*\)\s*=>/.test(src),
+      `${file}: sorting with a comparator that ignores its arguments is not a shuffle. `
+      + `It leaves elements near where they started. Use shuffle() from ${SHUFFLE_HOME}.`,
+    );
+    assert.ok(
+      !/function shuffled?\s*</.test(src),
+      `${file}: a hand-rolled shuffle. There is one in ${SHUFFLE_HOME} and it takes the `
+      + `generator as a parameter, so a seeded caller passes its own.`,
+    );
+    /*
+      And the third implementation, which was inline six times and has no
+      function to name: decorate each item with a random key, sort on it,
+      undecorate. Sorting on independent random keys is a fair shuffle, unlike
+      the comparator above, so this is about there being one of these rather
+      than about correctness. The tell is the decorate step, a property whose
+      value is a draw *and nothing else*: `left: Math.random() * 100` is a
+      confetti piece's position and was the first thing this caught.
+    */
+    assert.ok(
+      !/[{,]\s*\w+:\s*(Math\.)?random\(\)\s*[,}]/.test(src),
+      `${file}: an inline shuffle, keyed on a random draw and sorted. Use shuffle() from `
+      + `${SHUFFLE_HOME}. Two of these were weighted ("the deck's own words first"), and `
+      + `that reads better as two shuffles concatenated than as a key trick whose two `
+      + `ranges happen not to overlap.`,
+    );
+  }
+
+  // And the exception carries its reason, so nobody reads it as an oversight.
+  assert.match(
+    read(EXCEPTION),
+    /rebuilds the paper from that seed to mark it/,
+    `${EXCEPTION} keeps its own shuffle and its header stopped saying why`,
+  );
+});
+
+check("a `take` beside a `distinct` bounds nothing, so it is scoped to one owner", () => {
+  /*
+    Prisma applies `distinct` in the client. A `LIMIT` would cut rows before the
+    deduplication, so it emits none: `findMany({ distinct, take })` reads every
+    matching row, adds an id column of its own to deduplicate with, sorts, and
+    throws the surplus away in JavaScript. The `take` reads exactly like a bound
+    and is not in the query at all.
+
+    Measured, not inferred. `countGroups` in the suggestion queue carried a
+    comment saying a `groupBy` "would read every matching group to count them,
+    which at the volume this queue is built for is the one query that would stop
+    being cheap", and its replacement emitted
+    `SELECT id, groupKey FROM Suggestion WHERE status = $1 ORDER BY id` for a
+    single number. It read every row where the query it replaced read one per
+    group, on the one table open sign-up lets strangers grow.
+
+    So the rule is not "never pair them", because a query for one learner's own
+    cards is bounded by the size of their deck whatever the `take` says, and two
+    of those are honest. It is that the pairing may only ever be owner-scoped:
+    an unscoped one reads the whole table however small the number beside it
+    looks. Anything deployment-wide counts in Postgres.
+  */
+  for (const file of ALL) {
+    // Comments out, or this fires on the paragraph in `practice/page.tsx` that
+    // describes the query it stopped making. Which it did, once.
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    let at = src.indexOf("distinct: [");
+    while (at !== -1) {
+      // The enclosing call: back to the `prisma.` that opened it, forward to
+      // the end of that argument object.
+      const opened = src.lastIndexOf("prisma.", at);
+      const call = src.slice(opened, src.indexOf("})", at) + 2);
+      assert.ok(
+        /ownerId/.test(call),
+        `${file}: a Prisma \`distinct\` with no ownerId in its where. That reads the whole `
+        + `table however small the \`take\` beside it looks, because Prisma emits no LIMIT `
+        + `next to a distinct. Count it in Postgres instead.`,
+      );
+      at = src.indexOf("distinct: [", at + 1);
+    }
+  }
+});
+
+check("which of two entries for one word wins is decided, not left to the rows", () => {
+  /*
+    `@@unique` is on `(lemma, pos)`, so one lemma can hold more than one entry
+    and sometimes should: `hall` is grey and also frost. What may not happen is
+    the app having no rule about which of them it leads with, because the entry
+    page renders `hits[0]` and nothing else.
+
+    It had none. Both rows score 100, the tiebreak compared `lemma` against
+    `lemma` and returned 0, and neither query behind the search carried an
+    `ORDER BY`, so the winner came out of the plan. A fresh seed shipped thirteen
+    such pairs (open question Q8, since answered, which takes it to two), and a
+    learner confirming a scanned word the dictionary already knows makes another
+    with no forms in it, which took the whole paradigm off the entry page for a
+    word the app knows perfectly well. That second path is why this rule is not
+    retired by the part-of-speech fix.
+    Three browser suites failed on it in one run and passed in the next with
+    nothing changed.
+
+    Asserted on both comparators, because the search box and the gate in front
+    of a flashcard had the same fault in different words: one sorted, the other
+    kept whichever candidate the array listed first.
+  */
+  const search = read("lib/dict/search.ts");
+
+  assert.match(
+    search,
+    /function bySubstance\([\s\S]*?a\.id\.localeCompare\(b\.id\)/,
+    "the tiebreak stopped ending on id, so it can return 0 for two different rows",
+  );
+  /*
+    And the order of its first two tests, which is not a detail. Provenance has
+    to come second: a word confirmed off a photograph is filed as USER, which
+    counts as written by a person and has no forms in it, so ranking provenance
+    first hands a formless stub the entry page again. Ranking forms before
+    provenance is the other way to get it wrong, and did: `vana` the built noun
+    has six principal parts and the hand-checked course adjective has five.
+  */
+  const body = /function bySubstance\(([\s\S]*?)\n\}/.exec(search)?.[1] ?? "";
+  const posAt = body.indexOf('pos !== "OTHER"');
+  const provAt = body.indexOf("HAND_WRITTEN.has");
+  const formsAt = body.indexOf("forms.length");
+  assert.ok(posAt >= 0 && provAt >= 0 && formsAt >= 0, "bySubstance lost one of its three tests");
+  assert.ok(
+    posAt < provAt && provAt < formsAt,
+    "bySubstance reordered: a known part of speech, then a hand-written source, then how much is stored",
+  );
+  assert.match(
+    search,
+    /\.sort\(\(a, b\) =>[\s\S]{0,200}?bySubstance\(a\.hit, b\.hit\)\)/,
+    "rankCandidates no longer breaks a tie between two entries for one word",
+  );
+  assert.match(
+    search,
+    /scored\.score === best\.score && bySubstance\(/,
+    "matchEstonianForm is back to keeping whichever equal candidate came first",
+  );
+  /*
+    And the candidate set itself is ordered, because it is truncated: which 600
+    of a broad match you get was otherwise the plan's choice, and the ranker can
+    only rank what it was handed.
+  */
+  assert.match(
+    search,
+    /ORDER BY id\s*\n\s*LIMIT 600/,
+    "the truncated candidate query lost its order, so it can return a different 600",
+  );
+});
+
 check("the photograph itself is never stored", () => {
   /*
     A picture of somebody's homework has their name at the top of it, and the
@@ -976,7 +1279,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "scan", "security", "stats", "time", "ux",
+    "random", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -1327,9 +1630,24 @@ check("every browser suite can be pointed at a different server", () => {
     is what a pass looks like to anything reading the output.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
-    assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
+    /*
+      A suite that starts its own server is the one case this cannot ask for.
+      `test-error.mjs` runs a build against a database that is not there, which
+      is the whole of what it checks, so pointing it at the working server would
+      leave it nothing to see. What the rule is really about still applies and
+      is still asserted below: no suite is pinned to a server on port 3000 that
+      it did not start.
+    */
+    const startsItsOwn = /spawn\(/.test(source) && /"next", "start"/.test(source);
+    if (!startsItsOwn) assert.match(source, /baseUrl\(\)/, `${file} does not read BASE_URL`);
     assert.equal(
       /"http:\/\/localhost:3000"/.test(source.replace(/baseUrl[\s\S]*?\n/, "")),
       false,
@@ -1345,7 +1663,13 @@ check("every browser suite says how many checks it reached", () => {
     looked at. Both happened here. The floor is the count CI reaches.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
     const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
     assert.ok(floor, `${file} does not declare a check floor`);
@@ -1390,7 +1714,13 @@ check("a check a state cannot reach is waived by number, never by a printed word
     to the tally, so the block reads as handled and the floor never notices.
   */
   for (const file of sourceFiles("scripts", /^test-.*\.mjs$|^e2e\.mjs$/)) {
-    const source = read(file);
+    /*
+      Comments out. A suite explaining in prose why it does not use `baseUrl()`
+      satisfied a check looking for that call, which is this repository's oldest
+      recurring mistake in its own checks and was committed here again while
+      writing the exemption below.
+    */
+    const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
     assert.equal(
       /console\.log\(\s*[`"'][^`"']*SKIP/.test(source),
@@ -2762,6 +3092,249 @@ check("every browser suite that exists is a browser suite CI runs", () => {
 });
 
 /**
+ * And the one suite whose *position* in that list is the whole of its value.
+ *
+ * `/start` redirects anyone carrying `onboardedAt` or a single card, which is
+ * right: a first-run wizard reappearing for an established learner is worse
+ * than no wizard. It also means the demo fixture closes that door. CI built
+ * the fixture before it started the server, so `test-assess.mjs` had never
+ * once reached the walkthrough — sixteen of its forty-two checks waived on
+ * every run there has ever been, honestly reported, under the half that fails
+ * a suite outright, and therefore silent. The screen a learner meets before
+ * any other was verified by nothing at all. All nineteen of those checks pass;
+ * they had simply never been asked.
+ *
+ * This is the `absent()` machinery's one blind spot and worth naming as its
+ * own rule: a waiver states a fact about the run, and a waiver that is true on
+ * every possible run is a hole wearing a waiver's clothes. The suite reaches
+ * 43 checks before the fixture and 26 after it.
+ *
+ * Asserted on the order of the two lines rather than on either alone, because
+ * both will still be present when somebody tidies them back together.
+ */
+check("first run is exercised, which means one suite runs before the fixture", () => {
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const suite = workflow.indexOf("node scripts/test-assess.mjs");
+  const fixture = workflow.indexOf("scripts/demo-data.ts");
+  const server = workflow.indexOf("Start the server");
+
+  assert.ok(suite > 0, "CI does not run scripts/test-assess.mjs at all");
+  assert.ok(fixture > 0, "CI does not build the demo fixture");
+  assert.ok(
+    suite < fixture,
+    "CI builds the demo deck before test-assess.mjs runs, so /start redirects and the " +
+    "first-run walkthrough is waived rather than checked. It has to run against an empty deck.",
+  );
+  assert.ok(
+    server < suite,
+    "test-assess.mjs is a browser suite and CI runs it before the server is up",
+  );
+
+  /*
+    And the suite still says what it needs, so the developer who takes the
+    other branch on their own seeded machine reads a precondition rather than
+    a number. `scripts/lib/prefs.mjs` makes the same argument about a stored
+    preference: a suite states its preconditions, it does not inherit them.
+  */
+  const assess = read(join("scripts", "test-assess.mjs"));
+  assert.match(
+    assess,
+    /absent\(\s*\d+[\s\S]{0,200}?demo fixture/,
+    "test-assess.mjs waives its first-run checks without saying which state would reach them",
+  );
+});
+
+/**
+ * And the other waiver that fired on every run, which was worse: it was not
+ * true.
+ *
+ * `test-containment.mjs` waived ten checks — five at each width — with the
+ * reason "the deck had nothing due", while the deck had forty cards due. A
+ * review card is asked as a flip, as multiple choice or as typing, decided per
+ * card, and the only thing that suite knew how to press was the flip. So the
+ * revealed layout, the one with the most in it (the answer, the note about why
+ * this card, and four rating buttons across a 360px phone) was never measured,
+ * and the line explaining why sent anybody reading it off to seed a database
+ * that was already seeded.
+ *
+ * `smoke-offline.mjs` had found this first and its own comment says it plainly:
+ * "a test that only knows about `Show answer` silently stops testing anything
+ * the day the default changes. It did." Four more suites had each worked it out
+ * separately, and `test-teaching.mjs` had two of the three shapes and got the
+ * third by accident, its `3` keypress landing on the third option rather than
+ * on a grade.
+ *
+ * So there is one definition, `scripts/lib/review.mjs`, and this asserts that a
+ * suite reaching for the flip knows there are others. Read comment-blind,
+ * because four checks in this repository's history have been satisfied by
+ * prose, one of them mine.
+ */
+check("a suite that reveals a review card knows all the shapes it comes in", () => {
+  const suites = readdirSync("scripts")
+    .filter((f) => f.endsWith(".mjs"))
+    .filter((f) => DECLARES_SUITE.test(read(join("scripts", f))));
+  assert.ok(suites.length > 10, `only found ${suites.length} suites, so this check stopped looking`);
+
+  let drivers = 0;
+  for (const file of suites) {
+    const source = code(join("scripts", file));
+    if (!/Show answer/i.test(source)) continue;
+    drivers += 1;
+    const knowsTheRest =
+      /revealAnswer/.test(source) || /Pick the meaning/.test(source);
+    assert.ok(
+      knowsTheRest,
+      `scripts/${file} presses "Show answer" and knows no other shape, so it stops driving ` +
+      `the moment a choice or typed card comes up first. Use revealAnswer from lib/review.mjs.`,
+    );
+  }
+  assert.ok(drivers > 0, "no suite drives a review card any more, so this check stopped looking");
+
+  /*
+    And the helper is one helper. It reveals and never grades: the containment
+    suite runs third and everything after it reads the same deck, so a shared
+    driver that graded would quietly change what the rest of them measure.
+  */
+  const helper = code(join("scripts", "lib", "review.mjs"));
+  assert.doesNotMatch(
+    helper,
+    /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
+    "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
+  );
+});
+
+/**
+ * A query that is cut short is ordered all the way down to the primary key.
+ *
+ * CLAUDE.md has said for a while that "a query that is cut short says where to
+ * cut", and nothing asserted it, so eleven queries in the derived-progress
+ * layer had drifted from it or had never been brought in line. Every one of
+ * them ordered on a column that is not unique and then took the first N.
+ *
+ * Two of those ties are not theoretical. `Card` was ordered by
+ * `(createdAt, lexemeId)`, and `addCardsFor` writes a word's recognition and
+ * production cards in one `createMany`, so both share both keys exactly. And
+ * `Lexeme` was ordered by `(fetchedAt, lemma)` while `@@unique` is on
+ * `(lemma, pos)`: on a freshly seeded deployment every `fetchedAt` is null, so
+ * the two entries for `hall` tied outright.
+ *
+ * The exam pool is the one where that is a correctness fault rather than an
+ * inconsistency. `submitExam` rebuilds the paper from (level, seed, pool) in
+ * order to mark it, so a pool that comes back in another order marks a learner
+ * on questions they were never asked, and the `take` means a tie at the five
+ * hundredth row decides which of a pair is in the paper at all.
+ *
+ * Ordering is free where the index is already there, and it was in all eleven.
+ * What is not free is a number that moves on its own.
+ *
+ * Scoped to `lib/progress/`, which is where every derived figure is read, and
+ * asserted on the *last* key, because an order that is total in the middle and
+ * loose at the end is loose.
+ */
+check("a truncated query in the progress layer ends on the primary key", () => {
+  const dir = join("lib", "progress");
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith(".ts") && !f.includes(".test.") && !f.includes(".itest."));
+  assert.ok(files.length > 3, `only found ${files.length} files, so this check stopped looking`);
+
+  let looked = 0;
+  for (const file of files) {
+    const src = code(join(dir, file));
+    for (const found of src.matchAll(/\.findMany\(\{/g)) {
+      // The block this call opens, by brace depth.
+      let depth = 0;
+      let end = found.index + found[0].length - 1;
+      for (let i = end; i < src.length; i += 1) {
+        if (src[i] === "{") depth += 1;
+        else if (src[i] === "}") { depth -= 1; if (depth === 0) { end = i; break; } }
+      }
+      const block = src.slice(found.index, end + 1);
+      if (!/\btake:/.test(block) && !/\bskip:/.test(block)) continue;
+      looked += 1;
+
+      const line = src.slice(0, found.index).split("\n").length;
+      const where = `lib/progress/${file}:${line}`;
+      /*
+        The outermost `orderBy`, not a relation's. A nested one (`forms:
+        { orderBy: ... }`) sorts rows inside one parent and is never the thing
+        `take` cuts, so matching the first `orderBy:` in the text would read
+        the wrong one and pass.
+      */
+      const top = /\n    orderBy:\s*(\[[\s\S]*?\]|\{[\s\S]*?\}),/.exec(block)
+        ?? /orderBy:\s*(\[[\s\S]*?\]|\{[^{}]*\}),/.exec(block);
+      assert.ok(top, `${where} takes a slice of an unordered query, so which rows it gets is Postgres's choice`);
+      assert.match(
+        top[1]!.replace(/\s+/g, " "),
+        /\{ id: "(asc|desc)" \} *\]$|^\{ id: "(asc|desc)" \}$/,
+        `${where} orders on ${top[1]!.replace(/\s+/g, " ")} and then cuts. None of those keys is unique, ` +
+        "so two tied rows are ordered by whatever the plan did that day. End it on { id: \"asc\" }.",
+      );
+    }
+  }
+  assert.ok(looked > 8, `only ${looked} truncated queries found, so this check stopped looking`);
+});
+
+/**
+ * The layers that are pure are still pure, which nothing was checking.
+ *
+ * CLAUDE.md names twelve directories that "stay free of React, Next.js and
+ * Prisma: pure functions, unit tested", and that was prose alone. All twelve
+ * hold today, which is the moment to assert it rather than the moment after
+ * one of them stops.
+ *
+ * It is not a tidiness rule. The unit suite gates every commit on being
+ * hermetic, with no database, no network and no clock nobody controls, and it
+ * has to stay fast enough that nobody is tempted to skip it. One
+ * `import { prisma }` inside `lib/stats/` puts a database behind a function
+ * that four hundred unit tests call, and the suite does not fail: it gets
+ * slower, or it passes against whatever rows happen to be there. A React
+ * import is the same boundary from the other side, since these modules are
+ * what a Server Component and a Route Handler share.
+ *
+ * The directories are listed rather than discovered, because "which layers are
+ * pure" is a decision rather than a fact about the filesystem, and each is
+ * checked to exist so a rename fails here instead of silently covering
+ * nothing.
+ */
+check("the layers that promise to be pure import no database, React or Next", () => {
+  const pure = [
+    "assessment", "estonian", "gamification", "stats", "collections", "time",
+    "offline", "security", "scan", "ux", "random", "copy",
+  ];
+  const banned = [
+    [/from "@\/lib\/db"/, "the database"],
+    [/from "@prisma\/client"/, "Prisma"],
+    [/from "react"|from "react\//, "React"],
+    [/from "next\//, "Next"],
+    [/from "server-only"/, "a server-only marker, which is a Next concern"],
+  ] as const;
+
+  let looked = 0;
+  for (const name of pure) {
+    const dir = join("lib", name);
+    assert.ok(
+      existsSync(dir),
+      `lib/${name} is named as a pure layer and is not there. Rename it here or put it back.`,
+    );
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".ts") && !file.endsWith(".tsx")) continue;
+      if (file.includes(".test.") || file.includes(".itest.")) continue;
+      looked += 1;
+      const src = code(join(dir, file));
+      for (const [pattern, what] of banned) {
+        assert.doesNotMatch(
+          src,
+          pattern,
+          `lib/${name}/${file} imports ${what}. That layer is unit tested hermetically, ` +
+          "so anything needing the database belongs in lib/progress/ or a route.",
+        );
+      }
+    }
+  }
+  assert.ok(looked > 40, `only read ${looked} files in the pure layers, so this check stopped looking`);
+});
+
+/**
  * The worker's caches have ceilings too.
  *
  * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never
@@ -3007,11 +3580,31 @@ check("a date is written in the reader's own locale, not the server's", () => {
       fallback.
     */
     if (/^\s*"use client"/m.test(read(file))) continue;
-    assert.match(
-      source,
-      /<LocalDate/,
-      `${file} formats a date on the server, so it is written in the deployment's locale rather than the reader's`,
-    );
+    /*
+      EVERY SUCH CALL, NOT THE FILE.
+
+      This used to ask whether the file mentions `<LocalDate` anywhere, and a
+      file that hands one date to the browser and formats two others itself
+      passed. `app/(app)/class/[classroomId]/page.tsx` was exactly that: the
+      joined date went through `LocalDate` with a server-rendered fallback,
+      and the classwork history three sections above formatted `createdAt` and
+      `dueAt` on the server and shipped them as text. A teacher in Tartu read
+      their own homework list as "30 Aug".
+
+      So each call is checked where it stands. The legitimate one is the
+      `fallback` a `LocalDate` renders while it waits, which is what the server
+      is *supposed* to write, and it is the only shape that passes.
+    */
+    const call = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/g;
+    for (let m = call.exec(source); m; m = call.exec(source)) {
+      const before = source.slice(Math.max(0, m.index - 160), m.index);
+      assert.ok(
+        /fallback=\{?$|fallback=\{[^}]*$/.test(before),
+        `${file}: formats a date on the server outside a LocalDate fallback, so it is written `
+        + `in the deployment's locale rather than the reader's. Hand it to <LocalDate>, with `
+        + `this rendering as its fallback.`,
+      );
+    }
   }
 
   const local = code(join("components", "LocalDate.tsx"));
@@ -3200,6 +3793,142 @@ check("the accessibility sweep runs axe, over both themes", () => {
 
   const pkg = JSON.parse(read("package.json")) as { devDependencies?: Record<string, string> };
   assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
+});
+
+// ── Checks about the checks ──────────────────────────────────────────────────
+
+check("anything a model wrote carries the mark the terms page promises", () => {
+  /*
+    `/terms` says what the AI suggests "is marked *AI · verify* and needs your
+    confirmation". That is a promise on a page somebody can hold the app to, so
+    every screen showing a model's words has to actually say it.
+
+    It had already drifted. Six places said `AI · verify` and three said a bare
+    `AI` with the rest in a `title`, which is a hover: this app is measured at
+    360px and its README leads with "works on a phone", where a hover does not
+    exist, so on the grammar case page, the dictation round and the dictionary's
+    own examples the useful half of the tag was not there at all. The word that
+    matters is `verify`, because `AI` says where a sentence came from and
+    `verify` says what to do about it.
+
+    One constant, read from `lib/copy/values.ts`, on the argument `NO_VALUE`
+    already makes next to it: a phrase retyped in nine places drifts in one of
+    them, and this one had. Asserted as "nobody retypes it" rather than "the
+    string is right", because a literal is exactly how it came apart.
+  */
+  const tagged = [...APP, ...COMPONENTS].filter((f) => read(f).includes("AI_TAG"));
+  assert.ok(
+    tagged.length >= 6,
+    `only ${tagged.length} screens read AI_TAG; the tag is being written some other way`,
+  );
+
+  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(read(f)));
+  assert.deepEqual(
+    retyped, [],
+    `the AI tag is typed out rather than read from lib/copy/values: ${retyped.join(", ")}`,
+  );
+
+  /*
+    And no screen marks a model's words with a bare `AI` and leaves the rest to
+    a tooltip, which is the shape the three drifted ones had.
+  */
+  const bare = [...APP, ...COMPONENTS].filter((f) =>
+    /<Chip[^>]*title="Machine translation[^"]*">\s*AI\s*<\/Chip>/.test(read(f)));
+  assert.deepEqual(
+    bare, [],
+    `a machine translation is marked "AI" with its meaning in a hover: ${bare.join(", ")}`,
+  );
+
+  /*
+    The terms page has to be making the promise this is holding it to.
+
+    Asserted on the rendered `{AI_TAG}` rather than on the token, and with the
+    imports stripped first: the first version matched the import line, so it
+    passed on a terms page that had stopped saying it. A check that cannot fail
+    is the thing this file exists to prevent, and writing one while adding a
+    check is a good argument for the discipline of taking each new rule away
+    once and watching it complain.
+  */
+  const terms = read("app/terms/page.tsx").replace(/^import [^\n]*\n/gm, "");
+  assert.match(
+    terms,
+    /\{AI_TAG\}/,
+    "the terms page stopped naming the mark, so there is no promise to keep",
+  );
+});
+
+check("every marker the merge ritual names is still somewhere in the tree", () => {
+  /*
+    CLAUDE.md ends its section on more than one session at a time with a list of
+    markers to grep for after a merge, learned from an afternoon when two clean
+    conflict-free merges each silently reverted somebody's work: git had no
+    reason to ask, because one side changed lines the other side had moved.
+
+    It was good guidance that depended entirely on a person remembering to run
+    it, which is the same shape as every rule this file exists to take out of
+    prose. So the list is read from CLAUDE.md rather than copied here: a copy is
+    the drift `PROVIDER_KEY_ENV` was consolidated to prevent, and a list that
+    can fall behind the paragraph naming it is worse than no list.
+
+    This is deliberately the blunt question, "is it still here at all", not
+    "does it still work" — most of these have an invariant of their own further
+    up, and the ones that do not are markers precisely because what they protect
+    is hard to assert. A marker that vanished in a merge is the one thing a
+    machine can see that a reviewer reading a green diff cannot.
+
+    CLAUDE.md is not in the haystack, and that is the whole check: the list
+    names each marker in backticks, so searching a corpus that includes the list
+    finds every marker in the list by definition and passes for ever. The first
+    version of this did exactly that, and the way it was found is the way this
+    repository says to find it, by renaming a marker and watching nothing fail.
+  */
+  const claude = read("CLAUDE.md");
+  const ritual = between(claude, "Grep the markers the branch owns");
+  const markers = [...ritual.slice(0, ritual.indexOf("Most of them now"))
+    .matchAll(/`([^`]+)`/g)].map((m) => m[1]!);
+
+  assert.ok(
+    markers.length >= 25,
+    `only ${markers.length} markers parsed out of CLAUDE.md; the list or its wording moved`,
+  );
+
+  const haystack = [
+    ...ALL, ...sourceFiles("scripts", /\.(ts|tsx|mjs)$/), ...sourceFiles("prisma"),
+    "middleware.ts", "next.config.ts", "app/globals.css",
+  ].filter((f) => existsSync(f)).map(read).join("\n");
+
+  const gone = markers.filter((marker) => !haystack.includes(marker));
+  assert.deepEqual(
+    gone, [],
+    `named in the merge ritual and no longer anywhere in the tree: ${gone.join(", ")}`,
+  );
+});
+
+check("every script a workflow runs is a script that exists", () => {
+  /*
+    The invariants already assert that a browser suite CI can run is one CI does
+    run. One layer up, nothing checked the workflow files themselves: a job
+    calling `npm run test:whatever` after somebody renamed the script fails at
+    the point where a failure looks like the code being broken, and a job that
+    quietly stopped being the thing it claims to run does not fail at all.
+
+    Both directions, because they are different faults. A workflow naming a
+    script that is gone is a broken job; a `scripts/*` path that no longer
+    exists is the same thing wearing the other spelling.
+  */
+  const workflows = sourceFiles(".github/workflows", /\.ya?ml$/);
+  assert.ok(workflows.length >= 1, "no workflow files found, so this check is looking in the wrong place");
+  const yaml = workflows.map(read).join("\n");
+
+  const scripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> }).scripts;
+  const named = [...new Set([...yaml.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]!))];
+  const missing = named.filter((name) => !(name in scripts));
+  assert.deepEqual(missing, [], `a workflow runs an npm script that no longer exists: ${missing.join(", ")}`);
+
+  const paths = [...new Set([...yaml.matchAll(/scripts\/([\w.-]+\.(?:mjs|ts))/g)].map((m) => m[1]!))];
+  assert.ok(paths.length >= 5, `only ${paths.length} script paths found in the workflows; the pattern moved`);
+  const absent = paths.filter((file) => !existsSync(join("scripts", file)));
+  assert.deepEqual(absent, [], `a workflow runs a script file that is not there: ${absent.join(", ")}`);
 });
 
 console.log(

@@ -1,8 +1,10 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
-// Floor: 9, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Editing", { floor: 9 });
+// Floor: 10, measured in the state CI seeds. A thinner database reads as short.
+// It was 9 while the suite reached 10, so one check could have stopped running
+// with nothing to notice, which is the one thing a floor is for.
+const { check, done } = suite("Editing", { floor: 10 });
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
 const errors = [];

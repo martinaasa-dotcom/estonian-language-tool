@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { SprintSession, type SprintCard } from "./SprintSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Case sprint" };
 
@@ -45,7 +46,7 @@ export default async function SprintPage() {
   }
 
   // Shuffled so the same session doesn't always open on the same word.
-  const shuffled = [...cards].sort(() => Math.random() - 0.5);
+  const shuffled = shuffle(cards);
   const sprintCards: SprintCard[] = shuffled.map((c) => ({
     id: c.id,
     front: c.front,

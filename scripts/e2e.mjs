@@ -11,7 +11,7 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 21, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The core flows", { floor: 21 });
+const { check, done } = suite("The core flows", { floor: 22 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -134,6 +134,37 @@ await page.waitForTimeout(400);
 await page.getByRole("button", { name: /Add 2 words/ }).click();
 check("re-importing the same words does not duplicate them",
   await eventually(async () => (await page.getByText(/already in your deck/).count()) > 0));
+
+/*
+  A paste that repeats a line, which is what a list assembled from two handouts
+  looks like. The importer used to ask the database about every row on its own,
+  so the second copy found what the first had just written; it reads the whole
+  paste in one query now and drops the repeats before counting.
+
+  The count is the thing to check, and the first version of this check got that
+  wrong. It asserted "Added 1 word", which is 1 whether the repeat is dropped or
+  not, because `createMany` is told to skip duplicates and so writes one row
+  either way. What actually breaks is `skipped`, which collects a lemma per row
+  that was already there: a new word beside a repeated old one then reads
+  "Skipped 2 you already had" about one word. So the list below is one new word
+  and one old one written twice, and the number in that sentence is the check.
+*/
+const kaks = `testkaks${stamp} - twice over`;
+await page.getByLabel("Paste word list").fill(kaks);
+await page.waitForTimeout(400);
+await page.getByRole("button", { name: /Add 1 word\b/ }).click();
+await eventually(async () => (await page.getByText(/Added 1 word\b/).count()) > 0);
+
+const mixed = `testuus${stamp} - brand new\n${kaks}\n${kaks}`;
+await page.getByLabel("Paste word list").fill(mixed);
+await page.waitForTimeout(400);
+await page.getByRole("button", { name: /Add \d+ words?/ }).click();
+const skippedLine = await eventually(async () =>
+  (await page.getByText(/Skipped \d+ you already had/).count()) > 0);
+const said = (await page.locator("main").innerText()).replace(/\n+/g, " · ");
+check("a repeated line is counted once, not twice",
+  skippedLine && /Skipped 1 you already had/.test(said),
+  said.slice(0, 140));
 
 // 6 — Export
 const res = await page.request.get(`${B}/api/export`);

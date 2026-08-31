@@ -10,6 +10,7 @@ import { Chip, Stat } from "@/components/ui";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import type { GradedSentence } from "@/lib/tutor/grader";
 import type { WithholdReason } from "@/lib/tutor/verify";
+import { AI_TAG } from "@/lib/copy/values";
 
 export interface WritingPrompt {
   /** The card this exercise practises, so the round feeds the scheduler. */
@@ -314,7 +315,7 @@ function Feedback({ marked }: { marked: Marked }) {
             <Chip tone={graded.verdict === "correct" ? "good" : graded.verdict === "almost" ? "hard" : "again"}>
               {graded.verdict === "correct" ? "reads well" : graded.verdict === "almost" ? "almost" : "not yet"}
             </Chip>
-            <span className="label-xs" style={{ color: "var(--ink-3)" }}>AI · verify</span>
+            <span className="label-xs" style={{ color: "var(--ink-3)" }}>{AI_TAG}</span>
           </div>
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>{graded.comment}</p>
           {graded.rule && (

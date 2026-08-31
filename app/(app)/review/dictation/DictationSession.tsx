@@ -14,6 +14,7 @@ import type { Badge } from "@/lib/achievements/badges";
 import { checkDictation, wordNote, type DictationResult, type WordStatus } from "@/lib/estonian/dictation";
 import { xpForRating } from "@/lib/gamification/xp";
 import type { RatingValue } from "@/lib/srs/scheduler";
+import { AI_TAG } from "@/lib/copy/values";
 
 export interface DictationTask {
   /** The card this counts against — every mode grades through the same log. */
@@ -299,7 +300,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
             <p className="text-center text-sm" style={{ color: "var(--ink-2)" }}>
               {task.en}
               <Chip tone="again" title="Machine translation, the Estonian is authoritative, this is not">
-                AI
+                {AI_TAG}
               </Chip>
             </p>
           )}

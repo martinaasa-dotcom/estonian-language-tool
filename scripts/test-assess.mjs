@@ -17,7 +17,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 42, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 42 });
+const { check, absent, done } = suite("Level check", { floor: 43 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -205,7 +205,24 @@ await page.goto(`${B}/start`, { waitUntil: "networkidle" });
 const onboarded = !page.url().includes("/start");
 
 if (onboarded) {
-  absent(16, "a learner who has not been through first run: this database has");
+  /*
+    A WAIVER THAT FIRED ON EVERY RUN, WHICH IS A HOLE RATHER THAN A WAIVER.
+
+    `/start` redirects anyone carrying `onboardedAt` *or a single card*. CI
+    built the demo deck before starting the server, so this branch was the only
+    one that had ever been taken: sixteen of forty-two checks waived here, and
+    the same sixteen waived on anybody's machine, for as long as this suite has
+    existed. Honestly reported and under the half that fails a suite outright,
+    so nothing complained, and first run was verified by nothing. The nineteen
+    checks below all pass; they had simply never been asked.
+
+    The fixture moved after this suite in `.github/workflows/ci.yml`, which is
+    the precondition this branch is now stating rather than inheriting, and an
+    invariant asserts that ordering. Locally the deck is usually already there,
+    so this branch is still the one a developer takes.
+  */
+  absent(18, "a learner who has not been through first run: this database has a deck, " +
+    "so /start correctly redirects. CI runs this suite before the demo fixture");
   /*
     A learner who has already been through it is sent to Today, which is the
     documented behaviour rather than a gap in this run: a wizard that reappears
@@ -261,9 +278,21 @@ if (onboarded) {
   await page.waitForURL((url) => !url.pathname.startsWith("/start"), { timeout: 20000 });
   check("finishing lands in the app", !page.url().includes("/start"), page.url());
 
+  /*
+    What the wizard collected, read back off a different screen in a different
+    request. This asked whether the string "Why you are learning" appeared,
+    which is the `ChoiceGroup`'s own label and is drawn whether or not anybody
+    ever answered it: the check passed on an empty panel and could not fail.
+    The chosen chip carries `aria-checked`, and the name is an input's value, so
+    both of these are the wizard's answers having survived a round trip through
+    the database rather than the panel having rendered.
+  */
   await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
-  const saved = await page.locator("main").innerText();
-  check("the goals the wizard asked for were kept", /Why you are learning/i.test(saved));
+  const chosen = page.getByRole("radio", { name: /Citizenship or residence/ }).first();
+  check("the reason the wizard asked for was kept",
+    (await chosen.getAttribute("aria-checked")) === "true");
+  check("and the name they gave is the name the app uses",
+    (await page.getByLabel(/Name shown on the board/i).inputValue()) === "Test");
   check("and the level check is offered from settings too",
     (await page.locator('a[href="/assess"]').count()) > 0);
 }

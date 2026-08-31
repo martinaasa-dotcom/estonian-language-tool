@@ -60,6 +60,7 @@
  */
 import { eventually, launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { revealAnswer } from "./lib/review.mjs";
 import { ensureLetterBar } from "./lib/prefs.mjs";
 
 const B = baseUrl();
@@ -886,14 +887,32 @@ async function askedForStates(ctx, at) {
     absent(5, `Anu's panel ${at}, which needs the tutor to be reachable`);
   }
 
+  /*
+    A REVEALED CARD, WHICHEVER OF THE THREE SHAPES IT CAME IN.
+
+    This pressed "Show answer" and waived when there was none, on the reason
+    that the deck had nothing due. The deck had forty cards due. Review asks a
+    card as a flip, as multiple choice or as typing, decided per card, and the
+    one that comes up on the demo fixture is a choice card, which has no flip
+    button at all. So these ten checks, five at each width, had never once run,
+    and the line saying why told anybody reading it to go and seed a database
+    that was already seeded.
+
+    The revealed layout is the same whichever way the question was asked, and
+    it is the one with the most in it: the answer, the note about why this
+    card, and four rating buttons across a 360px phone.
+
+    It reveals and never grades. This suite runs third and everything after it
+    reads the same deck.
+  */
   await page.goto(`${B}/review`, { waitUntil: "networkidle", timeout: 60000 });
-  const show = page.getByRole("button", { name: /Show answer/ }).first();
-  if (await show.count()) {
-    await show.click();
+  const shape = await revealAnswer(page);
+  if (shape) {
     await page.waitForTimeout(450);
-    await measure(page, `a review card with its answer shown ${at}`);
+    await measure(page, `a review card with its answer shown ${at}, asked as ${shape}`);
   } else {
-    absent(5, `a revealed review card ${at}, because the deck had nothing due`);
+    absent(5, `a revealed review card ${at}: /review offered no card of any shape, ` +
+      "so this deck genuinely has nothing due. Run `npm run demo`");
   }
 
   await page.close();

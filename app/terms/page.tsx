@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Legal, P, S } from "@/components/Legal";
 import { resolveOperator } from "@/lib/legal/operator";
+import { AI_TAG } from "@/lib/copy/values";
 
 export const metadata = { title: "Terms" };
 
@@ -68,7 +69,7 @@ export default function TermsPage() {
           Anu, the AI tutor, is not authoritative. It may explain grammar and suggest an
           English translation, and it is structurally prevented from supplying an
           Estonian dictionary form, but its explanations can still be wrong. Anything
-          it suggests is marked <em>AI · verify</em> and needs your confirmation before
+          it suggests is marked <em>{AI_TAG}</em> and needs your confirmation before
           it becomes a card. Do not rely on it for an exam answer without checking.
         </P>
         <P>

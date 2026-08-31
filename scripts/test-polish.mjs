@@ -1,8 +1,9 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
-// Floor: 11, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Polish", { floor: 13 });
+// Floor: the count CI reaches in the state it seeds. A thinner database reads
+// as short, and the three about a second entry for one word waive by number.
+const { check, absent, done } = suite("Polish", { floor: 16 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
@@ -78,6 +79,88 @@ check("a review card links to the full dictionary entry",
 await page.getByRole("link", { name: /Full entry/ }).click();
 await page.waitForURL(/\/dictionary\?q=/, { timeout: 10000 }).catch(() => {});
 check("that link lands on the entry", page.url().includes("/dictionary?q="), page.url());
+
+/*
+  Two entries for one word, and both of them reachable.
+
+  A lemma can hold more than one entry, because `@@unique` is on `(lemma, pos)`:
+  `hall` is grey and also frost. The entry page shows one of them, listed the
+  rest under "other matches", and navigated those chips to `?q=<lemma>` — which
+  searched the same word, opened the same winner, and left the second entry
+  unreachable from anywhere in the app. The chips also read lemma and gloss
+  alone, so two of them said nearly the same thing twice and one looked like a
+  rendering fault.
+
+  Driven rather than reasoned about, because the whole bug was that the button
+  looked right and did nothing.
+
+  THE CHIP IS FOUND BY ITS LEMMA, EXACTLY, AND THE FIRST VERSION OF THIS WAS NOT.
+
+  It asked for the first button whose text started with "vana", which in CI was
+  `vanaadium`, vanadium: a different word that shares five letters. So the check
+  about the label failed on a chip it was never about, and the one after it went
+  green for opening an entry that was indeed a different entry. Prefix-matching
+  the thing under test is the same fault as the bug this block exists for, one
+  layer up, which is a good reason to say exactly what you mean.
+
+  The precondition is stated rather than assumed, and it is the real one: not
+  "are there other matches", since searching a short word finds longer ones
+  whatever else is true, but "is one of them this same word". A database
+  holding one entry cannot show any of this, and a suite that clicks a chip
+  that is not there waits thirty seconds and then fails in Playwright's words
+  rather than in ones that name the cause.
+
+  AND IT NO LONGER NAMES THE WORD, BECAUSE THE WORD MOVED.
+
+  This asked about `vana`, which shipped as a pair when it was written. Open
+  question Q8 has since been answered: the builder reads a word's part of
+  speech off the sense its gloss came from, 61 labels were corrected, and a
+  fresh seed now holds two pairs rather than thirteen. `vana` is one entry, so
+  this block waived its three checks and would have gone on waiving them for
+  ever, which is a check that has quietly stopped looking.
+
+  So it asks for what it is actually about: a lemma this dictionary holds
+  twice. `hall` and `rõõmus` are what a fresh seed ships, and `tuba` is what
+  `test-containment` makes by confirming a scanned word, which is the path that
+  produces a pair for any word at all and the one no upstream correction
+  reaches. The first that is really a pair is the one driven, and its name is
+  printed so a reader knows which. Only when none of them is does it waive.
+*/
+const PAIR_CANDIDATES = ["hall", "rõõmus", "tuba", "vana"];
+let pairLemma = null;
+let otherChip = null;
+for (const lemma of PAIR_CANDIDATES) {
+  await page.goto(`${B}/dictionary?q=${encodeURIComponent(lemma)}`, { waitUntil: "networkidle" });
+  const chips = page.locator('button:has(span[lang="et"])');
+  for (let i = 0; i < (await chips.count()); i++) {
+    const chip = chips.nth(i);
+    const text = (await chip.locator('span[lang="et"]').first().innerText()).trim();
+    if (text === lemma) { otherChip = chip; pairLemma = lemma; break; }
+  }
+  if (otherChip) break;
+}
+
+if (!otherChip) {
+  absent(3, `this dictionary holds one entry for each of ${PAIR_CANDIDATES.join(", ")}, `
+    + "so there is no pair to choose between");
+} else {
+  const chipText = (await otherChip.innerText()).replace(/\s+/g, " ").trim();
+  const openedBefore = (await page.locator("main").innerText()).toLowerCase();
+
+  check("a second entry for one word is offered, and it is the same word",
+    (await page.getByText(/other match/).count()) > 0 && chipText.startsWith(`${pairLemma} `),
+    `${pairLemma}: ${chipText}`);
+  check("and the chip says which one it is, since the glosses barely differ",
+    /adjective|noun|verb|other/i.test(chipText), chipText);
+
+  await otherChip.click();
+  await page.waitForURL(/entry=/, { timeout: 10000 }).catch(() => {});
+  const openedAfter = (await page.locator("main").innerText()).toLowerCase();
+  check("and clicking it actually opens the other one",
+    page.url().includes(`q=${encodeURIComponent(pairLemma)}`) && page.url().includes("entry=")
+      && openedAfter !== openedBefore,
+    page.url().replace(B, ""));
+}
 
 // The answer must be announced, not silently inserted.
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });

@@ -29,3 +29,27 @@ export const NO_VALUE = "n/a";
  * same gap is how `isPlaceholder` starts missing one of them.
  */
 export const NEEDS_TRANSLATION = `${NO_VALUE} · add a translation`;
+
+/**
+ * How anything a model wrote is marked, wherever a learner meets it.
+ *
+ * `/terms` promises this in as many words: what the AI suggests "is marked
+ * *AI · verify* and needs your confirmation". That is a statement about the
+ * app on a page a person can hold it to, so the app has to actually say it.
+ *
+ * IT HAD ALREADY DRIFTED. Six places said `AI · verify`; the grammar case
+ * page and the dictation round said a bare `AI` and put the rest in a `title`,
+ * which is a hover. This app is measured at 360px and its README leads with
+ * "works on a phone", where there is no hover at all, so on the two screens
+ * that most needed it the useful half of the tag did not exist. The same
+ * argument `wordNote` makes about dictation: a tooltip is not text.
+ *
+ * The word that matters is `verify`. `AI` alone says where a sentence came
+ * from; `verify` says what to do about it, which is the whole point of
+ * marking it, and it is the half that was missing.
+ *
+ * One constant, for the reason `NO_VALUE` gives above and `PROVIDER_KEY_ENV`
+ * gives about itself: a phrase retyped in eight places is a phrase that drifts
+ * in one of them, and this one already had.
+ */
+export const AI_TAG = "AI · verify";

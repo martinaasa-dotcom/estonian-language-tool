@@ -8,11 +8,26 @@ import { SuggestFix } from "@/components/SuggestFix";
 /**
  * Something threw on the server.
  *
- * The message is shown rather than hidden: this is a study tool someone is
- * running for themselves, and "something went wrong" with no detail turns a
- * fixable configuration problem — usually a missing DATABASE_URL — into a
- * mystery. It is deliberately calm about it, and never suggests the learner has
- * lost anything, because they have not: the review log is only ever appended to.
+ * Calm about it, and never suggesting the learner has lost anything, because
+ * they have not: the review log is only ever appended to.
+ *
+ * THE MESSAGE IS NOT THE USEFUL PART IN A PRODUCTION BUILD, AND THIS SAID IT WAS.
+ *
+ * The header used to argue that showing the message turns a fixable
+ * configuration problem, "usually a missing DATABASE_URL", into something a
+ * self-hoster can act on. Driven against a build pointed at a database that is
+ * not there, which is that exact case, what the page actually showed was Next's
+ * own line: "An error occurred in the Server Components render. The specific
+ * message is omitted in production builds to avoid leaking sensitive details."
+ * So the sentence promising the useful part below it pointed at boilerplate,
+ * and the one reader it was written for had a dead end.
+ *
+ * A production build keeps the message on the server on purpose, and that is
+ * the right default: a message can carry a connection string. What crosses is
+ * the digest, and the same digest is written next to the full error in the
+ * server log, which makes it the thing worth showing and worth naming as a
+ * reference rather than as an explanation. In development the message is real
+ * and is still printed, which is why both are here.
  */
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -27,7 +42,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       </h1>
       <p className="text-base" style={{ color: "var(--ink-2)" }}>
         Nothing has been lost, your deck and review history are untouched. Trying again usually
-        works; if it keeps happening, the message below is the useful part.
+        works.
       </p>
       <code
         className="max-w-full overflow-x-auto rounded-[var(--r)] px-3 py-2 text-left text-xs"
@@ -36,6 +51,12 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         {error.message || "Unknown error"}
         {error.digest ? ` (${error.digest})` : ""}
       </code>
+      {error.digest && (
+        <p className="text-sm" style={{ color: "var(--ink-3)" }}>
+          If you run this copy of Kodukeel, the server log holds the full message under that
+          reference.
+        </p>
+      )}
       <div className="mt-2 flex gap-3">
         <Button variant="primary" onClick={reset}>Try again</Button>
         <ButtonLink href="/">Back to Today</ButtonLink>

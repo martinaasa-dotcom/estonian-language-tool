@@ -408,6 +408,135 @@ Do not add a counter column. A stored score is a second source of truth that dri
 awarded for something that never happened. The only exceptions are values no log can reconstruct: a
 personal best, and which days a streak shield has already covered. (ADR-014.)
 
+**A query that is cut short says where to cut, and a query whose answer is picked from says how to
+pick.** Derived progress is only as trustworthy as the rows it was derived from, and four places had
+handed that choice to Postgres. The shape is always the same: a `take` with no `orderBy`, or a
+comparator that can return 0 for two different rows, and then one of the results is shown. It looks
+settled, because a plan over unchanged rows usually is, and it is not a promise.
+
+All four were real. The dictionary showed one of two entries for a lemma and nothing chose which, so
+a scanned word could shadow a word the app knows and take the paradigm off the page, and three
+browser suites failed on it in one run and passed in the next with the code untouched. The grammar
+reference picked its example words the same way. `readinessSignals` capped three queries at twenty
+thousand rows without saying which twenty thousand, in a file whose own header promises no
+confidence percentage can drift from the reviews behind it. And the weakest-case panel, already
+consolidated to one component and one calculation, still had three inputs, so a learner who had
+fixed their partitive was told 100% on Progress and 50% on Practice on the same day.
+
+So: `bySubstance` ends on `id` because a total comparator is the only kind whose answer does not
+depend on the array it was handed; a truncated query is ordered even where the order looks
+arbitrary, since arbitrary-but-stable is what makes a wrong result reproducible; and where two
+screens answer one question, the query is a function they share rather than a query each
+(`lib/progress/cases.ts`). Ordering is free wherever the index is already there, and it was in every
+one of these. What is not free is a number that moves on its own.
+
+**And the rule had nothing behind it, so eleven queries had drifted from it.** Every truncated
+read in `lib/progress/` ordered on a column that is not unique and then took the first N. Two of
+those ties are not theoretical: `Card` was ordered by `(createdAt, lexemeId)` and `addCardsFor`
+writes a word's recognition and production cards in one `createMany`, so both share both keys
+exactly; and `Lexeme` was ordered by `(fetchedAt, lemma)` while `@@unique` is on `(lemma, pos)`,
+so on a freshly seeded deployment, where every `fetchedAt` is null, the two entries for `hall`
+tied outright. The exam pool is the one where that is a correctness fault rather than an
+inconsistency, because `submitExam` rebuilds the paper from (level, seed, pool) in order to mark
+it: a pool that comes back in another order marks somebody on questions they were never asked,
+and the `take` means a tie at the five hundredth row decides which of a pair is in the paper at
+all. All eleven end on `{ id: "asc" }` now and an invariant reads the *last* key, because an
+order that is total in the middle and loose at the end is loose.
+
+**And a `take` beside a `distinct` bounds nothing at all.** Prisma deduplicates in the client, so a
+`LIMIT` would cut rows before the deduplication and it emits none: the query reads every matching
+row, adds an id column of its own to deduplicate with, sorts, and throws the surplus away in
+JavaScript. The number beside `take` reads exactly like a bound and is not in the SQL. `countGroups`
+in the suggestion queue carried a comment saying a `groupBy` "would read every matching group to
+count them, which at the volume this queue is built for is the one query that would stop being
+cheap", and what replaced it read every *row* to produce one number, on the one table open sign-up
+lets strangers grow. Practice had the same shape over `examples`, the longest column in the schema,
+fetched once per card rather than once per word. So the pairing is owner-scoped or it does not
+happen, which is what the invariant asserts: one learner's own cards are bounded by their deck
+whatever the `take` says, and anything deployment-wide counts in Postgres.
+
+**A cap on rows is not a cap on time, and a loop of queries is where the difference lives.** Three
+loops were measured against a real database rather than reasoned about, and they did not all need
+the same answer. The offline replay asked "have I seen this grade before" once per item, which is
+the one query in it that does not depend on what the previous grade did: a `Review` id is generated
+on the client and the only rows that loop writes are its own, so the answer for a whole batch is one
+read. The rest of it stays per item, because that part genuinely is what the grade before left
+behind. The word importer asked the dictionary about every pasted row on its own, five hundred of
+them at the cap, and `@@unique` on `(lemma, pos)` means one `IN` answers all of it; what is left per
+word is `addCardsFor`, which takes a lock and is half the cost, and collapsing that would mean a
+second path that writes cards. And `addUnitToDeck` was measured and left alone: twenty words and
+seventy-three cards in 117ms, so the lock it takes per word costs nothing worth restructuring for.
+
+Where a loop cannot be collapsed, the route needs a budget: `MAX_IMPORT_ROWS` is 500 and the time
+those rows imply is not something a platform's default ten seconds covers, so
+`app/(app)/settings/page.tsx` says `maxDuration`. Deduplicating the input belongs there too, and for
+the reason that is easy to get wrong: `createMany` with `skipDuplicates` makes the *write*
+indifferent to a repeated line, so what a missing dedupe breaks is the *counting*, and a paste of a
+new word beside a repeated old one reads "Skipped 2 you already had" about one word. The first check
+written for that asserted the created count, which is 1 either way and so could not fail.
+
+**"Is it already there" is check-then-act, and the deck had it too.** The ledger learned this about
+spending; `addCardsFor` had the same shape about cards. It read a learner's existing cards for a
+word, filtered the generated ones against them, and inserted the rest, so two requests inside that
+gap both see an empty deck and both insert. Measured against a real database: two concurrent adds
+gave two cards, four gave four, and eight gave fourteen where two is right. A learner meets it by
+double-tapping "Add to deck", and `addUnitToDeck` walks it once per word with no throttle in front,
+so one impatient second on a nineteen-word unit is the worst case rather than the unlikely one. The
+answer is the ledger's, for the reasons its header already gives: a *transaction* advisory lock, so
+a pooler cannot strand it, and the blocking form, since the non-blocking one serialises nothing.
+Keyed on the owner and the word rather than deployment-wide, because two learners adding two
+different words are not each other's concern; the ledger is deployment-wide because a shared budget
+is. With it, sixteen concurrent adds make two cards in 28ms. A unique index is the other answer and
+is the one not taken: a deck that already holds duplicates from this bug would fail the push, and
+the deployment's own build is what runs it.
+
+**The syllabus names a lemma; the dictionary may hold two entries for it.** `@@unique` is on
+`(lemma, pos)`, so `where: { lemma: { in: [...unit.lemmas] } }` can return more rows than the unit
+has words, and seven places rendered or wrote every one of them. Measured with a scanned `tuba`
+confirmed into the dictionary beside the Ekilex one, which is a thing any learner can do in a
+minute: `/learn/kodu` listed the word twice, its printable worksheet printed it six times, the unit
+counted more words than it teaches, the lesson planner split the duplicate into the sitting,
+`addUnitToDeck` and `recordLesson` each built two sets of cards for one word with one of them
+unanswerable, the landing page's own three-word demo could have shown an empty paradigm, and React
+was warning about two children with the same key, which it says may duplicate or omit a row. The
+adjective/noun pairs of open question Q8 are the same shape and ship with a fresh seed: there were
+thirteen when this was written, and answering Q8 by reading the part of speech off the sense the
+gloss came from took it to two, `hall` and `rõõmus`. That changes how often this fires and not
+whether it has to, because a word confirmed off a photograph makes a pair for any lemma at all and
+no upstream correction reaches that. `oneEntryPerLemma` in `lib/dict/search.ts` is the one answer and it is
+`bySubstance`, the rule the search already leads with, because a course screen and the search box
+disagreeing about which `vana` is the real one would be worse than either answer on its own. It
+also returns the caller's order, since the sort it replaced (`order.get(a.lemma) -
+order.get(b.lemma)`) returned 0 for exactly the pair that is the problem. Counting distinct lemmas
+into a `Set` is the other honest answer and two places do that; what may not happen is rows reaching
+a render or a write.
+
+**There is one shuffle, and `sort(() => Math.random() - 0.5)` is not one.** There were ten copies of
+this function in three implementations: four in `app/` that were Fisher-Yates character for
+character, four in `lib/` that were the same again with an rng passed in, and two places that used a
+comparator. A comparator is asked about a pair and expected to answer the same way each time; one
+that answers at random leaves the sort finishing early over runs it believes are already ordered, so
+an element stays near where it started. Measured over 200,000 rounds at the sizes the app actually
+uses: in the 40-card sprint the first card led 7.0% of rounds against a uniform 2.5%, and the first
+ten cards filled the first ten places 39.5% of the time against 25%; in the 20-card listening round
+the first card led 11.7% against 5.0%. Those pools arrive `orderBy: { due: "asc" }`, so that was the
+most overdue card leading about three times as often as chance while the tail of the pool went
+under-practised. `lib/random/shuffle.ts` is the one, and `random` is a parameter so a seeded caller
+hands in its own generator and a test hands in a fixed one. `lib/exam/paper.ts` is the single
+exception and its header says why: the server rebuilds a paper from its seed to mark it, so changing
+how that one draws would mis-mark a paper somebody started before a deploy and handed in after.
+Both halves are asserted, because fixing the two wrong copies and leaving eight right ones is how a
+ninth gets written.
+
+**A seed is only as fixed as what it is seeded over.** `planLesson` promises the same seed gives the
+same lesson, and the wrong answers came from an unordered sixty of the 478 words at A1 or the 1,302
+at B1. Measured: a bulk touch of the level, which is what re-running `npm run harvest` does, swapped
+seven of the sixty, and the seven that left were `Tere hommikust!`, `Aitäh!`, `Palun`, `Head aega!`,
+`Nägemist!`, `kohv` and `elu`. Ordering by lemma alone fixes the drift and reads badly for the reason
+the grammar reference did, since every lesson at a level would then draw its decoys from the same
+sixty words at the front of the alphabet. The window starts where the unit points, which is the
+answer `paperFor` had already reached one file over.
+
 **A day is the learner's day, and every screen that counts one is rendered on a server.** The
 streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour
 of the day are all derived server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
@@ -442,6 +571,29 @@ the method and the body. The Content Security Policy is set there too, on every 
 including the refusals; the static headers are in `next.config.ts` so they cover the files the
 matcher skips. `Permissions-Policy` keeps `microphone=(self)` on purpose: speaking practice
 records, and denying it would switch that off with no error anybody could act on.
+
+**The error state is a screen, so something has to render it.** `app/error.tsx` is one of the four
+states every view owes a reader and it was the only one nothing ever put on a screen: an invariant
+read its source for the failure copy and the report button, which is a different question from
+whether a client component that throws while rendering leaves a learner with a blank page. Driving
+it needs a server that genuinely fails, so `scripts/test-error.mjs` starts its own on a spare port
+against a database that is not there, which is the case the page was written for. That is also how
+the page turned out to be wrong about itself. Its header argued that showing the message turns a
+fixable problem, "usually a missing DATABASE_URL", into something a self-hoster can act on; what a
+production build actually shows is Next's own line saying the message was withheld, so the sentence
+promising the useful part below it pointed at boilerplate. Keeping the message on the server is the
+right default, since one can carry a connection string. What crosses is the digest, the same digest
+sits beside the full error in the server log, and the page says so.
+
+**A check that reads a file reads its code, not its prose.** This is the oldest recurring mistake in
+this repository's own checks and it has now been made four times: the marker sweep whose haystack
+included the list naming the markers, the `AI_TAG` assertion that matched its own import line, the
+lemma check that fired on a paragraph describing the query it had removed, and a suite explaining in
+a comment why it does not call `baseUrl()`, which satisfied a check looking for that call. Strip
+comments first; `code()` in `scripts/test-invariants.ts` is what does it. And the other half of the
+same discipline: a check that fires on honest code gets waived, so when one does, widen the rule
+rather than contorting the code. The lemma check learned a third answer that way, since keying rows
+on `(lemma, pos)` is the unique key itself and stronger than either answer it knew.
 
 **A suite that exists is a suite CI runs.** The workflow names its suites one line at a time, and
 its own comment says why: "a suite added to `npm run test:browser` alone is a suite CI never runs".
@@ -710,9 +862,16 @@ local learner; with them, every route is gated. It keys off the absence of confi
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
-  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/` and `lib/copy/` stay free of
+  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/`, `lib/random/` and
+  `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
-  needs the database lives in `lib/progress/` or a route.
+  needs the database lives in `lib/progress/` or a route. Asserted, because it
+  had been prose alone and it is not a tidiness rule: the unit suite gates every
+  commit on being hermetic, so one `import { prisma }` inside `lib/stats/` puts
+  a database behind a function four hundred tests call, and the suite does not
+  fail, it gets slower or it passes against whatever rows happen to be there.
+  Each directory is checked to exist too, so a rename fails there rather than
+  quietly covering nothing.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
 - Settings go through `lib/settings/store.ts`. No new string keys scattered through pages. The five
@@ -1262,6 +1421,47 @@ no-key empty state dropped the question a review card had just handed her, so
 the key was the price of even seeing what you were about to ask. Neither was
 reachable on a machine with the keys set, which is the argument for running a
 suite in the state a stranger installs into.
+
+**And a waiver that fires on every possible run is a hole wearing a waiver's clothes.** That
+is the one thing the machinery above cannot see: `absent(n, why)` states a fact about *this*
+run, and it never asks whether some run exists where the fact is false. `test-assess.mjs`
+waived sixteen of its forty-two checks every time it had ever been run, on any machine and in
+CI, because `/start` correctly redirects anyone holding `onboardedAt` **or a single card** and
+CI built the demo deck before it started the server. The reason was true, it was well under the
+half that fails a suite outright, and nothing complained. So the wizard, the four screens a
+learner meets before any other and the one place this app asks for anything, was verified by
+nothing at all. All nineteen of those checks pass; they had simply never been asked. The
+fixture is built *after* that suite now, which is a fact about the order of two lines in
+`.github/workflows/ci.yml` and therefore asserted, because an ordering that matters and lives
+only in a comment is an ordering that drifts. When you write a waiver, say which state would
+lift it, and then go and find out whether anything ever reaches that state.
+
+**The other permanent waiver was worse, because its reason was false.**
+`scripts/test-containment.mjs` waived ten checks, five at each width, saying the deck had nothing
+due. The deck had forty cards due. A review card is asked as a flip, as multiple choice or as
+typing, decided per card, and the only thing that suite knew how to press was "Show answer". So
+the revealed layout, which is the one with the most in it (the answer, the note about why this
+card, and four rating buttons across a 360px phone) was never measured once, and the line saying
+why sent whoever read it off to seed a database that was already seeded. A waiver that misnames
+its own cause is worse than a failure: a failure sends you to the code.
+
+`smoke-offline.mjs` had already found this and written it down, that a driver knowing only the
+flip "silently stops testing anything the day the default changes. It did." Four more suites had
+each worked it out separately, and `test-teaching.mjs` had two shapes of the three and got the
+third by accident, its `3` keypress landing on the third option rather than on a grade.
+`scripts/lib/review.mjs` is the one definition and it **reveals without grading**, because the
+containment suite runs third and everything after it reads the same deck. An invariant fails on a
+suite that presses the flip and knows no other shape, and on the helper learning to grade.
+
+**A failure may not misname its cause either, and that is the same rule pointing the other way.**
+`/api/export` allows six backups an hour, because it reads every owner-scoped table.
+`test-restore.mjs` read the body and not the status, so the seventh run in an hour, which is an
+ordinary afternoon of working on this, said `export produced a backup (0 KB)` and stopped. The
+export was working perfectly. That line sends whoever reads it to the one part of the app the
+suite exists to protect, and the answer was the clock. It reads the 429 now and says the
+allowance is spent and that restarting the server clears it, since the limiter is per instance
+and in memory. Still a failure rather than a waiver: a run that could not take a backup has not
+checked backup and restore.
 
 `scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
 walks every text-bearing element, every icon and everything that arrives with a width of its own,

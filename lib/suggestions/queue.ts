@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseExamples } from "@/lib/dict/examples";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 import {
   CATEGORY_KEYS, parsePatch,
   type Patch, type SuggestionCategory, type SuggestionStatus,
@@ -180,19 +181,29 @@ export async function readQueue(options: {
 /**
  * How many distinct groups match, for the pager.
  *
- * A `groupBy` with no `take` would read every matching group to count them,
- * which at the volume this queue is built for is the one query that would
- * stop being cheap. Counting distinct keys is the same answer for one number.
+ * One number, counted where the rows are. This used to be a `findMany` with
+ * `distinct: ["groupKey"]` and `take: 5000` under a comment saying a `groupBy`
+ * would be the expensive way round, and it had that backwards: Prisma applies
+ * `distinct` in the client, so it emits no `DISTINCT` and, because a `LIMIT`
+ * would cut rows before the deduplication, **no `LIMIT` either**. The SQL was
+ * `SELECT id, groupKey FROM Suggestion WHERE status = $1 ORDER BY id`, which
+ * is every matching row and an id column Prisma adds for its own use, sorted,
+ * over the wire, deduplicated in JavaScript. The `groupBy` it was written to
+ * avoid reads one row per group. The `take` that made it look bounded was not
+ * in the query at all.
+ *
+ * Sign-up is open and every failure in the app offers the button that writes
+ * one of these rows, so the volume the comment was worried about is real. It
+ * is just that the fix pointed the wrong way.
  */
 async function countGroups(where: { status: string; category?: string }): Promise<number> {
-  const distinct = await prisma.suggestion.findMany({
-    where,
-    select: { groupKey: true },
-    distinct: ["groupKey"],
-    // Far past any page a person will reach, and a bound rather than none.
-    take: 5000,
-  });
-  return distinct.length;
+  const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
+    SELECT COUNT(DISTINCT "groupKey") AS count
+    FROM "Suggestion"
+    WHERE "status" = ${where.status}
+      AND (${where.category ?? null}::text IS NULL OR "category" = ${where.category ?? null})
+  `;
+  return Number(row?.count ?? 0);
 }
 
 /**
@@ -230,7 +241,13 @@ async function currentValues(
     lemmas.size
       ? prisma.lexeme.findMany({
           where: { lemma: { in: [...lemmas] } },
-          select: { id: true, lemma: true, pos: true, translation: true },
+          select: {
+            id: true, lemma: true, pos: true, translation: true,
+            // For `oneEntryPerLemma` below: a reviewer told "this word is
+            // already here" should be shown the entry the app itself leads
+            // with, not whichever row the plan returned first.
+            provenance: true, forms: { select: { formType: true } },
+          },
         })
       : Promise.resolve([]),
   ]);
@@ -246,7 +263,10 @@ async function currentValues(
     }
 
     if (patch.kind === "CREATE_WORD") {
-      const clash = byLemma.find((e) => e.lemma.toLowerCase() === patch.lemma.toLowerCase());
+      const clash = oneEntryPerLemma(
+        byLemma.filter((e) => e.lemma.toLowerCase() === patch.lemma.toLowerCase()),
+        [patch.lemma],
+      )[0] ?? byLemma.find((e) => e.lemma.toLowerCase() === patch.lemma.toLowerCase());
       out.set(item.id, {
         before: clash ? `${clash.lemma} · ${clash.pos.toLowerCase()} · ${clash.translation}` : null,
         blocked: clash && clash.pos === patch.pos

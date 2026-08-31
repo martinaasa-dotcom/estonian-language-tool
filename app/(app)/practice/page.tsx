@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -29,31 +30,49 @@ export default async function PracticePage() {
   const [snapshot, settings, caseReviews, sentenceReady] = await Promise.all([
     deckSnapshot(ownerId),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
-    prisma.review.findMany({
-      where: { targetCase: { not: null }, ownerId },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
-    prisma.card.findMany({
-      where: { ownerId, suspended: false, lexemeId: { not: null } },
-      distinct: ["lexemeId"],
-      take: 300,
-      select: { lexeme: { select: { examples: true } } },
+    // The one reader, so Practice and Progress cannot disagree about which case
+    // a learner is worst at. See lib/progress/cases.ts.
+    caseReviewsFor(ownerId),
+    /*
+      The learner's own words, asked for as words.
+
+      This was a `findMany` over their cards with `distinct: ["lexemeId"]` and
+      `take: 300`, which is the page's heaviest read and only looked bounded.
+      Prisma deduplicates in the client, so a `LIMIT` would cut rows before the
+      deduplication and it emits none: the SQL was every card this learner
+      owns, and then `examples`, the longest column in the schema, fetched once
+      per card rather than once per word. A word with five card types was read
+      five times.
+
+      Asking Lexeme instead is one row per word by construction, so the cap is
+      a real `LIMIT` and the join happens once. Two thousand is past any deck
+      somebody has actually built, and ordered, so a learner who does get there
+      is told the same number twice rather than a different one each load.
+    */
+    prisma.lexeme.findMany({
+      where: { cards: { some: { ownerId, suspended: false } } },
+      orderBy: { lemma: "asc" },
+      take: 2000,
+      select: { examples: true },
     }),
   ]);
 
   const sprintBest = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
-  // How many of the learner's own words carry a sentence worth rebuilding.
-  const sentenceCount = sentenceReady.filter((c) =>
-    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => isBuildable(e.et)),
-  ).length;
-  // Dictation is stricter: only sentences short enough to hold in your head.
-  const dictationCount = sentenceReady.filter((c) =>
-    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => {
-      const count = dictationWords(e.et).length;
-      return count >= 3 && count <= 9 && e.et.length <= 80;
-    }),
-  ).length;
+  /*
+    Parsed once and asked twice. Each of these used to call `parseExamples` for
+    itself, which is a `JSON.parse` per word per question, and the cap above is
+    now a real one at two thousand rather than a number that was not in the SQL.
+    Two thousand words is four thousand parses for two integers.
+
+    Sentence building wants a sentence worth rebuilding; dictation is stricter,
+    since it has to be short enough to hold in your head.
+  */
+  const usable = sentenceReady.map((w) => usableExamples(parseExamples(w.examples)));
+  const sentenceCount = usable.filter((es) => es.some((e) => isBuildable(e.et))).length;
+  const dictationCount = usable.filter((es) => es.some((e) => {
+    const count = dictationWords(e.et).length;
+    return count >= 3 && count <= 9 && e.et.length <= 80;
+  })).length;
   const matchBest = numberSetting(settings[SETTING_KEYS.matchBest], 0);
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
 

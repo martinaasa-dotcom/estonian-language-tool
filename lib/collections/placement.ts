@@ -26,6 +26,7 @@
  * Pure and framework-free, like the rest of lib/collections.
  */
 import { LEVELS, levelIndex, type Level } from "./syllabus";
+import { shuffle } from "@/lib/random/shuffle";
 
 /** A word the placement test can ask about. */
 export interface PlacementWord {
@@ -64,18 +65,6 @@ function rng(seed: number): () => number {
   };
 }
 
-function shuffled<T>(items: readonly T[], rand: () => number): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    const a = out[i]!;
-    const b = out[j]!;
-    out[i] = b;
-    out[j] = a;
-  }
-  return out;
-}
-
 /**
  * Builds the ladder.
  *
@@ -91,13 +80,13 @@ export function buildPlacement(words: readonly PlacementWord[], seed = 1): Place
     const pool = words.filter((w) => w.level === level);
     if (pool.length < OPTIONS + PER_LEVEL) continue;
 
-    const asked = shuffled(pool, rand).slice(0, PER_LEVEL);
+    const asked = shuffle(pool, rand).slice(0, PER_LEVEL);
     const questions: PlacementQuestion[] = [];
 
     for (const [i, word] of asked.entries()) {
       const seen = new Set([word.gloss.toLowerCase()]);
       const wrong: string[] = [];
-      for (const candidate of shuffled(pool, rand)) {
+      for (const candidate of shuffle(pool, rand)) {
         const key = candidate.gloss.toLowerCase();
         if (seen.has(key)) continue;
         seen.add(key);
@@ -105,7 +94,7 @@ export function buildPlacement(words: readonly PlacementWord[], seed = 1): Place
         if (wrong.length === OPTIONS - 1) break;
       }
       if (wrong.length < OPTIONS - 1) continue;
-      const options = shuffled([word.gloss, ...wrong], rand);
+      const options = shuffle([word.gloss, ...wrong], rand);
       questions.push({
         id: `${level}-${i}`,
         level,

@@ -1,5 +1,6 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { revealAnswer } from "./lib/review.mjs";
 
 /**
  * The teaching layer: the grammar reference, dictation, the printable worksheet,
@@ -195,14 +196,15 @@ check("it counts only the cards the scheduler thought were known",
 // explains it. A reference nobody can find from the exercise is a reference
 // nobody reads.
 await page.goto(`${B}/review?case=INESSIVE`, { waitUntil: "networkidle" });
+/*
+  Whichever shape the card came in. This knew the typed one and the flip and
+  not multiple choice, and on a choice card neither branch fired: the `3` at
+  the bottom of the loop then picked the third option rather than grading, and
+  the loop worked by accident. `scripts/lib/review.mjs` knows all three.
+*/
 let revealed = false;
 for (let i = 0; i < 6 && !revealed; i++) {
-  if (await page.getByLabel("Type your answer").count()) {
-    await page.getByLabel("Type your answer").fill("vale");
-    await page.getByRole("button", { name: /Check/ }).first().click();
-  } else if (await page.getByRole("button", { name: /Show answer/ }).count()) {
-    await page.getByRole("button", { name: /Show answer/ }).first().click();
-  }
+  await revealAnswer(page);
   await page.waitForTimeout(450);
   revealed = (await page.getByRole("link", { name: /Why the/ }).count()) > 0;
   if (!revealed) { await page.keyboard.press("3"); await page.waitForTimeout(650); }

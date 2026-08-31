@@ -1,5 +1,6 @@
 import { CASES } from "./cases";
 import type { CaseKey } from "./types";
+import { shuffle } from "@/lib/random/shuffle";
 
 /**
  * Verb government (*rektsioon*) — which case a verb demands of its complement.
@@ -139,10 +140,7 @@ export function buildOptions(
 
   // Shuffle the distractors, take what is needed, then top up from the common
   // government cases if the deck is too small to supply enough.
-  const shuffled = distractors
-    .map((c) => ({ c, k: random() }))
-    .sort((a, b) => a.k - b.k)
-    .map(({ c }) => c);
+  const shuffled = shuffle(distractors, random);
 
   const FALLBACK: CaseKey[] = ["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE", "ADESSIVE", "GENITIVE"];
   const chosen = [...shuffled];
@@ -151,10 +149,7 @@ export function buildOptions(
     if (c !== answer && !chosen.includes(c)) chosen.push(c);
   }
 
-  return [answer, ...chosen.slice(0, count - 1)]
-    .map((c) => ({ c, k: random() }))
-    .sort((a, b) => a.k - b.k)
-    .map(({ c }) => c);
+  return shuffle([answer, ...chosen.slice(0, count - 1)], random);
 }
 
 /**

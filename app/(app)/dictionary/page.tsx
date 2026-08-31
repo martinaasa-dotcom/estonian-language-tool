@@ -16,10 +16,21 @@ export const dynamic = "force-dynamic";
 export default async function DictionaryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; entry?: string }>;
 }) {
   const ownerId = await requireUserId();
-  const { q = "" } = await searchParams;
+  /*
+    `entry` names which of the matches to open, and exists because a lemma can
+    hold more than one: `hall` is grey and also frost, and `@@unique` on
+    `(lemma, pos)` is what lets both be stored.
+
+    Without it the second one was listed under "other matches" and could not be
+    opened. The chip navigated to `?q=<lemma>`, which searched the same word and
+    landed on the same winning hit, so the button did nothing at all and the
+    frost entry was unreachable from anywhere in the app. It is a plain id
+    rather than an index, so a link keeps working when the ranking changes.
+  */
+  const { q = "", entry: wanted } = await searchParams;
   let hits = q ? await searchLexemes(q) : [];
 
   // Nothing locally: ask Ekilex, store what comes back, and search again. The
@@ -34,20 +45,24 @@ export default async function DictionaryPage({
   }
 
   // Open the first hit straight away — searching a word and then having to click it
-  // again is a wasted step when you already know what you looked up.
+  // again is a wasted step when you already know what you looked up. Unless the
+  // link asked for one of the others by name, which is the only way a second
+  // entry for the same lemma can be opened at all.
+  const opened = (wanted ? hits.find((h) => h.id === wanted) : undefined) ?? hits[0];
+
   // A seeded word we are about to display: upgrade it to the real paradigm first.
-  if (hits[0] && ekilexConfigured()) {
-    const upgraded = await enrichWithinDeadline(hits[0].id);
+  if (opened && ekilexConfigured()) {
+    const upgraded = await enrichWithinDeadline(opened.id);
     if (upgraded) {
       fetched = true;
       // The sentences that just arrived can support a gap-fill card this word
       // could not have had when it was added to the deck.
-      await backfillClozeCards(ownerId, hits[0].id);
+      await backfillClozeCards(ownerId, opened.id);
     }
   }
 
-  const entry = hits[0] ? await loadEntry(hits[0].id, ownerId) : null;
-  const matchedAs = hits[0]?.matchedAs ?? null;
+  const entry = opened ? await loadEntry(opened.id, ownerId) : null;
+  const matchedAs = opened?.matchedAs ?? null;
 
   const [total, suggestions, starred] = await Promise.all([
     prisma.lexeme.count(),
@@ -83,6 +98,7 @@ export default async function DictionaryPage({
         justFetched={fetched}
         initialQuery={q}
         hits={hits}
+        openedId={opened?.id ?? null}
         entry={entry}
         matchedAs={matchedAs}
         suggestions={suggestions.map((s) => s.lemma)}

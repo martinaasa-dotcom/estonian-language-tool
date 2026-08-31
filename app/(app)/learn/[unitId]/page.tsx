@@ -13,6 +13,7 @@ import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, Chip, Meter, Page, Ring } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export async function generateMetadata({ params }: { params: Promise<{ unitId: string }> }) {
   const { unitId } = await params;
@@ -36,26 +37,30 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
   if (!unit) notFound();
 
   const ownerId = await requireUserId();
-  const [snapshot, lexemes] = await Promise.all([
+  const [snapshot, rows] = await Promise.all([
     deckSnapshot(ownerId),
     prisma.lexeme.findMany({
       where: { lemma: { in: [...unit.lemmas] } },
-      select: { id: true, lemma: true, translation: true, pos: true, cefr: true, gradationNote: true, government: true },
+      select: {
+        id: true, lemma: true, translation: true, pos: true, cefr: true, gradationNote: true,
+        government: true, provenance: true, forms: { select: { formType: true } },
+      },
     }),
   ]);
 
-  const order = new Map(unit.lemmas.map((l, i) => [l, i]));
-  lexemes.sort((a, b) => (order.get(a.lemma) ?? 0) - (order.get(b.lemma) ?? 0));
+  // One row per lemma, in the unit's own order. A lemma can hold two entries
+  // and this page counted both.
+  const words = oneEntryPerLemma(rows, unit.lemmas);
 
   const progress = unitProgress({
-    availableLemmas: lexemes.map((l) => l.lemma),
+    availableLemmas: words.map((l) => l.lemma),
     startedLemmas: [...snapshot.startedLemmas],
     knownLemmas: [...snapshot.knownLemmas],
   });
 
   const Icon = icon(unit.icon);
-  const missing = unit.lemmas.length - lexemes.length;
-  const lessons = splitIntoLessons(lexemes).length;
+  const missing = unit.lemmas.length - words.length;
+  const lessons = splitIntoLessons(words).length;
 
   return (
     <Page
@@ -142,10 +147,10 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
 
         <div>
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            {lexemes.length} words · {unit.cardTypes.map(cardTypeLabel).join(", ")} cards
+            {words.length} words · {unit.cardTypes.map(cardTypeLabel).join(", ")} cards
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
-            {lexemes.map((l) => {
+            {words.map((l) => {
               const known = snapshot.knownLemmas.has(l.lemma);
               const started = snapshot.startedLemmas.has(l.lemma);
               return (

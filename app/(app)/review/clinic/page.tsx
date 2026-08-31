@@ -74,9 +74,13 @@ export default async function ClinicPage() {
 
   // The rest of the deck, for the interference check. Cheap and orthographic —
   // it only ever claims "these look alike".
+  // Ordered, so a deck past the cap compares the same thousand words every
+  // time: "these two look alike" is a warning a learner should be able to see
+  // twice rather than one that comes and goes with the plan.
   const deck = await prisma.card.findMany({
     where: { ownerId, lexemeId: { not: null } },
     select: { lexeme: { select: { lemma: true } } },
+    orderBy: { createdAt: "asc" },
     take: 1000,
   });
   const lemmas = [...new Set(deck.map((d) => d.lexeme?.lemma).filter((l): l is string => !!l))];

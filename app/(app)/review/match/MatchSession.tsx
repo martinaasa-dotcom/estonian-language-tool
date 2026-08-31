@@ -9,6 +9,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { Confetti } from "@/components/Confetti";
 import { Empty, Page, Stat } from "@/components/ui";
 import type { Badge } from "@/lib/achievements/badges";
+import { shuffle } from "@/lib/random/shuffle";
 
 export interface MatchPair {
   cardId: string;
@@ -279,11 +280,3 @@ function accuracyFrom(misses: Record<string, number>, pairs: number): number {
   return pairs > 0 ? Math.round((clean / pairs) * 100) : 0;
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}
