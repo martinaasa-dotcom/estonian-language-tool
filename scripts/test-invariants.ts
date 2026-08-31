@@ -83,6 +83,36 @@ const code = (file: string) =>
  * a syntax nobody thought about; this only needs to know which half of a file
  * a call site is in.
  */
+/**
+ * Every lemma the shipped dictionary carries, lower-cased.
+ *
+ * Read off the two files the seed loads rather than out of a database, so this
+ * suite stays hermetic like the rest of it.
+ */
+function seededLemmas(): Set<string> {
+  const out = new Set<string>();
+
+  const expanded = "prisma/data/expanded.json";
+  if (existsSync(expanded)) {
+    const parsed: unknown = JSON.parse(readFileSync(expanded, "utf8"));
+    const rows = Array.isArray(parsed) ? parsed : (parsed as { entries?: unknown[] }).entries ?? [];
+    for (const row of rows) {
+      const lemma = (row as { lemma?: unknown }).lemma;
+      if (typeof lemma === "string") out.add(lemma.toLowerCase());
+    }
+  }
+
+  // The course harvest is a TypeScript module, so its lemmas are read as text.
+  const harvested = "prisma/data/harvested.ts";
+  if (existsSync(harvested)) {
+    for (const m of readFileSync(harvested, "utf8").matchAll(/\blemma:\s*"((?:[^"\\]|\\.)*)"/g)) {
+      out.add((m[1] ?? "").toLowerCase());
+    }
+  }
+
+  return out;
+}
+
 function between(source: string, from: string): string {
   const start = source.indexOf(from);
   if (start < 0) return "";
@@ -1401,6 +1431,51 @@ check("a check a state cannot reach is waived by number, never by a printed word
     // function's clothes: it would leave the target where it was.
     for (const waiver of source.matchAll(/\babsent\(\s*([^,]+),/g)) {
       assert.match((waiver[1] ?? "").trim(), /^[1-9]\d*$/, `${file} waives a count that is not a positive number`);
+    }
+  }
+});
+
+check("a suite that writes to the shared dictionary invents the word it writes", () => {
+  /*
+    A BROWSER SUITE MAY NOT LEAVE A ROW THAT SHADOWS A SEEDED ENTRY.
+
+    Ticking a word the dictionary did not vouch for is how `saveScan` makes a
+    learner their own entry, and it is a path worth driving. But `Lexeme` is
+    unique on `[lemma, pos]` rather than on the lemma alone, deliberately,
+    because `hall` is a noun meaning frost and an adjective meaning grey. So a
+    fixture that ticks a word the seed already holds does not collide with it,
+    it sits *beside* it, with no paradigm behind it, in a dictionary every
+    later suite shares.
+
+    `test-containment.mjs` ticked `tuba`. `e2e.mjs` opens with three checks on
+    `/dictionary?q=tuba`, and CI runs it two steps later on the same database.
+    The cost was not one wrong check: the suite threw on its first wait and
+    reported a Playwright timeout with none of its twenty-one checks run.
+
+    `test-scan.mjs` and `test-suggestions.mjs` each worked this out for
+    themselves and each carries an invented string. This is the rule they were
+    both following, written down: the Estonian in a fixture that will be
+    written to the dictionary has to be a word no dictionary has.
+  */
+  const lemmas = seededLemmas();
+  assert.ok(lemmas.size > 100, "the built dictionary could not be read, so this check sees nothing");
+
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    const source = read(file);
+    /*
+      An item the dictionary did not vouch for, in a stubbed scan response.
+      `lexemeId: null` is what makes it one, and the `et` beside it is what
+      would be written. Matched in either order, because an object literal has
+      no canonical one.
+    */
+    for (const item of source.matchAll(/\{[^{}]*lexemeId:\s*null[^{}]*\}/g)) {
+      const et = /\bet:\s*"([^"]+)"/.exec(item[0])?.[1];
+      if (!et) continue;
+      assert.equal(
+        lemmas.has(et.toLowerCase()),
+        false,
+        `${file} ticks "${et}", which the dictionary already holds, so it leaves a second entry beside it`,
+      );
     }
   }
 });

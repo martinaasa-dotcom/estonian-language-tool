@@ -340,6 +340,18 @@ knowing. Signed-in work never touches any of it.
 public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
 belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.
 
+**A comparator that returns 0 is not a tie, it is the database deciding.** Two entries can share a
+lemma, by design and by accident: `hall` is a noun and an adjective, and a learner adding a word by
+hand or off a photograph gets their own row beside the seeded one. Both score 100 for the exact
+lemma, and `localeCompare` of a word with itself is 0, so `rankCandidates` used to return 0 for the
+pair. `sort` is stable, so that means "keep the order you were given", and the order it was given
+came from a `findMany` with no `orderBy`: a fact about the query plan and the physical layout of the
+table rather than about Estonian. `/dictionary` opens `hits[0]` without asking, so which entry a
+learner was shown for their own search was settled by the planner, and could differ between two
+identical requests. It is the fault `resolveScan.ts` has a comment about, one layer up. The order is
+total now, on the forms count and then the id, so the entry with a paradigm leads and no two
+candidates ever compare equal. Do not add a ranking key without asking what happens when it ties.
+
 **The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
 learner sees, so an edit to one is an edit for everybody. It is attributed (`editedBy`), it may
 replace only the principal parts, and it must never touch a retrieved Ekilex paradigm. Anything
@@ -1228,6 +1240,18 @@ it never running, all reported as one failure naming a regex. It reads the
 precondition and waives its three checks with the reason on screen instead. Cleaning up after yourself is the
 weaker version of the same idea, since it only works while every suite remembers
 and cannot help the first run on a machine somebody has been clicking around on.
+
+**A suite that writes to the shared dictionary invents the word it writes.** `Lexeme` is unique on
+`[lemma, pos]` rather than on the lemma, deliberately, because `hall` is a noun meaning frost and an
+adjective meaning grey. So a fixture that ticks a word the seed already holds does not collide with
+it, it sits *beside* it with no paradigm behind it, in a dictionary every later suite shares.
+`test-containment.mjs` ticked `tuba`; `e2e.mjs` opens with four checks on `/dictionary?q=tuba` and CI
+runs it two steps later on the same database. The cost was never one wrong check, it was a suite that
+threw on its first wait and reported a Playwright timeout with none of its twenty-one checks run.
+`test-scan.mjs` and `test-suggestions.mjs` had each worked this out alone and each carries an
+invented string; the invariant reads the built dictionary and fails on a third suite that does not.
+Spell it so nobody could mistake it for Estonian, because the app writes none (ADR-005) and neither
+do its fixtures.
 
 **An agent branch does not deploy, because the account has a hundred deployments a day and there
 is only one production.** Vercel's free tier counts them across the whole account, and a session

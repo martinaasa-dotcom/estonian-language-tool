@@ -234,6 +234,25 @@ await ensureLetterBar(browser, B, "on");
  * meant to be: `Assessment` is append-only, and `scripts/test-exam.mjs` hands
  * one in on every run for the same reason.
  */
+/**
+ * The word the stubbed photograph is read as.
+ *
+ * IT MUST BE A WORD NO DICTIONARY HAS, and it must not look like one either.
+ * `lexemeId: null` says the dictionary did not vouch for it, so ticking it
+ * makes the learner their own `Lexeme` row, and `Lexeme` is unique on
+ * `[lemma, pos]` rather than on the lemma alone. This fixture used to say
+ * `tuba`, so it left a second `tuba` in the shared dictionary with no
+ * paradigm behind it, sitting beside the seeded noun. `e2e.mjs` opens with
+ * three checks on `/dictionary?q=tuba` and CI runs it two steps after this
+ * suite, on the same database.
+ *
+ * `test-scan.mjs` and `test-suggestions.mjs` both worked this out already and
+ * each carries an invented string of its own. This is the third, and it is
+ * spelled so that nobody could mistake it for Estonian: the app writes none
+ * (ADR-005) and neither do its fixtures.
+ */
+const UNVOUCHED = "kodukeelcontainmenttest";
+
 async function screensToMake() {
   const made = [];
   const missing = [];
@@ -317,7 +336,7 @@ async function screensToMake() {
       contentType: "application/json",
       headers: { "x-model-provider": "Stub", "x-model-id": "test" },
       body: JSON.stringify({
-        items: [{ et: "tuba", en: "room", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
+        items: [{ et: UNVOUCHED, en: "a word off the page", lexemeId: null, lemma: null, translation: null, matchedAs: null, cefr: null }],
         summary: { total: 1, known: 0, unknown: 1, inflected: 0 },
       }),
     }));

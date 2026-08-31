@@ -113,6 +113,57 @@ describe("rankCandidates — inflected forms", () => {
 });
 
 /*
+  TWO ENTRIES CAN SHARE A LEMMA, AND SOMETHING HAS TO DECIDE WHICH ONE OPENS.
+
+  `Lexeme` is unique on `[lemma, pos]` deliberately: `hall` is a noun meaning
+  frost and an adjective meaning grey. The same shape arrives by accident every
+  time somebody adds a word by hand or off a photograph that the dictionary
+  already holds under another part of speech, which is how a learner's bare
+  `tuba` came to sit beside the seeded noun.
+
+  Both score 100 and `localeCompare` of a word with itself is 0, so the
+  comparator used to return 0 for the pair. `sort` is stable, so that meant
+  "keep the order the database returned", and the query that loads candidates
+  has no `orderBy`. The entry a learner was shown for their own search was
+  decided by the query planner, and it could differ between two identical
+  requests.
+*/
+describe("rankCandidates — two entries under one lemma", () => {
+  const withParadigm = lexeme("tuba", "room", "NOUN", [
+    ["NOM_SG", "tuba"], ["GEN_SG", "toa"], ["PART_SG", "tuba"],
+  ]);
+  // Sorts first by id, so it wins on any tie-break that reaches for one early.
+  const bare = { ...lexeme("tuba", "room", "OTHER", []), id: "0000-typed-by-hand" };
+
+  it("opens the same entry whichever order the database returned them in", () => {
+    expect(rankCandidates([withParadigm, bare], "tuba")[0]!.pos).toBe("NOUN");
+    expect(rankCandidates([bare, withParadigm], "tuba")[0]!.pos).toBe("NOUN");
+  });
+
+  it("leads with the entry that has a paradigm to open", () => {
+    const hits = rankCandidates([bare, withParadigm], "tuba");
+    expect(hits.map((h) => h.pos)).toEqual(["NOUN", "OTHER"]);
+  });
+
+  it("still lists both, because neither is wrong", () => {
+    expect(rankCandidates([bare, withParadigm], "tuba")).toHaveLength(2);
+  });
+
+  /*
+    The general property, and the one that matters beyond this pair: no two
+    candidates may ever compare equal, or `sort` falls back to the order it was
+    handed and the database is deciding again. Checked over every pairing of
+    the whole fixture rather than over the case that prompted it.
+  */
+  it("never leaves two candidates comparing equal", () => {
+    const both = [...DICT, withParadigm, bare];
+    const seen = rankCandidates(both, "tuba");
+    const shuffled = rankCandidates([...both].reverse(), "tuba");
+    expect(shuffled.map((h) => h.id)).toEqual(seen.map((h) => h.id));
+  });
+});
+
+/*
   The gate a photographed page has to get through.
 
   `rankCandidates` is built for a search box, where a prefix match is a helpful

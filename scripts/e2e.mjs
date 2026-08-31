@@ -11,7 +11,7 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 21, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The core flows", { floor: 21 });
+const { check, absent, done } = suite("The core flows", { floor: 21 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -24,18 +24,68 @@ const { check, done } = suite("The core flows", { floor: 21 });
 await ensureLetterBar(browser, B, "on");
 
 // 1 — Dictionary: search, paradigm, add to deck
-await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
-await page.waitForSelector("text=toaga", { timeout: 10000 });
-check("search shows the short illative", (await page.getByText("tuppa", { exact: true }).count()) > 0);
-check("derived case table renders", (await page.getByText("toaga", { exact: true }).count()) > 0);
-check("gradation is flagged", (await page.getByText(/gradation b : ∅/i).count()) > 0);
+/*
+  The same rule as the letter bar above, applied to data rather than to a
+  preference: state the precondition, do not inherit it.
 
-await page.getByRole("button", { name: /Add to deck|In deck/ }).click();
-await page.waitForTimeout(400);
-const addBtn = page.getByRole("button", { name: /^Add$/ });
-if (await addBtn.count()) await addBtn.click();
-check("add to deck completes",
-  await eventually(async () => (await page.getByRole("button", { name: /In deck/ }).count()) > 0));
+  These three checks need `tuba` to open the seeded noun, and until recently
+  that was not something this suite could count on. `Lexeme` is unique on
+  `[lemma, pos]`, so a suite that ticks an unvouched word already in the
+  dictionary leaves a second row under the same lemma with no paradigm behind
+  it. `test-containment.mjs` did exactly that with `tuba`, and CI runs it two
+  steps before this. What that cost was not one failed check: `waitForSelector`
+  threw, the suite died before check one, and a whole run reported a Playwright
+  timeout instead of a cause.
+
+  So the wait is a question now. A dictionary with no `tuba` at all is a
+  database nobody seeded, which is an honest absence and waives its checks. A
+  `tuba` that opens without a paradigm is something shadowing it, which is a
+  fault and says so in a sentence naming the likely culprit.
+*/
+await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
+const paradigm = await page
+  .waitForSelector("text=toaga", { timeout: 10000 })
+  .then(() => true, () => false);
+
+if (!paradigm) {
+  const opened = (await page.locator("main h2").first().innerText().catch(() => "")).trim();
+  if (!opened) {
+    absent(4, "a seeded dictionary: `tuba` is not in it at all. npm run db:seed");
+  } else {
+    /*
+      Waived and failed, which is not two minds about it. The four checks
+      genuinely cannot run, so the floor has to come down or the shortfall
+      would report a second time in vaguer words; and the reason is a fault
+      rather than a thin database, so it fails as well and says whose.
+    */
+    absent(4, "a `tuba` with a paradigm behind it, which something has shadowed");
+    check(
+      "the seeded noun is what `tuba` opens",
+      false,
+      `it opened "${opened}" with no paradigm. Another suite has probably left a second `
+      + `"tuba" in the shared dictionary: see UNVOUCHED in scripts/test-containment.mjs`,
+    );
+  }
+}
+
+/*
+  All four, not just the three about the paradigm. Adding to the deck is done
+  from this same entry, so on a shadowed `tuba` it clicks a button that is not
+  there, and the suite dies four checks later than it needs to with the cause
+  already printed above it.
+*/
+if (paradigm) {
+  check("search shows the short illative", (await page.getByText("tuppa", { exact: true }).count()) > 0);
+  check("derived case table renders", (await page.getByText("toaga", { exact: true }).count()) > 0);
+  check("gradation is flagged", (await page.getByText(/gradation b : ∅/i).count()) > 0);
+
+  await page.getByRole("button", { name: /Add to deck|In deck/ }).click();
+  await page.waitForTimeout(400);
+  const addBtn = page.getByRole("button", { name: /^Add$/ });
+  if (await addBtn.count()) await addBtn.click();
+  check("add to deck completes",
+    await eventually(async () => (await page.getByRole("button", { name: /In deck/ }).count()) > 0));
+}
 
 // 2 — Search box drives navigation, and the diacritic bar types Estonian
 await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });

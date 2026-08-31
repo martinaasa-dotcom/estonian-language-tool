@@ -196,10 +196,39 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
   if (!q) return [];
   const folded = fold(q);
 
+  /*
+    THE LAST TWO KEYS ARE WHAT MAKE THIS AN ORDER RATHER THAN NEARLY ONE.
+
+    Two entries can share a lemma: `Lexeme` is unique on `[lemma, pos]` because
+    `hall` is a noun meaning frost and an adjective meaning grey, and because a
+    learner adding `tuba` by hand or off a photograph gets their own row beside
+    the seeded one. Both then score 100 for the exact lemma, and
+    `localeCompare` of a word with itself is 0, so with those two keys alone
+    the comparator returned 0 for the pair.
+
+    A comparator that returns 0 does not mean "either will do". `sort` is
+    stable, so it means "keep the order you were given", and the order we were
+    given is whatever Postgres returned from a `findMany` with no `orderBy` —
+    a fact about the plan and the physical layout of the table rather than
+    about Estonian. `/dictionary` opens `hits[0]` without asking, so the entry
+    a learner is shown for their own search was decided by the query planner.
+    It is the fault `resolveScan.ts` has a comment about, one layer up: an
+    order nobody specified is not an order.
+
+    So the tie is broken on what the dictionary actually knows. More forms
+    first, because that is the entry with a paradigm to open and the other is
+    usually a bare row somebody typed. Then the id, which decides nothing a
+    reader would notice and guarantees no two candidates ever compare equal
+    again.
+  */
   const scored = candidates
     .map((c) => ({ hit: c, ...rank(c, q, folded) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.hit.lemma.localeCompare(b.hit.lemma, "et"));
+    .sort((a, b) =>
+      b.score - a.score
+      || a.hit.lemma.localeCompare(b.hit.lemma, "et")
+      || b.hit.forms.length - a.hit.forms.length
+      || a.hit.id.localeCompare(b.hit.id));
 
   return scored.slice(0, limit).map(({ hit, matchedAs }) => ({
     id: hit.id,
