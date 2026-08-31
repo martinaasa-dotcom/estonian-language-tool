@@ -159,8 +159,6 @@ export function Sidebar() {
             {
               "--nav-marker-bg": "var(--surface)",
               "--nav-marker-shadow": "var(--shadow-sm)",
-              "--nav-ghost-bg": "var(--accent-soft)",
-              "--nav-ghost-halo": "3px",
             } as CSSProperties
           }
         >
@@ -279,7 +277,6 @@ export function Sidebar() {
               background: "var(--surface)",
               boxShadow: "var(--shadow)",
               "--nav-marker-bg": "var(--raised)",
-              "--nav-ghost-bg": "var(--accent-soft)",
             } as CSSProperties
           }
         >
@@ -409,12 +406,14 @@ export function Sidebar() {
  * One row of the desktop rail.
  *
  * It paints no background of its own in either state now. The card the
- * current row used to draw for itself is one pane that travels between them,
- * and a row that also painted itself would be a second answer to the same
+ * current row used to draw for itself is one pane that the marker places, and
+ * a row that also painted itself would be a second answer to the same
  * question arriving a beat later. What is left here is what a pane cannot
- * say: which row is bold, and which glyph wears its own colour.
+ * say: which row is bold, and which glyph wears its own colour. Those two are
+ * also the whole of what tells the row you are on from the row you are
+ * pointing at, since both now carry the same pane; see `app/nav.css`.
  *
- * The disc reads `--nav-disc` rather than naming its resting fill, because an
+ * The ink reads `--nav-ink` rather than naming its resting colour, because an
  * inline style beats a class hover, silently, which is the mechanism that
  * left half the controls in this app dead under a pointer. A custom property
  * is how a caller passes a tone *through* one, and `app/nav.css` spends it
@@ -439,7 +438,7 @@ function RailLink({ item, active }: { item: Destination; active: boolean }) {
       <span
         className="nav-glyph flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
         style={{
-          background: active ? `var(--${item.tone})` : "var(--nav-disc, var(--raised))",
+          background: active ? `var(--${item.tone})` : "var(--raised)",
           color: active ? "var(--surface)" : "var(--ink-3)",
         }}
       >

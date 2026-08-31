@@ -4,10 +4,18 @@
  * The rail and the phone bar used to say where you were by painting the row
  * you were on and unpainting the one you left. That is two things happening
  * at once and it reads as two things: a light going out over here and another
- * coming on over there, with nothing connecting them. What connects them is a
- * marker that *travels*, and the travel is the whole of the effect, because a
- * pill that slides from the row you left to the row you asked for is the app
- * showing you the move you just made rather than the state you ended in.
+ * coming on over there, with nothing connecting them. What connects them is
+ * one pane rather than two states, and there are two of those panes: the
+ * marker, which says where you are, and the pointer's own, which says what
+ * you are reaching for. They are one object at two weights, which is the
+ * whole of why the navigation reads as a place with a marker in it.
+ *
+ * WHETHER THAT PANE TRAVELS IS A QUESTION ABOUT THE INPUT, NOT THE DESIGN.
+ * A thumb has nothing else to do while a server answers, so the phone bar's
+ * marker slides from the cell you left to the cell you asked for. A pointer
+ * has already arrived, and its pane has been following it down the rail all
+ * along, so the rail's marker does not travel at all: it is simply there, on
+ * the row under the cursor, on `pointerdown`. See `NAV_MOTION`.
  *
  * Borrowed, deliberately and with its measurements intact, from Upside Lab's
  * dock, which traced this off iOS frame by frame. Three things carry it and
@@ -55,19 +63,35 @@ export type NavDir = "forward" | "back" | null;
 /**
  * The two surfaces and what each is allowed to spend.
  *
- * They are not the same numbers because they are not the same object. The bar
- * is a floating capsule of five cells that a thumb hits, so it takes the
- * fuller breath and the longer run: it is the surface Lab traced these off,
- * and a finger has no hover to spend the motion on instead. The rail is a
- * column of sixteen rows on a machine with a pointer, where every travel is a
- * shorter distance and the pointer already has the ghost pane to answer it,
- * so it moves quicker and does not breathe at all. A rail that swelled every
- * time somebody clicked a link would be an eighty percent taller object
- * lurching beside the page it just changed.
+ * They are not the same numbers because they are not the same object, and the
+ * one that matters most is the rail's zero.
+ *
+ * A TRAVELLING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
+ * The phone bar is a floating capsule of five cells that a thumb hits, and a
+ * thumb has nothing else to do while it waits, so a pill crossing the bar is
+ * the app keeping the reader company through a wait that is real. A pointer
+ * has already arrived: you clicked one row, you know which, and watching a
+ * marker take a quarter of a second to agree with you is the rail being
+ * slower than you are. Worse, it is a second answer to a settled question,
+ * arriving next to the page you just changed.
+ *
+ * So the rail's travel is zero and `glide` writes the resting geometry and
+ * returns: the marker is simply THERE, on the row you pressed, on
+ * `pointerdown`. What carries the movement on that surface instead is the
+ * pointer's own pane, which has been following the pointer down the column
+ * all along, so by the time you press, the card is already under your cursor
+ * and clicking only settles it. Reaching and arriving are one object at two
+ * weights, and neither of them flies anywhere.
+ *
+ * The bar keeps the full run and the breath, which is the surface Lab traced
+ * these off and the one a finger has no hover to spend the motion on instead.
+ * The rail does not breathe at all: a column of sixteen rows swelling every
+ * time somebody clicked a link would be a tall object lurching beside the
+ * page it just changed.
  */
 export const NAV_MOTION = {
-  rail: { travelMs: 260, lagMs: 14, swellPeak: 1, swellMs: 0 },
-  bar: { travelMs: 330, lagMs: 18, swellPeak: 1.03, swellMs: 460 },
+  rail: { travelMs: 0, lagMs: 14, swellPeak: 1, swellMs: 0 },
+  bar: { travelMs: 340, lagMs: 18, swellPeak: 1.03, swellMs: 460 },
 } as const;
 
 export type NavSurface = keyof typeof NAV_MOTION;

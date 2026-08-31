@@ -28,6 +28,7 @@ import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
+import { NAV_MOTION } from "../lib/ux/navMotion";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
@@ -861,41 +862,92 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
-check("adding a word to a deck reads and writes under one lock", () => {
+check("every path that adds cards reads and writes under one lock", () => {
   /*
-    "Is it already there" is check-then-act. `addCardsFor` read the learner's
-    existing cards for a word, filtered the generated ones against them, and
-    inserted the rest; two requests inside that gap both see an empty deck and
-    both insert. Measured against a real database rather than reasoned about:
-    two concurrent adds gave two cards, four gave four, and eight gave fourteen
-    where two is right. A learner meets it by double-tapping "Add to deck", and
-    `addUnitToDeck` walks this once per word with no throttle in front of it.
+    "Is it already there" is check-then-act, and this app has two paths that ask
+    it. `addCardsFor` read the learner's existing cards for a word, filtered the
+    generated ones against them, and inserted the rest; two requests inside that
+    gap both see an empty deck and both insert. Measured against a real database
+    rather than reasoned about: two concurrent adds gave two cards, four gave
+    four, and eight gave fourteen where two is right.
+
+    `addUnitsToDeck` then arrived as the batched rewrite of the loop that called
+    it, kept the shape and did not inherit the lock, which moved the fault from
+    one word to a whole unit: eight concurrent adds of an eighteen-word unit
+    wrote 180 cards where 36 is right. A learner meets either one by double
+    tapping "Add to deck", or the last button of first run, and neither has a
+    throttle in front of it because neither should.
 
     The lock is `lib/usage/ledger.ts`'s, for the reasons its header gives: the
     *transaction* form, so a connection pooler cannot strand it, and the
-    blocking one, since the non-blocking form serialises nothing. With it, 16
-    concurrent adds make 2 cards in 28ms.
+    blocking one, since the non-blocking form serialises nothing.
 
-    Asserted as the three things together, because each on its own is satisfied
-    by a version that still races: a transaction with no lock, a lock taken
-    outside the transaction, or a lock with the read left outside it.
+    Asserted per path as the three things together, because each on its own is
+    satisfied by a version that still races: a transaction with no lock, a lock
+    taken outside the transaction, or a lock with the read left outside it. And
+    asserted as *one* lock, because two paths guarding themselves with two
+    different keys are two paths neither of which guards the other.
   */
-  const src = code("app/actions.ts");
-  const body = /async function addCardsFor\(([\s\S]*?)\n\}/.exec(src)?.[1] ?? "";
-  assert.ok(body, "addCardsFor has gone, or changed shape past recognition");
+  const lockedPaths = [
+    {
+      what: "addCardsFor",
+      body: /async function addCardsFor\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "",
+      read: "card.findMany",
+      write: "card.createMany",
+    },
+    {
+      what: "addUnitsToDeck",
+      body: /export async function addUnitsToDeck\(([\s\S]*?)\n\}/.exec(code("lib/srs/deck.ts"))?.[1] ?? "",
+      read: "card.findMany",
+      write: "card.createMany",
+    },
+  ];
 
-  assert.match(body, /prisma\.\$transaction\(/, "addCardsFor no longer runs in one transaction");
+  for (const { what, body, read: readCall, write } of lockedPaths) {
+    assert.ok(body, `${what} has gone, or changed shape past recognition`);
+    assert.match(body, /\$transaction\(/, `${what} no longer runs in one transaction`);
+    assert.match(
+      body, /lockDeck\(/,
+      `${what} stopped taking the deck lock, so two tabs can both insert`,
+    );
+
+    const lockAt = body.indexOf("lockDeck(");
+    const readAt = body.indexOf(readCall);
+    const writeAt = body.indexOf(write);
+    assert.ok(readAt >= 0 && writeAt >= 0, `${what} no longer reads what it has before writing`);
+    assert.ok(
+      lockAt < readAt && readAt < writeAt,
+      `${what} takes its lock after the read it is meant to protect, which serialises nothing`,
+    );
+  }
+
+  /*
+    And the lock itself. The transaction form and the blocking one, keyed on the
+    owner and nothing else: a key naming the word, which is what the per-word
+    path used before the batched builder existed, is safe against another add of
+    the same word and says nothing about a unit add that contains it.
+  */
+  const deck = code("lib/srs/deck.ts");
+  const lock = /export async function lockDeck\(([\s\S]*?)\n\}/.exec(deck)?.[1] ?? "";
+  assert.ok(lock, "lockDeck has gone, and with it the one definition both paths read");
   assert.match(
-    body, /pg_advisory_xact_lock/,
-    "addCardsFor stopped taking the transaction advisory lock, so two tabs can both insert",
+    lock, /pg_advisory_xact_lock/,
+    "lockDeck stopped taking the transaction advisory lock",
   );
-  const lockAt = body.indexOf("pg_advisory_xact_lock");
-  const readAt = body.indexOf("card.findMany");
-  const writeAt = body.indexOf("card.createMany");
-  assert.ok(readAt >= 0 && writeAt >= 0, "addCardsFor no longer reads what it has before writing");
-  assert.ok(
-    lockAt < readAt && readAt < writeAt,
-    "addCardsFor takes its lock after the read it is meant to protect, which serialises nothing",
+  assert.doesNotMatch(
+    lock, /pg_try_advisory/,
+    "lockDeck went to the non-blocking lock, which serialises nothing",
+  );
+  assert.match(
+    lock, /\$\{`deck:\$\{ownerId\}`\}/,
+    "lockDeck stopped keying on the owner alone, so the per-word and batched paths no longer exclude each other",
+  );
+
+  assert.equal(
+    (deck.match(/pg_advisory_xact_lock/g) ?? []).length
+      + (code("app/actions.ts").match(/pg_advisory_xact_lock/g) ?? []).length,
+    1,
+    "a deck write is taking a lock of its own again; there is one definition and it is lockDeck",
   );
 });
 
@@ -1450,7 +1502,7 @@ check("the rail shows every place, rather than hiding some behind a button", () 
   }
 });
 
-check("where you are is one pill that travels, on the compositor", () => {
+check("where you are is one pane, and it arrives under a pointer", () => {
   /*
     The rail and the phone bar say where you are with one pane that moves
     between their cells, rather than each cell painting itself when its turn
@@ -1503,6 +1555,58 @@ check("where you are is one pill that travels, on the compositor", () => {
     "the current row stopped carrying its own card for the paint before hydration",
   );
   assert.match(rail, /data-nav-marked/, "nothing tells the row when a pane has taken the card over");
+
+  /*
+    REACHING AND ARRIVING ARE ONE OBJECT AT TWO WEIGHTS.
+
+    The pointer's pane was the accent's softest tint, three pixels bigger than
+    the row it sat under, while the marker was a white card the row's own size,
+    so the two states of one row were two different objects and on the row you
+    were already on the tint stuck out round the card as a second outline. They
+    read one fill now, `--nav-marker-bg`, and the marker's own lift is the only
+    difference; a pane painted from a fill of its own, or reaching past the cell
+    it was measured on, is the regression either way.
+  */
+  /* Comments first: this one carries commas and the word `box-shadow`. */
+  const rules = motion.replace(/\/\*[\s\S]*?\*\//g, "");
+  const ghost =
+    rules
+      .split("}")
+      .map((rule) => rule.split("{"))
+      .filter((parts) => parts.length === 2 && parts[0]!.trim().endsWith(".nav-ghost") &&
+        !parts[0]!.includes(","))
+      .map((parts) => parts[1]!)
+      .join("\n");
+  assert.match(
+    ghost,
+    /background:\s*var\(--nav-marker-bg/,
+    "the pointer's pane is painted something other than the marker's own fill",
+  );
+  assert.doesNotMatch(
+    ghost,
+    /box-shadow/,
+    "the pointer's pane reaches past the cell it was measured on again",
+  );
+
+  /*
+    A TRAVELLING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
+
+    A thumb has nothing else to do while a server answers, so the bar's pill
+    slides from the cell you left to the cell you asked for. A pointer has
+    already arrived, and its own pane has been following it down the rail all
+    along, so the rail is written straight to its resting geometry and the
+    marker is simply there on the row you pressed. Asserted as the pair rather
+    than as either number: what may not happen is the two surfaces answering
+    the same way, and `glide` has to have the zero-duration way out for the
+    rail's answer to mean anything at all.
+  */
+  assert.equal(NAV_MOTION.rail.travelMs, 0, "the rail's marker travels again under a pointer");
+  assert.ok(NAV_MOTION.bar.travelMs > 0, "the phone bar's marker stopped travelling");
+  assert.match(
+    code("lib/layout/navMarker.ts"),
+    /durationMs\s*<=\s*0/,
+    "a pane with no travel would animate anyway, since `glide` lost its way out",
+  );
 });
 
 check("the pure modules stay free of React, Next and Prisma", () => {
@@ -3748,6 +3852,57 @@ check("a suite that reveals a review card knows all the shapes it comes in", () 
  * asserted on the *last* key, because an order that is total in the middle and
  * loose at the end is loose.
  */
+/*
+  AND EVERYWHERE ELSE, A TRUNCATED QUERY AT LEAST SAYS WHERE TO CUT.
+
+  The check below holds `lib/progress/` to a total order, because a figure drawn
+  from those rows has to be the same figure twice. The rest of the app was held
+  to nothing, and five reads had drifted to a `take` with no `orderBy` at all,
+  which is not a weaker version of the rule: it is the plan choosing which rows
+  the screen is built from. Today's weakest cases took an arbitrary five
+  thousand; the government drill and the minimal-pairs round each took an
+  arbitrary two thousand cards to decide which words were already in the deck,
+  so whether an answer graded a real card changed between visits; the class week
+  counted three figures off an arbitrary three hundred; and the dictionary's
+  suggestion row shuffled an arbitrary two hundred.
+
+  This asks only for an order, not for a unique one. Ending every truncated read
+  in the app on the primary key is a larger change than this rule needs to be
+  useful, and where a screen orders by `due` and cuts, arbitrary-but-stated
+  still beats arbitrary-and-silent. The stricter rule stays where a number is
+  derived.
+*/
+check("a truncated query outside the progress layer still says where to cut", () => {
+  let looked = 0;
+  const silent: string[] = [];
+
+  for (const file of [...APP, ...LIB]) {
+    if (file.includes(join("lib", "progress"))) continue;
+    const src = code(file);
+    for (const found of src.matchAll(/\.findMany\(\{/g)) {
+      let depth = 0;
+      let end = found.index + found[0].length - 1;
+      for (let i = end; i < src.length; i += 1) {
+        if (src[i] === "{") depth += 1;
+        else if (src[i] === "}") { depth -= 1; if (depth === 0) { end = i; break; } }
+      }
+      const block = src.slice(found.index, end + 1);
+      if (!/\btake:/.test(block) && !/\bskip:/.test(block)) continue;
+      looked += 1;
+      if (!/\borderBy:/.test(block)) {
+        silent.push(`${file}:${src.slice(0, found.index).split("\n").length}`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    silent, [],
+    `${silent.join(", ")} cuts a query short without saying where to cut, so which rows `
+    + "the screen is built from is the plan's choice rather than anybody's",
+  );
+  assert.ok(looked > 20, `only ${looked} truncated reads found, so this check stopped looking`);
+});
+
 check("a truncated query in the progress layer ends on the primary key", () => {
   const dir = join("lib", "progress");
   const files = readdirSync(dir)
@@ -4745,6 +4900,125 @@ check("the plan reads a duration through the one module that units it", () => {
  * all measured at runtime and set as inline styles. So what this asserts is
  * that the name is set *somewhere*, not that it is in the palette.
  */
+/*
+  THE WEAKEST CASES ARE ONE CALCULATION OVER ONE QUERY.
+
+  "Your weakest cases, click to drill" was drawn three ways on three pages, and
+  consolidating the component and the calculation fixed only the half you can
+  see: the *input* stayed three, and Progress read the last half-year while two
+  other screens each took an arbitrary five thousand rows of all time with no
+  order between them. A learner who got the partitive wrong three hundred times
+  last year and right three hundred times this month was told 100% on one screen
+  and 50% on another, on the same day, about the same case. `caseReviewsFor` is
+  the shared input that ended that.
+
+  It came back anyway. Today's dashboard was rewritten, reached for
+  `caseAccuracy` like everybody else, and wrote the old query beside it, which
+  made the home page the fourth answer. So the pairing is asserted rather than
+  described: a screen that runs the calculation reads the query, and nobody
+  gathers those rows themselves.
+
+  Anchored on the call rather than on the import, because a file can import a
+  function and go on using its own rows, which is exactly what happened.
+*/
+check("every screen that draws the weakest cases reads the one query behind them", () => {
+  /*
+    The panel is one component and one calculation, and consolidating those
+    fixed only the half you can see: the *input* stayed three. Progress read the
+    last half-year while two other screens each took an arbitrary five thousand
+    rows of all time with no order between them, so a learner who got the
+    partitive wrong three hundred times last year and right three hundred times
+    this month was told 100% on one screen and 50% on another, on the same day,
+    about the same case. `caseReviewsFor` is the shared input that ended it.
+
+    It came back anyway. Today's dashboard was rewritten, reached for
+    `caseAccuracy` like everybody else, and wrote the old query beside it, which
+    made the home page the fourth answer.
+
+    Scoped to `app/`, because a screen drawing this panel is the thing that has
+    to agree with the other screens drawing it. Two modules under `lib/` score
+    cases for different questions and each says so in its own header: the class
+    roster rolls a whole class up at once, which one learner's query cannot
+    express, and the badge stats read all time on purpose, because a badge is a
+    claim about what somebody has done rather than about what to drill now.
+    Widening this to `lib/` would fire on both, and a check that fires on honest
+    code is a check people learn to waive.
+
+    Anchored on the call rather than on the import, because a file can import a
+    function and go on using its own rows, which is exactly what happened.
+  */
+  const screens: string[] = [];
+  for (const file of APP) {
+    const src = code(file);
+    if (!/\bcaseAccuracy\(/.test(src)) continue;
+    screens.push(file);
+
+    assert.match(
+      src, /caseReviewsFor\(/,
+      `${file} scores the cases off rows it gathered itself. A shared calculation over an `
+      + "unshared input is not a shared answer: read them with caseReviewsFor",
+    );
+    /*
+      And it does not gather them itself as well. Matched on the *filter* rather
+      than on the column: Progress selects `targetCase` among eight others for
+      the heatmap and the forecast, which is a different chart over a different
+      window, and only a query that narrows to the case reviews is this panel's
+      input wearing another name.
+    */
+    assert.doesNotMatch(
+      src, /review\.findMany\(\{[\s\S]{0,300}?targetCase: \{ not: null \}/,
+      `${file} selects its own case reviews beside the shared query, which is the second `
+      + "input caseReviewsFor exists to prevent",
+    );
+  }
+
+  assert.ok(
+    screens.length >= 3,
+    `only ${screens.length} screens draw the weakest cases, so this check stopped looking`,
+  );
+});
+
+/*
+  ONE TYPEFACE, AND NOTHING WEARING THE SECOND ONE'S CLASS.
+
+  Estonian used to be set in a second face, which put two typefaces inside one
+  card wherever a prompt and its answers are in different languages, and that is
+  most of this app. The face was removed and `components/Et.tsx` says so: the
+  `lang` attribute is the whole of what marking Estonian means now.
+
+  What the removal left behind is an `est` class that nothing defines. Four
+  branches open at the time reintroduced it and three were stripped in the
+  merge; the fourth reached the tree and sat on `/review/government` styling
+  nothing, because a class no stylesheet declares is silent rather than broken.
+  That is the shape worth asserting: the typeface cannot come back through a
+  second `next/font` call, and a screen cannot go on asking for it through a
+  class that was deleted underneath it.
+*/
+check("Estonian is marked by its language, not by a second typeface", () => {
+  const layout = code("app/layout.tsx");
+  const faces = [...layout.matchAll(/from "next\/font\/google"/g)].length;
+  assert.equal(
+    faces, 1,
+    `app/layout.tsx loads ${faces} font imports. Estonian is marked with lang, not with a face of its own`,
+  );
+
+  const wearing: string[] = [];
+  for (const file of ALL) {
+    const src = code(file);
+    for (const match of src.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)) {
+      const classes = (match[1] ?? match[2] ?? "").split(/\s+/);
+      if (classes.includes("est")) {
+        wearing.push(`${file}:${src.slice(0, match.index).split("\n").length}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    wearing, [],
+    `${wearing.join(", ")} still applies the "est" class, which the second typeface carried and `
+    + "nothing defines any more, so it styles nothing and reads as though it does",
+  );
+});
+
 check("every custom property a screen reads is one something sets", () => {
   const stylesheets = sourceFiles("app", /\.css$/).map(read).join("\n");
 

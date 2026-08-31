@@ -39,6 +39,7 @@
   --text-4xl: 40px;     /* display */
   --text-5xl: 52px;     /* landing hero */
   --text-6xl: 68px;     /* the same hero, once there is room for it */
+  --text-7xl: 88px;     /* and again, once the window is wide and tall enough */
 
   /* Tailwind's radius names, mapped onto the four the system actually has, so
      a stray `rounded-md` lands on 10px rather than inventing a 6px corner. */
@@ -197,6 +198,18 @@
     --shadow: 0 1px 2px rgb(36 31 53 / 0.04), 0 14px 34px -18px rgb(66 48 150 / 0.28);
     --shadow-lg: 0 2px 4px rgb(36 31 53 / 0.04), 0 30px 60px -28px rgb(66 48 150 / 0.38);
     --shadow-accent: 0 10px 24px -12px rgb(122 107 240 / 0.65);
+
+    /*
+      The key cap on a primary button, which is the one surface whose ink
+      flips. `--accent-ink` is white in the light theme and #171229 in the
+      dark, so a cap tinted one way cannot serve both: measured against the
+      worst of the accent ramp's three stops, white at 22% reads 3.32 under
+      white text and black at 16% reads 2.65 under dark text. The cap has to
+      tint away from the ink rather than toward it, so it is a token that
+      flips with the rest of the palette: 6.49 in the light theme and 5.79 in
+      the dark.
+    */
+    --key-cap: rgb(0 0 0 / 0.16);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -256,6 +269,8 @@
       --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
       --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
       --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
+
+      --key-cap: rgb(255 255 255 / 0.28);
     }
   }
 
@@ -306,6 +321,8 @@
     --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
     --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
     --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
+
+    --key-cap: rgb(255 255 255 / 0.28);
   }
 
   * { box-sizing: border-box; }
@@ -737,6 +754,7 @@
     touch-action: pan-y;
   }
 
+  .key-cap { background: var(--key-cap); }
   .tnum { font-variant-numeric: tabular-nums; }
 
   .label-xs {
@@ -806,6 +824,152 @@
   .grad-sweep {
     background-size: 220% 100%;
     animation: grad-sweep 9s ease-in-out infinite;
+  }
+
+  /*
+    THE LANDING HERO IS AS TALL AS THE SCREEN, LESS A DELIBERATE PEEK.
+
+    It used to be 483px whatever it was drawn on, because its height was two
+    paddings and whatever the copy came to. Measured: on a 1080px screen that
+    left 558px of window under the last line of the hero, which the browser
+    filled with the next section, so the first thing anybody saw was the hero
+    sitting in the top half and the whole of "You didn't fail Estonian" and its
+    paragraph crowded in under it. Two openings arguing at once, and a band of
+    dead air between them wide enough to read as a mistake. On a 780px phone
+    the same fault was 207px of it.
+
+    So the hero takes the window and centres its column in it, and the leftover
+    space goes above and below the copy in equal measure rather than into one
+    gap under it. What it does not take is `--hero-peek`, which is the point of
+    the whole rule: a hero that ends exactly at the fold is a page that looks
+    like it has nothing after it, and the honest way to say there is more is to
+    let the next section start where you can see it. The band is sized to clear
+    that section's own top padding and show its eyebrow with the heading rising
+    into the last of it, which is a beginning rather than an ornament. No arrow
+    and no second link: the page already made its one loud action, and the rule
+    the button primitive is written under is one per screen.
+
+    `svh` rather than `vh` or `dvh`. `vh` is the tall viewport on a phone, so
+    the peek would be hidden under the browser's own toolbar exactly when the
+    toolbar is showing, which is on arrival. `dvh` re-lays the page out as the
+    toolbar retracts, which moves the copy under the reader's thumb mid-scroll.
+    `svh` is the small one: the peek is honest with the toolbar there and grows
+    a little when it goes, which is the direction that costs nothing.
+
+    `--landing-nav` is measured rather than reasoned about, and it is the same
+    79px at every width this app is drawn at, because the nav pill's height is
+    set by the button in it rather than by anything that reflows.
+    `scripts/test-design.mjs` measures the real nav against it, since a typed
+    constant standing in for something on screen is a constant that drifts.
+
+    Both numbers sit on the rule that reads them rather than in `:root` with
+    the palette. They are two facts about one page, and a name in the token
+    block is an invitation to the rest of the app to build on them.
+  */
+  .hero-screen {
+    --landing-nav: 79px;
+    --hero-peek: 96px;
+
+    min-height: calc(100svh - var(--landing-nav) - var(--hero-peek));
+  }
+
+  @media (min-width: 768px) {
+    .hero-screen {
+      --hero-peek: 124px;
+    }
+  }
+
+  /*
+    The three gaps down the hero grow with the window the hero now fills.
+
+    Centring a fixed 363px column in an 877px box is the first fault wearing a
+    better hat: the copy stops being piled at the top and becomes a postage
+    stamp with a void over it and a void under it. What a tall screen is for is
+    letting the three beats stand apart, so the space goes between them rather
+    than around them, and the block grows until the air left over is a margin
+    instead of a gap.
+
+    They keep their proportions to each other while they do it, which is the
+    half that took two passes. Scaled apart, the gap over the button grew to
+    four times the one over the paragraph and the button stopped belonging to
+    the sentence that argues for it: a column read from the top down is one
+    thing with air in it rather than three things with distance between them.
+    So all three step up together, by about a third on a tall screen, and the
+    rest of the height stays in the margins, which is where a hero's air is
+    supposed to be.
+
+    Every one of these is a `clamp`, and the floor is the spacing the hero had
+    before any of this: on a short laptop or a phone held sideways nothing
+    grows at all, which is the case where there is no room to spend. `svh`
+    rather than `vh` for the reason `.hero-screen` gives, and the same unit as
+    the box these sit in, since a gap measured against a taller viewport than
+    its own container is a gap that overflows it.
+  */
+  .hero-lead { margin-top: clamp(1.25rem, 3.2svh, 2.5rem); }
+  .hero-action { margin-top: clamp(1.75rem, 6.4svh, 4.5rem); }
+  .hero-claims { margin-top: clamp(1.5rem, 4svh, 3rem); }
+
+  /*
+    THE HEADLINE IS THE THING THE AIR IS AROUND.
+
+    Filling the window and centring the column was half a fix and read as the
+    other half of the fault: the same small block, now with a margin over it
+    and a margin under it instead of a gap under it alone. Air does not read as
+    generous on its own. It reads as generous around something with enough
+    weight to deserve it, and 68px of headline in a 1512px window is not that,
+    so the page came out as a postage stamp in a field.
+
+    So the display steps once more, to 88px, and the paragraph under it goes
+    with it, and the gaps between them open up. The block that was 363px tall
+    on every desktop is about 520px, which is two thirds of the window rather
+    than a third, and the air left over is a margin at last.
+
+    The step is taken on width *and* height together, which is the part a
+    breakpoint alone gets wrong. 88px of headline over a 19px paragraph is
+    about 520px of column, and a 1024x600 laptop has 397px to put it in: the
+    hero would outgrow the window, the peek band would go under the fold, and
+    the page would open on a headline with its own paragraph cut off. Wide
+    enough is not the question. Wide and tall enough is.
+
+    Both numbers are what the step needs rather than a breakpoint borrowed from
+    the grid. The width is 768 because the longest line, "Estonian that", is
+    536px at this size and the column has 704px to draw it in there, so a
+    portrait tablet gets the big headline its height is crying out for; gating
+    it at the `lg` breakpoint left 768x1024 with 216px of air over a headline
+    two steps too small for it, which is the fault this whole pass is about.
+
+    `--text-7xl` is on the scale rather than a fluid `clamp` between two of
+    them, and that is what keeps `test-design.mjs` able to ask the question it
+    asks: a fluid size computes to whatever the window makes it, so a sweep for
+    sizes that are on the scale would have to stop reading this element, and
+    the eleven steps would be twelve steps and a hole.
+  */
+  .hero-display { font-size: var(--text-5xl); }
+  .hero-sub { font-size: var(--text-md); }
+
+  @media (min-width: 768px) {
+    .hero-display { font-size: var(--text-6xl); }
+  }
+
+  /*
+    The action grows with the statement, or the bottom half of the composition
+    is three small things under one big one. The doubled class is specificity
+    and not a typo: `size="lg"` puts `px-6 py-3.5 text-base` on the same
+    element from Tailwind's own utilities, in this same layer, so a single
+    class ties and the winner is whichever the build happens to emit last.
+    Two of the same class is 0-2-0 against 0-1-0, which is a rule that holds
+    wherever the file lands.
+  */
+  @media (min-width: 768px) and (min-height: 740px) {
+    .hero-display { font-size: var(--text-7xl); }
+    .hero-sub { font-size: var(--text-lg); }
+    .hero-claims { font-size: var(--text-sm); }
+
+    .hero-cta.hero-cta {
+      padding-inline: 2rem;
+      padding-block: 1rem;
+      font-size: var(--text-md);
+    }
   }
 
   /* Soft pastel light behind a section, so the ground never reads as flat grey. */

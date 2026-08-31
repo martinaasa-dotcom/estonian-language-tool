@@ -672,10 +672,18 @@ function taskView(task: {
  * What is fighting this learner: the words that keep lapsing and the cases they
  * keep missing.
  *
- * BOTH ARE THE ONE CALCULATION EACH. `stickingPoints` and `caseAccuracy` are
- * what Progress and Practice already read, and a home page tallying its own
- * would let one learner read two different numbers for the comitative with
- * nothing in the app to say which was right. That has happened here before.
+ * BOTH ARE THE ONE CALCULATION EACH, AND THE CASES ARE THE ONE QUERY.
+ * `stickingPoints` and `caseAccuracy` are what Progress and Practice already
+ * read, and a home page tallying its own would let one learner read two
+ * different numbers for the comitative with nothing in the app to say which was
+ * right. That has happened here before.
+ *
+ * So the reviews behind the cases come from `caseReviewsFor` rather than from a
+ * query written beside this one. A shared calculation over an unshared input is
+ * not a shared answer: the query this replaced took an arbitrary five thousand
+ * rows of all time with no order between them, which is the exact shape that
+ * module exists to remove, and all-time accuracy answers a different question
+ * from the one a drill button asks.
  *
  * The deck is narrowed in SQL, which is the one thing this does that Progress
  * does not. Progress loads every card the learner owns because it is going to
@@ -698,9 +706,10 @@ async function loadStruggle(ownerId: string, now: Date) {
         suspended: false,
         OR: [{ lapses: { gte: LAPSE_THRESHOLD } }, { reps: { gte: MIN_REPS } }],
       },
-      // Ordered to the end, because two cards can tie on both keys and this is
-      // a `take`: past the sixtieth row, which cards a learner is told are
-      // fighting them would otherwise be the query plan's choice.
+      // And on the primary key, because neither lapses nor reps is unique and
+      // this is cut at sixty: a tie at the boundary would otherwise be settled
+      // by whatever the plan did that day, so the panel could name a different
+      // card on two loads of one morning.
       orderBy: [{ lapses: "desc" }, { reps: "desc" }, { id: "asc" }],
       take: 60,
       select: {

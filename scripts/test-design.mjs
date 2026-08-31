@@ -202,9 +202,9 @@ for (const url of ["/welcome"]) {
 }
 
 // Floor: 13, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("Design system", { floor: 14 });
+const { check, done } = suite("Design system", { floor: 15 });
 
-const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px"]);
+const SCALE = new Set(["11.5px", "12.5px", "13.5px", "15px", "17px", "19px", "22px", "27px", "32px", "40px", "52px", "68px", "88px"]);
 const offScale = [...sizes.keys()].filter((s) => !SCALE.has(s));
 
 /*
@@ -249,11 +249,11 @@ check("no gradient wraps the wrong colour round its own edge", wrapped.size === 
   A HOVERED ROW IS A STATE NOTHING ELSE SWEEPS.
 
   The pass above walks pages as they arrive, and the rail's row under the
-  pointer is not a state a page arrives in: it paints the accent's softest
-  tint behind the row and writes the row in the accent's ink, and neither of
-  those readings exists until a pointer is on it. So it is hovered here, in
-  both themes, and measured against the pane actually behind the words
-  rather than against the page.
+  pointer is not a state a page arrives in: it draws the marker's own card
+  behind the row and writes the row in the ink the marked row wears, and
+  neither of those readings exists until a pointer is on it. So it is hovered
+  here, in both themes, and measured against the pane actually behind the
+  words rather than against the page.
 */
 const hovered = [];
 for (const theme of ["light", "dark"]) {
@@ -459,6 +459,78 @@ await p.emulateMedia({ reducedMotion: null });
 
 check("every landing letter keeps its slant with the motion turned off",
   unslanted.length === 0, unslanted.join(" "));
+
+/*
+  THE HERO'S ARITHMETIC AGAINST THE NAV IT IS SUBTRACTING.
+
+  `.hero-screen` is `100svh` less `--landing-nav` less `--hero-peek`, and the
+  first of those is a typed constant standing in for something drawn on screen,
+  which is the shape that drifts: raise the nav's padding or put a taller
+  control in the pill and the hero is that much too long, so the peek it leaves
+  under itself closes up and the page reads as ending at the fold again. The
+  nav is the same height at every width this app is drawn at, because the pill
+  is sized by the button in it rather than by anything that reflows, so one
+  measurement is the whole check. A pixel of slack for a fractional layout.
+
+  And the peek is checked by what it is for rather than by its number: the
+  section under the hero has to have started by the fold, and its heading has
+  to still be arriving at it. A hero that ends exactly at the bottom of the
+  window is a page that looks like it has nothing after it, which is the fault
+  this band exists to prevent, and a band wide enough to fit that whole section
+  in is the opposite fault, two openings competing on one screen.
+*/
+const heroFit = [];
+/*
+  The last two are the boundary of the display step, one pixel apart, because a
+  rule taken on two axes is a rule with a corner and the corner is where it is
+  wrong. 88px of headline over a 19px paragraph needs both the width for its
+  longest line and the height for the column: measured, 740 leaves 64px over
+  the headline and 739 has to fall back or the hero takes its own peek band
+  under the fold. Asserting the size at 1000x740 and 1000x739 is asserting that
+  the height half of the condition is really there, which a check at one
+  comfortable desktop size cannot see.
+*/
+for (const [width, height, display] of [
+  [390, 844, "52px"], [768, 1024, "88px"], [1024, 600, "68px"], [1280, 800, "88px"],
+  [1512, 982, "88px"], [1920, 1080, "88px"], [1000, 740, "88px"], [1000, 739, "68px"],
+]) {
+  await p.setViewportSize({ width, height });
+  await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
+  await p.waitForTimeout(200);
+  const seen = await p.evaluate(() => {
+    const bottom = (el) => Math.round(el.getBoundingClientRect().bottom);
+    const top = (el) => Math.round(el.getBoundingClientRect().top);
+    const nav = document.querySelector("header nav");
+    const cases = document.querySelector("#cases");
+    const hero = document.querySelector(".hero-screen");
+    const h1 = hero.querySelector("h1");
+    const declared = getComputedStyle(hero).getPropertyValue("--landing-nav");
+    return {
+      navBottom: bottom(nav),
+      declared: Math.round(parseFloat(declared)),
+      casesTop: top(cases),
+      headingTop: top(cases.querySelector("h2")),
+      display: getComputedStyle(h1).fontSize,
+      headlineTop: top(h1),
+      fold: window.innerHeight,
+    };
+  });
+  const at = `${width}x${height}`;
+  if (seen.display !== display) {
+    heroFit.push(`${at} the headline is ${seen.display}, not the ${display} this window has room for`);
+  }
+  if (seen.headlineTop - seen.navBottom < 32) {
+    heroFit.push(`${at} the headline is ${seen.headlineTop - seen.navBottom}px under the nav, which is not air`);
+  }
+  if (Math.abs(seen.navBottom - seen.declared) > 1) {
+    heroFit.push(`${at} nav is ${seen.navBottom}px, --landing-nav says ${seen.declared}px`);
+  }
+  if (seen.casesTop >= seen.fold) heroFit.push(`${at} nothing of the next section shows above the fold`);
+  if (seen.headingTop <= seen.fold - 120) heroFit.push(`${at} the next section's heading is ${seen.fold - seen.headingTop}px above the fold, which is a second opening rather than a peek`);
+}
+
+check("the hero fills the window and leaves the next section starting in it",
+  heroFit.length === 0, heroFit.join(" | "));
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);
 await b.close();

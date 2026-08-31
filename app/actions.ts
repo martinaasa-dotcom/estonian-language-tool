@@ -40,7 +40,7 @@ import {
   availableCardTypes, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
-import { addUnitsToDeck } from "@/lib/srs/deck";
+import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
@@ -98,12 +98,15 @@ async function addCardsFor(
 
     The answer is `lib/usage/ledger.ts`'s, for the reasons its own header gives:
     a *transaction* advisory lock, so a connection pooler cannot strand it, and
-    the blocking form, since the non-blocking one serialises nothing. Keyed on
-    the owner and the word rather than deployment-wide, because two learners
-    adding two words are not each other's concern here; the ledger is
-    deployment-wide because a shared budget is. `hashtextextended` gives the
-    two-argument form Postgres wants, and it is a lock key rather than a
-    checksum, so a collision costs two unrelated adds a few milliseconds.
+    the blocking form, since the non-blocking one serialises nothing.
+
+    The key is `lockDeck`'s and is the learner rather than the learner and the
+    word, which is a widening this path did not need on its own and the batched
+    builder does. A key naming the word is safe against another add of the same
+    word and says nothing about `addUnitsToDeck` writing a unit that contains
+    it, so two keys would leave each path guarded against itself and neither
+    against the other. One definition, in `lib/srs/deck.ts`, because two spellings
+    of a lock key are a lock that is not held.
 
     Held across one select and one insert, which is milliseconds, and the whole
     of it is work this action was doing anyway.
@@ -115,9 +118,7 @@ async function addCardsFor(
   const now = new Date();
   const scheduling = emptyScheduling(now);
   const added = await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
-    await tx.$executeRaw`
-      SELECT pg_advisory_xact_lock(hashtextextended(${`${owner}:${lexemeId}`}, 0))`;
+    await lockDeck(tx, owner);
 
     const existing = await tx.card.findMany({
       where: { lexemeId, ownerId: owner },

@@ -24,13 +24,14 @@ mkdirSync(SHOTS, { recursive: true });
 const browser = await launchChromium();
 
 /*
-  Floor: 45 before the navigation checks below, plus the seven they add, plus
-  the five the travelling marker adds. This box reaches 59 against a seeded
-  database, so the two above the floor are the ones gated on the deck holding
-  enough to build a government drill and a minimal pair, which a thin database
-  does not.
+  Floor: what CI reaches, three more than before, because the marker checks
+  below went from five to eight when the rail stopped travelling and the phone
+  bar grew checks of its own. This box reaches 66 against a seeded database
+  with the demo history laid down; the ones above the floor are gated on the
+  deck holding enough to build a government drill and a minimal pair, which a
+  thin database does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 61 });
+const { check, done } = suite("The new routes, rendered", { floor: 64 });
 
 const ROUTES = [
   ["/", "today"],
@@ -269,43 +270,37 @@ const aimed = await page.evaluate(async () => {
   const pane = nav.querySelector(".nav-marker");
   const to = [...nav.querySelectorAll("[data-nav-goes]")]
     .find((c) => c.getAttribute("href") === "/settings");
-  const from = pane.getBoundingClientRect().top;
-  const distance = to.getBoundingClientRect().top - from;
-  const rest = Math.round(pane.getBoundingClientRect().height);
-  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
   /*
     A press and nothing else: no click, so nothing navigates, and the marker
-    has only the bet to go on. The pill is sampled every frame for the length
-    of the travel rather than at one chosen instant, because how far along it
-    is at a given millisecond is a fact about the machine: the first version
-    of this read the stretch at 130ms, which is most of the way there on a
-    laptop and past the peak on a slower box, and it failed in CI at 56px
-    while passing here at 64. A peak over the whole journey is the same
-    measurement without the stopwatch in it.
+    has only the bet to go on. Read on the second frame rather than over a
+    window, because the rail does not travel: `NAV_MOTION.rail.travelMs` is
+    zero, so the pane is written to its resting geometry inside the press
+    handler and there is nothing in flight to sample.
   */
-  let covered = 0;
-  let tallest = rest;
-  const until = performance.now() + 420;
-  await new Promise((done) => {
-    const tick = () => {
-      const box = pane.getBoundingClientRect();
-      tallest = Math.max(tallest, box.height);
-      covered = Math.max(covered, (box.top - from) / distance);
-      if (performance.now() < until) requestAnimationFrame(tick);
-      else done();
-    };
-    requestAnimationFrame(tick);
-  });
-  return { covered: Math.round(covered * 100), rest, tallest: Math.round(tallest) };
+  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return {
+    onto: Math.round(pane.getBoundingClientRect().top - to.getBoundingClientRect().top),
+    running: pane.getAnimations().length,
+  };
 });
 check("the marker leaves on the press, not on the page",
-  aimed.covered > 90 && page.url() === was,
-  `${aimed.covered}% of the way there before the page was asked for anything, ` +
+  Math.abs(aimed.onto) <= 1 && page.url() === was,
+  `out by ${aimed.onto}px before the page was asked for anything, ` +
   `still on ${page.url().replace(BASE, "")}`);
-check("and it stretches across the ground it covers",
-  aimed.tallest > aimed.rest * 1.2,
-  `${aimed.tallest}px at its longest against a ${aimed.rest}px row, ` +
-  `which is ${(aimed.tallest / aimed.rest).toFixed(2)}x`);
+/*
+  AND UNDER A POINTER IT ARRIVES RATHER THAN TRAVELS.
+
+  A travelling pill is company for a thumb and an argument with a mouse: you
+  clicked one row, you know which, and watching a marker take a quarter of a
+  second to agree with you is the rail being slower than you are. What carries
+  the movement here is the pointer's own pane, which has been following the
+  cursor down the column all along, so by the time you press, the card is
+  already where the marker lands. The phone bar keeps the travel, and the two
+  checks below measure it there.
+*/
+check("and under a pointer it arrives rather than travelling to the row",
+  aimed.running === 0, `${aimed.running} animations in flight`);
 
 /*
   ONE NAVIGATION IS ONE JOURNEY.
@@ -317,17 +312,24 @@ check("and it stretches across the ground it covers",
   and all the way back: measured on this rail at three travels for one tap,
   127 to 817, 817 to 127, then 127 to 817 again. On a phone the browser taking
   the gesture for a scroll does it on an ordinary tap.
+
+  Counted as PLACES THE MARKER WAS PUT rather than as animations, because the
+  rail no longer travels: it is written straight to its resting geometry, so
+  an animation count is zero however many times the pill jumps. A mutation
+  observer on the pane's own style sees every one of them, on either surface.
 */
 await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await page.evaluate(() => {
   const pane = document.querySelector('nav[aria-label="Main"] .nav-marker');
-  window.__travels = [];
-  const real = pane.animate.bind(pane);
-  pane.animate = (frames, opts) => {
-    window.__travels.push(String(frames[frames.length - 1]?.transform ?? ""));
-    return real(frames, opts);
-  };
+  window.__places = [];
+  const at = () => /translateY\((-?[\d.]+)px\)/.exec(pane.style.transform)?.[1] ?? null;
+  new MutationObserver(() => {
+    const now = at();
+    if (now !== null && now !== window.__places[window.__places.length - 1]) {
+      window.__places.push(now);
+    }
+  }).observe(pane, { attributes: true, attributeFilter: ["style"] });
 });
 await page.locator('nav[aria-label="Main"] a[href="/settings"]').click();
 await page.waitForTimeout(60);
@@ -336,24 +338,41 @@ await page.evaluate(() =>
 );
 await page.waitForURL("**/settings", { timeout: 15000 }).catch(() => {});
 await page.waitForTimeout(900);
-const travels = await page.evaluate(() => window.__travels ?? []);
-check("a navigation is one journey, not three", travels.length === 1,
-  `${travels.length} travels: ${travels.join(" then ")}`);
+const places = await page.evaluate(() => window.__places ?? []);
+check("a navigation puts the marker in one place, not three", places.length === 1,
+  `${places.length} places: ${places.join(" then ")}`);
 
+/*
+  AN ABANDONED PRESS IS ONE THAT WANDERED, NOT ONE THE BROWSER CANCELLED.
+
+  A cancel used to be read as the press being given up, and on a fixed bar that
+  is wrong: the browser fires one at a finger that has done nothing at all,
+  because it has taken the touch to stop the page's momentum, and refusing that
+  is a tap that does nothing. What tells the two apart is whether the pointer
+  moved, which is the same question the click deadline asks. So this drags the
+  press well off the cell before cancelling it.
+*/
 const abandoned = await page.evaluate(async () => {
   const nav = document.querySelector('nav[aria-label="Main"]');
   const pane = nav.querySelector(".nav-marker");
   const to = [...nav.querySelectorAll("[data-nav-goes]")].find((c) => c.getAttribute("href") === "/");
   const at = () => Math.round(pane.getBoundingClientRect().top);
   const home = at();
-  to.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "touch" }));
+  const box = to.getBoundingClientRect();
+  to.dispatchEvent(new PointerEvent("pointerdown", {
+    clientX: box.left + 20, clientY: box.top + 10,
+    bubbles: true, button: 0, pointerType: "touch",
+  }));
   await new Promise((r) => setTimeout(r, 400));
   const aimed = at();
+  document.dispatchEvent(new PointerEvent("pointermove", {
+    clientX: box.left + 20, clientY: box.top + 260, bubbles: true, pointerType: "touch",
+  }));
   document.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerType: "touch" }));
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   return { home, aimed, back: at(), running: pane.getAnimations().length };
 });
-check("an abandoned press arrives home rather than travelling back",
+check("a press dragged off the cell arrives home rather than travelling back",
   abandoned.aimed !== abandoned.home && abandoned.back === abandoned.home && abandoned.running === 0,
   `aimed at ${abandoned.aimed}, back at ${abandoned.back} against ${abandoned.home}, ` +
   `${abandoned.running} animations`);
@@ -455,6 +474,103 @@ const barMark = await mobile.evaluate(() => {
 });
 check("the phone bar marks the cell you are on too", barMark !== null && barMark <= 1,
   barMark === null ? "no marker" : `out by ${barMark.toFixed(1)}px`);
+
+/*
+  AND THE PHONE BAR IS THE SURFACE THAT STILL TRAVELS.
+
+  A thumb has nothing else to do while a server answers, so the bar's pill
+  slides from the cell you left to the cell you asked for, and its leading edge
+  sets off before its trailing one follows, which is what makes it read as one
+  object smearing rather than a rectangle that moved. The rail arrives instead;
+  see the pointer check above. Sampled every frame over the length of the
+  travel rather than at one chosen millisecond, because how far along it is at
+  a given moment is a fact about the machine.
+*/
+await mobile.goto(`${BASE}/review`, { waitUntil: "networkidle" });
+await mobile.waitForTimeout(500);
+const barTravel = await mobile.evaluate(async () => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")]
+    .find((c) => c.getAttribute("href") === "/dictionary");
+  if (!pane || !to) return null;
+  const from = pane.getBoundingClientRect().left;
+  const rest = Math.round(pane.getBoundingClientRect().width);
+  const distance = to.getBoundingClientRect().left - from;
+  const box = to.getBoundingClientRect();
+  const where = {
+    clientX: box.left + box.width / 2,
+    clientY: box.top + box.height / 2,
+    bubbles: true, button: 0, pointerType: "touch",
+  };
+  to.dispatchEvent(new PointerEvent("pointerdown", where));
+  let covered = 0;
+  let widest = rest;
+  const until = performance.now() + 400;
+  await new Promise((done) => {
+    const tick = () => {
+      const at = pane.getBoundingClientRect();
+      widest = Math.max(widest, at.width);
+      covered = Math.max(covered, (at.left - from) / distance);
+      if (performance.now() < until) requestAnimationFrame(tick);
+      else done();
+    };
+    requestAnimationFrame(tick);
+  });
+  /*
+    Then let go, and dispatch NO click, which is what a browser does to a
+    press that landed while the page was still moving. The tap is inside
+    `TAP_HOLD_MS` of the press above, so it is still a tap.
+  */
+  to.dispatchEvent(new PointerEvent("pointerup", where));
+  return { covered: Math.round(covered * 100), rest, widest: Math.round(widest) };
+});
+check("the phone bar's marker travels, and stretches across the ground it covers",
+  barTravel !== null && barTravel.covered > 90 && barTravel.widest > barTravel.rest * 1.2,
+  barTravel === null ? "no marker" :
+    `${barTravel.covered}% of the way, ${barTravel.widest}px at its longest against a ` +
+    `${barTravel.rest}px cell, which is ${(barTravel.widest / barTravel.rest).toFixed(2)}x`);
+
+await mobile.waitForURL("**/dictionary", { timeout: 8000 }).catch(() => {});
+check("a press the browser never turned into a click still goes where it was aimed",
+  mobile.url().includes("/dictionary"),
+  `landed on ${mobile.url().replace(BASE, "")}`);
+
+/*
+  And a press that panned away is not a tap. It goes nowhere, and the marker
+  arrives home rather than travelling back, since reverting is a correction
+  and not a journey.
+*/
+await mobile.goto(`${BASE}/review`, { waitUntil: "networkidle" });
+await mobile.waitForTimeout(500);
+const panned = await mobile.evaluate(async () => {
+  const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
+    .find((n) => getComputedStyle(n).display !== "none");
+  const pane = nav.querySelector(".nav-marker");
+  const to = [...nav.querySelectorAll("[data-nav-goes]")]
+    .find((c) => c.getAttribute("href") === "/dictionary");
+  const at = () => Math.round(pane.getBoundingClientRect().left);
+  const home = at();
+  const box = to.getBoundingClientRect();
+  to.dispatchEvent(new PointerEvent("pointerdown", {
+    clientX: box.left + 20, clientY: box.top + 20,
+    bubbles: true, button: 0, pointerType: "touch",
+  }));
+  await new Promise((r) => setTimeout(r, 400));
+  const aimed = at();
+  document.dispatchEvent(new PointerEvent("pointermove", {
+    clientX: box.left + 220, clientY: box.top + 20, bubbles: true, pointerType: "touch",
+  }));
+  document.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerType: "touch" }));
+  await new Promise((r) => setTimeout(r, 160));
+  return { home, aimed, back: at(), running: pane.getAnimations().length };
+});
+check("a press dragged off the bar goes nowhere and arrives home",
+  panned.aimed !== panned.home && panned.back === panned.home &&
+  panned.running === 0 && !mobile.url().includes("/dictionary"),
+  `aimed at ${panned.aimed}, back at ${panned.back} against ${panned.home}, ` +
+  `${panned.running} animations, on ${mobile.url().replace(BASE, "")}`);
 
 console.log(`\nScreenshots in ${SHOTS}`);
 console.log(errors.length ? `\nConsole errors:\n${errors.join("\n")}` : "\nNo console errors.");
