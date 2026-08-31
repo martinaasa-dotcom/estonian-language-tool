@@ -1,4 +1,5 @@
-import { BANDS, type Band } from "./types";
+import { BANDS, type Band } from "@/lib/assessment/types";
+import type { CaseSpec } from "@/lib/estonian/cases";
 import { shuffle } from "@/lib/random/shuffle";
 
 /*
@@ -36,9 +37,18 @@ import { shuffle } from "@/lib/random/shuffle";
   two recorded usages that share every content word are two ways of saying one
   thing and a learner picking either of them is right.
 
-  Pure, and it holds no Estonian of its own. The case labels it arranges come
-  from `lib/estonian/cases.ts` and every gloss and sentence it sorts was read
-  out of the dictionary by the caller.
+  Three callers read it and that is why it lives here rather than inside any
+  one of them: the placement check (`lib/assessment/items.ts`), the mock exam
+  (`lib/exam/paper.ts`) and `buildOptions` in `lib/estonian/government.ts`,
+  which is the one table of what cases to offer against a governed one and is
+  shared by the exam and the government practice mode. A copy per caller is
+  three answers to one question, drifting a weight at a time, which is the
+  argument `lib/cache/singleFlight.ts` makes about itself.
+
+  Pure, and it holds no Estonian of its own: every gloss, form and sentence it
+  sorts was read out of the dictionary by the caller, and a case reaches it as
+  a `CaseSpec` from `lib/estonian/cases.ts`. The CEFR ladder comes from
+  `lib/assessment/types.ts`, which is where this app declares it.
 */
 
 /** Anything a learner can be asked to pick between. */
@@ -245,6 +255,17 @@ export function glossNearness(candidate: GlossOption, answer: GlossOption): numb
   return score;
 }
 
+/**
+ * The CEFR tag a dictionary entry carries, where it carries a usable one.
+ *
+ * Here rather than in either caller because a band is only ever read to decide
+ * what an option is worth, and both question builders were about to write the
+ * same three lines.
+ */
+export function bandOf(cefr: string | null | undefined): Band | null {
+  return BANDS.includes(cefr as Band) ? (cefr as Band) : null;
+}
+
 function bandCloseness(a: Band | null, b: Band | null): number {
   if (!a || !b) return 0;
   const gap = Math.abs(BANDS.indexOf(a) - BANDS.indexOf(b));
@@ -303,6 +324,59 @@ export function sentenceNearness(candidate: SentenceOption, answer: SentenceOpti
 }
 
 const asks = (sentence: string) => sentence.trim().endsWith("?");
+
+/**
+ * The three cases a first year does not reach.
+ *
+ * Everything else is a principal part, one of the six local cases, saav or
+ * kaasaütlev, which is roughly what a beginner's course covers. Rajav, olev
+ * and ilmaütlev a learner can cross out without looking at the form in front
+ * of them, simply because their class has not got there.
+ *
+ * Which is why this is a match rather than a bonus, and it took a question
+ * about kaasaütlev to see it. Rewarding a familiar option outright would put
+ * three first-year cases around every answer, so on the rarer ones it would
+ * hand back the elimination it exists to remove: the odd option is the answer,
+ * and the reader never has to read an ending at all. It is drawn by name
+ * rather than by where the traditional order puts a case, because that order
+ * has kaasaütlev last and a class teaches -ga in its first month.
+ */
+const LATE_CASES: readonly string[] = ["TERMINATIVE", "ESSIVE", "ABESSIVE"];
+
+const familiar = (spec: CaseSpec) => !LATE_CASES.includes(spec.key);
+
+/**
+ * How hard a case is to tell from another case.
+ *
+ * The question word is what a class actually teaches, and it is what makes
+ * this hard in the right way: `kus?` is answered by seesütlev and alalütlev
+ * both, so a learner who knows only that the form means "somewhere" has to
+ * decide whether the thing is in it or on it, which is the distinction the
+ * question exists to measure. After that comes the ending family, since -s,
+ * -st and -sse are one series and hearing which of them was said is most of
+ * the listening question.
+ *
+ * This is the only part of the case ranking that survived the level check
+ * dropping its case-name questions: what asks one now is `buildOptions` in
+ * `lib/estonian/government.ts`, which is a question about a verb rather than
+ * about a form, so it needs the scoring and none of the labelling that went
+ * with it.
+ */
+export function caseNearness(candidate: CaseSpec, answer: CaseSpec): number {
+  let score = 0;
+
+  const asked = new Set(answer.question.split(/\s+/));
+  for (const word of candidate.question.split(/\s+/)) if (asked.has(word)) score += 5;
+
+  if (
+    candidate.suffix && answer.suffix
+    && (candidate.suffix.startsWith(answer.suffix) || answer.suffix.startsWith(candidate.suffix))
+  ) score += 3;
+  if (candidate.principal === answer.principal) score += 2;
+  if (familiar(candidate) === familiar(answer)) score += 2;
+  if (candidate.suffix.length === answer.suffix.length) score += 1;
+  return score;
+}
 
 /**
  * How hard one Estonian form is to tell from another.

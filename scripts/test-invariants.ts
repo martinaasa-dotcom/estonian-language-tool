@@ -2168,34 +2168,53 @@ check("no model decides anybody's level", () => {
   }
 });
 
-check("a placement question never fills itself with free eliminations", () => {
+check("a question never fills itself with free eliminations", () => {
   /*
-    ADR-020 amendment 1. The wrong answers used to be the first three the
-    shuffle handed back out of the whole dictionary, so "black" was asked
-    against a plastic bag and two C1 nouns and the question could be answered
-    without reading it. Every question that offers a choice now ranks its
-    candidates in `lib/assessment/distractors.ts`, and what is asserted is that
-    no builder goes back to assembling its own options, since that is the shape
-    the fault had and the shape a sixth question kind would arrive in.
+    ADR-020 amendment 1, and the same fault in the mock exam. The wrong answers
+    used to be the first three a shuffle handed back: the placement check drew
+    them from the whole dictionary, so "black" was asked against a plastic bag
+    and two C1 nouns, and the exam drew them from a deck spanning four levels
+    and could offer a word's own synonym. Both questions could be answered
+    without reading the Estonian, and a level or a mark built on those measured
+    nothing.
+
+    `lib/questions/distractors.ts` is the one table of what makes a wrong
+    answer hard to cross out, and what is asserted is that every builder still
+    reads it and that none of them goes back to assembling its own options,
+    since that is the shape the fault had and the shape a new question kind
+    would arrive in.
   */
-  const items = read("lib/assessment/items.ts");
-  const optionLines = items.split("\n").filter((line) => /^\s*options:/.test(line));
-  assert.ok(optionLines.length >= 5, `expected the choice questions, found ${optionLines.length}`);
-  for (const line of optionLines) {
-    assert.match(line, /set\.options/, `a question builds its own options: ${line.trim()}`);
+  const builders = ["lib/assessment/items.ts", "lib/exam/paper.ts", "lib/estonian/government.ts"];
+  for (const file of builders) {
+    assert.match(
+      read(file),
+      /from "@\/lib\/questions\/distractors"/,
+      `${file} decides what a wrong answer is worth on its own`,
+    );
   }
 
-  const picks = items.match(/pickOptions\(\{/g) ?? [];
-  assert.equal(picks.length, optionLines.length, "a question was asked without picking its options");
-  assert.equal(
-    picks.length,
-    (items.match(/nearness:/g) ?? []).length,
-    "a question picks its wrong answers without ranking them",
-  );
+  for (const file of ["lib/assessment/items.ts", "lib/exam/paper.ts"]) {
+    const source = read(file);
+    // A field assigned in an item, rather than declared in an interface: the
+    // declaration ends in a semicolon and the assignment in a comma.
+    const optionLines = source.split("\n").filter((line) => /^\s*options:.*,\s*$/.test(line));
+    assert.ok(optionLines.length >= 5, `${file}: expected the choice questions, found ${optionLines.length}`);
+    for (const line of optionLines) {
+      assert.match(line, /set\.options/, `${file} builds its own options: ${line.trim()}`);
+    }
+
+    const picks = source.match(/pickOptions\(\{/g) ?? [];
+    assert.equal(picks.length, optionLines.length, `${file} asks a question without picking its options`);
+    assert.equal(
+      picks.length,
+      (source.match(/nearness:/g) ?? []).length,
+      `${file} picks wrong answers without ranking them`,
+    );
+  }
 
   // And the ranking may not become a filter. A question the dictionary can
   // fill has to stay askable, which is what keeps a thin section honest.
-  const distractors = read("lib/assessment/distractors.ts");
+  const distractors = read("lib/questions/distractors.ts");
   assert.match(distractors, /wrong\.length < WRONG/, "the picker stopped refusing what it cannot fill");
 });
 
@@ -3568,8 +3587,8 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 /**
  * The layers that are pure are still pure, which nothing was checking.
  *
- * CLAUDE.md names twelve directories that "stay free of React, Next.js and
- * Prisma: pure functions, unit tested", and that was prose alone. All twelve
+ * CLAUDE.md names thirteen directories that "stay free of React, Next.js and
+ * Prisma: pure functions, unit tested", and that was prose alone. All thirteen
  * hold today, which is the moment to assert it rather than the moment after
  * one of them stops.
  *
@@ -3590,7 +3609,7 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
     "assessment", "estonian", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "ux", "random", "copy",
+    "offline", "security", "scan", "questions", "ux", "random", "copy",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],

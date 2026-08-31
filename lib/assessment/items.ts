@@ -5,9 +5,10 @@ import { dictationWords } from "@/lib/estonian/dictation";
 import { CASE_NOTES } from "@/lib/estonian/grammar";
 import { formName } from "@/lib/estonian/morph";
 import type { CaseKey } from "@/lib/estonian/types";
-import { courseWords } from "@/lib/collections/syllabus";
+import { unitIntroducing } from "@/lib/collections/syllabus";
 import { shuffle } from "@/lib/random/shuffle";
 import {
+  bandOf,
   differentMeaning,
   differentSentence,
   differentText,
@@ -18,7 +19,7 @@ import {
   sentenceNearness,
   sentenceOption,
   type GlossOption,
-} from "./distractors";
+} from "@/lib/questions/distractors";
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
 
 /**
@@ -51,10 +52,6 @@ export interface WordRow {
   government: string | null;
   forms: readonly { formType: string; value: string; morphCode?: string | null }[];
   examples: readonly { et: string; en?: string | null }[];
-}
-
-export function bandOf(cefr: string | null | undefined): Band | null {
-  return BANDS.includes(cefr as Band) ? (cefr as Band) : null;
 }
 
 /** The harder of two bands, which is what a question costs to answer. */
@@ -106,36 +103,13 @@ function attestedForms(word: WordRow): Set<string> {
   return new Set([word.lemma, ...word.forms.map((f) => f.value)].map((f) => f.toLowerCase()));
 }
 
-/**
- * The course unit that introduces a word, which is the nearest thing this app
- * has to a topic.
- *
- * `lib/collections/syllabus/` is a course rather than a thesaurus, and for this
- * it is the better source of the two: a unit is a dozen words a teacher put in
- * one lesson because they turn up together, which makes them exactly the words
- * a learner has to be able to tell apart. Reading it adds nothing to the
- * dictionary and asks nothing of it. A word the course does not teach has no
- * theme and is ranked on everything else, which is most of what the signal is
- * worth anyway.
- */
-const COURSE_UNIT = (() => {
-  const byLemma = new Map<string, string>();
-  for (const word of courseWords()) {
-    const lemma = word.lemma.trim().toLowerCase();
-    byLemma.set(`${lemma}|${word.pos}`, word.unitId);
-    if (!byLemma.has(lemma)) byLemma.set(lemma, word.unitId);
-  }
-  return byLemma;
-})();
-
 /** A gloss with what a learner would otherwise eliminate it by. */
 function glossFor(word: WordRow): GlossOption {
-  const lemma = word.lemma.trim().toLowerCase();
   return glossOption({
     text: word.translation,
     pos: word.pos,
     band: bandOf(word.cefr),
-    theme: COURSE_UNIT.get(`${lemma}|${word.pos}`) ?? COURSE_UNIT.get(lemma) ?? null,
+    theme: unitIntroducing(word.lemma, word.pos),
   });
 }
 

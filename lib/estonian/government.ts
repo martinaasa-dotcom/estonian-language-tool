@@ -1,6 +1,7 @@
-import { CASES } from "./cases";
-import type { CaseKey } from "./types";
+import { CASES, caseByKey } from "./cases";
+import { caseNearness } from "@/lib/questions/distractors";
 import { shuffle } from "@/lib/random/shuffle";
+import type { CaseKey } from "./types";
 
 /**
  * Verb government (*rektsioon*) — which case a verb demands of its complement.
@@ -121,14 +122,33 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
   };
 }
 
+/** Hardest to tell from the answer first. Ties keep the order they came in. */
+function rankAgainst(keys: readonly CaseKey[], answer: CaseKey): CaseKey[] {
+  const target = caseByKey(answer);
+  if (!target) return [...keys];
+  const score = (key: CaseKey) => {
+    const spec = caseByKey(key);
+    return spec ? caseNearness(spec, target) : 0;
+  };
+  return [...keys].sort((a, b) => score(b) - score(a));
+}
+
 /**
  * Builds the answer options for one question.
  *
  * The distractors are the cases *other verbs in the learner's own deck*
  * actually govern, not a random sample of the fourteen. Estonian government
- * clusters hard — partitive, allative, elative, comitative account for nearly
- * all of it — so options drawn from the real distribution make the question a
- * genuine discrimination rather than a giveaway.
+ * clusters hard: partitive, allative, elative and comitative account for
+ * nearly all of it, so options drawn from the real distribution make the
+ * question a genuine discrimination rather than a giveaway.
+ *
+ * Which three of them get printed is `lib/questions/distractors.ts`, the one
+ * table of what makes a wrong answer hard to cross out, shared with the mock
+ * exam and the placement check. It puts the cases that answer the same
+ * question word first, so osastav is offered against nimetav and omastav, the
+ * two other cases an object is ever in, rather than against whichever three
+ * the shuffle reached. The top-up list is ordered the same way instead of by
+ * the frequency somebody typed it in.
  */
 export function buildOptions(
   answer: CaseKey,
@@ -138,13 +158,13 @@ export function buildOptions(
 ): CaseKey[] {
   const distractors = [...new Set(pool)].filter((c) => c !== answer);
 
-  // Shuffle the distractors, take what is needed, then top up from the common
-  // government cases if the deck is too small to supply enough.
-  const shuffled = shuffle(distractors, random);
+  // Shuffled before it is ranked, so cases that are equally near come up in a
+  // different order each time. Then top up from the common government cases if
+  // the deck is too small to supply enough.
+  const chosen = rankAgainst(shuffle(distractors, random), answer);
 
   const FALLBACK: CaseKey[] = ["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE", "ADESSIVE", "GENITIVE"];
-  const chosen = [...shuffled];
-  for (const c of FALLBACK) {
+  for (const c of rankAgainst(FALLBACK, answer)) {
     if (chosen.length >= count - 1) break;
     if (c !== answer && !chosen.includes(c)) chosen.push(c);
   }

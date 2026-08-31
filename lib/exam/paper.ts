@@ -1,3 +1,4 @@
+import { unitIntroducing } from "@/lib/collections/syllabus";
 import { buildCloze, ESTONIAN_WORD, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { caseByKey } from "@/lib/estonian/cases";
@@ -7,6 +8,10 @@ import {
   blueprintFor, lengthsFor, specFor,
   type ExamLevel, type ExamSpec, type PartSpec, type TaskKind, type TaskSpec,
 } from "./spec";
+import {
+  bandOf, differentMeaning, differentText, formNearness, glossNearness, glossOption,
+  pickOptions, sentenceNearness, sentenceOption, type GlossOption, type Textual,
+} from "@/lib/questions/distractors";
 import type { SkillKey } from "./types";
 
 /**
@@ -388,6 +393,39 @@ export function formsOf(word: PoolWord): string[] {
   return [...new Set([word.lemma, ...word.forms.map((f) => f.value)])].filter(Boolean);
 }
 
+/** A gloss with what a candidate could otherwise be eliminated by. */
+function glossFor(word: PoolWord): GlossOption {
+  return glossOption({
+    text: word.translation,
+    pos: word.pos,
+    band: bandOf(word.cefr),
+    theme: unitIntroducing(word.lemma, word.pos),
+  });
+}
+
+/** A form, and whether it belongs to the word the question is about. */
+interface FormOption extends Textual {
+  readonly sibling: boolean;
+}
+
+/**
+ * How near one form is to another, with a form of the same word always first.
+ *
+ * `lib/questions/distractors.ts` decides what near means and this adds the one
+ * fact it cannot know: which word an option came off. A gap question claims to
+ * be asking the learner to choose an *ending*, and it only is while all four
+ * options stand on one stem, so a sibling outranks any stranger however close
+ * the stranger's spelling happens to be. The bonus is larger than any score
+ * that function can return, which is what makes that a rule rather than a
+ * preference. Strangers are still ranked among themselves, because a task with
+ * two siblings and two strangers is better off with the two nearest strangers.
+ */
+const SIBLING_FIRST = 100;
+
+function stemFirst(candidate: FormOption, answer: FormOption): number {
+  return formNearness(candidate, answer) + (candidate.sibling ? SIBLING_FIRST : 0);
+}
+
 export const BLANK = "____";
 
 /**
@@ -506,13 +544,22 @@ function buildGapChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
     const siblings = forms.filter(
       (f) => f.toLowerCase() !== answerLower && !inSentence.has(f.toLowerCase()),
     );
+    const own = new Set(siblings.map((f) => f.toLowerCase()));
     const strangers = ctx.words
       .filter((w) => w.lexemeId !== sentence.word.lexemeId && w.pos === sentence.word.pos)
       .flatMap(formsOf)
       .filter((f) => f.toLowerCase() !== answerLower && !inSentence.has(f.toLowerCase()));
 
-    const pool = [...new Set([...shuffle(siblings, ctx.random), ...shuffle(strangers, ctx.random)])];
-    if (pool.length < 3) continue;
+    const candidates: FormOption[] = [...new Set([...siblings, ...strangers])]
+      .map((text) => ({ text, sibling: own.has(text.toLowerCase()) }));
+    const set = pickOptions({
+      answer: { text: cloze.answer, sibling: true },
+      candidates,
+      rng: ctx.random,
+      distinct: differentText,
+      nearness: stemFirst,
+    });
+    if (!set) continue;
 
     ctx.spent.add(sentence.word.lexemeId);
     items.push({
@@ -521,7 +568,7 @@ function buildGapChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
       sentence: cloze.text,
       full: cloze.full,
       answer: cloze.answer,
-      options: shuffle([cloze.answer, ...pool.slice(0, 3)], ctx.random),
+      options: set.options,
     });
   }
   return finish(spec, items, undefined, "sentences that repeat their own headword");
@@ -676,20 +723,36 @@ function buildListenChoose(spec: TaskSpec, ctx: BuildContext): ExamTask {
     if (ctx.spent.has(sentence.word.lexemeId)) continue;
     if (sentence.text.length > 90) continue;
 
-    // Distractors of a similar length, so the answer is not the odd one out on
-    // the page before the recording has even played.
-    const near = shuffle(
-      all.filter((t) => t !== sentence.text && Math.abs(t.length - sentence.text.length) <= 25),
-      ctx.random,
-    );
-    if (near.length < 3) continue;
+    /*
+      A similar length is the floor rather than the rule: an option half the
+      length of the answer is crossed out on the page before the recording has
+      played. Inside that, the nearest are the ones sharing words with what was
+      said, because those are the ones that have to be *heard* apart rather
+      than picked out by the one word the learner recognised.
+
+      Two sentences that say the same thing are still two different recordings,
+      so this asks for a different *text* where the reading comprehension
+      question asks for a different meaning: there, either option would be a
+      right answer, and here the question is which one was played.
+    */
+    const candidates = all
+      .filter((t) => t !== sentence.text && Math.abs(t.length - sentence.text.length) <= 25)
+      .map(sentenceOption);
+    const set = pickOptions({
+      answer: sentenceOption(sentence.text),
+      candidates,
+      rng: ctx.random,
+      distinct: differentText,
+      nearness: sentenceNearness,
+    });
+    if (!set) continue;
 
     ctx.spent.add(sentence.word.lexemeId);
     items.push({
       ...base(sentence.word, `${spec.id}-${items.length}`),
       kind: "listen-choose",
       answer: sentence.text,
-      options: shuffle([sentence.text, ...near.slice(0, 3)], ctx.random),
+      options: set.options,
       unit: "sentence",
     });
   }
@@ -704,14 +767,23 @@ function buildListenChoose(spec: TaskSpec, ctx: BuildContext): ExamTask {
     if (ctx.spent.has(word.lexemeId)) continue;
     const spoken = pickSpokenForm(word, ctx.random);
     if (!spoken) continue;
-    const near = shuffle(spokenPool.filter((f) => f !== spoken), ctx.random);
-    if (near.length < 3) continue;
+    // Words that look, and so mostly sound, like the one being played. A
+    // recording is only a listening question while the four spellings are
+    // close enough that hearing is the only way to tell them apart.
+    const set = pickOptions({
+      answer: { text: spoken },
+      candidates: spokenPool.map((text) => ({ text })),
+      rng: ctx.random,
+      distinct: differentText,
+      nearness: formNearness,
+    });
+    if (!set) continue;
     ctx.spent.add(word.lexemeId);
     items.push({
       ...base(word, `${spec.id}-${items.length}`),
       kind: "listen-choose",
       answer: spoken,
-      options: shuffle([spoken, ...near.slice(0, 3)], ctx.random),
+      options: set.options,
       unit: "word",
     });
   }
@@ -719,25 +791,46 @@ function buildListenChoose(spec: TaskSpec, ctx: BuildContext): ExamTask {
   return finish(spec, items, undefined, "recordings with three near neighbours to hide among");
 }
 
-/** An Estonian word and four English meanings. Needs no sentence and no key. */
+/**
+ * An Estonian word and four English meanings. Needs no sentence and no key.
+ *
+ * The four are ranked rather than shuffled, and the three wrong ones are
+ * checked against the right one first. This task used to do neither, so it
+ * could offer a word's own synonym as a distractor and mark a candidate wrong
+ * for choosing it, and it filled a B2 question with whatever came first out of
+ * a deck that spans four levels.
+ */
 function buildGlossChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
-  const glosses = [...new Set(ctx.words.map((w) => w.translation).filter(Boolean))];
+  const seen = new Set<string>();
+  const glosses: GlossOption[] = [];
+  for (const word of ctx.words) {
+    if (!word.translation || seen.has(word.translation)) continue;
+    seen.add(word.translation);
+    glosses.push(glossFor(word));
+  }
+
   const items: GlossChoiceItem[] = [];
   for (const word of shuffle(ctx.words, ctx.random)) {
     if (items.length >= spec.items) break;
     if (ctx.spent.has(word.lexemeId) || !word.translation) continue;
-    const near = shuffle(glosses.filter((g) => g !== word.translation), ctx.random);
-    if (near.length < 3) continue;
+    const set = pickOptions({
+      answer: glossFor(word),
+      candidates: glosses,
+      rng: ctx.random,
+      distinct: differentMeaning,
+      nearness: glossNearness,
+    });
+    if (!set) continue;
     ctx.spent.add(word.lexemeId);
     items.push({
       ...base(word, `${spec.id}-${items.length}`),
       kind: "gloss-choice",
       word: word.lemma,
       answer: word.translation,
-      options: shuffle([word.translation, ...near.slice(0, 3)], ctx.random),
+      options: set.options,
     });
   }
-  return finish(spec, items, undefined, "words the dictionary has an English meaning for");
+  return finish(spec, items, undefined, "words with three other meanings to hide among");
 }
 
 /**
@@ -758,12 +851,21 @@ function buildFormChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
     const siblings = [
       ...new Set(tasks.map((t) => t.targetForm).filter((f) => f !== task.targetForm)),
     ];
+    const own = new Set(siblings.map((f) => f.toLowerCase()));
     const strangers = ctx.words
       .filter((w) => w.lexemeId !== word.lexemeId)
       .flatMap((w) => writingTasksFor(w).map((t) => t.targetForm));
-    const pool = [...new Set([...shuffle(siblings, ctx.random), ...shuffle(strangers, ctx.random)])]
-      .filter((f) => f !== task.targetForm);
-    if (pool.length < 3) continue;
+    const candidates: FormOption[] = [...new Set([...siblings, ...strangers])]
+      .filter((f) => f !== task.targetForm)
+      .map((text) => ({ text, sibling: own.has(text.toLowerCase()) }));
+    const set = pickOptions({
+      answer: { text: task.targetForm, sibling: true },
+      candidates,
+      rng: ctx.random,
+      distinct: differentText,
+      nearness: stemFirst,
+    });
+    if (!set) continue;
 
     ctx.spent.add(word.lexemeId);
     items.push({
@@ -774,7 +876,7 @@ function buildFormChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
       caseEt: task.caseEt,
       caseQuestion: task.caseQuestion,
       answer: task.targetForm,
-      options: shuffle([task.targetForm, ...pool.slice(0, 3)], ctx.random),
+      options: set.options,
       provenance: task.provenance,
     });
   }
