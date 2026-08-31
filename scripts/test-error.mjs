@@ -34,7 +34,22 @@ import { suite } from "./lib/checks.mjs";
 const PORT = Number(process.env.ERROR_SUITE_PORT ?? 3199);
 const { check, done, absent } = suite("The error state", { floor: 6 });
 
+/*
+  `detached`, because `child.kill()` on its own does not stop this server.
+
+  `npx next start` is a launcher that spawns the real server as a grandchild,
+  so killing the child left `next-server` holding this port for the rest of
+  the job. It went unnoticed while nothing else wanted the port and surfaced
+  the moment something did: `scripts/test-signin.mjs` runs next, defaults to
+  the pair either side of this one, and its own guard against measuring
+  somebody else's server refused to start. The orphan was in the runner's
+  cleanup log all along, one line under "Cleaning up orphan processes".
+
+  Detached makes the child a process group leader, so `halt` can kill the
+  group and take the grandchild with it.
+*/
 const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+  detached: true,
   env: {
     ...process.env,
     // Nothing listens here. Prisma fails to connect and the page throws, which
@@ -47,6 +62,15 @@ const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
   stdio: "ignore",
 });
 
+/** Kill the server and the grandchild actually listening, ignoring one already gone. */
+function halt(child) {
+  try {
+    process.kill(-child.pid, "SIGKILL");
+  } catch {
+    // Already dead, or never started. Either way there is nothing to stop.
+  }
+}
+
 const B = `http://localhost:${PORT}`;
 let up = false;
 for (let i = 0; i < 60 && !up; i++) {
@@ -56,7 +80,7 @@ for (let i = 0; i < 60 && !up; i++) {
 
 if (!up) {
   absent(6, `no server came up on ${PORT}, so the error state could not be driven`);
-  server.kill();
+  halt(server);
   done();
 } else {
   const browser = await launchChromium();
@@ -99,6 +123,6 @@ if (!up) {
     body.slice(0, 120));
 
   await browser.close();
-  server.kill();
+  halt(server);
   done();
 }

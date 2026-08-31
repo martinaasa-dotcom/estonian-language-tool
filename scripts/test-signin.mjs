@@ -42,7 +42,18 @@ import { suite } from "./lib/checks.mjs";
   offers, and the one place it needs a provider to answer, it answers for it.
 */
 
-const PORT = Number(process.env.SIGNIN_SUITE_PORT ?? 3198);
+/*
+  Clear of the other suites rather than next door to them.
+
+  This was 3198, which put its pair on 3198 and 3199, and `test-error.mjs`
+  defaults to 3199 and runs immediately before this one. That suite was
+  leaking its server, so the guard below found a live server on 3199 and
+  refused to run, correctly and on the first CI run of this file. The leak is
+  fixed where it lives; the adjacency is fixed here, because a suite that
+  only works while the one before it cleans up perfectly is a suite waiting
+  to fail again.
+*/
+const PORT = Number(process.env.SIGNIN_SUITE_PORT ?? 3210);
 const OFF_PORT = PORT + 1;
 const DIST = ".next-signin";
 
