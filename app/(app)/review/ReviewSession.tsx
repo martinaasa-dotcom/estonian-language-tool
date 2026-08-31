@@ -748,9 +748,34 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                       color: TONE[r.value],
                     }}
                   >
+                    {/*
+                      Three lines, no fade on any of them.
+
+                      Both of the quiet ones used to be an `opacity`, which is
+                      the one thing CLAUDE.md will not have on a box holding
+                      words, and this is why: the hue inks are walked down to
+                      *just* clear 4.5:1 on their own tint, so the tint is
+                      already spent, and multiplying the ink back up towards
+                      the background spends what is not there. Measured on the
+                      light theme, the interval at 80% came out 3.49 to 3.73
+                      and the key hint at 60% came out 2.45 to 2.61. On the
+                      busiest screen in the app.
+
+                      Size and shape carry the order instead. The label is
+                      bold at 16px, the interval is the number the button is
+                      actually promising, and the key hint is drawn as a key,
+                      the way the Check and Show answer buttons above already
+                      draw theirs, so it is told apart by being a cap rather
+                      than by being faint.
+                    */}
                     <span className="text-base font-bold">{r.label}</span>
-                    <span className="tnum text-2xs opacity-80">{intervals?.[r.value as RatingValue]}</span>
-                    <kbd className="text-2xs opacity-60">{r.key}</kbd>
+                    <span className="tnum text-2xs">{intervals?.[r.value as RatingValue]}</span>
+                    <kbd
+                      className="rounded-[5px] px-1.5 text-2xs font-semibold"
+                      style={{ background: "var(--surface)" }}
+                    >
+                      {r.key}
+                    </kbd>
                   </button>
                 );
               })}

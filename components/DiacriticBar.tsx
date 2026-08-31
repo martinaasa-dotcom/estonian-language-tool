@@ -164,10 +164,15 @@ export function DiacriticBar({
  * The six letters, drawn as a sample rather than named.
  *
  * "The diacritic bar" means nothing to somebody who has met it once under a
- * text box, so the question that offers it shows it. Solid and bordered when
- * the row would be drawn, dashed and faded when it would not: the difference
+ * text box, so the question that offers it shows it. Solid and accented when
+ * the row would be drawn, dashed and quieter when it would not: the difference
  * is a border style as well as a tone, because the design system does not let
  * a colour carry a distinction on its own.
+ *
+ * Quieter is a different ink and not a fade. It used to be `--ink-3` at 55%,
+ * which is the tone doing the border's job over again at the price of the one
+ * thing an opacity always costs, and one letter per chip is short enough that
+ * axe declines to rule on it (see scripts/a11y-check.mjs). 2.39:1.
  *
  * On a surface rather than an accent tint, since a chosen `ChoiceCard` is
  * itself `--accent-soft` and a tinted chip on it would disappear at exactly
@@ -183,7 +188,16 @@ export function LetterSample({ lit }: { lit: boolean }) {
           style={
             lit
               ? { background: "var(--surface)", border: "1px solid var(--accent)", color: "var(--accent-deep)" }
-              : { border: "1px dashed var(--rule)", color: "var(--ink-3)", opacity: 0.55 }
+              /*
+                No `opacity` here, and the doc comment above is the reason it
+                was never needed: the distinction is already carried by the
+                border style, so the fade was buying nothing and costing the
+                only thing it could cost. `--ink-3` is picked to clear 4.5:1 on
+                every surface in the system; at 55% these chips measured 2.39
+                on the light theme and 2.72 on the dark, and being one letter
+                each they were invisible to the sweep as well as on the screen.
+              */
+              : { border: "1px dashed var(--rule)", color: "var(--ink-3)" }
           }
         >
           {ch}

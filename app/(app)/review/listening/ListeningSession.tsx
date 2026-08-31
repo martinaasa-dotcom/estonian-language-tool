@@ -236,7 +236,11 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                 className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-base font-semibold transition-ui hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
                 style={tone}
               >
-                <kbd className="text-2xs opacity-60">{i + 1}</kbd>
+                {/* One character, so axe files it as "too short to determine"
+                    and the sweep used to drop the measurement on the floor.
+                    At 60% this read 2.46 to 4.16 depending on which of the
+                    four tones the option was wearing. */}
+                <kbd className="text-2xs">{i + 1}</kbd>
                 <span className="flex-1">{choice}</span>
                 {answered && isCorrectChoice && <Check size={15} aria-hidden />}
                 {answered && isPicked && !isCorrectChoice && <X size={15} aria-hidden />}

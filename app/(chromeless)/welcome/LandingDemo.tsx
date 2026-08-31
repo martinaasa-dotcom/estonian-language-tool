@@ -144,7 +144,10 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
                   style={{ background: g.soft, color: g.tone }}
                 >
                   <span className="text-sm font-bold">{g.label}</span>
-                  <span className="tnum text-2xs opacity-80">{g.next}</span>
+                  {/* The real button's fade is gone, so this one's is too:
+                      the first thing anybody sees of this app should not be a
+                      demonstration of the control the review screen fixed. */}
+                  <span className="tnum text-2xs">{g.next}</span>
                 </button>
               ))}
             </div>

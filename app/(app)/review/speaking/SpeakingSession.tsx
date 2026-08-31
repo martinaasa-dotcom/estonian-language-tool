@@ -242,7 +242,10 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
                   style={{ background: TONE_SOFT[r.value], color: TONE[r.value] }}
                 >
                   <span className="text-base font-bold">{r.label}</span>
-                  <span className="text-2xs opacity-80">{r.hint}</span>
+                  {/* No fade: this is the review card's grade button, and the
+                      hue inks are already walked down to just clear 4.5:1 on
+                      their own tint. At 80% the hint measured 3.49 to 3.73. */}
+                  <span className="text-2xs">{r.hint}</span>
                 </button>
               ))}
             </div>

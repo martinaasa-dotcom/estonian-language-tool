@@ -181,9 +181,13 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
               const tone = !revealed
                 ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
                 : isAnswer
-                  ? { background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }
+                  /* The ink, not the hue: see the same table in
+                     review/pairs/PairsSession.tsx. A hue set as text on its
+                     own tint measures about 2.5:1, which is what every hue
+                     having an ink is for. */
+                  ? { background: "var(--good-soft)", color: "var(--good-ink)", borderColor: "transparent" }
                   : isPicked
-                    ? { background: "var(--again-soft)", color: "var(--again)", borderColor: "transparent" }
+                    ? { background: "var(--again-soft)", color: "var(--again-ink)", borderColor: "transparent" }
                     : { background: "transparent", color: "var(--ink-3)", borderColor: "var(--rule-soft)" };
 
               return (
@@ -195,14 +199,16 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
+                  {/* One character at 60%, which measured 4.12:1 against a
+                      bar of 4.5 on the unrevealed option alone. */}
+                  <kbd className="tnum text-2xs">{i + 1}</kbd>
                   <span className="min-w-0">
                     {/* The question leads because the dictionary records
                         government as the question a verb answers, and because
                         that is how the answer is said out loud: "aitama" takes
                         "keda?", not "the partitive". */}
                     <span lang="et" className="block text-base font-medium">{spec?.question}</span>
-                    <span lang="et" className="block text-[12.5px] opacity-75">{spec?.et}</span>
+                    <span lang="et" className="block text-[12.5px]">{spec?.et}</span>
                   </span>
                   {revealed && isAnswer && <Check size={16} className="ml-auto shrink-0" aria-hidden />}
                 </button>
