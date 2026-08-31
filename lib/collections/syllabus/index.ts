@@ -196,9 +196,6 @@ export function unitIntroducing(lemma: string, pos?: string): string | null {
   return (pos ? INTRODUCING.get(`${key}|${pos}`) : undefined) ?? INTRODUCING.get(key) ?? null;
 }
 
-/** Distinct lemmas the course teaches, in course order. */
-export const courseLemmas = (): readonly string[] => WORDS.map((w) => w.lemma);
-
 export function wordsAtLevel(level: Level): readonly CourseWord[] {
   return WORDS.filter((w) => w.level === level);
 }

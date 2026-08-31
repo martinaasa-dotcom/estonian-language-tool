@@ -51,8 +51,6 @@ export function caseOptionLabel(spec: CaseSpec): string {
   return `${spec.et} · ${spec.question}`;
 }
 
-export const DERIVED_CASES = CASES.filter((c) => !c.principal);
-
 export function caseByKey(key: string): CaseSpec | undefined {
   return CASES.find((c) => c.key === key);
 }

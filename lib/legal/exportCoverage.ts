@@ -32,8 +32,3 @@ export const NOT_EXPORTED: Readonly<Record<string, string>> = {
     "enforce the daily cap, it is named on /privacy as the one thing an export does " +
     "not carry, and it is deleted with the account like everything else.",
 };
-
-/** True when this model may be absent from a backup, with a reason on file. */
-export function exportExcluded(model: string): boolean {
-  return Object.hasOwn(NOT_EXPORTED, model);
-}
