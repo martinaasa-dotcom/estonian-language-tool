@@ -209,6 +209,24 @@ for (let i = 0; i < 6 && !revealed; i++) {
   revealed = (await page.getByRole("link", { name: /Why the/ }).count()) > 0;
   if (!revealed) { await page.keyboard.press("3"); await page.waitForTimeout(650); }
 }
+/*
+  AND A DECK WITH NO INESSIVE CARD IN IT SAYS SO, RATHER THAN TIMING OUT.
+
+  Everything below reads the row of pills the card offers, so when the loop
+  above found no card this failed and then spent thirty seconds waiting for a
+  link that was never coming, threw, and took the eleven checks after it with
+  it: one reported failure covering twelve unlooked things, naming a locator
+  rather than the cause. `smoke-interact.mjs` met the same shape at
+  `/review/government` and this is its answer.
+*/
+if (!revealed) {
+  const state = (await page.locator("main").innerText()).slice(0, 90).replace(/\s+/g, " ");
+  check("a revealed case card offers the rule behind it", false,
+    `six cards at /review?case=INESSIVE offered nothing to reveal. Deck state: ${state}`);
+  // Three rather than four: this branch still runs the check above, as a
+  // failure. What it cannot run is the three that read the card's own pills.
+  absent(3, "a deck with an inessive card in it: run `npm run demo`");
+} else {
 check("a revealed case card offers the rule behind it", revealed);
 /*
   Scoped to the card rather than the page. The rail names every destination now
@@ -239,6 +257,7 @@ if (await box.count()) {
   check("with no key, Anu still shows the question that was handed over",
     asked.length > 20 && shown.includes(asked.slice(0, 40)), asked.slice(0, 60));
   absent(1, "a model key, so there is no box to prefill");
+}
 }
 
 // ─── Sticking points ──────────────────────────────────────────────────────────

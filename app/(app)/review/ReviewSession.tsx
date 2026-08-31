@@ -705,7 +705,20 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </p>
           )}
 
-          {(revealed || chosen) && <WhyRow card={card} />}
+          {/*
+            Whenever the answer is on screen, which includes the card the
+            learner is meeting for the first time.
+
+            This read `revealed || chosen`, and every other path sets `revealed`
+            itself: `checkTyped` and `pickChoice` both do. So the one state it
+            missed was `intro`, which shows the answer and the case's Estonian
+            name from the moment it opens and asks the learner to read it and
+            say it. That is the first time somebody meets the seesütlev, it is
+            when the rule behind it is worth the most, and it was the one screen
+            in the drill with no way to reach it. Every later sitting of the
+            same card had the link.
+          */}
+          {(revealed || chosen || ask === "intro") && <WhyRow card={card} />}
         </div>
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
