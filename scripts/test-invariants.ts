@@ -3220,6 +3220,66 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 });
 
 /**
+ * The layers that are pure are still pure, which nothing was checking.
+ *
+ * CLAUDE.md names twelve directories that "stay free of React, Next.js and
+ * Prisma: pure functions, unit tested", and that was prose alone. All twelve
+ * hold today, which is the moment to assert it rather than the moment after
+ * one of them stops.
+ *
+ * It is not a tidiness rule. The unit suite gates every commit on being
+ * hermetic, with no database, no network and no clock nobody controls, and it
+ * has to stay fast enough that nobody is tempted to skip it. One
+ * `import { prisma }` inside `lib/stats/` puts a database behind a function
+ * that four hundred unit tests call, and the suite does not fail: it gets
+ * slower, or it passes against whatever rows happen to be there. A React
+ * import is the same boundary from the other side, since these modules are
+ * what a Server Component and a Route Handler share.
+ *
+ * The directories are listed rather than discovered, because "which layers are
+ * pure" is a decision rather than a fact about the filesystem, and each is
+ * checked to exist so a rename fails here instead of silently covering
+ * nothing.
+ */
+check("the layers that promise to be pure import no database, React or Next", () => {
+  const pure = [
+    "assessment", "estonian", "gamification", "stats", "collections", "time",
+    "offline", "security", "scan", "ux", "random", "copy",
+  ];
+  const banned = [
+    [/from "@\/lib\/db"/, "the database"],
+    [/from "@prisma\/client"/, "Prisma"],
+    [/from "react"|from "react\//, "React"],
+    [/from "next\//, "Next"],
+    [/from "server-only"/, "a server-only marker, which is a Next concern"],
+  ] as const;
+
+  let looked = 0;
+  for (const name of pure) {
+    const dir = join("lib", name);
+    assert.ok(
+      existsSync(dir),
+      `lib/${name} is named as a pure layer and is not there. Rename it here or put it back.`,
+    );
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".ts") && !file.endsWith(".tsx")) continue;
+      if (file.includes(".test.") || file.includes(".itest.")) continue;
+      looked += 1;
+      const src = code(join(dir, file));
+      for (const [pattern, what] of banned) {
+        assert.doesNotMatch(
+          src,
+          pattern,
+          `lib/${name}/${file} imports ${what}. That layer is unit tested hermetically, ` +
+          "so anything needing the database belongs in lib/progress/ or a route.",
+        );
+      }
+    }
+  }
+  assert.ok(looked > 40, `only read ${looked} files in the pure layers, so this check stopped looking`);
+});
+
+/**
  * The worker's caches have ceilings too.
  *
  * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never

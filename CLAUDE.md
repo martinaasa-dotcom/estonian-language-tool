@@ -790,7 +790,13 @@ local learner; with them, every route is gated. It keys off the absence of confi
   `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/`, `lib/random/` and
   `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
-  needs the database lives in `lib/progress/` or a route.
+  needs the database lives in `lib/progress/` or a route. Asserted, because it
+  had been prose alone and it is not a tidiness rule: the unit suite gates every
+  commit on being hermetic, so one `import { prisma }` inside `lib/stats/` puts
+  a database behind a function four hundred tests call, and the suite does not
+  fail, it gets slower or it passes against whatever rows happen to be there.
+  Each directory is checked to exist too, so a rename fails there rather than
+  quietly covering nothing.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
 - Settings go through `lib/settings/store.ts`. No new string keys scattered through pages. The five
