@@ -130,13 +130,30 @@ export function Mascot({
   );
 }
 
-/** The mascot plus the name, as used in the sidebar and the landing nav. */
+/**
+ * The mascot plus the name, as used in the sidebar and the landing nav.
+ *
+ * It does not shrink and the name does not break, which is two declarations
+ * rather than a preference. `overflow-wrap: anywhere` is inherited from the
+ * body and counts towards min-content, so the automatic minimum of a flex item
+ * holding this is one character wide: put the wordmark in a row beside anything
+ * that wants the space and it gives up all of it. The landing footer is that
+ * row, and it read "Kodukee" with the "l" on the line under it, which is the
+ * one word on the page that may never be hyphenated or wrapped, because it is
+ * a name rather than a sentence. Fixed here rather than at each caller: a
+ * wordmark squeezed by its neighbour is a property of the wordmark, and the
+ * next row somebody puts it in would break it again.
+ */
 export function Wordmark({ size = 34, subtitle }: { size?: number; subtitle?: string }) {
   return (
-    <span className="flex items-center gap-2.5">
+    <span className="flex shrink-0 items-center gap-2.5">
       <Mascot size={size} />
       <span className="flex flex-col">
-        <span lang="et" className="text-xl font-bold leading-none tracking-tight" style={{ color: "var(--ink)" }}>
+        <span
+          lang="et"
+          className="whitespace-nowrap text-xl font-bold leading-none tracking-tight"
+          style={{ color: "var(--ink)" }}
+        >
           Kodukeel
         </span>
         {subtitle && (

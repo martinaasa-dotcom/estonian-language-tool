@@ -808,6 +808,89 @@
     animation: grad-sweep 9s ease-in-out infinite;
   }
 
+  /*
+    THE LANDING HERO IS AS TALL AS THE SCREEN, LESS A DELIBERATE PEEK.
+
+    It used to be 483px whatever it was drawn on, because its height was two
+    paddings and whatever the copy came to. Measured: on a 1080px screen that
+    left 558px of window under the last line of the hero, which the browser
+    filled with the next section, so the first thing anybody saw was the hero
+    sitting in the top half and the whole of "You didn't fail Estonian" and its
+    paragraph crowded in under it. Two openings arguing at once, and a band of
+    dead air between them wide enough to read as a mistake. On a 780px phone
+    the same fault was 207px of it.
+
+    So the hero takes the window and centres its column in it, and the leftover
+    space goes above and below the copy in equal measure rather than into one
+    gap under it. What it does not take is `--hero-peek`, which is the point of
+    the whole rule: a hero that ends exactly at the fold is a page that looks
+    like it has nothing after it, and the honest way to say there is more is to
+    let the next section start where you can see it. The band is sized to clear
+    that section's own top padding and show its eyebrow with the heading rising
+    into the last of it, which is a beginning rather than an ornament. No arrow
+    and no second link: the page already made its one loud action, and the rule
+    the button primitive is written under is one per screen.
+
+    `svh` rather than `vh` or `dvh`. `vh` is the tall viewport on a phone, so
+    the peek would be hidden under the browser's own toolbar exactly when the
+    toolbar is showing, which is on arrival. `dvh` re-lays the page out as the
+    toolbar retracts, which moves the copy under the reader's thumb mid-scroll.
+    `svh` is the small one: the peek is honest with the toolbar there and grows
+    a little when it goes, which is the direction that costs nothing.
+
+    `--landing-nav` is measured rather than reasoned about, and it is the same
+    79px at every width this app is drawn at, because the nav pill's height is
+    set by the button in it rather than by anything that reflows.
+    `scripts/test-design.mjs` measures the real nav against it, since a typed
+    constant standing in for something on screen is a constant that drifts.
+
+    Both numbers sit on the rule that reads them rather than in `:root` with
+    the palette. They are two facts about one page, and a name in the token
+    block is an invitation to the rest of the app to build on them.
+  */
+  .hero-screen {
+    --landing-nav: 79px;
+    --hero-peek: 96px;
+
+    min-height: calc(100svh - var(--landing-nav) - var(--hero-peek));
+  }
+
+  @media (min-width: 768px) {
+    .hero-screen {
+      --hero-peek: 124px;
+    }
+  }
+
+  /*
+    The three gaps down the hero grow with the window the hero now fills.
+
+    Centring a fixed 363px column in an 877px box is the first fault wearing a
+    better hat: the copy stops being piled at the top and becomes a postage
+    stamp with a void over it and a void under it. What a tall screen is for is
+    letting the three beats stand apart, so the space goes between them rather
+    than around them, and the block grows until the air left over is a margin
+    instead of a gap.
+
+    They keep their proportions to each other while they do it, which is the
+    half that took two passes. Scaled apart, the gap over the button grew to
+    four times the one over the paragraph and the button stopped belonging to
+    the sentence that argues for it: a column read from the top down is one
+    thing with air in it rather than three things with distance between them.
+    So all three step up together, by about a third on a tall screen, and the
+    rest of the height stays in the margins, which is where a hero's air is
+    supposed to be.
+
+    Every one of these is a `clamp`, and the floor is the spacing the hero had
+    before any of this: on a short laptop or a phone held sideways nothing
+    grows at all, which is the case where there is no room to spend. `svh`
+    rather than `vh` for the reason `.hero-screen` gives, and the same unit as
+    the box these sit in, since a gap measured against a taller viewport than
+    its own container is a gap that overflows it.
+  */
+  .hero-lead { margin-top: clamp(1.25rem, 2.6svh, 2rem); }
+  .hero-action { margin-top: clamp(1.75rem, 3.6svh, 2.75rem); }
+  .hero-claims { margin-top: clamp(1.5rem, 3.1svh, 2.375rem); }
+
   /* Soft pastel light behind a section, so the ground never reads as flat grey. */
   .wash {
     position: absolute;
