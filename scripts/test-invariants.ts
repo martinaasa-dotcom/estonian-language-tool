@@ -728,6 +728,74 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
+check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
+  /*
+    There were ten, in three implementations. Four in `app/` were Fisher-Yates
+    character for character, four in `lib/` were the same again with an rng
+    passed in, and two places used a comparator instead:
+
+        [...cards].sort(() => Math.random() - 0.5)
+
+    A comparator is asked about a pair and expected to answer the same way each
+    time. One that answers at random leaves the sort finishing early over runs
+    it believes are ordered, so an element stays near where it started.
+    Measured over 200,000 rounds at the sizes the app uses: in the 40-card
+    sprint the first card led 7.0% of rounds against a uniform 2.5%; in the
+    20-card listening round, 11.7% against 5.0%. Those pools arrive
+    `orderBy: { due: "asc" }`, so that is the most overdue card leading about
+    three times as often as chance while the tail went under-practised.
+
+    Both halves are asserted, because fixing the two wrong copies and leaving
+    eight right ones is how a ninth gets written. `lib/exam/paper.ts` is the one
+    exception and says why in its own header: the server rebuilds a paper from
+    its seed to mark it, so changing how that one draws would mis-mark a paper
+    somebody started before a deploy.
+  */
+  const SHUFFLE_HOME = "lib/random/shuffle.ts";
+  const EXCEPTION = "lib/exam/paper.ts";
+
+  assert.ok(existsSync(SHUFFLE_HOME), "the one shuffle has gone from lib/random/shuffle.ts");
+
+  for (const file of ALL) {
+    if (file === SHUFFLE_HOME || file === EXCEPTION) continue;
+    const src = read(file).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+    assert.ok(
+      !/\.sort\(\s*\(\s*\)\s*=>/.test(src),
+      `${file}: sorting with a comparator that ignores its arguments is not a shuffle. `
+      + `It leaves elements near where they started. Use shuffle() from ${SHUFFLE_HOME}.`,
+    );
+    assert.ok(
+      !/function shuffled?\s*</.test(src),
+      `${file}: a hand-rolled shuffle. There is one in ${SHUFFLE_HOME} and it takes the `
+      + `generator as a parameter, so a seeded caller passes its own.`,
+    );
+    /*
+      And the third implementation, which was inline six times and has no
+      function to name: decorate each item with a random key, sort on it,
+      undecorate. Sorting on independent random keys is a fair shuffle, unlike
+      the comparator above, so this is about there being one of these rather
+      than about correctness. The tell is the decorate step, a property whose
+      value is a draw *and nothing else*: `left: Math.random() * 100` is a
+      confetti piece's position and was the first thing this caught.
+    */
+    assert.ok(
+      !/[{,]\s*\w+:\s*(Math\.)?random\(\)\s*[,}]/.test(src),
+      `${file}: an inline shuffle, keyed on a random draw and sorted. Use shuffle() from `
+      + `${SHUFFLE_HOME}. Two of these were weighted ("the deck's own words first"), and `
+      + `that reads better as two shuffles concatenated than as a key trick whose two `
+      + `ranges happen not to overlap.`,
+    );
+  }
+
+  // And the exception carries its reason, so nobody reads it as an oversight.
+  assert.match(
+    read(EXCEPTION),
+    /rebuilds the paper from that seed to mark it/,
+    `${EXCEPTION} keeps its own shuffle and its header stopped saying why`,
+  );
+});
+
 check("which of two entries for one word wins is decided, not left to the rows", () => {
   /*
     `@@unique` is on `(lemma, pos)`, so one lemma can hold more than one entry
@@ -986,7 +1054,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "scan", "security", "stats", "time", "ux",
+    "random", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];

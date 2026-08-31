@@ -5,6 +5,7 @@ import { dictationWords } from "@/lib/estonian/dictation";
 import { authoritativeForm } from "@/lib/estonian/writing";
 import type { CaseKey } from "@/lib/estonian/types";
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
+import { shuffle } from "@/lib/random/shuffle";
 
 /**
  * Turning the dictionary into a placement test.
@@ -88,17 +89,6 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-function shuffled<T>(list: readonly T[], rng: () => number): T[] {
-  const out = [...list];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    const a = out[i]!;
-    out[i] = out[j]!;
-    out[j] = a;
-  }
-  return out;
-}
-
 /** Loose enough to catch "a car" against "car", which is not a distractor. */
 function sameMeaning(a: string, b: string): boolean {
   const words = (s: string) =>
@@ -124,14 +114,14 @@ function choices(
   distinct: (a: string, b: string) => boolean,
 ): { options: string[]; answer: number } | null {
   const wrong: string[] = [];
-  for (const candidate of shuffled(pool, rng)) {
+  for (const candidate of shuffle(pool, rng)) {
     if (!distinct(candidate, answer)) continue;
     if (wrong.some((w) => !distinct(w, candidate))) continue;
     wrong.push(candidate);
     if (wrong.length === 3) break;
   }
   if (wrong.length < 3) return null;
-  const options = shuffled([answer, ...wrong], rng);
+  const options = shuffle([answer, ...wrong], rng);
   return { options, answer: options.indexOf(answer) };
 }
 
@@ -167,7 +157,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   const glosses = pool.map((w) => w.translation);
   const out: ChoiceItem[] = [];
 
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     const band = bandOf(word.cefr)!;
     const set = choices(word.translation, glosses, rng, differentMeaning);
     if (!set) continue;
@@ -188,10 +178,10 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     });
   }
 
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
     const forms = knownForms(word);
-    for (const caseKey of shuffled(ASKABLE, rng)) {
+    for (const caseKey of shuffle(ASKABLE, rng)) {
       const form = authoritativeForm(
         { lemma: word.lemma, translation: word.translation, pos: word.pos, forms: [...word.forms] },
         caseKey,
@@ -221,11 +211,11 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   }
 
   const caseNames = CASES.map(caseOptionLabel);
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
     const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
     if (!gen) continue;
-    for (const caseKey of shuffled(ASKABLE, rng)) {
+    for (const caseKey of shuffle(ASKABLE, rng)) {
       const spec = caseByKey(caseKey)!;
       if (spec.principal) continue;
       const value = deriveCase(gen, caseKey);
@@ -251,7 +241,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     }
   }
 
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     const government = parseGovernment(word.government);
     if (!government) continue;
     const govSpec = caseByKey(government.caseKey);
@@ -281,7 +271,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     w.examples.filter((e) => e.en && e.en.trim()).map((e) => ({ word: w, et: e.et, en: e.en!.trim() })),
   );
   const sentenceGlosses = translated.map((t) => t.en);
-  for (const sentence of shuffled(translated, rng)) {
+  for (const sentence of shuffle(translated, rng)) {
     const set = choices(sentence.en, sentenceGlosses, rng, differentMeaning);
     if (!set) continue;
     out.push({
@@ -318,7 +308,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   const caseNames = CASES.map(caseOptionLabel);
   const out: (ChoiceItem | DictationItem)[] = [];
 
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     const set = choices(word.translation, glosses, rng, differentMeaning);
     if (!set) continue;
     out.push({
@@ -338,11 +328,11 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
     });
   }
 
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
     const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
     if (!gen) continue;
-    for (const caseKey of shuffled(ASKABLE, rng)) {
+    for (const caseKey of shuffle(ASKABLE, rng)) {
       const spec = caseByKey(caseKey)!;
       if (spec.principal) continue;
       const value = deriveCase(gen, caseKey);
@@ -368,7 +358,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
     }
   }
 
-  for (const word of shuffled(pool, rng)) {
+  for (const word of shuffle(pool, rng)) {
     const sentence = word.examples.find((e) => dictatable(e.et));
     if (!sentence) continue;
     out.push({
@@ -390,9 +380,9 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
 
 export function writingItems(words: readonly WordRow[], rng: () => number): WriteItem[] {
   const out: WriteItem[] = [];
-  for (const word of shuffled(usableWords(words), rng)) {
+  for (const word of shuffle(usableWords(words), rng)) {
     if (word.pos !== "NOUN" && word.pos !== "ADJECTIVE") continue;
-    for (const caseKey of shuffled(ASKABLE, rng)) {
+    for (const caseKey of shuffle(ASKABLE, rng)) {
       const form = authoritativeForm(
         { lemma: word.lemma, translation: word.translation, pos: word.pos, forms: [...word.forms] },
         caseKey,
@@ -426,7 +416,7 @@ export function writingItems(words: readonly WordRow[], rng: () => number): Writ
 
 export function speakingItems(words: readonly WordRow[], rng: () => number): SpeakItem[] {
   const out: SpeakItem[] = [];
-  for (const word of shuffled(usableWords(words), rng)) {
+  for (const word of shuffle(usableWords(words), rng)) {
     const sentence = word.examples.find((e) => dictatable(e.et) && e.en);
     if (sentence) {
       out.push({

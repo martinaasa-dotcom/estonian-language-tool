@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ListeningSession, type ListeningCard } from "./ListeningSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Listening" };
 
@@ -81,7 +82,7 @@ export default async function ListeningPage() {
     }
     const allTranslations = [...distinctTranslations];
 
-    const shuffled = [...cards].sort(() => Math.random() - 0.5);
+    const shuffled = shuffle(cards);
     const listeningCards: ListeningCard[] = shuffled.map((c) => {
       const correct = c.back;
       const pos = c.lexeme?.pos ?? "OTHER";
@@ -104,6 +105,3 @@ function pickDecoys(
   return [...sameOrder, ...rest].slice(0, count);
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
-}

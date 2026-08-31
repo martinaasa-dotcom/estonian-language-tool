@@ -5,6 +5,7 @@ import { formLabel } from "@/lib/estonian/morph";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { PairsSession, type PairQuestion } from "./PairsSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Minimal pairs" };
 
@@ -85,11 +86,9 @@ export default async function PairsPage() {
     );
   }
 
-  const round: PairQuestion[] = pairs
-    .map((p) => ({ p, k: Math.random() }))
-    .sort((a, b) => a.k - b.k)
+  const round: PairQuestion[] = shuffle(pairs)
     .slice(0, ROUND)
-    .map(({ p }) => {
+    .map((p) => {
       // Which one the learner will hear, chosen here so the server decides and
       // the answer is not sitting in the client before the question is asked.
       const askA = Math.random() < 0.5;

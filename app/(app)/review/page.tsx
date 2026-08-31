@@ -6,6 +6,7 @@ import { parseItems } from "@/lib/scan/items";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Review" };
 
@@ -204,11 +205,3 @@ async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
   });
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}

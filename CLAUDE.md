@@ -382,6 +382,23 @@ screens answer one question, the query is a function they share rather than a qu
 (`lib/progress/cases.ts`). Ordering is free wherever the index is already there, and it was in every
 one of these. What is not free is a number that moves on its own.
 
+**There is one shuffle, and `sort(() => Math.random() - 0.5)` is not one.** There were ten copies of
+this function in three implementations: four in `app/` that were Fisher-Yates character for
+character, four in `lib/` that were the same again with an rng passed in, and two places that used a
+comparator. A comparator is asked about a pair and expected to answer the same way each time; one
+that answers at random leaves the sort finishing early over runs it believes are already ordered, so
+an element stays near where it started. Measured over 200,000 rounds at the sizes the app actually
+uses: in the 40-card sprint the first card led 7.0% of rounds against a uniform 2.5%, and the first
+ten cards filled the first ten places 39.5% of the time against 25%; in the 20-card listening round
+the first card led 11.7% against 5.0%. Those pools arrive `orderBy: { due: "asc" }`, so that was the
+most overdue card leading about three times as often as chance while the tail of the pool went
+under-practised. `lib/random/shuffle.ts` is the one, and `random` is a parameter so a seeded caller
+hands in its own generator and a test hands in a fixed one. `lib/exam/paper.ts` is the single
+exception and its header says why: the server rebuilds a paper from its seed to mark it, so changing
+how that one draws would mis-mark a paper somebody started before a deploy and handed in after.
+Both halves are asserted, because fixing the two wrong copies and leaving eight right ones is how a
+ninth gets written.
+
 **A day is the learner's day, and every screen that counts one is rendered on a server.** The
 streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour
 of the day are all derived server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
@@ -609,7 +626,8 @@ local learner; with them, every route is gated. It keys off the absence of confi
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
-  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/` and `lib/copy/` stay free of
+  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/ux/`, `lib/random/` and
+  `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route.
 - Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
