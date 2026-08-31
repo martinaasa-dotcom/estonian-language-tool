@@ -127,7 +127,7 @@ export function Starters({ compact = false, lead, onPick }: {
   onPick: (prompt: string) => void;
 }) {
   return (
-    <div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
+    <div className="flex flex-wrap gap-2">
       {lead}
       {CHIPS.map((c) => (
         <button

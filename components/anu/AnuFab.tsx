@@ -94,9 +94,27 @@ export function AnuFab({
           role="dialog"
           aria-modal="true"
           aria-label="Ask Anu"
-          className="flex w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[var(--r-xl)] border"
+          /*
+            A CHAT PANEL OPENS AT THE SIZE IT WILL BE USED AT.
+
+            It had a maximum and no minimum, so it was exactly as tall as
+            whatever was in it: a short panel on opening, then a taller one
+            after the first question, then taller again, growing under the
+            reader a message at a time and finally jumping to a scroller. Every
+            one of those is a different window and none of them was the one they
+            opened. A floor rather than a fixed height, because a panel that
+            cannot grow at all is the same fault at the other end.
+
+            The floor is what a conversation needs before it has to scroll: two
+            exchanges of the length Anu actually writes, which is a paragraph of
+            grammar and a boxed correction under it. Both ends give way to a
+            short window first, so the arithmetic is the same expression twice
+            and the floor can never end up above the ceiling.
+          */
+          className="flex w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-[var(--r-xl)] border"
           style={{
-            maxHeight: "min(36rem, calc(100dvh - 7rem))",
+            minHeight: "min(32rem, calc(100dvh - 7rem))",
+            maxHeight: "min(44rem, calc(100dvh - 7rem))",
             borderColor: "var(--rule)",
             background: "var(--surface)",
             boxShadow: "var(--shadow-lg)",
@@ -114,8 +132,8 @@ export function AnuFab({
             than turns in the conversation, so they sit in her chrome, where
             they cost the thread nothing.
           */}
-          <header className="flex items-center gap-2.5 border-b px-4 py-3" style={{ borderColor: "var(--rule)" }}>
-            <Mascot size={26} className="shrink-0" animate={false} />
+          <header className="flex items-center gap-3 border-b px-5 py-4" style={{ borderColor: "var(--rule)" }}>
+            <Mascot size={28} className="shrink-0" animate={false} />
             <div className="min-w-0 flex-1">
               <p className="text-base font-bold leading-snug" style={{ color: "var(--ink)" }}>Anu</p>
               {configured && (
@@ -137,7 +155,18 @@ export function AnuFab({
             </button>
           </header>
 
-          <div className="scroll-host flex-1 overflow-y-auto px-4 py-4">
+          {/*
+            The well is a column and its contents are pushed to the bottom by
+            `mt-auto` below, which is what a floor under the panel's height
+            makes necessary: a thread anchored to the top of a 44rem window
+            leaves a first answer stranded at the ceiling with a screen of
+            nothing between it and the box it was typed into. Growing upward
+            off the input is what every chat does and it is where the next
+            message is going to appear anyway. `mt-auto` rather than
+            `justify-end`, which on a scroll container puts the overflowing top
+            of a long conversation out of reach in Chromium.
+          */}
+          <div className="scroll-host flex flex-1 flex-col overflow-y-auto px-5 py-5">
             {!configured ? (
               <Empty
                 title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
@@ -162,34 +191,38 @@ export function AnuFab({
                 surface has room for, plus the check that leads them.
               */
               checkOpen ? (
-                <SentenceCheck
-                  open
-                  compact
-                  estonian={checkEt}
-                  meaning={checkEn}
-                  streaming={streaming}
-                  onOpen={() => setCheckOpen(true)}
-                  onClose={() => setCheckOpen(false)}
-                  onEstonian={setCheckEt}
-                  onMeaning={setCheckEn}
-                  onSubmit={() => {
-                    void send(sentenceCheckPrompt(checkEt, checkEn));
-                    setCheckEt("");
-                    setCheckEn("");
-                    setCheckOpen(false);
-                  }}
-                />
+                <div className="mt-auto">
+                  <SentenceCheck
+                    open
+                    compact
+                    estonian={checkEt}
+                    meaning={checkEn}
+                    streaming={streaming}
+                    onOpen={() => setCheckOpen(true)}
+                    onClose={() => setCheckOpen(false)}
+                    onEstonian={setCheckEt}
+                    onMeaning={setCheckEn}
+                    onSubmit={() => {
+                      void send(sentenceCheckPrompt(checkEt, checkEn));
+                      setCheckEt("");
+                      setCheckEn("");
+                      setCheckOpen(false);
+                    }}
+                  />
+                </div>
               ) : (
-                <Starters
-                  compact
-                  onPick={pick}
-                  lead={<CheckStarter compact onOpen={() => setCheckOpen(true)} />}
-                />
+                <div className="mt-auto">
+                  <Starters
+                    compact
+                    onPick={pick}
+                    lead={<CheckStarter compact onOpen={() => setCheckOpen(true)} />}
+                  />
+                </div>
               )
             ) : (
               <div
                 ref={conversation}
-                className="flex flex-col gap-3"
+                className="mt-auto flex flex-col gap-4"
                 role="log"
                 aria-live="polite"
                 aria-label="Conversation with Anu"
@@ -202,8 +235,8 @@ export function AnuFab({
           </div>
 
           {configured && (
-            <div className="flex flex-col gap-2.5 border-t px-4 py-3" style={{ borderColor: "var(--rule)" }}>
-              <div className="flex items-start gap-2">
+            <div className="flex flex-col gap-3 border-t px-5 py-4" style={{ borderColor: "var(--rule)" }}>
+              <div className="flex items-start gap-2.5">
                 <div className="flex-1">
                   <EstonianInput
                     value={input}
