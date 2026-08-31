@@ -2060,64 +2060,97 @@ export async function saveScan(input: {
     holds that id.
   */
   const claimed = items.map((i) => i.lexemeId).filter((id): id is string => id !== null);
+  /*
+    With the paradigm attached, because the card-building branch below needs it
+    and used to ask for it a second time, once per word. A page carries up to
+    `MAX_ITEMS` words: that was sixty round trips for rows this query already
+    had, plus another sixty for the words it did not.
+  */
   const known = claimed.length
-    ? await prisma.lexeme.findMany({
-        where: { id: { in: claimed } },
-        select: { id: true, lemma: true, translation: true },
-      })
+    ? await prisma.lexeme.findMany({ where: { id: { in: claimed } }, include: { forms: true } })
     : [];
   const byId = new Map(known.map((l) => [l.id, l]));
 
-  const stored: typeof items = [];
-  let cards = 0;
+  /*
+    And one question for every word the dictionary would not vouch for, asked
+    before the loop rather than inside it. The key is `(lemma, pos)`, which is
+    `Lexeme`'s own unique key, so a word that is already there under another
+    learner's hand is found rather than re-created. `createMany` with
+    `skipDuplicates` then writes only what is genuinely new, and the count it
+    returns is what `created` used to tally one row at a time.
+  */
   let created = 0;
-
+  const unvouched = new Map<string, { lemma: string; pos: string; en: string }>();
+  // What a ticked word would be filed under if the dictionary does not already
+  // hold it. `(lemma, pos)` is `Lexeme`'s own unique key, so this is the same
+  // question the loop below asks and the same one the write below settles.
+  const keyOf = (et: string) => {
+    const lemma = capped(et, LIMITS.lemma);
+    const pos = guessPos(lemma);
+    return { lemma, pos, key: `${lemma}|${pos}` };
+  };
   for (const item of items) {
-    const match = item.lexemeId ? byId.get(item.lexemeId) : undefined;
-    let lexemeId = match?.id ?? null;
-    let lemma = match?.lemma ?? null;
-    let translation = match?.translation ?? null;
+    if (item.lexemeId && byId.has(item.lexemeId)) continue;
+    const { lemma, pos, key } = keyOf(item.et);
+    if (!unvouched.has(key)) unvouched.set(key, { lemma, pos, en: item.en });
+  }
 
-    if (!lexemeId) {
-      // Not in the dictionary, and ticked anyway. Stored as the learner's own
-      // entry, attributed to them, with the page's gloss as its English.
-      const lemmaText = capped(item.et, LIMITS.lemma);
-      const pos = guessPos(lemmaText);
-      const existing = await prisma.lexeme.findUnique({
-        where: { lemma_pos: { lemma: lemmaText, pos } },
-        select: { id: true, lemma: true, translation: true },
-      });
-      const row = existing ?? await prisma.lexeme.create({
-        data: {
-          lemma: lemmaText,
-          pos,
-          translation: capped(item.en, LIMITS.translation) || NEEDS_TRANSLATION,
-          provenance: "USER",
+  const byKey = new Map<string, (typeof known)[number]>();
+  if (unvouched.size) {
+    const rows = await prisma.lexeme.findMany({
+      where: { OR: [...unvouched.values()].map((w) => ({ lemma: w.lemma, pos: w.pos })) },
+      include: { forms: true },
+    });
+    for (const row of rows) byKey.set(`${row.lemma}|${row.pos}`, row);
+
+    const missing = [...unvouched.entries()].filter(([key]) => !byKey.has(key));
+    if (missing.length) {
+      const written = await prisma.lexeme.createMany({
+        data: missing.map(([, w]) => ({
+          lemma: w.lemma,
+          pos: w.pos,
+          translation: capped(w.en, LIMITS.translation) || NEEDS_TRANSLATION,
+          provenance: "USER" as const,
           editedBy: ownerId,
           editedAt: new Date(),
-        },
-        select: { id: true, lemma: true, translation: true },
+        })),
+        skipDuplicates: true,
       });
-      if (!existing) created += 1;
-      lexemeId = row.id;
-      lemma = row.lemma;
-      translation = row.translation;
-    }
-
-    stored.push({ ...item, lexemeId, lemma, translation });
-
-    if (input.addCards) {
-      // Only what the word can actually support. A hand-added entry has no
-      // forms, so asking for a case-form card would produce nothing; a matched
-      // one may carry a full paradigm and deserves the lot.
-      const lexeme = await prisma.lexeme.findUnique({
-        where: { id: lexemeId },
+      created = written.count;
+      const fresh = await prisma.lexeme.findMany({
+        where: { OR: missing.map(([, w]) => ({ lemma: w.lemma, pos: w.pos })) },
         include: { forms: true },
       });
-      const types = lexeme
-        ? availableCardTypes(lexeme as LexemeForCards)
-        : (["RECOGNITION", "PRODUCTION"] as CardType[]);
-      const result = await addCardsFor(ownerId, lexemeId, types, "SCAN");
+      for (const row of fresh) byKey.set(`${row.lemma}|${row.pos}`, row);
+    }
+  }
+
+  const stored: typeof items = [];
+  let cards = 0;
+  const carded = new Set<string>();
+
+  for (const item of items) {
+    const vouched = item.lexemeId ? byId.get(item.lexemeId) : undefined;
+    // Not in the dictionary, and ticked anyway. Stored as the learner's own
+    // entry, attributed to them, with the page's gloss as its English.
+    const row = vouched ?? byKey.get(keyOf(item.et).key);
+    if (!row) {
+      // Nothing to point at: the write above lost a race with a hand edit.
+      // Kept on the page as an unmatched word rather than dropped.
+      stored.push({ ...item, lexemeId: null, lemma: null, translation: null });
+      continue;
+    }
+
+    stored.push({ ...item, lexemeId: row.id, lemma: row.lemma, translation: row.translation });
+
+    // Only what the word can actually support. A hand-added entry has no
+    // forms, so asking for a case-form card would produce nothing; a matched
+    // one may carry a full paradigm and deserves the lot.
+    if (input.addCards && !carded.has(row.id)) {
+      carded.add(row.id);
+      const result = await addCardsFor(
+        ownerId, row.id, availableCardTypes(row as LexemeForCards), "SCAN",
+      );
       if (result.ok) cards += result.added ?? 0;
     }
   }
@@ -2143,13 +2176,32 @@ export async function addScanToDeck(scanId: string) {
   if (!scan) return { ok: false as const, error: "That page is not here any more." };
 
   const items = parseItems(scan.items, SCAN_MAX_ITEMS);
+
+  /*
+    One query for the words, not sixty.
+
+    A page carries up to `MAX_ITEMS` words and this asked the dictionary about
+    each one on its own, with its whole paradigm attached. None of those reads
+    depends on what the previous word did: they are the same question sixty
+    times over, and a deployment asks it through a pooler while somebody
+    watches the button they just pressed. `importWords` and the offline replay
+    had the same shape for the same reason.
+
+    The `addCardsFor` below stays per word, because that one is the write and
+    it takes an advisory lock on (owner, word) to keep a double tap from
+    building two decks.
+  */
+  const wanted = [...new Set(items.map((i) => i.lexemeId).filter((id): id is string => !!id))];
+  const byId = new Map(
+    (wanted.length
+      ? await prisma.lexeme.findMany({ where: { id: { in: wanted } }, include: { forms: true } })
+      : []
+    ).map((l) => [l.id, l]),
+  );
+
   let added = 0;
-  for (const item of items) {
-    if (!item.lexemeId) continue;
-    const lexeme = await prisma.lexeme.findUnique({
-      where: { id: item.lexemeId },
-      include: { forms: true },
-    });
+  for (const id of wanted) {
+    const lexeme = byId.get(id);
     if (!lexeme) continue;
     const result = await addCardsFor(
       ownerId, lexeme.id, availableCardTypes(lexeme as LexemeForCards), "SCAN",

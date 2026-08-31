@@ -43,7 +43,7 @@ const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("write and delete a scanned page and its cards"),
 });
 
-const { check, done } = suite("The paper path", { floor: 15 });
+const { check, done } = suite("The paper path", { floor: 17 });
 
 /** A word the seed definitely holds, with its real id, for the matched row. */
 const known = await prisma.lexeme.findFirst({
@@ -169,6 +169,30 @@ check(
 
 const madeCards = await prisma.card.count({ where: { ownerId: OWNER, source: "SCAN" } });
 check("ticking a word makes cards", madeCards >= 2, `${madeCards} cards`);
+
+/*
+  THE UNVOUCHED WORD BECAME AN ENTRY, WHICH IS THE HALF THIS DID NOT ASK.
+
+  The forms check below is the point of the whole path: nothing the model read
+  off a photograph may become an Estonian form. But counting zero forms passes
+  just as happily when the word was never written down at all, so the one
+  branch that turns a ticked-but-unmatched word into the learner's own entry
+  was covered by a check that could not tell the difference. Assert the entry
+  first, then that it carries nothing invented.
+*/
+const mine = await prisma.lexeme.findFirst({
+  where: { lemma: UNKNOWN },
+  select: { id: true, provenance: true, editedBy: true },
+});
+check(
+  "a ticked word the dictionary would not vouch for becomes the learner's own entry",
+  Boolean(mine) && mine.provenance === "USER" && mine.editedBy === OWNER,
+  mine ? `${mine.provenance}, edited by ${mine.editedBy}` : "no entry was written",
+);
+check(
+  "and it gets cards of its own, not just the matched word's",
+  mine ? (await prisma.card.count({ where: { ownerId: OWNER, lexemeId: mine.id } })) >= 2 : false,
+);
 
 const invented = await prisma.form.count({ where: { lexeme: { lemma: UNKNOWN } } });
 check(

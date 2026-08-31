@@ -38,7 +38,29 @@ const before = {
   tasks: await prisma.task.count(),
   scans: await prisma.scan.count(),
 };
-const backup = await (await page.request.get(`${B}/api/export`)).text();
+const exported = await page.request.get(`${B}/api/export`);
+const backup = await exported.text();
+
+/*
+  A 429 IS THE APP WORKING, AND THIS USED TO REPORT IT AS AN EMPTY BACKUP.
+
+  `/api/export` allows six backups an hour, which is right: it reads every
+  owner-scoped table. Running the suites twice in an hour is an ordinary
+  afternoon, and the second run said "export produced a backup (0 KB)" and
+  stopped. That sends whoever reads it to look at the export, which is
+  working, rather than at the clock. The limiter is per instance and in
+  memory, so restarting the server clears it, and that is worth saying too.
+
+  Not waived and not passed: a run that could not take a backup has not
+  checked backup and restore, and this is the suite guarding the one failure
+  in this app with nothing to recover from.
+*/
+if (exported.status() === 429) {
+  check("export produced a backup", false,
+    "the hourly backup allowance is spent, which is /api/export working. " +
+    "Wait, or restart the server: the limiter is per instance and in memory.");
+  done();
+}
 check("export produced a backup", backup.length > 1000, `${Math.round(backup.length / 1024)} KB`);
 
 // On disk before anything is deleted. If the suite dies from here on, this file

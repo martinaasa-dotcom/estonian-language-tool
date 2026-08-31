@@ -1347,6 +1347,16 @@ third by accident, its `3` keypress landing on the third option rather than on a
 containment suite runs third and everything after it reads the same deck. An invariant fails on a
 suite that presses the flip and knows no other shape, and on the helper learning to grade.
 
+**A failure may not misname its cause either, and that is the same rule pointing the other way.**
+`/api/export` allows six backups an hour, because it reads every owner-scoped table.
+`test-restore.mjs` read the body and not the status, so the seventh run in an hour, which is an
+ordinary afternoon of working on this, said `export produced a backup (0 KB)` and stopped. The
+export was working perfectly. That line sends whoever reads it to the one part of the app the
+suite exists to protect, and the answer was the clock. It reads the 429 now and says the
+allowance is spent and that restarting the server clears it, since the limiter is per instance
+and in memory. Still a failure rather than a waiver: a run that could not take a backup has not
+checked backup and restore.
+
 `scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
 walks every text-bearing element, every icon and everything that arrives with a width of its own,
 on **every route the app has** at 360 and 1280, plus the landing page with its disclosures open
