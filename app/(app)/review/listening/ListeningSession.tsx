@@ -99,7 +99,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
       <Page title="Listening" lead="Hear a word, pick its meaning.">
         <Empty
           title="Nothing to listen to yet"
-          body="Listening draws from cards that are due or that you've slipped on before. Review a little first, or add some words."
+          body="This draws on cards that are due, or that you have slipped on before."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -112,7 +112,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
@@ -188,7 +188,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           {!answered ? (
             noAudio ? (
               <>
-                <p lang="et" className="est text-2xl font-semibold" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>
                   {card.lemma}
                 </p>
                 <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
@@ -210,7 +210,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
             )
           ) : (
             <div className="flex items-center gap-2">
-              <p lang="et" className="est text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
+              <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
               <Speak text={card.lemma} />
             </div>
           )}
@@ -236,7 +236,11 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                 className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-base font-semibold transition-ui hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
                 style={tone}
               >
-                <kbd className="text-2xs opacity-60">{i + 1}</kbd>
+                {/* One character, so axe files it as "too short to determine"
+                    and the sweep used to drop the measurement on the floor.
+                    At 60% this read 2.46 to 4.16 depending on which of the
+                    four tones the option was wearing. */}
+                <kbd className="text-2xs">{i + 1}</kbd>
                 <span className="flex-1">{choice}</span>
                 {answered && isCorrectChoice && <Check size={15} aria-hidden />}
                 {answered && isPicked && !isCorrectChoice && <X size={15} aria-hidden />}

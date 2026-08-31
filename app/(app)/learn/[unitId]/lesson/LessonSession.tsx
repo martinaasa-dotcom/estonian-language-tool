@@ -91,7 +91,7 @@ export function LessonSession({
       <Page title={unitTitle} lead="Nothing to teach here yet.">
         <Empty
           title="This unit has no words in the dictionary yet"
-          body="Its words arrive with an Ekilex key, or you can add them by hand. Nothing is missing from your deck in the meantime."
+          body="Its words arrive with an Ekilex key, or you can add them by hand."
           action={<ButtonLink href={`/learn/${unitId}`}>Back to the unit</ButtonLink>}
         />
       </Page>

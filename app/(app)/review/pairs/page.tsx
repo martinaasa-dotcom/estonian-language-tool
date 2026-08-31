@@ -5,6 +5,7 @@ import { formLabel } from "@/lib/estonian/morph";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { PairsSession, type PairQuestion } from "./PairsSession";
+import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Minimal pairs" };
 
@@ -23,11 +24,22 @@ const ROUND = 10;
 export default async function PairsPage() {
   const ownerId = await requireUserId();
 
+  /*
+    Easiest first, and ordered at all.
+
+    This cap binds: the dictionary is around six thousand words and the pairs
+    are discovered by collapsing doubled letters across all of them, so which
+    two thousand were looked at decided which contrasts existed. Unordered,
+    that was the plan's choice, and a drill could offer a pair one day and not
+    the next. By cefr and lemma the pool is the words a learner is likeliest to
+    have met, which is also the better third to draw a listening drill from.
+  */
   const lexemes = await prisma.lexeme.findMany({
     select: {
       id: true, lemma: true, translation: true,
       forms: { select: { value: true, formType: true, morphName: true } },
     },
+    orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
     take: 2000,
   });
 
@@ -67,18 +79,16 @@ export default async function PairsPage() {
       <Page title="Minimal pairs" lead="The length distinctions spelling half-records.">
         <Empty
           title="No length contrasts in the dictionary yet"
-          body="These are found automatically wherever two forms differ only in how long a sound is, as in maja against majja. Add a few more words to your deck and pairs will start appearing."
+          body="A pair is two forms that differ only in how long a sound is, as in maja against majja."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
     );
   }
 
-  const round: PairQuestion[] = pairs
-    .map((p) => ({ p, k: Math.random() }))
-    .sort((a, b) => a.k - b.k)
+  const round: PairQuestion[] = shuffle(pairs)
     .slice(0, ROUND)
-    .map(({ p }) => {
+    .map((p) => {
       // Which one the learner will hear, chosen here so the server decides and
       // the answer is not sitting in the client before the question is asked.
       const askA = Math.random() < 0.5;

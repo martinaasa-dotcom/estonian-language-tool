@@ -11,8 +11,15 @@
  * Pure and framework-free, like the rest of `lib/estonian/`.
  */
 
-/** Letters, plus the marks that live inside an Estonian word. */
-const WORD_RE = /[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu;
+/**
+ * Letters, plus the marks that live inside an Estonian word.
+ *
+ * Exported because three modules were matching Estonian words with three
+ * copies of it, each with its own comment saying it mirrored one of the
+ * others. A hyphenated compound or a word with an apostrophe in it is a thing
+ * the whole app has to agree about, so it is written once here and imported.
+ */
+export const ESTONIAN_WORD = /[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu;
 
 export interface Cloze {
   /** The sentence with the target replaced by a blank. */
@@ -49,7 +56,7 @@ export function buildCloze(sentence: string, forms: readonly string[]): Cloze | 
   }
   if (wanted.size === 0) return null;
 
-  const tokens = [...text.matchAll(WORD_RE)];
+  const tokens = [...text.matchAll(ESTONIAN_WORD)];
   if (tokens.length < 3) return null; // too short to be a question
 
   let best: { value: string; index: number } | null = null;
@@ -78,7 +85,7 @@ export function buildCloze(sentence: string, forms: readonly string[]): Cloze | 
  * It is put back when the sentence is shown complete.
  */
 export function sentenceTiles(sentence: string): string[] {
-  return [...sentence.trim().matchAll(WORD_RE)].map((m) => m[0]);
+  return [...sentence.trim().matchAll(ESTONIAN_WORD)].map((m) => m[0]);
 }
 
 /** Compares a built sentence with the original, ignoring punctuation and case. */

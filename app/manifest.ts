@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Kodukeel. Estonian study",
     short_name: "Kodukeel",
     description:
-      "Learn Estonian by its cases: a dictionary with full paradigms, spaced-repetition flashcards, speed rounds and a grammar tutor.",
+      "Learn Estonian by its cases: a dictionary that shows every form, spaced-repetition flashcards, speed rounds and a grammar tutor.",
     start_url: "/",
     scope: "/",
     display: "standalone",

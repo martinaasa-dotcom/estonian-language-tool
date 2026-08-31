@@ -77,7 +77,7 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         autoCapitalize="characters"
         autoCorrect="off"
         spellCheck={false}
-        className="est rounded-[var(--r)] border px-3.5 py-2.5 text-xl tracking-[0.3em] outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-xl tracking-[0.3em] outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <label htmlFor="join-name" className="label-xs" style={{ color: "var(--ink-3)" }}>

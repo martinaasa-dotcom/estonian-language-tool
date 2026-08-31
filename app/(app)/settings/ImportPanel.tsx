@@ -100,7 +100,7 @@ export function ImportPanel() {
         rows={6}
         placeholder={EXAMPLE}
         aria-label="Paste word list"
-        className="est mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base outline-none"
+        className="mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base outline-none"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       {/* This box is usually pasted into, but its own copy says "typed off a
@@ -119,7 +119,7 @@ export function ImportPanel() {
                 className="flex justify-between gap-4 px-3 py-1.5 text-sm"
                 style={{ borderTop: i ? "1px solid var(--rule-soft)" : undefined }}
               >
-                <span lang="et" className="est" style={{ color: "var(--ink)" }}>{r.lemma}</span>
+                <span lang="et" style={{ color: "var(--ink)" }}>{r.lemma}</span>
                 <span style={{ color: "var(--ink-3)" }}>{r.translation}</span>
               </li>
             ))}

@@ -91,7 +91,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
     const accuracy = Math.round((correct / questions.length) * 100);
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
@@ -153,7 +153,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
 
         <div className="px-6 py-8 text-center">
           <div className="flex items-center justify-center gap-2">
-            <p lang="et" className="est text-3xl font-semibold" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="text-3xl font-semibold" style={{ color: "var(--ink)" }}>
               {question.lemma}
             </p>
             <Speak text={question.lemma} />
@@ -161,7 +161,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>{question.translation}</p>
 
           {question.maskedExample && !revealed && (
-            <p lang="et" className="est mt-5 text-[19px]" style={{ color: "var(--ink-2)" }}>
+            <p lang="et" className="mt-5 text-[19px]" style={{ color: "var(--ink-2)" }}>
               {question.maskedExample}
             </p>
           )}
@@ -181,9 +181,13 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
               const tone = !revealed
                 ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
                 : isAnswer
-                  ? { background: "var(--good-soft)", color: "var(--good)", borderColor: "transparent" }
+                  /* The ink, not the hue: see the same table in
+                     review/pairs/PairsSession.tsx. A hue set as text on its
+                     own tint measures about 2.5:1, which is what every hue
+                     having an ink is for. */
+                  ? { background: "var(--good-soft)", color: "var(--good-ink)", borderColor: "transparent" }
                   : isPicked
-                    ? { background: "var(--again-soft)", color: "var(--again)", borderColor: "transparent" }
+                    ? { background: "var(--again-soft)", color: "var(--again-ink)", borderColor: "transparent" }
                     : { background: "transparent", color: "var(--ink-3)", borderColor: "var(--rule-soft)" };
 
               return (
@@ -195,14 +199,16 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                   className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
                   style={tone}
                 >
-                  <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
+                  {/* One character at 60%, which measured 4.12:1 against a
+                      bar of 4.5 on the unrevealed option alone. */}
+                  <kbd className="tnum text-2xs">{i + 1}</kbd>
                   <span className="min-w-0">
                     {/* The question leads because the dictionary records
                         government as the question a verb answers, and because
                         that is how the answer is said out loud: "aitama" takes
                         "keda?", not "the partitive". */}
                     <span lang="et" className="block text-base font-medium">{spec?.question}</span>
-                    <span lang="et" className="block text-[12.5px] opacity-75">{spec?.et}</span>
+                    <span lang="et" className="block text-[12.5px]">{spec?.et}</span>
                   </span>
                   {revealed && isAnswer && <Check size={16} className="ml-auto shrink-0" aria-hidden />}
                 </button>
@@ -215,7 +221,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             {question.example && (
               <div className="flex flex-wrap items-center gap-2">
-                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
+                <p lang="et" className="text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {question.example}
                 </p>
                 <Speak text={question.example} />

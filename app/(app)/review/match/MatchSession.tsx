@@ -9,6 +9,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { Confetti } from "@/components/Confetti";
 import { Empty, Page, Stat } from "@/components/ui";
 import type { Badge } from "@/lib/achievements/badges";
+import { shuffle } from "@/lib/random/shuffle";
 
 export interface MatchPair {
   cardId: string;
@@ -121,7 +122,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
       <Page title="Match" lead="Pair the Estonian with its meaning, against the clock.">
         <Empty
           title="Not enough cards to make a round"
-          body="Match needs at least four words in your deck. Start a unit on the path and come straight back."
+          body="Match needs four words in your deck."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>
@@ -138,7 +139,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
           >
             <Timer size={30} aria-hidden />
           </span>
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Match
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -173,7 +174,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <Confetti count={40} />
-        <h1 className="est text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           All matched!
         </h1>
         <p className="mt-2 flex items-center gap-2 text-base" style={{ color: "var(--ink-2)" }}>
@@ -237,7 +238,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
               disabled={isMatched}
               lang={tile.side === "et" ? "et" : "en"}
               aria-pressed={isSelected}
-              className={`${tile.side === "et" ? "est text-md font-semibold " : "text-base "}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0`}
+              className={`${tile.side === "et" ? "text-md font-semibold " : "text-base "}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0`}
               style={{
                 background: isMatched
                   ? "var(--mint-soft)"
@@ -279,11 +280,3 @@ function accuracyFrom(misses: Record<string, number>, pairs: number): number {
   return pairs > 0 ? Math.round((clean / pairs) * 100) : 0;
 }
 
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}

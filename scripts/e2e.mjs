@@ -10,8 +10,8 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-// Floor: 21, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The core flows", { floor: 21 });
+// Floor: 26, measured in the state CI seeds. A thinner database reads as short.
+const { check, absent, done } = suite("The core flows", { floor: 26 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -23,7 +23,7 @@ const { check, done } = suite("The core flows", { floor: 21 });
 */
 await ensureLetterBar(browser, B, "on");
 
-// 1 — Dictionary: search, paradigm, add to deck
+// 1 — Dictionary: search, forms, add to deck
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
 await page.waitForSelector("text=toaga", { timeout: 10000 });
 check("search shows the short illative", (await page.getByText("tuppa", { exact: true }).count()) > 0);
@@ -135,6 +135,37 @@ await page.getByRole("button", { name: /Add 2 words/ }).click();
 check("re-importing the same words does not duplicate them",
   await eventually(async () => (await page.getByText(/already in your deck/).count()) > 0));
 
+/*
+  A paste that repeats a line, which is what a list assembled from two handouts
+  looks like. The importer used to ask the database about every row on its own,
+  so the second copy found what the first had just written; it reads the whole
+  paste in one query now and drops the repeats before counting.
+
+  The count is the thing to check, and the first version of this check got that
+  wrong. It asserted "Added 1 word", which is 1 whether the repeat is dropped or
+  not, because `createMany` is told to skip duplicates and so writes one row
+  either way. What actually breaks is `skipped`, which collects a lemma per row
+  that was already there: a new word beside a repeated old one then reads
+  "Skipped 2 you already had" about one word. So the list below is one new word
+  and one old one written twice, and the number in that sentence is the check.
+*/
+const kaks = `testkaks${stamp} - twice over`;
+await page.getByLabel("Paste word list").fill(kaks);
+await page.waitForTimeout(400);
+await page.getByRole("button", { name: /Add 1 word\b/ }).click();
+await eventually(async () => (await page.getByText(/Added 1 word\b/).count()) > 0);
+
+const mixed = `testuus${stamp} - brand new\n${kaks}\n${kaks}`;
+await page.getByLabel("Paste word list").fill(mixed);
+await page.waitForTimeout(400);
+await page.getByRole("button", { name: /Add \d+ words?/ }).click();
+const skippedLine = await eventually(async () =>
+  (await page.getByText(/Skipped \d+ you already had/).count()) > 0);
+const said = (await page.locator("main").innerText()).replace(/\n+/g, " · ");
+check("a repeated line is counted once, not twice",
+  skippedLine && /Skipped 1 you already had/.test(said),
+  said.slice(0, 140));
+
 // 6 — Export
 const res = await page.request.get(`${B}/api/export`);
 const body = await res.json();
@@ -201,7 +232,64 @@ check("shared diacritic bar types into the focused field",
   await eventually(async () => (await genField.inputValue()) === "sä"),
   `got "${await genField.inputValue()}"`);
 
-// 10 — B1+ coverage, with verb government
+// 10 — The suggestion row, which is the empty state's whole answer
+/*
+  This row read the first forty rows of an alphabetical list and drew twelve,
+  so for the life of the app it offered `aasialane`, `aastatuhat` and
+  `aberratsioon` to everybody, every day, and the daily skip made it look as
+  though it moved. Three things are worth driving a browser for, and none of
+  them is visible to a unit test: that the row says why it chose these words,
+  that a chip actually opens the entry it names, and that the row moves.
+*/
+await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+const rowOf = async () =>
+  (await page.locator('ul[aria-labelledby="try-these"] button').allInnerTexts()).map((t) => t.trim());
+
+const first = await rowOf();
+if (first.length === 0) {
+  absent(4, "a seeded dictionary, which is what the suggestion row draws from");
+} else {
+  const label = (await page.locator("#try-these").innerText()).trim();
+  check("the row says why it chose these words", label.length > 3, `label "${label}"`);
+
+  /*
+    Not sorted. That is the fault stated exactly: the old row was always the
+    alphabetical head, and twelve words landing in order by chance is one in
+    twelve factorial.
+  */
+  const sorted = [...first].sort((a, b) => a.localeCompare(b, "et"));
+  check("the row is not the top of an alphabetical list",
+    first.join("|") !== sorted.join("|"), first.slice(0, 3).join(", "));
+
+  /*
+    Six loads rather than two. One repeat is possible when a source has a
+    small pool; six identical rows is the row being frozen, which is the thing
+    that was wrong.
+  */
+  const rows = [first.join("|")];
+  for (let i = 0; i < 5; i += 1) {
+    await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+    rows.push((await rowOf()).join("|"));
+  }
+  check("the row moves between visits", new Set(rows).size > 1, `${new Set(rows).size} of 6 differ`);
+
+  await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+  const word = (await rowOf())[0];
+  await page.locator('ul[aria-labelledby="try-these"] button').first().click();
+  /*
+    Waiting for the URL rather than for the network. A chip navigates through
+    the router, so the page is already idle when the click lands and
+    `waitForLoadState` returns before anything has happened.
+  */
+  const arrived = await page
+    .waitForURL((url) => decodeURIComponent(url.href).includes(`q=${word}`), { timeout: 10000 })
+    .then(() => true, () => false);
+  check("a suggested word opens its own entry",
+    arrived && (await page.getByRole("heading", { name: word, exact: true }).count()) > 0,
+    `chip "${word}" landed on ${decodeURIComponent(page.url())}`);
+}
+
+// 11 — B1+ coverage, with verb government
 await page.goto(`${B}/dictionary?q=sõltuma`, { waitUntil: "networkidle" });
 check("B1 verb carries its government",
   (await page.getByText(/elative/i).count()) > 0);

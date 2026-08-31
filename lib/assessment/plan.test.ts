@@ -4,6 +4,7 @@ import {
   sustainableNewCardsPerDay, weeksNeeded, weeksToLearn,
 } from "./plan";
 import { BANDS, PRE_A1, type Band, type Level } from "./types";
+import { formatDuration, formatDurationRange } from "@/lib/time/duration";
 
 describe("the hours table", () => {
   it("only ever goes up", () => {
@@ -147,6 +148,44 @@ describe("project", () => {
     }
   });
 
+  /*
+    An hour is the wrong unit for the figures at the small end of this screen.
+    Nine minutes a week was printed as "0.2h", which is twelve, and a real
+    0.0218 hours a week still to find was printed as "0 hours a week" under a
+    headline saying there was study left to do. Every duration the plan can
+    print is swept here, because the fault is only visible at the ends.
+  */
+  it("prints no duration in a unit that rounds it away", () => {
+    const FROMS: Level[] = [PRE_A1, ...BANDS];
+    const wrong: string[] = [];
+    for (const from of FROMS) {
+      for (const to of BANDS as readonly Band[]) {
+        for (const minutes of [3, 5, 8, 13]) {
+          for (const days of [2, 3, 4, 5, 6, 7]) {
+            for (const weeks of [null, 0, 13, 26, 52, 104]) {
+              const p = project({ from, to, minutesPerDay: minutes, daysPerWeek: days, weeksAvailable: weeks });
+              const where = `${from}->${to} ${minutes}min x${days}d in ${weeks}wk`;
+
+              // The pace is a real amount of practice, so it never reads as none.
+              const pace = formatDuration(p.appHoursPerWeek);
+              if (p.appHoursPerWeek > 0 && /^0 /.test(pace)) wrong.push(`${where}: pace "${pace}"`);
+              // And it is read in minutes wherever an hour would be the wrong unit.
+              if (p.appHoursPerWeek < 1 && !pace.endsWith("min")) wrong.push(`${where}: pace "${pace}"`);
+
+              // The note only renders on a real shortfall, so it may not read as none either.
+              const other = p.otherHoursPerWeek;
+              if (!other || other.high <= 0) continue;
+              const found = formatDurationRange(other.low, other.high, "long");
+              if (/^0 (minutes?|hours?)$/.test(found)) wrong.push(`${where}: shortfall "${found}"`);
+              if (/to 0 (minutes?|hours?)$/.test(found)) wrong.push(`${where}: shortfall "${found}"`);
+            }
+          }
+        }
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+
   it("never makes more practice take longer", () => {
     for (const to of BANDS as readonly Band[]) {
       for (const minutes of [3, 5, 8, 13]) {
@@ -178,9 +217,27 @@ describe("the daily goal a learner can actually sustain", () => {
     expect(sustainableNewCardsPerDay(1)).toBe(1);
   });
 
-  it("turns a word count into weeks at two cards a word", () => {
-    expect(weeksToLearn(50, 15, 5)).toBe(10);
+  it("turns a card count into weeks at the sustainable rate", () => {
+    // 15 a day sustains 2 new cards, 5 days a week, so 100 cards is 10 weeks.
+    expect(weeksToLearn(100, 15, 5)).toBe(10);
     expect(weeksToLearn(0, 15, 5)).toBe(0);
+  });
+
+  /*
+    The regression this signature exists for. It took words and doubled them,
+    which is the card count for a unit that drills nothing; a real A1 unit is
+    nearer nine cards a word, so the old call understated a starter deck by a
+    factor of four and a half and told a beginner nine weeks where the answer
+    was forty.
+  */
+  it("counts the cards it was given rather than doubling them", () => {
+    // The A1 starter deck, measured: 52 words build 404 cards, not 104.
+    expect(weeksToLearn(404, 25, 5)).toBe(27);
+    expect(weeksToLearn(50, 15, 5)).toBe(5);
+  });
+
+  it("is faster at a higher goal, which is what the copy now says", () => {
+    expect(weeksToLearn(400, 40, 5)).toBeLessThan(weeksToLearn(400, 10, 5));
   });
 });
 

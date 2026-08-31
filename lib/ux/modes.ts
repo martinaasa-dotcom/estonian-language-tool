@@ -107,7 +107,7 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
   },
   {
     href: "/review/clinic", title: "Leech clinic", subtitle: "What keeps failing", icon: "Stethoscope",
-    tone: "blush", group: "targeted", note: "From your review log",
+    tone: "blush", group: "targeted", note: "From your log",
     blurb:
       "The handful of cards you keep getting wrong, with what their history says about how they " +
       "are failing, instead of quietly burying them.",

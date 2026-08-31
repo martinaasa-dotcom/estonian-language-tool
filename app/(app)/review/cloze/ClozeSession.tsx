@@ -107,7 +107,7 @@ export function ClozeSession() {
             maxLength={MAX_PASSAGE_CHARS}
             onChange={(e) => setText(e.target.value)}
             placeholder="Kleebi siia artikkel, kodutöö või sõnum…"
-            className="est mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-base outline-none"
+            className="mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-base outline-none"
             style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
           />
           <div className="mt-2 flex items-center justify-between gap-3">
@@ -143,7 +143,7 @@ export function ClozeSession() {
     const accuracy = Math.round((correct / items.length) * 100);
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           Passage complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
@@ -210,7 +210,7 @@ export function ClozeSession() {
         </div>
 
         <div className="px-6 py-8">
-          <p lang="et" className="est text-lg leading-relaxed" style={{ color: "var(--ink)" }}>
+          <p lang="et" className="text-lg leading-relaxed" style={{ color: "var(--ink)" }}>
             {before}
             <span
               className="mx-1 inline-block min-w-[5ch] rounded px-2 text-center"
@@ -239,7 +239,7 @@ export function ClozeSession() {
               autoFocus
               disabled={checked}
               onChange={(e) => setAttempt(e.target.value)}
-              className="est mt-2 w-full rounded-md border px-3.5 py-2.5 text-lg outline-none disabled:opacity-70"
+              className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-lg outline-none disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
             {!checked && <div className="mt-2"><DiacriticBar /></div>}
@@ -267,7 +267,7 @@ export function ClozeSession() {
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <p lang="et" className="est text-[15px]" style={{ color: "var(--ink-2)" }}>
+                <p lang="et" className="text-[15px]" style={{ color: "var(--ink-2)" }}>
                   {item.sentence}
                 </p>
                 <Speak text={item.sentence} />

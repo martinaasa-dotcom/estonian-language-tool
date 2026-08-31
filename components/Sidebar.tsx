@@ -84,71 +84,133 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop rail */}
+      {/*
+        The desktop rail. Two boxes rather than one, and the split is the
+        whole point.
+
+        Every destination plus four headings and a rule comes to more than a
+        laptop is tall, so this column has always scrolled. The scroll was on
+        the nav itself, which meant the wordmark went with it: reach the
+        bottom of the list and the app's own name has left the screen, and the
+        one fixed thing in the layout is the piece that moved. It stays put
+        now. The nav holds the height and no longer scrolls, the wordmark is
+        its first child, and the list below it is the scroll container.
+
+        Split rather than `position: sticky` on the wordmark, because a sticky
+        header has to hide what passes beneath it and there is nothing here to
+        hide it with. This rail is transparent over the fixed pastel wash, so a
+        solid fill behind the wordmark would be a flat rectangle sitting on a
+        gradient, and the one thing that hides a moving backdrop without a fill
+        is a `backdrop-filter`, which this app does not put over moving content
+        (see the phone bar below). A second scroll container costs none of
+        that: the rows are simply clipped at its top edge, which is what every
+        other scroller in the app already does.
+      */}
       <nav
-        ref={railMarker.ref}
         aria-label="Main"
-        data-nav-marked={railMarker.mark ? "" : undefined}
-        className="scroll-host sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto p-4 md:flex"
-        style={
-          {
-            "--nav-marker-bg": "var(--surface)",
-            "--nav-marker-shadow": "var(--shadow-sm)",
-            "--nav-ghost-bg": "var(--accent-soft)",
-            "--nav-ghost-halo": "3px",
-          } as CSSProperties
-        }
+        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col p-4 md:flex"
       >
         {/*
-          The panes come before the rows, since a row draws over whichever pane
-          it is standing on. Both are placed entirely by measurement, so the
-          pill is exactly the row it is under. The marker is the card the
-          current row used to paint for itself, and one of them travelling is
-          the whole difference between this and a light going out over here as
-          another comes on over there.
+          A link to Today, which nothing about it used to say. See `.brand-tap`
+          in app/globals.css for the tint and the growth, and `title` for where
+          it goes, which is what every row of this rail carries too.
+
+          Outside the well below, deliberately. It is not a nav cell, so the
+          pointer's pane has no business following on to it, and it is the one
+          row in this column that does not scroll.
         */}
-        <NavMarker state={railMarker} />
-        <Link href="/" className="mb-7 block rounded-[var(--r)] px-2 pt-3">
-          <Wordmark subtitle="Estonian, daily" />
+        <Link
+          href="/"
+          title="Today"
+          className="brand-tap tap-tint mb-5 mr-1 block shrink-0 cursor-pointer rounded-[var(--r)] px-2 py-2.5"
+        >
+          <span className="brand-mark">
+            <Wordmark subtitle="Estonian, daily" />
+          </span>
         </Link>
 
         {/*
-          The gap between sections is doing the work the headings only label.
-          Four groups two rows apart read as one list with words in it; four
-          groups with air around them read as four, which is the whole point of
-          grouping them. It is the largest space in the column on purpose.
-        */}
-        {PLACES.map((section) => (
-          <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-7">
-            <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-2.5" style={{ color: "var(--ink-3)" }}>
-              {section.title}
-            </h2>
-            {section.items.map((item) => (
-              <RailLink key={item.href} item={item} active={active(item.href)} />
-            ))}
-          </section>
-        ))}
+          The list, and the well the marker is measured against.
 
-        {/*
-          Settings, your reports, and what this thing is. Pinned under the
-          sections when they fit and simply last when they do not, since the
-          rail is a scroll container: fourteen rows with air between their
-          groups are taller than a short laptop, and the answer to that is a
-          scrollbar rather than a disclosure.
+          `min-h-0` is what makes this scroll at all: a flex item's automatic
+          minimum is its content, so without it the list sets the height of a
+          column that is already fixed to the screen and nothing overflows
+          anywhere. `-mr-4` gives the scrollbar back the nav's own right
+          padding, so the thumb sits at the edge of the rail rather than
+          floating a centimetre inside it; `.scroll-host` then puts the rows
+          back a comfortable distance from it.
 
-          A rule rather than another heading. This is the quiet end of the
-          column and three more uppercase words at the bottom of it would be
-          one label too many.
+          THE WELL AND THE SCROLL CONTAINER HAVE TO BE THE SAME BOX. The panes
+          are placed by `offsetTop` and drawn absolutely, so they travel with
+          the rows only while the rows' offset parent is the thing that
+          scrolls; hang them off the nav instead and the pill stays where the
+          window is while the row it names slides out from under it. That was
+          free when the nav was itself the scroller. It is not free now, so
+          this box takes it on: `relative` to be the offset parent the cells
+          measure from, and `isolate` for the stacking context that keeps a
+          `z-index: -1` pane behind the rows rather than behind the page. The
+          nav's own `sticky` used to be quietly supplying both.
         */}
-        <div className="mt-auto border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
-          {SECTIONS.filter((s) => s.id === "app").map((section) =>
-            section.items.map((item) => (
-              <RailLink key={item.href} item={item} active={active(item.href)} />
-            )),
-          )}
-          <div className="mt-2 flex items-center gap-1 px-1">
-            <ThemeToggle labelled />
-            <SignOutButton />
+        <div
+          ref={railMarker.ref}
+          data-nav-marked={railMarker.mark ? "" : undefined}
+          className="scroll-host relative isolate -mr-4 flex min-h-0 flex-1 flex-col"
+          style={
+            {
+              "--nav-marker-bg": "var(--surface)",
+              "--nav-marker-shadow": "var(--shadow-sm)",
+              "--nav-ghost-bg": "var(--accent-soft)",
+              "--nav-ghost-halo": "3px",
+            } as CSSProperties
+          }
+        >
+          {/*
+            The panes come before the rows, since a row draws over whichever
+            pane it is standing on. Both are placed entirely by measurement, so
+            the pill is exactly the row it is under. The marker is the card the
+            current row used to paint for itself, and one of them travelling is
+            the whole difference between this and a light going out over here
+            as another comes on over there.
+          */}
+          <NavMarker state={railMarker} />
+          {/*
+            The gap between sections is doing the work the headings only label.
+            Four groups two rows apart read as one list with words in it; four
+            groups with air around them read as four, which is the whole point of
+            grouping them. It is the largest space in the column on purpose.
+          */}
+          {PLACES.map((section) => (
+            <section key={section.id} aria-labelledby={`rail-${section.id}`} className="mb-7">
+              <h2 id={`rail-${section.id}`} className="label-xs px-3 pb-2.5" style={{ color: "var(--ink-3)" }}>
+                {section.title}
+              </h2>
+              {section.items.map((item) => (
+                <RailLink key={item.href} item={item} active={active(item.href)} />
+              ))}
+            </section>
+          ))}
+
+          {/*
+            Settings, your reports, and what this thing is. Pinned under the
+            sections when they fit and simply last when they do not, since the
+            rail is a scroll container: fourteen rows with air between their
+            groups are taller than a short laptop, and the answer to that is a
+            scrollbar rather than a disclosure.
+
+            A rule rather than another heading. This is the quiet end of the
+            column and three more uppercase words at the bottom of it would be
+            one label too many.
+          */}
+          <div className="mt-auto border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
+            {SECTIONS.filter((s) => s.id === "app").map((section) =>
+              section.items.map((item) => (
+                <RailLink key={item.href} item={item} active={active(item.href)} />
+              )),
+            )}
+            <div className="mt-2 flex items-center gap-1 px-1">
+              <ThemeToggle labelled />
+              <SignOutButton />
+            </div>
           </div>
         </div>
       </nav>

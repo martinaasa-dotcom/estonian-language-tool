@@ -480,7 +480,7 @@ function ScanRow({ row, editing, busy, onToggle, onEdit, onChange, onRecheck }: 
             style={{ accentColor: "var(--accent)" }}
           />
           <span className="min-w-0 flex-1">
-            <span lang="et" className="est block text-base" style={{ color: "var(--ink)" }}>
+            <span lang="et" className="block text-base" style={{ color: "var(--ink)" }}>
               {row.et}
             </span>
             <span className="block text-sm" style={{ color: "var(--ink-3)" }}>

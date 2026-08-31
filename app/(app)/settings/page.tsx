@@ -27,6 +27,23 @@ export const metadata = { title: "Settings" };
 
 export const dynamic = "force-dynamic";
 
+/*
+  The word importer runs here, and it is the one action on this page whose cost
+  is set by what somebody pasted rather than by the page. `MAX_IMPORT_ROWS` is
+  500, and a cap on rows is not a cap on time: measured against a local
+  database, where a round trip is nearly free, five hundred rows take about
+  two and a half seconds, and a deployment reaches its database over a pooler
+  where every one of those round trips costs a great deal more. Without a
+  budget the action inherits the platform's default, which on several of them
+  is ten seconds, and a paste that runs past it leaves a half-finished import
+  and an error that says nothing about how much landed.
+
+  Sixty seconds, the same figure the writing routes use. It is a ceiling rather
+  than a reservation: a page render that takes a millisecond still takes a
+  millisecond.
+*/
+export const maxDuration = 60;
+
 const SHORTCUTS: [string, string][] = [
   ["⌘K / Ctrl-K", "Jump to any screen, or look a word up"],
   ["Space", "Show the answer"],
@@ -50,7 +67,7 @@ const SHORTCUTS: [string, string][] = [
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-6 border-t pt-8 first:border-t-0 first:pt-0" style={{ borderColor: "var(--rule-soft)" }}>
-      <h2 className="est text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</h2>
+      <h2 className="text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</h2>
       {children}
     </div>
   );
@@ -92,7 +109,7 @@ export default async function SettingsPage() {
       lead={
         hosted
           ? "Your deck, reviews and tasks belong to your account and are visible only to you."
-          : "This copy runs locally: everything is stored in the database on this machine, and nothing is uploaded anywhere."
+          : "This copy runs locally. Nothing is uploaded anywhere."
       }
     >
       <Stack>

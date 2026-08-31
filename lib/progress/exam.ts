@@ -43,9 +43,27 @@ export async function examPool(ownerId: string, level: ExamLevel): Promise<PoolW
       ? { OR: [{ cefr: { in: levels } }, { cefr: null }] }
       : { cefr: { in: levels } },
     include: { forms: { orderBy: { orderIndex: "asc" } } },
-    // Words the dictionary knows most about first: an entry with a retrieved
-    // paradigm can carry a case question, one with usages can carry a sentence.
-    orderBy: [{ fetchedAt: { sort: "desc", nulls: "last" } }, { lemma: "asc" }],
+    /*
+      Words the dictionary knows most about first: an entry with retrieved
+      forms can carry a case question, one with usages can carry a sentence.
+
+      AND THEN ON THE PRIMARY KEY, WHICH IS THE ONLY TOTAL ORDER HERE.
+
+      `@@unique` is on `(lemma, pos)`, so one lemma can hold two entries, and
+      on a freshly seeded deployment every one of them has `fetchedAt` null.
+      Two rows for `hall` therefore tied on both keys and Postgres chose
+      between them. That is usually stable and it is not a promise, and this
+      is the one query in the app where a promise is being made: `submitExam`
+      rebuilds the paper from (level, seed, pool) to mark it, so a pool that
+      comes back in a different order is a learner marked on questions they
+      were never asked. `take` makes it worse, since a tie straddling the five
+      hundredth row decides which of the pair is in the paper at all.
+
+      Free, because the sort was happening anyway, and the answer stops
+      depending on the plan. The same reasoning as `bySubstance` ending on
+      `id` in lib/dict/search.ts.
+    */
+    orderBy: [{ fetchedAt: { sort: "desc", nulls: "last" } }, { lemma: "asc" }, { id: "asc" }],
     take: POOL_SIZE,
   });
 
@@ -102,14 +120,32 @@ export async function readinessSignals(ownerId: string): Promise<ReadinessSignal
       deckSnapshot(ownerId),
       prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
       prisma.lexeme.findMany({ select: { lemma: true, cefr: true } }),
+      /*
+        The most recent twenty thousand, not an arbitrary twenty thousand.
+
+        The cap is a bound on the work, and until it was ordered it was also a
+        bound on the meaning: past it, which reviews the confidence figure was
+        built from came out of the plan, so the number could move between two
+        page loads with no new reviews behind it. This file's own header says
+        there is no path by which a confidence percentage can drift away from
+        the reviews that justify it, and that was the path.
+
+        Recent rather than merely stable, because readiness is a claim about
+        what somebody can do now and a year-old rating is weaker evidence for
+        it. Under the cap nothing changes at all: the same rows, and the
+        tallies below do not depend on their order. `(ownerId, reviewedAt)` is
+        already indexed, which is what makes the ordering free.
+      */
       prisma.review.findMany({
         where: { ownerId, stateBefore: { gte: MATURE_STATE } },
         select: { rating: true },
+        orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
         take: 20_000,
       }),
       prisma.review.findMany({
         where: { ownerId, targetCase: { not: null } },
         select: { targetCase: true, rating: true },
+        orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
         take: 20_000,
       }),
       prisma.card.findMany({
@@ -210,9 +246,13 @@ async function skillEvidence(
       .map((c) => c.id),
   );
 
+  // The most recent twenty thousand, for the reason given where the other two
+  // caps are ordered: past the cap an unordered slice makes the per-skill
+  // percentages move on their own.
   const reviews = await prisma.review.findMany({
     where: { ownerId, cardId: { in: [...readingCards, ...writingCards] } },
     select: { cardId: true, rating: true },
+    orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
     take: 20_000,
   });
 
@@ -277,7 +317,7 @@ const ATTEMPT_WINDOW = 12;
 export async function recentAttempts(ownerId: string): Promise<PastAttempt[]> {
   const rows = await prisma.examAttempt.findMany({
     where: { ownerId },
-    orderBy: { finishedAt: "desc" },
+    orderBy: [{ finishedAt: "desc" }, { id: "asc" }],
     take: ATTEMPT_WINDOW,
     select: { level: true, pct: true, passed: true, finishedAt: true, result: true },
   });
@@ -337,7 +377,7 @@ export async function previousAttempt(
 ): Promise<{ pct: number; passed: boolean; at: Date } | null> {
   const row = await prisma.examAttempt.findFirst({
     where: { ownerId, level, finishedAt: { lt: before } },
-    orderBy: { finishedAt: "desc" },
+    orderBy: [{ finishedAt: "desc" }, { id: "asc" }],
     select: { pct: true, passed: true, finishedAt: true },
   });
   return row ? { pct: row.pct, passed: row.passed, at: row.finishedAt } : null;

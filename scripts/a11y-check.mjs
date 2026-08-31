@@ -42,15 +42,79 @@ const AXE = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.mi
  * `best-practice` is included on purpose. It is where the landing page's
  * `<ol>` full of `<div>`s turned up, and a list that announces itself as empty
  * is not a matter of taste.
+ *
+ * ONE CHARACTER IS STILL TEXT, AND AXE WILL NOT SAY SO.
+ *
+ * `test-design.mjs` learned this once already: its contrast pass measured a
+ * text node only at `length > 1`, so the tick on Today's week strip sat at
+ * 2.52:1 unseen by the suite whose job was finding it. That pass was replaced
+ * by axe, which is better at everything except this, and the same hole came
+ * back through the front door. axe files a one-character run as `incomplete`
+ * with `messageKey: "shortTextContent"` — it has *measured* the ratio and
+ * declines only to rule on whether a single glyph counts as text content —
+ * and a report that reads `violations` alone throws that measurement away.
+ *
+ * The four grade buttons under every review card are what it was throwing
+ * away: their keyboard hints are one digit each, `opacity-60` over an ink the
+ * palette had already walked down to just clear the bar, and they measured
+ * 2.45 to 2.61 against 4.5 on the busiest screen in the app. The interval
+ * above them, being two characters, was reported and failed; the fainter thing
+ * beside it was not.
+ *
+ * So a short run whose measured ratio is under the ratio axe itself expected
+ * is a violation here. Two things are still let through, and neither is a
+ * length. A node axe could not put a number on stays incomplete, which covers
+ * `elmPartiallyObscured` and anything else arriving with `contrastRatio: 0`
+ * and no colours: that is a genuine "cannot tell" rather than an answer being
+ * withheld. And `data-ornament` is honoured exactly as `test-design.mjs`
+ * honours it, because the two suites have to agree about what counts as text:
+ * a 92px step numeral in a hue's own tint, behind a card that says the same
+ * thing in words, is decoration and the markup says so out loud. `aria-hidden`
+ * is not that exemption and never stands in for it, since the tick on the week
+ * strip carries `aria-hidden` and is still the thing a sighted reader looks at.
  */
 async function axeViolations(page) {
   await page.addScriptTag({ content: AXE });
-  const result = await page.evaluate(async () => await window.axe.run(document, {
-    resultTypes: ["violations"],
-    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
-  }));
-  return result.violations.map((v) =>
-    `${v.id} (${v.impact}, ${v.nodes.length}): ${v.nodes[0]?.target.join(" ") ?? ""}`);
+  const result = await page.evaluate(async () => {
+    const run = await window.axe.run(document, {
+      // The element itself, so the ornament exemption can be read off the DOM
+      // rather than guessed at from a selector string.
+      elementRef: true,
+      runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] },
+    });
+    const short = [];
+    for (const rule of run.incomplete) {
+      for (const node of rule.nodes) {
+        const data = node.any?.find((c) => c.data?.messageKey === "shortTextContent")?.data;
+        if (!data) continue;
+        // A measurement, not a shrug: axe reports 0 with no colours where it
+        // could not resolve a background at all.
+        if (!data.fgColor || !data.bgColor || !(data.contrastRatio > 0)) continue;
+        const want = parseFloat(String(data.expectedContrastRatio));
+        if (!Number.isFinite(want) || !(data.contrastRatio < want)) continue;
+        const el = node.element ?? document.querySelector(node.target.at(-1));
+        if (el?.closest("[data-ornament], .sr-only")) continue;
+        short.push({
+          id: rule.id,
+          target: node.target,
+          detail: `${data.contrastRatio}:1 against ${want}:1, ${data.fgColor} on ${data.bgColor}`,
+        });
+      }
+    }
+    return {
+      violations: run.violations.map((v) => ({
+        id: v.id, impact: v.impact, count: v.nodes.length, target: v.nodes[0]?.target ?? [],
+      })),
+      short,
+    };
+  });
+
+  const lines = result.violations.map((v) =>
+    `${v.id} (${v.impact}, ${v.count}): ${v.target.join(" ")}`);
+  for (const s of result.short) {
+    lines.push(`${s.id} (one-character text): ${s.target.join(" ")} at ${s.detail}`);
+  }
+  return lines;
 }
 
 const BASE = baseUrl();

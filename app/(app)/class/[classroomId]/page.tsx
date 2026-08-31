@@ -89,7 +89,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <div className="flex flex-wrap items-center gap-4">
               <div>
                 <SectionTitle>Join code</SectionTitle>
-                <p className="est text-3xl font-bold tracking-[0.25em]" style={{ color: "var(--accent-deep)" }}>
+                <p className="text-3xl font-bold tracking-[0.25em]" style={{ color: "var(--accent-deep)" }}>
                   {classroom.code}
                 </p>
               </div>
@@ -115,8 +115,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <Empty
               title={isTeacher ? "Nobody has joined yet" : "You are the first one here"}
               body={isTeacher
-                ? "Put the join code on the board. As soon as someone joins and reviews, this fills with who is keeping up and who has gone quiet."
-                : "Once your classmates join, this shows how the week is going for everyone."}
+                ? "Put the join code on the board. This fills as people join and review."
+                : "This fills as your classmates join."}
             />
           ) : (
             <ul className="flex flex-col gap-1.5">
@@ -243,9 +243,30 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>{h.title}</span>
+                        {/*
+                          Through LocalDate, like the joined date below it. These
+                          two were formatted on the server with the locale left
+                          to the runtime, which is the deployment's: a teacher in
+                          Tartu reading their own classwork history was shown
+                          "30 Aug" because the machine it renders on is set to
+                          en-GB. Same file as the fix, two sections down.
+                        */}
                         <span className="text-xs" style={{ color: "var(--ink-3)" }}>
-                          {h.createdAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
-                          {h.dueAt && ` · due ${h.dueAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}`}
+                          <LocalDate
+                            iso={h.createdAt.toISOString()}
+                            options={{ day: "numeric", month: "short" }}
+                            fallback={h.createdAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                          />
+                          {h.dueAt && (
+                            <>
+                              {" · due "}
+                              <LocalDate
+                                iso={h.dueAt.toISOString()}
+                                options={{ day: "numeric", month: "short" }}
+                                fallback={h.dueAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                              />
+                            </>
+                          )}
                         </span>
                       </div>
                       {h.detail && (

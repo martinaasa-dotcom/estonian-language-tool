@@ -204,7 +204,7 @@ function cache(lemma: string, entry: ExpandedEntry | null): void {
  *
  * Returns null whenever either side is missing or incomplete. A word with no
  * English is not a flashcard, and a word whose principal parts did not come
- * back is a paradigm this app would have to guess at, which it may not do.
+ * back is a set of forms this app would have to guess at, which it may not do.
  */
 async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> {
   const hits = await searchEkilex(lemma);

@@ -391,7 +391,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         {drillCase ? (
           <Empty
             title={`No ${drillCase.toLowerCase()} cards yet`}
-            body="Case-form cards are optional when you add a word, tick 'Case form' in the dictionary, or start a noun unit on the path, and they will show up here."
+            body="Tick &lsquo;Case form&rsquo; when you add a word, or start a noun unit on the path."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : drillUnit ? (
@@ -411,13 +411,13 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         ) : totalCards === 0 ? (
           <Empty
             title="No cards yet"
-            body="Start a unit on the path, or add words from the dictionary. Two cards are made per word, one each direction."
+            body="Start a unit on the path, or add words from the dictionary."
             action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
           />
         ) : (
           <Empty
             title="Nothing due, you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early doesn't help memory, so this is the app telling you to stop.`}
+            body={`All ${totalCards} cards are scheduled for later. Reviewing early does not help.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
         )}
@@ -432,7 +432,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={72} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -540,8 +540,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 // A gap-fill prompt is a whole sentence: at flashcard size it
                 // wraps to four lines and stops being readable at a glance.
                 card.cardType === "CLOZE"
-                  ? "est text-xl font-semibold leading-snug tracking-tight md:text-2xl"
-                  : "est text-3xl font-bold leading-tight tracking-tight md:text-4xl"
+                  ? "text-xl font-semibold leading-snug tracking-tight md:text-2xl"
+                  : "text-3xl font-bold leading-tight tracking-tight md:text-4xl"
               }
               style={{ color: "var(--ink)" }}
             >
@@ -591,7 +591,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
               </p>
               {typed.trim() && verdict.verdict !== "correct" && (
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                  You typed <span lang={backLang} className="est">{typed.trim()}</span>
+                  You typed <span lang={backLang}>{typed.trim()}</span>
                 </p>
               )}
               {/*
@@ -675,7 +675,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                    so the reveal puts the word back where it came from and reads
                    the whole thing aloud. */
                 <div className="flex flex-col items-center gap-2">
-                  <p lang="et" className="est text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
                     {card.front.split(BLANK)[0]}
                     <span style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
                     {card.front.split(BLANK)[1]}
@@ -686,7 +686,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 <div className="flex items-center gap-2">
                   <p
                     lang={backLang}
-                    className="est text-2xl font-bold md:text-3xl"
+                    className="text-2xl font-bold md:text-3xl"
                     style={{ color: "var(--accent-deep)" }}
                   >
                     {card.back}
@@ -705,7 +705,20 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             </p>
           )}
 
-          {(revealed || chosen) && <WhyRow card={card} />}
+          {/*
+            Whenever the answer is on screen, which includes the card the
+            learner is meeting for the first time.
+
+            This read `revealed || chosen`, and every other path sets `revealed`
+            itself: `checkTyped` and `pickChoice` both do. So the one state it
+            missed was `intro`, which shows the answer and the case's Estonian
+            name from the moment it opens and asks the learner to read it and
+            say it. That is the first time somebody meets the seesütlev, it is
+            when the rule behind it is worth the most, and it was the one screen
+            in the drill with no way to reach it. Every later sitting of the
+            same card had the link.
+          */}
+          {(revealed || chosen || ask === "intro") && <WhyRow card={card} />}
         </div>
 
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
@@ -748,9 +761,34 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                       color: TONE[r.value],
                     }}
                   >
+                    {/*
+                      Three lines, no fade on any of them.
+
+                      Both of the quiet ones used to be an `opacity`, which is
+                      the one thing CLAUDE.md will not have on a box holding
+                      words, and this is why: the hue inks are walked down to
+                      *just* clear 4.5:1 on their own tint, so the tint is
+                      already spent, and multiplying the ink back up towards
+                      the background spends what is not there. Measured on the
+                      light theme, the interval at 80% came out 3.49 to 3.73
+                      and the key hint at 60% came out 2.45 to 2.61. On the
+                      busiest screen in the app.
+
+                      Size and shape carry the order instead. The label is
+                      bold at 16px, the interval is the number the button is
+                      actually promising, and the key hint is drawn as a key,
+                      the way the Check and Show answer buttons above already
+                      draw theirs, so it is told apart by being a cap rather
+                      than by being faint.
+                    */}
                     <span className="text-base font-bold">{r.label}</span>
-                    <span className="tnum text-2xs opacity-80">{intervals?.[r.value as RatingValue]}</span>
-                    <kbd className="text-2xs opacity-60">{r.key}</kbd>
+                    <span className="tnum text-2xs">{intervals?.[r.value as RatingValue]}</span>
+                    <kbd
+                      className="rounded-[5px] px-1.5 text-2xs font-semibold"
+                      style={{ background: "var(--surface)" }}
+                    >
+                      {r.key}
+                    </kbd>
                   </button>
                 );
               })}

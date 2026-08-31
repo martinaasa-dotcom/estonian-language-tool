@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -29,31 +30,49 @@ export default async function PracticePage() {
   const [snapshot, settings, caseReviews, sentenceReady] = await Promise.all([
     deckSnapshot(ownerId),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
-    prisma.review.findMany({
-      where: { targetCase: { not: null }, ownerId },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
-    prisma.card.findMany({
-      where: { ownerId, suspended: false, lexemeId: { not: null } },
-      distinct: ["lexemeId"],
-      take: 300,
-      select: { lexeme: { select: { examples: true } } },
+    // The one reader, so Practice and Progress cannot disagree about which case
+    // a learner is worst at. See lib/progress/cases.ts.
+    caseReviewsFor(ownerId),
+    /*
+      The learner's own words, asked for as words.
+
+      This was a `findMany` over their cards with `distinct: ["lexemeId"]` and
+      `take: 300`, which is the page's heaviest read and only looked bounded.
+      Prisma deduplicates in the client, so a `LIMIT` would cut rows before the
+      deduplication and it emits none: the SQL was every card this learner
+      owns, and then `examples`, the longest column in the schema, fetched once
+      per card rather than once per word. A word with five card types was read
+      five times.
+
+      Asking Lexeme instead is one row per word by construction, so the cap is
+      a real `LIMIT` and the join happens once. Two thousand is past any deck
+      somebody has actually built, and ordered, so a learner who does get there
+      is told the same number twice rather than a different one each load.
+    */
+    prisma.lexeme.findMany({
+      where: { cards: { some: { ownerId, suspended: false } } },
+      orderBy: { lemma: "asc" },
+      take: 2000,
+      select: { examples: true },
     }),
   ]);
 
   const sprintBest = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
-  // How many of the learner's own words carry a sentence worth rebuilding.
-  const sentenceCount = sentenceReady.filter((c) =>
-    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => isBuildable(e.et)),
-  ).length;
-  // Dictation is stricter: only sentences short enough to hold in your head.
-  const dictationCount = sentenceReady.filter((c) =>
-    usableExamples(parseExamples(c.lexeme?.examples)).some((e) => {
-      const count = dictationWords(e.et).length;
-      return count >= 3 && count <= 9 && e.et.length <= 80;
-    }),
-  ).length;
+  /*
+    Parsed once and asked twice. Each of these used to call `parseExamples` for
+    itself, which is a `JSON.parse` per word per question, and the cap above is
+    now a real one at two thousand rather than a number that was not in the SQL.
+    Two thousand words is four thousand parses for two integers.
+
+    Sentence building wants a sentence worth rebuilding; dictation is stricter,
+    since it has to be short enough to hold in your head.
+  */
+  const usable = sentenceReady.map((w) => usableExamples(parseExamples(w.examples)));
+  const sentenceCount = usable.filter((es) => es.some((e) => isBuildable(e.et))).length;
+  const dictationCount = usable.filter((es) => es.some((e) => {
+    const count = dictationWords(e.et).length;
+    return count >= 3 && count <= 9 && e.et.length <= 80;
+  })).length;
   const matchBest = numberSetting(settings[SETTING_KEYS.matchBest], 0);
   const weakCases = caseAccuracy(caseReviews).slice(0, 5);
 
@@ -92,14 +111,11 @@ export default async function PracticePage() {
   const metaFor = (mode: PracticeMode) => live[mode.href] ?? mode.note;
 
   return (
-    <Page
-      title="Practice"
-      lead="Every mode here writes to the same review log, so nothing you do is a side game with a score of its own."
-    >
+    <Page title="Practice" lead="Every mode grades the same cards.">
       {snapshot.totalCards === 0 ? (
         <Empty
           title="Nothing to practise yet"
-          body="Every mode here draws on your own deck. Start a unit on the path and all of them light up at once."
+          body="Every mode here draws on your own deck."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       ) : (
@@ -110,7 +126,7 @@ export default async function PracticePage() {
             tone="accent"
             title="Review"
             subtitle="The daily loop"
-            body="Everything due, scheduled by FSRS. Type the answer or flip the card, your choice in Settings."
+            body="Everything due, scheduled by FSRS."
             meta={dailyMeta}
             primary={snapshot.dueCount > 0}
           />
@@ -118,69 +134,46 @@ export default async function PracticePage() {
           <section>
             <SectionTitle hint="a few minutes each">Quick rounds</SectionTitle>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {QUICK_MODES.map((m) => {
-                const Icon = icon(m.icon);
-                return (
-                  <Link
-                    key={m.href}
-                    href={m.href}
-                    className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
-                    style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
-                  >
-                    <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                      style={{ background: `var(--${m.tone})`, color: "var(--surface)" }}
-                    >
-                      <Icon size={18} aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>{m.title}</span>
-                      <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
-                        {m.subtitle} · {metaFor(m)}
-                      </span>
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-
-          <section>
-            <SectionTitle hint="when you know what is wrong">Work a weakness</SectionTitle>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {TARGETED_MODES.map((m) => (
-                <ModeCard
-                  key={m.href}
-                  href={m.href}
-                  iconName={m.icon}
-                  tone={m.tone}
-                  title={m.title}
-                  subtitle={m.subtitle}
-                  body={m.blurb}
-                  meta={metaFor(m)}
-                />
+              {QUICK_MODES.map((m) => (
+                <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
               ))}
             </div>
           </section>
 
           <section>
+            <SectionTitle hint="when you know what is wrong">Work a weakness</SectionTitle>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {TARGETED_MODES.map((m) => (
+                <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
+              ))}
+            </div>
+          </section>
+
+          {/*
+            The paper keeps a heading of its own, and that is a correction
+            rather than an oversight. Folding it into the grid above put it
+            under "when you know what is wrong", and a mock exam is exactly
+            what you sit when you do not: it is the thing that tells you. What
+            it does not need is the paragraph it used to carry, so it is the
+            same tile as everything else, one row wide.
+          */}
+          <section>
             <SectionTitle hint="an afternoon, not five minutes">Sit the paper</SectionTitle>
             <Link
               href="/exam"
-              className="lift flex items-center gap-4 rounded-[var(--r-lg)] border p-5"
+              className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
             >
               <span
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                 style={{ background: "var(--blush)", color: "var(--surface)" }}
               >
-                <ClipboardCheck size={19} aria-hidden />
+                <ClipboardCheck size={18} aria-hidden />
               </span>
-              <span className="min-w-0">
-                <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
-                <span className="mt-1 block text-sm" style={{ color: "var(--ink-2)" }}>
-                  An imitation of the A2, B1, B2 or C1 state paper. Four parts, sixty percent to
-                  pass, and a zero anywhere fails the whole thing.
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
+                <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+                  A2 to C1 · four parts · sixty percent to pass
                 </span>
               </span>
             </Link>
@@ -193,10 +186,9 @@ export default async function PracticePage() {
                 cases={weakCases}
                 empty={
                   <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                    Once you have answered a few case-form cards, the cases you keep missing show up
-                    here with a one-click drill. Add a noun unit from the{" "}
-                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
-                    to start generating them.
+                    Answer a few case-form cards and the ones you keep missing show up here. Add a
+                    noun unit from the{" "}
+                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>.
                   </p>
                 }
               />
@@ -209,11 +201,47 @@ export default async function PracticePage() {
 }
 
 /**
- * A mode with a reason to open it: the daily loop, and the five that work one
- * specific weakness. The quick rounds do not get one, because a title and
- * whether there is anything ready is the whole decision there and a paragraph
- * beside it is a paragraph nobody reads twice.
+ * One mode, at the size the decision actually needs.
+ *
+ * Every mode but the daily loop is drawn this way now. The five targeted ones
+ * each carried `blurb` as a two or three line paragraph and the mock paper
+ * carried a sixth, on a page whose own promise is answering "what should I do
+ * with the next five minutes". Six paragraphs is not an answer to that, and
+ * the quick rounds sitting directly above them had already shown what is: a
+ * title, three words, and whether there is anything ready to play.
+ *
+ * The blurbs are not deleted, and this is the argument for the split rather
+ * than for cutting them. `components/CommandPalette.tsx` shows one as the hint
+ * under each mode and searches its words, which is where somebody is reading a
+ * description rather than scanning a grid. A sentence explaining rektsioon
+ * earns its place where you are looking for the thing; it does not earn its
+ * place eleven times over on the page you press.
  */
+function ModeTile({ mode, meta }: { mode: PracticeMode; meta: string }) {
+  const Icon = icon(mode.icon);
+  return (
+    <Link
+      href={mode.href}
+      className="lift flex items-center gap-3 rounded-[var(--r-lg)] border p-4"
+      style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{ background: `var(--${mode.tone})`, color: "var(--surface)" }}
+      >
+        <Icon size={18} aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
+        <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+          {mode.subtitle} · {meta}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/** The daily loop, and only the daily loop. Everything else is a tile. */
 function ModeCard({ href, iconName, tone, title, subtitle, body, meta, primary }: {
   href: string;
   iconName: string;
@@ -243,7 +271,7 @@ function ModeCard({ href, iconName, tone, title, subtitle, body, meta, primary }
           <Icon size={19} aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</span>
+          <span className="block text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</span>
           <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{subtitle}</span>
         </span>
         <span className="ml-auto"><Chip tone={primary ? "accent" : "neutral"}>{meta}</Chip></span>

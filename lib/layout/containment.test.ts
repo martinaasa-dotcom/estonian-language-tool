@@ -15,7 +15,7 @@
  *
  *   - a word that will not fit breaks, and says so early enough that the box
  *     it is in is allowed to be narrow (`anywhere`, not `break-word`);
- *   - a table is the exemption, because a paradigm is read by comparing forms
+ *   - a table is the exemption, because a table of forms is read by comparing them
  *     and it already sits in a scroller;
  *   - an icon is never resized by the text beside it;
  *   - anything that arrives with a width of its own is capped at its box.
@@ -59,7 +59,7 @@ describe("a word that will not fit", () => {
 
 describe("a table", () => {
   it("keeps its words whole, which is the one exemption", () => {
-    // A paradigm is read by comparing its forms down a column, so a form split
+    // A table of forms is read by comparing them down a column, so a form split
     // across two lines is a form the reader has to reassemble first.
     expect(rule("table")).toMatch(/overflow-wrap\s*:\s*break-word/);
   });

@@ -9,7 +9,7 @@ import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Empty, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { SuggestFix } from "@/components/SuggestFix";
-import { NO_VALUE } from "@/lib/copy/values";
+import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +88,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
               <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Answers</dt>
-              <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+              <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.question}
               </dd>
             </div>
@@ -96,13 +96,13 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                 In English references
               </dt>
-              <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+              <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 the {ref.spec.en.toLowerCase()}
               </dd>
             </div>
             <div>
               <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Ending</dt>
-              <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+              <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.principal
                   ? <span className="text-base font-semibold" style={{ color: "var(--ink-2)" }}>memorised, not derived</span>
                   : <>-{ref.spec.suffix} <span className="text-xs font-normal" style={{ color: "var(--ink-3)" }}>on the genitive</span></>}
@@ -154,7 +154,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           {examples.length === 0 ? (
             <Empty
               title="No words to show it on yet"
-              body="This page builds its examples out of the dictionary. Look a noun up and it will have something to show, nothing here is written by the app."
+              body="Every example here is read from the dictionary. Look a noun up and this fills in."
               action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
             />
           ) : (
@@ -184,7 +184,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                           href={`/dictionary?q=${encodeURIComponent(example.lemma)}`}
                           className="hover:underline"
                         >
-                          <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>
+                          <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>
                             {example.lemma}
                           </span>
                         </Link>
@@ -192,12 +192,12 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                           {example.translation}
                         </span>
                       </td>
-                      <td lang="et" className="est px-3 py-2.5" style={{ color: "var(--ink-3)" }}>
+                      <td lang="et" className="px-3 py-2.5" style={{ color: "var(--ink-3)" }}>
                         {example.genitive ?? NO_VALUE}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className="inline-flex items-center gap-1.5">
-                          <span lang="et" className="est text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
+                          <span lang="et" className="text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
                             {example.form}
                           </span>
                           <Speak text={example.form} label={`Hear "${example.form}"`} size={13} />
@@ -227,7 +227,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                 <li key={`${example.lexemeId}-sentence`}>
                   <Card>
                     <div className="flex items-start gap-2">
-                      <p lang="et" className="est flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
+                      <p lang="et" className="flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
                         {example.sentence!.et}
                       </p>
                       <Speak text={example.sentence!.et} label="Hear the sentence" />
@@ -236,15 +236,15 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                       <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
                         <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
-                          AI
+                          {AI_TAG}
                         </Chip>
                       </p>
                     )}
                     <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                       contains{" "}
-                      <span lang="et" className="est" style={{ color: "var(--accent-deep)" }}>{example.form}</span>
+                      <span lang="et" style={{ color: "var(--accent-deep)" }}>{example.form}</span>
                       {", "}the <span lang="et">{ref.spec.et}</span> of{" "}
-                      <span lang="et" className="est">{example.lemma}</span>
+                      <span lang="et">{example.lemma}</span>
                     </p>
                   </Card>
                 </li>

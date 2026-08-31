@@ -70,7 +70,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     Answers
                   </dt>
-                  <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                     {term.question}
                   </dd>
                 </div>
@@ -79,7 +79,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                 <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                   In plain English
                 </dt>
-                <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                   {topic.title}
                 </dd>
               </div>
@@ -88,7 +88,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     In English references
                   </dt>
-                  <dd className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                     {term.alsoCalled}
                   </dd>
                 </div>
@@ -98,7 +98,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     The ending that carries it
                   </dt>
-                  <dd lang="et" className="est mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                     {topic.marker}
                   </dd>
                 </div>
@@ -157,7 +157,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                     <Link
                       href={`/learn/${unit.id}`}
                       lang="et"
-                      className="est text-md font-bold hover:underline"
+                      className="text-md font-bold hover:underline"
                       style={{ color: "var(--ink)" }}
                     >
                       {unit.title}

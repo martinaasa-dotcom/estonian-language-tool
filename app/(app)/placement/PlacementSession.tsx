@@ -98,7 +98,7 @@ export function PlacementSession({
       <Page title="Where to start" lead="A quick check of what you already know.">
         <Empty
           title="Not enough words to place you yet"
-          body="The placement test needs a full set of words at each level. Seed the dictionary, or pick a level yourself on the path."
+          body="This needs a full set of words at each level in the dictionary."
           action={<ButtonLink href="/learn">Go to the path</ButtonLink>}
         />
       </Page>

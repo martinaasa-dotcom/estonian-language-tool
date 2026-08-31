@@ -7,7 +7,7 @@ Ordered by expected damage. "Status" reflects what was verified during the audit
 | # | Risk | Likelihood | Impact | Status | Mitigation |
 |---|---|---|---|---|---|
 | R1 | Ekilex key is refused or slow to issue | Medium | **High**: Phase 2 blocked | Open | Requested day one (Phase 0); seed fixture unblocks all development; app degrades to a local dictionary with manual entry |
-| R2 | Ekilex paradigm data does not yield all five noun principal parts | Low to Medium | High | Open | Phase 0 spike answers this in week one; fallback is to store what exists and mark gaps explicitly rather than guess |
+| R2 | Ekilex form data does not yield all five noun principal parts | Low to Medium | High | Open | Phase 0 spike answers this in week one; fallback is to store what exists and mark gaps explicitly rather than guess |
 | R3 | Anu produces a confidently wrong grammar explanation | **Medium** | **High**: a wrong rule gets rehearsed | Mitigated | ADR-005 provenance rule; AI never supplies answer keys; eval suite gates prompt changes |
 | R4 | Review history lost to a bad migration | Low | **Critical**: irreplaceable | Mitigated | Append-only log; pre-migration snapshot; tested restore; export from Phase 3 |
 | R5 | AI cost runs away | Medium | Medium | Mitigated | Daily cap, measured ledger, prompt caching, Batch API for bulk |

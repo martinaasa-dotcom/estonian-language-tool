@@ -125,8 +125,13 @@ one gradient button.
 
 ## 3. Type
 
-- **Fraunces** (`.est`): headings, numbers that matter, and every Estonian word in the app.
-- **Plus Jakarta Sans**: the interface around it.
+**One face, Plus Jakarta Sans.** Estonian used to be set in Fraunces, a second face carrying
+headings and the numbers a screen is about as well. It meant two typefaces inside one card
+wherever a prompt and its answers are in different languages, which is most of this app: a
+lesson step asks "Which word is this?" in the interface face and offers four Estonian answers
+in the other one, and the next step asks the same question the other way round and swaps them
+over. Weight and size are what a heading is told apart by now, which is what they were already
+doing on every screen that had no Estonian on it.
 
 **Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes,
 13px and 13.5px and 14px appearing inside one card, each chosen once and never compared with the
@@ -151,10 +156,11 @@ held at arm's length in the evening, which is when this app is actually used. `.
 that floor. The one thing off the scale is the step numeral behind the landing page's how-it-works
 cards. That is ornament, not type.
 
-Both are loaded with `latin-ext`, which is not optional: without it `õ ä ö ü š ž` fall back to a
-different face mid-word. The font variables are attached to `<html>`, not `<body>`, because
-`--font-serif` is declared on `:root` and references them, and a custom property is substituted
-where it is declared, so the face has to be in scope there.
+It is loaded with `latin-ext`, which is not optional: without it `õ ä ö ü š ž` fall back to a
+different face mid-word, which is the fault this rule exists to prevent. The font variable is
+attached to `<html>`, not `<body>`, because `--font-sans` is declared on `:root` and references
+it, and a custom property is substituted where it is declared, so the face has to be in scope
+there.
 
 ### Text stays in its box
 
@@ -167,8 +173,8 @@ word sitting on the ground behind a card.
   the whole row and the row leaves the card having broken nothing. Estonian is why this is not
   academic. The dictionary holds compounds past twenty characters and the row holding one is three
   or four columns wide on a phone.
-- **`table { overflow-wrap: break-word }` is the single exemption.** A paradigm is read by
-  comparing forms down a column, so a form split across two lines has to be reassembled before it
+- **`table { overflow-wrap: break-word }` is the single exemption.** A table of forms is read by
+  comparing them down a column, so a form split across two lines has to be reassembled before it
   can be compared. The table pays for that with a scroller of its own, which every table in the app
   sits in and `scripts/test-invariants.ts` checks.
 - **`svg.lucide { flex: none }`.** An icon is a square and a flex item with no `flex` of its own
@@ -204,7 +210,10 @@ Small, physical, and never blocking:
   that animates `outline-width` too, so a focus ring fades in over 200ms and a keyboard user
   watches it arrive.
 - `.fade-up`, `.pop-in`: entrances for content that has just arrived (a flipped card, a summary).
-- `.float`: the mascot and the landing page's decorative letters.
+- `.float`: the mascot and the landing page's decorative letters. The lift is the animation;
+  the letters' slant is a `rotate` property of their own, so it survives `prefers-reduced-motion`
+  turning every animation here into 0.01ms. A caller that sets no `--float-tilt` rotates by 0deg,
+  which is every mascot.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
 - The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pill that travels from the
@@ -323,7 +332,7 @@ toast has somewhere to land.
 
 The pastel rebuild and the teaching-in-context pass (`13-mvp-status.md` §7) were built in
 parallel and merged. The screens that arrived from the second of those (classes, the sentence
-builder, speaking, the paradigm tables, example sentences, the install prompt) were restyled
+builder, speaking, the tables of forms, example sentences, the install prompt) were restyled
 onto the primitives above rather than kept as they were: token radii instead of hand-rolled ones,
 `Card` tones instead of bordered boxes, `StatTile` summaries, and `press`/`lift` on anything that
 can be clicked.
@@ -416,5 +425,5 @@ place one becomes a component, so an emoji in a heading is a second icon set wit
 it. The check is narrow on purpose, since the arrow in "Estonian to English", the return key in a
 keyboard hint and the tick on the week strip are typographic glyphs in one colour doing a job no
 word does as well. And **an empty cell is `NO_VALUE`**, which is "n/a" from `lib/copy/values.ts`,
-never a typed dash: in a paradigm table a bare hyphen reads as a one-character form, and beside a
+never a typed dash: in a table of forms a bare hyphen reads as a one-character form, and beside a
 percentage as a minus sign whose digits failed to load.

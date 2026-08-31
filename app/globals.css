@@ -48,8 +48,10 @@
   --radius-xl: 22px;
   --radius-2xl: 30px;
 
+  /* One face, for Estonian and for the English around it. A second one set
+     the Estonian apart and put two typefaces inside a single card: a prompt
+     in one language and its four answers in the other is most of this app. */
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
   --color-ground: #fbf9ff;
@@ -376,7 +378,7 @@
   /*
     A TABLE KEEPS ITS WORDS WHOLE, BECAUSE IT ALREADY HAS A WAY OUT.
 
-    A paradigm is a column of Estonian forms and the reader's job is to
+    A table of forms is a column of Estonian and the reader's job is to
     compare them, so a form split across two lines to save forty pixels is a
     form they have to reassemble before they can read it. `break-word` keeps
     the word's own width in the column's minimum, so a table too wide for a
@@ -507,6 +509,62 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /*
+    A POINTER OVER SOMETHING PRESSABLE SAYS SO.
+
+    Tailwind 3's preflight set `cursor: pointer` on every button. Tailwind 4's
+    does not: it hands the element back to the browser's own default, which for
+    a `<button>` is the arrow. This app is built almost entirely out of real
+    buttons, so the change landed on nearly every control in it at once. The
+    rail, the practice chips, the four rating keys, the multiple-choice
+    answers, the letter bar, every close cross and every "Add to deck" drew the
+    same arrow as the paragraph beside them, and the only things in the whole
+    interface that changed under a mouse were the handful of plain `<a href>`s.
+    A learner working out what is pressable by hovering it was told "nothing
+    here", everywhere, wrongly.
+
+    Keyed on what a thing IS rather than on a class, so a control written next
+    year is covered by being a control and never by remembering this rule. That
+    is also why the list is roles and input types rather than `.press` or
+    `.tap-tint`: those are how a control moves, and a control that moves is not
+    the same set as a control that can be pressed.
+
+    A label is on the list only where clicking it operates something, which is
+    a checkbox or a radio. The dozens of `label-xs` captions sitting above a
+    text field move a caret rather than press anything, and a pointer over one
+    would promise a button that is not there.
+
+    A DISABLED CONTROL GOES BACK TO THE ARROW, not to `not-allowed`. Every
+    disabled thing in this app is waiting for the learner (a send button with
+    an empty box, a rating key before the answer is shown) rather than refusing
+    them, and a crossed-out circle is a rebuke. This is where `.choice-btn`'s
+    own `cursor: default` used to live, and it is one declaration now rather
+    than one per control that thought of it.
+  */
+  button,
+  summary,
+  select,
+  [role="button"],
+  [role="tab"],
+  [role="radio"],
+  [role="option"],
+  [role="switch"],
+  [role="menuitem"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled="true"] {
+    cursor: default;
   }
 
   /* A tap is a tap: no grey flash, and none of the 300ms double-tap-to-zoom
@@ -679,7 +737,6 @@
     touch-action: pan-y;
   }
 
-  .est { font-family: var(--font-serif); font-optical-sizing: auto; }
   .tnum { font-variant-numeric: tabular-nums; }
 
   .label-xs {
@@ -819,7 +876,6 @@
     box-shadow: var(--shadow-sm);
   }
   .choice-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
-  .choice-btn:disabled { cursor: default; }
 
   /*
     An option that stays chosen, which a multiple-choice answer never is.
@@ -897,6 +953,38 @@
   }
   .tap-tint:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
 
+  /*
+    THE SAME RULE AGAIN, FOR THE ONE THING IN THE RAIL THAT DID NOT LOOK LIKE
+    A CONTROL AT ALL.
+
+    The wordmark at the top of the column is a link to Today, and nothing on
+    it said so: no border, no fill, no row shape, and no hover state of any
+    kind, so the only way to find out was to click the app's own name and see
+    where you ended up. Every other bare row in this app answers a pointer
+    with `.tap-tint`, and this is that plus the growth, which is the part a
+    mark can carry and a row of text cannot: the tint arrives behind the whole
+    box while the name and the mascot lean up towards the pointer.
+
+    The growth goes on the mark rather than on the link, because the link is
+    the full width of the rail and scaling that would drag its tint out past
+    the rows underneath it. Left origin for the same reason: this sits in a
+    240px column against its left padding, and a centred scale walks the
+    mascot into the edge of the rail.
+
+    Small on purpose. 3.5% is about a pixel and a half on a 34px mascot, which
+    is enough to read as a response and not enough to look like the sidebar
+    twitched.
+  */
+  .brand-tap .brand-mark {
+    display: block;
+    transform-origin: left center;
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .brand-tap:hover .brand-mark,
+  .brand-tap:focus-visible .brand-mark {
+    transform: scale(1.035);
+  }
+
   .fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
@@ -915,7 +1003,18 @@
      lands rather than early. */
   .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
-  .float { animation: float 6s ease-in-out infinite; }
+  /*
+    The slant is a `rotate` of its own and only the lift is animated.
+
+    Both used to live in the keyframes, which meant the tilt was a frame of an
+    animation rather than a property of the element: `prefers-reduced-motion`
+    shortens every animation here to 0.01ms with no fill, so a reader who asks
+    for less motion got four upright squares and lost the one thing about them
+    that was not motion. `rotate` and `transform` are separate properties, so
+    the letters stay slanted while the lift is what gets turned off. A caller
+    that sets no `--float-tilt` rotates by 0deg, which is every mascot.
+  */
+  .float { rotate: var(--float-tilt, 0deg); animation: float 6s ease-in-out infinite; }
   .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 }
 
@@ -991,8 +1090,8 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) rotate(var(--float-tilt, 0deg)); }
-  50% { transform: translateY(-10px) rotate(var(--float-tilt, 0deg)); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 @keyframes pop-in {

@@ -74,7 +74,7 @@ export async function upsertLexemeWithForms(input: LexemeWrite): Promise<LexemeW
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
     // An entry Ekilex supplied stays marked as Ekilex's after a correction —
-    // relabelling it USER would quietly discard where the paradigm came from.
+    // relabelling it USER would quietly discard where the forms came from.
     ...(existing && (existing.provenance === "SEED" || existing.provenance === "EKILEX")
       ? {}
       : { provenance: "USER" }),
@@ -87,7 +87,7 @@ export async function upsertLexemeWithForms(input: LexemeWrite): Promise<LexemeW
     : await prisma.lexeme.create({ data });
 
   // Replace only the principal parts. Deleting every row for the lexeme threw
-  // away the retrieved Ekilex paradigm — the one thing on an entry that cannot
+  // away the forms retrieved from Ekilex — the one thing on an entry that cannot
   // be reconstructed — whenever anybody corrected a typo.
   await prisma.form.deleteMany({
     where: { lexemeId: lexeme.id, formType: { in: [...PRINCIPAL_FORM_TYPES] } },

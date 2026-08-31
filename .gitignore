@@ -18,3 +18,6 @@ prisma/data/.cache/
 
 # Cached Ekilex responses, so a re-harvest costs the service nothing
 .ekilex-cache/
+
+# Local before/after screenshots taken while working on a change.
+.shots/

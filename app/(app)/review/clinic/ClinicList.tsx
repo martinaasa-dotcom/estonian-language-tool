@@ -36,7 +36,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
   return (
     <Page
       title="Leech clinic"
-      lead="The cards you keep failing. Burying them is not a plan. Here is what the history actually says."
+      lead="The cards you keep failing, and what their history says."
     >
       <div className="flex flex-col gap-4">
         {items.map((leech) => {
@@ -56,11 +56,11 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
               </div>
 
               <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                <p lang="et" className="est text-[22px] font-semibold" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="text-[22px] font-semibold" style={{ color: "var(--ink)" }}>
                   {leech.front}
                 </p>
                 <ArrowRight size={14} aria-hidden style={{ color: "var(--ink-3)" }} />
-                <p className="est text-lg" style={{ color: "var(--accent-deep)" }}>{leech.back}</p>
+                <p className="text-lg" style={{ color: "var(--accent-deep)" }}>{leech.back}</p>
                 {leech.lemma && <Speak text={leech.lemma} />}
               </div>
 

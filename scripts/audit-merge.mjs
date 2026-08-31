@@ -32,13 +32,40 @@
  *
  *   node scripts/audit-merge.mjs              # against origin/main
  *   node scripts/audit-merge.mjs origin/main  # or whichever side to compare
+ *
+ * AND IT HAS TO WORK AFTER THE MERGE, WHICH IS WHEN IT IS RUN.
+ *
+ * CLAUDE.md says to run this "after every merge that touched files both sides
+ * own", and the first version could not answer that question. It took the base
+ * as `merge-base HEAD <other>`, and once the merge is in, `<other>` is an
+ * ancestor of HEAD, so that base *is* `<other>`: the diff is empty, and it
+ * printed "Nothing to lose" whatever the merge had done. A check that cannot
+ * fail in the one situation it exists for is the fault this repository keeps
+ * finding in its own checks, and it found this one the same way as the others,
+ * by running it in earnest and getting an answer too good to be true.
+ *
+ * So when `<other>` has already landed, it looks for the merge that brought it
+ * in and asks the question of that merge: base is where the two sides parted,
+ * and the other side is the merge's second parent. It says which merge it
+ * picked, because comparing against the wrong one would be the same silence
+ * wearing a number.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
-const other = process.argv[2] ?? "origin/main";
+let other = process.argv[2] ?? "origin/main";
 
 const git = (...args) => execFileSync("git", args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+
+/** `git merge-base --is-ancestor` reports through its exit status. */
+function isAncestor(maybe, of) {
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", maybe, of], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 let base;
 try {
@@ -46,6 +73,40 @@ try {
 } catch {
   console.error(`Cannot find a merge base with ${other}. Fetch it first.`);
   process.exit(2);
+}
+
+if (isAncestor(other, "HEAD")) {
+  /*
+    The merge has happened. Walk back along the first parent for the newest
+    merge that brought this side in, and ask the question of that one: the two
+    sides parted at its own base, and what arrived is its second parent.
+
+    First-parent only, so a merge made on some other branch and later merged
+    here is not mistaken for this branch's own.
+  */
+  const merges = git("rev-list", "--first-parent", "--merges", "HEAD")
+    .split("\n").map((l) => l.trim()).filter(Boolean);
+
+  const brought = merges.find((m) => {
+    try {
+      return isAncestor(other, git("rev-parse", `${m}^2`).trim());
+    } catch {
+      return false;
+    }
+  });
+
+  if (!brought) {
+    console.log(`${other} is already in this branch and no merge on the first-parent line`);
+    console.log("brought it in, so there is no merge here to audit. Nothing to lose.");
+    process.exit(0);
+  }
+
+  const parent2 = git("rev-parse", `${brought}^2`).trim();
+  base = git("merge-base", `${brought}^1`, parent2).trim();
+  other = parent2;
+  const subject = git("log", "-1", "--format=%s", brought).trim();
+  console.log(`${other.slice(0, 8)} came in by ${brought.slice(0, 8)} "${subject}".`);
+  console.log(`Comparing what it added since ${base.slice(0, 8)}.\n`);
 }
 
 /*

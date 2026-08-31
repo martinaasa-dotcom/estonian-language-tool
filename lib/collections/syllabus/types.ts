@@ -19,7 +19,7 @@ export const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1"];
 
 /**
  * `PHRASE` is the one part of speech the harvest does not fetch. A multi-word
- * greeting is not a headword, so Ekilex has no paradigm for it; the phrases in
+ * greeting is not a headword, so Ekilex has no forms for it; the phrases in
  * the course are the hand-checked ones the built-in dictionary already carried,
  * and no new ones are written here.
  */

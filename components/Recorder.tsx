@@ -103,7 +103,7 @@ export function Recorder({ onRecorded, targetSeconds }: {
     <div className="flex flex-wrap items-center justify-center gap-2">
       {state === "recording" && (
         <span
-          className="est tnum text-sm font-semibold"
+          className="tnum text-sm font-semibold"
           style={{ color: targetSeconds && elapsed >= targetSeconds ? "var(--mint-ink)" : "var(--ink-2)" }}
           role="timer"
         >

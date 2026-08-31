@@ -30,7 +30,7 @@ export const CARD_TYPES: readonly CardTypeSpec[] = [
  * The verb forms worth drilling, and what to call them.
  *
  * Six, not sixty. These are the ones a beginner has to produce out loud in a
- * conversation; the rest of the paradigm is on the dictionary entry to be read,
+ * conversation; the rest of the forms are on the dictionary entry to be read,
  * not memorised. Every one is a form we actually hold — from Ekilex by its
  * morph code, or from the seeded principal parts — so nothing is derived.
  *

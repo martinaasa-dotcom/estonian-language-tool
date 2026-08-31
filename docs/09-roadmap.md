@@ -21,7 +21,7 @@ The phase v4.0 does not have, and the reason its plan would have failed in week 
 | Task | Output |
 |---|---|
 | **Request the Ekilex API key** | Submitted day one; human turnaround is not under our control and blocks Phase 2 |
-| Spike: Ekilex API contract | A real response for `raamat`, `tuba`, `lugema`, `tulema` saved as fixtures; confirm paradigm data yields all five principal parts for both nouns and verbs |
+| Spike: Ekilex API contract | A real response for `raamat`, `tuba`, `lugema`, `tulema` saved as fixtures; confirm the form data yields all five principal parts for both nouns and verbs |
 | Spike: TartuNLP TTS | Fetch and play a `.wav` end to end; measure latency; confirm cache strategy |
 | Scaffold | Next.js 15 + TS strict + Tailwind + shadcn + Prisma + Vitest + Playwright + CI |
 | Seed fixture | ~500 A1-B1 lexemes committed, so all later work is unblocked if the key is delayed |
@@ -63,7 +63,7 @@ for Phase 2 to consume.
 | Usage ledger + budget cap + cost meter | Before heavy use, not after the first bill |
 | Anu eval suite | ~40 questions, run before prompt changes |
 
-**Exit:** search `tuba`, see the full correct paradigm with gradation flagged, hear it, ask Anu why
+**Exit:** search `tuba`, see every form correct with gradation flagged, hear it, ask Anu why
 `toa` loses the `b`, and get a correct explanation citing the pattern. Key absent from the client
 bundle, verified in CI.
 

@@ -41,7 +41,7 @@ export default async function AssessPage({
         <Page title="Level check" lead="Reading, listening, writing and speaking, measured against the dictionary.">
           <Empty
             title="No questions could be built"
-            body="A level check is assembled out of dictionary entries, and this deployment has none tagged with a level yet. Seed the dictionary and it will have plenty."
+            body="The questions are built from dictionary entries tagged with a level, and there are none."
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>
@@ -69,7 +69,7 @@ export default async function AssessPage({
   return (
     <Page
       title="Level check"
-      lead="Reading, listening, writing and speaking, measured against the same dictionary the rest of the app teaches from."
+      lead="Reading, listening, writing and speaking, measured against the dictionary."
       actions={
         <ButtonLink href="/assess?take=1" variant="primary" size="lg">
           <Compass size={16} aria-hidden /> {latest ? "Take it again" : "Take the check"}
@@ -85,7 +85,7 @@ export default async function AssessPage({
         ) : (
           <Empty
             title="Nothing measured yet"
-            body="About ten minutes: a few questions each of reading, listening and writing, and a speaking section you judge yourself because nothing here can honestly score a recording. It stops as soon as the questions get clearly too hard, and no answer becomes a flashcard."
+            body="About ten minutes of reading, listening and writing, plus speaking you judge yourself."
             action={<ButtonLink href="/assess?take=1" variant="primary" size="lg">Start the check</ButtonLink>}
           />
         )}

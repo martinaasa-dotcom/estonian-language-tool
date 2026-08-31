@@ -1,4 +1,4 @@
-import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
+import { buildCloze, ESTONIAN_WORD, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { caseByKey } from "@/lib/estonian/cases";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -47,7 +47,7 @@ export interface PoolWord {
   translation: string;
   pos: string;
   cefr: string | null;
-  /** Stored principal parts plus any retrieved Ekilex paradigm. */
+  /** Stored principal parts plus anything retrieved from Ekilex. */
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
   /** Attested sentences. Never generated. */
   examples: PoolExample[];
@@ -92,6 +92,19 @@ export function rng(seed: number): () => number {
   };
 }
 
+/**
+ * The one shuffle not folded into `lib/random/shuffle.ts`, on purpose.
+ *
+ * The client never sends a mark, only a level, a seed and its answers, so the
+ * server rebuilds the paper from that seed to mark it (ADR-022). A paper is a
+ * long sitting: change how this draws and a candidate who started before a
+ * deploy and handed in after it has their answers marked against a different
+ * paper from the one they sat. That is the worst mark this app could produce,
+ * on the feature where a wrong one matters most.
+ *
+ * So it stays where it is and keeps its own algorithm, and the invariant that
+ * bans a hand-rolled shuffle names this function as its single exception.
+ */
 function shuffle<T>(items: readonly T[], random: () => number): T[] {
   return items
     .map((item) => ({ item, k: random() }))
@@ -375,9 +388,6 @@ export function formsOf(word: PoolWord): string[] {
   return [...new Set([word.lemma, ...word.forms.map((f) => f.value)])].filter(Boolean);
 }
 
-/** Letters, plus the marks that live inside an Estonian word. Mirrors cloze.ts. */
-const WORD_RE = /[\p{L}\p{M}]+(?:[-'’][\p{L}\p{M}]+)*/gu;
-
 export const BLANK = "____";
 
 /**
@@ -393,7 +403,7 @@ export function maskForms(sentence: string, forms: readonly string[]): string {
   if (wanted.size === 0) return sentence;
   let out = "";
   let cursor = 0;
-  for (const token of sentence.matchAll(WORD_RE)) {
+  for (const token of sentence.matchAll(ESTONIAN_WORD)) {
     const value = token[0];
     if (!wanted.has(value.toLowerCase())) continue;
     const start = token.index;
@@ -490,7 +500,7 @@ function buildGapChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
       standing in the sentence is excluded, or two options look right at once.
     */
     const inSentence = new Set(
-      [...cloze.text.matchAll(WORD_RE)].map((m) => m[0].toLowerCase()),
+      [...cloze.text.matchAll(ESTONIAN_WORD)].map((m) => m[0].toLowerCase()),
     );
     const answerLower = cloze.answer.toLowerCase();
     const siblings = forms.filter(

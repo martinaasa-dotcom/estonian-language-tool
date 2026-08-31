@@ -77,7 +77,7 @@ isolated from React, Next.js and the database and can be tested without any of t
 1. Client calls `/api/dictionary/search?q=tuba`.
 2. Handler checks the local `Lexeme` cache. Fresh → return, no network.
 3. Miss → Ekilex `/api/word/search` with the server-held key.
-4. `mapper.ts` normalises Ekilex paradigm data into our principal-parts model.
+4. `mapper.ts` normalises Ekilex form data into our principal-parts model.
 5. Result persisted with `provenance: EKILEX` and a fetch timestamp.
 6. Client renders stored forms + `derive.ts` output for the ten derived cases, visually distinguished.
 
@@ -178,11 +178,11 @@ paste-and-parse importer handling TSV/CSV/JSON/dash-separated lines, with Ekilex
 *Consequences:* works with Speakly, Quizlet, a class handout or a photo transcription; depends on no
 third party's continued goodwill; no terms-of-service exposure.
 
-**ADR-009: Store retrieved paradigms; derive only what we cannot retrieve.**
+**ADR-009: Store the forms we retrieve; derive only what we cannot retrieve.**
 *Context:* the original plan stored five principal parts and derived the rest, to avoid a second
-source of truth. With an Ekilex key we can retrieve the entire paradigm authoritatively, 30-37
+source of truth. With an Ekilex key we can retrieve every form authoritatively, 30-37
 forms including irregular plurals and the parallel forms Estonian genuinely has (`raamatutes` /
-`raamatuis`), which derivation cannot produce. *Decision:* store the full retrieved paradigm and
+`raamatuis`), which derivation cannot produce. *Decision:* store every retrieved form and
 render it directly; derive only for words held as principal parts alone (user-added, or seeded and
 not yet enriched). *Consequences:* `Form` gains `isPrincipal`, `morphCode` and `orderIndex`, and its
 uniqueness key includes the value so parallel forms coexist. The no-stale-duplication rule is intact:
@@ -243,11 +243,41 @@ instead of skipping it, since "already exists" no longer means "already yours". 
 Auth.js/NextAuth. Supabase Auth pairs with the Postgres project already in hand and needs no
 separate provider setup beyond Google's own OAuth client.
 
+**ADR-012 amendment 1: the session is verified, not asked about, and never without a deadline.**
+*Context:* the ADR said the middleware gates every route and `requireUserId()` reads the session,
+and left how open. Both reached for `getUser()`, which hands the access token to Supabase and asks
+whether it is still good. That is one network call each, and there were three of them on a signed-in
+page load: the middleware's gate, `requireUserId()` and `currentLearner()`, each waiting on the
+last, none able to reuse another's answer. Measured against a project in eu-west-1, a gated request
+cost 138 to 187ms before the page had done anything, and a public page that never reads an identity
+paid the same. *Problem:* nothing capped the wait. When the auth service stopped answering, the
+middleware sat on the request until the platform gave up at twenty-five seconds and served
+`MIDDLEWARE_INVOCATION_TIMEOUT`, which tells a learner nothing and tells them it slowly.
+*Decision:* three questions, cheapest first, in `lib/auth/identity.ts`. A public page that renders
+the same either way is answered without a client, which is the landing page, both policy pages, the
+offline fallback and the OAuth callback, and /sign-in is the one exception because it sends somebody
+already signed in home. A request with no `sb-<ref>-auth-token` cookie is signed out, definitively,
+with no call at all. What is left goes to `getClaims()`, which verifies the token's signature against
+the project's public keys, cached in the process, so the answer is arrived at rather than requested.
+Every remaining call is made through a transport carrying a 2,500ms deadline, the same one the
+dictionary gives Ekilex. *Consequences:* the same request costs 7 to 9ms, and a page render is one
+resolution shared by `requireUserId()` and `currentLearner()` instead of two. A session revoked
+elsewhere now survives until its access token expires rather than until the next request, which is
+the trade `getClaims()` makes and is bounded by the project's token lifetime; the allowlist is not
+part of it, since the address is a claim inside the token and `isAllowedEmail` still runs on every
+gated request. `Identity` has three states rather than two: a deadline that passes is `unreachable`,
+which is let through rather than redirected, because reading it as a sign-out would take a learner's
+deck away over a bad minute at somebody else's server, and because `requireUserId()` is the check
+that actually decides. *Rejected:* passing the verified identity from the middleware to the page in a
+request header. It would have taken the page's remaining resolution to zero, and a header a client
+can also send is a header that has to be stripped on every path that reaches a handler, including
+the ones the middleware now skips.
+
 **ADR-008: Five noun and five verb principal parts, not three cases and two infinitives.**
 *Context:* v4.0 stores nominative/genitive/partitive and the ma-/da-infinitives (audit B2, B4).
 *Problem:* partitive plural and the short illative cannot be derived, and the present 1sg is in the
 weak grade and unguessable from the infinitive. A three-form model silently teaches an incomplete
-paradigm. *Decision:* store five principal parts per part of speech; `ILL_SG_SHORT` is nullable
+set of forms. *Decision:* store five principal parts per part of speech; `ILL_SG_SHORT` is nullable
 because it genuinely does not exist for every noun. *Consequences:* the Ekilex mapper must find ten
 `FormType`s rather than five, which is what the Phase 0 spike verifies before any UI is built on the
 assumption.
@@ -414,10 +444,26 @@ reports a level it refuses to certify.**
 first units. That is the one question a beginner is least able to answer, and every downstream
 number, including the timeline this pass added, inherits the guess. *Decision:* a check that
 measures four skills, at `/assess` and inside first run, built out of `Lexeme`, `Form` and the
-recorded `usages` the dictionary already holds. Reading is asked as meanings, case forms, case
-identification, verb government and, where a translated sentence exists, comprehension; listening
-is the same material with nothing written down, plus dictation; writing is a sentence that has to
-contain a named case of a named word; speaking is shadowing. Questions climb the bands in order and
+recorded `usages` the dictionary already holds. Reading is asked as meanings, as a gap in a
+recorded sentence with four forms of one word to choose between, and, where a translated sentence
+exists, comprehension; listening is a word and then a whole sentence with nothing written down,
+plus dictation; writing is the same gap, typed; speaking is shadowing.
+
+**Amendment 1 (2026-08-31): no question names a case.** The first version asked which case an
+ending marked, which form a case called for, and which case a verb governed, and it was wrong on
+three counts. Nobody is examined that way: the state examination's published reading tasks are
+`valikvastustega ülesanne`, `valikvastustega lünkülesanne` and `sobitamine`, and the placement
+tests Estonian language schools set are almost entirely the middle one, a sentence with a hole in
+it and three or four forms of one word under it. The government question was worded as a fact the
+dictionary could not support, asking what case a verb "demands of its object" about 45 entries
+that are nouns or adjectives and about verbs like `kõlbama` that take no object at all. And 18 of
+those questions offered a second genuinely correct case as a wrong answer, because a word's
+government string names every case it governs while the distractors were drawn from all of them:
+`segama` governs the partitive and the comitative, and a learner who knew the comitative was
+marked wrong for it. So the questions are gaps now, in sentences a lexicographer recorded, which
+`lib/estonian/cloze.ts` already hid words out of for the mock exam. A case is named in the
+explanation *after* an answer, where it is a cross-reference for somebody also taking a course,
+and `scripts/test-invariants.ts` fails on one in a question. Questions climb the bands in order and
 a skill stops as soon as a whole band comes in under half, so the paper is about ten minutes rather
 than forty. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
 form is retrieved, stored or derived from the genitive stem by the app's own derivation, and every
@@ -438,6 +484,22 @@ this app has), a single number rather than a profile (it hides which skill is be
 one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest
 recogniser did not change because a test wanted one).
 
+*Amendment 1 (a wrong answer is chosen, not shuffled).* The three rules above make a mark
+trustworthy and say nothing about whether the question was worth marking. The wrong answers were
+taken from the whole dictionary in shuffle order, so a beginner asked what `must` means chose
+between "black", "plastic bag", "narcomania, drug addiction, substance abuse" and "user
+experience", and 99% of the meaning questions over sixty pools carried at least one option that
+could be crossed out on part of speech, on a band two or more away, or on the number of senses in
+the line. A level built on questions answered by elimination is wrong about somebody's Estonian on
+the day they are deciding where to start. `lib/assessment/distractors.ts` ranks each candidate on
+what a learner cannot eliminate it by: for a gloss the course unit that teaches the word, the part
+of speech, the band and the shape of the line; for a case the cases that answer the same question
+word and the endings from the same series; for a form how much of the stem it shares. It ranks
+rather than filters, so the set of questions that can be asked is unchanged and only the choice
+among the survivors moves, and the test of what counts as the same answer got stricter as the
+options got closer, never looser: a shared content word for a gloss, containment for a sentence,
+and no sentence offered against another recorded under the same headword.
+
 **ADR-021: A photograph is read by a model; whether it is *believed* is decided by the dictionary.**
 *Context:* half of an Estonian course is on paper (a handout, a textbook page, a list copied off a
 whiteboard) and typing it back in is the step where a learner stops. Reading it needs optical
@@ -447,7 +509,7 @@ transcribes and nothing more (`lib/scan/extract.ts`, pure, no database, no netwo
 returns is then resolved against the dictionary by `matchEstonianForm`, which accepts only an exact
 lemma, a diacritic-folded lemma, a stored form or a regular case built on a genitive stem, and
 rejects everything below that. A word the dictionary vouches for becomes cards from its own
-principal parts and paradigm, so nothing the model wrote survives into the card. A word it does not
+principal parts and its retrieved forms, so nothing the model wrote survives into the card. A word it does not
 recognise is shown as exactly that, editable beside the paper, and reaches the deck only once a
 person has ticked it, the same standard the paste importer has always met, since there too a human
 vouched for the list. *The picture is never stored:* it is decoded in a Route Handler, sent once, and
@@ -500,7 +562,7 @@ cross-reference.**
 *Context:* the reference layer, the dictionary, the flashcards, the placement check and the mock
 exam all name cases and verb forms, and every one of them held the Estonian name and the question
 word already: `cases.ts` has carried `et` and `question` since the domain model was written, and
-`morph.ts` has carried `olevik` and `lihtminevik` for as long as there has been a paradigm table.
+`morph.ts` has carried `olevik` and `lihtminevik` for as long as there has been a table of forms.
 *Problem:* all of them led with the English or Latin name and demoted the Estonian one to small
 italics, a hint or a bracket. Estonian is not taught that way anywhere. A course, a school textbook
 and the state examination name a case by its Estonian name and, more often, by the question it
@@ -529,3 +591,44 @@ strand anyone using an English grammar or a Wiktionary page and buys nothing; re
 to Estonian, which reads better in a URL and would rewrite 83 syllabus entries and break every
 bookmark for a slug; and inventing an Estonian term where a course does not have one, which is the
 same failure as inventing a form, one level up.
+
+
+**ADR-024: The dictionary's suggestion row is chosen for the moment, and the dictionary decides
+which words it is allowed to choose.**
+*Context:* the empty state of `/dictionary` offers a dozen words to look up, and it is the answer to
+"what is this for", asked by somebody who has typed nothing. It read `ORDER BY lemma ASC` with a
+twelve-row window inside the first forty, so for the whole life of the app that answer was
+`aasialane`, `aastatuhat`, `aatomipomm` and `aberratsioon`. The skip moved by one row a day and
+never left the letter A, which is why nobody noticed it was not moving. Three of those four carry no
+CEFR level at all: they arrived in the tail of the Wiktionary expansion rather than out of the
+course, and nobody learning Estonian has needed the word for an aberration. *Decision:* three
+sources, one per render, in a rotating order, with two filters that every source obeys.
+`lib/news/` reads the front page of the national broadcaster and produces candidate words;
+`lib/collections/topical.ts` maps the day of the year to units of the course; and a random draw over
+the graded dictionary is the backstop that is always available, so the row is never empty. The order
+is rolled per render rather than fixed, because a fixed order means the sources behind the leader
+are only ever seen when the leader fails, and a seasonal row nobody sees in a year is a feature that
+rots. A source has to fill most of the row on its own or it is passed over: a row labelled "In the
+news today" whose last four words came from a random draw would be a caption that is true of two
+thirds of what is under it. Every row says which of the three it is, because words that change
+without saying why read as noise. *The news source is ADR-021 again, on a second path where Estonian
+this app did not write arrives from outside.* A headline proposes; `matchEstonianForm` decides, at
+the same confidence floor a photographed page has to clear; and what is offered is the dictionary's
+own headword, never the spelling the headline used, so `ettepaneku` becomes `ettepanek` with a whole
+case table behind it. Nothing of the learner's goes out with the request, which is why the feed is not
+a recipient on `/privacy`: it asks for a front page and would ask for the same one if nobody were
+signed in. It is cached for an hour, single-flighted, given 1.5 seconds, and every failure is
+silent, because two sources sit behind it. A feed that will not answer is written down as a miss for
+ten minutes, which is the rule the seed and `enrichFromEkilex` both learned the expensive way.
+*The two filters are why `aberratsioon` cannot come back.* A suggested word carries a CEFR level,
+which is not a guess about difficulty but the record that the course or the graded seed vouched for
+it; and it is a noun, a verb or an adjective, which are the entries with a case table behind them, and
+a case table is what the chip opens. *Consequences:* the seasonal table names unit ids and never
+lemmas, so no Estonian is authored for it and a misspelling cannot ship (ADR-005); a word is offered
+inside the band around the level the learner placed at, so a beginner is not sent to a C1 headword;
+and the row changes when somebody comes back to it, which is the whole of what makes it worth a
+second look. *Rejected:* a plain `ORDER BY random()` with no filters, which fixes the alphabet and
+keeps `aberratsioon`; asking a model for topical words, which is ADR-005 with extra steps; topping a
+thin source up from the random draw, which buys four chips and spends the caption; and putting the
+feed on the recipients list, which would make a page about personal data harder to read by naming a
+service that receives none of it.

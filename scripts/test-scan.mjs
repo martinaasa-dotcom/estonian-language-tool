@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { launchChromium, eventually } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ratingButtons, revealAnswer } from "./lib/review.mjs";
 import { PrismaClient } from "@prisma/client";
 import { requireLocalDatabase } from "./lib/local-db.mjs";
 
@@ -42,7 +43,7 @@ const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("write and delete a scanned page and its cards"),
 });
 
-const { check, done } = suite("The paper path", { floor: 15 });
+const { check, done } = suite("The paper path", { floor: 17 });
 
 /** A word the seed definitely holds, with its real id, for the matched row. */
 const known = await prisma.lexeme.findFirst({
@@ -169,6 +170,30 @@ check(
 const madeCards = await prisma.card.count({ where: { ownerId: OWNER, source: "SCAN" } });
 check("ticking a word makes cards", madeCards >= 2, `${madeCards} cards`);
 
+/*
+  THE UNVOUCHED WORD BECAME AN ENTRY, WHICH IS THE HALF THIS DID NOT ASK.
+
+  The forms check below is the point of the whole path: nothing the model read
+  off a photograph may become an Estonian form. But counting zero forms passes
+  just as happily when the word was never written down at all, so the one
+  branch that turns a ticked-but-unmatched word into the learner's own entry
+  was covered by a check that could not tell the difference. Assert the entry
+  first, then that it carries nothing invented.
+*/
+const mine = await prisma.lexeme.findFirst({
+  where: { lemma: UNKNOWN },
+  select: { id: true, provenance: true, editedBy: true },
+});
+check(
+  "a ticked word the dictionary would not vouch for becomes the learner's own entry",
+  Boolean(mine) && mine.provenance === "USER" && mine.editedBy === OWNER,
+  mine ? `${mine.provenance}, edited by ${mine.editedBy}` : "no entry was written",
+);
+check(
+  "and it gets cards of its own, not just the matched word's",
+  mine ? (await prisma.card.count({ where: { ownerId: OWNER, lexemeId: mine.id } })) >= 2 : false,
+);
+
 const invented = await prisma.form.count({ where: { lexeme: { lemma: UNKNOWN } } });
 check(
   "a word the dictionary never vouched for gets no forms invented for it",
@@ -225,14 +250,19 @@ await page.waitForURL(/\/review\?scan=/, { timeout: 20_000 });
   `smoke-offline.mjs` learned this first and its comment says why in full: the
   shapes are chosen per card, so a driver that knows only "Show answer"
   silently stops testing anything the day another shape comes up first, and
-  what changed there was the dictionary growing. Not shared with it as one
-  helper, because that one goes on to grade and this must stop at the ratings
-  in order to count them.
+  what changed there was the dictionary growing.
+
+  This kept its own copy on the reason that the other one goes on to grade and
+  this has to stop at the ratings in order to count them. That reason is gone:
+  `scripts/lib/review.mjs` reveals and never grades, which is exactly this, and
+  the grade is one line in the caller that wants it. `test-containment.mjs` is
+  why it exists, having waived ten checks on the claim that a deck holding
+  forty due cards had nothing due.
 
   Nothing is weakened: the assertion below is unchanged and still wants the
   ordinary session's four ratings, now in every shape rather than one.
 */
-const ratings = page.getByRole("button", { name: /^(again|hard|good|easy)\b/i });
+const ratings = ratingButtons(page);
 const reveal = page.getByRole("button", { name: /show answer/i });
 const pick = page.getByText(/Pick the meaning/);
 const typed = page.locator("main input[type='text'], main input:not([type])").first();
@@ -241,15 +271,9 @@ await eventually(async () =>
   (await ratings.count()) > 0 || (await reveal.count()) > 0
   || (await pick.count()) > 0 || (await typed.count()) > 0, { timeoutMs: 20_000 });
 
-if (await reveal.count()) {
-  await reveal.first().click();
-} else if (await pick.count()) {
-  // The keyboard, because it is what the app offers and what test-modes drives.
-  await page.keyboard.press("1");
-} else if ((await ratings.count()) === 0 && (await typed.count())) {
-  await typed.fill("zzz");
-  await page.keyboard.press("Enter");
-}
+// A card that is new opens straight on the ratings with nothing to reveal,
+// which is the fourth shape and the one this used to assume was the only one.
+if ((await ratings.count()) === 0) await revealAnswer(page);
 await ratings.first().waitFor({ timeout: 20_000 });
 const rated = await ratings.count();
 check("the page drills through the ordinary review session", rated === 4, `${rated} rating buttons`);

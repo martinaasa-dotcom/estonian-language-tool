@@ -25,7 +25,7 @@ actual products:
 | Cannot be iframed | `curl -sSI https://sonaveeb.ee/` → `X-Frame-Options: DENY`. Same on `ekilex.ee`. **VERIFIED** |
 | API requires a key | `GET https://ekilex.ee/api/word/search/raamat` → **403** unauthenticated. **VERIFIED** |
 | Key source | Issued from the API section of an Ekilex account profile |
-| Data model | A word has one or more *paradigms*, each containing *forms* with orthographic representations, transcriptions and sound-file links, which is exactly the shape our principal-parts model needs |
+| Data model | A word has one or more sets of *forms* (their JSON calls a set by the linguist's word), each carrying orthographic representations, transcriptions and sound-file links, which is exactly the shape our principal-parts model needs |
 | Licence | Ekilex standard licence is **CC BY 4.0**: attribution is a *condition*, not a courtesy |
 
 ### 1.3 Consequences for the build
@@ -52,7 +52,7 @@ No published rate limit means we impose our own rather than discover theirs:
 ### 1.5 Mapping Ekilex → our model
 
 `lib/ekilex/mapper.ts` is the only place that knows Ekilex's shape. It:
-- picks the paradigm forms corresponding to our ten principal-part `FormType`s,
+- picks the retrieved forms corresponding to our ten principal-part `FormType`s,
 - classifies gradation by comparing the nominative and genitive stems, producing the
   `gradationNote` (e.g. `b : ∅`),
 - flattens senses and translations,
@@ -169,7 +169,30 @@ Full treatment in `06-anu-tutor.md`. Integration-level facts:
 
 ---
 
-## 6. Integration risk summary
+## 6. An Estonian news feed: words that are in the air today
+
+The empty state of `/dictionary` offers a dozen words worth looking up, and the most alive of its
+three sources is the front page of Eesti Rahvusringhääling. Full treatment in ADR-024. What matters
+at the integration level:
+
+- One public RSS document, read server-side, cached for an hour and single-flighted, with a 1.5
+  second deadline. No key, no account, no query. The request is the same one whether or not anybody
+  is signed in, which is why the feed is not a recipient on `/privacy`.
+- **The feed proposes and the dictionary decides.** `lib/news/` turns XML into candidate words and
+  nothing more; `matchEstonianForm` resolves each against `Lexeme` and `Form` at the confidence
+  floor a photographed page has to clear, and what reaches the screen is this dictionary's own
+  headword. Nothing a feed wrote can become a form, a card or a line of Estonian anywhere.
+- **Every failure is silent and the row still fills.** The other two sources, the time of year and a
+  draw from the graded dictionary, need no network. A deployment with no outbound access, a feed
+  having a bad minute and an operator who set `NEWS_FEED_URL=off` all get the same thing: a row that
+  never says it is showing the news.
+- A feed that will not answer is written down as a miss for ten minutes, so a dead feed is not
+  re-asked on every render. That is the rule the seed and `enrichFromEkilex` each learned the
+  expensive way.
+
+---
+
+## 7. Integration risk summary
 
 | Integration | Verified? | Risk | Mitigation |
 |---|---|---|---|
@@ -179,3 +202,4 @@ Full treatment in `06-anu-tutor.md`. Integration-level facts:
 | Speakly | Verified as *not* integrable | Low (descoped) | Generic importer |
 | iCal | Standard format, library verified | Low | Per-feed error isolation |
 | Anthropic | Well documented | Low | Budget cap, typed errors |
+| ERR news feed | Verified live; read-only, no key | Low | Two offline sources behind it; every failure silent; `NEWS_FEED_URL=off` |

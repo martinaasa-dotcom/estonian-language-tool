@@ -12,7 +12,7 @@ import type { Patch } from "./model";
  * reference data every learner sees. So the same three rules hold here, and
  * they hold *because* the button is one click rather than in spite of it.
  *
- * - **Only principal parts are ever written.** A retrieved Ekilex paradigm is
+ * - **Only principal parts are ever written.** A form retrieved from Ekilex is
  *   authoritative and is never touched by a correction, which is what
  *   `upsertLexemeWithForms` enforces and what the form branch below repeats
  *   for the one-field case.
@@ -89,7 +89,7 @@ export async function applyPatch(patch: Patch | null, reviewerId: string): Promi
           ok: false,
           error:
             `${patch.formType} is not one of the principal parts. Only those are ours to change; ` +
-            `the rest of the paradigm comes from Ekilex and is left as it is.`,
+            `the rest of the forms come from Ekilex and are left as they are.`,
         };
       }
       const lexeme = await prisma.lexeme.findUnique({ where: { id: patch.lexemeId } });

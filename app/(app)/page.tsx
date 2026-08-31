@@ -178,7 +178,7 @@ export default async function TodayPage() {
                     label={`${summary.reviewsToday} of ${summary.dailyGoal} reviews toward today's goal`}
                   >
                     <span
-                      className="est tnum text-base font-bold"
+                      className="tnum text-base font-bold"
                       style={{ color: summary.goalPct >= 100 ? "var(--good-ink)" : "var(--ink)" }}
                     >
                       {summary.goalPct}%
@@ -197,7 +197,7 @@ export default async function TodayPage() {
             {snapshot.totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
-                body="Start a unit on the path and you get real cards, full paradigm, audio, and both directions, in one click."
+                body="A unit becomes real cards, with every form and audio."
                 action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
               />
             ) : toReview > 0 ? (
@@ -416,7 +416,7 @@ export default async function TodayPage() {
               <div className="flex items-center gap-3">
                 <NextUnitIcon name={nextUnit.unit.icon} />
                 <div className="min-w-0">
-                  <p lang="et" className="est text-lg font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="text-lg font-bold leading-tight" style={{ color: "var(--ink)" }}>
                     {nextUnit.unit.title}
                   </p>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>{nextUnit.unit.subtitle}</p>
@@ -460,7 +460,7 @@ export default async function TodayPage() {
             <Card>
               <SectionTitle hint="from your weakest cards">Word to revisit</SectionTitle>
               <div className="flex items-center gap-2">
-                <p lang="et" className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
                   {wordOfDay.lemma}
                 </p>
                 <Speak text={wordOfDay.lemma} />
@@ -475,7 +475,7 @@ export default async function TodayPage() {
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold"
                 style={{ color: "var(--accent-deep)" }}
               >
-                <BookOpen size={14} aria-hidden /> See the full paradigm
+                <BookOpen size={14} aria-hidden /> See every form
               </Link>
             </Card>
           )}
@@ -490,10 +490,10 @@ export default async function TodayPage() {
               </div>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 {tutorReady
-                  ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
+                  ? "Which case to use, why a stem changed, whether your sentence is right."
                   : readerCanConfigure
-                    ? "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."
-                    : "Anu is not switched on for this site yet. Everything else here works without her."}
+                    ? "She needs a free API key first, about two minutes."
+                    : "Not switched on for this site. Everything else works without her."}
               </p>
               {(tutorReady || readerCanConfigure) && (
                 <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">
@@ -518,7 +518,7 @@ function PracticeTile({ mode }: { mode: PracticeMode }) {
       style={{ background: `var(--${mode.tone}-soft)` }}
     >
       <span style={{ color: toneInk(mode.tone) }}><Glyph size={17} aria-hidden /></span>
-      <span className="est mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
+      <span className="mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
       <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
     </Link>
   );

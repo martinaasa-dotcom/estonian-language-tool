@@ -120,7 +120,7 @@ Two more forms are unpredictable and cannot be derived:
 - **Partitive plural** (`raamatuid`): highly irregular, needed constantly.
 - **Short illative / additive** (`majja` vs long `majasse`): exists for some words only.
 
-A tool that shows three forms will confidently teach an incomplete paradigm.
+A tool that shows three forms will confidently teach an incomplete set of them.
 
 ### B3. Consonant gradation (*astmevaheldus*) is absent, and it is the actual difficulty
 

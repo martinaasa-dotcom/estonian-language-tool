@@ -18,6 +18,7 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
@@ -38,7 +39,7 @@ export default async function ProgressPage() {
   const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
 
-  const [summary, units, reviews, dueDates, cefrRows, learnerSettings] = await Promise.all([
+  const [summary, units, reviews, dueDates, cefrRows, learnerSettings, caseReviews] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -55,6 +56,17 @@ export default async function ProgressPage() {
       select: { state: true, lexeme: { select: { lemma: true, cefr: true } } },
     }),
     readSettings(ownerId, [SETTING_KEYS.leaderboard, SETTING_KEYS.displayName]),
+    /*
+      Read separately from the charts above, and on purpose.
+
+      This page's reading of the panel was the considered one, over the last
+      half-year, and Practice and the grammar index each answered it over an
+      arbitrary five thousand rows of all time. So the same learner could be
+      told 100% here and 50% there about the same case on the same day. The
+      panel is one component and one calculation already; this makes it one
+      input too, and the window is the one this page already used.
+    */
+    caseReviewsFor(ownerId, now),
   ]);
 
   // The cards that keep coming back. Lapses live on the card's own FSRS state;
@@ -83,7 +95,7 @@ export default async function ProgressPage() {
   // The narrower, more useful number: how often a card the scheduler believed
   // you knew actually came back. The recall rate above counts first sights too.
   const retention = retentionReading(reviews);
-  const cases = caseAccuracy(reviews);
+  const cases = caseAccuracy(caseReviews);
   const hour = bestStudyHour(reviews, 20, clock);
   const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
   // A class you have joined is the leaderboard that means something: real people
@@ -116,10 +128,10 @@ export default async function ProgressPage() {
 
   if (reviews.length === 0 && snapshot.totalCards === 0) {
     return (
-      <Page title="Progress" lead="Everything here is computed from your review log, nothing is stored, so nothing can drift.">
+      <Page title="Progress" lead="Computed live from your review log, never stored, so it cannot drift.">
         <Empty
           title="No history yet"
-          body="Charts appear after your first review. Start a unit and come back tomorrow, the interesting part is the shape over weeks."
+          body="Charts appear after your first review."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       </Page>
@@ -129,7 +141,7 @@ export default async function ProgressPage() {
   return (
     <Page
       title="Progress"
-      lead="Computed live from the review log. Nothing here is a stored score, so it cannot drift from what you actually did."
+      lead="Computed live from your review log, never stored, so it cannot drift."
       actions={
         <ButtonLink href="/assess">
           <Compass size={15} aria-hidden /> Level check
@@ -139,12 +151,12 @@ export default async function ProgressPage() {
       <Stack>
         <Card className="flex flex-wrap items-center gap-6">
           <Ring pct={summary.level.pct} size={78} label={`Level ${summary.level.level}, ${summary.level.pct}% to the next`}>
-            <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
+            <span className="tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
               {summary.level.level}
             </span>
           </Ring>
           <div className="min-w-0 flex-1">
-            <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
               {summary.level.title}
             </p>
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>
@@ -188,12 +200,12 @@ export default async function ProgressPage() {
                     : `${retention.retention}% of mature cards recalled, against a ${retention.target}% target`
                 }
               >
-                <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
+                <span className="tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
                   {retention.retention === null ? NO_VALUE : `${retention.retention}%`}
                 </span>
               </Ring>
               <div className="min-w-0 flex-1">
-                <p className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                <p className="text-md font-bold" style={{ color: "var(--ink)" }}>
                   {retention.headline}
                 </p>
                 <p className="mt-1.5 max-w-[62ch] text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -207,22 +219,24 @@ export default async function ProgressPage() {
           </Card>
         </section>
 
+        {/*
+          The hour used to be a sentence under the chart explaining that a
+          consistent time survives a busy week. The section title already has
+          a slot on the right for exactly this kind of fact, and a reader
+          skimming a column of charts reads the labels, not the footnotes.
+        */}
         <section>
-          <SectionTitle hint={`last ${HEATMAP_DAYS} days`}>Study history</SectionTitle>
+          <SectionTitle hint={hour === null ? `last ${HEATMAP_DAYS} days` : `${HEATMAP_DAYS} days · most at ${formatHour(hour)}`}>
+            Study history
+          </SectionTitle>
           <Card>
             <Heatmap days={heatmap} />
-            {hour !== null && (
-              <p className="mt-3 text-xs" style={{ color: "var(--ink-2)" }}>
-                You study most at {formatHour(hour)}. Reviews done at a consistent time are the ones
-                that survive a busy week.
-              </p>
-            )}
           </Card>
         </section>
 
         <div className="grid gap-5 md:grid-cols-2">
           <section>
-            <SectionTitle hint={`next ${FORECAST_DAYS} days`}>What&rsquo;s coming</SectionTitle>
+            <SectionTitle hint={`next ${FORECAST_DAYS} days · overdue counted as today`}>What&rsquo;s coming</SectionTitle>
             <Card>
               <div className="flex h-28 items-end gap-1.5">
                 {forecast.map((f) => (
@@ -241,11 +255,11 @@ export default async function ProgressPage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                {dueDates.length === 0
-                  ? "Nothing scheduled yet. This fills in as cards graduate out of the learning steps."
-                  : "Overdue cards are counted as today, because that is when the work is. A flat-ish shape means the scheduler has settled; a spike means a big day was added at once."}
-              </p>
+              {dueDates.length === 0 && (
+                <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
+                  This fills in as cards graduate out of the learning steps.
+                </p>
+              )}
             </Card>
           </section>
 
@@ -270,7 +284,7 @@ export default async function ProgressPage() {
               </div>
               {breakdown.total === 0 && (
                 <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  No reviews in this window yet. Each bar is a day, coloured by how much you recalled.
+                  No reviews yet. Each bar is a day, coloured by how much you recalled.
                 </p>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
@@ -285,12 +299,7 @@ export default async function ProgressPage() {
 
         {sticking.length > 0 && (
           <section>
-            <SectionTitle hint="worst first">Sticking points</SectionTitle>
-            <p className="mb-3 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
-              Cards you have learned and forgotten more than once. A card that keeps lapsing is
-              usually a grammar problem wearing a vocabulary costume, so the explanation comes
-              first, and setting it aside is the last resort rather than the first.
-            </p>
+            <SectionTitle hint="learned and forgotten more than once">Sticking points</SectionTitle>
             <StickingPoints points={sticking} />
           </section>
         )}
@@ -304,8 +313,7 @@ export default async function ProgressPage() {
                 empty={
                   <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                     No case-form cards answered yet. Add a noun unit from the{" "}
-                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>{" "}
-                    and this becomes the most useful chart here.
+                    <Link href="/learn" className="underline" style={{ color: "var(--accent-deep)" }}>path</Link>.
                   </p>
                 }
               />
@@ -313,7 +321,7 @@ export default async function ProgressPage() {
           </section>
 
           <section>
-            <SectionTitle hint={`${pathKnown} of ${pathTotal} path words`}>Vocabulary reach</SectionTitle>
+            <SectionTitle hint={`${pathKnown} of ${pathTotal} path words · your deck only`}>Vocabulary reach</SectionTitle>
             <Card>
               <ul className="flex flex-col gap-2">
                 {CEFR_LEVELS.map((level) => {
@@ -334,8 +342,7 @@ export default async function ProgressPage() {
                 })}
               </ul>
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                Only counts words in your own deck, and only once every card made from them has
-                graduated. It is a floor on what you know, never a flattering estimate.
+                Counted once every card from a word has graduated, so it is a floor.
               </p>
             </Card>
           </section>
@@ -419,42 +426,64 @@ export default async function ProgressPage() {
   );
 }
 
+/** How many opted-in learners the weekly board is ranked from. */
+const BOARD_CANDIDATES = 2000;
+
 /**
  * This week's XP for everyone who has opted in.
  *
  * Only opted-in learners are read at all, and only their chosen display name
  * and a number leave the query — a leaderboard that leaked email addresses
- * would be a privacy incident, not a feature. Capped at a class-sized group,
- * since the whole thing is tallied in memory.
+ * would be a privacy incident, not a feature.
+ *
+ * The cap said it was there "since the whole thing is tallied in memory", and
+ * the tallying was the reason it had to be so small: this read every review
+ * every opted-in learner had written all week, which for two hundred people is
+ * tens of thousands of rows fetched to produce four numbers each. Postgres
+ * counts them now, so what comes back is at most four rows per learner and the
+ * cap can be a bound on the `IN` list rather than on the work.
  */
 async function weeklyLeaderboard(now: Date) {
   const since = new Date(now.getTime() - 7 * 86_400_000);
+  /*
+    Ordered, because which learners the board is drawn from was the plan's
+    choice: past the cap somebody could be on it one week and gone the next
+    having done nothing differently.
+
+    There is nothing on `Setting` that ranks people, so this is stable rather
+    than meaningful, and worth saying plainly: past the cap the board is the
+    top twenty of a fixed two thousand opted-in learners rather than of the
+    whole deployment. Ranking properly would mean tallying everybody first,
+    which is the query this function just stopped doing.
+  */
   const optedIn = await prisma.setting.findMany({
     where: { key: SETTING_KEYS.leaderboard, value: "1" },
     select: { ownerId: true },
-    take: 200,
+    orderBy: { ownerId: "asc" },
+    take: BOARD_CANDIDATES,
   });
   const ids = optedIn.map((s) => s.ownerId);
   if (ids.length === 0) return [];
 
-  const [names, reviews] = await Promise.all([
+  const [names, counts] = await Promise.all([
     prisma.setting.findMany({
       where: { key: SETTING_KEYS.displayName, ownerId: { in: ids } },
       select: { ownerId: true, value: true },
     }),
-    prisma.review.findMany({
+    prisma.review.groupBy({
+      by: ["ownerId", "rating"],
       where: { reviewedAt: { gte: since }, ownerId: { in: ids } },
-      select: { rating: true, ownerId: true },
+      _count: { _all: true },
     }),
   ]);
 
   const nameByOwner = new Map(names.map((n) => [n.ownerId, n.value]));
   const tally = new Map<string, Record<number, number>>();
-  for (const r of reviews) {
-    const owner = r.ownerId;
-    const counts = tally.get(owner) ?? {};
-    counts[r.rating] = (counts[r.rating] ?? 0) + 1;
-    tally.set(owner, counts);
+  for (const row of counts) {
+    const owner = row.ownerId;
+    const forOwner = tally.get(owner) ?? {};
+    forOwner[row.rating] = (forOwner[row.rating] ?? 0) + row._count._all;
+    tally.set(owner, forOwner);
   }
 
   return ids
@@ -463,6 +492,9 @@ async function weeklyLeaderboard(now: Date) {
       name: nameByOwner.get(ownerId)?.trim() || "A learner",
       xp: xpFromRatingCounts(tally.get(ownerId) ?? {}),
     }))
-    .sort((a, b) => b.xp - a.xp)
+    // Total, so two learners level on the week are not ordered by whatever the
+    // rows arrived in. Same rule as `bySubstance` in the dictionary: a
+    // comparator that can return 0 for two different rows decides nothing.
+    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name) || a.ownerId.localeCompare(b.ownerId))
     .slice(0, 20);
 }
