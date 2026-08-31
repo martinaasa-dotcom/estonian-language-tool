@@ -70,7 +70,7 @@ export function TutorChat({
         <Card tone="blush" className="flex items-start gap-4">
           <Mascot size={46} className="float shrink-0" />
           <div>
-            <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
+            <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
             <p className="mt-1.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
               Ask me anything about Estonian grammar. I&rsquo;ll always tell you the rule, not just the
               answer, and I&rsquo;ll say so if I&rsquo;m not sure of a form rather than guessing.

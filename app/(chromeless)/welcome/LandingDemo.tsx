@@ -86,7 +86,7 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
 
         <div key={`${i}-${revealed}`} className="pop-in flex min-h-[232px] flex-col items-center justify-center gap-3 px-6 py-9 text-center">
           <div className="flex items-center gap-2">
-            <p lang="et" className="est text-4xl font-bold leading-none tracking-tight" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="text-4xl font-bold leading-none tracking-tight" style={{ color: "var(--ink)" }}>
               {word.lemma}
             </p>
             <span
@@ -116,7 +116,7 @@ export function DemoCard({ words }: { words: DemoWord[] }) {
 
           <div aria-live="polite" className="min-h-[44px]">
             {revealed && (
-              <p className="est pop-in text-2xl font-bold" style={{ color: "var(--accent-deep)" }}>
+              <p className="pop-in text-2xl font-bold" style={{ color: "var(--accent-deep)" }}>
                 {word.translation}
               </p>
             )}
@@ -184,7 +184,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
             onClick={() => setActive(n)}
             aria-pressed={active === n}
             lang="et"
-            className="est press rounded-full px-3.5 py-1.5 text-base transition-ui"
+            className="press rounded-full px-3.5 py-1.5 text-base transition-ui"
             style={{
               background: active === n ? "var(--accent-deep)" : "var(--raised)",
               color: active === n ? "var(--accent-ink)" : "var(--ink-2)",
@@ -209,7 +209,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
                 style={{ background: "var(--raised)" }}
               >
                 <span lang="et" className="text-xs" style={{ color: "var(--ink-3)" }}>{p.label}</span>
-                <span lang="et" className="est text-lg font-bold" style={{ color: "var(--ink)" }}>{p.value}</span>
+                <span lang="et" className="text-lg font-bold" style={{ color: "var(--ink)" }}>{p.value}</span>
               </div>
             ))}
           </div>
@@ -240,7 +240,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
                     quarters of it is 3.25. This is the Estonian name of the case,
                     which is the label this app leads with everywhere else. */}
                 <span lang="et" className="text-2xs" style={{ color: "var(--accent-deep)" }}>{c.et}</span>
-                <span lang="et" className="est text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
+                <span lang="et" className="text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {c.singular}
                 </span>
               </li>
@@ -265,8 +265,8 @@ export function TutorPeek() {
         className="ml-auto max-w-[85%] rounded-[var(--r-lg)] rounded-br-md px-4 py-3 text-sm"
         style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
       >
-        Why is it <span lang="et" className="est font-semibold">raamatut</span> and not{" "}
-        <span lang="et" className="est font-semibold">raamatu</span>?
+        Why is it <span lang="et" className="font-semibold">raamatut</span> and not{" "}
+        <span lang="et" className="font-semibold">raamatu</span>?
       </div>
 
       {asked ? (
@@ -275,9 +275,9 @@ export function TutorPeek() {
           style={{ background: "var(--surface)", borderColor: "var(--rule)", color: "var(--ink-2)" }}
         >
           <span className="label-xs mb-1.5 block" style={{ color: "var(--blush-ink)" }}>Anu</span>
-          Because the action is unfinished. <span lang="et" className="est font-semibold">Ma loen raamatut</span>{" "}
+          Because the action is unfinished. <span lang="et" className="font-semibold">Ma loen raamatut</span>{" "}
           is “I am reading a book”: partitive, still going. Swap in the genitive and you get{" "}
-          <span lang="et" className="est font-semibold">Ma loen raamatu läbi</span>, a whole book,
+          <span lang="et" className="font-semibold">Ma loen raamatu läbi</span>, a whole book,
           finished. The object case is where Estonian hides its aspect.
         </div>
       ) : (

@@ -116,7 +116,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   if (audioFailed) {
     return (
       <div className="mx-auto max-w-lg px-5 py-20 text-center">
-        <h1 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+        <h1 className="text-xl font-bold" style={{ color: "var(--ink)" }}>
           No audio, no drill
         </h1>
         <p className="mx-auto mt-2 max-w-[44ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -135,7 +135,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
     const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
@@ -240,7 +240,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                 >
                   <kbd className="tnum text-2xs opacity-60">{i + 1}</kbd>
                   <span className="min-w-0">
-                    <span lang="et" className="est block text-[19px] font-semibold">{option.value}</span>
+                    <span lang="et" className="block text-[19px] font-semibold">{option.value}</span>
                     <span className="block text-[12.5px] opacity-80">
                       {option.formLabel} of {option.lemma} · {option.translation}
                     </span>
@@ -264,7 +264,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {question.options.map((o) => (
                 <span key={o.value} className="flex items-center gap-1.5">
-                  <span lang="et" className="est text-[15px]" style={{ color: "var(--ink)" }}>{o.value}</span>
+                  <span lang="et" className="text-[15px]" style={{ color: "var(--ink)" }}>{o.value}</span>
                   <Speak text={o.value} />
                 </span>
               ))}

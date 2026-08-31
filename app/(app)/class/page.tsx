@@ -73,7 +73,7 @@ export default async function ClassIndexPage() {
                       {m.role === "TEACHER" ? <GraduationCap size={19} aria-hidden /> : <Users size={19} aria-hidden />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="est block text-md font-semibold" style={{ color: "var(--ink)" }}>
+                      <span className="block text-md font-semibold" style={{ color: "var(--ink)" }}>
                         {m.classroom.name}
                       </span>
                       <span className="block text-xs" style={{ color: "var(--ink-3)" }}>

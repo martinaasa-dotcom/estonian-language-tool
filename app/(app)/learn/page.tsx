@@ -147,7 +147,7 @@ export default async function LearnPage() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline gap-2">
-                    <span lang="et" className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    <span lang="et" className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                       {info.title}
                     </span>
                     {level === placement && <Chip tone="accent">You are here</Chip>}
@@ -214,7 +214,7 @@ export default async function LearnPage() {
                         <Link
                           href={`/learn/${u.unit.id}`}
                           lang="et"
-                          className="est text-md font-bold hover:underline"
+                          className="text-md font-bold hover:underline"
                           style={{ color: "var(--ink)" }}
                         >
                           {u.unit.title}

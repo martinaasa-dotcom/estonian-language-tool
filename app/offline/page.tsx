@@ -17,7 +17,7 @@ export default function OfflinePage() {
       >
         <CloudOff size={13} aria-hidden /> Offline
       </span>
-      <h1 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+      <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
         This screen needs a connection
       </h1>
       <p className="text-base" style={{ color: "var(--ink-2)" }}>

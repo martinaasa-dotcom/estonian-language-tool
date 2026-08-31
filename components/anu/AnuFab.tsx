@@ -78,7 +78,7 @@ export function AnuFab({
         >
           <header className="flex items-center gap-2.5 border-b px-4 py-3" style={{ borderColor: "var(--rule)" }}>
             <Mascot size={26} className="shrink-0" blink={false} />
-            <p className="est flex-1 text-base font-bold" style={{ color: "var(--ink)" }}>Anu</p>
+            <p className="flex-1 text-base font-bold" style={{ color: "var(--ink)" }}>Anu</p>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -105,7 +105,7 @@ export function AnuFab({
               <Card tone="blush" className="flex items-start gap-3 p-4">
                 <Mascot size={36} className="float shrink-0" />
                 <div>
-                  <p className="est text-base font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
+                  <p className="text-base font-bold" style={{ color: "var(--ink)" }}>Tere! Ma olen Anu.</p>
                   <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                     Ask me anything about Estonian grammar. I&rsquo;ll say so if I&rsquo;m not sure of a
                     form rather than guessing.

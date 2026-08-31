@@ -139,12 +139,12 @@ export default async function ProgressPage() {
       <Stack>
         <Card className="flex flex-wrap items-center gap-6">
           <Ring pct={summary.level.pct} size={78} label={`Level ${summary.level.level}, ${summary.level.pct}% to the next`}>
-            <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
+            <span className="tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
               {summary.level.level}
             </span>
           </Ring>
           <div className="min-w-0 flex-1">
-            <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
               {summary.level.title}
             </p>
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>
@@ -188,12 +188,12 @@ export default async function ProgressPage() {
                     : `${retention.retention}% of mature cards recalled, against a ${retention.target}% target`
                 }
               >
-                <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
+                <span className="tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
                   {retention.retention === null ? NO_VALUE : `${retention.retention}%`}
                 </span>
               </Ring>
               <div className="min-w-0 flex-1">
-                <p className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                <p className="text-md font-bold" style={{ color: "var(--ink)" }}>
                   {retention.headline}
                 </p>
                 <p className="mt-1.5 max-w-[62ch] text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>

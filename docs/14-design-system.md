@@ -125,8 +125,13 @@ one gradient button.
 
 ## 3. Type
 
-- **Fraunces** (`.est`): headings, numbers that matter, and every Estonian word in the app.
-- **Plus Jakarta Sans**: the interface around it.
+**One face, Plus Jakarta Sans.** Estonian used to be set in Fraunces, a second face carrying
+headings and the numbers a screen is about as well. It meant two typefaces inside one card
+wherever a prompt and its answers are in different languages, which is most of this app: a
+lesson step asks "Which word is this?" in the interface face and offers four Estonian answers
+in the other one, and the next step asks the same question the other way round and swaps them
+over. Weight and size are what a heading is told apart by now, which is what they were already
+doing on every screen that had no Estonian on it.
 
 **Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes,
 13px and 13.5px and 14px appearing inside one card, each chosen once and never compared with the
@@ -151,10 +156,11 @@ held at arm's length in the evening, which is when this app is actually used. `.
 that floor. The one thing off the scale is the step numeral behind the landing page's how-it-works
 cards. That is ornament, not type.
 
-Both are loaded with `latin-ext`, which is not optional: without it `õ ä ö ü š ž` fall back to a
-different face mid-word. The font variables are attached to `<html>`, not `<body>`, because
-`--font-serif` is declared on `:root` and references them, and a custom property is substituted
-where it is declared, so the face has to be in scope there.
+It is loaded with `latin-ext`, which is not optional: without it `õ ä ö ü š ž` fall back to a
+different face mid-word, which is the fault this rule exists to prevent. The font variable is
+attached to `<html>`, not `<body>`, because `--font-sans` is declared on `:root` and references
+it, and a custom property is substituted where it is declared, so the face has to be in scope
+there.
 
 ### Text stays in its box
 

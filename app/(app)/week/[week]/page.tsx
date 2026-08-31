@@ -151,7 +151,7 @@ export default async function WeekPage({ params }: { params: Promise<{ week: str
                         href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}
                         className="min-w-0 flex-1"
                       >
-                        <span lang="et" className="est text-md font-medium" style={{ color: "var(--ink)" }}>
+                        <span lang="et" className="text-md font-medium" style={{ color: "var(--ink)" }}>
                           {word.lemma}
                         </span>
                         <span className="ml-2 text-[13.5px]" style={{ color: "var(--ink-3)" }}>

@@ -150,7 +150,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Dictation done
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -247,7 +247,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
                 style={{ background: "var(--hard-soft)" }}
               >
                 <p className="label-xs" style={{ color: "var(--hard-ink)" }}>No audio right now</p>
-                <p lang="et" className="est text-lg" style={{ color: "var(--ink)" }}>{task.et}</p>
+                <p lang="et" className="text-lg" style={{ color: "var(--ink)" }}>{task.et}</p>
                 <p className="max-w-[42ch] text-xs" style={{ color: "var(--ink-2)" }}>
                   The pronunciation service could not be reached, so the sentence is shown instead of
                   played. Copying it out still drills the spelling. Come back for the listening half.
@@ -374,7 +374,7 @@ function Marked({ result }: { result: DictationResult }) {
             >
               <span
                 lang="et"
-                className="est text-md"
+                className="text-md"
                 style={{
                   color: tone.color,
                   textDecoration: word.status === "extra" ? "line-through" : undefined,

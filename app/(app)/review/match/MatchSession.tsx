@@ -138,7 +138,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
           >
             <Timer size={30} aria-hidden />
           </span>
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Match
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -173,7 +173,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <Confetti count={40} />
-        <h1 className="est text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           All matched!
         </h1>
         <p className="mt-2 flex items-center gap-2 text-base" style={{ color: "var(--ink-2)" }}>
@@ -237,7 +237,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
               disabled={isMatched}
               lang={tile.side === "et" ? "et" : "en"}
               aria-pressed={isSelected}
-              className={`${tile.side === "et" ? "est text-md font-semibold " : "text-base "}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0`}
+              className={`${tile.side === "et" ? "text-md font-semibold " : "text-base "}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0`}
               style={{
                 background: isMatched
                   ? "var(--mint-soft)"

@@ -288,7 +288,7 @@ case table and an honest comparison against the streak apps. Every Estonian form
 read from the real dictionary and derived by the app's own code, not typed into marketing copy.
 
 Inside, the app runs on a pastel design system built around the cornflower, *rukkilill*, Estonia's
-national flower, with Fraunces for Estonian words and headings, and a mascot made out of the
+national flower, set throughout in Plus Jakarta Sans, with a mascot made out of the
 letter **õ**. Light and dark both ship, and the theme toggle sits at the bottom of the rail.
 `docs/14-design-system.md` has the palette, the tokens and the rules colour follows.
 

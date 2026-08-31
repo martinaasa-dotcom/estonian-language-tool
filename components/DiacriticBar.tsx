@@ -131,7 +131,7 @@ export function DiacriticBar({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => insert(ch, fallbackRef?.current)}
           aria-label={`Insert ${ch}`}
-          className="est press h-9 w-9 rounded-full text-base font-semibold transition-ui hover:-translate-y-px"
+          className="press h-9 w-9 rounded-full text-base font-semibold transition-ui hover:-translate-y-px"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
           {ch}
@@ -179,7 +179,7 @@ export function LetterSample({ lit }: { lit: boolean }) {
       {ESTONIAN_LETTERS.map((ch) => (
         <span
           key={ch}
-          className="est flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+          className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
           style={
             lit
               ? { background: "var(--surface)", border: "1px solid var(--accent)", color: "var(--accent-deep)" }

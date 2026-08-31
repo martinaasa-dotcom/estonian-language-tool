@@ -125,7 +125,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
           </span>
         </div>
       ) : item.et ? (
-        <p lang="et" className="est mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
+        <p lang="et" className="mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
           {item.et}
         </p>
       ) : null}
@@ -167,7 +167,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
               </span>
               <span
                 lang={item.estonianOptions ? "et" : undefined}
-                className={`min-w-0 flex-1 text-base ${item.estonianOptions ? "est font-semibold" : ""}`}
+                className={`min-w-0 flex-1 text-base ${item.estonianOptions ? "font-semibold" : ""}`}
                 style={{ color: "var(--ink)" }}
               >
                 {option}
@@ -188,7 +188,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
             sentence is Estonian would have it read the English with Estonian
             phonics, which is worse than leaving the two words unmarked.
           */}
-          <p className="est mt-3 text-base" style={{ color: "var(--ink-2)" }}>{item.because}</p>
+          <p className="mt-3 text-base" style={{ color: "var(--ink-2)" }}>{item.because}</p>
           <Provenance source={item.source} />
           <Button
             variant="primary"
@@ -288,7 +288,7 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
                   key={`${word.expected ?? word.typed ?? ""}-${i}`}
                   lang="et"
                   title={tone.title}
-                  className="est rounded-[var(--r-sm)] px-2 py-1 text-base"
+                  className="rounded-[var(--r-sm)] px-2 py-1 text-base"
                   style={{ background: tone.background, color: tone.color }}
                 >
                   {word.expected ?? word.typed}
@@ -296,7 +296,7 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
               );
             })}
           </div>
-          <p lang="et" className="est mt-4 text-base" style={{ color: "var(--ink-2)" }}>{item.et}</p>
+          <p lang="et" className="mt-4 text-base" style={{ color: "var(--ink-2)" }}>{item.et}</p>
           <Provenance source={item.source} />
           <Button variant="primary" size="lg" className="mt-5" autoFocus onClick={() => onAnswer({ credit: mark.credit })}>
             Next question
@@ -319,8 +319,8 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
     <div>
       <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.question}</p>
       <p className="mt-3 text-base" style={{ color: "var(--ink-3)" }}>
-        The {item.caseEn.toLowerCase()} (<span lang="et" className="est">{item.caseEt}</span>) answers{" "}
-        <span lang="et" className="est">{item.caseQuestion}</span>
+        The {item.caseEn.toLowerCase()} (<span lang="et">{item.caseEt}</span>) answers{" "}
+        <span lang="et">{item.caseQuestion}</span>
       </p>
 
       {mark === null ? (
@@ -350,7 +350,7 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
       ) : (
         <div className="pop-in mt-6">
           <Chip tone={mark.credit === 1 ? "good" : mark.credit > 0 ? "hard" : "again"}>{mark.note}</Chip>
-          <p lang="et" className="est mt-4 text-2xl font-bold" style={{ color: "var(--ink)" }}>{item.targetForm}</p>
+          <p lang="et" className="mt-4 text-2xl font-bold" style={{ color: "var(--ink)" }}>{item.targetForm}</p>
           <Provenance source={item.source} />
           <Button variant="primary" size="lg" className="mt-5" autoFocus onClick={() => onAnswer({ credit: mark.credit })}>
             Next question
@@ -390,7 +390,7 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
       <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.question}</p>
       <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>{item.translation}</p>
 
-      <p lang="et" className="est mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
+      <p lang="et" className="mt-5 text-3xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
         {item.et}
       </p>
 

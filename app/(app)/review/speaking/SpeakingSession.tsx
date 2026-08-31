@@ -117,7 +117,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Well spoken
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -199,7 +199,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 px-6 py-10 text-center" aria-live="polite">
           <div>
             <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Say this in Estonian</p>
-            <p className="est text-2xl font-bold leading-snug tracking-tight md:text-3xl" style={{ color: "var(--ink)" }}>
+            <p className="text-2xl font-bold leading-snug tracking-tight md:text-3xl" style={{ color: "var(--ink)" }}>
               {card.prompt}
             </p>
           </div>
@@ -211,7 +211,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
                 className="pop-in flex flex-wrap items-center justify-center gap-2 rounded-[var(--r-lg)] px-5 py-4"
                 style={{ background: "var(--accent-soft)" }}
               >
-                <p lang="et" className="est text-2xl font-semibold md:text-2xl" style={{ color: "var(--accent-deep)" }}>
+                <p lang="et" className="text-2xl font-semibold md:text-2xl" style={{ color: "var(--accent-deep)" }}>
                   {card.et}
                 </p>
                 <SpeakPair text={card.et} size={17} />

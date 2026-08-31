@@ -134,7 +134,7 @@ export default async function PracticePage() {
                       <Icon size={18} aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="est block text-base font-bold" style={{ color: "var(--ink)" }}>{m.title}</span>
+                      <span className="block text-base font-bold" style={{ color: "var(--ink)" }}>{m.title}</span>
                       <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
                         {m.subtitle} · {metaFor(m)}
                       </span>
@@ -177,7 +177,7 @@ export default async function PracticePage() {
                 <ClipboardCheck size={19} aria-hidden />
               </span>
               <span className="min-w-0">
-                <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
+                <span className="block text-lg font-bold" style={{ color: "var(--ink)" }}>Mock exam</span>
                 <span className="mt-1 block text-sm" style={{ color: "var(--ink-2)" }}>
                   An imitation of the A2, B1, B2 or C1 state paper. Four parts, sixty percent to
                   pass, and a zero anywhere fails the whole thing.
@@ -243,7 +243,7 @@ function ModeCard({ href, iconName, tone, title, subtitle, body, meta, primary }
           <Icon size={19} aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="est block text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</span>
+          <span className="block text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</span>
           <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{subtitle}</span>
         </span>
         <span className="ml-auto"><Chip tone={primary ? "accent" : "neutral"}>{meta}</Chip></span>

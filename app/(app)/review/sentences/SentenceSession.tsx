@@ -159,7 +159,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Sentences done
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -252,7 +252,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
                 <p className="label-xs mb-2 flex items-center justify-center gap-1.5" style={{ color: "var(--ink-3)" }}>
                   <Eye size={12} aria-hidden /> Read it. The words scramble in a moment
                 </p>
-                <p lang="et" className="est text-xl leading-snug" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="text-xl leading-snug" style={{ color: "var(--ink)" }}>
                   {task.et}
                 </p>
               </>
@@ -284,7 +284,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
                   onClick={() => setBuilt((b) => b.filter((i) => i !== tileIndex))}
                   lang="et"
                   aria-label={`Remove ${tile.word}`}
-                  className="est press rounded-[var(--r-sm)] border px-3 py-1.5 text-md transition-ui hover:-translate-y-px"
+                  className="press rounded-[var(--r-sm)] border px-3 py-1.5 text-md transition-ui hover:-translate-y-px"
                   style={{
                     borderColor: "var(--rule)",
                     background: "var(--surface)",
@@ -310,7 +310,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
                   onClick={() => setBuilt((b) => [...b, tile.index])}
                   lang="et"
                   aria-label={`Add ${tile.word}`}
-                  className="est press rounded-[var(--r-sm)] border px-3 py-1.5 text-md transition-ui hover:-translate-y-px disabled:opacity-25 disabled:hover:translate-y-0"
+                  className="press rounded-[var(--r-sm)] border px-3 py-1.5 text-md transition-ui hover:-translate-y-px disabled:opacity-25 disabled:hover:translate-y-0"
                   style={{ borderColor: "transparent", background: "var(--raised)", color: "var(--ink)" }}
                 >
                   {tile.word}
@@ -328,7 +328,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
                 {checked === "right" ? "Õige, exactly right." : "Not the order Estonian uses. It goes:"}
               </p>
               <p className="mt-1 flex items-center justify-center gap-2">
-                <span lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{task.et}</span>
+                <span lang="et" className="text-md" style={{ color: "var(--ink)" }}>{task.et}</span>
                 <Speak text={task.et} />
               </p>
             </div>

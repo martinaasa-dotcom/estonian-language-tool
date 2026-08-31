@@ -147,7 +147,7 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
                 AI · verify
               </Chip>
             </div>
-            <p lang="et" className="est text-md" style={{ color: "var(--ink)" }}>{fix}</p>
+            <p lang="et" className="text-md" style={{ color: "var(--ink)" }}>{fix}</p>
           </div>
         )}
         {unverified.length > 0 && <UnverifiedNotice words={unverified} />}
@@ -209,7 +209,7 @@ function UnverifiedNotice({ words }: { words: string[] }) {
         {words.map((w, i) => (
           <span key={w}>
             {i > 0 && ", "}
-            <span lang="et" className="est font-semibold">{w}</span>
+            <span lang="et" className="font-semibold">{w}</span>
           </span>
         ))}.
       </span>
@@ -330,7 +330,7 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
         {vocab.map((w) => (
           <li key={w.et} className="flex items-center justify-between gap-3">
             <span className="text-sm">
-              <span className="est font-semibold" style={{ color: "var(--ink)" }}>{w.et}</span>
+              <span className="font-semibold" style={{ color: "var(--ink)" }}>{w.et}</span>
               <span style={{ color: "var(--ink-3)" }}>, {w.en}</span>
             </span>
             <Button

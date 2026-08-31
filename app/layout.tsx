@@ -1,25 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { OfflineProvider } from "@/components/OfflineProvider";
 import "./globals.css";
 
 /**
- * Fraunces for anything that should feel written — headings, and every Estonian
- * word in the app. Plus Jakarta Sans for the interface around it. Both carry
- * latin-ext, which is not optional here: without it õ ä ö ü š ž fall back to a
- * different face mid-word.
+ * Plus Jakarta Sans, for all of it. Estonian used to be set in a second face,
+ * which meant a card asking "Which word is this?" in one typeface and offering
+ * its four answers in another, on most screens in the app.
+ *
+ * latin-ext is not optional here: without it õ ä ö ü š ž fall back to a
+ * different face mid-word, which is the fault this rule exists to prevent.
  */
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
   variable: "--font-jakarta",
   display: "swap",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-fraunces",
-  display: "swap",
-  axes: ["SOFT", "WONK"],
 });
 
 export const metadata: Metadata = {
@@ -95,10 +90,10 @@ const THEME_SCRIPT =
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // The font variables go on <html>, not <body>: `--font-serif` is declared on
-    // :root and references `--font-fraunces`, and a custom property is
+    // The font variable goes on <html>, not <body>: `--font-sans` is declared on
+    // :root and references `--font-jakarta`, and a custom property is
     // substituted where it is *declared*, so the face has to be in scope there.
-    <html lang="en" className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

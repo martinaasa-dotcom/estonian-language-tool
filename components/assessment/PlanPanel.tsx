@@ -93,7 +93,7 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
   return (
     <div className="flex flex-col gap-4">
       <Card tone={verdict.tone === "good" ? "accent" : verdict.tone === "warn" ? "butter" : "sky"}>
-        <p className="est text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
+        <p className="text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
           {verdict.headline}
         </p>
         <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>

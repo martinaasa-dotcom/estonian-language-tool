@@ -116,7 +116,7 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
       style={{ background: "var(--raised)" }}
     >
       <div className="flex items-start gap-2">
-        <p lang="et" className="est flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
+        <p lang="et" className="flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
           {example.et}
         </p>
         <Speak text={example.et} label={`Hear "${example.et}"`} />

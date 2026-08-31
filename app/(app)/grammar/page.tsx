@@ -48,7 +48,7 @@ export default async function GrammarIndexPage() {
           <div className="flex items-start gap-3">
             <Sparkles size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
             <div>
-              <p className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+              <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                 Learn one form, get eleven cases
               </p>
               <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -124,10 +124,10 @@ export default async function GrammarIndexPage() {
                       }}
                     >
                       <span className="flex flex-wrap items-baseline gap-2">
-                        <span lang="et" className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                        <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                           {ref.spec.et}
                         </span>
-                        <span lang="et" className="est text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
+                        <span lang="et" className="text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
                           {ref.spec.question}
                         </span>
                         <span className="ml-auto">
@@ -151,7 +151,7 @@ export default async function GrammarIndexPage() {
         ))}
 
         <Card tone="butter">
-          <p className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+          <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>
             Estonian does not have six tenses
           </p>
           <p className="mt-2 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -165,7 +165,7 @@ export default async function GrammarIndexPage() {
             {VERB_AXES.map((axis) => (
               <div key={axis.et} className="rounded-[var(--r-md)] p-3" style={{ background: "var(--surface)" }}>
                 <dt className="flex flex-wrap items-baseline gap-2">
-                  <span lang="et" className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                  <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                     {axis.et}
                   </span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>{axis.en}</span>
@@ -192,7 +192,7 @@ export default async function GrammarIndexPage() {
                 <div key={group.id}>
                   <h3 className="flex flex-wrap items-baseline gap-2">
                     {groupTerm && (
-                      <span lang="et" className="est text-md font-bold" style={{ color: "var(--ink)" }}>
+                      <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                         {groupTerm}
                       </span>
                     )}
@@ -220,13 +220,13 @@ export default async function GrammarIndexPage() {
                             <span className="flex flex-wrap items-baseline gap-2">
                               <span
                                 lang={term ? "et" : undefined}
-                                className="est text-md font-bold"
+                                className="text-md font-bold"
                                 style={{ color: "var(--ink)" }}
                               >
                                 {term?.et ?? topic.title}
                               </span>
                               {term?.question && (
-                                <span lang="et" className="est text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
+                                <span lang="et" className="text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
                                   {term.question}
                                 </span>
                               )}

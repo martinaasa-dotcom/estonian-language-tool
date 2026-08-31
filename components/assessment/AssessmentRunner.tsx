@@ -144,7 +144,7 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
       return (
         <div className="py-6 text-center">
           <Mascot size={56} mood="cheer" className="mx-auto float" />
-          <p className="est mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>That is the check done.</p>
+          <p className="mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>That is the check done.</p>
           {saving && <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>Keeping the result...</p>}
         </div>
       );
@@ -175,7 +175,7 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
     return (
       <div className="mx-auto w-full max-w-2xl px-5 py-16 text-center md:px-8">
         <Mascot size={56} mood="thinking" className="mx-auto" />
-        <p className="est mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>Working out your level...</p>
+        <p className="mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>Working out your level...</p>
       </div>
     );
   }
@@ -209,7 +209,7 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
             >
               <section.icon size={20} aria-hidden />
             </span>
-            <h2 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>{section.title}</h2>
+            <h2 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>{section.title}</h2>
           </div>
           <p className="mt-4 max-w-[58ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             {section.body}

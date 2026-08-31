@@ -91,12 +91,12 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               tone={result.passed ? "var(--mint)" : "var(--peach)"}
               label={`${result.pct} percent`}
             >
-              <span className="est tnum text-2xl font-bold" style={{ color: "var(--ink)" }}>
+              <span className="tnum text-2xl font-bold" style={{ color: "var(--ink)" }}>
                 {result.pct}%
               </span>
             </Ring>
             <div className="min-w-[16rem] flex-1">
-              <p className="est text-xl font-bold" style={{ color: "var(--ink)" }}>
+              <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>
                 {result.points} of {result.maxPoints} points, {result.band.label}
               </p>
               <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -171,14 +171,14 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
             <Card as="li" key={part.skill}>
               <div className="flex items-baseline justify-between gap-3">
                 <span>
-                  <span className="est text-md font-semibold" style={{ color: "var(--ink)" }}>
+                  <span className="text-md font-semibold" style={{ color: "var(--ink)" }}>
                     {part.label}
                   </span>
                   <span className="ml-2 text-sm" style={{ color: "var(--ink-3)" }}>
                     {SKILL_ET[part.skill]}
                   </span>
                 </span>
-                <span className="est tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
+                <span className="tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
                   {part.rawAvailable === 0 ? NO_VALUE : part.points}
                   {part.rawAvailable > 0 && (
                     <span className="text-sm font-normal" style={{ color: "var(--ink-3)" }}>
@@ -270,7 +270,7 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               <li key={word.lexemeId}>
                 <Link href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}>
                   <Chip tone="again" caseSensitive>
-                    <span className="est" lang="et">{word.lemma}</span>
+                    <span lang="et">{word.lemma}</span>
                     <span>{word.times} times</span>
                   </Chip>
                 </Link>
@@ -332,14 +332,13 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
           <ul className="grid gap-2">
             {report.missed.map((mark) => {
               // Three question shapes answer in English. Tagging those Estonian
-              // set them in the Estonian face and had a screen reader pronounce
-              // "cheese" as an Estonian word.
+              // had a screen reader pronounce "cheese" as an Estonian word.
               const et = mark.language !== "en";
               return (
               <Card as="li" key={mark.itemId} className="!py-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   <span
-                    className={`text-md ${et ? "est" : ""}`}
+                    className="text-md"
                     style={{ color: "var(--mint-ink)" }}
                     lang={et ? "et" : undefined}
                   >
@@ -348,7 +347,6 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                   <span className="text-sm" style={{ color: "var(--ink-3)" }}>
                     you wrote{" "}
                     <span
-                      className={et ? "est" : ""}
                       lang={et ? "et" : undefined}
                       style={{ color: "var(--peach-ink)" }}
                     >

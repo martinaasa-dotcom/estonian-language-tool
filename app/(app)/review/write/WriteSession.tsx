@@ -116,7 +116,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
     const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
@@ -182,12 +182,12 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
         <div className="px-6 py-8">
           <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
             Use{" "}
-            <strong lang="et" className="est text-lg" style={{ color: "var(--ink)" }}>
+            <strong lang="et" className="text-lg" style={{ color: "var(--ink)" }}>
               {prompt.lemma}
             </strong>{" "}
             <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
           </p>
-          <p lang="et" className="est mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
+          <p lang="et" className="mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
             {prompt.caseEt}
           </p>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
@@ -211,7 +211,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(); }
               }}
               placeholder="Kirjuta oma lause siia…"
-              className="est mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] outline-none disabled:opacity-70"
+              className="mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] outline-none disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
             {!marked && <div className="mt-2"><DiacriticBar /></div>}

@@ -47,8 +47,10 @@
   --radius-xl: 22px;
   --radius-2xl: 30px;
 
+  /* One face, for Estonian and for the English around it. A second one set
+     the Estonian apart and put two typefaces inside a single card: a prompt
+     in one language and its four answers in the other is most of this app. */
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
   --color-ground: #fbf9ff;
@@ -678,7 +680,6 @@
     touch-action: pan-y;
   }
 
-  .est { font-family: var(--font-serif); font-optical-sizing: auto; }
   .tnum { font-variant-numeric: tabular-nums; }
 
   .label-xs {

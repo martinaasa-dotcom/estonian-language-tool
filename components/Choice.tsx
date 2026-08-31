@@ -222,14 +222,14 @@ export function ChoiceCard({
   const head = (
     <>
       {icon && <span className="shrink-0" style={{ color: mark }}>{icon}</span>}
-      {lead && <span className="est tnum shrink-0 text-base font-bold" style={{ color: "var(--accent-deep)" }}>{lead}</span>}
+      {lead && <span className="tnum shrink-0 text-base font-bold" style={{ color: "var(--accent-deep)" }}>{lead}</span>}
     </>
   );
   // One title element for both layouts. Two of them is how the Estonian unit
-  // titles would have quietly lost their `lang` and their serif the first time
-  // somebody reached for `stacked`.
+  // titles would have quietly lost their `lang` the first time somebody
+  // reached for `stacked`.
   const titleEl = (
-    <span lang={titleLang} className={`block text-base font-semibold ${titleLang ? "est" : ""}`} style={{ color: "var(--ink)" }}>
+    <span lang={titleLang} className="block text-base font-semibold" style={{ color: "var(--ink)" }}>
       {title}
     </span>
   );

@@ -50,7 +50,7 @@ const SHORTCUTS: [string, string][] = [
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-6 border-t pt-8 first:border-t-0 first:pt-0" style={{ borderColor: "var(--rule-soft)" }}>
-      <h2 className="est text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</h2>
+      <h2 className="text-lg font-bold" style={{ color: "var(--ink)" }}>{title}</h2>
       {children}
     </div>
   );

@@ -22,7 +22,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   return (
     <main className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
       <TriangleAlert size={28} aria-hidden style={{ color: "var(--hard-ink)" }} />
-      <h1 className="est text-2xl font-bold" style={{ color: "var(--ink)" }}>
+      <h1 className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
         That screen didn&rsquo;t load
       </h1>
       <p className="text-base" style={{ color: "var(--ink-2)" }}>

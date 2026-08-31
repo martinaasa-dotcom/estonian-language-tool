@@ -89,7 +89,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
             <div className="flex flex-wrap items-center gap-4">
               <div>
                 <SectionTitle>Join code</SectionTitle>
-                <p className="est text-3xl font-bold tracking-[0.25em]" style={{ color: "var(--accent-deep)" }}>
+                <p className="text-3xl font-bold tracking-[0.25em]" style={{ color: "var(--accent-deep)" }}>
                   {classroom.code}
                 </p>
               </div>

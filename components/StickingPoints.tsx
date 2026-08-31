@@ -67,7 +67,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
                 <Link
                   href={`/dictionary?q=${encodeURIComponent(word)}`}
                   lang="et"
-                  className="est text-md font-semibold hover:underline"
+                  className="text-md font-semibold hover:underline"
                   style={{ color: "var(--ink)" }}
                 >
                   {word}

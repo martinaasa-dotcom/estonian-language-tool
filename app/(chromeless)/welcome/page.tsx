@@ -169,7 +169,7 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         </p>
 
         <h1
-          className="est fade-up mt-6 text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
+          className="fade-up mt-6 text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
           style={{ color: "var(--ink)", animationDelay: "90ms" }}
         >
           Estonian that
@@ -236,21 +236,21 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
         */}
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
+          className="float pointer-events-none absolute -left-4 -top-8 z-20 hidden h-14 w-14 sm:flex items-center justify-center rounded-[var(--r)] text-2xl font-bold md:-left-10"
           style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-8deg" } as React.CSSProperties}
         >
           õ
         </span>
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
+          className="float pointer-events-none absolute -right-3 top-28 z-20 hidden h-12 w-12 sm:flex items-center justify-center rounded-[var(--r)] text-xl font-bold md:-right-8"
           style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "9deg" } as React.CSSProperties}
         >
           ä
         </span>
         <span
           aria-hidden
-          className="est float pointer-events-none absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
+          className="float pointer-events-none absolute -bottom-2 -left-2 z-20 hidden h-12 w-12 sm:flex md:-left-6 items-center justify-center rounded-[var(--r)] text-xl font-bold"
           style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.6s", "--float-tilt": "6deg" } as React.CSSProperties}
         >
           ü
@@ -286,7 +286,7 @@ function Problem() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <h2 className="est mx-auto max-w-[20ch] text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+        <h2 className="mx-auto max-w-[20ch] text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           You didn’t fail Estonian. Your tools did.
         </h2>
       </Reveal>
@@ -298,12 +298,12 @@ function Problem() {
               style={{ background: `var(--${p.tone}-soft)` }}
             >
               <span
-                className="est flex h-11 w-11 items-center justify-center rounded-full text-md font-bold"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-md font-bold"
                 style={{ background: "var(--surface)", color: toneInk(p.tone) }}
               >
                 {i + 1}
               </span>
-              <h3 className="est mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
+              <h3 className="mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
                 {p.title}
               </h3>
               <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -328,7 +328,7 @@ function Cases({ words }: { words: DemoWord[] }) {
       <Reveal>
         <div className="mx-auto max-w-[46ch] text-center">
           <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn one form, get eleven</p>
-          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+          <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             The fourteen cases, finally on your side
           </h2>
           <p className="mt-4 text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -364,7 +364,7 @@ function Features() {
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
-          <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+          <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             Five things, each doing one job well
           </h2>
         </div>
@@ -405,7 +405,7 @@ function Features() {
               <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--blush-soft)", color: "var(--blush-ink)" }}>
                 <Sparkles size={18} aria-hidden />
               </span>
-              <h3 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>Anu explains the rule</h3>
+              <h3 className="text-xl font-bold" style={{ color: "var(--ink)" }}>Anu explains the rule</h3>
             </div>
             <p className="mt-2.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
               A grammar tutor for the questions a textbook answers on page 240. She explains, checks
@@ -449,7 +449,7 @@ function Feature({ tone, icon, title, body, className = "" }: {
       >
         {icon}
       </span>
-      <h3 className="est mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
+      <h3 className="mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
         {title}
       </h3>
       <p className="mt-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
@@ -484,7 +484,7 @@ function HowItWorks() {
         <Reveal>
           <div className="mx-auto max-w-[42ch] text-center">
             <p className="label-xs" style={{ color: "var(--mint-ink)" }}>Three steps, then a habit</p>
-            <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+            <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
               How a day with Kodukeel goes
             </h2>
           </div>
@@ -510,14 +510,14 @@ function HowItWorks() {
                    failure. It is decoration: the step is written in words
                    inside the card this sits behind. */
                 data-ornament
-                className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
+                className="absolute -right-2 -top-6 text-[92px] font-bold leading-none"
                 style={{ color: `var(--${s.tone}-soft)` }}
               >
                 {i + 1}
               </span>
               <div className="relative">
                 <span className="label-xs" style={{ color: toneInk(s.tone) }}>Step {i + 1}</span>
-                <h3 className="est mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
+                <h3 className="mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
                 <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
               </div>
             </Reveal>
@@ -675,7 +675,7 @@ function Comparison() {
           <summary className="flex cursor-pointer list-none items-start justify-between gap-5">
             <span className="min-w-0">
               <span className="label-xs block" style={{ color: "var(--peach-ink)" }}>An honest comparison</span>
-              <span className="est mt-2 block text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
+              <span className="mt-2 block text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
                 How it sits next to Speakly, Keeleklikk and Anki
               </span>
               <span className="mt-2 block max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -703,8 +703,8 @@ function Comparison() {
           */}
           <p className="mt-6 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             None of them is trying to do quite this: get you to the point of saying{" "}
-            <span lang="et" className="est font-semibold">ma lähen tuppa</span> and knowing why it
-            is not <span lang="et" className="est font-semibold">tuba</span>.
+            <span lang="et" className="font-semibold">ma lähen tuppa</span> and knowing why it
+            is not <span lang="et" className="font-semibold">tuba</span>.
           </p>
 
           {/* Phones get a card per claim: four columns of ticks at 390px would
@@ -746,7 +746,7 @@ function Comparison() {
               <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
               {TOOLS.map((tool) =>
                 tool.ours ? (
-                  <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
+                  <span key={tool.name} className="text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
                     {tool.name}
                   </span>
                 ) : (
@@ -779,7 +779,7 @@ function Comparison() {
                 className="rounded-[var(--r-lg)] border px-4 py-3.5"
                 style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
               >
-                <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
+                <p className="text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
                 <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
               </div>
             ))}
@@ -823,7 +823,7 @@ function Faq() {
   return (
     <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <h2 className="est text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+        <h2 className="text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           The questions people ask
         </h2>
       </Reveal>
@@ -871,7 +871,7 @@ function FinalCta() {
 
           <div className="relative">
             <Mascot size={68} mood="cheer" className="float mx-auto" />
-            <h2 className="est mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
+            <h2 className="mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
               Fifteen minutes. Starting today.
             </h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>

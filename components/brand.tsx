@@ -83,7 +83,7 @@ export function Wordmark({ size = 34, subtitle }: { size?: number; subtitle?: st
     <span className="flex items-center gap-2.5">
       <Mascot size={size} />
       <span className="flex flex-col">
-        <span lang="et" className="est text-xl font-bold leading-none tracking-tight" style={{ color: "var(--ink)" }}>
+        <span lang="et" className="text-xl font-bold leading-none tracking-tight" style={{ color: "var(--ink)" }}>
           Kodukeel
         </span>
         {subtitle && (

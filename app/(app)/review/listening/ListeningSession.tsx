@@ -112,7 +112,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={68} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
           <p className="mt-2 text-base" style={{ color: "var(--ink-2)" }}>
@@ -188,7 +188,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           {!answered ? (
             noAudio ? (
               <>
-                <p lang="et" className="est text-2xl font-semibold" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>
                   {card.lemma}
                 </p>
                 <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
@@ -210,7 +210,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
             )
           ) : (
             <div className="flex items-center gap-2">
-              <p lang="et" className="est text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
+              <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
               <Speak text={card.lemma} />
             </div>
           )}

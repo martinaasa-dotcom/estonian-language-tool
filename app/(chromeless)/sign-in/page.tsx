@@ -39,7 +39,7 @@ export default function SignInPage() {
           style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-lg)" }}
         >
           <Mascot size={62} className="float mx-auto" />
-          <h1 className="est mt-5 text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
             Tere tulemast tagasi
           </h1>
           <p className="mx-auto mt-2 max-w-[36ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>

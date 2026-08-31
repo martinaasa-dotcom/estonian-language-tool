@@ -432,7 +432,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
         <div className="pop-in text-center">
           <Mascot size={72} mood="cheer" className="float mx-auto" />
-          <h1 className="est mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight" style={{ color: "var(--ink)" }}>
             Session complete
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -540,8 +540,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 // A gap-fill prompt is a whole sentence: at flashcard size it
                 // wraps to four lines and stops being readable at a glance.
                 card.cardType === "CLOZE"
-                  ? "est text-xl font-semibold leading-snug tracking-tight md:text-2xl"
-                  : "est text-3xl font-bold leading-tight tracking-tight md:text-4xl"
+                  ? "text-xl font-semibold leading-snug tracking-tight md:text-2xl"
+                  : "text-3xl font-bold leading-tight tracking-tight md:text-4xl"
               }
               style={{ color: "var(--ink)" }}
             >
@@ -591,7 +591,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
               </p>
               {typed.trim() && verdict.verdict !== "correct" && (
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                  You typed <span lang={backLang} className="est">{typed.trim()}</span>
+                  You typed <span lang={backLang}>{typed.trim()}</span>
                 </p>
               )}
               {/*
@@ -675,7 +675,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                    so the reveal puts the word back where it came from and reads
                    the whole thing aloud. */
                 <div className="flex flex-col items-center gap-2">
-                  <p lang="et" className="est text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
                     {card.front.split(BLANK)[0]}
                     <span style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
                     {card.front.split(BLANK)[1]}
@@ -686,7 +686,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                 <div className="flex items-center gap-2">
                   <p
                     lang={backLang}
-                    className="est text-2xl font-bold md:text-3xl"
+                    className="text-2xl font-bold md:text-3xl"
                     style={{ color: "var(--accent-deep)" }}
                   >
                     {card.back}

@@ -63,7 +63,7 @@ export default async function MySuggestionsPage() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Chip tone="accent">{SUGGESTION_CATEGORIES[category].label}</Chip>
                     {row.lemma && (
-                      <span lang="et" className="est text-base font-bold" style={{ color: "var(--ink)" }}>
+                      <span lang="et" className="text-base font-bold" style={{ color: "var(--ink)" }}>
                         {row.lemma}
                       </span>
                     )}
@@ -75,7 +75,7 @@ export default async function MySuggestionsPage() {
 
                 {summary && (
                   <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                    {summary.action}: <span className="est">{summary.after}</span>
+                    {summary.action}: {summary.after}
                   </p>
                 )}
                 {row.note && <p className="text-sm" style={{ color: "var(--ink-2)" }}>{row.note}</p>}

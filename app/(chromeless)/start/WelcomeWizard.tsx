@@ -246,7 +246,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 0 && (
           <section>
-            <h1 lang="et" className="est text-3xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 lang="et" className="text-3xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Tere tulemast!
             </h1>
             <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -334,7 +334,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 1 && (
           <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Where are you now?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -384,7 +384,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 2 && (
           <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Why Estonian, and how far?
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
@@ -489,7 +489,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
 
         {step === 3 && (
           <section>
-            <h1 className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+            <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Your first units
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>

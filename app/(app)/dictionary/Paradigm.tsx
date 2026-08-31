@@ -66,7 +66,7 @@ function Cell({ values }: { values: string[] }) {
   }
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>
+      <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>
         {values.join(" / ")}
       </span>
       <Speak text={values[0]!} size={13} />
@@ -265,7 +265,7 @@ function OtherForms({ forms, used }: { forms: ParadigmForm[]; used: Set<string> 
           {rest.map((r) => (
             <li key={r.code} className="flex items-baseline justify-between gap-3 text-xs">
               <span lang="et" style={{ color: "var(--ink-3)" }}>{r.name}</span>
-              <span lang="et" className="est text-sm" style={{ color: "var(--ink-2)" }}>
+              <span lang="et" className="text-sm" style={{ color: "var(--ink-2)" }}>
                 {r.values.join(" / ")}
               </span>
             </li>

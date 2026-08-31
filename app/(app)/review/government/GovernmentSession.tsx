@@ -91,7 +91,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
     const accuracy = Math.round((correct / questions.length) * 100);
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 md:px-10">
-        <h1 className="est text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
+        <h1 className="text-[32px] font-bold tracking-tight" style={{ color: "var(--ink)" }}>
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
@@ -153,7 +153,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
 
         <div className="px-6 py-8 text-center">
           <div className="flex items-center justify-center gap-2">
-            <p lang="et" className="est text-3xl font-semibold" style={{ color: "var(--ink)" }}>
+            <p lang="et" className="text-3xl font-semibold" style={{ color: "var(--ink)" }}>
               {question.lemma}
             </p>
             <Speak text={question.lemma} />
@@ -161,7 +161,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>{question.translation}</p>
 
           {question.maskedExample && !revealed && (
-            <p lang="et" className="est mt-5 text-[19px]" style={{ color: "var(--ink-2)" }}>
+            <p lang="et" className="mt-5 text-[19px]" style={{ color: "var(--ink-2)" }}>
               {question.maskedExample}
             </p>
           )}
@@ -215,7 +215,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             {question.example && (
               <div className="flex flex-wrap items-center gap-2">
-                <p lang="et" className="est text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
+                <p lang="et" className="text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
                   {question.example}
                 </p>
                 <Speak text={question.example} />

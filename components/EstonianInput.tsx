@@ -41,7 +41,7 @@ export function EstonianInput({
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
         }}
-        className={`est w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-xl" : "py-3 text-md"}`}
+        className={`w-full rounded-[var(--r-lg)] border px-5 outline-none transition-shadow focus:shadow-[var(--shadow)] ${large ? "py-3.5 text-xl" : "py-3 text-md"}`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
       />
       <DiacriticBar standalone={false} fallbackRef={ref} />

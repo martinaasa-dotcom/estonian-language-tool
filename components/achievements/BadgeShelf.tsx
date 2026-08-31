@@ -39,7 +39,7 @@ export function BadgeShelf({ earnedKeys }: { earnedKeys: Set<string> }) {
             >
               <Icon size={19} aria-hidden />
             </span>
-            <p className="est text-sm font-semibold leading-tight" style={{ color: earned ? "var(--ink)" : "var(--ink-2)" }}>
+            <p className="text-sm font-semibold leading-tight" style={{ color: earned ? "var(--ink)" : "var(--ink-2)" }}>
               {b.title}
             </p>
             <p className="text-2xs leading-snug" style={{ color: "var(--ink-3)" }}>{b.description}</p>

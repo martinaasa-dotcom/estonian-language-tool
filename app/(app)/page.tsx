@@ -178,7 +178,7 @@ export default async function TodayPage() {
                     label={`${summary.reviewsToday} of ${summary.dailyGoal} reviews toward today's goal`}
                   >
                     <span
-                      className="est tnum text-base font-bold"
+                      className="tnum text-base font-bold"
                       style={{ color: summary.goalPct >= 100 ? "var(--good-ink)" : "var(--ink)" }}
                     >
                       {summary.goalPct}%
@@ -416,7 +416,7 @@ export default async function TodayPage() {
               <div className="flex items-center gap-3">
                 <NextUnitIcon name={nextUnit.unit.icon} />
                 <div className="min-w-0">
-                  <p lang="et" className="est text-lg font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                  <p lang="et" className="text-lg font-bold leading-tight" style={{ color: "var(--ink)" }}>
                     {nextUnit.unit.title}
                   </p>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>{nextUnit.unit.subtitle}</p>
@@ -460,7 +460,7 @@ export default async function TodayPage() {
             <Card>
               <SectionTitle hint="from your weakest cards">Word to revisit</SectionTitle>
               <div className="flex items-center gap-2">
-                <p lang="et" className="est text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
+                <p lang="et" className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
                   {wordOfDay.lemma}
                 </p>
                 <Speak text={wordOfDay.lemma} />
@@ -518,7 +518,7 @@ function PracticeTile({ mode }: { mode: PracticeMode }) {
       style={{ background: `var(--${mode.tone}-soft)` }}
     >
       <span style={{ color: toneInk(mode.tone) }}><Glyph size={17} aria-hidden /></span>
-      <span className="est mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
+      <span className="mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
       <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
     </Link>
   );

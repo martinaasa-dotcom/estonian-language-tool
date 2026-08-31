@@ -128,7 +128,7 @@ export function DictionaryClient({
                   onClick={() => go(s.lemma)}
                   className="choice-btn flex items-baseline gap-2 rounded-md border px-3 py-1.5 text-left"
                 >
-                  <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
+                  <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>{s.lemma}</span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>{s.translation}</span>
                 </button>
               </li>
@@ -166,7 +166,7 @@ export function DictionaryClient({
               type="button"
               onClick={() => go(s)}
               lang="et"
-              className="est press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
+              className="press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
               style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
             >
               {s}
@@ -222,7 +222,7 @@ export function DictionaryClient({
               className="rounded-[var(--r)] px-4 py-3 text-sm"
               style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
-              <Et serif={false} className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
+              <Et className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
             </p>
           )}
           <Entry entry={entry} tutorReady={tutorReady} />
@@ -243,7 +243,7 @@ export function DictionaryClient({
                   className="press flex items-baseline gap-2 rounded-full border px-4 py-2 text-left transition-ui hover:-translate-y-px"
                   style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
                 >
-                  <span lang="et" className="est text-base" style={{ color: "var(--ink)" }}>{h.lemma}</span>
+                  <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>{h.lemma}</span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {h.matchedAs ? h.matchedAs : h.translation}
                   </span>
@@ -283,7 +283,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 lang="et" className="est text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
+            <h2 lang="et" className="text-3xl font-bold leading-none" style={{ color: "var(--ink)" }}>
               {entry.lemma}
             </h2>
             <SpeakPair text={entry.lemma} />
@@ -362,11 +362,11 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 >
                   {value ? (
                     <>
-                      <span lang="et" className="est block text-lg font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
+                      <span lang="et" className="block text-lg font-bold" style={{ color: "var(--accent-deep)" }}>{value}</span>
                       <Speak text={value} />
                     </>
                   ) : (
-                    <span className="est block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
+                    <span className="block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
                   )}
                   <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
                   <span lang="et" className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{et}</span>
@@ -415,10 +415,10 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                       </Link>
                       <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.en.toLowerCase()}</span>
                     </td>
-                    <td lang="et" className="est px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
+                    <td lang="et" className="px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
                       {singular ?? NO_VALUE}
                     </td>
-                    <td lang="et" className="est px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
+                    <td lang="et" className="px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
                     </td>
                     <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>

@@ -41,7 +41,7 @@ export function Page({ title, titleLang, lead, actions, children, eyebrow }: {
           {eyebrow && (
             <p className="label-xs mb-2" style={{ color: "var(--accent-deep)" }}>{eyebrow}</p>
           )}
-          <h1 lang={titleLang} className="est text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+          <h1 lang={titleLang} className="text-3xl font-bold leading-[1.1] tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             {title}
           </h1>
           {lead && <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{lead}</p>}
@@ -192,7 +192,7 @@ export function Empty({ title, body, action, mood = "thinking" }: {
       />
       <div className="relative">
         <Mascot size={54} mood={mood} className="mx-auto float" />
-        <p className="est mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>{title}</p>
+        <p className="mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>{title}</p>
         <p className="mx-auto mt-2 max-w-[48ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
         {action && <div className="mt-6 flex justify-center">{action}</div>}
       </div>
@@ -206,7 +206,7 @@ export function Stat({ value, label, tone, icon }: {
   return (
     <div>
       {icon && <div className="mb-2">{icon}</div>}
-      <div className="est tnum text-3xl font-bold leading-none tracking-tight" style={{ color: tone ?? "var(--ink)" }}>
+      <div className="tnum text-3xl font-bold leading-none tracking-tight" style={{ color: tone ?? "var(--ink)" }}>
         {value}
       </div>
       <div className="label-xs mt-2" style={{ color: "var(--ink-3)" }}>{label}</div>
@@ -237,7 +237,7 @@ export function StatTile({ value, label, tone = "accent", icon, hint }: {
         <span className="label-xs min-w-0" style={{ color: fg }}>{label}</span>
         {icon && <span className="shrink-0" style={{ color: fg, opacity: 0.75 }}>{icon}</span>}
       </div>
-      <span className="est tnum text-2xl font-bold leading-none" style={{ color: fg }}>{value}</span>
+      <span className="tnum text-2xl font-bold leading-none" style={{ color: fg }}>{value}</span>
       {hint && <span className="text-2xs" style={{ color: fg }}>{hint}</span>}
     </div>
   );

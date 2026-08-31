@@ -161,7 +161,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
                     <Link
                       href={`/dictionary?q=${encodeURIComponent(l.lemma)}`}
                       lang="et"
-                      className="est text-md font-semibold hover:underline"
+                      className="text-md font-semibold hover:underline"
                       style={{ color: "var(--ink)" }}
                     >
                       {l.lemma}

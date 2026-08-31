@@ -95,7 +95,7 @@ export default function GuidePage() {
                             >
                               <Icon size={17} aria-hidden />
                             </span>
-                            <span className="est text-lg font-bold" style={{ color: "var(--ink)" }}>
+                            <span className="text-lg font-bold" style={{ color: "var(--ink)" }}>
                               {stop.title}
                             </span>
                           </span>
