@@ -1936,6 +1936,95 @@ check("a check a state cannot reach is waived by number, never by a printed word
   }
 });
 
+check("a rating key works wherever a rating button is drawn", () => {
+  /*
+    A NEW CARD LEADS WITH ITS ANSWER, AND THE KEYBOARD DID NOT KNOW.
+
+    `askFor` returns `intro` for a card nobody has seen, because "a card you
+    have never seen cannot be recalled, only met". Its answer is printed and
+    its rating buttons are drawn immediately, but `revealed` is false, since
+    nothing was revealed. The render worked that out in four places and spelled
+    it out longhand in each; the keydown handler is where the fifth copy should
+    have been and was not, so it read `!revealed` and returned before the
+    rating branch. The buttons sat there, the mouse graded the card, and the
+    number keys did nothing at all on the one shape a learner meets every time
+    they start a new word.
+
+    So the concept has a name, and this asserts nobody spells it out again.
+    A fifth reader writing `revealed || ask === "intro"` by hand is exactly how
+    the fourth copy came to disagree with the other three, and a sixth would
+    disagree the same way.
+  */
+  const source = read("app/(app)/review/ReviewSession.tsx");
+  const definition = /const answerShown = .*/.exec(source);
+  assert.ok(definition, "the review screen no longer names when the answer is on screen");
+
+  // Everywhere but the one line that is allowed to say it.
+  const elsewhere = source.replace(definition[0], "");
+  assert.equal(
+    /revealed\s*\|\|\s*ask === "intro"|!revealed\s*&&\s*ask !== "intro"/.test(elsewhere),
+    false,
+    "the review screen spells out `the answer is on screen` again instead of using answerShown",
+  );
+
+  /*
+    And the guard in front of the rating keys is that name rather than
+    `revealed`, which is the bug itself: the buttons drawn and the keys that
+    press them have to agree about when they exist.
+  */
+  const beforeRatings = source.slice(0, source.indexOf("n >= 1 && n <= 4"));
+  assert.match(
+    beforeRatings.slice(-260),
+    /if \(!answerShown\) return;/,
+    "the number keys are gated on something other than whether the answer is on screen",
+  );
+});
+
+check("a suite that writes to the shared dictionary invents the word it writes", () => {
+  /*
+    A BROWSER SUITE MAY NOT LEAVE A ROW THAT SHADOWS A SEEDED ENTRY.
+
+    Ticking a word the dictionary did not vouch for is how `saveScan` makes a
+    learner their own entry, and it is a path worth driving. But `Lexeme` is
+    unique on `[lemma, pos]` rather than on the lemma alone, deliberately,
+    because `hall` is a noun meaning frost and an adjective meaning grey. So a
+    fixture that ticks a word the seed already holds does not collide with it,
+    it sits *beside* it, with no paradigm behind it, in a dictionary every
+    later suite shares.
+
+    `test-containment.mjs` ticked `tuba`. `e2e.mjs` opens with three checks on
+    `/dictionary?q=tuba`, and CI runs it two steps later on the same database.
+    The cost was not one wrong check: the suite threw on its first wait and
+    reported a Playwright timeout with none of its twenty-one checks run.
+
+    `test-scan.mjs` and `test-suggestions.mjs` each worked this out for
+    themselves and each carries an invented string. This is the rule they were
+    both following, written down: the Estonian in a fixture that will be
+    written to the dictionary has to be a word no dictionary has.
+  */
+  const lemmas = seededLemmas();
+  assert.ok(lemmas.size > 100, "the built dictionary could not be read, so this check sees nothing");
+
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    const source = read(file);
+    /*
+      An item the dictionary did not vouch for, in a stubbed scan response.
+      `lexemeId: null` is what makes it one, and the `et` beside it is what
+      would be written. Matched in either order, because an object literal has
+      no canonical one.
+    */
+    for (const item of source.matchAll(/\{[^{}]*lexemeId:\s*null[^{}]*\}/g)) {
+      const et = /\bet:\s*"([^"]+)"/.exec(item[0])?.[1];
+      if (!et) continue;
+      assert.equal(
+        lemmas.has(et.toLowerCase()),
+        false,
+        `${file} ticks "${et}", which the dictionary already holds, so it leaves a second entry beside it`,
+      );
+    }
+  }
+});
+
 check("every type size in the tree is a step on the scale", () => {
   /*
     `test-design.mjs` measures what is rendered, and it can only measure the
