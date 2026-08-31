@@ -3079,6 +3079,65 @@ check("first run is exercised, which means one suite runs before the fixture", (
 });
 
 /**
+ * And the other waiver that fired on every run, which was worse: it was not
+ * true.
+ *
+ * `test-containment.mjs` waived ten checks — five at each width — with the
+ * reason "the deck had nothing due", while the deck had forty cards due. A
+ * review card is asked as a flip, as multiple choice or as typing, decided per
+ * card, and the only thing that suite knew how to press was the flip. So the
+ * revealed layout, the one with the most in it (the answer, the note about why
+ * this card, and four rating buttons across a 360px phone) was never measured,
+ * and the line explaining why sent anybody reading it off to seed a database
+ * that was already seeded.
+ *
+ * `smoke-offline.mjs` had found this first and its own comment says it plainly:
+ * "a test that only knows about `Show answer` silently stops testing anything
+ * the day the default changes. It did." Four more suites had each worked it out
+ * separately, and `test-teaching.mjs` had two of the three shapes and got the
+ * third by accident, its `3` keypress landing on the third option rather than
+ * on a grade.
+ *
+ * So there is one definition, `scripts/lib/review.mjs`, and this asserts that a
+ * suite reaching for the flip knows there are others. Read comment-blind,
+ * because four checks in this repository's history have been satisfied by
+ * prose, one of them mine.
+ */
+check("a suite that reveals a review card knows all the shapes it comes in", () => {
+  const suites = readdirSync("scripts")
+    .filter((f) => f.endsWith(".mjs"))
+    .filter((f) => DECLARES_SUITE.test(read(join("scripts", f))));
+  assert.ok(suites.length > 10, `only found ${suites.length} suites, so this check stopped looking`);
+
+  let drivers = 0;
+  for (const file of suites) {
+    const source = code(join("scripts", file));
+    if (!/Show answer/i.test(source)) continue;
+    drivers += 1;
+    const knowsTheRest =
+      /revealAnswer/.test(source) || /Pick the meaning/.test(source);
+    assert.ok(
+      knowsTheRest,
+      `scripts/${file} presses "Show answer" and knows no other shape, so it stops driving ` +
+      `the moment a choice or typed card comes up first. Use revealAnswer from lib/review.mjs.`,
+    );
+  }
+  assert.ok(drivers > 0, "no suite drives a review card any more, so this check stopped looking");
+
+  /*
+    And the helper is one helper. It reveals and never grades: the containment
+    suite runs third and everything after it reads the same deck, so a shared
+    driver that graded would quietly change what the rest of them measure.
+  */
+  const helper = code(join("scripts", "lib", "review.mjs"));
+  assert.doesNotMatch(
+    helper,
+    /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
+    "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
+  );
+});
+
+/**
  * The worker's caches have ceilings too.
  *
  * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never

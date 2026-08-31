@@ -1330,6 +1330,23 @@ fixture is built *after* that suite now, which is a fact about the order of two 
 only in a comment is an ordering that drifts. When you write a waiver, say which state would
 lift it, and then go and find out whether anything ever reaches that state.
 
+**The other permanent waiver was worse, because its reason was false.**
+`scripts/test-containment.mjs` waived ten checks, five at each width, saying the deck had nothing
+due. The deck had forty cards due. A review card is asked as a flip, as multiple choice or as
+typing, decided per card, and the only thing that suite knew how to press was "Show answer". So
+the revealed layout, which is the one with the most in it (the answer, the note about why this
+card, and four rating buttons across a 360px phone) was never measured once, and the line saying
+why sent whoever read it off to seed a database that was already seeded. A waiver that misnames
+its own cause is worse than a failure: a failure sends you to the code.
+
+`smoke-offline.mjs` had already found this and written it down, that a driver knowing only the
+flip "silently stops testing anything the day the default changes. It did." Four more suites had
+each worked it out separately, and `test-teaching.mjs` had two shapes of the three and got the
+third by accident, its `3` keypress landing on the third option rather than on a grade.
+`scripts/lib/review.mjs` is the one definition and it **reveals without grading**, because the
+containment suite runs third and everything after it reads the same deck. An invariant fails on a
+suite that presses the flip and knows no other shape, and on the helper learning to grade.
+
 `scripts/test-containment.mjs` is the one that looks inside a card rather than at the page. It
 walks every text-bearing element, every icon and everything that arrives with a width of its own,
 on **every route the app has** at 360 and 1280, plus the landing page with its disclosures open

@@ -12,6 +12,7 @@
  */
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ratingButtons, revealAnswer } from "./lib/review.mjs";
 
 const BASE = baseUrl();
 const browser = await launchChromium();
@@ -25,55 +26,28 @@ const { check, done } = suite("Offline review", { floor: 15 });
 
 
 /**
- * Answers whichever kind of card is on screen.
+ * Answers whichever kind of card is on screen, and grades it.
  *
  * Review has three shapes — flip, typed, and multiple choice — chosen per card
  * and per preference, so a test that only knows about "Show answer" silently
  * stops testing anything the day the default changes. It did.
+ *
+ * Revealing is `scripts/lib/review.mjs` now, because `test-containment.mjs`
+ * needed the same three branches and had only the first, and waived ten checks
+ * on a reason that was not true. Grading stays here: it is what this suite is
+ * about and the one thing the other caller must not do.
+ *
+ * Picking an option only *reveals* the answer. The grade is the second
+ * interaction, on Again/Hard/Good/Easy, and without it this function reported
+ * a completed answer having graded nothing: the outbox was empty and the check
+ * read as "a grade taken offline is held on the device: 0 queued", which looks
+ * like the offline queue is broken when it is working perfectly.
  */
 async function answerOneCard() {
-  const show = app.getByRole("button", { name: /Show answer/ });
-  if (await show.count()) {
-    await show.first().click();
-    await page.waitForTimeout(250);
-    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard)/ });
-    if (await rate.count()) { await rate.first().click(); return true; }
-  }
-
-  /*
-    Multiple choice: the card says "1-4 to pick", so press one, and then grade.
-
-    Picking an option only *reveals* the answer. The grade is the second
-    interaction, on Again/Hard/Good/Easy, and without it this function reported
-    a completed answer having graded nothing: the outbox was empty and the
-    check read as "a grade taken offline is held on the device: 0 queued",
-    which looks like the offline queue is broken when it is working perfectly.
-    It surfaced when the dictionary grew, because a multiple choice card
-    started coming up first where a "Show answer" card used to, and that branch
-    above does both steps.
-
-    The keyboard rather than a click on the option, because it is what the app
-    itself offers and what test-modes.mjs drives.
-  */
-  if (await page.getByText(/Pick the meaning/).count()) {
-    await page.keyboard.press("1");
-    await page.waitForTimeout(900);
-    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
-    if (await rate.count()) { await rate.first().click(); }
-    return true;
-  }
-
-  // Typed: fill something wrong and submit — a wrong answer still grades.
-  const input = page.locator("main input[type='text'], main input:not([type])").first();
-  if (await input.count()) {
-    await input.fill("zzz");
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(250);
-    const rate = app.getByRole("button", { name: /^(Good|Easy|Hard|Again)/ });
-    if (await rate.count()) { await rate.first().click(); }
-    return true;
-  }
-  return false;
+  if (!(await revealAnswer(page))) return false;
+  const rate = ratingButtons(page);
+  if (await rate.count()) await rate.first().click();
+  return true;
 }
 
 const outboxSize = () => page.evaluate(() => new Promise((resolve) => {
