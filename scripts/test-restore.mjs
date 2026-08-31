@@ -24,8 +24,13 @@ const B = baseUrl();
 const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("delete every word, card, task and review row"),
 });
-// Floor: ten checks, all unconditional.
-const { check, done } = suite("Backup and restore", { floor: 10 });
+/*
+  Floor: eleven checks, all unconditional. It said ten while the suite reached
+  eleven, so a check could have stopped running and the tally would still have
+  cleared the bar, which is the one failure a floor exists to make visible.
+  The 429 branch below exits before any of them and does not count.
+*/
+const { check, done } = suite("Backup and restore", { floor: 11 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext()).newPage();
