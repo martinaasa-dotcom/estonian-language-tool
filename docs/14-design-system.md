@@ -213,6 +213,25 @@ Small, physical, and never blocking:
 - `.float`: the mascot and the landing page's decorative letters.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
+- The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pill that travels from the
+  place you left to the place you asked for, down the rail and across the phone bar. Borrowed from
+  Upside Lab's dock with its measurements intact, and three things carry it. Its leading edge sets
+  off before its trailing edge follows, so it stretches across the ground it covers and gathers
+  itself up on arrival, by a distance rather than by a fixed keyframe: one row up is 1.20x and the
+  length of the rail is 4.28x, measured. It runs as a transform animation handed to the compositor,
+  never a transition on `top` or `left`, because those are laid out and painted on the main thread
+  and the main thread is exactly what a page navigation is busy with. And it leaves on the press
+  rather than on the page, since these pages are rendered on a server and the wait is real; a press
+  dragged off, a page that answers somewhere else, or four seconds of nothing all call the bet off,
+  while a click on the cell ends the betting, since calling a bet off mid-navigation puts the pill
+  back on the row you are leaving and then sends it out again. A bet that loses arrives rather than
+  travels: reverting is a correction and not a journey.
+  A pointer drags a second pane on the same physics, which is the hover the rail never had: the
+  accent's softest tint, the row's words in the accent's ink, and the pill reaching 3px past the
+  row as a shadow spread, so a row under the pointer grows rather than merely tinting.
+  The phone bar's capsule also breathes, three percent uniformly on both axes over 460ms with a
+  slight undershoot; the rail does not, because a column that lurched beside the page it just
+  changed would be arguing with a decision the reader has already made.
 
 `prefers-reduced-motion: reduce` flattens all of it, and switches `.reveal` off outright, because a
 scroll-driven animation has no duration to shorten, so it needs removing rather than shrinking.

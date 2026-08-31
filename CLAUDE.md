@@ -601,6 +601,81 @@ open first, and a phone reaches every place a desktop does. `icon()` falling bac
 why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
 before a screenshot caught them.
 
+**Where you are is one pill that travels, and it leaves on the press rather than on the page.**
+The rail and the phone bar used to say it by painting the row you arrived on and unpainting the one
+you left, which is two things happening at once and reads as two things: a light going out over
+here and another coming on over there, with nothing connecting them. What connects them is a marker
+that moves, borrowed from Upside Lab's dock with its measurements intact, and three things carry it.
+Its **leading edge sets off before its trailing edge follows**, so the pill stretches across the
+ground it is covering and gathers itself up on arrival, which is why a mark is two edges rather
+than a position and a size: the stretch falls out of the arithmetic and scales with the distance,
+1.20x for one row and 4.28x for the length of the rail, where a fixed keyframe would give both the
+same. It is a **transform animation handed to the compositor**, never a transition on `top` or
+`left`: those are laid out and painted on the main thread, and the main thread is exactly what a
+page navigation is busy with, which Lab measured as three frames of travel, five frames frozen
+while the new room rendered, then the rest of the way in one. And it **leaves on `pointerdown`**,
+because these pages are rendered on a server and the wait is real; that is a bet, so it is called
+off by a press dragged off the cell, by a page that answers with a different cell, or by four
+seconds of nothing, which is long on purpose since snapping the marker home mid-wait looks far more
+broken than letting it stand where somebody put it. **A click on the aimed cell ends the betting**,
+though, and that one is not a refinement: calling a bet off puts the marker back on whatever is
+still marked, which during a navigation is the row you are *leaving*, so before this any pointer
+event landing off the cell while the new page rendered sent the pill all the way home and all the
+way back. Measured on this rail at three travels for one tap, 127 to 817, 817 to 127, then 127 to
+817 again, and on a phone the browser taking the gesture for a scroll does it on an ordinary tap. A
+cancel *before* the click is still a genuinely abandoned press, and a bet that loses **arrives
+rather than travels**, because reverting is a correction and not a journey.
+`lib/ux/navMotion.ts` is the arithmetic and is
+pure, `lib/layout/navMarker.ts` measures the cells and plays it, `app/nav.css` says how a pane
+behaves once placed, and both surfaces read all three, because a second marker is two answers to
+one question drifting apart a number at a time.
+
+Five things about it are decisions rather than details. **A surface nobody is looking at does not
+measure itself**: both are always mounted, the rail is `hidden md:flex` and the bar is `md:hidden`,
+so at every width one of the two has no layout box and reports its offsets as zero. Measuring one
+writes a collapsed marker at the far edge down as its last known place, and the first travel after
+the breakpoint is crossed sweeps the whole width from there, measured at `x 0 scaleX 0.01 -> x 288`
+going from 1280 to 390. So a surface with no layout box measures nothing, animates nothing, writes
+nothing down, and drops any outstanding bet, since the press that placed it was on a surface the
+reader is no longer looking at; the first measure after it comes back arrives rather than travels.
+**A pane is placed by measurement on both
+axes**, never by an inset typed to match a padding: the rail is a scroll container, so its padding
+box takes in the scrollbar's gutter and a pane inset from both edges came out four pixels narrower
+than the row it was under. **A pane with no offset on the axis it travels stays at its static
+position**, one padding in from the edge, while the cell it is chasing reports an `offsetTop`
+measured from the padding box, which drew the whole rail's marker 16px low on every row until
+`restingStyle` pinned the origin. **The curve is solved once**, into a table of 1,024 points read
+by interpolation, because the keyframes are worked out inside the `pointerdown` handler before the
+browser can dispatch the click that navigates, and binary searching a bezier twice per sample is
+about 1,900 iterations on the press path for a curve that never changes. **The panes sit at a
+negative z-index** so the cells can stay
+unpositioned and keep reporting their offsets against the well rather than against whichever
+section they are in, which is the same measurement fault arriving through the door marked
+`position: relative`. And **the current row still carries its own card until a pane exists**: a
+marker cannot be placed on a server, so the well declares the material once as `--nav-marker-bg`
+and the row wears it until `data-nav-marked` says the pane has taken it over, or every hard load
+would paint a rail with nothing marked and then flicker a card into place. The rail deliberately
+does **not** breathe on a travel the way the phone's capsule does, since a column lurching beside
+the page it just changed is arguing with a decision the reader has already made; what a pointer
+gets there instead is the pane following it, which is the hover those rows never had.
+
+**A pointer's pane has to be one you can see, and reading layout to place it is not free.** The
+pane started as the raised tint on the rail's own ground, two percent of lightness apart in the
+light theme, which is technically a hover and practically nothing on the surface a pointer spends
+most of its time over. It is the accent's softest tint now, the row's own words go to
+`--accent-deep`, and the pill reaches 3px past the row as a shadow spread rather than as geometry,
+so the measurement that places it stays the row's own box and the row appears to grow rather than
+merely tint. `test-design.mjs` hovers a row and measures the ink against the pill in both themes,
+because a hovered state is not one a page arrives in and nothing else sweeps it: 5.16 and 7.93
+against a bar of 4.5. And the measure that places the panes **runs on every render of the
+surface**, where `offsetTop` and `getClientRects` each force a style and layout recalculation of
+the whole document: measured at 26 to 37 forced reads for one navigation, on two surfaces at once,
+nearly all answering a question nothing asked. What moves a pane is the marked cell changing or
+the pointer moving, which is element identity and free to compare, and geometry moving under a
+still pane is the observer's job, so an ordinary re-render is two comparisons and a return. The
+same observer answers "does this surface have a box" for nothing, which takes that question off
+the render path too. Measured after: 11 to 15 reads, and one `getClientRects` rather than eleven.
+
 **Space is what says two things are separate, and it was saying five different things.** Pages
 stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
 them, so moving from Progress to Practice changed how tightly the app breathed for no reason a
@@ -1061,7 +1136,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
-`VOICE_RULES`, `findTells`. Most of them now
+`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -1134,6 +1209,18 @@ it never running, all reported as one failure naming a regex. It reads the
 precondition and waives its three checks with the reason on screen instead. Cleaning up after yourself is the
 weaker version of the same idea, since it only works while every suite remembers
 and cannot help the first run on a machine somebody has been clicking around on.
+
+**An agent branch does not deploy, because the account has a hundred deployments a day and there
+is only one production.** Vercel's free tier counts them across the whole account, and a session
+that pushes eight times to a branch spends eight of them; on 2026-08-30 the hundred ran out in an
+afternoon and every push after that answered `api-deployments-free-per-day`, which is the same
+answer production would have got. `vercel.json` turns preview deployments off for `claude/*` and
+nothing else, so `main` deploys exactly as it did and the cap is spent on the thing people visit.
+Upside Lab has the same two lines for the same reason and reached them the same way.
+
+The cost is real and worth stating: a `claude/*` pull request has no preview URL, so a change
+somebody wants to *look at* has to be run locally or pushed to a branch named something else. That
+is the trade, and it is the right way round while the alternative is production not deploying.
 
 **A suite that ran nothing looks exactly like one that passed, so every suite
 counts.** `scripts/lib/checks.mjs` gives each one a `check` that tallies what
