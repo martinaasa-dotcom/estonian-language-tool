@@ -206,6 +206,19 @@ export const CANNOT: readonly Claim[] = [
   },
 ];
 
+/**
+ * First run gets a line, the walkthrough gets the paragraph.
+ *
+ * They are two different jobs and one string was doing both. The screen at
+ * /guide is read by somebody who came looking for an explanation, so a
+ * paragraph is what they asked for. The first screen of setup is read by
+ * somebody who has not decided to read anything yet, and three sentences of
+ * what the app is before the first question is a wall to get past rather than
+ * a welcome.
+ */
+export const WHAT_IT_IS_SHORT =
+  "Pick the Estonian words you want to keep. Kodukeel asks you for them just before you forget.";
+
 /** The one paragraph version, for the top of the walkthrough. */
 export const WHAT_IT_IS =
   "Kodukeel is a memory and a reference, not a course. It holds an Estonian dictionary with real " +

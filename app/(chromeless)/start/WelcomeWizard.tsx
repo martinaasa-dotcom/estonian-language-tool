@@ -16,7 +16,7 @@ import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
 import { LEVELS as CEFR_LEVELS, unitsAtLevel } from "@/lib/collections/syllabus";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
-import { WHAT_IT_IS } from "@/lib/copy/tour";
+import { WHAT_IT_IS_SHORT } from "@/lib/copy/tour";
 import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 
 export interface WizardUnit {
@@ -250,7 +250,7 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               Tere tulemast!
             </h1>
             <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              {WHAT_IT_IS}
+              {WHAT_IT_IS_SHORT}
             </p>
             <div className="mt-5">
               {/*
