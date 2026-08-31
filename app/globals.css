@@ -1003,18 +1003,22 @@
      lands rather than early. */
   .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
+  .float { animation: float 6s ease-in-out infinite; }
   /*
-    The slant is a `rotate` of its own and only the lift is animated.
+    The mascot bobs, and nothing wanders.
 
-    Both used to live in the keyframes, which meant the tilt was a frame of an
-    animation rather than a property of the element: `prefers-reduced-motion`
-    shortens every animation here to 0.01ms with no fill, so a reader who asks
-    for less motion got four upright squares and lost the one thing about them
-    that was not motion. `rotate` and `transform` are separate properties, so
-    the letters stay slanted while the lift is what gets turned off. A caller
-    that sets no `--float-tilt` rotates by 0deg, which is every mascot.
+    `.drift` lived here: a wander of its own for each of the landing page's
+    four letters, on clocks between 7.5 and 11 seconds so the four were never
+    in step, and inward on every one of them because a letter hung in the
+    page's own padding and an outward swing of three pixels is a letter
+    clipped against the edge of the window.
+
+    It went when the hero's card went. The letters were placed against that
+    card's four sides and nothing else on the page is the hero, so there was
+    no edge left to tuck them over and no ornament left to move. The class
+    and its keyframes are deleted rather than left unused, because every
+    sentence of what they said described a card that is no longer there.
   */
-  .float { rotate: var(--float-tilt, 0deg); animation: float 6s ease-in-out infinite; }
   .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 }
 

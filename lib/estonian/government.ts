@@ -1,6 +1,7 @@
-import { CASES } from "./cases";
-import type { CaseKey } from "./types";
+import { CASES, caseByKey } from "./cases";
+import { caseNearness } from "@/lib/questions/distractors";
 import { shuffle } from "@/lib/random/shuffle";
+import type { CaseKey } from "./types";
 
 /**
  * Verb government (*rektsioon*) — which case a verb demands of its complement.
@@ -23,6 +24,18 @@ export interface Government {
   caseKey: CaseKey;
   caseEn: string;
   caseEt: string;
+  /**
+   * Every *other* case the entry names, in the order it names them.
+   *
+   * An Ekilex entry records the whole government of a word, not one case:
+   * `aitama` is "keda/mida* (partitive) · millest (elative)" and takes both,
+   * in different senses. `caseKey` is the primary, and these are the ones that
+   * are also true. They travel beside it so that a drill cannot offer one as a
+   * wrong answer, which is the whole reason this field exists: 58 of the 268
+   * governed verbs in the shipped dictionary could be shown a second genuinely
+   * correct case and marked wrong for choosing it.
+   */
+  alsoGoverned: readonly CaseKey[];
   /** The Estonian example, exactly as stored. Never synthesised. */
   example: string | null;
   /** The English gloss that followed the example in brackets. */
@@ -56,6 +69,34 @@ const EARLIEST_CASE_NAME = new RegExp(BY_NAME.map((c) => c.en).join("|"));
  * first separator in the string is always the right one to cut at.
  */
 const GOVERNMENT_SEPARATOR = /[\u2014\u2013-]/;
+
+/**
+ * Every case a government string names, in the order it names them.
+ *
+ * A left-to-right scan that consumes the *longest* name matching at each
+ * position, which is the only way to read these correctly: `adessive` contains
+ * `essive` and `abessive` contains it too, so a plain substring search finds
+ * cases the entry never mentioned. `hakkama` is "kelleks (translative) ·
+ * kellel (adessive)", and a naive scan reads a third government out of it that
+ * does not exist.
+ *
+ * The first entry is the primary government, which is what `parseGovernment`
+ * has always returned: the front for the seed shape, and the first-listed for
+ * the Ekilex shape, which writes them most important first. Finding all of
+ * them here rather than in a second function is deliberate, because two scans
+ * over one string are two answers waiting to disagree.
+ */
+function namedCases(text: string): (typeof BY_NAME)[number][] {
+  const found: (typeof BY_NAME)[number][] = [];
+  let i = 0;
+  while (i < text.length) {
+    const hit = BY_NAME.find((c) => text.startsWith(c.en, i));
+    if (!hit) { i++; continue; }
+    if (!found.some((f) => f.key === hit.key)) found.push(hit);
+    i += hit.en.length;
+  }
+  return found;
+}
 
 /**
  * Parses a stored government string.
@@ -94,14 +135,8 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
   const headLower = head.toLowerCase();
   const searchIn = headLower.match(EARLIEST_CASE_NAME) ? headLower : text.toLowerCase();
 
-  let match: (typeof BY_NAME)[number] | undefined;
-  let at = Number.POSITIVE_INFINITY;
-  for (const candidate of BY_NAME) {
-    const where = searchIn.indexOf(candidate.en);
-    // Ties go to BY_NAME's order, which is longest name first, so "ablative"
-    // cannot be claimed by a shorter name sitting at the same index.
-    if (where >= 0 && where < at) { at = where; match = candidate; }
-  }
+  const named = namedCases(searchIn);
+  const match = named[0];
   if (!match) return null;
 
   const body = cut < 0 ? "" : text.slice(cut + 1).trim();
@@ -114,6 +149,7 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
     caseKey: match.key,
     caseEn: match.label,
     caseEt: match.et,
+    alsoGoverned: named.slice(1).map((c) => c.key),
     example: example || null,
     gloss: gloss || null,
     experiencer: headLower.includes("experiencer"),
@@ -121,36 +157,91 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
   };
 }
 
+/** Hardest to tell from the answer first. Ties keep the order they came in. */
+function rankAgainst(keys: readonly CaseKey[], answer: CaseKey): CaseKey[] {
+  const target = caseByKey(answer);
+  if (!target) return [...keys];
+  const score = (key: CaseKey) => {
+    const spec = caseByKey(key);
+    return spec ? caseNearness(spec, target) : 0;
+  };
+  return [...keys].sort((a, b) => score(b) - score(a));
+}
+
 /**
  * Builds the answer options for one question.
  *
  * The distractors are the cases *other verbs in the learner's own deck*
  * actually govern, not a random sample of the fourteen. Estonian government
- * clusters hard — partitive, allative, elative, comitative account for nearly
- * all of it — so options drawn from the real distribution make the question a
- * genuine discrimination rather than a giveaway.
+ * clusters hard: partitive, allative, elative and comitative account for
+ * nearly all of it, so options drawn from the real distribution make the
+ * question a genuine discrimination rather than a giveaway.
+ *
+ * Which three of them get printed is `lib/questions/distractors.ts`, the one
+ * table of what makes a wrong answer hard to cross out, shared with the mock
+ * exam and the placement check. It puts the cases that answer the same
+ * question word first, so osastav is offered against nimetav and omastav, the
+ * two other cases an object is ever in, rather than against whichever three
+ * the shuffle reached. The top-up list is ordered the same way instead of by
+ * the frequency somebody typed it in.
+ *
+ * **It takes the parsed government rather than a case key, and that is the
+ * other half of the fix.** The first version took the answer alone and
+ * filtered only that out of the pool, so any *other* case the same word
+ * governs could be offered as a wrong answer. Measured over the shipped
+ * dictionary, 60 of the 268 governed verbs name more than one: `aitama` is
+ * "keda/mida* (partitive) · millest (elative)" and takes both, so a learner
+ * who knew `see ei aita millestki` picked the elative and was told they were
+ * wrong. Passing the whole `Government` is what makes that unforgettable: the
+ * type cannot be satisfied by a caller who has only the answer, so a fifth
+ * drill cannot reintroduce the fault by not knowing about it.
+ *
+ * Returns null rather than padding when there are not enough honest
+ * distractors, which is the standard `lib/assessment/items.ts` already holds
+ * itself to. The caller drops the question.
  */
 export function buildOptions(
-  answer: CaseKey,
-  pool: CaseKey[],
+  government: Pick<Government, "caseKey" | "alsoGoverned">,
+  pool: readonly CaseKey[],
   count = 4,
   random: () => number = Math.random,
-): CaseKey[] {
-  const distractors = [...new Set(pool)].filter((c) => c !== answer);
+): CaseKey[] | null {
+  const answer = government.caseKey;
+  // Every case this word governs is true of it, so none of them is a wrong
+  // answer. Only the primary is the answer; the rest are simply not offered.
+  const alsoTrue = new Set<CaseKey>([answer, ...government.alsoGoverned]);
 
-  // Shuffle the distractors, take what is needed, then top up from the common
-  // government cases if the deck is too small to supply enough.
-  const shuffled = shuffle(distractors, random);
+  const distractors = [...new Set(pool)].filter((c) => !alsoTrue.has(c));
 
-  const FALLBACK: CaseKey[] = ["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE", "ADESSIVE", "GENITIVE"];
-  const chosen = [...shuffled];
-  for (const c of FALLBACK) {
+  // Shuffled before it is ranked, so cases that are equally near come up in a
+  // different order each time. Then top up from the common government cases if
+  // the deck is too small to supply enough.
+  const chosen = rankAgainst(shuffle(distractors, random), answer);
+
+  for (const c of rankAgainst(FALLBACK, answer)) {
     if (chosen.length >= count - 1) break;
-    if (c !== answer && !chosen.includes(c)) chosen.push(c);
+    if (!alsoTrue.has(c) && !chosen.includes(c)) chosen.push(c);
   }
+  if (chosen.length < count - 1) return null;
 
   return shuffle([answer, ...chosen.slice(0, count - 1)], random);
 }
+
+/**
+ * Where a distractor comes from when the deck cannot supply one.
+ *
+ * The six commonest governments first, because a distractor drawn from the
+ * real distribution is a question rather than a giveaway, then the rest of the
+ * fourteen so that a word governing several of the common ones can still be
+ * asked. Before that tail existed a word like `alustama`, which takes three of
+ * the six, could run the list dry once its own governments were excluded.
+ */
+const FALLBACK: readonly CaseKey[] = [
+  "PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE", "ADESSIVE", "GENITIVE",
+  ...CASES.map((c) => c.key).filter(
+    (k) => !["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE", "ADESSIVE", "GENITIVE"].includes(k),
+  ),
+];
 
 /**
  * Blanks the governed word in the example so it can be shown as a cue without

@@ -93,22 +93,36 @@ export default async function GovernmentPage() {
     ...shuffle(parsed.filter((p) => !mine.has(p.v.id))),
   ].slice(0, ROUND);
 
-  const questions: GovernmentQuestion[] = ordered.map(({ v, g }) => ({
-    cardId: cardFor.get(v.id) ?? null,
-    lexemeId: v.id,
-    lemma: v.lemma,
-    translation: v.translation,
-    cefr: v.cefr,
-    answer: g.caseKey,
-    answerEn: g.caseEn,
-    answerEt: g.caseEt,
-    example: exampleFor(v, g),
-    maskedExample: maskExample(exampleFor(v, g)),
-    gloss: g.gloss,
-    experiencer: g.experiencer,
-    inDeck: mine.has(v.id),
-    options: buildOptions(g.caseKey, pool),
-  }));
+  /*
+    A question is dropped rather than padded when there is no honest set of
+    options for it, which `buildOptions` decides: every case the word itself
+    governs is true of it, so none of them may stand as a wrong answer, and a
+    word governing several can leave too few distractors behind. Losing one
+    verb from a round of twelve costs nothing; marking somebody wrong for
+    knowing that `aitama` also takes the seestütlev costs the drill its
+    credibility.
+  */
+  const questions: GovernmentQuestion[] = ordered.flatMap(({ v, g }) => {
+    const options = buildOptions(g, pool);
+    if (!options) return [];
+    return [{
+      cardId: cardFor.get(v.id) ?? null,
+      lexemeId: v.id,
+      lemma: v.lemma,
+      translation: v.translation,
+      cefr: v.cefr,
+      answer: g.caseKey,
+      answerEn: g.caseEn,
+      answerEt: g.caseEt,
+      alsoGoverned: [...g.alsoGoverned],
+      example: exampleFor(v, g),
+      maskedExample: maskExample(exampleFor(v, g)),
+      gloss: g.gloss,
+      experiencer: g.experiencer,
+      inDeck: mine.has(v.id),
+      options,
+    }];
+  });
 
   return <GovernmentSession questions={questions} />;
 }

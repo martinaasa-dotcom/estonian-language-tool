@@ -235,7 +235,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             >
               {busy
                 ? <><Loader2 size={15} className="animate-spin" aria-hidden /> Marking…</>
-                : <>Check it <kbd className="ml-1 opacity-70">⌘↵</kbd></>}
+                : <>Check it <kbd className="ml-1">⌘↵</kbd></>}
             </Button>
           ) : (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>

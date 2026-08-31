@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildOptions, maskExample, parseGovernment } from "./government";
+import { CASES } from "./cases";
 import type { CaseKey } from "./types";
 
 describe("parseGovernment", () => {
@@ -107,41 +108,130 @@ describe("parseGovernment, on the shape Ekilex writes", () => {
   it("returns null when nothing in the entry names a case", () => {
     expect(parseGovernment("kellel + mida teha")).toBeNull();
   });
+
+  it("reads every case the entry names, primary first", () => {
+    const g = parseGovernment("mida* (partitive) · millega (comitative) · millest (elative)");
+    expect(g?.caseKey).toBe("PARTITIVE");
+    expect(g?.alsoGoverned).toEqual(["COMITATIVE", "ELATIVE"]);
+  });
+
+  it("does not read a case out of another case's name", () => {
+    /*
+      "adessive" ends in "essive" and "abessive" contains it too, so a plain
+      substring search invents a government the entry never mentions. hakkama
+      is the real one: it takes the translative and the adessive, and a naive
+      scan reads the essive out of the second.
+    */
+    const g = parseGovernment("mida tegema · kelleks (translative) · millal · kellel (adessive)");
+    expect(g?.caseKey).toBe("TRANSLATIVE");
+    expect(g?.alsoGoverned).toEqual(["ADESSIVE"]);
+  });
+
+  it("leaves the seed shape with one government, because that is all it records", () => {
+    const g = parseGovernment("partitive — aitan sind (I help you)");
+    expect(g?.alsoGoverned).toEqual([]);
+  });
 });
 
 describe("buildOptions", () => {
   const pool: CaseKey[] = ["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE"];
   // Deterministic "random" so option order is assertable.
   const fixed = () => 0.5;
+  /** A word that governs one case only, which most do. */
+  const only = (caseKey: CaseKey) => ({ caseKey, alsoGoverned: [] as CaseKey[] });
 
   it("always contains the right answer", () => {
-    expect(buildOptions("ELATIVE", pool, 4, fixed)).toContain("ELATIVE");
+    expect(buildOptions(only("ELATIVE"), pool, 4, fixed)).toContain("ELATIVE");
   });
 
   it("returns the requested number of options", () => {
-    expect(buildOptions("ELATIVE", pool, 4, fixed)).toHaveLength(4);
+    expect(buildOptions(only("ELATIVE"), pool, 4, fixed)).toHaveLength(4);
   });
 
   it("never repeats an option", () => {
-    const options = buildOptions("PARTITIVE", pool, 4, fixed);
+    const options = buildOptions(only("PARTITIVE"), pool, 4, fixed)!;
     expect(new Set(options).size).toBe(options.length);
   });
 
   it("never offers the answer twice as a distractor", () => {
-    const options = buildOptions("PARTITIVE", ["PARTITIVE", "PARTITIVE", "ALLATIVE"], 4, fixed);
+    const options = buildOptions(only("PARTITIVE"), ["PARTITIVE", "PARTITIVE", "ALLATIVE"], 4, fixed)!;
     expect(options.filter((o) => o === "PARTITIVE")).toHaveLength(1);
   });
 
   it("tops up from the common government cases when the deck is too small", () => {
     // A learner with one governed verb still gets a real multiple choice.
-    expect(buildOptions("PARTITIVE", [], 4, fixed)).toHaveLength(4);
+    expect(buildOptions(only("PARTITIVE"), [], 4, fixed)).toHaveLength(4);
+  });
+
+  it("offers the cases an object could otherwise be in", () => {
+    /*
+      Which three of the deck's cases get printed is a ranking now, not a
+      shuffle: nimetav and omastav are the two other cases an Estonian object
+      is ever in, so a question about osastav that offers alaleütlev and
+      alaltütlev instead is asking whether the learner knows an object from a
+      direction, which they answered by knowing the verb was transitive.
+    */
+    const wide: CaseKey[] = ["ALLATIVE", "ELATIVE", "COMITATIVE", "GENITIVE", "NOMINATIVE", "ADESSIVE"];
+    const options = buildOptions(only("PARTITIVE"), wide, 4, fixed)!;
+    expect(options).toContain("GENITIVE");
+    expect(options).toContain("NOMINATIVE");
+  });
+
+  it("tops up with the near cases rather than the head of a list", () => {
+    // With an empty deck the fallback fills the question, and it is ordered by
+    // what is hard to tell from the answer rather than by how it was typed.
+    const options = buildOptions(only("ADESSIVE"), [], 4, fixed)!;
+    // -le beside -l is the hard one. Partitive heads the list and was always
+    // taken first, which for a question about alalütlev is the easy one.
+    expect(options).toContain("ALLATIVE");
+    expect(options).not.toContain("PARTITIVE");
   });
 
   it("draws distractors from the deck's own distribution when it can", () => {
-    const options = buildOptions("PARTITIVE", ["ALLATIVE", "ELATIVE", "COMITATIVE"], 4, fixed);
+    const options = buildOptions(only("PARTITIVE"), ["ALLATIVE", "ELATIVE", "COMITATIVE"], 4, fixed)!;
     expect(options).toEqual(expect.arrayContaining(["PARTITIVE"]));
     expect(options.every((o) =>
       ["PARTITIVE", "ALLATIVE", "ELATIVE", "COMITATIVE"].includes(o))).toBe(true);
+  });
+
+  /*
+    The fault this signature exists to prevent. `buildOptions` used to filter
+    only the answer out of the pool, so any other case the same word governs
+    could stand as a wrong answer: 58 of the 268 governed verbs in the shipped
+    dictionary could be shown one. A drill that marks somebody wrong for being
+    right is worse than no drill, because government is exactly the thing they
+    have no other way to check.
+  */
+  it("never offers another case the same word governs", () => {
+    const aitama = parseGovernment("keda/mida* (partitive) · millest (elative)")!;
+    expect(aitama.caseKey).toBe("PARTITIVE");
+    expect(aitama.alsoGoverned).toEqual(["ELATIVE"]);
+
+    // Over many draws, including one where the elative is the whole pool.
+    for (let i = 0; i < 50; i++) {
+      const options = buildOptions(aitama, ["ELATIVE", "ALLATIVE", "COMITATIVE"], 4, Math.random)!;
+      expect(options).toContain("PARTITIVE");
+      expect(options).not.toContain("ELATIVE");
+    }
+  });
+
+  it("still fills a question for a word that governs three of the common cases", () => {
+    // alustama: "mida* (partitive) · millega (comitative) · millest (elative)".
+    const alustama = { caseKey: "PARTITIVE" as CaseKey, alsoGoverned: ["COMITATIVE", "ELATIVE"] as CaseKey[] };
+    const options = buildOptions(alustama, ["COMITATIVE", "ELATIVE"], 4, fixed)!;
+    expect(options).toHaveLength(4);
+    expect(options).toContain("PARTITIVE");
+    expect(options).not.toContain("COMITATIVE");
+    expect(options).not.toContain("ELATIVE");
+  });
+
+  it("returns null rather than padding when there is no honest set", () => {
+    // A word that governs everything leaves nothing true to offer against it.
+    const everything = {
+      caseKey: "PARTITIVE" as CaseKey,
+      alsoGoverned: CASES.map((c) => c.key).filter((k) => k !== "PARTITIVE"),
+    };
+    expect(buildOptions(everything, [], 4, fixed)).toBeNull();
   });
 });
 

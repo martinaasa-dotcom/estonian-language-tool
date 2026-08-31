@@ -304,8 +304,21 @@ check("a hovered row is drawn, and its words clear AA on the pill behind them",
   nothing passes for the wrong reason. The floor came down by exactly four,
   which is the mirror of raising it when they arrived rather than lowering a bar
   to let a run through: nothing that used to be measured is now unmeasured, the
-  thing itself is gone. If an ornament earns its place on this page again, this
-  is the block to bring back, and the floor goes back up with it.
+  thing itself is gone.
+
+  WHAT WENT WITH THEM WAS NEWER THAN THEY WERE, and that is worth writing down
+  rather than losing in a merge. The letters had just been given a wander of
+  their own, `.drift` in `app/globals.css`, each on its own clock between 7.5
+  and 11 seconds and all four drifting inward so none of them swings into the
+  edge of the window; and this block had been sharpened to step every letter
+  through twelve frames of that wander rather than reading it wherever it
+  happened to rest, which is the only way a check on a moving ornament is worth
+  anything. Both are gone here, and neither was wrong. They were work on a card
+  this branch removes on the way to five screens.
+
+  If an ornament earns its place on this page again, this is the block to bring
+  back, the wander is in the history beside it, and the floor goes back up with
+  both.
 */
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);

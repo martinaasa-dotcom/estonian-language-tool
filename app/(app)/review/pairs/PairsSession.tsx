@@ -285,7 +285,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             </div>
             <div className="mt-4">
               <Button variant="primary" onClick={next} autoFocus>
-                Next <kbd className="ml-1 opacity-70">↵</kbd>
+                Next <kbd className="ml-1">↵</kbd>
               </Button>
             </div>
           </div>

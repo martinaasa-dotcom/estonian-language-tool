@@ -817,7 +817,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           className="flex items-center gap-1 rounded-md px-1.5 py-0.5 disabled:opacity-40"
           style={{ color: "var(--ink-3)" }}
         >
-          <Undo2 size={12} aria-hidden /> Undo <kbd className="opacity-60">u</kbd>
+          <Undo2 size={12} aria-hidden /> Undo <kbd>u</kbd>
         </button>
         <span className="hidden items-center gap-1 md:flex">
           <Keyboard size={12} aria-hidden />
