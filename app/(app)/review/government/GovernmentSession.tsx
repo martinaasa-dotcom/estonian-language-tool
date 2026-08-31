@@ -250,7 +250,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                 {question.alsoGoverned.map((key, i) => (
                   <span key={key}>
                     {i > 0 && (i === question.alsoGoverned.length - 1 ? " and " : ", ")}
-                    the <span lang="et" className="est">{caseLabel(key)?.et}</span>
+                    the <span lang="et">{caseLabel(key)?.et}</span>
                   </span>
                 ))}{" "}
                 {question.alsoGoverned.length === 1

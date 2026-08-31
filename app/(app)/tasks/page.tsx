@@ -48,6 +48,10 @@ export default async function TasksPage() {
     ? await prisma.card.findMany({
       where: { ownerId, classWeek: week },
       select: { lexemeId: true, state: true, suspended: true, due: true },
+      // Ordered because it is cut, and the three figures under the strip are
+      // counted off these rows: an unordered slice would count a different 300
+      // on two loads and move the numbers with nothing having changed.
+      orderBy: { id: "asc" },
       take: 300,
     })
     : [];

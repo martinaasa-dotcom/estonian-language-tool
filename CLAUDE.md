@@ -577,6 +577,30 @@ and the `take` means a tie at the five hundredth row decides which of a pair is 
 all. All eleven end on `{ id: "asc" }` now and an invariant reads the *last* key, because an
 order that is total in the middle and loose at the end is loose.
 
+**And the invariant behind it stopped at `lib/progress/`, so five reads outside it said nothing at
+all.** Not a loose order: no `orderBy` whatever, next to a `take`, which is the plan choosing the
+rows a screen is built from. Today's weakest cases took an arbitrary five thousand; `/review/government`
+and the minimal-pairs round each took an arbitrary two thousand cards to decide which words were
+already in the deck, so whether an answer graded a real card changed between visits; the class week
+counted its three figures off an arbitrary three hundred; and the dictionary's suggestion row
+shuffled an arbitrary two hundred. All five say where to cut now, and a second invariant holds the
+rest of the app to that much. It asks only for an order and not for a unique one, because ending
+every truncated read in the app on the primary key is a larger change than the rule needs to be
+useful, and where a screen orders by `due` and cuts, arbitrary-but-stated still beats
+arbitrary-and-silent. The stricter rule stays where a number is derived.
+
+**A shared calculation over an unshared input is not a shared answer, and Today proved it twice.**
+`lib/progress/cases.ts` exists because "your weakest cases" was drawn from three different queries
+behind one calculation, so a learner who got the partitive wrong three hundred times last year and
+right three hundred times this month read 100% on one screen and 50% on another, on the same day.
+The home page was then rewritten, reached for `caseAccuracy` like everybody else, and wrote the old
+query beside it, which made it the fourth answer: all of time rather than the half-year, and
+unordered. The pairing is asserted now rather than described, anchored on the *call* rather than on
+the import, because a file can import the shared query and go on using its own rows, which is
+exactly what happened. It is scoped to `app/`: the class roster rolls a whole class up at once and
+the badge stats read all time on purpose, and a check that fires on honest code is a check people
+learn to waive.
+
 **And a `take` beside a `distinct` bounds nothing at all.** Prisma deduplicates in the client, so a
 `LIMIT` would cut rows before the deduplication and it emits none: the query reads every matching
 row, adds an id column of its own to deduplicate with, sorts, and throws the surplus away in
@@ -618,11 +642,24 @@ double-tapping "Add to deck", and `addUnitToDeck` walks it once per word with no
 so one impatient second on a nineteen-word unit is the worst case rather than the unlikely one. The
 answer is the ledger's, for the reasons its header already gives: a *transaction* advisory lock, so
 a pooler cannot strand it, and the blocking form, since the non-blocking one serialises nothing.
-Keyed on the owner and the word rather than deployment-wide, because two learners adding two
-different words are not each other's concern; the ledger is deployment-wide because a shared budget
-is. With it, sixteen concurrent adds make two cards in 28ms. A unique index is the other answer and
-is the one not taken: a deck that already holds duplicates from this bug would fail the push, and
-the deployment's own build is what runs it.
+Keyed on the learner rather than deployment-wide, because two learners adding two different words
+are not each other's concern; the ledger is deployment-wide because a shared budget is. With it,
+sixteen concurrent adds make two cards in 28ms. A unique index is the other answer and is the one
+not taken: a deck that already holds duplicates from this bug would fail the push, and the
+deployment's own build is what runs it.
+
+**And then the batched builder arrived without it, which is why the key is the learner and not the
+word.** `addUnitsToDeck` is the rewrite of the loop that called `addCardsFor` per word, and it kept
+the shape and inherited no lock, so the fault came back a whole unit at a time: eight concurrent
+adds of an eighteen-word unit wrote 180 cards where 36 is right, and the two screens that reach it
+are "Add to deck" on a unit and the last button of first run, which is the one place in the app
+where somebody is already waiting and inclined to press again. `lockDeck` in `lib/srs/deck.ts` is
+the one definition and both paths take it. The key had to widen to do that: a key naming the word
+is safe against another add of the same word and says nothing about a batch containing it, so two
+keys would leave each path guarded against itself and neither against the other. What that costs is
+that one person's own two adds queue, which is milliseconds of work they asked for twice, and first
+run still builds 982 cards in 217ms. `lib/srs/deck.itest.ts` fires eight at once, because no unit
+test can see any of this.
 
 **The syllabus names a lemma; the dictionary may hold two entries for it.** `@@unique` is on
 `(lemma, pos)`, so `where: { lemma: { in: [...unit.lemmas] } }` can return more rows than the unit
@@ -1813,7 +1850,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
 `explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`, `teachingSentence`,
-`splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`. Most of them now
+`splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `lockDeck`, `caseReviewsFor`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

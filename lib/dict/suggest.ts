@@ -255,6 +255,10 @@ async function presentLemmas(lemmas: string[], band: readonly string[] | null): 
       ...(band ? { cefr: { in: [...band] } } : { cefr: { not: null } }),
     },
     select: { lemma: true },
+    // Ordered because it is cut. The row is shuffled afterwards, so this is not
+    // about which words lead; it is that the 200 shuffled from are the same 200
+    // rather than whichever the plan returned.
+    orderBy: { id: "asc" },
     take: 200,
   });
   return [...new Set(rows.map((row) => row.lemma))];
