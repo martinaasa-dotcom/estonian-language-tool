@@ -83,9 +83,11 @@ async function main() {
     argued against it.
 
     The course's own A1 nouns and verbs instead, which is 244 words to draw
-    thirty from and gives `aeg`, `aitama`, `aken`, `andma`, `arst`, `auto`,
-    `buss`, `elama`, `ema`, `hommik`, `inimene`, `isa`. Still alphabetical, so
-    the deck is the same deck on every run, which is what the suites need.
+    thirty from and gives `aitama`, `algama`, `alustama`, `andma`, `armastama`,
+    `armastus`, `arst`, `auto`, `buss`, `elama`, `ema`, `hommik`. Still
+    alphabetical, so the deck is the same deck on every run, which is what the
+    suites need. Which four of them get the whole card range is decided below
+    by what they can carry, not by where they sort.
 
     The query cannot silently widen again: a word is in this deck because the
     syllabus put it there and marked it A1, rather than because of where it
@@ -106,9 +108,48 @@ async function main() {
     process.exit(1);
   }
 
+  /*
+    THE FOUR RICH WORDS ARE FOUR THAT CAN BE RICH.
+
+    This gave the whole card range to `i < 4`, the first four alphabetically,
+    which was right when the comment above was written and names `aeg` and
+    `aken` among them. It is not now: `aeg` and `aken` came back from Ekilex
+    at some point and are marked `EKILEX` rather than `SEED`, so the first
+    five this query returns are `aitama`, `algama`, `alustama`, `andma` and
+    `armastama` — verbs, every one. A verb has no genitive singular, so
+    `generateCards` correctly built no case-form card for any of them, and
+    this fixture has been laying down a deck with **no case-form cards at
+    all**.
+
+    That is the deck every browser suite reviews. `/review?case=INESSIVE`
+    correctly answered "No inessive cards yet", and the two suites that drill
+    a case were passing on cards other suites had added as a side effect,
+    which is how it stayed invisible: they failed the moment the order changed.
+
+    Chosen by what the word can carry rather than by where it sorts, which is
+    the same question `availableCardTypes` asks. Still deterministic: the pool
+    is ordered by lemma, so it is the same four words on every run.
+  */
+  const rich = new Set(
+    lexemes
+      .filter((lex) => lex.forms.some((f) => f.formType === "GEN_SG"))
+      .slice(0, 4)
+      .map((lex) => lex.id),
+  );
+  if (rich.size < 4) {
+    console.error(
+      `Only ${rich.size} of these thirty words carry a genitive singular, so this deck would ` +
+      "have no case-form cards in it and the drills built on them would have nothing to ask.\n" +
+      "Run `npm run db:seed` first: the demo is built from the course vocabulary.",
+    );
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+
   for (const [i, lex] of lexemes.entries()) {
-    const types = i < 4 ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)
-                        : (["RECOGNITION", "PRODUCTION"] as const);
+    const types = rich.has(lex.id)
+      ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)
+      : (["RECOGNITION", "PRODUCTION"] as const);
     const cards = generateCards(lex as LexemeForCards, [...types]);
     for (const c of cards) {
       // Eight weeks of history rather than two, so the heatmap, the forecast and
