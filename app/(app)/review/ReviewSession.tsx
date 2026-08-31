@@ -725,7 +725,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           {ask === "type" && !verdict ? (
             <Button variant="primary" size="lg" className="w-full" onClick={checkTyped}>
               Check
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
                 Enter
               </kbd>
             </Button>
@@ -738,7 +738,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           ) : !revealed && ask !== "intro" ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(255 255 255 / 0.22)" }}>
+              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold" style={{ background: "rgb(0 0 0 / 0.16)" }}>
                 Space
               </kbd>
             </Button>

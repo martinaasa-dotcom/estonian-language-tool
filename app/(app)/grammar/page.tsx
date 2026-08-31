@@ -160,7 +160,7 @@ export default async function GrammarIndexPage() {
           </p>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2">
             {VERB_AXES.map((axis) => (
-              <div key={axis.et} className="rounded-[var(--r-md)] p-3" style={{ background: "var(--surface)" }}>
+              <div key={axis.et} className="rounded-[var(--r-sm)] p-3" style={{ background: "var(--surface)" }}>
                 <dt className="flex flex-wrap items-baseline gap-2">
                   <span lang="et" className="text-md font-bold" style={{ color: "var(--ink)" }}>
                     {axis.et}

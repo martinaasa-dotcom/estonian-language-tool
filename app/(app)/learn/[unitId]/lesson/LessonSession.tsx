@@ -128,7 +128,7 @@ export function LessonSession({
 function Verdict({ ok, note }: { ok: boolean; note?: string }) {
   return (
     <div
-      className="flex items-start gap-2 rounded-[var(--r-md)] p-3 text-sm"
+      className="flex items-start gap-2 rounded-[var(--r-sm)] p-3 text-sm"
       role="status"
       style={{ background: ok ? "var(--mint-soft)" : "var(--peach-soft)", color: "var(--ink)" }}
     >
@@ -194,7 +194,7 @@ function Options({
             type="button"
             disabled={settled}
             onClick={() => onChoose(i)}
-            className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-md)] border p-3 text-left"
+            className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-sm)] border p-3 text-left"
             style={settled ? {
               borderColor: isAnswer ? "var(--mint)" : "var(--rule)",
               background: isAnswer ? "var(--mint-soft)" : picked ? "var(--peach-soft)" : "var(--surface)",
@@ -250,10 +250,10 @@ function StepCard({
             <Sparkles size={16} aria-hidden /> What this lesson gives you
           </div>
           <p className="text-lg">{step.canDo}</p>
-          <p style={{ color: "var(--ink-soft)" }}>{step.blurb}</p>
+          <p style={{ color: "var(--ink-2)" }}>{step.blurb}</p>
           {step.grammar.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Grammar in this lesson</p>
+              <p className="text-sm" style={{ color: "var(--ink-3)" }}>Grammar in this lesson</p>
               <ul className="flex flex-wrap gap-2">
                 {step.grammar.map((id) => {
                   const point = grammarPoint(id);
@@ -283,14 +283,14 @@ function StepCard({
     case "meet":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>A new word</span>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>A new word</span>
           <div className="flex flex-wrap items-center gap-3">
             <Et className="text-3xl">{step.lemma}</Et>
             <Speak text={step.lemma} size={20} />
           </div>
           <p className="text-lg">{step.gloss}</p>
           {step.example && (
-            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+            <p className="text-sm" style={{ color: "var(--ink-2)" }}>
               <Et>{step.example}</Et>
             </p>
           )}
@@ -301,7 +301,7 @@ function StepCard({
     case "choose":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>What does this mean?</span>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>What does this mean?</span>
           <div className="flex flex-wrap items-center gap-3">
             <Et className="text-3xl">{step.lemma}</Et>
             <Speak text={step.lemma} size={18} />
@@ -316,7 +316,7 @@ function StepCard({
     case "produce":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>Which word is this?</span>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>Which word is this?</span>
           <p className="text-2xl">{step.gloss}</p>
           <Options options={step.options} answer={step.answer} chosen={chosen} lang="et"
             onChoose={(i) => choose(i, step.answer, step.lemma, step.kind)} />
@@ -328,7 +328,7 @@ function StepCard({
     case "listen":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="flex items-center gap-2 text-sm" style={{ color: "var(--ink-soft)" }}>
+          <span className="flex items-center gap-2 text-sm" style={{ color: "var(--ink-3)" }}>
             <Ear size={15} aria-hidden /> Listen, then choose what it means
           </span>
           <Speak text={step.lemma} size={30} label="Play the word" className="self-start p-3" />
@@ -346,7 +346,7 @@ function StepCard({
     case "type":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>Write it in Estonian</span>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>Write it in Estonian</span>
           <p className="text-2xl">{step.gloss}</p>
           <EstonianInput
             value={typed} onChange={setTyped} large autoFocus
@@ -366,7 +366,7 @@ function StepCard({
     case "gap":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>
             Fill the gap. The word is <Et>{step.lemma}</Et> ({step.gloss}), in the form the sentence needs.
           </span>
           <p className="text-xl">
@@ -386,7 +386,7 @@ function StepCard({
           {checked && (
             <>
               <Verdict ok={checked.ok} note={checked.note} />
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}>
                 <Et>{step.full}</Et>
               </p>
               <Continue onNext={onNext} />
@@ -398,12 +398,12 @@ function StepCard({
     case "case":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>
             Put it in the {step.caseName.toLowerCase()} ({step.question})
           </span>
           <div className="flex flex-wrap items-center gap-3">
             <Et className="text-3xl">{step.lemma}</Et>
-            <span style={{ color: "var(--ink-soft)" }}>{step.gloss}</span>
+            <span style={{ color: "var(--ink-2)" }}>{step.gloss}</span>
           </div>
           <EstonianInput
             value={typed} onChange={setTyped} large autoFocus
@@ -423,12 +423,12 @@ function StepCard({
     case "govern":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>
             Which question does this verb answer? That is the case it takes.
           </span>
           <div className="flex flex-wrap items-center gap-3">
             <Et className="text-3xl">{step.lemma}</Et>
-            <span style={{ color: "var(--ink-soft)" }}>{step.gloss}</span>
+            <span style={{ color: "var(--ink-2)" }}>{step.gloss}</span>
           </div>
           <Options options={step.options} answer={step.answer} chosen={chosen} lang="et"
             onChoose={(i) => choose(i, step.answer, step.lemma, step.kind)} />
@@ -443,11 +443,11 @@ function StepCard({
       const remaining = step.tiles.length - built.length;
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-soft)" }}>
+          <span className="text-sm" style={{ color: "var(--ink-3)" }}>
             Put the sentence back in order.
           </span>
           <div
-            className="min-h-[52px] rounded-[var(--r-md)] border p-3"
+            className="min-h-[52px] rounded-[var(--r-sm)] border p-3"
             style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
           >
             <Et>{placed.join(" ") || " "}</Et>
@@ -466,7 +466,7 @@ function StepCard({
                 <button
                   key={i} type="button" disabled={done}
                   onClick={() => setBuilt((b) => [...b, i])}
-                  className="choice-btn min-h-[44px] rounded-[var(--r-md)] border px-3"
+                  className="choice-btn min-h-[44px] rounded-[var(--r-sm)] border px-3"
                 >
                   <Et>{tile}</Et>
                 </button>
@@ -493,7 +493,7 @@ function StepCard({
           {done && (
             <>
               <Verdict ok={checked.ok} note={checked.note} />
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}><Et>{step.sentence}</Et></p>
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}><Et>{step.sentence}</Et></p>
               <Continue onNext={onNext} />
             </>
           )}
@@ -510,10 +510,10 @@ function StepCard({
           <p className="text-lg">
             {summary.correct} of {summary.total} right, and {step.learned} words are now in your deck.
           </p>
-          <p style={{ color: "var(--ink-soft)" }}>
+          <p style={{ color: "var(--ink-2)" }}>
             They will come back in review when the scheduler thinks you are about to forget them.
           </p>
-          {summary.saving && <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Saving your answers…</p>}
+          {summary.saving && <p className="text-sm" style={{ color: "var(--ink-3)" }}>Saving your answers…</p>}
           {summary.saved && !summary.saved.ok && (
             <Verdict ok={false} note={summary.saved.error ?? "Your answers could not be saved."} />
           )}

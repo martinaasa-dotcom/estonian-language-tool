@@ -179,7 +179,7 @@ export default async function LearnPage() {
                   return (
                     <li
                       key={u.unit.id}
-                      className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border p-3"
+                      className="flex flex-wrap items-center gap-4 rounded-[var(--r-sm)] border p-3"
                       /*
                         A locked unit is quieter, and the quiet used to be an
                         `opacity: 0.6` on the whole row. That fades the words:
@@ -245,7 +245,7 @@ export default async function LearnPage() {
 
                 {checkpoint && (
                   <li
-                    className="flex flex-wrap items-center gap-4 rounded-[var(--r-md)] border border-dashed p-3"
+                    className="flex flex-wrap items-center gap-4 rounded-[var(--r-sm)] border border-dashed p-3"
                     style={{ borderColor: "var(--rule)" }}
                   >
                     <span className="min-w-0 flex-1">
