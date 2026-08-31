@@ -116,7 +116,7 @@ async function main() {
 
   await prisma.task.createMany({
     data: [
-      { ownerId, title: "Exercise 4B — partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
+      { ownerId, title: "Exercise 4B, partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
       { ownerId, title: "Learn week 6 vocabulary (24 words)", tag: "VOCABULARY", classWeek: 6, dueAt: new Date(Date.now() - 86400000) },
       { ownerId, title: "Listen to Vikerraadio for 20 minutes", tag: "LISTENING", classWeek: 6 },
       { ownerId, title: "Write 5 sentences using the comitative", tag: "HOMEWORK", classWeek: 5, completed: true, completedAt: new Date() },

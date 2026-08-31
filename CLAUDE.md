@@ -567,6 +567,62 @@ appears and then vanishes reads as a bug rather than as restraint. The invariant
 that stops asking the module, and on anybody outside it comparing a review count against a number
 of their own, since a second answer to "has this learner started yet" is how the first one rots.
 
+**And then the rule over-reached, and day one paid for it.** "A figure computed from an empty log"
+is a streak of nought, a goal ring at nought percent and a level bar at 40 XP, and those are still
+held back. It is not the word of the day, which is a dictionary lookup keyed on the date and reads
+the same on the first morning as in the second year, and it is not the practice tiles, which are
+doors rather than measurements. Both were withheld anyway on the strength of not being the review
+button, so `arriving` was two cards on an otherwise empty page, which a learner reads as an app with
+nothing in it. Restraint that leaves a screen looking broken is not restraint. The test a panel has
+to pass is "does this say something true and useful on a log with nothing in it".
+
+**Today is a dashboard, and its modules are declared before they are placed.** What a card is and
+which column it sits in are two questions, and they were one six-hundred-line return statement with
+a `shows()` wrapped round each branch. The page now names each module, then lays them out: the wide
+column is the day (what is due, what is written down, what keeps going wrong, how the run of days is
+going) and the narrow one is the material (a word, the next unit, the practice modes, Anu). Inside
+the wide column the two you can act on come before the two that report on you, since a streak is
+worth more on the way out than on the way in.
+
+**One word a day, chosen by the date, that nothing else on the page was going to show you.** Every
+other panel on Today reports on the learner's own deck, so every one of them is silent on the first
+morning and repeats itself on the four hundredth. `lib/copy/almanac.ts` decides what today is: a day
+with a name (Estonia's own first), a day that moves and is worked out from Easter, the shape of the
+number, the weekday where Estonian has something to say about it, and the month, which always
+answers so nothing falls through. `lib/progress/wordOfDay.ts` asks the dictionary who carries the
+meaning and prints the reason beside the word, because `pannkook` on its own is a vocabulary item
+and `pannkook` under Pancake Day is something somebody tells a friend at lunch.
+
+**The almanac is English and holds no Estonian at all, which is the whole design.** A word typed
+into that table would be this project inventing vocabulary and putting it on the home page every
+morning under a heading saying it was chosen for you. So the table names a *meaning*, the dictionary
+supplies the word, and every Estonian character on the card came from Ekilex or the built expansion.
+The English gloss is the only authored column, which is exactly the latitude the syllabus already
+takes (ADR-005). A gloss is a **request**, not a promise: the dictionary decides whether it can be
+met, and when nothing can be, the card says the word was simply drawn rather than claiming a reason.
+A reason nobody can check is worse than no reason. Two invariants hold it up, and the second is the
+one that matters: every gloss the table can ask for is one the shipped dictionary can answer, since
+a dead gloss fails silently and for ever and the card quietly stops being about the date. Five were
+dead when the table was first written.
+
+**A word it has already shown you is not a word of the day.** Not in the deck, not starred, not in
+the review log, and the log is checked separately because `Review` deliberately has no relation to
+`Card` and outlives one. "Met" is measured at the start of the learner's day rather than now, which
+is what makes the card's own "add it to my deck" button work: otherwise doing what the panel asks
+makes the panel change under your hand. The matching is against a whole *sense* of a gloss and never
+a substring, because a gloss is a comma-separated list and a substring runs through the commas: a
+`contains` match on "dark" reaches a slur four rows down and one on "love" reaches "love child",
+and either would have been printed as today's word.
+
+**Late is decided in one place, and it was being decided twice and wrongly.** A due date is typed
+into `<input type="date">` and stored at midnight UTC, so `TaskRow`'s `due < new Date()` marked
+everything due today as overdue from midnight onwards, and from three in the morning for a learner
+in Tallinn. `bucketFor` in `lib/ux/agenda.ts` counts whole days on a clock it is handed, the row and
+the heading above it both read it, and an invariant fails on anything comparing a due date against
+`new Date()`. The panel groups by when rather than printing four loose dates, and the late group is
+the one bucket with no heading of its own: the panel's hint already counts them and every row in it
+says "Overdue" against its date.
+
 **Where a screen lives is one table, and nothing lives behind a button marked "More".** The rail
 promoted four destinations and hid the other twelve behind a disclosure, which is not fewer links,
 it is the same links somewhere a learner has to remember. It also had a bug you only met by using

@@ -30,6 +30,8 @@ import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
+import { allGlosses, occasionsFor } from "../lib/copy/almanac";
+import { glossSenses } from "../lib/dict/gloss";
 // @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
 import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
@@ -3200,6 +3202,126 @@ check("the accessibility sweep runs axe, over both themes", () => {
 
   const pkg = JSON.parse(read("package.json")) as { devDependencies?: Record<string, string> };
   assert.ok(pkg.devDependencies?.["axe-core"], "axe-core is not a dependency, so CI cannot run it");
+});
+
+
+// ── The word of the day ──────────────────────────────────────────────────────
+
+check("the almanac asks for a meaning and never supplies a word", () => {
+  /*
+    ADR-005 on the newest path onto the home page.
+
+    `lib/copy/almanac.ts` decides what today is and therefore which word gets
+    printed on Today every morning, which makes it the single most-read piece
+    of copy in the app. A word typed into it would be this project inventing
+    Estonian vocabulary and presenting it under a heading saying it was chosen
+    for you, with nothing between the invention and the learner.
+
+    So the table is English. It names a *meaning*, `lib/progress/wordOfDay.ts`
+    asks the dictionary who carries that meaning, and every Estonian character
+    on the card came from Ekilex or the built expansion. The English gloss is
+    the only authored column, which is exactly the latitude the syllabus takes.
+  */
+  const almanac = read("lib/copy/almanac.ts");
+  const estonianLetters = /[õäöüšž]/i;
+  const offenders = almanac.split("\n").filter((line) => estonianLetters.test(line));
+  assert.deepEqual(offenders, [], "an Estonian word was typed into the almanac");
+
+  // And the module that resolves it cannot ask a model instead of the dictionary.
+  for (const file of ["lib/progress/wordOfDay.ts", "lib/copy/almanac.ts", "lib/dict/gloss.ts"]) {
+    assert.doesNotMatch(
+      code(file),
+      /lib\/tutor|openWithFallback|ANTHROPIC|OPENAI|OPENROUTER/,
+      `${file} can reach a model, and this path decides what Estonian goes on the home page`,
+    );
+  }
+});
+
+check("every meaning the almanac can ask for is one the dictionary can answer", () => {
+  /*
+    The same argument the syllabus makes about itself: a lemma in a unit is a
+    request and Ekilex decides whether it exists, so a misspelled word cannot
+    reach the dictionary, it can only fail to arrive, loudly.
+
+    A gloss here is a request too. One the shipped dictionary cannot meet is
+    not a crash, because every occasion carries several and there is always a
+    month underneath, and that is exactly what makes it worth checking: a dead
+    gloss fails silently and for ever, and the card quietly stops being about
+    the date. Five were dead when this table was first written, "star" and
+    "bonfire" and "elk" among them.
+  */
+  const entries = JSON.parse(read("prisma/data/expanded.json")) as { translation: string }[];
+  const senses = new Set(entries.flatMap((e) => glossSenses(e.translation)));
+  const dead = allGlosses().filter((gloss) => !glossSenses(gloss).every((s) => senses.has(s)));
+  assert.deepEqual(dead, [], "the almanac asks for a meaning no word in the dictionary carries");
+
+  // And every day of the year reaches something, so the card is never blank.
+  for (const year of [2026, 2027, 2028]) {
+    for (let month = 1; month <= 12; month++) {
+      for (let day = 1; day <= 31; day++) {
+        const key = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        if (new Date(`${key}T00:00:00Z`).getUTCDate() !== day) continue;
+        assert.ok(occasionsFor(key).length > 0, `${key} reaches no occasion at all`);
+      }
+    }
+  }
+});
+
+check("the word of the day is one the learner has not met", () => {
+  /*
+    The whole claim of the panel. It is the one thing on Today that the rest of
+    the app is not already going to show you, and a word that turns out to be
+    card four of this afternoon's review is a coincidence rather than a
+    present.
+
+    Three ways to have met a word and all three are excluded: a card in the
+    deck, a star, and a row in the review log. The log is checked separately
+    because `Review` deliberately has no relation to `Card` (it outlives one),
+    so a word whose card was deleted last month has no card and has certainly
+    been met.
+  */
+  const source = code("lib/progress/wordOfDay.ts");
+  assert.match(source, /cards:\s*\{\s*none:/, "the word of the day no longer skips words in the deck");
+  assert.match(source, /stars:\s*\{\s*none:/, "the word of the day no longer skips starred words");
+  assert.match(source, /withoutReviewed\(/, "the review log is no longer consulted");
+  // Both ways of picking one go through it, not just the themed path.
+  const uses = [...source.matchAll(/withoutReviewed\(/g)].length;
+  assert.ok(uses >= 3, `withoutReviewed is used ${uses} times; it is defined once and called on both paths`);
+
+  /*
+    And the card says where its sentence came from. Every Estonian sentence in
+    this app was recorded by a lexicographer, and a page that prints one
+    without saying so is asking to be trusted rather than checked, which is the
+    rule the grammar pages already keep.
+  */
+  const card = read("components/WordOfDay.tsx");
+  assert.match(card, /SENTENCE_SOURCE/, "the word of the day prints a sentence with no provenance");
+  assert.match(card, /Ekilex/, "the sentence's provenance no longer names its source");
+});
+
+check("late is decided in one place, against the learner's own day", () => {
+  /*
+    A due date is typed into `<input type="date">`, so it is stored at midnight
+    UTC of that day. `TaskRow` compared it against `new Date()` and therefore
+    marked everything due today as overdue from midnight onwards, and from
+    three in the morning for a learner in Tallinn. The heading above the row
+    now comes from `bucketFor`, so a row and its heading disagreeing is the
+    failure this is watching for.
+
+    Anything comparing a due date against the clock is doing the arithmetic a
+    second time, and getting it wrong is the default.
+  */
+  const agenda = read("lib/ux/agenda.ts");
+  assert.match(agenda, /daysBetween\(/, "the agenda stopped counting in whole days");
+
+  for (const file of ALL) {
+    if (file === "lib/ux/agenda.ts") continue;
+    assert.doesNotMatch(
+      code(file),
+      /due(At|Date)?\s*<\s*new Date\(\)|new Date\(\)\s*>\s*due(At|Date)?\b/,
+      `${file} decides for itself whether something is late, against the clock rather than the day`,
+    );
+  }
 });
 
 console.log(

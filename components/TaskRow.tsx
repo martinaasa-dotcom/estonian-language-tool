@@ -4,6 +4,8 @@ import { useTransition } from "react";
 import { Check, Trash2 } from "lucide-react";
 import { deleteTask, toggleTask } from "@/app/actions";
 import { Chip } from "@/components/ui";
+import { bucketFor } from "@/lib/ux/agenda";
+import { dayClock } from "@/lib/time/day";
 
 export interface TaskView {
   id: string;
@@ -25,7 +27,20 @@ const TAG_LABEL: Record<string, string> = {
 export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boolean }) {
   const [pending, start] = useTransition();
   const due = task.dueAt ? new Date(task.dueAt) : null;
-  const overdue = due !== null && !task.completed && due < new Date();
+  /*
+    Late by the calendar, not by the clock, and through the same function the
+    agenda headings use so a row and the heading above it cannot disagree.
+
+    `due < new Date()` was the old rule and it was wrong every single day. A due
+    date is typed into `<input type="date">` and stored at midnight UTC, so a
+    task due today was already "Overdue" at three in the morning in Tallinn, and
+    at midnight anywhere. Something due today is due today.
+
+    `dayClock()` with no zone is the process's, which in a client component is
+    the browser's, which is the learner's. That is the one place in this app
+    where reaching for the process clock is the correct thing to do.
+  */
+  const overdue = !task.completed && bucketFor(due, dayClock(), new Date()) === "overdue";
 
   return (
     <li

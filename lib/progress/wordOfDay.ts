@@ -1,0 +1,265 @@
+import { prisma } from "@/lib/db";
+import { occasionsFor, type Occasion } from "@/lib/copy/almanac";
+import { matchesGloss, senseIndex } from "@/lib/dict/gloss";
+import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
+import type { DayKey } from "@/lib/time/day";
+
+/**
+ * THE WORD OF THE DAY, AND WHY IT IS THAT WORD.
+ *
+ * The panel this feeds used to be called "word to revisit" and drew the card
+ * with the most lapses on it. That is a useful thing to know and it is not a
+ * word of the day: it is a word you already have, already failed, and are
+ * already going to be asked about this afternoon by the scheduler. It now
+ * lives in the sticking points panel, where the rest of "what is fighting you"
+ * is, and this is the other thing entirely.
+ *
+ * TWO RULES DECIDE WHICH WORD.
+ *
+ * It has to be one the learner has NOT met. Not in their deck, not in their
+ * review log, not starred. A word of the day that turns out to be card four of
+ * today's review is a coincidence, not a present, and the whole point of the
+ * panel is that it is the one thing on this page the rest of the app is not
+ * already going to show you.
+ *
+ * And it has to arrive with a reason. `lib/copy/almanac.ts` decides what today
+ * is and which English gloss that asks for, this asks the dictionary who
+ * carries it, and the card prints the reason next to the word. A word with a
+ * reason is remembered and a word drawn at random is scrolled past.
+ *
+ * NOTHING HERE WRITES ESTONIAN, WHICH IS THE POINT OF THE SPLIT (ADR-005). The
+ * almanac is English and asks for a meaning. The Estonian is whatever the
+ * dictionary already held: the lemma from Ekilex or the built expansion, the
+ * gloss from Wiktionary, the example sentence a lexicographer recorded. This
+ * module joins them and invents nothing, exactly as `scripts/expand-seed.ts`
+ * does one layer down.
+ */
+
+export interface WordOfDay {
+  lexemeId: string;
+  lemma: string;
+  pos: string;
+  translation: string;
+  cefr: string | null;
+  gradationNote: string | null;
+  /** An attested sentence, when the entry has one short enough to read at a glance. */
+  example: Example | null;
+  /**
+   * What today is, when the date is the reason this word is here.
+   *
+   * Null when nothing the almanac asked for could be met and the word was
+   * drawn instead. The card says which it got rather than claiming a reason it
+   * does not have: a reason nobody can check is worse than no reason.
+   */
+  occasion: Occasion | null;
+}
+
+/** Enough rows to rank properly without dragging the dictionary onto the page. */
+const CANDIDATE_LIMIT = 240;
+
+/**
+ * The one for `day`, or null when the dictionary has nothing left to offer.
+ *
+ * Stable through the learner's own day: the same word until their midnight,
+ * because the day key is the only thing that varies. Adding it to the deck
+ * does not swap it either, since "met" is measured at the start of the day and
+ * "add this to my deck" is the button the card is built around.
+ */
+export async function wordOfDay(ownerId: string, day: DayKey, dayStart: Date): Promise<WordOfDay | null> {
+  const occasions = occasionsFor(day);
+  const glosses = [...new Set(occasions.flatMap((o) => o.glosses))];
+
+  const themed = glosses.length > 0 ? await pickThemed(ownerId, day, dayStart, occasions, glosses) : null;
+  return themed ?? (await pickAny(ownerId, day, dayStart));
+}
+
+interface Candidate {
+  id: string;
+  lemma: string;
+  pos: string;
+  translation: string;
+  cefr: string | null;
+  gradationNote: string | null;
+  examples: string;
+}
+
+const SELECT = {
+  id: true, lemma: true, pos: true, translation: true,
+  cefr: true, gradationNote: true, examples: true,
+} as const;
+
+/**
+ * A word the almanac asked for.
+ *
+ * One query for every gloss the day could want rather than one query per
+ * gloss: there are up to a dozen of them across five layers, and twelve round
+ * trips on the render path of the busiest page in the app to answer a question
+ * about the twelfth of the month is not a trade worth making. Postgres sieves
+ * with `contains`, `matchesGloss` decides, and the layers are put back in order
+ * here.
+ */
+async function pickThemed(
+  ownerId: string,
+  day: DayKey,
+  dayStart: Date,
+  occasions: Occasion[],
+  glosses: string[],
+): Promise<WordOfDay | null> {
+  const rows = await prisma.lexeme.findMany({
+    where: {
+      OR: glosses.map((gloss) => ({ translation: { contains: gloss, mode: "insensitive" as const } })),
+      ...unmet(ownerId, dayStart),
+    },
+    select: SELECT,
+    take: CANDIDATE_LIMIT,
+  });
+
+  const fresh = await withoutReviewed(ownerId, rows);
+  if (fresh.length === 0) return null;
+
+  // The layers in the almanac's own order: a named day beats a number, a
+  // number beats a month. Within one occasion its own glosses are in order too.
+  for (const occasion of occasions) {
+    for (const gloss of occasion.glosses) {
+      const matches = fresh.filter((row) => matchesGloss(row.translation, gloss));
+      const chosen = choose(matches, gloss, day);
+      if (chosen) return build(chosen, occasion);
+    }
+  }
+  return null;
+}
+
+/**
+ * Anything at all, when the dictionary could not meet a single request.
+ *
+ * It never happens on the dictionary this app ships, which carries a word for
+ * every gloss the almanac can ask for. It happens on a thin one: a deployment
+ * seeded before the harvest, or a learner far enough in to have met every word
+ * their level has. So this exists, and it does not pretend to have a reason.
+ */
+async function pickAny(ownerId: string, day: DayKey, dayStart: Date): Promise<WordOfDay | null> {
+  const where = { ...unmet(ownerId, dayStart), translation: { not: "" } };
+  const total = await prisma.lexeme.count({ where });
+  if (total === 0) return null;
+
+  // Stable through the day and spread across the dictionary, from the one
+  // thing that changes at midnight.
+  const skip = hashDay(day) % total;
+  const rows = await prisma.lexeme.findMany({
+    where, select: SELECT, orderBy: { lemma: "asc" }, skip, take: 1,
+  });
+
+  const fresh = await withoutReviewed(ownerId, rows);
+  const chosen = fresh[0];
+  return chosen ? build(chosen, null) : null;
+}
+
+/**
+ * Never met, as a relation filter.
+ *
+ * `createdAt: { lt: dayStart }` rather than any card at all, and that is what
+ * makes the card's own button work: adding the word to the deck would
+ * otherwise make it stop being the word of the day, and the panel would swap
+ * under the learner's hand the moment they did what it asked.
+ */
+function unmet(ownerId: string, dayStart: Date) {
+  return {
+    cards: { none: { ownerId, createdAt: { lt: dayStart } } },
+    stars: { none: { ownerId } },
+  };
+}
+
+/**
+ * The review log has the last word on "met".
+ *
+ * `Review` has no relation to `Lexeme` to filter through, on purpose: it is
+ * append-only and deliberately survives its card, so a word whose card was
+ * deleted a month ago has no card and has certainly been met. One query
+ * against the candidates rather than a join.
+ */
+async function withoutReviewed(ownerId: string, rows: Candidate[]): Promise<Candidate[]> {
+  if (rows.length === 0) return rows;
+  const seen = await prisma.review.findMany({
+    where: { ownerId, lexemeId: { in: rows.map((r) => r.id) } },
+    select: { lexemeId: true },
+    distinct: ["lexemeId"],
+  });
+  const met = new Set(seen.map((r) => r.lexemeId));
+  return rows.filter((row) => !met.has(row.id));
+}
+
+/**
+ * Which of several words carrying the same sense.
+ *
+ * Ranked rather than picked at random, because the candidates for one gloss
+ * are rarely equal: "fire" is the first sense of one word and the third of
+ * another, and the first is the word for fire. Then a sentence, because a word
+ * of the day with an example is a lesson and one without is a vocabulary item.
+ * Then a level, because an entry the course placed is one somebody looked at.
+ *
+ * The day breaks a tie among equals, so a gloss that comes round every month
+ * does not hand over the same word twelve times a year.
+ */
+function choose(matches: Candidate[], gloss: string, day: DayKey): Candidate | undefined {
+  if (matches.length === 0) return undefined;
+
+  const scored = matches
+    .map((row) => ({
+      row,
+      rank: [
+        senseIndex(row.translation, gloss),
+        firstExample(row) ? 0 : 1,
+        row.cefr ? 0 : 1,
+        row.lemma.length,
+      ] as const,
+    }))
+    .sort((a, b) => compare(a.rank, b.rank) || a.row.lemma.localeCompare(b.row.lemma));
+
+  const best = scored[0];
+  if (!best) return undefined;
+  const tied = scored.filter((s) => compare(s.rank, best.rank) === 0);
+  return tied[hashDay(day) % tied.length]?.row;
+}
+
+function compare(a: readonly number[], b: readonly number[]): number {
+  for (let i = 0; i < a.length; i++) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+/**
+ * The shortest sentence worth reading, and never one a model wrote.
+ *
+ * `usableExamples` already sorts shortest first, which is what a card with one
+ * line of room wants. The `AI` filter is this panel's own: an entry can carry a
+ * sentence a model produced, and that is fine on a dictionary page where it is
+ * chipped and captioned as such, and it is not fine on the home page under a
+ * heading saying today's word was chosen for you. Every sentence that reaches
+ * this card was recorded by a person.
+ */
+function firstExample(row: Candidate): Example | null {
+  const attested = usableExamples(parseExamples(row.examples)).filter((e) => e.source !== "AI");
+  return attested[0] ?? null;
+}
+
+function build(row: Candidate, occasion: Occasion | null): WordOfDay {
+  return {
+    lexemeId: row.id,
+    lemma: row.lemma,
+    pos: row.pos,
+    translation: row.translation,
+    cefr: row.cefr,
+    gradationNote: row.gradationNote,
+    example: firstExample(row),
+    occasion,
+  };
+}
+
+/** A small stable number from a day key. Not a hash anybody relies on, a spreader. */
+function hashDay(day: DayKey): number {
+  let h = 0;
+  for (let i = 0; i < day.length; i++) h = (h * 31 + day.charCodeAt(i)) % 2_147_483_647;
+  return h;
+}
