@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRecord, redact } from "./report";
+import { buildRecord, redact, safeMessage } from "./report";
 
 describe("redact", () => {
   it("removes a value whose key names a credential", () => {
@@ -73,5 +73,43 @@ describe("buildRecord", () => {
   it("produces something JSON can serialise", () => {
     const record = buildRecord(new Error("boom"), { at: "x", extra: { a: 1 } });
     expect(() => JSON.stringify(record)).not.toThrow();
+  });
+});
+
+describe("safeMessage", () => {
+  /*
+    The two operations that end in "and nothing was changed" both quote the
+    database, which is right: they are where somebody is owed a reason. What
+    the database says is the problem. Prisma names the datasource in an
+    initialisation failure, and a restore runs a two-minute transaction, which
+    is exactly the window a connection drops in.
+  */
+  it("scrubs a connection string out of a database error", () => {
+    const said = new Error(
+      "Can't reach database server at postgresql://kodukeel:hunter2@db.internal:5432/app",
+    );
+    const out = safeMessage(said);
+    expect(out).not.toContain("hunter2");
+    expect(out).toContain("[redacted]");
+  });
+
+  it("keeps a message that names nothing", () => {
+    expect(safeMessage(new Error("Unique constraint failed on the fields: (`id`)")))
+      .toBe("Unique constraint failed on the fields: (`id`)");
+  });
+
+  // A sentence on a screen, not a field in a record: Prisma's own errors run to
+  // several paragraphs with the failing query printed in them.
+  it("puts it on one line and caps it", () => {
+    const long = new Error(`Invalid invocation:\n\n${"x".repeat(400)}`);
+    const out = safeMessage(long);
+    expect(out).not.toContain("\n");
+    expect(out.length).toBeLessThanOrEqual(201);
+    expect(out.endsWith("\u2026")).toBe(true);
+  });
+
+  it("survives something that is not an Error at all", () => {
+    expect(safeMessage(undefined)).toBe("");
+    expect(safeMessage("plain string")).toBe("plain string");
   });
 });

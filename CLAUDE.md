@@ -29,6 +29,19 @@ both ways, clean on the bundle as it stands and failing when a value was deliber
 public prefix and read from a client component, because a check nobody has made fail once is a
 check nobody knows the state of.
 
+**And the bundle is not the only way out.** `restoreBackup` and `deleteMyAccount` both end in
+"and nothing was changed" followed by whatever the database said, which is the right shape:
+those two are where somebody is owed a reason. What the database says is the problem. Prisma
+quotes the datasource in an initialisation failure, and a restore runs a two-minute transaction,
+which is exactly the window a connection drops in, so that sentence on a learner's Settings
+screen could carry the deployment's own host, user and password. `redact` in
+`lib/observability/report.ts` already knew a DSN is a credential, because the error log has to be
+safe to post to a webhook; it scrubs the same shape CI greps the build output for. A message
+rendered in somebody's browser is at least as public as that log and was the one path not going
+through it. `safeMessage` is that function plus a length, and an invariant fails on any
+`"use server"` export reaching for `.message` itself, and on `safeMessage` quietly ceasing to
+redact.
+
 **Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
 *reordered* to make an exercise (`lib/estonian/cloze.ts`). The model may translate into English and

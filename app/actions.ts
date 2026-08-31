@@ -52,6 +52,7 @@ import { paperFor as examPaperFor, recordAttempt } from "@/lib/progress/exam";
 import { gradesFrom, markPaper, type Response as ExamResponse } from "@/lib/exam/score";
 import { isExamLevel } from "@/lib/exam/spec";
 import { oneEntryPerLemma } from "@/lib/dict/search";
+import { safeMessage } from "@/lib/observability/report";
 
 // ─────────────────────────────── Cards ────────────────────────────────────
 
@@ -1706,9 +1707,9 @@ export async function deleteMyAccount(confirmation: string) {
   } catch (error) {
     return {
       ok: false as const,
-      error: `Nothing was deleted. The operation did not complete. ${
-        error instanceof Error ? error.message : ""
-      }`.trim(),
+      // Redacted: what the database says can name the deployment's own host and
+      // user, and this sentence goes to a browser. See lib/observability/report.
+      error: `Nothing was deleted. The operation did not complete. ${safeMessage(error)}`.trim(),
     };
   }
 
@@ -1999,7 +2000,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
   } catch (error) {
     return {
       ok: false as const,
-      error: `The restore did not finish, and nothing was changed. ${error instanceof Error ? error.message : ""}`.trim(),
+      error: `The restore did not finish, and nothing was changed. ${safeMessage(error)}`.trim(),
     };
   }
 

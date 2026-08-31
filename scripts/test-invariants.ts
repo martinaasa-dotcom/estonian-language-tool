@@ -3280,6 +3280,61 @@ check("the layers that promise to be pure import no database, React or Next", ()
 });
 
 /**
+ * Nothing hands a raw error message back to a browser.
+ *
+ * `restoreBackup` and `deleteMyAccount` both end in "and nothing was changed"
+ * followed by whatever the database said, which is the right shape: those are
+ * the two operations where somebody is owed a reason. What the database says
+ * is the problem. Prisma quotes the datasource in an initialisation failure,
+ * and a restore runs a two-minute transaction, which is exactly the window a
+ * connection drops in, so the sentence on a learner's Settings screen could
+ * carry the deployment's own host, user and password.
+ *
+ * `redact` in lib/observability already knows a DSN is a credential, because
+ * the error log has to be safe to post to a webhook. A message rendered in
+ * somebody's browser is at least as public as that log, and it was the one
+ * path not going through it. `safeMessage` is that function plus a length, and
+ * this asserts every `"use server"` export uses it rather than reaching for
+ * `.message` itself.
+ *
+ * Read comment-blind, and scoped to the file that is a public endpoint by
+ * definition: every export of `app/actions.ts` is reachable by anybody who can
+ * POST to a page path.
+ */
+check("no server action returns an error message it has not redacted", () => {
+  const actions = code(join("app", "actions.ts"));
+  assert.match(actions, /"use server"/, "app/actions.ts is not a server action file any more");
+
+  const raw = [...actions.matchAll(/\berror(?:\s+instanceof\s+Error\s*\?)?\s*\.?message\b/g)];
+  for (const found of raw) {
+    const line = actions.slice(0, found.index).split("\n").length;
+    assert.fail(
+      `app/actions.ts:${line} puts an error's own message into a value the browser reads. ` +
+      "Use safeMessage from lib/observability/report: a Prisma failure can name the " +
+      "deployment's database host, user and password.",
+    );
+  }
+
+  assert.match(
+    actions,
+    /safeMessage\(/,
+    "app/actions.ts explains no failure at all any more, which is the dead end SuggestFix exists for",
+  );
+
+  /*
+    And the helper still redacts. A `safeMessage` that stopped calling `redact`
+    would satisfy the name and nothing else, which is this repository's oldest
+    lesson about checks.
+  */
+  const reporter = code(join("lib", "observability", "report.ts"));
+  assert.match(
+    reporter,
+    /function safeMessage[\s\S]{0,400}?redact\(/,
+    "safeMessage no longer redacts, so the name is the only thing protecting the connection string",
+  );
+});
+
+/**
  * The worker's caches have ceilings too.
  *
  * `lib/audio/clipCache.ts` exists because "a cache of object URLs that never
