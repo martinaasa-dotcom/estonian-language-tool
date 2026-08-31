@@ -95,6 +95,36 @@ const code = (file: string) =>
  * a syntax nobody thought about; this only needs to know which half of a file
  * a call site is in.
  */
+/**
+ * Every lemma the shipped dictionary carries, lower-cased.
+ *
+ * Read off the two files the seed loads rather than out of a database, so this
+ * suite stays hermetic like the rest of it.
+ */
+function seededLemmas(): Set<string> {
+  const out = new Set<string>();
+
+  const expanded = "prisma/data/expanded.json";
+  if (existsSync(expanded)) {
+    const parsed: unknown = JSON.parse(readFileSync(expanded, "utf8"));
+    const rows = Array.isArray(parsed) ? parsed : (parsed as { entries?: unknown[] }).entries ?? [];
+    for (const row of rows) {
+      const lemma = (row as { lemma?: unknown }).lemma;
+      if (typeof lemma === "string") out.add(lemma.toLowerCase());
+    }
+  }
+
+  // The course harvest is a TypeScript module, so its lemmas are read as text.
+  const harvested = "prisma/data/harvested.ts";
+  if (existsSync(harvested)) {
+    for (const m of readFileSync(harvested, "utf8").matchAll(/\blemma:\s*"((?:[^"\\]|\\.)*)"/g)) {
+      out.add((m[1] ?? "").toLowerCase());
+    }
+  }
+
+  return out;
+}
+
 function between(source: string, from: string): string {
   const start = source.indexOf(from);
   if (start < 0) return "";
