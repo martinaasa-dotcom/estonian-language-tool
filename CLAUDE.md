@@ -706,6 +706,44 @@ deck step ever moved above the plan.
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
+**Who is signed in is worked out, not asked for, and never without a deadline.** `getUser()` hands
+the access token to Supabase and asks whether it is still good, which is a network call, and this
+app was making three of them one after another on every signed-in page load: the middleware's gate,
+`requireUserId()` and `currentLearner()`, each waiting on the last and none able to reuse another's
+answer. Measured against a project in eu-west-1 that was 138 to 187ms before the page had done
+anything, paid on the landing page and the privacy notice as readily as on somebody's deck, and paid
+again on `/auth/callback`, which was waiting to be told about a session it had not created yet.
+Nothing capped the wait either, so a minute where the auth service stopped answering was a 504 from
+the platform twenty-five seconds later, which is the least useful sentence available for "the login
+server is busy".
+
+`lib/auth/identity.ts` is the one answer and it asks three things, cheapest first, each one a
+question the next no longer has to ask. **A public page that renders the same either way is answered
+without a client at all**, which is /welcome, /privacy, /terms, /offline and the OAuth callback;
+/sign-in is the single exception, because it still has to send somebody already signed in home.
+**A request with no `sb-<ref>-auth-token` cookie is signed out, definitively, for free**, which is
+every visitor who has not signed in yet. **What is left is verified rather than asked about**:
+`getClaims()` checks the token's signature against the project's public keys, cached in the process,
+so the same request costs 7 to 9ms. That last one needs the project on asymmetric JWT signing keys,
+which is a dashboard setting rather than a code change; on a legacy shared secret `getClaims()`
+calls `getUser()` itself, so the fallback is the old behaviour and never a weaker one.
+
+What it trades is freshness: a session revoked elsewhere survives until its access token expires
+rather than until the next request. The allowlist is not part of that trade, because the address is
+a claim inside the token and `isAllowedEmail` still runs on every gated request.
+
+**And "we could not tell" is not "signed out".** Every call goes through a transport carrying a
+2,500ms deadline, the same one the dictionary gives Ekilex, and the transport records whether the
+service answered at all, which is the only place that fact is known: a 401, an expired token and a
+bad signature all arrive as ordinary responses and are facts about the session, while a call that
+never completed is a fact about the network. `Identity` has three states for that reason, and the
+third is let through rather than redirected. Reading it as a sign-out would take a learner's deck
+away from them over a bad minute at somebody else's server, on the screen they open every day, and
+send them to a sign-in page that could not sign them back in either. It cannot leak anything,
+because the middleware is not the check that decides: every page, action and route resolves its own
+owner through `requireUserId()`, which throws when the session cannot be verified. `!== "in"` is the
+shape that breaks this and it is the natural thing to write, so the invariant reads for it.
+
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
@@ -1136,7 +1174,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
-`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`. Most of them now
+`VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`, `readIdentity`,
+`boundedTransport`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

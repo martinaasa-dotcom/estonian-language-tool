@@ -623,6 +623,94 @@ check("the public path allowlist is the only way past the gate", () => {
   }
 });
 
+// ── And the gate answers in a bounded time, or says it could not ─────────────
+
+check("nothing on the request path waits on the auth service without a deadline", () => {
+  /*
+    The middleware asked Supabase who was signed in on every request, over the
+    network, with nothing capping the wait. A slow minute at that service was
+    a slow minute for the whole app, and a minute where it stopped answering
+    was a 504 from the platform twenty-five seconds later, which is the least
+    useful sentence available for "the login server is busy".
+
+    The deadline lives on the transport rather than on one call, because the
+    calls are not all in sight: a claims check can refresh a token underneath
+    itself, and the allowlist path signs somebody out. A client built without
+    it is a client with no ceiling on any of that.
+
+    The shape, not the spelling: whoever resolves an identity builds the client
+    with `boundedTransport` and hands its fetch over.
+  */
+  for (const file of ["middleware.ts", "lib/auth/session.ts"]) {
+    const source = read(file);
+    assert.match(source, /boundedTransport\(/, `${file} builds its auth client with no deadline on it`);
+    assert.match(
+      source,
+      /fetch:\s*transport\.fetch|createClient\(transport\.fetch\)/,
+      `${file} has a bounded transport it does not hand to the client`,
+    );
+  }
+  const identity = read("lib/auth/identity.ts");
+  assert.match(identity, /AUTH_TIMEOUT_MS/, "the deadline is no longer a named number");
+  assert.match(identity, /signal/, "the bounded transport stopped putting a signal on the request");
+});
+
+check("a public page does not pay for an identity it never reads", () => {
+  /*
+    The landing page, the two policy pages, the offline fallback and the OAuth
+    callback render the same whoever is reading, and every one of them was
+    costing a round trip to the auth service to establish something nothing on
+    the page used. The callback is the expensive one: it is a step of signing
+    in, and it was waiting to be told about the session it had not created
+    yet.
+
+    /sign-in is the one public path that does read the identity, because a
+    learner who is already signed in gets sent home rather than offered a
+    button. So the check is positional: the early return for the rest has to
+    come before a client is built, or it is not saving anything.
+  */
+  const middleware = read("middleware.ts");
+  const skip = middleware.indexOf("isPublicPath && !path.startsWith(\"/sign-in\")");
+  const cookie = middleware.indexOf("hasSessionCookie(");
+  const client = middleware.indexOf("createServerClient(");
+  assert.ok(skip > 0, "a public page with nothing to read is resolving an identity again");
+  assert.ok(cookie > 0, "a request with no session cookie is asking the auth service about it");
+  assert.ok(skip < client, "the public path skip runs after the client it exists to avoid");
+  assert.ok(cookie < client, "the cookie check runs after the client it exists to avoid");
+});
+
+check("an auth service that did not answer is not a sign-out", () => {
+  /*
+    Three answers, because "we could not tell" is not "signed out". Reading a
+    timeout as a sign-out would take a learner's own deck away from them over
+    a bad minute at somebody else's server, on the screen they open every day,
+    and it would do it at exactly the moment the sign-in page it redirects to
+    could not sign them back in either.
+
+    Letting it through costs nothing, because the middleware is not the check
+    that decides: every page, action and route resolves its own owner through
+    `requireUserId()`, which throws when the session cannot be verified.
+
+    `!== "in"` is the shape that breaks this, and it is the natural thing to
+    write. The middleware has to key its refusals on the positive answer.
+  */
+  const identity = read("lib/auth/identity.ts");
+  for (const state of ["\"in\"", "\"out\"", "\"unreachable\""]) {
+    assert.ok(identity.includes(state), `the ${state} answer is gone from Identity`);
+  }
+  const middleware = read("middleware.ts");
+  assert.match(
+    middleware,
+    /identity\.state === "out"/,
+    "the middleware stopped refusing on a definite sign-out",
+  );
+  assert.equal(
+    /identity\.state !== "in"/.test(middleware),
+    false,
+    "the middleware folds an unreachable auth service back into being signed out",
+  );
+});
+
 // ── The security layer added on top of those ─────────────────────────────────
 
 check("the forged-request gate runs before anything else looks at the request", () => {

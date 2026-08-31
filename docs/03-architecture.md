@@ -243,6 +243,36 @@ instead of skipping it, since "already exists" no longer means "already yours". 
 Auth.js/NextAuth. Supabase Auth pairs with the Postgres project already in hand and needs no
 separate provider setup beyond Google's own OAuth client.
 
+**ADR-012 amendment 1: the session is verified, not asked about, and never without a deadline.**
+*Context:* the ADR said the middleware gates every route and `requireUserId()` reads the session,
+and left how open. Both reached for `getUser()`, which hands the access token to Supabase and asks
+whether it is still good. That is one network call each, and there were three of them on a signed-in
+page load: the middleware's gate, `requireUserId()` and `currentLearner()`, each waiting on the
+last, none able to reuse another's answer. Measured against a project in eu-west-1, a gated request
+cost 138 to 187ms before the page had done anything, and a public page that never reads an identity
+paid the same. *Problem:* nothing capped the wait. When the auth service stopped answering, the
+middleware sat on the request until the platform gave up at twenty-five seconds and served
+`MIDDLEWARE_INVOCATION_TIMEOUT`, which tells a learner nothing and tells them it slowly.
+*Decision:* three questions, cheapest first, in `lib/auth/identity.ts`. A public page that renders
+the same either way is answered without a client, which is the landing page, both policy pages, the
+offline fallback and the OAuth callback, and /sign-in is the one exception because it sends somebody
+already signed in home. A request with no `sb-<ref>-auth-token` cookie is signed out, definitively,
+with no call at all. What is left goes to `getClaims()`, which verifies the token's signature against
+the project's public keys, cached in the process, so the answer is arrived at rather than requested.
+Every remaining call is made through a transport carrying a 2,500ms deadline, the same one the
+dictionary gives Ekilex. *Consequences:* the same request costs 7 to 9ms, and a page render is one
+resolution shared by `requireUserId()` and `currentLearner()` instead of two. A session revoked
+elsewhere now survives until its access token expires rather than until the next request, which is
+the trade `getClaims()` makes and is bounded by the project's token lifetime; the allowlist is not
+part of it, since the address is a claim inside the token and `isAllowedEmail` still runs on every
+gated request. `Identity` has three states rather than two: a deadline that passes is `unreachable`,
+which is let through rather than redirected, because reading it as a sign-out would take a learner's
+deck away over a bad minute at somebody else's server, and because `requireUserId()` is the check
+that actually decides. *Rejected:* passing the verified identity from the middleware to the page in a
+request header. It would have taken the page's remaining resolution to zero, and a header a client
+can also send is a header that has to be stripped on every path that reaches a handler, including
+the ones the middleware now skips.
+
 **ADR-008: Five noun and five verb principal parts, not three cases and two infinitives.**
 *Context:* v4.0 stores nominative/genitive/partitive and the ma-/da-infinitives (audit B2, B4).
 *Problem:* partitive plural and the short illative cannot be derived, and the present 1sg is in the
