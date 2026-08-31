@@ -199,7 +199,10 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
   const scored = candidates
     .map((c) => ({ hit: c, ...rank(c, q, folded) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.hit.lemma.localeCompare(b.hit.lemma, "et"));
+    .sort((a, b) =>
+      b.score - a.score
+      || a.hit.lemma.localeCompare(b.hit.lemma, "et")
+      || settle(a.hit, b.hit));
 
   return scored.slice(0, limit).map(({ hit, matchedAs }) => ({
     id: hit.id,
@@ -210,6 +213,42 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
     gradationNote: hit.gradationNote,
     ...(matchedAs ? { matchedAs } : {}),
   }));
+}
+
+/**
+ * TWO ENTRIES, ONE LEMMA, AND THE TIEBREAK WAS COMPARING THE LEMMA.
+ *
+ * `pos` is half of `Lexeme`'s conflict key, so one spelling legitimately gets
+ * more than one row: `hall` is a noun meaning "frost" and an adjective meaning
+ * "grey", `rõõmus` is an adjective and the inessive of `rõõm`. Search an exact
+ * lemma and every one of those rows scores 100, which is right, and then the
+ * sort settled them on `lemma.localeCompare(lemma)`. That is zero by
+ * construction: the only way two entries reach a tie worth breaking is by
+ * sharing the spelling the tiebreak was reading. So the order was whatever
+ * Postgres handed back, which has no defined order without an `ORDER BY`, and
+ * `app/(app)/dictionary/page.tsx` opens `hits[0]` straight away. Which of two
+ * real words a learner was shown for "hall" was a coin the database tossed,
+ * and it could land differently on a reload.
+ *
+ * So a tie is settled on what an entry can actually teach. A paradigm first,
+ * because that is the whole of what a dictionary entry here is for and it is
+ * what the case table, the grammar links and every derived form are built
+ * from. Then a stated part of speech ahead of `OTHER`, which is not a claim
+ * about the word but the absence of one: a word confirmed off a scanned page
+ * that the dictionary could not vouch for is stored that way (ADR-021), and
+ * such a row beside a real entry for the same spelling is a husk that was
+ * winning ties against it. Then `id`, so that two entries with equally much to
+ * say come out in the same order on every request rather than in the order the
+ * rows happened to arrive.
+ *
+ * It never reorders different lemmas, and it never overrides a score: `hall`
+ * the noun and `hall` the adjective are both still returned, still both at
+ * 100, and the list shows both.
+ */
+function settle(a: Candidate, b: Candidate): number {
+  return (b.forms.length > 0 ? 1 : 0) - (a.forms.length > 0 ? 1 : 0)
+    || (a.pos === "OTHER" ? 1 : 0) - (b.pos === "OTHER" ? 1 : 0)
+    || a.id.localeCompare(b.id);
 }
 
 function rank(c: Candidate, raw: string, folded: string): { score: number; matchedAs?: string } {

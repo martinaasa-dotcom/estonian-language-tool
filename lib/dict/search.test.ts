@@ -113,6 +113,67 @@ describe("rankCandidates — inflected forms", () => {
 });
 
 /*
+  One spelling, more than one row. `pos` is half of `Lexeme`'s conflict key, so
+  this is normal and correct rather than something to forbid: `hall` really is
+  a noun meaning "frost" and an adjective meaning "grey".
+
+  What was wrong is that the sort settled such a tie on
+  `lemma.localeCompare(lemma)`, which is zero whenever there is a tie to
+  settle, so the winner was the order Postgres happened to return. The
+  dictionary opens the first hit, so that decided which of two real words a
+  learner was shown, and it could differ between reloads.
+
+  Both orderings are asserted for every case, because a check that passes on
+  one arrangement of the same two rows is the check the old code passed.
+*/
+describe("rankCandidates — one lemma, more than one entry", () => {
+  const noun = lexeme("hall", "frost", "NOUN", [
+    ["NOM_SG", "hall"], ["GEN_SG", "halla"], ["PART_SG", "halla"],
+  ]);
+  // A different id, or these are one row wearing two hats.
+  const adjective: Candidate = {
+    ...lexeme("hall", "grey", "ADJECTIVE", [
+      ["NOM_SG", "hall"], ["GEN_SG", "halli"], ["PART_SG", "halli"],
+    ]),
+    id: "hall-adj",
+  };
+  /*
+    A word confirmed off a scanned page that the dictionary could not vouch
+    for: stored under the spelling with no part of speech and no paradigm
+    (ADR-021). This is the row that was beating the real entry for `tuba`.
+  */
+  const husk: Candidate = {
+    ...lexeme("tuba", "room", "OTHER", []),
+    id: "tuba-user",
+  };
+  const room = DICT.find((c) => c.lemma === "tuba")!;
+
+  it("puts the entry with a paradigm ahead of the one without", () => {
+    for (const pair of [[husk, room], [room, husk]]) {
+      expect(rankCandidates(pair, "tuba")[0]?.pos).toBe("NOUN");
+    }
+  });
+
+  it("still returns both, rather than hiding one", () => {
+    expect(rankCandidates([husk, room], "tuba")).toHaveLength(2);
+    expect(rankCandidates([noun, adjective], "hall")).toHaveLength(2);
+  });
+
+  it("orders two real homographs the same way whichever order they arrive in", () => {
+    const one = rankCandidates([noun, adjective], "hall").map((h) => h.id);
+    const other = rankCandidates([adjective, noun], "hall").map((h) => h.id);
+    expect(one).toEqual(other);
+  });
+
+  it("leaves entries with different lemmas alone", () => {
+    // `raamat` has a paradigm and `tuba` scores 100 on its own spelling: the
+    // tiebreak must not reach across a score or a lemma to reorder them.
+    expect(rankCandidates(DICT, "tuba")[0]?.lemma).toBe("tuba");
+    expect(rankCandidates(DICT, "raamat")[0]?.lemma).toBe("raamat");
+  });
+});
+
+/*
   The gate a photographed page has to get through.
 
   `rankCandidates` is built for a search box, where a prefix match is a helpful
