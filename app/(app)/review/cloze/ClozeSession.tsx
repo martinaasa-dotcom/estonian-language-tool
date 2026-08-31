@@ -279,11 +279,11 @@ export function ClozeSession() {
         <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!checked ? (
             <Button variant="primary" className="w-full py-3" disabled={!attempt.trim()} onClick={check}>
-              Check <kbd className="ml-1 opacity-70">↵</kbd>
+              Check <kbd className="ml-1">↵</kbd>
             </Button>
           ) : (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>
-              {index + 1 >= items.length ? "Finish" : "Next"} <kbd className="ml-1 opacity-70">↵</kbd>
+              {index + 1 >= items.length ? "Finish" : "Next"} <kbd className="ml-1">↵</kbd>
             </Button>
           )}
         </div>

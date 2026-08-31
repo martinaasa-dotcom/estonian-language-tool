@@ -27,6 +27,7 @@ import { createRequire } from "node:module";
 
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { ratingButtons, revealAnswer } from "./lib/review.mjs";
 
 /*
   Read off disk and injected, rather than imported and called in Node: axe
@@ -154,7 +155,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, done } = suite("Accessibility", { floor: 335 });
+const { check, absent, done } = suite("Accessibility", { floor: 339 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -277,6 +278,54 @@ for (const route of ROUTES) {
     violations.length === 0, violations.slice(0, 2).join("; "));
 }
 await dark.close();
+
+/*
+  THE STATE A ROUTE DOES NOT ARRIVE IN, AND WHY ONE IS ENOUGH TO MATTER.
+
+  Everything above sweeps a page as it loads, and WCAG exempts a control that
+  is inactive: axe skips a disabled button's text on purpose, because nobody
+  is being asked to read it. That exemption was doing work nobody had asked it
+  to do here. Review's Undo button is `disabled` until a card has been graded,
+  which is exactly how every visit to `/review` begins, so its key hint was
+  outside this sweep for the whole of the app's life. Grade one card and the
+  same node measures 2.57:1 on the light theme and 3.06:1 on the dark, against
+  a bar of 4.5.
+
+  So the rule is that a control which is only ever live after somebody has
+  done something has to be swept after they have done it. One state rather
+  than a matrix: the point is not to enumerate the app, it is that a suite
+  which only ever sees arrival states cannot see this class of fault at all,
+  and the review screen is where the class lives.
+
+  It grades, which `lib/review.mjs` deliberately does not do for the suites
+  that only reveal, so this costs the shared deck one card. That is the whole
+  price of the state and it is stated here rather than discovered by whoever
+  runs the next suite.
+*/
+for (const theme of ["light", "dark"]) {
+  const graded = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: theme });
+  await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
+  await graded.waitForTimeout(300);
+  const shape = await revealAnswer(graded);
+  const ratings = ratingButtons(graded);
+  if (shape && (await ratings.count())) {
+    await ratings.first().click();
+    await graded.waitForTimeout(1200);
+    const live = await graded.evaluate(() => {
+      const btn = [...document.querySelectorAll("main button")].find((b) => /Undo/.test(b.textContent));
+      return btn ? !btn.disabled : null;
+    });
+    check(`/review once a card is graded, in ${theme}: the controls a grade unlocks are live`,
+      live === true, `Undo disabled: ${live === null ? "no button" : !live}`);
+    const violations = await axeViolations(graded);
+    check(`/review once a card is graded, in ${theme}: axe finds nothing`,
+      violations.length === 0, violations.slice(0, 2).join("; "));
+  } else {
+    absent(2, `/review with a card graded, in ${theme}: the deck had nothing due, ` +
+      "so the controls a grade unlocks were never drawn. Run `npm run demo`");
+  }
+  await graded.close();
+}
 
 // A visible focus ring on the primary action of the review path.
 await page.goto(`${BASE}/review/write`, { waitUntil: "networkidle" });
