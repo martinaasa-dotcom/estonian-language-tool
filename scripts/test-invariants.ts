@@ -1420,33 +1420,30 @@ check("every type size in the tree is a step on the scale", () => {
     literal that happens to land on a step is still worth turning into
     `text-sm`; what fails here is a size that is not a step at all.
   */
-  // The one thing off the scale on purpose, as §3 says in as many words: a
-  // numeral set large enough to read as a shape behind a card, aria-hidden,
-  // ornament rather than type. Listed rather than pattern-matched, and the
-  // check below fails if it stops being there, so it cannot quietly become a
-  // place to park a size somebody could not be bothered to fit.
-  const ORNAMENT = { file: "app/(chromeless)/welcome/page.tsx", size: "92px" };
+  // There is no exception any more. There was one, for a 92px step numeral set
+  // large enough to read as a shape behind a card on the landing page, and the
+  // rule it was granted under is unchanged (docs/14-design-system.md §3): an
+  // aria-hidden ornament may be off the scale because it is not type. That
+  // section of the page went when the landing page was shortened, so the
+  // exception went with it rather than staying behind as a size somebody could
+  // park a literal on. `data-ornament` in the markup is still what tells the
+  // contrast pass in test-design.mjs the same thing, and the next ornament that
+  // earns its place gets its exception back here, named and argued for.
   const STEPS = new Set([
     "11.5px", "12.5px", "13.5px", "15px", "17px", "19px",
     "22px", "27px", "32px", "40px", "52px", "68px",
   ]);
 
   const offScale: string[] = [];
-  let ornamentSeen = false;
   for (const file of [...sourceFiles("app", /\.tsx$/), ...sourceFiles("components", /\.tsx$/)]) {
     const source = read(file);
     for (const found of source.matchAll(/text-\[([0-9.]+px)\]/g)) {
       const size = found[1] ?? "";
       if (STEPS.has(size)) continue;
-      if (file === ORNAMENT.file && size === ORNAMENT.size) { ornamentSeen = true; continue; }
       offScale.push(`${file} ${size}`);
     }
   }
   assert.deepEqual(offScale, [], "type sizes that are not a step on the scale");
-  assert.ok(
-    ornamentSeen,
-    `${ORNAMENT.file} no longer carries the ${ORNAMENT.size} ornament, so the exception for it is dead and should go`,
-  );
 });
 
 // ── The phone, and the faults that were measured on it ───────────────────────

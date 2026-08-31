@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Flame, Headphones, Minus,
-  Map as MapIcon, Sparkles, Volume2,
+  ArrowRight, BookOpen, Check, CircleHelp, Flame, Minus,
+  Map as MapIcon, Sparkles,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
@@ -40,30 +40,34 @@ export default async function WelcomePage() {
       <Nav />
 
       {/*
-        Ten sections became six.
+        Ten sections became eight, and eight became five.
 
         The page was answering every question a visitor could have, in the order
-        somebody thought of them, and a first-time reader had to scroll past a
-        four-tile source credit, a four-figure stat panel and an eight-row
-        comparison grid to reach the part that shows what the app actually does.
-        Nothing here was wrong; there was simply too much of it before the
-        decision.
+        somebody thought of them. The first cut took out a four-tile source
+        credit and a four-figure stat panel, and left a page that still had to be
+        scrolled four times before it stopped introducing itself. Nothing in it
+        was wrong; there was simply more of it than anybody deciding whether to
+        try an app will read.
 
-        So: the sources and the figures are one line in the hero, where they are
-        evidence rather than a section. The comparison is behind its own summary,
-        because it answers a question only a comparison shopper is asking and it
-        is the longest block on the page. Everything cut from here is still said
-        somewhere it is read: the credits in the footer and on /terms, the
-        comparison one press away, the feature list on /guide in full.
+        Two sections went, and neither lost its argument. "You didn't fail
+        Estonian. Your tools did." was three cards making three complaints, and
+        each complaint was answered somewhere further down by the thing that
+        answers it: the case demo, the scheduler card, the line about a model
+        never supplying a form. So each one now sits next to its answer instead
+        of a screen and a half above it. "How a day goes" was three steps that
+        the feature grid and the closing sentence already described, in the same
+        words, twice.
+
+        What is left is the five beats somebody actually needs: what this is,
+        why the cases are the hard part, what you get, what the catch is, and
+        where to start. The comparison is one of the questions now rather than a
+        section of its own, which is where the person asking it looks.
       */}
       <main className="relative">
         <Hero words={words} stats={stats} />
-        <Problem />
         <Cases words={words} />
         <Features />
-        <HowItWorks />
-        <Comparison />
-        <Faq />
+        <Questions />
         <FinalCta />
       </main>
 
@@ -73,25 +77,17 @@ export default async function WelcomePage() {
 }
 
 /**
- * Fades a section up as it scrolls into view — CSS scroll timelines, so it costs
+ * Fades a block in as it scrolls into view. CSS scroll timelines, so it costs
  * no JavaScript and degrades to "already visible" where they aren't supported.
- */
-/**
- * Fades a block in as it scrolls into view.
  *
- * `as` exists because this wrapper broke a list. The three steps below are an
- * `<ol>` of `<li>`s with a Reveal around each one, and a `div` between an `ol`
- * and its `li` means the list is not a list: a screen reader announces an empty
- * list and three stray items, which is worse than no list markup at all. The
- * wrapper renders the `li` itself now, so the structure survives the animation.
+ * It renders a `div` and nothing else, which is a constraint on where it may go
+ * rather than a detail. It once wrapped the `<li>`s of an ordered list, and a
+ * `div` between an `ol` and its `li` means the list is not a list: a screen
+ * reader announces an empty list and three stray items. If a list ever needs
+ * this again, the wrapper has to render the list item itself.
  */
-function Reveal({ as: Tag = "div", className = "", style, children }: {
-  as?: "div" | "li";
-  className?: string;
-  style?: React.CSSProperties;
-  children: React.ReactNode;
-}) {
-  return <Tag className={`reveal ${className}`.trim()} style={style}>{children}</Tag>;
+function Reveal({ children }: { children: React.ReactNode }) {
+  return <div className="reveal">{children}</div>;
 }
 
 /* ─────────────────────────────────────────────────────────── nav ── */
@@ -114,7 +110,6 @@ function Nav() {
         <div className="hidden items-center gap-7 text-sm font-medium md:flex" style={{ color: "var(--ink-2)" }}>
           <a href="#cases" className="transition-opacity hover:opacity-60">The cases</a>
           <a href="#features" className="transition-opacity hover:opacity-60">What you get</a>
-          <a href="#how" className="transition-opacity hover:opacity-60">How it works</a>
           <a href="#faq" className="transition-opacity hover:opacity-60">Questions</a>
         </div>
         <div className="flex items-center gap-2">
@@ -160,7 +155,7 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
     "Free, and it works offline",
   ];
   return (
-    <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-8 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:px-8 md:pb-16 md:pt-20">
+    <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-8 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:px-8 md:pb-12 md:pt-20">
       <div>
         <p
           className="fade-up label-xs inline-flex items-center gap-2 rounded-full px-3.5 py-2"
@@ -182,9 +177,9 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           className="fade-up mt-6 max-w-[54ch] text-md leading-relaxed md:text-md"
           style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
         >
-          Fourteen cases. A stem that changes shape when you look at it. Kodukeel turns all of it
-          into fifteen quiet minutes a day, real paradigms, native audio, and a tutor who tells you
-          the rule instead of just marking you wrong.
+          Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
+          day, real paradigms, native audio, and a tutor who tells you the rule instead of marking
+          you wrong.
         </p>
 
         {/*
@@ -263,78 +258,38 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
   );
 }
 
-/* ─────────────────────────────────────────────────────── problem ── */
-
-const PROBLEMS = [
-  {
-    tone: "peach",
-    title: "Streak apps don’t teach cases",
-    body: "You can hold a 400-day streak and still not know whether it is majja, majas or majast. Kodukeel drills the case itself, and tracks which one keeps failing.",
-  },
-  {
-    tone: "butter",
-    title: "Textbooks don’t schedule",
-    body: "Week six pushes out week two. Nothing brings a word back on the day you were about to forget it, which is the only day repetition is worth doing.",
-  },
-  {
-    tone: "sky",
-    title: "Translation apps invent Estonian",
-    body: "Ask a chatbot for an inflected form and you will get a confident, wrong one. Every form here comes from a dictionary, never from a model.",
-  },
-] as const;
-
-function Problem() {
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-      <Reveal>
-        <h2 className="est mx-auto max-w-[20ch] text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-          You didn’t fail Estonian. Your tools did.
-        </h2>
-      </Reveal>
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
-        {PROBLEMS.map((p, i) => (
-          <Reveal key={p.title}>
-            <div
-              className="lift h-full rounded-[var(--r-xl)] p-6"
-              style={{ background: `var(--${p.tone}-soft)` }}
-            >
-              <span
-                className="est flex h-11 w-11 items-center justify-center rounded-full text-md font-bold"
-                style={{ background: "var(--surface)", color: toneInk(p.tone) }}
-              >
-                {i + 1}
-              </span>
-              <h3 className="est mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
-                {p.title}
-              </h3>
-              <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                {p.body}
-              </p>
-            </div>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 /* ───────────────────────────────────────────────────────── cases ── */
 
+/**
+ * The problem and the demonstration of it, in one section.
+ *
+ * The complaint used to be a section of its own three cards above this one:
+ * streak apps do not teach cases, textbooks do not schedule, chatbots invent
+ * Estonian. All three are still made, and each is now made where it is
+ * answered. The first is this heading, standing over the thing that answers it.
+ * The second is on the scheduling card below, which was already saying half of
+ * it. The third is on Anu's card and in the line of evidence under the hero,
+ * where it is a promise about the whole app rather than one grievance in three.
+ */
 function Cases({ words }: { words: DemoWord[] }) {
   const derivable = words.filter((w) => w.cases.some((c) => !c.principal && c.singular));
   if (derivable.length === 0) return null;
 
   return (
-    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-16">
       <Reveal>
-        <div className="mx-auto max-w-[46ch] text-center">
+        <div className="mx-auto max-w-[48ch] text-center">
           <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn one form, get eleven</p>
           <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            The fourteen cases, finally on your side
+            You didn&rsquo;t fail Estonian. Your tools did.
           </h2>
           <p className="mt-4 text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            Three principal parts are genuinely unpredictable, so you memorise those. The other
-            eleven are regular endings on the genitive stem. Press a word and watch them fall out.
+            You can hold a 400-day streak and still not know whether it is{" "}
+            <span lang="et" className="est font-semibold">majja</span>,{" "}
+            <span lang="et" className="est font-semibold">majas</span> or{" "}
+            <span lang="et" className="est font-semibold">majast</span>. Three principal parts are
+            genuinely unpredictable, so you memorise those. The other eleven are regular endings on
+            the genitive stem. Press a word and watch them fall out.
           </p>
         </div>
       </Reveal>
@@ -351,33 +306,47 @@ function Cases({ words }: { words: DemoWord[] }) {
 
 function Features() {
   /*
-    Eight cards became five.
+    Eight cards became five, and five became four.
 
-    Three of them were saying the same thing as the hero, the FAQ or each other:
-    a portability card beside an offline tick, a progress card beside an XP
-    card, a "four ways to practise" card that had been wrong since the third
-    practice mode shipped. What is left is the five things somebody could not
-    guess from the sentence at the top of the page, and the two that were merged
-    are stronger together than either was alone.
+    Three of the original eight said what the hero, the FAQ or another card was
+    already saying: a portability card beside an offline tick, a progress card
+    beside an XP card, and a "four ways to practise" card that had been wrong
+    since the third practice mode shipped. The one that went this time is the
+    speech card, which is not a thing of its own: it is what the dictionary
+    entry does when you press a form, so it is a clause on the dictionary card
+    and the claim is unchanged.
+
+    What the bodies carry now is the section that used to sit under this one.
+    "How a day goes" was three steps, and all three were already here in other
+    words: picking a unit and looking a word up is the first card, adding it in
+    a press is the sentence that ends it, and being told you are done for the
+    day is the second card's whole point. A step somebody reads twice is a step
+    they read neither time.
+
+    Four rather than five is also what makes the grid square. `md:col-span-2` on
+    Anu's card had done nothing since the day it was written, because the grid
+    item is the `Reveal` wrapper and the span was on the card inside it: the
+    layout everybody has been looking at is three cards, then two, then a hole
+    where the sixth would go. Two by two has no hole to explain.
   */
   return (
-    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="features" className="mx-auto max-w-5xl scroll-mt-24 px-5 py-10 md:px-8 md:py-16">
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
           <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Five things, each doing one job well
+            Four things, each doing one job well
           </h2>
         </div>
       </Reveal>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-3">
+      <div className="mt-9 grid gap-4 md:grid-cols-2">
         <Reveal>
           <Feature
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
             title="A dictionary that shows the whole word"
-            body="Search an inflected form you met in class (toas, lugesin) and it finds the word, tells you which form you typed, and lays out the full paradigm with gradation marked."
+            body="Search a form you half-remember from class and it finds the word, says which one you typed, and lays out the paradigm with gradation marked and every form spoken aloud."
           />
         </Reveal>
         <Reveal>
@@ -385,46 +354,25 @@ function Features() {
             tone="butter"
             icon={<Flame size={18} aria-hidden />}
             title="Repetition that knows when to stop"
-            body="FSRS schedules every card for the day you were about to forget it, then tells you you're done. New cards are capped, so week three never becomes an hour."
+            body="A textbook lets week six push out week two. FSRS brings each card back on the day you were going to forget it, caps what is new, and then tells you you're done."
           />
         </Reveal>
         <Reveal>
           <Feature
-            tone="sky"
-            icon={<Volume2 size={18} aria-hidden />}
-            title="Hear every single form"
-            body="Estonian neural speech from the University of Tartu, on every word and every form, at normal or slow speed. No key, no per-word charge."
-          />
-        </Reveal>
-
-        <Reveal>
-          <div
-            className="lift flex h-full flex-col rounded-[var(--r-xl)] border p-6 md:col-span-2"
-            style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
+            tone="blush"
+            icon={<Sparkles size={18} aria-hidden />}
+            title="Anu explains the rule"
+            body="Ask a chatbot for an inflected form and you get a confident, wrong one. Anu explains the rule and checks your sentence, and she may never supply an Estonian form: those come from the dictionary."
           >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "var(--blush-soft)", color: "var(--blush-ink)" }}>
-                <Sparkles size={18} aria-hidden />
-              </span>
-              <h3 className="est text-xl font-bold" style={{ color: "var(--ink)" }}>Anu explains the rule</h3>
-            </div>
-            <p className="mt-2.5 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              A grammar tutor for the questions a textbook answers on page 240. She explains, checks
-              your sentence and names the pattern, and she is never allowed to invent an Estonian
-              form, because those come from the dictionary.
-            </p>
-            <div className="mt-5">
-              <TutorPeek />
-            </div>
-          </div>
+            <TutorPeek />
+          </Feature>
         </Reveal>
-
         <Reveal>
           <Feature
             tone="mint"
             icon={<MapIcon size={18} aria-hidden />}
             title={`A course of ${PATH.length} units, and a dozen ways to drill it`}
-            body="Each unit is a sitting's worth of words that becomes real cards in one click. Sprint, dictation, listening, word order, minimal pairs and the rest all grade the same cards, so practice is never a side game with a score of its own."
+            body="Each unit is a sitting's worth of words that becomes real cards in one press. Sprint, dictation, listening, word order and the rest all grade those same cards."
           />
         </Reveal>
       </div>
@@ -432,16 +380,24 @@ function Features() {
   );
 }
 
-function Feature({ tone, icon, title, body, className = "" }: {
+/**
+ * One card, and `children` for the one that shows its work.
+ *
+ * Anu's card used to be a hand-written copy of this with its icon beside the
+ * heading instead of above it, which is how it came to be the only card in the
+ * grid laid out differently from its neighbours. A slot under the body is the
+ * whole of what it needed.
+ */
+function Feature({ tone, icon, title, body, children }: {
   tone: "accent" | "mint" | "sky" | "butter" | "peach" | "blush";
   icon: React.ReactNode;
   title: React.ReactNode;
   body: string;
-  className?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div
-      className={`lift flex h-full flex-col rounded-[var(--r-xl)] border p-6 ${className}`}
+      className="lift flex h-full flex-col rounded-[var(--r-xl)] border p-6"
       style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
     >
       <span
@@ -453,79 +409,9 @@ function Feature({ tone, icon, title, body, className = "" }: {
       <h3 className="est mt-4 flex items-center gap-2 text-lg font-bold leading-snug" style={{ color: "var(--ink)" }}>
         {title}
       </h3>
-      <p className="mt-2 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+      <p className="mt-2 max-w-[52ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{body}</p>
+      {children ? <div className="mt-5">{children}</div> : null}
     </div>
-  );
-}
-
-/* ───────────────────────────────────────────────────── how it works ── */
-
-const STEPS = [
-  {
-    title: "Pick a unit, or look a word up",
-    body: "A course from greetings to argument, or type anything. Estonian, English, or a form you half-remember from class. You can also photograph the page you were set and tick the words off it.",
-    tone: "sky",
-  },
-  {
-    title: "Add it in one click",
-    body: "Real cards with the full paradigm and audio, both directions. Add a case-form or gradation card when a word deserves the extra attention.",
-    tone: "accent",
-  },
-  {
-    title: "Show up for fifteen minutes",
-    body: "Today tells you exactly what is due and how long it will take. When you are caught up, it says so and sends you away.",
-    tone: "mint",
-  },
-] as const;
-
-function HowItWorks() {
-  return (
-    <section id="how" className="scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
-      <div className="mx-auto max-w-6xl">
-        <Reveal>
-          <div className="mx-auto max-w-[42ch] text-center">
-            <p className="label-xs" style={{ color: "var(--mint-ink)" }}>Three steps, then a habit</p>
-            <h2 className="est mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-              How a day with Kodukeel goes
-            </h2>
-          </div>
-        </Reveal>
-
-        <ol className="mt-10 grid gap-4 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <Reveal
-              key={s.title}
-              as="li"
-              className="relative h-full overflow-hidden rounded-[var(--r-xl)] border p-6"
-              style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-            >
-              <span
-                aria-hidden
-                /* Ornament rather than type: a step number set large enough
-                   to read as a shape behind the card. Off the scale on
-                   purpose — see docs/14-design-system.md §3.
-
-                   `data-ornament` says the same thing to the contrast pass in
-                   scripts/test-design.mjs, which measures single characters
-                   now and would otherwise read a hue's own tint at 1.18:1 as a
-                   failure. It is decoration: the step is written in words
-                   inside the card this sits behind. */
-                data-ornament
-                className="est absolute -right-2 -top-6 text-[92px] font-bold leading-none"
-                style={{ color: `var(--${s.tone}-soft)` }}
-              >
-                {i + 1}
-              </span>
-              <div className="relative">
-                <span className="label-xs" style={{ color: toneInk(s.tone) }}>Step {i + 1}</span>
-                <h3 className="est mt-2 text-xl font-bold" style={{ color: "var(--ink)" }}>{s.title}</h3>
-                <p className="mt-2.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{s.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </ol>
-      </div>
-    </section>
   );
 }
 
@@ -651,15 +537,17 @@ function Mark({ verdict }: { verdict: Verdict }) {
 }
 
 /**
- * The comparison, folded shut.
+ * The comparison, folded into the questions.
  *
  * Every claim in it is still here, and so is the credit paragraph for each of
- * the four tools. What changed is that it no longer sits in the scroll of
- * somebody who has not yet worked out what this app is: an eight-row grid
- * against three products, four credit cards and a dated methodology note is the
- * longest block on the page, and it answers a question only a person already
- * choosing between tools is asking. That person will open it. Everybody else
- * gets one honest sentence and their evening back.
+ * the four tools. What changed is where it sits. It was a section of its own
+ * with its own heading and its own summary paragraph, second from the bottom of
+ * the page, and an eight-row grid against three products with four credit cards
+ * and a dated methodology note is the longest block here by a distance. It also
+ * answers a question only somebody already choosing between tools is asking,
+ * which is exactly the shape of the four questions above it. So it is the fifth
+ * one, wearing the same shell: the person asking it finds it where they look
+ * for it, and everybody else gets a line in a list instead of a screen.
  *
  * Shut by default rather than removed, because the argument in the comment
  * below still holds: a page that will not say what it is not better at is a
@@ -667,139 +555,116 @@ function Mark({ verdict }: { verdict: Verdict }) {
  */
 function Comparison() {
   return (
-    <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
-      <Reveal>
-        <details
-          className="group rounded-[var(--r-xl)] border px-5 py-5 md:px-8 md:py-7"
-          style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-        >
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-5">
-            <span className="min-w-0">
-              <span className="label-xs block" style={{ color: "var(--peach-ink)" }}>An honest comparison</span>
-              <span className="est mt-2 block text-2xl font-bold leading-tight tracking-tight" style={{ color: "var(--ink)" }}>
-                How it sits next to Speakly, Keeleklikk and Anki
-              </span>
-              <span className="mt-2 block max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                Duolingo has never offered an Estonian course, so the choice you actually face is
-                between the tools that do. {CLAIM_COUNT} claims, checked against their own public
-                pages, and on {SHARED_ROWS} of them somebody else ticks too.
-              </span>
-            </span>
-            <span
-              aria-hidden
-              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform group-open:rotate-180"
-              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-            >
-              <ChevronDown size={17} aria-hidden />
-            </span>
-          </summary>
+    <FaqItem question="How does it compare with Speakly, Keeleklikk and Anki?">
+      {/*
+        No Reveal inside here. It fades a section up as it enters the
+        viewport, and an element that is display:none until somebody opens
+        a disclosure has no entry to animate on a page already scrolled
+        past it. The one thing worse than an animation nobody sees is one
+        that leaves the content half-faded, which the design suite checks
+        for by name.
+      */}
+      <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        Duolingo has never offered an Estonian course, so the choice you actually face is between
+        the tools that do. {CLAIM_COUNT} claims, checked against their own public pages, and on{" "}
+        {SHARED_ROWS} of them somebody else ticks too.
+      </p>
+      <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        None of them is trying to do quite this: get you to the point of saying{" "}
+        <span lang="et" className="est font-semibold">ma lähen tuppa</span> and knowing why it
+        is not <span lang="et" className="est font-semibold">tuba</span>.
+      </p>
 
-          {/*
-            No Reveal inside here. It fades a section up as it enters the
-            viewport, and an element that is display:none until somebody opens
-            a disclosure has no entry to animate on a page already scrolled
-            past it. The one thing worse than an animation nobody sees is one
-            that leaves the content half-faded, which the design suite checks
-            for by name.
-          */}
-          <p className="mt-6 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            None of them is trying to do quite this: get you to the point of saying{" "}
-            <span lang="et" className="est font-semibold">ma lähen tuppa</span> and knowing why it
-            is not <span lang="et" className="est font-semibold">tuba</span>.
-          </p>
-
-          {/* Phones get a card per claim: four columns of ticks at 390px would
-              leave the labels a third of a line wide, and this page may not
-              scroll sideways. */}
-          <div className="mt-7 flex flex-col gap-3 md:hidden">
-            {ROWS.map((row) => (
-              <div
-                key={row.label}
-                className="rounded-[var(--r-lg)] border p-4"
-                style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
-              >
-                <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {TOOLS.map((tool, i) => (
-                    <span key={tool.name} className="flex items-center gap-2">
-                      <Mark verdict={row.cells[i] ?? "unsure"} />
-                      <span
-                        className="text-xs font-semibold"
-                        style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
-                      >
-                        {tool.short}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
+      {/* Phones get a card per claim: four columns of ticks at 390px would
+          leave the labels a third of a line wide, and this page may not
+          scroll sideways. */}
+      <div className="mt-7 flex flex-col gap-3 md:hidden">
+        {ROWS.map((row) => (
           <div
-            className="mt-7 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
-            style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
+            key={row.label}
+            className="rounded-[var(--r-lg)] border p-4"
+            style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
           >
-            <div
-              className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
-              style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
-            >
-              <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
-              {TOOLS.map((tool) =>
-                tool.ours ? (
-                  <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
-                    {tool.name}
+            <p className="text-sm font-semibold" style={{ color: "var(--ink)" }}>{row.label}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {TOOLS.map((tool, i) => (
+                <span key={tool.name} className="flex items-center gap-2">
+                  <Mark verdict={row.cells[i] ?? "unsure"} />
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: tool.ours ? "var(--accent-deep)" : "var(--ink-3)" }}
+                  >
+                    {tool.short}
                   </span>
-                ) : (
-                  <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
-                    {tool.name}
-                  </span>
-                ),
-              )}
+                </span>
+              ))}
             </div>
-            {ROWS.map((row) => (
-              <div
-                key={row.label}
-                className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
-                style={{ borderTop: "1px solid var(--rule-soft)" }}
-              >
-                <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
-                {TOOLS.map((tool, i) => (
-                  <span key={tool.name} className="flex justify-center">
-                    <Mark verdict={row.cells[i] ?? "unsure"} />
-                  </span>
-                ))}
-              </div>
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="mt-7 hidden overflow-hidden rounded-[var(--r-xl)] border md:block"
+        style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
+      >
+        <div
+          className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 border-b px-5 py-3.5"
+          style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
+        >
+          <span className="label-xs" style={{ color: "var(--ink-3)" }}>&nbsp;</span>
+          {TOOLS.map((tool) =>
+            tool.ours ? (
+              <span key={tool.name} className="est text-center text-base font-bold" style={{ color: "var(--accent-deep)" }}>
+                {tool.name}
+              </span>
+            ) : (
+              <span key={tool.name} className="label-xs text-center" style={{ color: "var(--ink-3)" }}>
+                {tool.name}
+              </span>
+            ),
+          )}
+        </div>
+        {ROWS.map((row) => (
+          <div
+            key={row.label}
+            className="grid grid-cols-[1fr_repeat(4,88px)] items-center gap-2 px-5 py-3.5"
+            style={{ borderTop: "1px solid var(--rule-soft)" }}
+          >
+            <span className="text-base" style={{ color: "var(--ink-2)" }}>{row.label}</span>
+            {TOOLS.map((tool, i) => (
+              <span key={tool.name} className="flex justify-center">
+                <Mark verdict={row.cells[i] ?? "unsure"} />
+              </span>
             ))}
           </div>
+        ))}
+      </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {CREDITS.map((credit) => (
-              <div
-                key={credit.name}
-                className="rounded-[var(--r-lg)] border px-4 py-3.5"
-                style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
-              >
-                <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
-                <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
-              </div>
-            ))}
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {CREDITS.map((credit) => (
+          <div
+            key={credit.name}
+            className="rounded-[var(--r-lg)] border px-4 py-3.5"
+            style={{ borderColor: "var(--rule)", background: "color-mix(in oklab, var(--surface) 70%, transparent)" }}
+          >
+            <p className="est text-sm font-bold" style={{ color: "var(--ink)" }}>{credit.name}</p>
+            <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>{credit.body}</p>
           </div>
+        ))}
+      </div>
 
-          <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-            A tick means yes, a dash means not from anything its own public pages say, and a question
-            mark means we could not tell and would rather say so. Checked in August 2026 against each
-            product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
-            is not affiliated with any of them and none of them has endorsed it. If something is out
-            of date or simply wrong, tell us and it gets corrected.
-          </p>
-        </details>
-      </Reveal>
-    </section>
+      <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
+        A tick means yes, a dash means not from anything its own public pages say, and a question
+        mark means we could not tell and would rather say so. Checked in August 2026 against each
+        product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
+        is not affiliated with any of them and none of them has endorsed it. If something is out
+        of date or simply wrong, tell us and it gets corrected.
+      </p>
+    </FaqItem>
   );
 }
 
-/* ─────────────────────────────────────────────────────────── faq ── */
+/* ───────────────────────────────────────────────────── questions ── */
 
 const FAQS = [
   [
@@ -820,9 +685,43 @@ const FAQS = [
   ],
 ] as const;
 
-function Faq() {
+/**
+ * One shell for every question, the comparison included.
+ *
+ * It exists because the comparison used to be its own section with its own
+ * heading, its own eyebrow and its own chevron, and folding it in beside four
+ * questions that look nothing like it would have read as two designs meeting
+ * rather than as one list. A shared shell is also the reason the comparison
+ * costs a line rather than a screen: shut, it is exactly as tall as "What
+ * happens to my data?".
+ */
+function FaqItem({ question, children }: { question: string; children: React.ReactNode }) {
   return (
-    <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <details
+      className="group rounded-[var(--r-lg)] border px-5 py-4"
+      style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <summary
+        className="flex cursor-pointer list-none items-center justify-between gap-4 text-md font-semibold"
+        style={{ color: "var(--ink)" }}
+      >
+        {question}
+        <span
+          aria-hidden
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-md leading-none transition-transform group-open:rotate-45"
+          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+        >
+          +
+        </span>
+      </summary>
+      {children}
+    </details>
+  );
+}
+
+function Questions() {
+  return (
+    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-10 md:px-8 md:py-16">
       <Reveal>
         <h2 className="est text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           The questions people ask
@@ -831,27 +730,17 @@ function Faq() {
       <div className="mt-9 flex flex-col gap-3">
         {FAQS.map(([q, a]) => (
           <Reveal key={q}>
-            <details
-              className="group rounded-[var(--r-lg)] border px-5 py-4"
-              style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-sm)" }}
-            >
-              <summary
-                className="flex cursor-pointer list-none items-center justify-between gap-4 text-md font-semibold"
-                style={{ color: "var(--ink)" }}
-              >
-                {q}
-                <span
-                  aria-hidden
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-md leading-none transition-transform group-open:rotate-45"
-                  style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-                >
-                  +
-                </span>
-              </summary>
-              <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{a}</p>
-            </details>
+            <FaqItem question={q}>
+              {/* Capped, because the section is as wide as the comparison table
+                  inside it and a hundred characters to the line is not a width
+                  anybody reads a paragraph at. */}
+              <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{a}</p>
+            </FaqItem>
           </Reveal>
         ))}
+        <Reveal>
+          <Comparison />
+        </Reveal>
       </div>
     </section>
   );
@@ -859,12 +748,24 @@ function Faq() {
 
 /* ──────────────────────────────────────────────────── final call ── */
 
+/**
+ * The close, and the one line the cut sections left behind.
+ *
+ * "How a day with Kodukeel goes" was three cards saying pick a unit, add it in
+ * a press, and show up for fifteen minutes. That is one sentence, and it reads
+ * better as one: it belongs at the point where somebody is deciding, not three
+ * scrolls earlier where it is a feature list with numbers on it.
+ *
+ * The second button went with it. A page this length has its demonstration two
+ * screens up rather than eight, and a "see it first" link at the bottom of a
+ * short page is an invitation to leave the one screen that asks for a decision.
+ */
 function FinalCta() {
   return (
-    <section className="px-5 py-14 md:px-8 md:py-20">
+    <section className="px-5 py-10 md:px-8 md:py-16">
       <Reveal>
         <div
-          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-14 text-center md:px-16 md:py-20"
+          className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-10 text-center md:px-16 md:py-14"
           style={{ background: "var(--accent-soft)" }}
         >
           <span aria-hidden className="wash" style={{ background: "var(--wash-2)", width: 420, height: 420, top: -160, right: -80 }} />
@@ -876,23 +777,16 @@ function FinalCta() {
               Fifteen minutes. Starting today.
             </h2>
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Look up one word, add it, and let the scheduler do the remembering. That is the whole
-              commitment.
+              Look up one word, add it in a press, and let the scheduler do the remembering. That
+              is the whole commitment.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-5">
+            <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
                 Start learning, free <ArrowRight size={17} aria-hidden />
               </ButtonLink>
-              <a
-                href="#cases"
-                className="inline-flex items-center gap-2 px-1 py-2 text-base font-semibold underline underline-offset-4 transition-opacity hover:opacity-70"
-                style={{ color: "var(--ink-2)" }}
-              >
-                <Headphones size={16} aria-hidden /> See it first
-              </a>
             </div>
             <p className="mt-5 text-xs" style={{ color: "var(--ink-3)" }}>
-              Google sign-in · nothing to install · export whenever you like
+              Google sign-in &middot; nothing to install &middot; export whenever you like
             </p>
           </div>
         </div>
