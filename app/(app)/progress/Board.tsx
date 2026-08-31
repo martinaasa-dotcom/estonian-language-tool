@@ -8,11 +8,11 @@ import { Card, SectionTitle, Skeleton } from "@/components/ui";
 /**
  * WHO ELSE IS STUDYING, AT THE BOTTOM OF A PAGE OF CHARTS.
  *
- * Split out of the page for one reason: it is four round trips deep and
+ * Split out of the page for one reason: it is three round trips deep and
  * nothing above it needs a single one of them. Find the class this learner is
- * in, read its name through the relation, then the roster. All of that used to
- * run before the first byte of a page whose first screen is a streak and a
- * heatmap, so a learner waited on a board to see their own numbers.
+ * in, then its name and its roster. All of that used to run before the first
+ * byte of a page whose first screen is a streak and a heatmap, so a learner
+ * waited on a board to see their own numbers.
  *
  * Behind a `Suspense` boundary it is fetched while the rest of the page is
  * already on screen and being read, and a skeleton the size of the panel holds
@@ -29,17 +29,41 @@ import { Card, SectionTitle, Skeleton } from "@/components/ui";
  * alone is offered the way into one rather than a table of usernames.
  */
 export async function Board({ ownerId, now }: { ownerId: string; now: Date }) {
+  /*
+    `select` and not `include`, which is the round trip this panel was carrying.
+
+    `include: { classroom: ... }` reads as part of this query and is a second
+    statement: Prisma fetches the membership, then sends the classroom id back
+    to ask for its name. That is the same fault `lemmasByCardLexeme` exists to
+    remove one layer down, and it is easy to miss here because the two
+    statements go out together and look like one call.
+
+    Nothing needed the name *before* the roster, though, only beside it. So the
+    membership is read for its id alone, and the name comes back in parallel
+    with the roster rather than in front of it: four sequential round trips to
+    three. The relation in `where` stays, because a relation *filter* compiles
+    into this statement rather than another one.
+  */
   const membership = await prisma.classroomMember.findFirst({
     where: { ownerId, classroom: { archived: false } },
-    include: { classroom: { select: { id: true, name: true } } },
+    select: { classroomId: true },
     orderBy: { joinedAt: "desc" },
   });
-  const classBoard = membership ? await classRoster(membership.classroomId, now) : null;
+
+  const [classroom, classBoard] = membership
+    ? await Promise.all([
+        prisma.classroom.findUnique({
+          where: { id: membership.classroomId },
+          select: { id: true, name: true },
+        }),
+        classRoster(membership.classroomId, now),
+      ])
+    : [null, null];
 
   return (
     <section>
       <SectionTitle hint="this week">
-        {classBoard ? membership?.classroom.name : "Class leaderboard"}
+        {classBoard ? classroom?.name : "Class leaderboard"}
       </SectionTitle>
       <Card>
         {classBoard && membership ? (
