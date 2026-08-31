@@ -382,7 +382,7 @@ if (onboarded) {
   check("the reason the wizard asked for was kept",
     (await chosen.getAttribute("aria-checked")) === "true");
   check("and the name they gave is the name the app uses",
-    (await page.getByLabel(/Name shown on the board/i).inputValue()) === "Test");
+    (await page.getByLabel(/Name your class sees/i).inputValue()) === "Test");
   check("and the level check is offered from settings too",
     (await page.locator('a[href="/assess"]').count()) > 0);
 }

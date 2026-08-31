@@ -89,8 +89,16 @@ cost four fifths of the dictionary on the first run and looked like a clean resu
 
 **A gloss is the answer side of a flashcard, so a wrong one is drilled rather than displayed.**
 `npm run audit:glosses` re-runs the parser over every entry's own Wiktionary page and prints
-what disagrees; `--write` applies it. The first systematic pass over A1 to B1 corrected 25 of
-2,164, and four of those were a different word rather than a different sense: `lamp` was being
+what disagrees; `--write` applies it. **The first pass over the whole of `expanded.json`, all
+5,363 entries, came back clean on 2026-08-31**, which is worth writing down because every pass
+before it stopped at B1: A1 to B1 is 2,164 entries and the 3,199 above it had never been asked.
+`.github/workflows/drift.yml` asks weekly and had not fired yet, having landed on main the same
+day after that Monday's cron, so this was its first execution by hand. A clean result over a
+parser this quiet is only worth the words if the check can fail, so it was made to: run the same
+comparison against a translation known to be wrong and all 5,363 flag. What remains is not parser
+drift but a page being wrong about its own word, which is what the report queue is for. The
+first systematic pass over A1 to B1 corrected 25 of 2,164, and four of those were a different
+word rather than a different sense: `lamp` was being
 taught as "random", `oktoober` as "hard hat", `ooper` as "opera house", `rida` as "many, much".
 One cause under all of them. `{{l|en|lamp}}` renders as the word "lamp", `cleanWikitext` deleted
 balanced templates wholesale, and an emptied line sent the picker to the next sense, which on a

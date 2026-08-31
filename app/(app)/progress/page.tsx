@@ -5,7 +5,6 @@ import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
-import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading,
@@ -41,7 +40,7 @@ export default async function ProgressPage() {
   const clock = await learnerDayClock(ownerId);
   const snapshot = await deckSnapshot(ownerId, now);
 
-  const [summary, units, reviews, dueDates, deck, learnerSettings, caseReviews] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -71,7 +70,6 @@ export default async function ProgressPage() {
         lapses: true, reps: true, suspended: true, state: true, lexemeId: true,
       },
     }),
-    readSettings(ownerId, [SETTING_KEYS.leaderboard, SETTING_KEYS.displayName]),
     /*
       Read separately from the charts above, and on purpose.
 
@@ -111,7 +109,6 @@ export default async function ProgressPage() {
   const retention = retentionReading(reviews);
   const cases = caseAccuracy(caseReviews);
   const hour = bestStudyHour(reviews, 20, clock);
-  const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
 
   // Vocabulary reach by CEFR: known words per level, against what the deck holds.
   const byLevel = new Map<string, { total: Set<string>; known: Set<string> }>();
@@ -369,7 +366,7 @@ export default async function ProgressPage() {
           being read, which is what a `Suspense` is for. See ./Board.
         */}
         <Suspense fallback={<BoardSkeleton />}>
-          <Board ownerId={ownerId} now={now} optedIn={optedIn} />
+          <Board ownerId={ownerId} now={now} />
         </Suspense>
       </Stack>
     </Page>

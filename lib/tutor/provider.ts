@@ -170,14 +170,35 @@ export const FREE_OPENROUTER_MODELS = [
  * the OpenRouter balance ran out here, every free model behind it answered 402
  * in the same second because they were one account wearing several hats.
  *
- * Two models each, because a model name that has been retired is walkable
+ * Three models each, because a model name that has been retired is walkable
  * within a provider but ends the chain if it is that provider's only link.
  * Both lists are overridable, and the console's own model list is the thing to
  * check if a name here has moved on.
+ *
+ * EVERY NAME BELOW WAS ASKED THE QUESTION BEFORE IT WAS WRITTEN DOWN, against
+ * each account's own model list and then with a real Estonian one ("Why is it
+ * 'Lugesin raamatut' and not 'Lugesin raamatu'?"). Listed is not the same as
+ * usable and the difference is not visible from a name, which is what the
+ * three rejections are worth recording for.
+ *
+ * `openai/gpt-oss-20b` answers 200 and returns an empty string: it spends the
+ * whole budget in its reasoning field and writes nothing into `content`, so a
+ * learner would watch a stream produce nothing and the chain would count it as
+ * an answer. `qwen/qwen3.6-27b` puts its reasoning in `content` behind a
+ * `<think>` tag, which streams straight to the screen. And Gemini's
+ * `gemini-flash-lite-latest` answers cleanly and got the Estonian wrong,
+ * offering `raamatud` for the partitive, which is the one kind of failure this
+ * app cannot let through to somebody who is learning the case.
+ *
+ * `gemini-flash-latest` answered 503 on the day this was widened, which is not
+ * an argument against it. It is the alias that tracks whatever the current
+ * flash model is, and a provider having a bad minute is the exact thing the
+ * two names behind it are for.
  */
 export const FREE_GROQ_MODELS = [
   "openai/gpt-oss-120b",
   "qwen/qwen3.8-27b",
+  "groq/compound-mini",
 ] as const;
 
 /*
@@ -196,6 +217,7 @@ export const FREE_GROQ_MODELS = [
 export const FREE_GEMINI_MODELS = [
   "gemini-flash-latest",
   "gemini-3.6-flash",
+  "gemini-3.5-flash",
 ] as const;
 
 function configuredModels(raw: string | undefined, fallback: readonly string[]): string[] {
