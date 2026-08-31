@@ -52,16 +52,18 @@ check("diacritic bar inserts õ",
   await eventually(async () => (await page.getByLabel("Search the dictionary").inputValue()) === "sõ"));
 
 // 3 — Keyboard-only review.
-// Review asks in several shapes — type it, pick it, flip it, or lead with the
-// answer on a card you have never seen (app/(app)/review/ReviewSession.tsx) —
-// and which keys carry you through depends on the one in front of you. One
-// path deliberately skips the rating buttons: a *correct* multiple-choice pick
-// auto-advances after 420ms, because a confirmation keystroke on every right
-// answer halves the throughput of the fast mode.
+// Review asks in four shapes — type it, pick it, flip it, or meet a word you
+// have never seen (app/(app)/review/ReviewSession.tsx) — and which keys carry
+// you through depends on the one in front of you. Two of them do not wait for a
+// grade at all: a correct typed answer and a correct pick are marked against
+// the dictionary and move on by themselves, because a confirmation keystroke on
+// the most common outcome in the app halves its throughput.
 //
 // So the claim under test is "the keyboard alone gets from a question to a
-// graded card", not "the Good button appears". Asserting the button made this
-// fail about one run in four, on nothing worse than guessing the right option.
+// graded card", not "a particular button appears". Asserting the button made
+// this fail about one run in four, on nothing worse than guessing the right
+// option; asserting `Good` specifically then failed every run once the app
+// stopped asking who was right on a card it had already marked.
 await page.goto(`${B}/review`, { waitUntil: "networkidle" });
 const before = await page.getByText(/\d+ left/).textContent();
 const graded = async () => Number(/(\d+) graded/.exec(await page.locator("main").innerText())?.[1] ?? 0);
@@ -78,16 +80,33 @@ if (await answerBox.count()) {
 }
 await page.waitForTimeout(900);
 
-const rateable = (await page.getByRole("button", { name: /^Good/ }).count()) > 0;
+// What is on screen now is one of three things: nothing to do because the
+// answer was marked correct and the card has gone; one button, on a miss or on
+// a word being met for the first time, which Enter takes; or the two self-grade
+// buttons of a flip card, where 2 is "Got it".
+const carryOn = (await page.getByRole("button", { name: /Got it, next/ }).count()) > 0;
+const selfGrade = (await page.getByRole("button", { name: /^Got it$/ }).count()) > 0;
 const alreadyGraded = (await graded()) > gradedBefore;
-check("the answer is reachable from the keyboard", rateable || alreadyGraded,
-  rateable ? "rating offered" : alreadyGraded ? "auto-advanced on a correct pick" : "neither");
+check("the answer is reachable from the keyboard", carryOn || selfGrade || alreadyGraded,
+  carryOn ? "one way on offered"
+    : selfGrade ? "self-grade offered"
+      : alreadyGraded ? "marked and advanced on its own" : "neither");
 
-if (rateable) await page.keyboard.press("3");
-const advanced = await eventually(async () =>
-  (await page.getByText(/\d+ left/).textContent()) !== before);
-const after = await page.getByText(/\d+ left/).textContent();
-check("number key grades and advances", advanced, `${before} -> ${after}`);
+if (carryOn) await page.keyboard.press("Enter");
+else if (selfGrade) await page.keyboard.press("2");
+/*
+  Counted on the session's own graded tally rather than on "N left".
+
+  That was only ever a valid proxy because the old driver forced a Good: a
+  grade of Again deliberately puts the card back a few places later in the same
+  session, so the queue does not shrink and the counter does not move. Now that
+  the app marks the answer itself, a deliberately wrong typed answer grades
+  Again, and reading "60 left -> 60 left" as a failure would be the test
+  demanding that a card you just got wrong be taken away from you.
+*/
+const gradedAfter = await eventually(async () => (await graded()) > gradedBefore);
+check("the keyboard gets from a question to a graded card", gradedAfter,
+  `${gradedBefore} graded -> ${await graded()} graded, ${before} -> ${await page.getByText(/\d+ left/).textContent()}`);
 
 // 4 — Tasks
 await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });

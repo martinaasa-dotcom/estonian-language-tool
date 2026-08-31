@@ -229,10 +229,19 @@ await page.waitForURL(/\/review\?scan=/, { timeout: 20_000 });
   helper, because that one goes on to grade and this must stop at the ratings
   in order to count them.
 
-  Nothing is weakened: the assertion below is unchanged and still wants the
-  ordinary session's four ratings, now in every shape rather than one.
+  What the assertion below wants is that a scanned word reaches the *ordinary*
+  review session and can be answered there, rather than some path of its own.
+  It used to say that by counting four rating buttons, which stopped being what
+  the ordinary session looks like: the app marks what it can mark now, so a
+  typed answer and a pick grade themselves, a miss and a first meeting offer one
+  way on, and only a flip card asks the learner, in two options rather than
+  four. Counting buttons was always a proxy; what it stands for is that the
+  session got to the point of taking an answer for this card.
 */
-const ratings = page.getByRole("button", { name: /^(again|hard|good|easy)\b/i });
+// Unanchored at the end on purpose: these buttons carry their keyboard hint
+// inside them, so the accessible name of the one that says "Got it, next" is
+// "Got it, next Space" and a `$` matches none of them.
+const ratings = page.getByRole("button", { name: /^(got it|not yet)/i });
 const reveal = page.getByRole("button", { name: /show answer/i });
 const pick = page.getByText(/Pick the meaning/);
 const typed = page.locator("main input[type='text'], main input:not([type])").first();
@@ -250,9 +259,16 @@ if (await reveal.count()) {
   await typed.fill("zzz");
   await page.keyboard.press("Enter");
 }
-await ratings.first().waitFor({ timeout: 20_000 });
-const rated = await ratings.count();
-check("the page drills through the ordinary review session", rated === 4, `${rated} rating buttons`);
+// Either the session is waiting on the learner, or it marked the answer and
+// moved on by itself. Both are the ordinary session doing its job.
+const gradedNow = async () =>
+  Number(/(\d+) graded/.exec(await page.locator("main").innerText())?.[1] ?? 0);
+const answered = await eventually(
+  async () => (await ratings.count()) > 0 || (await gradedNow()) > 0,
+  { timeoutMs: 20_000 },
+);
+check("the page drills through the ordinary review session", answered,
+  `${await ratings.count()} ways on offered, ${await gradedNow()} graded`);
 const named = await page.getByText("Scan test page", { exact: true }).count();
 check("and the session says which page it is drilling", named > 0);
 
