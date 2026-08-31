@@ -182,8 +182,23 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     `${PATH.length} units, ${LEVELS[0]} to ${LEVELS[LEVELS.length - 1]}`,
     "Free, and it works offline",
   ];
+  /*
+    Centred in the window rather than stacked from the top of it. The height
+    and the reason are in `.hero-screen`; what belongs here is that the top
+    padding is a floor and not the spacing. On a screen tall enough it never
+    applies, because `justify-center` has already put the air above and below
+    the column; on a short laptop or a phone held sideways the column outgrows
+    the box and it is what keeps the headline off the nav.
+
+    There is no bottom padding at all, and that is the balance rather than an
+    omission. The air under the last line is the peek band and the next
+    section's own top padding, which is 56px of page rhythm the hero does not
+    get to spend twice: with a `pb` to match the `pt` the gap under the claims
+    came out 72px wider than the one over the headline at every size, which is
+    a column that reads as dropped rather than placed.
+  */
   return (
-    <section className="mx-auto flex max-w-3xl flex-col items-center px-5 pb-6 pt-14 text-center md:px-8 md:pb-10 md:pt-20">
+    <section className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
       {/*
         No badge over the headline. It read "for everyone who bounced off
         Estonian once already", which is the same sentiment as the heading one
@@ -193,7 +208,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         is a page saying its best line twice, second-best first.
       */}
       <h1
-        className="fade-up text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
+        className="fade-up hero-display font-bold leading-[1.02] tracking-[-0.02em]"
         style={{ color: "var(--ink)", animationDelay: "90ms" }}
       >
         Estonian that
@@ -202,7 +217,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
       </h1>
 
       <p
-        className="fade-up mt-5 max-w-[52ch] text-md leading-relaxed"
+        className="fade-up hero-lead hero-sub max-w-[52ch] leading-relaxed"
         style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
       >
         Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
@@ -223,14 +238,14 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         down and the next thing a reader meets anyway, and the nav carries the
         same jump under "The cases" for anybody who wants to aim.
       */}
-      <div className="fade-up mt-7 w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
-        <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
-          Start learning, free <ArrowRight size={17} aria-hidden />
+      <div className="fade-up hero-action w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
+        <ButtonLink href="/sign-in" variant="primary" size="lg" className="hero-cta w-full sm:w-auto">
+          Start learning for free <ArrowRight size={17} aria-hidden />
         </ButtonLink>
       </div>
 
       <ul
-        className="fade-up mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
+        className="fade-up hero-claims flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
         style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
       >
         {claims.map((t) => (
@@ -860,7 +875,7 @@ function FinalCta() {
             </p>
             <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
-                Start learning, free <ArrowRight size={17} aria-hidden />
+                Start learning for free <ArrowRight size={17} aria-hidden />
               </ButtonLink>
             </div>
             <p className="mt-5 text-xs" style={{ color: "var(--ink-3)" }}>
@@ -881,7 +896,13 @@ function Footer() {
         style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}
       >
         <Wordmark size={26} />
-        <p className="text-center md:text-right">
+        {/*
+          Balanced rather than ragged. The credit is one sentence long enough to
+          wrap on any width, and left to itself it filled the row and dropped
+          "University of Tartu." onto a line of its own, which reads as a line
+          that fell off rather than as the end of a sentence.
+        */}
+        <p className="text-balance text-center md:text-right">
           Forms and example sentences from{" "}
           <a href="https://ekilex.ee" target="_blank" rel="noreferrer" className="underline underline-offset-2">Ekilex</a>
           , Institute of the Estonian Language · CC BY 4.0. English glosses from{" "}
