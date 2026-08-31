@@ -63,6 +63,9 @@ export default async function PairsPage() {
   const deck = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { not: null } },
     select: { id: true, lexemeId: true, cardType: true },
+    // Ordered because it is cut: which words count as in the deck decides which
+    // answers grade a card, and a slice with no order leaves that to the plan.
+    orderBy: { id: "asc" },
     take: 2000,
   });
   const cardFor = new Map<string, string>();

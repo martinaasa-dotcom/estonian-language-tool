@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { unitById } from "@/lib/collections/syllabus";
 import { prisma } from "@/lib/db";
 import { generateCards, type CardType, type GeneratedCard, type LexemeForCards } from "@/lib/srs/cards";
@@ -38,6 +39,53 @@ import { oneEntryPerLemma } from "@/lib/dict/search";
  */
 const INSERT_CHUNK = 500;
 
+/**
+ * Long enough to write a whole level.
+ *
+ * Prisma gives an interactive transaction five seconds by default, which is
+ * ample for one word and not for first run: six units is near a thousand cards
+ * and a level is over two thousand, and on a hosted database those chunked
+ * inserts are the one write in this app that can outlast the default. The
+ * restore path already carries this number for the same reason.
+ */
+const WRITE_TIMEOUT_MS = 120_000;
+
+/** Anything that can run one statement: the client, or a transaction's. */
+type Runner = Pick<Prisma.TransactionClient, "$executeRaw">;
+
+/**
+ * SERIALISES ONE LEARNER'S DECK WRITES AGAINST EACH OTHER.
+ *
+ * "Is it already there" is check-then-act: every path that adds cards reads
+ * what the learner already holds, filters the generated cards against it and
+ * inserts the rest, so two requests inside that gap both see the same deck and
+ * both insert. `addCardsFor` learned this the expensive way and took a lock;
+ * the batched builder here was written from the per-word loop and did not,
+ * which put the fault back at unit scale rather than at word scale. Measured
+ * against a real database: eight concurrent adds of an eighteen-word unit gave
+ * 180 cards where 36 is right, and a learner meets it by double-tapping "Add
+ * to deck" or the last button of first run.
+ *
+ * Keyed on the **owner alone**, which is the half that has to be shared. A key
+ * naming the word, as the per-word path used to, does not exclude a batch that
+ * happens to contain that word, so the two paths would each be safe against
+ * themselves and neither against the other. Two learners are still no
+ * concern of each other's, which is the reason that key was not deployment-wide
+ * in the first place; what it costs is that one person's own two adds queue,
+ * which is milliseconds of work they asked for twice.
+ *
+ * A *transaction* advisory lock, so a connection pooler cannot strand it, and
+ * the blocking form, since the non-blocking one serialises nothing. Every
+ * caller takes exactly one, so there is no ordering between locks to deadlock
+ * on.
+ */
+export async function lockDeck(tx: Runner, ownerId: string): Promise<void> {
+  // Three seconds, the ledger's number for the ledger's reason: if the lock
+  // cannot be had in that time something is wrong further out, and a refusal a
+  // learner can retry beats a request that hangs until the platform kills it.
+  await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`deck:${ownerId}`}, 0))`;
+}
 
 export interface DeckPlan {
   /** Lemmas in the order the units introduce them, each with the cards it earns. */
@@ -191,55 +239,69 @@ export async function addUnitsToDeck(
   const plan = planUnits(unitIds);
   if (plan.lemmas.length === 0) return { added: 0, words: 0 };
 
+  // Outside the lock on purpose: the dictionary is shared reference data, so
+  // this read says nothing about what one learner already holds and holding it
+  // under the lock would only make the window longer.
   const lexemes = await loadLexemes(plan.lemmas);
   if (lexemes.length === 0) return { added: 0, words: 0 };
 
-  const existing = await prisma.card.findMany({
-    where: { ownerId, lexemeId: { in: lexemes.map((l) => l.id) } },
-    select: { lexemeId: true, cardType: true, front: true },
-  });
-
-  const seen = new Set(existing.map((c) => cardKey(c.lexemeId ?? "", c.cardType, c.front)));
-  const fresh: (GeneratedCard & { lexemeId: string })[] = [];
+  const words = lexemes.length;
+  const scheduling = emptyScheduling(new Date());
 
   /*
-    Deduplicated against this run as well as against the deck. Two units can
-    name the same word, and although the types are unioned above, generating
-    per lemma still has to be proof against a card the same lemma produced
-    twice: the insert has no unique constraint to fall back on.
+    READ AND WRITE UNDER ONE LOCK, for the reason `lockDeck` gives above:
+    reading the deck, filtering against it and inserting the rest is
+    check-then-act, and two requests inside that gap both insert.
   */
-  for (const card of buildCards(plan, lexemes)) {
-    const key = cardKey(card.lexemeId, card.cardType, card.front);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    fresh.push(card);
-  }
+  const added = await prisma.$transaction(async (tx) => {
+    await lockDeck(tx, ownerId);
 
-  const words = lexemes.length;
-  if (fresh.length === 0) return { added: 0, words };
+    const existing = await tx.card.findMany({
+      where: { ownerId, lexemeId: { in: lexemes.map((l) => l.id) } },
+      select: { lexemeId: true, cardType: true, front: true },
+    });
 
-  const scheduling = emptyScheduling(new Date());
-  const rows = fresh.map((c) => ({
-    ownerId,
-    lexemeId: c.lexemeId,
-    cardType: c.cardType,
-    front: c.front,
-    back: c.back,
-    hint: c.hint,
-    targetCase: c.targetCase,
-    source,
-    due: scheduling.due,
-    stability: scheduling.stability,
-    difficulty: scheduling.difficulty,
-    state: scheduling.state,
-    learningSteps: scheduling.learningSteps,
-  }));
+    const seen = new Set(existing.map((c) => cardKey(c.lexemeId ?? "", c.cardType, c.front)));
+    const fresh: (GeneratedCard & { lexemeId: string })[] = [];
 
-  let added = 0;
-  for (let i = 0; i < rows.length; i += INSERT_CHUNK) {
-    const result = await prisma.card.createMany({ data: rows.slice(i, i + INSERT_CHUNK) });
-    added += result.count;
-  }
+    /*
+      Deduplicated against this run as well as against the deck. Two units can
+      name the same word, and although the types are unioned above, generating
+      per lemma still has to be proof against a card the same lemma produced
+      twice: the insert has no unique constraint to fall back on.
+    */
+    for (const card of buildCards(plan, lexemes)) {
+      const key = cardKey(card.lexemeId, card.cardType, card.front);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      fresh.push(card);
+    }
+
+    if (fresh.length === 0) return 0;
+
+    const rows = fresh.map((c) => ({
+      ownerId,
+      lexemeId: c.lexemeId,
+      cardType: c.cardType,
+      front: c.front,
+      back: c.back,
+      hint: c.hint,
+      targetCase: c.targetCase,
+      source,
+      due: scheduling.due,
+      stability: scheduling.stability,
+      difficulty: scheduling.difficulty,
+      state: scheduling.state,
+      learningSteps: scheduling.learningSteps,
+    }));
+
+    let written = 0;
+    for (let i = 0; i < rows.length; i += INSERT_CHUNK) {
+      const result = await tx.card.createMany({ data: rows.slice(i, i + INSERT_CHUNK) });
+      written += result.count;
+    }
+    return written;
+  }, { timeout: WRITE_TIMEOUT_MS });
 
   return { added, words };
 }

@@ -14,6 +14,7 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
@@ -651,10 +652,18 @@ function taskView(task: {
  * What is fighting this learner: the words that keep lapsing and the cases they
  * keep missing.
  *
- * BOTH ARE THE ONE CALCULATION EACH. `stickingPoints` and `caseAccuracy` are
- * what Progress and Practice already read, and a home page tallying its own
- * would let one learner read two different numbers for the comitative with
- * nothing in the app to say which was right. That has happened here before.
+ * BOTH ARE THE ONE CALCULATION EACH, AND THE CASES ARE THE ONE QUERY.
+ * `stickingPoints` and `caseAccuracy` are what Progress and Practice already
+ * read, and a home page tallying its own would let one learner read two
+ * different numbers for the comitative with nothing in the app to say which was
+ * right. That has happened here before.
+ *
+ * So the reviews behind the cases come from `caseReviewsFor` rather than from a
+ * query written beside this one. A shared calculation over an unshared input is
+ * not a shared answer: the query this replaced took an arbitrary five thousand
+ * rows of all time with no order between them, which is the exact shape that
+ * module exists to remove, and all-time accuracy answers a different question
+ * from the one a drill button asks.
  *
  * The deck is narrowed in SQL, which is the one thing this does that Progress
  * does not. Progress loads every card the learner owns because it is going to
@@ -677,7 +686,11 @@ async function loadStruggle(ownerId: string) {
         suspended: false,
         OR: [{ lapses: { gte: LAPSE_THRESHOLD } }, { reps: { gte: MIN_REPS } }],
       },
-      orderBy: [{ lapses: "desc" }, { reps: "desc" }],
+      // And on the primary key, because neither lapses nor reps is unique and
+      // this is cut at sixty: a tie at the boundary would otherwise be settled
+      // by whatever the plan did that day, so the panel could name a different
+      // card on two loads of one morning.
+      orderBy: [{ lapses: "desc" }, { reps: "desc" }, { id: "asc" }],
       take: 60,
       select: {
         id: true, front: true, back: true, cardType: true, targetCase: true,
@@ -685,11 +698,7 @@ async function loadStruggle(ownerId: string) {
         lexeme: { select: { lemma: true } },
       },
     }),
-    prisma.review.findMany({
-      where: { ownerId, targetCase: { not: null } },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
+    caseReviewsFor(ownerId),
   ]);
 
   const reviews = deck.length

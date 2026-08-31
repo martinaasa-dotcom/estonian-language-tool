@@ -43,6 +43,11 @@ export default async function GovernmentPage() {
     prisma.card.findMany({
       where: { ownerId, lexemeId: { not: null } },
       select: { id: true, lexemeId: true, cardType: true },
+      // Ordered because it is cut: this decides which verbs count as already in
+      // the deck, and therefore which answers grade a real card. An unordered
+      // slice hands that to the plan, so the same verb could score on one visit
+      // and not on the next.
+      orderBy: { id: "asc" },
       take: 2000,
     }),
   ]);

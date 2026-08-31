@@ -70,9 +70,17 @@ export async function examPool(ownerId: string, level: ExamLevel): Promise<PoolW
   const cards = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { in: lexemes.map((l) => l.id) } },
     select: { id: true, lexemeId: true },
+    // Ordered for the same reason the pool above is. A word usually has two
+    // cards in a deck, recognition and production, and answering in the exam
+    // grades one of them (ADR-016). Which one was whichever Postgres returned
+    // last, so the paper built to mark a sitting could name a different card
+    // from the one the sitting was built with. The first by id, every time.
+    orderBy: { id: "asc" },
   });
   const cardFor = new Map<string, string>();
-  for (const card of cards) if (card.lexemeId) cardFor.set(card.lexemeId, card.id);
+  for (const card of cards) {
+    if (card.lexemeId && !cardFor.has(card.lexemeId)) cardFor.set(card.lexemeId, card.id);
+  }
 
   return lexemes.map((lexeme) => ({
     lexemeId: lexeme.id,
