@@ -77,7 +77,7 @@ export function AnuFab({
           }}
         >
           <header className="flex items-center gap-2.5 border-b px-4 py-3" style={{ borderColor: "var(--rule)" }}>
-            <Mascot size={26} className="shrink-0" blink={false} />
+            <Mascot size={26} className="shrink-0" animate={false} />
             <p className="est flex-1 text-base font-bold" style={{ color: "var(--ink)" }}>Anu</p>
             <button
               type="button"
