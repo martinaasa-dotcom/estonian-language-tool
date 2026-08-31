@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         error:
-          "Reading a photo needs an AI key, and this deployment has none yet. " +
+          "Reading a photo needs an AI key, and this copy of Kodukeel has none yet. " +
           "Everything else (review, the dictionary, typing a word list in by hand) still works.",
       },
       { status: 503 },
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   try {
     payload = (await request.json()) as { image?: unknown };
   } catch {
-    return Response.json({ error: "Malformed request." }, { status: 400 });
+    return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   const decoded = decodeImageDataUrl(payload.image);

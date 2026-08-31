@@ -2416,7 +2416,7 @@ export async function submitExam(input: unknown) {
   const ownerId = await requireUserId();
 
   const parsed = ExamSubmissionSchema.safeParse(input);
-  if (!parsed.success) return { ok: false as const, error: "That submission was malformed." };
+  if (!parsed.success) return { ok: false as const, error: "Something about that submission didn't make sense." };
   const { level, seed, startedAt, responses } = parsed.data;
   if (!isExamLevel(level)) return { ok: false as const, error: "No paper at that level." };
 
@@ -2484,7 +2484,7 @@ export async function submitSuggestion(input: unknown) {
 
   const parsed = SuggestionInput.safeParse(input);
   if (!parsed.success) {
-    return { ok: false as const, error: "That did not arrive in a shape we could read. Nothing was sent." };
+    return { ok: false as const, error: "Something about that didn't make sense. Nothing was sent." };
   }
   const raw = parsed.data;
   if (!isCategory(raw.category)) {
@@ -2571,7 +2571,7 @@ export async function reviewSuggestion(input: unknown) {
 
   const parsed = ReviewInput.safeParse(input);
   if (!parsed.success) {
-    return { ok: false as const, error: "That did not arrive in a shape we could read. Nothing has changed." };
+    return { ok: false as const, error: "Something about that didn't make sense. Nothing has changed." };
   }
   const { id, decision, scope = "group" } = parsed.data;
 

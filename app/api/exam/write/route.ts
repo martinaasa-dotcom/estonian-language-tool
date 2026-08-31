@@ -41,12 +41,12 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     if (typeof body.text !== "string") {
-      return Response.json({ error: "Malformed request." }, { status: 400 });
+      return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
     }
     text = body.text.trim().slice(0, MAX_CHARS);
     if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
   } catch {
-    return Response.json({ error: "Malformed request." }, { status: 400 });
+    return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   if (text.split(/\s+/).filter(Boolean).length < 5) {
