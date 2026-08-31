@@ -752,6 +752,118 @@ check("the photograph itself is never stored", () => {
   );
 });
 
+// ── A headline is read, never believed ───────────────────────────────────────
+
+check("a word off a news feed reaches the screen only as a word the dictionary holds", () => {
+  /*
+    THE SAME RULE AS THE PHOTOGRAPH ABOVE, ON THE SECOND PATH WHERE ESTONIAN
+    THIS APP DID NOT WRITE COMES IN FROM OUTSIDE.
+
+    The dictionary's suggestion row offers words that are in the news this
+    morning, which means a text nobody here wrote is proposing Estonian. It
+    proposes and nothing more: `matchEstonianForm` decides, at the same
+    confidence floor a photographed page has to clear, and what is offered is
+    the dictionary's own headword rather than the spelling the headline used.
+    A feed could carry anything and the worst case is a shorter row.
+  */
+  const suggest = read("lib/dict/suggest.ts");
+  const vouching = between(suggest, "async function vouchNews");
+  assert.match(vouching, /matchEstonianForm\(/, "news words no longer go through the vouched matcher");
+  assert.match(
+    vouching,
+    /lemma: match\.lemma/,
+    "the row carries something other than the lemma the dictionary matched",
+  );
+  assert.equal(
+    /(push|add)\(\s*word\b|lemma: word\b/.test(vouching),
+    false,
+    "a word as the headline spelled it is being carried through to the row",
+  );
+
+  /*
+    And the reading of the feed stays a reading. Nothing under lib/news/ may
+    touch the database or run in a browser: it turns XML into candidate
+    strings and hands them on.
+  */
+  for (const file of sourceFiles("lib/news")) {
+    if (/\.i?test\.tsx?$/.test(file)) continue;
+    const source = read(file);
+    assert.equal(
+      /@\/lib\/db|prisma\./.test(source),
+      false,
+      `${file} reaches the database, so the feed could write to it`,
+    );
+    assert.equal(
+      /"use client"/.test(source),
+      false,
+      `${file} runs in a browser, so a learner's own address would fetch the feed`,
+    );
+  }
+});
+
+check("nothing is suggested that the dictionary has not graded", () => {
+  /*
+    THE ROW OFFERED `aberratsioon` FOR THE WHOLE LIFE OF THE APP.
+
+    It read the first forty rows of an alphabetical list and drew twelve of
+    them, so the invitation to use the dictionary was `aasialane`,
+    `aastatuhat` and `aatomipomm`. Two filters keep that from coming back and
+    they apply to all three sources: a word carries a CEFR level, which is the
+    record that the course or the graded seed vouched for it rather than the
+    tail of the Wiktionary expansion, and it is a noun, a verb or an
+    adjective, which are the entries with a paradigm for the chip to open.
+
+    Asserted against every read of the table rather than against one query,
+    because a fourth source added without both filters is exactly how this
+    comes back.
+  */
+  const suggest = read("lib/dict/suggest.ts");
+  assert.match(suggest, /const POS = \[/, "the suggestion row stopped naming which parts of speech it offers");
+
+  for (const read_ of suggest.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
+    const window = suggest.slice(read_.index, read_.index + 400);
+    assert.match(window, /cefr/, "a suggestion query does not constrain the CEFR level");
+    assert.match(window, /pos/i, "a suggestion query does not constrain the part of speech");
+  }
+
+  /*
+    The news source filters in TypeScript rather than in SQL, because the
+    matcher has already returned the row. Both halves still have to be there.
+  */
+  const news = between(suggest, "async function vouchNews");
+  assert.match(news, /match\.cefr/, "a news word is offered without a level behind it");
+  assert.match(news, /POS\.includes\(match\.pos\)/, "a news word is offered whatever its part of speech");
+});
+
+check("the seasonal row names units of the course, never words of its own", () => {
+  /*
+    A hand-written seasonal word list would be this app writing Estonian
+    (ADR-005), and the first misspelling would ship in silence. So the
+    calendar names unit ids and the words come out of the syllabus, where a
+    lemma is a request the Ekilex harvest either honoured or reported.
+    `topical.test.ts` checks every id is a real unit; this checks the table
+    has not started carrying words instead.
+  */
+  const topical = read("lib/collections/topical.ts");
+  const table = between(topical, "export const THEMES");
+  for (const units of table.matchAll(/units: \[([^\]]*)\]/g)) {
+    for (const id of units[1]!.split(",")) {
+      const trimmed = id.trim().replace(/^"|"$/g, "");
+      if (!trimmed) continue;
+      assert.equal(
+        /[\u00C0-\u024F]/.test(trimmed),
+        false,
+        `${trimmed} is spelled like a word rather than like a unit id`,
+      );
+    }
+  }
+  assert.match(
+    topical,
+    /import \{ SYLLABUS \} from "\.\/syllabus"/,
+    "the seasonal table stopped reading its words out of the course",
+  );
+});
+
 // ── The model is named from the run that answered ────────────────────────────
 
 check("the chat says which model actually replied", () => {

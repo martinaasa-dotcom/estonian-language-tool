@@ -11,7 +11,7 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 21, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The core flows", { floor: 21 });
+const { check, absent, done } = suite("The core flows", { floor: 24 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -201,7 +201,64 @@ check("shared diacritic bar types into the focused field",
   await eventually(async () => (await genField.inputValue()) === "sä"),
   `got "${await genField.inputValue()}"`);
 
-// 10 — B1+ coverage, with verb government
+// 10 — The suggestion row, which is the empty state's whole answer
+/*
+  This row read the first forty rows of an alphabetical list and drew twelve,
+  so for the life of the app it offered `aasialane`, `aastatuhat` and
+  `aberratsioon` to everybody, every day, and the daily skip made it look as
+  though it moved. Three things are worth driving a browser for, and none of
+  them is visible to a unit test: that the row says why it chose these words,
+  that a chip actually opens the entry it names, and that the row moves.
+*/
+await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+const rowOf = async () =>
+  (await page.locator('ul[aria-labelledby="try-these"] button').allInnerTexts()).map((t) => t.trim());
+
+const first = await rowOf();
+if (first.length === 0) {
+  absent(3, "a seeded dictionary, which is what the suggestion row draws from");
+} else {
+  const label = (await page.locator("#try-these").innerText()).trim();
+  check("the row says why it chose these words", label.length > 3, `label "${label}"`);
+
+  /*
+    Not sorted. That is the fault stated exactly: the old row was always the
+    alphabetical head, and twelve words landing in order by chance is one in
+    twelve factorial.
+  */
+  const sorted = [...first].sort((a, b) => a.localeCompare(b, "et"));
+  check("the row is not the top of an alphabetical list",
+    first.join("|") !== sorted.join("|"), first.slice(0, 3).join(", "));
+
+  /*
+    Six loads rather than two. One repeat is possible when a source has a
+    small pool; six identical rows is the row being frozen, which is the thing
+    that was wrong.
+  */
+  const rows = [first.join("|")];
+  for (let i = 0; i < 5; i += 1) {
+    await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+    rows.push((await rowOf()).join("|"));
+  }
+  check("the row moves between visits", new Set(rows).size > 1, `${new Set(rows).size} of 6 differ`);
+
+  await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+  const word = (await rowOf())[0];
+  await page.locator('ul[aria-labelledby="try-these"] button').first().click();
+  /*
+    Waiting for the URL rather than for the network. A chip navigates through
+    the router, so the page is already idle when the click lands and
+    `waitForLoadState` returns before anything has happened.
+  */
+  const arrived = await page
+    .waitForURL((url) => decodeURIComponent(url.href).includes(`q=${word}`), { timeout: 10000 })
+    .then(() => true, () => false);
+  check("a suggested word opens its own entry",
+    arrived && (await page.getByRole("heading", { name: word, exact: true }).count()) > 0,
+    `chip "${word}" landed on ${decodeURIComponent(page.url())}`);
+}
+
+// 11 — B1+ coverage, with verb government
 await page.goto(`${B}/dictionary?q=sõltuma`, { waitUntil: "networkidle" });
 check("B1 verb carries its government",
   (await page.getByText(/elative/i).count()) > 0);

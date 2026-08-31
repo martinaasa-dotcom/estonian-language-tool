@@ -263,6 +263,41 @@ exactly as the cloze exercise treats a pasted passage. `Scan` holds the confirme
 no column an image could go in; the invariant suite fails if one appears, and if the scan route ever
 writes to the database at all. A picture of somebody's homework has their name at the top of it.
 
+**A word offered in the dictionary's suggestion row is worth the click, and the dictionary is what
+decides that.** The row read `ORDER BY lemma ASC` with a twelve-row window inside the first forty,
+so the app spent its whole life inviting people to look up `aasialane`, `aastatuhat`, `aatomipomm`
+and `aberratsioon`. The skip moved by one row a day and never left the letter A, which is why it
+looked alive and was not. Three sources now answer instead, one per render, in an order rolled per
+render so the two behind the leader are not dead code: words off the front page of the news, words
+for the time of year, and a random draw over the graded dictionary that is always available. The
+row says which, because words that change without saying why read as noise, and a source has to
+fill most of the row on its own rather than be topped up from another, since a caption true of two
+thirds of what is under it is worse than a shorter row. Two filters hold for all three and are why
+`aberratsioon` cannot come back: a word carries a CEFR level, which is the record that the course
+or the graded seed vouched for it rather than the tail of the Wiktionary expansion, and it is a
+noun, a verb or an adjective, which are the entries with a paradigm for the chip to open. (ADR-024.)
+
+**A headline is read from a feed; whether it is offered is decided by the dictionary.** The same
+sentence as the photograph above, on the second path where Estonian this app did not write comes in
+from outside, and the same gate: `lib/news/` produces candidates and `matchEstonianForm` decides, at
+the confidence floor a scanned page has to clear. What reaches the screen is the dictionary's own
+headword, never the spelling the headline used, so `ettepaneku` is offered as `ettepanek` with a
+paradigm behind it and nothing a news feed wrote survives. Nothing of the learner's goes out with
+the request either: it asks for a front page and would ask for the same one if nobody were signed
+in, which is why the feed is not a recipient on `/privacy` and adding it there would make a page
+about personal data harder to read. Cached for an hour, single-flighted, 1.5 seconds, and every
+failure silent, because two sources sit behind it; a feed that will not answer is written down as a
+miss, which is the rule the seed and `enrichFromEkilex` each learned the expensive way. Nothing
+under `lib/news/` may touch the database or run in a browser, asserted.
+
+**The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
+is a calendar of Estonia's year, and every window in it names unit ids from
+`lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request
+the Ekilex harvest either honoured or reported. A hand-written seasonal word list would be this app
+writing Estonian and the first misspelling would ship in silence (ADR-005). The table is checked
+both ways: `topical.test.ts` fails on an id that is not a unit and on a year with a day in it that
+no window covers, and the invariant fails on an entry spelled like a word rather than like an id.
+
 **Never let the correctness of a form be decided by a model.** The writing exercise checks the
 required form by string comparison against the dictionary *before* any call, so a hallucination
 cannot mark a right answer wrong and a missing key does not break the exercise. Keep that ordering.

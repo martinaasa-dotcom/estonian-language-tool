@@ -6,12 +6,16 @@ import { backfillClozeCards } from "@/lib/srs/backfill";
 import { ekilexConfigured } from "@/lib/ekilex/client";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { resolveProvider } from "@/lib/tutor/provider";
+import { suggestWords, type Suggestions } from "@/lib/dict/suggest";
 import { Page } from "@/components/ui";
 import { DictionaryClient, type EntryView } from "./DictionaryClient";
 
 export const metadata = { title: "Dictionary" };
 
 export const dynamic = "force-dynamic";
+
+/** A search is showing, so there is no row to fill and nothing to choose for it. */
+const EMPTY_SUGGESTIONS: Suggestions = { label: "", source: "level", words: [] };
 
 export default async function DictionaryPage({
   searchParams,
@@ -51,13 +55,13 @@ export default async function DictionaryPage({
 
   const [total, suggestions, starred] = await Promise.all([
     prisma.lexeme.count(),
-    q ? Promise.resolve([]) : prisma.lexeme.findMany({
-      where: { pos: { in: ["NOUN", "VERB"] } },
-      orderBy: { lemma: "asc" },
-      take: 12,
-      skip: Math.floor(Date.now() / 86400000) % 40,
-      select: { lemma: true },
-    }),
+    /*
+      Only for the landing view, like the starred list below it. What used to
+      be here was a twelve-row window into the first forty rows of an
+      alphabetical list, which is why this app spent its life offering
+      `aberratsioon` to beginners. `lib/dict/suggest.ts` has the full account.
+    */
+    q ? Promise.resolve(EMPTY_SUGGESTIONS) : suggestWords(ownerId),
     // Starred words are only worth fetching for the landing view, which is the
     // one place they can be shown; a star that is never surfaced is a dead feature.
     q ? Promise.resolve([]) : prisma.starredWord.findMany({
@@ -85,7 +89,7 @@ export default async function DictionaryPage({
         hits={hits}
         entry={entry}
         matchedAs={matchedAs}
-        suggestions={suggestions.map((s) => s.lemma)}
+        suggestions={suggestions}
         starred={starred.map((s) => ({ lemma: s.lexeme.lemma, translation: s.lexeme.translation }))}
       />
     </Page>

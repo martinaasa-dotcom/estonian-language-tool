@@ -529,3 +529,44 @@ strand anyone using an English grammar or a Wiktionary page and buys nothing; re
 to Estonian, which reads better in a URL and would rewrite 83 syllabus entries and break every
 bookmark for a slug; and inventing an Estonian term where a course does not have one, which is the
 same failure as inventing a form, one level up.
+
+
+**ADR-024: The dictionary's suggestion row is chosen for the moment, and the dictionary decides
+which words it is allowed to choose.**
+*Context:* the empty state of `/dictionary` offers a dozen words to look up, and it is the answer to
+"what is this for", asked by somebody who has typed nothing. It read `ORDER BY lemma ASC` with a
+twelve-row window inside the first forty, so for the whole life of the app that answer was
+`aasialane`, `aastatuhat`, `aatomipomm` and `aberratsioon`. The skip moved by one row a day and
+never left the letter A, which is why nobody noticed it was not moving. Three of those four carry no
+CEFR level at all: they arrived in the tail of the Wiktionary expansion rather than out of the
+course, and nobody learning Estonian has needed the word for an aberration. *Decision:* three
+sources, one per render, in a rotating order, with two filters that every source obeys.
+`lib/news/` reads the front page of the national broadcaster and produces candidate words;
+`lib/collections/topical.ts` maps the day of the year to units of the course; and a random draw over
+the graded dictionary is the backstop that is always available, so the row is never empty. The order
+is rolled per render rather than fixed, because a fixed order means the sources behind the leader
+are only ever seen when the leader fails, and a seasonal row nobody sees in a year is a feature that
+rots. A source has to fill most of the row on its own or it is passed over: a row labelled "In the
+news today" whose last four words came from a random draw would be a caption that is true of two
+thirds of what is under it. Every row says which of the three it is, because words that change
+without saying why read as noise. *The news source is ADR-021 again, on a second path where Estonian
+this app did not write arrives from outside.* A headline proposes; `matchEstonianForm` decides, at
+the same confidence floor a photographed page has to clear; and what is offered is the dictionary's
+own headword, never the spelling the headline used, so `ettepaneku` becomes `ettepanek` with a whole
+paradigm behind it. Nothing of the learner's goes out with the request, which is why the feed is not
+a recipient on `/privacy`: it asks for a front page and would ask for the same one if nobody were
+signed in. It is cached for an hour, single-flighted, given 1.5 seconds, and every failure is
+silent, because two sources sit behind it. A feed that will not answer is written down as a miss for
+ten minutes, which is the rule the seed and `enrichFromEkilex` both learned the expensive way.
+*The two filters are why `aberratsioon` cannot come back.* A suggested word carries a CEFR level,
+which is not a guess about difficulty but the record that the course or the graded seed vouched for
+it; and it is a noun, a verb or an adjective, which are the entries with a paradigm behind them, and
+a paradigm is what the chip opens. *Consequences:* the seasonal table names unit ids and never
+lemmas, so no Estonian is authored for it and a misspelling cannot ship (ADR-005); a word is offered
+inside the band around the level the learner placed at, so a beginner is not sent to a C1 headword;
+and the row changes when somebody comes back to it, which is the whole of what makes it worth a
+second look. *Rejected:* a plain `ORDER BY random()` with no filters, which fixes the alphabet and
+keeps `aberratsioon`; asking a model for topical words, which is ADR-005 with extra steps; topping a
+thin source up from the random draw, which buys four chips and spends the caption; and putting the
+feed on the recipients list, which would make a page about personal data harder to read by naming a
+service that receives none of it.

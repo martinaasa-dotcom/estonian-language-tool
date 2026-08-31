@@ -19,6 +19,7 @@ import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
 import { SuggestFix } from "@/components/SuggestFix";
 import { NO_VALUE } from "@/lib/copy/values";
+import type { Suggestions } from "@/lib/dict/suggest";
 
 export interface EntryForm {
   formType: string;
@@ -72,7 +73,14 @@ export function DictionaryClient({
   entry: EntryView | null;
   /** Set when the query was an inflected form — "inessive (seesütlev) of tuba". */
   matchedAs: string | null;
-  suggestions: string[];
+  /**
+   * A dozen words worth looking up, and the line saying why these ones.
+   *
+   * The label is doing real work rather than decorating: the words change on
+   * every visit now, and a row that changes without saying why reads as
+   * random. "In the news today" earns the same twelve chips a second look.
+   */
+  suggestions: Suggestions;
   /** Words this learner has starred — shown on the landing view. */
   starred: { lemma: string; translation: string }[];
   /** Whether Anu can be asked to translate an example sentence. */
@@ -157,21 +165,26 @@ export function DictionaryClient({
         </div>
       )}
 
-      {!initialQuery && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="label-xs" style={{ color: "var(--ink-3)" }}>Try</span>
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => go(s)}
-              lang="et"
-              className="est press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
-              style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
-            >
-              {s}
-            </button>
-          ))}
+      {!initialQuery && suggestions.words.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p id="try-these" className="label-xs" style={{ color: "var(--ink-3)" }}>
+            {suggestions.label}
+          </p>
+          <ul aria-labelledby="try-these" className="flex flex-wrap gap-2">
+            {suggestions.words.map((s) => (
+              <li key={s}>
+                <button
+                  type="button"
+                  onClick={() => go(s)}
+                  lang="et"
+                  className="est press rounded-full px-4 py-1.5 text-base transition-ui hover:-translate-y-px"
+                  style={{ background: "var(--surface)", color: "var(--ink-2)", boxShadow: "var(--shadow-sm)" }}
+                >
+                  {s}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
