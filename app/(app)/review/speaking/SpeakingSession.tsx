@@ -12,7 +12,7 @@ import { Mascot } from "@/components/brand";
 import { SpeakPair } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { xpForRating } from "@/lib/gamification/xp";
-import { RATINGS, type RatingValue } from "@/lib/srs/scheduler";
+import { SELF_GRADES, type RatingValue } from "@/lib/srs/scheduler";
 
 export interface SpeakingCard {
   cardId: string;
@@ -231,18 +231,22 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
               I said it, show me
             </Button>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {RATINGS.map((r) => (
+            /* Two, from the one table in lib/srs/scheduler.ts. Nothing here can
+               mark a recording (ADR-018), so the learner is the judge, and the
+               four they were offered asked them to sort their own pronunciation
+               into a scheduler's grades. Whether it sounded like the native
+               rendering has two answers. */
+            <div className="grid grid-cols-2 gap-2.5">
+              {SELF_GRADES.map((g) => (
                 <button
-                  key={r.value}
+                  key={g.rating}
                   type="button"
                   disabled={busy}
-                  onClick={() => void submit(r.value as RatingValue)}
-                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                  style={{ background: TONE_SOFT[r.value], color: TONE[r.value] }}
+                  onClick={() => void submit(g.rating)}
+                  className="press flex items-center justify-center rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
+                  style={{ background: TONE_SOFT[g.rating], color: TONE[g.rating] }}
                 >
-                  <span className="text-base font-bold">{r.label}</span>
-                  <span className="text-2xs opacity-80">{r.hint}</span>
+                  <span className="text-base font-bold">{g.label}</span>
                 </button>
               ))}
             </div>

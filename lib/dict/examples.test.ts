@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  mergeExamples, parseExamples, sentenceContaining, sentenceWords, serialiseExamples, usableExamples,
+  mergeExamples, parseExamples, sentenceContaining, sentenceWords, serialiseExamples, splitOnForm,
+  teachingSentence, usableExamples,
   type Example,
 } from "./examples";
 
@@ -125,5 +126,89 @@ describe("sentenceContaining", () => {
   it("returns nothing for an empty form or an empty list", () => {
     expect(sentenceContaining([ex("Ta istub toas.")], "  ")).toBeNull();
     expect(sentenceContaining([], "toas")).toBeNull();
+  });
+});
+
+describe("teachingSentence", () => {
+  const examples = [
+    ek("Kohv on laual."),
+    ek("Jõin tassi kohvi.", "I drank a cup of coffee."),
+    ek("Ma ei taha täna kohvi juua."),
+  ];
+
+  it("prefers the sentence carrying the form the card is about to ask for", () => {
+    // Ranked above the lemma on purpose: a learner meeting the partitive
+    // learns nothing from a sentence carrying the nominative.
+    const found = teachingSentence(examples, ["kohvi", "kohv"]);
+    expect(found?.form).toBe("kohvi");
+    expect(found?.example.et).toBe("Jõin tassi kohvi.");
+  });
+
+  it("falls back to the lemma when nothing carries the asked form", () => {
+    const found = teachingSentence(examples, ["kohvile", "kohv"]);
+    expect(found?.form).toBe("kohv");
+    expect(found?.example.et).toBe("Kohv on laual.");
+  });
+
+  it("still offers a sentence when neither appears, and marks nothing in it", () => {
+    // Worth showing: seeing a word inflected in a way you did not expect is
+    // how anybody works out that Estonian inflects. Pointing at a word that is
+    // not the one being taught would be worse than pointing at nothing.
+    const found = teachingSentence([ek("Ilm on täna ilus.")], ["kohvi", "kohv"]);
+    expect(found?.form).toBeNull();
+    expect(found?.example.et).toBe("Ilm on täna ilus.");
+  });
+
+  it("has nothing to say about a word with no usable examples", () => {
+    expect(teachingSentence([], ["kohv"])).toBeNull();
+    expect(teachingSentence([ek("Ei.")], ["kohv"])).toBeNull();
+  });
+
+  it("skips blank and repeated candidates rather than matching on them", () => {
+    const found = teachingSentence(examples, [null, "", "kohvi", "kohvi"]);
+    expect(found?.form).toBe("kohvi");
+  });
+});
+
+describe("splitOnForm", () => {
+  it("marks the form and leaves the rest of the sentence alone", () => {
+    expect(splitOnForm("Jõin tassi kohvi.", "kohvi")).toEqual([
+      { text: "Jõin tassi ", match: false },
+      { text: "kohvi", match: true },
+      { text: ".", match: false },
+    ]);
+  });
+
+  it("marks whole words only, so a stem inside a longer form is left alone", () => {
+    // The same rule sentenceContaining is built on: `toa` sits inside `toas`,
+    // and marking it there would point at a case the sentence does not carry.
+    expect(splitOnForm("Toas on soe.", "toa")).toEqual([{ text: "Toas on soe.", match: false }]);
+  });
+
+  it("holds the boundary on Estonian's own letters", () => {
+    // `\b` is defined on ASCII word characters, so õ is a boundary to it and
+    // a naive pattern would match the tail of a longer word.
+    expect(splitOnForm("Sõidan tööle.", "sõida")).toEqual([{ text: "Sõidan tööle.", match: false }]);
+    expect(splitOnForm("Ma sõidan.", "sõidan")).toEqual([
+      { text: "Ma ", match: false },
+      { text: "sõidan", match: true },
+      { text: ".", match: false },
+    ]);
+  });
+
+  it("marks every occurrence, whatever the case", () => {
+    const runs = splitOnForm("Kohv on kohv.", "kohv");
+    expect(runs.filter((r) => r.match).map((r) => r.text)).toEqual(["Kohv", "kohv"]);
+  });
+
+  it("returns the whole sentence unmarked when there is no form to mark", () => {
+    expect(splitOnForm("Ilm on ilus.", null)).toEqual([{ text: "Ilm on ilus.", match: false }]);
+  });
+
+  it("treats a form with regex characters in it as text", () => {
+    expect(splitOnForm("Üle-eestiline võistlus.", "üle-eestiline")).toEqual([
+      { text: "Üle-eestiline", match: true },
+      { text: " võistlus.", match: false },
+    ]);
   });
 });

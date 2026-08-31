@@ -2,7 +2,9 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
+import { parseExamples, teachingSentence } from "@/lib/dict/examples";
 import { parseItems } from "@/lib/scan/items";
+import { inTeachingOrder } from "@/lib/srs/cards";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
@@ -27,7 +29,13 @@ export default async function ReviewPage({
   const settings = await readSettings(ownerId, [SETTING_KEYS.reviewMode]);
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
 
-  const include = { lexeme: { select: { lemma: true, translation: true, pos: true } } } as const;
+  // `examples` rides along because a card's first outing is a teaching screen
+  // and a word taught without a sentence is a word taught as a label. The
+  // column is a handful of short sentences, and only the one that gets shown
+  // crosses to the client (see `introFor`).
+  const include = {
+    lexeme: { select: { lemma: true, translation: true, pos: true, examples: true } },
+  } as const;
 
   // A drill ignores scheduling: the point is to attack one weakness — a case the
   // heatmap found, or the unit just added — not to review whatever is due.
@@ -118,22 +126,59 @@ export default async function ReviewPage({
     include,
   });
 
+  // Ordered by lexeme as well as by date so a word's cards stay together: they
+  // share one `createdAt`, so date alone leaves them tied and the take can
+  // interleave two words. `inTeachingOrder` then settles the order *within* a
+  // word, which is what stops a conjugation card being somebody's first sight
+  // of a verb.
   const fresh = await prisma.card.findMany({
     where: { ownerId, suspended: false, state: 0 },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
     take: Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)),
     include,
   });
 
-  const cards = await withChoices([...due, ...fresh].map(toReviewCard));
+  const cards = await withChoices([...due, ...inTeachingOrder(fresh)].map(toReviewCard));
   const totalCards = await prisma.card.count({ where: { ownerId } });
 
   return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
 }
 
 type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
-  lexeme: { lemma: string; translation: string; pos: string } | null;
+  lexeme: { lemma: string; translation: string; pos: string; examples: string } | null;
 };
+
+/**
+ * What a first meeting with a word shows.
+ *
+ * Assembled here rather than in the browser for two reasons: the sentence is
+ * picked out of a column holding up to eight of them and only the chosen one
+ * needs to cross the wire, and `teachingSentence` is the same function the
+ * grammar pages and the lesson use, so a word is introduced the same way
+ * wherever it is met.
+ *
+ * Every string in here came out of the dictionary. Nothing is written, and
+ * nothing is derived (ADR-005).
+ */
+function introFor(c: CardRow): ReviewCard["intro"] {
+  if (!c.lexeme) return null;
+
+  // The form the card is about to ask for comes first, then the lemma. On a
+  // recognition card the front *is* the lemma, and on a gap-fill the front is a
+  // sentence with a hole in it and would match nothing, which is why this asks
+  // the card what it is rather than reading whichever side happens to be
+  // Estonian.
+  const asked = c.cardType === "RECOGNITION" ? c.front : c.back;
+  const found = teachingSentence(parseExamples(c.lexeme.examples), [asked, c.lexeme.lemma]);
+
+  return {
+    lemma: c.lexeme.lemma,
+    gloss: c.lexeme.translation,
+    sentence: found
+      ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
+      : null,
+  };
+}
 
 function toReviewCard(c: CardRow): ReviewCard {
   return {
@@ -145,6 +190,9 @@ function toReviewCard(c: CardRow): ReviewCard {
     targetCase: c.targetCase,
     lemma: c.lexeme?.lemma ?? null,
     isNew: c.state === 0,
+    // Only on a card that has never been seen. Every other card in the session
+    // would carry a sentence nothing renders.
+    intro: c.state === 0 ? introFor(c) : null,
     choices: null,
     scheduling: {
       due: c.due.toISOString(),
