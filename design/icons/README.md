@@ -334,3 +334,84 @@ just a dark bird.
 **`08f` is a lockup rather than an icon.** Bear plus cornflower is the most branded thing in nine
 rounds and the busiest; at 20px the bloom is a smudge. It belongs on a splash screen or a store
 listing, not a home screen.
+
+## Round ten: the name, and the bear inside it
+
+Nine rounds drew the country, the language, the landscape and the animals, and not one of them drew
+the name. Sixteen in `design/icons/round10/`, from `node scripts/make-icon-round10.mjs`. Every hex is
+a token out of `app/globals.css` and nothing else.
+
+**Kodukeel is a compound, and the second half is the pun the whole app is named on.** *Kodu* is
+home. *Keel* is a tongue, a language, and the string of an instrument, all at once, and the compound
+is what a mother tongue is called here: the language spoken at home. Ten marks are built on that,
+one reading each, and the good ones carry both halves in a single figure rather than setting a house
+next to a symbol for speech.
+
+`10a` is a kannel, which is a soundbox shaped like a gable with strings across it. `10b` is the
+house with a tail on it, so the home is the thing speaking. `10c` is a string stretched between two
+posts and pulled up into a peak, where the roof and the string are one line. `10d` is the literal
+reading, language living inside the home. `10e` is the hearth, a flame being a tongue in Estonian
+as in English. `10f` puts the tilde on the roof. `10g` is the threshold. `10h` gives round one's
+surviving roof the other half of the name. `10i` draws the whole thing in one unbroken stroke,
+because the compound is one word. `10j` is `10b` inverted, the speech being the field and the home
+inside it.
+
+**Three misread the same way and the cause was one thing.** `10a` and `10d` both came back as a
+document, because a house with horizontal lines in it is a note whatever the lines are meant to be.
+`10d` keeps that reading, since a note is not a bad thing for a language app to be, and its lines are
+ragged with a short last one so it commits to being text. `10a` had to stop being it: a nut down one
+side and a bridge slanting across the strings is what makes a set of parallel lines an instrument
+rather than a paragraph. It is the same lesson as the furrows in round five, where parallel was a
+barcode and converging was a field.
+
+**A bubble drawn wider than the tile is not a bubble.** `10j` and `10n` both had one running off both
+edges, which crops to a band, and the launcher mask then took what was left. Both are inset now. It
+is worth writing down because the tile is 64 wide and a bubble wants to be wide, so the shape argues
+for exactly the thing that breaks it.
+
+**`10f` is the second attempt at that slot and the first is cut.** A house with a speech bubble
+beside it is two objects in a 64 box, which has failed every time it has been tried in this
+project, and the circular mask removed the bubble outright. What replaced it uses the tilde, the one
+thing that survived round one on the argument that it reads as Estonian without reading as anybody's
+masthead, and as a roof ridge it is three things in one line: the diacritic, a string seen side on,
+and the roof. That took two attempts of its own. **Filling the wave hid it**, because a silhouette
+whose top edge undulates is a blob: there is no second edge to read the undulation against. Stroking
+the tilde across a flat-topped body fixed it and broke something else, since a pale square with a
+dark square in the middle of it is a save icon, so the door is narrow and runs to the floor.
+
+**`10g` was a chapel** until the arch came out of it. An arched opening over a plinth is a nave or a
+bank; a plain doorway with the line clear of the wall is a threshold. It is also the one mark here
+carrying only half the name, and it is in the set as the plainest thing the name can mean.
+
+**The risk on `10e` does not go away.** A flame inside a house is a hearth or it is a house fire, and
+which one a person sees is not something the drawing can settle. Shrinking the flame and sitting it
+on the floor moves it toward hearth. It is a candidate with a caveat rather than a solved mark.
+
+### The bear
+
+Review kept the karu across two rounds and picked the variant with a mouth, so **every bear here has
+one**, which reverses the default set in round nine. That default was a caution rather than a
+finding: a curve under a nose is the grammar of the mark being replaced. Having now seen both, the
+mouth is what makes this bear read as an animal somebody drew rather than as a geometric exercise.
+The caution still stands for whatever ships, and it is answered by everything around the mouth: no
+brows, no blush, and a head sitting inside a piece of architecture rather than floating on a
+coloured tile.
+
+`10k` and `10l` put it under a roof, light ground and dark. The eaves come down past the ears rather
+than clearing them, because round one's roof floated above its own mark with nothing tying the two
+together and read as a chevron over a doughnut. `10m` puts it inside the house rather than under it,
+clipped to the doorway, so it is a thing seen through an opening rather than a sticker on a tile.
+`10n` makes the bear the thing being said. `10p` is the bear saying it, with the home as the shape
+of the word.
+
+**`10o` is the tightest fusion in the round**: the roof has no eaves of its own, because the ears are
+where it ends. It took a second pass. Drawn short it was a paper hat sitting on the head; wider and
+lower it visibly runs into the ears, which is the entire point of the mark and the only thing that
+makes it different from `10k`.
+
+**`10p` needed the bubble to stop being two shapes.** A house drawn inside a bubble at that size is a
+blob inside a blob. The bubble *is* the house, which is one shape, and its tail lands on the bear's
+ear, which is where a tail should land. It is still the busiest bear here and the first to go at
+20px.
+
+Still nothing adopted.
