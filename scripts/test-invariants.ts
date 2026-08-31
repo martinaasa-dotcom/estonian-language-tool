@@ -167,7 +167,7 @@ check("Anu's worked examples are sourced from a table the dictionary checks", ()
 
     `CLOSED_CLASS_EXAMPLES` is the honest exception: a pronoun's oblique case,
     a demonstrative and a particle, none of which the dictionary holds a
-    paradigm for at all, so they cannot be checked the same way and stay
+    form for at all, so they cannot be checked the same way and stay
     hand-verified. Naming the list here, imported rather than retyped, is what
     stops a sixth word joining it silently.
   */
@@ -229,7 +229,7 @@ check("a withheld note claims Estonian only when it caught Estonian", () => {
     and they are not the same claim. A word carrying one of õäöüšž is Estonian
     whatever else it is. A word of five letters or more that nothing supplied
     is `looksInflected`'s guess, deliberately biased towards withholding, and
-    on `/api/exam/write` it is handed no glosses, no paradigm and an allowlist
+    on `/api/exam/write` it is handed no glosses, no forms and an allowlist
     of the learner's own text, so an English word Anu quoted back is the thing
     it usually catches. Both drop the note, which is the safe error either way.
 
@@ -1175,7 +1175,7 @@ check("an empty cell goes through NO_VALUE, never a literal", () => {
 
     Ten call sites used an em dash to mean "no value here". A mechanical sweep
     of reader copy cannot tell that from a dash used as punctuation, so both
-    times it rewrote them into `", "`: a bare comma sitting in a paradigm cell
+    times it rewrote them into `", "`: a bare comma sitting in a table of forms
     where a form should be. `readerCopy.test.ts` passes on that happily,
     because a comma is not a dash, which is exactly why the rule needs its own
     assertion rather than relying on the other one.
@@ -1510,7 +1510,7 @@ check("nobody opts back out of the wrapping default", () => {
         found[1],
         "anywhere",
         `${file} sets overflow-wrap to ${found[1]}, which takes the containment default off ` +
-        "for everything under it. The exemption for a paradigm is on `table` in app/globals.css.",
+        "for everything under it. The exemption for a table of forms is on `table` in app/globals.css.",
       );
     }
     assert.equal(
@@ -1551,7 +1551,7 @@ check("no icon is given a flex of its own", () => {
 check("a table sits in a scroller, which is what buys it the exemption", () => {
   /*
     A table is the one thing allowed to keep its words whole, because a
-    paradigm is read by comparing forms down a column and a form broken across
+    table of forms is read by comparing them down a column and a form broken across
     two lines has to be reassembled before it can be compared. That is only an
     honest trade while the table has something to give instead, and what it
     gives is a sideways scroll of its own rather than the page's.
@@ -2145,8 +2145,8 @@ check("nothing a model wrote can reach the dictionary through the queue", () => 
 
     The apply path also writes forms, so it carries the same restriction the
     hand-edit path does: a principal part may be replaced and a retrieved
-    Ekilex paradigm may not. That is stated here as well as in the module,
-    because it is one `if` between a correction and a learner's paradigm being
+    Ekilex form may not. That is stated here as well as in the module,
+    because it is one `if` between a correction and a learner's forms being
     overwritten by whoever shouted loudest.
   */
   for (const file of sourceFiles("lib/suggestions")) {

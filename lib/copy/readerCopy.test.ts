@@ -39,13 +39,19 @@ import { EM_DASH as EM, EMOJI, EN_DASH as EN, TELLS, findTells } from "./voice";
 /**
  * Files allowed to break one of these rules, which rule, and why.
  *
- * Per rule rather than per file, because the two exemptions here are not the
- * same exemption: the table has to name the characters it strips, and the
- * standard has to name the phrases it bans and show the copy it exists to
- * prevent. Neither has any business carrying a dash it did not mean, and
+ * Per rule rather than per file, because these exemptions are not the same
+ * exemption: the table has to name the characters it strips, and the standard
+ * has to name the phrases it bans and show the copy it exists to prevent.
+ * Neither has any business carrying a dash it did not mean, and
  * `docs/18-voice.md` is swept for one like anything else.
+ *
+ * `only` narrows it further, to the tells a file is excused for by name. That
+ * exists because the third entry is not a file about the voice at all: it
+ * parses somebody else's JSON, and one key of it is spelled with a word this
+ * table bans. Excusing that file from the whole list would have handed it
+ * every brochure word as well, for one key it does not own.
  */
-const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; why: string }>([
+const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; only?: string[]; why: string }>([
   [
     "lib/copy/voice.ts",
     {
@@ -60,11 +66,33 @@ const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; why: string }>([
       why: "Is the standard. It names every banned phrase and quotes the generated copy it exists to prevent.",
     },
   ],
+  [
+    "lib/ekilex/client.ts",
+    {
+      rules: ["tell"],
+      only: ["paradigm"],
+      why: "Types Ekilex's own response, and their key for a set of forms is the word this table bans. Renaming a key we do not own would be renaming their data rather than ours.",
+    },
+  ],
 ]);
 
-/** Whether a file is excused from one rule. */
+/**
+ * Whether a file is excused from a rule outright.
+ *
+ * A file excused from named tells only is not excused from the rule, which is
+ * what keeps the emoji sweep (the visual form of the same rule) reaching it.
+ */
 function excused(file: string, rule: "dash" | "tell"): boolean {
-  return ALLOWED.get(file)?.rules.includes(rule) ?? false;
+  const entry = ALLOWED.get(file);
+  if (!entry?.rules.includes(rule)) return false;
+  return rule === "dash" || entry.only === undefined;
+}
+
+/** Whether a file is excused from one tell, by that tell's name. */
+function excusedTell(file: string, name: string): boolean {
+  const entry = ALLOWED.get(file);
+  if (!entry?.rules.includes("tell")) return false;
+  return entry.only === undefined || entry.only.includes(name);
 }
 
 /**
@@ -175,8 +203,8 @@ function markdownProse(file: string): { line: number; text: string }[] {
  * a project whose own documentation is written in the voice it forbids on
  * screen is teaching the next person which of its rules are real. There were
  * 388 dashes behind that argument, and three of them were the `NO_VALUE` fault
- * from the source tree wearing a different hat: an empty cell in a paradigm
- * table, in the four-states table and in the degradation table, each written as
+ * from the source tree wearing a different hat: an empty cell in a table of
+ * forms, in the four-states table and in the degradation table, each written as
  * a bare dash that a mechanical sweep would have turned into a comma.
  */
 const MARKDOWN = ["CLAUDE.md", "README.md", ...sourceFiles("docs", /\.md$/)];
@@ -232,11 +260,13 @@ describe("copy reads as a person wrote it", () => {
     person to need one will add theirs beside it.
   */
   it("has no stale exception", () => {
-    const stale = [...ALLOWED.entries()].filter(([file, { rules }]) => {
+    const stale = [...ALLOWED.entries()].filter(([file, entry]) => {
       const source = readFileSync(file, "utf8");
-      const needsDash = source.includes(EM) || source.includes(EN);
-      const needsTell = findTells(source).length > 0;
-      return rules.some((r) => (r === "dash" ? !needsDash : !needsTell));
+      const found = findTells(source).map((t) => t.name);
+      return entry.rules.some((r) => {
+        if (r === "dash") return !(source.includes(EM) || source.includes(EN));
+        return entry.only ? !entry.only.some((n) => found.includes(n)) : found.length === 0;
+      });
     });
     expect(stale.map(([f]) => f)).toEqual([]);
   });
@@ -309,18 +339,22 @@ describe("nothing a reader sees is written in brochure", () => {
     so what she may not say is what a panel may not say.
   */
   it("says the plain thing, on every screen", () => {
-    const bad = FILES.filter((f) => !excused(f, "tell")).flatMap((f) =>
+    const bad = FILES.flatMap((f) =>
       readerFacingLines(f).flatMap((l) =>
-        findTells(l.text).map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
+        findTells(l.text)
+          .filter((t) => !excusedTell(f, t.name))
+          .map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
       ),
     );
     expect(bad).toEqual([]);
   });
 
   it("says the plain thing in the README and the docs too", () => {
-    const bad = MARKDOWN.filter((f) => !excused(f, "tell")).flatMap((f) =>
+    const bad = MARKDOWN.flatMap((f) =>
       markdownProse(f).flatMap((l) =>
-        findTells(l.text).map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
+        findTells(l.text)
+          .filter((t) => !excusedTell(f, t.name))
+          .map((t) => `${f}:${l.line}: [${t.name}] ${l.text.trim().slice(0, 100)}`),
       ),
     );
     expect(bad).toEqual([]);
@@ -374,7 +408,7 @@ describe("the voice table catches what it claims to and nothing else", () => {
       "At the end of the day, practice is what matters.",
       "Great question! The partitive is used here.",
       "In conclusion, keep reviewing every day.",
-      "Moreover, the genitive stem carries the whole paradigm.",
+      "Moreover, the genitive stem carries the whole set of forms.",
       "This is not just a rule, but a pattern you will see everywhere.",
       "Estonian is more than just a language.",
       "Let's delve into the partitive.",
@@ -384,6 +418,7 @@ describe("the voice table catches what it claims to and nothing else", () => {
       "Whether you're a beginner or an advanced speaker, we've got you covered.",
       "Amazing work! That was fantastic.",
       "As an AI, I cannot be certain about that form.",
+      "Learn the genitive and the rest of the paradigm follows.",
     ];
     for (const line of generated) {
       expect(findTells(line).map((t) => t.name), `nothing caught: ${line}`).not.toEqual([]);
@@ -399,7 +434,7 @@ describe("the voice table catches what it claims to and nothing else", () => {
       "Not just answered right once.",
       "The perfect tense is taisminevik, and it is built on the tud-participle.",
       "Six days in a row. Your longest run so far.",
-      "We could not reach Ekilex, so this word has no paradigm yet.",
+      "We could not reach Ekilex, so this word has no forms yet.",
       "Fill in what you know. The genitive alone unlocks all eleven regular cases.",
     ];
     for (const line of written) {

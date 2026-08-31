@@ -146,7 +146,7 @@ export const SECTIONS: NavSection[] = [
     items: [
       {
         href: "/dictionary", label: "Dictionary", blurb: "Search any word or inflected form", icon: "BookOpen",
-        tone: "sky", keywords: "search lookup paradigm cases forms", bar: true,
+        tone: "sky", keywords: "search lookup declension cases forms", bar: true,
       },
       {
         href: "/grammar", label: "Grammar", blurb: "What each of the fourteen cases is for", icon: "Languages",

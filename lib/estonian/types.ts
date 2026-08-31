@@ -31,7 +31,7 @@ export interface Forms {
  * *authoritative* data on a Lexeme. Everything else in `Form` is a row Ekilex
  * supplied, and an edit made through the add/correct form must never touch
  * those — see ADR-009, and `createLexemeWithForms`, which used to delete the
- * whole paradigm and rebuild it from whatever one person typed.
+ * whole set of forms and rebuild it from whatever one person typed.
  */
 export const PRINCIPAL_FORM_TYPES = [
   "NOM_SG", "GEN_SG", "PART_SG", "ILL_SG_SHORT", "PART_PL", "GEN_PL",

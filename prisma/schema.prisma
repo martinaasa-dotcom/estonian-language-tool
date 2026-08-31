@@ -87,7 +87,7 @@ model StarredWord {
 /// An inflected form.
 ///
 /// Two kinds live here. Principal parts (isPrincipal) are the unpredictable forms
-/// a learner must memorise. Everything else is a full paradigm form retrieved from
+/// a learner must memorise. Everything else is a form retrieved from
 /// Ekilex — authoritative, not derived, so storing it does not create a second
 /// source of truth (ADR-009). Words we hold only principal parts for still get
 /// their regular cases derived at render time.

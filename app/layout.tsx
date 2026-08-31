@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     template: "%s · Kodukeel",
   },
   description:
-    "A calm daily home for learning Estonian: real paradigms from Ekilex, spaced repetition that " +
+    "A calm daily home for learning Estonian: real forms from Ekilex, spaced repetition that " +
     "knows when to stop, native audio, and a grammar tutor that explains the rule.",
   icons: { icon: "/icon.svg" },
   applicationName: "Kodukeel",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Kodukeel. Estonian that finally sticks",
     description:
-      "Real paradigms, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
+      "Real forms from Ekilex, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
     type: "website",
   },
 };

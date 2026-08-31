@@ -28,7 +28,7 @@ export interface KnownForm {
   lexemeId: string;
   lemma: string;
   translation: string;
-  /** A readable name for the paradigm slot, shown as the hint. */
+  /** A readable name for the form, shown as the hint. */
   formLabel: string;
 }
 

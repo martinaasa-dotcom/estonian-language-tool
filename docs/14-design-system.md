@@ -167,8 +167,8 @@ word sitting on the ground behind a card.
   the whole row and the row leaves the card having broken nothing. Estonian is why this is not
   academic. The dictionary holds compounds past twenty characters and the row holding one is three
   or four columns wide on a phone.
-- **`table { overflow-wrap: break-word }` is the single exemption.** A paradigm is read by
-  comparing forms down a column, so a form split across two lines has to be reassembled before it
+- **`table { overflow-wrap: break-word }` is the single exemption.** A table of forms is read by
+  comparing them down a column, so a form split across two lines has to be reassembled before it
   can be compared. The table pays for that with a scroller of its own, which every table in the app
   sits in and `scripts/test-invariants.ts` checks.
 - **`svg.lucide { flex: none }`.** An icon is a square and a flex item with no `flex` of its own
@@ -323,7 +323,7 @@ toast has somewhere to land.
 
 The pastel rebuild and the teaching-in-context pass (`13-mvp-status.md` §7) were built in
 parallel and merged. The screens that arrived from the second of those (classes, the sentence
-builder, speaking, the paradigm tables, example sentences, the install prompt) were restyled
+builder, speaking, the tables of forms, example sentences, the install prompt) were restyled
 onto the primitives above rather than kept as they were: token radii instead of hand-rolled ones,
 `Card` tones instead of bordered boxes, `StatTile` summaries, and `press`/`lift` on anything that
 can be clicked.
@@ -416,5 +416,5 @@ place one becomes a component, so an emoji in a heading is a second icon set wit
 it. The check is narrow on purpose, since the arrow in "Estonian to English", the return key in a
 keyboard hint and the tick on the week strip are typographic glyphs in one colour doing a job no
 word does as well. And **an empty cell is `NO_VALUE`**, which is "n/a" from `lib/copy/values.ts`,
-never a typed dash: in a paradigm table a bare hyphen reads as a one-character form, and beside a
+never a typed dash: in a table of forms a bare hyphen reads as a one-character form, and beside a
 percentage as a minus sign whose digits failed to load.

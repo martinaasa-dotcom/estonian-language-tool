@@ -493,8 +493,8 @@ export function WelcomeWizard({ units, suggestedName, paper }: {
               Your first units
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Picked for {startBand}. Each one becomes real flashcards with audio and full
-              paradigms, and you can add or drop units later on the path.
+              Picked for {startBand}. Each one becomes real flashcards with audio and every form of
+              the word, and you can add or drop units later on the path.
             </p>
             {/*
               Any number of units, so these are toggle buttons and say so:

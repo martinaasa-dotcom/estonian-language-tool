@@ -25,7 +25,7 @@ actual products:
 | Cannot be iframed | `curl -sSI https://sonaveeb.ee/` → `X-Frame-Options: DENY`. Same on `ekilex.ee`. **VERIFIED** |
 | API requires a key | `GET https://ekilex.ee/api/word/search/raamat` → **403** unauthenticated. **VERIFIED** |
 | Key source | Issued from the API section of an Ekilex account profile |
-| Data model | A word has one or more *paradigms*, each containing *forms* with orthographic representations, transcriptions and sound-file links, which is exactly the shape our principal-parts model needs |
+| Data model | A word has one or more sets of *forms* (their JSON calls a set by the linguist's word), each carrying orthographic representations, transcriptions and sound-file links, which is exactly the shape our principal-parts model needs |
 | Licence | Ekilex standard licence is **CC BY 4.0**: attribution is a *condition*, not a courtesy |
 
 ### 1.3 Consequences for the build
@@ -52,7 +52,7 @@ No published rate limit means we impose our own rather than discover theirs:
 ### 1.5 Mapping Ekilex → our model
 
 `lib/ekilex/mapper.ts` is the only place that knows Ekilex's shape. It:
-- picks the paradigm forms corresponding to our ten principal-part `FormType`s,
+- picks the retrieved forms corresponding to our ten principal-part `FormType`s,
 - classifies gradation by comparing the nominative and genitive stems, producing the
   `gradationNote` (e.g. `b : ∅`),
 - flattens senses and translations,

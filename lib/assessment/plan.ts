@@ -275,7 +275,7 @@ export const FACTS: readonly Fact[] = [
     icon: "Languages",
     claim:
       "Estonian has fourteen cases, but eleven of them are one regular ending on the genitive stem. Learn " +
-      "a word's genitive and most of its paradigm follows. The unpredictable part is three forms, not fourteen.",
+      "a word's genitive and most of its forms follow. The unpredictable part is three forms, not fourteen.",
     source: "The Estonian case system, as this app models it in lib/estonian",
   },
   {

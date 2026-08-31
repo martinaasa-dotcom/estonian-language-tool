@@ -32,7 +32,7 @@ export interface WritingSource {
   lemma: string;
   translation: string;
   pos: string;
-  /** Stored principal parts plus any full Ekilex paradigm. */
+  /** Stored principal parts plus anything Ekilex supplied. */
   forms: { formType: string; value: string; morphCode?: string | null }[];
 }
 

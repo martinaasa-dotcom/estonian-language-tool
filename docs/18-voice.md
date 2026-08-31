@@ -69,6 +69,15 @@ elevate, harness the, unlock the power of, take it to the next level, dive into,
 say goodbye to, we've got you covered, "whether you're a beginner or...". Also the praise
 adjectives: awesome, amazing, fantastic, incredible, stellar. And "As an AI", which Anu is not.
 
+**The linguist's word where a class has its own.** `paradigm`. A learner has met "the forms of a
+word", "the case endings" and "the table" in class, and has not met that one, so it stops the
+sentence while they wonder which lesson they missed. Write what a teacher writes on the board: all
+the forms, every form of the word, the case table. This is the same argument `lib/estonian/terms.ts`
+makes about the case names, and it is the one tell here that is not brochure and not an opener: it
+comes from writing about a language rather than teaching it. The Ekilex client keeps the word in one
+place, because it is the key their own JSON uses, and `lib/copy/readerCopy.test.ts` excuses that file
+for that one tell by name rather than for the whole list.
+
 **Emoji.** This app has an icon system: data that drives UI carries a lucide icon name and
 `components/icons.tsx` is the only place one becomes a component. An emoji at the head of a bullet is
 the visual form of the same tell. The check is drawn narrowly and deliberately: the arrow in
@@ -155,7 +164,7 @@ are still somebody explaining something to somebody, they are the first thing a 
 reads, and a project whose own documentation is written in the voice it forbids on screen has told
 that person which of its rules are real. There were 388 dashes behind the argument, and three of
 them were the `NO_VALUE` fault from the source tree wearing a different hat: an empty cell in a
-paradigm table, in the four-states table and in the degradation table, each written as a bare dash
+table of forms, in the four-states table and in the degradation table, each written as a bare dash
 that a mechanical sweep would have turned into a comma sitting where a form should be.
 
 This standard is the one exemption, from the phrase rule only. It has to name every phrase it bans

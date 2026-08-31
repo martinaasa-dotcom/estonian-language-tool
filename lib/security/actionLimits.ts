@@ -21,7 +21,7 @@ import { bucketForOwner, checkRateLimit } from "./rateLimit";
  * using the app: a limit there would be felt by learners and by nobody else.
  * What is listed here is the work that is genuinely per-call expensive — a
  * whole passage scanned against the dictionary, a backup parsed and written
- * row by row, a class roster read and written, a paradigm built and stored.
+ * row by row, a class roster read and written, a table of forms built and stored.
  *
  * The numbers are deliberately far above real use. A person importing three
  * word lists in a minute should never meet one of these; a script should meet

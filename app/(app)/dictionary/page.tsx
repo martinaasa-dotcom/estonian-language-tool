@@ -35,7 +35,7 @@ export default async function DictionaryPage({
 
   // Open the first hit straight away — searching a word and then having to click it
   // again is a wasted step when you already know what you looked up.
-  // A seeded word we are about to display: upgrade it to the real paradigm first.
+  // A seeded word we are about to display: upgrade it to the real forms first.
   if (hits[0] && ekilexConfigured()) {
     const upgraded = await enrichWithinDeadline(hits[0].id);
     if (upgraded) {
@@ -73,7 +73,7 @@ export default async function DictionaryPage({
       title="Dictionary"
       lead={
         ekilexConfigured()
-          ? "Search any Estonian word. Paradigms come from Ekilex, the Institute of the Estonian Language, and are stored so the next lookup works offline."
+          ? "Search any Estonian word. The forms come from Ekilex, the Institute of the Estonian Language, and are stored so the next lookup works offline."
           : `${total} words with full principal parts, gradation and audio. The eleven regular cases are worked out from the genitive.`
       }
     >

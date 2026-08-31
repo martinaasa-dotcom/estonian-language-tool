@@ -14,10 +14,10 @@ page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
 check("the headword is marked as Estonian",
   (await page.locator('h2[lang="et"]').innerText()) === "tuba");
-// The paradigm renders as a table when derived and as a list when retrieved from
+// The forms render as a table when derived and as a list when retrieved from
 // Ekilex; either way every Estonian form must carry lang="et".
 const marked = await page.locator('[lang="et"]').count();
-check("every form in the paradigm is marked as Estonian", marked >= 14, `${marked} elements`);
+check("every form in the table is marked as Estonian", marked >= 14, `${marked} elements`);
 
 // Searching an inflected form — what a learner actually meets in class.
 for (const [query, lemma, why] of [

@@ -152,7 +152,7 @@ and an adjective meaning "grey".
 
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
-Ekilex for each one and keeps only what comes back with a paradigm matching the part of speech
+Ekilex for each one and keeps only what comes back with forms matching the part of speech
 asked for; anything else is dropped and reported. So a misspelled or imagined word cannot reach
 the dictionary, it can only fail to arrive, loudly. That is what let the vocabulary grow from 360
 to 1,248 words without a single generated form. The English gloss is the only authored column
@@ -220,17 +220,28 @@ and a check everybody waives is a check nobody reads. The emoji rule is drawn th
 arrow in "Estonian to English", the return key in a keyboard hint and the tick on the week strip
 are typographic glyphs doing a job, and only the pictographic kind is banned.
 
+**One tell is not brochure, and that is the point of it.** `paradigm` is the linguist's word for
+the thing a class calls the forms of a word, the case endings, or just the table. Nobody learning
+Estonian in Tallinn has met it, so a screen that uses it stops the reader while they work out which
+lesson they missed, which is the same fault as heading a case "Inessive" and is banned for the same
+reason. Write what a teacher writes on the board. The word survives in three places and each one is
+a decision: the table that bans it, the single test line that proves the ban fires, and
+`lib/ekilex/client.ts`, which types Ekilex's own JSON and may not rename a key it does not own. That
+last is excused **by name** rather than wholesale, through an `only` list on the exemption, because
+excusing a whole file from the phrase rule to keep one key would have handed it every brochure word
+as well.
+
 **`docs/` is not exempt, and was.** The sweep skipped it on the argument that those pages are read
 by contributors rather than by learners, which was true and was not a reason: they are still
 somebody explaining something to somebody, they are the first thing a new contributor reads, and a
 project whose own documentation is written in the voice it forbids on screen has told that person
 which of its rules are real. There were 388 dashes behind that argument, and three of them were the
-`NO_VALUE` fault wearing a different hat, an empty cell in a paradigm table written as a bare dash
+`NO_VALUE` fault wearing a different hat, an empty cell in a table of forms written as a bare dash
 that a mechanical sweep turns into a comma sitting where a form should be. A fenced block and an
 inline code span are still skipped, because a document quoting the Prisma schema or the secret
 scan's own grep is quoting code, and because backticks are how a page names a banned phrase without
-using one. `docs/18-voice.md` is the one exemption and only from the phrase rule, since it has to
-show the copy it exists to prevent.
+using one. `docs/18-voice.md` is exempt from the phrase rule alone, since it has to show the copy it
+exists to prevent, and `lib/ekilex/client.ts` from one phrase of it and no more.
 
 **The table is half the rule.** No regex tells kind from cold, or notices a paragraph that is
 twice as long as it needs to be. `docs/18-voice.md` is the other half, with worked before-and-after
@@ -342,7 +353,7 @@ belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBat
 
 **The shared dictionary is shared; a deck is not.** `Lexeme` and `Form` are reference data every
 learner sees, so an edit to one is an edit for everybody. It is attributed (`editedBy`), it may
-replace only the principal parts, and it must never touch a retrieved Ekilex paradigm. Anything
+replace only the principal parts, and it must never touch a form retrieved from Ekilex. Anything
 scoped to a person (cards, reviews, tasks) is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
@@ -375,7 +386,7 @@ printing. Accepting acts on the group.
 
 **Accepting is a write into the shared dictionary, so it obeys every rule a hand edit does.** Both
 go through `lib/dict/upsert.ts`, which is one function rather than two copies of the answers that
-matter: only principal parts may be replaced, a retrieved Ekilex paradigm is never touched, and an
+matter: only principal parts may be replaced, a form retrieved from Ekilex is never touched, and an
 entry Ekilex supplied stays marked as Ekilex's after a correction. `lib/suggestions/apply.ts` may
 remove an example sentence and never rewrite one, because editing an attested sentence would be this
 app writing Estonian. Every Estonian character that reaches the dictionary this way was typed by a
@@ -811,7 +822,7 @@ local learner; with them, every route is gated. It keys off the absence of confi
   sentence became a word the learner had to type. Both are named constants written with escapes,
   and `readerCopy.test.ts` asserts they still read all three characters.
 - **An empty cell says `NO_VALUE`, which is "n/a"** (`lib/copy/values.ts`). It was an em dash,
-  which is now the one banned character; a bare hyphen is worse, since in a paradigm table it
+  which is now the one banned character; a bare hyphen is worse, since in a table of forms it
   reads as a one-character form and beside a percentage as a minus sign whose digits failed to
   load. `lookup.ts` still recognises all three spellings a stored translation may carry, because
   the dictionary is seeded data that outlives a deploy.
@@ -866,7 +877,7 @@ local learner; with them, every route is gated. It keys off the absence of confi
   both shrinks and grows, measured at 0x15 in a deck row and 28x16 in the rail. A replaced element
   is capped at its box, because nothing about wrapping reaches one: Settings' backup picker is an
   `<input type="file">` laid out at 336px inside a 278px card. And **a table is the one exemption**,
-  because a paradigm is read by comparing forms down a column and a form broken across two lines
+  because a table of forms is read by comparing them down a column and a form broken across two lines
   has to be reassembled first. It buys that with a scroller of its own, which every table in the
   app sits in and an invariant checks, since the worksheet's did not and was 103px over a phone.
   `scripts/test-containment.mjs` measures the rectangles, on **every route the app has** at 360,
@@ -882,7 +893,7 @@ local learner; with them, every route is gated. It keys off the absence of confi
   **768 is where the faults were**, and it went unmeasured for a while because it is neither end.
   It is the width at which the rail appears and the content column is therefore at its narrowest,
   and five things were wrong there. The worst was the shell: `main` is a flex item and had no
-  `min-w-0`, so from `md:` up a paradigm table or a row of chips made it wider than the window,
+  `min-w-0`, so from `md:` up a table of forms or a row of chips made it wider than the window,
   and since the body clips sideways there was not even a scrollbar to find the missing half with.
   Then a case row whose fixed columns came to more than its card had inside it, an exam card whose
   chips set a floor it could not meet, the landing page's ornaments swallowing taps on the card
@@ -1127,7 +1138,7 @@ two announced themselves: the typechecker caught the tutor naming the
 configured provider instead of the one that answered, and lint caught a script
 importing the portable launcher and then calling the sandbox path anyway. The
 other two were silent, because a re-run copy sweep turned an em dash meaning
-"no value" into a bare comma in a paradigm cell, and `readerCopy.test.ts`
+"no value" into a bare comma in a table of forms, and `readerCopy.test.ts`
 passes on that happily: a comma is not a dash. Grep the markers the branch owns
 after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `DASH_SEPARATED`, `launchChromium`, `baseUrl`, `scroll-host`, `bottom-notice`,
@@ -1256,7 +1267,7 @@ number behind it.
 
 Both of the checks that failed there were **real gaps that only a keyless
 deployment reaches**, which is the default one. The dictionary's case table
-linked to the grammar reference from the retrieved Ekilex paradigm and not
+linked to the grammar reference from the forms retrieved from Ekilex and not
 from the derived table, so without a key that table was a dead end; and Anu's
 no-key empty state dropped the question a review card had just handed her, so
 the key was the price of even seeing what you were about to ask. Neither was

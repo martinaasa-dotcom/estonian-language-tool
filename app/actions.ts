@@ -1907,8 +1907,8 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
  * has never heard of can still become a card: not because the model said so,
  * but because the learner did.
  *
- * A word that matched the dictionary brings its own principal parts and
- * paradigm, so its cards are built from attested forms and nothing the model
+ * A word that matched the dictionary brings its own principal parts and its
+ * retrieved forms, so its cards are built from attested forms and nothing the model
  * wrote survives into them. A word that did not becomes a plain USER entry
  * with recognition and production cards only, exactly like a pasted line: no
  * case-form card, because there are no forms to derive one from.
@@ -1990,7 +1990,7 @@ export async function saveScan(input: {
     if (input.addCards) {
       // Only what the word can actually support. A hand-added entry has no
       // forms, so asking for a case-form card would produce nothing; a matched
-      // one may carry a full paradigm and deserves the lot.
+      // one may carry every form and deserves the lot.
       const lexeme = await prisma.lexeme.findUnique({
         where: { id: lexemeId },
         include: { forms: true },
@@ -2085,7 +2085,7 @@ export async function deleteScan(scanId: string) {
  * often enough that the confirmation rows are editable, and an edit that did
  * not re-check the dictionary would leave a now-correct word still marked as
  * unrecognised. With an Ekilex key this also reaches the full lexicon, so a
- * word outside the built-in 360 arrives with its real paradigm rather than as
+ * word outside the built-in 360 arrives with its real forms rather than as
  * a bare string.
  */
 export async function resolveScannedWord(word: string) {

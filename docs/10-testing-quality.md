@@ -47,8 +47,8 @@ describe("gradation", () => {
 });
 ```
 
-A **golden-set test** pins ~100 hand-verified lexemes (the seed fixture) against their full expected
-paradigms. It is the regression net for every future change to the domain core.
+A **golden-set test** pins ~100 hand-verified lexemes (the seed fixture) against every form they are
+expected to have. It is the regression net for every future change to the domain core.
 
 ## 3. Contract tests
 

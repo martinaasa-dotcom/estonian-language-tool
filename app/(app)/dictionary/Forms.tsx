@@ -8,14 +8,14 @@ import { caseFromMorphCode, VERB_GROUP_LABELS, verbSlot, type VerbSlot } from "@
 import { Speak } from "@/components/Speak";
 import { NO_VALUE } from "@/lib/copy/values";
 
-export interface ParadigmForm {
+export interface WordForm {
   value: string;
   morphCode: string | null;
   morphName: string | null;
 }
 
 /**
- * The authoritative paradigm, laid out the way it is taught.
+ * Every authoritative form, laid out the way they are taught.
  *
  * Ekilex returns sixty-odd forms in one flat list. Printed as a list, that is a
  * wall of Estonian grammar labels; printed as a table, it is the page in the
@@ -27,12 +27,12 @@ export interface ParadigmForm {
  * a beginner will not produce) is still shown, behind a disclosure, because
  * hiding a form the dictionary holds would be its own kind of lie.
  */
-export function Paradigm({ forms, pos }: { forms: ParadigmForm[]; pos: string }) {
+export function WordForms({ forms, pos }: { forms: WordForm[]; pos: string }) {
   const isVerb = pos === "VERB";
   return (
     <div>
       <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
-        The full paradigm, from Ekilex
+        Every form, from Ekilex
       </h3>
       <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
         These are the authoritative forms, not worked out from a stem, irregular plurals and the
@@ -51,7 +51,7 @@ export function Paradigm({ forms, pos }: { forms: ParadigmForm[]; pos: string })
 }
 
 /** Collapses the parallel forms Estonian genuinely has onto one cell. */
-function valuesFor(forms: ParadigmForm[], code: string): string[] {
+function valuesFor(forms: WordForm[], code: string): string[] {
   const out: string[] = [];
   for (const f of forms) {
     if (f.morphCode !== code) continue;
@@ -75,7 +75,7 @@ function Cell({ values }: { values: string[] }) {
 }
 
 /** Cases down, singular and plural across — the shape of every Estonian noun table. */
-function CaseTable({ forms }: { forms: ParadigmForm[] }) {
+function CaseTable({ forms }: { forms: WordForm[] }) {
   const singular: Record<string, string> = {};
   const plural: Record<string, string> = {};
   for (const spec of CASES) {
@@ -157,10 +157,10 @@ const PERSONS = [
 const FINITE_GROUPS: VerbSlot["group"][] = ["PRESENT", "PAST", "CONDITIONAL"];
 
 /** Persons down, tenses across — how a verb is actually recited. */
-function VerbTable({ forms }: { forms: ParadigmForm[] }) {
+function VerbTable({ forms }: { forms: WordForm[] }) {
   const slotted = forms
     .map((f) => ({ form: f, slot: verbSlot(f.morphCode) }))
-    .filter((x): x is { form: ParadigmForm; slot: VerbSlot } => x.slot !== null);
+    .filter((x): x is { form: WordForm; slot: VerbSlot } => x.slot !== null);
 
   const used = new Set(slotted.map((x) => x.form.morphCode!));
   const groups = FINITE_GROUPS.filter((g) => slotted.some((x) => x.slot.group === g));
@@ -233,7 +233,7 @@ function VerbTable({ forms }: { forms: ParadigmForm[] }) {
  * Behind a disclosure rather than deleted: these are real forms Ekilex holds,
  * and someone at C1 looking for the quotative should be able to find it.
  */
-function OtherForms({ forms, used }: { forms: ParadigmForm[]; used: Set<string> }) {
+function OtherForms({ forms, used }: { forms: WordForm[]; used: Set<string> }) {
   const [open, setOpen] = useState(false);
   const rest: { code: string; name: string; values: string[] }[] = [];
   for (const f of forms) {

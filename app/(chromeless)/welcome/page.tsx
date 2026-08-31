@@ -17,7 +17,7 @@ import { toneInk } from "@/components/ui";
 export const metadata: Metadata = {
   title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
-    "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real paradigms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
+    "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real forms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
 };
 
 /** The landing page is public and read-only, so it can be cached hard. */
@@ -183,7 +183,7 @@ function Hero({ words, stats }: { words: DemoWord[]; stats: { words: number; for
           style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
         >
           Fourteen cases. A stem that changes shape when you look at it. Kodukeel turns all of it
-          into fifteen quiet minutes a day, real paradigms, native audio, and a tutor who tells you
+          into fifteen quiet minutes a day, real forms from Ekilex, native audio, and a tutor who tells you
           the rule instead of just marking you wrong.
         </p>
 
@@ -377,7 +377,7 @@ function Features() {
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
             title="A dictionary that shows the whole word"
-            body="Search an inflected form you met in class (toas, lugesin) and it finds the word, tells you which form you typed, and lays out the full paradigm with gradation marked."
+            body="Search an inflected form you met in class (toas, lugesin) and it finds the word, tells you which form you typed, and lays out all the rest with gradation marked."
           />
         </Reveal>
         <Reveal>
@@ -468,7 +468,7 @@ const STEPS = [
   },
   {
     title: "Add it in one click",
-    body: "Real cards with the full paradigm and audio, both directions. Add a case-form or gradation card when a word deserves the extra attention.",
+    body: "Real cards with every form of the word and audio, both directions. Add a case-form or gradation card when a word deserves the extra attention.",
     tone: "accent",
   },
   {

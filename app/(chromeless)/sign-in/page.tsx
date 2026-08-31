@@ -10,7 +10,7 @@ export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
 
 const PROMISES = [
-  "A dictionary that answers with the whole paradigm",
+  "A dictionary that answers with every form of the word",
   "Cards scheduled by FSRS, plus sprints, listening and match",
   "Anu explains the grammar, and never invents a form",
 ];

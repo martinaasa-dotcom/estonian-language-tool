@@ -77,7 +77,7 @@ isolated from React, Next.js and the database and can be tested without any of t
 1. Client calls `/api/dictionary/search?q=tuba`.
 2. Handler checks the local `Lexeme` cache. Fresh → return, no network.
 3. Miss → Ekilex `/api/word/search` with the server-held key.
-4. `mapper.ts` normalises Ekilex paradigm data into our principal-parts model.
+4. `mapper.ts` normalises Ekilex form data into our principal-parts model.
 5. Result persisted with `provenance: EKILEX` and a fetch timestamp.
 6. Client renders stored forms + `derive.ts` output for the ten derived cases, visually distinguished.
 
@@ -178,11 +178,11 @@ paste-and-parse importer handling TSV/CSV/JSON/dash-separated lines, with Ekilex
 *Consequences:* works with Speakly, Quizlet, a class handout or a photo transcription; depends on no
 third party's continued goodwill; no terms-of-service exposure.
 
-**ADR-009: Store retrieved paradigms; derive only what we cannot retrieve.**
+**ADR-009: Store the forms we retrieve; derive only what we cannot retrieve.**
 *Context:* the original plan stored five principal parts and derived the rest, to avoid a second
-source of truth. With an Ekilex key we can retrieve the entire paradigm authoritatively, 30-37
+source of truth. With an Ekilex key we can retrieve every form authoritatively, 30-37
 forms including irregular plurals and the parallel forms Estonian genuinely has (`raamatutes` /
-`raamatuis`), which derivation cannot produce. *Decision:* store the full retrieved paradigm and
+`raamatuis`), which derivation cannot produce. *Decision:* store every retrieved form and
 render it directly; derive only for words held as principal parts alone (user-added, or seeded and
 not yet enriched). *Consequences:* `Form` gains `isPrincipal`, `morphCode` and `orderIndex`, and its
 uniqueness key includes the value so parallel forms coexist. The no-stale-duplication rule is intact:
@@ -247,7 +247,7 @@ separate provider setup beyond Google's own OAuth client.
 *Context:* v4.0 stores nominative/genitive/partitive and the ma-/da-infinitives (audit B2, B4).
 *Problem:* partitive plural and the short illative cannot be derived, and the present 1sg is in the
 weak grade and unguessable from the infinitive. A three-form model silently teaches an incomplete
-paradigm. *Decision:* store five principal parts per part of speech; `ILL_SG_SHORT` is nullable
+set of forms. *Decision:* store five principal parts per part of speech; `ILL_SG_SHORT` is nullable
 because it genuinely does not exist for every noun. *Consequences:* the Ekilex mapper must find ten
 `FormType`s rather than five, which is what the Phase 0 spike verifies before any UI is built on the
 assumption.
@@ -447,7 +447,7 @@ transcribes and nothing more (`lib/scan/extract.ts`, pure, no database, no netwo
 returns is then resolved against the dictionary by `matchEstonianForm`, which accepts only an exact
 lemma, a diacritic-folded lemma, a stored form or a regular case built on a genitive stem, and
 rejects everything below that. A word the dictionary vouches for becomes cards from its own
-principal parts and paradigm, so nothing the model wrote survives into the card. A word it does not
+principal parts and its retrieved forms, so nothing the model wrote survives into the card. A word it does not
 recognise is shown as exactly that, editable beside the paper, and reaches the deck only once a
 person has ticked it, the same standard the paste importer has always met, since there too a human
 vouched for the list. *The picture is never stored:* it is decoded in a Route Handler, sent once, and
@@ -500,7 +500,7 @@ cross-reference.**
 *Context:* the reference layer, the dictionary, the flashcards, the placement check and the mock
 exam all name cases and verb forms, and every one of them held the Estonian name and the question
 word already: `cases.ts` has carried `et` and `question` since the domain model was written, and
-`morph.ts` has carried `olevik` and `lihtminevik` for as long as there has been a paradigm table.
+`morph.ts` has carried `olevik` and `lihtminevik` for as long as there has been a table of forms.
 *Problem:* all of them led with the English or Latin name and demoted the Estonian one to small
 italics, a hint or a bracket. Estonian is not taught that way anywhere. A course, a school textbook
 and the state examination name a case by its Estonian name and, more often, by the question it

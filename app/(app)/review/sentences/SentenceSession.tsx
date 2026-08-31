@@ -145,7 +145,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
       <Page title="Sentences" lead="Put real Estonian sentences back in order.">
         <Empty
           title="No sentences to build yet"
-          body="Sentences come from Ekilex, attached to the words in your deck. Look a few of your words up in the dictionary, the sentences arrive with the paradigm, or add a unit from the path."
+          body="Sentences come from Ekilex, attached to the words in your deck. Look a few of your words up in the dictionary, the sentences arrive with the forms, or add a unit from the path."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>

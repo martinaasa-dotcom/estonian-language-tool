@@ -23,7 +23,7 @@ const { check, done } = suite("The core flows", { floor: 21 });
 */
 await ensureLetterBar(browser, B, "on");
 
-// 1 — Dictionary: search, paradigm, add to deck
+// 1 — Dictionary: search, forms, add to deck
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
 await page.waitForSelector("text=toaga", { timeout: 10000 });
 check("search shows the short illative", (await page.getByText("tuppa", { exact: true }).count()) > 0);

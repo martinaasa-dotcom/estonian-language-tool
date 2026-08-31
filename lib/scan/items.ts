@@ -19,7 +19,7 @@ export interface ResolvedItem {
    *
    * This one field is the whole safety property of the feature. A word with an
    * id behind it becomes a flashcard built from real principal parts and a real
-   * paradigm, and nothing the model wrote survives into it. A word without one
+   * forms, and nothing the model wrote survives into it. A word without them
    * is shown as what it is: something a camera read, that only the person
    * holding the paper can confirm.
    */

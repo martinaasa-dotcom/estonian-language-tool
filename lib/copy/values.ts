@@ -8,8 +8,8 @@
  * hand-written copy. A nil marker that is the one banned character is a
  * marker nobody can reason about.
  *
- * A BARE HYPHEN WAS THE OBVIOUS SWAP AND IS WRONG. These sit in a paradigm
- * table, in a column of forms, beside percentages: a lone `-` in a grid of
+ * A BARE HYPHEN WAS THE OBVIOUS SWAP AND IS WRONG. These sit in a table of
+ * forms, in a column of them, beside percentages: a lone `-` in a grid of
  * Estonian forms reads as a form that is one character long, and beside
  * `62%` it reads as a minus sign whose digits failed to load. `n/a` cannot
  * be misread as either, and it is what a person would actually write in a

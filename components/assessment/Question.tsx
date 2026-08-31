@@ -43,7 +43,7 @@ const WORD_TONE: Record<WordStatus, { background: string; color: string; title: 
 /** The provenance line. Every Estonian string on screen says where it is from. */
 const SOURCE_LABEL: Record<Item["source"], string> = {
   dictionary: "From the dictionary",
-  ekilex: "Paradigm from Ekilex",
+  ekilex: "A form from Ekilex",
   derived: "Computed from the genitive stem",
   usage: "A sentence recorded by a lexicographer",
 };

@@ -56,8 +56,8 @@ because a cap that fails open is not a cap.
 | Area | State |
 |---|---|
 | `lib/estonian/`: cases, principal parts, gradation, derivation | Complete, 56 unit tests |
-| Dictionary: search, paradigm, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,960 words |
-| Ekilex integration: live lookup, full retrieved paradigm, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative paradigm the first time they are viewed |
+| Dictionary: search, forms, gradation, audio | Complete. With an Ekilex key it reaches the full Estonian lexicon; without one it falls back to the built-in set, which two build pipelines grew to about 5,960 words |
+| Ekilex integration: live lookup, every retrieved form, CEFR, verb government, Estonian definition | Complete. Seeded words are upgraded to the authoritative forms the first time they are viewed |
 | English translations, layered: accepted → Wiktionary → AI → blank | Complete. Ekilex has no English on a reader key, so no single source suffices |
 | Inflected-form search: `toas` finds `tuba` and explains that it is the inessive | Complete; matches stored principal parts and case endings on the singular and plural genitive stems |
 | Built-in dictionary, about 5,960 entries and 34,500 stored forms | Grown twice over by two pipelines that turned out to be complements: 360 hand-checked entries, 1,248 fetched against the syllabus by `scripts/harvest-ekilex.ts` with authored English glosses, and the rest built by `scripts/expand-seed.ts` from Ekilex (forms and sentences) and Wiktionary (English). CEFR-tagged A1 to C2 (478 / 693 / 1,226 / 1,243 / 180 / 76, the rest ungraded by either source). 461 verbs carry government, up from 24, and 5,405 entries carry an attested Estonian sentence |
@@ -225,7 +225,7 @@ lexicographer wrote (ADR-017).
 | **Sentence builder** (`/review/sentences`) | The word bank, over real Estonian. With a translation it is "say this in Estonian"; without one it shows the sentence, then scrambles it, and says which it is doing |
 | **Speaking** (`/review/speaking`) | Shadowing: say it, then hear a native voice and your own recording back to back. No score, see below |
 | **Classes** (`/class`) | A join code, a roster of effort, the group's weakest cases, and units set as homework into each student's own task list (ADR-019) |
-| **Conjugation** | The verb paradigm as a table (persons down, present/past/conditional across) plus a `CONJUGATION` card type over stored forms |
+| **Conjugation** | The verb's forms as a table (persons down, present/past/conditional across) plus a `CONJUGATION` card type over stored forms |
 | **Share card** (`/api/share`) | A 1200×630 PNG of streak, cards known and XP, generated per request for the signed-in learner |
 | **Install and remind** | Apple touch icon, safe-area insets, 16px inputs (iOS zoom), a one-time install prompt, and a daily reminder as a calendar file rather than a push subscription |
 | **Anu: check a sentence** | A structured check that names the rule before the fix, and boxes the corrected sentence as the model's own work rather than letting it read as dictionary data |
@@ -470,8 +470,8 @@ fail on purpose before being made to pass.
 ### Known limitations, stated plainly
 
 1. **A word outside the dictionary arrives with no verified forms.** It gets a recognition and a
-   production card and nothing else, because there is no paradigm to build a case-form card from.
-   With an Ekilex key the row's "look this up again" button fetches the real paradigm; without one,
+   production card and nothing else, because there are no forms to build a case-form card from.
+   With an Ekilex key the row's "look this up again" button fetches the real ones; without one,
    the honest answer is two cards.
 2. **The English on an unmatched word is the photograph's, not the dictionary's.** It is shown as
    unverified wherever it appears, and correcting the entry corrects it for everyone.
@@ -584,7 +584,7 @@ authority is the whole design. The syllabus names lemmas and glosses them in
 English (the one language this project is allowed to write) and Ekilex
 supplies every Estonian character that follows: principal parts, CEFR level,
 verb government, and attested sentences. A lemma in a unit is a *request*, not a
-fact. If Ekilex does not know it, or knows it with a paradigm that does not match
+fact. If Ekilex does not know it, or knows it with forms that do not match
 the part of speech asked for, it is dropped and reported. A misspelled or
 imagined word cannot reach the dictionary; it can only fail to arrive, loudly.
 
@@ -972,7 +972,7 @@ harmless: the tiles already show every word of the target sentence.
 The domain model had been right since it was written and the screens had not
 been reading it. `cases.ts` has carried the Estonian name and the question word
 for every case from the beginning; `morph.ts` has carried `olevik` and
-`lihtminevik` for as long as there has been a paradigm table. Every screen led
+`lihtminevik` for as long as there has been a table of forms. Every screen led
 with the other column. A case was headed "Inessive" with `seesütlev` in small
 italics under it, a flashcard asked for "tuba → inessive" and put the question
 in the hint, the reference called `lihtminevik` "the imperfect", which is a
@@ -1164,7 +1164,7 @@ decision does not need a second tab. Accepting acts on the whole group.
 **One click that is a real write.** Four of the eight categories carry a
 machine-applicable proposal, and accepting one goes through
 `lib/dict/upsert.ts`, the same function the hand-edit path uses: principal parts
-only, an Ekilex paradigm never touched, provenance never relabelled. An example
+only, a form from Ekilex never touched, provenance never relabelled. An example
 sentence can be removed and never rewritten. Nothing under `lib/suggestions/`
 can reach a model.
 
@@ -1339,7 +1339,7 @@ somewhere, and nouns are drawn first. So every word listed in two categories cam
 
 Nothing looked broken, which is why it survived a full gloss audit sitting right beside it. Every
 wrong answer is a real part of speech spelled correctly, and an Estonian adjective declines exactly
-like a noun, so the paradigm on the entry page was right and no screen contradicted itself. What it
+like a noun, so the forms on the entry page were right and no screen contradicted itself. What it
 reached was `lib/srs/cards.ts`, which prints the label as a card's hint, and every rule that filters
 on `pos`: which practice modes a word is eligible for, and which words `lib/progress/caseExamples.ts`
 is allowed to draw a noun case example from.
@@ -1399,7 +1399,7 @@ harvest is written, because run afterwards the harvest has already inserted its 
 `kallis` and the guard against moving a row onto an occupied key then correctly declines, leaving
 the duplicate in place.
 
-It writes no content. The translation, paradigm, examples and provenance stay as they were, the row
+It writes no content. The translation, forms, examples and provenance stay as they were, the row
 keeps its id, and a card and its review history follow it. It never touches a row somebody edited by
 hand, and never moves a row onto a key another row holds, because `hall` is legitimately both a noun
 meaning "frost" and an adjective meaning "grey".

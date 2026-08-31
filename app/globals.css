@@ -376,7 +376,7 @@
   /*
     A TABLE KEEPS ITS WORDS WHOLE, BECAUSE IT ALREADY HAS A WAY OUT.
 
-    A paradigm is a column of Estonian forms and the reader's job is to
+    A table of forms is a column of Estonian and the reader's job is to
     compare them, so a form split across two lines to save forty pixels is a
     form they have to reassemble before they can read it. `break-word` keeps
     the word's own width in the column's minimum, so a table too wide for a

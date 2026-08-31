@@ -59,11 +59,11 @@ export interface VerbSlot {
 /**
  * The verb forms worth putting in a table.
  *
- * Estonian's full paradigm as Ekilex returns it runs to sixty-odd forms
+ * The full set of Estonian forms as Ekilex returns it runs to sixty-odd forms
  * including the quotative and four participles, which is a wall, not a table.
  * These are the ones a learner conjugates out loud: the present and simple past
  * in all six persons, the conditional, the imperative, and the non-finite forms
- * that are principal parts. Everything else still appears in the full paradigm
+ * that are principal parts. Everything else still appears in the full form
  * list on the entry — it is just not pretending to be a lesson.
  */
 export const VERB_SLOTS: Record<string, VerbSlot> = {
@@ -117,7 +117,7 @@ export function verbSlot(code: string | null | undefined): VerbSlot | null {
 }
 
 /**
- * What to call one slot of a paradigm, in front of a learner.
+ * What to call one form of a word, in front of a learner.
  *
  * Three copies of a hand-typed English table used to answer this question, in
  * the dictionary's "you typed the X of Y" note, in the pasted-passage gap fill

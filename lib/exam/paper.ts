@@ -47,7 +47,7 @@ export interface PoolWord {
   translation: string;
   pos: string;
   cefr: string | null;
-  /** Stored principal parts plus any retrieved Ekilex paradigm. */
+  /** Stored principal parts plus anything retrieved from Ekilex. */
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
   /** Attested sentences. Never generated. */
   examples: PoolExample[];

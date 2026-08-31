@@ -62,7 +62,7 @@ export const TOUR: readonly TourStop[] = [
   {
     href: "/dictionary",
     what:
-      "Any word, with its full paradigm. Type an inflected form and it tells you which word it is and " +
+      "Any word, with every form it takes. Type an inflected form and it tells you which word it is and " +
       "which case you found. Forms come from Ekilex or from the stored principal parts, never from a model.",
     when: "The moment you meet a word anywhere else. Add it to your deck from here.",
   },
@@ -145,7 +145,7 @@ export const CAN: readonly Claim[] = [
   {
     icon: "BookOpen",
     text:
-      "Give you authoritative forms. Every paradigm comes from Ekilex or from hand checked principal " +
+      "Give you authoritative forms. Every one of them comes from Ekilex or from hand checked principal " +
       "parts, and the eleven regular cases are computed from the genitive stem rather than stored.",
   },
   {
@@ -208,6 +208,6 @@ export const CANNOT: readonly Claim[] = [
 
 /** The one paragraph version, for the top of the walkthrough. */
 export const WHAT_IT_IS =
-  "Kodukeel is a memory and a reference, not a course. It holds an Estonian dictionary with real " +
-  "paradigms, turns the words you choose into flashcards, and asks you for them at the moment you are " +
+  "Kodukeel is a memory and a reference, not a course. It holds an Estonian dictionary with every " +
+  "form a word takes, turns the words you choose into flashcards, and asks you for them at the moment you are " +
   "about to forget. Everything else here exists to make that fifteen minutes a day worth more.";

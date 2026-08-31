@@ -1,7 +1,7 @@
 # Kodukeel. Estonian learning dashboard
 
 *Kodukeel*, "home language". An Estonian study workspace built around the thing that actually makes
-the language hard: the cases. A dictionary that answers with the whole paradigm, a course you can
+the language hard: the cases. A dictionary that answers with every form of a word, a course you can
 work through, flashcards scheduled by FSRS, seven practice modes, a grammar reference written in
 English, printable worksheets for a real class, a mock of the state language examination at every
 level, and a tutor that is never allowed to invent an Estonian form.
@@ -41,7 +41,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 ## What it does
 
 - **A course.** Seventy-three units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
-  sitting's worth of words. Adding a unit builds real flashcards, full paradigm, audio, both
+  sitting's worth of words. Adding a unit builds real flashcards, every form, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
   with audio and a translation on request. Those same sentences become gap-fill cards
@@ -124,11 +124,11 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 ## The dictionary
 
 With a free **Ekilex** key (see `.env.example`) the dictionary reaches the whole Estonian lexicon:
-search any word and you get the authoritative paradigm from the Institute of the Estonian Language, 
+search any word and you get the authoritative forms from the Institute of the Estonian Language, 
 every case, both numbers, irregular plurals and the parallel forms Estonian really has, plus its
 CEFR level, verb government and an Estonian definition. Each word is stored on first lookup, so the
 second time is instant and works offline. Words from the built-in set are upgraded to the
-authoritative paradigm the first time you open them.
+authoritative forms the first time you open them.
 
 Ekilex carries no English on a reader key, so translations are resolved in layers: one you have
 already accepted, then Wiktionary, then Anu, then an honest blank for you to fill. Every layer says
@@ -369,7 +369,7 @@ Four rules the code holds to, all explained in `docs/`:
 
 ## Credits
 
-- Estonian forms, paradigms and example sentences: [Ekilex](https://ekilex.ee), the lexicographic
+- Estonian forms and example sentences: [Ekilex](https://ekilex.ee), the lexicographic
   database of the Institute of the Estonian Language. CC BY 4.0.
 - English glosses: [English Wiktionary](https://en.wiktionary.org), by its contributors.
   CC BY-SA 4.0.

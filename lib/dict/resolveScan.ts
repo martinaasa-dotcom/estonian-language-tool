@@ -14,7 +14,7 @@
  * `toas` and `lugesin`, not `tuba` and `lugema`, and the inflected-form search
  * this app already had (`matchEstonianForm`) resolves both and says which case
  * or person it recognised. So the photograph of an exercise becomes a set of
- * headwords with real paradigms behind them, and the learner is told, per word,
+ * headwords with real forms behind them, and the learner is told, per word,
  * what they were actually looking at.
  */
 

@@ -70,7 +70,7 @@ export default async function LearnPage() {
   return (
     <Page
       title="The course"
-      lead="Five levels, A1 to C1. Every unit teaches a lesson first, then puts its words into your review deck with real audio and full paradigms."
+      lead="Five levels, A1 to C1. Every unit teaches a lesson first, then puts its words into your review deck with real audio and every form."
     >
       {/*
         Stacked on a phone, one row above it. `flex-wrap` alone looked right and

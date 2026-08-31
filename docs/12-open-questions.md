@@ -96,8 +96,8 @@ comes out a noun: `lilla`, `kallis`, `valge`, `sinine`, `noor`, `tark`, `paks`, 
 `vana`, `vale`, `võõras` and about twenty more. Ekilex cannot settle it either; it calls every
 nominal a "noomen", which is why the builder asks Wiktionary in the first place.
 
-Nothing visibly breaks today, because an Estonian adjective declines like a noun and the paradigm
-is therefore right. It matters wherever the part of speech is the point rather than the shape:
+Nothing visibly breaks today, because an Estonian adjective declines like a noun and the forms
+are therefore right. It matters wherever the part of speech is the point rather than the shape:
 which practice modes a word is eligible for, and any future rule that reads `pos`.
 
 **Needed:** decide whether the fix is to prefer the more specific category (adjective over noun,

@@ -44,7 +44,7 @@ export async function examPool(ownerId: string, level: ExamLevel): Promise<PoolW
       : { cefr: { in: levels } },
     include: { forms: { orderBy: { orderIndex: "asc" } } },
     // Words the dictionary knows most about first: an entry with a retrieved
-    // paradigm can carry a case question, one with usages can carry a sentence.
+    // stored forms can carry a case question, one with usages can carry a sentence.
     orderBy: [{ fetchedAt: { sort: "desc", nulls: "last" } }, { lemma: "asc" }],
     take: POOL_SIZE,
   });

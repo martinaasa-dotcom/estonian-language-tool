@@ -8,7 +8,7 @@
  * project is allowed to write (ADR-005).
  *
  * Only principal parts are stored. The regular cases are derived from the
- * genitive stem at render time, and the full paradigm is fetched from Ekilex the
+ * genitive stem at render time, and every other form is fetched from Ekilex the
  * first time a word is viewed — storing it here would be a second source of
  * truth that goes stale.
  *

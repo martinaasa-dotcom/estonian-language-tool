@@ -66,7 +66,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           `min-w-0` is the rule in app/globals.css applied to the one flex item
           the whole app sits inside. From `md:` up this is a row, and a flex
           item's automatic minimum is its min-content width, so anything wide
-          in a page (a paradigm table, a row of chips that will not wrap) made
+          in a page (a table of forms, a row of chips that will not wrap) made
           `main` wider than the window rather than being contained by it. The
           body clips sideways, so the overflow did not even leave a scrollbar
           to find it with: the right-hand end of the page was simply gone.

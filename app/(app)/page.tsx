@@ -197,7 +197,7 @@ export default async function TodayPage() {
             {snapshot.totalCards === 0 ? (
               <Empty
                 title="Your deck is empty"
-                body="Start a unit on the path and you get real cards, full paradigm, audio, and both directions, in one click."
+                body="Start a unit on the path and you get real cards, every form, audio, and both directions, in one click."
                 action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
               />
             ) : toReview > 0 ? (
@@ -475,7 +475,7 @@ export default async function TodayPage() {
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold"
                 style={{ color: "var(--accent-deep)" }}
               >
-                <BookOpen size={14} aria-hidden /> See the full paradigm
+                <BookOpen size={14} aria-hidden /> See every form
               </Link>
             </Card>
           )}

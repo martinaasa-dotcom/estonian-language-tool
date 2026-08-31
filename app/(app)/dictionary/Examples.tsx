@@ -12,7 +12,7 @@ import type { Example } from "@/lib/dict/examples";
 /**
  * Example sentences on a dictionary entry.
  *
- * These are the most valuable thing on the page after the paradigm: a case
+ * These are the most valuable thing on the page after the forms: a case
  * table tells you `toas` exists, a sentence tells you when an Estonian would
  * actually say it. Every one of them is attested — recorded by lexicographers
  * and served by Ekilex — which is why the app can build cloze exercises from

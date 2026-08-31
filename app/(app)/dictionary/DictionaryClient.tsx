@@ -13,7 +13,7 @@ import { buildCaseTable } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { Examples } from "./Examples";
-import { Paradigm } from "./Paradigm";
+import { WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
@@ -263,7 +263,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
   const form = (t: string) => entry.forms.find((f) => f.formType === t)?.value;
 
-  // Ekilex hands over the whole paradigm, so when we have it there is nothing to
+  // Ekilex hands over every form, so when we have them there is nothing to
   // derive — we show the authoritative forms, including irregular plurals and the
   // parallel forms Estonian genuinely has (raamatutes / raamatuis).
   // Every form Ekilex labelled, principal parts included: the 1sg present is
@@ -378,7 +378,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
       )}
 
       {retrieved.length > 0 ? (
-        <Paradigm
+        <WordForms
           pos={entry.pos}
           forms={retrieved.map((f) => ({ value: f.value, morphCode: f.morphCode, morphName: f.morphName }))}
         />
@@ -405,7 +405,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 {table.map(({ spec, singular, plural, origin }) => (
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                      {/* The same way in the retrieved paradigm gives: this
+                      {/* The same way the retrieved forms give: this
                           table says what the form is, that page says when to
                           use it. It has to be here too, because a deployment
                           with no Ekilex key only ever renders this one, and

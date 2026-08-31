@@ -8,8 +8,8 @@ import { candidatesFor, resolveOneWord, resolveScannedItems } from "./resolveSca
  * The matching logic itself is unit tested over fixtures in `search.test.ts`.
  * What needs a database is the half that decides *what to match against*: a
  * page of homework is full of inflected forms, and the whole feature rests on
- * a retrieved paradigm and a derived case being just as good a match as the
- * headword. Fixtures cannot show that, because the paradigm is the thing that
+ * a retrieved form and a derived case being just as good a match as the
+ * headword. Fixtures cannot show that, because the stored forms are the thing that
  * comes out of the database.
  */
 
@@ -63,7 +63,7 @@ describe("resolveScannedItems", () => {
     expect(item?.translation).toBe("room");
   });
 
-  it("traces a retrieved paradigm form back to its headword", async () => {
+  it("traces a retrieved form back to its headword", async () => {
     const [item] = await resolveScannedItems([{ et: "itest-scan-toas", en: "" }]);
     expect(item?.lemma).toBe(LEMMA);
     expect(item?.matchedAs).toContain("seesütlev");

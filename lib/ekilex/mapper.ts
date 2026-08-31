@@ -26,8 +26,8 @@ const PRINCIPAL_PARTS: Record<string, string> = {
   PtsPtIps: "PART_TUD",
 };
 
-/** The order the full paradigm reads in, matching how Estonian tables are printed. */
-const PARADIGM_ORDER = [
+/** The order the forms read in, matching how Estonian tables are printed. */
+const FORM_ORDER = [
   "SgN", "SgG", "SgP", "SgAdt", "SgIll", "SgIn", "SgEl", "SgAll", "SgAd", "SgAbl",
   "SgTr", "SgTer", "SgEs", "SgAb", "SgKom",
   "PlN", "PlG", "PlP", "PlIll", "PlIn", "PlEl", "PlAll", "PlAd", "PlAbl",
@@ -76,24 +76,24 @@ export interface MappedLexeme {
 }
 
 export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
-  const paradigm = details.paradigms.find((p) => p.forms.length > 0);
-  if (!paradigm) return null;
+  const formSet = details.formSets.find((p) => p.forms.length > 0);
+  if (!formSet) return null;
 
   const pos =
-    paradigm.wordClass === "verb" ? "VERB"
-    : paradigm.wordClass === "noomen" ? "NOUN"
+    formSet.wordClass === "verb" ? "VERB"
+    : formSet.wordClass === "noomen" ? "NOUN"
     : "OTHER";
 
   const forms: MappedForm[] = [];
   const seen = new Set<string>();
 
-  for (const f of paradigm.forms) {
+  for (const f of formSet.forms) {
     const key = `${f.morphCode}|${f.value}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
     const principal = PRINCIPAL_PARTS[f.morphCode];
-    const order = PARADIGM_ORDER.indexOf(f.morphCode);
+    const order = FORM_ORDER.indexOf(f.morphCode);
     forms.push({
       formType: principal ?? `EKILEX:${f.morphCode}`,
       value: f.value,

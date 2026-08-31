@@ -35,7 +35,7 @@ export function bandIndex(band: Band): number {
 export type ItemSource =
   /** A form or gloss stored in the dictionary, seeded or retrieved. */
   | "dictionary"
-  /** A full paradigm form retrieved from Ekilex. */
+  /** A form retrieved from Ekilex. */
   | "ekilex"
   /** A regular case computed from the genitive stem by `lib/estonian/derive`. */
   | "derived"
