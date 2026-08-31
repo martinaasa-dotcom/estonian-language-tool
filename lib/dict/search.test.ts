@@ -110,6 +110,24 @@ describe("rankCandidates — inflected forms", () => {
   it("does not let a regex metacharacter in the query throw", () => {
     expect(() => rankCandidates(DICT, "read (")).not.toThrow();
   });
+
+  /*
+    Two entries under one lemma, which happens by design (`hall` is a noun and
+    an adjective) and by accident (a learner adds a word the dictionary already
+    holds under another part of speech). Both score 100, so without a tie-break
+    the winner was whatever order the database returned.
+  */
+  const bare = { ...lexeme("tuba", "room", "OTHER", []), id: "0000-typed-by-hand" };
+  const withParadigm = DICT[0]!;
+
+  it("opens the same entry whichever order the database returned them in", () => {
+    expect(rankCandidates([withParadigm, bare], "tuba")[0]!.pos).toBe("NOUN");
+    expect(rankCandidates([bare, withParadigm], "tuba")[0]!.pos).toBe("NOUN");
+  });
+
+  it("leads with the entry that has a paradigm, and still lists both", () => {
+    expect(rankCandidates([bare, withParadigm], "tuba").map((h) => h.pos)).toEqual(["NOUN", "OTHER"]);
+  });
 });
 
 /*

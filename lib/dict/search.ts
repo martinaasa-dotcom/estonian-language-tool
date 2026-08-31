@@ -199,7 +199,21 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
   const scored = candidates
     .map((c) => ({ hit: c, ...rank(c, q, folded) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.hit.lemma.localeCompare(b.hit.lemma, "et"));
+    /*
+      Two entries can share a lemma: `Lexeme` is unique on `[lemma, pos]`,
+      because `hall` is a noun meaning frost and an adjective meaning grey.
+      Both then score 100 and `localeCompare` of a word with itself is 0, so
+      these two keys alone returned 0 for the pair. `sort` is stable, so that
+      means "keep the order the database gave you", and the query that loads
+      candidates has no `orderBy`: `/dictionary` opens `hits[0]`, so the entry
+      a learner saw was chosen by the query planner. Forms first, so the entry
+      with a paradigm leads, then the id so no two candidates ever tie.
+    */
+    .sort((a, b) =>
+      b.score - a.score
+      || a.hit.lemma.localeCompare(b.hit.lemma, "et")
+      || b.hit.forms.length - a.hit.forms.length
+      || a.hit.id.localeCompare(b.hit.id));
 
   return scored.slice(0, limit).map(({ hit, matchedAs }) => ({
     id: hit.id,
