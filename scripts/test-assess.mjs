@@ -44,7 +44,7 @@ check("the guide says what the app does", (await page.getByText("What it does", 
 check("and gives equal room to what it does not",
   (await page.getByText("What it does not").count()) > 0);
 check("it admits it cannot score pronunciation",
-  (await page.getByText(/no verified Estonian speech recogniser/i).count()) > 0);
+  (await page.getByText(/recognises spoken Estonian reliably/i).count()) > 0);
 check("it admits it is not a course",
   (await page.getByText(/Replace a course or a teacher/i).count()) > 0);
 check("every screen is listed with a reason to open it",
@@ -319,7 +319,7 @@ if (onboarded) {
     (await page.getByText(/Days a week you will really practise/i).count()) > 0);
   check("the plan sits under the answers that build it", /study hours to go/i.test(goalStep));
   check("an estimated level is flagged as estimated on the plan",
-    /Take the check when you have ten minutes/i.test(goalStep));
+    /Take the ten-minute check/i.test(goalStep));
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   const deckStep = await page.locator("body").innerText();

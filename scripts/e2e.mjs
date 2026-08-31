@@ -317,7 +317,7 @@ await page.goto(`${B}/dictionary?q=zzznotaword`, { waitUntil: "networkidle" });
 const genField = page.getByPlaceholder("toa");
 await genField.click();
 await genField.fill("s");
-await page.getByLabel("Insert an Estonian character into the field you are typing in").getByLabel("Insert ä").click();
+await page.getByLabel("Insert an Estonian letter into the field you're typing in").getByLabel("Insert ä").click();
 check("shared diacritic bar types into the focused field",
   await eventually(async () => (await genField.inputValue()) === "sä"),
   `got "${await genField.inputValue()}"`);
