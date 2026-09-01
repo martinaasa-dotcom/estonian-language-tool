@@ -2,7 +2,7 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { Metadata } from "next";
 import {
   ArrowRight, BookOpen, Check, CircleHelp, Minus,
-  Plus, Sparkles, Target,
+  Plus, Sparkles, Target, X,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
@@ -886,24 +886,43 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
       >
         {question}
         {/*
-          AN ICON RATHER THAN THE CHARACTER "+".
+          TWO ICONS SWAPPED, RATHER THAN ONE CHARACTER TURNED.
 
+          It was the character "+", rotated 45 degrees when the question opens.
           A typed plus is a glyph on a baseline, and a baseline is not the
           middle of the line box: `items-center` centres the line box and the
           font then draws the bar wherever its own metrics say, which in Plus
-          Jakarta is above centre. `leading-none` collapsed the line box around
-          it and made that worse rather than better. Every one of these circles
-          on the page was off centre, and rotating it 45 degrees when the
-          question opens spun it about a point that was not its own middle, so
-          the cross wobbled as it turned. A `Plus` is drawn inside a square
-          viewBox, so its centre is the centre of the box it is given.
+          Jakarta is above centre. So every one of these circles was off centre,
+          and the rotation spun the mark about a point that was not its own
+          middle, which is why the cross wobbled as it turned. A lucide icon is
+          drawn inside a square viewBox, so its centre is the centre of the box
+          it is given, and it measures dead centre on both axes.
+
+          THE ROTATION HAD TO GO WITH IT, and that is `test-containment`
+          reading the icon correctly rather than a limitation to work around.
+          It asks whether an icon is drawn at the size it declared, and
+          `getBoundingClientRect` reports the box *after* an ancestor's
+          transform: a 15px square turned 45 degrees is 21px across the axes,
+          so the check called it deformed, at all three widths, and it was
+          right that something was up. The character it replaced declared no
+          width or height, so the check had skipped it and never had an opinion
+          about the rotation before.
+
+          A cross-fade of the two stacked on top of each other is the other
+          way to keep the motion, and it trades this fault for the collision
+          check instead. So the icon swaps: `hidden` is `display: none`, which
+          is the one state that leaves nothing behind to measure or to sit
+          under. What the animation was carrying was never the meaning anyway;
+          the meaning is the mark, and the mark is now the right one and in the
+          middle of its circle.
         */}
         <span
           aria-hidden
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-transform group-open:rotate-45"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
-          <Plus size={15} strokeWidth={2.5} />
+          <Plus size={15} strokeWidth={2.5} className="group-open:hidden" />
+          <X size={15} strokeWidth={2.5} className="hidden group-open:block" />
         </span>
       </summary>
       {children}
@@ -990,10 +1009,16 @@ function FinalCta() {
               for. The cases section opens on somebody freezing when they are
               spoken to at a counter, and this is the same person a screen
               later, with something to say back.
+
+              It opened "Start today" and lost the words: the heading two lines
+              above it ends on "Starting today", and the same day named twice
+              in three lines reads as a page that has forgotten what it just
+              said. The heading carries the date, so the line under it carries
+              the payoff and nothing else.
             */}
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Start today, and the next time somebody speaks to you in Estonian you will have
-              something to say back.
+              The next time somebody speaks to you in Estonian, you will have something to say
+              back.
             </p>
             <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
