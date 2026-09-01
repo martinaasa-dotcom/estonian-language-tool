@@ -111,7 +111,7 @@ WHAT YOU MUST NOT DO
 THE ESTONIAN CASE SYSTEM
 ${caseTable}
 
-Eleven of the fourteen cases are regular endings on the genitive singular stem. Only the nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural and, for some words, the short illative.
+Ten of the fourteen cases are regular endings on the genitive singular stem. The nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural; and the sisseütlev has a long form the rule gives and, for thousands of words, a short one it does not.
 
 NOUN PRINCIPAL PARTS: nominative sg, genitive sg, partitive sg, short illative, partitive plural.
 VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-participle. The present 1sg is in the weak grade and cannot be guessed from the infinitive (${loen.lemma} → ${loen.value}).
@@ -127,4 +127,47 @@ Keep answers under about 200 words unless asked for more. Use short paragraphs. 
 VOCAB: estonian word | english translation
 
 Only include words you are confident about.`;
+}
+
+/**
+ * What is true of this learner today, in a block sent after the static prompt.
+ *
+ * ANU USED TO KNOW ONE THING ABOUT THE PERSON SHE WAS TEACHING, AND IT WAS
+ * WRONG. The chat posted `level: "B1"` for everybody, typed into the client,
+ * so a beginner on their first evening and a C1 speaker were both taught as
+ * B1, and nothing the app had measured reached her: not the level check, not
+ * the six months of case answers on the Progress page, not which unit was open.
+ * A teacher who has been looking is what "warm is attention" means, and she
+ * had not been given anything to look at.
+ *
+ * Three facts, and the wording keeps them from becoming a tic. The weakest
+ * case is offered as something to use when a question touches it, not to
+ * raise in every answer, because a learner who hears about their partitive
+ * every time they ask about the weather stops asking. Everything here is
+ * derived on the server from the learner's own log (`lib/progress/tutorContext.ts`);
+ * nothing the client sends reaches this block.
+ */
+export interface LearnerNote {
+  level: string;
+  /** A case key from `CASES`, with how often it was answered right and out of how many. */
+  weakestCase: { grammCase: string; accuracy: number; total: number } | null;
+  /** The course unit currently open: its Estonian title, the English under it, and its band. */
+  unit: { title: string; subtitle: string; level: string } | null;
+}
+
+export function learnerNote(note: LearnerNote): string {
+  const lines: string[] = [];
+  const weak = note.weakestCase && CASES.find((c) => c.key === note.weakestCase?.grammCase);
+  if (weak && note.weakestCase) {
+    lines.push(
+      `- Over the last six months their weakest case is the ${weak.et} (${weak.en}), right ${note.weakestCase.accuracy}% of ${note.weakestCase.total} times. When a question touches it, say so and build the example around it. Do not raise it unprompted in every answer.`,
+    );
+  }
+  if (note.unit) {
+    lines.push(
+      `- They are working through the unit "${note.unit.title}" (${note.unit.subtitle}) at ${note.unit.level}. Prefer everyday words from around that level in examples.`,
+    );
+  }
+  if (lines.length === 0) return "";
+  return `ABOUT THIS LEARNER\n- Their level is ${note.level}.\n${lines.join("\n")}`;
 }

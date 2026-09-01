@@ -1913,6 +1913,20 @@ headers at all; the chat reads them back and the line under the conversation say
 a reply has arrived and "Answered by" after. A trailer was tried and is not an option, because no
 browser exposes one.
 
+**Anu is told who is asking, and she is told by the server.** The chat posted `level: "B1"` for
+everybody, typed into the client, and the route believed it: a beginner on their first evening and
+a C1 speaker were both taught as B1, and nothing the app had measured about either reached her.
+`lib/progress/tutorContext.ts` reads three things off the learner's own log at once, the level
+`courseLevelFor` gives every other screen, the weakest case `caseAccuracy` gives the Progress page
+over the same shared query, and the unit the deck has started and not finished, and `learnerNote`
+puts them in a block sent **after** the static prompt rather than inside it, so the part that does
+not change per person stays cached on every provider. The wording of that block is a decision: the
+weakest case is offered for when a question touches it and never as a refrain, because a learner
+who hears about their partitive every time they ask about the weather stops asking. It needs twelve
+answers before it names a case, four times the chart's floor, since a teacher raising it in
+conversation is a stronger claim than a bar. The route no longer reads a level from the request at
+all, asserted.
+
 **Anu's English is cleaned on its way past, and her Estonian never is.** `lib/tutor/humanize.ts`
 strips dashes used as clause breaks and stock openers, reading both from `lib/copy/voice.ts` rather
 than keeping a list of its own. It streams, holding text back only where a

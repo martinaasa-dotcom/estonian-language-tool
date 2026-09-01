@@ -34,7 +34,7 @@ export const CHIPS = [
   { label: "Object case check", short: "Object case", prompt: "Is the object case right in this sentence, total or partial? Explain why: " },
   { label: "Explain this gradation", short: "Gradation", prompt: "Explain the consonant gradation in this word and name the pattern: " },
   { label: "Correct my Estonian", short: "Correct me", prompt: "Correct my Estonian and explain each change: " },
-  { label: "Quiz me", short: "Quiz me", prompt: "Quiz me with five short B1-level Estonian questions, one at a time." },
+  { label: "Quiz me", short: "Quiz me", prompt: "Quiz me with five short Estonian questions at my level, one at a time." },
 ] as const;
 
 /**

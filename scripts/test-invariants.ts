@@ -2040,6 +2040,23 @@ check("the voice is one table, and everything that speaks reads from it", () => 
   );
 
   /*
+    And what she is told about the learner is read off their own log, never
+    off the request. The chat used to post `level: "B1"` for everybody and
+    the route believed it, so every learner was taught as B1. The level, the
+    weakest case and the open unit come from `learnerContextFor` now, in a
+    block sent after the static prompt so the cached part stays cached.
+  */
+  const tutorRoute = code("app/api/tutor/route.ts");
+  assert.doesNotMatch(tutorRoute, /body\.level/, "the tutor route reads a level from the client again");
+  assert.match(tutorRoute, /learnerContextFor\(ownerId\)/, "the tutor route no longer asks who is asking");
+  assert.match(tutorRoute, /learnerNote\(learner\)/, "the tutor route no longer hands Anu the learner note");
+  assert.doesNotMatch(
+    code("components/anu/useAnuChat.ts"),
+    /level:/,
+    "the chat posts a level again, which the server would have to distrust",
+  );
+
+  /*
     And the sweep still sweeps everything. Narrowing it back to a hand-listed
     set of public files is exactly how it spent its first life, and a list is
     what a rule decays into: it covers the screens somebody was looking at on

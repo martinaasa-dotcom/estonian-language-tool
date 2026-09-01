@@ -4,7 +4,8 @@ import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rate
 import { candidatesFor } from "@/lib/dict/resolveScan";
 import { matchEstonianForm } from "@/lib/dict/search";
 import { ProseStream } from "@/lib/tutor/humanize";
-import { buildSystemPrompt } from "@/lib/tutor/prompt";
+import { buildSystemPrompt, learnerNote } from "@/lib/tutor/prompt";
+import { learnerContextFor } from "@/lib/progress/tutorContext";
 import { chatEstonianTokens } from "@/lib/tutor/verify";
 import {
   openWithFallback,
@@ -45,8 +46,10 @@ export async function POST(request: Request) {
     start — and it fails closed, because "the database hiccuped" is not a reason
     to start spending without a ceiling.
   */
+  const learnerPromise = learnerContextFor(ownerId);
   const decision = await authoriseCall(ownerId, "TUTOR");
   if (!decision.allowed) {
+    learnerPromise.catch(() => undefined);
     return Response.json(
       { error: decision.message, reason: decision.reason },
       {
@@ -67,9 +70,8 @@ export async function POST(request: Request) {
   }
 
   let messages: ChatMessage[];
-  let level = "B1";
   try {
-    const body = (await request.json()) as { messages?: unknown; level?: unknown };
+    const body = (await request.json()) as { messages?: unknown };
     if (!Array.isArray(body.messages) || body.messages.length === 0) {
       return Response.json({ error: "Nothing to ask." }, { status: 400 });
     }
@@ -80,14 +82,22 @@ export async function POST(request: Request) {
         (("role" in m && (m.role === "user" || m.role === "assistant"))) &&
         "content" in m && typeof (m as ChatMessage).content === "string")
       .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
-    if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
   } catch {
     return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   // The learner's text is user content, never spliced into the system prompt.
   // The importer exists to paste text from elsewhere, so that boundary matters.
-  const system = buildSystemPrompt(level);
+  /*
+    Who is asking is the server's to know. The client used to post a level and
+    the route believed it, which made every learner B1. What she is told now
+    is read off this learner's own log, started beside the ledger's own
+    transaction above rather than after it: three round trips that do not
+    depend on the answer cost nothing extra when they are in flight together.
+  */
+  const learner = await learnerPromise;
+  const system = buildSystemPrompt(learner.level);
+  const live = learnerNote(learner);
   const encoder = new TextEncoder();
   let full = "";
 
@@ -117,7 +127,7 @@ export async function POST(request: Request) {
         // limit" while none of them has been recorded yet.
         reservation: decision.reservation,
       });
-    });
+    }, live);
   } catch (error) {
     // Nothing was spent and nothing was answered, so the authorisation is
     // handed back: a deployment with a bad key must not ration its learners

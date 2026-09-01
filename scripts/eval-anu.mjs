@@ -4,6 +4,7 @@
  * worse than none, because the SRS then drills it.
  */
 import { FREE_OPENROUTER_MODELS } from "../lib/tutor/provider.ts";
+import { buildSystemPrompt } from "../lib/tutor/prompt.ts";
 
 const QUESTIONS = [
   { q: "Why is it 'Lugesin raamatut' and not 'Lugesin raamatu'?",
@@ -20,7 +21,8 @@ const QUESTIONS = [
     must: [/raamatuid/i], why: "irregular form" },
 ];
 
-const system = "You are Anu, an Estonian teacher for English speakers. Answer briefly and name the grammar rule.";
+// Anu's own prompt rather than a one-line stand-in, or this measures a model and not her.
+const system = buildSystemPrompt("B1");
 const key = process.env.OPENROUTER_API_KEY;
 
 /*
