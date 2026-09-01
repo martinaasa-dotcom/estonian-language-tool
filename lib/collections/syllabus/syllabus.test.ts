@@ -4,6 +4,8 @@ import {
   nextUnit, unitById, unitProgress, unitsAtLevel, wordsAtLevel, type Level, type SyllabusUnit,
 } from "./index";
 import { HARVESTED } from "@/prisma/data/harvested";
+import { RETIRED_WORDS } from "./retired";
+import { inferPos } from "./types";
 import { PHRASES } from "@/prisma/data/other";
 import { grammarPoint } from "@/lib/estonian/grammar";
 
@@ -194,6 +196,27 @@ describe("nextUnit", () => {
   it("runs out honestly when the whole course is done", () => {
     const all = new Set(SYLLABUS.map((u) => u.id));
     expect(nextUnit({ doneUnitIds: all, startedUnitIds: empty, placement: "C1" })).toBeUndefined();
+  });
+});
+
+describe("the vocabulary the course no longer teaches", () => {
+  it("is still in the harvest, every word of it", () => {
+    // The ten C2 units were cut with the promise that their words stay in the
+    // dictionary, and the harvest reads the syllabus, so the first re-run after
+    // the cut took them out. retired.ts is the list that keeps them, and this
+    // is what notices a harvest that forgot to read it.
+    const held = new Set(HARVESTED.map((w) => `${w.lemma}|${w.pos}`));
+    const missing = RETIRED_WORDS
+      .map((w) => `${w[0]}|${inferPos(w[0], w[2])}`)
+      .filter((key) => !held.has(key));
+    expect(missing).toEqual([]);
+    expect(RETIRED_WORDS.length).toBeGreaterThan(100);
+  });
+
+  it("names no word a unit already teaches", () => {
+    const taught = new Set(courseWords().map((w) => `${w.lemma}|${w.pos}`));
+    const both = RETIRED_WORDS.map((w) => `${w[0]}|${inferPos(w[0], w[2])}`).filter((k) => taught.has(k));
+    expect(both).toEqual([]);
   });
 });
 

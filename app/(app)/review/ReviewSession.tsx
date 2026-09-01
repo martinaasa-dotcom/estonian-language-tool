@@ -199,6 +199,15 @@ const TYPE_LABEL: Record<string, string> = {
   CONJUGATION: "Verb form",
 };
 
+/**
+ * The one form to read aloud off a side that may print two.
+ *
+ * A case card's back is `tuppa / toasse`, both right and both printed, and a
+ * speech service handed that string reads the slash. The first is the one the
+ * dictionary leads with, which is the one worth hearing.
+ */
+const spoken = (side: string) => side.split(" / ")[0]!.trim();
+
 /** Cards whose front or back is Estonian and therefore worth hearing. */
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front"
@@ -342,7 +351,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     const heard = estonianSide(upcoming.cardType, "front") && upcoming.cardType !== "CLOZE"
       ? upcoming.lemma ?? upcoming.front
       : upcoming.intro?.lemma ?? upcoming.lemma ?? (estonianSide(upcoming.cardType, "back") ? upcoming.back : null);
-    if (heard) prefetchClip({ text: heard, voice });
+    if (heard) prefetchClip({ text: spoken(heard), voice });
   }, [index, queue, voice]);
 
   // Interval previews are computed after mount, never during the server render.
@@ -855,7 +864,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                   {/* The answer, read aloud as it appears. On a typed card
                       this is the correction; on a flip it is the word you
                       were trying to recall, said properly. */}
-                  {estonianSide(card.cardType, "back") && <Speak text={card.back} autoplay />}
+                  {estonianSide(card.cardType, "back") && <Speak text={spoken(card.back)} autoplay />}
                 </div>
               )}
 

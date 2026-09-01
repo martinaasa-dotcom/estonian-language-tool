@@ -69,8 +69,8 @@ const ROW = 12;
 /** The fewest a source may fill before the next one is tried instead. */
 const MIN_ROW = 6;
 
-/** The parts of speech with a paradigm to open. */
-const POS = ["NOUN", "VERB", "ADJECTIVE"];
+/** The parts of speech with a case or verb table to open. */
+const POS = ["NOUN", "VERB", "ADJECTIVE", "PRONOUN"];
 
 /**
  * How many headline words are worth asking the dictionary about.
