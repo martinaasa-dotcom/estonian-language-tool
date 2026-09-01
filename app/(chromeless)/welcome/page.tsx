@@ -6,12 +6,14 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
+import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
 import { CaseExplorer, TutorPeek, type DemoWord } from "./LandingDemo";
+import { LetterTile } from "@/components/LetterTile";
 import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
@@ -23,8 +25,6 @@ export const metadata: Metadata = {
 
 /** The landing page is public and read-only, so it can be cached hard. */
 export const revalidate = 3600;
-
-const DEMO_LEMMAS = ["tuba", "raamat", "õppima"];
 
 export default async function WelcomePage() {
   const { words, stats } = await loadDemo();
@@ -302,8 +302,8 @@ function Cases({ words }: { words: DemoWord[] }) {
           </h2>
           <p className="mx-auto mt-5 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             You can hold a 400-day streak and still freeze when somebody speaks to you at the
-            counter. Three forms of a word are yours to learn. The eleven that follow are the same
-            regular endings every time. Press a word and watch.
+            counter. Three forms of a word are yours to learn, sometimes four. Everything after
+            them is the same regular endings every time. Press a word and watch.
           </p>
         </div>
       </Reveal>
@@ -348,8 +348,20 @@ function Cases({ words }: { words: DemoWord[] }) {
             than its side's margin, wander included, cannot touch a glyph
             whatever the reader presses: that is a property of the placement
             rather than a lucky gap, which matters because pressing a chip
-            changes how many rows the card has. Each of these reaches in by 12
-            to 20px and drifts at most 4px further.
+            changes how many rows the card has.
+
+            THE TRAVEL IS ALONG THE EDGE, WHICH IS WHERE THE ROOM IS. These
+            used to wander three or four pixels towards the card, because that
+            is the only direction anybody had thought to spend, and against a
+            17px margin there is nothing to spend: the movement was real and
+            invisible. A letter on the top edge can slide the better part of
+            the card's width without coming a pixel nearer anything it could
+            land on, so õ and ö now travel 26 and 30px sideways, ä and ü the
+            same up and down their own sides, and what crosses the edge is one
+            to three pixels. The rock and the squash are what the small budget
+            buys, and `room` is what scales them per letter: a rotated square
+            is wider than its side, so 8deg on the tightest of the four is
+            worth more than 15deg on the one with a gutter under it.
 
             The hang is bounded by the other end: the gutter is 20px at 640,
             and a rotated square is wider than its side, so 14deg on 40px puts
@@ -357,80 +369,40 @@ function Cases({ words }: { words: DemoWord[] }) {
             hanging inside the page's padding and being clipped against it, and
             it is why every letter is smaller below `md` than above it.
 
-            They are `pointer-events-none` and `aria-hidden`: an ornament that
+            EACH ONE MOVES DIFFERENTLY, and that is the point of there being
+            four characters in `lib/ux/letterMotion.ts` rather than one
+            keyframe with four delays on it. Four squares doing the same thing
+            a second and a half apart is a mechanism. õ ambles, ä crouches and
+            springs, ü rolls, ö hangs and swings.
+
+            AND THEY NOTICE A POINTER. Coming near one slides it along its own
+            edge towards the cursor and settles it further onto the card, which
+            is the same rule as the wander for the same reason. They are still
+            `pointer-events-none` and `aria-hidden`: an ornament that
             eats a tap on the card underneath it is a decoration doing
             something no decoration should, and the card underneath is the one
             interactive thing on this page.
-
-            `scripts/test-design.mjs` measures all of it at 640, 768 and 1280,
-            stepping each letter through twelve frames of its own wander rather
-            than reading it where it happens to rest: every letter over an
-            edge, none on a control, none past the page, and the slant still
-            there with the animation stopped.
-
-            One hue each, and the fourth takes butter because it is the hue
-            left: blush, mint and sky are spoken for and peach means "missed"
-            on every other screen in the app.
           */}
-          {/*
-            ONE SIZE FOR ALL FOUR, and one radius with it.
-
-            They were 40, 32, 28 and 32 across, and 56, 48, 40 and 36 above
-            `md`, which is a spread of two to one on the same ornament. Four
-            squares of four sizes around one card read as four attempts at the
-            same thing rather than as a set: the eye looks for the rule, does
-            not find one, and lands on the biggest as a mistake. Nothing was
-            deciding those numbers, which is exactly why they drifted apart.
-
-            THE ONE THEY ALL TOOK IS THE SMALL END OF THE OLD SPREAD, and that
-            is the geometry deciding rather than taste. Every letter's hang is
-            unchanged, so the reach onto the card is the size less the hang: a
-            bigger square is one that reaches further in, towards the nearest
-            run of text, and the tightest of those margins is 21px on the left.
-            Sizing the set at the widest of the old four would have put ü 24px
-            in at `md` against that 21px, which is the placement rule broken to
-            make the ornament tidy. At 32 and 40 the deepest reach in the set
-            is 20px, inside every margin, at every width, on both words the
-            explorer can show.
-
-            THE WANDER IS THE SAME DISTANCE AND HALF THE TIME. It moved 3 to
-            4px over nine to eleven seconds, which is a letter that is not
-            moving as far as anybody can tell. What it cannot do is travel
-            further: it only ever drifts inward, onto the card, so the amount
-            it can spend is the margin the paragraph above just accounted for.
-            Speed is the axis that is free. So the cycles are about half what
-            they were and the rock is a degree wider, which is visible at a
-            glance and costs the geometry a fifth of a pixel on the bounding
-            box.
-          */}
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -top-6 left-72 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-top-8 md:left-80 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg", "--drift-x": "2px", "--drift-y": "4px", "--drift-turn": "3deg", "--drift-time": "5.5s" } as React.CSSProperties}
-          >
-            õ
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -right-3 top-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:top-28 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.7s", "--float-tilt": "12deg", "--drift-x": "-4px", "--drift-y": "-3px", "--drift-turn": "2.6deg", "--drift-time": "4.8s" } as React.CSSProperties}
-          >
-            ä
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -left-3 bottom-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.5s", "--float-tilt": "-9deg", "--drift-x": "4px", "--drift-y": "-3px", "--drift-turn": "3deg", "--drift-time": "6.2s" } as React.CSSProperties}
-          >
-            ü
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -bottom-5 right-14 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-bottom-6 md:right-20 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "2.2s", "--float-tilt": "15deg", "--drift-x": "-3px", "--drift-y": "-4px", "--drift-turn": "2.8deg", "--drift-time": "5.6s" } as React.CSSProperties}
-          >
-            ö
-          </span>
+          <LetterTile
+            letter="õ" hue="blush" edge="top" character="wander"
+            tilt={-7} travel={{ x: 26, y: 1 }} room={0.5} reach={280}
+            className="-top-6 left-72 z-20 hidden h-8 w-8 text-base sm:block md:-top-8 md:left-80 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ä" hue="mint" edge="right" character="hop"
+            tilt={12} travel={{ x: -3, y: -30 }} room={0.75} delay={0.7} reach={280}
+            className="-right-3 top-24 z-20 hidden h-8 w-8 text-base sm:block md:-right-6 md:top-28 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ü" hue="sky" edge="left" character="tumble"
+            tilt={-9} travel={{ x: 2, y: -28 }} room={0.6} delay={1.5} reach={280}
+            className="-left-3 bottom-24 z-20 hidden h-8 w-8 text-base sm:block md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ö" hue="butter" edge="bottom" character="swing"
+            tilt={15} travel={{ x: -30, y: -3 }} room={0.85} delay={2.2} reach={280}
+            className="-bottom-5 right-14 z-20 hidden h-8 w-8 text-base sm:block md:-bottom-6 md:right-20 md:h-10 md:w-10 md:text-xl"
+          />
 
           <CaseExplorer words={derivable} />
         </div>
@@ -1079,7 +1051,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
   try {
     const [lexemes, wordCount, formCount] = await Promise.all([
       prisma.lexeme.findMany({
-        where: { lemma: { in: DEMO_LEMMAS } },
+        where: { lemma: { in: [...DEMO_LEMMAS] } },
         include: { forms: true },
       }),
       prisma.lexeme.count(),
@@ -1094,7 +1066,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       moment somebody confirms it off a photograph. The case table under it
       is the whole argument this page makes, and it would have been empty.
     */
-    const words = oneEntryPerLemma(lexemes, DEMO_LEMMAS).flatMap((lex) => {
+    const words = oneEntryPerLemma(lexemes, [...DEMO_LEMMAS]).flatMap((lex) => {
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 
@@ -1106,25 +1078,44 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         : [["nimetav · kes? mis?", form("NOM_SG")], ["omastav · kelle? mille?", form("GEN_SG")], ["osastav · keda? mida?", form("PART_SG")]]
       ).flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
 
-      const cases = isVerb
+      const table = isVerb
         ? []
         : buildCaseTable({
             nomSg: form("NOM_SG"), genSg: form("GEN_SG"), partSg: form("PART_SG"),
             partPl: form("PART_PL"), genPl: form("GEN_PL"),
-          }).map((row) => ({
-            en: row.spec.en,
-            et: row.spec.et,
-            question: row.spec.question,
-            singular: row.singular ?? null,
-            plural: row.plural ?? null,
-            principal: row.spec.principal,
-          }));
+            illSgShort: form("ILL_SG_SHORT"),
+          });
+
+      /*
+        A FOURTH FORM, WHERE THE WORD HAS ONE.
+
+        `tuppa` and `kätte` are not `toa` and `käe` with an ending on them, and
+        no rule reaches either, which is why the dictionary stores them. So
+        they sit with the forms you memorise rather than with the ones that
+        follow, and the two headings count what is under them: press `tuba` and
+        the card says four and ten rather than three and eleven. That is the
+        card doing its job. The alternative is printing `toasse`, which is
+        defensible Estonian and is not a sentence anybody says.
+      */
+      const learnt = table.filter((row) => row.origin === "STORED" && !row.spec.principal);
 
       return [{
         lemma: lex.lemma,
         genitive: form("GEN_SG") ?? null,
-        principal,
-        cases,
+        principal: [
+          ...principal,
+          ...learnt.flatMap((row) => (row.singular
+            ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: row.singular }]
+            : [])),
+        ],
+        cases: table.map((row) => ({
+          en: row.spec.en,
+          et: row.spec.et,
+          question: row.spec.question,
+          singular: row.singular ?? null,
+          plural: row.plural ?? null,
+          principal: row.spec.principal || row.origin === "STORED",
+        })),
       }];
     });
 
@@ -1142,35 +1133,37 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
 /**
  * The set the page falls back to when the database is unreachable or has not
- * been seeded yet — which is the state a fresh deployment builds in, so this
+ * been seeded yet, which is the state a fresh deployment builds in, so this
  * path is load-bearing rather than theoretical.
  *
- * The principal parts are copied verbatim from the checked seed data; the rest
- * is derived by `buildCaseTable()`, exactly as the live path does it. Nothing
- * here is a hand-written Estonian form.
+ * The stems are copied verbatim from the checked seed data and live in
+ * `lib/collections/demoWords.ts` beside the list of words to ask for; the rest
+ * is derived by `buildCaseTable()`, exactly as the live path does it, down to
+ * the short illative going in with the forms you memorise. Nothing here is a
+ * hand-written Estonian form, and `scripts/test-invariants.ts` checks the copy
+ * against the built dictionary rather than trusting that it was copied.
  */
-
-const FALLBACK_STEMS = [
-  { lemma: "tuba",
-    nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
-  { lemma: "raamat",
-    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
-] as const;
-
-const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
-  lemma: w.lemma,
-  genitive: w.genSg,
-  principal: [
-    { label: "nimetav · kes? mis?", value: w.nomSg },
-    { label: "omastav · kelle? mille?", value: w.genSg },
-    { label: "osastav · keda? mida?", value: w.partSg },
-  ],
-  cases: buildCaseTable(w).map((row) => ({
-    en: row.spec.en,
-    et: row.spec.et,
-    question: row.spec.question,
-    singular: row.singular ?? null,
-    plural: row.plural ?? null,
-    principal: row.spec.principal,
-  })),
-}));
+const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
+  const table = buildCaseTable(w);
+  const learnt = table.filter((row) => row.origin === "STORED" && !row.spec.principal);
+  return {
+    lemma: w.lemma,
+    genitive: w.genSg,
+    principal: [
+      { label: "nimetav · kes? mis?", value: w.nomSg },
+      { label: "omastav · kelle? mille?", value: w.genSg },
+      { label: "osastav · keda? mida?", value: w.partSg },
+      ...learnt.flatMap((row) => (row.singular
+        ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: row.singular }]
+        : [])),
+    ],
+    cases: table.map((row) => ({
+      en: row.spec.en,
+      et: row.spec.et,
+      question: row.spec.question,
+      singular: row.singular ?? null,
+      plural: row.plural ?? null,
+      principal: row.spec.principal || row.origin === "STORED",
+    })),
+  };
+});

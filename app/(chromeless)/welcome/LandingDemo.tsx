@@ -40,6 +40,14 @@ export interface DemoWord {
  * about Estonian nouns, shown rather than claimed. Every form on the right is
  * derived by the same function the app itself uses, from principal parts a
  * dictionary recorded. Nothing here was written by hand or by a model.
+ *
+ * SOMETIMES IT IS FOUR, and the card says so by counting. `tuppa` and `kätte`
+ * are not the genitive stem with an ending on it and no rule reaches either,
+ * so they are stored, and a word that has one puts it on the left with the
+ * forms you memorise. The two headings count what is under them, which is what
+ * the note above them has always said they do, so pressing `tuba` reads four
+ * and ten where `raamat` reads three and eleven. The alternative is printing
+ * `toasse`, which is defensible Estonian and a sentence nobody says.
  */
 export function CaseExplorer({ words }: { words: DemoWord[] }) {
   const [active, setActive] = useState(0);

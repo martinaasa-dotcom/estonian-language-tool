@@ -226,15 +226,31 @@ Small, physical, and never blocking:
   watches it arrive.
 - `.fade-up`, `.pop-in`: entrances for content that has just arrived (a flipped card, a summary).
 - `.float`: the mascot's bob, six seconds up and down.
-- `.drift`: the landing page's four letters. The same idea with nothing shared between them: each
-  wanders six or seven pixels and about two degrees on its own period, between 7.5 and 11 seconds,
-  so the four are never in step. It drifts inward only, since a letter hangs in the page's own
-  padding and an outward swing of three pixels is a letter clipped against the edge of the window.
+- `.drift` and `.letter-lean`: the four letters tucked over the sides of the landing page's case
+  explorer, and nowhere else. They belong to that card because its contents are the letters
+  themselves; one drifting in the margin beside a headline is a decoration that has come loose.
+  Four characters rather than one wander, declared in `lib/ux/letterMotion.ts` and drawn by
+  `components/LetterTile.tsx`: one ambles, one crouches and springs, one hangs and swings, one
+  rolls. No two share a period, so a set of them falls back into step about once an hour.
+  **The travel goes along the edge a letter hangs off, not across it.** A letter tucked over the
+  top of a card has about four pixels before it is sitting on a word and most of the card's width
+  sideways, so the one that used to wander six pixels towards the card now slides forty along it
+  and crosses the edge by one. What the small budget buys instead is the rock and the squash, and
+  `room` scales both per placement: a rotated square is wider than its side, so eight degrees on
+  the tightest letter costs more than fifteen on the one with a gutter under it.
+  **They answer a pointer.** Coming near one slides it towards the cursor along that same free axis
+  and settles it further onto the card, which is `leanFor()` and is the same rule as the wander:
+  either way along the edge, inward only across it. They stay `pointer-events-none`, so none of it
+  reaches a control underneath.
   The slant itself is a `rotate` property rather than a keyframe, so it survives
   `prefers-reduced-motion` turning every animation here into 0.01ms; the wander rocks it around
-  that declared value. `scripts/test-design.mjs` steps each letter through twelve frames of its own
-  cycle, because the amplitude that makes this pleasant is a few pixels from the one that lifts a
+  that declared value, and the lean is `transform` on a wrapper, which is the one property left.
+  `scripts/test-design.mjs` steps each letter through twelve frames of its own cycle at three
+  widths, because the amplitude that makes this pleasant is a few pixels from the one that lifts a
   letter off the card or drops it on the button.
+- `.letter-key`: the six keys that type õ, ä, ö, ü, š and ž. The one place a letter is a control
+  rather than an ornament, so it grows under a pointer and shakes once on the way in. `.press`
+  still supplies the dip, so a key is one control with one set of states.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
 - The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pane that says where you are,

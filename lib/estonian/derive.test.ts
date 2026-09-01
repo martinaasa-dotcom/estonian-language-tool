@@ -67,3 +67,45 @@ describe("deriveCase", () => {
     expect(deriveCase(undefined, "INESSIVE")).toBeUndefined();
   });
 });
+
+describe("the illative, which is the one case with two answers", () => {
+  it("prefers the stored short illative to the one the rule would build", () => {
+    const tuba = buildCaseTable({
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    });
+    const ill = tuba.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("tuppa");
+    expect(ill.origin).toBe("STORED");
+  });
+
+  it("keeps the plural regular, since only the singular has a short form", () => {
+    const tuba = buildCaseTable({
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    });
+    expect(tuba.find((r) => r.spec.key === "ILLATIVE")!.plural).toBe("tubadesse");
+  });
+
+  it("derives it where the dictionary holds no short form", () => {
+    const raamat = buildCaseTable({
+      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut",
+    });
+    const ill = raamat.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("raamatusse");
+    expect(ill.origin).toBe("DERIVED");
+  });
+
+  it("ignores a short form that is a word the learner already has", () => {
+    // `sõber` records `sõpra`, which is also its partitive. Promoting it would
+    // print one word twice under two names and hide the form somebody writing
+    // a sentence needs.
+    const sober = buildCaseTable({
+      nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade",
+      illSgShort: "sõpra",
+    });
+    const ill = sober.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("sõbrasse");
+    expect(ill.origin).toBe("DERIVED");
+  });
+});
