@@ -84,7 +84,7 @@ export const THEMES: readonly Theme[] = [
     reason: "A new year, and plans for it",
     from: [12, 27],
     to: [1, 6],
-    units: ["plaanid", "aeg", "arvud"],
+    units: ["plaanid", "aeg", "arvud", "kuud", "millal"],
   },
   {
     id: "talv",
@@ -98,7 +98,7 @@ export const THEMES: readonly Theme[] = [
     reason: "Estonia's independence day is 24 February",
     from: [2, 24],
     to: [2, 29],
-    units: ["ajalugu", "inimesed", "kodu"],
+    units: ["ajalugu", "inimesed", "kodu", "riigid"],
   },
   {
     id: "kevad",
