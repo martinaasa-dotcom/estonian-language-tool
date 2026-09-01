@@ -281,7 +281,7 @@ export default async function TodayPage() {
         />
         {/* A week at a glance: the streak, made concrete. */}
         <div className="flex min-w-[210px] flex-1 items-center justify-between gap-2">
-          {week.map((d) => (
+          {week.map((d, i) => (
             <div key={d.day} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
               {/*
                 Sized to the column it is in, up to 36px, rather than
@@ -292,7 +292,9 @@ export default async function TodayPage() {
                 circle at whatever width it ends up with.
               */}
               <span
-                className="flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold"
+                // A reviewed day pops in, one after another across the week,
+                // so the run of days reads as a run rather than as seven dots.
+                className={`${d.done ? "pop-in " : ""}flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold`}
                 /*
                   The ring is what makes a reviewed day visible.
 
@@ -319,6 +321,7 @@ export default async function TodayPage() {
                   boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
                   outline: d.isToday ? "2px solid var(--accent)" : "none",
                   outlineOffset: 2,
+                  animationDelay: d.done ? `${i * 60}ms` : undefined,
                 }}
                 aria-hidden
               >

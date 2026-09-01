@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CASES } from "@/lib/estonian/cases";
 import { ArrowRight } from "lucide-react";
 
 /**
@@ -145,7 +146,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
             {derived.map((c) => (
               <li
                 key={c.et}
-                className="flex items-baseline justify-between gap-2 rounded-[var(--r-sm)] px-3 py-2"
+                className="ending-row flex items-baseline justify-between gap-2 rounded-[var(--r-sm)] px-3 py-2"
                 style={{ background: "var(--accent-soft)" }}
               >
                 {/* No opacity: `--accent-deep` on `--accent-soft` is 5.16, and three
@@ -153,7 +154,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
                     which is the label this app leads with everywhere else. */}
                 <span lang="et" className="text-2xs" style={{ color: "var(--accent-deep)" }}>{c.et}</span>
                 <span lang="et" className="text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
-                  {c.singular}
+                  <WithEnding form={c.singular} et={c.et} />
                 </span>
               </li>
             ))}
@@ -200,5 +201,25 @@ export function TutorPeek() {
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * A derived form with its ending lit, which is the whole argument of the card
+ * made visible: the eleven on the right are the stem on the left plus a few
+ * letters, and hovering a row lifts exactly those letters. The ending is read
+ * off the case table rather than guessed, and a form that does not end in
+ * its case's suffix (the short illative `tuppa`) is left whole, because
+ * lighting the wrong letters would teach the wrong rule.
+ */
+function WithEnding({ form, et }: { form: string | null; et: string }) {
+  if (!form) return null;
+  const suffix = CASES.find((c) => c.et === et)?.suffix;
+  if (!suffix || !form.endsWith(suffix) || form.length <= suffix.length) return <>{form}</>;
+  return (
+    <>
+      {form.slice(0, -suffix.length)}
+      <span className="ending">{suffix}</span>
+    </>
   );
 }

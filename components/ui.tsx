@@ -275,10 +275,17 @@ export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "v
   tone?: string;
 }) {
   const clamped = Math.max(0, Math.min(100, pct));
+  // The angle is a custom property so the fill can draw itself on arrival
+  // (`.ring-fill` in globals.css); the gradient reads it, the keyframe moves it.
+  const ring = {
+    width: size, height: size,
+    background: `conic-gradient(${tone} var(--ring-deg), var(--raised) 0deg)`,
+    "--ring-deg": `${clamped * 3.6}deg`,
+  } as CSSProperties;
   return (
     <div
-      className="relative flex shrink-0 items-center justify-center rounded-full"
-      style={{ width: size, height: size, background: `conic-gradient(${tone} ${clamped * 3.6}deg, var(--raised) 0deg)` }}
+      className="ring-fill relative flex shrink-0 items-center justify-center rounded-full"
+      style={ring}
       role="img"
       aria-label={label}
     >
@@ -299,7 +306,7 @@ export function Meter({ pct, label, tone = "var(--accent)", height = 8 }: {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
     <div
-      className="w-full overflow-hidden rounded-full"
+      className="meter-fill w-full overflow-hidden rounded-full"
       style={{ background: "var(--raised)", height }}
       role="progressbar"
       aria-label={label}

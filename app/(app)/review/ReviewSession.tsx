@@ -749,7 +749,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           {ask === "type" && verdict && (
             <div className="w-full max-w-sm">
               <p
-                className="rounded-md px-4 py-2.5 text-sm"
+                className={`${verdict.verdict === "correct" ? "pop-in" : "shake"} rounded-md px-4 py-2.5 text-sm`}
                 style={{
                   background: verdict.verdict === "correct" ? "var(--good-soft)"
                     : verdict.verdict === "wrong" ? "var(--again-soft)" : "var(--hard-soft)",

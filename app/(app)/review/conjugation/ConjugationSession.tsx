@@ -217,7 +217,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
               {question.blanks.map((blank, i) => {
                 const mark = verdicts?.[i];
                 return (
-                  <tr key={blank.code} style={{ borderTop: "1px solid var(--rule-soft)" }}>
+                  <tr key={blank.code} className="ending-row" style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td lang="et" className="w-16 py-2 pr-3 text-base" style={{ color: "var(--ink-2)" }}>
                       {blank.person}
                     </td>
@@ -240,10 +240,10 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
                         <div className="flex flex-wrap items-center gap-2">
                           <span
                             lang="et"
-                            className="text-lg font-semibold"
+                            className="pop-in text-lg font-semibold"
                             style={{ color: mark.verdict === "correct" ? "var(--good-ink)" : mark.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)" }}
                           >
-                            {blank.answer}
+                            <Ending stem={question.given.value} form={blank.answer} />
                           </span>
                           <Speak text={blank.answer} size={13} />
                           {mark.verdict === "correct" ? (
@@ -322,5 +322,24 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
         {tablesRight}/{index + (revealed ? 1 : 0)} tables clean · Enter moves down the table
       </p>
     </div>
+  );
+}
+
+/**
+ * A form with the part a person adds lit up: what `algan` and `algad` share is
+ * the stem, and the letters after it are the ending the table is teaching.
+ * Read off the two strings rather than off the rule, so a stored irregular
+ * form (`olen`, `on`) is shown honestly with whatever it does not share.
+ */
+function Ending({ stem, form }: { stem: string; form: string }) {
+  let shared = 0;
+  while (shared < stem.length && shared < form.length && stem[shared] === form[shared]) shared += 1;
+  // A form that shares nothing, or everything, has no ending worth lighting.
+  if (shared === 0 || shared === form.length) return <>{form}</>;
+  return (
+    <>
+      {form.slice(0, shared)}
+      <span className="ending">{form.slice(shared)}</span>
+    </>
   );
 }

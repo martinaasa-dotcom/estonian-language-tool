@@ -1547,3 +1547,75 @@ plural-only pronoun kept the way an adverb is. Re-running the harvest also showe
 units cut in §19 would have taken their 170 words out of the seed the first time anybody ran it,
 against what that section promised; `lib/collections/syllabus/retired.ts` keeps them as a request
 list of their own. The built-in dictionary is 6,039 words.
+
+## 24. The eighteenth pass: what was not learning, and who is asking
+
+The second half of the same audit, with one question kept from the first: does every screen earn
+its place for somebody trying to learn Estonian, and is what it tells them true.
+
+### What went
+
+- **The placement ladder, the homework list and the class week.** `/placement` was a second
+  answer to the level check with nothing measured behind it; `/tasks` and `/week` were a to-do
+  list and a calendar that a class can set but a learner alone never filled. Today keeps one card
+  for work a teacher assigns, and the rest is gone with its routes, its nav rows, its fixtures
+  and its checks. Four suite floors came down by exactly what the deleted screens counted, with
+  the arithmetic written beside each.
+- **The badge shelf from Settings.** Achievements and the streak shields are readings, so they
+  sit under Vocabulary reach on Progress, read in the same batch as everything else on that page.
+- **Three of the level check's four blocks of caveats.** The result screen ran to five thousand
+  pixels on a phone. The duplicate caveat is gone and the sources and six cited facts sit behind
+  one disclosure whose summary says what is inside.
+
+### What was wrong
+
+- **Signing out cleared one cookie.** The worker's page cache, the stashed review session, any
+  queued grade and an unfinished exam paper stayed behind for the next person on the same
+  machine. `lib/offline/forget.ts` removes all of it after the outbox has had its chance to
+  drain, both sign-out paths go through it, and a different account appearing on the same
+  browser clears what the last one left even when nobody signed out. `/privacy` says so.
+- **Anu was told every learner was B1.** The chat posted the level from the client and the route
+  believed it. `lib/progress/tutorContext.ts` reads the level, the weakest case over the shared
+  six-month query and the open unit off the learner's own log, and `learnerNote` sends them in a
+  block after the cached prompt. The prompt's case count was also off by one.
+- **The word of the day printed `Kokakool.` under "in a sentence".** The shortest usage Ekilex
+  recorded was one word with a full stop. Three words and the shape an exam sentence has to pass,
+  or no sentence.
+- **Names that did not match.** The rail said Learn over a page called The course; the sprint's
+  tab spelt its own name differently from its heading; the exam's tab said state where its rail
+  row did not; the manifest shortcut said Learning path. One name each.
+- **Four pages asked in turn what they could have asked at once.** Review, the dictionary,
+  Progress and My words each had one read waiting in front of others that did not need it. One
+  round trip fewer on each.
+- **Five letter bars on one conjugation table.** One now, under the table, typing into whichever
+  field has focus.
+
+### What was built
+
+- **Today's headlines, readable.** The news feed was already fetched hourly for the dictionary's
+  suggestion row and thrown away down to its words. A few headlines are kept whole on the
+  dictionary landing, printed as the feed spelled them and attributed, with every word the
+  dictionary vouches for at the scanned-page floor linked to its own headword and the rest left
+  plain. Offered only when most of a headline can be opened; stored nowhere; asserted.
+- **Motion where an answer lands or a number arrives.** A wrong answer shakes its verdict once
+  and a right one pops, in review and in Match; rings and meters fill on arrival rather than
+  appearing full; the week strip's ticks pop in one after another; and the letters a case or a
+  person adds to a stem are lit on the landing demo and in the conjugation drill, lifting under a
+  pointer on their own row. `prefers-reduced-motion` flattens all of it.
+
+### Measured
+
+- Every browser suite green against a production build on a fresh seed, in CI's order, after
+  the cut. The load test's ten checks pass with the heavy fixture: the whole review log for the
+  charts at 47ms p95, Today at 917ms p95 under eight concurrent readers on a local socket.
+- `npm run eval:anu` with Anu's own prompt rather than a one-line stand-in: five of five
+  answered correctly on the free chain, one refused by the model, which the script counts as
+  nothing rather than as wrong.
+
+### The dictionary, stated plainly
+
+The built-in dictionary is 6,039 words and that is the whole of what Wiktionary's four Estonian
+part-of-speech categories yield once proper nouns, multi-word entries and pages Ekilex cannot
+answer for are dropped. More words come from the two live paths, a lookup with an Ekilex key and
+a photographed page, and never from a model. The gloss and part-of-speech audits were clean over
+all of it on 2026-08-31 and the weekly drift check asks again.
