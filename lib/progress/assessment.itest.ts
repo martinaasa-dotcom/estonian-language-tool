@@ -52,14 +52,39 @@ describe("a sitting is kept, and never rewritten", () => {
     expect(latest?.skills.find((s) => s.skill === "reading")?.bands.length).toBeGreaterThan(0);
   });
 
+  /*
+    EACH SITTING IS FOUND BY ITS OWN ID, NOT BY ITS PLACE IN THE LIST.
+
+    The property is that a second sitting adds a row rather than rewriting the
+    first, and it was asserted as `history[1]` being the earlier one, which is
+    a claim about the order rather than about the row. That claim is a coin
+    toss. `takenAt` is `timestamp(3)`, so all the column records is the
+    millisecond, and two sittings written back to back land inside one of them
+    on a runner quick enough; `historyFor` then falls through to `id asc` to
+    break the tie, and the id is a random uuid. Measured against a real
+    Postgres with the two rows given the same `takenAt`: the earlier sitting
+    came second 105 times out of 200.
+
+    So it failed on CI on a landing-page branch that cannot reach this file,
+    and it will fail again on whatever lands next. Both rows are pinned by
+    identity now, which asserts strictly more than the line it replaces (the
+    later sitting was never checked at all) and asks nothing of an order the
+    schema does not record.
+
+    The ordering itself is left alone on purpose. Two sittings inside one
+    millisecond is a thing this test does and a thing no learner can do, and
+    the cure would be a column recording insertion order, which is a change to
+    an append-only table to settle a case that only a test reaches.
+  */
   it("adds a row rather than moving a number", async () => {
-    await saveResult(MINE, sat([0, 0, 0]));
-    await saveResult(MINE, sat([1, 1, 1]));
+    const first = await saveResult(MINE, sat([0, 0, 0]));
+    const second = await saveResult(MINE, sat([1, 1, 1]));
 
     const history = await historyFor(MINE, 5);
     expect(history).toHaveLength(2);
-    // Newest first, and the earlier one is still exactly as it was sat.
-    expect(history[1]?.overall).toBe("pre-A1");
+    // The earlier one is still exactly as it was sat, and so is the later one.
+    expect(history.find((row) => row.id === first.id)?.overall).toBe("pre-A1");
+    expect(history.find((row) => row.id === second.id)?.overall).toBe("A1");
     expect((await latestFor(MINE))?.overall).toBe(history[0]?.overall);
   });
 
