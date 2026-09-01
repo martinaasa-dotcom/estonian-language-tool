@@ -36,10 +36,13 @@ export interface DemoWord {
 }
 
 /**
- * Learn three forms and the rest follows: the single most encouraging fact
+ * Learn three forms and get most of the rest: the single most encouraging fact
  * about Estonian nouns, shown rather than claimed. Every form on the right is
- * derived by the same function the app itself uses, from principal parts a
- * dictionary recorded. Nothing here was written by hand or by a model.
+ * produced by the same function the app itself uses, which takes the form the
+ * dictionary attests wherever there is one and applies the regular ending only
+ * where there is not. `tuba` shows the difference: the illative is `tuppa`,
+ * and no ending on `toa` produces it. Nothing here was written by hand or by a
+ * model.
  */
 export function CaseExplorer({ words }: { words: DemoWord[] }) {
   const [active, setActive] = useState(0);
@@ -123,8 +126,14 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
         </div>
 
         <div>
+          {/*
+            "that follow the pattern" was a claim about all eleven, and the
+            illative does not: `tuba` gives `tuppa`, which no ending on `toa`
+            produces. The heading says what the column is rather than making a
+            promise the row under it breaks. The box stays as plain as it was.
+          */}
           <p className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
-            The {counted(derived.length)} that follow the pattern
+            The {counted(derived.length)} that come with it
           </p>
           <ul key={word.lemma} className="fade-up grid grid-cols-2 gap-1.5">
             {derived.map((c) => (

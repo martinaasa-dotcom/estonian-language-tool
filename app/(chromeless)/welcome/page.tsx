@@ -7,7 +7,7 @@ import {
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
-import { buildCaseTable } from "@/lib/estonian/derive";
+import { buildCaseTable, stemsFrom } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
@@ -296,14 +296,15 @@ function Cases({ words }: { words: DemoWord[] }) {
           heading into two lines in the first place.
         */}
         <div className="mx-auto max-w-4xl text-center">
-          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn three forms, the rest follows</p>
+          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn three forms, get most of the rest</p>
           <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             You didn&rsquo;t fail Estonian.<br className="lg:hidden" /> Your tools did.
           </h2>
           <p className="mx-auto mt-5 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             You can hold a 400-day streak and still freeze when somebody speaks to you at the
-            counter. Three forms of a word are yours to learn. The eleven that follow are the same
-            regular endings every time. Press a word and watch.
+            counter. Three forms of a word are yours to learn. Ten of the rest are the same endings
+            every time, and where a word breaks the pattern you get the form Estonians actually
+            say, not the one the rule predicts. Press a word and watch.
           </p>
         </div>
       </Reveal>
@@ -1108,10 +1109,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
       const cases = isVerb
         ? []
-        : buildCaseTable({
-            nomSg: form("NOM_SG"), genSg: form("GEN_SG"), partSg: form("PART_SG"),
-            partPl: form("PART_PL"), genPl: form("GEN_PL"),
-          }).map((row) => ({
+        : buildCaseTable(stemsFrom(lex.forms)).map((row) => ({
             en: row.spec.en,
             et: row.spec.et,
             question: row.spec.question,
@@ -1150,11 +1148,20 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  * here is a hand-written Estonian form.
  */
 
+/*
+  `illSgShort` is copied from the seed exactly as the other five parts are,
+  and the two words disagree about it on purpose. `tuba` has a short illative,
+  `tuppa`, so the suffix rule would have printed `toasse`; `raamat` has none
+  recorded, so `raamatusse` is simply what the rule gives and is right. That is
+  the pair this section is trying to teach, and the fallback has to teach it
+  too, because a deployment building against an unseeded database renders this
+  set and nothing else.
+*/
 const FALLBACK_STEMS = [
-  { lemma: "tuba",
-    nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
-  { lemma: "raamat",
-    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
+  { lemma: "tuba", nomSg: "tuba", genSg: "toa", partSg: "tuba",
+    partPl: "tube", genPl: "tubade", illSgShort: "tuppa" },
+  { lemma: "raamat", nomSg: "raamat", genSg: "raamatu", partSg: "raamatut",
+    partPl: "raamatuid", genPl: "raamatute", illSgShort: null },
 ] as const;
 
 const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({

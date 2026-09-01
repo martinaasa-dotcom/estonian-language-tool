@@ -204,6 +204,36 @@ that it was derived. A model is wrong about one word, unpredictably, in output t
 like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
 only" and three later decisions had already been reading it the narrower way.
 
+**And a derivation never stands where the dictionary has the real thing.** The paragraph above is
+the licence to derive; this is its limit, and it was broken for a year in the one case that has an
+exception. Estonian has two illatives: the long one is the genitive stem plus `sse`, which a rule
+can produce, and the short one, the *aditiiv*, is lexically unpredictable and is the form people
+say. `tuba` goes to **tuppa**, not `toasse`; `aeg` to `aega`, not `ajasse`; `abi` to `appi`. The
+dictionary held it all along as `ILL_SG_SHORT`, on 2,969 of the shipped entries, every one of them
+different from what the ending gives. `NounStems` had no field to put it in and `deriveCase` took a
+bare genitive string, so none of the eight callers could have consulted it. The landing page taught
+`toasse` as its headline demonstration, the grammar reference printed it under a label saying a
+lexicographer wrote it down, and `lib/srs/cards.ts` put it on the back of a flashcard: a learner
+typing the correct answer was marked wrong and shown the card again until they stopped.
+
+So `illSgShort: string | null` is a **required** field on `NounStems`, and that is the whole of the
+fix that matters. `null` means the dictionary was asked and holds none; a caller that never asked
+does not compile. It is the shape `buildOptions` takes a parsed `Government` for, and for the same
+reason: prose had said an attested form wins since ADR-005 was written, and the code disagreed the
+entire time. `caseAnswer` is the one function that answers "what is this word in this case", it
+puts a retrieved form ahead of the seeded short illative ahead of a suffix, and it returns every
+spelling that counts as right, because a screen printing one form and a marker accepting one form
+are two different questions. Three invariants hold it: the field stays required, nothing joins a
+case suffix to a stem outside `lib/estonian/derive.ts`, and the six modules that produce a case
+form for a learner all read `caseAnswer`. `lib/estonian/attested.test.ts` is the other half, and
+it is the half that can fail on a word: it walks all 5,363 shipped entries and was made to fail
+first, on `tuba → toasse`.
+
+Two things this does **not** licence. The other ten cases really are one ending each, and the audit
+asserts that too, so the illative is singled out rather than the whole table distrusted. And the
+long form stays *accepted* everywhere the short one is shown, since both are Estonian and marking
+somebody wrong for the other true answer is the fault this started as, pointed the other way.
+
 **Nothing a person reads may sound like a machine wrote it.** Every screen, every error, every
 empty state, the README, the policy pages and Anu are one person explaining Estonian to another.
 Almost everybody using this is also sitting in a class or working through a textbook, and they read

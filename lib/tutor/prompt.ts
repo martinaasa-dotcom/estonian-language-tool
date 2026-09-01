@@ -63,9 +63,30 @@ export const CLOSED_CLASS_EXAMPLES = ["mulle", "sulle", "see", "läbi"] as const
 const [mulle, sulle, see, labi] = CLOSED_CLASS_EXAMPLES;
 
 export function buildSystemPrompt(level: string): string {
-  const caseTable = CASES.map(
-    (c) => `${c.et} (${c.en}): ${c.question}${c.suffix ? ` (genitive stem + -${c.suffix})` : " (principal part, memorised)"}`,
-  ).join("\n");
+  /*
+    THE ILLATIVE IS NOT DESCRIBED AS REGULAR, BECAUSE IT IS NOT.
+
+    This handed Anu "sisseütlev: kuhu? (genitive stem + -sse)" alongside the
+    ten that really are regular, which is the same false rule the case table
+    itself used to apply: `tuba` goes to `tuppa`, not `toasse`. A tutor told
+    the ending is predictable will predict it, and `lib/tutor/verify.ts` only
+    withholds a form she was not given rather than one she reasoned her way to
+    inside an explanation.
+
+    So the one irregular case says so, and says where the real form comes from.
+    The forms she is handed for the word in question are the answer, and the
+    honest thing when she has not been handed one is to say she is not sure.
+  */
+  const caseTable = CASES.map((c) => {
+    const ending = c.suffix ? ` (genitive stem + -${c.suffix})` : " (principal part, memorised)";
+    const irregular = c.key === "ILLATIVE"
+      ? ". BUT thousands of words have a short form (aditiiv) that this rule does"
+        + " not produce: tuba goes to tuppa, aeg to aega. Use the form you were"
+        + " given for the word being asked about, and say you are not sure rather"
+        + " than applying -sse to a word whose short form you were not given."
+      : "";
+    return `${c.et} (${c.en}): ${c.question}${ending}${irregular}`;
+  }).join("\n");
 
   const { tuba, sepp, loen, lugesin, aitan, sind, helistan, meeldin, raamatut, raamatu } = WORKED_FORMS;
 

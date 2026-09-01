@@ -1,6 +1,6 @@
 import { CASES } from "@/lib/estonian/cases";
 import { buildCloze, ESTONIAN_WORD } from "@/lib/estonian/cloze";
-import { deriveCase } from "@/lib/estonian/derive";
+import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { CASE_NOTES } from "@/lib/estonian/grammar";
 import { formName } from "@/lib/estonian/morph";
@@ -90,10 +90,13 @@ export function mulberry32(seed: number): () => number {
  */
 function vouchedForms(word: WordRow): string[] {
   const out = new Set<string>([word.lemma, ...word.forms.map((f) => f.value)]);
-  const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
+  /*
+    Every spelling, not the first one: a word with two illatives has both, and
+    this set is what stops a distractor being drawn that is secretly the answer.
+  */
+  const stems = stemsFrom(word.forms);
   for (const spec of CASES) {
-    const value = deriveCase(gen, spec.key);
-    if (value) out.add(value);
+    for (const value of caseAnswer(stems, spec.key)?.accepted ?? []) out.add(value);
   }
   return [...out].filter((f) => f.trim());
 }
@@ -178,9 +181,11 @@ export function gapFrom(word: WordRow): Gap | null {
   const forms = vouchedForms(word);
   const attested = attestedForms(word);
   const objectPair = new Set(
+    // The genitive and the partitive, which is the pair an object is in.
+    // A third entry here asked `deriveCase` for the genitive, which is a
+    // principal part: it answered `undefined` every time it was ever called.
     [word.forms.find((f) => f.formType === "GEN_SG")?.value,
-     word.forms.find((f) => f.formType === "PART_SG")?.value,
-     deriveCase(word.forms.find((f) => f.formType === "GEN_SG")?.value, "GENITIVE")]
+     word.forms.find((f) => f.formType === "PART_SG")?.value]
       .filter((f): f is string => !!f)
       .map((f) => f.toLowerCase()),
   );
@@ -226,7 +231,6 @@ export function gapFrom(word: WordRow): Gap | null {
  */
 function nameForm(word: WordRow, value: string): { et: string; en: string; summary?: string } | null {
   const lower = value.toLowerCase();
-  const gen = word.forms.find((f) => f.formType === "GEN_SG")?.value;
 
   /*
     Estonian syncretism means one spelling is often two cases: `trammi` is both
@@ -242,8 +246,10 @@ function nameForm(word: WordRow, value: string): { et: string; en: string; summa
     const key = CASE_BY_FORM_TYPE[form.formType];
     if (key) claimed.add(key);
   }
+  const stems = stemsFrom(word.forms);
   for (const spec of CASES) {
-    if (deriveCase(gen, spec.key)?.toLowerCase() === lower) claimed.add(spec.key);
+    const answer = caseAnswer(stems, spec.key);
+    if (answer?.accepted.some((f) => f.toLowerCase() === lower)) claimed.add(spec.key);
   }
   const only = claimed.size === 1 ? [...claimed][0] : undefined;
 

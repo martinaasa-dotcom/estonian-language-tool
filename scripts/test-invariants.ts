@@ -181,6 +181,100 @@ check("the keyed services are only ever reached from the server", () => {
 
 // ── Never write Estonian, never generate morphology (ADR-005, ADR-017) ───────
 
+/*
+  AN ATTESTED FORM ALWAYS BEATS A DERIVED ONE, AND THE TYPE IS WHAT ENFORCES IT.
+
+  The app taught `toasse` as the illative of `tuba`. The dictionary held
+  `tuppa` the whole time, under `ILL_SG_SHORT`, for 2,969 of the shipped
+  entries. The illative is the one case of the eleven with a lexically
+  unpredictable short form (the aditiiv), and `NounStems` had no field for it,
+  so no screen could have shown it: `deriveCase(genSg, key)` took a bare
+  genitive, and eight callers asked it for a form. Two of those decided whether
+  a learner was right. A card asked for the illative of `aeg`, expected
+  `ajasse`, and marked `aega` wrong; the scheduler then brought that card back
+  until the learner stopped typing the correct answer.
+
+  Prose would not have stopped it and did not: ADR-005 already said an attested
+  form wins, and the code disagreed for a year. What stops it is that
+  `illSgShort` is a REQUIRED field on `NounStems`, so a caller holding only a
+  genitive stem does not compile. These two checks are the parts of that a
+  regex can see: the field stays required, and nobody rebuilds the old
+  shortcut beside it.
+*/
+check("the short illative is a required stem, not an optional one", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /readonly illSgShort: string \| null;/,
+    "NounStems.illSgShort stopped being required, so a caller that never asked "
+      + "the dictionary compiles again and the illative goes back to a suffix rule",
+  );
+  assert.doesNotMatch(
+    derive,
+    /illSgShort\?:/,
+    "NounStems.illSgShort became optional, which is the shape the bug had",
+  );
+});
+
+check("nothing builds a case form out of a bare stem and a suffix", () => {
+  /*
+    `spec.suffix` is the eleven endings, and joining one onto a stem is exactly
+    what produced `toasse`. `lib/estonian/derive.ts` owns that operation
+    because it is the only module that also holds the exceptions; anywhere else
+    it is a second answer to the question, and a second answer is how the first
+    one rots.
+
+    WHAT IS CAUGHT IS THE JOIN, not the word `suffix`. Written the wide way
+    first, this fired on four honest files and would have been waived, which is
+    how a check stops being read: the grammar pages print `-sse` as the name of
+    an ending, `lib/tutor/prompt.ts` tells the model what the ending is, and
+    `lib/dict/search.ts` sorts the endings by length in order to *strip* them
+    off something a learner typed, which is the opposite direction and is how
+    `toasse` gets recognised as a word rather than produced as one. None of
+    those makes a form.
+  */
+  const joins = [/\+\s*\w+(?:\.\w+)*\.suffix\b/, /\$\{[^}]+\}\$\{\s*\w+(?:\.\w+)*\.suffix\s*\}/];
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== "lib/estonian/derive.ts" && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => joins.some((join) => join.test(code(file))));
+  assert.deepEqual(offenders, [], "a case suffix is being joined to a stem outside lib/estonian/derive.ts");
+});
+
+check("every screen and marker that needs a case form asks the one function for it", () => {
+  /*
+    Eight callers used `deriveCase`, and the two that graded answers are the
+    reason this is a check rather than a note: `lib/srs/cards.ts` writes the
+    back of a flashcard and `lib/estonian/writing.ts` decides what a written
+    sentence has to contain. Both now go through `caseAnswer`, which is the one
+    place that puts an attested form ahead of a derived one, and both must
+    keep doing so.
+  */
+  const callers = [
+    "lib/srs/cards.ts",
+    "lib/estonian/writing.ts",
+    "lib/progress/caseExamples.ts",
+    "lib/collections/lesson.ts",
+    "lib/collections/checkpoint.ts",
+    "lib/assessment/items.ts",
+  ];
+  for (const file of callers) {
+    assert.match(
+      code(file),
+      /caseAnswer\(/,
+      `${file} produces a case form without asking caseAnswer, so it cannot see the short illative`,
+    );
+  }
+  for (const file of ["app/(app)/dictionary/DictionaryClient.tsx", "app/(chromeless)/welcome/page.tsx"]) {
+    assert.match(
+      code(file),
+      /stemsFrom\(/,
+      `${file} builds its case table from hand-picked slots again, which is how the short illative was lost`,
+    );
+  }
+});
+
+
 check("the module that writes about Estonian holds no Estonian", () => {
   /*
     `lib/estonian/grammar.ts` is the one place that explains the case system at

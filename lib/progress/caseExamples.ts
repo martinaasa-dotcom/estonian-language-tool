@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseExamples, sentenceContaining } from "@/lib/dict/examples";
-import { deriveCase } from "@/lib/estonian/derive";
+import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseFromMorphCode, numberFromMorphCode } from "@/lib/estonian/morph";
 import type { CaseKey } from "@/lib/estonian/types";
 
@@ -134,21 +134,35 @@ function isExample(value: CaseExample | null): value is CaseExample {
 function toExample(lex: Candidate, key: CaseKey, inDeck: boolean): CaseExample | null {
   const genitive = lex.forms.find((f) => f.formType === "GEN_SG")?.value ?? null;
 
-  // An Ekilex form for exactly this case and number beats everything else: it is
-  // authoritative, and it is right even where the regular ending is not.
-  const retrieved = lex.forms.find(
-    (f) => caseFromMorphCode(f.morphCode) === key && numberFromMorphCode(f.morphCode) === "SINGULAR",
-  );
+  /*
+    THE THREE PRINCIPAL PARTS ARE STORED SLOTS; THE OTHER ELEVEN ARE A QUESTION
+    FOR `caseAnswer`.
 
+    This walked its own precedence and got the illative wrong twice over.
+    `PRINCIPAL_FORM_TYPE` listed only the nominative, genitive and partitive, so
+    `ILL_SG_SHORT` was never consulted; and the Ekilex lookup above it takes
+    `SgIll`, the long form, which then beat the short one sitting in the same
+    form list. The grammar reference prints its examples with a provenance
+    label, so it was showing `toasse` under a tag saying a lexicographer wrote
+    it down, which is the worst version of this fault: right about the source
+    and wrong about the word.
+  */
   const principalType = PRINCIPAL_FORM_TYPE[key];
+  const retrieved = principalType
+    ? lex.forms.find(
+        (f) => caseFromMorphCode(f.morphCode) === key && numberFromMorphCode(f.morphCode) === "SINGULAR",
+      )
+    : undefined;
   const principal = principalType
     ? lex.forms.find((f) => f.formType === principalType)?.value
     : undefined;
 
-  const form = retrieved?.value ?? principal ?? deriveCase(genitive ?? undefined, key);
+  const answer = principalType ? null : caseAnswer(stemsFrom(lex.forms), key);
+  const form = retrieved?.value ?? principal ?? answer?.value;
   if (!form) return null;
 
-  const origin: CaseExample["origin"] = retrieved ? "EKILEX" : principal ? "STORED" : "DERIVED";
+  const origin: CaseExample["origin"] =
+    retrieved ? "EKILEX" : principal ? "STORED" : (answer?.origin ?? "DERIVED");
 
   return {
     lexemeId: lex.id,
