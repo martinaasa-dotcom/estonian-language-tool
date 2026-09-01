@@ -243,6 +243,66 @@ check("nothing builds a case form out of a bare stem and a suffix", () => {
   assert.deepEqual(offenders, [], "a case suffix is being joined to a stem outside lib/estonian/derive.ts");
 });
 
+/*
+  A SCREEN THAT PRINTS A CASE FORM PRINTS BOTH WHERE ESTONIAN HAS TWO.
+
+  The illative is the one case with two right answers, and every way of
+  printing one of them alone is a choice about which word to be wrong about:
+  leading with the long form hides `tuppa` and `aega`, and leading with the
+  short one prints `aadressi` under the sisseütlev beside the identical
+  omastav and osastav, hiding `aadressisse`. Both readings shipped, three
+  weeks apart, and each was written as the fix for the other.
+
+  `lib/srs/cards.ts` and `lib/collections/lesson.ts` had been joining on ` / `
+  since long before either, so the app had already answered this and three
+  screens had not caught up. They read `shownForms` now, and this fails on a
+  fourth that renders `singular` or `.value` on its own.
+
+  IT IS ANCHORED ON THE CALL, not on the word "illative", because a screen can
+  import the helper and go on printing `row.singular` beside it, which is the
+  shape every check in this file has been caught by at least once.
+*/
+check("a screen that prints a case form prints both where Estonian has two", () => {
+  const screens = [
+    "app/(app)/dictionary/DictionaryClient.tsx",
+    "app/(chromeless)/welcome/page.tsx",
+  ];
+  for (const file of screens) {
+    assert.match(
+      code(file),
+      /shownForms\(/,
+      `${file} prints a case form without asking shownForms, so it shows one illative and hides the other`,
+    );
+  }
+  /*
+    The grammar reference goes through `lib/progress/caseExamples.ts`, which
+    keeps the two apart on purpose: `form` is matched against attested
+    sentences and `tuppa / toasse` is not a word anybody wrote. So the check
+    on that pair is that the field survives and the page renders it.
+  */
+  assert.match(
+    code("lib/progress/caseExamples.ts"),
+    /alsoRight/,
+    "caseExamples stopped carrying the second form, so the grammar reference prints one illative",
+  );
+  assert.match(
+    code("app/(app)/grammar/[caseKey]/page.tsx"),
+    /example\.alsoRight/,
+    "the grammar reference stopped printing the second form beside the first",
+  );
+  /*
+    And the pair on screen has to be a pair the marker accepts, or a learner
+    copies what they were shown and is told they are wrong. ` / ` is the
+    separator `acceptedAnswers` splits on, so this is the one spelling of it
+    that keeps those two facts the same fact.
+  */
+  assert.match(
+    code("lib/estonian/answer.ts"),
+    /split\(\/\\s\*\[\/,;\]/,
+    "acceptedAnswers stopped splitting on the separator every screen shows a pair with",
+  );
+});
+
 check("every screen and marker that needs a case form asks the one function for it", () => {
   /*
     Eight callers used `deriveCase`, and the two that graded answers are the

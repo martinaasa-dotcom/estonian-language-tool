@@ -234,6 +234,33 @@ asserts that too, so the illative is singled out rather than the whole table dis
 long form stays *accepted* everywhere the short one is shown, since both are Estonian and marking
 somebody wrong for the other true answer is the fault this started as, pointed the other way.
 
+**And accepted is not the same as printed, which is how one bug got fixed twice into two bugs.**
+Leading with the long form hides `tuppa` and teaches `toasse`, which is where this started.
+Leading with the short one and hiding the long one is the same fault turned around, and it is
+worse than it looks: 1,937 of the 2,700 short illatives in the shipped dictionary are spelled like
+the nominative, genitive or partitive, because that is what this case does, so `aadress` printed
+`aadressi` down three rows of one column and `aadressisse`, the form somebody writing a sentence
+needs, appeared nowhere. Both readings shipped three weeks apart and each was written as the fix
+for the other.
+
+There is no third form to choose. Estonian has two illatives, a course teaches them as a pair, and
+`alsoRight` on `DerivedForm` and `CaseAnswer` is that pair: `shownForms` is the one reader, and
+every screen that prints a case form prints `tuppa / toasse`. The separator is the one the app
+already uses for the parallel forms it has, and it is load-bearing rather than cosmetic, because
+`acceptedAnswers` splits on it: what a screen shows and what a marker takes are the same string.
+`lib/srs/cards.ts` and `lib/collections/lesson.ts` had been joining on it since long before any of
+this, so the app had already answered the question and three screens had not caught up.
+
+`accepted` is deliberately wider and may not stand in for it. It holds every spelling a marker lets
+through, including a suffix guess sitting beside a form Ekilex retrieved, and printing that pair
+would assert the guess is a word. `alsoRight` holds only the two that are.
+
+The one place they came apart was the writing exercise, whose own comment said `accepted` "is what
+makes the marking fair where a word genuinely has two" and which then kept `value` alone: a learner
+asked for the illative of `tuba` who wrote `toasse` was told they had not used the form at all, and
+the near miss beside it reported their correct sentence as the wrong case. `WritingTask` carries
+both now.
+
 **Nothing a person reads may sound like a machine wrote it.** Every screen, every error, every
 empty state, the README, the policy pages and Anu are one person explaining Estonian to another.
 Almost everybody using this is also sitting in a class or working through a textbook, and they read
@@ -2203,6 +2230,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
 `explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`, `teachingSentence`,
 `splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `lockDeck`, `caseReviewsFor`,
+`alsoRight`, `shownForms`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

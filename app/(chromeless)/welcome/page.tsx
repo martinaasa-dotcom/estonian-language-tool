@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
-import { buildCaseTable, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
+import { buildCaseTable, shownForms, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
@@ -304,8 +304,7 @@ function Cases({ words }: { words: DemoWord[] }) {
             You can hold a 400-day streak and still freeze when somebody speaks to you at the
             counter. Three forms of a word are yours to learn, sometimes four. Everything after
             them is the same regular endings every time, and where a word breaks the pattern you
-            get the form Estonians say rather than the one the rule predicts. Press a word and
-            watch.
+            get the form Estonians say beside the one the rule predicts. Press a word and watch.
           </p>
         </div>
       </Reveal>
@@ -1132,14 +1131,14 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         principal: [
           ...principal,
           ...learnt.flatMap((row) => (row.singular
-            ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: row.singular }]
+            ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: shownForms(row).join(" / ") }]
             : [])),
         ],
         cases: table.map((row) => ({
           en: row.spec.en,
           et: row.spec.et,
           question: row.spec.question,
-          singular: row.singular ?? null,
+          singular: row.singular ? shownForms(row).join(" / ") : null,
           plural: row.plural ?? null,
           principal: row.spec.principal || isLearnt(row),
         })),
@@ -1187,14 +1186,14 @@ const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
       { label: "omastav · kelle? mille?", value: w.genSg },
       { label: "osastav · keda? mida?", value: w.partSg },
       ...learnt.flatMap((row) => (row.singular
-        ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: row.singular }]
+        ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: shownForms(row).join(" / ") }]
         : [])),
     ],
     cases: table.map((row) => ({
       en: row.spec.en,
       et: row.spec.et,
       question: row.spec.question,
-      singular: row.singular ?? null,
+      singular: row.singular ? shownForms(row).join(" / ") : null,
       plural: row.plural ?? null,
       principal: row.spec.principal || isLearnt(row),
     })),
