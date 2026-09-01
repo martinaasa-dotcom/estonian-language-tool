@@ -7,6 +7,8 @@ import { ekilexConfigured } from "@/lib/ekilex/client";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { suggestWords, type Suggestions } from "@/lib/dict/suggest";
+import { readableHeadlines } from "@/lib/dict/headlines";
+import { feedHost } from "@/lib/news/feed";
 import { Page } from "@/components/ui";
 import { DictionaryClient, type EntryView } from "./DictionaryClient";
 
@@ -69,7 +71,7 @@ export default async function DictionaryPage({
 
   // The entry beside the three landing reads rather than before them: none of
   // the four depends on another, and on a hosted database each is a round trip.
-  const [entry, total, suggestions, starred] = await Promise.all([
+  const [entry, total, suggestions, starred, headlines] = await Promise.all([
     opened ? loadEntry(opened.id, ownerId) : Promise.resolve(null),
     prisma.lexeme.count(),
     /*
@@ -87,6 +89,9 @@ export default async function DictionaryPage({
       take: 24,
       select: { lexeme: { select: { lemma: true, translation: true } } },
     }),
+    // The front page, readable, for the landing view only: the same hourly
+    // fetch the suggestion row already pays for. See lib/dict/headlines.ts.
+    q ? Promise.resolve([]) : readableHeadlines(),
   ]);
 
   return (
@@ -108,6 +113,8 @@ export default async function DictionaryPage({
         entry={entry}
         matchedAs={matchedAs}
         suggestions={suggestions}
+        headlines={headlines}
+        feedHost={feedHost()}
         starred={starred.map((s) => ({ lemma: s.lexeme.lemma, translation: s.lexeme.translation }))}
       />
     </Page>

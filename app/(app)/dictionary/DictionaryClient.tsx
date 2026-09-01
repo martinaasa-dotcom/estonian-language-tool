@@ -20,6 +20,8 @@ import { Et } from "@/components/Et";
 import { SuggestFix } from "@/components/SuggestFix";
 import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
 import type { Suggestions } from "@/lib/dict/suggest";
+import type { ReadableHeadline } from "@/lib/dict/headlines";
+import { Headlines } from "@/components/Headlines";
 
 export interface EntryForm {
   formType: string;
@@ -64,7 +66,7 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, openedId, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan,
 }: {
   initialQuery: string;
   /** True when this word was pulled from Ekilex on this request. */
@@ -86,6 +88,8 @@ export function DictionaryClient({
    * random. "In the news today" earns the same twelve chips a second look.
    */
   suggestions: Suggestions;
+  headlines: ReadableHeadline[];
+  feedHost: string | null;
   /** Words this learner has starred — shown on the landing view. */
   starred: { lemma: string; translation: string }[];
   /** Whether Anu can be asked to translate an example sentence. */
@@ -225,6 +229,8 @@ export function DictionaryClient({
           </ul>
         </div>
       )}
+
+      {!initialQuery && <Headlines headlines={headlines} host={feedHost} />}
 
       {initialQuery && hits.length === 0 && (
         <div className="flex flex-col gap-4">
