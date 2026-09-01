@@ -3493,6 +3493,8 @@ check("nothing is stored on a device that would need asking first", () => {
     "components/Sidebar.tsx",
     "app/layout.tsx",
     "lib/offline/db.ts",
+    // The sign-out that removes all of the above, and so has to name them.
+    "lib/offline/forget.ts",
     // An exam paper started and not handed in. Strictly necessary by the same
     // argument the outbox is: a mock exam that loses three hours of a B2 paper
     // to a closed tab is broken rather than private. Answers only, never marks
@@ -3510,6 +3512,51 @@ check("nothing is stored on a device that would need asking first", () => {
     /What is kept on your own device/,
     "the privacy page stopped saying what is kept on the device",
   );
+});
+
+check("signing out forgets the device", () => {
+  /*
+    Signing out cleared one cookie and left everything the app keeps in the
+    browser for the next person on the same machine: the worker's page cache,
+    which is somebody's own deck and progress rendered and ready to serve, the
+    stashed review session, any grade still queued, and an unfinished exam
+    paper with the composition in it. `lib/offline/forget.ts` removes all of
+    it, after the outbox has had its chance to drain, and every place that
+    signs a learner out has to go through it. The callback route is the one
+    exception, since it signs out a session it refused rather than a person
+    leaving a device, and runs on a server with no device to forget.
+  */
+  const forget = read("lib/offline/forget.ts");
+  const leavers = ALL.filter((f) => /auth\.signOut\(/.test(code(f)))
+    .filter((f) => f !== "app/auth/callback/route.ts");
+  assert.ok(leavers.length >= 2, "no client signs anybody out any more");
+  for (const file of leavers) {
+    assert.match(code(file), /forgetThisDevice/, `${file} signs out without forgetting the device`);
+  }
+  // The outbox goes first, because a grade still queued is the one thing the
+  // device cannot keep and must not quietly drop.
+  const rail = code("components/Sidebar.tsx");
+  assert.ok(
+    rail.indexOf("flush()") < rail.indexOf("forgetThisDevice()"),
+    "the rail forgets the device before the outbox has been given its chance to drain",
+  );
+  // The three stores it forgets are named by the modules that write them.
+  const sw = read("public/sw.js");
+  assert.match(sw, /`\$\{VERSION\}-pages`/, "the worker no longer names its page cache by suffix");
+  assert.match(forget, /PAGES_CACHE_SUFFIX = "-pages"/, "forget.ts deletes a cache the worker does not keep");
+  assert.match(forget, /deleteLocalDatabase/, "forget.ts no longer removes the outbox and the stash");
+  assert.match(
+    code("app/(app)/exam/[level]/resume.ts"),
+    /SITTING_KEY_PREFIX/,
+    "an unfinished paper is stored under a key a sign-out does not know",
+  );
+  // And the case where nobody signed out: a different account on the same
+  // browser clears what the last one left, from the shell, on every render.
+  assert.match(forget, /forgetIfOwnerChanged/, "a change of account no longer forgets the device");
+  assert.match(code("components/DeviceOwner.tsx"), /forgetIfOwnerChanged\(owner\)/);
+  const shell = code("app/(app)/layout.tsx");
+  assert.match(shell, /<DeviceOwner owner=\{ownerDigest\(ownerId\)\}/, "the shell no longer mounts DeviceOwner");
+  assert.match(shell, /createHash\("sha256"\)/, "the browser is handed the account id itself rather than a digest");
 });
 
 

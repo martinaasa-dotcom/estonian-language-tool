@@ -188,8 +188,14 @@ export default function PrivacyPage() {
           requires your agreement before something is stored on your device unless it is
           strictly necessary for the service you asked for, and each of these is: a review
           app that silently drops the answers you gave on a train is broken, not private.
-          That is why there is no cookie banner. Clearing your browser storage removes all
-          of it, and costs you nothing except any grade still waiting to be sent.
+          That is why there is no cookie banner. Signing out removes the outbox, the saved
+          session, the pages kept for offline use and any unfinished paper, so the next person
+          on a shared computer starts from nothing; the theme and the install prompt stay,
+          since they are about the device rather than about you. The browser also keeps a
+          short code for which account last used it, so that a different account signing in
+          clears the previous one&apos;s data even when nobody signed out. Clearing your browser
+          storage removes all of it, and costs you nothing except any grade still waiting to
+          be sent.
         </P>
       </S>
 

@@ -2,7 +2,9 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Shortcuts } from "@/components/Shortcuts";
+import { createHash } from "node:crypto";
 import { Sidebar } from "@/components/Sidebar";
+import { DeviceOwner } from "@/components/DeviceOwner";
 import { Wash } from "@/components/ui";
 import { AnuFab } from "@/components/anu/AnuFab";
 import { TimeZoneSync } from "@/components/TimeZoneSync";
@@ -43,8 +45,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     See lib/ux/letterBar.ts for why the bar is a question at all, and
     lib/time/day.ts for what the zone is worth.
   */
+  const ownerId = await requireUserId();
   const settings = await readSettings(
-    await requireUserId(),
+    ownerId,
     [
       SETTING_KEYS.letterBar, SETTING_KEYS.timeZone,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
@@ -62,6 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AudioPrefsProvider value={audio}>
     <LetterBarScope value={letters} dismissible>
+      <DeviceOwner owner={ownerDigest(ownerId)} />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-full focus:px-4 focus:py-2"
@@ -106,4 +110,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     </LetterBarScope>
     </AudioPrefsProvider>
   );
+}
+
+/**
+ * What the browser is told about who is using it: enough to notice a change
+ * of account, and nothing that names one. See `components/DeviceOwner.tsx`.
+ */
+function ownerDigest(ownerId: string): string {
+  return createHash("sha256").update(ownerId).digest("hex").slice(0, 16);
 }

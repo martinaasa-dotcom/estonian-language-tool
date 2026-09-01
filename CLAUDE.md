@@ -548,6 +548,20 @@ allowances. So it is read only when `TRUST_PROXY_HEADERS` or `VERCEL` says a pro
 every unattributed request otherwise shares one bucket, which is the honest shape for not
 knowing. Signed-in work never touches any of it.
 
+**Signing out leaves the device the way a stranger should find it.** It cleared one cookie and
+nothing else, and everything the app keeps in the browser to make review work on a train stayed
+behind for the next person on the same machine: the pages the service worker had cached, which are
+somebody's own deck and progress rendered and ready to serve; the last review session, stashed with
+every card in it; any grade still queued; and a mock exam paper they had started, composition
+included. A school computer, a shared laptop and a phone handed to a friend are the ordinary case,
+not the edge. `lib/offline/forget.ts` removes all three stores, after the outbox has been given its
+chance to drain through the provider's `flush`, and both places that sign a learner out go through
+it, asserted. A grade that still could not land is the one thing the device cannot keep and must
+not quietly drop, so the rail asks before losing it. And nobody signing out is the other case: the
+shell mounts `DeviceOwner` with a digest of the account id, and a different account appearing on the
+same browser clears what the last one left. What it does not touch is what is about the device
+rather than a person: the theme, the install prompt's memory, and the audio and build caches.
+
 **Nothing in a `"use server"` file may take an owner id from its caller.** Every export there is a
 public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
 belongs in `lib/`, not in `app/actions.ts`. See `addCardsFor` and `applyGradeBatch` for the shape.

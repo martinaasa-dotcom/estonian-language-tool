@@ -1,4 +1,5 @@
 import type { Response } from "@/lib/exam/score";
+import { SITTING_KEY_PREFIX } from "@/lib/offline/forget";
 
 /**
  * A sitting, kept on the device so a closed tab does not destroy it.
@@ -47,8 +48,9 @@ export interface SavedSitting {
 
 const VERSION = 1;
 
+/** Prefixed so a sign-out can find every unfinished paper without knowing its seed. */
 function keyFor(level: string, seed: string): string {
-  return `kodukeel.exam.${level}.${seed}`;
+  return `${SITTING_KEY_PREFIX}${level}.${seed}`;
 }
 
 export function loadSitting(level: string, seed: string): SavedSitting | null {
