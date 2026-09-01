@@ -1,18 +1,16 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { ReactNode } from "react";
-import { Bell, Download, Keyboard, Shield, Smartphone } from "lucide-react";
+import { Bell, Download, Keyboard, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { ekilexConfigured } from "@/lib/ekilex/client";
-import { BADGES } from "@/lib/achievements/badges";
-import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
+import { dailyGoalFrom, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { letterBarFrom } from "@/lib/ux/letterBar";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
 import { courseLevelFor } from "@/lib/progress/level";
-import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle, Stack } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
 import { LevelPanel } from "./LevelPanel";
@@ -84,13 +82,12 @@ export default async function SettingsPage() {
   const hosted = supabaseConfigured();
   const ekilexOn = ekilexConfigured();
 
-  const [words, cards, reviews, earned, settings, learner, goals, latestCheck, courseLevel] = await Promise.all([
+  const [words, cards, reviews, settings, learner, goals, latestCheck, courseLevel] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
-    prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     readSettings(ownerId, [
-      SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,
+      SETTING_KEYS.dailyGoal, SETTING_KEYS.reviewMode,
       SETTING_KEYS.letterBar,
       SETTING_KEYS.displayName,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
@@ -107,9 +104,7 @@ export default async function SettingsPage() {
     courseLevelFor(ownerId),
   ]);
 
-  const earnedKeys = new Set(earned.map((a) => a.key));
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
-  const shields = numberSetting(settings[SETTING_KEYS.streakShields], 0);
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
   const voice = voiceFrom(settings[SETTING_KEYS.ttsVoice]);
@@ -251,27 +246,7 @@ export default async function SettingsPage() {
           </section>
         </Group>
 
-        <Group title="Progress and sharing">
-          <section>
-            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
-            <Card>
-              <BadgeShelf earnedKeys={earnedKeys} />
-              <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
-                <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent-deep)" }} />
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-                    {shields} streak shield{shields === 1 ? "" : "s"} banked
-                  </p>
-                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
-                    Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
-                    through a single day you miss entirely. Nothing to do. It is spent
-                    automatically the next time you&rsquo;re back.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </section>
-
+        <Group title="Sharing">
           <section>
             <SectionTitle>Your name in a class</SectionTitle>
             <Card>
