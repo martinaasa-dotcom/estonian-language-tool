@@ -17,7 +17,7 @@
  * Pure and framework-free, like the rest of lib/collections.
  */
 import { buildCloze } from "@/lib/estonian/cloze";
-import { deriveCase } from "@/lib/estonian/derive";
+import { caseAnswer, stemsFromParts } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import { shuffle } from "@/lib/random/shuffle";
 
@@ -65,10 +65,12 @@ function knownForms(word: CheckpointWord): string[] {
   const forms = new Set<string>([word.lemma, ...Object.values(word.parts)]);
   const genitive = word.parts.GEN_SG;
   if (genitive) {
+    // Every accepted spelling, so a gap-fill never treats the short illative
+    // as a word belonging to some other entry.
+    const stems = stemsFromParts(word.parts);
     for (const spec of CASES) {
       if (spec.principal) continue;
-      const derived = deriveCase(genitive, spec.key);
-      if (derived) forms.add(derived);
+      for (const value of caseAnswer(stems, spec.key)?.accepted ?? []) forms.add(value);
     }
   }
   return [...forms].filter(Boolean);

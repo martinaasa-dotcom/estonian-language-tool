@@ -37,7 +37,7 @@
  * dictionary rows and hands them in.
  */
 import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
-import { deriveCase } from "@/lib/estonian/derive";
+import { caseAnswer, stemsFromParts } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
 import { shuffle } from "@/lib/random/shuffle";
@@ -282,10 +282,12 @@ function knownForms(word: LessonWord): string[] {
   const forms = new Set<string>([word.lemma, ...Object.values(word.parts)]);
   const genitive = word.parts.GEN_SG;
   if (genitive) {
+    // Every accepted spelling, so a gap-fill never treats the short illative
+    // as a word belonging to some other entry.
+    const stems = stemsFromParts(word.parts);
     for (const spec of CASES) {
       if (spec.principal) continue;
-      const derived = deriveCase(genitive, spec.key);
-      if (derived) forms.add(derived);
+      for (const value of caseAnswer(stems, spec.key)?.accepted ?? []) forms.add(value);
     }
   }
   return [...forms].filter(Boolean);
@@ -347,12 +349,15 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
   const genitive = word.parts.GEN_SG;
   if (!genitive) return null;
   for (const key of shuffle(DRILL_CASES, rand)) {
-    const answer = deriveCase(genitive, key);
+    // The attested form, and every spelling that counts as right with it: a
+    // lesson that asks for the illative of `tuba` wants `tuppa`.
+    const found = caseAnswer(stemsFromParts(word.parts), key);
     const spec = CASES.find((c) => c.key === key);
-    if (!answer || !spec) continue;
+    if (!found || !spec) continue;
     return {
       id, kind: "case", lemma: word.lemma, gloss: word.gloss,
-      caseKey: key, caseName: spec.en, question: spec.question, answer,
+      caseKey: key, caseName: spec.en, question: spec.question,
+      answer: found.accepted.join(" / "),
     };
   }
   return null;

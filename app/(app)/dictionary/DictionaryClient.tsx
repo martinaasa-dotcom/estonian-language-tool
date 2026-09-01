@@ -9,7 +9,7 @@ import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
-import { buildCaseTable } from "@/lib/estonian/derive";
+import { buildCaseTable, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { Examples } from "./Examples";
@@ -334,12 +334,10 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
   // leaving it out left a hole in the middle of the table.
   const retrieved = entry.forms.filter((f) => f.morphCode);
 
-  const table = isNoun
-    ? buildCaseTable({
-        nomSg: form("NOM_SG"), genSg: form("GEN_SG"),
-        partSg: form("PART_SG"), partPl: form("PART_PL"), genPl: form("GEN_PL"),
-      })
-    : [];
+  // `stemsFrom` rather than five hand-picked slots: it reads the short
+  // illative and the retrieved paradigm too, which is what keeps this table
+  // from printing `toasse` over the `tuppa` sitting in the same form list.
+  const table = isNoun ? buildCaseTable(stemsFrom(entry.forms)) : [];
 
   return (
     <Card className="flex flex-col gap-6">

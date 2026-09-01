@@ -1,6 +1,6 @@
 import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { buildCloze } from "@/lib/estonian/cloze";
-import { deriveCase } from "@/lib/estonian/derive";
+import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseFromMorphCode } from "@/lib/estonian/morph";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import type { CaseKey } from "@/lib/estonian/types";
@@ -149,13 +149,26 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       case "CASE_FORM": {
         if (!genSg) break;
         for (const key of DRILL_CASES) {
-          const value = deriveCase(genSg, key);
-          if (!value) continue;
+          /*
+            THE ANSWER SIDE IS WHAT THE DICTIONARY ATTESTS.
+
+            This asked `deriveCase` for a suffix on the genitive, and for the
+            illative that is the long form: the card for `tuba` had `toasse` on
+            the back, and a learner typing `tuppa`, which is the form they will
+            hear every day, was marked wrong and shown the card again until
+            they stopped. `aeg` was drilled as `ajasse` rather than `aega`.
+
+            Every accepted spelling goes on the back, joined the way
+            `acceptedAnswers` already splits stored alternatives, so a word
+            with two real illatives marks both right and teaches both.
+          */
+          const answer = caseAnswer(stemsFrom(lex.forms), key);
+          if (!answer) continue;
           const spec = CASES.find((c) => c.key === key)!;
           out.push({
             cardType: type,
             front: `${lex.lemma} → ${spec.question}`,
-            back: value,
+            back: answer.accepted.join(" / "),
             hint: `${spec.et} · the ${spec.en.toLowerCase()}`,
             targetCase: key,
           });
