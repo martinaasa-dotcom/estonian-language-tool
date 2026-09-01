@@ -1546,4 +1546,4 @@ now, harvested from Ekilex like every other unit, with `PRONOUN` added as a part
 plural-only pronoun kept the way an adverb is. Re-running the harvest also showed that the ten C2
 units cut in §19 would have taken their 170 words out of the seed the first time anybody ran it,
 against what that section promised; `lib/collections/syllabus/retired.ts` keeps them as a request
-list of their own. The built-in dictionary is 6,041 words.
+list of their own. The built-in dictionary is 6,039 words.
