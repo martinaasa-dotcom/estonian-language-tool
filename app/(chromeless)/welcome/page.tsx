@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
-import { buildCaseTable } from "@/lib/estonian/derive";
+import { buildCaseTable, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
@@ -296,14 +296,16 @@ function Cases({ words }: { words: DemoWord[] }) {
           heading into two lines in the first place.
         */}
         <div className="mx-auto max-w-4xl text-center">
-          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn three forms, the rest follows</p>
+          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn three forms, get most of the rest</p>
           <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
             You didn&rsquo;t fail Estonian.<br className="lg:hidden" /> Your tools did.
           </h2>
           <p className="mx-auto mt-5 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             You can hold a 400-day streak and still freeze when somebody speaks to you at the
             counter. Three forms of a word are yours to learn, sometimes four. Everything after
-            them is the same regular endings every time. Press a word and watch.
+            them is the same regular endings every time, and where a word breaks the pattern you
+            get the form Estonians say rather than the one the rule predicts. Press a word and
+            watch.
           </p>
         </div>
       </Reveal>
@@ -1089,11 +1091,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
       const table = isVerb
         ? []
-        : buildCaseTable({
-            nomSg: form("NOM_SG"), genSg: form("GEN_SG"), partSg: form("PART_SG"),
-            partPl: form("PART_PL"), genPl: form("GEN_PL"),
-            illSgShort: form("ILL_SG_SHORT"),
-          });
+        : buildCaseTable(stemsFrom(lex.forms));
 
       /*
         A FOURTH FORM, WHERE THE WORD HAS ONE.
@@ -1105,8 +1103,28 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         the card says four and ten rather than three and eleven. That is the
         card doing its job. The alternative is printing `toasse`, which is
         defensible Estonian and is not a sentence anybody says.
+
+        The stems come from `stemsFrom`, which is the one reader of the short
+        illative: it takes the seeded `ILL_SG_SHORT` and Ekilex's `SgAdt`, so
+        an entry enriched from Ekilex carries its aditiiv here too.
+
+        IT ONLY EARNS THE FOURTH SLOT IF IT IS A DIFFERENT WORD. Most short
+        illatives are spelled like one of the three above them, because that
+        is what the case does: `aeg` goes to `aega`, which is also its
+        partitive. Printing it again under a second name teaches nobody
+        anything, so the card leaves it out of the column you memorise. This
+        is a question about the card and not about the language, which is why
+        it is answered here: `caseAnswer` still says `aega`, the case table
+        still shows it, and a learner who types it is still right.
       */
-      const learnt = table.filter((row) => row.origin === "STORED" && !row.spec.principal);
+      const shown = new Set(principal.map((p) => p.value));
+      // One predicate, read twice: which column a row goes in and which
+      // heading counts it are the same question, and answering it twice is
+      // how a form ends up in neither.
+      const isLearnt = (row: DerivedForm) => (
+        row.origin === "STORED" && !row.spec.principal && !!row.singular && !shown.has(row.singular)
+      );
+      const learnt = table.filter(isLearnt);
 
       return [{
         lemma: lex.lemma,
@@ -1123,7 +1141,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
           question: row.spec.question,
           singular: row.singular ?? null,
           plural: row.plural ?? null,
-          principal: row.spec.principal || row.origin === "STORED",
+          principal: row.spec.principal || isLearnt(row),
         })),
       }];
     });
@@ -1154,7 +1172,13 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  */
 const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
   const table = buildCaseTable(w);
-  const learnt = table.filter((row) => row.origin === "STORED" && !row.spec.principal);
+  // The same rule as the live path above, for the same reason: `sõber` records
+  // `sõpra` as its short illative and `sõpra` is already its partitive.
+  const shown = new Set([w.nomSg, w.genSg, w.partSg]);
+  const isLearnt = (row: DerivedForm) => (
+    row.origin === "STORED" && !row.spec.principal && !!row.singular && !shown.has(row.singular)
+  );
+  const learnt = table.filter(isLearnt);
   return {
     lemma: w.lemma,
     genitive: w.genSg,
@@ -1172,7 +1196,7 @@ const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
       question: row.spec.question,
       singular: row.singular ?? null,
       plural: row.plural ?? null,
-      principal: row.spec.principal || row.origin === "STORED",
+      principal: row.spec.principal || isLearnt(row),
     })),
   };
 });

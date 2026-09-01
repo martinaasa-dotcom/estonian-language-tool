@@ -42,14 +42,22 @@ export interface DemoStems {
   readonly partSg: string;
   readonly partPl: string;
   readonly genPl: string;
-  /** Only where the dictionary holds one, and only where it is worth saying:
-   *  see `buildCaseTable` on why `sõber` has one recorded and none here. */
-  readonly illSgShort?: string;
+  /**
+   * The short illative, or `null` where the seed records none.
+   *
+   * Required rather than optional, which is `NounStems`'s own rule and is
+   * there so a stem written without asking the dictionary does not compile.
+   * `sõber` records `sõpra`, which is already its partitive, and
+   * `buildCaseTable` is where that is decided rather than here: this table
+   * says what the seed holds, not what the card should lead with.
+   */
+  readonly illSgShort: string | null;
 }
 
 export const DEMO_STEMS: readonly DemoStems[] = [
   { lemma: "raamat",
-    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
+    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute",
+    illSgShort: null },
   { lemma: "tuba",
     nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
     illSgShort: "tuppa" },
@@ -60,5 +68,6 @@ export const DEMO_STEMS: readonly DemoStems[] = [
     nomSg: "käsi", genSg: "käe", partSg: "kätt", partPl: "käsi", genPl: "käte",
     illSgShort: "kätte" },
   { lemma: "mees",
-    nomSg: "mees", genSg: "mehe", partSg: "meest", partPl: "mehi", genPl: "meeste" },
+    nomSg: "mees", genSg: "mehe", partSg: "meest", partPl: "mehi", genPl: "meeste",
+    illSgShort: null },
 ];

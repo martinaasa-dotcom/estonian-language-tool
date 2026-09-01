@@ -1,5 +1,5 @@
 import { CASES, type CaseSpec } from "./cases";
-import { deriveCase } from "./derive";
+import { caseAnswer, stemsFrom } from "./derive";
 import type { CaseKey } from "./types";
 
 /**
@@ -50,12 +50,6 @@ export interface WritingTask {
 }
 
 /** Ekilex morph codes for the singular of each case we set exercises on. */
-const MORPH_FOR_CASE: Partial<Record<CaseKey, string>> = {
-  GENITIVE: "SgG", PARTITIVE: "SgP", ILLATIVE: "SgIll", INESSIVE: "SgIn",
-  ELATIVE: "SgEl", ALLATIVE: "SgAll", ADESSIVE: "SgAd", ABLATIVE: "SgAbl",
-  TRANSLATIVE: "SgTr", COMITATIVE: "SgKom",
-};
-
 /** Principal parts we store directly, for the two cases that have one. */
 const FORM_TYPE_FOR_CASE: Partial<Record<CaseKey, string>> = {
   GENITIVE: "GEN_SG", PARTITIVE: "PART_SG",
@@ -70,24 +64,32 @@ export function authoritativeForm(
   source: WritingSource,
   caseKey: CaseKey,
 ): { value: string; provenance: "ekilex" | "derived" } | null {
-  const morph = MORPH_FOR_CASE[caseKey];
-  if (morph) {
-    const fromEkilex = source.forms.find(
-      (f) => f.morphCode === morph || f.formType === `EKILEX:${morph}`,
-    );
-    if (fromEkilex?.value) return { value: fromEkilex.value, provenance: "ekilex" };
-  }
-
   const stored = FORM_TYPE_FOR_CASE[caseKey];
   if (stored) {
     const principal = source.forms.find((f) => f.formType === stored);
     if (principal?.value) return { value: principal.value, provenance: "ekilex" };
   }
 
-  const genSg = source.forms.find((f) => f.formType === "GEN_SG")?.value;
-  if (!genSg) return null;
-  const derived = deriveCase(genSg, caseKey);
-  return derived ? { value: derived, provenance: "derived" } : null;
+  /*
+    THE ILLATIVE WAS BEING SET AS AN EXERCISE AND MARKED AGAINST THE WRONG FORM.
+
+    This walked its own precedence: an Ekilex morph form, then the two
+    principal parts, then a suffix on the genitive. `ILL_SG_SHORT` appeared in
+    neither table, so a seeded word was marked against `X-sse` and a learner
+    writing `tuppa` failed the exercise. Worse for an enriched word, where
+    `SgIll` was found first and the short illative beside it was never looked
+    at.
+
+    `caseAnswer` is that precedence written once, in the module that owns it,
+    with the short illative ahead of both. Its `accepted` list is what makes
+    the marking fair where a word genuinely has two.
+  */
+  const answer = caseAnswer(stemsFrom(source.forms), caseKey);
+  if (!answer) return null;
+  return {
+    value: answer.value,
+    provenance: answer.origin === "DERIVED" ? "derived" : "ekilex",
+  };
 }
 
 /** Every exercise this word can support. Empty for a word with no genitive stem. */

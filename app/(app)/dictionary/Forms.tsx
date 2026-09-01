@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ChevronDown } from "lucide-react";
 import { CASES } from "@/lib/estonian/cases";
@@ -86,12 +86,21 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
     }
   }
 
-  const rows = CASES.filter((c) => singular[c.key] || plural[c.key]);
+  const shortIllativeValues = valuesFor(forms, "SgAdt");
+  /*
+    The illative row has to exist for the short one to sit under it, and an
+    entry can carry `SgAdt` without `SgIll`. Without this the short illative
+    would silently vanish for exactly the words whose illative is only ever
+    the short one.
+  */
+  const rows = CASES.filter(
+    (c) => singular[c.key] || plural[c.key] || (c.key === "ILLATIVE" && shortIllativeValues.length > 0),
+  );
   if (rows.length === 0) return <OtherForms forms={forms} used={new Set()} />;
 
   const used = new Set([...Object.values(singular), ...Object.values(plural)]);
   // The short illative is a separate code on the same case; show it in its own row.
-  const shortIllative = valuesFor(forms, "SgAdt");
+  const shortIllative = shortIllativeValues;
   if (shortIllative.length > 0) used.add("SgAdt");
 
   return (
@@ -109,7 +118,8 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
           </thead>
           <tbody>
             {rows.map((spec) => (
-              <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
+              <Fragment key={spec.key}>
+              <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
                 <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                   {/* The case name is the way into the reference page: this table
                       says what the form is, that page says when to use it. The
@@ -127,20 +137,38 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
                 <td className="px-3 py-2"><Cell values={plural[spec.key] ? valuesFor(forms, plural[spec.key]!) : []} /></td>
                 <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
               </tr>
+              {/*
+                THE SHORT ILLATIVE SITS UNDER THE LONG ONE, NOT AT THE BOTTOM
+                OF THE TABLE.
+
+                It was appended after all fourteen cases, eleven rows below the
+                case it is a form of. A learner reading down the "Answers"
+                column for `kuhu?` meets `sisseütlev toasse` first and stops,
+                which for `tuba` hands them the form almost nobody says while
+                `tuppa` sits out of sight under a name they have not met yet.
+                Both are attested and both are labelled correctly, so nothing
+                here was wrong; it was ordered so that the wrong one is what
+                gets read.
+
+                It keeps its own row rather than being crammed into the
+                illative's cell, because it is a different form with a
+                different name and a course teaches it as one.
+              */}
+              {spec.key === "ILLATIVE" && shortIllative.length > 0 && (
+                <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
+                  <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
+                    <span lang="et">lühike sisseütlev</span>
+                    <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                      short illative
+                    </span>
+                  </td>
+                  <td className="px-3 py-2"><Cell values={shortIllative} /></td>
+                  <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span></td>
+                  <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>kuhu?</td>
+                </tr>
+              )}
+              </Fragment>
             ))}
-            {shortIllative.length > 0 && (
-              <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
-                <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                  <span lang="et">lühike sisseütlev</span>
-                  <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
-                    short illative
-                  </span>
-                </td>
-                <td className="px-3 py-2"><Cell values={shortIllative} /></td>
-                <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span></td>
-                <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>kuhu?</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
