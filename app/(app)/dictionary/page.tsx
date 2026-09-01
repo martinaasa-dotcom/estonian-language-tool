@@ -65,10 +65,12 @@ export default async function DictionaryPage({
     }
   }
 
-  const entry = opened ? await loadEntry(opened.id, ownerId) : null;
   const matchedAs = opened?.matchedAs ?? null;
 
-  const [total, suggestions, starred] = await Promise.all([
+  // The entry beside the three landing reads rather than before them: none of
+  // the four depends on another, and on a hosted database each is a round trip.
+  const [entry, total, suggestions, starred] = await Promise.all([
+    opened ? loadEntry(opened.id, ownerId) : Promise.resolve(null),
     prisma.lexeme.count(),
     /*
       Only for the landing view, like the starred list below it. What used to

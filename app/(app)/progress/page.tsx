@@ -37,8 +37,7 @@ export default async function ProgressPage() {
   const now = new Date();
   // Every figure below is a fact about a *day*, and this page renders on the
   // server, whose midnight is the deployment's. See lib/time/day.ts.
-  const clock = await learnerDayClock(ownerId);
-  const snapshot = await deckSnapshot(ownerId, now);
+  const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
   const [summary, units, reviews, dueDates, deck, caseReviews] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
