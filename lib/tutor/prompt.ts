@@ -47,12 +47,12 @@ const meeldib = WORKED_FORMS.meeldin.value.replace(/n$/, "b");
 
 /**
  * Closed-class words a case or a principal part cannot cover at all: a
- * pronoun's oblique case, a demonstrative, a particle. Estonian's pronouns
- * and function words are not built from a genitive stem or a principal part
- * the way an ordinary noun or verb is, and the harvested dictionary (which
- * exists to hold content words a syllabus names, per CLAUDE.md) carries no
- * forms for them at all, so there is no `Form` row for
- * `lib/tutor/prompt.itest.ts` to check them against.
+ * pronoun's short oblique form, a particle. The pronoun units harvest `mina`
+ * and `see` with their principal parts now, so `see` could be checked against
+ * a `Form` row; `mulle` and `sulle` are the short allatives, which no rule
+ * over the genitive reaches and the seed does not store, and `läbi` is a
+ * particle with no forms at all. They stay listed together because the check
+ * that names them is one list.
  *
  * They stay hand-verified rather than machine-checked, which is a real gap,
  * not a hidden one: `scripts/test-invariants.ts` names this exact list, so a
