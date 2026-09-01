@@ -1236,12 +1236,13 @@ both, a fill for a bar and an ink for its label, is the pairing this protects ra
 it. `scripts/demo-data.ts` now sets the week and the goal for the same reason: a rule enforced only
 where a fixture happens to walk holds on about half the app.
 
-**Where a screen lives and what a card is are still two questions, and so are the week and the
-homework.** `lib/ux/nav.ts` says the class week lives inside Tasks, so Today does not get a panel for
-it; the "On today" card carries one line saying which week you are in, because that card is already
-"what is due" and the week is the frame that gives it a date. `SETTING_KEYS.currentWeek` moved out of
-`app/actions.ts` for it: that file is `"use server"` so it cannot export a constant, every export
-there being a public endpoint, and the only other way to read the key was to type it again.
+**Where a screen lives and what a card is are still two questions, and the homework list was
+neither.** `/tasks`, `/week` and the placement ladder were cut in the eighteenth pass
+(`docs/13-mvp-status.md` §24): a to-do list and a calendar a class can set but a learner alone never
+filled, and a second answer to the level check with nothing measured behind it. What stays is one
+card on Today for work a teacher assigns, drawn by `components/TodayPlan.tsx` from the same
+`agenda` buckets, because that card is already "what is due". Do not bring the pages back as
+"organisation"; a learner organises their evening by opening Review.
 
 **Late is decided in one place, and it was being decided twice and wrongly.** A due date is typed
 into `<input type="date">` and stored at midnight UTC, so `TaskRow`'s `due < new Date()` marked
@@ -1266,14 +1267,14 @@ That module decides what a *screen leads with* by how far in the learner is; thi
 a thing lives, and the answer is the same in the first minute as in the first year.
 
 A place that lives *inside* another place carries `within` and keeps its row out of the rail
-without leaving the table, so the palette still reaches it. Eight do. Three were there from the
-start: Anu, because her button is in the corner of every signed-in screen and a row saying "Ask
-Anu" was a second door onto a room whose door is always open; the class week, which leads the Tasks
-page where its homework already was; and the scanner, which is a way of getting words *into* the
-dictionary and sat under "Look it up", which is not what it does.
+without leaving the table, so the palette still reaches it. Two were there from the start: Anu,
+because her button is in the corner of every signed-in screen and a row saying "Ask Anu" was a
+second door onto a room whose door is always open; and the scanner, which is a way of getting words
+*into* the dictionary and sat under "Look it up", which is not what it does. The class week was a
+third until the page it led was cut.
 
-The other five are one question asked five ways. Homework is what Today already lists, and the
-deck, the level check, the mock exam and a class are four readings of "how am I doing", which is
+The others are one question asked four ways. The deck, the level check, the mock exam and a class
+are four readings of "how am I doing", which is
 the question `/progress` exists to answer: standing them beside it as four more rows made the rail
 a list of every noun in the app rather than a set of places to go. Seven rows are left, under three
 headings rather than four, because a heading over a single row is furniture: a heading earns itself

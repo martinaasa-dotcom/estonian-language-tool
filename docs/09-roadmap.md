@@ -2,7 +2,9 @@
 
 > **Where this stands.** Phases 0-5 shipped, plus a later pass that added the learning path, typed
 > answers, the practice modes, XP/quests/progress and offline review. `13-mvp-status.md` §6 is the
-> current state; this file is kept as the plan the build actually followed.
+> current state; this file is kept as the plan the build actually followed. Two things it planned
+> were later taken out as not being learning: the task list and class week of Phase 1, cut in
+> `13-mvp-status.md` §24, where the reasoning is.
 
 v4.0's four phases put two impossible iframes ahead of the SRS engine and bundled the riskiest work
 into one overloaded phase with no de-risking. This roadmap front-loads the unknowns and orders the
