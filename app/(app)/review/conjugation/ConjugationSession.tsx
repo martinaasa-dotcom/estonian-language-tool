@@ -7,6 +7,7 @@ import { addToDeck, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { EstonianInput } from "@/components/EstonianInput";
+import { DiacriticBar } from "@/components/DiacriticBar";
 import { Speak } from "@/components/Speak";
 import { SuggestFix } from "@/components/SuggestFix";
 import { useFeedbackSound } from "@/components/AudioPrefs";
@@ -224,6 +225,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
                       {!mark ? (
                         <EstonianInput
                           compact
+                          bar={false}
                           value={typed[i] ?? ""}
                           ariaLabel={`${question.lemma}, ${blank.person}`}
                           inputRef={inputs[i]}
@@ -261,6 +263,17 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
               })}
             </tbody>
           </table>
+          {/*
+            One row of keys for the whole table rather than one under each of
+            the five fields, which drew the same six keys five times over. The
+            shared bar types into whichever field has focus, and falls back to
+            the first while nothing does.
+          */}
+          {!revealed && (
+            <div className="mt-3">
+              <DiacriticBar standalone={false} fallbackRef={inputs[0]} />
+            </div>
+          )}
         </div>
 
         <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
