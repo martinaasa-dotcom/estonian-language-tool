@@ -448,6 +448,18 @@ failure silent, because two sources sit behind it; a feed that will not answer i
 miss, which is the rule the seed and `enrichFromEkilex` each learned the expensive way. Nothing
 under `lib/news/` may touch the database or run in a browser, asserted.
 
+**And the headlines themselves are read, not only mined.** Every sentence a learner met here was
+one a lexicographer recorded to illustrate a word, which is the right sentence for a card and is not
+what a newspaper, a sign or a colleague says. The feed was being fetched once an hour for the
+suggestion row and thrown away down to its words. `lib/dict/headlines.ts` keeps a few of the
+headlines whole and puts the dictionary under them: the feed proposes, `matchEstonianForm` decides at
+the scanned-page floor, and a vouched word links to the dictionary's own headword while a word it
+will not vouch for is printed plain, because leaving it out would be editing the sentence and
+guessing would be worse. A headline is offered only when most of it can be opened, so a beginner
+meets one they can read through rather than a wall of names, and the block names the host it came
+from, since these are somebody else's words. It lives on the dictionary landing beside the row it
+grew out of, rendered from the same hourly cache and stored nowhere; asserted.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request

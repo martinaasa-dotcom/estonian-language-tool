@@ -223,6 +223,11 @@ await page.getByRole("button", { name: /^Save goals$/ }).click();
 await page.waitForTimeout(900);
 
 await page.goto(`${B}/assess`, { waitUntil: "networkidle" });
+// The sources and the six facts sit behind one disclosure now, which is where
+// a reader finds them and a skimmer does not trip over them; `innerText`
+// reads only what is on screen, so the suite opens it the way a reader would.
+await page.locator("details summary", { hasText: /Where these numbers come from/ }).click();
+await page.waitForTimeout(200);
 // innerText, so the label styles that uppercase these are already applied.
 const planText = await page.locator("main").innerText();
 check("the plan is in hours, not badges", /study hours to go/i.test(planText));

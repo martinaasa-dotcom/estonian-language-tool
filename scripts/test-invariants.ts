@@ -3531,6 +3531,28 @@ check("nothing is stored on a device that would need asking first", () => {
   );
 });
 
+check("a headline is read through the dictionary's gate, and the feed writes nothing down", () => {
+  /*
+    The front page is the most ordinary Estonian this app can put in front of
+    somebody, and it is somebody else's. So it is printed as the feed spelled
+    it, attributed, and every word that opens an entry does so because
+    `matchEstonianForm` vouched for it at the scanned-page floor (ADR-021): a
+    word it will not vouch for is left plain rather than guessed at. The block
+    is rendered from the hourly cache and stored nowhere.
+  */
+  const reader = code("lib/dict/headlines.ts");
+  assert.match(reader, /matchEstonianForm\(candidates/, "headline words are no longer vouched by the dictionary");
+  assert.match(reader, /newsHeadlines\(\)/, "the reader no longer reads the feed's own cache");
+  assert.doesNotMatch(reader, /prisma\.(lexeme|form|card)\.(create|update|upsert|delete)/, "the headline reader writes to the dictionary");
+  const screen = code("components/Headlines.tsx");
+  assert.match(screen, /token\.lemma \?/, "the screen links something other than a vouched lemma");
+  assert.match(screen, /encodeURIComponent\(token\.lemma\)/, "a link carries the headline's spelling rather than the headword");
+  assert.match(screen, /from \{host\}/, "the block no longer names where the headline came from");
+  // The feed module stays pure: no database, no browser, nothing of the learner's goes out.
+  const feed = code("lib/news/feed.ts");
+  assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
+});
+
 check("signing out forgets the device", () => {
   /*
     Signing out cleared one cookie and left everything the app keeps in the
