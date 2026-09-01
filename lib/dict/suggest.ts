@@ -70,7 +70,9 @@ const ROW = 12;
 const MIN_ROW = 6;
 
 /** The parts of speech with a case or verb table to open. */
-const POS = ["NOUN", "VERB", "ADJECTIVE", "PRONOUN"];
+// Not PRONOUN: a plural-only pronoun is harvested with no forms at all, and
+// the chip promises a table to open.
+const POS = ["NOUN", "VERB", "ADJECTIVE"];
 
 /**
  * How many headline words are worth asking the dictionary about.

@@ -134,10 +134,12 @@ async function main() {
         continue;
       }
       let clean = true;
+      let compared = 0;
       for (const d of derived) {
         if (d.origin === "STORED") continue;
         const attested = forms.filter((f) => f.morphCode === d.morphCode).map((f) => f.value);
         if (attested.length === 0) continue; // Ekilex has no such slot for this word: nothing to compare.
+        compared++;
         const slot = perSlot.get(d.morphCode) ?? { ok: 0, bad: 0 };
         if (attested.includes(d.value)) {
           slot.ok++;
@@ -148,13 +150,17 @@ async function main() {
         }
         perSlot.set(d.morphCode, slot);
       }
+      if (compared === 0) {
+        uncovered.push({ lemma: verb.lemma, reason: "Ekilex records none of the derived slots, so nothing was compared" });
+        continue;
+      }
       if (clean) agreeing++;
     }
   }
   await Promise.all(Array.from({ length: WORKERS }, worker));
 
   console.log(`Checked ${checked} verbs against attested paradigms; ${unreachable} could not be fetched.`);
-  console.log(`${agreeing} agree on every derived slot; ${uncovered.length} the rule declined.\n`);
+  console.log(`${agreeing} agree on every derived slot that could be compared; ${uncovered.length} compared nothing or were declined.\n`);
   console.log("Per slot:");
   const codes: DerivedVerbCode[] = [
     "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",

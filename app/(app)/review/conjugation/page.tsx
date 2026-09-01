@@ -60,7 +60,9 @@ export default async function ConjugationPage() {
 
   const select = {
     id: true, lemma: true, translation: true, cefr: true,
-    forms: { select: { formType: true, value: true, morphCode: true } },
+    // Ordered for the reason lib/progress/verbExamples.ts gives: a parallel
+    // form must be the same one on every load, since one is the answer.
+    forms: { select: { formType: true, value: true, morphCode: true }, orderBy: { orderIndex: "asc" as const } },
   } as const;
 
   const [deck, banded] = await Promise.all([

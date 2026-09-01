@@ -528,8 +528,15 @@ function SignOutButton({ labelled }: { labelled?: boolean }) {
       );
       if (!ok) return;
     }
+    // The session goes first and the device is forgotten only once it has:
+    // a sign-out that could not reach the service leaves the cookie in place,
+    // and forgetting the outbox before that would lose the grades for nothing.
+    const { error } = await createClient().auth.signOut();
+    if (error) {
+      window.alert("The sign-in service could not be reached, so you are still signed in. Try again once you are back online.");
+      return;
+    }
     await forgetThisDevice();
-    await createClient().auth.signOut();
     router.push("/welcome");
     router.refresh();
   };

@@ -298,7 +298,14 @@ const DRILL_CASES: readonly CaseKey[] = [
   "INESSIVE", "ILLATIVE", "ELATIVE", "ALLATIVE", "ADESSIVE", "COMITATIVE", "TRANSLATIVE",
 ];
 
-const isInflecting = (w: LessonWord) => w.pos === "NOUN" || w.pos === "ADJECTIVE" || w.pos === "PRONOUN";
+/*
+  Not PRONOUN, although a pronoun declines: its everyday case forms are the
+  short ones (`mulle`, `mul`) that no rule over the genitive reaches, so a
+  question built off `minu` would accept `minule` alone and mark the form
+  everybody says wrong. The pronoun unit builds no case cards for the same
+  reason; an enriched entry shows both.
+*/
+const isInflecting = (w: LessonWord) => w.pos === "NOUN" || w.pos === "ADJECTIVE";
 
 /**
  * The Estonian cases a government question offers.
