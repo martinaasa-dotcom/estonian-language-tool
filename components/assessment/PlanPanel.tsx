@@ -6,6 +6,7 @@ import {
 import { targetByBand, weeksUntil, type Goals } from "@/lib/assessment/goals";
 import { formatDuration, formatDurationRange } from "@/lib/time/duration";
 import { PRE_A1, type Band, type Level } from "@/lib/assessment/types";
+import { ChevronRight } from "lucide-react";
 import { Card, Note, SectionTitle, StatTile } from "@/components/ui";
 import { icon } from "@/components/icons";
 
@@ -184,9 +185,28 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
         </p>
       )}
 
+      {/*
+        THE REFERENCE MATERIAL IS BEHIND A DISCLOSURE, WHICH IS WHERE A
+        READER FINDS IT AND A SKIMMER DOES NOT TRIP OVER IT. This screen used
+        to run to five thousand pixels on a phone: the result, then the plan,
+        then three paragraphs on where the hours come from, then six cited
+        facts, then a second caveat repeating the first. Somebody who has
+        just been told they are below A1 wants the number, the plan and the
+        way out, and the sources exactly once they ask "says who". The
+        `summary` says what is inside so nobody has to open it to find out.
+      */}
       {!compact && (
-      <Card>
-        <SectionTitle hint="what the numbers assume">Where these come from</SectionTitle>
+      <details className="group">
+        <summary
+          className="tap-tint flex cursor-pointer items-center gap-2 rounded-[var(--r)] px-1 py-2 text-sm font-medium"
+          style={{ color: "var(--accent-deep)" }}
+        >
+          <ChevronRight size={15} aria-hidden className="transition-ui group-open:rotate-90" />
+          Where these numbers come from, and six facts behind the pace
+        </summary>
+        <div className="mt-4 flex flex-col gap-6">
+        <Card>
+          <SectionTitle hint="what the numbers assume">Where these come from</SectionTitle>
         <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           {target} sits at roughly {range(CUMULATIVE_HOURS[target].low, CUMULATIVE_HOURS[target].high, "hours")} of
           study from nothing, for an English speaker. Estonian is at the harder end of the scale, so
@@ -220,12 +240,10 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           week six goes wrong. The goal worth choosing is the one you would still keep on a bad
           Wednesday.
         </p>
-      </Card>
-      )}
+        </Card>
 
-      {!compact && (
-      <div>
-        <SectionTitle hint="checkable, not motivational">Facts worth knowing first</SectionTitle>
+        <div>
+          <SectionTitle hint="checkable, not motivational">Facts worth knowing first</SectionTitle>
         <ul className="flex flex-col gap-3">
           {FACTS.map((fact) => {
             const Icon = icon(fact.icon);
@@ -247,7 +265,9 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
             );
           })}
         </ul>
-      </div>
+        </div>
+        </div>
+      </details>
       )}
     </div>
   );
