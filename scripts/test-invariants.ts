@@ -1430,13 +1430,19 @@ check("how much of the app a screen leads with is decided in one place", () => {
 
 check("where a screen lives is decided in one table", () => {
   /*
-    The rail, the phone sheet, the command palette and the guide are four
-    answers to "where does this live", and for a while they were four lists.
-    The palette offered six practice modes while the hub offered eleven, so the
-    Leech clinic was reachable from one screen and unfindable from the box that
-    promises to go anywhere; `components/PracticeModes.tsx` held a seventh copy
-    of them that no screen rendered at all; and `lib/copy/tour.ts` named nine
-    screens a second time with their own icons.
+    The rail, the phone sheet and the command palette are three answers to
+    "where does this live", and for a while they were three lists plus a
+    walkthrough. The palette offered six practice modes while the hub offered
+    eleven, so the Leech clinic was reachable from one screen and unfindable
+    from the box that promises to go anywhere; `components/PracticeModes.tsx`
+    held a seventh copy of them that no screen rendered at all; and
+    `lib/copy/tour.ts` named nine screens a second time with their own icons.
+
+    That last one is gone with the page it fed. `/guide` was a second
+    description of an app the landing page already describes, offered to
+    somebody who had just pressed the button saying they wanted to start, and
+    the tour table was the last thing keeping a second set of screen names
+    alive. The rule it existed under stands for whatever is written next.
 
     Two shapes fail here. A navigation surface that stops reading
     `lib/ux/nav.ts` or `lib/ux/modes.ts`, and anybody else collecting this
@@ -1446,7 +1452,6 @@ check("where a screen lives is decided in one table", () => {
   const readers: [string, RegExp][] = [
     ["components/Sidebar.tsx", /lib\/ux\/nav/],
     ["components/CommandPalette.tsx", /lib\/ux\/nav/],
-    ["app/(app)/guide/page.tsx", /lib\/copy\/tour/],
     ["app/(app)/practice/page.tsx", /lib\/ux\/modes/],
     ["app/(app)/page.tsx", /lib\/ux\/modes/],
   ];

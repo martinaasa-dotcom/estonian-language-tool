@@ -770,7 +770,7 @@ const FAQS = [
   ],
   [
     "Is this only for beginners?",
-    "It covers A1 to C1. The parts that make Estonian hard later on (consonant gradation, verb government, whether an object is total or partial) each get their own kind of card, instead of being left to guesswork. There is a ten-minute placement check if you would rather not guess where you are, and a mock paper for the state examination at A2, B1, B2 and C1, built from recorded sentences and marked by comparing your answers against the dictionary.",
+    "It covers A1 to C1. The parts that make Estonian hard later on (consonant gradation, verb government, whether an object is total or partial) each get their own kind of card, instead of being left to guesswork. There is a placement check if you would rather not guess where you are, as long as it needs to be and no longer, and a mock paper for the state examination at A2, B1, B2 and C1, built from recorded sentences and marked by comparing your answers against the dictionary.",
   ],
   [
     "What happens to my data?",

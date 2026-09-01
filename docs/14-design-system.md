@@ -413,8 +413,7 @@ eleven behind one disclosure that opens itself whenever the current page is insi
 **Fold it, do not cut it.** The comparison table on the landing page is eight checkable claims
 against three real products, three of them ticks for somebody else, and deleting it to save scroll
 would have been the cheapest kind of tidying: it is the block that makes the rest checkable. It is
-behind its own summary now. The same applies to the walkthrough's tour, which is `/guide`, and to
-the plan's working, which is on `/assess`. Nothing that was true stopped being said; it stopped
+behind its own summary now. The same applies to the plan's working, which is on `/assess`. Nothing that was true stopped being said; it stopped
 being said in the way of somebody who has not decided yet.
 
 What none of this licenses is hiding a thing because a screen looks busy. The test is whether the

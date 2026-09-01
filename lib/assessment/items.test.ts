@@ -351,3 +351,130 @@ describe("the wrong answers are worth reading", () => {
   });
 
 });
+
+describe("a sentence a learner is asked to read is a sentence", () => {
+  /*
+    Three shapes of Ekilex usage reached the screen and none of them is a
+    sentence. `naturalSentence` in lib/estonian/cloze.ts is the guard and this
+    is the placement check's half of it: the same words the app was reported
+    on, so a regression here reads as the report rather than as a regex.
+  */
+  const usage = (id: string, lemma: string, pos: string, et: string): WordRow => ({
+    id, lemma, translation: "something", pos, cefr: "A1", government: null,
+    forms: [
+      { formType: "NOM_SG", value: lemma },
+      { formType: "GEN_SG", value: `${lemma}i` },
+      { formType: "PART_SG", value: `${lemma}it` },
+      { formType: "PART_PL", value: `${lemma}eid` },
+    ],
+    examples: [{ et, en: "an English rendering" }],
+  });
+
+  const sentences = (words: WordRow[]) => {
+    const rng = mulberry32(5);
+    return [...readingItems(words, rng), ...listeningItems(words, rng), ...writingItems(words, rng)]
+      .flatMap((i) => ("et" in i ? [i.et] : []) as string[])
+      .concat(
+        [...writingItems(words, mulberry32(5))].map((i) => i.full),
+      );
+  };
+
+  it("drops a headword standing in front of a comma as a label", () => {
+    // Filed under kahvel, and about a sailing gaff rather than about a fork.
+    const built = sentences([usage("kahvel", "kahvel", "NOUN", "Kahvel, lipp kukub!")]);
+    expect(built.filter((t) => t.includes("lipp"))).toHaveLength(0);
+  });
+
+  it("keeps a verb standing in front of a comma, which is a main clause", () => {
+    const built = sentences([usage("uskuma", "usun", "VERB", "Usun, et ta ei valeta praegu.")]);
+    expect(built.some((t) => t.includes("valeta"))).toBe(true);
+  });
+
+  it("drops a usage that trails off, or offers two words round a slash", () => {
+    expect(sentences([usage("naitama", "uuring", "NOUN", "Uuringud uuringut näitavad, et ..")])).toHaveLength(0);
+    expect(sentences([usage("elekter", "elekter", "NOUN", "Elekter elektrit läks ära / kadus.")])).toHaveLength(0);
+  });
+});
+
+describe("the explanation after a gap", () => {
+  it("leads with the sentence and the word, not with the label", () => {
+    const items = writingItems(WORDS, mulberry32(3));
+    const explained = items.find((i) => i.because.length > 0);
+    expect(explained, "no written gap was built").toBeDefined();
+    /*
+      The version this replaced opened "Here toas is in the seesütlev, the
+      inessive.", which is grammar vocabulary at somebody who has just been
+      told they were wrong. The sentence comes first, then the gap, then the
+      name as the cross-reference it is.
+    */
+    expect(explained!.because.startsWith(explained!.full)).toBe(true);
+    expect(explained!.because).toContain("The gap takes");
+  });
+
+  it("names both cases when one spelling is two, and claims neither", () => {
+    /*
+      `tuba` is the nimetav and the osastav; `kaarti` is the osastav and the
+      short sisseütlev. This used to return "a form of kaart", which tells a
+      learner what they could already see. Naming both and saying the sentence
+      decides is honest and is what a class says about these words.
+    */
+    // kaart, copied from the seeded dictionary: PART_SG and ILL_SG_SHORT are
+    // both `kaarti`, which is why `nameForm` may not pick one of them.
+    const kaart: WordRow = {
+      id: "kaart", lemma: "kaart", translation: "map, card", pos: "NOUN", cefr: "A2", government: null,
+      forms: [
+        { formType: "NOM_SG", value: "kaart" },
+        { formType: "GEN_SG", value: "kaardi" },
+        { formType: "PART_SG", value: "kaarti" },
+        { formType: "ILL_SG_SHORT", value: "kaarti" },
+        { formType: "PART_PL", value: "kaarte" },
+        { formType: "GEN_PL", value: "kaartide" },
+      ],
+      examples: [{ et: "Õpilased uurisid tunnis Euroopa kaarti." }],
+    };
+    const both = writingItems([kaart], mulberry32(3))
+      .map((i) => i.because)
+      .find((b) => b.includes(" or the "));
+    expect(both, "no syncretic form turned up").toBeDefined();
+    expect(both).toContain("The sentence decides which.");
+    // And no summary, because two summaries is the explanation arguing with
+    // itself about which case the learner is looking at.
+    expect(both!.endsWith("The sentence decides which.")).toBe(true);
+  });
+
+  it("names the form in Estonian first and English in brackets", () => {
+    // CLAUDE.md's rule, which the plainer wording may not quietly reverse: a
+    // learner in a class hears the Estonian name and needs it to lead.
+    const withCase = writingItems(WORDS, mulberry32(3))
+      .map((i) => i.because)
+      .find((b) => /\(inessive\)|\(nominative\)|\(genitive\)|\(partitive\)/.test(b));
+    expect(withCase, "no case was named at all").toBeDefined();
+    expect(withCase).toMatch(/\b(seesütlev|nimetav|omastav|osastav)\b \(/);
+  });
+});
+
+describe("a word's other recorded sense is never a wrong answer", () => {
+  it("does not offer grey against hall meaning frost", () => {
+    const hall: WordRow[] = [
+      { id: "hall-n", lemma: "hall", translation: "frost", pos: "NOUN", cefr: "A2", government: null,
+        forms: [{ formType: "NOM_SG", value: "hall" }], examples: [] },
+      { id: "hall-a", lemma: "hall", translation: "grey", pos: "ADJECTIVE", cefr: "A2", government: null,
+        forms: [{ formType: "NOM_SG", value: "hall" }], examples: [] },
+      { id: "must", lemma: "must", translation: "black", pos: "ADJECTIVE", cefr: "A1", government: null,
+        forms: [{ formType: "NOM_SG", value: "must" }], examples: [] },
+      { id: "valge", lemma: "valge", translation: "white", pos: "ADJECTIVE", cefr: "A1", government: null,
+        forms: [{ formType: "NOM_SG", value: "valge" }], examples: [] },
+      { id: "pruun", lemma: "pruun", translation: "brown", pos: "ADJECTIVE", cefr: "A1", government: null,
+        forms: [{ formType: "NOM_SG", value: "pruun" }], examples: [] },
+      { id: "sinine", lemma: "sinine", translation: "blue", pos: "ADJECTIVE", cefr: "A1", government: null,
+        forms: [{ formType: "NOM_SG", value: "sinine" }], examples: [] },
+    ];
+    for (let seed = 1; seed < 30; seed++) {
+      for (const item of readingItems(hall, mulberry32(seed))) {
+        if (!item.id.startsWith("r-mean-hall-")) continue;
+        const other = item.options[item.answer] === "frost" ? "grey" : "frost";
+        expect(item.options, `${item.id} at seed ${seed}`).not.toContain(other);
+      }
+    }
+  });
+});

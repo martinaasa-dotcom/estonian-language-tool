@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BLANK, buildCloze, isBuildable, sentenceMatches, sentenceTiles } from "./cloze";
+import { BLANK, buildCloze, isBuildable, naturalSentence, sentenceMatches, sentenceTiles } from "./cloze";
 
 describe("buildCloze", () => {
   it("blanks the form that appears in the sentence", () => {
@@ -103,5 +103,37 @@ describe("isBuildable", () => {
 
   it("rejects a sentence with a repeated word, where wrong order is unfalsifiable", () => {
     expect(isBuildable("Ta on siin ja ta on rõõmus.")).toBe(false);
+  });
+});
+
+describe("naturalSentence", () => {
+  const isNominal = (forms: string[]) => (opening: string) =>
+    forms.some((f) => f.toLowerCase() === opening.toLowerCase());
+
+  it("accepts a sentence somebody would say", () => {
+    expect(naturalSentence("Ma olen praegu toas.")).toBe(true);
+    expect(naturalSentence("Kas sa tuled homme?")).toBe(true);
+    expect(naturalSentence("Rahu, ainult rahu!", isNominal(["kass"]))).toBe(true);
+  });
+
+  it("rejects a usage the dictionary left unfinished", () => {
+    expect(naturalSentence("Uuringud näitavad, et ..")).toBe(false);
+    expect(naturalSentence("Öösel on lund sadanud")).toBe(false);
+    expect(naturalSentence("Vanemametnikud on: ... 9) insener;")).toBe(false);
+  });
+
+  it("rejects two alternatives offered round a slash", () => {
+    // Not a sentence: two ways of ending one, which is unanswerable as a gap.
+    expect(naturalSentence("Elekter läks ära / kadus.")).toBe(false);
+  });
+
+  it("rejects a nominal headword standing in front of a comma", () => {
+    // Filed under kahvel, and about a sailing gaff rather than about a fork.
+    expect(naturalSentence("Kahvel, lipp kukub!", isNominal(["kahvel", "kahvli"]))).toBe(false);
+  });
+
+  it("keeps a verb in front of a comma, which is an ordinary main clause", () => {
+    // No predicate is handed in for a verb headword, so nothing is rejected.
+    expect(naturalSentence("Usun, et ta ei valeta.")).toBe(true);
   });
 });

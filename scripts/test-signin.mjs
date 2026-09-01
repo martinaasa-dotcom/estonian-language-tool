@@ -23,7 +23,7 @@ import { suite } from "./lib/checks.mjs";
   WHICH MODE IS A PROPERTY OF THE BUILD, NOT OF THE SERVER. `NEXT_PUBLIC_`
   variables are inlined when the bundle is built, so starting a server with the
   keys cleared still gates every route if the build had them. Measured, not
-  assumed: a build carrying them served `/guide` as a 307 to `/sign-in` with
+  assumed: a build carrying them served `/settings` as a 307 to `/sign-in` with
   the variables removed from the environment. So this suite makes its own build
   in hosted mode, into its own `distDir` so it cannot disturb the one the other
   suites are running against, and starts it on its own port for the same

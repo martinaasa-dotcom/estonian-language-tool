@@ -36,34 +36,33 @@ const SECTIONS: Record<Skill, { icon: typeof Compass; title: string; body: strin
     icon: Compass,
     title: "Reading",
     body:
-      "What a word means, and which form a sentence needs. These are sentences a lexicographer " +
-      "actually recorded, with one word taken out, the same task the state exam calls a " +
-      "lünkülesanne. None of it was written just for this test.",
+      "What a word means and which form a sentence needs. These are sentences just like the " +
+      "state exam.",
   },
   listening: {
     icon: Headphones,
     title: "Listening",
     body:
       "Estonian audio with nothing written down: single words first, then whole sentences at " +
-      "normal speed. If the audio will not play, tell us, and this section is left unmeasured " +
-      "instead of being marked as a failure. A silent speaker is not a fact about your listening.",
+      "normal speed. If the audio will not play, say so, and this section is left unmeasured " +
+      "instead of marked as a failure. A silent speaker is not a fact about your listening.",
   },
   writing: {
     icon: PenLine,
     title: "Writing",
     body:
-      "A sentence with a word missing, and you type in the form it needs. It is checked directly " +
-      "against the word a lexicographer actually wrote there, so the verdict is certain and no AI " +
-      "ever reads your answer.",
+      "A sentence with a word missing, and you type in the form it needs. It is checked against " +
+      "the word a lexicographer actually wrote there, so the verdict is certain and no AI ever " +
+      "reads your answer.",
   },
   speaking: {
     icon: Mic,
     title: "Speaking",
     body:
-      "This one cannot be scored, and it is not going to pretend otherwise. There is no Estonian " +
-      "speech recognition here we can honestly trust, so instead you will hear a native voice, " +
-      "record yourself, compare the two, and rate it yourself. That rating is reported as yours " +
-      "and never moves your level.",
+      "This one cannot be scored and is not going to pretend otherwise. There is no Estonian " +
+      "speech recognition we can honestly trust, so you hear a native voice and say how " +
+      "confident you would be saying it yourself. That answer is reported as yours and never " +
+      "moves your level.",
   },
 };
 
@@ -222,12 +221,25 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
               This section is shorter than usual: the dictionary here could not fill it.
             </p>
           )}
-          <div className="mt-6 flex flex-wrap gap-3">
+          {/*
+            NO SKIP BUTTON, AND THAT IS THE POINT OF THE SCREEN.
+
+            A placement check that can be skipped a section at a time measures
+            whichever sections somebody felt like doing, and the overall level
+            is the weakest of three skills (ADR-020), so a skipped section is
+            not a gap in the report, it is a hole underneath the number. It sat
+            beside "Start this section" as an equal-weight second button, which
+            is where somebody puts the thing they want you to consider.
+
+            The one way out that stays is `skipSkill` for listening, and it is
+            not a skip: it is what happens when the speech service cannot make
+            any audio, so there is nothing on the screen to answer. That is a
+            fact about this deployment rather than about anybody's Estonian,
+            and it leaves the section unmeasured rather than failed.
+          */}
+          <div className="mt-6">
             <Button variant="primary" size="lg" onClick={() => setSeenIntro([...seenIntro, item.skill])}>
               Start this section <ArrowRight size={15} aria-hidden />
-            </Button>
-            <Button variant="ghost" onClick={() => skipSkill(item.skill)}>
-              Skip {section.title.toLowerCase()}
             </Button>
           </div>
         </Card>
@@ -266,11 +278,8 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
       <div className="mt-8">
         <SectionTitle>How this is marked</SectionTitle>
         <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Eighty questions, six at each level in reading and writing and three in listening,
-          climbing. A skill stops one level past the first one you do not pass, so how many you
-          answer depends on how far up you get: about fifteen if the first level is already hard,
-          all of them if none of it is. Nothing you answer here becomes a flashcard, and none of
-          it is sent to an AI.
+          A skill stops one level past the first one you do not pass, so how many questions you
+          get depends on how far up you make it. Nothing you answer here becomes a flashcard.
         </p>
       </div>
     </div>

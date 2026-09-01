@@ -895,14 +895,6 @@ export async function completeOnboarding(input: {
   return { ok: true as const, added };
 }
 
-/** Marks onboarding as seen without changing anything else. */
-export async function skipOnboarding() {
-  const ownerId = await requireUserId();
-  await writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString());
-  revalidatePath("/");
-  return { ok: true as const };
-}
-
 /**
  * Adds every word of a path unit to the deck, with the card types that unit is
  * actually about — the rektsioon unit adds government cards, a noun unit adds
@@ -2398,7 +2390,15 @@ export async function recordAssessment(input: unknown) {
 }
 
 const GOALS = z.object({
-  reason: z.string().max(40).nullable().optional(),
+  /*
+    Room for every reason at once rather than for one. They are stored space
+    separated in a single setting (`reasonsFor` is the parser), and all eight
+    ids together are sixty characters, which the old cap of forty silently
+    rejected the moment the question became multiple choice. `normaliseGoals`
+    still drops anything that is not a known id, so the width here bounds the
+    string and nothing else.
+  */
+  reason: z.string().max(200).nullable().optional(),
   target: z.string().max(4).nullable().optional(),
   deadline: z.string().max(40).nullable().optional(),
   daysPerWeek: z.number().min(1).max(7),

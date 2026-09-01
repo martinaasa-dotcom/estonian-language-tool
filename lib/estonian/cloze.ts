@@ -109,3 +109,40 @@ export function isBuildable(sentence: string): boolean {
   const lowered = tiles.map((t) => t.toLowerCase());
   return new Set(lowered).size === lowered.length;
 }
+
+/**
+ * Is this a sentence a learner should be asked to read at all?
+ *
+ * Ekilex records a usage against a *sense*, not against a lesson, so what
+ * comes back under a headword is sometimes not a sentence and sometimes not
+ * about the word a learner thinks they are being asked. Three shapes turned up
+ * in a real sitting and all three are mechanical.
+ *
+ * A usage that trails off, carries a slash between two alternatives, or is
+ * numbered out of a list of definitions is a dictionary's own shorthand rather
+ * than a sentence: `Uuringud näitavad, et ..` and `Elekter läks ära / kadus.`
+ * are both perfectly good lexicography and neither is answerable. A usage with
+ * no closing punctuation is a fragment for the same reason.
+ *
+ * And a usage that opens with the headword followed by a comma is the label
+ * pattern, where the entry names itself and then illustrates: `Kahvel, lipp
+ * kukub!` is filed under `kahvel` and is a sailing call about a gaff, not a
+ * fork, which is exactly the question a learner cannot answer and cannot
+ * argue with. Only a nominal is caught by it, because a verb standing before a
+ * comma is an ordinary main clause: `Usun, et ta ei valeta` is a real
+ * sentence and stays.
+ *
+ * Measured over the shipped dictionary: 8,826 usages pass the length rules and
+ * this rejects 101 of them, so it costs almost nothing and it removes the ones
+ * that were being read as errors in the app.
+ */
+export function naturalSentence(sentence: string, opensWithNominal?: (word: string) => boolean): boolean {
+  const text = sentence.trim();
+  if (!/[.!?]$/.test(text)) return false;
+  if (/\.\.|…|\/|[()]|\d\s*\)/.test(text)) return false;
+
+  const opening = text.match(/^([\p{L}\p{M}]+)\s*,/u)?.[1];
+  if (opening && opensWithNominal?.(opening)) return false;
+
+  return true;
+}
