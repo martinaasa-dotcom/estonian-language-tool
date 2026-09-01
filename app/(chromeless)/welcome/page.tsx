@@ -980,9 +980,20 @@ function FinalCta() {
             <h2 className="mx-auto mt-6 text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
               Fifteen minutes.<br />Starting today.
             </h2>
+            {/*
+              The close pays off the section that opens the page's argument.
+
+              It described the loop instead: look a word up, press once, let
+              the scheduler remember. That is what the app does, and it is a
+              third answer to a question the feature grid and this heading have
+              both already answered. What it never said is what any of it is
+              for. The cases section opens on somebody freezing when they are
+              spoken to at a counter, and this is the same person a screen
+              later, with something to say back.
+            */}
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Look up one word, add it in a press, and let the scheduler do the remembering. That
-              is the whole commitment.
+              Start today, and the next time somebody speaks to you in Estonian you will have
+              something to say back.
             </p>
             <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
