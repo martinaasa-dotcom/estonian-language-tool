@@ -143,6 +143,13 @@ Ekilex carries no English on a reader key, so translations are resolved in layer
 already accepted, then Wiktionary, then Anu, then an honest blank for you to fill. Every layer says
 where it came from, and you can always overwrite it.
 
+The dictionary's landing page also reads the morning's front page. A few of the day's headlines
+from ERR, Estonia's public broadcaster, are printed as written, and every word the dictionary can
+vouch for is a link to its entry, so the most ordinary Estonian there is comes with a case table
+under it. A word the dictionary will not vouch for is left plain rather than guessed at, and
+nothing from the feed is stored. `NEWS_FEED_URL` points it at another RSS feed, or `off` turns it
+off.
+
 ## What works without any API key
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
