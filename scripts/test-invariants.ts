@@ -30,6 +30,7 @@ import { buildOptions, parseGovernment, type Government } from "../lib/estonian/
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
+import { DEMO_STEMS } from "../lib/collections/demoWords";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
@@ -5757,6 +5758,86 @@ check("a decorative letter is hidden, untouchable and placed", () => {
     "a screen draws its own drifting letter instead of using components/LetterTile.tsx, "
     + "which is where the three properties above and the pointer listener live",
   );
+});
+
+/**
+ * WHAT THE LANDING PAGE PROMISES ABOUT FIVE WORDS IS WHAT THE DICTIONARY SAYS.
+ *
+ * The case explorer is the one screen in this app that shows Estonian to
+ * somebody who has not signed in, and it is the page's whole argument: learn
+ * these forms, and the rest are regular endings. So it is the worst place for
+ * a wrong form, and it has two ways to get one.
+ *
+ * The first is the fallback. `lib/collections/demoWords.ts` carries five stems
+ * per word, copied out of the seed for the case where the database behind the
+ * page is unreachable, which is the state a fresh deployment builds in. A copy
+ * is a thing that goes stale, and this one goes stale silently: the live path
+ * and the fallback would then show two different words for one lemma and only
+ * the deployment that could not reach its database would ever see it. So the
+ * copy is checked against the built dictionary, character for character.
+ *
+ * The second is the derivation. Every case in the right-hand column is the
+ * genitive stem plus an ending, and the seed carries Ekilex's own recorded
+ * forms for the course words, so the two can be compared. All 22 of `tuba`'s
+ * agree, which is the check working rather than the check being vacuous, and
+ * the one form that does not fall out of the rule is exactly the one this
+ * exists to protect: `toa` + `sse` is `toasse`, a real word and not the one
+ * anybody says, and `tuppa` is stored because no rule reaches it.
+ */
+check("the landing page's five words say what the dictionary says", () => {
+  const expanded = JSON.parse(read(join("prisma", "data", "expanded.json"))) as {
+    lemma: string; pos: string; forms: { formType: string; value: string }[];
+  }[];
+
+  const missing: string[] = [];
+  const wrong: string[] = [];
+
+  for (const stems of DEMO_STEMS) {
+    const entry = expanded.find((e) => e.lemma === stems.lemma && e.pos === "NOUN");
+    if (!entry) {
+      missing.push(stems.lemma);
+      continue;
+    }
+    const held = (type: string) => entry.forms.filter((f) => f.formType === type).map((f) => f.value);
+    // PART_PL is the one that can legitimately hold two (`tube` and `tubasid`),
+    // so the check is membership rather than equality on that one alone.
+    for (const [type, value] of [
+      ["NOM_SG", stems.nomSg], ["GEN_SG", stems.genSg], ["PART_SG", stems.partSg],
+      ["GEN_PL", stems.genPl],
+    ] as const) {
+      const seen = held(type);
+      if (seen[0] !== value) wrong.push(`${stems.lemma} ${type}: page says ${value}, the seed says ${seen.join(" or ") || "nothing"}`);
+    }
+    if (!held("PART_PL").includes(stems.partPl)) {
+      wrong.push(`${stems.lemma} PART_PL: page says ${stems.partPl}, the seed says ${held("PART_PL").join(" or ") || "nothing"}`);
+    }
+    const short = held("ILL_SG_SHORT")[0];
+    if (short !== stems.illSgShort) {
+      wrong.push(`${stems.lemma} ILL_SG_SHORT: page says ${stems.illSgShort ?? "none"}, the seed says ${short ?? "none"}`);
+    }
+  }
+
+  assert.deepEqual(missing, [], "the landing page asks the dictionary for a noun it does not hold");
+  assert.deepEqual(wrong, [], "a stem on the landing page's fallback has drifted from the seed it was copied from");
+
+  /*
+    THE ENDINGS THEMSELVES ARE CHECKED AGAINST EKILEX, AND NOT HERE, BECAUSE
+    THE SEED DOES NOT CARRY THEM.
+
+    `harvested.ts` stores principal parts only, which is the point of it: the
+    other eleven are a rule over the genitive stem and storing them would be
+    the second source of truth this app refuses to keep (ADR-009). So the
+    comparison that matters, every case the page works out against the form
+    Ekilex records for it, is a thing somebody runs against a live key rather
+    than a check that can live in this file. It was run for all five of these
+    words: 55 singular forms, all agreeing, and every long plural with them.
+    What differs is the parallel short plural Estonian genuinely has
+    (`raamatuis` beside `raamatutes`), which this card does not show.
+
+    What is left here is the half that can go stale on its own, which is the
+    copy above, and `lib/estonian/derive.test.ts` holds the rule that decides
+    the one case with two answers.
+  */
 });
 
 console.log(

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
+import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
@@ -24,37 +25,6 @@ export const metadata: Metadata = {
 
 /** The landing page is public and read-only, so it can be cached hard. */
 export const revalidate = 3600;
-
-/*
-  THE WORDS THE EXPLORER OFFERS, AND WHY THEY ARE THE ODD ONES.
-
-  Two, and one of them a verb that never rendered. `Cases` keeps only the words
-  with a derived case in them, which a verb has none of, so the card a visitor
-  actually met offered `tuba` and `raamat`: one word whose stem changes and one
-  whose stem does not. That is the section's claim demonstrated twice, and a
-  reader pressing the second chip and getting the same answer again learns that
-  the card is a picture rather than a thing that works.
-
-  THE FIVE ARE PICKED FOR WHERE THE STEM GOES STRANGE, because that is the
-  objection this card exists to answer. Nobody doubts that endings stack onto
-  `raamat`. What stops people is the word whose genitive they would never have
-  guessed, and the honest answer is that the endings are regular anyway: learn
-  the three and the other eleven follow off the second of them, however little
-  it looks like the first.
-
-  `raamat` is the baseline and does nothing at all. `tuba` swaps its vowel and
-  comes out `toa`. `sõber` is the one where the two stems disagree with each
-  other, `sõbra` against `sõpra`, so even the three you memorise are not one
-  stem. `käsi` goes to `käe`, which shares two letters with the word you looked
-  up. `mees` turns its s into an h. Every one of those is a word a beginner
-  meets in their first month, which is the point: these are not curiosities.
-
-  Every form under every one of them still comes out of the dictionary, and the
-  five stems each falls back to are copied from the seed. This list is a list of
-  requests, exactly as a syllabus unit is: a word the dictionary cannot answer
-  for is dropped by `Cases`, not invented.
-*/
-const DEMO_LEMMAS = ["tuba", "raamat", "sõber", "käsi", "mees"];
 
 export default async function WelcomePage() {
   const { words, stats } = await loadDemo();
@@ -332,8 +302,8 @@ function Cases({ words }: { words: DemoWord[] }) {
           </h2>
           <p className="mx-auto mt-5 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             You can hold a 400-day streak and still freeze when somebody speaks to you at the
-            counter. Three forms of a word are yours to learn. The eleven that follow are the same
-            regular endings every time. Press a word and watch.
+            counter. Three forms of a word are yours to learn, sometimes four. Everything after
+            them is the same regular endings every time. Press a word and watch.
           </p>
         </div>
       </Reveal>
@@ -1081,7 +1051,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
   try {
     const [lexemes, wordCount, formCount] = await Promise.all([
       prisma.lexeme.findMany({
-        where: { lemma: { in: DEMO_LEMMAS } },
+        where: { lemma: { in: [...DEMO_LEMMAS] } },
         include: { forms: true },
       }),
       prisma.lexeme.count(),
@@ -1096,7 +1066,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       moment somebody confirms it off a photograph. The case table under it
       is the whole argument this page makes, and it would have been empty.
     */
-    const words = oneEntryPerLemma(lexemes, DEMO_LEMMAS).flatMap((lex) => {
+    const words = oneEntryPerLemma(lexemes, [...DEMO_LEMMAS]).flatMap((lex) => {
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 
@@ -1108,25 +1078,44 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         : [["nimetav · kes? mis?", form("NOM_SG")], ["omastav · kelle? mille?", form("GEN_SG")], ["osastav · keda? mida?", form("PART_SG")]]
       ).flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
 
-      const cases = isVerb
+      const table = isVerb
         ? []
         : buildCaseTable({
             nomSg: form("NOM_SG"), genSg: form("GEN_SG"), partSg: form("PART_SG"),
             partPl: form("PART_PL"), genPl: form("GEN_PL"),
-          }).map((row) => ({
-            en: row.spec.en,
-            et: row.spec.et,
-            question: row.spec.question,
-            singular: row.singular ?? null,
-            plural: row.plural ?? null,
-            principal: row.spec.principal,
-          }));
+            illSgShort: form("ILL_SG_SHORT"),
+          });
+
+      /*
+        A FOURTH FORM, WHERE THE WORD HAS ONE.
+
+        `tuppa` and `kätte` are not `toa` and `käe` with an ending on them, and
+        no rule reaches either, which is why the dictionary stores them. So
+        they sit with the forms you memorise rather than with the ones that
+        follow, and the two headings count what is under them: press `tuba` and
+        the card says four and ten rather than three and eleven. That is the
+        card doing its job. The alternative is printing `toasse`, which is
+        defensible Estonian and is not a sentence anybody says.
+      */
+      const learnt = table.filter((row) => row.origin === "STORED" && !row.spec.principal);
 
       return [{
         lemma: lex.lemma,
         genitive: form("GEN_SG") ?? null,
-        principal,
-        cases,
+        principal: [
+          ...principal,
+          ...learnt.flatMap((row) => (row.singular
+            ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: row.singular }]
+            : [])),
+        ],
+        cases: table.map((row) => ({
+          en: row.spec.en,
+          et: row.spec.et,
+          question: row.spec.question,
+          singular: row.singular ?? null,
+          plural: row.plural ?? null,
+          principal: row.spec.principal || row.origin === "STORED",
+        })),
       }];
     });
 
@@ -1144,41 +1133,37 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
 /**
  * The set the page falls back to when the database is unreachable or has not
- * been seeded yet — which is the state a fresh deployment builds in, so this
+ * been seeded yet, which is the state a fresh deployment builds in, so this
  * path is load-bearing rather than theoretical.
  *
- * The principal parts are copied verbatim from the checked seed data; the rest
- * is derived by `buildCaseTable()`, exactly as the live path does it. Nothing
- * here is a hand-written Estonian form.
+ * The stems are copied verbatim from the checked seed data and live in
+ * `lib/collections/demoWords.ts` beside the list of words to ask for; the rest
+ * is derived by `buildCaseTable()`, exactly as the live path does it, down to
+ * the short illative going in with the forms you memorise. Nothing here is a
+ * hand-written Estonian form, and `scripts/test-invariants.ts` checks the copy
+ * against the built dictionary rather than trusting that it was copied.
  */
-
-const FALLBACK_STEMS = [
-  { lemma: "tuba",
-    nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
-  { lemma: "raamat",
-    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
-  { lemma: "sõber",
-    nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade" },
-  { lemma: "käsi",
-    nomSg: "käsi", genSg: "käe", partSg: "kätt", partPl: "käsi", genPl: "käte" },
-  { lemma: "mees",
-    nomSg: "mees", genSg: "mehe", partSg: "meest", partPl: "mehi", genPl: "meeste" },
-] as const;
-
-const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
-  lemma: w.lemma,
-  genitive: w.genSg,
-  principal: [
-    { label: "nimetav · kes? mis?", value: w.nomSg },
-    { label: "omastav · kelle? mille?", value: w.genSg },
-    { label: "osastav · keda? mida?", value: w.partSg },
-  ],
-  cases: buildCaseTable(w).map((row) => ({
-    en: row.spec.en,
-    et: row.spec.et,
-    question: row.spec.question,
-    singular: row.singular ?? null,
-    plural: row.plural ?? null,
-    principal: row.spec.principal,
-  })),
-}));
+const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
+  const table = buildCaseTable(w);
+  const learnt = table.filter((row) => row.origin === "STORED" && !row.spec.principal);
+  return {
+    lemma: w.lemma,
+    genitive: w.genSg,
+    principal: [
+      { label: "nimetav · kes? mis?", value: w.nomSg },
+      { label: "omastav · kelle? mille?", value: w.genSg },
+      { label: "osastav · keda? mida?", value: w.partSg },
+      ...learnt.flatMap((row) => (row.singular
+        ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: row.singular }]
+        : [])),
+    ],
+    cases: table.map((row) => ({
+      en: row.spec.en,
+      et: row.spec.et,
+      question: row.spec.question,
+      singular: row.singular ?? null,
+      plural: row.plural ?? null,
+      principal: row.spec.principal || row.origin === "STORED",
+    })),
+  };
+});

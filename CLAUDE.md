@@ -363,6 +363,25 @@ no window covers, and the invariant fails on an entry spelled like a word rather
 required form by string comparison against the dictionary *before* any call, so a hallucination
 cannot mark a right answer wrong and a missing key does not break the exercise. Keep that ordering.
 
+**The illative is the one case with two answers, and only one of them is derivable.** `toa` plus
+`sse` is `toasse`, which is a real form, is what Ekilex records as the sisseütlev, and is not what
+anybody says: the word is `tuppa`, and `käsi` goes to `kätte` rather than `käesse`. Both of those are
+stored, because no rule over the genitive stem reaches either, which is what `ILL_SG_SHORT` is for.
+`buildCaseTable` takes it and reports that row as STORED, so the landing page's case explorer puts it
+with the forms you memorise and its two headings count what is under them: `tuba` reads four and ten
+where `raamat` reads three and eleven. A stored short form has to *differ* from the three principal
+parts to be worth saying, though. `sõber` records `sõpra`, which is already its partitive, so
+promoting it would print one word twice under two names and hide `sõbrasse`, the form somebody
+writing a sentence needs.
+
+Everything else on that card was checked against Ekilex rather than reasoned about: 55 singular
+forms across the five words, all agreeing, and every long plural with them. What differs is the
+parallel short plural Estonian genuinely has, `raamatuis` beside `raamatutes`, which the card does
+not show. That comparison needs a live key, so what is asserted offline is the half that rots on its
+own: `lib/collections/demoWords.ts` is the one list of which words the card asks for and which stems
+it falls back to when the database is unreachable, and an invariant checks that copy against the
+built dictionary character for character.
+
 **Never store derived case forms.** Only principal parts are persisted (five per lexeme). The ten
 regular cases
 are computed from the genitive stem at render time. Storing them creates a second source of truth
