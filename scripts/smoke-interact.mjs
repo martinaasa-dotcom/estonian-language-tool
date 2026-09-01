@@ -23,8 +23,8 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
  */
 const app = page.locator("main");
 
-// Floor: measured 13 in dev mode. It cannot run against a production build at all: `page.waitForFunction` evaluates a string, which the production Content Security Policy refuses.
-const { absent, check, done } = suite("The new modes, driven", { floor: 13 });
+// Floor: measured 11, which was 13 until the homework list and its two checks were cut. It cannot run against a production build at all: `page.waitForFunction` evaluates a string, which the production Content Security Policy refuses.
+const { absent, check, done } = suite("The new modes, driven", { floor: 11 });
 
 /**
  * Wait from Node, by polling, rather than with `page.waitForFunction`.

@@ -203,8 +203,14 @@ const SPARSE = new Map([
   two themes, twice over, so deleting one screen takes a fixed block of checks
   with it. Lowering a floor is otherwise how a suite stops noticing: this one
   is arithmetic on the route list, not a run being waved through.
+
+  And 920 rather than 1000 for the same reason, three routes at once: the
+  placement ladder, the homework list and the class week were cut as not
+  being learning, and the run after the cut counted 940 where the one before
+  it counted 1020. The margin of twenty under the count is the one the floor
+  has always kept.
 */
-const { check, absent, done } = suite("Containment", { floor: 1000 });
+const { check, absent, done } = suite("Containment", { floor: 920 });
 
 const browser = await launchChromium();
 

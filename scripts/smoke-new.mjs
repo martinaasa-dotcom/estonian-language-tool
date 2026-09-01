@@ -31,7 +31,7 @@ const browser = await launchChromium();
   deck holding enough to build a government drill and a minimal pair, which a
   thin database does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 66 });
+const { check, done } = suite("The new routes, rendered", { floor: 65 });
 
 const ROUTES = [
   ["/", "today"],
@@ -121,10 +121,6 @@ const clinicBody = await page.textContent("body");
 check("clinic renders leeches or an honest empty state",
   /lapses/i.test(clinicBody ?? "") || /No leeches/i.test(clinicBody ?? ""));
 
-// ── The week spine ───────────────────────────────────────────────────────────
-await page.goto(`${BASE}/week`, { waitUntil: "networkidle" });
-check("/week redirects to a numbered week", /\/week\/\d+/.test(page.url()), page.url());
-
 // ── PWA wiring ───────────────────────────────────────────────────────────────
 const manifest = await page.goto(`${BASE}/manifest.webmanifest`);
 check("manifest is served", manifest?.status() === 200);
@@ -139,7 +135,7 @@ const phone = await browser.newContext({
 });
 const mobile = await phone.newPage();
 
-for (const [route, name] of [["/", "today"], ["/review/write", "write"], ["/week", "week"]]) {
+for (const [route, name] of [["/", "today"], ["/review/write", "write"], ["/learn", "learn"]]) {
   await mobile.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
   await mobile.waitForTimeout(300);
   const overflow = await mobile.evaluate(() =>

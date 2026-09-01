@@ -11,7 +11,12 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 26, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("The core flows", { floor: 26 });
+/*
+  25 rather than 26: the homework list was cut as not being learning, and the
+  one check that added a task to it went with the screen. Arithmetic on what
+  the app has, not a run being waved through.
+*/
+const { check, absent, done } = suite("The core flows", { floor: 25 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
