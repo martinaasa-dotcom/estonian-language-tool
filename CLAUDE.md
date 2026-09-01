@@ -183,6 +183,24 @@ bring back, which is what makes this mechanical rather than aspirational. Re-run
 `npm run harvest`; responses are cached, so it costs Ekilex nothing.
 
 
+**The words between the words are a request like any other, and a unit that was cut does not take
+its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
+words every sentence is made of: nobody asking `kes?` or `millal?`, or looking up `täna`, `peal`
+or `september`, found anything, in a dictionary of six thousand words. Six units carry them now,
+question words, pronouns, the adverbs of time, the postpositions, the months and the countries,
+appended after the fourteen so that the first three units at A1, which is what first run builds a
+deck from, stay what they were. `PRONOUN` is a part of speech for it, harvested as a nominal
+because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
+`nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
+unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
+short ones (`mulle`, `mul`) that no rule over the genitive reaches, and a card answering `minule`
+would mark the form everybody says wrong; Ekilex records both and an enriched entry shows the pair.
+`lib/collections/syllabus/retired.ts` is the other half: the ten C2 units were cut in §19 of the
+status doc with the note that their 170 words stay in the dictionary, and the harvest reads the
+syllabus, so the first re-run after that cut would have quietly taken them out of the seed. They
+are a request list of their own now, in a unit's shape, read by the harvest beside the units and
+listed by no screen.
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output

@@ -225,6 +225,10 @@ describe("the harvested dictionary behind the course", () => {
         for (const p of ["INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG"]) {
           expect(w.parts[p], `${w.lemma} is missing ${p}`).toBeTruthy();
         }
+      } else if (w.pos === "PRONOUN" && Object.keys(w.parts).length === 0) {
+        // A plural-only pronoun (`meie`, `nemad`) has no singular to store and
+        // is kept the way an adverb is: attested by Ekilex, with no parts.
+        expect(w.usages.length + (w.cefr ? 1 : 0), `${w.lemma} arrived with nothing at all`).toBeGreaterThan(0);
       } else if (w.pos !== "ADVERB") {
         for (const p of ["NOM_SG", "GEN_SG", "PART_SG"]) {
           expect(w.parts[p], `${w.lemma} is missing ${p}`).toBeTruthy();

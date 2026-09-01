@@ -1533,3 +1533,15 @@ page said "after two" where the partitive singular follows any number from two u
 3. **Autoplay obeys the browser's own policy.** A page nobody has touched yet may not play sound, so
    the very first card of a session opened from a cold tab keeps its speaker button and waits for a
    press; every card after it reads itself.
+
+### The words between the words
+
+Found on the same pass, and the larger content gap: the course had fourteen A1 units of nouns,
+verbs and adjectives and no unit for the words every sentence is made of. `kes`, `mis`, `millal`,
+`täna`, `homme`, `peal`, `taga`, `mina`, `see`, `Eesti`, `september` and `november` were in neither
+the course nor the built dictionary, and `sina` was in it labelled a noun. Six A1 units carry them
+now, harvested from Ekilex like every other unit, with `PRONOUN` added as a part of speech and a
+plural-only pronoun kept the way an adverb is. Re-running the harvest also showed that the ten C2
+units cut in §19 would have taken their 170 words out of the seed the first time anybody ran it,
+against what that section promised; `lib/collections/syllabus/retired.ts` keeps them as a request
+list of their own. The built-in dictionary is 6,041 words.

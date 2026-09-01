@@ -23,7 +23,7 @@ export const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1"];
  * the course are the hand-checked ones the built-in dictionary already carried,
  * and no new ones are written here.
  */
-export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE";
+export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PRONOUN" | "PHRASE";
 
 /**
  * A word the unit teaches: the Estonian lemma, an English gloss, and the part of

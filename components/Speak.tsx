@@ -21,9 +21,15 @@ import { useAudioPrefs } from "./AudioPrefs";
  * takes the button away.
  */
 export function Speak({
-  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay,
+  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay, voice: askedVoice,
 }: {
   text: string; slow?: boolean; label?: string;
+  /**
+   * A voice other than the learner's own, by its identifier. For the
+   * listening round, which changes speaker from word to word the way the
+   * examination does; everywhere else the setting decides.
+   */
+  voice?: string;
   /** Icon size in px, plus className/style overrides for a bigger tap target (e.g. Listening mode). */
   size?: number; className?: string; style?: CSSProperties;
   /**
@@ -61,7 +67,9 @@ export function Speak({
   autoplay?: boolean;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
-  const { voice, autoplay: wanted } = useAudioPrefs();
+  const prefs = useAudioPrefs();
+  const voice = askedVoice ?? prefs.voice;
+  const wanted = prefs.autoplay;
   const played = useRef<string | null>(null);
 
   const play = async (unasked = false) => {
@@ -93,14 +101,14 @@ export function Speak({
 
   useEffect(() => {
     if (!autoplay || wanted !== "on" || disabled) return;
-    const key = `${text}|${slow ? 1 : 0}`;
+    const key = `${text}|${slow ? 1 : 0}|${voice}`;
     if (played.current === key) return;
     played.current = key;
     void play(true);
     // `play` closes over the props it needs; re-running on them would replay
     // the same clip on an unrelated re-render, which `played` also guards.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoplay, wanted, disabled, text, slow]);
+  }, [autoplay, wanted, disabled, text, slow, voice]);
 
   if (state === "gone") return null;
 
