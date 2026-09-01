@@ -24,6 +24,10 @@ import { verbExamples } from "@/lib/progress/verbExamples";
 const TOPIC_DRILL: Record<string, string> = {
   government: "/review/government",
   gradation: "/review/pairs",
+  // The same drill from both, since it asks for either table: the present
+  // from the first lesson, and the conditional once a learner is at B1.
+  "present-tense": "/review/conjugation",
+  conditional: "/review/conjugation",
 };
 
 /** The topics with a table of real verbs, and which slots that table shows. */

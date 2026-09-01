@@ -116,6 +116,7 @@ const ROUTES = [
   "/review/pairs",
   "/review/clinic",
   "/review/government",
+  "/review/conjugation",
   "/review/listening",
   "/review/match",
   "/review/sentences",

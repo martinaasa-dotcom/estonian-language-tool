@@ -136,7 +136,7 @@ const ROUTES = [
   "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
   "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
-  "/review", "/review/write", "/review/government", "/review/cloze", "/review/clinic",
+  "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
   "/review/sentences", "/review/speaking", "/review/sprint",
 ];

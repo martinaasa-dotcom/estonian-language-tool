@@ -41,6 +41,7 @@ const ROUTES = [
   ["/progress", "progress"],
   ["/review/write", "write"],
   ["/review/government", "government"],
+  ["/review/conjugation", "conjugation"],
   ["/review/pairs", "pairs"],
   ["/review/cloze", "cloze"],
   ["/review/clinic", "clinic"],

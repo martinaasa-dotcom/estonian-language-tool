@@ -89,35 +89,50 @@ const CODES: readonly DerivedVerbCode[] = [
   "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3", "ImpPrSg2",
 ];
 
-function toExample(lex: Candidate, inDeck: boolean): VerbExample | null {
-  const pres1sg = pres1sgFrom(lex.forms);
-  if (!pres1sg) return null;
-
-  // What Ekilex recorded, by code, wins over the rule every time. The seed
-  // spells a retrieved code as `EKILEX:<code>` on `formType`; a live fetch
-  // puts it on `morphCode`.
+/**
+ * Every form of one verb the app can vouch for, attested first.
+ *
+ * What Ekilex recorded, by code, wins over the rule every time. The seed
+ * spells a retrieved code as `EKILEX:<code>` on `formType`; a live fetch puts
+ * it on `morphCode`. Where Ekilex has nothing for a slot, the rule answers if
+ * it reaches, and the slot is simply absent otherwise. Shared with the
+ * conjugation drill, so the table a learner reads and the table they are
+ * asked to fill cannot come from two different answers.
+ */
+export function conjugatedForms(
+  lemma: string,
+  forms: readonly { formType: string; value: string; morphCode: string | null }[],
+): VerbExampleForm[] {
+  const pres1sg = pres1sgFrom(forms);
+  if (!pres1sg) return [];
   const attested = new Map<string, string>();
-  for (const f of lex.forms) {
+  for (const f of forms) {
     const code = f.morphCode ?? (f.formType.startsWith("EKILEX:") ? f.formType.slice(7) : null);
     if (code && !attested.has(code)) attested.set(code, f.value);
   }
   const derived = new Map(
-    derivedVerbForms({ lemma: lex.lemma, pres1sg }).map((f) => [f.morphCode, f] as const),
+    derivedVerbForms({ lemma, pres1sg }).map((f) => [f.morphCode, f] as const),
   );
 
-  const forms: VerbExampleForm[] = [];
+  const out: VerbExampleForm[] = [];
   for (const code of CODES) {
     const fromEkilex = attested.get(code);
     if (fromEkilex) {
-      forms.push({ code, value: fromEkilex, origin: "EKILEX" });
+      out.push({ code, value: fromEkilex, origin: "EKILEX" });
       continue;
     }
     const rule = derived.get(code);
-    if (rule) forms.push({ code, value: rule.value, origin: rule.origin });
+    if (rule) out.push({ code, value: rule.value, origin: rule.origin });
   }
+  return out;
+}
+
+function toExample(lex: Candidate, inDeck: boolean): VerbExample | null {
+  const pres1sg = pres1sgFrom(lex.forms);
+  if (!pres1sg) return null;
+  const forms = conjugatedForms(lex.lemma, lex.forms);
   // A verb the rule declines and Ekilex has not filled in shows only its first
   // person, which is not an example of anything: leave it out.
   if (forms.length < 2) return null;
-
   return { lexemeId: lex.id, lemma: lex.lemma, translation: lex.translation, pres1sg, forms, inDeck };
 }
