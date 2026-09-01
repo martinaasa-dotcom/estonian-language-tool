@@ -156,13 +156,6 @@ if (madeExercises) {
     /The writer used|right word, missing diacritic/i.test(marked));
 }
 
-// ── Week: the spine ties vocabulary and homework together ────────────────────
-await page.goto(`${BASE}/week`, { waitUntil: "networkidle" });
-const weekBody = (await page.textContent("body")) ?? "";
-check("week view shows homework filed under it", /Homework|Nothing filed/i.test(weekBody));
-check("week view always offers a next action",
-  /Review week|Drill week|Add week \d+ vocabulary|Nothing filed/i.test(weekBody));
-
 // ── Diagnosis: says something, or honestly says it cannot yet ────────────────
 await page.goto(`${BASE}/words`, { waitUntil: "networkidle" });
 const wordsBody = (await page.textContent("body")) ?? "";

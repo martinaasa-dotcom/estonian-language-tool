@@ -125,16 +125,6 @@ export const SECTIONS: NavSection[] = [
         keywords: "course units path lessons syllabus", bar: true,
       },
       {
-        href: "/tasks", label: "Tasks", blurb: "Homework, and the week you are in", icon: "CalendarCheck",
-        tone: "peach", keywords: "homework todo class due week current",
-        within: "Today, which lists what is outstanding",
-      },
-      {
-        href: "/week", label: "This week", blurb: "The words and work saved under this week",
-        icon: "CalendarRange", tone: "butter", keywords: "week class lesson current",
-        within: "/tasks",
-      },
-      {
         href: "/class", label: "Classes", blurb: "Teach a class, or join one", icon: "School", tone: "sky",
         keywords: "classroom teacher students join code school",
         within: "/progress",

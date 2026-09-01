@@ -132,9 +132,9 @@ const BASE = baseUrl();
   of checking a route that has never broken is a second of wall clock.
 */
 const ROUTES = [
-  "/", "/learn", "/practice", "/progress", "/tasks", "/words", "/week", "/dictionary",
+  "/", "/learn", "/practice", "/progress", "/words", "/dictionary",
   "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
-  "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
   "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",

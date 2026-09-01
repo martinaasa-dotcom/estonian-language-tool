@@ -47,7 +47,6 @@ const ROUTES = [
   ["/review/clinic", "clinic"],
   ["/words", "words"],
   ["/scan", "scan"],
-  ["/week", "week"],
   ["/settings", "settings"],
   ["/privacy", "privacy"],
   ["/terms", "terms"],

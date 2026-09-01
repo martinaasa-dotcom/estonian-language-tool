@@ -6,6 +6,7 @@ import { fetchEnglishGloss } from "./wiktionary";
 import { translateWithAnu } from "@/lib/tutor/translate";
 import { NEEDS_TRANSLATION, NO_VALUE } from "@/lib/copy/values";
 import { isRecentMiss, rememberMiss, singleFlight } from "@/lib/cache/singleFlight";
+import { gradates } from "@/lib/estonian/gradation";
 
 /**
  * How long a word Ekilex had nothing to say about is left alone.
@@ -124,7 +125,7 @@ async function runEnrich(lexemeId: string): Promise<boolean> {
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
     select: {
-      id: true, lemma: true, ekilexWordId: true, lookupMissAt: true,
+      id: true, lemma: true, pos: true, ekilexWordId: true, lookupMissAt: true,
       translation: true, provenance: true, government: true, examples: true,
       // The marker alone is not proof: re-running the seed rewrites forms with
       // principal parts only while leaving ekilexWordId set, which would strand
@@ -160,8 +161,10 @@ async function runEnrich(lexemeId: string): Promise<boolean> {
     data: {
       // The hand-written English stays: it is better than anything we would refetch.
       cefr: mapped.cefr ?? undefined,
-      gradation: mapped.gradation,
-      gradationNote: mapped.gradationNote,
+      // A pronoun's stem change is suppletion, not gradation, whatever the
+      // classifier makes of `kes : kelle`. The stored part of speech decides.
+      gradation: gradates(lexeme.pos) ? mapped.gradation : "NONE",
+      gradationNote: gradates(lexeme.pos) ? mapped.gradationNote : null,
       // Ekilex records government as bare question words ("kellest/millest").
       // A worked example we already hold teaches more, so it is not overwritten.
       government: lexeme.government ?? mapped.government ?? undefined,

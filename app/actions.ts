@@ -10,7 +10,6 @@ import {
   LEVELS, checkpointFor, levelIndex, unitById, wordsAtLevel,
 } from "@/lib/collections/syllabus";
 import { checkpointPassed } from "@/lib/collections/checkpoint";
-import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { loadRecentMessages } from "@/lib/tutor/history";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
@@ -1116,46 +1115,17 @@ export async function completeLesson(
 }
 
 /**
- * Records where the placement test put somebody.
- *
- * The level is re-derived here from the per-level scores rather than trusted
- * from the caller. This file is `"use server"`, so `savePlacement("C1")` is an
- * endpoint anybody can call — and while placing yourself at C1 only unlocks
- * units you could have opened anyway, a stored level that no test produced would
- * quietly become a lie the whole path is built on.
- */
-const StageScoreSchema = z.object({
-  level: z.enum(["A1", "A2", "B1", "B2", "C1"]),
-  correct: z.number().int().min(0).max(20),
-  asked: z.number().int().min(0).max(20),
-});
-
-export async function savePlacement(scores: z.input<typeof StageScoreSchema>[]) {
-  const ownerId = await requireUserId();
-  const parsed = z.array(StageScoreSchema).max(12).safeParse(scores);
-  if (!parsed.success) return { ok: false as const, error: "That result could not be read." };
-
-  const clean = parsed.data.filter((s) => s.correct <= s.asked);
-  const level = placementResult(clean);
-  await recordCourseLevel(ownerId, level);
-
-  revalidatePath("/learn");
-  revalidatePath("/");
-  return { ok: true as const, level };
-}
-
-/**
  * The level the learner says they are at.
  *
- * Everything else that writes this key is a measurement: the placement ladder,
- * a passed checkpoint, the check at `/assess`. This one is a person telling
+ * Everything else that writes this key is a measurement: a passed checkpoint,
+ * the check at `/assess`. This one is a person telling
  * the app something it has no way to find out. Somebody was moved up in the
  * class they sit in every Tuesday, or sat the state examination, or simply
  * knows the check caught them on a bad evening, and until now the app had no
  * answer to any of that except "take it again and hope".
  *
- * It is a statement rather than a claim about a score, so unlike
- * `savePlacement` there is nothing to re-derive and nothing to distrust. Every
+ * It is a statement rather than a claim about a score, so unlike a level
+ * check's result there is nothing to re-derive and nothing to distrust. Every
  * export here is a public endpoint and `setCourseLevel("C1")` is a call
  * anybody can make against their own account, which is the same thing the
  * button does: what it buys is which units the course opens at and which band
@@ -1401,7 +1371,6 @@ export async function assignUnit(classroomId: string, unitId: string, dueAt?: st
   });
 
   revalidatePath("/class");
-  revalidatePath("/tasks");
   return { ok: true as const, assigned: members.length };
 }
 
@@ -1454,7 +1423,6 @@ export async function assignHomework(classroomId: string, title: string, notes: 
   });
 
   revalidatePath("/class");
-  revalidatePath("/tasks");
   return { ok: true as const, assigned: members.length };
 }
 
@@ -1506,27 +1474,10 @@ async function resolveDisplayName(ownerId: string): Promise<string> {
 
 // ─────────────────────────────── Tasks ────────────────────────────────────
 
-export async function createTask(input: {
-  title: string; tag: string; classWeek?: number | null; dueAt?: string | null; notes?: string;
-}) {
-  const ownerId = await requireUserId();
-  const title = capped(input.title, LIMITS.taskTitle);
-  if (!title) return { ok: false as const, error: "A task needs a title." };
-  await prisma.task.create({
-    data: {
-      ownerId,
-      title,
-      tag: input.tag,
-      classWeek: input.classWeek ?? null,
-      dueAt: input.dueAt ? new Date(input.dueAt) : null,
-      notes: input.notes?.trim() || null,
-    },
-  });
-  revalidatePath("/tasks");
-  revalidatePath("/");
-  return { ok: true as const };
-}
-
+/**
+ * Ticks a task a teacher assigned. The manual homework list is gone, so this
+ * is the one thing a learner does to a task: the row on Today, done or not.
+ */
 export async function toggleTask(id: string) {
   const ownerId = await requireUserId();
   const task = await prisma.task.findFirst({ where: { id, ownerId }, select: { completed: true } });
@@ -1535,69 +1486,10 @@ export async function toggleTask(id: string) {
     where: { id },
     data: { completed: !task.completed, completedAt: task.completed ? null : new Date() },
   });
-  revalidatePath("/tasks");
   revalidatePath("/");
   return { ok: true as const };
 }
 
-export async function deleteTask(id: string) {
-  const ownerId = await requireUserId();
-  await prisma.task.deleteMany({ where: { id, ownerId } });
-  revalidatePath("/tasks");
-  revalidatePath("/");
-  return { ok: true as const };
-}
-
-// ─────────────────────────────── The course week ──────────────────────────
-
-// From `lib/settings/store.ts`, which is where keys live, rather than a literal
-// typed here: this file is `"use server"` so it cannot export one of its own,
-// and Today needs to read the same key to say which week you are in.
-const CURRENT_WEEK_KEY = SETTING_KEYS.currentWeek;
-
-/** The course week the learner says they are in. Null until they set one. */
-async function currentClassWeek(ownerId: string): Promise<number | null> {
-  // Through the store rather than straight at the table, so this shares the
-  // one settings read the request has already paid for rather than adding a
-  // ninth round trip for one row. See lib/settings/store.ts.
-  const value = await readSetting(ownerId, CURRENT_WEEK_KEY);
-  if (value === null) return null;
-  const week = Number(value);
-  return Number.isInteger(week) && week > 0 ? week : null;
-}
-
-export async function getCurrentWeek() {
-  return currentClassWeek(await requireUserId());
-}
-
-/**
- * Sets the course week. Everything added from now on is filed under it, which is
- * what turns `classWeek` from a stored column into a lens over the whole app.
- */
-export async function setCurrentWeek(week: number | null) {
-  const ownerId = await requireUserId();
-  if (week === null) {
-    await prisma.setting.deleteMany({ where: { ownerId, key: CURRENT_WEEK_KEY } });
-    // A delete is not a value, so there is nothing to correct the request's
-    // held settings with. Drop them. See lib/settings/store.ts.
-    forgetSettings(ownerId);
-  } else {
-    await writeSetting(ownerId, CURRENT_WEEK_KEY, String(Math.max(1, Math.min(60, Math.round(week)))));
-  }
-  revalidatePath("/");
-  revalidatePath("/week");
-  return { ok: true as const };
-}
-
-/** Files (or unfiles) every card of one word under a week. */
-export async function setWordWeek(lexemeId: string, week: number | null) {
-  const ownerId = await requireUserId();
-  const classWeek = week === null ? null : Math.max(1, Math.min(60, Math.round(week)));
-  await prisma.card.updateMany({ where: { ownerId, lexemeId }, data: { classWeek } });
-  revalidatePath("/week");
-  revalidatePath("/words");
-  return { ok: true as const };
-}
 
 // ──────────────────────── Gap-fill from pasted reading ─────────────────────
 
@@ -2073,7 +1965,6 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
 
   revalidatePath("/");
   revalidatePath("/words");
-  revalidatePath("/tasks");
   revalidatePath("/dictionary");
   revalidatePath("/scan");
   revalidatePath("/settings");

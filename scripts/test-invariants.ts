@@ -569,9 +569,7 @@ check("no counter column exists for anything the review log can reconstruct", ()
  * put grades against cards that do not exist and tell the scheduler somebody had
  * practised material they have not yet met.
  */
-const MEASURES_RATHER_THAN_PRACTISES = [
-  "app/(app)/placement/PlacementSession.tsx",
-];
+const MEASURES_RATHER_THAN_PRACTISES: string[] = [];
 
 
 check("every practice mode writes to the same review log", () => {

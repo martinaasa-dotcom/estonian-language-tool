@@ -6,11 +6,12 @@ import { PRE_A1 } from "@/lib/assessment/types";
 /**
  * The level the course opens at.
  *
- * Two things measure a learner's Estonian, and they arrived in the same week by
- * different routes. `/assess` is the fuller instrument: four skills, eighty
- * questions, gapped sentences and dictation and forms typed out. The
- * placement ladder at `/placement` is four vocabulary questions per level and
- * says on its own result screen that it only measures recognition.
+ * Two things measure a learner's Estonian. `/assess` is the fuller instrument:
+ * four skills, eighty questions, gapped sentences and dictation and forms typed
+ * out. A passed checkpoint on the path is the other, and a level the learner
+ * states in Settings is a third answer that is not a measurement at all. (A
+ * four-questions-per-level placement ladder used to sit beside these and was
+ * removed: it measured recognition only and nothing linked to it.)
  *
  * So the richer one wins where it exists, and the order here is the whole point
  * of this module: without it the app would hold two answers to the same

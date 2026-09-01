@@ -99,7 +99,6 @@ export default async function TodayPage() {
     deckSnapshot(ownerId, now),
     readSettings(ownerId, [
       SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
-      SETTING_KEYS.currentWeek,
     ]),
     /*
       Which level the course opens at. It was read last, after everything else
@@ -164,10 +163,6 @@ export default async function TodayPage() {
   const readerCanConfigure = !supabaseConfigured();
   const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
-  // Written by `setCurrentWeek`, which clamps to 1..60, so anything else in the
-  // column is a value from before that clamp or from a restored backup.
-  const storedWeek = Number(settings[SETTING_KEYS.currentWeek]);
-  const classWeek = Number.isInteger(storedWeek) && storedWeek > 0 ? storedWeek : null;
   /*
     The course decides what comes next, not this page. Its own rule respects
     where the learner placed: picking the first unfinished unit in order sent a
@@ -371,9 +366,11 @@ export default async function TodayPage() {
     </Card>
   ) : null;
 
-  /* What is written down for today, under headings rather than four loose dates. */
-  const planCard = shows(stage, "tasks") ? (
-    <TodayPlan tasks={tasks.map(taskView)} classWeek={classWeek} clock={clock} now={now} />
+  /* What a teacher has assigned, under headings rather than loose dates. Only
+     drawn when there is something in it: the manual homework list is gone, so
+     a learner studying alone has nothing to put here and no reason to see it. */
+  const planCard = shows(stage, "tasks") && tasks.length > 0 ? (
+    <TodayPlan tasks={tasks.map(taskView)} clock={clock} now={now} />
   ) : null;
 
   const questsCard = shows(stage, "quests") ? (
@@ -659,12 +656,11 @@ function greeting(clock: DayClock, now: Date): string {
 
 /** A `Task` row in the shape `TaskRow` can hold, which is a client component. */
 function taskView(task: {
-  id: string; title: string; tag: string; completed: boolean;
-  classWeek: number | null; dueAt: Date | null;
+  id: string; title: string; tag: string; completed: boolean; dueAt: Date | null;
 }): TaskView {
   return {
     id: task.id, title: task.title, tag: task.tag, completed: task.completed,
-    classWeek: task.classWeek, dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+    dueAt: task.dueAt ? task.dueAt.toISOString() : null,
   };
 }
 

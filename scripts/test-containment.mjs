@@ -123,7 +123,6 @@ const ROUTES = [
   "/review/speaking",
   "/review/sprint",
   "/practice",
-  "/tasks",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
   "/dictionary",
@@ -139,14 +138,11 @@ const ROUTES = [
   "/learn/kodu/lesson",
   "/learn/kodu/worksheet",
   "/learn/checkpoint/A1",
-  "/week",
-  "/week/1",
 
   // Measurement, and the things built on it.
   "/progress",
   "/exam",
   "/assess",
-  "/placement",
 
   // Everything else a signed-in learner can reach.
   "/settings",

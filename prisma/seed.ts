@@ -7,7 +7,7 @@ import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { applyPosCorrections, writeExpanded } from "./expanded";
 import { ensureSearchIndexes } from "./indexes";
-import { classifyGradation, classifyVerbGradation } from "../lib/estonian/gradation";
+import { classifyGradation, classifyVerbGradation, gradates } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
 
 const prisma = new PrismaClient();
@@ -112,7 +112,8 @@ async function main() {
   for (const word of HARVESTED) {
     const p = word.parts;
     const gradation =
-      word.pos === "VERB"
+      !gradates(word.pos) ? { type: "NONE" as const, note: undefined }
+      : word.pos === "VERB"
         ? classifyVerbGradation(p.INF_MA ?? word.lemma, p.PRES_1SG ?? "")
         : classifyGradation(p.NOM_SG ?? word.lemma, p.GEN_SG ?? "");
     authored.push({
