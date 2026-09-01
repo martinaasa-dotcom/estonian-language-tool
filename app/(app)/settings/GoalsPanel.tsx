@@ -6,7 +6,7 @@ import { saveLearningGoals } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { icon } from "@/components/icons";
-import { DEADLINES, REASONS, TARGETS, deadlineFrom, weeksUntil, type Goals } from "@/lib/assessment/goals";
+import { DEADLINES, REASONS, TARGETS, deadlineFrom, reasonsFor, reasonsToStored, weeksUntil, type Goals } from "@/lib/assessment/goals";
 import type { Band } from "@/lib/assessment/types";
 
 /**
@@ -19,7 +19,9 @@ import type { Band } from "@/lib/assessment/types";
  * this is the one control that changes what the app tells you about your year.
  */
 export function GoalsPanel({ current }: { current: Goals }) {
-  const [reason, setReason] = useState(current.reason);
+  // A set rather than one id: almost nobody is learning Estonian for one
+  // reason, and first run asks it the same way.
+  const [reasons, setReasons] = useState<string[]>(() => reasonsFor(current.reason).map((r) => r.id));
   const [target, setTarget] = useState<Band | null>(current.target);
   const [deadline, setDeadline] = useState<string | null>(current.deadline);
   const [days, setDays] = useState(current.daysPerWeek);
@@ -32,7 +34,7 @@ export function GoalsPanel({ current }: { current: Goals }) {
   const save = () => {
     setSaved(false);
     start(async () => {
-      await saveLearningGoals({ reason, target, deadline, daysPerWeek: days, note });
+      await saveLearningGoals({ reason: reasonsToStored(reasons), target, deadline, daysPerWeek: days, note });
       setSaved(true);
     });
   };
@@ -45,17 +47,17 @@ export function GoalsPanel({ current }: { current: Goals }) {
         screen that decides a learner's year read as a legend rather than a
         form, and the chosen answer was a hue shift of almost no luminance.
       */}
-      <ChoiceGroup label="Why you are learning">
+      <ChoiceGroup label="Why you are learning" hint="pick as many as are true" select="many">
         {REASONS.map((r) => {
           const Icon = icon(r.icon);
-          const on = reason === r.id;
+          const on = reasons.includes(r.id);
           return (
             <ChoiceChip
               key={r.id}
               selected={on}
-              /* Pressing the chosen one again clears it: "none of these" is a
+              /* Pressing a chosen one again clears it: "none of these" is a
                  real answer, and the plan is honest about having no reason. */
-              onSelect={() => setReason(on ? null : r.id)}
+              onSelect={() => setReasons((all) => on ? all.filter((id) => id !== r.id) : [...all, r.id])}
               icon={<Icon size={14} aria-hidden />}
             >
               {r.label}

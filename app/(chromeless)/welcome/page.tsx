@@ -828,7 +828,16 @@ const FAQS = [
   ],
   [
     "Is this only for beginners?",
-    "It runs A1 to C1, and the parts that stay hard get a card of their own: gradation, verb government, whether an object is whole or partial. There is a ten-minute check if you would rather not guess where you are, and a mock state examination paper at A2, B1, B2 and C1.",
+    /*
+      Main's rewrite of this answer, with the one word this branch is here for
+      taken out of it. "A ten-minute check" was written when the paper was
+      nineteen questions; it is eighty now and a skill climbs until it stops
+      passing, so ten minutes is right for a beginner and three times out for
+      anybody else, and the learner who is furthest through is the one it
+      misleads. The shorter answer is main's and is better than what this
+      branch had.
+    */
+    "It runs A1 to C1, and the parts that stay hard get a card of their own: gradation, verb government, whether an object is whole or partial. There is a level check if you would rather not guess where you are, and a mock state examination paper at A2, B1, B2 and C1.",
   ],
   [
     "What happens to my data?",

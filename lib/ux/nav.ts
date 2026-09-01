@@ -221,10 +221,6 @@ export const SECTIONS: NavSection[] = [
         icon: "MessageSquareWarning", tone: "peach",
         keywords: "report wrong mistake feedback correction missing word fix suggest admin review",
       },
-      {
-        href: "/guide", label: "What this app is", blurb: "Every screen, and what this app cannot do",
-        icon: "CircleHelp", tone: "ink", keywords: "tour help onboarding walkthrough limits honest",
-      },
     ],
   },
 ];

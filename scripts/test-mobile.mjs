@@ -23,7 +23,11 @@ const WIDE = [768, 1280];
 const browser = await launchChromium();
 
 // Floor: 59, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 59 });
+/*
+  58 rather than 59: `/guide` was one of the routes in the overflow sweep and
+  the page is gone. One check, off the route list.
+*/
+const { check, done } = suite("The phone", { floor: 58 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -144,7 +148,7 @@ for (const width of PHONES) {
 // Neither route was covered here before, which is why a whole screen of
 // controls could be redrawn without this suite having an opinion.
 for (const path of [
-  "/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam",
+  "/", "/review", "/dictionary", "/scan", "/assess", "/exam",
   "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
   "/settings", "/practice",
 ]) {

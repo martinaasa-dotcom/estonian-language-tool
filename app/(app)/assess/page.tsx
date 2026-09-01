@@ -1,4 +1,3 @@
-import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Compass, History } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { goalsFor, historyFor, latestFor, paperFor } from "@/lib/progress/assessment";
@@ -150,13 +149,6 @@ export default async function AssessPage({
             is direction: which of the four skills is behind, and whether the date you have in
             mind is realistic, given how many hours that level actually takes.
           </p>
-          <Link
-            href="/guide"
-            className="mt-4 inline-block text-sm underline underline-offset-2"
-            style={{ color: "var(--accent-deep)" }}
-          >
-            What this app can and cannot do
-          </Link>
         </Card>
       </Stack>
     </Page>

@@ -1158,12 +1158,14 @@ scanner, which is the other way of bringing your own text in. `components/DrillL
 drawing for all of them, reading the same table, so a mode renamed once is renamed everywhere it is
 offered. `/practice` is the six rounds, which is what a menu is the right shape for.
 
-The table is read by the rail, the phone sheet, the command palette and the guide, because it was
-four lists and they had drifted. The palette offered six practice modes while `/practice` offered
+The table is read by the rail, the phone sheet and the command palette, because it was four lists
+and they had drifted. The palette offered six practice modes while `/practice` offered
 eleven, so the Leech clinic was reachable from one screen and unfindable from the box that promises
 to go anywhere; `components/PracticeModes.tsx` held a seventh copy that no screen rendered at all
-and has been deleted; `lib/copy/tour.ts` named nine screens a second time with their own icons, and
-now carries the prose and joins the rest. `lib/ux/modes.ts` did the same for the practice modes, and
+and has been deleted; and `lib/copy/tour.ts` named nine screens a second time with their own icons,
+which went with the `/guide` page it fed, since a second description of the app offered to somebody
+who has just pressed "start" is the landing page again with a worse audience.
+`lib/ux/modes.ts` did the same for the practice modes, and
 the split is deliberate: what a mode *is* lives there, what it is like *right now* is a database
 question and stays in the page. Two invariants hold it, plus `scripts/smoke-new.mjs`, which opens
 the app and asks the two questions no source check can: the rail draws its links with nothing to
@@ -1369,8 +1371,8 @@ and the five thousand row query behind it and points at Progress instead, which 
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still
 collects: what to call you, where you are, why, how far, by when, how often and the daily goal. What
-went is four screens that each carried one question, a screen of feature tour that is `/guide` word
-for word, and a plan panel whose six cited facts and essay on where the hours come from now live on
+went is four screens that each carried one question, a screen of feature tour repeating the landing
+page, and a plan panel whose six cited facts and essay on where the hours come from now live on
 `/assess` behind `compact`. The order is still the argument: the limits are stated before anything
 is asked for, the level is measured before the plan is built on it, and the plan is seen before a
 deck is built on it. `test-assess.mjs` drives all four screens and would fail if the deck step ever
@@ -1845,6 +1847,82 @@ osastav, and the version that named whichever the dictionary listed first called
 `scripts/test-assess.mjs` asks the same thing of the rendered screen, because a source check cannot
 see a name arriving through an interpolated option.
 
+**A placement check has no way to skip it, and one way past one question.** Every section opened
+with "Start this section" and "Skip reading" as two buttons of equal weight, and every typed
+question offered "Skip this one" beside Check. The overall level is the weakest of three skills
+(ADR-020), so a skipped section is not a gap in the report, it is a hole underneath the number: the
+app measures what somebody felt like doing and then prints a level as though it had measured them.
+Both are gone. What stays is `skipSkill` for listening, which is not a skip and is reached only
+when the speech service cannot make audio at all, so there is nothing on the screen to answer, and
+it leaves the section unmeasured rather than failed. Leaving a box empty and pressing Check is
+still allowed and is honest, because it marks nothing wrong that was not. The one skip left in
+first run is the *goal* screen, whose answers only feed the plan.
+
+**Feedback explains the sentence, it does not label it.** A gap's explanation read "Here kõhn is in
+the nimetav, the nominative. The dictionary form. The subject of a sentence, and what you point
+at.": three sentences of grammar vocabulary at somebody who has just been told they were wrong, and
+none of them about the sentence in front of them. `explainGap` leads with the sentence put back
+together, then says what the gap took and names the form as the cross-reference it is, then gives
+`CASE_NOTES`'s one line on what the case is *for* and its `englishHook`, which is the half that was
+missing entirely: "of the book", "the book's cover" lands in a glance where "possession, and the
+stem eleven other cases are built on" is a fact to be learned before it can be used. The Estonian
+name still leads the English one, because that is the rule above and a class uses the Estonian.
+**The typed version of the task prints the same string**, from the same function: the writing
+section used to answer "why that form" with the whole sentence and nothing else, which tells a
+learner what the answer was rather than why, and `WriteItem.because` is now `explainGap`'s own
+output so the two shapes of one task cannot say different things.
+
+**Speaking is asked, not recorded.** The check played a native rendering, recorded the learner, and
+asked them to rate the comparison. Nothing scored it (ADR-018), so what the microphone bought was a
+permission prompt and a clip in exchange for a rating that was going to be the learner's own
+judgement either way, and the two clips play one after the other rather than together, which is not
+how anybody hears their own accent. The recorder is gone from the placement check and the question
+is the honest version of what it was already collecting: hear it said properly, and say how
+confident you are saying it. `SCORED_SKILLS` is unchanged and speaking still contributes nothing.
+
+**A usage is not always a sentence, and `naturalSentence` is where that is decided.** Ekilex records
+a usage against a *sense*, so what comes back under a headword is sometimes lexicography rather than
+something somebody said, and three shapes of it reached a real sitting. A usage that trails off
+(`Uuringud näitavad, et ..`), offers two alternatives round a slash (`Elekter läks ära / kadus.`) or
+is numbered out of a list of definitions is not answerable. And a usage opening with its own
+headword before a comma is the label pattern, where the entry names itself and then illustrates a
+sense the gloss beside it does not name: `Kahvel, lipp kukub!` is filed under `kahvel` and is a
+sailing call about a gaff rather than about a fork, which is precisely the question a learner cannot
+answer and cannot argue with. Only a *nominal* is caught by that last one, because a verb before a
+comma is an ordinary main clause and `Usun, et ta ei valeta` is a sentence worth reading. It lives in
+`lib/estonian/cloze.ts` beside `buildCloze` and the placement check and the mock exam both read it,
+because two papers disagreeing about what counts as a sentence is two answers to one question. It
+rejects 101 of the 8,826 usages that pass the length rules, which is the cost of it.
+
+**A word means everything the dictionary files under its lemma, so none of that is a wrong answer.**
+"What does kallis mean" offered `expensive`, `beautiful`, `fast` and `morning`, and the learner who
+chose `beautiful` had a case, because `kallis` is also what you call somebody you are fond of.
+`differentMeaning` compares one gloss against another and a sense the printed gloss does not mention
+is invisible to it. What *is* visible is a second entry under the same lemma, and `@@unique` is on
+`(lemma, pos)` so the dictionary holds plenty of them: `hall` is a noun meaning frost and an
+adjective meaning grey, and offering "grey" against "frost" marks somebody wrong for knowing the
+word. `meaningTest` treats every gloss filed under the lemma as an answer. It does not reach a sense
+no entry records, which is `kallis` itself: that is a gloss worth correcting, and `npm run
+audit:glosses` and the report queue are the two ways that happens. `prisma/data/harvested.ts`
+already carries "expensive, dear" for it, so a deployment showing "expensive" alone is one seeded
+before the course harvest and is fixed by a reseed rather than by code.
+
+**Why somebody is learning Estonian is a set, not a choice.** Living here, an Estonian partner and a
+job whose meetings are in Estonian are three true answers, and the app made somebody pick a
+favourite and then implied the target the whole plan was built on from whichever they picked. The
+stored value is still one string, space separated, so every row written before this reads back as
+the single reason it holds; `reasonsFor` is the one parser and `impliedTarget` offers the *highest*
+band any chosen reason needs, because the smaller goal sits inside the bigger one and planning for
+the smaller would tell somebody they were finished when they were not.
+
+**There is no page describing this app to somebody already inside it.** `/guide` was the first-run
+feature tour kept at a URL: every screen with a reason to open it, and an equally long list of what
+this app cannot do. The landing page makes that case to somebody who has not decided yet, which is
+where it belongs, and a learner who skipped it finds out what the app does by using it. Offered from
+inside the setup wizard it was a link out of a flow ninety seconds from finishing. `lib/copy/tour.ts`
+went with it, which is the last second table of this app's own screen names; the one sentence of
+honest limits it led with is on the first screen of first run, last, in one line.
+
 **A word governs every case its entry names, so none of them is a wrong answer.** The two drills
 that keep asking the question rather than replacing it, the mock exam's `rektsioon` task and
 `/review/government`, had the same fault the placement check did. An Ekilex entry records a word's
@@ -2089,7 +2167,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `overflow-wrap`, `svg.lucide`, `useStickToBottom`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
-`requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
+`requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `naturalSentence`,
 `PAPER_SIZE`, `bandsAround`, `aroundFirst`, `recordCourseLevel`, `decisiveItems`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
