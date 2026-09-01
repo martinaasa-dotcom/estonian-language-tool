@@ -63,6 +63,29 @@ function run<T>(
   });
 }
 
+/**
+ * Removes the whole database, outbox and stashed session together.
+ *
+ * Called on sign-out by `lib/offline/forget.ts`, after the outbox has had its
+ * chance to drain. A connection this tab still holds would leave the delete
+ * `blocked` for as long as the tab lives, so the request resolves on that
+ * event too: the data is then removed the moment the connection closes, which
+ * is the next navigation, and a sign-out is one.
+ */
+export function deleteLocalDatabase(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof indexedDB === "undefined") return resolve();
+    try {
+      const request = indexedDB.deleteDatabase(DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
 // ───────────────────────────── the outbox ─────────────────────────────────
 
 export async function enqueueGrade(grade: PendingGrade): Promise<void> {

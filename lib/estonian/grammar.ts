@@ -50,7 +50,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
       "What a whole, countable thing looks like as an object",
     ],
     watchOut:
-      "A whole object takes the nominative or the genitive, never the partitive, the choice says whether the action finished, not how polite you are being.",
+      "A whole object takes the nominative or the genitive, never the partitive. The choice says whether the action finished, not how polite you are being.",
     englishHook: "Closest to plain English word order: the thing doing the verb.",
   },
   {
@@ -59,7 +59,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: [
       "Possession, the way English uses ’s or “of”",
       "A completed whole object",
-      "After most prepositions and postpositions",
+      "Before nearly every postposition, and after a few prepositions",
       "The stem every case below this one attaches to",
     ],
     watchOut:
@@ -168,7 +168,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     summary: "Without something, the opposite of the comitative below it.",
     uses: ["The absence of a thing", "Doing something without a tool, a person or a permission"],
     watchOut:
-      "Rare in speech, where a preposition usually does the job instead, but it turns up in writing and on exams, which is exactly why it is worth recognising rather than producing.",
+      "Rare on its own in speech, where it usually comes with the preposition meaning without in front of it, saying the same thing twice. It turns up in writing and on exams, which is exactly why it is worth recognising rather than producing.",
     englishHook: "without, without a coat, without asking.",
   },
   {
@@ -275,10 +275,10 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     points: [
       "The one verb you cannot avoid, and one of the few genuinely irregular ones",
       "Having something is expressed as it being at you, using the adessive",
-      "The same pattern carries age, feelings and obligations",
+      "The same pattern carries feelings, needs and obligations",
     ],
     watchOut:
-      "There is no verb to have to reach for, so a sentence built on the English shape will not translate word for word. The owner goes into a case and the thing owned stays in the nominative.",
+      "There is no verb to have to reach for, so a sentence built on the English shape will not translate word for word. The owner goes into a case and the thing owned stays in the nominative, or in the partitive when it is a quantity or the sentence is negated.",
   },
   {
     id: "present-tense",
@@ -429,7 +429,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
       "Has an impersonal counterpart for things done to something",
     ],
     watchOut:
-      "It does not agree with anything when it is part of a tense, but it does decline when it is used as an adjective. Which job it is doing decides whether it changes.",
+      "It never changes shape: not as part of a tense, and not in front of a noun either, where it is one of the few words in the language that stays the same whatever case the noun is in. The present participles do decline, which is where the two get mixed up.",
   },
   {
     id: "converb",
@@ -498,10 +498,10 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   {
     id: "adjective-agreement",
     title: "Adjectives agree",
-    summary: "An adjective takes the same case and number as the noun it describes.",
+    summary: "An adjective takes the case and number of its noun through the first ten cases, and stops at the genitive for the last four.",
     points: [
-      "Agreement in case and in number",
-      "So an adjective declines exactly like a noun",
+      "Agreement in case and in number, so an adjective declines exactly like a noun",
+      "For the last four cases in the table, up to, as, without and with, the adjective stays in the genitive and only the noun takes the ending",
       "A few borrowed adjectives do not decline at all",
     ],
     watchOut:
@@ -514,11 +514,11 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     marker: "-m",
     points: [
       "Formed from the genitive stem, like almost everything else",
-      "The thing compared against goes into a case rather than after a word like than",
+      "The thing compared against either follows the word for than, or goes into the elative with no such word at all",
       "A handful of common adjectives are irregular",
     ],
     watchOut:
-      "There is no separate word for than to reach for. The comparison is carried by the case of the other thing, which English speakers routinely leave in the nominative.",
+      "Both shapes are common and both are correct: the word for than with the plain form after it, or no such word and the other thing in the elative. The mistake is mixing them, keeping the word for than and putting the other thing in the elative as well.",
   },
   {
     id: "superlative",
@@ -537,7 +537,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Numbers and what follows them",
     summary: "Counting looks simple until you notice what case the counted thing goes into.",
     points: [
-      "Anything after two takes the partitive singular",
+      "The counted noun after any number from two upwards is in the partitive singular",
       "Numerals decline like nouns when the phrase itself is in a case",
       "Ordinals are formed regularly and decline too",
     ],
@@ -709,7 +709,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Punctuation",
     summary: "Commas are grammatical here, not rhetorical, and the rules are stricter than English ones.",
     points: [
-      "A comma before every subordinate clause, without exception",
+      "A comma before a subordinate clause, whether or not you would pause there",
       "Rules for lists and for parenthetical material",
       "Quotation marks are shaped differently from English ones",
     ],
@@ -807,7 +807,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Saying when",
     summary: "Time is expressed with cases, and which case depends on the unit of time.",
     points: [
-      "Days and parts of the day take one case, months and years another",
+      "Days, parts of the day, seasons and years take the on-case; months take the in-case",
       "Duration is expressed differently again",
       "From and until each have their own case",
     ],

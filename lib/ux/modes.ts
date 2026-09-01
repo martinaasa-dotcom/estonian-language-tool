@@ -126,6 +126,13 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
     within: "/dictionary",
   },
   {
+    href: "/review/conjugation", title: "Conjugation", subtitle: "Fill the table", icon: "Repeat",
+    tone: "accent", group: "targeted", note: "Typed, six persons", within: "/grammar/topic/present-tense",
+    blurb:
+      "One verb, the first person given, the other five to type. Every form is checked against " +
+      "the dictionary, and the conditional joins in from B1.",
+  },
+  {
     href: "/review/clinic", title: "Leech clinic", subtitle: "What keeps failing", icon: "Stethoscope",
     tone: "blush", group: "targeted", note: "From your log",
     blurb:

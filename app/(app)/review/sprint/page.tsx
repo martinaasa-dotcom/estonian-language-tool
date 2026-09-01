@@ -4,7 +4,7 @@ import { SprintSession, type SprintCard } from "./SprintSession";
 import { shuffle } from "@/lib/random/shuffle";
 import { numberSetting, readSetting, SETTING_KEYS } from "@/lib/settings/store";
 
-export const metadata = { title: "Case sprint" };
+export const metadata = { title: "Case Sprint" };
 
 export const dynamic = "force-dynamic";
 

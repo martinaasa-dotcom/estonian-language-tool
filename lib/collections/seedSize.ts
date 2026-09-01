@@ -26,4 +26,4 @@
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
  */
-export const SEED_SET_SIZE = { words: 5_959, forms: 34_386 };
+export const SEED_SET_SIZE = { words: 6_039, forms: 34_524 };

@@ -40,8 +40,9 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A course.** Seventy-three units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
-  sitting's worth of words. Adding a unit builds real flashcards, every form, audio, both
+- **A course.** Seventy-nine units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
+  sitting's worth of words, and the words between the words too: question words, pronouns, the
+  postpositions, the months and the adverbs of time have units of their own. Adding a unit builds real flashcards, every form, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
   with audio and a translation on request. Those same sentences become gap-fill cards
@@ -53,7 +54,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   recognition. `u` undoes the last grade without touching the review log.
 - **Seven practice modes over one deck**, the daily review, a 60-second Case Sprint, a Match round
   against the clock, Sentences, Speaking, Listening and Dictation, plus a one-click drill for
-  whichever case you keep missing. Everything writes to the same review log, so a game still moves
+  whichever case you keep missing and a conjugation table to type out, five persons at a time. Everything writes to the same review log, so a game still moves
   the schedule forward.
 - **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
   citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
@@ -142,6 +143,13 @@ Ekilex carries no English on a reader key, so translations are resolved in layer
 already accepted, then Wiktionary, then Anu, then an honest blank for you to fill. Every layer says
 where it came from, and you can always overwrite it.
 
+The dictionary's landing page also reads the morning's front page. A few of the day's headlines
+from ERR, Estonia's public broadcaster, are printed as written, and every word the dictionary can
+vouch for is a link to its entry, so the most ordinary Estonian there is comes with a case table
+under it. A word the dictionary will not vouch for is left plain rather than guessed at, and
+nothing from the feed is stored. `NEWS_FEED_URL` points it at another RSS feed, or `off` turns it
+off.
+
 ## What works without any API key
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
@@ -150,7 +158,9 @@ Everything except the two things that need a model, Anu and reading a photograph
   full case table worked out from the genitive. Search an inflected form you met in class, 
   `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
-- **Audio**, real Estonian speech from the University of Tartu's neural voice. No key, no setup.
+- **Audio**, real Estonian speech from the University of Tartu's neural voices, twelve of them to
+  choose from. A card reads itself aloud when a word is met and when its answer appears, and the
+  next card's clip is fetched while you answer this one. No key, no setup.
 - **Flashcards**. FSRS scheduling, five card types, typed or flipped, keyboard-only review.
 - **The learning path, every practice mode, the grammar reference, printable worksheets, XP, quests,
   badges and the progress charts.**
@@ -158,6 +168,9 @@ Everything except the two things that need a model, Anu and reading a photograph
   the dictionary *before* any model runs, so the verdict is certain and works with no API key.
 - **Verb government**. Which case a verb demands (`aitan sind`, `helistan sulle`). The error
   English speakers never stop making, and the one nothing else drills systematically.
+- **Every verb conjugated**. The present tense, the negative, the conditional and the imperative
+  are worked out from the stored first person for every verb in the dictionary, a rule checked
+  against Ekilex for all 797 of them, and the conjugation drill asks you to type the table back.
 - **Minimal pairs**. The length contrasts Estonian spelling only half records, found automatically
   wherever two forms in the dictionary differ by a doubled letter.
 - **From your reading**. Paste real Estonian; words already in your deck are blanked out.

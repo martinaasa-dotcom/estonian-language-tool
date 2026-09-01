@@ -131,7 +131,7 @@ are worth the top model (a wrong case explanation is actively harmful to a learn
 means the multi-thousand-token grammar prompt is paid for once per session rather than per turn.
 Details and cost model in `06-anu-tutor.md`.
 
-**ADR-005: Retrieve morphology, never generate it. (AMENDED, twice, below.)**
+**ADR-005: Retrieve morphology, never generate it. (AMENDED, three times, below.)**
 *Context:* an LLM will happily produce a plausible, wrong partitive plural. *Decision:* authoritative
 forms come from Ekilex only; AI output is tagged `provenance: AI` and requires explicit confirmation
 before entering a card's answer field. *Consequences:* the dictionary is bounded by Ekilex coverage;
@@ -171,6 +171,20 @@ line on the day it is right. The chat is therefore the path where ADR-005 is enf
 most, and the compensating control is the UI rather than the check: every claim Anu makes about a
 form is boxed and tagged, and a word only becomes a card through a confirmation step. If that trade
 is ever revisited, the thing to change is the reply's shape, not the extractor's threshold.
+
+*Amendment 3: the verb has one derivable part, and it is derived under amendment 1's licence.* The
+present indicative, the negative after `ei`, the present conditional and the singular imperative are
+regular endings on the stored first person for every verb in the language but `olema`, whose third
+person is `on`, and `minema`, whose imperative is `mine`. `lib/estonian/conjugate.ts` is the one
+module that joins those endings to a stem, asserted, and it declines both exceptions rather than
+guessing at them. The rule was not reasoned about but measured: `npm run audit:verbs` derives every
+slot for every verb in the shipped dictionary and compares it with every form Ekilex records for the
+same word, 797 verbs and thirteen slots each, with no disagreement. What is *not* derived, and may
+not be, is the simple past: `lugesin` goes to `luges` but `tahtsin` to `tahtis` and `võtsin` to
+`võttis`, with the grade changing on the way, so its third person stays attested-only. An attested
+form always answers ahead of the rule, every derived form says so on screen, and the moment an entry
+is enriched from Ekilex the rule steps aside. The same principle as the ten regular cases on the
+genitive: one bug for the whole language rather than one word wrong unpredictably.
 
 **ADR-006: Generic importer instead of a Speakly integration.**
 *Context:* Speakly has no public API and no verifiable export (audit A3). *Decision:* one

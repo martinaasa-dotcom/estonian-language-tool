@@ -50,7 +50,8 @@ export function useAnuChat(initialMessages: Msg[]) {
       const res = await fetch("/api/tutor", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next, level: "B1" }),
+        // Who is asking, and at what level, is the server's to know.
+        body: JSON.stringify({ messages: next }),
       });
 
       const provider = res.headers.get("x-model-provider");

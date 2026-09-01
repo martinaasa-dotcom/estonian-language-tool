@@ -141,15 +141,6 @@ export default async function AssessPage({
           </div>
         )}
 
-        <Card>
-          <SectionTitle>Before you read too much into it</SectionTitle>
-          <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            This is an estimate from a handful of questions, built out of words this dictionary
-            happens to hold. It is not a state exam, and it certifies nothing. What it is good for
-            is direction: which of the four skills is behind, and whether the date you have in
-            mind is realistic, given how many hours that level actually takes.
-          </p>
-        </Card>
       </Stack>
     </Page>
   );

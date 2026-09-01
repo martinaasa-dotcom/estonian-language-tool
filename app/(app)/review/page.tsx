@@ -45,8 +45,11 @@ export default async function ReviewPage({
   const { case: targetCase, unit: unitId, scan: scanId } = await searchParams;
   const now = new Date();
 
-  const settings = await readSettings(ownerId, [SETTING_KEYS.reviewMode]);
-  const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
+  // Started here and awaited where it is read, so the one settings row rides
+  // beside the deck reads below rather than in front of them. On a hosted
+  // database that is a round trip off the daily path.
+  const settingsPromise = readSettings(ownerId, [SETTING_KEYS.reviewMode]);
+  const modeChosen = async () => reviewModeFrom((await settingsPromise)[SETTING_KEYS.reviewMode]);
 
   // `examples` rides along because a card's first outing is a teaching screen
   // and a word taught without a sentence is a word taught as a label. The
@@ -76,7 +79,7 @@ export default async function ReviewPage({
         cards={await withChoices(drill.map(toReviewCard))}
         drillCase={targetCase}
         totalCards={0}
-        mode={mode}
+        mode={await modeChosen()}
       />
     );
   }
@@ -96,7 +99,7 @@ export default async function ReviewPage({
         cards={await withChoices(drill.map(toReviewCard))}
         drillUnit={unitId}
         totalCards={0}
-        mode={mode}
+        mode={await modeChosen()}
       />
     );
   }
@@ -133,7 +136,7 @@ export default async function ReviewPage({
         cards={await withChoices(drill.map(toReviewCard))}
         drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
-        mode={mode}
+        mode={await modeChosen()}
       />
     );
   }
@@ -152,7 +155,7 @@ export default async function ReviewPage({
     either. The level read is the fourth because `atLevelFirst` needs it and
     neither of the queries does.
   */
-  const [due, freshPool, totalCards, level] = await Promise.all([
+  const [due, freshPool, totalCards, level, mode] = await Promise.all([
     prisma.card.findMany({
       where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
       orderBy: { due: "asc" },
@@ -172,6 +175,7 @@ export default async function ReviewPage({
     }),
     prisma.card.count({ where: { ownerId } }),
     courseLevelFor(ownerId),
+    modeChosen(),
   ]);
 
   const fresh = atLevelFirst(freshPool, level)

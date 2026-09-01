@@ -1,18 +1,16 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { ReactNode } from "react";
-import { Bell, Download, Keyboard, Shield, Smartphone } from "lucide-react";
+import { Bell, Download, Keyboard, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { ekilexConfigured } from "@/lib/ekilex/client";
-import { BADGES } from "@/lib/achievements/badges";
-import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
+import { dailyGoalFrom, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { letterBarFrom } from "@/lib/ux/letterBar";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
 import { courseLevelFor } from "@/lib/progress/level";
-import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle, Stack } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
 import { LevelPanel } from "./LevelPanel";
@@ -21,6 +19,8 @@ import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
 import { ClassNamePanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
+import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, VoicePanel } from "./AudioPanel";
+import { autoplayFrom, feedbackSoundsFrom, voiceFrom, VOICES } from "@/lib/audio/voice";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 import { providerResilience } from "@/lib/tutor/provider";
@@ -82,15 +82,15 @@ export default async function SettingsPage() {
   const hosted = supabaseConfigured();
   const ekilexOn = ekilexConfigured();
 
-  const [words, cards, reviews, earned, settings, learner, goals, latestCheck, courseLevel] = await Promise.all([
+  const [words, cards, reviews, settings, learner, goals, latestCheck, courseLevel] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
-    prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     readSettings(ownerId, [
-      SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,
+      SETTING_KEYS.dailyGoal, SETTING_KEYS.reviewMode,
       SETTING_KEYS.letterBar,
       SETTING_KEYS.displayName,
+      SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
     ]),
     currentLearner(),
     goalsFor(ownerId),
@@ -104,11 +104,13 @@ export default async function SettingsPage() {
     courseLevelFor(ownerId),
   ]);
 
-  const earnedKeys = new Set(earned.map((a) => a.key));
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
-  const shields = numberSetting(settings[SETTING_KEYS.streakShields], 0);
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
+  const voice = voiceFrom(settings[SETTING_KEYS.ttsVoice]);
+  const voiceName = VOICES.find((v) => v.id === voice)?.name ?? voice;
+  const autoplay = autoplayFrom(settings[SETTING_KEYS.autoplayAudio]);
+  const sounds = feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]);
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
   /*
     Whether the level on screen is one a check produced, which is the only
@@ -137,6 +139,37 @@ export default async function SettingsPage() {
               Either way, brand-new cards are shown with their answer first. Being asked to produce a
               word you have never seen teaches nothing.
             </p>
+          </section>
+
+          {/*
+            How Estonian sounds. Three questions in one section because they
+            are one decision about the same thing: who says it, whether they
+            say it unasked, and whether the app answers back. The voices come
+            from the same Tartu service every clip in the app does.
+          */}
+          <section>
+            <SectionTitle hint={voiceName}>Voice</SectionTitle>
+            <Card className="flex flex-col gap-5">
+              <div>
+                <p className="mb-3 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                  Who reads Estonian to you. Press the ear beside a name to hear it, and the chip to keep it.
+                  <CurrentVoiceSample />
+                </p>
+                <VoicePanel current={voice} />
+                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                  Twelve voices from the University of Tartu&rsquo;s speech synthesis. The state examination
+                  is read by more than one speaker, so it is worth changing this now and then.
+                </p>
+              </div>
+              <div>
+                <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>When it speaks</h3>
+                <AutoplayPanel current={autoplay} />
+              </div>
+              <div>
+                <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Right and wrong</h3>
+                <FeedbackSoundsPanel current={sounds} />
+              </div>
+            </Card>
           </section>
 
           <section id="level">
@@ -213,27 +246,7 @@ export default async function SettingsPage() {
           </section>
         </Group>
 
-        <Group title="Progress and sharing">
-          <section>
-            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
-            <Card>
-              <BadgeShelf earnedKeys={earnedKeys} />
-              <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
-                <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent-deep)" }} />
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-                    {shields} streak shield{shields === 1 ? "" : "s"} banked
-                  </p>
-                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
-                    Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
-                    through a single day you miss entirely. Nothing to do. It is spent
-                    automatically the next time you&rsquo;re back.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </section>
-
+        <Group title="Sharing">
           <section>
             <SectionTitle>Your name in a class</SectionTitle>
             <Card>

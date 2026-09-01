@@ -82,3 +82,17 @@ describe("classifyGradation — clusters and reverse direction", () => {
     expect(classifyGradation(nom, gen).note).toBe(note);
   });
 });
+
+describe("which parts of speech gradate", () => {
+  it("asks nouns, adjectives and verbs, and never a pronoun", async () => {
+    const { gradates, classifyGradation } = await import("./gradation");
+    expect(gradates("NOUN")).toBe(true);
+    expect(gradates("ADJECTIVE")).toBe(true);
+    expect(gradates("VERB")).toBe(true);
+    expect(gradates("PRONOUN")).toBe(false);
+    expect(gradates("ADVERB")).toBe(false);
+    // The reason the question exists: run blind, the classifier reads a
+    // pronoun's suppletive stem as an alternation.
+    expect(classifyGradation("kes", "kelle").type).toBe("QUALITATIVE");
+  });
+});

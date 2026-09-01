@@ -12,9 +12,18 @@ interface OfflineState {
   pending: number;
   /** Re-counts the outbox after a grade is queued. */
   refresh: () => void;
+  /**
+   * Drains the outbox now and resolves when it has stopped, whether or not
+   * everything landed. Sign-out calls this first, because a grade still
+   * queued belongs to the person leaving and the device is about to forget
+   * them (`lib/offline/forget.ts`).
+   */
+  flush: () => Promise<void>;
 }
 
-const Context = createContext<OfflineState>({ online: true, pending: 0, refresh: () => {} });
+const Context = createContext<OfflineState>({
+  online: true, pending: 0, refresh: () => {}, flush: async () => {},
+});
 
 /** How often to retry a stuck queue. Long enough to be invisible, short enough to matter. */
 const RETRY_INTERVAL_MS = 30_000;
@@ -124,7 +133,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Context.Provider value={{ online, pending, refresh }}>
+    <Context.Provider value={{ online, pending, refresh, flush: sync }}>
       {children}
       <OfflineBanner online={online} pending={pending} syncing={syncing} />
     </Context.Provider>

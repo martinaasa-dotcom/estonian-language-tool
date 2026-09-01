@@ -29,7 +29,7 @@ import { DiacriticBar } from "@/components/DiacriticBar";
  * size reads from.
  */
 export function EstonianInput({
-  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large, compact, inputRef,
+  value, onChange, placeholder, autoFocus, onEnter, id, ariaLabel, large, compact, inputRef, bar = true,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -41,6 +41,13 @@ export function EstonianInput({
   large?: boolean;
   compact?: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
+  /**
+   * `false` where several of these sit in one table and one bar under the
+   * table serves them all, since the shared bar types into whatever has
+   * focus. Five fields with five rows of the same six keys is a keyboard
+   * drawn five times; the conjugation drill draws one and passes this.
+   */
+  bar?: boolean;
 }) {
   const own = useRef<HTMLInputElement>(null);
   const ref = inputRef ?? own;
@@ -63,7 +70,7 @@ export function EstonianInput({
         }`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
       />
-      <DiacriticBar standalone={false} fallbackRef={ref} />
+      {bar && <DiacriticBar standalone={false} fallbackRef={ref} />}
     </div>
   );
 }

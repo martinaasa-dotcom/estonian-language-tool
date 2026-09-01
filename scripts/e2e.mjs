@@ -11,7 +11,12 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 26, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("The core flows", { floor: 26 });
+/*
+  25 rather than 26: the homework list was cut as not being learning, and the
+  one check that added a task to it went with the screen. Arithmetic on what
+  the app has, not a run being waved through.
+*/
+const { check, absent, done } = suite("The core flows", { floor: 25 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -178,34 +183,6 @@ else if (selfGrade) await page.keyboard.press("2");
 const gradedAfter = await eventually(async () => (await graded()) > gradedBefore);
 check("the keyboard gets from a question to a graded card", gradedAfter,
   `${gradedBefore} graded -> ${await graded()} graded, ${before} -> ${await page.getByText(/\d+ left/).textContent()}`);
-
-// 4 — Tasks
-await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });
-await page.getByLabel("Task title").fill("Revise the comitative");
-await page.getByRole("button", { name: /^Add$/ }).click();
-/*
-  Same reporting as the word above, and for the same reason: this one failed
-  twice in CI, fifteen seconds each time, and "false" does not say whether the
-  task was never created or created and not shown.
-
-  IT POLLS ACROSS A RELOAD NOW, AND THAT IS WHAT THE CHECK CLAIMS TO TEST.
-  Adding a task writes through a Server Action and then asks for the route
-  again; the previous version waited fifteen seconds for that client-side
-  refresh to land in this DOM and never looked anywhere else, so a refresh that
-  raced or was dropped read as a task that was never written. Both are worth
-  failing on, but only one of them is "created and persists", and re-reading the
-  page from the server is the only way to tell them apart. It failed a third
-  time in CI on a tree that already carried the fix for the first two, which is
-  the argument for testing the claim rather than the mechanism that usually
-  delivers it.
-*/
-const taskShown = await eventually(async () => {
-  if ((await page.getByText("Revise the comitative").count()) > 0) return true;
-  await page.reload({ waitUntil: "networkidle" }).catch(() => {});
-  return (await page.getByText("Revise the comitative").count()) > 0;
-}, { everyMs: 500 });
-check("task is created and persists", taskShown,
-  taskShown ? "" : `list says: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 
 // 5 — Import
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });

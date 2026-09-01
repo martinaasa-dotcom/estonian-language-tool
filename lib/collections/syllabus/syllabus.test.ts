@@ -4,6 +4,8 @@ import {
   nextUnit, unitById, unitProgress, unitsAtLevel, wordsAtLevel, type Level, type SyllabusUnit,
 } from "./index";
 import { HARVESTED } from "@/prisma/data/harvested";
+import { RETIRED_WORDS } from "./retired";
+import { inferPos } from "./types";
 import { PHRASES } from "@/prisma/data/other";
 import { grammarPoint } from "@/lib/estonian/grammar";
 
@@ -197,6 +199,27 @@ describe("nextUnit", () => {
   });
 });
 
+describe("the vocabulary the course no longer teaches", () => {
+  it("is still in the harvest, every word of it", () => {
+    // The ten C2 units were cut with the promise that their words stay in the
+    // dictionary, and the harvest reads the syllabus, so the first re-run after
+    // the cut took them out. retired.ts is the list that keeps them, and this
+    // is what notices a harvest that forgot to read it.
+    const held = new Set(HARVESTED.map((w) => `${w.lemma}|${w.pos}`));
+    const missing = RETIRED_WORDS
+      .map((w) => `${w[0]}|${inferPos(w[0], w[2])}`)
+      .filter((key) => !held.has(key));
+    expect(missing).toEqual([]);
+    expect(RETIRED_WORDS.length).toBeGreaterThan(100);
+  });
+
+  it("names no word a unit already teaches", () => {
+    const taught = new Set(courseWords().map((w) => `${w.lemma}|${w.pos}`));
+    const both = RETIRED_WORDS.map((w) => `${w[0]}|${inferPos(w[0], w[2])}`).filter((k) => taught.has(k));
+    expect(both).toEqual([]);
+  });
+});
+
 describe("the harvested dictionary behind the course", () => {
   it("carries attested sentences for the overwhelming majority of words", () => {
     // The gap-fill, dictation and sentence-building modes are built entirely
@@ -225,6 +248,10 @@ describe("the harvested dictionary behind the course", () => {
         for (const p of ["INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG"]) {
           expect(w.parts[p], `${w.lemma} is missing ${p}`).toBeTruthy();
         }
+      } else if (w.pos === "PRONOUN" && Object.keys(w.parts).length === 0) {
+        // A plural-only pronoun (`meie`, `nemad`) has no singular to store and
+        // is kept the way an adverb is: attested by Ekilex, with no parts.
+        expect(w.usages.length + (w.cefr ? 1 : 0), `${w.lemma} arrived with nothing at all`).toBeGreaterThan(0);
       } else if (w.pos !== "ADVERB") {
         for (const p of ["NOM_SG", "GEN_SG", "PART_SG"]) {
           expect(w.parts[p], `${w.lemma} is missing ${p}`).toBeTruthy();

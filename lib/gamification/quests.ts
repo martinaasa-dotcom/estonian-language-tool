@@ -118,15 +118,6 @@ const SPECS: readonly QuestSpec[] = [
     progress: (s) => s.cardsAddedToday,
     reward: 15,
   },
-  {
-    key: "class_work",
-    title: () => "Tick off a task",
-    detail: "Homework, a grammar point, anything on your list.",
-    icon: "CalendarCheck",
-    target: () => 1,
-    progress: (s) => s.tasksDoneToday,
-    reward: 15,
-  },
 ];
 
 /** A small stable hash of the day key, so the rotation looks arbitrary but isn't. */

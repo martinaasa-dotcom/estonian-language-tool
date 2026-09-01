@@ -8,6 +8,9 @@ import { supabaseConfigured } from "@/lib/auth/mode";
 import { useDockClearance } from "@/lib/layout/dockClearance";
 import { useNavMarker } from "@/lib/layout/navMarker";
 import { createClient } from "@/lib/supabase/client";
+import { useOffline } from "@/components/OfflineProvider";
+import { outboxSize } from "@/lib/offline/db";
+import { forgetThisDevice } from "@/lib/offline/forget";
 import { BAR, isUnder, LISTED, PLACES, SECTIONS, type Destination, type NavSection } from "@/lib/ux/nav";
 import { NavMarker } from "@/components/NavMarker";
 import { Wordmark } from "@/components/brand";
@@ -499,12 +502,33 @@ function IconButton({ onClick, label, labelled, children }: {
   );
 }
 
+/**
+ * Signing out leaves the device the way a stranger should find it.
+ *
+ * The outbox gets one last chance to reach the server, then the pages the
+ * worker cached, the stashed session and any unfinished exam paper are
+ * removed (`lib/offline/forget.ts`), and only then does the cookie go. A grade
+ * that still could not land is the one thing this cannot keep and cannot
+ * quietly drop, so it asks: the person pressing this on a train may prefer to
+ * stay signed in until the tunnel ends.
+ */
 function SignOutButton({ labelled }: { labelled?: boolean }) {
   const router = useRouter();
+  const { flush } = useOffline();
   // Local installs have no accounts to sign out of — see lib/auth/mode.ts.
   if (!supabaseConfigured()) return null;
 
   const signOut = async () => {
+    await flush();
+    const stranded = await outboxSize();
+    if (stranded > 0) {
+      const grades = stranded === 1 ? "1 grade" : `${stranded} grades`;
+      const ok = window.confirm(
+        `${grades} from this device have not reached your account yet. Signing out now loses them. Sign out anyway?`,
+      );
+      if (!ok) return;
+    }
+    await forgetThisDevice();
     await createClient().auth.signOut();
     router.push("/welcome");
     router.refresh();

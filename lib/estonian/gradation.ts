@@ -131,3 +131,17 @@ export function classifyVerbGradation(infMa: string, pres1sg: string): Gradation
   if (!a || !b) return { type: "NONE", note: undefined };
   return classifyGradation(a, b);
 }
+
+/**
+ * Whether a part of speech can gradate at all.
+ *
+ * Gradation is an alternation inside a stem, and a pronoun does not have one
+ * in that sense: `kes` goes to `kelle` and `mina` to `minu` by suppletion,
+ * a different stem rather than a weakened one. Run through the classifier
+ * those read as `s : ll` and `n : ∅`, and a chip saying "gradation s : ll"
+ * on the entry for `kes` teaches a pattern that is not there. Nouns,
+ * adjectives and verbs gradate; nothing else is asked.
+ */
+export function gradates(pos: string): boolean {
+  return pos === "NOUN" || pos === "ADJECTIVE" || pos === "VERB";
+}

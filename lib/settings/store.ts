@@ -83,17 +83,16 @@ export const SETTING_KEYS = {
    */
   timeZone: "timeZone",
 
+
   /**
-   * The week of their course the learner says they are in.
-   *
-   * It was a literal in `app/actions.ts`, which is a `"use server"` file, so
-   * the constant holding it could not be exported: every export there is a
-   * public endpoint and a string is not one. That was fine while one file read
-   * it and stopped being fine the moment Today wanted to say which week you are
-   * in, because the only way to read it from a second place was to type
-   * "currentWeek" again. Keys live here for exactly that reason.
+   * How Estonian is read aloud: which of the speech service's voices, whether
+   * a card reads itself when it appears, and whether an answer makes a sound.
+   * The values and their defaults live in lib/audio/voice.ts; a missing row
+   * reads as the behaviour everybody had before the question existed.
    */
-  currentWeek: "currentWeek",
+  ttsVoice: "ttsVoice",
+  autoplayAudio: "autoplayAudio",
+  feedbackSounds: "feedbackSounds",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

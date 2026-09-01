@@ -3,6 +3,7 @@ import { computeStreak } from "@/lib/achievements/badges";
 import { occasionsFor, type Occasion } from "@/lib/copy/almanac";
 import { matchesGloss, senseIndex } from "@/lib/dict/gloss";
 import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
+import { naturalSentence } from "@/lib/estonian/cloze";
 import type { DayClock, DayKey } from "@/lib/time/day";
 
 /**
@@ -312,8 +313,19 @@ function compare(a: readonly number[], b: readonly number[]): number {
  */
 function firstExample(row: Candidate): Example | null {
   const attested = usableExamples(parseExamples(row.examples)).filter((e) => e.source !== "AI");
-  return attested[0] ?? null;
+  /*
+    Shortest first is right until the shortest is one word. Ekilex records a
+    usage against a sense, and for `kool` that included `Kokakool.`, which the
+    card printed under "in a sentence" on the first of September. Three words
+    and the shape `naturalSentence` asks of an exam sentence, or nothing: a
+    card with no sentence says so, and a card with a compound noun and a full
+    stop says the app cannot tell the difference.
+  */
+  return attested.find((e) => wordCount(e.et) >= MIN_SENTENCE_WORDS && naturalSentence(e.et)) ?? null;
 }
+
+const MIN_SENTENCE_WORDS = 3;
+const wordCount = (text: string) => text.trim().split(/\s+/).length;
 
 function build(row: Candidate, occasion: Occasion | null): WordOfDay {
   return {

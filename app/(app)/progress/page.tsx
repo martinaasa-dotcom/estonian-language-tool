@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Compass, Flame } from "lucide-react";
+import { Compass, Flame, Shield } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -19,6 +19,9 @@ import { WeakestCases } from "@/components/WeakestCases";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Board, BoardSkeleton } from "./Board";
+import { BADGES } from "@/lib/achievements/badges";
+import { BadgeShelf } from "@/components/achievements/BadgeShelf";
+import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { Card, Chip, Empty, Meter, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
@@ -37,10 +40,9 @@ export default async function ProgressPage() {
   const now = new Date();
   // Every figure below is a fact about a *day*, and this page renders on the
   // server, whose midnight is the deployment's. See lib/time/day.ts.
-  const clock = await learnerDayClock(ownerId);
-  const snapshot = await deckSnapshot(ownerId, now);
+  const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
-  const [summary, units, reviews, dueDates, deck, caseReviews] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -81,7 +83,13 @@ export default async function ProgressPage() {
       input too, and the window is the one this page already used.
     */
     caseReviewsFor(ownerId, now),
+    // The shelf and the shields lived on Settings, which is where you change
+    // things, not where you find out how you are doing. Both are readings.
+    prisma.achievement.findMany({ where: { ownerId }, select: { key: true }, orderBy: { key: "asc" } }),
+    readSettings(ownerId, [SETTING_KEYS.streakShields]),
   ]);
+  const earnedKeys = new Set(earned.map((a) => a.key));
+  const shields = numberSetting(shieldRow[SETTING_KEYS.streakShields], 0);
 
   // The lemma behind each card, out of the dictionary the whole deployment
   // shares rather than a second statement per deck read. lib/dict/facts.ts.
@@ -353,6 +361,26 @@ export default async function ProgressPage() {
                 This counts a word only once you know every card for it, so the real number could
                 be a little higher.
               </p>
+            </Card>
+          </section>
+
+          <section>
+            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
+            <Card>
+              <BadgeShelf earnedKeys={earnedKeys} />
+              <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
+                <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent-deep)" }} />
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                    {shields} streak shield{shields === 1 ? "" : "s"} banked
+                  </p>
+                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
+                    Earned at 7-, 30- and 100-day streaks. Each one carries your streak
+                    through a single day you miss entirely, and is spent on its own the
+                    next time you are back.
+                  </p>
+                </div>
+              </div>
             </Card>
           </section>
         </div>

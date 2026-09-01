@@ -391,10 +391,9 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               learner who is furthest through is the one who was told wrong.
             */}
             <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Take the level check now, or just estimate your level and move on. It stops as soon
-              as it has found your level, so it is short if you are starting out and longer if you
-              are not. Nothing is locked in. You can always change your level or take the check
-              later on too.
+              Take the level check now, or estimate and move on. The check stops as soon as it has
+              found your level, and nothing here is locked in: Settings can change it, or sit the
+              check, whenever you like.
             </p>
 
             {measured ? (

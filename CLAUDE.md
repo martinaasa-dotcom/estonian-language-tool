@@ -183,6 +183,24 @@ bring back, which is what makes this mechanical rather than aspirational. Re-run
 `npm run harvest`; responses are cached, so it costs Ekilex nothing.
 
 
+**The words between the words are a request like any other, and a unit that was cut does not take
+its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
+words every sentence is made of: nobody asking `kes?` or `millal?`, or looking up `täna`, `peal`
+or `september`, found anything, in a dictionary of six thousand words. Six units carry them now,
+question words, pronouns, the adverbs of time, the postpositions, the months and the countries,
+appended after the fourteen so that the first three units at A1, which is what first run builds a
+deck from, stay what they were. `PRONOUN` is a part of speech for it, harvested as a nominal
+because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
+`nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
+unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
+short ones (`mulle`, `mul`) that no rule over the genitive reaches, and a card answering `minule`
+would mark the form everybody says wrong; Ekilex records both and an enriched entry shows the pair.
+`lib/collections/syllabus/retired.ts` is the other half: the ten C2 units were cut in §19 of the
+status doc with the note that their 170 words stay in the dictionary, and the harvest reads the
+syllabus, so the first re-run after that cut would have quietly taken them out of the seed. They
+are a request list of their own now, in a unit's shape, read by the harvest beside the units and
+listed by no screen.
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
@@ -203,6 +221,28 @@ way for every word that takes the ending, so it is one bug found once, and the f
 that it was derived. A model is wrong about one word, unpredictably, in output that looks exactly
 like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
 only" and three later decisions had already been reading it the narrower way.
+
+**The verb has one derivable part, and it was checked against every verb before it was shipped.**
+A seeded verb holds five principal parts and nothing else, so on a deployment without an Ekilex key
+every one of the 799 verbs in the built dictionary showed `loen` and stopped: no `loed`, no `loeb`,
+no `ei loe`, and a conjugation card for `olevik · ta` could not be built at all. The present
+indicative is the one part of the Estonian verb that really is a suffix on a stored stem for every
+verb in the language but one: take the `n` off the first person and the other five persons, the
+negative after `ei`, the conditional in `-ksi-` and the singular imperative are regular endings on
+what is left. `lib/estonian/conjugate.ts` is that rule and it is the only module allowed to join a
+person ending to a stem, asserted, for the reason the case suffixes have one home: it is the module
+that also holds the exceptions. `olema` gets no present from it, because its third person is `on`
+and nothing about `olen` predicts that; `minema` gets no imperative, because it says `mine` off
+the infinitive. **The simple past is not derived and may not be**: `lugesin` goes to `luges` but
+`tahtsin` to `tahtis` and `võtsin` to `võttis`, with the grade changing on the way, so its third
+person stays attested-only and a seeded verb makes seven conjugation cards where an enriched one
+makes eight. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+and compares it with every form Ekilex records for the same word: 797 verbs, thirteen slots
+each, no disagreement, and the two exceptions above are the ones it found. Re-run it before
+widening the table. Every derived form says so on screen, the dictionary entry prints the table
+under "worked out from loen" with the stored form in bold, the four verb topic pages show the point
+on the learner's own verbs with a provenance chip, and an attested form always answers first, so
+the moment an entry is enriched the rule steps aside.
 
 **And a derivation never stands where the dictionary has the real thing.** The paragraph above is
 the licence to derive; this is its limit, and it was broken for a year in the one case that has an
@@ -408,6 +448,18 @@ failure silent, because two sources sit behind it; a feed that will not answer i
 miss, which is the rule the seed and `enrichFromEkilex` each learned the expensive way. Nothing
 under `lib/news/` may touch the database or run in a browser, asserted.
 
+**And the headlines themselves are read, not only mined.** Every sentence a learner met here was
+one a lexicographer recorded to illustrate a word, which is the right sentence for a card and is not
+what a newspaper, a sign or a colleague says. The feed was being fetched once an hour for the
+suggestion row and thrown away down to its words. `lib/dict/headlines.ts` keeps a few of the
+headlines whole and puts the dictionary under them: the feed proposes, `matchEstonianForm` decides at
+the scanned-page floor, and a vouched word links to the dictionary's own headword while a word it
+will not vouch for is printed plain, because leaving it out would be editing the sentence and
+guessing would be worse. A headline is offered only when most of it can be opened, so a beginner
+meets one they can read through rather than a wall of names, and the block names the host it came
+from, since these are somebody else's words. It lives on the dictionary landing beside the row it
+grew out of, rendered from the same hourly cache and stored nowhere; asserted.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request
@@ -507,6 +559,20 @@ caller picked, and a caller who picks a new one per request gets an unlimited nu
 allowances. So it is read only when `TRUST_PROXY_HEADERS` or `VERCEL` says a proxy is there, and
 every unattributed request otherwise shares one bucket, which is the honest shape for not
 knowing. Signed-in work never touches any of it.
+
+**Signing out leaves the device the way a stranger should find it.** It cleared one cookie and
+nothing else, and everything the app keeps in the browser to make review work on a train stayed
+behind for the next person on the same machine: the pages the service worker had cached, which are
+somebody's own deck and progress rendered and ready to serve; the last review session, stashed with
+every card in it; any grade still queued; and a mock exam paper they had started, composition
+included. A school computer, a shared laptop and a phone handed to a friend are the ordinary case,
+not the edge. `lib/offline/forget.ts` removes all three stores, after the outbox has been given its
+chance to drain through the provider's `flush`, and both places that sign a learner out go through
+it, asserted. A grade that still could not land is the one thing the device cannot keep and must
+not quietly drop, so the rail asks before losing it. And nobody signing out is the other case: the
+shell mounts `DeviceOwner` with a digest of the account id, and a different account appearing on the
+same browser clears what the last one left. What it does not touch is what is about the device
+rather than a person: the theme, the install prompt's memory, and the audio and build caches.
 
 **Nothing in a `"use server"` file may take an owner id from its caller.** Every export there is a
 public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
@@ -892,6 +958,23 @@ watching them at all, `test-restore.mjs` among them. The source of truth is the 
 `scripts/lib/suites.mjs` with a written reason. Two are, and both are facts about the route rather
 than about anybody's schedule.
 
+**A word is heard as often as it is met, and the voice is the learner's to choose.** Speech
+used to arrive on a button press only, in one voice chosen by whoever deployed the app, which on
+the daily path meant a learner clicking a speaker icon on every card or hearing nothing. A card
+now reads itself aloud when a word is first met and when its answer appears, the next card's clip
+is fetched while this one is being answered so the play is instant, and `lib/audio/voice.ts` is
+the allowlist of TartuNLP's twelve Estonian voices a learner may pick from in Settings. The state
+examination's listening part is read by more than one speaker and so is the country, so a learner
+who has only ever heard one voice say a word has learned that voice rather than the word. A
+requested voice is checked against that list on the way into the speech route and never passed to
+a third party as typed; the disk cache and the service worker's cache both key on it. A right or
+wrong answer makes a short sound made with the browser's own oscillator, so it costs no request
+and works offline. All three are settings, on by default because a missing row has to read as
+the behaviour everybody had, and `components/AudioPrefs.tsx` publishes them once from the shell so
+every speaker button and every round reads one answer. `lib/audio/clip.ts` is the one place a
+clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
+agreeing about what is in the cache.
+
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
 students on one school network are one IP and a review session asks for audio on nearly every
@@ -1153,12 +1236,13 @@ both, a fill for a bar and an ink for its label, is the pairing this protects ra
 it. `scripts/demo-data.ts` now sets the week and the goal for the same reason: a rule enforced only
 where a fixture happens to walk holds on about half the app.
 
-**Where a screen lives and what a card is are still two questions, and so are the week and the
-homework.** `lib/ux/nav.ts` says the class week lives inside Tasks, so Today does not get a panel for
-it; the "On today" card carries one line saying which week you are in, because that card is already
-"what is due" and the week is the frame that gives it a date. `SETTING_KEYS.currentWeek` moved out of
-`app/actions.ts` for it: that file is `"use server"` so it cannot export a constant, every export
-there being a public endpoint, and the only other way to read the key was to type it again.
+**Where a screen lives and what a card is are still two questions, and the homework list was
+neither.** `/tasks`, `/week` and the placement ladder were cut in the eighteenth pass
+(`docs/13-mvp-status.md` §24): a to-do list and a calendar a class can set but a learner alone never
+filled, and a second answer to the level check with nothing measured behind it. What stays is one
+card on Today for work a teacher assigns, drawn by `components/TodayPlan.tsx` from the same
+`agenda` buckets, because that card is already "what is due". Do not bring the pages back as
+"organisation"; a learner organises their evening by opening Review.
 
 **Late is decided in one place, and it was being decided twice and wrongly.** A due date is typed
 into `<input type="date">` and stored at midnight UTC, so `TaskRow`'s `due < new Date()` marked
@@ -1183,14 +1267,14 @@ That module decides what a *screen leads with* by how far in the learner is; thi
 a thing lives, and the answer is the same in the first minute as in the first year.
 
 A place that lives *inside* another place carries `within` and keeps its row out of the rail
-without leaving the table, so the palette still reaches it. Eight do. Three were there from the
-start: Anu, because her button is in the corner of every signed-in screen and a row saying "Ask
-Anu" was a second door onto a room whose door is always open; the class week, which leads the Tasks
-page where its homework already was; and the scanner, which is a way of getting words *into* the
-dictionary and sat under "Look it up", which is not what it does.
+without leaving the table, so the palette still reaches it. Two were there from the start: Anu,
+because her button is in the corner of every signed-in screen and a row saying "Ask Anu" was a
+second door onto a room whose door is always open; and the scanner, which is a way of getting words
+*into* the dictionary and sat under "Look it up", which is not what it does. The class week was a
+third until the page it led was cut.
 
-The other five are one question asked five ways. Homework is what Today already lists, and the
-deck, the level check, the mock exam and a class are four readings of "how am I doing", which is
+The others are one question asked four ways. The deck, the level check, the mock exam and a class
+are four readings of "how am I doing", which is
 the question `/progress` exists to answer: standing them beside it as four more rows made the rail
 a list of every noun in the app rather than a set of places to go. Seven rows are left, under three
 headings rather than four, because a heading over a single row is furniture: a heading earns itself
@@ -1842,6 +1926,20 @@ headers at all; the chat reads them back and the line under the conversation say
 a reply has arrived and "Answered by" after. A trailer was tried and is not an option, because no
 browser exposes one.
 
+**Anu is told who is asking, and she is told by the server.** The chat posted `level: "B1"` for
+everybody, typed into the client, and the route believed it: a beginner on their first evening and
+a C1 speaker were both taught as B1, and nothing the app had measured about either reached her.
+`lib/progress/tutorContext.ts` reads three things off the learner's own log at once, the level
+`courseLevelFor` gives every other screen, the weakest case `caseAccuracy` gives the Progress page
+over the same shared query, and the unit the deck has started and not finished, and `learnerNote`
+puts them in a block sent **after** the static prompt rather than inside it, so the part that does
+not change per person stays cached on every provider. The wording of that block is a decision: the
+weakest case is offered for when a question touches it and never as a refrain, because a learner
+who hears about their partitive every time they ask about the weather stops asking. It needs twelve
+answers before it names a case, four times the chart's floor, since a teacher raising it in
+conversation is a stronger claim than a bar. The route no longer reads a level from the request at
+all, asserted.
+
 **Anu's English is cleaned on its way past, and her Estonian never is.** `lib/tutor/humanize.ts`
 strips dashes used as clause breaks and stock openers, reading both from `lib/copy/voice.ts` rather
 than keeping a list of its own. It streams, holding text back only where a
@@ -2232,7 +2330,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `lockDeck`, `caseReviewsFor`,
 `alsoRight`, `shownForms`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
-`staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`. Most of them now
+`staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
+`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -2246,6 +2345,7 @@ npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
 npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
+npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary

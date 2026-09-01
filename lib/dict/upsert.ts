@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
+import { classifyGradation, classifyVerbGradation, gradates } from "@/lib/estonian/gradation";
 import { PRINCIPAL_FORM_TYPES, isPrincipalFormType } from "@/lib/estonian/types";
 
 /**
@@ -58,7 +58,8 @@ export async function upsertLexemeWithForms(input: LexemeWrite): Promise<LexemeW
   const pres1 = at("PRES_1SG");
 
   const gradation =
-    nomSg && genSg ? classifyGradation(nomSg, genSg)
+    !gradates(pos) ? { type: "NONE" as const, note: undefined }
+    : nomSg && genSg ? classifyGradation(nomSg, genSg)
     : infMa && pres1 ? classifyVerbGradation(infMa, pres1)
     : { type: "NONE" as const, note: undefined };
 

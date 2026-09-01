@@ -34,6 +34,8 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { courseWords, type CourseWord } from "../lib/collections/syllabus/index";
+import { RETIRED_WORDS } from "../lib/collections/syllabus/retired";
+import { inferPos } from "../lib/collections/syllabus/types";
 import { formatGovernment } from "../lib/ekilex/mapper";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -239,7 +241,13 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
   // drop every single connective in the course. Existing in Ekilex is the whole
   // check that matters here: it is still the authority deciding the word is real,
   // and there are no forms to get wrong.
-  if (pos === "ADVERB") {
+  if (pos === "ADVERB" || (pos === "PRONOUN" && !hasSingular(await details(candidates[0]!.wordId)))) {
+    /*
+      A pronoun with no singular, `meie` and `nemad`, has no principal parts in
+      the sense the seed stores them, so it is kept the way an adverb is: real
+      because Ekilex has it, with its sentences and level, and no forms to get
+      wrong. Its case table arrives with the first enrichment.
+    */
     const first = candidates[0];
     if (!first) return { lemma, gloss, pos, error: "not in Ekilex" };
     const detail = await details(first.wordId);
@@ -288,6 +296,12 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
   return { lemma, gloss, pos, error: wantVerb ? "no verb forms" : "no nominal forms" };
 }
 
+/** True when a nominal form set carries a nominative singular. */
+function hasSingular(detail: RawDetails | null): boolean {
+  const set = pickFormSet(detail, false);
+  return set !== null && formMap(set).has("SgN");
+}
+
 /** Runs `worker` over `items` with a fixed number of workers in flight. */
 async function pool<T, R>(items: readonly T[], limit: number, worker: (item: T) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(items.length);
@@ -328,7 +342,7 @@ export interface HarvestedWord {
   lemma: string;
   /** English gloss. Authored, because Ekilex has no English on a reader key. */
   gloss: string;
-  pos: "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB";
+  pos: "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PRONOUN";
   /** Ekilex's own proficiency level, where it records one. */
   cefr: string | null;
   ekilexWordId: number;
@@ -367,7 +381,22 @@ async function main() {
   // Phrases are the one part of speech that is not a headword, so Ekilex has no
   // forms for them. They stay in the hand-checked built-in list.
   let requests = courseWords().filter((w) => w.pos !== "PHRASE");
-  if (ONLY) requests = requests.filter((w) => w.units.includes(ONLY));
+  if (ONLY) {
+    requests = requests.filter((w) => w.units.includes(ONLY));
+  } else {
+    /*
+      The vocabulary of the units that were cut, kept in the dictionary on
+      purpose (docs/13-mvp-status.md §19). Not in any unit, so it carries no
+      introducing unit and counts at the top of the course; the syllabus
+      never lists it and no card is built from it unasked.
+    */
+    const named = new Set(requests.map((w) => `${w.lemma}|${w.pos}`));
+    for (const w of RETIRED_WORDS) {
+      const pos = inferPos(w[0], w[2]);
+      if (named.has(`${w[0]}|${pos}`)) continue;
+      requests.push({ lemma: w[0], gloss: w[1], pos, unitId: "", level: "C1", units: [] });
+    }
+  }
 
   console.log(`Harvesting ${requests.length} words from Ekilex with ${CONCURRENCY} workers…`);
   let done = 0;

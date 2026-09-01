@@ -53,6 +53,8 @@ const DEADLINE_MS = 1500;
 interface Cached {
   at: number;
   words: string[];
+  /** The headlines the words came off, in the feed's order. */
+  headlines: string[];
 }
 
 let cache: Cached | null = null;
@@ -85,23 +87,46 @@ export async function newsWords(now: number = Date.now()): Promise<string[]> {
   if (cache && fresh) return cache.words;
 
   return singleFlight(`news:${url}`, async () => {
-    const words = await read(url);
-    cache = { at: Date.now(), words };
-    return words;
+    const got = await read(url);
+    cache = { at: Date.now(), ...got };
+    return got.words;
   });
 }
 
-async function read(url: string): Promise<string[]> {
+/**
+ * The headlines themselves, for reading rather than for mining. Same fetch,
+ * same cache, same deadline: a caller that wants both pays for one request.
+ */
+export async function newsHeadlines(now: number = Date.now()): Promise<string[]> {
+  await newsWords(now);
+  return cache?.headlines ?? [];
+}
+
+/** The host the feed is read from, for saying where a headline came from. */
+export function feedHost(): string | null {
+  const url = feedUrl();
+  if (!url) return null;
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+const NOTHING = { words: [] as string[], headlines: [] as string[] };
+
+async function read(url: string): Promise<{ words: string[]; headlines: string[] }> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(DEADLINE_MS),
       cache: "no-store",
       headers: { accept: "application/rss+xml, application/xml;q=0.9, */*;q=0.8" },
     });
-    if (!res.ok) return [];
-    return headlineWords(parseHeadlines(await res.text()));
+    if (!res.ok) return NOTHING;
+    const headlines = parseHeadlines(await res.text());
+    return { words: headlineWords(headlines), headlines };
   } catch {
-    return [];
+    return NOTHING;
   }
 }
 

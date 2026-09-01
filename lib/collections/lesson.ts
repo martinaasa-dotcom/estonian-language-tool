@@ -298,7 +298,7 @@ const DRILL_CASES: readonly CaseKey[] = [
   "INESSIVE", "ILLATIVE", "ELATIVE", "ALLATIVE", "ADESSIVE", "COMITATIVE", "TRANSLATIVE",
 ];
 
-const isInflecting = (w: LessonWord) => w.pos === "NOUN" || w.pos === "ADJECTIVE";
+const isInflecting = (w: LessonWord) => w.pos === "NOUN" || w.pos === "ADJECTIVE" || w.pos === "PRONOUN";
 
 /**
  * The Estonian cases a government question offers.

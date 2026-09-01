@@ -230,7 +230,6 @@ async function main() {
     for the same reason.
   */
   for (const [key, value] of [
-    ["currentWeek", "6"],
     ["goalTarget", "B1"],
     ["goalDeadline", new Date(Date.now() + 47 * 86_400_000).toISOString()],
   ] as const) {

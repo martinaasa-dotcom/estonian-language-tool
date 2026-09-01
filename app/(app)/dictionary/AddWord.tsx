@@ -157,6 +157,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
           <select value={pos} onChange={(e) => setPos(e.target.value)} className="rounded-md border px-3 py-2 text-sm" style={field}>
             <option value="NOUN">Noun</option>
             <option value="VERB">Verb</option>
+            <option value="PRONOUN">Pronoun</option>
             <option value="ADJECTIVE">Adjective</option>
             <option value="PHRASE">Phrase</option>
             <option value="OTHER">Other</option>

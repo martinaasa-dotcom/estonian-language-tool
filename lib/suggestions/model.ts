@@ -160,7 +160,7 @@ export interface DropExamplePatch {
 export type Patch = CreateWordPatch | SetTranslationPatch | SetFormPatch | DropExamplePatch;
 
 /** The parts of speech a proposal may name. Same set the dictionary uses. */
-export const PATCH_POS = ["NOUN", "VERB", "ADJECTIVE", "ADVERB", "PHRASE", "OTHER"] as const;
+export const PATCH_POS = ["NOUN", "VERB", "ADJECTIVE", "ADVERB", "PRONOUN", "PHRASE", "OTHER"] as const;
 
 const trimmed = (value: unknown, max: number): string =>
   typeof value === "string" ? value.trim().slice(0, max) : "";

@@ -358,6 +358,14 @@ export async function openWithFallback(
   /** Called once when the stream ends, however it ends. Tokens spent before a
    *  failure were still spent, and the spend cap has to see them. */
   onUsage?: (usage: UsageReport, config: ProviderConfig) => void,
+  /*
+    What is true of this learner today, sent after the static prompt rather
+    than inside it. The Anthropic path caches the static block and this one
+    follows it uncached; an OpenAI-compatible provider caches by prefix, so
+    appending it costs the same. Either way a note that changes per person
+    never invalidates the part that does not.
+  */
+  live = "",
 ): Promise<OpenStream> {
   if (chain.length === 0) throw new TutorError("No AI provider is configured.", 503);
 
@@ -367,11 +375,11 @@ export async function openWithFallback(
       const last = i === chain.length - 1;
       const upstream =
         config.name === "anthropic"
-          ? await callAnthropic(config, system, messages)
-          : await callOpenAiCompatible(config, system, messages, last);
+          ? await callAnthropic(config, system, messages, live)
+          : await callOpenAiCompatible(config, system, messages, last, live);
       // The ledger has to see the provider that actually answered, not the head
       // of the chain — falling back to a dearer model must not go unmetered.
-      return { config, chunks: readStream(config, upstream, system, messages, onUsage) };
+      return { config, chunks: readStream(config, upstream, system + live, messages, onUsage) };
     } catch (error) {
       const next = chain[i + 1];
       if (!next || !worthFallingBackFrom(error, next.name === config.name)) throw error;
@@ -561,6 +569,7 @@ async function callOpenAiCompatible(
   system: string,
   messages: ChatMessage[],
   patient = true,
+  live = "",
 ) {
   const { url, keyEnv, usageFrames } = openAiCompatible(config);
   // Safe only because every config reaching here came from resolveProviders(),
@@ -583,7 +592,7 @@ async function callOpenAiCompatible(
       // fall back to estimating from character counts.
       ...(usageFrames ? { stream_options: { include_usage: true } } : {}),
       max_tokens: 1200,
-      messages: [{ role: "system", content: system }, ...messages],
+      messages: [{ role: "system", content: live ? `${system}\n\n${live}` : system }, ...messages],
     }),
     signal: AbortSignal.timeout(90_000),
   }), patient);
@@ -592,7 +601,7 @@ async function callOpenAiCompatible(
   return res;
 }
 
-async function callAnthropic(config: ProviderConfig, system: string, messages: ChatMessage[]) {
+async function callAnthropic(config: ProviderConfig, system: string, messages: ChatMessage[], live = "") {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -608,7 +617,10 @@ async function callAnthropic(config: ProviderConfig, system: string, messages: C
       // message_start and message_delta, and rejects the OpenAI-shaped field.
       // The Estonian reference is identical every turn, so cache it rather than
       // paying to re-read it on each message.
-      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+      system: [
+        { type: "text", text: system, cache_control: { type: "ephemeral" } },
+        ...(live ? [{ type: "text", text: live }] : []),
+      ],
       messages,
     }),
     signal: AbortSignal.timeout(90_000),

@@ -1257,6 +1257,24 @@
   }
   .letter-key:active:not(:disabled) { scale: 0.94; }
   .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .shake { animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+  .ring-fill { animation: ring-fill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .meter-fill > * { transform-origin: left; animation: meter-fill 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  /*
+    The ending of a form, lit: the letters a case or a person adds to a stem.
+    Underlined in the accent rather than coloured, so it survives sitting on a
+    verdict that has already spent the ink on being right or wrong, and it
+    lifts a little under a pointer on the row it belongs to.
+  */
+  .ending {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    display: inline-block;
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ending-row:hover .ending, .ending-row:focus-within .ending { transform: translateY(-2px); }
 }
 
 /*
@@ -1459,6 +1477,36 @@
 @keyframes pop-in {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/*
+  WHAT MOVES WHEN AN ANSWER LANDS, AND WHAT MOVES WHEN A NUMBER ARRIVES.
+
+  A wrong answer shakes its verdict once, the way a head does; a right one
+  pops, which `pop-in` already did for a finished round. A ring and a meter
+  fill from nothing on arrival rather than appearing full, because a figure
+  that draws itself is read as a measurement and one that is simply there is
+  read as furniture. The ring's angle is a registered custom property so the
+  conic gradient can animate at all; a browser without `@property` shows the
+  ring full, which is what it showed before. `prefers-reduced-motion` flattens
+  every one of these to nothing, through the block near the top of this file.
+*/
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+@property --ring-deg {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes ring-fill {
+  from { --ring-deg: 0deg; }
+}
+@keyframes meter-fill {
+  from { transform: scaleX(0); }
 }
 
 @keyframes confetti-fall {

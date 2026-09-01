@@ -569,9 +569,7 @@ check("no counter column exists for anything the review log can reconstruct", ()
  * put grades against cards that do not exist and tell the scheduler somebody had
  * practised material they have not yet met.
  */
-const MEASURES_RATHER_THAN_PRACTISES = [
-  "app/(app)/placement/PlacementSession.tsx",
-];
+const MEASURES_RATHER_THAN_PRACTISES: string[] = [];
 
 
 check("every practice mode writes to the same review log", () => {
@@ -2042,6 +2040,23 @@ check("the voice is one table, and everything that speaks reads from it", () => 
   );
 
   /*
+    And what she is told about the learner is read off their own log, never
+    off the request. The chat used to post `level: "B1"` for everybody and
+    the route believed it, so every learner was taught as B1. The level, the
+    weakest case and the open unit come from `learnerContextFor` now, in a
+    block sent after the static prompt so the cached part stays cached.
+  */
+  const tutorRoute = code("app/api/tutor/route.ts");
+  assert.doesNotMatch(tutorRoute, /body\.level/, "the tutor route reads a level from the client again");
+  assert.match(tutorRoute, /learnerContextFor\(ownerId\)/, "the tutor route no longer asks who is asking");
+  assert.match(tutorRoute, /learnerNote\(learner\)/, "the tutor route no longer hands Anu the learner note");
+  assert.doesNotMatch(
+    code("components/anu/useAnuChat.ts"),
+    /level:/,
+    "the chat posts a level again, which the server would have to distrust",
+  );
+
+  /*
     And the sweep still sweeps everything. Narrowing it back to a hand-listed
     set of public files is exactly how it spent its first life, and a list is
     what a rule decays into: it covers the screens somebody was looking at on
@@ -3495,6 +3510,8 @@ check("nothing is stored on a device that would need asking first", () => {
     "components/Sidebar.tsx",
     "app/layout.tsx",
     "lib/offline/db.ts",
+    // The sign-out that removes all of the above, and so has to name them.
+    "lib/offline/forget.ts",
     // An exam paper started and not handed in. Strictly necessary by the same
     // argument the outbox is: a mock exam that loses three hours of a B2 paper
     // to a closed tab is broken rather than private. Answers only, never marks
@@ -3512,6 +3529,73 @@ check("nothing is stored on a device that would need asking first", () => {
     /What is kept on your own device/,
     "the privacy page stopped saying what is kept on the device",
   );
+});
+
+check("a headline is read through the dictionary's gate, and the feed writes nothing down", () => {
+  /*
+    The front page is the most ordinary Estonian this app can put in front of
+    somebody, and it is somebody else's. So it is printed as the feed spelled
+    it, attributed, and every word that opens an entry does so because
+    `matchEstonianForm` vouched for it at the scanned-page floor (ADR-021): a
+    word it will not vouch for is left plain rather than guessed at. The block
+    is rendered from the hourly cache and stored nowhere.
+  */
+  const reader = code("lib/dict/headlines.ts");
+  assert.match(reader, /matchEstonianForm\(candidates/, "headline words are no longer vouched by the dictionary");
+  assert.match(reader, /newsHeadlines\(\)/, "the reader no longer reads the feed's own cache");
+  assert.doesNotMatch(reader, /prisma\.(lexeme|form|card)\.(create|update|upsert|delete)/, "the headline reader writes to the dictionary");
+  const screen = code("components/Headlines.tsx");
+  assert.match(screen, /token\.lemma \?/, "the screen links something other than a vouched lemma");
+  assert.match(screen, /encodeURIComponent\(token\.lemma\)/, "a link carries the headline's spelling rather than the headword");
+  assert.match(screen, /from \{host\}/, "the block no longer names where the headline came from");
+  // The feed module stays pure: no database, no browser, nothing of the learner's goes out.
+  const feed = code("lib/news/feed.ts");
+  assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
+});
+
+check("signing out forgets the device", () => {
+  /*
+    Signing out cleared one cookie and left everything the app keeps in the
+    browser for the next person on the same machine: the worker's page cache,
+    which is somebody's own deck and progress rendered and ready to serve, the
+    stashed review session, any grade still queued, and an unfinished exam
+    paper with the composition in it. `lib/offline/forget.ts` removes all of
+    it, after the outbox has had its chance to drain, and every place that
+    signs a learner out has to go through it. The callback route is the one
+    exception, since it signs out a session it refused rather than a person
+    leaving a device, and runs on a server with no device to forget.
+  */
+  const forget = read("lib/offline/forget.ts");
+  const leavers = ALL.filter((f) => /auth\.signOut\(/.test(code(f)))
+    .filter((f) => f !== "app/auth/callback/route.ts");
+  assert.ok(leavers.length >= 2, "no client signs anybody out any more");
+  for (const file of leavers) {
+    assert.match(code(file), /forgetThisDevice/, `${file} signs out without forgetting the device`);
+  }
+  // The outbox goes first, because a grade still queued is the one thing the
+  // device cannot keep and must not quietly drop.
+  const rail = code("components/Sidebar.tsx");
+  assert.ok(
+    rail.indexOf("flush()") < rail.indexOf("forgetThisDevice()"),
+    "the rail forgets the device before the outbox has been given its chance to drain",
+  );
+  // The three stores it forgets are named by the modules that write them.
+  const sw = read("public/sw.js");
+  assert.match(sw, /`\$\{VERSION\}-pages`/, "the worker no longer names its page cache by suffix");
+  assert.match(forget, /PAGES_CACHE_SUFFIX = "-pages"/, "forget.ts deletes a cache the worker does not keep");
+  assert.match(forget, /deleteLocalDatabase/, "forget.ts no longer removes the outbox and the stash");
+  assert.match(
+    code("app/(app)/exam/[level]/resume.ts"),
+    /SITTING_KEY_PREFIX/,
+    "an unfinished paper is stored under a key a sign-out does not know",
+  );
+  // And the case where nobody signed out: a different account on the same
+  // browser clears what the last one left, from the shell, on every render.
+  assert.match(forget, /forgetIfOwnerChanged/, "a change of account no longer forgets the device");
+  assert.match(code("components/DeviceOwner.tsx"), /forgetIfOwnerChanged\(owner\)/);
+  const shell = code("app/(app)/layout.tsx");
+  assert.match(shell, /<DeviceOwner owner=\{ownerDigest\(ownerId\)\}/, "the shell no longer mounts DeviceOwner");
+  assert.match(shell, /createHash\("sha256"\)/, "the browser is handed the account id itself rather than a digest");
 });
 
 
@@ -6000,6 +6084,55 @@ check("the landing page's five words say what the dictionary says", () => {
     copy above, and `lib/estonian/derive.test.ts` holds the rule that decides
     the one case with two answers.
   */
+});
+
+/*
+  A VERB FORM IS DERIVED IN ONE PLACE, AND THAT PLACE WAS CHECKED AGAINST
+  EKILEX BEFORE IT WAS ALLOWED TO PUT A WORD ON A SCREEN.
+
+  `lib/estonian/conjugate.ts` builds the present tense, the negative, the
+  conditional and the singular imperative from the stored first person, which
+  is the same licence `derive.ts` takes over the genitive (ADR-005 amendment
+  1). It is the only module allowed to, for the reason the case suffixes have
+  one home: it is the one that also holds the exceptions, `olema` in the
+  present and `minema` in the imperative, and a second copy of the endings is
+  a second copy that does not know about them. `scripts/audit-verbs.ts` is
+  what made the rule shippable, 797 verbs against Ekilex's own paradigms with
+  no disagreement, and it has to keep importing the rule it audits rather
+  than a copy of it.
+*/
+check("nothing builds a verb form out of a stem and a person ending outside lib/estonian/conjugate.ts", () => {
+  const endings = "(?:d|b|me|te|vad|ksin|ksid|ks|ksime|ksite)";
+  const joins = [
+    new RegExp(`\\b(?:stem|pres1sg|present)\\w*\\s*\\+\\s*["'\`]${endings}["'\`]`),
+    new RegExp(`\\$\\{\\s*(?:stem|pres1sg)\\w*\\s*\\}${endings}[\`"']`),
+  ];
+  const offenders = ["app", "lib", "components", "scripts"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== "lib/estonian/conjugate.ts" && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => joins.some((join) => join.test(code(file))));
+  assert.deepEqual(offenders, [], "a person ending is being joined to a verb stem outside lib/estonian/conjugate.ts");
+
+  const conjugate = code("lib/estonian/conjugate.ts");
+  assert.match(conjugate, /IRREGULAR_PRESENT[^;]*"olema"/, "conjugate.ts no longer declines to derive olema's present, whose third person is `on`");
+  assert.match(conjugate, /IRREGULAR_IMPERATIVE[^;]*"minema"/, "conjugate.ts no longer declines to derive minema's imperative");
+
+  const audit = code("scripts/audit-verbs.ts");
+  assert.match(audit, /derivedVerbForms/, "scripts/audit-verbs.ts stopped auditing the rule the app ships");
+  assert.match(audit, /morphCode === d\.morphCode/, "scripts/audit-verbs.ts stopped comparing against Ekilex's own slot");
+});
+
+check("a screen that prints a derived verb form says it was derived", () => {
+  // Each of the readers prints provenance: the entry's table says which form is
+  // stored, the reference's chip names the origin, and the drill says whether
+  // the table was Ekilex's or the rule's before the learner moves on.
+  for (const file of [
+    "app/(app)/dictionary/Forms.tsx",
+    "app/(app)/grammar/topic/[id]/VerbTable.tsx",
+    "app/(app)/review/conjugation/ConjugationSession.tsx",
+  ]) {
+    assert.match(code(file), /\.origin\b/, `${file} prints a verb form without reading where it came from`);
+  }
 });
 
 console.log(

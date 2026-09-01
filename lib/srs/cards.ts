@@ -2,6 +2,7 @@ import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { buildCloze } from "@/lib/estonian/cloze";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseFromMorphCode } from "@/lib/estonian/morph";
+import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import type { CaseKey } from "@/lib/estonian/types";
 
@@ -77,10 +78,17 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
 /**
  * The verb forms worth drilling, and what to call them.
  *
- * Six, not sixty. These are the ones a beginner has to produce out loud in a
+ * Eight, not sixty. These are the ones a beginner has to produce out loud in a
  * conversation; the rest of the forms are on the dictionary entry to be read,
- * not memorised. Every one is a form we actually hold — from Ekilex by its
- * morph code, or from the seeded principal parts — so nothing is derived.
+ * not memorised. An attested form always answers first: Ekilex's, by its
+ * morph code, or the seeded principal part. Where the dictionary holds only
+ * the principal parts, which is every seeded verb on a deployment without a
+ * key, the present, the negative, the conditional and the singular imperative
+ * come from `lib/estonian/conjugate.ts`, the one rule over a stored stem that
+ * was checked against every verb in the dictionary before it was allowed to
+ * put a word on the back of a card. The simple past third person has no such
+ * rule and stays attested-only, so a seeded verb makes seven cards and an
+ * enriched one eight.
  *
  * Asked by the name a teacher asks by. Nobody stands at a whiteboard in Tallinn
  * and says "the conditional"; they say `tingiv kõneviis`, and a learner who has
@@ -88,14 +96,36 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  * is on the reference page this card links back to, which is the right place
  * for a cross-reference and the wrong place for the prompt.
  */
-const CONJUGATION_SLOTS: { match: { morphCode?: string; formType?: string }; label: string }[] = [
-  { match: { morphCode: "IndPrSg1", formType: "PRES_1SG" }, label: "olevik · ma" },
-  { match: { morphCode: "IndPrSg3" }, label: "olevik · ta" },
-  { match: { morphCode: "IndPrPl1" }, label: "olevik · me" },
-  { match: { morphCode: "IndIpfSg1", formType: "PAST_1SG" }, label: "lihtminevik · ma" },
-  { match: { morphCode: "IndIpfSg3" }, label: "lihtminevik · ta" },
-  { match: { morphCode: "KndPrSg1" }, label: "tingiv kõneviis · ma" },
+const CONJUGATION_SLOTS: { code: string; formType?: string; label: string; negative?: boolean }[] = [
+  { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
+  { code: "IndPrSg3", label: "olevik · ta" },
+  { code: "IndPrPl1", label: "olevik · me" },
+  // The negative is one form for every person, said after `ei`. The card
+  // shows and accepts the two words together, since `loe` on its own is not
+  // what anybody says.
+  { code: "IndPrPs_", label: "eitus · ma ei", negative: true },
+  { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
+  { code: "IndIpfSg3", label: "lihtminevik · ta" },
+  { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
+  { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
 ];
+
+/**
+ * The form for one conjugation slot: attested where the dictionary has it,
+ * derived where the rule reaches, and nothing otherwise.
+ */
+function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string | null {
+  const attested = lex.forms.find(
+    (f) =>
+      f.morphCode === slot.code ||
+      f.formType === `EKILEX:${slot.code}` ||
+      (slot.formType !== undefined && f.formType === slot.formType),
+  );
+  if (attested) return attested.value;
+  const derived = derivedVerbForms({ lemma: lex.lemma, pres1sg: pres1sgFrom(lex.forms) })
+    .find((f) => f.morphCode === slot.code);
+  return derived?.value ?? null;
+}
 
 /** At most this many gap-fill cards per word: two sentences teach, eight nag. */
 const MAX_CLOZE_PER_WORD = 2;
@@ -191,16 +221,12 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       case "CONJUGATION": {
         if (lex.pos !== "VERB") break;
         for (const slot of CONJUGATION_SLOTS) {
-          const match = lex.forms.find(
-            (f) =>
-              (slot.match.morphCode && f.morphCode === slot.match.morphCode) ||
-              (slot.match.formType && f.formType === slot.match.formType),
-          );
-          if (!match) continue;
+          const value = conjugationAnswer(lex, slot);
+          if (!value) continue;
           out.push({
             cardType: type,
             front: `${lex.lemma} → ${slot.label}`,
-            back: match.value,
+            back: slot.negative ? `ei ${value}` : value,
             hint: lex.translation,
             targetCase: null,
           });

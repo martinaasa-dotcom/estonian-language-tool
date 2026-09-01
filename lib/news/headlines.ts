@@ -133,3 +133,24 @@ export function headlineWords(headlines: readonly string[]): string[] {
 
   return out;
 }
+
+/**
+ * A headline split into the runs a reader sees: words, and whatever sits
+ * between them. Every character of the headline comes back in order, so a
+ * screen can join the pieces and print exactly what the feed said while
+ * treating the words as things to look up. `word` is a run of letters; the
+ * rest is spaces, digits and punctuation, kept as one piece each.
+ */
+export interface HeadlineToken {
+  text: string;
+  word: boolean;
+}
+
+export function tokenise(headline: string): HeadlineToken[] {
+  const out: HeadlineToken[] = [];
+  for (const match of headline.matchAll(/\p{L}+|[^\p{L}]+/gu)) {
+    const text = match[0];
+    out.push({ text, word: /\p{L}/u.test(text) });
+  }
+  return out;
+}
