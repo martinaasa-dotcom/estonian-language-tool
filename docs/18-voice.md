@@ -174,13 +174,13 @@ which is exactly the wrong reason.
 
 The level check, before anybody has taken one:
 
-> About ten minutes: a few questions each of reading, listening and writing, and a speaking section
+> Reading, listening and writing, climbing until it finds your level: a few questions each, and a speaking section
 > you judge yourself because nothing here can honestly score a recording. It stops as soon as the
 > questions get clearly too hard, and no answer becomes a flashcard.
 
 against
 
-> About ten minutes of reading, listening and writing, plus speaking you judge yourself.
+> Reading, listening and writing, climbing until it finds your level. Speaking you judge yourself.
 
 Three of the four dropped facts are on the results screen, where they answer a question somebody is
 actually asking. The fourth, that no answer becomes a flashcard, is the honest kind of detail this

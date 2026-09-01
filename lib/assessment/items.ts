@@ -607,13 +607,70 @@ export function speakingItems(words: readonly WordRow[], rng: () => number): Spe
 
 // ── The paper ────────────────────────────────────────────────────────────────
 
-/** How many questions each skill may ask, and how many at any one band. */
+/**
+ * How many questions each skill may ask, and how many at any one band.
+ *
+ * **Eighty, and every number in it was measured rather than chosen.** The
+ * shape came from a published CEFR placement test covering A1 to C1, which is
+ * thirty five multiple choice at seven per level plus ten listening, ten
+ * writing and five spoken. What it had instead was nineteen questions at two
+ * per band per skill, and two four-option questions cannot decide anything:
+ * one lucky guess moves a band from half to full, one slip moves it back.
+ *
+ * So `scripts/` was not the place for this and a simulation was. Learners at
+ * each true level were sat against papers built from the shipped dictionary,
+ * answering at the rates a learner actually answers, and the reported level
+ * was compared with the one they were given. The old paper placed 43% of them
+ * correctly and put 57% *below* where they were, which is exactly the
+ * complaint this rewrite started from.
+ *
+ * Three things came out of the sweep and only one of them was the obvious one.
+ *
+ * **The threshold has to be reachable.** `PASS` is two thirds, so at two items
+ * a band demands a perfect score and at four it demands three, which is
+ * stricter than two thirds rather than looser. Multiples of three are the
+ * sizes where two thirds is a score somebody can actually get, and 4 per band
+ * measured *worse* than 3.
+ *
+ * **Writing was the bottleneck, not reading.** Its answers are typed rather
+ * than chosen, so there is no floor under a band the way four options put one
+ * under a reading band, and it is the noisiest of the three. At the same
+ * eighty items, spending them on writing (6/3/6) placed 87% correctly where
+ * spending them on listening (6/6/3) placed 83% and on reading (9/3/3) placed
+ * 82%.
+ *
+ * **The overall level is the weakest of three skills (ADR-020), so noise in
+ * any one of them lands on the result.** That is why raising reading alone was
+ * not enough: 7/2/2 took the placement from 43% to 52% and left a genuine C1
+ * being told A1 more often than C1.
+ *
+ * Measured on the shipped dictionary at 6/3/6, by true level: pre-A1 97%, A1
+ * 98%, A2 93%, B1 85%, B2 80%, C1 72%. Before: 99%, 62%, 42%, 25%, 18%, 12%.
+ *
+ * The paper is four times longer and the sitting is not, because `session.ts`
+ * stops a skill one band past the first band it was not passed at. A beginner
+ * answers about fifteen questions, somebody at A2 about forty, and somebody at
+ * C1 the lot, which is the paper each of them needed.
+ */
 export const BLUEPRINT = {
-  reading: { total: 8, perBand: 2 },
-  listening: { total: 6, perBand: 2 },
-  writing: { total: 3, perBand: 1 },
-  speaking: { total: 2, perBand: 1 },
+  reading: { total: 30, perBand: 6 },
+  listening: { total: 15, perBand: 3 },
+  writing: { total: 30, perBand: 6 },
+  speaking: { total: 5, perBand: 1 },
 } as const;
+
+/**
+ * The most questions a paper can hold, which is the blueprint added up.
+ *
+ * Derived rather than typed, because it is typed in one other place: the Zod
+ * schema `recordAssessment` validates a finished sitting against. Those two
+ * numbers were written independently and the moment the blueprint grew past
+ * the schema's 60 every sitting was rejected on the way to being stored, with
+ * the result still on screen and nothing in the history. That failure is
+ * invisible from inside the check: the learner sees their level, presses on,
+ * and the hub says nothing was ever measured.
+ */
+export const PAPER_SIZE = Object.values(BLUEPRINT).reduce((sum, s) => sum + s.total, 0);
 
 /**
  * Picks the paper: bands in order, at most a couple of questions each, and no

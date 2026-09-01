@@ -23,10 +23,27 @@ import { DEFAULT_DAYS_PER_WEEK } from "@/lib/assessment/goals";
  * that rises every time they revise and means nothing outside this app.
  */
 
-/** Words sampled per CEFR band before the paper is assembled from them. */
-const PER_BAND = 60;
-/** Below this, a band falls back to including words already in the deck. */
-const MIN_UNOWNED = 10;
+/**
+ * Words sampled per CEFR band before the paper is assembled from them.
+ *
+ * Raised with the blueprint, and it had to be. A band now wants twelve
+ * questions across the four skills rather than six, every one of them about a
+ * different word, and most of them need more of a word than its gloss: a gap
+ * needs a recorded sentence short enough to read and at least three other
+ * forms to offer, and a dictation needs one shorter still. Sixty words a band
+ * was enough to fill six questions and would have left the harder sections
+ * reporting themselves thin on a dictionary that is not.
+ */
+const PER_BAND = 100;
+/**
+ * Below this, a band falls back to including words already in the deck.
+ *
+ * Raised with `PER_BAND` for the same reason: a band with twenty unowned words
+ * left in it has to build twelve questions out of them, so what it is choosing
+ * between is nearly nothing, and a paper made of whatever survived is a worse
+ * measurement than one that asks about a word the learner happens to own.
+ */
+const MIN_UNOWNED = 30;
 
 function toRow(lexeme: {
   id: string; lemma: string; translation: string; pos: string; cefr: string | null;
@@ -68,9 +85,9 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
   /*
     A window into each band, moved by the seed.
 
-    Ordering by lemma and taking the first hundred and twenty is stable, which
-    a test wants, and on a dictionary of a few hundred words it is most of the
-    band anyway. On a real one it is the same slice of the alphabet every
+    Ordering by lemma and taking the first two hundred is stable, which a test
+    wants, and on a dictionary of a few hundred words it is most of the band
+    anyway. On a real one it is the same slice of the alphabet every
     sitting: every learner would meet the same words, and a retake would redraw
     the paper it had just been shown the answers to. So the window starts
     wherever the seed points, which costs one count per band.

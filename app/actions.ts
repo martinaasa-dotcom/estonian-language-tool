@@ -47,8 +47,10 @@ import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
 import { MAX_PASSAGE_CHARS, buildPassageCloze, type KnownForm } from "@/lib/estonian/passage";
 import { DEFAULT_DAYS_PER_WEEK, normaliseGoals } from "@/lib/assessment/goals";
 import { placement } from "@/lib/assessment/score";
+import { PAPER_SIZE } from "@/lib/assessment/items";
 import type { Band, ItemRef, Response } from "@/lib/assessment/types";
 import { goalsFor, saveGoals, saveResult } from "@/lib/progress/assessment";
+import { recordCourseLevel } from "@/lib/progress/level";
 import { REPLAY_BATCH } from "@/lib/offline/outbox";
 import { paperFor as examPaperFor, recordAttempt } from "@/lib/progress/exam";
 import { gradesFrom, markPaper, type Response as ExamResponse } from "@/lib/exam/score";
@@ -849,10 +851,20 @@ export async function completeOnboarding(input: {
   await Promise.all([
     writeSetting(ownerId, SETTING_KEYS.displayName, input.displayName.trim().slice(0, 32)),
     writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
-    // The level somebody declares at sign-up is the best guess available until
-    // they take the placement test, and the course needs *some* starting point
-    // to decide what to open. The test overwrites it whenever they take it.
+    /*
+      The level somebody declares at sign-up is the best guess available until
+      they take the placement test, and the course needs *some* starting point
+      to decide what to open. The test overwrites it whenever they take it.
+
+      Deliberately written with no `cefrPlacementAt` beside it, unlike every
+      other writer of this key. An unstamped declaration reads as older than
+      any measurement (`lib/progress/level.ts`), and a level ticked in ninety
+      seconds by somebody who has not answered a question yet is exactly that:
+      it must never outrank the check sat on the next screen of this same
+      wizard. The blank clears a stamp left by an earlier life of the account.
+    */
     writeSetting(ownerId, SETTING_KEYS.cefrPlacement, input.cefr),
+    writeSetting(ownerId, SETTING_KEYS.cefrPlacementAt, ""),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
     writeSetting(ownerId, SETTING_KEYS.letterBar, letterBarFrom(input.letterBar)),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
@@ -1102,11 +1114,52 @@ export async function savePlacement(scores: z.input<typeof StageScoreSchema>[]) 
 
   const clean = parsed.data.filter((s) => s.correct <= s.asked);
   const level = placementResult(clean);
-  await writeSetting(ownerId, SETTING_KEYS.cefrPlacement, level);
+  await recordCourseLevel(ownerId, level);
 
   revalidatePath("/learn");
   revalidatePath("/");
   return { ok: true as const, level };
+}
+
+/**
+ * The level the learner says they are at.
+ *
+ * Everything else that writes this key is a measurement: the placement ladder,
+ * a passed checkpoint, the check at `/assess`. This one is a person telling
+ * the app something it has no way to find out. Somebody was moved up in the
+ * class they sit in every Tuesday, or sat the state examination, or simply
+ * knows the check caught them on a bad evening, and until now the app had no
+ * answer to any of that except "take it again and hope".
+ *
+ * It is a statement rather than a claim about a score, so unlike
+ * `savePlacement` there is nothing to re-derive and nothing to distrust. Every
+ * export here is a public endpoint and `setCourseLevel("C1")` is a call
+ * anybody can make against their own account, which is the same thing the
+ * button does: what it buys is which units the course opens at and which band
+ * of words gets offered, and a learner who lies to it is only choosing their
+ * own reading. Nothing in the review log moves, because a level is not a
+ * score.
+ */
+export async function setCourseLevel(level: string) {
+  const ownerId = await requireUserId();
+  const parsed = z.enum(["A1", "A2", "B1", "B2", "C1"]).safeParse(level.toUpperCase());
+  if (!parsed.success) return { ok: false as const, error: "That is not a level." };
+
+  await recordCourseLevel(ownerId, parsed.data);
+
+  /*
+    Every screen that reads a level, which is more of them than it looks: the
+    course opens at a unit, Today draws its next unit from the same answer, the
+    dictionary's suggestion row bands its words by it, and review introduces
+    new cards in that band. A picker that took effect on the next cold load
+    would read as a button that does nothing.
+  */
+  revalidatePath("/learn");
+  revalidatePath("/settings");
+  revalidatePath("/review");
+  revalidatePath("/practice");
+  revalidatePath("/");
+  return { ok: true as const, level: parsed.data };
 }
 
 /**
@@ -1168,7 +1221,7 @@ export async function recordCheckpoint(
     : "A1";
   const next = LEVELS[Math.min(levelIndex(parsed.data.level) + 1, LEVELS.length - 1)]!;
   const promoted = levelIndex(next) > levelIndex(currentLevel) ? next : currentLevel;
-  await writeSetting(ownerId, SETTING_KEYS.cefrPlacement, promoted);
+  await recordCourseLevel(ownerId, promoted);
 
   revalidatePath("/learn");
   revalidatePath("/");
@@ -2298,8 +2351,19 @@ const SKILL = z.enum(["reading", "listening", "writing", "speaking"]);
  * of the same function the tests cover, so a stale browser or a hand-made
  * request cannot invent its own scale.
  */
+/*
+  Bounded by the paper rather than by a number typed here.
+
+  It was 60 twice over, written when the paper was nineteen questions, and the
+  blueprint grew past it: `safeParse` then failed on every finished sitting and
+  `recordAssessment` returned "That result could not be read". The runner shows
+  the result anyway, because it computes the level in the browser and the write
+  is what fails, so a learner sat the whole check, read their level, and found
+  the hub saying nothing had ever been measured. Two numbers for one fact, and
+  the one that was wrong was the one nobody looks at.
+*/
 const ASSESSMENT = z.object({
-  items: z.array(z.object({ id: z.string().min(1).max(120), skill: SKILL, band: BAND })).min(1).max(60),
+  items: z.array(z.object({ id: z.string().min(1).max(120), skill: SKILL, band: BAND })).min(1).max(PAPER_SIZE),
   responses: z.array(z.object({
     itemId: z.string().min(1).max(120),
     skill: SKILL,
@@ -2308,7 +2372,7 @@ const ASSESSMENT = z.object({
     selfRating: z.number().int().min(1).max(4).optional(),
     ms: z.number().int().min(0).max(3_600_000),
     skipped: z.boolean().optional(),
-  })).max(60),
+  })).max(PAPER_SIZE),
 });
 
 export async function recordAssessment(input: unknown) {

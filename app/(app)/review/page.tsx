@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { unitById } from "@/lib/collections/syllabus";
+import { courseLevelFor } from "@/lib/progress/level";
+import { aroundFirst } from "@/lib/collections/levels";
+import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
 import { decoyGlosses } from "@/lib/dict/facts";
@@ -16,6 +18,21 @@ export const metadata = { title: "Review" };
 export const dynamic = "force-dynamic";
 
 const NEW_PER_SESSION = 10;
+/**
+ * How many unstarted cards are read before ten of them are chosen.
+ *
+ * The queue used to ask for exactly ten and show them, so which words a
+ * learner met next was decided entirely by the order they were added in. That
+ * is right for a deck built one unit at a time and wrong the moment anything
+ * else fills it: adding a whole level, importing a class handout or
+ * photographing a page puts hundreds of cards in at one `createdAt`, spanning
+ * every band the dictionary has, and the ten off the front of that are whatever
+ * the insert happened to order first.
+ *
+ * Sixty is a wide enough window for the level to have something to choose
+ * between and still one query of one page of rows.
+ */
+const NEW_CANDIDATES = 60;
 const MAX_SESSION = 60;
 const CHOICES = 4;
 
@@ -36,7 +53,9 @@ export default async function ReviewPage({
   // column is a handful of short sentences, and only the one that gets shown
   // crosses to the client (see `introFor`).
   const include = {
-    lexeme: { select: { lemma: true, translation: true, pos: true, examples: true } },
+    // `cefr` rides along for the new-card queue below, which introduces words
+    // around the learner's level before words far off it.
+    lexeme: { select: { lemma: true, translation: true, pos: true, examples: true, cefr: true } },
   } as const;
 
   // A drill ignores scheduling: the point is to attack one weakness — a case the
@@ -126,12 +145,14 @@ export default async function ReviewPage({
 
     The new-card query used to wait for the due one, because its `take` is what
     is left of the session after the due cards have filled it. That is a whole
-    round trip spent on an arithmetic that at most drops ten rows: the cap is
-    ten new cards either way, so the honest version asks for ten and keeps as
-    many as there is room for. Ten rows is less than the trip costs on any
-    hosted database, and the deck size below never depended on either.
+    round trip spent on an arithmetic that at most drops a few rows: at most ten
+    new cards are shown either way, so the honest version reads a window and
+    keeps as many as there is room for. One page of rows is less than the trip
+    costs on any hosted database, and the deck size below never depended on
+    either. The level read is the fourth because `atLevelFirst` needs it and
+    neither of the queries does.
   */
-  const [due, freshPool, totalCards] = await Promise.all([
+  const [due, freshPool, totalCards, level] = await Promise.all([
     prisma.card.findMany({
       where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
       orderBy: { due: "asc" },
@@ -146,20 +167,40 @@ export default async function ReviewPage({
     prisma.card.findMany({
       where: { ownerId, suspended: false, state: 0 },
       orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
-      take: NEW_PER_SESSION,
+      take: NEW_CANDIDATES,
       include,
     }),
     prisma.card.count({ where: { ownerId } }),
+    courseLevelFor(ownerId),
   ]);
 
-  const fresh = freshPool.slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
+  const fresh = atLevelFirst(freshPool, level)
+    .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
   const cards = await withChoices([...due, ...inTeachingOrder(fresh)].map(toReviewCard));
 
   return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
 }
 
+/**
+ * New words around the learner's level first.
+ *
+ * The one place a level can honestly reach the daily loop. What is *due* is
+ * decided by FSRS and may not be reordered by anything: a card comes back when
+ * the scheduler says, whatever band it is in, or the schedule is not a
+ * schedule. What has never been seen has no schedule yet, and choosing which
+ * of those to teach next is exactly the judgement a level is for.
+ *
+ * `aroundFirst` orders and never drops, and a word the learner typed in,
+ * pasted or photographed carries no band at all and counts as at level, since
+ * they went to the trouble of putting it there. Both of those are
+ * `lib/collections/levels.ts`, which is where they can be tested.
+ */
+function atLevelFirst(cards: readonly CardRow[], level: Level): CardRow[] {
+  return aroundFirst(cards, level, (c) => c.lexeme?.cefr);
+}
+
 type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
-  lexeme: { lemma: string; translation: string; pos: string; examples: string } | null;
+  lexeme: { lemma: string; translation: string; pos: string; examples: string; cefr: string | null } | null;
 };
 
 /**

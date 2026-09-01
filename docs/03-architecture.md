@@ -463,9 +463,24 @@ government string names every case it governs while the distractors were drawn f
 marked wrong for it. So the questions are gaps now, in sentences a lexicographer recorded, which
 `lib/estonian/cloze.ts` already hid words out of for the mock exam. A case is named in the
 explanation *after* an answer, where it is a cross-reference for somebody also taking a course,
-and `scripts/test-invariants.ts` fails on one in a question. Questions climb the bands in order and
-a skill stops as soon as a whole band comes in under half, so the paper is about ten minutes rather
-than forty. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
+and `scripts/test-invariants.ts` fails on one in a question. *The paper is eighty questions and every number in it was measured*:
+six reading and six writing at each of the five bands, three listening and one spoken. It was
+nineteen at two per band per skill, and two four-option questions cannot decide a band, because one
+lucky guess moves it from half to full and one slip moves it back. Learners at each true level were
+simulated against papers built from the shipped dictionary: the old paper placed 43% of them
+correctly and put 57% *below* where they were, and this one places 97, 98, 93, 85, 80 and 72
+percent from pre-A1 to C1. Three things came out of that sweep. Two thirds has to be a score
+somebody can reach, so a band size is a multiple of three and 4 per band measured *worse* than 3.
+Writing is the noisiest of the three skills, because its answers are typed and nothing puts a floor
+under a band the way four options do, so at a fixed eighty items spending them there beat spending
+them on listening or on reading. And the overall level is the weakest of three skills, so noise in
+any one of them lands on the result, which is why raising reading alone took it only to 52%. Questions climb the bands in order and a skill asks at most one band above
+the first band it was not passed at, and nothing above one that came in under half, so a beginner
+answers a dozen questions and somebody at C1 answers all sixty, which is the paper each of them
+needed. *The level is the highest band passed consecutively from the bottom*, which is the rule
+those tests score on and was not the rule here: the old one climbed past any band between half and
+two thirds, so A1 at 100%, A2 at 55% and B1 at 70% reported B1 over a band the same screen printed
+as failed. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
 form is retrieved, stored or derived from the genitive stem by the app's own derivation, and every
 question says which (ADR-005, ADR-017). **No model marks anything**: a choice against a stored
 index, a dictation against the recorded sentence, a written sentence against a form the dictionary

@@ -155,7 +155,7 @@ export default async function ExamPage() {
                 A page that says "no level assessed yet" and offers no way to be
                 assessed is a dead end, and this one was: the figure it leads
                 with comes from the level check, and nothing on it said so or
-                said where to take one. Ten minutes against the three hours a
+                said where to take one. Half an hour against the three hours a
                 paper costs, so the difference is worth printing.
               */}
               <p className="mt-3 flex flex-wrap items-center gap-3">
@@ -164,7 +164,7 @@ export default async function ExamPage() {
                   {readiness.assessed ? "Check your level again" : "Take the level check"}
                 </ButtonLink>
                 <span className="text-sm" style={{ color: "var(--ink-3)" }}>
-                  About ten minutes. It&apos;s what this number comes from.
+                  About half an hour. It&apos;s what this number comes from.
                 </span>
               </p>
             </div>

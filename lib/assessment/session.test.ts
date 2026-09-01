@@ -16,6 +16,17 @@ const PAPER: Item[] = [
   item("l-a1-1", "listening", "A1"),
 ];
 
+/** The same paper with a fourth band, for the rules that need two rungs. */
+const TALL: Item[] = [
+  ...PAPER.filter((i) => i.skill === "reading"),
+  item("r-b2-1", "reading", "B2"), item("r-b2-2", "reading", "B2"),
+];
+
+const toldTall = (id: string, credit: number): Response => {
+  const found = TALL.find((i) => i.id === id)!;
+  return { itemId: id, skill: found.skill, band: found.band, credit, ms: 500 };
+};
+
 const said = (id: string, credit: number): Response => {
   const found = PAPER.find((i) => i.id === id)!;
   return { itemId: id, skill: found.skill, band: found.band, credit, ms: 500 };
@@ -39,6 +50,31 @@ describe("the ladder", () => {
     const answers = [said("r-a1-1", 1), said("r-a1-2", 1), said("r-a2-1", 1), said("r-a2-2", 0)];
     expect(ladderStopped(PAPER, answers, "reading", "B1")).toBe(false);
     expect(PAPER[nextCursor(PAPER, answers).index!]?.id).toBe("r-b1-1");
+  });
+
+  it("asks one band past a near miss, and then stops", () => {
+    /*
+      `levelFrom` ends the climb at the first band under two thirds, so nothing
+      above that point can raise the level. What one more band can still do is
+      show that the near miss was a bad ten questions rather than a ceiling,
+      which is worth several minutes. Two more bands is not.
+    */
+    const near = [
+      toldTall("r-a1-1", 1), toldTall("r-a1-2", 1),
+      toldTall("r-a2-1", 1), toldTall("r-a2-2", 0),
+    ];
+    expect(ladderStopped(TALL, near, "reading", "B1")).toBe(false);
+    expect(ladderStopped(TALL, near, "reading", "B2")).toBe(true);
+  });
+
+  it("stops outright above a band that collapsed, confirming nothing", () => {
+    // Under half is not a near miss, and being walked further up a ladder you
+    // have fallen off is the thing this rule was written for.
+    const gone = [
+      toldTall("r-a1-1", 1), toldTall("r-a1-2", 1),
+      toldTall("r-a2-1", 0), toldTall("r-a2-2", 0),
+    ];
+    expect(ladderStopped(TALL, gone, "reading", "B1")).toBe(true);
   });
 
   it("does not stop a skill on another skill's failure", () => {

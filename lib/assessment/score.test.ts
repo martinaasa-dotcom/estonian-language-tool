@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { gradeChoice, gradeDictation, gradeWrite, levelFrom, placement } from "./score";
-import type { ChoiceItem, DictationItem, Item, Response, WriteItem } from "./types";
+import { confidenceFrom, decisiveItems, gradeChoice, gradeDictation, gradeWrite, levelFrom, placement } from "./score";
+import type { Band, ChoiceItem, DictationItem, Item, Response, WriteItem } from "./types";
 
 const choice = (over: Partial<ChoiceItem> = {}): ChoiceItem => ({
   id: "c1", kind: "choice", skill: "reading", band: "A1", lemma: "tuba",
@@ -90,6 +90,100 @@ describe("levelFrom", () => {
 
   it("reports below A1 rather than rounding up to it", () => {
     expect(levelFrom([{ band: "A1", items: 2, credit: 0, ratio: 0 }])).toBe("pre-A1");
+  });
+
+  it("stops at a band that was asked and not passed, not one that collapsed", () => {
+    /*
+      The whole reason a result did not feel like the learner's own Estonian.
+      A band between half and two thirds is a band somebody visibly did not
+      pass, and it is also exactly what four-option questions and a little
+      knowledge produce. The old rule only stopped climbing under half, so this
+      reported B1 with A2 printed as failed on the same screen.
+    */
+    expect(levelFrom([
+      { band: "A1", items: 7, credit: 7, ratio: 1 },
+      { band: "A2", items: 7, credit: 3.9, ratio: 0.557 },
+      { band: "B1", items: 7, credit: 4.9, ratio: 0.7 },
+    ])).toBe("A1");
+  });
+
+  it("does not call somebody below A1 on a section that set no A1 question", () => {
+    /*
+      Writing has no A1 item and cannot: choosing the ending a sentence needs
+      is a step past reading the word, so every gap is raised to A2. Reading a
+      failed A2 as "below A1" claims something about a band nobody was asked
+      about, and since the overall level follows the weakest skill it put that
+      claim on most results.
+    */
+    expect(levelFrom([{ band: "A2", items: 8, credit: 2, ratio: 0.25 }])).toBe("A1");
+    expect(levelFrom([{ band: "A1", items: 7, credit: 2, ratio: 0.29 }])).toBe("pre-A1");
+  });
+
+  it("steps over a band nothing could be asked at rather than failing it", () => {
+    // A dictionary too thin to fill a band is not evidence about the learner.
+    expect(levelFrom([
+      { band: "A1", items: 7, credit: 7, ratio: 1 },
+      { band: "B1", items: 7, credit: 7, ratio: 1 },
+    ])).toBe("B1");
+  });
+});
+
+describe("decisiveItems", () => {
+  const at = (band: Band, count: number): Response[] =>
+    Array.from({ length: count }, (_, i) => answer({ itemId: `${band}-${i}`, band, credit: 1 }));
+
+  it("counts the boundary the level turns on, not the whole paper", () => {
+    // Forty questions below A2 say nothing more than the first three did.
+    const responses = [...at("A1", 20), ...at("A2", 9), ...at("B1", 7)];
+    expect(decisiveItems(responses, "A2")).toBe(16);
+  });
+
+  it("counts what was asked at A1 for somebody who did not reach it", () => {
+    expect(decisiveItems([...at("A1", 11)], "pre-A1")).toBe(11);
+  });
+
+  it("does not count a recording as evidence of anything", () => {
+    // ADR-018: speaking is not scored, so it is not evidence either.
+    const spoken = answer({ itemId: "s", skill: "speaking", band: "A1", credit: 0, selfRating: 4 });
+    expect(decisiveItems([...at("A1", 4), spoken], "pre-A1")).toBe(4);
+  });
+
+  it("does not count a question that was skipped", () => {
+    const skipped = { ...answer({ itemId: "x", band: "A1", credit: 0 }), skipped: true };
+    expect(decisiveItems([...at("A1", 4), skipped], "pre-A1")).toBe(4);
+  });
+});
+
+describe("confidenceFrom", () => {
+  it("scales with the paper rather than with a number somebody has to raise", () => {
+    // A band carries fifteen scored questions, so one whole band is already
+    // evidence and two of them is a boundary properly measured.
+    expect(confidenceFrom(15)).toBe("reasonable");
+    expect(confidenceFrom(30)).toBe("reasonable");
+    // A band decided on two questions is a coin toss wearing a percentage.
+    expect(confidenceFrom(4)).toBe("rough");
+  });
+});
+
+describe("placement", () => {
+  it("reports the evidence the confidence tier is about", () => {
+    /*
+      The result screen prints the whole paper's count, so the tier has to
+      arrive with the smaller number it was actually computed from. Without it
+      the sentence reads "68 scored questions" over a tier that 30 of them
+      decided, which is a headline and its caption answering one question two
+      different ways.
+    */
+    const items: Item[] = [choice({ id: "a1", band: "A1" }), choice({ id: "a2", band: "A2" }), choice({ id: "b2", band: "B2" })];
+    const result = placement(items, [
+      answer({ itemId: "a1", band: "A1", credit: 1 }),
+      answer({ itemId: "a2", band: "A2", credit: 0 }),
+      answer({ itemId: "b2", band: "B2", credit: 1 }),
+    ]);
+    expect(result.overall).toBe("A1");
+    expect(result.itemsAnswered).toBe(3);
+    // A1 and A2, the band reached and the one that ended the climb. Not B2.
+    expect(result.decisive).toBe(2);
   });
 });
 

@@ -174,4 +174,15 @@ export interface Placement {
   ceiling: Level | null;
   confidence: Confidence;
   itemsAnswered: number;
+  /**
+   * Questions asked at the two bands the level turned on, which is what the
+   * confidence tier is a statement about.
+   *
+   * Reported beside the tier rather than left inside the calculation, because
+   * the screen used to print the whole paper's count and then a tier computed
+   * from a subset of it, which is a headline and a sentence answering one
+   * question two ways. Somebody who climbed to C1 answered sixty-odd questions
+   * and forty of them told us only what the first three already had.
+   */
+  decisive: number;
 }
