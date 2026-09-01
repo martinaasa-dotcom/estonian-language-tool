@@ -6002,6 +6002,55 @@ check("the landing page's five words say what the dictionary says", () => {
   */
 });
 
+/*
+  A VERB FORM IS DERIVED IN ONE PLACE, AND THAT PLACE WAS CHECKED AGAINST
+  EKILEX BEFORE IT WAS ALLOWED TO PUT A WORD ON A SCREEN.
+
+  `lib/estonian/conjugate.ts` builds the present tense, the negative, the
+  conditional and the singular imperative from the stored first person, which
+  is the same licence `derive.ts` takes over the genitive (ADR-005 amendment
+  1). It is the only module allowed to, for the reason the case suffixes have
+  one home: it is the one that also holds the exceptions, `olema` in the
+  present and `minema` in the imperative, and a second copy of the endings is
+  a second copy that does not know about them. `scripts/audit-verbs.ts` is
+  what made the rule shippable, 797 verbs against Ekilex's own paradigms with
+  no disagreement, and it has to keep importing the rule it audits rather
+  than a copy of it.
+*/
+check("nothing builds a verb form out of a stem and a person ending outside lib/estonian/conjugate.ts", () => {
+  const endings = "(?:d|b|me|te|vad|ksin|ksid|ks|ksime|ksite)";
+  const joins = [
+    new RegExp(`\\b(?:stem|pres1sg|present)\\w*\\s*\\+\\s*["'\`]${endings}["'\`]`),
+    new RegExp(`\\$\\{\\s*(?:stem|pres1sg)\\w*\\s*\\}${endings}[\`"']`),
+  ];
+  const offenders = ["app", "lib", "components", "scripts"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== "lib/estonian/conjugate.ts" && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => joins.some((join) => join.test(code(file))));
+  assert.deepEqual(offenders, [], "a person ending is being joined to a verb stem outside lib/estonian/conjugate.ts");
+
+  const conjugate = code("lib/estonian/conjugate.ts");
+  assert.match(conjugate, /IRREGULAR_PRESENT[^;]*"olema"/, "conjugate.ts no longer declines to derive olema's present, whose third person is `on`");
+  assert.match(conjugate, /IRREGULAR_IMPERATIVE[^;]*"minema"/, "conjugate.ts no longer declines to derive minema's imperative");
+
+  const audit = code("scripts/audit-verbs.ts");
+  assert.match(audit, /derivedVerbForms/, "scripts/audit-verbs.ts stopped auditing the rule the app ships");
+  assert.match(audit, /morphCode === d\.morphCode/, "scripts/audit-verbs.ts stopped comparing against Ekilex's own slot");
+});
+
+check("a screen that prints a derived verb form says it was derived", () => {
+  // Each of the readers prints provenance: the entry's table says which form is
+  // stored, the reference's chip names the origin, and the drill says whether
+  // the table was Ekilex's or the rule's before the learner moves on.
+  for (const file of [
+    "app/(app)/dictionary/Forms.tsx",
+    "app/(app)/grammar/topic/[id]/VerbTable.tsx",
+    "app/(app)/review/conjugation/ConjugationSession.tsx",
+  ]) {
+    assert.match(code(file), /\.origin\b/, `${file} prints a verb form without reading where it came from`);
+  }
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

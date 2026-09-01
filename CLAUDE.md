@@ -204,6 +204,28 @@ that it was derived. A model is wrong about one word, unpredictably, in output t
 like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
 only" and three later decisions had already been reading it the narrower way.
 
+**The verb has one derivable part, and it was checked against every verb before it was shipped.**
+A seeded verb holds five principal parts and nothing else, so on a deployment without an Ekilex key
+every one of the 799 verbs in the built dictionary showed `loen` and stopped: no `loed`, no `loeb`,
+no `ei loe`, and a conjugation card for `olevik · ta` could not be built at all. The present
+indicative is the one part of the Estonian verb that really is a suffix on a stored stem for every
+verb in the language but one: take the `n` off the first person and the other five persons, the
+negative after `ei`, the conditional in `-ksi-` and the singular imperative are regular endings on
+what is left. `lib/estonian/conjugate.ts` is that rule and it is the only module allowed to join a
+person ending to a stem, asserted, for the reason the case suffixes have one home: it is the module
+that also holds the exceptions. `olema` gets no present from it, because its third person is `on`
+and nothing about `olen` predicts that; `minema` gets no imperative, because it says `mine` off
+the infinitive. **The simple past is not derived and may not be**: `lugesin` goes to `luges` but
+`tahtsin` to `tahtis` and `võtsin` to `võttis`, with the grade changing on the way, so its third
+person stays attested-only and a seeded verb makes seven conjugation cards where an enriched one
+makes eight. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+and compares it with every form Ekilex records for the same word: 797 verbs, thirteen slots
+each, no disagreement, and the two exceptions above are the ones it found. Re-run it before
+widening the table. Every derived form says so on screen, the dictionary entry prints the table
+under "worked out from loen" with the stored form in bold, the four verb topic pages show the point
+on the learner's own verbs with a provenance chip, and an attested form always answers first, so
+the moment an entry is enriched the rule steps aside.
+
 **And a derivation never stands where the dictionary has the real thing.** The paragraph above is
 the licence to derive; this is its limit, and it was broken for a year in the one case that has an
 exception. Estonian has two illatives: the long one is the genitive stem plus `sse`, which a rule
@@ -891,6 +913,23 @@ watching them at all, `test-restore.mjs` among them. The source of truth is the 
 `scripts/*.mjs` that declares a suite is one CI runs, and anything else is named in
 `scripts/lib/suites.mjs` with a written reason. Two are, and both are facts about the route rather
 than about anybody's schedule.
+
+**A word is heard as often as it is met, and the voice is the learner's to choose.** Speech
+used to arrive on a button press only, in one voice chosen by whoever deployed the app, which on
+the daily path meant a learner clicking a speaker icon on every card or hearing nothing. A card
+now reads itself aloud when a word is first met and when its answer appears, the next card's clip
+is fetched while this one is being answered so the play is instant, and `lib/audio/voice.ts` is
+the allowlist of TartuNLP's twelve Estonian voices a learner may pick from in Settings. The state
+examination's listening part is read by more than one speaker and so is the country, so a learner
+who has only ever heard one voice say a word has learned that voice rather than the word. A
+requested voice is checked against that list on the way into the speech route and never passed to
+a third party as typed; the disk cache and the service worker's cache both key on it. A right or
+wrong answer makes a short sound made with the browser's own oscillator, so it costs no request
+and works offline. All three are settings, on by default because a missing row has to read as
+the behaviour everybody had, and `components/AudioPrefs.tsx` publishes them once from the shell so
+every speaker button and every round reads one answer. `lib/audio/clip.ts` is the one place a
+clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
+agreeing about what is in the cache.
 
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
@@ -2232,7 +2271,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `lockDeck`, `caseReviewsFor`,
 `alsoRight`, `shownForms`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
-`staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`. Most of them now
+`staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
+`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -2246,6 +2286,7 @@ npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
 npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
+npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary

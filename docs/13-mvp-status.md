@@ -1454,3 +1454,82 @@ is generated and a correction belongs in the syllabus. Nothing new asserts the l
 `syllabus.test.ts` already keys the course's vocabulary on `lemma|pos` against the harvest alone: a
 label changed in one file and not the other fails `npm test`, which was confirmed by changing one
 and watching it fail. A second check of the same thing is how the first one rots.
+
+## 23. The seventeenth pass: the verb, heard, and the table a class runs down
+
+A pass over the whole app with one question, whether the Estonian on it is right at every point a
+learner meets it, and one finding worth the section: it was, and it stopped early. Every seeded
+verb held five principal parts and nothing else, so on a deployment without an Ekilex key, which is
+the default one, `lugema` was `loen` and no other person. The dictionary entry printed the five
+tiles and stopped, the `olevik` reference page explained the present tense in English and handed
+over to the units, and a conjugation card for `olevik · ta` could not be built because there was
+no `loeb` to put on it. A verb taught as one person is a verb taught as a noun.
+
+### What changed
+
+**The present tense, the negative, the conditional and the singular imperative are derived**, from
+the stored first person, by `lib/estonian/conjugate.ts`. That is the one part of the Estonian verb
+that genuinely is a suffix on a stored stem for every verb in the language but one, and it is the
+same licence ADR-005 amendment 1 already gives the ten regular cases on the genitive. It was not
+reasoned about: `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+and compares it with every form Ekilex records for the same word, 797 verbs and thirteen slots
+each, and it came back with no disagreement. The two exceptions the rule declines are the ones that
+audit named, `olema` in the present (`on`) and `minema` in the imperative (`mine`). The simple past
+is not derived and may not be, because `lugesin` goes to `luges` but `tahtsin` to `tahtis`, with
+the grade changing on the way, so a seeded verb makes seven conjugation cards where an enriched one
+makes eight. The dictionary entry prints the table under "worked out from loen" with the stored form
+in bold, the four verb topic pages show the point on the learner's own verbs with a chip saying
+which forms Ekilex recorded and which the rule supplied, and an attested form always answers first,
+so the moment an entry is enriched the rule steps aside.
+
+**A conjugation drill**, `/review/conjugation`. A conjugation card asks for one person of one verb,
+which is the right shape for spaced repetition and the wrong shape for what a class does on a
+Tuesday, which is run down the whole table out loud. This is that table, typed, the first person
+given, the other five marked a cell at a time the way a typed review answer is: a dropped õ is
+named as a dropped õ, a slipped key as a slip, a wrong form as wrong with the right one beside it.
+The conditional joins from B1. It is reached from the `olevik` and `tingiv kõneviis` reference
+pages rather than from the practice menu, for the reason every other targeted drill is, and a verb
+already in the deck grades its card (ADR-016).
+
+**A card reads itself aloud**, when a word is first met and when its answer appears, and the next
+card's clip is fetched while this one is being answered so the play is instant. Speech had been a
+button, so on the daily path a learner either clicked a speaker icon on every card or heard
+nothing, in a language whose spelling only half records its length. **The voice is the learner's
+to choose**: TartuNLP offers twelve Estonian voices, the app had used one of them for everybody,
+and a learner who has only ever heard one voice say a word has learned that voice rather than the
+word. The state examination's listening part is read by more than one speaker. The list in
+`lib/audio/voice.ts` is the allowlist the speech route checks a request against, so a value not on
+it is answered with the default rather than passed to a third party as typed. **A right or wrong
+answer makes a short sound**, two notes up for a hit and one low note for a miss, made with the
+browser's own oscillator so it costs no request and works offline. All three are settings, on by
+default because a missing row has to read as the behaviour everybody had.
+
+**Five faults in the grammar prose.** The past participle was said to decline when used as an
+adjective, and the `nud`- and `tud`-participles are among the few words in the language that do not:
+`väsinud` stays `väsinud` in front of a noun in any case. Adjective agreement was stated as
+unconditional, and it stops at the genitive for the last four cases. The comparative page said
+there was no word for "than", and there is. The time-expressions page put months and years in one
+case, and months take the inessive where days, seasons and years take the adessive. And the numerals
+page said "after two" where the partitive singular follows any number from two up.
+
+### What this pass deliberately did not do
+
+- **No verb form was written.** Every form on every new screen is either what Ekilex recorded or a
+  regular ending on a stored first person, and the ending table lives in one module that an
+  invariant holds to being the only one.
+- **The past is still stored per verb.** A rule for the third person of the simple past was
+  considered and is wrong for too many common verbs to be a rule.
+- **No pronunciation is scored.** The voice setting changes who reads; it does not change what
+  ADR-018 says about listening to a learner.
+
+### Known limitations, stated plainly
+
+1. **`olema` has no derived present, so on a keyless deployment its entry shows five forms and the
+   conditional.** The one verb every sentence needs is the one the rule cannot reach, and its `on`
+   arrives with the first Ekilex enrichment. A deployment with a key gets it the first time anybody
+   opens the entry.
+2. **The plural imperative and the impersonal are not derived.** Both are built on the `da`-stem,
+   which changes vowel in ways a rule over the seed would have to guess at (`süüa` to `sööge`).
+3. **Autoplay obeys the browser's own policy.** A page nobody has touched yet may not play sound, so
+   the very first card of a session opened from a cold tab keeps its speaker button and waits for a
+   press; every card after it reads itself.
