@@ -1152,6 +1152,48 @@ open first, and a phone reaches every place a desktop does. `icon()` falling bac
 why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
 before a screenshot caught them.
 
+**A letter lying on a page has a character, and the room it has is along the edge it hangs off.**
+õ, ä, ö and ü are the four letters an English keyboard has no key for, which is the most concrete
+thing there is about writing Estonian, so they are what this app decorates itself with. Four of them
+are tucked over the sides of the case explorer and they wandered three or four pixels towards the
+card over ten seconds, which is a page that is technically alive and reads as still: you have to
+watch one for several seconds to be sure it moved. The reason it was that small is that the wander
+was pointed the one way there is nothing to spend, since a letter on a top edge has about four
+pixels before it is sitting on a word.
+
+The room is **along** the edge. A letter on the top edge can slide most of the width of the card
+without coming a pixel nearer anything it could land on, so õ and ö travel 42 and 49px sideways now,
+ä and ü 56 and 43 up and down their own sides, and what crosses the edge is one to four pixels.
+Measured, at three widths, over twice the frames the suite asks for. The small budget goes on the
+rock and the squash instead, and `room` scales those per placement, because a rotated square is
+wider than its side and eight degrees on the tightest of the four costs more than fifteen on the one
+with a gutter under it.
+
+`lib/ux/letterMotion.ts` is the table of **four characters rather than one wander**: one ambles, one
+crouches and springs, one hangs and swings, one rolls. Four squares doing the same thing a second
+and a half apart is a mechanism, which is the thing the page is arguing it is not. The signs live in
+that module and never in the keyframes, because a keyframe cannot know which edge a letter is on and
+one written to reverse on x is a letter walking off the page the day somebody moves it to the left.
+
+**They answer a pointer, and the rule is the wander's rule.** Coming near one slides it towards the
+cursor along its free axis and settles it further onto the card; it never leans outward, since a
+letter that shied away from a pointer would leave the card at the exact moment somebody was looking
+at it. They stay `pointer-events-none` and `aria-hidden`. The lean is `transform` on a wrapper and
+the wander is `translate`, `rotate` and `scale` on the tile inside it, because a keyframe and a
+transition on one property is the keyframe winning and the pointer doing nothing. The tile is
+`absolute inset-0` rather than static, and that is load-bearing: every suite that measures whether
+something is inside its box skips an element that positions itself, and it reads the element rather
+than its ancestors, so a statically laid out tile inside a placed wrapper is walked as ordinary text
+lying across a card.
+
+Two invariants. Every character names keyframes the stylesheet declares and every declared set is
+named by a character, because an `animation-name` pointing at keyframes nobody wrote is not an error:
+it is a letter sitting perfectly still, looking exactly like one that was meant to. And a decorative
+letter is hidden, untouchable and placed, asserted on the one component, with no screen drawing its
+own. `components/LetterTile.tsx` is that component and `.letter-key` is the same idea where a letter
+is a control: the six keys that type õ, ä, ö, ü, š and ž grow under a pointer and shake once on the
+way in, which is the app's ornaments recognising its own keys.
+
 **Where you are is one pane, and under a pointer it arrives rather than travelling.**
 The rail and the phone bar used to say it by painting the row you arrived on and unpainting the one
 you left, which is two things happening at once and reads as two things: a light going out over
@@ -2027,7 +2069,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`, `teachingSentence`,
 `splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `lockDeck`, `caseReviewsFor`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
-`staleTimes`, `BadgeCheck`. Most of them now
+`staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

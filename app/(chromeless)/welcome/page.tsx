@@ -12,6 +12,7 @@ import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
 import { CaseExplorer, TutorPeek, type DemoWord } from "./LandingDemo";
+import { LetterTile } from "@/components/LetterTile";
 import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
@@ -24,7 +25,31 @@ export const metadata: Metadata = {
 /** The landing page is public and read-only, so it can be cached hard. */
 export const revalidate = 3600;
 
-const DEMO_LEMMAS = ["tuba", "raamat", "õppima"];
+/*
+  THE WORDS THE EXPLORER OFFERS, AND WHY THERE ARE SIX OF THEM.
+
+  Two, and one of them a verb that never rendered. `Cases` keeps only the words
+  with a derived case in them, which a verb has none of, so the card a visitor
+  actually met offered `tuba` and `raamat`: one word whose stem changes and one
+  whose stem does not. That is the claim of the whole section demonstrated
+  twice, and a reader pressing the second chip and getting the same answer
+  again learns that the card is a picture rather than a thing that works.
+
+  These six are picked for what each one does to its own stem, which is the
+  question a learner is really asking. `tuba` swaps its vowel and reads as a
+  different word. `raamat` does nothing at all and simply takes the endings.
+  `sõber` and `käsi` change under you, which is the case that frightens people.
+  `maja` has a genitive identical to its nominative, so pressing it answers
+  "does this always change" with a no. `öö` is two letters long and still has
+  eleven forms, which is the fact that makes the pattern look like a pattern
+  rather than like a long word being padded.
+
+  Every form under every one of them still comes out of the dictionary, and the
+  five stems each falls back to are copied from the seed. This list is a list
+  of requests, exactly as a syllabus unit is: a word the dictionary cannot
+  answer for is dropped by `Cases`, not invented.
+*/
+const DEMO_LEMMAS = ["tuba", "raamat", "sõber", "käsi", "maja", "öö"];
 
 export default async function WelcomePage() {
   const { words, stats } = await loadDemo();
@@ -198,7 +223,36 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     a column that reads as dropped rather than placed.
   */
   return (
-    <section className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
+    <section className="hero-screen relative mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
+      {/*
+        THREE MORE OF THEM, WITH NOTHING TO BE CAREFUL OF.
+
+        The set around the case card is placed to a tolerance of a pixel or
+        two, because it is tucked over a card full of words. Up here the column
+        is 768px inside a page that is not, so at `lg` there are two hundred
+        pixels of empty margin either side and the letters can do what they
+        like in it: forty pixels of travel, a full roll, and a lean that
+        follows a pointer on both axes rather than along one edge.
+
+        `lg` and up only, and that is the same reason rather than a different
+        one. Below it the margin is what the reading column needs, and a letter
+        drifting in it is a letter drifting across a sentence.
+      */}
+      <LetterTile
+        letter="ä" hue="mint" edge={null} character="tumble"
+        tilt={-13} travel={{ x: 26, y: -34 }} reach={420} pull={22}
+        className="left-[-5.5rem] top-[18%] hidden h-12 w-12 text-2xl lg:block xl:left-[-8rem] xl:h-14 xl:w-14"
+      />
+      <LetterTile
+        letter="ö" hue="butter" edge={null} character="hop"
+        tilt={16} travel={{ x: -20, y: -38 }} delay={0.9} reach={420} pull={22}
+        className="right-[-5rem] top-[34%] hidden h-11 w-11 text-xl lg:block xl:right-[-7.5rem] xl:h-14 xl:w-14 xl:text-2xl"
+      />
+      <LetterTile
+        letter="š" hue="accent" edge={null} character="swing"
+        tilt={-9} travel={{ x: 18, y: 30 }} delay={1.8} reach={420} pull={22}
+        className="bottom-[16%] left-[-3.5rem] hidden h-10 w-10 text-xl lg:block xl:left-[-6rem] xl:h-12 xl:w-12"
+      />
       {/*
         No badge over the headline. It read "for everyone who bounced off
         Estonian once already", which is the same sentiment as the heading one
@@ -348,8 +402,20 @@ function Cases({ words }: { words: DemoWord[] }) {
             than its side's margin, wander included, cannot touch a glyph
             whatever the reader presses: that is a property of the placement
             rather than a lucky gap, which matters because pressing a chip
-            changes how many rows the card has. Each of these reaches in by 12
-            to 20px and drifts at most 4px further.
+            changes how many rows the card has.
+
+            THE TRAVEL IS ALONG THE EDGE, WHICH IS WHERE THE ROOM IS. These
+            used to wander three or four pixels towards the card, because that
+            is the only direction anybody had thought to spend, and against a
+            17px margin there is nothing to spend: the movement was real and
+            invisible. A letter on the top edge can slide the better part of
+            the card's width without coming a pixel nearer anything it could
+            land on, so õ and ö now travel 26 and 30px sideways, ä and ü the
+            same up and down their own sides, and what crosses the edge is one
+            to three pixels. The rock and the squash are what the small budget
+            buys, and `room` is what scales them per letter: a rotated square
+            is wider than its side, so 8deg on the tightest of the four is
+            worth more than 15deg on the one with a gutter under it.
 
             The hang is bounded by the other end: the gutter is 20px at 640,
             and a rotated square is wider than its side, so 14deg on 40px puts
@@ -357,80 +423,40 @@ function Cases({ words }: { words: DemoWord[] }) {
             hanging inside the page's padding and being clipped against it, and
             it is why every letter is smaller below `md` than above it.
 
-            They are `pointer-events-none` and `aria-hidden`: an ornament that
+            EACH ONE MOVES DIFFERENTLY, and that is the point of there being
+            four characters in `lib/ux/letterMotion.ts` rather than one
+            keyframe with four delays on it. Four squares doing the same thing
+            a second and a half apart is a mechanism. õ ambles, ä crouches and
+            springs, ü rolls, ö hangs and swings.
+
+            AND THEY NOTICE A POINTER. Coming near one slides it along its own
+            edge towards the cursor and settles it further onto the card, which
+            is the same rule as the wander for the same reason. They are still
+            `pointer-events-none` and `aria-hidden`: an ornament that
             eats a tap on the card underneath it is a decoration doing
             something no decoration should, and the card underneath is the one
             interactive thing on this page.
-
-            `scripts/test-design.mjs` measures all of it at 640, 768 and 1280,
-            stepping each letter through twelve frames of its own wander rather
-            than reading it where it happens to rest: every letter over an
-            edge, none on a control, none past the page, and the slant still
-            there with the animation stopped.
-
-            One hue each, and the fourth takes butter because it is the hue
-            left: blush, mint and sky are spoken for and peach means "missed"
-            on every other screen in the app.
           */}
-          {/*
-            ONE SIZE FOR ALL FOUR, and one radius with it.
-
-            They were 40, 32, 28 and 32 across, and 56, 48, 40 and 36 above
-            `md`, which is a spread of two to one on the same ornament. Four
-            squares of four sizes around one card read as four attempts at the
-            same thing rather than as a set: the eye looks for the rule, does
-            not find one, and lands on the biggest as a mistake. Nothing was
-            deciding those numbers, which is exactly why they drifted apart.
-
-            THE ONE THEY ALL TOOK IS THE SMALL END OF THE OLD SPREAD, and that
-            is the geometry deciding rather than taste. Every letter's hang is
-            unchanged, so the reach onto the card is the size less the hang: a
-            bigger square is one that reaches further in, towards the nearest
-            run of text, and the tightest of those margins is 21px on the left.
-            Sizing the set at the widest of the old four would have put ü 24px
-            in at `md` against that 21px, which is the placement rule broken to
-            make the ornament tidy. At 32 and 40 the deepest reach in the set
-            is 20px, inside every margin, at every width, on both words the
-            explorer can show.
-
-            THE WANDER IS THE SAME DISTANCE AND HALF THE TIME. It moved 3 to
-            4px over nine to eleven seconds, which is a letter that is not
-            moving as far as anybody can tell. What it cannot do is travel
-            further: it only ever drifts inward, onto the card, so the amount
-            it can spend is the margin the paragraph above just accounted for.
-            Speed is the axis that is free. So the cycles are about half what
-            they were and the rock is a degree wider, which is visible at a
-            glance and costs the geometry a fifth of a pixel on the bounding
-            box.
-          */}
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -top-6 left-72 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-top-8 md:left-80 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg", "--drift-x": "2px", "--drift-y": "4px", "--drift-turn": "3deg", "--drift-time": "5.5s" } as React.CSSProperties}
-          >
-            õ
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -right-3 top-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:top-28 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "0.7s", "--float-tilt": "12deg", "--drift-x": "-4px", "--drift-y": "-3px", "--drift-turn": "2.6deg", "--drift-time": "4.8s" } as React.CSSProperties}
-          >
-            ä
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -left-3 bottom-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.5s", "--float-tilt": "-9deg", "--drift-x": "4px", "--drift-y": "-3px", "--drift-turn": "3deg", "--drift-time": "6.2s" } as React.CSSProperties}
-          >
-            ü
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -bottom-5 right-14 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-bottom-6 md:right-20 md:h-10 md:w-10 md:text-xl"
-            style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "2.2s", "--float-tilt": "15deg", "--drift-x": "-3px", "--drift-y": "-4px", "--drift-turn": "2.8deg", "--drift-time": "5.6s" } as React.CSSProperties}
-          >
-            ö
-          </span>
+          <LetterTile
+            letter="õ" hue="blush" edge="top" character="wander"
+            tilt={-7} travel={{ x: 26, y: 1 }} room={0.5} reach={280}
+            className="-top-6 left-72 z-20 hidden h-8 w-8 text-base sm:block md:-top-8 md:left-80 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ä" hue="mint" edge="right" character="hop"
+            tilt={12} travel={{ x: -3, y: -30 }} room={0.75} delay={0.7} reach={280}
+            className="-right-3 top-24 z-20 hidden h-8 w-8 text-base sm:block md:-right-6 md:top-28 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ü" hue="sky" edge="left" character="tumble"
+            tilt={-9} travel={{ x: 2, y: -28 }} room={0.6} delay={1.5} reach={280}
+            className="-left-3 bottom-24 z-20 hidden h-8 w-8 text-base sm:block md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ö" hue="butter" edge="bottom" character="swing"
+            tilt={15} travel={{ x: -30, y: -3 }} room={0.85} delay={2.2} reach={280}
+            className="-bottom-5 right-14 z-20 hidden h-8 w-8 text-base sm:block md:-bottom-6 md:right-20 md:h-10 md:w-10 md:text-xl"
+          />
 
           <CaseExplorer words={derivable} />
         </div>
@@ -982,6 +1008,25 @@ function FinalCta() {
           <span aria-hidden className="wash" style={{ background: "var(--wash-2)", width: 420, height: 420, top: -160, right: -80 }} />
           <span aria-hidden className="wash" style={{ background: "var(--wash-3)", width: 380, height: 380, bottom: -200, left: -60, opacity: 0.5 }} />
 
+          {/*
+            Two more, in the panel's own corners rather than over its edges.
+
+            The panel clips, so a letter in a corner of it is a letter that
+            cannot reach anything: it is the one place on this page where the
+            geometry costs nothing at all. `md` and up, because the padding
+            below that is 24px and these would be sitting on the heading.
+          */}
+          <LetterTile
+            letter="õ" hue="blush" edge={null} character="wander"
+            tilt={-15} travel={{ x: 22, y: 26 }} reach={360} pull={18}
+            className="left-6 top-7 hidden h-11 w-11 text-xl md:block"
+          />
+          <LetterTile
+            letter="ü" hue="sky" edge={null} character="tumble"
+            tilt={13} travel={{ x: -24, y: -22 }} delay={1.3} reach={360} pull={18}
+            className="bottom-8 right-7 hidden h-11 w-11 text-xl md:block"
+          />
+
           <div className="relative">
             <MascotWatch size={68} mood="cheer" className="float mx-auto" />
             {/*
@@ -1155,6 +1200,14 @@ const FALLBACK_STEMS = [
     nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
   { lemma: "raamat",
     nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
+  { lemma: "sõber",
+    nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade" },
+  { lemma: "käsi",
+    nomSg: "käsi", genSg: "käe", partSg: "kätt", partPl: "käsi", genPl: "käte" },
+  { lemma: "maja",
+    nomSg: "maja", genSg: "maja", partSg: "maja", partPl: "maju", genPl: "majade" },
+  { lemma: "öö",
+    nomSg: "öö", genSg: "öö", partSg: "ööd", partPl: "öid", genPl: "ööde" },
 ] as const;
 
 const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({

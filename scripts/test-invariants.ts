@@ -29,6 +29,7 @@ import { CASES } from "../lib/estonian/cases";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
+import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
@@ -5664,6 +5665,97 @@ check("nothing caches a learner's own rows in the dictionary's cache", () => {
     "lib/dict/facts.ts names an ownerId. It caches across requests and across "
     + "learners, so anything scoped to a person served from here is served to "
     + "everybody. Use cache() from react, which is scoped to one request.",
+  );
+});
+
+/**
+ * A LETTER MOVES THE WAY ONE TABLE SAYS, AND THE CSS BEHIND IT EXISTS.
+ *
+ * `lib/ux/letterMotion.ts` names a set of keyframes per character and
+ * `app/globals.css` declares them, which is two files that have to agree about
+ * four strings. Getting that wrong is the quietest possible failure: an
+ * `animation-name` naming keyframes nobody wrote is not an error, it is an
+ * animation that does nothing, so the letter sits perfectly still and looks
+ * exactly like a letter that was meant to. Nothing on a screen says which.
+ *
+ * Both directions, because both are real. A character pointing at keyframes
+ * that were renamed is the one above. A keyframe set nobody points at is the
+ * other half of a rename, left behind, and the next person reads it as live.
+ */
+check("every way a letter moves is declared in both the table and the stylesheet", () => {
+  const css = code(join("app", "globals.css"));
+  const declared = new Set(
+    [...css.matchAll(/@keyframes\s+(letter-[\w-]+)/g)].map((m) => m[1]!),
+  );
+  // The shake a key does under a pointer belongs to the control rather than to
+  // a character, so it is declared and deliberately unnamed by the table.
+  declared.delete("letter-wiggle");
+
+  const asked = new Set(LETTER_CHARACTERS.map((c) => c.keyframes));
+  const missing = [...asked].filter((k) => !declared.has(k));
+  const orphaned = [...declared].filter((k) => !asked.has(k));
+
+  assert.deepEqual(
+    missing, [],
+    "a letter character names keyframes app/globals.css does not declare. The "
+    + "animation silently does nothing and the letter is simply still.",
+  );
+  assert.deepEqual(
+    orphaned, [],
+    "app/globals.css declares letter keyframes no character asks for, which is "
+    + "half of a rename left behind for somebody to read as live.",
+  );
+
+  /*
+    And every one of them spends the budget it was handed rather than a number
+    somebody typed. A keyframe with a literal pixel in its `translate` is a
+    letter that ignores the room its caller measured, which is how one ends up
+    on a word at the one width nobody screenshotted.
+  */
+  for (const name of asked) {
+    const at = css.indexOf(`@keyframes ${name}`);
+    const body = css.slice(at, css.indexOf("\n}", at));
+    assert.ok(
+      !/translate:[^;]*\b\d+px/.test(body.replace(/var\(--drift-[\w-]+,\s*0px\)/g, "")),
+      `@keyframes ${name} moves a letter by a typed distance rather than by the `
+      + "travel its caller measured. See lib/ux/letterMotion.ts.",
+    );
+  }
+});
+
+/**
+ * A LETTER LYING ON A PAGE IS A DECORATION, EVERYWHERE IT IS DRAWN.
+ *
+ * Three properties, and each one has a screen behind it. `aria-hidden`,
+ * because a reader hearing "õ ä ö ü" read out in the middle of a sentence
+ * about the partitive has been handed noise. `pointer-events-none`, because
+ * these hang over the one interactive thing on the landing page and an
+ * ornament that eats a tap is a decoration doing something no decoration
+ * should. And both elements position themselves, which is what every suite
+ * that measures whether something is inside its box reads before deciding the
+ * thing was put where it is on purpose.
+ *
+ * Asserted on the component rather than on the pages, because there is one
+ * component now: the second half of this is that no page draws its own.
+ */
+check("a decorative letter is hidden, untouchable and placed", () => {
+  const tile = code("components/LetterTile.tsx");
+  for (const [what, pattern] of [
+    ["aria-hidden", /aria-hidden/],
+    ["pointer-events-none", /pointer-events-none/],
+    ["a placed wrapper", /className=\{`letter-lean pointer-events-none absolute/],
+    ["a placed tile", /className="drift absolute inset-0/],
+  ] as const) {
+    assert.match(tile, pattern, `components/LetterTile.tsx no longer carries ${what}`);
+  }
+
+  const strays = [...APP, ...COMPONENTS]
+    .filter((f) => f !== "components/LetterTile.tsx")
+    .filter((f) => /className="[^"]*\bdrift\b/.test(code(f)));
+  assert.deepEqual(
+    strays, [],
+    "a screen draws its own drifting letter instead of using components/LetterTile.tsx, "
+    + "which is where the three properties above and the pointer listener live",
   );
 });
 
