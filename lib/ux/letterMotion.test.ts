@@ -115,15 +115,9 @@ describe("answering a pointer", () => {
     expect(Math.abs(lean.turn)).toBeLessThanOrEqual(9);
   });
 
-  it("follows the pointer on both axes where a letter has room on every side", () => {
-    const lean = leanFor({ edge: null, pointer: { x: 560, y: 360 }, centre, reach: 300, pull: 14 });
-    expect(lean.x).toBeGreaterThan(0);
-    expect(lean.y).toBeGreaterThan(0);
-  });
-
   it("comes alive near rather than everywhere, which is what squaring buys", () => {
-    const far = leanFor({ edge: null, pointer: { x: 660, y: 300 }, centre, reach: 200, pull: 14 });
-    const near = leanFor({ edge: null, pointer: { x: 520, y: 300 }, centre, reach: 200, pull: 14 });
+    const far = leanFor({ edge: "top", pointer: { x: 660, y: 300 }, centre, reach: 200, pull: 14 });
+    const near = leanFor({ edge: "top", pointer: { x: 520, y: 300 }, centre, reach: 200, pull: 14 });
     expect(Math.abs(far.x)).toBeLessThan(Math.abs(near.x));
   });
 });

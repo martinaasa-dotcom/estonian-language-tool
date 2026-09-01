@@ -226,7 +226,9 @@ Small, physical, and never blocking:
   watches it arrive.
 - `.fade-up`, `.pop-in`: entrances for content that has just arrived (a flipped card, a summary).
 - `.float`: the mascot's bob, six seconds up and down.
-- `.drift` and `.letter-lean`: the loose letters, on the landing page, on sign-in and on first run.
+- `.drift` and `.letter-lean`: the four letters tucked over the sides of the landing page's case
+  explorer, and nowhere else. They belong to that card because its contents are the letters
+  themselves; one drifting in the margin beside a headline is a decoration that has come loose.
   Four characters rather than one wander, declared in `lib/ux/letterMotion.ts` and drawn by
   `components/LetterTile.tsx`: one ambles, one crouches and springs, one hangs and swings, one
   rolls. No two share a period, so a set of them falls back into step about once an hour.

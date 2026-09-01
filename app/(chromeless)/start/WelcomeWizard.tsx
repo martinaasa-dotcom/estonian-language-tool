@@ -10,7 +10,6 @@ import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { Button } from "@/components/Button";
 import { LetterBarScope, LetterSample } from "@/components/DiacriticBar";
 import { Mascot } from "@/components/brand";
-import { LetterTile } from "@/components/LetterTile";
 import { icon } from "@/components/icons";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
@@ -230,29 +229,10 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
         <span className="wash" style={{ background: "var(--wash-2)", width: 480, height: 480, bottom: -240, right: -160, opacity: 0.6 }} />
       </div>
 
-      {/*
-        The letters follow somebody in from the landing page.
-
-        First run is four screens of questions and it is the first thing a new
-        learner meets, so it gets the same two ornaments the sign-in card has,
-        for the same reason: the app that talked them into this is the app they
-        are now filling a form in. `lg` here rather than `sm`, because this
-        card is 672px wide and the margin beside it only opens up later.
-      */}
       <div
         className="pop-in relative mx-auto w-full max-w-2xl rounded-[var(--r-xl)] border p-7 md:p-10"
         style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow-lg)" }}
       >
-        <LetterTile
-          letter="ö" hue="butter" edge="left" character="swing"
-          tilt={-14} travel={{ x: 2, y: -24 }} reach={320}
-          className="-left-12 top-20 hidden h-11 w-11 text-xl lg:block xl:-left-16"
-        />
-        <LetterTile
-          letter="ü" hue="sky" edge="right" character="wander"
-          tilt={12} travel={{ x: -2, y: -28 }} delay={1.4} reach={320}
-          className="-right-11 bottom-20 hidden h-10 w-10 text-lg lg:block xl:-right-16"
-        />
         <div className="mb-8 flex items-center gap-4">
           <Mascot size={44} className="float shrink-0" />
           <div className="min-w-0 flex-1">

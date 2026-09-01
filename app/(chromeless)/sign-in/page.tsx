@@ -5,7 +5,6 @@ import { resolveOperator } from "@/lib/legal/operator";
 import { Note } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { MascotWatch } from "@/components/MascotWatch";
-import { LetterTile } from "@/components/LetterTile";
 import { SignInForm } from "./SignInForm";
 
 export const metadata = { title: "Sign in" };
@@ -57,25 +56,6 @@ export default async function SignInPage({ searchParams }: {
       </div>
 
       <div className="relative w-full max-w-[440px]">
-        {/*
-          Two letters in the margin beside the card.
-
-          The same ornament the landing page carries, on the screen a learner
-          arrives at from it, so the two do not read as two different products.
-          They hang off the sides rather than the corners because this card is
-          440px inside a page that is at least 640 wherever they are drawn, and
-          `sm` is where that becomes true.
-        */}
-        <LetterTile
-          letter="õ" hue="blush" edge="left" character="tumble"
-          tilt={-12} travel={{ x: 2, y: -26 }} reach={300}
-          className="-left-9 top-28 hidden h-11 w-11 text-xl sm:block md:-left-14"
-        />
-        <LetterTile
-          letter="ä" hue="mint" edge="right" character="hop"
-          tilt={14} travel={{ x: -2, y: -22 }} delay={1.1} reach={300}
-          className="-right-8 bottom-24 hidden h-10 w-10 text-lg sm:block md:-right-14"
-        />
         <Link
           href="/welcome"
           className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60"

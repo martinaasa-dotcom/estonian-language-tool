@@ -110,9 +110,9 @@ export function inward(edge: LetterEdge): { x: number; y: number } {
 export interface LetterPlacement {
   /** Which character it moves with. */
   readonly character: LetterCharacter;
-  /** The edge it is tucked over, or null for a letter loose on a page.
-   *  It decides which way the second leg of the wander is allowed to go. */
-  readonly edge: LetterEdge | null;
+  /** The edge it is tucked over. It decides which way the second leg of the
+   *  wander is allowed to go. */
+  readonly edge: LetterEdge;
   /** Its resting slant, in degrees. Declared rather than animated, so a reader
    *  who asked for less motion still gets a set of tilted squares. */
   readonly tilt: number;
@@ -168,7 +168,6 @@ export function letterVars(p: LetterPlacement): Record<string, string> {
  * moves it to the left edge.
  */
 export function returnLeg(p: LetterPlacement): { x: number; y: number } {
-  if (p.edge === null) return { x: -p.travel.x * 0.55, y: -p.travel.y * 0.55 };
   const free = freeAxis(p.edge);
   return {
     x: free === "x" ? -p.travel.x * 0.55 : p.travel.x * 0.4,
@@ -201,16 +200,13 @@ export const NO_LEAN: Lean = { x: 0, y: 0, turn: 0 };
  * looking at it, and one that leant towards a pointer on both axes would hang
  * off the edge of the page on the letters that have no gutter left.
  *
- * `edge` of null is a letter loose on a page with room on every side, which is
- * the hero and the closing panel. Those follow the pointer on both axes.
- *
  * Nearness is squared on purpose. Linear falloff means every letter within
  * half a screen is visibly displaced all the time, which reads as a page that
  * has been knocked askew. Squared, a letter is at rest until the pointer is
  * genuinely near it, and then it moves quickly.
  */
 export function leanFor(opts: {
-  edge: LetterEdge | null;
+  edge: LetterEdge;
   pointer: { x: number; y: number };
   centre: { x: number; y: number };
   /** How near the pointer has to be before anything happens. */
@@ -225,12 +221,6 @@ export function leanFor(opts: {
 
   const near = (1 - distance / opts.reach) ** 2;
   const cap = (v: number, limit: number) => Math.max(-limit, Math.min(limit, v));
-
-  if (opts.edge === null) {
-    const x = cap(dx * near * 0.6, opts.pull);
-    const y = cap(dy * near * 0.6, opts.pull);
-    return { x: round(x), y: round(y), turn: round(cap((x / opts.pull) * 9, 9)) };
-  }
 
   const along = freeAxis(opts.edge) === "x" ? dx : dy;
   const slide = cap(along * near * 0.6, opts.pull);

@@ -1192,7 +1192,15 @@ it is a letter sitting perfectly still, looking exactly like one that was meant 
 letter is hidden, untouchable and placed, asserted on the one component, with no screen drawing its
 own. `components/LetterTile.tsx` is that component and `.letter-key` is the same idea where a letter
 is a control: the six keys that type õ, ä, ö, ü, š and ž grow under a pointer and shake once on the
-way in, which is the app's ornaments recognising its own keys.
+way in, which is the app's ornament recognising its own keys.
+
+**And they are the case card's, not the page's.** A set was tried in the landing page's own margins,
+where the reading column does not reach and a letter can travel forty pixels and roll right over.
+It is more room and it is the wrong room: these letters belong to the one object on the page whose
+contents are the letters themselves, and one drifting in the margin beside a headline reads as a
+decoration that has come loose rather than as one that was placed. `edge` is required on the tile
+for that reason, which is also what deletes the branch of `leanFor` that could move a letter on both
+axes at once.
 
 **Where you are is one pane, and under a pointer it arrives rather than travelling.**
 The rail and the phone bar used to say it by painting the row you arrived on and unpainting the one

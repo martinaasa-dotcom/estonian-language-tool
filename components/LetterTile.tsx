@@ -6,7 +6,7 @@ import {
 } from "@/lib/ux/letterMotion";
 
 /**
- * ONE OF THE FOUR LETTERS AN ENGLISH KEYBOARD HAS NOT GOT, LOOSE ON A PAGE.
+ * ONE OF THE FOUR LETTERS AN ENGLISH KEYBOARD HAS NOT GOT, TUCKED OVER A CARD.
  *
  * The ornament that was four spans of Tailwind on the landing page and is now
  * one component, because the moment they answer a pointer they need a listener
@@ -18,6 +18,14 @@ import {
  * so a lean written onto the same element as the wander is a lean that never
  * happens. See `app/globals.css` for the pairing and why the suite that guards
  * the placement can still see both halves of it.
+ *
+ * IT IS ALWAYS TUCKED OVER AN EDGE, and the type says so rather than the
+ * comment. A letter with room on every side was tried, out in the landing
+ * page's margins where the reading column does not reach, and it is not what
+ * this ornament is: these belong to the card whose contents are the letters
+ * themselves, and one drifting in the margin beside a headline is a decoration
+ * that has come loose. So `edge` is not optional, which is what deletes the
+ * branch of `leanFor` that could move a letter on both axes at once.
  *
  * IT MEASURES ITSELF ONCE, NOT ON EVERY MOVE. `getBoundingClientRect` in a
  * pointermove handler is a forced layout per event per letter, which is the
@@ -79,9 +87,9 @@ export function LetterTile({
   /** Which hue it wears. Peach is not on the list: it means "missed" on every
    *  other screen in the app and a decoration may not spend it. */
   hue: LetterHue;
-  /** The edge of the thing it is tucked over, or null for a letter with room
-   *  on every side. It decides which way it may travel and which way it leans. */
-  edge: LetterEdge | null;
+  /** The edge of the thing it is tucked over. It decides which way it may
+   *  travel and which way it leans. */
+  edge: LetterEdge;
   /** Which of the four ways of moving. See lib/ux/letterMotion.ts. */
   character: string;
   /** Its resting slant, in degrees. */

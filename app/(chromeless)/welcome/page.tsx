@@ -26,30 +26,35 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 /*
-  THE WORDS THE EXPLORER OFFERS, AND WHY THERE ARE SIX OF THEM.
+  THE WORDS THE EXPLORER OFFERS, AND WHY THEY ARE THE ODD ONES.
 
   Two, and one of them a verb that never rendered. `Cases` keeps only the words
   with a derived case in them, which a verb has none of, so the card a visitor
   actually met offered `tuba` and `raamat`: one word whose stem changes and one
-  whose stem does not. That is the claim of the whole section demonstrated
-  twice, and a reader pressing the second chip and getting the same answer
-  again learns that the card is a picture rather than a thing that works.
+  whose stem does not. That is the section's claim demonstrated twice, and a
+  reader pressing the second chip and getting the same answer again learns that
+  the card is a picture rather than a thing that works.
 
-  These six are picked for what each one does to its own stem, which is the
-  question a learner is really asking. `tuba` swaps its vowel and reads as a
-  different word. `raamat` does nothing at all and simply takes the endings.
-  `sõber` and `käsi` change under you, which is the case that frightens people.
-  `maja` has a genitive identical to its nominative, so pressing it answers
-  "does this always change" with a no. `öö` is two letters long and still has
-  eleven forms, which is the fact that makes the pattern look like a pattern
-  rather than like a long word being padded.
+  THE FIVE ARE PICKED FOR WHERE THE STEM GOES STRANGE, because that is the
+  objection this card exists to answer. Nobody doubts that endings stack onto
+  `raamat`. What stops people is the word whose genitive they would never have
+  guessed, and the honest answer is that the endings are regular anyway: learn
+  the three and the other eleven follow off the second of them, however little
+  it looks like the first.
+
+  `raamat` is the baseline and does nothing at all. `tuba` swaps its vowel and
+  comes out `toa`. `sõber` is the one where the two stems disagree with each
+  other, `sõbra` against `sõpra`, so even the three you memorise are not one
+  stem. `käsi` goes to `käe`, which shares two letters with the word you looked
+  up. `mees` turns its s into an h. Every one of those is a word a beginner
+  meets in their first month, which is the point: these are not curiosities.
 
   Every form under every one of them still comes out of the dictionary, and the
-  five stems each falls back to are copied from the seed. This list is a list
-  of requests, exactly as a syllabus unit is: a word the dictionary cannot
-  answer for is dropped by `Cases`, not invented.
+  five stems each falls back to are copied from the seed. This list is a list of
+  requests, exactly as a syllabus unit is: a word the dictionary cannot answer
+  for is dropped by `Cases`, not invented.
 */
-const DEMO_LEMMAS = ["tuba", "raamat", "sõber", "käsi", "maja", "öö"];
+const DEMO_LEMMAS = ["tuba", "raamat", "sõber", "käsi", "mees"];
 
 export default async function WelcomePage() {
   const { words, stats } = await loadDemo();
@@ -223,36 +228,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     a column that reads as dropped rather than placed.
   */
   return (
-    <section className="hero-screen relative mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
-      {/*
-        THREE MORE OF THEM, WITH NOTHING TO BE CAREFUL OF.
-
-        The set around the case card is placed to a tolerance of a pixel or
-        two, because it is tucked over a card full of words. Up here the column
-        is 768px inside a page that is not, so at `lg` there are two hundred
-        pixels of empty margin either side and the letters can do what they
-        like in it: forty pixels of travel, a full roll, and a lean that
-        follows a pointer on both axes rather than along one edge.
-
-        `lg` and up only, and that is the same reason rather than a different
-        one. Below it the margin is what the reading column needs, and a letter
-        drifting in it is a letter drifting across a sentence.
-      */}
-      <LetterTile
-        letter="ä" hue="mint" edge={null} character="tumble"
-        tilt={-13} travel={{ x: 26, y: -34 }} reach={420} pull={22}
-        className="left-[-5.5rem] top-[18%] hidden h-12 w-12 text-2xl lg:block xl:left-[-8rem] xl:h-14 xl:w-14"
-      />
-      <LetterTile
-        letter="ö" hue="butter" edge={null} character="hop"
-        tilt={16} travel={{ x: -20, y: -38 }} delay={0.9} reach={420} pull={22}
-        className="right-[-5rem] top-[34%] hidden h-11 w-11 text-xl lg:block xl:right-[-7.5rem] xl:h-14 xl:w-14 xl:text-2xl"
-      />
-      <LetterTile
-        letter="š" hue="accent" edge={null} character="swing"
-        tilt={-9} travel={{ x: 18, y: 30 }} delay={1.8} reach={420} pull={22}
-        className="bottom-[16%] left-[-3.5rem] hidden h-10 w-10 text-xl lg:block xl:left-[-6rem] xl:h-12 xl:w-12"
-      />
+    <section className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
       {/*
         No badge over the headline. It read "for everyone who bounced off
         Estonian once already", which is the same sentiment as the heading one
@@ -1008,25 +984,6 @@ function FinalCta() {
           <span aria-hidden className="wash" style={{ background: "var(--wash-2)", width: 420, height: 420, top: -160, right: -80 }} />
           <span aria-hidden className="wash" style={{ background: "var(--wash-3)", width: 380, height: 380, bottom: -200, left: -60, opacity: 0.5 }} />
 
-          {/*
-            Two more, in the panel's own corners rather than over its edges.
-
-            The panel clips, so a letter in a corner of it is a letter that
-            cannot reach anything: it is the one place on this page where the
-            geometry costs nothing at all. `md` and up, because the padding
-            below that is 24px and these would be sitting on the heading.
-          */}
-          <LetterTile
-            letter="õ" hue="blush" edge={null} character="wander"
-            tilt={-15} travel={{ x: 22, y: 26 }} reach={360} pull={18}
-            className="left-6 top-7 hidden h-11 w-11 text-xl md:block"
-          />
-          <LetterTile
-            letter="ü" hue="sky" edge={null} character="tumble"
-            tilt={13} travel={{ x: -24, y: -22 }} delay={1.3} reach={360} pull={18}
-            className="bottom-8 right-7 hidden h-11 w-11 text-xl md:block"
-          />
-
           <div className="relative">
             <MascotWatch size={68} mood="cheer" className="float mx-auto" />
             {/*
@@ -1204,10 +1161,8 @@ const FALLBACK_STEMS = [
     nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade" },
   { lemma: "käsi",
     nomSg: "käsi", genSg: "käe", partSg: "kätt", partPl: "käsi", genPl: "käte" },
-  { lemma: "maja",
-    nomSg: "maja", genSg: "maja", partSg: "maja", partPl: "maju", genPl: "majade" },
-  { lemma: "öö",
-    nomSg: "öö", genSg: "öö", partSg: "ööd", partPl: "öid", genPl: "ööde" },
+  { lemma: "mees",
+    nomSg: "mees", genSg: "mehe", partSg: "meest", partPl: "mehi", genPl: "meeste" },
 ] as const;
 
 const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
