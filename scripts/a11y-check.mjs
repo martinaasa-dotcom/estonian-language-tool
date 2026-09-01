@@ -159,8 +159,13 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   330 rather than 339, for the reason the containment suite gives at its own
   floor: `/guide` is gone and it was one of the routes this walks. Nine checks,
   counted off the route list rather than off a run.
+
+  And 303 rather than 330: the placement ladder, the homework list and the
+  class week were cut as not being learning, three routes at nine checks
+  each. The run before the cut counted 335 and the run after it 308, which
+  is the same twenty-seven, and the floor keeps the five it always sat under.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 330 });
+const { check, absent, done } = suite("Accessibility", { floor: 303 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
