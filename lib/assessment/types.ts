@@ -90,6 +90,16 @@ export interface WriteItem extends ItemBase {
   targetForm: string;
   /** Every other form of the word, so a near miss can be named as one. */
   otherForms: readonly string[];
+  /**
+   * Why the sentence wanted that form, in the same words the reading gap uses.
+   *
+   * The screen used to answer "why that form" with the sentence put back
+   * together and nothing else, which tells a learner what the answer was and
+   * not what they got wrong. It is the same `explainGap` string the multiple
+   * choice version of this task shows, because the two are one task typed and
+   * chosen and two explanations of it would drift.
+   */
+  because: string;
 }
 
 /** Say it, hear it back beside a native voice, judge for yourself. */

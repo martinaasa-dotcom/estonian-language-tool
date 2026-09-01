@@ -118,8 +118,9 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
             and C1 by the authority that sets them. This is half an hour in an app.
           </li>
           <li>
-            Not a measurement of your speaking. Nothing here can score a recording honestly, so the
-            speaking line is your own judgement and is kept out of the level entirely.
+            Not a measurement of your speaking. Nothing here can score how you say Estonian
+            honestly, so the speaking line is how confident you said you felt and is kept out of
+            the level entirely.
           </li>
           <li>
             Not a measurement of conversation. Nothing in this app talks back to you at real speed,
@@ -127,8 +128,8 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
             is spoken.
           </li>
           <li>
-            Built from this dictionary. The words came from the same set the rest of the app teaches
-            from, which is broad but not the whole language.
+            Built from this dictionary. Every word and sentence came from Ekilex and the same set
+            the rest of the app teaches from, which is broad but not the whole language.
           </li>
         </ul>
       </Card>

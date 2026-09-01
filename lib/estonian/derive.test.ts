@@ -154,3 +154,61 @@ describe("reading stems off what a caller happens to hold", () => {
     expect(caseAnswer(stems, "ILLATIVE")?.value).toBe("tuppa");
   });
 });
+
+describe("the illative, which is the one case with two answers", () => {
+  it("prefers the stored short illative to the one the rule would build", () => {
+    const tuba = buildCaseTable({
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    });
+    const ill = tuba.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("tuppa");
+    expect(ill.origin).toBe("STORED");
+  });
+
+  it("keeps the plural regular, since only the singular has a short form", () => {
+    const tuba = buildCaseTable({
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    });
+    expect(tuba.find((r) => r.spec.key === "ILLATIVE")!.plural).toBe("tubadesse");
+  });
+
+  it("derives it where the dictionary holds no short form", () => {
+    const raamat = buildCaseTable({
+      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", illSgShort: null,
+    });
+    const ill = raamat.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("raamatusse");
+    expect(ill.origin).toBe("DERIVED");
+  });
+
+  it("ignores a short form that is a word the learner already has", () => {
+    // `sõber` records `sõpra`, which is also its partitive. Promoting it would
+    // print one word twice under two names and hide the form somebody writing
+    // a sentence needs.
+    const sober = buildCaseTable({
+      nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade",
+      illSgShort: "sõpra",
+    });
+    const ill = sober.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("sõbrasse");
+    expect(ill.origin).toBe("DERIVED");
+  });
+
+  /*
+    The other half of the line above: not leading with it is a decision about
+    the screen, and a marker has no business inheriting it. Ekilex records
+    `sõpra` as this word's short illative, so somebody who types it has given
+    a right answer to the question that was asked.
+  */
+  it("still accepts the short form it declined to lead with", () => {
+    const sober = {
+      nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru",
+      genPl: "sõprade", illSgShort: "sõpra",
+    };
+    const answer = caseAnswer(sober, "ILLATIVE");
+    expect(answer?.value).toBe("sõbrasse");
+    expect(answer?.accepted).toContain("sõpra");
+  });
+});

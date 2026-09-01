@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check, Ear, Volume2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Ear, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Recorder } from "@/components/Recorder";
 import { Speak } from "@/components/Speak";
 import { Chip, Note } from "@/components/ui";
 import { BLANK } from "@/lib/estonian/cloze";
@@ -41,12 +40,22 @@ const WORD_TONE: Record<WordStatus, { background: string; color: string; title: 
   extra: { background: "var(--raised)", color: "var(--ink-3)", title: "Not in the sentence" },
 };
 
-/** The provenance line. Every Estonian string on screen says where it is from. */
+/**
+ * The provenance line. Every Estonian string on screen says where it is from.
+ *
+ * "From the dictionary" was true and told a learner nothing: whose dictionary,
+ * and why should they believe it over the teacher who told them `kallis` also
+ * means dear? Both sources are named, because they are the two this app is
+ * built on and neither is ours. Ekilex is the Institute of the Estonian
+ * Language's own database, which is the authority a class would cite, and the
+ * English glosses come from Wiktionary. A source a reader can go and check is
+ * the difference between a claim and a citation.
+ */
 const SOURCE_LABEL: Record<Item["source"], string> = {
-  dictionary: "From the dictionary",
-  ekilex: "A form from Ekilex",
-  derived: "Worked out from the genitive stem",
-  usage: "A sentence recorded by a lexicographer",
+  dictionary: "From Kodukeel's dictionary, built from Ekilex and Wiktionary",
+  ekilex: "A form from Ekilex, the Institute of the Estonian Language's database",
+  derived: "Worked out from the genitive stem, by rule rather than by guess",
+  usage: "A sentence recorded by a lexicographer, from Ekilex",
 };
 
 /**
@@ -301,12 +310,16 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
             autoFocus
             onEnter={() => setMark(gradeDictation(item, typed))}
           />
-          <div className="mt-4 flex flex-wrap gap-3">
+          {/*
+            No "skip this one". A placement check is fifteen questions for a
+            beginner and every one of them is load bearing, so a skip is a hole
+            under the number rather than a blank in the report. Leaving the box
+            empty and pressing Check is still available and is honest: it marks
+            nothing wrong that was not, and it counts.
+          */}
+          <div className="mt-4">
             <Button variant="primary" size="lg" onClick={() => setMark(gradeDictation(item, typed))}>
               Check
-            </Button>
-            <Button variant="ghost" onClick={() => onAnswer({ credit: 0, skipped: true })}>
-              Skip this one
             </Button>
           </div>
         </div>
@@ -353,9 +366,16 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
   return (
     <div>
       <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.question}</p>
-      <p className="mt-2 text-lg" style={{ color: "var(--ink-2)" }}>
+      {/*
+        The word and what it means, with the gap between them drawn rather than
+        typed. A bold Estonian word butted up against the English after it read
+        as one run ("kaartmeans map, card") on the screen this was reported
+        from, because a single space between two spans at two weights is not a
+        gap anybody can see. `gap-2` is a gap the layout owns.
+      */}
+      <p className="mt-2 flex flex-wrap items-baseline gap-2 text-lg" style={{ color: "var(--ink-2)" }}>
         <span lang="et" className="font-bold" style={{ color: "var(--ink)" }}>{item.lemma}</span>
-        <span className="text-base" style={{ color: "var(--ink-3)" }}> means {item.translation}</span>
+        <span className="text-base" style={{ color: "var(--ink-3)" }}>means {item.translation}</span>
       </p>
 
       <EstonianPrompt text={item.sentence} />
@@ -375,12 +395,9 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
             Checked directly against the word a lexicographer put in this sentence, so no AI is
             involved, and none is needed.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-4">
             <Button variant="primary" size="lg" onClick={() => setMark(gradeWrite(item, text))}>
               Check
-            </Button>
-            <Button variant="ghost" onClick={() => onAnswer({ credit: 0, skipped: true })}>
-              Skip this one
             </Button>
           </div>
         </div>
@@ -388,12 +405,19 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
         <div className="pop-in mt-6">
           <Chip tone={mark.credit === 1 ? "good" : mark.credit > 0 ? "hard" : "again"}>{mark.note}</Chip>
           {/*
-            The sentence put back together is the answer to "why that form", so
-            it is what the screen shows rather than the form on its own.
+            The sentence put back together, and then why it wanted that word.
+            The sentence alone answers "what was it", which a learner who has
+            just been marked wrong can already see from the mark. What they
+            asked for is why `kaardilt` and not `kaart`, and that is the same
+            explanation the multiple choice version of this task prints, from
+            the same function, so the two cannot say different things.
           */}
           <p lang="et" className="mt-4 text-xl font-bold leading-snug" style={{ color: "var(--ink)" }}>
             {item.full}
           </p>
+          {mark.credit < 1 && (
+            <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.because}</p>
+          )}
           <Provenance source={item.source} />
           <Button variant="primary" size="lg" className="mt-5" autoFocus onClick={() => onAnswer({ credit: mark.credit })}>
             Next question
@@ -406,28 +430,44 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
 
 // ── Speaking ─────────────────────────────────────────────────────────────────
 
+/**
+ * How sure somebody feels about saying it, which is all this can honestly ask.
+ *
+ * These used to be four judgements of a recording ("Nothing like it", "A
+ * native would work out what I meant") because the screen recorded the learner
+ * and played it back beside a native voice for comparison. The recorder is
+ * gone, so the wording is too: a scale about a recording nobody made is a
+ * question with nothing behind it. What is left is the learner's own
+ * confidence, which is what the result already reports it as.
+ */
 const SELF_RATINGS = [
-  { value: 1, label: "Nothing like it", detail: "I could not get the sounds out." },
-  { value: 2, label: "Recognisable", detail: "A native would work out what I meant." },
-  { value: 3, label: "Close", detail: "The rhythm and the length are nearly right." },
-  { value: 4, label: "Confident", detail: "I would say that out loud to somebody." },
+  { value: 1, label: "Not at all", detail: "I would not attempt this out loud." },
+  { value: 2, label: "Hesitant", detail: "I could get it out, slowly and with mistakes." },
+  { value: 3, label: "Fairly sure", detail: "I would say it and expect to be understood." },
+  { value: 4, label: "Confident", detail: "I would say this to somebody without thinking about it." },
 ] as const;
 
 /**
  * Speaking, judged by the only person qualified to judge it here.
  *
  * There is no verified Estonian speech recogniser available to this app
- * (ADR-018), so nothing scores the recording. The learner hears a native
- * rendering, hears their own, and rates the comparison. That rating is reported
- * back to them as theirs and contributes nothing to the level, which the screen
- * says out loud rather than leaving to be discovered.
+ * (ADR-018), so nothing scores anything: `scripts/measure-asr.mjs` puts the
+ * best reachable one at a 14.6% word error rate on clean native audio, with
+ * its mistakes landing on consonant length and word boundaries, which is
+ * exactly where an Estonian learner is weakest. A transcript like that would
+ * report correct pronunciation as an error four times in five.
+ *
+ * **So the recorder is gone.** It was there so a learner could play their own
+ * attempt beside a native rendering and compare, which sounds useful and was
+ * not: the two clips play one after the other rather than together, nobody
+ * hears their own accent the way somebody else does, and the app was asking
+ * for a microphone permission and a recording in exchange for a rating it then
+ * threw away for scoring purposes anyway. What is left is the honest version
+ * of the same question. Hear it said properly, and say how confident you are
+ * that you could say it. That answer is reported back as the learner's own and
+ * contributes nothing to the level, which the screen says out loud.
  */
 export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (answer: Answer) => void }) {
-  const [recorded, setRecorded] = useState(false);
-  const startedAt = useRef(Date.now());
-
-  useEffect(() => { setRecorded(false); startedAt.current = Date.now(); }, [item.id]);
-
   return (
     <div>
       <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>{item.question}</p>
@@ -437,7 +477,7 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
         {item.et}
       </p>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-5">
         <Speak
           text={item.et}
           label="Hear a native voice say it"
@@ -445,16 +485,20 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
           className="flex min-h-[44px] items-center gap-2 rounded-full px-4"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         />
-        <Recorder onRecorded={() => setRecorded(true)} />
       </div>
 
       <Note tone="neutral">
-        Nothing here scores your pronunciation, and nothing you record ever leaves this device.
-        There is no Estonian speech recognition we can honestly trust, so your own rating is what
-        gets recorded. It is marked as yours, and it never moves your level.
+        Nothing here can grade how you say it. The speech recognisers we tested get Estonian
+        consonant length and word boundaries wrong often enough that they would mark good
+        pronunciation as a mistake, and being told you are wrong when you are right is worse than
+        being told nothing. Until that changes, this part asks you instead. Your answer is recorded
+        as yours, and it never moves your level.
       </Note>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+      <p className="mt-5 text-base font-semibold" style={{ color: "var(--ink)" }}>
+        How confident are you saying this out loud?
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {SELF_RATINGS.map((rating) => (
           <button
             key={rating.value}
@@ -466,18 +510,6 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
             <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{rating.detail}</span>
           </button>
         ))}
-      </div>
-
-      <div className="mt-4 flex items-center gap-3">
-        <Button variant="ghost" onClick={() => onAnswer({ credit: 0, skipped: true })}>
-          Skip speaking
-        </Button>
-        {!recorded && (
-          <span className="text-xs" style={{ color: "var(--ink-3)" }}>
-            <Volume2 size={13} className="mr-1 inline" aria-hidden />
-            Record yourself first if you want the comparison to mean anything.
-          </span>
-        )}
       </div>
     </div>
   );

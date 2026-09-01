@@ -96,8 +96,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   numbers are on the same screen, with their sources named.
 - **Setup that teaches the app.** First run asks what you are here for before it asks which level,
   offers to measure you rather than making you guess, shows the timeline before you have picked a
-  single word, and walks through every screen along with an equally long list of what this app
-  cannot do. That list is kept at `/guide`.
+  single word, and says in one line what this app will not do for you before it asks for anything.
 - **Classes.** A six-character join code, a roster showing who is keeping up, the cases the group
   keeps missing, and a unit set as homework into each student's own task list. A class is a view
   over what learners already own, joining shares progress, never your deck, and leaving stops it.

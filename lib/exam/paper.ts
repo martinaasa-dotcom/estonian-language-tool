@@ -1,5 +1,5 @@
 import { unitIntroducing } from "@/lib/collections/syllabus";
-import { buildCloze, ESTONIAN_WORD, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
+import { buildCloze, ESTONIAN_WORD, isBuildable, naturalSentence, sentenceTiles } from "@/lib/estonian/cloze";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { caseByKey } from "@/lib/estonian/cases";
 import { dictationWords } from "@/lib/estonian/dictation";
@@ -460,9 +460,22 @@ interface Sentence {
 function sentencesFrom(words: readonly PoolWord[]): Sentence[] {
   const out: Sentence[] = [];
   for (const word of words) {
+    /*
+      The same guard the placement check applies, and for the same reason: a
+      usage that trails off, offers two alternatives round a slash, or opens
+      with its own headword before a comma is lexicography rather than a
+      sentence, and a candidate asked to read one cannot answer it or argue
+      with it. One definition in `lib/estonian/cloze.ts`, because two papers
+      disagreeing about what counts as a sentence is two answers to one
+      question.
+    */
+    const forms = new Set(formsOf(word).map((f) => f.toLowerCase()));
+    const opener = word.pos === "VERB" ? undefined : (opening: string) => forms.has(opening.toLowerCase());
     for (const example of word.examples) {
       const text = example.et.trim().replace(/\s+/g, " ");
-      if (text.length >= 8 && text.length <= 140) out.push({ word, text });
+      if (text.length < 8 || text.length > 140) continue;
+      if (!naturalSentence(text, opener)) continue;
+      out.push({ word, text });
     }
   }
   return out;

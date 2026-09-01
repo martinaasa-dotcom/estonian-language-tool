@@ -112,6 +112,16 @@ export function DiacriticBar({
     });
   };
 
+  /*
+    A KEY THAT BEHAVES LIKE THE LETTERS ON THE LANDING PAGE.
+
+    These six are the only place in the app where one of those letters is a
+    control rather than an ornament, and they were the flattest thing on the
+    screen: a one pixel lift, which is the hover a row in a list gets. `.press`
+    still supplies the push, and `.letter-key` supplies the growing and the one
+    shake on the way in, so a key is one control with one set of states rather
+    than two rules arguing over `transform`. See app/globals.css.
+  */
   const letter = (ch: string) => (
     <button
       key={ch}
@@ -120,7 +130,7 @@ export function DiacriticBar({
       onMouseDown={(e) => e.preventDefault()}
       onClick={() => insert(ch, fallbackRef?.current)}
       aria-label={`Insert ${ch}`}
-      className="press h-9 w-9 shrink-0 rounded-full text-base font-semibold transition-ui hover:-translate-y-px"
+      className="press letter-key h-9 w-9 shrink-0 rounded-full text-base font-semibold"
       style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
     >
       {ch}

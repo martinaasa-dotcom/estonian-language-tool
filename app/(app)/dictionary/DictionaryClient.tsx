@@ -448,8 +448,17 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
             The rest, worked out from the genitive
           </h3>
+          {/*
+            Counted rather than typed, because the short illative is stored and
+            not worked out: a word with one has that many fewer rows following
+            the rule, and a sentence promising eleven over ten of them is the
+            table arguing with itself. `tuppa` is bold in the column below for
+            the same reason.
+          */}
           <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-            Learn <Et className="text-base" >{form("GEN_SG")}</Et> and these eleven follow as regular endings.
+            Learn <Et className="text-base" >{form("GEN_SG")}</Et> and these{" "}
+            {table.filter((row) => row.origin === "DERIVED" && row.singular).length} follow as
+            regular endings.
           </p>
           <div className="overflow-x-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
             <table className="w-full min-w-[440px] text-sm">

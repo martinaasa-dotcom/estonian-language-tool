@@ -68,10 +68,16 @@ export interface NounStems {
   /**
    * The short illative (aditiiv), or `null` when the dictionary holds none.
    *
+   * Not derivable, which is the whole reason it is stored: `tuba` gives
+   * `tuppa` and `käsi` gives `kätte`, and no rule over the genitive stem
+   * reaches either.
+   *
    * Required rather than optional, deliberately. See the header: this is the
    * one field whose absence produced a wrong Estonian form on every screen in
    * the app, and a required field is the only version of the rule that a new
-   * caller cannot skip.
+   * caller cannot skip. `main` fixed the same bug with an optional field, and
+   * the optional version is why `lib/srs/cards.ts` and `lib/estonian/writing.ts`
+   * there still grade against a suffix: nothing made them look.
    */
   readonly illSgShort: string | null;
   /**
@@ -95,34 +101,75 @@ function uniq(values: readonly (string | undefined | null)[]): string[] {
  * The order is the whole point: what a lexicographer wrote down comes before
  * the short illative we seeded, which comes before a suffix we added to a
  * stem. A derived form is only ever reached when nothing was attested.
+ *
+ * BOTH ILLATIVES ARE RETURNED, AND THAT IS THE RESOLUTION OF A REAL
+ * DISAGREEMENT. Two sessions fixed this bug within the hour and chose
+ * differently about a word whose short illative is syncretic with one of its
+ * principal parts, which is 2,044 of the 2,966 entries that have one.
+ *
+ * Leading with the short form alone prints `aadressi` under the sisseütlev
+ * beside the identical `aadressi` under the omastav and the osastav, and
+ * hides `aadressisse`, which is the form somebody writing a sentence needs.
+ * Suppressing it wherever it is syncretic, which is what `main` does, hides
+ * `aega` and shows `ajasse` for `aeg`, which is the fault this started as.
+ *
+ * Estonian has both, so the app shows both, shortest first. Nothing is
+ * hidden, nothing is invented, and the reader sees the pair a course teaches
+ * as a pair. It is the same treatment the dictionary already gives the
+ * parallel forms of `raamatutes / raamatuis`.
  */
 function singularForms(stems: NounStems, spec: CaseSpec): { forms: string[]; origin: DerivedForm["origin"] } {
   const retrieved = stems.retrieved?.[spec.key];
   const short = spec.key === "ILLATIVE" ? stems.illSgShort : null;
   const derived = stems.genSg ? stems.genSg + spec.suffix : undefined;
 
-  // Both illatives are right where both are known, so both are offered and
-  // both are accepted. The short one leads, because it is the one somebody
-  // will hear in a shop.
-  const attested = uniq([short, retrieved]);
+  /*
+    A SHORT ILLATIVE SPELLED LIKE A PRINCIPAL PART IS RECORDED BUT NOT WORTH
+    LEADING WITH, which is 2,044 of the 2,966 entries that have one.
+
+    `sõber` has `sõpra` recorded, and `sõpra` is already its partitive, so
+    leading with it prints one word under two names and hides `sõbrasse`,
+    which is the form somebody writing a sentence needs. `aadress` is worse:
+    its short illative is `aadressi`, which is both its genitive and its
+    partitive, so the table would print the same word three times.
+
+    It stays in `accepted`, though, because the dictionary does record it as
+    the short illative and marking somebody wrong for it would be this whole
+    bug pointed the other way. What a screen prints and what a marker accepts
+    are two different questions, and this is the one place they differ.
+  */
+  const principalParts = [stems.nomSg, stems.genSg, stems.partSg];
+  const lead = short && !principalParts.includes(short) ? short : null;
+
+  const attested = uniq([lead, retrieved]);
   if (attested.length > 0) {
     return {
-      forms: uniq([...attested, derived]),
-      origin: short ? "STORED" : "EKILEX",
+      forms: uniq([...attested, derived, short]),
+      origin: lead ? "STORED" : "EKILEX",
     };
   }
-  return { forms: uniq([derived]), origin: "DERIVED" };
+  return { forms: uniq([derived, short]), origin: "DERIVED" };
 }
 
 /**
  * Builds the full case table for a noun.
  *
  * Singular obliques are suffixes on the genitive singular, except where the
- * dictionary holds the real thing: see the header on the illative. Plural
- * obliques are suffixes on the genitive *plural*, which is NOT derivable from
- * the singular (`tuba : toa` gives `tubade`, not `toade`), so they appear only
- * when the genitive plural is stored. We show a gap rather than invent a form,
- * which is ADR-005.
+ * dictionary holds the real thing: see `singularForms`. Plural obliques are
+ * suffixes on the genitive *plural*, which is NOT derivable from the singular
+ * (`tuba : toa` gives `tubade`, not `toade`), so they appear only when the
+ * genitive plural is stored. We show a gap rather than invent a form (ADR-005).
+ *
+ * THE ILLATIVE IS THE ONE CASE WITH TWO ANSWERS, and a suffix on the genitive
+ * was the only one this ever gave. `toa` + `sse` is `toasse`, which is a real
+ * form and is what Ekilex records as the sisseütlev, and it is not what
+ * anybody says: the word is `tuppa`, and `käsi` goes to `kätte` rather than
+ * `käesse`. Both are stored, because neither is reachable by a rule, and a
+ * learner shown the long form alone has been taught the grammatically
+ * defensible version of a sentence no Estonian speaker utters.
+ *
+ * The plural illative is regular either way (`tubadesse`, never a short form),
+ * so only the singular has two answers.
  */
 export function buildCaseTable(stems: NounStems): DerivedForm[] {
   const { nomSg, genSg, partSg, partPl, genPl } = stems;

@@ -43,27 +43,40 @@ function shippedWords(): { lemma: string; pos: string; parts: Record<string, str
 const WORDS = shippedWords();
 const WITH_SHORT = WORDS.filter((w) => w.parts.ILL_SG_SHORT && w.parts.GEN_SG);
 
+/**
+ * A short illative worth leading with: one that is not already the spelling of
+ * a principal part.
+ *
+ * 2,044 of the 2,966 recorded short illatives are syncretic with one, and for
+ * those the illative reading is the rare one: `aega` is overwhelmingly the
+ * partitive of `aeg`, and `aadressi` is the genitive and the partitive of
+ * `aadress` as well. Leading with them prints one word under two or three
+ * names and hides the form somebody writing a sentence needs.
+ */
+const DISTINCT = WITH_SHORT.filter(
+  (w) => ![w.parts.NOM_SG, w.parts.GEN_SG, w.parts.PART_SG].includes(w.parts.ILL_SG_SHORT),
+);
+
 describe("the shipped dictionary", () => {
   it("is actually loaded, so a passing run means something", () => {
     expect(WORDS.length).toBeGreaterThan(5000);
     expect(WITH_SHORT.length).toBeGreaterThan(2000);
+    expect(DISTINCT.length).toBeGreaterThan(500);
   });
 
   /*
     The check can fail, and this is the line that proves it. Every one of these
-    words has a short illative that differs from `genitive + sse`, which is
-    what the app used to print for all of them: if the derivation ever silently
-    became the answer again, the assertion below would have thousands of
-    failures rather than none.
+    has a short illative that no ending on the genitive stem produces, which is
+    what the app used to print for all of them.
   */
-  it("holds thousands of short illatives the suffix rule gets wrong", () => {
-    const differ = WITH_SHORT.filter((w) => w.parts.ILL_SG_SHORT !== `${w.parts.GEN_SG}sse`);
-    expect(differ.length).toBeGreaterThan(2000);
+  it("holds hundreds of short illatives the suffix rule gets wrong", () => {
+    const differ = DISTINCT.filter((w) => w.parts.ILL_SG_SHORT !== `${w.parts.GEN_SG}sse`);
+    expect(differ.length).toBe(DISTINCT.length);
   });
 
-  it("shows the attested short illative for every one of them", () => {
+  it("leads with the attested short illative wherever it is a word of its own", () => {
     const wrong: string[] = [];
-    for (const w of WITH_SHORT) {
+    for (const w of DISTINCT) {
       const shown = buildCaseTable(stemsFromParts(w.parts)).find((r) => r.spec.key === "ILLATIVE");
       if (shown?.singular !== w.parts.ILL_SG_SHORT) {
         wrong.push(`${w.lemma}: shows ${shown?.singular}, dictionary says ${w.parts.ILL_SG_SHORT}`);
@@ -72,14 +85,34 @@ describe("the shipped dictionary", () => {
     expect(wrong.slice(0, 8)).toEqual([]);
   });
 
-  it("marks it as stored rather than derived, so the provenance label is true", () => {
-    const mislabelled = WITH_SHORT.filter(
+  it("marks those as stored rather than derived, so the provenance label is true", () => {
+    const mislabelled = DISTINCT.filter(
       (w) => caseAnswer(stemsFromParts(w.parts), "ILLATIVE")?.origin !== "STORED",
     );
     expect(mislabelled.map((w) => w.lemma).slice(0, 8)).toEqual([]);
   });
 
-  it("still accepts the regular form, so knowing both is never marked wrong", () => {
+  /*
+    The other side of the guard. Declining to lead with a syncretic form is a
+    decision about the screen; a marker has no business inheriting it, because
+    the dictionary does record the form under that case.
+  */
+  it("does not lead with one that is already a principal part, but still accepts it", () => {
+    const syncretic = WITH_SHORT.filter((w) => !DISTINCT.includes(w));
+    expect(syncretic.length).toBeGreaterThan(1000);
+
+    const led: string[] = [];
+    const unaccepted: string[] = [];
+    for (const w of syncretic) {
+      const answer = caseAnswer(stemsFromParts(w.parts), "ILLATIVE");
+      if (answer?.value === w.parts.ILL_SG_SHORT) led.push(w.lemma);
+      if (!answer?.accepted.includes(w.parts.ILL_SG_SHORT!)) unaccepted.push(w.lemma);
+    }
+    expect(led.slice(0, 8)).toEqual([]);
+    expect(unaccepted.slice(0, 8)).toEqual([]);
+  });
+
+  it("still accepts the regular form everywhere, so knowing both is never marked wrong", () => {
     const missing = WITH_SHORT.filter(
       (w) => !caseAnswer(stemsFromParts(w.parts), "ILLATIVE")?.accepted.includes(`${w.parts.GEN_SG}sse`),
     );
@@ -87,14 +120,15 @@ describe("the shipped dictionary", () => {
   });
 
   /*
-    The named cases, spelled out, because a count over five thousand rows is
-    easy to satisfy by accident and these are the words a person can check
-    against a dictionary in a minute.
+    Named and spelled out, because a count over five thousand rows is easy to
+    satisfy by accident and these are the words a person can check against a
+    dictionary in a minute. Every one was read out of the shipped data rather
+    than remembered.
   */
   it("gets the words a reader would look up first right", () => {
     const expected: Record<string, string> = {
-      tuba: "tuppa", aeg: "aega", abi: "appi", ajalugu: "ajalukku",
-      aed: "aeda", algus: "algusse", ajaleht: "ajalehte",
+      tuba: "tuppa", abi: "appi", ajalugu: "ajalukku", käsi: "kätte",
+      maja: "majja", pea: "pähe", suu: "suhu", töö: "töhe",
     };
     for (const [lemma, illative] of Object.entries(expected)) {
       const word = WORDS.find((w) => w.lemma === lemma && w.parts.ILL_SG_SHORT);
@@ -106,8 +140,7 @@ describe("the shipped dictionary", () => {
 
   /*
     The other ten really are regular, which is what makes the illative worth
-    singling out rather than distrusting the whole table. Nothing in the
-    shipped data contradicts a suffix on the genitive for any of them.
+    singling out rather than distrusting the whole table.
   */
   it("leaves the ten regular cases as suffixes on the genitive stem", () => {
     const sample = WORDS.filter((w) => w.parts.GEN_SG).slice(0, 400);

@@ -1,5 +1,7 @@
 import { CASES } from "@/lib/estonian/cases";
-import { buildCloze, ESTONIAN_WORD } from "@/lib/estonian/cloze";
+// Both sides: `naturalSentence` is main's, `caseAnswer` and `stemsFrom`
+// replace the `deriveCase` shortcut nothing in this file reaches for any more.
+import { buildCloze, ESTONIAN_WORD, naturalSentence } from "@/lib/estonian/cloze";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { CASE_NOTES } from "@/lib/estonian/grammar";
@@ -120,6 +122,54 @@ function usableWords(words: readonly WordRow[]): WordRow[] {
   return words.filter((w) => w.lemma.trim() && w.translation.trim() && bandOf(w.cefr));
 }
 
+/**
+ * A word means everything the dictionary says it means, not just the line
+ * printed as the answer.
+ *
+ * "What does kallis mean" offered `expensive`, `beautiful`, `fast` and
+ * `morning`, and the learner who chose `beautiful` had a case: `kallis` is
+ * also what you call somebody you are fond of, so with no sentence around it
+ * the question is asking which of two real senses the dictionary happened to
+ * print. Nothing in the ranking could see that, because `differentMeaning`
+ * compares one gloss against another and a sense the gloss does not mention is
+ * invisible to it.
+ *
+ * What *is* visible is a second entry under the same lemma, and `@@unique` is
+ * on `(lemma, pos)` so the dictionary holds plenty: `hall` is a noun meaning
+ * frost and an adjective meaning grey, and offering "grey" as a wrong answer
+ * to "what does hall mean" marks somebody wrong for knowing the word. So every
+ * gloss the dictionary files under this lemma is treated as an answer, and
+ * none of them can stand as a distractor.
+ *
+ * It does not reach a sense that no entry records, which is the `kallis` case
+ * itself: that one is a gloss worth correcting rather than a rule worth
+ * writing, and `npm run audit:glosses` and the report queue are the two ways
+ * that happens. What this rules out is the half a rule can see.
+ */
+function meaningTest(word: WordRow, pool: readonly WordRow[]): (a: string, b: string) => boolean {
+  const senses = pool
+    .filter((w) => w.lemma.toLowerCase() === word.lemma.toLowerCase() && w.id !== word.id)
+    .map((w) => w.translation);
+  if (senses.length === 0) return differentMeaning;
+  return (a, b) => differentMeaning(a, b) && senses.every((sense) => differentMeaning(a, sense));
+}
+
+/**
+ * The label pattern, as `naturalSentence` needs to be told about it.
+ *
+ * A usage that opens with its own headword and a comma is a dictionary
+ * illustrating a sense rather than a sentence somebody said, and the sense is
+ * often not the one the gloss beside it names: `Kahvel, lipp kukub!` is filed
+ * under `kahvel` and is a call about a sailing gaff, not about a fork. Only a
+ * nominal, because a verb before a comma is an ordinary main clause and
+ * `Usun, et ta ei valeta` is a sentence worth reading.
+ */
+function nominalOpener(word: WordRow): ((opening: string) => boolean) | undefined {
+  if (word.pos === "VERB") return undefined;
+  const forms = attestedForms(word);
+  return (opening: string) => forms.has(opening.toLowerCase());
+}
+
 // ── Gaps ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -131,9 +181,10 @@ function usableWords(words: readonly WordRow[]): WordRow[] {
  * fragments alongside whole sentences, and a gap in a fragment is a question
  * with nothing to answer it from.
  */
-export function gappable(sentence: string): boolean {
+export function gappable(sentence: string, opensWithNominal?: (word: string) => boolean): boolean {
   const count = dictationWords(sentence).length;
-  return count >= 3 && count <= 12 && sentence.trim().length <= 90;
+  if (count < 3 || count > 12 || sentence.trim().length > 90) return false;
+  return naturalSentence(sentence, opensWithNominal);
 }
 
 export interface Gap {
@@ -192,7 +243,7 @@ export function gapFrom(word: WordRow): Gap | null {
 
   for (const example of word.examples) {
     const sentence = example.et.trim().replace(/\s+/g, " ");
-    if (!gappable(sentence)) continue;
+    if (!gappable(sentence, nominalOpener(word))) continue;
 
     const cloze = buildCloze(sentence, forms);
     if (!cloze || cloze.index === 0) continue;
@@ -229,16 +280,22 @@ export function gapFrom(word: WordRow): Gap | null {
  * honest answer for a participle nobody stored, and is why the explanation
  * below is written to work without it.
  */
-function nameForm(word: WordRow, value: string): { et: string; en: string; summary?: string } | null {
+function nameForm(word: WordRow, value: string): FormName | null {
   const lower = value.toLowerCase();
 
   /*
     Estonian syncretism means one spelling is often two cases: `trammi` is both
-    the omastav and the osastav, and `tuba` is both the nimetav and the
-    osastav. Naming whichever the dictionary happens to list first would state
-    the wrong one about half the time, in the sentence the learner is being
-    told is the explanation. So a spelling that is more than one case is named
-    without claiming which, and the sentence carries the explanation on its own.
+    the omastav and the osastav, `tuba` is both the nimetav and the osastav,
+    and `kaarti` is the osastav and the short sisseütlev. Naming whichever the
+    dictionary happens to list first would state the wrong one about half the
+    time, in the sentence the learner is being told is the explanation.
+
+    So both are named and neither is claimed. The version before this returned
+    null for the pair and the explanation read "a form of kaart", which is the
+    least a sentence can say: a learner who wants to know why `kaarti` and not
+    `kaardi` is told that `kaarti` is a form, which they could see. Two names
+    and the sentence deciding between them is the honest answer and the useful
+    one, and it is the thing a class says about these words anyway.
   */
   const claimed = new Set<CaseKey>();
   for (const form of word.forms) {
@@ -251,27 +308,48 @@ function nameForm(word: WordRow, value: string): { et: string; en: string; summa
     const answer = caseAnswer(stems, spec.key);
     if (answer?.accepted.some((f) => f.toLowerCase() === lower)) claimed.add(spec.key);
   }
-  const only = claimed.size === 1 ? [...claimed][0] : undefined;
 
   // A verb form is not a case and cannot be syncretic with one, so the stored
   // slot names it outright: `aidata` is the da-tegevusnimi and nothing else.
   const stored = word.forms.find((f) => f.value.toLowerCase() === lower);
   if (stored && !CASE_BY_FORM_TYPE[stored.formType] && claimed.size === 0) {
     const named = formName(stored);
-    if (named) return named;
+    if (named) return { names: [named] };
   }
 
-  if (!only) return null;
-  const spec = CASES.find((c) => c.key === only);
-  if (!spec) return null;
+  const specs = CASES.filter((c) => claimed.has(c.key));
+  if (specs.length === 0) return null;
+
   // The plural slots name a case the app has no plural derivation for, so the
-  // stored name is the precise one where there is one: "mitmuse osastav".
-  const named = stored ? formName(stored) : null;
+  // stored name is the precise one where there is one: "mitmuse osastav". It
+  // can only stand in for a single claim, since one stored form names one slot.
+  const precise = specs.length === 1 && stored ? formName(stored) : null;
+  const names = specs.map((spec) => ({
+    et: precise?.et ?? spec.et,
+    en: precise?.en ?? spec.en.toLowerCase(),
+  }));
   return {
-    et: named?.et ?? spec.et,
-    en: named?.en ?? spec.en.toLowerCase(),
-    summary: CASE_NOTES.find((n) => n.key === only)?.summary,
+    names,
+    // Only where the form is one case. Two summaries is the explanation
+    // arguing with itself about which case the learner is looking at.
+    ...(specs.length === 1
+      ? { summary: CASE_NOTES.find((n) => n.key === specs[0]!.key)?.summary }
+      : {}),
   };
+}
+
+/** What a form is called, and what that case is for where it is only one case. */
+interface FormName {
+  /** One name, or every name the spelling could be. Never a guess between them. */
+  names: readonly { et: string; en: string }[];
+  summary?: string;
+}
+
+/** "the nimetav (nominative)", or "the osastav (partitive) or the sisseütlev". */
+function nameList(names: readonly { et: string; en: string }[]): string {
+  const written = names.map((n) => `the ${n.et} (${n.en})`);
+  const last = written.pop()!;
+  return written.length === 0 ? last : `${written.join(", ")} or ${last}`;
 }
 
 /** The stored slots that are a case, so the case's own note can explain them. */
@@ -286,19 +364,57 @@ const CASE_BY_FORM_TYPE: Record<string, CaseKey | undefined> = {
  * The sentence leads, because the sentence is the reason: put the word back
  * and a learner can see what the ending is doing. Then the form is named the
  * way a class names it, and `CASE_NOTES` says in one line what the case is
- * for. That table is the grammar reference's own, so the explanation here and
- * the page somebody opens next cannot say two different things.
+ * for and what the nearest English habit is. That table is the grammar
+ * reference's own, so the explanation here and the page somebody opens next
+ * cannot say two different things.
+ *
+ * **What it may not do is lead with the label.** The version this replaces
+ * read "Here kõhn is in the nimetav, the nominative. The dictionary form. The
+ * subject of a sentence, and what you point at.": three sentences of grammar
+ * vocabulary at somebody who has just been told they were wrong, none of them
+ * about the sentence in front of them. A learner reading feedback wants to
+ * know what the gap was asking for, so the form comes first and its name comes
+ * after it as the cross-reference it is. The Estonian name still leads the
+ * English one, because that is the name a class and the state examination use
+ * and an English label alone leaves a learner unable to follow their own
+ * teacher.
+ *
+ * And it stops there. `CASE_NOTES` also carries an `englishHook` ("of the
+ * book", "the book's cover") which was tried here and made the nominative read
+ * "The dictionary form. The subject of a sentence, and what you point at.
+ * Closest to plain English word order: the thing doing the verb.", which is
+ * the same claim three times at somebody who wanted one line. The grammar
+ * reference is where a learner goes for more, and the summary already says
+ * what the case is for in the register a class uses.
  *
  * Where the form cannot be named the sentence stands alone, which is still an
- * answer. What the old version did instead was restate the question: it told
- * somebody the seesütlev answers `milles? kus?` when the question had just
- * told them the same thing, and never once said why this word wanted it.
+ * answer.
  */
 export function explainGap(word: WordRow, gap: Gap): string {
   const named = nameForm(word, gap.answer);
-  if (!named) return gap.full;
-  const what = named.summary ? ` ${named.summary}` : "";
-  return `${gap.full} Here ${word.lemma} is in the ${named.et}, the ${named.en}.${what}`;
+  const plain = gap.answer.toLowerCase() === word.lemma.toLowerCase();
+
+  /*
+    The gap is named before the case is, and it is named even when the case
+    cannot be. Estonian syncretism means `kivi` is the nimetav, the omastav and
+    the osastav all at once, and `nameForm` correctly refuses to pick one; the
+    version this replaced returned the sentence on its own in that case, which
+    on the writing screen printed the sentence twice and explained nothing.
+    "The gap takes kivi exactly as the dictionary spells it" is short and is
+    the useful half, and the label is added on top wherever there is one to
+    add.
+  */
+  const where = named ? nameList(named.names) : null;
+  const decides = named && named.names.length > 1 ? " The sentence decides which." : "";
+  const takes = plain
+    ? where
+      ? `The gap takes ${word.lemma} unchanged, in ${where}.`
+      : `The gap takes ${word.lemma} unchanged.`
+    : where
+      ? `The gap takes ${gap.answer}, which is ${word.lemma} in ${where}.`
+      : `The gap takes ${gap.answer}, a form of ${word.lemma}.`;
+
+  return [gap.full, takes + decides, named?.summary].filter(Boolean).join(" ");
 }
 
 // ── Reading ──────────────────────────────────────────────────────────────────
@@ -336,7 +452,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     const band = bandOf(word.cefr)!;
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,
-      distinct: differentMeaning, nearness: glossNearness,
+      distinct: meaningTest(word, pool), nearness: glossNearness,
     });
     if (!set) continue;
     out.push({
@@ -390,9 +506,12 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
     });
   }
 
-  const translated = pool.flatMap((w) =>
-    w.examples.filter((e) => e.en && e.en.trim()).map((e) => ({ word: w, et: e.et, en: e.en!.trim() })),
-  );
+  const translated = pool.flatMap((w) => {
+    const opener = nominalOpener(w);
+    return w.examples
+      .filter((e) => e.en && e.en.trim() && naturalSentence(e.et, opener))
+      .map((e) => ({ word: w, et: e.et, en: e.en!.trim() }));
+  });
   /*
     A sentence is never offered against another sentence about the same word.
     Two usages recorded under one headword are the likeliest pair in the whole
@@ -430,9 +549,10 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
 // ── Listening ────────────────────────────────────────────────────────────────
 
 /** A sentence short enough to hold in your head, which is what dictation asks. */
-export function dictatable(sentence: string): boolean {
+export function dictatable(sentence: string, opensWithNominal?: (word: string) => boolean): boolean {
   const count = dictationWords(sentence).length;
-  return count >= 3 && count <= 9 && sentence.length <= 80;
+  if (count < 3 || count > 9 || sentence.length > 80) return false;
+  return naturalSentence(sentence, opensWithNominal);
 }
 
 /**
@@ -459,7 +579,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   for (const word of shuffle(pool, rng)) {
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,
-      distinct: differentMeaning, nearness: glossNearness,
+      distinct: meaningTest(word, pool), nearness: glossNearness,
     });
     if (!set) continue;
     out.push({
@@ -480,11 +600,11 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   }
 
   for (const word of shuffle(pool, rng)) {
-    const sentence = word.examples.find((e) => gappable(e.et));
+    const sentence = word.examples.find((e) => gappable(e.et, nominalOpener(word)));
     if (!sentence) continue;
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,
-      distinct: differentMeaning, nearness: glossNearness,
+      distinct: meaningTest(word, pool), nearness: glossNearness,
     });
     if (!set) continue;
     out.push({
@@ -495,7 +615,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
       // is most of what makes listening hard in the first place.
       band: raise(bandOf(word.cefr)!, "A2"),
       lemma: word.lemma,
-      question: "Listen to the whole sentence. Which of these is in it?",
+      question: "Listen to the whole sentence, then pick the meaning of a word you heard in it.",
       et: sentence.et,
       heard: true,
       options: set.options,
@@ -507,7 +627,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   }
 
   for (const word of shuffle(pool, rng)) {
-    const sentence = word.examples.find((e) => dictatable(e.et));
+    const sentence = word.examples.find((e) => dictatable(e.et, nominalOpener(word)));
     if (!sentence) continue;
     out.push({
       id: `l-dict-${word.id}`,
@@ -567,6 +687,7 @@ export function writingItems(words: readonly WordRow[], rng: () => number): Writ
       full: gap.full,
       targetForm: gap.answer,
       otherForms: gap.siblings,
+      because: explainGap(word, gap),
       source: "usage",
       kind: "write",
     });
@@ -579,14 +700,14 @@ export function writingItems(words: readonly WordRow[], rng: () => number): Writ
 export function speakingItems(words: readonly WordRow[], rng: () => number): SpeakItem[] {
   const out: SpeakItem[] = [];
   for (const word of shuffle(usableWords(words), rng)) {
-    const sentence = word.examples.find((e) => dictatable(e.et) && e.en);
+    const sentence = word.examples.find((e) => dictatable(e.et, nominalOpener(word)) && e.en);
     if (sentence) {
       out.push({
         id: `s-sent-${word.id}`,
         skill: "speaking",
         band: raise(bandOf(word.cefr)!, "B1"),
         lemma: word.lemma,
-        question: "Say this out loud, then listen to both recordings and judge for yourself.",
+        question: "Listen to this said properly, then say how confident you would be saying it.",
         et: sentence.et,
         translation: sentence.en!.trim(),
         isSentence: true,
@@ -600,7 +721,7 @@ export function speakingItems(words: readonly WordRow[], rng: () => number): Spe
       skill: "speaking",
       band: bandOf(word.cefr)!,
       lemma: word.lemma,
-      question: "Say this out loud, then listen to both recordings and judge for yourself.",
+      question: "Listen to this said properly, then say how confident you would be saying it.",
       et: word.lemma,
       translation: word.translation,
       isSentence: false,

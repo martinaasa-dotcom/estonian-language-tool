@@ -17,7 +17,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 52, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 52 });
+const { check, absent, done } = suite("Level check", { floor: 48 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -36,20 +36,6 @@ page.on("console", (m) => {
   if (m.location()?.url?.includes("/api/tts")) return;
   errors.push(m.text());
 });
-
-// ─── What the app is, kept at a URL ───────────────────────────────────────────
-
-await page.goto(`${B}/guide`, { waitUntil: "networkidle" });
-check("the guide says what the app does", (await page.getByText("What it does", { exact: true }).count()) > 0);
-check("and gives equal room to what it does not",
-  (await page.getByText("What it does not").count()) > 0);
-check("it admits it cannot score pronunciation",
-  (await page.getByText(/recognises spoken Estonian reliably/i).count()) > 0);
-check("it admits it is not a course",
-  (await page.getByText(/Replace a course or a teacher/i).count()) > 0);
-check("every screen is listed with a reason to open it",
-  (await page.locator('a[href="/review"]').count()) > 0 &&
-  (await page.locator('a[href="/dictionary"]').count()) > 0);
 
 // ─── The hub, before anything has been measured ───────────────────────────────
 
@@ -126,8 +112,13 @@ for (let step = 0; step < 200; step++) {
     continue;
   }
 
-  // Speaking is rated by the learner and never scored.
-  const selfRating = page.getByRole("button", { name: /Recognisable/ });
+  /*
+    Speaking is rated by the learner and never scored, and there is no recorder
+    any more: the microphone bought a permission prompt and a clip in exchange
+    for a rating that was the learner's own judgement either way, so the
+    question is now how confident they would be saying it.
+  */
+  const selfRating = page.getByRole("button", { name: /Fairly sure/ });
   if (await selfRating.count()) {
     saidNotScored ||= (await page.getByText(/never moves your level/i).count()) > 0;
     await selfRating.click();
@@ -170,8 +161,16 @@ for (let step = 0; step < 200; step++) {
     continue;
   }
 
-  const skipSection = page.getByRole("button", { name: /^Skip / });
-  if (await skipSection.count()) { await skipSection.first().click(); await page.waitForTimeout(120); continue; }
+  /*
+    There is no "Skip reading" to fall back on any more, and that is the point:
+    a placement check that can be skipped a section at a time measures whichever
+    sections somebody felt like doing and then prints a level as though it had
+    measured them. The one way out left is the listening escape below, which is
+    what a deployment with no speech service offers, and this driver takes it
+    only when the options are genuinely unpressable.
+  */
+  const noAudio = page.getByRole("button", { name: /The audio will not play/ });
+  if (await noAudio.count()) { await noAudio.first().click(); await page.waitForTimeout(200); continue; }
   break;
 }
 
@@ -212,10 +211,12 @@ check("the plan is on the same screen as the level",
 await page.goto(`${B}/settings#goals`, { waitUntil: "networkidle" });
 check("goals are editable for ever, not just at first run",
   (await page.getByText("Why you are learning").count()) > 0);
-// A goal answer is a `radio` and not a `button`: these are mutually
-// exclusive, so the set is one radio group rather than eight toggle switches
-// each announcing itself as pressed or not. See components/Choice.tsx.
-await page.getByRole("radio", { name: /Citizenship or residence/ }).click();
+// The target and the deadline are `radio`, because those are mutually
+// exclusive and one radio group beats eight toggle switches each announcing
+// itself as pressed. The reasons are not mutually exclusive: somebody living
+// here with an Estonian partner and Estonian meetings at work has three true
+// answers, so that set is toggles and says so. See components/Choice.tsx.
+await page.getByRole("button", { name: /Citizenship or residence/ }).click();
 await page.getByRole("radio", { name: /^B1 · Live in the language$/ }).click();
 await page.getByRole("radio", { name: /In six months/ }).click();
 await page.getByRole("button", { name: /^Save goals$/ }).click();
@@ -276,12 +277,13 @@ if (onboarded) {
     24 is the checks inside the `else` branch below, minus the one this branch
     runs in their place. It was 18, which is the figure from before #58 rewrote
     the deck step: that turned two checks into nine inside that branch and took
-    it from 17 to 25, and the waiver was never recounted. 52 minus 18 is 34, a
-    waived run reaches 28, and the suite failed reporting a block having stopped
-    running when nothing had. Measured in a browser in both states rather than
-    counted by eye, because counting by eye is what produced 18.
+    it from 17 to 25, and the waiver was never recounted. The floor read 52 and
+    a waived run reached 28, so the suite failed reporting a block having
+    stopped running when nothing had. Recount it whenever the branch changes:
+    the else branch holds 26 and this one holds 1, so the gap is 25 and the
+    floor is the 22 outside both plus the 26 inside.
   */
-  absent(24, "a learner who has not been through first run: this database has a deck, " +
+  absent(25, "a learner who has not been through first run: this database has a deck, " +
     "so /start correctly redirects. CI runs this suite before the demo fixture");
   /*
     A learner who has already been through it is sent to Today, which is the
@@ -303,32 +305,45 @@ if (onboarded) {
   const opening = await page.locator("body").innerText();
   check("it states what the app cannot do before it asks for anything",
     /will not score your pronunciation/i.test(opening));
-  check("and links both lists in full",
-    (await page.locator('a[href="/guide"]').count()) > 0);
   await page.getByLabel(/What should we call you/i).fill("Test");
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   check("the level step offers a measurement first",
     (await page.getByRole("button", { name: /Take the level check/ }).count()) > 0);
   check("and an estimate for anyone in a hurry",
-    (await page.getByText(/a guess is a guess/i).count()) > 0);
+    (await page.getByRole("radio", { name: /I get by/ }).count()) > 0);
+  /*
+    No number of minutes on this screen. It said "the ten-minute level check",
+    which was written when the paper was nineteen questions and is three times
+    out for anybody above A1 now that a skill climbs until it stops passing.
+  */
+  check("and it does not promise a number of minutes it cannot keep",
+    !/ten.minute|10.minute/i.test(await page.locator("body").innerText()));
   await page.getByRole("radio", { name: /I get by/ }).click();
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   check("it asks why, and one of the reasons is the one with an exam attached",
     (await page.getByText(/Citizenship or residence/).count()) > 0);
-  await page.getByRole("radio", { name: /Citizenship or residence/ }).click();
+  /*
+    A set rather than a choice of one, so these are toggles rather than radios.
+    Somebody living here with an Estonian partner and Estonian meetings at work
+    has three true answers and was being made to pick a favourite, and whichever
+    they picked implied the target the plan was then built on.
+  */
+  await page.getByRole("button", { name: /Citizenship or residence/ }).click();
+  await page.getByRole("button", { name: /^Work/ }).click();
 
   const goalStep = await page.locator("body").innerText();
-  check("choosing a reason names the level it needs, by what it lets you do",
-    /naturalisation exam asks for/i.test(goalStep));
-  check("and by what it still does not", /Still out of reach/i.test(goalStep));
+  check("more than one reason can be true at once",
+    (await page.locator('[aria-pressed="true"]').count()) >= 2);
+  check("and the goal it offers is the highest of them",
+    (await page.getByRole("radio", { name: /B2/ }).getAttribute("aria-checked")) === "true");
   check("it asks for a deadline", (await page.getByText(/In six months/).count()) > 0);
   check("and how many days a week are realistic",
     (await page.getByText(/Days a week you will really practise/i).count()) > 0);
   check("the plan sits under the answers that build it", /study hours to go/i.test(goalStep));
   check("an estimated level is flagged as estimated on the plan",
-    /Take the ten-minute check/i.test(goalStep));
+    /Take the level check whenever you like/i.test(goalStep));
   await page.getByRole("button", { name: /^Continue$/ }).click();
 
   const deckStep = await page.locator("body").innerText();
@@ -387,9 +402,12 @@ if (onboarded) {
     the database rather than the panel having rendered.
   */
   await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
-  const chosen = page.getByRole("radio", { name: /Citizenship or residence/ }).first();
+  const chosen = page.getByRole("button", { name: /Citizenship or residence/ }).first();
   check("the reason the wizard asked for was kept",
-    (await chosen.getAttribute("aria-checked")) === "true");
+    (await chosen.getAttribute("aria-pressed")) === "true");
+  const alsoChosen = page.getByRole("button", { name: /^Work/ }).first();
+  check("and so was the second one, because more than one can be true",
+    (await alsoChosen.getAttribute("aria-pressed")) === "true");
   check("and the name they gave is the name the app uses",
     (await page.getByLabel(/Name your class sees/i).inputValue()) === "Test");
   check("and the level check is offered from settings too",

@@ -133,7 +133,7 @@ const BASE = baseUrl();
 */
 const ROUTES = [
   "/", "/learn", "/practice", "/progress", "/tasks", "/words", "/week", "/dictionary",
-  "/grammar", "/grammar/inessive", "/guide", "/settings", "/scan", "/class", "/tutor",
+  "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
   "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
   "/review", "/review/write", "/review/government", "/review/cloze", "/review/clinic",
@@ -155,7 +155,12 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 339 });
+/*
+  330 rather than 339, for the reason the containment suite gives at its own
+  floor: `/guide` is gone and it was one of the routes this walks. Nine checks,
+  counted off the route list rather than off a run.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 330 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });

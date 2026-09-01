@@ -201,8 +201,8 @@ if (rail) {
   check("the rail groups what it shows under headings",
     rail.headings.length >= 3, `${rail.headings.length} headings`);
   /*
-    Ten: seven places under those headings, then Settings, the reports queue and
-    the guide in the footer. It was fourteen, and the five that went are not
+    Nine: seven places under those headings, then Settings and the reports
+    queue in the footer. It was fourteen, and the five that went are not
     hidden, they are inside the place they belong to and carry `within` saying
     which: homework under Today, and the deck, the level check, the mock exam
     and a class under Progress, which is the screen that asks the question all
@@ -210,7 +210,7 @@ if (rail) {
     four, which is what the rail led with when the rest sat behind a button
     marked "More".
   */
-  check("the rail shows the whole app", rail.links.length >= 10, `${rail.links.length} links`);
+  check("the rail shows the whole app", rail.links.length >= 9, `${rail.links.length} links`);
 }
 
 // The phone cannot show every link at once, so it shows them under the same

@@ -163,11 +163,7 @@ export default async function SettingsPage() {
                 <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
                   Take the level check
                 </Link>{" "}
-                to measure where you are, or read{" "}
-                <Link href="/guide" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
-                  what this app can and cannot do
-                </Link>
-                .
+                to measure where you are.
               </p>
             </Card>
           </section>

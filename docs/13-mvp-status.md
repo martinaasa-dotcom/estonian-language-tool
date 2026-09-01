@@ -385,8 +385,7 @@ nothing said what the app cannot do.
 | **A profile, not a number** | Per skill levels with the band breakdown, an overall that follows the weakest measured skill, and a stated confidence that names how few questions it came from |
 | **Goals** | Why you are here, the level you want, the date you want it by, and how many days a week you will really practise. Asked at first run, editable in Settings for ever |
 | **A timeline with sources** (`lib/assessment/plan.ts`) | Hours between two levels, how many of them the stated daily goal covers, and how many are left to find elsewhere. Ranges, with the published estimates they came from named |
-| **What this app is** (`/guide`) | Every screen and when to open it, what the app does, and at the same length what it does not. Shown in first run and kept at a URL |
-| **First run, rewritten** | Eight steps: name, why, how far and by when, measure or estimate, pace, the plan, the walkthrough, the deck |
+| **First run, rewritten** | Four steps: name and keyboard, measure or estimate, why and how far with the plan live under it, the deck and the pace |
 
 ### Why the speaking section exists at all if it cannot be scored
 
@@ -1057,7 +1056,7 @@ restraint. The invariant fails both on Today ceasing to ask the module and on an
 a threshold of their own.
 
 **First run: eight screens to four.** Every answer it collected it still collects. What went is the
-spreading: four screens carrying one question each, a feature tour that is `/guide` word for word,
+spreading: four screens carrying one question each, a feature tour repeating the landing page,
 and a plan whose six cited facts and essay on the source of the hours are now on `/assess` behind a
 `compact` flag. Why, how far, by when and how often are one screen with the plan live underneath
 them, which is a better argument for asking than a screen of answers followed by a screen of
