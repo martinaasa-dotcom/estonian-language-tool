@@ -10,6 +10,8 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
+import { useAudioPrefs, useFeedbackSound } from "@/components/AudioPrefs";
+import { prefetchClip } from "@/lib/audio/clip";
 import { SuggestFix } from "@/components/SuggestFix";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
@@ -129,7 +131,9 @@ function MeetWord({ card }: { card: ReviewCard }) {
         <p lang="et" className="text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           {lemma}
         </p>
-        <Speak text={lemma} />
+        {/* Read aloud on arrival: the first time a word is met is the one time
+            hearing it is worth more than reading it. */}
+        <Speak text={lemma} autoplay />
       </div>
       {gloss && <p className="text-base" style={{ color: "var(--ink-2)" }}>{gloss}</p>}
 
@@ -263,6 +267,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const shownAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
   const checkedAchievements = useRef(false);
+  const { voice } = useAudioPrefs();
+  const sound = useFeedbackSound();
 
   const card = queue[index];
   const finished = !card;
@@ -323,6 +329,21 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     setVerdict(null);
     setChosen(null);
   }, [index]);
+
+  /*
+    The next card's word is fetched while this one is being answered, so its
+    speaker button and its autoplay are instant rather than a round trip to a
+    speech service on every card. One card ahead is enough: the page cache
+    holds two dozen clips and a session moves one card at a time.
+  */
+  useEffect(() => {
+    const upcoming = queue[index + 1];
+    if (!upcoming) return;
+    const heard = estonianSide(upcoming.cardType, "front") && upcoming.cardType !== "CLOZE"
+      ? upcoming.lemma ?? upcoming.front
+      : upcoming.intro?.lemma ?? upcoming.lemma ?? (estonianSide(upcoming.cardType, "back") ? upcoming.back : null);
+    if (heard) prefetchClip({ text: heard, voice });
+  }, [index, queue, voice]);
 
   // Interval previews are computed after mount, never during the server render.
   // FSRS scheduling is fuzzed (deliberately — see lib/srs/scheduler.ts), so the
@@ -427,6 +448,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     const result = checkAnswer(typed, card.back, language);
     setVerdict(result);
     setRevealed(true);
+    sound(countsAsRecalled(result.verdict) ? "right" : "wrong");
     if (result.verdict === "wrong" && typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(60);
     }
@@ -438,20 +460,21 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     if (result.verdict === "correct") {
       window.setTimeout(() => void submit(result.suggestedRating), 420);
     }
-  }, [card, typed, verdict, submit]);
+  }, [card, typed, verdict, submit, sound]);
 
   const pickChoice = useCallback((choice: string) => {
     if (!card || chosen) return;
     setChosen(choice);
     setRevealed(true);
     const right = choice === card.back;
+    sound(right ? "right" : "wrong");
     if (!right && typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(60);
     if (right) {
       // Right answers move on by themselves: multiple choice is the fast mode,
       // and a confirmation click on every correct card halves the throughput.
       window.setTimeout(() => void submit(3), 420);
     }
-  }, [card, chosen, submit]);
+  }, [card, chosen, submit, sound]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -818,7 +841,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                     <span style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
                     {card.front.split(BLANK)[1]}
                   </p>
-                  <Speak text={card.front.replace(BLANK, card.back)} label="Hear the whole sentence" />
+                  <Speak text={card.front.replace(BLANK, card.back)} label="Hear the whole sentence" autoplay />
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -829,7 +852,10 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                   >
                     {card.back}
                   </p>
-                  {estonianSide(card.cardType, "back") && <Speak text={card.back} />}
+                  {/* The answer, read aloud as it appears. On a typed card
+                      this is the correction; on a flip it is the word you
+                      were trying to recall, said properly. */}
+                  {estonianSide(card.cardType, "back") && <Speak text={card.back} autoplay />}
                 </div>
               )}
 

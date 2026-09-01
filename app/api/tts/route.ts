@@ -5,6 +5,7 @@ import { bucketForRequest, checkRateLimit, rateLimited } from "@/lib/security/ra
 import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
 import { singleFlightTagged } from "@/lib/cache/singleFlight";
 import { recordUsage } from "@/lib/usage/ledger";
+import { DEFAULT_VOICE, voiceFrom, VOICES } from "@/lib/audio/voice";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
 const MAX_CHARS = 400;
@@ -64,18 +65,26 @@ export async function POST(request: Request) {
 
   let text: string;
   let speed = 1;
+  let voice: string | null = null;
   try {
-    const body = (await request.json()) as { text?: unknown; speed?: unknown };
+    const body = (await request.json()) as { text?: unknown; speed?: unknown; voice?: unknown };
     if (typeof body.text !== "string" || !body.text.trim()) {
       return NextResponse.json({ error: "Nothing to say." }, { status: 400 });
     }
     text = body.text.trim().slice(0, MAX_CHARS);
     if (typeof body.speed === "number" && body.speed >= 0.5 && body.speed <= 2) speed = body.speed;
+    /*
+      The learner's chosen voice, checked against the allowlist rather than
+      passed to a third party as typed. A value that is not one of ours is
+      the deployment's default, never an error, because the request carries
+      it on behalf of a setting the learner may have set on another day.
+    */
+    if (typeof body.voice === "string" && VOICES.some((v) => v.id === body.voice)) voice = voiceFrom(body.voice);
   } catch {
     return NextResponse.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
-  const speaker = process.env.TTS_SPEAKER ?? "mari";
+  const speaker = voice ?? voiceFrom(process.env.TTS_SPEAKER ?? DEFAULT_VOICE);
   const hash = createHash("sha256").update(`${text}|${speaker}|${speed}`).digest("hex");
   // Content-addressed and shared across instances and users: a clip fetched
   // once is available to everybody, forever. Writing to /tmp instead, as this

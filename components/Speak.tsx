@@ -1,8 +1,9 @@
 "use client";
 
 import { Volume2, Loader2 } from "lucide-react";
-import { useState, type CSSProperties, type ReactNode } from "react";
-import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { fetchClip } from "@/lib/audio/clip";
+import { useAudioPrefs } from "./AudioPrefs";
 
 /**
  * Pronunciation button.
@@ -11,9 +12,16 @@ import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
  * browser's speechSynthesis has no dependable et-EE voice — it fails silently, or
  * reads Estonian in an English accent. If the proxy cannot produce audio the button
  * disappears rather than sitting there doing nothing.
+ *
+ * The voice is the learner's own, read from the shell (components/AudioPrefs.tsx),
+ * and `autoplay` reads the clip aloud the moment the button appears, once, if
+ * they have that switched on. A browser refuses to play sound on a page nobody
+ * has touched yet, and that refusal is not a fault in the service: it leaves the
+ * button in place to be pressed, where a clip that could not be fetched at all
+ * takes the button away.
  */
 export function Speak({
-  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children,
+  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay,
 }: {
   text: string; slow?: boolean; label?: string;
   /** Icon size in px, plus className/style overrides for a bigger tap target (e.g. Listening mode). */
@@ -44,33 +52,37 @@ export function Speak({
    * for its slow half.
    */
   children?: ReactNode;
+  /**
+   * Read it aloud as soon as this appears, if the learner's setting allows.
+   * For the moment a word is met and the moment an answer is shown, which are
+   * the two moments hearing it does the most, and never for a sentence with a
+   * hole in it. Counts as a play for `onPlay`, since it is one.
+   */
+  autoplay?: boolean;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
+  const { voice, autoplay: wanted } = useAudioPrefs();
+  const played = useRef<string | null>(null);
 
-  if (state === "gone") return null;
-
-  const play = async () => {
-    const key = `${text}|${slow ? 0.6 : 1}`;
+  const play = async (unasked = false) => {
     try {
       setState("loading");
-      /*
-        Held in lib/audio/clipCache.ts rather than in a `Map` here. That map
-        was module-level and never revoked one of its object URLs, so a tab
-        left open through a few review sessions kept every clip it had ever
-        played. The cache is bounded and revokes what it evicts now, and it is
-        shared with the listening round, so a word met in both is one clip.
-      */
-      let url = cachedClip(key);
-      if (!url) {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text, speed: slow ? 0.6 : 1 }),
-        });
-        if (!res.ok) throw new Error(String(res.status));
-        url = rememberClip(key, await res.blob());
+      const url = await fetchClip({ text, slow, voice });
+      try {
+        await new Audio(url).play();
+      } catch (error) {
+        /*
+          The clip is here and the browser would not play it, which on a page
+          nobody has touched yet is the autoplay policy and not the service.
+          Leave the button to be pressed. A press is a user gesture and will
+          be allowed, so the same error on a press is genuinely something else.
+        */
+        if (unasked && error instanceof DOMException && error.name === "NotAllowedError") {
+          setState("idle");
+          return;
+        }
+        throw error;
       }
-      await new Audio(url).play();
       setState("idle");
       onPlay?.();
     } catch {
@@ -79,10 +91,23 @@ export function Speak({
     }
   };
 
+  useEffect(() => {
+    if (!autoplay || wanted !== "on" || disabled) return;
+    const key = `${text}|${slow ? 1 : 0}`;
+    if (played.current === key) return;
+    played.current = key;
+    void play(true);
+    // `play` closes over the props it needs; re-running on them would replay
+    // the same clip on an unrelated re-render, which `played` also guards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoplay, wanted, disabled, text, slow]);
+
+  if (state === "gone") return null;
+
   return (
     <button
       type="button"
-      onClick={play}
+      onClick={() => void play()}
       disabled={disabled || state === "loading"}
       aria-label={label ?? `Hear "${text}"${slow ? " slowly" : ""} in Estonian`}
       className={className ?? "press inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"}
@@ -115,7 +140,7 @@ export function Speak({
  * lone button.
  */
 export function SpeakPair({
-  text, label, slowLabel, disabled, onPlay, onUnavailable, size = 15, className = "",
+  text, label, slowLabel, disabled, onPlay, onUnavailable, size = 15, className = "", autoplay,
 }: {
   text: string;
   label?: string;
@@ -125,6 +150,8 @@ export function SpeakPair({
   className?: string;
   onPlay?: () => void;
   onUnavailable?: () => void;
+  /** Reads the normal-speed half aloud on appearing, as `Speak` does. */
+  autoplay?: boolean;
 }) {
   const [gone, setGone] = useState(false);
   if (gone) return null;
@@ -148,6 +175,7 @@ export function SpeakPair({
         disabled={disabled}
         onPlay={onPlay}
         onUnavailable={lost}
+        autoplay={autoplay}
         className={`${half} px-2.5 py-1.5`}
         style={{ color: "var(--ink-2)" }}
       />

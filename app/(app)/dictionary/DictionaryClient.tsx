@@ -13,7 +13,7 @@ import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { Examples } from "./Examples";
-import { WordForms } from "./Forms";
+import { DerivedVerbForms, WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
@@ -443,6 +443,8 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           pos={entry.pos}
           forms={retrieved.map((f) => ({ value: f.value, morphCode: f.morphCode, morphName: f.morphName }))}
         />
+      ) : isVerb && form("PRES_1SG") ? (
+        <DerivedVerbForms lemma={entry.lemma} forms={entry.forms} />
       ) : isNoun && form("GEN_SG") && (
         <div>
           <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>

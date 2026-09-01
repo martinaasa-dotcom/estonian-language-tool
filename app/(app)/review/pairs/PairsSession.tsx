@@ -7,7 +7,8 @@ import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
-import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
+import { fetchClip } from "@/lib/audio/clip";
+import { useAudioPrefs } from "@/components/AudioPrefs";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -50,33 +51,25 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   const finished = !question;
   const revealed = picked !== null;
 
+  const { voice } = useAudioPrefs();
   const play = useCallback(async (text: string, slow = false) => {
-    const key = `${text}|${slow ? 0.6 : 1}`;
     try {
       setPlaying(true);
       /*
         Shared with `Speak` rather than a ref of its own. A ref's clips became
         unreachable when the round ended and were still held by the browser,
         because nothing revoked them: a listening round meets a dozen new
-        words a minute and every one of them stayed.
+        words a minute and every one of them stayed. `fetchClip` is the one
+        reader of that cache and the one place the key is built.
       */
-      let url = cachedClip(key);
-      if (!url) {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text, speed: slow ? 0.6 : 1 }),
-        });
-        if (!res.ok) throw new Error(String(res.status));
-        url = rememberClip(key, await res.blob());
-      }
+      const url = await fetchClip({ text, slow, voice });
       await new Audio(url).play();
     } catch {
       setAudioFailed(true);
     } finally {
       setPlaying(false);
     }
-  }, []);
+  }, [voice]);
 
   // Play as soon as the question appears: this is a listening drill, and making
   // someone press play before every item is friction with no purpose.

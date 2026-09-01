@@ -94,6 +94,16 @@ export const SETTING_KEYS = {
    * "currentWeek" again. Keys live here for exactly that reason.
    */
   currentWeek: "currentWeek",
+
+  /**
+   * How Estonian is read aloud: which of the speech service's voices, whether
+   * a card reads itself when it appears, and whether an answer makes a sound.
+   * The values and their defaults live in lib/audio/voice.ts; a missing row
+   * reads as the behaviour everybody had before the question existed.
+   */
+  ttsVoice: "ttsVoice",
+  autoplayAudio: "autoplayAudio",
+  feedbackSounds: "feedbackSounds",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

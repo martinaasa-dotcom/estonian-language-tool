@@ -12,6 +12,8 @@ import { requireUserId } from "@/lib/auth/session";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { letterBarFrom } from "@/lib/ux/letterBar";
+import { AudioPrefsProvider } from "@/components/AudioPrefs";
+import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
 
 // Not cached at build time: `configured` below is read from the environment,
 // and a notice baked in from the build machine's environment describes
@@ -43,11 +45,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   */
   const settings = await readSettings(
     await requireUserId(),
-    [SETTING_KEYS.letterBar, SETTING_KEYS.timeZone],
+    [
+      SETTING_KEYS.letterBar, SETTING_KEYS.timeZone,
+      SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
+    ],
   );
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
   const storedZone = settings[SETTING_KEYS.timeZone] ?? null;
+  // How Estonian is read aloud, published once for every speaker button and
+  // every round inside the shell. See components/AudioPrefs.tsx.
+  const audio = {
+    voice: voiceFrom(settings[SETTING_KEYS.ttsVoice]),
+    autoplay: autoplayFrom(settings[SETTING_KEYS.autoplayAudio]),
+    sounds: feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]),
+  };
   return (
+    <AudioPrefsProvider value={audio}>
     <LetterBarScope value={letters} dismissible>
       <a
         href="#main"
@@ -91,5 +104,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           prediction about one that has not. `/tutor` has the room for both. */}
       <AnuFab configured={chain.length > 0} readerCanConfigure={!supabaseConfigured()} />
     </LetterBarScope>
+    </AudioPrefsProvider>
   );
 }

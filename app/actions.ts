@@ -36,6 +36,7 @@ import {
   forgetSettings, numberSetting, readSetting, SETTING_KEYS, writeSetting, type ReviewMode,
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
+import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
 import {
   availableCardTypes, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -789,6 +790,36 @@ export async function setLetterBar(value: LetterBar) {
   await writeSetting(ownerId, SETTING_KEYS.letterBar, value === "off" ? "off" : "on");
   revalidatePath("/", "layout");
   return { ok: true as const, value };
+}
+
+/**
+ * Which voice reads Estonian aloud, whether a card reads itself, and whether
+ * an answer makes a sound. Each value is normalised against its allowlist on
+ * the way in, so a request cannot store a voice the speech route would not
+ * accept. Revalidated at the layout, since the shell publishes all three.
+ */
+export async function setVoice(voice: string) {
+  const ownerId = await requireUserId();
+  const value = voiceFrom(voice);
+  await writeSetting(ownerId, SETTING_KEYS.ttsVoice, value);
+  revalidatePath("/", "layout");
+  return { ok: true as const, voice: value };
+}
+
+export async function setAutoplay(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = autoplayFrom(value);
+  await writeSetting(ownerId, SETTING_KEYS.autoplayAudio, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
+}
+
+export async function setFeedbackSounds(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = feedbackSoundsFrom(value);
+  await writeSetting(ownerId, SETTING_KEYS.feedbackSounds, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
 }
 
 /**

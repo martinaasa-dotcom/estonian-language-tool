@@ -7,6 +7,8 @@ import { grammarTerm } from "@/lib/estonian/terms";
 import { SYLLABUS } from "@/lib/collections/syllabus";
 import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { DrillLink } from "@/components/DrillLink";
+import { VerbTable } from "./VerbTable";
+import { verbExamples } from "@/lib/progress/verbExamples";
 
 /**
  * The grammar topics with a drill of their own.
@@ -22,6 +24,14 @@ import { DrillLink } from "@/components/DrillLink";
 const TOPIC_DRILL: Record<string, string> = {
   government: "/review/government",
   gradation: "/review/pairs",
+};
+
+/** The topics with a table of real verbs, and which slots that table shows. */
+const VERB_TOPICS: Record<string, "present" | "negative" | "conditional" | "imperative"> = {
+  "present-tense": "present",
+  negation: "negative",
+  conditional: "conditional",
+  imperative: "imperative",
 };
 
 export const dynamic = "force-dynamic";
@@ -60,11 +70,25 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   const topic = grammarTopic(id);
   if (!topic) notFound();
 
-  await requireUserId();
+  const ownerId = await requireUserId();
 
   const term = grammarTerm(id);
 
   const units = SYLLABUS.filter((u) => u.grammar.includes(id));
+
+  /*
+    THE FOUR POINTS THAT CAN BE SHOWN ON REAL VERBS.
+
+    The header above says a topic page is sparser than a case page because
+    there is no safe way to illustrate most of these on real words. For the
+    present tense, the negative, the conditional and the singular imperative
+    there is, and it is the case page's own way: every form is either what
+    Ekilex recorded or the regular ending on a stored first person that
+    `scripts/audit-verbs.ts` checked against Ekilex for every verb in the
+    dictionary. Each form says which. The other topics keep to English.
+  */
+  const shown = VERB_TOPICS[id];
+  const verbs = shown ? await verbExamples(ownerId, 4) : [];
 
   return (
     <Page
@@ -153,6 +177,15 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             <span>{topic.watchOut}</span>
           </span>
         </Note>
+
+        {shown && verbs.length > 0 && (
+          <section>
+            <SectionTitle hint={verbs.some((v) => v.inDeck) ? "verbs from your deck first" : "from the dictionary"}>
+              On real verbs
+            </SectionTitle>
+            <VerbTable verbs={verbs} show={shown} />
+          </section>
+        )}
 
         <section>
           <SectionTitle hint={`${units.length} unit${units.length === 1 ? "" : "s"}`}>
