@@ -1499,7 +1499,9 @@ to choose**: TartuNLP offers twelve Estonian voices, the app had used one of the
 and a learner who has only ever heard one voice say a word has learned that voice rather than the
 word. The state examination's listening part is read by more than one speaker. The list in
 `lib/audio/voice.ts` is the allowlist the speech route checks a request against, so a value not on
-it is answered with the default rather than passed to a third party as typed. **A right or wrong
+it is answered with the default rather than passed to a third party as typed. The listening round
+goes further and changes voice from word to word, naming the speaker after the answer, because a
+round read entirely in one voice tests that voice. **A right or wrong
 answer makes a short sound**, two notes up for a hit and one low note for a miss, made with the
 browser's own oscillator so it costs no request and works offline. All three are settings, on by
 default because a missing row has to read as the behaviour everybody had.
