@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CASES } from "@/lib/estonian/cases";
-import { assemble, buildPaper, listeningItems, mulberry32, readingItems, speakingItems, writingItems, type WordRow } from "./items";
+import { assemble, BLUEPRINT, buildPaper, listeningItems, mulberry32, readingItems, speakingItems, writingItems, type WordRow } from "./items";
 import { BLANK } from "@/lib/estonian/cloze";
 import { BANDS, type ChoiceItem, type Item } from "./types";
 
@@ -231,6 +231,43 @@ describe("assemble", () => {
     const perBand = new Map<string, number>();
     for (const item of items) perBand.set(item.band, (perBand.get(item.band) ?? 0) + 1);
     for (const count of perBand.values()) expect(count).toBe(1);
+  });
+});
+
+describe("BLUEPRINT", () => {
+  it("is the size the accuracy was measured at", () => {
+    /*
+      Asserted rather than described because the numbers are the finding. The
+      paper was two per band per skill and placed 43% of simulated learners
+      correctly while putting 57% below where they were; at these it places
+      between 72% and 98% depending on the level. Lowering one of these is
+      lowering how much of somebody's Estonian their level was read off.
+    */
+    expect(BLUEPRINT.reading).toEqual({ total: 30, perBand: 6 });
+    expect(BLUEPRINT.listening).toEqual({ total: 15, perBand: 3 });
+    expect(BLUEPRINT.writing).toEqual({ total: 30, perBand: 6 });
+    expect(BLUEPRINT.speaking).toEqual({ total: 5, perBand: 1 });
+
+    const total = Object.values(BLUEPRINT).reduce((sum, s) => sum + s.total, 0);
+    expect(total).toBe(80);
+    // Every section fills every band, or a band is decided by fewer skills
+    // than the one below it and the two are not comparable.
+    for (const section of Object.values(BLUEPRINT)) {
+      expect(section.perBand * BANDS.length).toBe(section.total);
+    }
+  });
+
+  it("gives every scored skill a band size two thirds is reachable at", () => {
+    /*
+      `PASS` is two thirds of a band's credit, and a band of n items can only
+      score in nths. At two items two thirds means a perfect score, and at four
+      it means three quarters, which is a stricter bar rather than a looser
+      one. Only a multiple of three lets a learner score exactly the threshold
+      they are being marked against, and 4 per band measured worse than 3.
+    */
+    for (const skill of ["reading", "listening", "writing"] as const) {
+      expect(BLUEPRINT[skill].perBand % 3).toBe(0);
+    }
   });
 });
 

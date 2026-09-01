@@ -1,15 +1,18 @@
 import { BANDS, type Band, type ItemRef, type Response, type Skill } from "./types";
-import { FLOOR } from "./score";
+import { FLOOR, PASS } from "./score";
 
 /**
  * Which question comes next.
  *
  * The paper is laid out in ascending bands within each skill, and this is the
- * part that stops climbing. Once every question at a band has been answered and
- * the learner scored under half of it, the harder questions in that skill are
- * skipped: they would take three more minutes to confirm what the last two
- * already said, and being walked up a ladder you have visibly fallen off is a
- * miserable way to start with an app.
+ * part that stops climbing. Once a band has been answered and not passed, at
+ * most one more band is asked above it: they would take several more minutes
+ * to confirm what the band below already said, and being walked up a ladder
+ * you have visibly fallen off is a miserable way to start with an app.
+ *
+ * It is what keeps an eighty question paper from being eighty questions for
+ * everybody. A learner who reads at A2 answers the A1, A2 and B1 questions and
+ * is done; one who reads at C1 answers the lot, which is the paper they need.
  *
  * It is a pure function of the paper and the answers so far, so a test can walk
  * a whole session through it without a browser, and so the runner has no state
@@ -38,8 +41,22 @@ function bandComplete(items: readonly ItemRef[], responses: readonly Response[],
 }
 
 /**
- * Has this skill's ladder ended? True once a completed band came in under half
- * and there is nothing left at or below it to ask.
+ * Has this skill's ladder ended?
+ *
+ * Two rules, and the second is new because the score changed underneath it.
+ * `levelFrom` now ends the climb at the first band that did not reach `PASS`,
+ * so a band answered above that point cannot raise anybody's level and is
+ * three more minutes spent measuring nothing. What it can still do is settle a
+ * near miss, which is why one band is asked past the failure rather than none:
+ * a learner who came in at 60% at B1 and then reads B2 comfortably was having
+ * a bad ten questions, and that is worth finding out. Two bands past it is
+ * not, and that is the confirmation stage every multi-stage placement test
+ * stops at.
+ *
+ * The older rule stands in front of it. A band under `FLOOR` is not a near
+ * miss, it is a level the learner has visibly not met, and being walked up a
+ * ladder you have fallen off is a miserable way to start with an app. Nothing
+ * above it is asked at all.
  */
 export function ladderStopped(
   items: readonly ItemRef[],
@@ -48,10 +65,13 @@ export function ladderStopped(
   band: Band,
 ): boolean {
   for (const lower of BANDS) {
-    if (BANDS.indexOf(lower) >= BANDS.indexOf(band)) break;
+    const rungs = BANDS.indexOf(band) - BANDS.indexOf(lower);
+    if (rungs <= 0) break;
     if (!bandComplete(items, responses, skill, lower)) continue;
     const ratio = ratioAt(responses, skill, lower);
-    if (ratio !== null && ratio < FLOOR) return true;
+    if (ratio === null) continue;
+    if (ratio < FLOOR) return true;
+    if (ratio < PASS && rungs > 1) return true;
   }
   return false;
 }

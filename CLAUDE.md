@@ -1349,6 +1349,36 @@ rather than a general warning. The minutes are `minutesFor` and are no longer al
 row, which is where "About about 8 minutes a day" came from: a figure written down twice is a figure
 nobody is checking.
 
+**A level is something a learner may simply tell the app, and the later answer wins.** Three
+things measure Estonian here and none of them can know that somebody was moved up in the class
+they sit in every Tuesday, or sat the real state examination, or read a check taken on a bad
+evening and knows it is wrong. Settings has a row of five chips for exactly that.
+`courseLevelFor` used to order by richness, taking the level check first and the stored setting
+only when there had never been one, which would have made that button do nothing: a check sat in
+March beats a correction made this morning, silently, on every screen that reads a level. So what
+decides is **when**, not which, and `cefrPlacementAt` is what makes that possible. A declaration
+with no timestamp reads as older than any measurement, which is both every row written before the
+picker existed and, deliberately, the level ticked in first run by somebody who has not answered
+a question yet.
+
+**And a level has to be worth setting, which means it decides which words somebody meets.**
+"Around your level" was one `Record<Level, readonly string[]>` inside `lib/dict/suggest.ts`, where
+exactly one of the three things that choose words for a learner could see it. The other two did
+not band at all, and it did not look like an omission because both had an `ORDER BY cefr ASC` in
+front of a `take` that reads as deliberate and is the bottom of the dictionary: the minimal pairs
+round drew two thousand rows starting at A1, so a C1 speaker got beginner contrasts on their first
+visit and on their four hundredth, and the government drill took the easiest two hundred of 268
+governed verbs, so the C1 ones were the verbs nobody was ever shown. `lib/collections/levels.ts`
+is the one table, one band either side, and an invariant fails on a second copy of it and on a
+reader that stopped asking.
+
+What is **due** in review is not banded and may not be: FSRS decides when a card comes back, and a
+level that reordered that is not a schedule. What has never been seen has no schedule yet, so
+`aroundFirst` puts those around the learner's level first. It **orders and never drops**, which is
+the whole of why this is safe on somebody's own deck, and a word with no CEFR tag counts as at
+level, because a word typed in, pasted or photographed is one the learner went to the trouble of
+putting there.
+
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
@@ -1779,6 +1809,38 @@ is the one that is confused, so the machine is never the judge. The overall leve
 **weakest** measured skill, because a CEFR level is a claim about everything you can do at it.
 (ADR-020.)
 
+**A level read off two questions is a coin toss, and every number in the paper is measured now.**
+Nineteen questions at two per band per skill was the whole paper, and `PASS` is two thirds, so a
+band of two demanded a perfect score and one lucky guess out of four options moved it from half to
+full. Simulated against papers built from the shipped dictionary, that placed **43%** of learners
+at their own level and put **57% of them below it**, which is what a check that does not feel like
+your own Estonian is. It is eighty questions now: six reading and six writing at each band, three
+listening, one spoken, and the placement runs 97, 98, 93, 85, 80 and 72 percent from pre-A1 to C1.
+
+Three findings sit under those numbers and only the first is the obvious one. **Two thirds has to
+be a score somebody can reach**, so a band size is a multiple of three, and 4 per band measured
+worse than 3 because it demands three quarters. **Writing is the noisiest skill**, since its
+answers are typed and nothing puts a floor under a band the way four options do, so at a fixed
+eighty items spending them on writing beat spending them on listening or reading. And **the
+overall level is the weakest of three skills**, so noise anywhere lands on the result, which is
+why raising reading alone took it only to 52%.
+
+Two scoring rules changed with it. The level is **the highest band passed consecutively from the
+bottom**, which is the rule published placement tests use and was not the rule here: the old one
+climbed past any band between half and two thirds, so A1 at 100%, A2 at 55% and B1 at 70% reported
+B1 over a band the same screen printed as failed. And the floor is **the band below the lowest one
+asked**, not always `pre-A1`: writing sets no A1 question and structurally cannot, so a failed A2
+was being read as "below A1" on the strength of a band nobody had been asked about, on most
+sittings. `session.ts` stops a skill one band past the first it was not passed at, which is what
+keeps an eighty question paper at about fifteen questions for a beginner.
+
+**Two numbers for one paper is how a finished sitting stops being stored.** `recordAssessment`
+capped its posted arrays at a literal 60, written when the paper was nineteen, and the blueprint
+grew past it: every sitting then failed `safeParse` while the runner, which computes the level in
+the browser, showed the result anyway. The learner read their level and the hub said nothing had
+ever been measured. It is `PAPER_SIZE`, the blueprint added up, and an invariant fails on a literal
+coming back.
+
 **A question is only as hard as its second best option, and three of the four were free.** The
 check filled its wrong answers out of the whole dictionary in shuffle order, so a beginner asked
 what `must` means chose between "black", "plastic bag", "narcomania, drug addiction, substance
@@ -1959,6 +2021,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
 `requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
+`PAPER_SIZE`, `bandsAround`, `aroundFirst`, `recordCourseLevel`, `decisiveItems`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
 `explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`, `teachingSentence`,

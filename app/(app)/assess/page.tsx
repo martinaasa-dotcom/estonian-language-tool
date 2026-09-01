@@ -63,6 +63,16 @@ export default async function AssessPage({
         ceiling: (latest.ceiling ?? null) as Placement["ceiling"],
         confidence: latest.confidence as Confidence,
         itemsAnswered: latest.answered,
+        /*
+          A stored sitting knows how many questions it asked and not how many
+          of them settled the boundary, and `Assessment` is append-only, so a
+          row written before that number existed cannot grow one. Nought is the
+          honest value and the panel reads it as "say nothing", the same way
+          `parseDetail` reads an old row's missing breakdown as no breakdown.
+          Rebuilding it here would mean recomputing a level from responses this
+          row does not keep.
+        */
+        decisive: 0,
       }
     : null;
 
@@ -85,7 +95,7 @@ export default async function AssessPage({
         ) : (
           <Empty
             title="Nothing measured yet"
-            body="About ten minutes of reading, listening and writing, plus speaking you judge yourself."
+            body="Reading, listening and writing, climbing until it finds your level. Speaking you judge yourself."
             action={<ButtonLink href="/assess?take=1" variant="primary" size="lg">Start the check</ButtonLink>}
           />
         )}

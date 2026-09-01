@@ -284,7 +284,7 @@ function expectedPart(
     apart.
 
     Blended rather than substituted, two thirds to the measurement. The check is
-    ten minutes long and says so, and its own confidence field exists because it
+    half an hour long and says so, and its own confidence field exists because it
     knows it is short; letting it overwrite months of review history would be
     taking the smaller sample on its own account.
   */

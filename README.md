@@ -71,14 +71,23 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **Speaking that does not lie to you.** Say the word, then hear a native voice and your own
   recording back to back. It is not scored: there is no verified Estonian speech recogniser this app
   can use, and an invented confidence number would be believed.
-- **A level check that measures rather than asks.** Reading, listening, writing and speaking, about
-  ten minutes, assembled entirely out of the dictionary: meanings, case forms, case identification,
-  verb government, recorded sentences, dictation, and a sentence you write that has to contain a
-  named case. Questions climb the levels and a skill stops as soon as a band is clearly past you.
-  Nothing is marked by an AI. Speaking is not scored, because nothing here honestly can, so it is
-  yours to rate and it is kept out of the level. The result is a profile per skill, not a badge, and
-  the overall figure follows your weakest measured skill because that is what a CEFR level claims.
-  Take it whenever you like, and every sitting is kept.
+- **A level check that measures rather than asks.** Eighty questions across A1 to C1: six reading
+  and six writing at each level, three listening, one spoken. Assembled entirely out of the
+  dictionary, so it is meanings, sentences with a word taken out of them, dictation, and forms you
+  type. Questions climb the levels, and a skill asks one level past the first one you do not pass
+  and then stops, so a beginner answers about fifteen of them and nobody answers all eighty
+  without earning it. The size is measured rather than picked: simulated against the real
+  dictionary, the old nineteen-question paper placed 43% of learners correctly and put 57% of them
+  below where they were, and this one places between 72% and 98% depending on the level. Nothing
+  is marked by an AI. Speaking is not scored, because nothing here
+  honestly can, so it is yours to rate and it is kept out of the level. The result is a profile per
+  skill, not a badge, and the overall figure follows your weakest measured skill because that is
+  what a CEFR level claims. Take it whenever you like, and every sitting is kept.
+- **A level you can just set.** Settings has the level the app is going on and a row of five chips
+  to change it. A measurement is the wrong instrument for having been moved up in your class, or
+  for a check taken on a bad evening, and whichever of the two was stated later is the one the app
+  holds. It decides where the course opens, which words review introduces next, and the band the
+  practice rounds and the dictionary draw from.
 - **A plan in hours, and it is not flattering.** Say why you are learning, how far you want to get
   and by when, and the app does the arithmetic: how many study hours that level usually takes, how
   many of them your daily goal actually covers, and how many are left to find in a class or a

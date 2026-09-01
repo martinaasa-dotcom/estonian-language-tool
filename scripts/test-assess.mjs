@@ -83,7 +83,13 @@ const CASE_NAMES = [
   "ilmaütlev", "kaasaütlev",
 ];
 
-for (let step = 0; step < 80; step++) {
+/*
+  A cap on the loop rather than on the paper. It was 80, which was comfortable
+  when the paper was nineteen questions and is the paper's own length now, so a
+  sitting that climbed would have run out of steps before the result screen and
+  reported it as the paper not ending.
+*/
+for (let step = 0; step < 200; step++) {
   if ((await page.getByText("Skill by skill").count()) > 0) break;
 
   // A section opens with what it measures and how.
@@ -183,7 +189,10 @@ check("the writing section is a gap in a real sentence, not an essay prompt", sa
 await page.waitForTimeout(600);
 check("it ends on a result", (await page.getByText("Skill by skill").count()) > 0);
 check("the result says how few questions it came from",
-  (await page.getByText(/scored questions?\./i).count()) > 0);
+  // Matched to the end of the count rather than to a full stop: the sentence
+  // now carries on to say how many of those questions were at the levels the
+  // level actually turned on, which is the same claim made better.
+  (await page.getByText(/scored questions?[,.]/i).count()) > 0);
 check("it refuses to call itself a certificate",
   (await page.getByText(/Not a certificate/i).count()) > 0);
 check("it keeps speaking out of the level",

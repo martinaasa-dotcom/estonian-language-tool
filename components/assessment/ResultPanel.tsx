@@ -9,7 +9,7 @@ import { levelLabel } from "./PlanPanel";
  *
  * Four numbers and a paragraph of caveats, in that order, because the caveats
  * are the part that makes the numbers usable. A learner told "you are B1" by an
- * app they met ten minutes ago will either believe it and sit an exam they fail,
+ * app they met half an hour ago will either believe it and sit an exam they fail,
  * or disbelieve it and ignore everything else here. Told "reading looks B1,
  * writing looks A2, from nine questions, which is thin", they have something
  * they can actually use.
@@ -95,7 +95,10 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
           )}
         </p>
         <p className="mt-3 text-sm" style={{ color: "var(--ink-2)" }}>
-          {result.itemsAnswered} scored {result.itemsAnswered === 1 ? "question" : "questions"}.{" "}
+          {result.itemsAnswered} scored {result.itemsAnswered === 1 ? "question" : "questions"}
+          {result.decisive > 0 && result.decisive < result.itemsAnswered
+            ? `, ${result.decisive} of them at the levels this turned on`
+            : ""}.{" "}
           {CONFIDENCE_COPY[result.confidence]}
         </p>
       </Card>
@@ -112,7 +115,7 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
         <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           <li>
             Not a certificate. The exams that count are the state language exams, run at A2, B1, B2
-            and C1 by the authority that sets them. This is ten minutes in an app.
+            and C1 by the authority that sets them. This is half an hour in an app.
           </li>
           <li>
             Not a measurement of your speaking. Nothing here can score a recording honestly, so the

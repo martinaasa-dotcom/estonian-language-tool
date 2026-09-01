@@ -39,6 +39,22 @@ export const SETTING_KEYS = {
    * assessment at /assess, which is the better instrument of the three.
    */
   cefrPlacement: "cefrPlacement",
+  /**
+   * When `cefrPlacement` was last written, as an ISO timestamp.
+   *
+   * There are two answers to "what level is this learner" and until now the
+   * measurement always won: `courseLevelFor` read the most recent level check
+   * first and fell back to this setting only when there had never been one. So
+   * a learner who sat a check in March and then said in Settings that they had
+   * moved up was told, by every screen that reads a level, that they had not.
+   *
+   * A date is what settles it. Whichever of the two was stated later is the
+   * one the app holds, so changing it by hand takes effect immediately and
+   * sitting a new check takes it back. A row with no timestamp is older than
+   * any measurement, which is exactly the behaviour every deployment already
+   * had.
+   */
+  cefrPlacementAt: "cefrPlacementAt",
 
   /*
     Why this person is here, what they want to reach, and by when. Asked once

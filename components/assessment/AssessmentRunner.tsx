@@ -20,8 +20,10 @@ import { ResultPanel } from "./ResultPanel";
  * `lib/assessment/items.ts` shapes it) and is snapshotted on mount, so a
  * refresh of the page underneath cannot swap a question out while it is being
  * read. Which question comes next is decided by `nextCursor`, which is a pure
- * function of the paper and the answers so far: once a whole band has come in
- * under half, the harder questions in that skill are dropped rather than asked.
+ * function of the paper and the answers so far: a skill asks at most one band
+ * above the first band it was not passed at, and nothing at all above one that
+ * collapsed. That is what keeps an eighty question paper from being eighty
+ * questions for a beginner.
  *
  * Two things it deliberately does not do. It does not grade any card, because
  * the words in it are chosen for *not* being in the learner's deck and grading
@@ -264,9 +266,11 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
       <div className="mt-8">
         <SectionTitle>How this is marked</SectionTitle>
         <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Questions get harder as you go, and stop once a level is clearly past you, so this takes
-          about ten minutes instead of forty. Nothing you answer here becomes a flashcard, and
-          none of it is sent to an AI.
+          Eighty questions, six at each level in reading and writing and three in listening,
+          climbing. A skill stops one level past the first one you do not pass, so how many you
+          answer depends on how far up you get: about fifteen if the first level is already hard,
+          all of them if none of it is. Nothing you answer here becomes a flashcard, and none of
+          it is sent to an AI.
         </p>
       </div>
     </div>

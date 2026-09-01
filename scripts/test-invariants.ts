@@ -5466,6 +5466,186 @@ check("a setting written outside the store tells the store it changed", () => {
   );
 });
 
+check("a finished sitting is bounded by the paper, not by a number typed twice", () => {
+  /*
+    THE CHECK WAS SAT, THE LEVEL WAS SHOWN, AND NOTHING WAS EVER STORED.
+
+    `recordAssessment` validates a posted sitting with Zod, and a bound on the
+    array is right: every export in that file is a public endpoint, so without
+    one a caller posts a million responses. What was wrong is that the bound
+    was the number 60, written when the paper was nineteen questions, and the
+    blueprint later went to eighty. Every finished sitting then failed
+    `safeParse` and came back "That result could not be read".
+
+    It is the worst shape a failure can have here. The runner computes the
+    level in the browser, so the learner sees their result, presses on, and
+    only later finds the hub saying nothing has ever been measured. Two numbers
+    for one fact, and the wrong one was the one nobody looks at.
+
+    So the bound is `PAPER_SIZE`, which is the blueprint added up, and this
+    fails on a literal coming back.
+  */
+  const actions = code("app/actions.ts");
+  const schema = actions.slice(actions.indexOf("const ASSESSMENT = z.object({"));
+  const body = schema.slice(0, schema.indexOf("\n});"));
+  assert.ok(body.length > 0, "the schema recordAssessment validates against has moved or gone");
+
+  const caps = [...body.matchAll(/\.max\(([^)]+)\)/g)]
+    .map((m) => m[1]!.trim())
+    .filter((arg) => !/^\d+$/.test(arg) || Number(arg) > 120);
+  assert.ok(
+    caps.includes("PAPER_SIZE"),
+    "the posted paper is not bounded by PAPER_SIZE",
+  );
+  for (const array of ["items:", "responses:"]) {
+    const at = body.indexOf(array);
+    assert.ok(at >= 0, `the sitting schema no longer names ${array}`);
+    const rest = body.slice(at);
+    const end = rest.indexOf("\n  responses:") > 0 && array === "items:" ? rest.indexOf("\n  responses:") : rest.length;
+    assert.match(
+      rest.slice(0, end),
+      /\.max\(PAPER_SIZE\)/,
+      `${array} in the sitting schema is capped at a literal rather than at the paper's own size, `
+      + "so a paper that outgrows it is rejected after the learner has already sat it",
+    );
+  }
+
+  assert.match(
+    code("lib/assessment/items.ts"),
+    /export const PAPER_SIZE = Object\.values\(BLUEPRINT\)/,
+    "PAPER_SIZE stopped being derived from the blueprint, so it is a second number to keep in step",
+  );
+});
+
+check("a stored level carries the time it was stated", () => {
+  /*
+    THE PICKER IN SETTINGS DOES NOTHING WITHOUT THIS, AND SAYS NOTHING ABOUT IT.
+
+    There are two answers to what level a learner is at, the check at `/assess`
+    and whatever they told Settings, and `courseLevelFor` picks between them by
+    date: whichever was stated later is the one the app holds. So a write of
+    `cefrPlacement` with no `cefrPlacementAt` beside it is read as older than
+    every measurement, for ever. That is the right reading of a row written
+    before the picker existed and the wrong reading of one written this
+    morning, and the failure is silent in the worst way: nothing throws, the
+    setting is stored correctly, and the button simply has no effect on any
+    screen.
+
+    `recordCourseLevel` writes both, which is why it exists rather than the two
+    `writeSetting` calls being inlined. One writer is exempt by name and the
+    exemption is the point of it: `completeOnboarding` stores a level ticked in
+    ninety seconds by somebody who has not answered a question yet, and it must
+    never outrank the check on the next screen of the same wizard, so it writes
+    the stamp blank on purpose.
+  */
+  const stamped = ["lib/progress/level.ts", "app/actions.ts"];
+  const offenders: string[] = [];
+  for (const file of [...APP, ...LIB, ...COMPONENTS]) {
+    const src = code(file);
+    if (!/SETTING_KEYS\.cefrPlacement\b/.test(src)) continue;
+    if (!/writeSetting\([^)]*SETTING_KEYS\.cefrPlacement\b/.test(src)) continue;
+    if (!stamped.includes(file)) offenders.push(file);
+  }
+  assert.deepEqual(
+    offenders, [],
+    "these write the learner's level without the timestamp that decides whether it is still "
+    + "the current answer. Call recordCourseLevel() in lib/progress/level.ts.",
+  );
+
+  const actions = code("app/actions.ts");
+  const onboarding = actions.slice(actions.indexOf("export async function completeOnboarding"));
+  assert.match(
+    onboarding.slice(0, 4000),
+    /writeSetting\(ownerId, SETTING_KEYS\.cefrPlacementAt, ""\)/,
+    "first run stores a self-declared level without blanking its timestamp, so a guess ticked "
+    + "before any question was answered can outrank the check on the next screen",
+  );
+
+  /*
+    And the one function the exemption above exists for really does write both.
+    Written the loose way first, as "this file mentions the timestamp key
+    somewhere", and deleting the write from `recordCourseLevel` left the check
+    passing on the strength of `courseLevelFor` reading it four lines up. A
+    check that reads a file rather than the function in it is the oldest
+    recurring mistake in this suite.
+  */
+  const level = code("lib/progress/level.ts");
+  const writer = between(level, "export async function recordCourseLevel");
+  for (const key of ["cefrPlacement", "cefrPlacementAt"] as const) {
+    assert.match(
+      writer,
+      new RegExp(`writeSetting\\([^)]*SETTING_KEYS\\.${key}\\b`),
+      `recordCourseLevel does not write ${key}, so a level stored through it is read as older `
+      + "than every measurement and the picker in Settings has no effect",
+    );
+  }
+
+  /*
+    Matched on the read itself rather than on the key appearing anywhere in the
+    function, for the reason above one more time: dropping the key from the
+    `readSettings` list while leaving the `Date.parse` that consumes it is the
+    shape this breaks in, and it leaves every comparison reading `undefined`
+    without a line of it looking wrong.
+  */
+  assert.match(
+    between(level, "export async function courseLevelFor"),
+    /readSettings\([^)]*SETTING_KEYS\.cefrPlacementAt/,
+    "courseLevelFor stopped asking the store when the declared level was stated, so the picker "
+    + "in Settings is outranked by any level check however old",
+  );
+});
+
+check("a word chosen for a learner is banded by one table", () => {
+  /*
+    "Around your level" was a `Record<Level, readonly string[]>` inside
+    `lib/dict/suggest.ts`, where exactly one of the three things that choose
+    words for somebody could see it. The other two did not band at all and it
+    did not look like an omission, because both had an `ORDER BY cefr ASC` in
+    front of a `take` that reads as deliberate and is the bottom of the
+    dictionary: the minimal pairs round drew two thousand rows starting at A1,
+    so a C1 speaker got beginner contrasts on their first visit and on their
+    four hundredth, and the government drill took the easiest two hundred of
+    268 governed verbs, so the C1 ones were the verbs nobody was ever shown.
+
+    One table in `lib/collections/levels.ts` now, and the check is that there
+    is not a second one anywhere. A copy is how the two drift, and a window
+    that disagrees with itself between the dictionary row and the round the
+    learner opens from it is worse than either answer alone.
+  */
+  const table = /\bA1:\s*\[\s*["']A1["']/;
+  const copies: string[] = [];
+  for (const file of [...APP, ...LIB, ...COMPONENTS]) {
+    if (file === "lib/collections/levels.ts") continue;
+    if (file.endsWith(".test.ts") || file.endsWith(".itest.ts")) continue;
+    if (table.test(code(file))) copies.push(file);
+  }
+  assert.deepEqual(
+    copies, [],
+    "these keep their own table of which CEFR bands to show at a level. There is one, in "
+    + "lib/collections/levels.ts, and two of them drift.",
+  );
+
+  /*
+    And the readers really do read it. Asserted against the call rather than
+    the import, because a file can import the window and go on filtering by
+    something of its own, which is exactly what the two drills were doing with
+    a cefr key that ordered rather than selected.
+  */
+  const readers = [
+    "lib/dict/suggest.ts",
+    "app/(app)/review/pairs/page.tsx",
+    "app/(app)/review/government/page.tsx",
+    "app/(app)/review/page.tsx",
+  ];
+  for (const file of readers) {
+    assert.match(
+      code(file),
+      /\b(bandsAround|isAround|aroundFirst)\s*\(/,
+      `${file} chooses words for a learner without asking which bands are around their level`,
+    );
+  }
+});
+
 check("nothing caches a learner's own rows in the dictionary's cache", () => {
   /*
     `lib/dict/facts.ts` holds answers across requests and across learners,

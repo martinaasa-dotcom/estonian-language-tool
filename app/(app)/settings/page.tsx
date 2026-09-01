@@ -11,9 +11,11 @@ import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEY
 import { letterBarFrom } from "@/lib/ux/letterBar";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
+import { courseLevelFor } from "@/lib/progress/level";
 import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { Card, Chip, Page, SectionTitle, Stack } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
+import { LevelPanel } from "./LevelPanel";
 import { EkilexSetupGuide } from "./EkilexSetupGuide";
 import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
@@ -80,7 +82,7 @@ export default async function SettingsPage() {
   const hosted = supabaseConfigured();
   const ekilexOn = ekilexConfigured();
 
-  const [words, cards, reviews, earned, settings, learner, goals, latestCheck] = await Promise.all([
+  const [words, cards, reviews, earned, settings, learner, goals, latestCheck, courseLevel] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
@@ -93,6 +95,13 @@ export default async function SettingsPage() {
     currentLearner(),
     goalsFor(ownerId),
     latestFor(ownerId),
+    /*
+      The level the app is actually going on, which is not always the last
+      check: `courseLevelFor` takes whichever of the measurement and the
+      learner's own answer was stated later. Reading the check alone here
+      would print one level in the hint and hand the picker another.
+    */
+    courseLevelFor(ownerId),
   ]);
 
   const earnedKeys = new Set(earned.map((a) => a.key));
@@ -101,6 +110,14 @@ export default async function SettingsPage() {
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
+  /*
+    Whether the level on screen is one a check produced, which is the only
+    thing the panel's copy changes on. Compared by value rather than by asking
+    which source won, because a check that put somebody at B1 and a learner who
+    then picked B1 are the same claim and saying "you set this" over it would
+    be the app arguing with itself about a number both agree on.
+  */
+  const measuredIsCurrent = (latestCheck?.overall ?? null) === courseLevel;
 
   return (
     <Page
@@ -120,6 +137,13 @@ export default async function SettingsPage() {
               Either way, brand-new cards are shown with their answer first. Being asked to produce a
               word you have never seen teaches nothing.
             </p>
+          </section>
+
+          <section id="level">
+            <SectionTitle hint={courseLevel}>Your level</SectionTitle>
+            <Card>
+              <LevelPanel current={courseLevel} measured={measuredIsCurrent} />
+            </Card>
           </section>
 
           <section id="goals">
