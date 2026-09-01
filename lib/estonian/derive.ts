@@ -41,6 +41,23 @@ import type { CaseKey } from "./types";
 export interface DerivedForm {
   readonly spec: CaseSpec;
   readonly singular: string | undefined;
+  /**
+   * The other form that is also right and also worth printing, or `null`.
+   *
+   * Only the illative ever has one, and that is the point of the field rather
+   * than a limitation of it. Estonian has two illatives and a course teaches
+   * them as a pair, so a table that prints one of them has to choose which
+   * word to be wrong about: leading with the long one hides `tuppa` and
+   * `aega`, and leading with the short one prints `aadressi` beside the
+   * identical genitive and hides `aadressisse`. Both readings were shipped
+   * and each is the other's bug.
+   *
+   * `accepted` is deliberately wider than this and may not stand in for it. It
+   * holds every spelling a marker lets through, including a suffix guess
+   * sitting beside a form Ekilex retrieved, and printing that pair would
+   * assert the guess is a real word. This holds only the two that are.
+   */
+  readonly alsoRight: string | null;
   readonly plural: string | undefined;
   /**
    * STORED = a principal part or a short illative we hold.
@@ -96,7 +113,7 @@ function uniq(values: readonly (string | undefined | null)[]): string[] {
  * the short illative we seeded, which comes before a suffix we added to a
  * stem. A derived form is only ever reached when nothing was attested.
  */
-function singularForms(stems: NounStems, spec: CaseSpec): { forms: string[]; origin: DerivedForm["origin"] } {
+function singularForms(stems: NounStems, spec: CaseSpec): { forms: string[]; alsoRight: string | null; origin: DerivedForm["origin"] } {
   const retrieved = stems.retrieved?.[spec.key];
   const short = spec.key === "ILLATIVE" ? stems.illSgShort : null;
   const derived = stems.genSg ? stems.genSg + spec.suffix : undefined;
@@ -114,12 +131,25 @@ function singularForms(stems: NounStems, spec: CaseSpec): { forms: string[]; ori
   // card, and `app/(chromeless)/welcome/page.tsx` answers it there.
   const attested = uniq([short, retrieved]);
   if (attested.length > 0) {
+    const forms = uniq([...attested, derived]);
+    /*
+      THE PAIR, WHERE THERE IS ONE.
+
+      Only where a short illative leads, because that is the only place two
+      forms are both right and both worth printing. The long one is whatever
+      Ekilex retrieved for the case if it retrieved anything, and the ending on
+      the genitive stem otherwise, which is the same precedence the rest of
+      this function uses. `null` where they come out the same word, since
+      `tuppa / tuppa` is not a pair.
+    */
+    const long = spec.key === "ILLATIVE" && short ? retrieved ?? derived : undefined;
     return {
-      forms: uniq([...attested, derived]),
+      forms,
+      alsoRight: long && long !== forms[0] ? long : null,
       origin: short ? "STORED" : "EKILEX",
     };
   }
-  return { forms: uniq([derived]), origin: "DERIVED" };
+  return { forms: uniq([derived]), alsoRight: null, origin: "DERIVED" };
 }
 
 /**
@@ -148,6 +178,7 @@ export function buildCaseTable(stems: NounStems): DerivedForm[] {
       return {
         spec,
         singular: nomSg,
+        alsoRight: null,
         // Nominative plural is the one regular plural: genitive singular + d.
         plural: genSg ? `${genSg}d` : undefined,
         origin: "STORED",
@@ -155,15 +186,16 @@ export function buildCaseTable(stems: NounStems): DerivedForm[] {
       };
     }
     if (spec.key === "GENITIVE") {
-      return { spec, singular: genSg, plural: genPl, origin: "STORED", accepted: uniq([genSg]) };
+      return { spec, singular: genSg, alsoRight: null, plural: genPl, origin: "STORED", accepted: uniq([genSg]) };
     }
     if (spec.key === "PARTITIVE") {
-      return { spec, singular: partSg, plural: partPl, origin: "STORED", accepted: uniq([partSg]) };
+      return { spec, singular: partSg, alsoRight: null, plural: partPl, origin: "STORED", accepted: uniq([partSg]) };
     }
-    const { forms, origin } = singularForms(stems, spec);
+    const { forms, alsoRight, origin } = singularForms(stems, spec);
     return {
       spec,
       singular: forms[0],
+      alsoRight,
       plural: genPl ? genPl + spec.suffix : undefined,
       origin,
       accepted: forms,
@@ -175,9 +207,26 @@ export function buildCaseTable(stems: NounStems): DerivedForm[] {
 export interface CaseAnswer {
   /** The form to print: attested wherever one is attested. */
   readonly value: string;
+  /** The other form also worth printing beside it. See `DerivedForm`. */
+  readonly alsoRight: string | null;
   /** Every spelling a learner may type, `value` first. */
   readonly accepted: readonly string[];
   readonly origin: DerivedForm["origin"];
+}
+
+/**
+ * The forms to print for one case, best first: a pair where Estonian has one.
+ *
+ * One reader rather than a join at each screen, because three of them printed
+ * `singular` alone while `lib/srs/cards.ts` and `lib/collections/lesson.ts`
+ * had been joining on ` / ` all along, so the same word read `tuppa` on the
+ * dictionary page and `tuppa / toasse` on the card made from it. ` / ` is the
+ * separator the app already uses for the parallel forms Estonian has, and
+ * `acceptedAnswers` in `lib/estonian/answer.ts` splits on it, so a learner who
+ * types either half of what a screen shows them is right.
+ */
+export function shownForms(form: { singular?: string | undefined; alsoRight: string | null }): string[] {
+  return [form.singular, form.alsoRight].filter((v): v is string => !!v);
 }
 
 /**
@@ -196,10 +245,10 @@ export interface CaseAnswer {
 export function caseAnswer(stems: NounStems, key: CaseKey): CaseAnswer | null {
   const spec = CASES.find((c) => c.key === key);
   if (!spec || spec.principal) return null;
-  const { forms, origin } = singularForms(stems, spec);
+  const { forms, alsoRight, origin } = singularForms(stems, spec);
   const value = forms[0];
   if (!value) return null;
-  return { value, accepted: forms, origin };
+  return { value, alsoRight, accepted: forms, origin };
 }
 
 /**

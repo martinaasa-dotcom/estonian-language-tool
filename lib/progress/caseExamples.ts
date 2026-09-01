@@ -25,13 +25,25 @@ export interface CaseExample {
   lemma: string;
   translation: string;
   genitive: string | null;
-  /** The word in this case, singular. */
+  /** The word in this case, singular. One word: `sentenceContaining` matches it. */
   form: string;
+  /**
+   * The other form that is also right, for the screen to print beside it.
+   *
+   * Kept out of `form` on purpose. That one is matched against attested
+   * sentences, and `tuppa / toasse` is not a word anybody wrote.
+   */
+  alsoRight: string | null;
   origin: "EKILEX" | "STORED" | "DERIVED";
   /** True when this word is in the learner's own deck. */
   inDeck: boolean;
-  /** An attested sentence that actually contains `form`, when one exists. */
+  /** An attested sentence that actually contains one of the forms above. */
   sentence: { et: string; en: string | null } | null;
+  /**
+   * Which form that sentence contains, so the line under it names the word a
+   * reader can actually see in it rather than the one the table led with.
+   */
+  sentenceForm: string | null;
 }
 
 const PRINCIPAL_FORM_TYPE: Partial<Record<CaseKey, string>> = {
@@ -164,15 +176,31 @@ function toExample(lex: Candidate, key: CaseKey, inDeck: boolean): CaseExample |
   const origin: CaseExample["origin"] =
     retrieved ? "EKILEX" : principal ? "STORED" : (answer?.origin ?? "DERIVED");
 
+  /*
+    THE SENTENCE IS LOOKED FOR UNDER EITHER FORM.
+
+    A lexicographer writing a sentence about going into a room may have used
+    `tuppa` or `toasse`, and the card should find its example either way. It
+    asks for the form it leads with first, so where both appear in the
+    dictionary the sentence shown is the one using the form printed above it.
+  */
+  const alsoRight = principalType ? null : answer?.alsoRight ?? null;
+  const examples = parseExamples(lex.examples);
+  const second = alsoRight && alsoRight !== form ? alsoRight : null;
+  const lead = sentenceContaining(examples, form);
+  const found = lead ?? (second ? sentenceContaining(examples, second) : null);
+
   return {
     lexemeId: lex.id,
     lemma: lex.lemma,
     translation: lex.translation,
     genitive,
     form,
+    alsoRight: second,
     origin,
     inDeck,
-    sentence: toSentence(sentenceContaining(parseExamples(lex.examples), form)),
+    sentence: toSentence(found),
+    sentenceForm: found ? (lead ? form : second) : null,
   };
 }
 

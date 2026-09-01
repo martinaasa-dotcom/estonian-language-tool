@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCaseTable, caseAnswer, stemsFrom, stemsFromParts } from "./derive";
+import { buildCaseTable, caseAnswer, shownForms, stemsFrom, stemsFromParts } from "./derive";
 
 /** No short illative recorded, so the suffix rule is the whole answer. */
 const raamat = {
@@ -181,6 +181,60 @@ describe("the illative, which is the one case with two answers", () => {
     const ill = raamat.find((r) => r.spec.key === "ILLATIVE")!;
     expect(ill.singular).toBe("raamatusse");
     expect(ill.origin).toBe("DERIVED");
+  });
+
+  it("names both illatives where the word has two", () => {
+    const tuba = buildCaseTable({
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    });
+    const ill = tuba.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.singular).toBe("tuppa");
+    expect(ill.alsoRight).toBe("toasse");
+    expect(shownForms(ill)).toEqual(["tuppa", "toasse"]);
+  });
+
+  it("names both even where the short one is spelled like a principal part", () => {
+    // The case `aadress` makes: its short illative is also its genitive and
+    // its partitive, so leading with it alone prints the same word three times
+    // down the column and hides `aadressisse`. Printing the pair is what stops
+    // the row repeating what the two above it already said.
+    const aadress = buildCaseTable({
+      nomSg: "aadress", genSg: "aadressi", partSg: "aadressi",
+      partPl: "aadresse", genPl: "aadresside", illSgShort: "aadressi",
+    });
+    const ill = aadress.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(shownForms(ill)).toEqual(["aadressi", "aadressisse"]);
+  });
+
+  it("has no second form for a case with one answer", () => {
+    const tuba = buildCaseTable({
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    });
+    for (const row of tuba.filter((r) => r.spec.key !== "ILLATIVE")) {
+      expect(row.alsoRight, row.spec.key).toBeNull();
+    }
+  });
+
+  it("has no second form where the word records no short illative", () => {
+    const raamat = buildCaseTable({
+      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", illSgShort: null,
+    });
+    const ill = raamat.find((r) => r.spec.key === "ILLATIVE")!;
+    expect(ill.alsoRight).toBeNull();
+    expect(shownForms(ill)).toEqual(["raamatusse"]);
+  });
+
+  it("prints what a marker accepts, so either half of a pair on screen is right", () => {
+    const stems = {
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
+      illSgShort: "tuppa",
+    } as const;
+    const answer = caseAnswer(stems, "ILLATIVE")!;
+    for (const form of shownForms({ singular: answer.value, alsoRight: answer.alsoRight })) {
+      expect(answer.accepted).toContain(form);
+    }
   });
 
   it("shows a short form spelled like a principal part, because most of them are", () => {

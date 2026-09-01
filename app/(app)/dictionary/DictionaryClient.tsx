@@ -9,7 +9,7 @@ import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
-import { buildCaseTable, stemsFrom } from "@/lib/estonian/derive";
+import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { Examples } from "./Examples";
@@ -472,7 +472,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 </tr>
               </thead>
               <tbody>
-                {table.map(({ spec, singular, plural, origin }) => (
+                {table.map(({ spec, singular, alsoRight, plural, origin }) => (
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                       {/* The same way the retrieved forms give: this
@@ -485,8 +485,16 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                       </Link>
                       <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.en.toLowerCase()}</span>
                     </td>
+                    {/* Both illatives, where the word has both. `tuppa` and
+                        `toasse` are one answer to one question and a course
+                        teaches them as a pair, so printing either alone means
+                        choosing which word to be wrong about. Joined with the
+                        separator this app already uses for the parallel forms
+                        Estonian has, which is the one `acceptedAnswers`
+                        splits, so typing either half of what is on screen is
+                        right. */}
                     <td lang="et" className="px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
-                      {singular ?? NO_VALUE}
+                      {singular ? shownForms({ singular, alsoRight }).join(" / ") : NO_VALUE}
                     </td>
                     <td lang="et" className="px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
