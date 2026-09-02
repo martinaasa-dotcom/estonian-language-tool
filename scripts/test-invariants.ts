@@ -3621,6 +3621,30 @@ check("a call is booked only once the request is worth answering", () => {
   }
 });
 
+check("a card never answers the card before it", () => {
+  /*
+    A word's cards are written together, graded together and come back
+    together, so a queue ordered by `due` alone puts them side by side: 13 of
+    32 due cards on the demo deck sat next to a card of the same word, and
+    seven case cards of one word ran consecutively. That is a re-read logged
+    as a recall, and the scheduler raises the interval on it.
+
+    The daily review passes its due list through the spacer. The new cards do
+    not, deliberately: `inTeachingOrder` puts a word's cards together in the
+    order a lesson teaches them, because a first meeting is a teaching screen
+    rather than a retrieval.
+  */
+  const review = code("app/(app)/review/page.tsx");
+  assert.match(review, /spaceSiblings\(due,/, "the review queue no longer spaces a word's cards apart");
+  assert.match(review, /inTeachingOrder\(fresh\)/, "new cards no longer arrive in teaching order");
+
+  const queue = code("lib/srs/queue.ts");
+  assert.match(queue, /export function spaceSiblings/, "the spacer is gone");
+  // It reorders and never drops: the set out is the set in.
+  assert.match(queue, /remaining\.splice/, "the spacer no longer moves cards rather than filtering them");
+  assert.doesNotMatch(queue, /\.filter\(/, "the spacer filters, which would silently drop a due card");
+});
+
 check("signing out forgets the device", () => {
   /*
     Signing out cleared one cookie and left everything the app keeps in the

@@ -8,6 +8,7 @@ import { parseExamples, teachingSentence } from "@/lib/dict/examples";
 import { decoyGlosses } from "@/lib/dict/facts";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
+import { spaceSiblings } from "@/lib/srs/queue";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
@@ -178,9 +179,27 @@ export default async function ReviewPage({
     modeChosen(),
   ]);
 
+  /*
+    A CARD NEVER ANSWERS THE CARD BEFORE IT.
+
+    `addCardsFor` writes a word's cards in one go, they are graded in one
+    session, and they come back with almost the same `due`, so a queue ordered
+    by `due` puts them side by side: measured on the demo deck, 13 of 32 due
+    cards sat next to a card of the same word and seven case cards of `Eesti`
+    ran consecutively. Answering `Eesti → millesse? kuhu?` straight after
+    `Eesti → milles? kus?` is reading the answer off the card before, and the
+    log records it as a recall either way, so the scheduler raises the interval
+    on a memory nothing tested. See lib/srs/queue.ts.
+
+    Only the due list. New cards keep `inTeachingOrder`, which deliberately
+    puts a word's cards together and in the order a lesson teaches them,
+    because a first meeting is a teaching screen rather than a retrieval.
+  */
+  const spaced = spaceSiblings(due, (card) => card.lexemeId);
+
   const fresh = atLevelFirst(freshPool, level)
     .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
-  const cards = await withChoices([...due, ...inTeachingOrder(fresh)].map(toReviewCard));
+  const cards = await withChoices([...spaced, ...inTeachingOrder(fresh)].map(toReviewCard));
 
   return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
 }

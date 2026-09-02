@@ -936,6 +936,22 @@ miss is still graded Hard by the marker, and `Review`, undo and the offline repl
 what they always did. What went is the asking, and that distinction is what keeps this a change to
 one screen rather than to the append-only log underneath it.
 
+**A card never answers the card before it.** FSRS decides when a card comes back and has no
+opinion on the order of the cards already due, which the queue took from `due` alone. A word's
+cards are written in one `createMany`, graded in one session and come back within seconds of each
+other, so they arrived side by side: measured on the demo deck, 13 of 32 due cards sat next to a
+card of the same word, 17 of the 32 had a sibling within three places, and seven case cards of
+`Eesti` ran consecutively. Answering `Eesti → millesse? kuhu?` straight after `Eesti → milles?
+kus?` is reading the answer off the card before, and the log records a recall either way, so the
+scheduler raises the interval on a memory nothing tested; the retrieval-effort account is that
+what a recall is worth scales with how hard it was. `spaceSiblings` in `lib/srs/queue.ts` walks the
+due list and defers a card whose word is still on screen, narrowing the gap it asks for rather
+than giving up, so a session spends whatever room it has: six adjacent pairs become one on the
+shape that was measured. It **moves and never drops**, asserted, because a spacer that filtered
+would lose a due card in silence. New cards do not go through it: `inTeachingOrder` puts a word's
+cards together in the order a lesson teaches them, and a first meeting is a teaching screen rather
+than a retrieval.
+
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
 own scores. They write to the same review log, so the scheduler sees what was actually practised.
 An abandoned round writes nothing. (ADR-016.)
