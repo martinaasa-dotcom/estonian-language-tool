@@ -7,7 +7,21 @@ import { createEmptyCard, fsrs, generatorParameters, State, type Card as FsrsCar
  * Fuzz is on. Without it, every card added in one sitting comes back in one clump,
  * forever.
  */
-const scheduler = fsrs(generatorParameters({ request_retention: 0.9, enable_fuzz: true }));
+/**
+ * The share of mature cards the scheduler plans for you to recall.
+ *
+ * Exported because `lib/stats/history.ts` reports how close you actually are to
+ * it, and that comparison is only worth printing if the two numbers are the
+ * same number. It held its own `RETENTION_TARGET = 90` under a comment saying
+ * "the target the scheduler is configured for, see lib/srs/scheduler.ts",
+ * which is a second copy pointing at the first.
+ */
+export const REQUEST_RETENTION = 0.9;
+
+const scheduler = fsrs(generatorParameters({
+  request_retention: REQUEST_RETENTION,
+  enable_fuzz: true,
+}));
 
 export const RATINGS = [
   { value: 1, key: "1", label: "Again", hint: "No idea", tone: "again" },
