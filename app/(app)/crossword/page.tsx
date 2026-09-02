@@ -6,12 +6,19 @@ import { Empty, Page } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { CrosswordSession } from "./CrosswordSession";
 
-export const metadata = { title: "Crossword" };
+export const metadata = { title: "Ristsõna" };
 
 export const dynamic = "force-dynamic";
 
 /**
- * THE DAILY CROSSWORD: ENGLISH CLUES, ESTONIAN ANSWERS.
+ * RISTSÕNA: THE DAILY CROSSWORD, ENGLISH CLUES AND ESTONIAN ANSWERS.
+ *
+ * Named in Estonian for the reason Sõnad is, and the English name is kept
+ * beside it rather than dropped: the lead says "a crossword" in the first two
+ * words, so nobody has to know the word before they can decide whether to
+ * press. That is the shape every grammar screen here takes with a case, the
+ * name a class uses leading and the one an English reference grammar uses as
+ * the cross-reference.
  *
  * One direction and one direction only, because it is the one that teaches:
  * you know what you mean and you are looking for the word, which is where a
@@ -29,7 +36,10 @@ export default async function CrosswordPage() {
   const puzzle = await crosswordFor(ownerId, day, level);
 
   return (
-    <Page title="Crossword" lead="English clues, Estonian answers. A new grid every morning.">
+    <Page
+      title="Ristsõna"
+      lead="A crossword. English clues, Estonian answers, and a new grid every morning."
+    >
       {puzzle ? (
         <CrosswordSession puzzle={puzzle} day={day} />
       ) : (
