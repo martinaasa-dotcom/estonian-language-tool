@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { CASES } from "@/lib/estonian/cases";
+import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { markDescription } from "@/lib/games/describe";
 import { MAX_SENTENCE_CHARS, looksLikeSentence } from "@/lib/estonian/writing";
@@ -135,7 +136,9 @@ export async function POST(request: Request) {
       asked: {
         lemma: asked.lemma,
         caseEt: grammarTerm(spec.key)?.et ?? spec.et,
-        caseQuestion: spec.question,
+        // What Anu is told the learner was asked, which has to be what the
+        // screen printed: see lib/estonian/caseQuestion.ts.
+        caseQuestion: caseQuestionFor(spec, asked),
       },
       rightCase: mark.rightCase,
       knownForms: task.words.flatMap((w) => [

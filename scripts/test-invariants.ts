@@ -826,6 +826,8 @@ check("a question about one word is worded for that word", () => {
     "app/(app)/dictionary/Forms.tsx",
     "app/(app)/dictionary/DictionaryClient.tsx",
     "app/(chromeless)/welcome/page.tsx",
+    "app/(app)/review/describe/page.tsx",
+    "app/api/describe/route.ts",
   ];
   for (const file of perWord) {
     const source = code(file);
@@ -916,6 +918,8 @@ check("every exercise built from a sentence checks that it is one", () => {
     "lib/progress/describe.ts",
     "app/(app)/learn/[unitId]/lesson/page.tsx",
     "app/(app)/review/speaking/page.tsx",
+    "app/(app)/review/dictation/page.tsx",
+    "app/(app)/review/sentences/page.tsx",
   ];
   for (const file of builders) {
     assert.match(

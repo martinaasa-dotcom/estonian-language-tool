@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
-import { isBuildable } from "@/lib/estonian/cloze";
+import { isBuildable, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { SentenceSession, type SentenceTask } from "./SentenceSession";
 import { shuffle } from "@/lib/random/shuffle";
 
@@ -34,13 +34,15 @@ export default async function SentencesPage() {
     select: {
       id: true,
       cardType: true,
-      lexeme: { select: { id: true, lemma: true, examples: true } },
+      lexeme: { select: { id: true, lemma: true, pos: true, examples: true } },
     },
   });
 
   // One task per word, and one card per word to grade against: a learner with
   // five cards for `raamat` should still meet its sentence once.
-  const byLexeme = new Map<string, { cardId: string; lemma: string; lexemeId: string; examples: string }>();
+  const byLexeme = new Map<string, {
+    cardId: string; lemma: string; pos: string; lexemeId: string; examples: string;
+  }>();
   for (const card of cards) {
     const lex = card.lexeme;
     if (!lex) continue;
@@ -48,14 +50,23 @@ export default async function SentencesPage() {
     // Prefer grading the gap-fill card: it is the one this exercise is closest to.
     if (!held || card.cardType === "CLOZE") {
       byLexeme.set(lex.id, {
-        cardId: card.id, lemma: lex.lemma, lexemeId: lex.id, examples: lex.examples,
+        cardId: card.id, lemma: lex.lemma, pos: lex.pos, lexemeId: lex.id, examples: lex.examples,
       });
     }
   }
 
   const tasks: SentenceTask[] = [];
   for (const entry of byLexeme.values()) {
+    /*
+      And only out of a sentence. `isBuildable` counts the tiles and refuses a
+      repeated word; it has no opinion on whether the thing is a sentence at
+      all, so `Panin lehte/internetti kuulutuse.` came out as tiles to put in
+      order with a slash inside one of them. `naturalSentence` is the gate the
+      mock exam and the level check already apply.
+    */
+    const opener = nominalOpener(entry.pos, [entry.lemma]);
     for (const example of usableExamples(parseExamples(entry.examples))) {
+      if (!naturalSentence(example.et, opener)) continue;
       if (!isBuildable(example.et)) continue;
       tasks.push({
         cardId: entry.cardId,
