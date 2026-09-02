@@ -768,17 +768,27 @@ Each of these is a way the module fails, with the guard that stops it.
 
 ## 19. Phases
 
-**Phase 0 is done.** `npm run measure:scenes` is built and §25 is what it said. What is left of the
-phase is `scripts/eval-scene.mjs`, which measures the gate rejection rate against the real chain and
-measures whether the government check of §2 rejects more real errors than good lines. That one needs
-a key and a provider, so it belongs beside the first composer rather than before it.
+**Phase 0 is done, both halves.** `npm run measure:scenes` answered the first and §25 is what it
+said. `npm run eval:scene` answered the second and §29 is what it said, which is a different answer
+from the one this section expected when it was written: the government check ships, the gate
+rejection rate is 60 to 70 percent against a line of 5, and the residual is not the gate or the
+model but words this course does not teach.
 
-**Phase 1.** Three scenes at A2 and B1, drawn from units the course already teaches: the health
-centre (`keha-ja-tervis`), the landlord (`eluase`), and the counter that wants a document
-(`linn-ja-teenused`). Typed turns, mechanical marking, attested and composed lines, four curveballs,
-the debrief, the offline scene. Every guard in §18 on day one, because a guard added afterwards is a
-guard that was missing for a release. Done means what `docs/09-roadmap.md` says it means, plus the
-suite in §21.
+**Phase 1 is blocked on vocabulary, not on code.** The eight verbs and nouns §29 names are missing
+from the syllabus at every level, and they are the ones an encounter turns on: `sobima`,
+`valutama`, `kestma`, `asuma`, `esitama`, `korrus`, `katki`, `valmis`. Adding them is the same
+request the connectives were, a list of lemmas the harvest either honours or reports, and it is
+worth doing whether or not this module is ever built, because a course that cannot say "does this
+time suit you" is a course with a hole in it. Then re-run `eval:scene` and decide on the new
+number. Building against the course as it stands would ship a module whose other side is silent
+two turns in three.
+
+**Phase 1, when the number allows it.** Three scenes at A2 and B1, drawn from units the course
+already teaches: the health centre (`keha-ja-tervis`), the landlord (`eluase`), and the counter
+that wants a document (`linn-ja-teenused`). Typed turns, mechanical marking, attested and composed
+lines, four curveballs, the debrief, the offline scene. Every guard in §18 on day one, because a
+guard added afterwards is a guard that was missing for a release. Done means what
+`docs/09-roadmap.md` says it means, plus the suite in §21.
 
 **Phase 2.** The rest of the dials, the spoken unmarked mode, the two-way link from the unit pages,
 the full curveball catalogue, class assignment, and the loop that makes this more than practice:
@@ -1299,3 +1309,131 @@ spelled out in the failure message. Shared prompts fell from 372 to 362.
 The other 355 are outside the course, so they carry no Ekilex definition and there is nothing to
 judge them by. They are marked correctly all the same, which is the point of fixing the card rather
 than the list.
+
+## 29. The gate, measured, and what it turned out to be measuring
+
+§19 said what was left of Phase 0: `scripts/eval-scene.ts`, which measures the gate rejection
+rate against a real chain and settles whether §2's government check rejects more real errors
+than good lines. Both are answered. Neither answer is the one the design expected, and the more
+useful of the two is not a number at all.
+
+### The government check ships
+
+The labelled set needs no key, because Ekilex had already recorded both halves and nobody had
+read them together. The good lines are attested usages of a governed verb. The bad ones are the
+same sentence with one nominal moved into a case the verb does not govern, which is a derivation
+over a stored stem and exactly the error a composed line would make. Nothing is invented and
+nothing is shown to anybody: the corrupted line exists for the length of a comparison.
+
+Over 358 pairs it withholds **48.9% of real errors and 8.1% of good lines**, net +146. §2's
+condition is met and the check goes in.
+
+What makes that defensible is how weakly it is drawn. There is no parser here, so nothing can say
+which noun is a verb's complement, and the strict reading, that every noun be in a governed case,
+fires on any sentence carrying an adjunct, which is most of them. So it asks the weakest thing
+that is still a check: a line holding a governed verb has to hold **at least one** nominal in a
+case that verb governs. A line with no governed verb and a line with no nominal are both outside
+what it can say, and it passes them.
+
+### The rejection rate is 60 to 70 percent, against a line of 5
+
+Six runs, three lines per beat, over whichever free model of the configured chain would answer.
+The design's condition is that above one line in twenty withheld, "either the word list is too
+small or the model is the wrong one for this, and the answer is not to loosen the gate".
+
+| What the scene could say | First attempt | After the one retry §6 allows |
+|---|---|---|
+| The units it declared, 119 lemmas | 84.1% | 74.6% |
+| The whole course to its level, 622 | | 74.6% |
+| Its subject units too, 151 | 81.0% | 68.3% |
+| The words between the words too, 223 | 69.8% | 61.9% |
+| With the polite imperative stored, 223 | 77.8% | 69.8% |
+
+**The last two rows are the same configuration and they differ by eight points.** That is the
+honest headline of this table: 63 lines is enough to rank causes and not enough to resolve a
+difference of that size, so the round-by-round deltas are not measurements and are not reported
+as any. What the six runs do establish is a range, 60 to 70 percent, and a range twelve times over
+the line is a conclusion no amount of sampling changes.
+
+Read the rows as configurations rather than as a trajectory. Only the first drop, from the scenes
+as they were written to the scenes with the words a conversation needs, is larger than the noise.
+
+### What the number was actually measuring, twice
+
+The first thing it measured was a bug in the scene catalogue. `arsti-aeg` is set at a health
+centre and its word list did not contain `arst`; none of the three scenes contained `olema`, so
+every line built on "Kas teil **on** valu?" was withheld; `uuri-remont` is about something broken
+in a flat and had neither `korter` nor `köök`. Nothing about the catalogue looked wrong. A scene
+that declares too few units produces a gate that withholds correct Estonian, and the rate reads as
+a verdict on the model.
+
+The second thing it measured was the same fault one level out. With the subject units added, the
+two commonest words the gate withheld a line over were `ja` and `või`: the course teaches them and
+no scene had declared the unit. `pohiverbid`, `sidesonad`, `vastused`, `maaramine` and `millal`
+are in `COMMON` now, on the test `COMMON` already stated, that a unit belongs there when it
+teaches the machinery a conversation is made of rather than the subject of one.
+
+Neither would have been found by reading the rate. Both were found by reading the ranked list of
+words the model reached for, which is the same instrument `measure:scenes` used to find the
+missing connectives unit, and which is why this script prints one.
+
+### Vouching is the whole of it, and it is a vocabulary problem
+
+Across every run, vouching accounts for about 85% of what is withheld, register for none, and
+shape for a handful. The composed Estonian is not the problem. These are real lines the gate threw
+away:
+
+    Kui kaua see on kestnud?
+    Kas see aeg sobib teile?
+    Palun, kus teil valutab?
+
+Those are what a receptionist says. What fails is that `kestma`, `sobima` and `valutama` are not
+in this course at any level, and they are not unusual words. They are the verbs the encounter
+turns on, and the pattern behind them is one sentence: **the course teaches the nouns of a
+situation and not the verbs that do things with them.** It has `valu` and `haige` and not
+`valutama`; a unit on housing and no `katki`.
+
+The eight the eval named, none of them taught at any level: `sobima`, to suit, which is the
+sentence an appointment is made of; `valutama`, to hurt; `kestma`, to last; `asuma`, to be
+located; `esitama`, to submit; `korrus`, a floor; `katki`, broken; `valmis`, ready.
+
+### And one gap that was a form rather than a word
+
+A scene set in `teie` is answered in the polite imperative, and the model reached for `öelge`,
+`andke`, `oodake` and `täitke` over and over. The app had no such form for **any verb in the
+language**: it is not a suffix on anything the rule holds, since `annan` goes to `andke`, `lähen`
+to `minge` and `loen` to `lugege`. It is stored now, one per course verb, and it shows on the
+conjugation table and asks a card, because a form somebody is addressed with every day is a form
+to learn rather than only to recognise.
+
+That is the whole value of running this before Phase 1 rather than after it. The gap was in the
+morphology the app can produce, it was invisible from inside the app, and it was found by watching
+a model try to hold a conversation.
+
+### What this says about Phase 1
+
+Not "the gate is too strict" and not "the model is too weak". Both were the obvious readings and
+both were measured: five times the word list bought eight points, and the retry the design
+specifies bought nine, which are the sizes of the noise. What the residual is made of, run after
+run, is words this course does not teach.
+
+So the recommendation is to **close the vocabulary gap first and measure again**, and it is a
+recommendation somebody should like whatever they think of Situations: those verbs belong in an
+A2 course whether or not a scene ever asks for one, and adding them is the same request the
+connectives were, a list of lemmas that Ekilex either honours or reports. Building Phase 1 against
+a course that cannot say "does this time suit you" would ship a module whose other side is silent
+two turns in three, and no amount of gate tuning fixes that.
+
+What is already banked either way: the government check is settled, the scene catalogue is
+correct, `COMMON` is right, every verb in the course has its polite imperative, and the script
+that found all of it is in the repository with a flag for the two allowlists and a ranked list
+that names the next gap for whoever runs it.
+
+### How to read a run
+
+`npm run eval:scene` does both halves; the second needs no key. `--lines 10` if the free chain's
+daily allowance is not spent, because three is the sampling floor rather than a good sample.
+`--allowlist course` measures the wide list. A run that composed nothing reports that it composed
+nothing rather than a rate, and names which model refused with what status, because the first
+version of this reported `0/0 withheld (0%)` at a rate limit and that reads as a perfect score.
+

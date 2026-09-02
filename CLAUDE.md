@@ -462,6 +462,37 @@ the single boolean environment read, every variable `services.ts` names being on
 reads, and the page staying outside the sign-in gate, like `/privacy` and `/terms` and for the same
 reason.
 
+**A coverage number is a measurement of whatever is wrong, and usually that is not what you were
+measuring.** `npm run eval:scene` is Phase 0's second half and it asks the one question the
+Situations design rests on: what share of composed lines does the gate withhold, against a stated
+line of one in twenty. It came back at 60 to 70 percent, and the number was never the useful part.
+The first thing it measured was that `arsti-aeg`, a scene set at a health centre, could not vouch
+for `arst`, and that none of the three scenes could vouch for `olema`, so every line built on "Kas
+teil **on** valu?" was thrown away. The second was that the two commonest words it withheld a line
+over were `ja` and `või`, taught by the course and declared by no scene. Neither is visible in a
+rate. Both are the first two entries of the ranked list of words the model reached for, which is
+the same instrument `measure:scenes` used to find the missing connectives unit, and which is why
+the script prints one and why the star on it has to mean what it says: written against the lemma
+list it starred `arsti`, `korteris` and `olen` as words the course does not teach, and they are the
+genitive of `arst`, the inessive of `korter` and the first person of `olema`.
+
+**And the residual is a fact about the course rather than about the gate.** Vouching is about 85%
+of what is withheld in every run, register is none of it, and the lines being thrown away are
+`Kui kaua see on kestnud?` and `Kas see aeg sobib teile?`, which is what a receptionist says.
+`kestma`, `sobima` and `valutama` are in no unit at any level, and nor are `asuma`, `esitama`,
+`korrus`, `katki` or `valmis`. The pattern is one sentence: the course teaches the nouns of a
+situation and not the verbs that do things with them, `valu` and `haige` but not `valutama`, a
+unit on housing but no `katki`. `docs/19-situations.md` §29 is the write-up and §19 is what it
+changed, which is that Phase 1 waits on that vocabulary rather than on any code.
+
+**Six runs of 63 lines cannot resolve eight points, and the table says so.** Two of the rows in
+§29 are the same configuration and differ by eight, which is what stops the round-by-round
+differences being reported as improvements: three lines per beat is a sampling floor rather than a
+sample, and only the first drop is larger than the noise. A range twelve times over the line is
+still a conclusion; a delta inside the noise is not. And a run that composes nothing says so
+rather than reporting a rate, because the first version of this hit a free model's daily cap and
+printed `0/0 withheld (0%)`, which reads as a perfect score.
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
