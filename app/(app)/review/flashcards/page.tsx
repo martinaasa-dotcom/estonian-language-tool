@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
 import { shuffle } from "@/lib/random/shuffle";
 import { masteryFor } from "@/lib/progress/mastery";
 import { MASTERY_SLOTS } from "@/lib/srs/mastery";
@@ -88,7 +90,14 @@ export default async function FlashcardsPage() {
   });
 
   const picked = leastPractised(cards, unfinished).slice(0, ROUND);
-  const round = await withChoices(shuffle(picked));
+  /*
+    A first meeting gives the meaning in the language the learner thinks in, and
+    this round can hold one: a word that is not mastered may still be new to a
+    card it has never been asked on. Read here rather than defaulted, so the two
+    routes rendering this session do not disagree about it.
+  */
+  const gloss = glossLanguageFrom(await readSetting(ownerId, SETTING_KEYS.glossLanguage));
+  const round = await withChoices(shuffle(picked), gloss);
 
   return <ReviewSession cards={round} totalCards={round.length} mode="type" title="Flash cards" />;
 }

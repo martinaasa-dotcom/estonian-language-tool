@@ -94,7 +94,7 @@ describe("stickingPoints", () => {
     // The worst of the word's cards stands for the rest, and says how many.
     expect(points[0]?.siblings).toBe(2);
     expect(points[1]?.siblings).toBe(0);
-    expect(stickingNote(points[0]!)).toMatch(/Another 2 cards for this word are stuck too/);
+    expect(stickingNote(points[0]!)).toMatch(/2 more cards for this word are stuck too/);
   });
 
   it("counts one sibling in the singular", () => {
@@ -102,7 +102,8 @@ describe("stickingPoints", () => {
       card({ id: "a", lapses: 5 }),
       card({ id: "b", cardType: "PRODUCTION", lapses: 4 }),
     ];
-    expect(stickingNote(stickingPoints(cards, [])[0]!)).toMatch(/Another 1 card for this word is stuck too/);
+    // "Another 1 card ... is stuck too" is not a sentence anybody writes.
+    expect(stickingNote(stickingPoints(cards, [])[0]!)).toMatch(/One more card for this word is stuck too/);
   });
 
   it("copes with a card that has lapses but no reviews in the window", () => {
@@ -123,7 +124,12 @@ describe("stickingPoints", () => {
 describe("stickingNote", () => {
   it("counts the lapses when that is what flagged the card", () => {
     const [point] = stickingPoints([card({ lapses: 5 })], log("c1", 10, 5));
-    expect(stickingNote(point!)).toBe("Learned and forgotten 5 times, 50% recalled over 10 reviews.");
+    /*
+      The count is in the chip beside this line, so saying it again here was
+      the same fact twice on one row. What the chip cannot say is how the card
+      has done over how many attempts, which is what this is for.
+    */
+    expect(stickingNote(point!)).toBe("Learned and forgotten again, 50% recalled over 10 reviews.");
   });
 
   it("talks about settling when accuracy is what flagged it", () => {

@@ -20,7 +20,9 @@ export function ShareProgress() {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/share");
+      // `no-store` as well as the header, so a card already sitting in this
+      // browser from before the header existed is never the one shared.
+      const response = await fetch("/api/share", { cache: "no-store" });
       if (!response.ok) throw new Error("could not render");
       const blob = await response.blob();
       const file = new File([blob], "kodukeel.png", { type: "image/png" });

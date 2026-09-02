@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
+import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguage";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { decoyOptions } from "@/lib/dict/facts";
@@ -24,6 +25,7 @@ import type { ReviewCard } from "./ReviewSession";
  * Server only: it reads Prisma.
  */
 
+/** Four options, one of them right. */
 const CHOICES = 4;
 
 /**
@@ -36,11 +38,22 @@ const CHOICES = 4;
  * word taught without a sentence is a word taught as a label (see `introFor`).
  */
 export const include = {
-  lexeme: { select: { lemma: true, translation: true, pos: true, examples: true, cefr: true } },
+  lexeme: {
+    select: {
+      lemma: true, translation: true, pos: true, examples: true, cefr: true,
+      // For the first meeting only, which is the one screen where a meaning in
+      // the learner's own language earns the most: the word is being learned
+      // there rather than tested.
+      translationRu: true, translationUk: true,
+    },
+  },
 } as const;
 
 export type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
-  lexeme: { lemma: string; translation: string; pos: string; examples: string; cefr: string | null } | null;
+  lexeme: {
+    lemma: string; translation: string; pos: string; examples: string; cefr: string | null;
+    translationRu: string | null; translationUk: string | null;
+  } | null;
 };
 
 /**
@@ -55,7 +68,7 @@ export type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] &
  * Every string in here came out of the dictionary. Nothing is written, and
  * nothing is derived (ADR-005).
  */
-function introFor(c: CardRow): ReviewCard["intro"] {
+function introFor(c: CardRow, glossLanguage: GlossLanguage): ReviewCard["intro"] {
   if (!c.lexeme) return null;
 
   // The form the card is about to ask for comes first, then the lemma. On a
@@ -66,16 +79,19 @@ function introFor(c: CardRow): ReviewCard["intro"] {
   const asked = c.cardType === "RECOGNITION" ? c.front : c.back;
   const found = teachingSentence(parseExamples(c.lexeme.examples), [asked, c.lexeme.lemma]);
 
+  const equivalent = equivalentIn(c.lexeme, glossLanguage);
+
   return {
     lemma: c.lexeme.lemma,
     gloss: c.lexeme.translation,
+    equivalent: equivalent ? { text: equivalent, lang: glossLanguage } : null,
     sentence: found
       ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
       : null,
   };
 }
 
-function toReviewCard(c: CardRow): ReviewCard {
+function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
   return {
     id: c.id,
     cardType: c.cardType,
@@ -87,7 +103,7 @@ function toReviewCard(c: CardRow): ReviewCard {
     isNew: c.state === 0,
     // Only on a card that has never been seen. Every other card in the session
     // would carry a sentence nothing renders.
-    intro: c.state === 0 ? introFor(c) : null,
+    intro: c.state === 0 ? introFor(c, glossLanguage) : null,
     choices: null,
     scheduling: {
       due: c.due.toISOString(),
@@ -103,7 +119,6 @@ function toReviewCard(c: CardRow): ReviewCard {
     },
   };
 }
-
 
 /**
  * Which recognition cards are asked as four options rather than recalled.
@@ -123,16 +138,17 @@ function toReviewCard(c: CardRow): ReviewCard {
  * position by definition, which `isStillLearning` reads as Relearning.
  */
 function wantsChoices(card: ReviewCard): boolean {
-  if (card.cardType !== "RECOGNITION") return false;
   /*
-    A word met earlier in this sitting is asked back in it, and four options is
-    what it is asked with. `!card.isNew` used to be here and it was the reason
-    a new word could not be tested the same day it was taught: the server
-    attached no options, so the only shape available on the step after the
-    introduction was recall, which is the guessing game the introduction exists
-    to avoid. See lib/srs/learn.ts.
+    A NEW CARD NOW GETS THEM TOO, BECAUSE IT IS NOW ASKED.
+
+    `!card.isNew` was right while meeting a word was the whole of its first
+    outing: there was no question, so there was nothing to offer options for.
+    A newly met word is asked back before the session ends now, and the memory
+    at that point is minutes old, which is exactly the position the sentence
+    above describes for a card still in learning.
   */
-  return card.isNew || isStillLearning(card.scheduling.state);
+  return card.cardType === "RECOGNITION"
+    && (card.isNew || isStillLearning(card.scheduling.state));
 }
 
 /**
@@ -150,7 +166,9 @@ function wantsChoices(card: ReviewCard): boolean {
  * "friendship". Three nouns standing around one verb is a single glance, and
  * the question measured whether somebody can spot the odd option rather than
  * whether they know the word. The learner who reported it put it plainly: if
- * the Estonian word is a verb then all four options need to be verbs.
+ * the Estonian word is a verb then all four options need to be verbs. Measured
+ * over 4,000 questions built from the shipped dictionary, all four shared the
+ * answer's part of speech 33% of the time, and it is 99% now.
  *
  * `lib/questions/distractors.ts` has been the one table of what a wrong answer
  * is worth since the placement check and the mock exam were fixed for exactly
@@ -167,8 +185,10 @@ function wantsChoices(card: ReviewCard): boolean {
  * second parallel array in beside the cards would be two lists that can come
  * apart.
  */
-export async function withChoices(rows: CardRow[]): Promise<ReviewCard[]> {
-  const cards = rows.map(toReviewCard);
+export async function withChoices(
+  rows: CardRow[], glossLanguage: GlossLanguage,
+): Promise<ReviewCard[]> {
+  const cards = rows.map((c) => toReviewCard(c, glossLanguage));
   if (!cards.some(wantsChoices)) return cards;
 
   /*

@@ -27,7 +27,7 @@ import { createRequire } from "node:module";
 
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
-import { ratingButtons, revealAnswer } from "./lib/review.mjs";
+import { gradeButtons, revealAnswer } from "./lib/review.mjs";
 
 /*
   Read off disk and injected, rather than imported and called in Node: axe
@@ -165,7 +165,14 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   each. The run before the cut counted 335 and the run after it 308, which
   is the same twenty-seven, and the floor keeps the five it always sat under.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 303 });
+/*
+  Raised by exactly four: the two-per-theme checks on a graded review card had
+  been waived on every run, because `gradeButtons` named four buttons the
+  screen stopped drawing. They run now, so the floor rises by the number that
+  stopped being skippable rather than by however many the run happens to
+  reach.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 307 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -317,7 +324,7 @@ for (const theme of ["light", "dark"]) {
   await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
   await graded.waitForTimeout(300);
   const shape = await revealAnswer(graded);
-  const ratings = ratingButtons(graded);
+  const ratings = gradeButtons(graded);
   if (shape && (await ratings.count())) {
     await ratings.first().click();
     await graded.waitForTimeout(1200);
@@ -331,8 +338,9 @@ for (const theme of ["light", "dark"]) {
     check(`/review once a card is graded, in ${theme}: axe finds nothing`,
       violations.length === 0, violations.slice(0, 2).join("; "));
   } else {
-    absent(2, `/review with a card graded, in ${theme}: the deck had nothing due, ` +
-      "so the controls a grade unlocks were never drawn. Run `npm run demo`");
+    absent(2, `/review with a card graded, in ${theme}: no card offered a grade button, ` +
+      "so the controls a grade unlocks were never drawn. Either the deck has nothing due " +
+      "(run `npm run demo`) or every card that came up graded itself, which a clean hit does");
   }
   await graded.close();
 }

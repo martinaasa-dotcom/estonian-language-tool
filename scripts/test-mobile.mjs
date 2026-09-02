@@ -159,7 +159,11 @@ for (const path of [
 ]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
-    [...document.querySelectorAll("button, [role=button], a[role=button]")]
+    // The same set the floor in globals.css covers, which is what a thumb has
+    // to hit rather than what is spelt `<button>`: a link drawn as a pill or
+    // as a lone icon is a control, and this suite could not see one.
+    [...document.querySelectorAll("button, [role=button], a[role=button], a.pill, a[aria-label]")]
+      .filter((el) => el.tagName !== "A" || el.classList.contains("pill") || el.querySelector("svg"))
       .map((el) => ({ el, r: el.getBoundingClientRect() }))
       .filter(({ r }) => r.width > 0 && (r.height < 44 || r.width < 44))
       .map(({ el, r }) => `${(el.textContent || el.getAttribute("aria-label") || "?").trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`),

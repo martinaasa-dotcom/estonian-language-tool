@@ -44,6 +44,12 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   sitting's worth of words, and the words between the words too: question words, pronouns, the
   postpositions, the months and the adverbs of time have units of their own. Adding a unit builds real flashcards, every form, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
+- **A meaning in the language you think in.** Most people learning Estonian in Estonia already
+  speak Russian or Ukrainian, and being told that `kohv` is "coffee" asks you to reach a word
+  through the language you are least sure of. `tuba` is комната and кімната, from Ekilex, written
+  by the same lexicographers as the Estonian: 1,367 of the course's words carry a Russian
+  equivalent and 1,165 a Ukrainian one. Chosen in Settings, printed beside the English rather than
+  instead of it, and no model is anywhere near it.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
   with audio and a translation on request. Those same sentences become gap-fill cards
   ("Hotelli ____ on näha vanalinna.") and a word-order builder. Nothing is generated: the app only
@@ -142,6 +148,12 @@ authoritative forms the first time you open them.
 Ekilex carries no English on a reader key, so translations are resolved in layers: one you have
 already accepted, then Wiktionary, then Anu, then an honest blank for you to fill. Every layer says
 where it came from, and you can always overwrite it.
+
+It does carry Russian and Ukrainian, though, in the same response as the forms, and the course
+harvest keeps them: 1,367 of the 1,371 course words have a Russian equivalent and 1,165 a
+Ukrainian one, written by the same lexicographers. Pick a language in Settings and it is printed
+beside the English on the entry and on the first meeting with a word in review. The English stays,
+because it is the one gloss every entry has and the Wiktionary-derived words have no other.
 
 The dictionary's landing page also reads the morning's front page. A few of the day's headlines
 from ERR, Estonia's public broadcaster, are printed as written, and every word the dictionary can

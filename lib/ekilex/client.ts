@@ -56,6 +56,24 @@ export interface EkilexDetails {
    */
   usages: string[];
   cefr: string | null;
+  /**
+   * THE INSTITUTE'S OWN RUSSIAN AND UKRAINIAN, WHICH IS NOT A TRANSLATION THIS
+   * APP MADE.
+   *
+   * Most people learning Estonian in Estonia already speak Russian or
+   * Ukrainian, and telling them `kohv` is "coffee" asks them to go through a
+   * third language to reach a word their own would have landed instantly.
+   * Ekilex records the equivalents in `synonymLangGroups`, in the same
+   * response the harvest already fetches and caches, written by the same
+   * lexicographers who wrote the Estonian: 1,965 of the 1,975 entries in the
+   * cache carry a Russian one and 1,755 a Ukrainian one.
+   *
+   * ADR-005 is untouched by this and is the reason it is worth having: no
+   * model writes a character of it, exactly as with the forms and the
+   * sentences. Nothing here is Estonian either, so the ban on writing Estonian
+   * has nothing to say about it.
+   */
+  translations: { rus: string[]; ukr: string[] };
 }
 
 export function ekilexConfigured(): boolean {
@@ -93,6 +111,7 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
   const definitions: string[] = [];
   const governments: string[] = [];
   const usages: string[] = [];
+  const translations: { rus: string[]; ukr: string[] } = { rus: [], ukr: [] };
   let cefr: string | null = null;
 
   for (const lexeme of data.lexemes ?? []) {
@@ -111,6 +130,26 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
       if (u.lang !== "est" || u.public === false) continue;
       const value = u.value?.trim();
       if (value && !usages.includes(value)) usages.push(value);
+    }
+    /*
+      The equivalents in the other languages of the country. `MEANING_WORD` is
+      the synonym that *is* this meaning in that language; the other kinds are
+      relations between meanings and are not what a learner wants on a card.
+      `wordValue` is the plain spelling, where `wordValuePrese` carries
+      Ekilex's own `<eki-stress>` markup for a rendering this app does not do.
+    */
+    for (const group of lexeme.synonymLangGroups ?? []) {
+      const into = group.lang === "rus" ? translations.rus
+        : group.lang === "ukr" ? translations.ukr
+        : null;
+      if (!into) continue;
+      for (const synonym of group.synonyms ?? []) {
+        if (synonym.type !== "MEANING_WORD") continue;
+        for (const word of synonym.words ?? []) {
+          const value = word.wordValue?.trim();
+          if (value && !into.includes(value)) into.push(value);
+        }
+      }
     }
   }
 
@@ -131,6 +170,7 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
     governments,
     usages,
     cefr,
+    translations,
   };
 }
 
@@ -149,5 +189,9 @@ interface RawDetails {
     governments?: { value?: string }[];
     usages?: { value?: string; lang?: string; public?: boolean }[];
     meaning?: { definitions?: { value?: string; lang?: string }[] };
+    synonymLangGroups?: {
+      lang?: string;
+      synonyms?: { type?: string; words?: { wordValue?: string }[] }[];
+    }[];
   }[];
 }

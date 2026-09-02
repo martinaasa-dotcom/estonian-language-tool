@@ -97,8 +97,19 @@ export function readLimits(env: QuotaEnv = process.env): QuotaLimits {
 export interface UsageSnapshot {
   /** Calls this user made inside the burst window. */
   burstCalls: number;
-  /** Calls this user made today (UTC). */
+  /** Calls this user made today (UTC), of the kind being asked about. */
   dailyCalls: number;
+  /**
+   * Calls this user made today (UTC), of every kind.
+   *
+   * The reserve below asks "has this person already had a few answers today",
+   * and `dailyCalls` answers a narrower question: a few answers *of this
+   * kind*. So a learner on their tenth tutor call was held back while the
+   * same learner's first scan, the dearest single call in the app, went
+   * through as if they had asked nothing all day, and 29 grader calls went
+   * with it. The reserve is about the person, so it counts the person.
+   */
+  dailyCallsAllKinds: number;
   /** Micro-dollars this user spent today (UTC). */
   dailyMicros: number;
   /** Micro-dollars everyone spent today (UTC). */
@@ -190,7 +201,7 @@ export function checkQuota(
   if (
     usage.globalMicros >= reserveFrom &&
     usage.globalMicros < limits.dailyMicrosGlobal &&
-    usage.dailyCalls >= limits.reserveCallsPerUser
+    usage.dailyCallsAllKinds >= limits.reserveCallsPerUser
   ) {
     return {
       allowed: false,

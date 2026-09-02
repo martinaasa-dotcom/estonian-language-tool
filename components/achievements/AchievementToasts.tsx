@@ -28,9 +28,33 @@ import { badgeIcon } from "./icons";
 const VISIBLE = 3;
 const LINGER_MS = 9000;
 
+/*
+  A PHONE IS NOT A CORNER OF A DESKTOP.
+
+  Three of these plus the counted line stacked from y≈95 to y≈440 of an 844px
+  screen, which is 41 percent of it, over the plan card and grazing the Start
+  reviewing button; five badges kept that stack up for forty-five seconds, and
+  they are pinned to the corner the Ask Anu button lives in, so the third one
+  sat on top of it. A phone shows one at a time and lets it go sooner: the
+  shelf on Progress holds every badge for as long as the account exists, so
+  nothing here is the only sighting of anything.
+*/
+const PHONE_VISIBLE = 1;
+const PHONE_LINGER_MS = 5000;
+const PHONE_WIDTH = 768;
+
 export function AchievementToasts({ badges }: { badges: Badge[] }) {
   const [queue, setQueue] = useState<Badge[]>([]);
   const [burst, setBurst] = useState(false);
+  const [phone, setPhone] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia(`(max-width: ${PHONE_WIDTH - 1}px)`);
+    const read = () => setPhone(query.matches);
+    read();
+    query.addEventListener("change", read);
+    return () => query.removeEventListener("change", read);
+  }, []);
 
   useEffect(() => {
     if (badges.length === 0) return;
@@ -44,13 +68,13 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
   // together, and a timer per card means a queue that empties in a stutter.
   useEffect(() => {
     if (queue.length === 0) return;
-    const t = setTimeout(() => setQueue((q) => q.slice(1)), LINGER_MS);
+    const t = setTimeout(() => setQueue((q) => q.slice(1)), phone ? PHONE_LINGER_MS : LINGER_MS);
     return () => clearTimeout(t);
-  }, [queue]);
+  }, [queue, phone]);
 
   if (queue.length === 0) return null;
 
-  const shown = queue.slice(0, VISIBLE);
+  const shown = queue.slice(0, phone ? PHONE_VISIBLE : VISIBLE);
   const hidden = queue.length - shown.length;
 
   return (
@@ -88,8 +112,12 @@ export function AchievementToasts({ badges }: { badges: Badge[] }) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="label-xs" style={{ color: "var(--ink-3)" }}>Badge earned</p>
-                <p className="text-base font-semibold" style={{ color: "var(--ink)" }}>{b.title}</p>
-                <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>{b.description}</p>
+                <p className="text-base font-semibold" style={{ color: "var(--ink)" }}>
+                  <span lang="et">{b.title}</span>
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>
+                  {b.gloss}. {b.description}
+                </p>
               </div>
               <button
                 type="button"

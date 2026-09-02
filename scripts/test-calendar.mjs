@@ -76,17 +76,51 @@ async function until(page, text, present = true) {
  */
 async function sweep(page) {
   for (const label of [/Remove Eesti keel B1/, /Remove A test reminder/]) {
-    for (let i = 0; i < 12; i++) {
-      const remove = page.getByRole("button", { name: label });
-      if (await remove.count() === 0) break;
-      await remove.first().click();
-      await page.waitForTimeout(600);
-    }
+    await removeAll(page, label, label.source.replace("Remove ", ""));
   }
+}
+
+/**
+ * Clicks a remove button until there are none left.
+ *
+ * The click is guarded because each removal re-renders the week, and a button
+ * found by `count()` can be detached by the time the click lands. Playwright
+ * throws on that, which took a suite whose subject was fine down at check 11.
+ * The loop re-resolves the locator every pass, so a lost click costs one more
+ * pass and nothing else.
+ *
+ * Bounded rather than `while`: a button that will not go away is a real
+ * failure, and the checks after this say so, where an infinite loop would just
+ * hang.
+ */
+async function removeAll(page, label, text) {
+  for (let i = 0; i < 24; i++) {
+    const remove = page.getByRole("button", { name: label });
+    if (await remove.count() === 0) break;
+    await remove.first().click({ timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(500);
+  }
+  /*
+    And then wait for the *page* to agree, not just for the buttons to run out.
+    Each removal re-renders the week, so the last one leaves a window where the
+    row is gone from the database and still drawn. The check after this reads
+    the rendered column, and that window is the whole of a failure that looked
+    like a removal not working and was a render arriving a beat late: the
+    database showed nought rows every time it was inspected afterwards.
+  */
+  if (text) await until(page, text, false);
 }
 
 await page.goto(`${B}/calendar`, { waitUntil: "networkidle" });
 await sweep(page);
+/*
+  Reloaded before the check rather than trusting the client refresh. Every
+  removal re-renders the week, and the last one leaves a window where the row is
+  gone from the database and still drawn; a full navigation closes it. That
+  window was the whole of an intermittent failure whose database showed nought
+  rows every time it was inspected afterwards.
+*/
+await page.reload({ waitUntil: "networkidle" });
 
 check(
   "the week starts clean, with nothing an earlier run left in it",
@@ -162,12 +196,8 @@ check("and says which week it is showing", await page.getByText(/this week/).cou
   // Looped for the reason the class below is: an interrupted earlier run leaves
   // a row behind, and a suite that only removes one of them fails on a database
   // that is fine.
-  for (let i = 0; i < 8; i++) {
-    const remove = page.getByRole("button", { name: /Remove A test reminder/ });
-    if (await remove.count() === 0) break;
-    await remove.first().click();
-    await until(page, "A test reminder", false);
-  }
+  await removeAll(page, /Remove A test reminder/, "A test reminder");
+  await page.reload({ waitUntil: "networkidle" });
   check(
     "a reminder can be taken off again",
     !/A test reminder/.test(await column(page, MON)),
@@ -180,12 +210,8 @@ check("and says which week it is showing", await page.getByText(/this week/).cou
     loop also clears anything an interrupted earlier run left behind, which is
     what makes this suite runnable twice.
   */
-  for (let i = 0; i < 8; i++) {
-    const remove = page.getByRole("button", { name: /Remove Eesti keel B1/ });
-    if (await remove.count() === 0) break;
-    await remove.first().click();
-    await until(page, "Eesti keel B1", false);
-  }
+  await removeAll(page, /Remove Eesti keel B1/, "Eesti keel B1");
+  await page.reload({ waitUntil: "networkidle" });
   const mon = await column(page, MON);
   const wed = await column(page, WED);
   check("and removing a repeating class removes every one of its days",

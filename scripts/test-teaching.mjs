@@ -281,9 +281,18 @@ if (hasSticking) {
   const row = page.locator("li", { hasText: /lapses|never really settled/ }).first();
   // Either rule may have flagged it, and each has to say which: a count of
   // times the card was learned and lost, or an accuracy that never settled.
+  /*
+    The count lives in the chip and the sentence says what the count means,
+    which is the split that stopped the row saying one fact three times. So
+    both halves are asked for: a number, and which of the two rules flagged
+    the card. The pattern used to read `forgotten \d+ times`, which was the
+    count in the sentence as well, and it went on passing while the row said
+    everything twice.
+  */
+  const rowText = (await row.innerText()).replace(/\n/g, " · ");
   check("each one says what is wrong with it",
-    /forgotten \d+ times|never really settled/i.test(await row.innerText()),
-    (await row.innerText()).replace(/\n/g, " · ").slice(0, 70));
+    /forgotten again|never really settled/i.test(rowText) && /\d+ (lapses|%)/i.test(rowText),
+    rowText.slice(0, 90));
   // The argument this section makes is in the order of its actions: understand
   // it, look it up, and only then set it aside.
   check("and offers the explanation before the off switch",

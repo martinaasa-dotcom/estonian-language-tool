@@ -3,7 +3,6 @@
 import { useTransition } from "react";
 import { Check } from "lucide-react";
 import { toggleTask } from "@/app/actions";
-import { Chip } from "@/components/ui";
 import { bucketFor } from "@/lib/ux/agenda";
 import { dayClock } from "@/lib/time/day";
 
@@ -83,7 +82,6 @@ export function TaskRow({ task }: { task: TaskView }) {
         </div>
       </div>
 
-      {overdue && <Chip tone="again">Late</Chip>}
 
     </li>
   );

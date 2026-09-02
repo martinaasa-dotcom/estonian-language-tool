@@ -61,6 +61,7 @@ async function main() {
     const g = classifyGradation(nomSg, genSg);
     entries.push({
       lemma, pos: "NOUN", translation, cefr,
+      translationRu: null, translationUk: null,
       gradation: g.type, gradationNote: g.note ?? null, government: null,
       forms: forms({
         NOM_SG: nomSg, GEN_SG: genSg, PART_SG: partSg,
@@ -73,6 +74,7 @@ async function main() {
     const g = classifyVerbGradation(infMa, pres1sg);
     entries.push({
       lemma, pos: "VERB", translation, cefr,
+      translationRu: null, translationUk: null,
       gradation: g.type, gradationNote: g.note ?? null, government: government ?? null,
       forms: forms({ INF_MA: infMa, INF_DA: infDa, PRES_1SG: pres1sg, PAST_1SG: past1sg, PART_TUD: partTud }),
     });
@@ -82,6 +84,7 @@ async function main() {
     const g = classifyGradation(nomSg, genSg);
     entries.push({
       lemma, pos: "ADJECTIVE", translation, cefr,
+      translationRu: null, translationUk: null,
       gradation: g.type, gradationNote: g.note ?? null, government: null,
       forms: forms({ NOM_SG: nomSg, GEN_SG: genSg, PART_SG: partSg }),
     });
@@ -90,6 +93,7 @@ async function main() {
   for (const [lemma, translation, cefr, note] of PHRASES) {
     entries.push({
       lemma, pos: "PHRASE", translation, cefr,
+      translationRu: null, translationUk: null,
       gradation: "NONE", gradationNote: null, government: null,
       notes: note ?? null, forms: [],
     });
@@ -120,6 +124,11 @@ async function main() {
       lemma: word.lemma,
       pos: word.pos,
       translation: word.gloss,
+      // Ekilex's own equivalents, joined the way every other list in this
+      // schema is: a comma and a space, which is what the gloss column already
+      // uses and what a reader is already reading.
+      translationRu: word.rus.length > 0 ? word.rus.join(", ") : null,
+      translationUk: word.ukr.length > 0 ? word.ukr.join(", ") : null,
       // Ekilex's own proficiency code where it records one, and the level of the
       // unit that introduces the word where it does not. Both are honest; the
       // first is the authority's, and it wins.

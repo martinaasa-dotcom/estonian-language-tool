@@ -118,8 +118,17 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
 
           {sheet.vocabulary.length > 0 && (
             <section className="avoid-break mb-9">
+              {/*
+                The two halves have to be the same sentence. It read "Mis see
+                on? What does it mean?", and `Mis see on?` asks what a thing
+                is, not what a word means, so the one heading a teacher hands
+                out bilingually did not translate itself. This sheet's other
+                headings are already an Estonian-and-English pair (`Täida
+                lüngad`, `Kääna`, and the three case names below), so this is
+                a correction inside a set rather than new Estonian on a screen.
+              */}
               <h2 className="mb-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                A · Mis see on? What does it mean?
+                A · Mida see tähendab? What does it mean?
               </h2>
               <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Write the English meaning next to each word.

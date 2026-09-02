@@ -23,7 +23,7 @@ import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db
 import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
-import { answerCount, learningQueue, type LearnStep } from "@/lib/srs/learn";
+import { requeue } from "@/lib/srs/queue";
 import { AI_TAG } from "@/lib/copy/values";
 
 export interface ReviewCard {
@@ -43,6 +43,17 @@ export interface ReviewCard {
   intro: {
     lemma: string;
     gloss: string;
+    /**
+     * The Institute's own equivalent in the learner's chosen language, or null.
+     *
+     * The first meeting is the one screen where this earns the most: it is the
+     * moment the word is being learned rather than tested, and somebody who
+     * already speaks Russian or Ukrainian reaches the meaning in one step
+     * instead of two. Beside the English rather than instead of it, since the
+     * English is the gloss every entry has. Comes from Ekilex, like the
+     * sentence under it.
+     */
+    equivalent: { text: string; lang: string } | null;
     /** An attested sentence, and which form of the word it carries. */
     sentence: { et: string; en: string | null; form: string | null } | null;
   } | null;
@@ -125,6 +136,7 @@ function MeetWord({ card }: { card: ReviewCard }) {
   const lemma = card.intro?.lemma ?? card.lemma ?? card.front;
   const gloss = card.intro?.gloss ?? (card.cardType === "RECOGNITION" ? card.back : "");
   const sentence = card.intro?.sentence ?? null;
+  const equivalent = card.intro?.equivalent ?? null;
 
   return (
     <>
@@ -137,6 +149,11 @@ function MeetWord({ card }: { card: ReviewCard }) {
         <Speak text={lemma} autoplay />
       </div>
       {gloss && <p className="text-base" style={{ color: "var(--ink-2)" }}>{gloss}</p>}
+      {equivalent && (
+        <p lang={equivalent.lang} className="text-base" style={{ color: "var(--ink-2)" }}>
+          {equivalent.text}
+        </p>
+      )}
 
       <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
 
@@ -226,16 +243,48 @@ const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
 type Ask = "intro" | "type" | "choice" | "flip";
 
 /**
- * What shape an *answering* step takes. Whether a step teaches instead is
- * `LearnStep.teach`, decided by `learningQueue` before this is asked.
+ * WHAT COUNTS AS HAVING MET A WORD.
  *
- * `if (card.isNew) return "intro"` used to live at the top of this, from when a
- * new card appeared once in a sitting and that appearance was the introduction.
- * It cannot stay: a new word now appears twice, and the second one is the whole
- * point. Left in, it would teach the word, then teach it again, and the learner
- * would never be asked anything.
+ * The word, not the card. `addCardsFor` writes a recognition card, a production
+ * card and one per case the dictionary can build, so `Euroopa` alone is five
+ * cards; keyed on the card id, each of them got its own introduction. Those
+ * screens differ only in a line at the bottom saying what the card will ask
+ * later, because the introduction shows the lemma, the gloss and a sentence and
+ * none of that changes between a word's cards. Driven in a browser, that was
+ * five near-identical screens for one word before a single question.
+ *
+ * Keyed on the lemma, a word is introduced once and its other cards are asked
+ * straight away, which is what the meeting was for. `spreadSiblings` keeps
+ * those questions apart; this only decides which of them teach.
+ *
+ * A card with no lemma behind it falls back to its own id, so it is its own
+ * word. Reading a missing lemma as one shared key would collapse every such
+ * card together and the rest would be asked having never been shown.
  */
-function askFor(card: ReviewCard, mode: ReviewMode): Ask {
+function wordKey(card: ReviewCard): string {
+  return card.intro?.lemma ?? card.lemma ?? card.id;
+}
+
+function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): Ask {
+  /*
+    A card you have never seen cannot be recalled, only met. Asking someone to
+    produce a word they have not been shown is a guessing game that teaches
+    nothing, so a new card leads with its answer.
+
+    MEETING IT IS NOT ANSWERING IT, THOUGH. That screen used to end in
+    `submit(3)`: the card was graded Good, in the append-only log, on a word
+    the learner had done nothing with but read. The scheduler then set the
+    first interval from a recall that never happened, and the next real
+    question was the next day. Karpicke and Roediger measured what that costs:
+    learners who kept retrieving new pairs inside the first session recalled
+    about 80 percent a week later, against about 35 for those who only
+    restudied, and the whole difference was whether retrieval happened while
+    the word was being learned.
+
+    So the meeting writes nothing, and the card comes back a few places later
+    as the question it would ordinarily be. That retrieval is the grade.
+  */
+  if (card.isNew && !met.has(wordKey(card))) return "intro";
   if (mode === "type" && TYPEABLE.has(card.cardType)) return "type";
   if (card.cardType === "RECOGNITION" && card.choices && card.choices.length > 1) return "choice";
   return "flip";
@@ -245,38 +294,12 @@ interface Done {
   cardId: string;
   index: number;
   rating: RatingValue;
-  /**
-   * The card itself, so undo can put its step back without hunting the queue
-   * for it. The queue holds steps rather than cards now, and a card that was
-   * requeued by an "Again" is not where its index says it is.
-   */
-  card: ReviewCard;
-  /** The card's scheduling before the grade, which is everything undo needs. */
+  /** The card's scheduling before the grade — everything undo needs. */
   before: ReviewCard["scheduling"];
 }
 
-/**
- * A sitting's steps, from the flat list of cards the page hands down.
- *
- * Split on `isNew` rather than on a second prop, because the page already hands
- * the two groups down in one array in the order it wants them (due first, then
- * `inTeachingOrder`), and a filter keeps each group's own order while a second
- * prop would be two lists that can come apart.
- *
- * `wordOf` is the lemma, and it is what makes the batch five *words*: a word
- * carries a recognition card, a production card and one per case, so batching
- * by card taught one word five times over.
- */
-function plan(cards: readonly ReviewCard[]): LearnStep<ReviewCard>[] {
-  return learningQueue(
-    cards.filter((c) => !c.isNew),
-    cards.filter((c) => c.isNew),
-    { wordOf: (c) => c.intro?.lemma ?? c.lemma },
-  );
-}
-
 export function ReviewSession({
-  cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, title = "Review",
+  cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, nextDue, title = "Review",
 }: {
   cards: ReviewCard[];
   drillCase?: string;
@@ -284,15 +307,24 @@ export function ReviewSession({
   /** A photographed page being drilled on its own: its id, and what it is called. */
   drillScan?: { id: string; title: string };
   totalCards: number;
-  mode: ReviewMode;
   /**
    * What this screen is called, for the heading no round has room to draw.
    *
-   * Two routes render this session now, and the Flash cards round announced
-   * itself as "Review" to a screen reader while its tab said "Flash cards".
-   * A screen names itself, and it has to be the same name in both places.
+   * Two routes render this session, and the Flash cards round announced itself
+   * as "Review" to a screen reader while its tab said "Flash cards". A screen
+   * names itself, and it has to be the same name in both places.
    */
   title?: string;
+  /**
+   * One sentence saying when the next card comes back, or null.
+   *
+   * The only question an empty queue raises, and the one the caught-up screen
+   * did not answer: it said "All 312 cards are scheduled for later", which is
+   * a count the learner already knows. Worked out on the server, where the
+   * learner's own zone lives, and only on the path where it is shown.
+   */
+  nextDue?: string | null;
+  mode: ReviewMode;
 }) {
   // Snapshotted once on mount, and never updated from later props. gradeCard()
   // is a Server Action, and Next.js refreshes this route's Server Component
@@ -301,20 +333,7 @@ export function ReviewSession({
   // *last* grade of a session would see an empty prop and render "nothing
   // due" instead of the session summary — the pool the page found on the
   // very first load is the only one this session should ever know about.
-  /*
-    A QUEUE OF STEPS, NOT OF CARDS.
-
-    A new word appears twice in one sitting: once being taught and once being
-    asked, and the second is the one that grades. `learningQueue` is the whole
-    of that ordering and it is pure, so the argument for batches of five lives
-    in lib/srs/learn.ts where it can be tested.
-
-    Split on `isNew` rather than on a second prop, because the page already
-    hands the two groups down in one array in the order it wants them (due
-    first, then `inTeachingOrder`), and a filter keeps each group's own order
-    while a second prop would be two lists that can come apart.
-  */
-  const [queue, setQueue] = useState<LearnStep<ReviewCard>[]>(() => plan(initialCards));
+  const [queue, setQueue] = useState(initialCards);
   const [wasEmptyAtStart] = useState(initialCards.length === 0);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -326,6 +345,8 @@ export function ReviewSession({
   const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Done[]>([]);
+  /** Words met this session, which are now asked rather than introduced. */
+  const [met, setMet] = useState<ReadonlySet<string>>(() => new Set());
   const [pendingOffline, setPendingOffline] = useState(0);
   const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
@@ -335,13 +356,28 @@ export function ReviewSession({
   const { voice } = useAudioPrefs();
   const sound = useFeedbackSound();
 
-  const step = queue[index];
-  const card = step?.card;
+  /*
+    HOW MANY IN A ROW, WHICH IS WHAT THE RIGHT SOUND CLIMBS WITH.
+
+    The two-note chime was the same every time, so the tenth card you got right
+    sounded exactly like the first and a session had no shape to it. A run that
+    goes up says what a counter would say and says it while you are already
+    reading the next card, which is the one thing sound is better at than a
+    number on a screen.
+
+    A ref rather than state: nothing on the screen reads it, so putting it in
+    state would re-render the card to change a frequency. Undo puts it back to
+    nothing, because taking an answer back is not a run continuing.
+  */
+  const run = useRef(0);
+  const cheer = useCallback((right: boolean) => {
+    run.current = right ? run.current + 1 : 0;
+    sound(right ? "right" : "wrong", run.current);
+  }, [sound]);
+
+  const card = queue[index];
   const finished = !card;
-  // The plan decides whether this is a teaching step; `askFor` decides what
-  // shape an answering step takes. Two questions, and reading `card.isNew` here
-  // would answer the first one wrongly on the step that asks a word back.
-  const ask: Ask = !card ? "flip" : step!.teach ? "intro" : askFor(card, mode);
+  const ask = card ? askFor(card, mode, met) : "flip";
 
   /*
     Whether the answer is on the screen, which is not the same question as
@@ -362,18 +398,6 @@ export function ReviewSession({
   */
   const answerShown = revealed || ask === "intro";
 
-  /*
-    Counted in answers, not in steps, and worked out here because a hook may not
-    sit behind an early return.
-
-    A sitting of ten due cards and ten new words is thirty steps and twenty
-    answers, and a bar reading 3 of 30 while ten of those thirty are a word
-    being shown to you overstates the work by half. `answerCount` is the one
-    definition, beside the queue it counts.
-  */
-  const answers = useMemo(() => answerCount(queue), [queue]);
-  const answersDone = useMemo(() => answerCount(queue.slice(0, index)), [queue, index]);
-
   // Draining the queue is the provider's job, not this screen's — it has to keep
   // happening on pages that are not a review session. Here we only report it.
   useEffect(() => { setPendingOffline(outboxPending); }, [outboxPending]);
@@ -390,7 +414,7 @@ export function ReviewSession({
     }
     if (typeof navigator !== "undefined" && navigator.onLine) return;
     void readStashedSession().then((stashed) => {
-      if (stashed.length > 0) setQueue(plan(stashed));
+      if (stashed.length > 0) setQueue(stashed);
     });
   }, [initialCards]);
 
@@ -418,7 +442,7 @@ export function ReviewSession({
     holds two dozen clips and a session moves one card at a time.
   */
   useEffect(() => {
-    const upcoming = queue[index + 1]?.card;
+    const upcoming = queue[index + 1];
     if (!upcoming) return;
     // What the card will play: on meeting it, the Estonian front or the lemma;
     // on the answer, the back whenever the back is the Estonian side, which is
@@ -451,22 +475,28 @@ export function ReviewSession({
   }, [card, mounted]);
 
   /**
-   * Moves past a teaching step, writing nothing.
+   * The learner has met the word. Nothing is written, and the card comes back.
    *
-   * Meeting a word used to grade it Good, which is where the whole fault came
-   * from: the card left the new queue on the strength of having been looked at,
-   * and FSRS scheduled it a day or more out, so the learner was taught five
-   * words and asked none of them. Being shown something is not an answer, and a
-   * schedule built on it is a schedule built on nothing.
-   *
-   * The step after this one is on the same card in the same sitting and is the
-   * one that grades. A learner who closes the tab in between has met a word and
-   * answered nothing, which is exactly what the log should say: an abandoned
-   * round writes nothing (ADR-016).
+   * `requeue` is the same helper the Again path uses, so a first meeting and a
+   * miss are reinserted the same distance on: far enough that the answer is
+   * not still on the screen, near enough that a short session still reaches
+   * it. A session too short for the gap puts the card last, which is the best
+   * a short session can do, and the card is asked either way.
    */
-  const advance = useCallback(() => {
-    setIndex((i) => i + 1);
-  }, []);
+  const meetDone = useCallback(() => {
+    if (!card || busy) return;
+    setMet((m) => new Set(m).add(wordKey(card)));
+    setQueue((q) => {
+      const next = [...q];
+      const [seen] = next.splice(index, 1);
+      return seen ? requeue(next, seen, index) : next;
+    });
+    setRevealed(false);
+    setTyped("");
+    setVerdict(null);
+    setChosen(null);
+    shownAt.current = Date.now();
+  }, [card, busy, index]);
 
   const submit = useCallback(async (rating: RatingValue) => {
     if (!card || busy) return;
@@ -495,15 +525,15 @@ export function ReviewSession({
     setDone((d) => d + 1);
     setXp((x) => x + xpForRating(rating));
     if (rating >= 3) setCorrect((c) => c + 1);
-    setHistory((h) => [...h, { cardId: card.id, index, rating, card, before: card.scheduling }]);
+    setHistory((h) => [...h, { cardId: card.id, index, rating, before: card.scheduling }]);
 
     // "Again" means it is not learned — put it back near the end of this session.
     if (rating === 1) {
       setQueue((q) => {
         const next = [...q];
         const [failed] = next.splice(index, 1);
-        if (failed) next.splice(Math.min(next.length, index + 5), 0, failed);
-        return next;
+        // The same distance a newly met word waits: see `requeue`.
+        return failed ? requeue(next, failed, index) : next;
       });
       setRevealed(false);
       setTyped("");
@@ -532,23 +562,20 @@ export function ReviewSession({
       setDone((d) => Math.max(0, d - 1));
       setXp((x) => Math.max(0, x - xpForRating(last.rating)));
       if (last.rating >= 3) setCorrect((c) => Math.max(0, c - 1));
+      // Taking an answer back is not a run continuing.
+      run.current = 0;
       setQueue((q) => {
-        /*
-          The *answering* step goes back where it was. It may have been requeued
-          by an "Again", so it is found by card rather than by position, and the
-          teaching step of the same card is deliberately left alone: it sits
-          earlier in the sitting, it was never graded, and pulling it out would
-          shift every index behind it including the one being restored to.
-        */
-        const without = q.filter((st) => !(st.card.id === last.cardId && !st.teach));
-        if (without.length === q.length) return q;
-        without.splice(Math.min(last.index, without.length), 0, { card: last.card, teach: false });
+        // The card may have been requeued by an "Again"; find it wherever it is.
+        const without = q.filter((c) => c.id !== last.cardId);
+        const original = queue.find((c) => c.id === last.cardId);
+        if (!original) return q;
+        without.splice(Math.min(last.index, without.length), 0, original);
         return without;
       });
       setIndex(last.index);
     }
     setBusy(false);
-  }, [history, busy]);
+  }, [history, busy, queue]);
 
   const checkTyped = useCallback(() => {
     if (!card || verdict) return;
@@ -556,7 +583,7 @@ export function ReviewSession({
     const result = checkAnswer(typed, card.back, language);
     setVerdict(result);
     setRevealed(true);
-    sound(countsAsRecalled(result.verdict) ? "right" : "wrong");
+    cheer(countsAsRecalled(result.verdict));
     if (result.verdict === "wrong" && typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(60);
     }
@@ -568,21 +595,21 @@ export function ReviewSession({
     if (result.verdict === "correct") {
       window.setTimeout(() => void submit(result.suggestedRating), 420);
     }
-  }, [card, typed, verdict, submit, sound]);
+  }, [card, typed, verdict, submit, cheer]);
 
   const pickChoice = useCallback((choice: string) => {
     if (!card || chosen) return;
     setChosen(choice);
     setRevealed(true);
     const right = choice === card.back;
-    sound(right ? "right" : "wrong");
+    cheer(right);
     if (!right && typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(60);
     if (right) {
       // Right answers move on by themselves: multiple choice is the fast mode,
       // and a confirmation click on every correct card halves the throughput.
       window.setTimeout(() => void submit(3), 420);
     }
-  }, [card, chosen, submit, sound]);
+  }, [card, chosen, submit, cheer]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -617,7 +644,7 @@ export function ReviewSession({
         // set — and would grade the card before it had been read.
         if (typing) return;
         e.preventDefault();
-        if (ask === "intro") { advance(); return; }
+        if (ask === "intro") { meetDone(); return; }
         if (ask === "type" && !verdict) { checkTyped(); return; }
         if (ask === "type" && verdict) { void submit(verdict.suggestedRating); return; }
         // A right pick grades itself on a timer; a wrong one waits here.
@@ -648,7 +675,7 @@ export function ReviewSession({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [answerShown, revealed, submit, advance, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
+  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, meetDone, undo, history.length]);
 
   if (wasEmptyAtStart) {
     return (
@@ -682,7 +709,7 @@ export function ReviewSession({
         ) : (
           <Empty
             title="Nothing due, you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early does not help.`}
+            body={nextDue ?? `All ${totalCards} cards are scheduled for later.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
         )}
@@ -736,8 +763,8 @@ export function ReviewSession({
     );
   }
 
-  const remaining = answers - answersDone;
-  const progress = answers ? (answersDone / answers) * 100 : 0;
+  const remaining = queue.length - index;
+  const progress = queue.length ? (index / queue.length) * 100 : 0;
   const frontLang = estonianSide(card.cardType, "front") ? "et" : "en";
   const backLang = estonianSide(card.cardType, "back") ? "et" : "en";
 
@@ -763,7 +790,7 @@ export function ReviewSession({
           <X size={18} aria-hidden />
         </Link>
         <div className="flex-1">
-          <Meter pct={progress} label={`Session progress: ${answersDone} of ${answers}`} height={10} />
+          <Meter pct={progress} label={`Session progress: ${index} of ${queue.length}`} height={10} />
         </div>
         <span
           className="tnum label-xs rounded-full px-2.5 py-1"
@@ -1000,10 +1027,8 @@ export function ReviewSession({
             Hard is still what a near miss is graded. What went is the asking.
           */}
           {ask === "intro" ? (
-            /* Teaching, not marking. This writes no review: the same word is
-               asked back a few cards later and that is the step that counts. */
-            <Button variant="primary" size="lg" className="w-full" onClick={advance} disabled={busy}>
-              Got it, next
+            <Button variant="primary" size="lg" className="w-full" onClick={meetDone} disabled={busy}>
+              Got it, ask me later
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Space
               </kbd>

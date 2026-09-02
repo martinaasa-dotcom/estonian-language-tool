@@ -20,6 +20,8 @@ import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
 import { ClassNamePanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
 import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, VoicePanel } from "./AudioPanel";
+import { GlossLanguagePanel } from "./GlossLanguagePanel";
+import { GLOSS_LANGUAGES, glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom, VOICES } from "@/lib/audio/voice";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
@@ -91,6 +93,7 @@ export default async function SettingsPage() {
       SETTING_KEYS.letterBar,
       SETTING_KEYS.displayName,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
+      SETTING_KEYS.glossLanguage,
     ]),
     currentLearner(),
     goalsFor(ownerId),
@@ -111,6 +114,9 @@ export default async function SettingsPage() {
   const voiceName = VOICES.find((v) => v.id === voice)?.name ?? voice;
   const autoplay = autoplayFrom(settings[SETTING_KEYS.autoplayAudio]);
   const sounds = feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]);
+  const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
+  const glossLanguageName =
+    GLOSS_LANGUAGES.find((l) => l.id === glossLanguage)?.label ?? "English";
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
   /*
     Whether the level on screen is one a check produced, which is the only
@@ -169,6 +175,33 @@ export default async function SettingsPage() {
                 <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Right and wrong</h3>
                 <FeedbackSoundsPanel current={sounds} />
               </div>
+            </Card>
+          </section>
+
+          {/*
+            WHICH LANGUAGE A MEANING IS GIVEN IN, WHICH IS NOT A COSMETIC
+            SETTING HERE.
+
+            Most people learning Estonian in Estonia already speak Russian or
+            Ukrainian, and an app that can only say `kohv` is "coffee" asks
+            them to reach a word through the language they are least sure of.
+            The equivalents are the Institute's own, out of the same Ekilex
+            response as the forms and the sentences: no model is anywhere near
+            them.
+          */}
+          <section id="meanings">
+            <SectionTitle hint={glossLanguageName}>Meanings</SectionTitle>
+            <Card>
+              <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
+                What a word means, in the language you think in. The English gloss stays on every
+                entry; this decides what is printed beside it.
+              </p>
+              <GlossLanguagePanel current={glossLanguage} />
+              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                The Russian and Ukrainian come from Ekilex, written by the same lexicographers as
+                the Estonian. Where they recorded none, the entry says so by showing the English
+                on its own.
+              </p>
             </Card>
           </section>
 
@@ -262,7 +295,9 @@ export default async function SettingsPage() {
           </section>
 
           <section>
-            <SectionTitle hint={provider ? undefined : "Anu is off until you add a key"}>AI tutor</SectionTitle>
+            {/* Named the way every other screen names her. "AI tutor" here
+                against "Anu" everywhere else made two things out of one. */}
+            <SectionTitle hint={provider ? undefined : "off until you add a key"}>Anu</SectionTitle>
             <Card>
               {provider ? (
                 <div>
@@ -403,11 +438,6 @@ export default async function SettingsPage() {
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     The time is read on your own clock, wherever you are, and stays put when the
                     clocks change.
-                  </p>
-                  <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                    We considered push notifications instead. They need a server that is always
-                    switched on, and still do nothing on an iPhone unless the app is installed. A
-                    calendar entry just works.
                   </p>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguage";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -36,6 +37,15 @@ export interface EntryView {
   id: string;
   lemma: string;
   translation: string;
+  /**
+   * The Institute's own Russian and Ukrainian, where Ekilex recorded them.
+   *
+   * Not a translation this app or a model made: they come from the same
+   * response as the forms and the sentences. Null on most of the built
+   * expansion, which is drawn from Wiktionary and has none.
+   */
+  translationRu: string | null;
+  translationUk: string | null;
   pos: string;
   cefr: string | null;
   gradation: string;
@@ -66,12 +76,21 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, heard, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
 }: {
   initialQuery: string;
+  /** Which language the learner asked for their meanings in. */
+  glossLanguage: GlossLanguage;
   /** True when this word was pulled from Ekilex on this request. */
   justFetched?: boolean;
   hits: SearchHit[];
+  /**
+   * Words that sound like the query, when nothing matched it.
+   *
+   * Empty on every path but the dead end, because that is the only screen it
+   * has anything to say on. See `lib/estonian/sounds.ts`.
+   */
+  heard: string[];
   /**
    * Which of the hits is the one on screen. Usually the first, and not when a
    * link asked for another entry of the same lemma by name.
@@ -238,6 +257,38 @@ export function DictionaryClient({
             title={`Nothing found for "${initialQuery}"`}
             body="The built-in dictionary covers common words to B2. Add this one with its genitive."
           />
+          {/*
+            WHAT THEY MIGHT HAVE HEARD, BEFORE ANYTHING ELSE ON THIS SCREEN.
+
+            Every other way out of this dead end assumes the learner can spell
+            the word. Nobody using this app has only read these words: somebody
+            who heard `poiss` writes "pois" and somebody who heard `padi`
+            writes "pati", and the search folds diacritics and case endings and
+            has nothing to say about either. It leads because it is the only
+            one that might mean they are not at a dead end at all.
+          */}
+          {heard.length > 0 && (
+            <Card>
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                If you heard it rather than read it, Estonian writes some sounds two ways.
+                One of these might be it.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {heard.map((lemma) => (
+                  <li key={lemma}>
+                    <Link
+                      href={`/dictionary?q=${encodeURIComponent(lemma)}`}
+                      lang="et"
+                      className="press inline-flex items-center rounded-full px-3.5 py-2 text-base font-semibold transition-ui hover:-translate-y-px"
+                      style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                    >
+                      {lemma}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           <AddWord initialLemma={initialQuery} />
           {/*
             A search that found nothing is the commonest dead end in the app,
@@ -281,7 +332,7 @@ export function DictionaryClient({
               <Et className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
             </p>
           )}
-          <Entry entry={entry} tutorReady={tutorReady} />
+          <Entry entry={entry} tutorReady={tutorReady} glossLanguage={glossLanguage} />
         </>
       )}
 
@@ -326,7 +377,12 @@ export function DictionaryClient({
   );
 }
 
-function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean }) {
+function Entry({ entry, tutorReady, glossLanguage }: {
+  entry: EntryView;
+  tutorReady: boolean;
+  glossLanguage: GlossLanguage;
+}) {
+  const equivalent = equivalentIn(entry, glossLanguage);
   const isNoun = entry.pos === "NOUN" || entry.pos === "ADJECTIVE";
   const isVerb = entry.pos === "VERB";
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
@@ -356,6 +412,17 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
             <SpeakPair text={entry.lemma} />
           </div>
           <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
+          {/*
+            The meaning in the language the learner thinks in, where Ekilex
+            recorded one. Under the English rather than instead of it: the
+            English is the one gloss every entry has, and hiding it would leave
+            the words with no equivalent looking like words with no meaning.
+          */}
+          {equivalent && (
+            <p lang={glossLanguage} className="mt-1 text-md" style={{ color: "var(--ink-2)" }}>
+              {equivalent}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Chip>{entry.pos.toLowerCase()}</Chip>
             {entry.cefr && <Chip tone="accent">{entry.cefr}</Chip>}
@@ -435,8 +502,18 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                   ) : (
                     <span className="block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
                   )}
-                  <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
-                  <span lang="et" className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  {/*
+                    The Estonian name leads and the English is the
+                    cross-reference under it, which is the rule everywhere else
+                    in this app and was the wrong way round on the one screen a
+                    learner opens to look a word up. The case table two rows
+                    below already did it correctly, so the entry disagreed with
+                    itself: "SHORT ILLATIVE" in caps over `lühike sisseütlev`
+                    in small italics is the exact layout CLAUDE.md names as the
+                    fault it was written to stop.
+                  */}
+                  <span lang="et" className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  <span className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{label}</span>
                 </div>
               );
             })}

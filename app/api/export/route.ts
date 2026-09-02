@@ -126,6 +126,15 @@ export async function GET() {
     headers: {
       "content-type": "application/json",
       "content-disposition": `attachment; filename="kodukeel-backup-${date}.json"`,
+      /*
+        Every review, every conversation with Anu and every exam composition
+        this learner has written, in one response at one URL. It carried no
+        freshness directive at all, so a shared cache in front of the app with
+        a default TTL for a 200 would have been free to hand it to the next
+        request. `private, no-store` and a `Cookie` vary say who it belongs to.
+      */
+      "cache-control": "private, no-store",
+      vary: "Cookie",
     },
   });
 }

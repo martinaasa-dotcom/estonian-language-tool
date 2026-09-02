@@ -54,6 +54,27 @@ describe("parsePatchValue", () => {
     expect(parsePatchValue({ kind: "CREATE_WORD", lemma: "x", pos: "PARTICLE", translation: "y" })).toBeNull();
   });
 
+  /*
+    A patch is stored whole on a row in the queue a reviewer pages through,
+    and signing up is open. Each form value was capped at 80 characters and
+    every key was copied, so an object with a hundred thousand keys survived
+    into the row: twenty of those a minute is about 300 MB a minute. Eleven
+    keys is what a word has, and `applyPatch` will take no other, so a patch
+    naming one is refused rather than trimmed.
+  */
+  it("refuses a patch naming a form that is not a principal part", () => {
+    expect(parsePatchValue({
+      kind: "CREATE_WORD", lemma: "kohvik", pos: "NOUN", translation: "cafe",
+      forms: { GEN_SG: "kohviku", NOT_A_FORM: "x" },
+    })).toBeNull();
+
+    const flood: Record<string, string> = {};
+    for (let i = 0; i < 5_000; i += 1) flood[`K${i}`] = "x";
+    expect(parsePatchValue({
+      kind: "CREATE_WORD", lemma: "kohvik", pos: "NOUN", translation: "cafe", forms: flood,
+    })).toBeNull();
+  });
+
   it("drops empty forms instead of writing a blank principal part", () => {
     const patch = parsePatchValue({
       kind: "CREATE_WORD", lemma: "tuba", pos: "NOUN", translation: "room",

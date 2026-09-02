@@ -53,6 +53,18 @@ describe("the negative, the conditional and the imperative", () => {
     expect(imperativeSingular({ lemma: "olema", pres1sg: "olen" })).toBeNull();
   });
 
+  /*
+    `pidama` in the sense the course teaches, the one a learner needs for "ma
+    pidin minema", has no imperative at all: Ekilex records the slot as absent
+    and the rule would offer `pea`, which is the imperative of a different verb
+    and also the word for a head. `npm run audit:verbs` found it, as the one
+    disagreement in 797 verbs across thirteen slots after the course pinned
+    `pidama` to the right homonym.
+  */
+  it("offers no imperative for a verb Ekilex records none for", () => {
+    expect(imperativeSingular({ lemma: "pidama", pres1sg: "pean" })).toBeNull();
+  });
+
   it("lists everything it can derive, and nothing for a verb it cannot", () => {
     expect(derivedVerbForms({ lemma: "lugema", pres1sg: "loen" })).toHaveLength(14);
     // olema keeps its conditional, which is regular, and loses the rest.

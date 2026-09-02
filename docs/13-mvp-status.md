@@ -1619,3 +1619,78 @@ part-of-speech categories yield once proper nouns, multi-word entries and pages 
 answer for are dropped. More words come from the two live paths, a lookup with an Ekilex key and
 a photographed page, and never from a model. The gloss and part-of-speech audits were clean over
 all of it on 2026-08-31 and the weekly drift check asks again.
+
+## 25. The nineteenth pass: a meaning in the language the learner thinks in
+
+Four adversarial audits, run in parallel over the whole tree: the content a learner reads, the
+security and performance of every route and action, the interface at phone and desktop widths, and
+what the app could be that it is not. Every finding was verified against the code, against Ekilex
+or in a browser before it was fixed, and the ones that turned out not to be faults were dropped
+rather than "fixed".
+
+### The largest thing that was missing
+
+Most people learning Estonian in Estonia already speak Russian or Ukrainian, and this app could
+only ever say that `kohv` is "coffee". That asks somebody to reach a word through the language they
+are least sure of, and it is the single biggest thing standing between the app and the people it is
+for.
+
+Ekilex has the answer and has had it all along: the equivalents sit in `synonymLangGroups` on the
+same response the forms and the sentences come from, written by the same lexicographers. 1,367 of
+the 1,371 course words carry a Russian one and 1,165 a Ukrainian one, and the harvest already had
+the response cached, so it cost no request. `tuba` is комната and кімната; `vasakul` is слева and
+ліворуч.
+
+ADR-005 is the reason this is worth having rather than an exception to it, and the rule is stronger
+here than anywhere else in the app: these two columns hold a language neither the app nor the
+person reviewing the code necessarily reads, so a wrong gloss would look exactly like a right one
+and nobody here could tell. The files that may name the columns are a closed list, asserted. The
+English never goes away either, because it is the one column every entry has, and a card that hid
+it would be blank on the words Ekilex has no equivalent for.
+
+### Words that were a different word
+
+`scripts/harvest-ekilex.ts` returned on the first exact match whose forms fit and never looked at
+the next. 87 of the course's words have more than one Ekilex homonym, and six came back wrong:
+`kohus` taught as "court" with the forms and eight sentences of the moral duty, `kaste` as "sauce"
+with the forms of dew, `iga` as "every" with the case table of age, and `pidama`, the one A1 verb a
+learner needs for "ma pidin minema", with the past of the verb for keeping a farm. `WordSpec` takes
+a fourth slot naming the word id, and the 31 lemmas that remain ambiguous are printed at the end of
+the run with the ids to choose between.
+
+### Promises the vocabulary could not keep
+
+Three A1 units promised what their word lists could not deliver: numbers with no zero, no teens and
+no tens; directions with no word for left, right or straight on; clothes by size with no word for
+size and no trousers. Fifteen lemmas requested, fifteen confirmed by Ekilex, every one with
+recorded sentences. `parem` was requested first and is the homonym fault again, made while fixing
+it: Ekilex 213895 is the comparative of `hea`. Directions take the adverbs anyway.
+
+### What the app was doing to the log
+
+- **Meeting a word is not answering it.** The intro screen ended in `submit(3)`, so a card the
+  learner had only read was graded Good in the append-only log and the scheduler set its first
+  interval from a recall that never happened. A first meeting now teaches, writes nothing, and puts
+  the card back five places on where the retrieval is the grade.
+- **A card never answers the card before it.** 13 of 32 due cards sat beside a card of the same
+  word on the demo deck, so answering one was reading the answer off the last.
+- **A release gives back the call, not only the money.** A deployment with a rejected key still
+  rationed its learners over answers nobody received.
+- **A nominative -s that simply goes is an ending, not a grade.** 174 entries re-graded.
+
+### Measured
+
+- All 24 browser and integration suites green against a production build on a fresh seed, plus
+  typecheck, lint, 1,594 unit tests and 163 invariants. Every new invariant was made to fail before
+  it was left passing.
+- 766 of 22,260 lesson questions carried a second right answer; 0 do now, with all 22,260 still
+  asked.
+- `a11y-check.mjs` was waiving four checks a run because its locator named four buttons the review
+  screen no longer draws, and `smoke-offline.mjs` was revealing every card and grading none for the
+  same reason: 312 checks and 0 waived, 15 of 15 with grades queued and drained.
+
+### The dictionary, stated plainly
+
+6,050 words in the seed, 1,371 of them the course harvest with attested sentences, Ekilex CEFR
+levels and, for most, the Institute's Russian and Ukrainian. More words come from the two live
+paths and never from a model.

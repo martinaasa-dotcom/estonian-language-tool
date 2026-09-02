@@ -486,10 +486,40 @@
     already carry their own height, and a min-height on an element that
     centres its content pushes the content away from where it was drawn.
   */
+  /*
+    THE FLOOR IS FOR ANYTHING A THUMB HAS TO HIT, NOT FOR ANYTHING SPELT
+    `<button>`.
+
+    It listed the button elements, and this app reaches half its screens
+    through links: measured on Today with a coarse pointer, "Entry" was 74x29,
+    the help mark beside a case 28x28, "See the full entry" 128x19, "Change
+    the goal" 105x19. `scripts/test-mobile.mjs` measured exactly the same set
+    of selectors, so none of them had ever been flagged by the suite whose job
+    that is. A link drawn as a pill or as an icon is a control.
+
+    AN INLINE LINK IN A SENTENCE IS NOT ON THIS LIST, AND THE ATTEMPT TO PUT IT
+    THERE IS WHY THAT IS WRITTEN DOWN. It was given `padding-block: 0.375rem`
+    on the argument that a taller link is easier to press and the line still
+    reads the same. Vertical padding on an inline box does not grow the line
+    box, it grows the element's border box past it, so the link on the last
+    line of a paragraph reaches 6px below the paragraph it is in: measured on
+    the landing page's credit line at 360 with a coarse pointer, "TartuNLP" sat
+    5px outside the footer's own border, and `scripts/test-containment.mjs`
+    failed on it six times. Overlaying a bigger hit area with an absolutely
+    positioned pseudo-element is the other way and is worse, because in running
+    prose it would take the taps meant for a link on the line above.
+
+    WCAG 2.2's target-size rule makes exactly this exception, for exactly this
+    reason: a target in a sentence is constrained by the line-height of the
+    text around it, and the way to make it easier to hit is to give it a line
+    of its own, not to inflate it where it stands.
+  */
   @media (pointer: coarse) {
     button:not(.inline-edit),
     [role="button"]:not(.inline-edit),
     a[role="button"],
+    a.pill,
+    a[aria-label]:has(> svg:only-child),
     summary {
       min-height: 2.75rem;
       min-width: 2.75rem;
@@ -1685,4 +1715,19 @@
 */
 @media (prefers-reduced-motion: reduce) {
   .ptr-ring[data-working] { animation: none; }
+}
+
+/*
+  THE WAY OUT OF A CARD MEETS THE FLOOR THE WAY AN INLINE LINK CANNOT.
+
+  `components/ui.tsx`'s `CardLink` is a block-level link on a line of its own,
+  so vertical padding grows the line it sits on rather than pushing the link
+  out of a paragraph, which is exactly what happened when the same padding was
+  put on inline links in running text. Measured at 390 with a coarse pointer,
+  these were 128x19 and 240x19; with this they clear the floor.
+*/
+@media (pointer: coarse) {
+  .card-link {
+    padding-block: 0.625rem;
+  }
 }

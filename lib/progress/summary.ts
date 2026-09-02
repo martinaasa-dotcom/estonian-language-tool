@@ -201,7 +201,6 @@ export async function dailySummary(
 
   const questStats: QuestStats = {
     reviewsToday: todayReviews.length,
-    xpToday,
     newCardsToday: todayReviews.filter((r) => r.stateBefore === 0).length,
     recalledToday: todayReviews.filter((r) => r.rating >= 3).length,
     cardsAddedToday,

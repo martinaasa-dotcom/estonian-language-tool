@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { buildSystemPrompt } from "./prompt";
 import { openWithFallback, resolveProviders } from "./provider";
 import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
@@ -76,18 +77,19 @@ async function ask(
       // too long or unusable: the tokens were spent whatever we did with them,
       // and a cap that only counts the answers it liked is not counting.
       (usage, config) => {
-        void recordUsage({
+        after(() => recordUsage({
           ownerId, kind: "GRADER", provider: config.name, model: config.model,
           inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
           reservation: decision.reservation,
-        });
+        }));
       },
     );
   } catch (error) {
     // No provider took the question, so nothing was spent and the
     // authorisation goes back. Without this, a gloss nobody could get would
     // still count against the day.
-    if (decision.reservation) void releaseReservation(decision.reservation);
+    const booking = decision.reservation;
+    if (booking) after(() => releaseReservation(booking));
     throw error;
   }
 

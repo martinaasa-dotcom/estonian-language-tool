@@ -1,3 +1,7 @@
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { dictionaryLemmas } from "@/lib/dict/facts";
+import { soundAlike } from "@/lib/estonian/sounds";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
@@ -50,6 +54,23 @@ export default async function DictionaryPage({
     }
   }
 
+  /*
+    STILL NOTHING, SO ASK WHAT THEY MIGHT HAVE HEARD.
+
+    A search that found nothing is the commonest dead end in the app, and every
+    way out of it so far assumes the learner can spell the word: add it
+    yourself, or report it missing. Nobody here has only read these words.
+    Somebody who heard `poiss` writes "pois", somebody who heard `padi` writes
+    "pati", and the search folds diacritics and case endings and has nothing to
+    say about either.
+
+    Over the lemma list `lib/dict/facts.ts` already keeps in memory, so it is
+    no query at all, and only on the path where the answer was going to be a
+    dead end. See `lib/estonian/sounds.ts` for which confusions it forgives and
+    which it deliberately does not.
+  */
+  const heard = hits.length === 0 && q ? soundAlike(q, await dictionaryLemmas()) : [];
+
   // Open the first hit straight away — searching a word and then having to click it
   // again is a wasted step when you already know what you looked up. Unless the
   // link asked for one of the others by name, which is the only way a second
@@ -71,7 +92,7 @@ export default async function DictionaryPage({
 
   // The entry beside the three landing reads rather than before them: none of
   // the four depends on another, and on a hosted database each is a round trip.
-  const [entry, total, suggestions, starred, headlines] = await Promise.all([
+  const [entry, total, suggestions, starred, headlines, settings] = await Promise.all([
     opened ? loadEntry(opened.id, ownerId) : Promise.resolve(null),
     prisma.lexeme.count(),
     /*
@@ -92,7 +113,11 @@ export default async function DictionaryPage({
     // The front page, readable, for the landing view only: the same hourly
     // fetch the suggestion row already pays for. See lib/dict/headlines.ts.
     q ? Promise.resolve([]) : readableHeadlines(),
+    // Which language the meanings are printed in. Memoised for this render by
+    // `readSettings`, so the entry and anything else that asks share one read.
+    readSettings(ownerId, [SETTING_KEYS.glossLanguage]),
   ]);
+  const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
 
   return (
     <Page
@@ -109,6 +134,8 @@ export default async function DictionaryPage({
         justFetched={fetched}
         initialQuery={q}
         hits={hits}
+        heard={heard}
+        glossLanguage={glossLanguage}
         openedId={opened?.id ?? null}
         entry={entry}
         matchedAs={matchedAs}
@@ -135,6 +162,8 @@ async function loadEntry(id: string, ownerId: string): Promise<EntryView | null>
     id: lex.id,
     lemma: lex.lemma,
     translation: lex.translation,
+    translationRu: lex.translationRu,
+    translationUk: lex.translationUk,
     pos: lex.pos,
     cefr: lex.cefr,
     gradation: lex.gradation,

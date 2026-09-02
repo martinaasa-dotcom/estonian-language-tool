@@ -1,3 +1,6 @@
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { nextCardLine } from "@/lib/time/day";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -6,6 +9,7 @@ import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
+import { spaceSiblings } from "@/lib/srs/queue";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession } from "./ReviewSession";
 import { include, withChoices, type CardRow } from "./cards";
@@ -29,7 +33,6 @@ const NEW_PER_SESSION = 10;
  * Sixty is a wide enough window for the level to have something to choose
  * between and still one query of one page of rows.
  */
-
 const NEW_CANDIDATES = 60;
 const MAX_SESSION = 60;
 
@@ -45,13 +48,18 @@ export default async function ReviewPage({
   // Started here and awaited where it is read, so the one settings row rides
   // beside the deck reads below rather than in front of them. On a hosted
   // database that is a round trip off the daily path.
-  const settingsPromise = readSettings(ownerId, [SETTING_KEYS.reviewMode]);
+  const settingsPromise = readSettings(ownerId, [
+    SETTING_KEYS.reviewMode, SETTING_KEYS.glossLanguage,
+  ]);
   const modeChosen = async () => reviewModeFrom((await settingsPromise)[SETTING_KEYS.reviewMode]);
+  /*
+    Which language a first meeting gives the meaning in. One read for the whole
+    render: `readSettings` is memoised per request, so asking for both keys here
+    costs the same round trip the review mode already made.
+  */
+  const glossChosen = async () =>
+    glossLanguageFrom((await settingsPromise)[SETTING_KEYS.glossLanguage]);
 
-  // `examples` rides along because a card's first outing is a teaching screen
-  // and a word taught without a sentence is a word taught as a label. The
-  // column is a handful of short sentences, and only the one that gets shown
-  // crosses to the client (see `introFor`).
 
   // A drill ignores scheduling: the point is to attack one weakness — a case the
   // heatmap found, or the unit just added — not to review whatever is due.
@@ -66,9 +74,10 @@ export default async function ReviewPage({
       take: 30,
       include,
     });
+    const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill)}
+        cards={await withChoices(drill, gloss)}
         drillCase={targetCase}
         totalCards={0}
         mode={await modeChosen()}
@@ -86,9 +95,10 @@ export default async function ReviewPage({
           include,
         })
       : [];
+    const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill)}
+        cards={await withChoices(drill, gloss)}
         drillUnit={unitId}
         totalCards={0}
         mode={await modeChosen()}
@@ -123,9 +133,10 @@ export default async function ReviewPage({
           include,
         })
       : [];
+    const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill)}
+        cards={await withChoices(drill, gloss)}
         drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
         mode={await modeChosen()}
@@ -170,11 +181,63 @@ export default async function ReviewPage({
     modeChosen(),
   ]);
 
+  /*
+    A CARD NEVER ANSWERS THE CARD BEFORE IT.
+
+    `addCardsFor` writes a word's cards in one go, they are graded in one
+    session, and they come back with almost the same `due`, so a queue ordered
+    by `due` puts them side by side: measured on the demo deck, 13 of 32 due
+    cards sat next to a card of the same word and seven case cards of `Eesti`
+    ran consecutively. Answering `Eesti → millesse? kuhu?` straight after
+    `Eesti → milles? kus?` is reading the answer off the card before, and the
+    log records it as a recall either way, so the scheduler raises the interval
+    on a memory nothing tested. See lib/srs/queue.ts.
+
+    Only the due list. New cards keep `inTeachingOrder`, which deliberately
+    puts a word's cards together and in the order a lesson teaches them,
+    because a first meeting is a teaching screen rather than a retrieval.
+  */
+  const spaced = spaceSiblings(due, (card) => card.lexemeId);
+
   const room = Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length));
   const fresh = atLevelFirst(await inBandPool(ownerId, freshPool, level, room), level).slice(0, room);
-  const cards = await withChoices([...due, ...inTeachingOrder(fresh)]);
+  const gloss = await glossChosen();
+  const cards = await withChoices([...spaced, ...inTeachingOrder(fresh)], gloss);
 
-  return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
+  /*
+    WHEN THE NEXT CARD COMES BACK, WHICH IS THE ONLY QUESTION AN EMPTY QUEUE
+    RAISES.
+
+    The caught-up screen said "All 312 cards are scheduled for later", which is
+    the count somebody already knows and not the thing they came to find out.
+    `docs/18-voice.md` uses this exact screen as its worked example and the
+    answer it gives is a date.
+
+    Asked only on the path where it is going to be shown, and that is the
+    point rather than a saving: this is one more round trip on a page whose
+    daily job is to open fast, and on the day there is something to review it
+    would answer a question nobody is asking.
+  */
+  const caughtUp = cards.length === 0 && totalCards > 0;
+  const [next, clock] = caughtUp
+    ? await Promise.all([
+        prisma.card.findFirst({
+          where: { ownerId, suspended: false, due: { gt: now } },
+          orderBy: [{ due: "asc" }, { id: "asc" }],
+          select: { due: true },
+        }),
+        learnerDayClock(ownerId),
+      ])
+    : [null, null];
+
+  return (
+    <ReviewSession
+      cards={cards}
+      totalCards={totalCards}
+      mode={mode}
+      nextDue={next && clock ? nextCardLine(next.due, now, clock) : null}
+    />
+  );
 }
 
 /**

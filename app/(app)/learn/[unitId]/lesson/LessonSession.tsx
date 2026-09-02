@@ -289,6 +289,19 @@ function StepCard({
             <Speak text={step.lemma} size={20} />
           </div>
           <p className="text-lg">{step.gloss}</p>
+          {/*
+            The meaning in the language the learner thinks in, on the one step
+            of a lesson where a word is being learned rather than tested. Under
+            the English rather than instead of it, and never on a question's
+            options: those are drawn from a pool of English glosses, and one
+            option in a second language would be the answer before anybody read
+            it. From Ekilex, like everything else on this screen.
+          */}
+          {step.equivalent && (
+            <p lang={step.equivalent.lang} className="text-lg" style={{ color: "var(--ink-2)" }}>
+              {step.equivalent.text}
+            </p>
+          )}
           {step.example && (
             <p className="text-sm" style={{ color: "var(--ink-2)" }}>
               <Et>{step.example}</Et>

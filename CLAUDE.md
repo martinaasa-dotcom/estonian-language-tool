@@ -171,6 +171,31 @@ this was meant to replace. It writes no content, never touches a row somebody ed
 never moves a row onto a key another row holds, since `hall` is legitimately a noun meaning "frost"
 and an adjective meaning "grey".
 
+**Ekilex numbers its homonyms, and the harvest used to take the first one in silence.** The
+candidate loop returned on the first exact match whose forms fit and never looked at the next, and
+87 of the course's 1,185 words have more than one. Six came back as a different word: `kohus` was
+taught as "court" carrying the forms and eight sentences of the moral duty (`kohuse`, not `kohtu`),
+`kaste` as "sauce" with the forms of dew, `iga` as "every" with the case table of `iga : ea`, age,
+and `pidama`, the one A1 verb a learner needs for "ma pidin minema", with the past of the verb for
+keeping a farm, so the conjugation card answered `pidasin` and marked `pidin` wrong. `WordSpec`
+takes a fourth slot naming the Ekilex word id, which is a number rather than a word because this
+file may not write Estonian either, and the five that were wrong are pinned. Unpinned ambiguity is
+now printed at the end of the run, all 31 of them, with the ids to choose between: taking the first
+is right for about eighty of them and dropping the lot to fix six would cut a fifth of an A1 unit,
+so it is reported rather than dropped or hidden.
+
+**A nominative -s that simply goes is an ending, not a grade.** `classifyGradation` counted it as
+part of the consonant centre, so the chip on the dictionary entry and the hint on the flashcard
+said `hammas` alternates "ms : b" and `ratas` "s : t", which are not patterns in the language, and
+121 of the 133 entries labelled "s : ∅" were words whose only change is losing that -s: `kapsas`,
+`kuningas`, `rahvas`, `taevas`, `kallis`. EKK keeps astmevaheldus, a change inside the centre,
+apart from lõpuvaheldus, an ending that comes and goes. The -s comes off before the centres are
+compared, so `hammas : hamba` reads mm : mb and `ratas : ratta` reads t : tt, and where peeling it
+leaves exactly the genitive the word gradates in nothing. The peel **adds readings and never
+removes one**: `mees : mehe` is s : h, `poiss : poisi` is ss : s and `viis : viie` is s : ∅, and
+peeling those leaves the patterns nothing to match, so a peel that finds nothing falls back to the
+whole word. 174 entries in the built dictionary were re-graded by it.
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with forms matching the part of speech
@@ -182,6 +207,29 @@ in the whole pipeline, and English is the one language this project may write.
 bring back, which is what makes this mechanical rather than aspirational. Re-run the harvest with
 `npm run harvest`; responses are cached, so it costs Ekilex nothing.
 
+
+**A meaning is given in the language the learner thinks in, and Ekilex is the one that gives it.**
+Most people learning Estonian in Estonia already speak Russian or Ukrainian, and an app that can
+only say `kohv` is "coffee" asks them to reach a word through the language they are least sure of.
+Ekilex records the equivalents in `synonymLangGroups`, in the same response the forms and the
+sentences come from, written by the same lexicographers: 1,367 of the 1,371 course words carry a
+Russian one and 1,165 a Ukrainian one, and it costs no extra request because the harvest already
+had the response. `Lexeme.translationRu` and `translationUk` hold them, `lib/collections/glossLanguage.ts`
+is the choice, and Settings is where it is made.
+
+**The English never goes away, and that is what makes this safe.** This chooses what is printed
+*beside* the gloss, not instead of it: the authored English is the one column every entry has,
+Ekilex records an equivalent for the course and not for the Wiktionary expansion, and a card that
+hid the English would be blank on the words with no other. Where there is none, the entry prints
+the English alone rather than a dash, because "we have no Russian for this word" is not worth a
+line of somebody's card.
+
+**No model may reach either column.** They are the one place in the schema holding a language
+neither the app nor the person reviewing the code necessarily reads, which makes ADR-005 stronger
+here rather than weaker: a wrong gloss looks exactly like a right one, and more so in a language
+you cannot check. The files that may name the columns at all are a closed list, asserted, the way
+`prisma/columns.ts` is a closed list of what the seed writes, and nothing on the provider chain is
+on it.
 
 **The words between the words are a request like any other, and a unit that was cut does not take
 its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
@@ -560,6 +608,63 @@ allowances. So it is read only when `TRUST_PROXY_HEADERS` or `VERCEL` says a pro
 every unattributed request otherwise shares one bucket, which is the honest shape for not
 knowing. Signed-in work never touches any of it.
 
+**And which header, and which hop in it, is the other half of that.** The rule above was written
+and then only half implemented: `x-vercel-forwarded-for` was read first whenever proxy headers
+were trusted *at all*, including the self-hosted `TRUST_PROXY_HEADERS=1` case the function exists
+for. No proxy but Vercel's sets that header and no proxy but Vercel's strips it, so anywhere else
+it is a value the caller typed, which is the fault the paragraph above rules out arriving through
+the door it opened. It is read only where `VERCEL` says the platform that owns it is there. The
+hop matters as much: `X-Forwarded-For` is a list the client starts and each proxy appends to, so
+the leftmost element is whatever the caller put there and the rightmost is the one the trusted
+proxy added about the connection it actually accepted. Vercel overwrites the whole header and is
+read from the left; a self-hosted proxy appends and is read from the right.
+
+**A release gives back the call, not only the money.** `releaseReservation` wrote a settlement at
+minus the reserve, which returns the spend to zero and leaves the `CALL` row standing, and two of
+the three limits count `CALL` rows. So a deployment with a rejected key still rationed its
+learners by how many refusals they had collected: eight in a minute and the burst limit closed
+over answers nobody received, which is the exact thing that function's header says it exists to
+prevent, met for one limit out of three. `RELEASE` is a third entry kind, append-only like the
+other two, and `snapshotUsage` counts `CALL` minus `RELEASE`. The Settings meter reads it too,
+since a call that reached nobody is not a question anybody asked.
+
+**And the reserve is about the person, so it counts the person.** The last slice of the global
+budget is kept for somebody who has not asked anything today, and the test read `dailyCalls`,
+which `snapshotUsage` fills with calls *of the kind being asked about*. A learner on their tenth
+tutor call waited while the same learner's first scan, the dearest single call in the app, went
+through as though they had asked nothing all day.
+
+**No ledger write is left to a promise nobody is holding.** Every settlement and every release was
+`void recordUsage(...)` next to the `return`. The deployment target suspends a function once its
+response is sent and does not guarantee a pending promise runs, so a settlement that never lands
+leaves the reserve standing and bills a free model at its estimate for ever, and a release that
+never lands rations a learner over a call they did not receive. `after()` from `next/server` is
+the platform's own answer and is the one thing that says "keep this invocation alive until this
+finishes". Asserted, comment-blind.
+
+**A mailed sign-in link may not change who is signed in without saying so.** The `token_hash`
+branch of `/auth/callback` is deliberately not tied to the browser that asked, which is the whole
+reason the template shape exists and is also login CSRF: an attacker who requests a link for an
+address they control and gets a signed-in learner to open it lands that learner in the attacker's
+account, silently, at whatever `next` says, and everything they write afterwards goes into a
+stranger's deck. A link that would change the account ends the session that is there and sends
+the learner to `/sign-in?switched=1` with a sentence saying what happened; `next` is dropped,
+because it was chosen by whoever wrote the link. Nobody signed in is the ordinary case and is
+untouched, which is what makes it safe: the link works exactly as it did for the person it was
+mailed to.
+
+**A name a class is going to see is cleaned, not trimmed.** `trim()` does not remove U+200B, so
+two zero-width spaces were a two-character name that passed the empty check and rendered as
+nothing on the roster; U+202E reverses what follows it and can make one pupil's row read as
+another's. `cleanDisplayName` strips `\p{C}`, normalises to NFC, and requires a letter or a digit.
+The roster is the one screen where a stranger's text is shown to a teacher beside real names.
+
+**An argument that is supposed to be a string is not one.** Every export of `app/actions.ts` is a
+public endpoint and its arguments are JSON off the wire whatever the types say, so
+`joinClassroom(42)` reached `.trim()` and threw, which the framework answers with a 500 and a
+digest where a refusal is the honest reply. `text()` in that file coerces; `normaliseCode` takes
+`unknown` because it is the boundary of a pure module.
+
 **Signing out leaves the device the way a stranger should find it.** It cleared one cookie and
 nothing else, and everything the app keeps in the browser to make review work on a train stayed
 behind for the next person on the same machine: the pages the service worker had cached, which are
@@ -877,6 +982,21 @@ Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value on
 a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
 on any other.
 
+**Meeting a word is not answering it.** The intro screen ended in `submit(3)`: a card the learner
+had done nothing with but read was graded Good, in the append-only log, and the scheduler set its
+first interval from a recall that never happened. The next real question was the next day, because
+the ten-minute learning step lands after a seven-minute session has ended. Karpicke and Roediger
+measured what that costs: learners who kept retrieving new pairs *inside* the first session
+recalled about 80 percent a week later against about 35 for those who only restudied, and the whole
+difference was whether retrieval happened while the word was being learned. So a first meeting
+writes nothing and puts the card back five places on, where it is asked in its ordinary shape, and
+that retrieval is the grade. `requeue` in `lib/srs/queue.ts` is the same helper the Again path uses,
+so a miss and a first meeting wait the same distance, and a session too short for the gap asks at
+the end rather than not at all. `wantsChoices` reaches a new recognition card now, for the reason
+it already reached one still in learning: the memory is minutes old and asking for it cold is a
+guessing game. Nothing about `Review`, undo or the offline replay changed; what changed is that the
+row now records something that happened.
+
 **A word is taught before it is asked, and the app marks what it can mark.** Two rules, one
 screen, and the code already believed both of them before it did either.
 
@@ -910,6 +1030,22 @@ is a question about a scheduler nobody can see, put to somebody trying to learn 
 miss is still graded Hard by the marker, and `Review`, undo and the offline replay carry exactly
 what they always did. What went is the asking, and that distinction is what keeps this a change to
 one screen rather than to the append-only log underneath it.
+
+**A card never answers the card before it.** FSRS decides when a card comes back and has no
+opinion on the order of the cards already due, which the queue took from `due` alone. A word's
+cards are written in one `createMany`, graded in one session and come back within seconds of each
+other, so they arrived side by side: measured on the demo deck, 13 of 32 due cards sat next to a
+card of the same word, 17 of the 32 had a sibling within three places, and seven case cards of
+`Eesti` ran consecutively. Answering `Eesti → millesse? kuhu?` straight after `Eesti → milles?
+kus?` is reading the answer off the card before, and the log records a recall either way, so the
+scheduler raises the interval on a memory nothing tested; the retrieval-effort account is that
+what a recall is worth scales with how hard it was. `spaceSiblings` in `lib/srs/queue.ts` walks the
+due list and defers a card whose word is still on screen, narrowing the gap it asks for rather
+than giving up, so a session spends whatever room it has: six adjacent pairs become one on the
+shape that was measured. It **moves and never drops**, asserted, because a spacer that filtered
+would lose a due card in silence. New cards do not go through it: `inTeachingOrder` puts a word's
+cards together in the order a lesson teaches them, and a first meeting is a teaching screen rather
+than a retrieval.
 
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
 own scores. They write to the same review log, so the scheduler sees what was actually practised.
@@ -974,6 +1110,55 @@ the behaviour everybody had, and `components/AudioPrefs.tsx` publishes them once
 every speaker button and every round reads one answer. `lib/audio/clip.ts` is the one place a
 clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
 agreeing about what is in the cache.
+
+**A response built out of one learner's own rows says it is theirs and is never kept.** The
+framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
+max-age=31536000` on anything that does not say otherwise, so the share card, which carries a
+name, a streak and an XP total, was cached for a year at one fixed URL. Measured on the built app:
+three fetches made one request, and the second and third were served from the browser's own cache
+*after* everything `forgetThisDevice` clears had been cleared, so signing out on a shared laptop
+left the last person's card one fetch away. `/api/export` and `/api/reminder` sent no freshness
+directive at all, and the export is every review, every conversation with Anu and every exam
+composition somebody has written. Every owner-scoped route says `no-store` now, and the two shapes
+a shared cache would otherwise keep, a download and a picture, say `private` and vary on the
+cookie that chose them. Asserted, because the next such route inherits the same silence.
+
+**A call is booked once the request is worth answering, and not before.** The ledger writes a call
+down when it authorises it, which is what stops ten tabs reading the same "under the limit"; the
+price of that is that anything refused afterwards has to hand the booking back. `/api/tutor`
+authorised first and then returned 400 on an empty message list, so four empty posts left four
+pending calls against the global budget and spent four of that learner's ten for the day, having
+answered nothing. And the speech route had the opposite fault: a cache miss makes a request of
+TartuNLP and writes a WAV into storage nothing prunes, and nothing but an in-process limiter stood
+in front of it, so `ALLOWANCE.TTS` described a gate that had never existed. A miss is metered now,
+a joiner hands its booking back because it asked nobody for anything, and a failure hands it back
+too.
+
+**Adding to the shared dictionary is not the same as rewriting it, and a backup file is a document
+somebody hands the server.** `restoreBackup` upserted every `Lexeme` in the file by id and then
+deleted and recreated its forms, taking `lemma`, `provenance`, `editedBy`, `ekilexWordId` and every
+`Form` exactly as written: any signed-in learner could rewrite any word every other learner reads,
+forge "retrieved from Ekilex" on their own text, and delete the attested forms underneath. It does
+what the seed does now, `ON CONFLICT DO NOTHING`, and what it creates is marked as the restorer's
+own. `addExample` was the same door one plank narrower: no cap, no throttle, no attribution, and
+`usableExamples` sorted by length alone, so eight short sentences from one learner pushed every
+Ekilex usage off a word for everybody, including the sentences the mock exam and the level check
+are built from. An attested sentence now outranks a typed one and a learner may occupy at most two.
+
+**A half-configured deployment is neither mode and is answered as neither.** ADR-013 keys local
+mode on the *absence* of the Supabase keys, and one of the two present is not an absence: it is a
+hosted install with a typo in a dashboard. Read as local mode it opened that install to the
+internet under one shared id with `isAdmin()` true for every visitor, behind a sign-in screen that
+read as "set up later". `halfConfigured()` is the third state and the middleware answers 503
+naming the variable.
+
+**There is no analytics script, because /privacy says there is none.** Vercel Analytics was mounted
+for every visitor of the hosted build, posting each page's path, the referrer and a derived visitor
+id to a company outside the European Economic Area, while the deployment's own notice said "No
+analytics, no advertising identifiers, no third-party trackers" and the generated recipients list
+never named Vercel. Two of those three could have been edited to make the third true. This app is
+for people whose data is the reason they are careful, and `/api/metrics` already answers whether
+anybody comes back, out of the deployment's own database, which is what the notice describes.
 
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
@@ -1722,6 +1907,18 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   to `not-allowed`: everything disabled in this app is waiting for the learner, a send button with
   an empty box or a rating key before the answer is shown, never refusing them. That is the one
   declaration `.choice-btn` used to carry for itself, and it is one declaration now.
+- **An inline link in a sentence is not a 44px target.** The floor covers a link drawn as a pill or
+  as a lone icon, because those are controls; an inline link was given `padding-block` on the
+  argument that a taller link is easier to press and the line still reads the same. Vertical
+  padding on an inline box does not grow the line box, it grows the element's border box past it,
+  so the link on a paragraph's last line reaches six pixels below the paragraph it is in: measured
+  on the landing page's credit line at 360 with a coarse pointer, "TartuNLP" sat 5px outside the
+  footer's own border and `scripts/test-containment.mjs` failed on it six times. Overlaying a
+  bigger hit area with an absolutely positioned pseudo-element is the other way and is worse,
+  since in running prose it takes the taps meant for a link on the line above. WCAG 2.2 makes
+  exactly this exception for exactly this reason: a target in a sentence is constrained by the
+  line-height of the text around it, and the way to make it easier to hit is to give it a line of
+  its own.
 - **A control the 44px floor makes bigger centres its own content.** The floor under a coarse
   pointer is a `min-width` and a `min-height`, and an inline box lays its content out from the top
   left, so on a button holding nothing but an icon all of the slack lands on one side: measured at

@@ -12,7 +12,7 @@ import {
 import { checkpointPassed } from "@/lib/collections/checkpoint";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { loadRecentMessages } from "@/lib/tutor/history";
-import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
+import { mergeExamples, parseExamples, serialiseExamples, MAX_CHARS as EXAMPLE_MAX_CHARS } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
 import { upsertLexemeWithForms } from "@/lib/dict/upsert";
 import { requireAdminId } from "@/lib/auth/admin";
@@ -37,8 +37,9 @@ import {
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
 import { kindFrom } from "@/lib/ux/schedule";
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import {
-  availableCardTypes, generateCards, type CardType, type LexemeForCards,
+  availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
@@ -66,8 +67,40 @@ import { safeMessage } from "@/lib/observability/report";
  * Cards are per-user (`ownerId`) even though the Lexeme they're generated from is the shared
  * dictionary — see docs/03-architecture.md ADR-012.
  */
+/**
+ * The card sources a caller may name.
+ *
+ * `Card.source` is not decoration: `lib/progress/wordOfDay.ts` counts the
+ * words a learner kept from the almanac by querying it, and `/words` groups
+ * by it. It is also a free-text column on a row a signed-in stranger can
+ * create, and this endpoint was passing whatever arrived straight into it, so
+ * one caller could file a card under a source nothing else in the app has
+ * ever written and quietly break a count that is supposed to be derived from
+ * facts. A closed list costs nothing: every caller in the tree already names
+ * one of these.
+ */
+const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC"]);
+
+/**
+ * Add a word to the deck.
+ *
+ * Every argument here comes from a browser, because this file is
+ * `"use server"` and each export is a public endpoint. `types` is typed
+ * `CardType[]` for the callers in this tree and is a JSON array at runtime, so
+ * it is filtered against the table that defines what a card type is, capped at
+ * the length of that table, and deduplicated: an unbounded array of the same
+ * key was a way to make the generator run a thousand times for one word.
+ */
 export async function addToDeck(lexemeId: string, types: CardType[], source = "DICTIONARY") {
-  return addCardsFor(await requireUserId(), lexemeId, types, source);
+  const known = new Set(CARD_TYPES.map((t) => t.type));
+  const wanted = [...new Set(Array.isArray(types) ? types : [])]
+    .filter((t): t is CardType => known.has(t as CardType));
+  return addCardsFor(
+    await requireUserId(),
+    lexemeId,
+    wanted,
+    CARD_SOURCES.has(source) ? source : "MANUAL",
+  );
 }
 
 /**
@@ -190,12 +223,38 @@ export async function gradeCard(
   cardId: string, rating: RatingValue, durationMs: number, reviewedAt?: string,
 ) {
   const ownerId = await requireUserId();
+
+  /*
+    `Review` IS APPEND-ONLY, SO A BAD ROW IS PERMANENT.
+
+    `rating` is typed here and is a number off a POST body at runtime. Nothing
+    checked it, so a 7 or a NaN would have been written into the one table this
+    app cannot repair, read back by every chart and fed to the scheduler. The
+    four values are the four the scheduler defines.
+  */
+  if (rating !== 1 && rating !== 2 && rating !== 3 && rating !== 4) {
+    return { ok: false as const, error: "That is not a rating." };
+  }
+
   const card = await prisma.card.findFirst({ where: { id: cardId, ownerId } });
   if (!card) return { ok: false as const, error: "Card not found." };
 
+  /*
+    A grade carries the time it was actually answered, because the offline
+    outbox replays in order with the timestamp it was given (ADR-015). It was
+    clamped forward and not back, so a caller could date one before the card
+    existed, which is a review of something that was not there: the streak, the
+    heatmap and every "reviews this week" figure read it, and none of them can
+    tell a replayed grade from a forged one. The card's own creation is the
+    floor, and it cannot narrow an honest replay.
+  */
   const now = new Date();
   const when = reviewedAt ? new Date(reviewedAt) : now;
-  const at = Number.isNaN(when.getTime()) || when > now ? now : when;
+  const at = Number.isNaN(when.getTime()) || when > now
+    ? now
+    : when < card.createdAt
+      ? card.createdAt
+      : when;
 
   await prisma.review.create({
     data: {
@@ -387,8 +446,21 @@ export async function translateExample(lexemeId: string, sentence: string) {
  * lexicographers' examples rather than quietly passing it off as attested.
  */
 export async function addExample(lexemeId: string, sentence: string, translation?: string) {
-  await requireUserId();
-  const et = sentence.trim();
+  /*
+    THIS IS A WRITE INTO THE SHARED DICTIONARY, SO IT OBEYS WHAT ONE COSTS.
+
+    It took any lexeme id, any length of text, no throttle and no attribution,
+    and `Lexeme` is read by everybody: eight calls put eight of one learner's
+    sentences on a word and pushed every Ekilex usage off it, for every other
+    learner and for the exam and level-check questions built out of them.
+    Capped, throttled and signed now, and `usableExamples` keeps an attested
+    sentence ahead of a typed one.
+  */
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "editDictionary");
+  if (busy) return busy;
+
+  const et = capped(sentence, LIMITS.example);
   if (et.length < 4) return { ok: false as const, error: "That is too short to be a sentence." };
 
   const lexeme = await prisma.lexeme.findUnique({
@@ -398,11 +470,11 @@ export async function addExample(lexemeId: string, sentence: string, translation
   if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
 
   const merged = mergeExamples(parseExamples(lexeme.examples), [
-    { et, en: translation?.trim() || null, source: "USER" },
+    { et, en: capped(translation ?? "", LIMITS.translation) || null, source: "USER" },
   ]);
   await prisma.lexeme.update({
     where: { id: lexeme.id },
-    data: { examples: serialiseExamples(merged) },
+    data: { examples: serialiseExamples(merged), editedBy: ownerId, editedAt: new Date() },
   });
   revalidatePath("/dictionary");
   return { ok: true as const };
@@ -421,6 +493,8 @@ export async function addExample(lexemeId: string, sentence: string, translation
 const LIMITS = {
   lemma: 80,
   translation: 200,
+  /** One sentence: the same ceiling the reader applies, so nothing is stored unshowable. */
+  example: EXAMPLE_MAX_CHARS,
   form: 80,
   government: 300,
   notes: 2000,
@@ -430,6 +504,19 @@ const LIMITS = {
 
 const capped = (value: string | undefined | null, max: number): string =>
   (value ?? "").trim().slice(0, max);
+
+/**
+ * An argument that is supposed to be a string, as a string.
+ *
+ * Every export of this file is a public endpoint and its arguments are JSON
+ * off the wire, so the types here describe the callers in this tree and say
+ * nothing about what actually arrives. `joinClassroom(42)` reached
+ * `input.trim()` and threw a `TypeError`, which the framework answers with a
+ * 500 and a digest: an unhandled fault where the honest answer is a refusal.
+ * Anything that is not a string is nothing, and every one of these paths
+ * already has a sentence for nothing.
+ */
+const text = (value: unknown): string => (typeof value === "string" ? value : "");
 
 
 /**
@@ -814,6 +901,23 @@ export async function setAutoplay(value: string) {
   return { ok: true as const, value: normalised };
 }
 
+/**
+ * Which language a meaning is given in beside the English.
+ *
+ * The equivalents themselves come from Ekilex and are already in the
+ * dictionary; this only decides what a screen leads with. Revalidated across
+ * the whole layout because the answer is read on the dictionary, in review and
+ * on the course pages, and a learner who changes it should see it change
+ * everywhere rather than on the next page they happen to reload.
+ */
+export async function setGlossLanguage(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = glossLanguageFrom(text(value));
+  await writeSetting(ownerId, SETTING_KEYS.glossLanguage, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
+}
+
 export async function setFeedbackSounds(value: string) {
   const ownerId = await requireUserId();
   const normalised = feedbackSoundsFrom(value);
@@ -835,7 +939,7 @@ export async function setFeedbackSounds(value: string) {
  */
 export async function setClassDisplayName(input: { displayName: string }) {
   const ownerId = await requireUserId();
-  const name = input.displayName.trim().slice(0, 32);
+  const name = cleanDisplayName(input?.displayName);
   if (!name) {
     return { ok: false as const, error: "Pick a name your class will recognise." };
   }
@@ -867,6 +971,14 @@ export async function completeOnboarding(input: {
    * question is not asked because the bar is not drawn either way.
    */
   letterBar?: LetterBar;
+  /**
+   * Which language a meaning is given in.
+   *
+   * Asked on the first screen rather than left in Settings: most people
+   * learning Estonian in Estonia already speak Russian or Ukrainian, and the
+   * people who would never go looking for this setting are the ones it is for.
+   */
+  glossLanguage?: string;
   /** What the learner said they are here for. Absent when they skipped it. */
   goals?: {
     reason?: string | null;
@@ -880,7 +992,7 @@ export async function completeOnboarding(input: {
   const goal = Math.min(200, Math.max(5, Math.round(input.dailyGoal)));
 
   await Promise.all([
-    writeSetting(ownerId, SETTING_KEYS.displayName, input.displayName.trim().slice(0, 32)),
+    writeSetting(ownerId, SETTING_KEYS.displayName, cleanDisplayName(input?.displayName) || "A learner"),
     writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
     /*
       The level somebody declares at sign-up is the best guess available until
@@ -898,6 +1010,7 @@ export async function completeOnboarding(input: {
     writeSetting(ownerId, SETTING_KEYS.cefrPlacementAt, ""),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
     writeSetting(ownerId, SETTING_KEYS.letterBar, letterBarFrom(input.letterBar)),
+    writeSetting(ownerId, SETTING_KEYS.glossLanguage, glossLanguageFrom(text(input.glossLanguage))),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
     input.goals
       ? saveGoals(ownerId, normaliseGoals({
@@ -1136,7 +1249,7 @@ export async function completeLesson(
  */
 export async function setCourseLevel(level: string) {
   const ownerId = await requireUserId();
-  const parsed = z.enum(["A1", "A2", "B1", "B2", "C1"]).safeParse(level.toUpperCase());
+  const parsed = z.enum(["A1", "A2", "B1", "B2", "C1"]).safeParse(text(level).toUpperCase());
   if (!parsed.success) return { ok: false as const, error: "That is not a level." };
 
   await recordCourseLevel(ownerId, parsed.data);
@@ -1239,7 +1352,7 @@ export async function createClassroom(name: string) {
 
   const busy = throttleAction(ownerId, "createClassroom");
   if (busy) return busy;
-  const trimmed = name.trim().slice(0, 60);
+  const trimmed = text(name).trim().slice(0, 60);
   if (trimmed.length < 2) return { ok: false as const, error: "Give the class a name." };
 
   let code = "";
@@ -1289,7 +1402,7 @@ export async function joinClassroom(code: string, displayName?: string) {
     return { ok: false as const, error: "No class with that code." };
   }
 
-  const name = displayName?.trim().slice(0, 32) || await resolveDisplayName(ownerId);
+  const name = cleanDisplayName(displayName) || await resolveDisplayName(ownerId);
   if (!name) return { ok: false as const, error: "Pick a name your class will recognise." };
 
   await prisma.classroomMember.upsert({
@@ -1465,12 +1578,36 @@ export async function classworkHistory(classroomId: string) {
   }));
 }
 
+/**
+ * A name a class is going to see, cleaned.
+ *
+ * `trim().slice(0, 32)` was the whole of it, and `String.prototype.trim` does
+ * not remove U+200B: two zero-width spaces are a two-character string that
+ * passes the `!name` check and renders as nothing on the roster, so a member
+ * could sit in a class with no name at all. U+202E is worse, because it
+ * reverses what follows it and can be used to make one pupil's row read as
+ * another's. The roster is the one screen in this app where a stranger's text
+ * is shown to a teacher beside real pupils' names.
+ *
+ * `\p{C}` is every control, format and unassigned code point, which is the
+ * category both of those are in, and NFC first so a name is compared and
+ * stored in one normalisation. At least one letter or digit, because a row
+ * of punctuation is the same "renders as nothing" fault wearing a visible
+ * character.
+ */
+function cleanDisplayName(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const cleaned = value.normalize("NFC").replace(/\p{C}/gu, "").replace(/\s+/g, " ").trim().slice(0, 32);
+  return /[\p{L}\p{N}]/u.test(cleaned) ? cleaned : "";
+}
+
 /** The name to show in a class: their chosen one, else their account's. */
 async function resolveDisplayName(ownerId: string): Promise<string> {
-  const stored = await readSetting(ownerId, SETTING_KEYS.displayName);
-  if (stored?.trim()) return stored.trim().slice(0, 32);
+  const stored = cleanDisplayName(await readSetting(ownerId, SETTING_KEYS.displayName));
+  if (stored) return stored;
   const learner = await currentLearner();
-  return learner.name === "you" ? "A learner" : learner.name.slice(0, 32);
+  const account = cleanDisplayName(learner.name);
+  return !account || learner.name === "you" ? "A learner" : account;
 }
 
 // ─────────────────────────────── Tasks ────────────────────────────────────
@@ -1623,12 +1760,13 @@ function dayKeyOrNull(value: string | null | undefined): string | null {
  * The passage is never stored. It is somebody's homework, a news article or a
  * private message, and the app has no reason to keep it.
  */
-export async function buildClozeFromText(text: string) {
+export async function buildClozeFromText(passageIn: string) {
   const ownerId = await requireUserId();
+  const raw = text(passageIn);
 
   const busy = throttleAction(ownerId, "buildCloze");
   if (busy) return busy;
-  const passage = text.slice(0, MAX_PASSAGE_CHARS);
+  const passage = raw.slice(0, MAX_PASSAGE_CHARS);
   if (!passage.trim()) return { ok: false as const, error: "Paste some Estonian first." };
 
   // Ordered, because past the cap which of somebody's words could be blanked
@@ -1872,7 +2010,19 @@ export interface RestoreSummary {
 export async function inspectBackup(json: string): Promise<
   { ok: true; summary: RestoreSummary } | { ok: false; error: string }
 > {
-  await requireUserId();
+  const ownerId = await requireUserId();
+
+  /*
+    The restore route limits itself and this is not that route: every export
+    of this file is an endpoint, so a caller can reach the parse directly and
+    the route's allowance says nothing about it. Nothing is written here,
+    which is exactly why it had no limit and exactly why it needed one: a loop
+    of 16 MB bodies is a parse and a zod walk of every row, per request, for
+    free.
+  */
+  const busy = throttleAction(ownerId, "inspectBackup");
+  if (busy) return { ok: false as const, error: busy.error };
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
@@ -1934,19 +2084,59 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         await tx.scan.deleteMany({ where: { ownerId } });
       }
 
-      // Shared dictionary: upserted as-is, benefits every user, never deleted here.
+      /*
+        THE SHARED DICTIONARY IS ADDED TO BY A RESTORE, NEVER REWRITTEN BY ONE.
+
+        This upserted every `Lexeme` row in the file by id and then deleted and
+        recreated its forms, taking `lemma`, `translation`, `pos`,
+        `provenance`, `editedBy`, `ekilexWordId` and every `Form` exactly as
+        the uploaded file wrote them. A backup file is a document one learner
+        hands the server, so that was any signed-in learner rewriting any word
+        every other learner reads, forging "retrieved from Ekilex" on their
+        own text, and deleting the attested forms underneath it. Every other
+        shared write in this app goes through `lib/dict/upsert.ts` and obeys
+        three rules: only principal parts may be replaced, a retrieved form is
+        never touched, and the edit is attributed.
+
+        So a restore does what the seed does, `ON CONFLICT DO NOTHING`: a word
+        the dictionary already holds is left exactly as it is, and a word it
+        does not is created as this learner's own, without the provenance or
+        the Ekilex identifiers that would claim otherwise. Nothing is lost by
+        it, because the cards below point at ids either way.
+      */
+      const wanted = backup.lexemes.map((l) => String((l as { id?: unknown }).id ?? ""));
+      const present = new Set(
+        (await tx.lexeme.findMany({ where: { id: { in: wanted } }, select: { id: true } }))
+          .map((l) => l.id),
+      );
       for (const raw of backup.lexemes) {
         const { forms, ...lex } = raw as Record<string, unknown> & { forms?: unknown[] };
         const data = revive(lex, ["createdAt", "updatedAt"]);
         delete data.starred; // dropped field from a pre-multi-user backup
-        await tx.lexeme.upsert({
-          where: { id: String(data.id) },
-          create: data as never,
-          update: data as never,
-        });
-        await tx.form.deleteMany({ where: { lexemeId: String(data.id) } });
+        if (present.has(String(data.id))) continue;
+
+        // Whoever restores it is who added it, and it is not Ekilex's.
+        data.provenance = "USER";
+        data.editedBy = ownerId;
+        delete data.ekilexWordId;
+        delete data.fetchedAt;
+        delete data.lookupMissAt;
+
+        try {
+          await tx.lexeme.create({ data: data as never });
+        } catch {
+          // Another word already holds this (lemma, pos). Theirs stays.
+          continue;
+        }
         if (Array.isArray(forms) && forms.length) {
-          await tx.form.createMany({ data: forms.map((f) => revive(f as Record<string, unknown>, [])) as never });
+          await tx.form.createMany({
+            data: forms.map((f) => {
+              const form = revive(f as Record<string, unknown>, []);
+              form.lexemeId = String(data.id);
+              return form;
+            }) as never,
+            skipDuplicates: true,
+          });
         }
       }
 
