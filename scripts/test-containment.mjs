@@ -255,7 +255,8 @@ const SPARSE = new Map([
 // and twenty checks. It is a page of numbers in a table beside a bar chart and
 // a slider, which is the one arrangement in the app whose width is decided by
 // how long a figure happens to be, so it is exactly the route this suite is
-// for. Measured with every fixture made and the floor keeps its margin.
+// for. Measured at 1140 with the demo fixture in place, which is the 1120 above
+// plus that one route, and the floor keeps the same ten under it.
 const { check, absent, done } = suite("Containment", { floor: 1130 });
 
 const browser = await launchChromium();
