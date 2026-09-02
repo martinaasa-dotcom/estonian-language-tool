@@ -702,11 +702,31 @@
     after it: a row that appears and then vanishes on every navigation is worse
     than one that was never asked about.
 
-    WHAT COUNTS AS A DESKTOP is stated once, here. `min-width` alone would give
-    the bar to a tablet in landscape with no keys attached to it; `pointer:
-    fine` alone would give it to a phone with a mouse paired, which is a
-    stranger thing but not an impossible one. Both, and the answer is a machine
-    somebody is typing on with their hands on physical keys.
+    WHAT COUNTS AS A DESKTOP is stated once, here, and it is the pointer alone.
+
+    It used to be `(min-width: 768px) and (pointer: fine)`, on the reasoning
+    that `min-width` alone would give the bar to a tablet in landscape with no
+    keys attached to it. The reasoning was right about tablets and the test was
+    wrong, because a viewport width is not a fact about a keyboard. Drag a
+    desktop window to half the screen and the row vanishes, on a machine whose
+    physical keyboard has not changed and still has no key for õ, which is the
+    one situation this row exists for. That is a learner losing the only way
+    they have of answering half the exercises in the app, for resizing a
+    window.
+
+    `pointer: fine` is the test that was doing the work all along. A tablet in
+    landscape with nothing attached reports a coarse pointer and is excluded by
+    it; a tablet in a keyboard case reports a fine one and has a physical
+    keyboard, which is a machine that should get the row. What the pointer
+    cannot exclude is a phone with a mouse paired, and that is the trade taken
+    deliberately: it is rare, the row is one line of buttons, and it carries its
+    own way out. A desktop at half width is neither rare nor recoverable
+    without a trip to Settings.
+
+    There is no layout floor hiding in the old width either. Six 44px buttons
+    and their gaps come to about 280px, so the row fits a 360px phone with room
+    to spare, and the reason a phone does not get it is the pointer rather than
+    the space.
 
     `.letters-choice` is the control that offers the bar, and it takes the same
     media query rather than a `md:` class, so a screen cannot end up offering a
@@ -716,7 +736,7 @@
   */
   .letter-bar, .letters-choice { display: none; }
 
-  @media (min-width: 768px) and (pointer: fine) {
+  @media (pointer: fine) {
     .letter-bar { display: flex; }
     .letters-choice { display: block; }
     [data-letters="off"] .letter-bar { display: none; }

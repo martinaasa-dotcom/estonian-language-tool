@@ -29,7 +29,10 @@ const browser = await launchChromium();
 */
 // 57 rather than 58: `/placement` was cut, and it was one of the thirteen routes
 // the 44px pass walks. The sliver pass visits the lesson in its place.
-const { check, done } = suite("The phone", { floor: 57 });
+// +3: a narrow window with a real mouse keeps the letter bar, at three widths.
+// That combination is what the width-keyed rule got wrong and what `open()`
+// structurally cannot produce, since it ties `hasTouch` to the viewport.
+const { check, done } = suite("The phone", { floor: 60 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -344,6 +347,34 @@ for (const width of WIDE) {
   const bar = await letterBar(page);
   check(
     `the letter bar is drawn at ${width}, where there are no keys for these letters`,
+    bar.found > 0 && bar.drawn > 0,
+    JSON.stringify(bar),
+  );
+  await ctx.close();
+}
+
+//     A DESKTOP WINDOW DRAGGED NARROW IS STILL A DESKTOP.
+//
+//     The rule was `(min-width: 768px) and (pointer: fine)`, so half-sizing a
+//     window took the row away on a machine whose keyboard had not changed and
+//     still had no key for õ. Every check above passes either way, because
+//     `open()` ties `hasTouch` to the width and so never produces the one
+//     combination that was broken: a narrow viewport with a real mouse.
+//
+//     So this opens that combination by hand. It is the regression check for
+//     the rule being keyed on the pointer rather than on the width, and it
+//     fails on the old CSS.
+for (const width of [480, 640, 760]) {
+  const ctx = await browser.newContext({
+    viewport: { width, height: 900 },
+    hasTouch: false,
+    isMobile: false,
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
+  const bar = await letterBar(page);
+  check(
+    `a ${width}px window with a mouse keeps the letter bar`,
     bar.found > 0 && bar.drawn > 0,
     JSON.stringify(bar),
   );
