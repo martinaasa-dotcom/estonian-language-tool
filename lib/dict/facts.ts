@@ -2,6 +2,7 @@ import { singleFlight } from "@/lib/cache/singleFlight";
 import { prisma } from "@/lib/db";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { bandOf, glossOption, type GlossOption } from "@/lib/questions/distractors";
+import { MAX_LETTERS, MIN_LETTERS } from "@/lib/games/crossword";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -264,11 +265,20 @@ export function decoyOptions(): Promise<GlossOption[]> {
  * built for: it knows only which words exist, which is exactly enough.
  *
  * Read whole and handed to the browser, so a guess is checked without a round
- * trip. At six letters that is 7,134 words, about 50 KB of text before the
- * response is compressed, and the alternative is a server call on every guess
- * in a game whose whole feel is typing six letters and pressing return. Cached
- * across requests like everything else here, since which words exist is not a
- * fact about the person playing.
+ * trip. The alternative is a server call inside the one gesture the game is
+ * made of, and it would take the board offline as well.
+ *
+ * MEASURED RATHER THAN ARGUED ABOUT, because the obvious objection is the
+ * size: at six letters the list is 7,134 words, and the whole page comes to
+ * 143 KB of text that the server compresses to **36 KB**, which is a small
+ * photograph, once a day. Front-coding the shared prefixes was the first idea
+ * and gzip is already doing it: 143 down to 36 is a factor of four on a sorted
+ * list. Serving it from a separately cacheable route would save the repeat
+ * visits and costs a loading state on the one screen that must never wait, so
+ * it is written down here rather than done.
+ *
+ * Cached across requests like everything else in this file, since which words
+ * exist is not a fact about the person playing.
  */
 export function guessableWords(length: number): Promise<string[]> {
   return remember(`guessable:${length}`, FACTS_TTL_MS, async () => {
@@ -280,4 +290,41 @@ export function guessableWords(length: number): Promise<string[]> {
     `;
     return rows.map((r) => r.lemma);
   });
+}
+
+/**
+ * The words a crossword could be built from, at one level.
+ *
+ * A fact about the shared dictionary and about a CEFR band, not about the
+ * person waiting: two learners at B1 draw from the same 2,039 rows, and the
+ * page fetched all of them on every render and again inside the action that
+ * marks the grid. Cached here for the reason everything else is, and keyed on
+ * the band rather than on an owner, which is what this module is allowed to
+ * hold.
+ *
+ * The lengths are the compiler's own (`lib/games/crossword.ts`), so a rule
+ * about what crosses well is not written down twice. The part of speech is
+ * one with a case table behind it, so the entry the finish screen links to is
+ * worth opening, and a gloss is required because the gloss is the clue.
+ */
+export function crosswordPool(bands: readonly string[]): Promise<CrosswordWord[]> {
+  const key = [...bands].sort().join(",");
+  return remember(`crossword-pool:${key}`, FACTS_TTL_MS, async () => {
+    return prisma.$queryRaw<CrosswordWord[]>`
+      SELECT DISTINCT ON (lemma) id, lemma, translation FROM "Lexeme"
+      WHERE char_length(lemma) BETWEEN ${MIN_LETTERS} AND ${MAX_LETTERS}
+        AND lemma ~ ${"^[a-zäöüõšž]+$"}
+        AND cefr = ANY(${[...bands]})
+        AND pos = ANY(${["NOUN", "VERB", "ADJECTIVE", "ADVERB"]})
+        AND translation <> ''
+      ORDER BY lemma, id
+    `;
+  });
+}
+
+/** One row of that pool: the answer, the clue's source, and the entry to link to. */
+export interface CrosswordWord {
+  id: string;
+  lemma: string;
+  translation: string;
 }

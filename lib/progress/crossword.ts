@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { bandsAround } from "@/lib/collections/levels";
 import type { Level } from "@/lib/collections/syllabus/types";
+import { crosswordPool } from "@/lib/dict/facts";
 import { compile, type Candidate, type Crossword } from "@/lib/games/crossword";
 import { dayOrdinal } from "@/lib/random/dayHash";
 import { shuffle } from "@/lib/random/shuffle";
@@ -35,10 +36,6 @@ export interface DailyCrossword extends Crossword {
 /** Enough words to compile from without dragging the dictionary onto the page. */
 const POOL = 90;
 
-/** Short enough to cross, long enough to be worth clueing. */
-const MIN_LETTERS = 3;
-const MAX_LETTERS = 7;
-
 /**
  * A clue is one line. A gloss like "a devil, an evil spirit, the deuce" is
  * three, and a crossword clue that is longer than the grid is a paragraph
@@ -49,15 +46,14 @@ const MAX_CLUE = 46;
 export async function crosswordFor(
   ownerId: string, day: DayKey, level: Level,
 ): Promise<DailyCrossword | null> {
-  const rows = await prisma.$queryRaw<{ id: string; lemma: string; translation: string }[]>`
-    SELECT DISTINCT ON (lemma) id, lemma, translation FROM "Lexeme"
-    WHERE char_length(lemma) BETWEEN ${MIN_LETTERS} AND ${MAX_LETTERS}
-      AND lemma ~ ${"^[a-zäöüõšž]+$"}
-      AND cefr = ANY(${[...bandsAround(level)]})
-      AND pos = ANY(${["NOUN", "VERB", "ADJECTIVE", "ADVERB"]})
-      AND translation <> ''
-    ORDER BY lemma, id
-  `;
+  /*
+    Cached across requests in `lib/dict/facts.ts`, because which words a
+    crossword could be built from is a fact about the shared dictionary and a
+    band rather than about the person waiting: two learners at B1 draw from the
+    same 2,039 rows, and this page fetched all of them on every render and
+    again inside the action that marks the grid.
+  */
+  const rows = await crosswordPool(bandsAround(level));
   if (rows.length === 0) return null;
 
   /*

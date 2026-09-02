@@ -88,6 +88,18 @@ export const MAX_ENTRIES = 7;
 /** The fewest that make it a crossword rather than a word. */
 export const MIN_ENTRIES = 3;
 
+/**
+ * How long an answer may be.
+ *
+ * Short enough to cross something and long enough to be worth clueing: a
+ * two-letter word crosses nothing anybody wants to read, and eight will not fit
+ * a nine-wide grid beside anything else. Exported because the query that draws
+ * the pool is in `lib/dict/facts.ts`, where it is cached across requests, and a
+ * length typed there would be the compiler's rule written down twice.
+ */
+export const MIN_LETTERS = 3;
+export const MAX_LETTERS = 7;
+
 interface Placed { lemma: string; clue: string; lexemeId: string; direction: Direction; row: number; col: number }
 
 /**
