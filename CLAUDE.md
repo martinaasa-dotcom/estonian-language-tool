@@ -1556,6 +1556,34 @@ deck, searches or answer history: a student's raw mistakes stay theirs alone, on
 The join screen states this before anyone joins, and `weakestCase` may only ever be a `{grammCase,
 accuracy, total}` roll-up, never a specific answer, a search, or a card.
 
+**And an employer is a third seat, which is narrower than a teacher's rather than the same one
+renamed.** `Classroom.kind` is `CLASS` or `WORKPLACE` and the difference is which query runs.
+The per-student weakest case was widened into a teacher's view on a pedagogical argument, that the
+aggregate said the class was weak on the partitive and nothing about who to sit next to, and that
+argument does not survive the move into a workplace: an employer has no lesson to plan, and "Kadri
+keeps getting the partitive wrong" follows somebody into a review they never see. So
+`workplaceRoster` never selects `targetCase`, hands `assessReadiness` an empty `cases`, and returns
+a `CohortSummary` with nowhere to put one. There is no XP column either, because ranking colleagues
+by how much homework they did is a league table their employer is reading, and the list is ordered
+by name for the same reason: sorting by band would put whoever is struggling at one end of it.
+
+What a sponsor gets instead is a **band, never a percentage**. The learner's own hub prints "41
+percent likely to pass B1" and should, since they can act on it and the tier beside it says what it
+is worth; the same number about a named employee looks exact, cannot be argued with by the person it
+describes, and decides nothing a band would not. `bandFor` reads `LIKELY_PCT` and `CLOSE_PCT` out of
+`lib/exam/readiness.ts` rather than drawing its own lines, and it refuses to place anybody at all
+below `MIN_EVIDENCE_TO_BAND`, which is stricter than the model's own ceiling: "needs time" beside a
+name, computed off nine reviews, is a judgement the log cannot carry. A cohort's evidence is its
+**weakest** member's, so one long-standing colleague cannot vouch for a group who joined last week.
+
+The cost of a group is a fixed number of queries whatever its size, which is the same rule
+`classRoster` states about itself: the per-member alternative is `readinessSignals` in a loop, nine
+each. Accuracy and skills are read over one window (`COHORT_WINDOW_DAYS`) rather than the row cap a
+single learner gets, because a cap spends itself on whoever reviews most and a figure printed down a
+column beside several names has to cover the same stretch for all of them. The all-time review count
+and the last review are read separately, so a member's evidence tier matches the one their own hub
+shows them and somebody who stopped a year ago is not reported as never having reviewed.
+
 **Never score pronunciation.** Not because none is reachable, which stopped being true, but
 because the reachable one is not good enough and that was measured rather than assumed.
 `scripts/measure-asr.mjs` runs `whisper-large-v3` over sentences the dictionary already carries,

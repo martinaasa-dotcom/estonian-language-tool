@@ -324,6 +324,19 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
   };
 }
 
+/**
+ * Where a confidence figure stops being one thing and starts being another.
+ *
+ * Exported because a second screen now reads the same percentages. The cohort
+ * rollup (lib/classroom/cohort.ts) sorts a group into the same three bands this
+ * verdict is written in, and a band drawn at 70 there against 75 here would put
+ * a learner "on track" on one screen and "close" on another with one number
+ * behind both. One table, read twice.
+ */
+export const LIKELY_PCT = 75;
+export const CLOSE_PCT = 55;
+export const DISTANT_PCT = 25;
+
 function verdictFor(
   level: ExamLevel,
   confidence: number,
@@ -336,9 +349,9 @@ function verdictFor(
       : `You sat this and scored ${sat.pct} percent. A pass is ${PASS_PCT}.`;
   }
   const hedge = evidence === "thin" ? " We are working from very little, so treat it as a guess." : "";
-  if (confidence >= 75) return `You would very likely pass ${level} today.${hedge}`;
-  if (confidence >= 55) return `${level} is within reach, and it would be close.${hedge}`;
-  if (confidence >= 25) return `${level} is a stretch at the moment.${hedge}`;
+  if (confidence >= LIKELY_PCT) return `You would very likely pass ${level} today.${hedge}`;
+  if (confidence >= CLOSE_PCT) return `${level} is within reach, and it would be close.${hedge}`;
+  if (confidence >= DISTANT_PCT) return `${level} is a stretch at the moment.${hedge}`;
   return `${level} is a long way off for now, which is worth knowing.${hedge}`;
 }
 

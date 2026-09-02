@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { GraduationCap, School, Users } from "lucide-react";
+import { Building2, GraduationCap, School, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { cohortKind } from "@/lib/classroom/cohort";
 import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { CreateClass, JoinClass } from "./ClassForms";
 
@@ -26,7 +27,11 @@ export default async function ClassIndexPage() {
   const [memberships, settings, learner] = await Promise.all([
     prisma.classroomMember.findMany({
       where: { ownerId },
-      include: { classroom: { select: { id: true, name: true, code: true, archived: true, ownerId: true } } },
+      include: {
+        classroom: {
+          select: { id: true, name: true, code: true, archived: true, ownerId: true, kind: true },
+        },
+      },
       orderBy: { joinedAt: "desc" },
     }),
     readSettings(ownerId, [SETTING_KEYS.displayName]),
@@ -59,7 +64,10 @@ export default async function ClassIndexPage() {
           <section>
             <SectionTitle>Your classes</SectionTitle>
             <ul className="flex flex-col gap-2">
-              {memberships.map((m) => (
+              {memberships.map((m) => {
+                const workplace = cohortKind(m.classroom.kind) === "WORKPLACE";
+                const owns = m.role === "TEACHER";
+                return (
                 <li key={m.classroomId}>
                   <Link
                     href={`/class/${m.classroomId}`}
@@ -70,24 +78,29 @@ export default async function ClassIndexPage() {
                       className="flex h-10 w-10 items-center justify-center rounded-full"
                       style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                     >
-                      {m.role === "TEACHER" ? <GraduationCap size={19} aria-hidden /> : <Users size={19} aria-hidden />}
+                      {workplace
+                        ? <Building2 size={19} aria-hidden />
+                        : owns ? <GraduationCap size={19} aria-hidden /> : <Users size={19} aria-hidden />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-md font-semibold" style={{ color: "var(--ink)" }}>
                         {m.classroom.name}
                       </span>
                       <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
-                        {m.role === "TEACHER" ? "You teach this class" : "You are a student here"} ·{" "}
+                        {workplace
+                          ? (owns ? "You run this group" : "You are in this group")
+                          : (owns ? "You teach this class" : "You are a student here")} ·{" "}
                         {sizeOf.get(m.classroomId) ?? 1} member{(sizeOf.get(m.classroomId) ?? 1) === 1 ? "" : "s"}
                       </span>
                     </span>
                     {m.classroom.archived && <Chip>archived</Chip>}
-                    {m.role === "TEACHER" && !m.classroom.archived && (
+                    {owns && !m.classroom.archived && (
                       <Chip tone="accent" caseSensitive>{m.classroom.code}</Chip>
                     )}
                   </Link>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </section>
         )}
@@ -102,12 +115,13 @@ export default async function ClassIndexPage() {
             </section>
 
             <section>
-              <SectionTitle hint="teachers">Start a class</SectionTitle>
+              <SectionTitle hint="teachers and employers">Start a group</SectionTitle>
               <Card tone="accent">
                 <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
-                  You get a six-character join code to put on the board, a roster showing who is
-                  actually reviewing, the cases your group keeps missing, and which case each
-                  student personally keeps missing, which is the useful half of a progress report.
+                  Either way you get a six-character join code and a list of who is actually
+                  reviewing. A class adds the cases the group keeps missing and the one each student
+                  personally keeps missing. A workplace group leaves both out and answers a
+                  different question instead: who is on track for the paper they have to pass.
                 </p>
                 <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                   If your pupils are under 13, a parent has to agree before they sign up, and the
@@ -142,9 +156,11 @@ export default async function ClassIndexPage() {
         <Note tone="neutral">
           A teacher sees effort and progress: reviews this week, streak, words known, the
           class&rsquo;s weakest cases in aggregate, and which case each student personally is
-          weakest at as a rolled-up percentage. Never a search, a deck, or a specific answer. That
-          line is drawn in the code, not in a policy, see{" "}
-          <code className="text-xs">lib/classroom/roster.ts</code>.
+          weakest at as a rolled-up percentage. Whoever runs a workplace group sees less than that,
+          not more: a name, whether somebody has been practising, and one of four bands for the
+          paper the group works towards. Never a search, a deck, or a specific answer, and never a
+          colleague&rsquo;s weak grammar. Both lines are drawn in the code rather than in a policy,
+          see <code className="text-xs">lib/classroom/roster.ts</code>.
         </Note>
       </Stack>
     </Page>

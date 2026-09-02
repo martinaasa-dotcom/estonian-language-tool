@@ -12,6 +12,8 @@ import {
 import { checkpointPassed } from "@/lib/collections/checkpoint";
 import { placementResult } from "@/lib/collections/placement";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
+import { cohortKind } from "@/lib/classroom/cohort";
+import { EXAM_LEVELS, type ExamLevel } from "@/lib/exam/spec";
 import { loadRecentMessages } from "@/lib/tutor/history";
 import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
@@ -1186,13 +1188,24 @@ const CODE_ATTEMPTS = 8;
  * looked up live, so a learner changing what they call themselves later does
  * not silently rename someone halfway through a term.
  */
-export async function createClassroom(name: string) {
+export async function createClassroom(name: string, kind?: string, targetLevel?: string) {
   const ownerId = await requireUserId();
 
   const busy = throttleAction(ownerId, "createClassroom");
   if (busy) return busy;
   const trimmed = name.trim().slice(0, 60);
   if (trimmed.length < 2) return { ok: false as const, error: "Give the class a name." };
+
+  /*
+    Both read through their own tables rather than trusted as sent. Every export
+    here is a public endpoint, so `kind` arrives as a string somebody could set
+    to anything, and an unrecognised one has to become a class: that is the
+    shape whose consent screen a member will actually be shown.
+  */
+  const cohort = cohortKind(kind);
+  const level: ExamLevel = (EXAM_LEVELS as readonly string[]).includes(targetLevel ?? "")
+    ? (targetLevel as ExamLevel)
+    : "B1";
 
   let code = "";
   for (let attempt = 0; attempt < CODE_ATTEMPTS; attempt++) {
@@ -1208,6 +1221,8 @@ export async function createClassroom(name: string) {
       name: trimmed,
       code,
       ownerId,
+      kind: cohort,
+      targetLevel: level,
       members: { create: { ownerId, role: "TEACHER", displayName } },
     },
   });

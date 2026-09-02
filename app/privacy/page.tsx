@@ -115,6 +115,15 @@ export default function PrivacyPage() {
           every class you are in and every class you run.
         </P>
         <P>
+          <strong>Your workplace group, if an employer sponsors you.</strong> A group set up by
+          an employer is the same membership row and shows them less than a teacher sees, not
+          more: your name, whether you have been reviewing and when you last did, and one of
+          four bands for the examination the group works towards. Not a percentage, not which
+          grammar you personally find hard, and never a deck, a search or an answer. The band
+          is withheld entirely until there is enough history behind it to mean something.
+          Leaving stops all of it at once and takes nothing from your own deck.
+        </P>
+        <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
           replies are stored so the conversation survives a page reload.
         </P>
@@ -343,6 +352,12 @@ export default function PrivacyPage() {
           work each pupil did, which grammar the class as a whole is weakest at, and which
           grammar each pupil personally is weakest at as a rolled-up percentage, never an
           individual&rsquo;s deck, their searches or a specific answer.
+        </P>
+        <P>
+          An employer sponsoring a workplace group is the controller of that group&rsquo;s
+          membership in the same way, and sees a narrower set again: effort, and a band for the
+          paper the group is working towards. The difference is a different query rather than a
+          hidden column, so there is no setting that widens it.
         </P>
       </S>
 

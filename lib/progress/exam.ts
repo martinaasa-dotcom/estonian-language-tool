@@ -104,7 +104,10 @@ export async function paperFor(
 // ── The signals behind the confidence figure ─────────────────────────────────
 
 /** Cards past the learning phase, whose recall is worth reading anything into. */
-const MATURE_STATE = 2;
+export const MATURE_STATE = 2;
+
+/** Past papers one learner's readiness model looks at, however many they have sat. */
+export const ATTEMPT_WINDOW = 12;
 
 /**
  * Everything `lib/exam/readiness` needs, read off the review log and the deck.
@@ -249,21 +252,57 @@ async function skillEvidence(
   cards: { id: string; cardType: string }[],
   attempts: PastAttempt[],
 ): Promise<Record<SkillKey, SkillEvidence>> {
-  const readingCards = new Set(cards.filter((c) => c.cardType === "RECOGNITION").map((c) => c.id));
-  const writingCards = new Set(
-    cards.filter((c) => ["PRODUCTION", "CASE_FORM", "GOVERNMENT", "GRADATION"].includes(c.cardType))
-      .map((c) => c.id),
-  );
+  const { reading, writing } = skillCardSets(cards);
 
   // The most recent twenty thousand, for the reason given where the other two
   // caps are ordered: past the cap an unordered slice makes the per-skill
   // percentages move on their own.
   const reviews = await prisma.review.findMany({
-    where: { ownerId, cardId: { in: [...readingCards, ...writingCards] } },
+    where: { ownerId, cardId: { in: [...reading, ...writing] } },
     select: { cardId: true, rating: true },
     orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
     take: 20_000,
   });
+
+  return skillEvidenceFrom(cards, reviews, attempts);
+}
+
+/**
+ * Which cards stand in for which skill.
+ *
+ * One reading of it, because the query above selects reviews by these sets and
+ * the tally below counts them by the same sets. Two copies would mean a card
+ * type added to one and not the other, and the symptom would be a percentage
+ * that is quietly computed over the wrong denominator.
+ */
+export function skillCardSets(cards: { id: string; cardType: string }[]): {
+  reading: Set<string>;
+  writing: Set<string>;
+} {
+  return {
+    reading: new Set(cards.filter((c) => c.cardType === "RECOGNITION").map((c) => c.id)),
+    writing: new Set(
+      cards.filter((c) => ["PRODUCTION", "CASE_FORM", "GOVERNMENT", "GRADATION"].includes(c.cardType))
+        .map((c) => c.id),
+    ),
+  };
+}
+
+/**
+ * The same tally, over reviews somebody else has already fetched.
+ *
+ * Split out for the cohort roster, which reads a whole group's reviews in one
+ * query and cannot afford this function's own (lib/classroom/roster.ts). Pure,
+ * so the two callers cannot drift into two answers about what a skill is worth:
+ * a colleague's screen and the learner's own hub disagreeing about whether
+ * their writing is at 60 percent would be worse than either number alone.
+ */
+export function skillEvidenceFrom(
+  cards: { id: string; cardType: string }[],
+  reviews: { cardId: string; rating: number }[],
+  attempts: PastAttempt[],
+): Record<SkillKey, SkillEvidence> {
+  const { reading: readingCards, writing: writingCards } = skillCardSets(cards);
 
   const tally = (ids: Set<string>): SkillEvidence => {
     const rows = reviews.filter((r) => ids.has(r.cardId));
@@ -319,9 +358,6 @@ async function skillEvidence(
 
 // ── Sittings ─────────────────────────────────────────────────────────────────
 
-/** How many past papers the readiness model looks at. */
-const ATTEMPT_WINDOW = 12;
-
 /** Past sittings, most recent first, with each part's percentage. */
 export async function recentAttempts(ownerId: string): Promise<PastAttempt[]> {
   const rows = await prisma.examAttempt.findMany({
@@ -348,7 +384,7 @@ export async function recentAttempts(ownerId: string): Promise<PastAttempt[]> {
  * worth throwing a page for. A blob it cannot read contributes nothing rather
  * than crashing the hub.
  */
-function partPercentages(json: string): Partial<Record<SkillKey, number>> {
+export function partPercentages(json: string): Partial<Record<SkillKey, number>> {
   try {
     const parsed: unknown = JSON.parse(json);
     const parts = (parsed as { parts?: unknown })?.parts;
