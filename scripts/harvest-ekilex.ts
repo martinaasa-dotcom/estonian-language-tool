@@ -188,15 +188,15 @@ function formMap(formSet: RawFormSet): Map<string, string> {
  *
  * AND A PARALLEL IS OFTEN A WHOLE SECOND PARADIGM. `pickFormSet` takes one,
  * which is right for the six forms a learner memorises and was silently wrong
- * for everything else: `ütlema` is recorded as two verb paradigms, one on
+ * for everything else: `ütlema` is recorded as two full sets of verb forms, one on
  * `ütle-` and one on `öel-`, so `öelge`, `öelnud` and `öelda` were in the
  * response and thrown away, and `öelge` was the word `eval:scene` watched a
  * model reach for more than any other. `ise` is the same shape, `enese` in one
- * paradigm and `enda`, which is the form anybody says, in the other.
+ * set and `enda`, which is the form anybody says, in the other.
  *
- * Safe because these are paradigms of one `wordId`. A homonym is a different
+ * Safe because both belong to one `wordId`. A homonym is a different
  * word with its own id and its own cache entry, which is what `pickFormSet`'s
- * verb-or-nominal filter and the pinning above are for; two matching paradigms
+ * verb-or-nominal filter and the pinning above are for; two matching sets
  * under one id are two inflection patterns of one word, `haigus` with `haigusi`
  * and `haiguseid`, and both are Estonian. 167 of the 2,057 sets the course
  * reads have a second.

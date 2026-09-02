@@ -121,7 +121,7 @@ const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema", "pidama"]);
  * THE TWO INFINITIVES ARE HERE FOR THEIR PARALLELS ALONE. Both are principal
  * parts, so the entry already holds one of each and the harvest drops what it
  * already holds. What is left is the second stem of a verb Ekilex records as
- * two paradigms: `öelda` beside `ütelda`, which is the infinitive anybody says.
+ * two sets of forms: `öelda` beside `ütelda`, the infinitive anybody says.
  */
 export const VERB_SLOTS: readonly string[] = [
   "IndPrSg1", "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",

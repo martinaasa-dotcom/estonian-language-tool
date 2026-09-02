@@ -166,7 +166,7 @@ const CASE_BY_CODE: Record<string, CaseKey | undefined> = {
  * TWO SOURCES, AND THE FIRST RUN OF THIS HAD ONLY ONE. `stemsFromParts` returns
  * `retrieved: {}` by design, so a table built through it is the rule's answer
  * and nothing else: no `mulle`, no `teile`, no short illative, and nothing at
- * all for the pronouns held as an attested paradigm with no principal parts.
+ * all for the pronouns held as an attested set of forms with no principal parts.
  * That made the government check report the polite register as ungoverned,
  * which is the register every scene is set in, and `Kas kell kolm sobib teile?`
  * was withheld over the one word in it that answers `kellele`. `formsOf` one
