@@ -272,6 +272,17 @@ jobs:
       # it, because an ordering that matters and is only written in a comment
       # is an ordering that drifts. See the note above about `test-exam.mjs`
       # sitting in `test:browser` unrun for two builds.
+      #
+      # AND A SECOND SUITE WANTS THE SAME STATE, FIRST. Every screen in this
+      # app has a branch for a learner with no cards and no history, and every
+      # browser suite runs after the fixture, so that branch was rendered by
+      # nothing: half of this app is a figure computed from a review log, and
+      # on an empty one every panel takes a path nobody had looked at. It walks
+      # every route the filesystem has, so a route added without an empty state
+      # fails here rather than being found by a learner on their first evening.
+      # It refuses to run against a deck with cards in it, because every check
+      # would pass while testing the wrong app.
+      - run: node scripts/test-first-day.mjs
       - run: node scripts/test-assess.mjs
       # A deck with something in it, so the review screen has cards and the
       # phone bar has a page under it to scroll.

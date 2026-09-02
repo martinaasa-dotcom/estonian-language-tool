@@ -4360,22 +4360,46 @@ check("the suite that empties the dictionary runs after every suite that reads i
  * Asserted on the order of the two lines rather than on either alone, because
  * both will still be present when somebody tidies them back together.
  */
-check("first run is exercised, which means one suite runs before the fixture", () => {
+check("first run is exercised, which means two suites run before the fixture", () => {
   const workflow = read(join(".github", "workflows", "ci.yml"));
-  const suite = workflow.indexOf("node scripts/test-assess.mjs");
   const fixture = workflow.indexOf("scripts/demo-data.ts");
   const server = workflow.indexOf("Start the server");
-
-  assert.ok(suite > 0, "CI does not run scripts/test-assess.mjs at all");
   assert.ok(fixture > 0, "CI does not build the demo fixture");
-  assert.ok(
-    suite < fixture,
-    "CI builds the demo deck before test-assess.mjs runs, so /start redirects and the " +
-    "first-run walkthrough is waived rather than checked. It has to run against an empty deck.",
-  );
-  assert.ok(
-    server < suite,
-    "test-assess.mjs is a browser suite and CI runs it before the server is up",
+
+  /*
+    Two, and for the same reason. `test-assess.mjs` walks the first-run wizard,
+    which `/start` refuses to show anybody holding a card. `test-first-day.mjs`
+    walks every route in the app against a learner who has none, which is the
+    branch every panel computed from a review log takes and which no suite
+    rendered until it existed. Both are checks on a *state*, and the fixture is
+    what ends that state, so both belong above it.
+  */
+  for (const name of ["test-first-day", "test-assess"]) {
+    const suite = workflow.indexOf(`node scripts/${name}.mjs`);
+    assert.ok(suite > 0, `CI does not run scripts/${name}.mjs at all`);
+    assert.ok(
+      suite < fixture,
+      `CI builds the demo deck before ${name}.mjs runs, so it measures a learner with `
+        + "two months of history rather than one on their first evening. It has to run "
+        + "against an empty deck.",
+    );
+    assert.ok(
+      server < suite,
+      `${name}.mjs is a browser suite and CI runs it before the server is up`,
+    );
+  }
+
+  /*
+    And the one that cannot tell says so rather than passing. `test-first-day`
+    reads the app's own answer for whether the deck is empty and stops when it
+    is not, because every check in it would pass against the wrong state, which
+    is the shape of the waiver that left the wizard verified by nothing.
+  */
+  assert.match(
+    read(join("scripts", "test-first-day.mjs")),
+    /No cards yet/,
+    "test-first-day.mjs stopped checking that the deck is actually empty, so it can "
+      + "pass having walked the app as an established learner sees it",
   );
 
   /*

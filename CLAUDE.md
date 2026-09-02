@@ -2756,6 +2756,7 @@ npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, ne
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y
+                         # (test-first-day runs first and needs an empty deck: reseed before it)
 
 npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
@@ -2884,6 +2885,27 @@ and is not a substitute for the order: the person reading it is sent to reseed a
 seeded correctly an hour ago. The only thing that kept this harmless was the order of two lines in
 a workflow file, so it is asserted, inside the browser job, since the sign-in suite is a separate
 job with a database of its own and appears later in the same file.
+
+**And the state a stranger installs into is a state, so a suite runs in it.** Every browser suite
+ran after `scripts/demo-data.ts` laid down two months of history, which is the app as somebody who
+has used it sees it. Half of this app is a figure computed from a review log, and on an empty one
+every panel takes a branch nothing had ever rendered: no cards, no reviews, no settings, no
+placement, which is what every learner has for their first five minutes.
+`scripts/test-first-day.mjs` walks **every route the filesystem has** in that state and asks the
+four things a first-day fault actually produces: does the page answer, does it render without a
+client error, is there anything in `main`, and is there exactly one `h1`. Every route rather than a
+chosen spread, for the reason `test-containment.mjs` gives about widths, and read off `app/` rather
+than a list, because a list somebody maintains is a list that falls behind.
+
+Two things about it are decisions. It **waits for `main` rather than sleeping**: several of these
+routes redirect, `/` to the wizard and `/exam/A1` to a seeded paper, and a fixed 500ms held against
+a warm server and lost four routes against one that had just started, which is exactly the state
+this suite runs in, first, before anything else has touched the app. A suite that reports four
+faults that are not there is worse than no suite. And it **states its precondition rather than
+inheriting it**: it asks the app whether the deck is empty and stops if it is not, because run after
+the fixture every check would pass while measuring a different app, which is the shape of the waiver
+that left the first-run wizard verified by nothing for months. It runs above `demo-data.ts` in CI
+beside `test-assess.mjs`, and the invariant that used to name one suite names both.
 
 **And a waiver that fires on every possible run is a hole wearing a waiver's clothes.** That
 is the one thing the machinery above cannot see: `absent(n, why)` states a fact about *this*
