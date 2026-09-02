@@ -58,8 +58,10 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **19 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
-  Sprint, Match, Sentences, Listening, Dictation and Speaking), six games (flash cards, a picture
+- **20 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
+  Sprint, Match, Sentences, Listening, Dictation and Speaking), two passes over the words you are
+  working on (flash cards over the whole deck, and the hundred commonest words of each kind,
+  counted over film and television subtitles rather than chosen by anybody), five games (a picture
   board with no English on it, a picture to write one Estonian sentence about, Sõnad, a six-letter
   word a day in six guesses, Ristsõna, a crossword with English clues and Estonian answers, and
   Target for endings before the timer runs out), a two-minute daily quest aimed at whatever is going
