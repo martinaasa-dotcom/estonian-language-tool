@@ -51,6 +51,18 @@ export type StepKind =
 export interface LessonWord {
   lemma: string;
   gloss: string;
+  /**
+   * The Institute's own equivalent in the learner's chosen language, or null.
+   *
+   * Shown on the *meeting* step and nowhere else in a lesson, which is the
+   * same rule review follows: that is the moment a word is being learned
+   * rather than tested, and somebody who already speaks Russian or Ukrainian
+   * reaches the meaning in one step instead of two. A question's options are
+   * drawn from a pool of English glosses and stay English, because an option
+   * in a second language would be recognisable as the answer before anybody
+   * read it.
+   */
+  equivalent?: { text: string; lang: string } | null;
   pos: string;
   /** Attested Estonian sentences. Never generated. */
   examples: readonly string[];
@@ -79,6 +91,8 @@ export interface MeetStep extends StepBase {
   kind: "meet";
   lemma: string;
   gloss: string;
+  /** The meaning in the learner's own language, where Ekilex recorded one. */
+  equivalent?: { text: string; lang: string } | null;
   pos: string;
   /** One attested sentence, when the word has one, purely to see it in use. */
   example: string | null;
@@ -559,6 +573,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
    */
   const meetLane = (block: readonly LessonWord[]) => block.map((word): LessonStep => ({
     id: nextId("meet"), kind: "meet", lemma: word.lemma, gloss: word.gloss,
+    equivalent: word.equivalent ?? null,
     pos: word.pos, example: word.examples[0] ?? null,
   }));
 

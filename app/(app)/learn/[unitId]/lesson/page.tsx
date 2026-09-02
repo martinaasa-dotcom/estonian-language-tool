@@ -1,3 +1,5 @@
+import { equivalentIn, glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
@@ -39,11 +41,13 @@ export default async function LessonPage({
   const unit = unitById(unitId);
   if (!unit) notFound();
 
-  await requireUserId();
+  const ownerId = await requireUserId();
 
   const select = {
     id: true, lemma: true, translation: true, pos: true, provenance: true,
     examples: true, government: true,
+    // For the meeting step only: see `LessonWord.equivalent`.
+    translationRu: true, translationUk: true,
     forms: { select: { formType: true, value: true } },
   } as const;
 
@@ -72,10 +76,14 @@ export default async function LessonPage({
     which of them each question uses is the per-part seed's job, below.
   */
   const poolSeed = hash(unit.id);
-  const [rows, atLevel] = await Promise.all([
+  const [rows, atLevel, settings] = await Promise.all([
     prisma.lexeme.findMany({ where: { lemma: { in: [...unit.lemmas] } }, select }),
     prisma.lexeme.count({ where: { cefr: unit.level } }),
+    // Which language the meeting step gives a meaning in. Memoised per render,
+    // so this shares the read every other page of this request already made.
+    readSettings(ownerId, [SETTING_KEYS.glossLanguage]),
   ]);
+  const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
   const pool = await prisma.lexeme.findMany({
     where: { cefr: unit.level, lemma: { notIn: [...unit.lemmas] } },
     select: { lemma: true, translation: true, pos: true },
@@ -87,6 +95,9 @@ export default async function LessonPage({
   const toWord = (row: (typeof rows)[number]): LessonWord => ({
     lemma: row.lemma,
     gloss: row.translation,
+    equivalent: equivalentIn(row, glossLanguage)
+      ? { text: equivalentIn(row, glossLanguage)!, lang: glossLanguage }
+      : null,
     pos: row.pos,
     // Only the sentences a lexicographer recorded. `parseExamples` degrades a
     // malformed or outdated blob to nothing rather than throwing on the page.

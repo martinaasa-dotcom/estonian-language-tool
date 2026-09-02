@@ -1144,7 +1144,19 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
         so the answer sits to the *left* of the query rather than under it.
       */
       const statement = Math.max(0, src.lastIndexOf("\n\n", from), from - 400);
-      const window = src.slice(statement, at + 900);
+      /*
+        A window rather than a statement, because "and then what" is a
+        different line from the query about half the time, and it is generous
+        on purpose. It was 900 characters and fired on the lesson page the
+        first time anything was added between the `findMany` and the
+        `oneEntryPerLemma` twelve lines below it: an honest page, correctly
+        written, failing because a check measured in characters. Widening is
+        the answer the file's own rule gives, since a check that fires on
+        honest code is a check people learn to waive; what bounds it is the
+        blank line before the next statement group, which is where a reader
+        would stop looking too.
+      */
+      const window = src.slice(statement, at + 2000);
       /*
         Only a query for the *words*. `/review?unit=` filters the learner's own
         cards by their lexeme's lemma, and one row per card is right there:
@@ -4192,6 +4204,9 @@ check("only the harvest, the seed and the screens name a Russian or Ukrainian me
     join("app", "(app)", "dictionary", "page.tsx"),
     join("app", "(app)", "dictionary", "DictionaryClient.tsx"),
     join("app", "(app)", "review", "page.tsx"),
+    join("app", "(app)", "learn", "[unitId]", "lesson", "page.tsx"),
+    join("lib", "collections", "lesson.ts"),
+    join("app", "(app)", "learn", "[unitId]", "lesson", "LessonSession.tsx"),
   ]);
 
   const roots = ["app", "lib", "components", "scripts", "prisma"];
