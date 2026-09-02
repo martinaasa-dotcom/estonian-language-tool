@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CASES } from "@/lib/estonian/cases";
+import { derivedVerbForms, possibleFirstPersons } from "@/lib/estonian/conjugate";
 import { formLabel } from "@/lib/estonian/morph";
 
 /** Strips Estonian diacritics so `sona` finds `sõna`. */
@@ -139,6 +140,15 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
   const folded = fold(q);
   const raw = q.toLowerCase();
   const stems = possibleStems(folded);
+  /*
+    And the first persons this could be a derived form of. The search knew how
+    to strip a case ending off a genitive stem and nothing about a person
+    ending, so a verb was findable by its lemma, its two infinitives and its
+    stored first person, and not by `helistab`, which is the form a beginner
+    meets in every sentence they read. The strip lives beside the endings it
+    reverses, in `lib/estonian/conjugate.ts`.
+  */
+  const firstPersons = possibleFirstPersons(folded);
   // Substring branches only. The equality branches below compare whole values
   // and must not have backslashes inserted into them.
   const foldedLike = likeLiteral(folded);
@@ -170,6 +180,11 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
         WHERE f."formType" IN ('GEN_SG', 'GEN_PL')
           AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
               IN (${Prisma.join(stems.length ? stems : [""])})
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE f."formType" = 'PRES_1SG'
+          AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
+              IN (${Prisma.join(firstPersons.length ? firstPersons : [""])})
     ) AS candidates
     -- Ordered because it is truncated. Which 600 of a broad match you got was
     -- otherwise decided by the plan, so one query could answer differently
@@ -388,6 +403,20 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
   // A stored principal part: `loen` should find `lugema`.
   const stored = c.forms.find((f) => fold(f.value) === folded);
   if (stored) return { score: 88, matchedAs: `${formLabel(stored)} of ${c.lemma}` };
+
+  // A person of the present, the conditional, the negative or the imperative,
+  // worked out from the stored first person: `helistab` is `helistan` with the
+  // `n` off and a `b` on. The forms come from `derivedVerbForms` rather than
+  // from a second copy of the endings, so what the search finds and what the
+  // entry prints are the same rule, exceptions included.
+  const pres1sg = c.forms.find((f) => f.formType === "PRES_1SG")?.value;
+  if (pres1sg) {
+    const person = derivedVerbForms({ lemma: c.lemma, pres1sg })
+      .find((form) => fold(form.value) === folded);
+    if (person) {
+      return { score: 85, matchedAs: `${formLabel({ morphCode: person.morphCode })} of ${c.lemma}` };
+    }
+  }
 
   // A regular case form built on a genitive stem: `toas` → `toa` + -s, and
   // `tubadega` → `tubade` + -ga on the plural stem.

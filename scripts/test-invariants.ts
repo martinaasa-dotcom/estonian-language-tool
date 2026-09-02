@@ -36,6 +36,11 @@ import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/t
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
 import { allGlosses, occasionsFor } from "../lib/copy/almanac";
 import { glossSenses } from "../lib/dict/gloss";
+import {
+  COUNT_ROUNDING, LEARNER_BANDS, MAX_LEARNER_SHARE, MIN_LEARNERS, MIN_REVIEWS,
+} from "../lib/research/corpus";
+import { CORRECT_FROM_RATING, MATURE_STATE } from "../lib/research/sections";
+import { REVIEW_STATE } from "../lib/stats/history";
 // @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
 import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
@@ -320,10 +325,19 @@ check("every screen and marker that needs a case form asks the one function for 
     "lib/collections/checkpoint.ts",
     "lib/assessment/items.ts",
   ];
+  /*
+    Reaching it through `lib/estonian/gapForms.ts` counts, and widening the rule
+    is what this file's own instruction says to do when a check fires on honest
+    code. That module's whole job is to answer "every spelling of this word",
+    it asks `caseAnswer` for every case, and it has an invariant of its own
+    saying it must keep doing so. Two of these callers stopped writing the loop
+    themselves and started asking it.
+  */
+  const asksForACase = /caseAnswer\(|gapForms(?:FromParts)?\(/;
   for (const file of callers) {
     assert.match(
       code(file),
-      /caseAnswer\(/,
+      asksForACase,
       `${file} produces a case form without asking caseAnswer, so it cannot see the short illative`,
     );
   }
@@ -487,10 +501,23 @@ check("nothing derived from a stem is stored", () => {
 // ── Review is append-only (ADR-014, ADR-015) ─────────────────────────────────
 
 check("no code path updates a review", () => {
-  // It is the one table whose loss is unrecoverable, and it is the input to
-  // FSRS parameter optimisation. An undo writes a compensating row.
+  /*
+    It is the one table whose loss is unrecoverable, and it is the input to
+    FSRS parameter optimisation. An undo writes a compensating row.
+
+    `code()` rather than `read()`, which is the fifth time this repository has
+    made the same mistake and the first time it was caught by a comment saying
+    the right thing: a fixture explaining in prose why it does *not* reach for
+    `review.update` to arrange a state failed this check. A rule that fires on
+    an honest explanation is a rule that gets satisfied by deleting the
+    explanation.
+
+    Tests are still in scope, unlike the deletion check below. Setting a state
+    up by editing history is exactly what must not be learned from, and a
+    fixture can always write the row it wants in the first place.
+  */
   for (const file of ALL) {
-    assert.equal(/review\.update/.test(read(file)), false, `${file} updates a review`);
+    assert.equal(/review\.update/.test(code(file)), false, `${file} updates a review`);
   }
 });
 
@@ -1842,7 +1869,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "random", "scan", "security", "stats", "time", "ux",
+    "random", "research", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -4110,6 +4137,50 @@ check("every browser suite that exists is a browser suite CI runs", () => {
 });
 
 /**
+ * And the other one, at the far end of the same list.
+ *
+ * `test-restore.mjs` empties the shared dictionary and rebuilds it from a
+ * backup, which is the whole of what it exists to prove. Everything it puts
+ * back is created as the restorer's own, because that is what a restore is
+ * allowed to do to a word it does not already hold, so afterwards not one row
+ * in the dictionary is marked `SEED`. Every suite that reads a seeded word is
+ * then looking at a dictionary that no longer has one.
+ *
+ * `test-scan.mjs` says so out loud when it happens, which is the right
+ * behaviour and is not a substitute for the ordering: it reports "no seeded
+ * words" and waives seventeen checks, and the person reading that is sent to
+ * reseed a database that was seeded correctly an hour ago. Run second to last
+ * on somebody's own machine it costs a suite; the only thing keeping it
+ * harmless in CI is the order of two lines in a workflow file.
+ *
+ * Asserted inside the browser job, because the sign-in suite is a separate job
+ * with a database of its own and appears later in the same file.
+ */
+check("the suite that empties the dictionary runs after every suite that reads it", () => {
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const start = workflow.indexOf("name: The browser suites");
+  assert.ok(start > 0, "ci.yml no longer has a job called The browser suites");
+  const next = workflow.indexOf("\n  signin:", start);
+  const job = workflow.slice(start, next > 0 ? next : undefined);
+
+  const suites = [...job.matchAll(/node scripts\/([\w-]+)\.mjs/g)].map((m) => m[1]);
+  assert.ok(suites.includes("test-restore"), "the browser job does not run scripts/test-restore.mjs");
+  assert.equal(
+    suites[suites.length - 1],
+    "test-restore",
+    `scripts/test-restore.mjs has to be the last browser suite: ${suites[suites.length - 1]} runs after it, ` +
+    "against a dictionary it has just rebuilt with no SEED row in it",
+  );
+
+  // And it is last because of what it does, not because somebody put it there.
+  assert.match(
+    read(join("scripts", "test-restore.mjs")),
+    /lexeme\.deleteMany/,
+    "test-restore.mjs no longer empties the dictionary, so its position no longer has to be last",
+  );
+});
+
+/**
  * And the one suite whose *position* in that list is the whole of its value.
  *
  * `/start` redirects anyone carrying `onboardedAt` or a single card, which is
@@ -4202,6 +4273,52 @@ check("first run is exercised, which means one suite runs before the fixture", (
  * Read comment-blind, because a paragraph explaining why `void` is wrong would
  * otherwise satisfy a check looking for it.
  */
+/**
+ * EVERY PROVIDER KEY IS IN THE CREDENTIAL CANARY.
+ *
+ * CI builds with a marked value in every server-only variable and greps
+ * `.next/static` for it, which is the check CLAUDE.md leads with. It is only
+ * as good as the list of variables it marks, and that list was seven names
+ * somebody typed: `GROQ_API_KEY` and `GEMINI_API_KEY` joined the provider
+ * chain, `PROVIDER_KEY_ENV` grew to five, and the canary stayed at three of
+ * them. A key nothing marks is a key the grep cannot find, so the check would
+ * have passed over exactly the two the default free chain holds.
+ *
+ * `PROVIDER_KEY_ENV` is the one list of provider keys and the chain reads it,
+ * so this reads it too rather than keeping a fourth copy. Adding a provider
+ * now fails here until its key is marked.
+ */
+check("every provider key the chain can hold is marked in the credential canary", () => {
+  const chain = read(join("lib", "tutor", "provider.ts"));
+  const listed = chain.match(/export const PROVIDER_KEY_ENV = \[([\s\S]*?)\] as const;/);
+  assert.ok(listed, "PROVIDER_KEY_ENV is not where this check expects it");
+  const keys = [...listed![1]!.matchAll(/"([A-Z_]+)"/g)].map((m) => m[1]!);
+  assert.ok(keys.length >= 3, `only ${keys.length} provider keys found, so this check stopped looking`);
+
+  const ci = read(join(".github", "workflows", "ci.yml"));
+  for (const key of keys) {
+    assert.match(
+      ci,
+      new RegExp(`^\\s*${key}: .*canary-${key}-must-not-ship`, "m"),
+      `${key} is in PROVIDER_KEY_ENV and is not marked in the CI credential canary, ` +
+      "so a build that leaked it into the client bundle would pass the grep.",
+    );
+  }
+
+  /*
+    And the marker carries the variable's name. Every one of them used to be
+    the same string, so a failure could say that something had leaked and not
+    which: on the one check whose whole job is naming a leak.
+  */
+  const assigned = [...ci.matchAll(/^\s*([A-Z_]+): .*canary-([A-Z_]+)-must-not-ship/gm)];
+  const mismatched = assigned.filter(([, variable, marker]) => variable !== marker);
+  assert.deepEqual(
+    mismatched.map(([, v, m]) => `${v} is marked canary-${m}`), [],
+    "a variable's canary marker does not carry its own name, so a failure cannot say which leaked",
+  );
+  assert.ok(assigned.length >= 10, `only ${assigned.length} variables are marked, so this stopped looking`);
+});
+
 check("no ledger write is left to a promise the platform may drop", () => {
   const roots = ["app", "lib"];
   const files: string[] = [];
@@ -4486,7 +4603,7 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
     "assessment", "estonian", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "questions", "ux", "random", "copy", "scenes",
+    "offline", "security", "scan", "questions", "ux", "random", "copy", "research", "scenes",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
@@ -4664,12 +4781,19 @@ check("a route that spends something is throttled", () => {
 
     metrics  carries its own bearer token, 404s when none is configured, and is
              read by whoever runs the deployment rather than by a learner.
+    research is the same shape and the same reader, and the expensive work is
+             behind the token rather than in front of it: with no token set the
+             route 404s having read one environment variable, and with one set
+             the only caller who can reach the queries is the person who holds
+             the deployment's own secret. A per-owner bucket is also the wrong
+             instrument here, since there is no owner to resolve: the caller is
+             not a learner and `requireUserId` would have nothing to say.
     reminder is one indexed read and some string building, so a ceiling there
              would be met by a person tapping twice and by nobody else, which
              is the same argument `lib/security/actionLimits.ts` makes about
              grading a card.
   */
-  const exempt = new Set(["metrics", "reminder"]);
+  const exempt = new Set(["metrics", "reminder", "research"]);
 
   for (const file of routes) {
     const name = file.split(/[\\/]/).slice(-2, -1)[0] ?? file;
@@ -5811,6 +5935,84 @@ check("a confidence figure carries its evidence, on every screen that prints one
   }
 });
 
+check("a workplace group is a narrower query, never a hidden column", () => {
+  /*
+    A class and a sponsored group of colleagues are the same rows underneath,
+    and the seats reading them are not the same seat. `classRoster` shows a
+    teacher which case one named student keeps missing, widened to that
+    deliberately on a pedagogical argument: the aggregate said the class was
+    weak on the partitive and nothing about who to sit next to. That argument
+    does not survive the move into a workplace. An employer has no lesson to
+    plan, and "Kadri keeps getting the partitive wrong" follows somebody into a
+    review they never see.
+
+    The obvious way to build the narrower screen is the wider query with fields
+    left unrendered, and it is one careless render away from being the wider
+    screen. So the boundary is which query runs: `workplaceRoster` never selects
+    a case, its summary type has nowhere to put one, and the page picks between
+    the two before either has read anything.
+  */
+  const roster = code("lib/classroom/roster.ts");
+  const workplace = between(roster, "export async function workplaceRoster");
+  assert.ok(workplace.length > 0, "workplaceRoster is gone; the sponsor's screen has no narrower read");
+
+  for (const leak of ["targetCase", "caseAccuracy", "xpFromRatingCounts"]) {
+    assert.ok(
+      !workplace.includes(leak),
+      `workplaceRoster reads ${leak}; a sponsor's query has started collecting what a teacher's does`,
+    );
+  }
+  // And the teacher's still does, or the two have quietly become one query and
+  // this check is passing by measuring nothing.
+  assert.match(
+    between(roster, "export async function classRoster"),
+    /targetCase/,
+    "classRoster no longer reads a case, so the two seats are no longer different",
+  );
+
+  /*
+    The shape, which is the half that outlives whoever wrote the view. A field
+    that never reaches the type cannot be printed by a screen written next year
+    by somebody who has not read any of this.
+  */
+  const cohort = code("lib/classroom/cohort.ts");
+  const member = between(cohort, "export interface CohortMember");
+  assert.ok(member.length > 0, "CohortMember is gone");
+  for (const field of ["confidence", "weakestCase", "weeklyXp", "grammCase"]) {
+    assert.ok(
+      !member.includes(field),
+      `CohortMember carries ${field}, which a sponsor has no reason to see`,
+    );
+  }
+
+  /*
+    A band is a claim about somebody's chances, so it obeys the rule above it:
+    nothing prints one without saying what it rests on. Anchored on the member
+    access rather than the word, for the reason the confidence check gives.
+  */
+  const screens = [...APP, ...COMPONENTS].filter((file) => /BAND_LABEL/.test(code(file)));
+  assert.ok(screens.length >= 1, "nothing prints a band; this check has stopped finding its screens");
+  for (const file of screens) {
+    const source = code(file);
+    assert.match(
+      source,
+      /EVIDENCE_(NOTE|LABEL)|\.evidence\b/,
+      `${file} prints a readiness band with no account of what it rests on`,
+    );
+    for (const leak of [".weakestCase", ".weeklyXp"]) {
+      assert.ok(
+        !source.includes(leak),
+        `${file} prints ${leak} beside a colleague's name`,
+      );
+    }
+  }
+
+  // The page chooses between the two reads rather than fetching both.
+  const page = code("app/(app)/class/[classroomId]/page.tsx");
+  assert.match(page, /cohortKind\(/, "the class page no longer asks which kind of group it is showing");
+  assert.match(page, /workplaceRoster\(/, "the class page never runs the narrower read");
+});
+
 check("what the learner has kept is counted, never stored", () => {
   /*
     ADR-014 over the newest number on Today. The word of the day panel says how
@@ -6400,6 +6602,170 @@ check("nothing builds a verb form out of a stem and a person ending outside lib/
   assert.match(audit, /morphCode === d\.morphCode/, "scripts/audit-verbs.ts stopped comparing against Ekilex's own slot");
 });
 
+/*
+  A CARD IS GRADED IN ONE PLACE.
+
+  `Review` is append-only, so a row written wrongly is permanent, and the row
+  was being written in two places: `gradeCard` for a learner who is online and
+  `applyGradeBatch` for a device coming back. Both created the row and then
+  updated the card's scheduling, and the two had drifted on the one thing that
+  is genuinely hard here, which moment the grade is recorded at.
+
+  `gradeCard` floored it at the card's own creation, and said why in a comment:
+  a review dated before its card existed is a review of something that was not
+  there, and the streak, the heatmap and every "reviews this week" figure read
+  that column with no way to tell a replayed grade from a forged one. The
+  replay path had no such floor, and it is the door a device's own timestamps
+  actually come through, so the fix had been written on the one nobody was
+  using.
+
+  `lib/srs/grade.ts` is the one writer now. A third caller inherits the floor
+  by reaching for the function, which is the only way this stays true.
+*/
+check("nothing grades a card outside lib/srs/grade.ts", () => {
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !["lib/srs/grade.ts", "app/actions.ts"].includes(file))
+    .filter((file) => !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\breview\.create(?:Many)?\s*\(/.test(code(file)));
+  assert.deepEqual(offenders, [], "a Review row is being written outside lib/srs/grade.ts");
+
+  /*
+    `restoreBackup` is the one exemption and it is exempt by name rather than
+    wholesale, because `app/actions.ts` is also where `gradeCard` lives and
+    excusing the file would excuse that too. Restoring is not grading: it puts
+    a learner's own rows back exactly as the file holds them, inside the
+    transaction, and never touches a card's scheduling. Flooring those dates
+    would buy nothing anyway, since the card's own creation comes out of the
+    same file.
+  */
+  const writes = [...code("app/actions.ts").matchAll(/(\w+)\.review\.create(?:Many)?\s*\(/g)]
+    .map((m) => m[1]);
+  assert.deepEqual(writes, ["tx"], "app/actions.ts writes a Review row outside the restore transaction");
+
+  const writer = code("lib/srs/grade.ts");
+  assert.match(
+    writer,
+    /at < createdAt \? createdAt : at/,
+    "lib/srs/grade.ts stopped flooring a grade at the moment its card was created",
+  );
+  for (const caller of ["app/actions.ts", "lib/srs/replay.ts"]) {
+    assert.match(code(caller), /\bwriteGrade\(/, `${caller} stopped writing its grade through lib/srs/grade.ts`);
+  }
+});
+
+/*
+  WHICH FORMS CAN BE HIDDEN IN A SENTENCE IS ONE ANSWER.
+
+  `buildCloze` hides a word it is told to look for, so what it can hide is
+  whatever list the caller hands it, and there were five such lists. Two added
+  the ten regular cases and were the same twenty lines twice; three did not,
+  and the printable worksheet's own comment said "a sentence about `tuba`
+  usually contains `toas`, not `tuba`, and hiding the inflected form is the
+  more useful exercise" over a list that could not hide `toas`. None of the
+  five knew a verb person, so `Kontsert algab kell 18.` could not be gapped for
+  `algama`. Measured over the graded half of the dictionary, 2,201 words could
+  carry a gap and 2,758 can now.
+
+  `lib/exam/paper.ts` and `lib/assessment/items.ts` are the two exceptions and
+  are exempt by name. Both build a marked instrument out of a pool and a seed,
+  the exam rebuilds its paper server-side to mark it, and both surround the
+  answer with distractors drawn from the same list, so widening what can be
+  gapped changes which questions a candidate is asked and what is offered
+  against them. That is a change to a measurement rather than to an exercise
+  and it is not made in passing.
+*/
+/*
+  THE CARD TYPES ARE NAMED IN THREE PLACES AND TWO OF THEM HAD DRIFTED.
+
+  `CARD_TYPES` in `lib/srs/cards.ts` is the one that decides. The schema's own
+  comment beside `cardType String` listed five of the seven, missing the
+  gap-fill and the conjugation card, which are two of the three a default deck
+  is mostly made of. `docs/04-data-model.md` printed an enum of seven that was
+  the wrong seven: it had `LISTENING` and `OBJECT_CASE`, which have never
+  existed in the code, and lacked the same two.
+
+  Neither is load-bearing at runtime, which is exactly why nobody noticed. They
+  are what a contributor reads first, and a schema comment that names five card
+  types is a schema comment that tells them the app has five.
+*/
+check("the card types are the same seven wherever they are written down", () => {
+  const declared = [...code("lib/srs/cards.ts").matchAll(/\{\s*type:\s*"(\w+)"/g)].map((m) => m[1]!);
+  assert.ok(declared.length >= 7, "lib/srs/cards.ts no longer declares its card types as a table");
+
+  const schema = read(join("prisma", "schema.prisma"));
+  const comment = /cardType\s+String\s*\/\/\s*([A-Z_ ]+)/.exec(schema)?.[1]?.trim().split(/\s+/) ?? [];
+  assert.deepEqual(
+    [...comment].sort(),
+    [...declared].sort(),
+    "prisma/schema.prisma names a different set of card types from lib/srs/cards.ts",
+  );
+
+  const doc = read(join("docs", "04-data-model.md"));
+  const line = /^CardType\s+(.+)$/m.exec(doc)?.[1]?.trim().split(/\s+/) ?? [];
+  assert.deepEqual(
+    [...line].sort(),
+    [...declared].sort(),
+    "docs/04-data-model.md names a different set of card types from lib/srs/cards.ts",
+  );
+});
+
+/*
+  AND THE PAGE A NEW CONTRIBUTOR READS ABOUT THE SCHEMA NAMES THE SCHEMA'S OWN
+  MODELS.
+
+  `docs/04-data-model.md` used to carry 272 lines of Prisma, and the copy went
+  stale exactly as a second source of truth does: ten models that no longer
+  exist, none of the nine that had arrived since, and `provider = "sqlite"` at
+  the top of a Postgres app. `CLAUDE.md` sends a new contributor to that page
+  third, so more than half of what they read about the schema was wrong.
+
+  The fields live in the schema file, which comments every model that needs
+  one. What the page keeps is the map and the reasoning, and a map is exactly
+  the shape a check can hold to the thing it maps.
+*/
+check("the data model page names every model the schema has, and no others", () => {
+  const schema = read(join("prisma", "schema.prisma"));
+  const models = [...schema.matchAll(/^model (\w+)/gm)].map((m) => m[1]!);
+  assert.ok(models.length > 10, "prisma/schema.prisma no longer declares models the usual way");
+
+  const doc = read(join("docs", "04-data-model.md"));
+  const named = new Set([...doc.matchAll(/`(\w+)`/g)].map((m) => m[1]!));
+
+  const missing = models.filter((model) => !named.has(model));
+  assert.deepEqual(missing, [], "docs/04-data-model.md does not name every model in the schema");
+
+  /*
+    And the other direction, over the models it once described and no longer
+    should. A name may still appear in the paragraph explaining that it went,
+    which is why this reads the map's own table rather than the whole page.
+  */
+  const table = [...doc.matchAll(/^\| `([^`]+)`[^|]*\|/gm)]
+    .flatMap((m) => m[1]!.split(/`,\s*`/));
+  const invented = table.filter((model) => !models.includes(model));
+  assert.deepEqual(invented, [], "docs/04-data-model.md maps a model the schema does not have");
+});
+
+check("nothing decides what a gap can hide outside lib/estonian/gapForms.ts", () => {
+  const allowed = new Set([
+    // Where `buildCloze` is written, and where `gapForms` is.
+    "lib/estonian/cloze.ts",
+    "lib/estonian/gapForms.ts",
+    "lib/exam/paper.ts",
+    "lib/assessment/items.ts",
+  ]);
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !allowed.has(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\bbuildCloze\s*\(/.test(code(file)))
+    .filter((file) => !/\bgapForms(?:FromParts)?\s*\(/.test(code(file)));
+  assert.deepEqual(offenders, [], "a caller of buildCloze builds its own list of forms to hide");
+
+  const forms = code("lib/estonian/gapForms.ts");
+  assert.match(forms, /derivedVerbForms\(/, "gapForms stopped offering a verb's persons");
+  assert.match(forms, /caseAnswer\(/, "gapForms stopped offering the cases built on the stem");
+});
+
 check("a screen that prints a derived verb form says it was derived", () => {
   // Each of the readers prints provenance: the entry's table says which form is
   // stored, the reference's chip names the origin, and the drill says whether
@@ -6411,6 +6777,241 @@ check("a screen that prints a derived verb form says it was derived", () => {
   ]) {
     assert.match(code(file), /\.origin\b/, `${file} prints a verb form without reading where it came from`);
   }
+});
+
+/**
+ * The anonymous research export publishes nothing that could be one person.
+ *
+ * `/api/research` is the only thing in this app whose output is meant to leave
+ * the deployment and be handed to somebody outside it. What makes that safe is
+ * a gate in `lib/research/corpus.ts`, and a gate is exactly the kind of thing
+ * that gets loosened by somebody in a hurry to make a thin deployment produce a
+ * fuller file. These four are the floors under it.
+ *
+ * Floors rather than equalities, deliberately: raising a threshold is always
+ * allowed and lowering one is the change worth stopping. Asserting today's
+ * numbers would fail on the safe direction and teach whoever hit it to edit the
+ * check.
+ */
+check("the research export's disclosure thresholds are never loosened", () => {
+  assert.ok(
+    MIN_LEARNERS >= 10,
+    `the research export would publish a figure from ${MIN_LEARNERS} people. Ten is the floor.`,
+  );
+  assert.ok(
+    MIN_REVIEWS >= 50,
+    `the research export would publish a figure resting on ${MIN_REVIEWS} answers.`,
+  );
+  assert.ok(
+    MAX_LEARNER_SHARE <= 0.5,
+    "one person may now be more than half of a published figure, which is the rule a head count alone misses",
+  );
+  assert.ok(
+    COUNT_ROUNDING >= 10,
+    "published counts are exact again, so two vintages of the file can be differenced",
+  );
+  assert.ok(
+    LEARNER_BANDS.every((band) => band.from >= MIN_LEARNERS) &&
+      LEARNER_BANDS[LEARNER_BANDS.length - 1]!.from === MIN_LEARNERS,
+    "the learner bands no longer start at the threshold, so a published cell could report a band below it",
+  );
+});
+
+/**
+ * And there is one way to make a published figure, not two.
+ *
+ * `gate` is where all three rules live, so a second place that builds an
+ * accuracy figure is a second place that has to remember them. The check reads
+ * for the construction rather than for the word: the type is written out in
+ * several places and only one of them fills it in.
+ */
+check("every figure the research export publishes was made by the gate", () => {
+  const corpus = code("lib/research/corpus.ts");
+  const built = corpus.match(/accuracyPct:\s*Math/g) ?? [];
+  assert.equal(
+    built.length,
+    1,
+    `an accuracy figure is constructed in ${built.length} places in lib/research/corpus.ts, and gate() is meant to be the only one`,
+  );
+  assert.match(
+    corpus,
+    /const all = gate\(/,
+    "buildSection stopped putting its cells through the gate",
+  );
+  assert.match(
+    corpus,
+    /const mature = gate\(cell\.mature\)/,
+    "the mature column is no longer gated on its own, so a cell can publish a rate resting on one person's answers",
+  );
+
+  const route = code("app/api/research/route.ts");
+  assert.equal(
+    /accuracyPct/.test(route),
+    false,
+    "the research route computes an accuracy of its own instead of asking the gate for one",
+  );
+});
+
+/**
+ * The export is reachable only by whoever holds the deployment's own secret.
+ *
+ * Three separate things have to hold and each is easy to lose on its own: the
+ * middleware has to let it past the learner gate, since there is no learner to
+ * resolve; the route has to then authenticate itself; and with no token
+ * configured it has to be absent rather than merely refused, because a 401
+ * advertises that a deployment has a corpus worth asking for.
+ */
+check("the research export authenticates itself and hides when unconfigured", () => {
+  const middleware = code("middleware.ts");
+  assert.match(
+    middleware,
+    /path\.startsWith\("\/api\/research"\)/,
+    "the research route is no longer past the sign-in gate, so it answers a caller with no session rather than checking its own token",
+  );
+
+  const route = code("app/api/research/route.ts");
+  assert.match(route, /process\.env\.RESEARCH_TOKEN/, "the research route stopped reading its token");
+  assert.match(
+    route,
+    /timingSafeEqual\(/,
+    "the research token is compared in a way that leaks how much of it was right",
+  );
+  assert.match(
+    route,
+    /!process\.env\.RESEARCH_TOKEN[\s\S]{0,120}status:\s*404/,
+    "an unconfigured deployment now advertises the research endpoint instead of 404ing",
+  );
+});
+
+/**
+ * Somebody who asked to be left out is left out of the query, not the answer.
+ *
+ * The difference is the whole of what the setting promises. Filtering after the
+ * fact would mean their rows were read, counted and then subtracted, which is
+ * not what /privacy says and is not what anybody ticking it means.
+ *
+ * The privacy page and the Settings row are checked together with it, because
+ * three things drift apart in the same direction: a page describing a control
+ * that was renamed, a control for a promise that was deleted, and a promise for
+ * a control nobody wired up.
+ */
+check("the research opt-out is applied in the query, and is where the page says", () => {
+  const route = code("app/api/research/route.ts");
+  assert.match(
+    route,
+    /SETTING_KEYS\.researchOptOut/,
+    "the research export stopped reading who asked to be left out",
+  );
+  /*
+    Both queries, named separately, because the first version of this asked
+    the file for the clause once and the file has two of them: deleting the one
+    that matters left the other one satisfying the check. The same trap `code()`
+    exists for, arriving through a different door.
+  */
+  assert.match(
+    route,
+    /conditions\.push\(\s*Prisma\.sql`r\."ownerId" NOT IN/,
+    "the tallies no longer exclude anybody, so an excluded learner's answers are counted into the published cells",
+  );
+  assert.match(
+    route,
+    /const not = [\s\S]{0,60}Prisma\.sql`WHERE r\."ownerId" NOT IN/,
+    "the corpus totals no longer exclude anybody, so the file reports a size that counts people who asked to be left out",
+  );
+
+  const label = "Anonymous statistics";
+  for (const file of ["app/privacy/page.tsx", "app/(app)/settings/page.tsx"]) {
+    assert.ok(
+      read(file).includes(label),
+      `${file} no longer names the "${label}" row, so the promise and the control have come apart`,
+    );
+  }
+  assert.match(
+    read("app/(app)/settings/PreferencesPanel.tsx"),
+    /setResearchParticipation\(/,
+    "the Settings row for the research opt-out no longer writes anything",
+  );
+});
+
+/**
+ * What the export counts as a right answer is the app's own cut, not a second
+ * one.
+ *
+ * `lib/stats/history.ts` decides everywhere else in this app that Good and Easy
+ * are recalled and Hard is not, and the export restates the number rather than
+ * importing it, so that `lib/research/` stays about the export. Restating it is
+ * only safe while something notices the day the two disagree, which is what
+ * this is. The same for the FSRS state that means a card was learned.
+ */
+check("the research export counts a right answer the way the rest of the app does", () => {
+  assert.equal(
+    CORRECT_FROM_RATING,
+    3,
+    "the research export and lib/stats/history.ts no longer agree on what counts as recalled",
+  );
+  assert.equal(
+    MATURE_STATE,
+    REVIEW_STATE,
+    "the research export's mature column and retentionReading no longer mean the same thing",
+  );
+});
+
+/**
+ * Every secret the app reads is marked in the build CI greps.
+ *
+ * The second of two checks on that list, and the pair is deliberate rather
+ * than duplicated. The provider one above reads `PROVIDER_KEY_ENV`, which is
+ * the only way to see a key the chain reaches through `process.env[keyEnv]`
+ * with a variable rather than a literal. This one reads the source for a
+ * *shape*, which is the only way to see a secret no chain declares at all:
+ * `METRICS_TOKEN` gates a route and `RESEARCH_TOKEN` gates the research
+ * export, and neither is in anybody's provider list. Delete either and a real
+ * class of variable stops being covered.
+ *
+ * A shape rather than an inventory is what stops it going stale: a variable
+ * whose name ends in KEY, TOKEN, SECRET or PASSWORD, read anywhere Next
+ * builds, has to be in the canary environment. `NEXT_PUBLIC_` is the one
+ * exclusion and it excludes itself, since a variable with that prefix is
+ * public by design and is *supposed* to be in the bundle. What it cannot see
+ * is a secret named some other way, which is why `ERROR_WEBHOOK_URL` is on
+ * the list by somebody's judgement and not by this.
+ *
+ * Scoped to `app/`, `lib/` and the middleware because those are what Next
+ * builds. A variable only a script reads cannot reach a browser, so requiring
+ * it here would be a check firing on something that cannot happen, which is
+ * the kind people learn to waive.
+ */
+check("every secret-shaped variable the app reads is marked in the CI canary build", () => {
+  const CANARY = ".github/workflows/ci.yml";
+  const workflow = read(CANARY);
+  const canaryEnv = between(workflow, "Build with marked secrets").split("run: npx next build")[0] ?? "";
+  assert.match(
+    canaryEnv,
+    /canary-[A-Z_]+-must-not-ship/,
+    `the marked build in ${CANARY} has been renamed, so this check is reading nothing`,
+  );
+
+  const secretish = /^[A-Z0-9_]+_(KEY|TOKEN|SECRET|PASSWORD)$/;
+  const found = new Set<string>();
+  for (const file of [...APP, ...LIB, "middleware.ts"]) {
+    for (const match of read(file).matchAll(/process\.env\.([A-Z0-9_]+)/g)) {
+      const name = match[1]!;
+      if (name.startsWith("NEXT_PUBLIC_")) continue;
+      if (secretish.test(name)) found.add(name);
+    }
+  }
+
+  assert.ok(
+    found.size >= 8,
+    `only ${found.size} secret-shaped variables found, so this check stopped looking`,
+  );
+
+  const missing = [...found].filter((name) => !canaryEnv.includes(`${name}:`)).sort();
+  assert.deepEqual(
+    missing,
+    [],
+    `${missing.join(", ")} would leak into the client bundle without CI noticing: add each to the marked build in ${CANARY}`,
+  );
 });
 
 console.log(

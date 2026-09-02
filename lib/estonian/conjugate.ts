@@ -94,6 +94,42 @@ const IRREGULAR_PRESENT: ReadonlySet<string> = new Set(["olema"]);
 const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema", "pidama"]);
 
 /**
+ * The first persons a written verb form could have been derived from.
+ *
+ * THE DICTIONARY KNEW `helistab` AND COULD NOT FIND IT.
+ *
+ * The search strips a case ending to look for a genitive stem, which is how
+ * `toas` finds `tuba`, and it knew nothing at all about a person ending. So a
+ * verb was findable by its lemma, by its `ma`- and `da`-infinitives, by its
+ * stored first person and its stored simple past, and by nothing else: not
+ * `helistad`, not `helistab`, not `helistame`. `ta helistab` is the shape a
+ * beginner meets in every sentence they read, and the app derives it, prints
+ * it on the entry and drills it on a card. Measured over sixty graded words
+ * and six forms each, that one gap was every miss the search had.
+ *
+ * This is the table above read backwards, and it lives here for the reason the
+ * table does: an ending stripped in another module is an ending that stops
+ * agreeing with the one this module adds.
+ *
+ * Candidates, not answers. What comes back is fed to the database as "is any
+ * of these a stored first person", and `derivedVerbForms` decides afterwards
+ * whether the word really is that verb's, so a wrong strip costs a lookup and
+ * never a wrong answer. The bare word plus `n` is in the set because the
+ * negative after `ei` and the singular imperative are the stem on its own.
+ */
+export function possibleFirstPersons(word: string): string[] {
+  const head = word.trim().toLowerCase().split(/\s+/)[0] ?? "";
+  if (head.length < 2) return [];
+  const out = new Set<string>([`${head}n`]);
+  for (const [, ending] of [...PRESENT, ...CONDITIONAL]) {
+    if (head.length > ending.length && head.endsWith(ending)) {
+      out.add(`${head.slice(0, head.length - ending.length)}n`);
+    }
+  }
+  return [...out];
+}
+
+/**
  * The present stem, or null where there is no honest one.
  *
  * A particle verb stores its first person as two words, `loen läbi`, and the

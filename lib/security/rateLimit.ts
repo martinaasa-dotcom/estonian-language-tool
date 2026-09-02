@@ -42,8 +42,16 @@ let lastSweep = 0;
 /** Cap, so a flood of unique keys cannot grow this Map without bound. */
 const MAX_BUCKETS = 10_000;
 
-function sweep(now: number) {
-  if (now - lastSweep < 60_000) return;
+/**
+ * Drop every expired bucket.
+ *
+ * Rate-limited to once a minute on the ordinary path, because this walks the
+ * whole map and the ordinary path is every request. `force` is for the one
+ * caller that cannot afford to be told "not yet": a full map about to evict a
+ * live bucket, below.
+ */
+function sweep(now: number, force = false) {
+  if (!force && now - lastSweep < 60_000) return;
   lastSweep = now;
   for (const [key, bucket] of buckets) {
     if (now >= bucket.resetAt) buckets.delete(key);
@@ -66,7 +74,21 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): Ra
   sweep(now);
 
   if (buckets.size >= MAX_BUCKETS && !buckets.has(key)) {
-    sweep(now);
+    /*
+      FORCED, BECAUSE THE SWEEP ABOVE HAS ALREADY SET `lastSweep`.
+
+      `sweep(now)` on the line before this block ran unconditionally and stamped
+      the clock, so this second call returned immediately every single time:
+      `now - lastSweep` is zero. A full map therefore never reclaimed an
+      expired bucket on demand and fell straight through to deleting the
+      oldest-inserted key, which is a live caller and quite possibly a busy
+      one. On a deployment with more than MAX_BUCKETS distinct keys in a
+      minute, that hands somebody a fresh allowance in the middle of their
+      window and resets a counter that was doing its job.
+
+      Expired first, always. Only if nothing has expired does a live bucket go.
+    */
+    sweep(now, true);
     if (buckets.size >= MAX_BUCKETS) {
       const oldest = buckets.keys().next().value;
       if (oldest !== undefined) buckets.delete(oldest);

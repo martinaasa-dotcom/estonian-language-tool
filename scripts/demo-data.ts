@@ -33,6 +33,7 @@ const HISTORIES: number[][] = [
 
 /** Fixed, so re-running the fixture reuses the one class rather than adding another. */
 const DEMO_CLASS_CODE = "DEMOAA";
+const DEMO_WORKPLACE_CODE = "DEMOWK";
 
 async function main() {
   // Cards/tasks are per-user now (docs/03-architecture.md ADR-012), so this script
@@ -218,6 +219,44 @@ async function main() {
     update: {},
     create: { classroomId: classroom.id, ownerId, role: "TEACHER", displayName: "You" },
   });
+
+  /*
+    And a workplace group, for exactly the reason the class above exists.
+
+    `/class/[classroomId]` renders two different screens depending on
+    `Classroom.kind`, and only one of them had a row. So the sponsor's view was
+    unreachable by every browser suite: never measured for containment at 360,
+    never measured for contrast in either theme, never walked by axe. A screen
+    no fixture can reach is a screen whose rules are enforced on paper only,
+    which is the fault the comment above this one describes, one variant along.
+
+    Three members, because the interesting states are plural: this learner has
+    two months of history behind them and can be banded, and the two colleagues
+    have none, which is what most of a real cohort looks like in its first
+    fortnight and is the row the band deliberately refuses to place.
+  */
+  const workplace = await prisma.classroom.upsert({
+    where: { code: DEMO_WORKPLACE_CODE },
+    update: {},
+    create: {
+      name: "Estonian at work, autumn",
+      code: DEMO_WORKPLACE_CODE,
+      ownerId,
+      kind: "WORKPLACE",
+      targetLevel: "B1",
+    },
+  });
+  for (const member of [
+    { ownerId, role: "TEACHER", displayName: "You" },
+    { ownerId: `${ownerId}-demo-colleague-1`, role: "STUDENT", displayName: "Kadri" },
+    { ownerId: `${ownerId}-demo-colleague-2`, role: "STUDENT", displayName: "Jaan" },
+  ]) {
+    await prisma.classroomMember.upsert({
+      where: { classroomId_ownerId: { classroomId: workplace.id, ownerId: member.ownerId } },
+      update: {},
+      create: { classroomId: workplace.id, ...member },
+    });
+  }
 
   /*
     The week this learner says they are in, and a level they are aiming at.

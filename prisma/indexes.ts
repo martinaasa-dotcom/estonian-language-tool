@@ -42,6 +42,14 @@ const INDEXES: { name: string; sql: string }[] = [
           WHERE "formType" IN ('GEN_SG', 'GEN_PL')`,
   },
   {
+    // The stored first persons a written verb form could be derived from.
+    // Partial for the reason the stems index is: one form type, tested one way.
+    name: "Form_pres1sg_folded_idx",
+    sql: `CREATE INDEX IF NOT EXISTS "Form_pres1sg_folded_idx"
+          ON "Form" (translate(lower(value), '${FROM}', '${TO}'))
+          WHERE "formType" = 'PRES_1SG'`,
+  },
+  {
     // Lemma prefix matches. text_pattern_ops is what lets LIKE 'x%' use an
     // index at all; a leading wildcard still cannot, which is what the trigram
     // indexes below are for.

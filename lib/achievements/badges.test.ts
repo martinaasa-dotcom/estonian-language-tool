@@ -95,10 +95,34 @@ describe("earnedBadgeKeys", () => {
 
   it("earns the hour badges only when an hour is actually reported", () => {
     expect(earnedBadgeKeys(base)).not.toContain("early_bird");
-    expect(earnedBadgeKeys({ ...base, reviewHour: 6 })).toContain("early_bird");
-    expect(earnedBadgeKeys({ ...base, reviewHour: 7 })).not.toContain("early_bird");
-    expect(earnedBadgeKeys({ ...base, reviewHour: 23 })).toContain("night_owl");
-    expect(earnedBadgeKeys({ ...base, reviewHour: 22 })).not.toContain("night_owl");
+    expect(earnedBadgeKeys({ ...base, reviewHours: [6] })).toContain("early_bird");
+    expect(earnedBadgeKeys({ ...base, reviewHours: [7] })).not.toContain("early_bird");
+    expect(earnedBadgeKeys({ ...base, reviewHours: [23] })).toContain("night_owl");
+    expect(earnedBadgeKeys({ ...base, reviewHours: [22] })).not.toContain("night_owl");
+  });
+
+  /*
+    A SESSION HAS A BEGINNING AND AN END, AND THE BADGES SAY SO.
+
+    One number used to be reported, the hour the check ran, which is the hour
+    the session ended. Somebody who sat down at half past six and carried on
+    past seven was denied "review before 7am", which is the learner it is most
+    obviously about. Both ends are reported now.
+  */
+  it("earns the morning badge from a session that began before seven", () => {
+    expect(earnedBadgeKeys({ ...base, reviewHours: [6, 7] })).toContain("early_bird");
+  });
+
+  it("earns both from a session that crossed midnight", () => {
+    const crossed = earnedBadgeKeys({ ...base, reviewHours: [23, 0] });
+    expect(crossed).toContain("night_owl");
+    expect(crossed).toContain("early_bird");
+  });
+
+  it("earns neither from an ordinary afternoon", () => {
+    const afternoon = earnedBadgeKeys({ ...base, reviewHours: [14, 15] });
+    expect(afternoon).not.toContain("early_bird");
+    expect(afternoon).not.toContain("night_owl");
   });
 });
 
