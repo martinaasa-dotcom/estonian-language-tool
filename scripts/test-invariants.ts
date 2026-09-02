@@ -6566,6 +6566,52 @@ check("the card types are the same seven wherever they are written down", () => 
   one. What the page keeps is the map and the reasoning, and a map is exactly
   the shape a check can hold to the thing it maps.
 */
+/*
+  THE SIZE OF THE DICTIONARY IS ONE NUMBER, AND THE README HAD LAST YEAR'S.
+
+  `SEED_SET_SIZE` is counted from the two files the seed loads and its own test
+  proves it. The landing page reads it. The README typed it, and the dictionary
+  grew: 5,960 in the README against 6,050 in the seed, which is the first
+  figure anybody reads about this project.
+*/
+/*
+  A COMMAND THE DOCUMENTATION TELLS SOMEBODY TO RUN IS A COMMAND THAT EXISTS.
+
+  Four `npm run` names between the README and this file are the first thing a
+  new contributor types, and a renamed script leaves a page telling them to run
+  something that answers "Missing script". The check is one-directional on
+  purpose: plenty of scripts are internal (`predev`, `build:ci`) or are audits
+  somebody runs once against a live key, and a rule that every script must be
+  documented would be a rule to write filler.
+*/
+check("every command the README and CLAUDE.md name is a script that exists", () => {
+  const scripts = new Set(
+    Object.keys(JSON.parse(read("package.json")).scripts as Record<string, string>),
+  );
+  const named = new Set(
+    ["README.md", "CLAUDE.md"]
+      .flatMap((file) => [...read(file).matchAll(/npm run ([\w:-]+)/g)])
+      .map((m) => m[1]!),
+  );
+  assert.ok(named.size > 10, "the documentation stopped naming its commands the usual way");
+
+  const missing = [...named].filter((name) => !scripts.has(name)).sort();
+  assert.deepEqual(missing, [], "the documentation names an npm script package.json does not have");
+});
+
+check("the README's dictionary size is the seed's own count", () => {
+  const size = /words:\s*([\d_]+)/.exec(read(join("lib", "collections", "seedSize.ts")))?.[1];
+  assert.ok(size, "lib/collections/seedSize.ts no longer states the word count the usual way");
+  const words = Number(size.replaceAll("_", ""));
+  const printed = words.toLocaleString("en-GB");
+
+  const readme = read("README.md");
+  assert.ok(
+    readme.includes(`${printed} words`),
+    `README.md does not say "${printed} words", which is what the seed loads`,
+  );
+});
+
 check("the data model page names every model the schema has, and no others", () => {
   const schema = read(join("prisma", "schema.prisma"));
   const models = [...schema.matchAll(/^model (\w+)/gm)].map((m) => m[1]!);

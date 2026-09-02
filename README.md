@@ -166,9 +166,10 @@ off.
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
 
-- **Dictionary**, about 5,960 words (A1 to C2) with principal parts, consonant gradation and the
-  full case table worked out from the genitive. Search an inflected form you met in class, 
-  `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
+- **Dictionary**, 6,050 words (A1 to C2) with principal parts, consonant gradation and the
+  full case table worked out from the genitive. Search an inflected form you met in class,
+  `toas`, `lugesin`, `tubadega`, `helistab`, and it finds the word *and* tells you which form you
+  typed.
   Anything missing can be added by hand, principal parts and all.
 - **Audio**, real Estonian speech from the University of Tartu's neural voices, twelve of them to
   choose from. A card reads itself aloud when a word is met and when its answer appears, and the

@@ -527,8 +527,8 @@ page whose subject is an explanation is allowed to explain. What is capped is th
 the thing a reader came for. And a cap cannot tell a short sentence from a good one, which is
 `docs/18-voice.md`'s job exactly as before.
 
-**A blurb belongs where somebody is reading, not where they are scanning.** The five targeted
-practice modes are drawn as the same compact tile the six quick rounds already used, and their
+**A blurb belongs where somebody is reading, not where they are scanning.** The targeted practice
+modes are drawn as the same compact tile the quick rounds already used, and their
 `blurb` was not deleted with the paragraph: `components/CommandPalette.tsx` shows it as the hint
 under each mode and searches its words. A sentence explaining rektsioon earns its place where you
 are looking the thing up. It does not earn its place eleven times over on the page you press.
@@ -1568,10 +1568,13 @@ drawn the distinction and then ignored it: `targeted` is described there as "wha
 already know what is going wrong", and all five of them sat on a menu under a heading saying so,
 which is a list of answers to a question the learner has not been asked yet. A verb government
 drill is worth pressing on the page explaining rektsioon and worth nothing beside four other
-things. So the five carry `within` and each is on the page that names the thing it drills: the
-leech clinic under the panel listing the cards you keep failing, minimal pairs under quantitative
-gradation, writing under the case it asks you to write in, and pasting your own Estonian beside the
-scanner, which is the other way of bringing your own text in. `components/DrillLink.tsx` is one
+things. So they carry `within`, and each is on the page that names the thing it drills: the leech
+clinic under the panel listing the cards you keep failing, minimal pairs under quantitative
+gradation, the conjugation table under the verb pages, writing under the case it asks you to write
+in, and pasting your own Estonian beside the scanner, which is the other way of bringing your own
+text in. The count is deliberately not written down here: it was five when this was written and the
+conjugation drill has joined them since, and a number in prose beside a table is the second list
+this whole section is about. `components/DrillLink.tsx` is one
 drawing for all of them, reading the same table, so a mode renamed once is renamed everywhere it is
 offered. `/practice` is the six rounds, which is what a menu is the right shape for.
 
