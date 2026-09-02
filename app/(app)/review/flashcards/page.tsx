@@ -50,7 +50,21 @@ const ROUND = 20;
 export default async function FlashcardsPage() {
   const ownerId = await requireUserId();
 
-  const words = await masteryFor(ownerId);
+  /*
+    Two questions that do not need each other, asked at once. Where a word
+    stands is a read over the deck; which language the meaning is printed in is
+    one settings row, and neither waits on the other. On the deployment's own
+    pooler each `await` is a round trip, so a page that asks them in a line is
+    a round trip longer than it has to be for nothing.
+
+    An empty deck pays for a settings row it will not show. That is the trade
+    `/words` already takes for the same reason: one cheap read for the learner
+    with nothing, one round trip saved for everybody else.
+  */
+  const [words, glossSetting] = await Promise.all([
+    masteryFor(ownerId),
+    readSetting(ownerId, SETTING_KEYS.glossLanguage),
+  ]);
   const unfinished = words.filter((w) => w.verdict.mastery !== "mastered");
 
   if (unfinished.length === 0) {
@@ -96,7 +110,7 @@ export default async function FlashcardsPage() {
     card it has never been asked on. Read here rather than defaulted, so the two
     routes rendering this session do not disagree about it.
   */
-  const gloss = glossLanguageFrom(await readSetting(ownerId, SETTING_KEYS.glossLanguage));
+  const gloss = glossLanguageFrom(glossSetting);
   const round = await withChoices(shuffle(picked), gloss);
 
   return <ReviewSession cards={round} totalCards={round.length} mode="type" title="Flash cards" />;

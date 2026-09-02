@@ -30,12 +30,20 @@ export default async function MatchPage() {
   } as const;
   const include = { lexeme: { select: { lemma: true } } } as const;
 
-  const due = await prisma.card.findMany({
-    where: { ...base, due: { lte: now }, state: { not: 0 } },
-    orderBy: { due: "asc" },
-    take: PAIRS * 2,
-    include,
-  });
+  /*
+    The best score is one settings row and has nothing to do with which cards
+    are due, so the two are asked at once rather than one after the other. Each
+    `await` here is a round trip to a pooler in another region.
+  */
+  const [due, settings] = await Promise.all([
+    prisma.card.findMany({
+      where: { ...base, due: { lte: now }, state: { not: 0 } },
+      orderBy: { due: "asc" },
+      take: PAIRS * 2,
+      include,
+    }),
+    readSettings(ownerId, [SETTING_KEYS.matchBest]),
+  ]);
 
   let pool = due;
   if (pool.length < PAIRS) {
@@ -61,7 +69,6 @@ export default async function MatchPage() {
     if (pairs.length === PAIRS) break;
   }
 
-  const settings = await readSettings(ownerId, [SETTING_KEYS.matchBest]);
   const best = numberSetting(settings[SETTING_KEYS.matchBest], 0);
 
   return <MatchSession pairs={pairs.length >= MIN_PAIRS ? pairs : []} best={best} />;

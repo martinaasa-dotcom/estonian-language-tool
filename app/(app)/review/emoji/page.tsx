@@ -50,7 +50,6 @@ const POOL = 120;
  */
 export default async function EmojiPage() {
   const ownerId = await requireUserId();
-  const level = await courseLevelFor(ownerId);
 
   /*
     THE LEARNER'S OWN CARDS FIRST, AND THAT IS WHAT MAKES THIS A PRACTICE MODE.
@@ -67,16 +66,24 @@ export default async function EmojiPage() {
     dictionary at the learner's level, and those carry no card because there is
     no card: nothing is graded for them, which is the honest answer rather than
     a row about a card that does not exist.
+
+    ASKED AT ONCE, because the two do not need each other: the level decides
+    which band the board tops up from and the deck read does not wait on it.
+    On the deployment's own pooler each `await` is a round trip, so a page that
+    lines them up is a round trip longer than it has to be for nothing.
   */
-  const deckCards = await prisma.card.findMany({
-    where: {
-      ownerId, suspended: false, cardType: "CASE_FORM", targetCase: { not: null },
-      lexeme: { pos: "NOUN" },
-    },
-    orderBy: [{ due: "asc" }, { id: "asc" }],
-    take: POOL,
-    include: { lexeme: { select: { id: true, lemma: true } } },
-  });
+  const [level, deckCards] = await Promise.all([
+    courseLevelFor(ownerId),
+    prisma.card.findMany({
+      where: {
+        ownerId, suspended: false, cardType: "CASE_FORM", targetCase: { not: null },
+        lexeme: { pos: "NOUN" },
+      },
+      orderBy: [{ due: "asc" }, { id: "asc" }],
+      take: POOL,
+      include: { lexeme: { select: { id: true, lemma: true } } },
+    }),
+  ]);
 
   const pairs: EmojiPair[] = [];
   const usedLemmas = new Set<string>();

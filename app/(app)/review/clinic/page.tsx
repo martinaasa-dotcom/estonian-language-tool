@@ -43,12 +43,32 @@ export default async function ClinicPage() {
 
   // The history each card is being judged on. Reviews outlive their cards, but
   // here the card is very much alive, so this is a plain lookup by cardId.
-  const reviews = await prisma.review.findMany({
-    where: { ownerId, cardId: { in: cards.map((c) => c.id) } },
-    select: { cardId: true, rating: true, reviewedAt: true },
-    orderBy: { reviewedAt: "asc" },
-    take: 2000,
-  });
+  /*
+    With the rest of the deck, which the interference check below reads and
+    which needs nothing from this. Two round trips in a line where one does,
+    and both are past the early return, so a learner with no leeches pays for
+    neither.
+  */
+  const [reviews, deck] = await Promise.all([
+    prisma.review.findMany({
+      where: { ownerId, cardId: { in: cards.map((c) => c.id) } },
+      select: { cardId: true, rating: true, reviewedAt: true },
+      orderBy: { reviewedAt: "asc" },
+      take: 2000,
+    }),
+    /*
+      Cheap and orthographic: it only ever claims "these look alike". Ordered,
+      so a deck past the cap compares the same thousand words every time, since
+      that warning is one a learner should be able to see twice rather than one
+      that comes and goes with the plan.
+    */
+    prisma.card.findMany({
+      where: { ownerId, lexemeId: { not: null } },
+      select: { lexeme: { select: { lemma: true } } },
+      orderBy: { createdAt: "asc" },
+      take: 1000,
+    }),
+  ]);
 
   const byCard = new Map<string, { rating: number; at: Date }[]>();
   for (const r of reviews) {
@@ -72,17 +92,6 @@ export default async function ClinicPage() {
 
   const leeches = rankLeeches(candidates);
 
-  // The rest of the deck, for the interference check. Cheap and orthographic —
-  // it only ever claims "these look alike".
-  // Ordered, so a deck past the cap compares the same thousand words every
-  // time: "these two look alike" is a warning a learner should be able to see
-  // twice rather than one that comes and goes with the plan.
-  const deck = await prisma.card.findMany({
-    where: { ownerId, lexemeId: { not: null } },
-    select: { lexeme: { select: { lemma: true } } },
-    orderBy: { createdAt: "asc" },
-    take: 1000,
-  });
   const lemmas = [...new Set(deck.map((d) => d.lexeme?.lemma).filter((l): l is string => !!l))];
 
   const items: ClinicItem[] = leeches.map((leech) => ({
