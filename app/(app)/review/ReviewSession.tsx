@@ -482,6 +482,20 @@ export function ReviewSession({
     const answeredAt = new Date().toISOString();
     const before = scheduled.current.get(card.id) ?? card.scheduling;
 
+    /*
+      EVERY CONTROL ON THIS SCREEN IS DISABLED WHILE A GRADE IS IN FLIGHT, SO
+      THE FLAG HAS TO COME BACK OFF WHATEVER HAPPENS.
+
+      It used to be cleared on the last line, and the offline branch below
+      `await`s a write to IndexedDB: a browser with storage blocked, a private
+      window, or a device with no room left rejects it, the exception leaves
+      this function, and `busy` stays true for ever. The card then sits there
+      with a button that exists, is visible, and can never be pressed, which is
+      the least useful shape a failure can take. A lost grade is bad; a session
+      the learner cannot carry on with is worse, and the outbox count on screen
+      is what tells them either way.
+    */
+    try {
     try {
       const result = await gradeCard(card.id, rating, duration, answeredAt);
       if (!result.ok) throw new Error(result.error);
@@ -522,7 +536,9 @@ export function ReviewSession({
     } else {
       setIndex((i) => i + 1);
     }
-    setBusy(false);
+    } finally {
+      setBusy(false);
+    }
   }, [card, busy, index, refreshOutbox]);
 
   /**

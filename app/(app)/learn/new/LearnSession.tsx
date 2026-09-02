@@ -246,7 +246,15 @@ export function LearnSession({
     const answeredAt = new Date().toISOString();
     const before = scheduled.current.get(word.cardId) ?? word.scheduling;
 
+    /*
+      The flag comes back off whatever happens, for the reason the review
+      session gives at length: every control here is disabled while a grade is
+      in flight, and the offline branch below awaits a write to IndexedDB that
+      a browser can refuse. An exception leaving this function would leave the
+      round on screen with nothing that can be pressed.
+    */
     let after: LearnScheduling;
+    try {
     try {
       const res = await gradeCard(word.cardId, rating, durationMs, answeredAt);
       if (!res.ok) throw new Error(res.error);
@@ -288,12 +296,14 @@ export function LearnSession({
     setAnswered((n) => n + 1);
     setXp((x) => x + xpForRating(rating));
     if (rating >= 3) setRight((n) => n + 1);
-    setBusy(false);
 
     // A clean hit moves on. A miss keeps its screen, because the correction is
     // the one moment in a round worth stopping for.
     if (outcome === "right" || outcome === "known") advance(moved);
     else { setRungs(moved); setResult(shown); setPhase("feedback"); }
+    } finally {
+      setBusy(false);
+    }
   }, [word, busy, rungs, advance, refreshOutbox]);
 
   /** The meeting writes nothing. The word comes back a lap later as a question. */
