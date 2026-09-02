@@ -55,6 +55,33 @@ export interface CaseSubject {
   readonly lemma: string;
   /** Ekilex's own semantic type codes, space separated, or `null`. */
   readonly semanticTypes: string | null;
+  /**
+   * The word's nominative singular, or `null` where the dictionary holds none.
+   *
+   * Required for the reason the field above is, and it answers a different
+   * question: whether the word has a singular for a card to ask about at all.
+   * Nineteen entries in the shipped dictionary are headed by a plural, because
+   * that is the only number the word has: `prillid`, `teksad`, `käärid`,
+   * `jõulud`, `aluspüksid`, `kõrvaklapid`. Ekilex still records the singular
+   * paradigm of the word underneath (`prill`, `teksa`, `käär`), so the card
+   * came out as `prillid → milles?` wanting `prillis`, which is a form of a
+   * headword the learner was not shown, in a number the word does not have.
+   * It is `prillides`, and the entry's plural column has said so all along.
+   */
+  readonly nomSg: string | null;
+}
+
+/**
+ * Is the word on the card the singular the card is about to ask for?
+ *
+ * A nominal's lemma is its nominative singular, except where the word has no
+ * singular: those are headed by the plural and the dictionary stores the
+ * singular of something else beside them. Compared rather than assumed,
+ * because the dictionary already holds both and the mismatch is exact.
+ */
+function hasSingular(subject: CaseSubject): boolean {
+  if (!subject.nomSg) return true;
+  return subject.nomSg.trim().toLocaleLowerCase("et") === subject.lemma.trim().toLocaleLowerCase("et");
 }
 
 /**
@@ -91,6 +118,14 @@ const LOCAL: readonly CaseKey[] = [...INSIDE_CASES, ...OUTSIDE_CASES];
  * nothing here narrows a word to the trio it takes.
  */
 export function caseFits(key: CaseKey, subject: CaseSubject): boolean {
+  /*
+    A WORD WITH NO SINGULAR FAILS EVERY CASE, NOT ONLY THE LOCAL ONES.
+    `jõuludega` is how you say it and `jõuluga` is a form of `jõul`, so the
+    comitative is as wrong as the seesütlev. Nothing here narrows what the
+    dictionary *shows*: the entry prints the whole table and its plural column
+    is right, which is what a reference is for.
+  */
+  if (!hasSingular(subject)) return false;
   if (!LOCAL.includes(key)) return true;
   return localCasesFor(subject).includes(key);
 }

@@ -36,6 +36,21 @@ export interface EntryForm {
   orderIndex: number;
 }
 
+/**
+ * The three facts `lib/estonian/caseQuestion.ts` needs about a word.
+ *
+ * Read off the entry rather than carried on it, because the nominative
+ * singular is already in `forms` and a second copy of a form is a second
+ * source of truth for it.
+ */
+function subjectOf(entry: EntryView) {
+  return {
+    lemma: entry.lemma,
+    semanticTypes: entry.semanticTypes,
+    nomSg: entry.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+  };
+}
+
 export interface EntryView {
   id: string;
   lemma: string;
@@ -685,7 +700,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
       {retrieved.length > 0 ? (
         <WordForms
           pos={entry.pos}
-          subject={entry}
+          subject={subjectOf(entry)}
           forms={retrieved.map((f) => ({ value: f.value, morphCode: f.morphCode, morphName: f.morphName }))}
         />
       ) : isVerb && form("PRES_1SG") ? (
@@ -746,7 +761,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
                     <td lang="et" className="px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
                     </td>
-                    <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{caseQuestionFor(spec, entry)}</td>
+                    <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{caseQuestionFor(spec, subjectOf(entry))}</td>
                   </tr>
                 ))}
               </tbody>

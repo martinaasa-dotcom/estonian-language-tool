@@ -74,7 +74,11 @@ export default async function DescribePage() {
       // and animals, so the `mille-` series was asking `millega?` about a
       // horse; and `kus?` names two cases at once, which is not a question a
       // task wanting one form can print. See lib/estonian/caseQuestion.ts.
-      caseQuestion: caseQuestionFor(spec, asked),
+      caseQuestion: caseQuestionFor(spec, {
+        lemma: asked.lemma,
+        semanticTypes: asked.semanticTypes,
+        nomSg: asked.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+      }),
     };
   });
 

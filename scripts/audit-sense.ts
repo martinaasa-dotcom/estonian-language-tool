@@ -27,7 +27,11 @@
  *      seesütlev *and* the alalütlev, so a card printing it can be answered
  *      correctly and marked wrong. It belongs in the case's name and not in a
  *      question about a word.
- *   4. An exercise built out of something that is not a sentence.
+ *   4. A singular case asked of a word that has no singular. Nineteen entries
+ *      are headed by a plural because that is the only number the word has,
+ *      and Ekilex records the singular paradigm of the word underneath, so
+ *      `prillid → milles?` wanted `prillis`.
+ *   5. An exercise built out of something that is not a sentence.
  *      `naturalSentence` is the gate, and it was on four of the eight doors:
  *      the mock exam and the level check had it, the deck's gap-fills, the
  *      printable worksheet, the lesson planner and speaking practice did not.
@@ -44,7 +48,7 @@ import { readExpanded } from "./lib/expandedFile";
 import { generateCards, availableCardTypes, type LexemeForCards } from "../lib/srs/cards";
 import { writingTasksFor } from "../lib/estonian/writing";
 import { CASES } from "../lib/estonian/cases";
-import { caseFits } from "../lib/estonian/caseQuestion";
+import { caseFits, type CaseSubject } from "../lib/estonian/caseQuestion";
 import { naturalSentence, nominalOpener } from "../lib/estonian/cloze";
 import { parseExamples, usableExamples } from "../lib/dict/examples";
 import { semanticGroup } from "../lib/estonian/semantics";
@@ -81,18 +85,36 @@ const PERSON_ASKS = new Map(CASES.map((c) => [c.asksPerson, c.key]));
  */
 function check(
   where: string,
-  word: { lemma: string; semanticTypes: string | null },
+  word: CaseSubject,
   question: string | null,
   caseKey: CaseKey | null,
 ): void {
   asked++;
   const group = semanticGroup(word.semanticTypes);
 
+  /*
+    READ OFF THE ENTRY RATHER THAN THROUGH `caseFits`, so this can fail on a
+    word. Every other rule here asks the same function the generators ask,
+    which catches a generator that forgot to call it and nothing else. A
+    lemma that is not its own nominative singular is a fact about the
+    dictionary, so it is checked against the dictionary.
+  */
+  if (word.nomSg && word.nomSg.toLocaleLowerCase("et") !== word.lemma.toLocaleLowerCase("et")) {
+    faults.push({
+      rule: "a case asked of a word with no singular",
+      where,
+      detail: `${word.lemma} is asked for a case; the dictionary's singular here is ${word.nomSg}`,
+    });
+  }
+
   if (caseKey && !caseFits(caseKey, word)) {
+    const why = word.nomSg && word.nomSg !== word.lemma
+      ? `${word.lemma} has no singular (the dictionary holds ${word.nomSg})`
+      : `${word.lemma} is ${group.toLowerCase()}`;
     faults.push({
       rule: "case the word does not take",
       where,
-      detail: `${word.lemma} is ${group.toLowerCase()} and was asked for the ${caseKey.toLowerCase()}`,
+      detail: `${why} and was asked for the ${caseKey.toLowerCase()}`,
     });
   }
 
@@ -132,7 +154,11 @@ function checkSentence(where: string, word: Row, sentence: string): void {
 }
 
 for (const entry of entries) {
-  const word = { lemma: entry.lemma, semanticTypes: entry.semanticTypes ?? null };
+  const word = {
+    lemma: entry.lemma,
+    semanticTypes: entry.semanticTypes ?? null,
+    nomSg: (entry.forms ?? []).find((f) => f.formType === "NOM_SG")?.value ?? null,
+  };
   const lex: LexemeForCards = {
     lemma: entry.lemma,
     translation: entry.translation,

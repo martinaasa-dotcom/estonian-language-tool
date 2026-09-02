@@ -42,6 +42,7 @@
     "measure:asr": "node scripts/measure-asr.mjs",
     "audit:questions": "tsx scripts/audit-questions.ts",
     "audit:sense": "tsx scripts/audit-sense.ts",
+    "audit:homonyms": "tsx scripts/audit-homonyms.ts",
     "audit:decks": "tsx scripts/audit-decks.ts"
   },
   "prisma": {

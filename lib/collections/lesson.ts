@@ -398,8 +398,11 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
   if (!isInflecting(word)) return null;
   const genitive = word.parts.GEN_SG;
   if (!genitive) return null;
+  const subject = {
+    lemma: word.lemma, semanticTypes: word.semanticTypes, nomSg: word.parts.NOM_SG ?? null,
+  };
   for (const key of shuffle(DRILL_CASES, rand)) {
-    if (!caseFits(key, word)) continue;
+    if (!caseFits(key, subject)) continue;
     // The attested form, and every spelling that counts as right with it: a
     // lesson that asks for the illative of `tuba` wants `tuppa`.
     const found = caseAnswer(stemsFromParts(word.parts), key);
@@ -409,7 +412,7 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
       id, kind: "case", lemma: word.lemma, gloss: word.gloss,
       // The question this word answers, not the case's whole name: a horse is
       // a `kes`, and `kus?` names two cases at once. See `caseQuestionFor`.
-      caseKey: key, caseName: spec.en, question: caseQuestionFor(spec, word),
+      caseKey: key, caseName: spec.en, question: caseQuestionFor(spec, subject),
       answer: found.accepted.join(" / "),
     };
   }

@@ -1,5 +1,5 @@
 import { CASES, caseByKey } from "@/lib/estonian/cases";
-import { caseQuestionFor, localCasesFor } from "@/lib/estonian/caseQuestion";
+import { caseFits, caseQuestionFor, localCasesFor } from "@/lib/estonian/caseQuestion";
 import { buildCloze, mentions, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { gapForms } from "@/lib/estonian/gapForms";
@@ -187,6 +187,12 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
   const out: GeneratedCard[] = [];
   const genSg = form(lex, "GEN_SG");
 
+  /*
+    What the case questions are asked of. `lex` carries the forms; this is the
+    two facts `lib/estonian/caseQuestion.ts` needs off them, read once.
+  */
+  const subject = { lemma: lex.lemma, semanticTypes: lex.semanticTypes, nomSg: form(lex, "NOM_SG") ?? null };
+
   for (const type of types) {
     switch (type) {
       case "RECOGNITION":
@@ -199,7 +205,16 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
 
       case "CASE_FORM": {
         if (!genSg) break;
-        for (const key of [...localCasesFor(lex), ...DRILL_CASES]) {
+        for (const key of [...localCasesFor(subject), ...DRILL_CASES]) {
+          /*
+            AND NOTHING AT ALL FOR A WORD WITH NO SINGULAR. Nineteen entries
+            are headed by a plural because that is the only number the word
+            has, and Ekilex records the singular of the word underneath, so
+            this asked `prillid → milles?` and wanted `prillis`. `caseFits`
+            refuses every case for those, the comitative included, since
+            `jõuludega` is how you say it and `jõuluga` is a form of `jõul`.
+          */
+          if (!caseFits(key, subject)) continue;
           /*
             THE ANSWER SIDE IS WHAT THE DICTIONARY ATTESTS.
 
@@ -254,7 +269,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
               question ambiguous between two cases and marks a learner wrong
               for answering what was asked.
             */
-            front: `${lex.lemma} → ${caseQuestionFor(spec, lex)}`,
+            front: `${lex.lemma} → ${caseQuestionFor(spec, subject)}`,
             back: answer.accepted.join(" / "),
             hint: `${spec.et} · the ${spec.en.toLowerCase()}`,
             targetCase: key,
@@ -264,10 +279,12 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       }
 
       case "GRADATION": {
-        if (lex.gradation === "NONE" || !genSg) break;
+        // The genitive singular of a word with no singular is another word's,
+        // so `jõulud → mille?` wanted `jõulu`. See `caseFits`.
+        if (lex.gradation === "NONE" || !genSg || !caseFits("GENITIVE", subject)) break;
         out.push({
           cardType: type,
-          front: `${lex.lemma} → ${caseQuestionFor(caseByKey("GENITIVE")!, lex)}`,
+          front: `${lex.lemma} → ${caseQuestionFor(caseByKey("GENITIVE")!, subject)}`,
           back: genSg,
           /*
             The hint is shown before the answer, so it may not carry the

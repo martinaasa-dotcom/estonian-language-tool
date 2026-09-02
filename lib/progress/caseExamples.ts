@@ -142,7 +142,11 @@ export async function caseExamples(
     carrying the Institute's own classification: the seesütlev page was
     illustrating itself with `hobuses`. See lib/estonian/caseQuestion.ts.
   */
-  const fits = (lex: Candidate) => caseFits(key, lex);
+  const fits = (lex: Candidate) => caseFits(key, {
+    lemma: lex.lemma,
+    semanticTypes: lex.semanticTypes,
+    nomSg: lex.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+  });
   const built = [
     ...mine.filter(fits).map((lex) => toExample(lex, key, true)),
     ...rest.filter(fits).map((lex) => toExample(lex, key, false)),

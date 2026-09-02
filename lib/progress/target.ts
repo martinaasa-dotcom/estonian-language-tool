@@ -164,6 +164,9 @@ function caseQuestion(
   cardId: string,
 ): TargetQuestion | null {
   const stems = stemsFrom(lexeme.forms);
+  const subject = {
+    lemma: lexeme.lemma, semanticTypes: lexeme.semanticTypes, nomSg: stems.nomSg ?? null,
+  };
 
   const built: { key: string; value: string }[] = [];
   for (const spec of CASES) {
@@ -172,7 +175,7 @@ function caseQuestion(
     // `hobuses` and `hobusesse` as options against each other, which is a
     // question about the half of the language a horse is not in. See
     // lib/estonian/caseQuestion.ts.
-    if (!caseFits(spec.key, lexeme)) continue;
+    if (!caseFits(spec.key, subject)) continue;
     const answer = caseAnswer(stems, spec.key);
     if (answer) built.push({ key: spec.key, value: answer.value });
   }
@@ -195,7 +198,7 @@ function caseQuestion(
     cardId,
     kind: "case",
     lemma: lexeme.lemma,
-    question: caseQuestionFor(spec, lexeme),
+    question: caseQuestionFor(spec, subject),
     caseEt: grammarTerm(spec.key)?.et ?? spec.et,
     options: picked.options,
     answer: picked.answer,

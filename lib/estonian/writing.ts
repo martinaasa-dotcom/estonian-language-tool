@@ -122,8 +122,13 @@ export function writingTasksFor(source: WritingSource): WritingTask[] {
   if (source.pos !== "NOUN" && source.pos !== "ADJECTIVE") return [];
 
   const tasks: WritingTask[] = [];
+  const subject = {
+    lemma: source.lemma,
+    semanticTypes: source.semanticTypes,
+    nomSg: source.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+  };
   for (const caseKey of WRITABLE_CASES) {
-    if (!caseFits(caseKey, source)) continue;
+    if (!caseFits(caseKey, subject)) continue;
     const form = authoritativeForm(source, caseKey);
     if (!form) continue;
     // A case whose form is identical to the headword teaches nothing here —
@@ -138,7 +143,7 @@ export function writingTasksFor(source: WritingSource): WritingTask[] {
       caseEn: spec.en,
       caseEt: spec.et,
       // The question this word answers, not the case's whole name.
-      caseQuestion: caseQuestionFor(spec, source),
+      caseQuestion: caseQuestionFor(spec, subject),
       targetForm: form.value,
       alsoRight: form.alsoRight,
       provenance: form.provenance,

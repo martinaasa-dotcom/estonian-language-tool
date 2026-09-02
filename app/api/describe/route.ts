@@ -138,7 +138,11 @@ export async function POST(request: Request) {
         caseEt: grammarTerm(spec.key)?.et ?? spec.et,
         // What Anu is told the learner was asked, which has to be what the
         // screen printed: see lib/estonian/caseQuestion.ts.
-        caseQuestion: caseQuestionFor(spec, asked),
+        caseQuestion: caseQuestionFor(spec, {
+        lemma: asked.lemma,
+        semanticTypes: asked.semanticTypes,
+        nomSg: asked.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+      }),
       },
       rightCase: mark.rightCase,
       knownForms: task.words.flatMap((w) => [

@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
-import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
+import { DEMO_LEMMAS, DEMO_STEMS, type DemoStems } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable, shownForms, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
 import { caseByKey } from "@/lib/estonian/cases";
@@ -1096,21 +1096,30 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 
+      // The three facts a case question is worded from. Two of the five words
+      // on this card are people; see lib/estonian/caseQuestion.ts.
+      const subject = {
+        lemma: lex.lemma,
+        semanticTypes: lex.semanticTypes,
+        nomSg: form("NOM_SG") ?? null,
+      };
+
       // Labelled the way a course labels them. The three noun parts are the
       // three questions every Estonian schoolbook drills them by, and a visitor
       // who has been to one lesson recognises them.
       const principal = (isVerb
         ? [["ma-tegevusnimi", form("INF_MA")], ["da-tegevusnimi", form("INF_DA")], ["olevik · ma", form("PRES_1SG")], ["lihtminevik · ma", form("PAST_1SG")]]
         : [
-            [`nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, lex)}`, form("NOM_SG")],
-            [`omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, lex)}`, form("GEN_SG")],
-            [`osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, lex)}`, form("PART_SG")],
+            [`nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, subject)}`, form("NOM_SG")],
+            [`omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, subject)}`, form("GEN_SG")],
+            [`osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, subject)}`, form("PART_SG")],
           ]
       ).flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
 
       const table = isVerb
         ? []
         : buildCaseTable(stemsFrom(lex.forms));
+
 
       /*
         A FOURTH FORM, WHERE THE WORD HAS ONE.
@@ -1151,7 +1160,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         principal: [
           ...principal,
           ...learnt.flatMap((row) => (row.singular
-            ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, lex)}`, value: shownForms(row).join(" / ") }]
+            ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, subject)}`, value: shownForms(row).join(" / ") }]
             : [])),
         ],
         cases: table.map((row) => ({
@@ -1165,7 +1174,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
             shown, because a table of forms is a reference rather than a
             question. See lib/estonian/caseQuestion.ts.
           */
-          question: caseQuestionFor(row.spec, lex),
+          question: caseQuestionFor(row.spec, subject),
           singular: row.singular ? shownForms(row).join(" / ") : null,
           plural: row.plural ?? null,
           principal: row.spec.principal || isLearnt(row),
@@ -1197,6 +1206,11 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  * hand-written Estonian form, and `scripts/test-invariants.ts` checks the copy
  * against the built dictionary rather than trusting that it was copied.
  */
+/** The same three facts, off the fallback stems, which carry them by name. */
+const demoSubject = (w: DemoStems) => ({
+  lemma: w.lemma, semanticTypes: w.semanticTypes, nomSg: w.nomSg,
+});
+
 const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
   const table = buildCaseTable(w);
   // The same rule as the live path above, for the same reason: `sõber` records
@@ -1210,17 +1224,17 @@ const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
     lemma: w.lemma,
     genitive: w.genSg,
     principal: [
-      { label: `nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, w)}`, value: w.nomSg },
-      { label: `omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, w)}`, value: w.genSg },
-      { label: `osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, w)}`, value: w.partSg },
+      { label: `nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, demoSubject(w))}`, value: w.nomSg },
+      { label: `omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, demoSubject(w))}`, value: w.genSg },
+      { label: `osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, demoSubject(w))}`, value: w.partSg },
       ...learnt.flatMap((row) => (row.singular
-        ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, w)}`, value: shownForms(row).join(" / ") }]
+        ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, demoSubject(w))}`, value: shownForms(row).join(" / ") }]
         : [])),
     ],
     cases: table.map((row) => ({
       en: row.spec.en,
       et: row.spec.et,
-      question: caseQuestionFor(row.spec, w),
+      question: caseQuestionFor(row.spec, demoSubject(w)),
       singular: row.singular ? shownForms(row).join(" / ") : null,
       plural: row.plural ?? null,
       principal: row.spec.principal || isLearnt(row),

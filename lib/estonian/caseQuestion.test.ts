@@ -4,12 +4,14 @@ import { CASES, caseByKey } from "./cases";
 import { caseFits, caseLabelFor, caseQuestionFor, localCasesFor } from "./caseQuestion";
 import { INSIDE_CASES, OUTSIDE_CASES } from "./place";
 
-const horse = { lemma: "hobune", semanticTypes: "loom" };
-const teacher = { lemma: "õpetaja", semanticTypes: "in_elukutse" };
-const room = { lemma: "tuba", semanticTypes: "koht_hoone" };
-const germany = { lemma: "Saksamaa", semanticTypes: "koht_ala" };
-const police = { lemma: "politsei", semanticTypes: "in_elukutse koht_asutus" };
-const scanned = { lemma: "uudishimulik", semanticTypes: null };
+const horse = { lemma: "hobune", semanticTypes: "loom", nomSg: "hobune" };
+const teacher = { lemma: "õpetaja", semanticTypes: "in_elukutse", nomSg: "õpetaja" };
+const room = { lemma: "tuba", semanticTypes: "koht_hoone", nomSg: "tuba" };
+const germany = { lemma: "Saksamaa", semanticTypes: "koht_ala", nomSg: "Saksamaa" };
+const police = { lemma: "politsei", semanticTypes: "in_elukutse koht_asutus", nomSg: "politsei" };
+const scanned = { lemma: "uudishimulik", semanticTypes: null, nomSg: null };
+// Headed by the plural, because that is the only number the word has.
+const glasses = { lemma: "prillid", semanticTypes: "ese_instru", nomSg: "prill" };
 
 describe("which local cases a word takes", () => {
   it("gives a person and an animal the outside trio", () => {
@@ -33,6 +35,24 @@ describe("which local cases a word takes", () => {
     // No regression on a word somebody added by hand or scanned off a page:
     // "we do not know" may not be read as "it is a person".
     expect(localCasesFor(scanned)).toEqual(INSIDE_CASES);
+  });
+});
+
+describe("a word with no singular", () => {
+  /*
+    Nineteen entries in the shipped dictionary are headed by a plural, because
+    that is the only number the word has, and Ekilex records the singular
+    paradigm of the word underneath: `prillid` stores `prill : prilli`. So the
+    card asked `prillid → milles?` and wanted `prillis`, which is a form of a
+    headword the learner was never shown, in a number the word does not have.
+  */
+  it("is asked for no case at all", () => {
+    for (const spec of CASES) expect(caseFits(spec.key, glasses), spec.key).toBe(false);
+  });
+
+  it("does not take that from a word whose lemma is its own singular", () => {
+    expect(caseFits("COMITATIVE", room)).toBe(true);
+    expect(caseFits("COMITATIVE", { ...room, nomSg: null })).toBe(true);
   });
 });
 

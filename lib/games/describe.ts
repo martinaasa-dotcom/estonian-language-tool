@@ -120,10 +120,11 @@ export function taskFor(
     sisseütlev" wants `hobusesse`, which is not a sentence anybody would write
     about a picture of a horse. See lib/estonian/caseQuestion.ts.
   */
-  if (!caseFits(caseKey, word)) return null;
-
   const parts: Record<string, string> = {};
   for (const form of word.forms) parts[form.formType] = form.value;
+  if (!caseFits(caseKey, {
+    lemma: word.lemma, semanticTypes: word.semanticTypes, nomSg: parts.NOM_SG ?? null,
+  })) return null;
 
   const answer = caseAnswer(stemsFromParts(parts), caseKey);
   if (!answer) return null;
