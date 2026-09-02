@@ -25,7 +25,7 @@ page.on("console", (m) => {
 
 // Floor: 29, measured in the state CI seeds. A thinner database reads as short.
 // 23 before Sõnad added six, the crossword six more and the game of the day two.
-const { check, absent, done } = suite("Practice modes", { floor: 37 });
+const { check, absent, done } = suite("Practice modes", { floor: 38 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -358,6 +358,17 @@ await page.getByLabel("Search commands and words").fill("tuba");
 await page.waitForTimeout(200);
 check("the palette offers a dictionary lookup for anything it doesn't know",
   (await page.getByText(/Look up/).count()) > 0);
+
+/*
+  And it finds a place whose name a UK keyboard cannot type, which is the
+  fault this caught: `Sõnad` was matched with a plain `includes`, so typing
+  `sonad` found nothing and the one place in the app with an Estonian name was
+  unreachable from the box that promises to go anywhere.
+*/
+await page.getByLabel("Search commands and words").fill("sonad");
+await page.waitForTimeout(250);
+check("and finds Sõnad typed without the diacritic",
+  (await page.getByText("Sõnad", { exact: false }).count()) > 0);
 await page.keyboard.press("Escape");
 
 // 8 — The app is installable

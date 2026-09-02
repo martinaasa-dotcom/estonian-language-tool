@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { fold } from "./search";
+import { fold } from "@/lib/estonian/fold";
 
 /**
  * IS THAT AN ESTONIAN WORD?

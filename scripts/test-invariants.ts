@@ -5920,6 +5920,55 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
   );
 });
 
+check("there is one table of which Estonian letters fold", () => {
+  /*
+    There were three, and they agreed, which is the dangerous state rather than
+    the safe one. `lib/dict/search.ts` had a `replaceAll` chain, and
+    `lib/estonian/dictation.ts` and `lib/estonian/answer.ts` each had the same
+    `Record` written out again. A marker and a search box disagreeing about
+    whether `ž` folds would mark somebody wrong for a spelling the dictionary
+    had just offered them.
+
+    The fourth case is what found it: the command palette matched with a plain
+    `includes`, so typing `sonad` found nothing and Sõnad was unreachable from
+    the box that promises to go anywhere, for exactly the learner who has no õ
+    key.
+
+    Two exemptions, both by name and both for a different question.
+    `lib/estonian/sounds.ts` folds *sounds a learner confuses*, b against p and
+    k against g, and says so at length. `lib/suggestions/model.ts` has a
+    function called `fold` that collapses whitespace for a grouping key and
+    touches no diacritic, which is a name collision rather than a copy.
+  */
+  const HOME = "lib/estonian/fold.ts";
+  assert.ok(existsSync(HOME), "the one fold has gone from lib/estonian/fold.ts");
+
+  const excused = ["lib/estonian/sounds.ts", "lib/estonian/fold.ts"];
+  const table = /["']?õ["']?\s*:\s*["']o["']/;
+  const offenders = [...LIB, ...APP, ...COMPONENTS]
+    .filter((file) => !excused.includes(file) && !/\.(test|itest)\.tsx?$/.test(file))
+    .filter((file) => table.test(code(file)) || /replaceAll\("õ"/.test(code(file)));
+  assert.deepEqual(
+    offenders, [],
+    "a second table of which Estonian letters fold. There is one, in lib/estonian/fold.ts.",
+  );
+
+  /*
+    And the SQL half comes from it too. `translate(lower(lemma), FOLD_FROM,
+    FOLD_TO)` narrows a search in Postgres and `fold` decides it in JavaScript;
+    two hand-kept lists with a comment asking them to agree is what this
+    replaced.
+  */
+  assert.match(
+    code(HOME), /export const FOLD_FROM[\s\S]{0,200}export const FOLD_TO/,
+    "the Postgres pair no longer lives beside the table it is derived from",
+  );
+  assert.match(
+    code("components/CommandPalette.tsx"), /fold\(/,
+    "the palette matches without folding, so a place with an Estonian name is unreachable from it",
+  );
+});
+
 check("the game of the day comes from the one table of them", () => {
   /*
     "Each weekday could have a different game focus. It becomes predictable and

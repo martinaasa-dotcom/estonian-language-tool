@@ -765,6 +765,30 @@ browser in both themes: 7.40 and 5.31 and 5.62 in the light, 11.70 and 9.27 and 
 draft that dropped the fill and kept only the ring measured 3.52, because `--butter-ink` is drawn to
 sit on butter's tint and not on a card.
 
+**There is one table of which Estonian letters fold, and there were three.** Six letters an English
+keyboard has no key for, and half the app has to answer the same question about them: is `sona` the
+word `sõna`? Whether the answer is yes is each caller's decision, since a search box says yes and a
+marker says no. Which six letters is not. `lib/dict/search.ts` had a `replaceAll` chain,
+`lib/estonian/dictation.ts` and `lib/estonian/answer.ts` each wrote the same `Record` out again, and
+they agreed, which is the dangerous state rather than the safe one: a marker and a search box that
+disagreed about `ž` would mark somebody wrong for a spelling the dictionary had just offered them.
+`lib/estonian/fold.ts` is the one table and it holds the Postgres `translate()` pair as well, so the
+SQL that narrows a search and the JavaScript that decides it cannot drift.
+
+**The fourth case is what found it, and it was a real screen.** The command palette matched a typed
+query against a label with `includes`, so typing `sonad` found nothing and Sõnad, the one place in
+this app with an Estonian name, was unreachable from the box that promises to go anywhere. For
+exactly the learner `lib/ux/letterBar.ts` exists for, who has no õ key and therefore cannot type the
+name at all. Both sides fold now, so `sõnad` and `sonad` both land.
+
+Two exemptions and both are a different question. `lib/estonian/sounds.ts` folds *sounds a learner
+confuses*, b against p and k against g, and says so at length. `lib/suggestions/model.ts` has a
+function called `fold` that collapses whitespace for a grouping key and touches no diacritic, which
+is a name collision rather than a copy. And the move is where it is on purpose:
+`lib/estonian/passage.ts` was importing `fold` from `lib/dict/search.ts`, which imports Prisma, so a
+layer asserted to be free of the database was pulling it in one import away and the invariant, which
+reads each file's own imports, could not see it.
+
 **One game a day, the same one every week, and nothing hidden by it.** Eleven rounds on a menu is a
 decision to make before you can start; one on the home page with a reason beside it is an invitation,
 and Thursday being Match every week is a thing somebody comes to know about their own Thursdays.
