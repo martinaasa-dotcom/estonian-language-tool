@@ -320,10 +320,19 @@ check("every screen and marker that needs a case form asks the one function for 
     "lib/collections/checkpoint.ts",
     "lib/assessment/items.ts",
   ];
+  /*
+    Reaching it through `lib/estonian/gapForms.ts` counts, and widening the rule
+    is what this file's own instruction says to do when a check fires on honest
+    code. That module's whole job is to answer "every spelling of this word",
+    it asks `caseAnswer` for every case, and it has an invariant of its own
+    saying it must keep doing so. Two of these callers stopped writing the loop
+    themselves and started asking it.
+  */
+  const asksForACase = /caseAnswer\(|gapForms(?:FromParts)?\(/;
   for (const file of callers) {
     assert.match(
       code(file),
-      /caseAnswer\(/,
+      asksForACase,
       `${file} produces a case form without asking caseAnswer, so it cannot see the short illative`,
     );
   }
@@ -6485,6 +6494,47 @@ check("nothing grades a card outside lib/srs/grade.ts", () => {
   for (const caller of ["app/actions.ts", "lib/srs/replay.ts"]) {
     assert.match(code(caller), /\bwriteGrade\(/, `${caller} stopped writing its grade through lib/srs/grade.ts`);
   }
+});
+
+/*
+  WHICH FORMS CAN BE HIDDEN IN A SENTENCE IS ONE ANSWER.
+
+  `buildCloze` hides a word it is told to look for, so what it can hide is
+  whatever list the caller hands it, and there were five such lists. Two added
+  the ten regular cases and were the same twenty lines twice; three did not,
+  and the printable worksheet's own comment said "a sentence about `tuba`
+  usually contains `toas`, not `tuba`, and hiding the inflected form is the
+  more useful exercise" over a list that could not hide `toas`. None of the
+  five knew a verb person, so `Kontsert algab kell 18.` could not be gapped for
+  `algama`. Measured over the graded half of the dictionary, 2,201 words could
+  carry a gap and 2,758 can now.
+
+  `lib/exam/paper.ts` and `lib/assessment/items.ts` are the two exceptions and
+  are exempt by name. Both build a marked instrument out of a pool and a seed,
+  the exam rebuilds its paper server-side to mark it, and both surround the
+  answer with distractors drawn from the same list, so widening what can be
+  gapped changes which questions a candidate is asked and what is offered
+  against them. That is a change to a measurement rather than to an exercise
+  and it is not made in passing.
+*/
+check("nothing decides what a gap can hide outside lib/estonian/gapForms.ts", () => {
+  const allowed = new Set([
+    // Where `buildCloze` is written, and where `gapForms` is.
+    "lib/estonian/cloze.ts",
+    "lib/estonian/gapForms.ts",
+    "lib/exam/paper.ts",
+    "lib/assessment/items.ts",
+  ]);
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !allowed.has(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\bbuildCloze\s*\(/.test(code(file)))
+    .filter((file) => !/\bgapForms(?:FromParts)?\s*\(/.test(code(file)));
+  assert.deepEqual(offenders, [], "a caller of buildCloze builds its own list of forms to hide");
+
+  const forms = code("lib/estonian/gapForms.ts");
+  assert.match(forms, /derivedVerbForms\(/, "gapForms stopped offering a verb's persons");
+  assert.match(forms, /caseAnswer\(/, "gapForms stopped offering the cases built on the stem");
 });
 
 check("a screen that prints a derived verb form says it was derived", () => {

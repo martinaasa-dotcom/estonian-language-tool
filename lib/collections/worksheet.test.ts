@@ -10,8 +10,9 @@ const word = (over: Partial<WorksheetWord> = {}): WorksheetWord => ({
     { formType: "NOM_SG", value: "tuba" },
     { formType: "GEN_SG", value: "toa" },
     { formType: "PART_SG", value: "tuba" },
-    // A retrieved form, as Ekilex supplies them. A gap can only hide a
-    // form we actually hold — the same rule the cloze cards follow.
+    // A retrieved form, as Ekilex supplies them. A gap hides a form the app
+    // can vouch for, which is a stored one or one of the two derivations
+    // ADR-005 amendment 1 allows, and it has to stand in the sentence.
     { formType: "EKILEX:SgIn", value: "toas" },
   ],
   examples: [{ et: "Ta istub toas ja loeb raamatut.", en: null, source: "EKILEX" }],
@@ -55,9 +56,18 @@ describe("buildWorksheet", () => {
     expect(buildWorksheet([word({ examples: [{ et: "Ilus tuba.", source: "EKILEX" }] })]).gaps).toEqual([]);
   });
 
-  it("cannot hide a form the dictionary does not hold", () => {
-    // Only principal parts are stored for this word, and none of them appears
-    // in the sentence — so there is nothing to blank, and nothing is invented.
+  /*
+    THIS USED TO ASSERT THE LIMITATION AS IF IT WERE THE RULE.
+
+    It gave the word its three principal parts, took `toas` away, and expected
+    no gap, on the reasoning that "nothing is invented". `toas` is the
+    inessive, which is the genitive stem this word does store plus `-s`: it is
+    what the entry prints, what the grammar page teaches and what a card
+    already asks for. Not hiding it was the worksheet knowing fewer forms than
+    the rest of the app, which is what its own comment about `tuba` and `toas`
+    had been describing all along.
+  */
+  it("hides a case worked out from the stem, which is what the sentence has in it", () => {
     const principalOnly = word({
       forms: [
         { formType: "NOM_SG", value: "tuba" },
@@ -65,7 +75,23 @@ describe("buildWorksheet", () => {
         { formType: "PART_SG", value: "tuba" },
       ],
     });
-    expect(buildWorksheet([principalOnly]).gaps).toEqual([]);
+    expect(buildWorksheet([principalOnly]).gaps[0]?.answer).toBe("toas");
+  });
+
+  it("hides a verb person worked out from the stored first person", () => {
+    const verb = word({
+      lemma: "algama", translation: "to begin", pos: "VERB",
+      forms: [{ formType: "PRES_1SG", value: "algan" }],
+      examples: [{ et: "Kontsert algab kell kaheksa.", en: null, source: "EKILEX" }],
+    });
+    expect(buildWorksheet([verb]).gaps[0]?.answer).toBe("algab");
+  });
+
+  it("hides nothing when no form of the word stands in the sentence", () => {
+    const elsewhere = word({
+      examples: [{ et: "Ta istub siin ja loeb raamatut.", en: null, source: "EKILEX" }],
+    });
+    expect(buildWorksheet([elsewhere]).gaps).toEqual([]);
   });
 
   it("builds a case row only when both principal parts are held", () => {

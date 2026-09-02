@@ -1,8 +1,8 @@
 import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { localCasesFor } from "@/lib/estonian/place";
 import { buildCloze } from "@/lib/estonian/cloze";
+import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
-import { caseFromMorphCode } from "@/lib/estonian/morph";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import type { CaseKey } from "@/lib/estonian/types";
@@ -246,16 +246,18 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
         const examples = usableExamples(parseExamples(lex.examples));
         if (examples.length === 0) break;
 
-        const byValue = new Map<string, string | null>();
-        for (const f of lex.forms) byValue.set(f.value.toLowerCase(), f.morphCode ?? null);
-        byValue.set(lex.lemma.toLowerCase(), null);
+        // Every spelling of the word, stored or derived, so a sentence about
+        // `tuba` can be gapped on `toas` and one about `algama` on `algab`.
+        // See `lib/estonian/gapForms.ts`: a derived form reaches a card only
+        // by matching a word a lexicographer wrote, so the sentence is what
+        // vouches for it.
+        const byValue = gapForms(lex);
 
         let built = 0;
         for (const example of examples) {
           if (built >= MAX_CLOZE_PER_WORD) break;
           const cloze = buildCloze(example.et, [...byValue.keys()]);
           if (!cloze) continue;
-          const morphCode = byValue.get(cloze.answer.toLowerCase()) ?? null;
           out.push({
             cardType: type,
             front: cloze.text,
@@ -263,7 +265,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
             // The lemma is given deliberately: this asks for the right *form*,
             // not for the vocabulary, which the recognition card already tests.
             hint: `${lex.lemma}, ${lex.translation}`,
-            targetCase: caseFromMorphCode(morphCode),
+            targetCase: byValue.get(cloze.answer.toLowerCase()) ?? null,
           });
           built++;
         }

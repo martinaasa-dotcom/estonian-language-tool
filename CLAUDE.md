@@ -292,6 +292,32 @@ under "worked out from loen" with the stored form in bold, the four verb topic p
 on the learner's own verbs with a provenance chip, and an attested form always answers first, so
 the moment an entry is enriched the rule steps aside.
 
+**Which forms a gap-fill may hide is one answer, and it was five.** `buildCloze` hides a word it is
+told to look for, so what it can hide is whatever list the caller hands it. Two callers, the lesson
+planner and the level checkpoint, added the ten regular cases and were the same twenty lines twice.
+Three did not: the review card, the printable worksheet and the mock exam, and the worksheet's own
+comment said "a sentence about `tuba` usually contains `toas`, not `tuba`, and hiding the inflected
+form is the more useful exercise" over a list that could not hide `toas` unless Ekilex happened to
+have stored it. And none of the five knew a verb person at all, so `Kontsert algab kell 18.` could
+not be gapped for `algama` and `Kuidas sa elad?` could not be gapped for `elama`, which are the two
+commonest sentence shapes in the language. Measured over the graded half of the shipped dictionary,
+2,201 words could carry a gap and 2,758 can now.
+
+`lib/estonian/gapForms.ts` is the one answer: every stored form, the ten cases built on the genitive
+stem, and a verb's persons off the stored first person. **Nothing is invented and the sentence is
+the second opinion**, which is what makes this safe: a derived form only ever becomes a card by
+matching a word a lexicographer wrote, so a wrong derivation matches nothing and disappears while a
+right one is confirmed by the sentence it was found in. A principal part is deliberately **not**
+labelled with a case, because `tuba` is its own nominative and its own partitive and the label is
+what the accuracy chart counts, so a guess there is a wrong row rather than a missing one; the short
+illative is the exception, since the dictionary only promotes it where it differs from all three.
+
+`lib/exam/paper.ts` and `lib/assessment/items.ts` are exempt by name. Both build a marked instrument
+from a pool and a seed, the exam rebuilds its paper server-side to mark it, and both surround the
+answer with distractors drawn from the same list, so widening what can be gapped changes which
+questions a candidate is asked and what is offered against them. That is a change to a measurement
+rather than to an exercise and it is not made in passing.
+
 **A verb the app can conjugate is a verb the dictionary can find, and for a year it was not.** The
 search strips a case ending to look for a genitive stem, which is how `toas` finds `tuba`, and it
 knew nothing whatever about a person ending. So a verb was findable by its lemma, by its two
