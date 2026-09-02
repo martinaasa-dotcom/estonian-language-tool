@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForRequest, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
@@ -138,22 +138,24 @@ export async function POST(request: Request) {
     // this row counts requests actually made of TartuNLP, and a joiner made
     // none. Counting them would tighten the speech allowance by the size of
     // whatever burst the deduplication just absorbed.
-    if (joined && decision?.reservation) {
+    const joinerBooking = joined ? decision?.reservation : undefined;
+    if (joinerBooking) {
       // A joiner made no request of anybody, so it hands its booking back.
-      void releaseReservation(decision.reservation);
+      after(() => releaseReservation(joinerBooking));
     }
     if (ownerId && !joined) {
-      void recordUsage({
+      after(() => recordUsage({
         ownerId, kind: "TTS", provider: "tartunlp", model: speaker,
         inputTokens: text.length, outputTokens: 0, costMicros: 0,
         reservation: decision?.reservation,
-      });
+      }));
     }
     return wav(audio, joined ? "joined" : "upstream");
   } catch (error) {
     // Nothing was spoken, so the booking goes back: a learner must not spend
     // their day's allowance on a minute when TartuNLP was down.
-    if (decision?.reservation) void releaseReservation(decision.reservation);
+    const booking = decision?.reservation;
+    if (booking) after(() => releaseReservation(booking));
     const status = error instanceof SpeechError ? error.status : 503;
     const message =
       status === 502 ? "Speech service could not read that." : "Speech service unreachable.";

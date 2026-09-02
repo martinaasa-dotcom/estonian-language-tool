@@ -93,9 +93,39 @@ describe("authoriseCall", () => {
     await releaseReservation(decision.reservation!);
 
     // Nothing was spent, and the record that it was authorised stays: this is
-    // a settlement at zero, not a deletion, because the table is append-only.
+    // a release row, not a deletion, because the table is append-only.
     expect(await spend()).toBe(0);
     expect(await prisma.usageEvent.count({ where: { ownerId: MINE } })).toBe(2);
+
+    /*
+      AND IT GIVES BACK THE CALL, NOT ONLY THE MONEY.
+
+      The release used to be an ordinary settlement at minus the reserve, which
+      returns the spend to zero and leaves the `CALL` row standing. The two
+      count limits read `CALL` rows, so a deployment whose key had been
+      rejected still rationed its learners by how many refusals they had
+      collected: eight in a minute and the burst limit closed over answers
+      nobody had received. Exactly what this function's header says it exists
+      to prevent, met for one of the three limits and not the other two.
+    */
+    const snapshot = await snapshotUsage(MINE, "SCAN");
+    expect(snapshot.dailyCalls).toBe(0);
+    expect(snapshot.burstCalls).toBe(0);
+  });
+
+  it("lets a learner keep asking after a run of refusals", async () => {
+    /*
+      The whole reason the release exists, driven rather than reasoned about:
+      a rejected key refuses every call, and the learner must still be able to
+      ask once the key is fixed. Ten refusals is past the burst allowance of
+      eight and past nothing else.
+    */
+    for (let i = 0; i < 10; i += 1) {
+      const decision = await authoriseCall(MINE, "TUTOR");
+      expect(decision.allowed).toBe(true);
+      await releaseReservation(decision.reservation!);
+    }
+    expect((await authoriseCall(MINE, "TUTOR")).allowed).toBe(true);
   });
 
   it("does not let a settlement count as a second call", async () => {

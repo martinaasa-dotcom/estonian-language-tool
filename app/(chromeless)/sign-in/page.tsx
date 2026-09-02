@@ -21,7 +21,9 @@ const PROMISES = [
  * Two refusals used to be written into the URL and read by nothing.
  *
  * `/auth/callback` sends somebody to `?denied=1` when their address is not on
- * this deployment's allowlist, and to `?error=1` when an exchange failed or a
+ * this deployment's allowlist, to `?switched=1` when a mailed link arrived on
+ * a browser that was already signed in, and to `?error=1` when an exchange
+ * failed or a
  * mailed link had already been used. Both landed on an ordinary sign-in
  * screen that said nothing at all, so the one person who needed telling why
  * they could not get in was shown the button that had just refused them.
@@ -47,6 +49,14 @@ export default async function SignInPage({ searchParams }: {
   const emailLink = (process.env.EMAIL_SIGN_IN ?? "").trim().toLowerCase() === "on";
   const denied = params.denied !== undefined;
   const failed = params.error !== undefined;
+  /*
+    A mailed link arrived while somebody else was already signed in on this
+    browser. `/auth/callback` will not follow it, because a link like that
+    silently moves whoever clicks it into the account it was issued for, and
+    everything they write afterwards goes into a stranger's deck. It ends the
+    session that was here and sends them back to this screen instead.
+  */
+  const switched = params.switched !== undefined;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
@@ -86,7 +96,16 @@ export default async function SignInPage({ searchParams }: {
               </Note>
             </div>
           )}
-          {failed && !denied && (
+          {switched && (
+            <div className="mt-6 text-left">
+              <Note tone="hard">
+                That link would have signed you in as somebody else, so we signed you out here
+                instead and did not follow it. If the link is yours, sign in below. If you did not
+                ask for it, you can ignore it.
+              </Note>
+            </div>
+          )}
+          {failed && !denied && !switched && (
             <div className="mt-6 text-left">
               <Note tone="hard">
                 That sign-in did not go through. A mailed link works once and lasts an hour, so if

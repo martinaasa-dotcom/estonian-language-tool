@@ -51,6 +51,18 @@ export const ACTION_LIMITS = {
   /** Parses and writes a whole backup: the most expensive call in the app. */
   restoreBackup: { perMinute: 4 },
   /**
+   * Parses a whole backup and writes nothing.
+   *
+   * `app/api/restore` limits itself and its comment said that limit was "the
+   * only thing standing in front of the parse", which was true of the route
+   * and not of this file: `inspectBackup` is an export of a `"use server"`
+   * module, so it is an endpoint of its own, and it ran `JSON.parse` over a
+   * 16 MB body plus a zod walk of every row with nothing in front of it.
+   * Higher than the restore's four because looking before you leap is the
+   * thing this exists to encourage, and low enough that a loop is not free.
+   */
+  inspectBackup: { perMinute: 10 },
+  /**
    * Sending a suggested fix.
    *
    * Offered on every dead end in the app, which is what makes it the one

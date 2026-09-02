@@ -11,6 +11,23 @@ export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN";
 const CALL = "CALL";
 /** The correction that follows one, once the provider has said what it cost. */
 const SETTLEMENT = "SETTLEMENT";
+/**
+ * A booking handed back because its call never happened.
+ *
+ * `releaseReservation` used to write this as an ordinary settlement at minus
+ * the reserve, which returns the *spend* to zero and leaves the `CALL` row
+ * standing. The counts read `CALL` rows, so a deployment whose key had been
+ * rejected still rationed its learners by how many refusals they had
+ * collected: eight in a minute and the burst limit closed, thirty in a day and
+ * the daily one did, over answers nobody received. That is the exact failure
+ * `releaseReservation`'s own header says it exists to prevent, met for one of
+ * the three limits and not the other two.
+ *
+ * A third kind rather than a delete, because `UsageEvent` is append-only for
+ * the reason `Review` is: the authorisation happened and stays in the log.
+ * What the row says is that it came to nothing.
+ */
+const RELEASE = "RELEASE";
 
 /**
  * What a reservation carries where the provider and model will go.
@@ -151,18 +168,36 @@ export async function snapshotUsage(
   const day = utcDay(now);
   const burstSince = new Date(now.getTime() - limits.burstWindowSeconds * 1000);
 
-  const [burstCalls, dailyCalls, userSpend, globalSpend] = await Promise.all([
-    client.usageEvent.count({
-      where: { ownerId, kind, entry: CALL, createdAt: { gte: burstSince } },
-    }),
-    client.usageEvent.count({ where: { ownerId, kind, entry: CALL, day } }),
-    client.usageEvent.aggregate({ where: { ownerId, day }, _sum: { costMicros: true } }),
-    client.usageEvent.aggregate({ where: { day }, _sum: { costMicros: true } }),
-  ]);
+  /*
+    A call that was handed back is not a call. Counted rather than subtracted
+    from a filter, because `entry` is a plain column and `NOT IN` over two
+    values reads the same index either way; two counts keep each number
+    something you can look up in the table by hand when a limit surprises
+    somebody.
+  */
+  const [
+    burstCalls, burstReleased, dailyCalls, dailyReleased, allCalls, allReleased,
+    userSpend, globalSpend,
+  ] =
+    await Promise.all([
+      client.usageEvent.count({
+        where: { ownerId, kind, entry: CALL, createdAt: { gte: burstSince } },
+      }),
+      client.usageEvent.count({
+        where: { ownerId, kind, entry: RELEASE, createdAt: { gte: burstSince } },
+      }),
+      client.usageEvent.count({ where: { ownerId, kind, entry: CALL, day } }),
+      client.usageEvent.count({ where: { ownerId, kind, entry: RELEASE, day } }),
+      client.usageEvent.count({ where: { ownerId, entry: CALL, day } }),
+      client.usageEvent.count({ where: { ownerId, entry: RELEASE, day } }),
+      client.usageEvent.aggregate({ where: { ownerId, day }, _sum: { costMicros: true } }),
+      client.usageEvent.aggregate({ where: { day }, _sum: { costMicros: true } }),
+    ]);
 
   return {
-    burstCalls,
-    dailyCalls,
+    burstCalls: Math.max(0, burstCalls - burstReleased),
+    dailyCalls: Math.max(0, dailyCalls - dailyReleased),
+    dailyCallsAllKinds: Math.max(0, allCalls - allReleased),
     dailyMicros: userSpend._sum.costMicros ?? 0,
     globalMicros: globalSpend._sum.costMicros ?? 0,
   };
@@ -354,30 +389,53 @@ export async function releaseReservation(
   reservation: Reservation,
   now = new Date(),
 ): Promise<void> {
-  await recordUsage({
-    ownerId: reservation.ownerId,
-    kind: reservation.kind,
-    provider: PENDING,
-    model: PENDING,
-    inputTokens: 0,
-    outputTokens: 0,
-    costMicros: 0,
-    reservation,
-    now,
-  });
+  try {
+    await prisma.usageEvent.create({
+      data: {
+        ownerId: reservation.ownerId,
+        kind: reservation.kind,
+        entry: RELEASE,
+        provider: PENDING,
+        model: PENDING,
+        inputTokens: 0,
+        outputTokens: 0,
+        // Minus the whole reserve, so the pair comes to nothing spent, and
+        // marked `RELEASE` so the counts can leave the pair out as well.
+        costMicros: -reservation.micros,
+        day: utcDay(now),
+      },
+    });
+  } catch (error) {
+    // A release that does not land leaves a learner rationed for a call they
+    // never received, which is quieter than a lost charge and just as wrong.
+    reportError(error, {
+      at: "usage/releaseReservation",
+      ownerId: reservation.ownerId,
+      extra: { kind: reservation.kind, micros: reservation.micros },
+    });
+  }
 }
 
 /** Today's spend and call count for one user, for the Settings meter. */
 export async function usageToday(ownerId: string, now = new Date()) {
   const day = utcDay(now);
-  const [calls, spend] = await Promise.all([
+  const [calls, released, spend] = await Promise.all([
     // `CALL` only: a settlement is the same request coming back with its real
     // numbers, and the meter would otherwise tell somebody they had asked
-    // twice as many questions as they had.
+    // twice as many questions as they had. A release is the opposite case, a
+    // question that reached nobody, and it comes back off the count the same
+    // way the limits take it off theirs.
     prisma.usageEvent.count({
       where: { ownerId, day, entry: CALL, kind: { in: ["TUTOR", "GRADER"] } },
     }),
+    prisma.usageEvent.count({
+      where: { ownerId, day, entry: RELEASE, kind: { in: ["TUTOR", "GRADER"] } },
+    }),
     prisma.usageEvent.aggregate({ where: { ownerId, day }, _sum: { costMicros: true } }),
   ]);
-  return { calls, micros: spend._sum.costMicros ?? 0, limits: readLimits() };
+  return {
+    calls: Math.max(0, calls - released),
+    micros: spend._sum.costMicros ?? 0,
+    limits: readLimits(),
+  };
 }

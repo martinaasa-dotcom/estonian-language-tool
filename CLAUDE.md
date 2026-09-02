@@ -585,6 +585,63 @@ allowances. So it is read only when `TRUST_PROXY_HEADERS` or `VERCEL` says a pro
 every unattributed request otherwise shares one bucket, which is the honest shape for not
 knowing. Signed-in work never touches any of it.
 
+**And which header, and which hop in it, is the other half of that.** The rule above was written
+and then only half implemented: `x-vercel-forwarded-for` was read first whenever proxy headers
+were trusted *at all*, including the self-hosted `TRUST_PROXY_HEADERS=1` case the function exists
+for. No proxy but Vercel's sets that header and no proxy but Vercel's strips it, so anywhere else
+it is a value the caller typed, which is the fault the paragraph above rules out arriving through
+the door it opened. It is read only where `VERCEL` says the platform that owns it is there. The
+hop matters as much: `X-Forwarded-For` is a list the client starts and each proxy appends to, so
+the leftmost element is whatever the caller put there and the rightmost is the one the trusted
+proxy added about the connection it actually accepted. Vercel overwrites the whole header and is
+read from the left; a self-hosted proxy appends and is read from the right.
+
+**A release gives back the call, not only the money.** `releaseReservation` wrote a settlement at
+minus the reserve, which returns the spend to zero and leaves the `CALL` row standing, and two of
+the three limits count `CALL` rows. So a deployment with a rejected key still rationed its
+learners by how many refusals they had collected: eight in a minute and the burst limit closed
+over answers nobody received, which is the exact thing that function's header says it exists to
+prevent, met for one limit out of three. `RELEASE` is a third entry kind, append-only like the
+other two, and `snapshotUsage` counts `CALL` minus `RELEASE`. The Settings meter reads it too,
+since a call that reached nobody is not a question anybody asked.
+
+**And the reserve is about the person, so it counts the person.** The last slice of the global
+budget is kept for somebody who has not asked anything today, and the test read `dailyCalls`,
+which `snapshotUsage` fills with calls *of the kind being asked about*. A learner on their tenth
+tutor call waited while the same learner's first scan, the dearest single call in the app, went
+through as though they had asked nothing all day.
+
+**No ledger write is left to a promise nobody is holding.** Every settlement and every release was
+`void recordUsage(...)` next to the `return`. The deployment target suspends a function once its
+response is sent and does not guarantee a pending promise runs, so a settlement that never lands
+leaves the reserve standing and bills a free model at its estimate for ever, and a release that
+never lands rations a learner over a call they did not receive. `after()` from `next/server` is
+the platform's own answer and is the one thing that says "keep this invocation alive until this
+finishes". Asserted, comment-blind.
+
+**A mailed sign-in link may not change who is signed in without saying so.** The `token_hash`
+branch of `/auth/callback` is deliberately not tied to the browser that asked, which is the whole
+reason the template shape exists and is also login CSRF: an attacker who requests a link for an
+address they control and gets a signed-in learner to open it lands that learner in the attacker's
+account, silently, at whatever `next` says, and everything they write afterwards goes into a
+stranger's deck. A link that would change the account ends the session that is there and sends
+the learner to `/sign-in?switched=1` with a sentence saying what happened; `next` is dropped,
+because it was chosen by whoever wrote the link. Nobody signed in is the ordinary case and is
+untouched, which is what makes it safe: the link works exactly as it did for the person it was
+mailed to.
+
+**A name a class is going to see is cleaned, not trimmed.** `trim()` does not remove U+200B, so
+two zero-width spaces were a two-character name that passed the empty check and rendered as
+nothing on the roster; U+202E reverses what follows it and can make one pupil's row read as
+another's. `cleanDisplayName` strips `\p{C}`, normalises to NFC, and requires a letter or a digit.
+The roster is the one screen where a stranger's text is shown to a teacher beside real names.
+
+**An argument that is supposed to be a string is not one.** Every export of `app/actions.ts` is a
+public endpoint and its arguments are JSON off the wire whatever the types say, so
+`joinClassroom(42)` reached `.trim()` and threw, which the framework answers with a 500 and a
+digest where a refusal is the honest reply. `text()` in that file coerces; `normaliseCode` takes
+`unknown` because it is the boundary of a pure module.
+
 **Signing out leaves the device the way a stranger should find it.** It cleared one cookie and
 nothing else, and everything the app keeps in the browser to make review work on a train stayed
 behind for the next person on the same machine: the pages the service worker had cached, which are
@@ -1827,6 +1884,18 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   to `not-allowed`: everything disabled in this app is waiting for the learner, a send button with
   an empty box or a rating key before the answer is shown, never refusing them. That is the one
   declaration `.choice-btn` used to carry for itself, and it is one declaration now.
+- **An inline link in a sentence is not a 44px target.** The floor covers a link drawn as a pill or
+  as a lone icon, because those are controls; an inline link was given `padding-block` on the
+  argument that a taller link is easier to press and the line still reads the same. Vertical
+  padding on an inline box does not grow the line box, it grows the element's border box past it,
+  so the link on a paragraph's last line reaches six pixels below the paragraph it is in: measured
+  on the landing page's credit line at 360 with a coarse pointer, "TartuNLP" sat 5px outside the
+  footer's own border and `scripts/test-containment.mjs` failed on it six times. Overlaying a
+  bigger hit area with an absolutely positioned pseudo-element is the other way and is worse,
+  since in running prose it takes the taps meant for a link on the line above. WCAG 2.2 makes
+  exactly this exception for exactly this reason: a target in a sentence is constrained by the
+  line-height of the text around it, and the way to make it easier to hit is to give it a line of
+  its own.
 - **A control the 44px floor makes bigger centres its own content.** The floor under a coarse
   pointer is a `min-width` and a `min-height`, and an inline box lays its content out from the top
   left, so on a button holding nothing but an icon all of the slack lands on one side: measured at

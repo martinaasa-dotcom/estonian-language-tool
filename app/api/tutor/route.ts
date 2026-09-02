@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
@@ -139,7 +140,7 @@ export async function POST(request: Request) {
     open = await openWithFallback(chain, system, messages, (usage, config) => {
       // Charged to the provider that actually answered, not the head of the
       // chain: falling back to a dearer model must not go unmetered.
-      void recordUsage({
+      after(() => recordUsage({
         ownerId, kind: "TUTOR", provider: config.name, model: config.model,
         inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
         // Settles the reservation `authoriseCall` already booked, rather than
@@ -147,13 +148,14 @@ export async function POST(request: Request) {
         // was opened, which is what stops ten tabs reading the same "under the
         // limit" while none of them has been recorded yet.
         reservation: decision.reservation,
-      });
+      }));
     }, live);
   } catch (error) {
     // Nothing was spent and nothing was answered, so the authorisation is
     // handed back: a deployment with a bad key must not ration its learners
     // over calls none of them received.
-    if (decision.reservation) void releaseReservation(decision.reservation);
+    const booking = decision.reservation;
+    if (booking) after(() => releaseReservation(booking));
     const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
     const status = error instanceof TutorError ? error.status : 502;
     return Response.json({ error: message }, { status });

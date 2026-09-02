@@ -503,6 +503,19 @@ const LIMITS = {
 const capped = (value: string | undefined | null, max: number): string =>
   (value ?? "").trim().slice(0, max);
 
+/**
+ * An argument that is supposed to be a string, as a string.
+ *
+ * Every export of this file is a public endpoint and its arguments are JSON
+ * off the wire, so the types here describe the callers in this tree and say
+ * nothing about what actually arrives. `joinClassroom(42)` reached
+ * `input.trim()` and threw a `TypeError`, which the framework answers with a
+ * 500 and a digest: an unhandled fault where the honest answer is a refusal.
+ * Anything that is not a string is nothing, and every one of these paths
+ * already has a sentence for nothing.
+ */
+const text = (value: unknown): string => (typeof value === "string" ? value : "");
+
 
 /**
  * Adds a word to the shared dictionary.
@@ -907,7 +920,7 @@ export async function setFeedbackSounds(value: string) {
  */
 export async function setClassDisplayName(input: { displayName: string }) {
   const ownerId = await requireUserId();
-  const name = input.displayName.trim().slice(0, 32);
+  const name = cleanDisplayName(input?.displayName);
   if (!name) {
     return { ok: false as const, error: "Pick a name your class will recognise." };
   }
@@ -952,7 +965,7 @@ export async function completeOnboarding(input: {
   const goal = Math.min(200, Math.max(5, Math.round(input.dailyGoal)));
 
   await Promise.all([
-    writeSetting(ownerId, SETTING_KEYS.displayName, input.displayName.trim().slice(0, 32)),
+    writeSetting(ownerId, SETTING_KEYS.displayName, cleanDisplayName(input?.displayName) || "A learner"),
     writeSetting(ownerId, SETTING_KEYS.cefrGoal, input.cefr),
     /*
       The level somebody declares at sign-up is the best guess available until
@@ -1208,7 +1221,7 @@ export async function completeLesson(
  */
 export async function setCourseLevel(level: string) {
   const ownerId = await requireUserId();
-  const parsed = z.enum(["A1", "A2", "B1", "B2", "C1"]).safeParse(level.toUpperCase());
+  const parsed = z.enum(["A1", "A2", "B1", "B2", "C1"]).safeParse(text(level).toUpperCase());
   if (!parsed.success) return { ok: false as const, error: "That is not a level." };
 
   await recordCourseLevel(ownerId, parsed.data);
@@ -1311,7 +1324,7 @@ export async function createClassroom(name: string) {
 
   const busy = throttleAction(ownerId, "createClassroom");
   if (busy) return busy;
-  const trimmed = name.trim().slice(0, 60);
+  const trimmed = text(name).trim().slice(0, 60);
   if (trimmed.length < 2) return { ok: false as const, error: "Give the class a name." };
 
   let code = "";
@@ -1361,7 +1374,7 @@ export async function joinClassroom(code: string, displayName?: string) {
     return { ok: false as const, error: "No class with that code." };
   }
 
-  const name = displayName?.trim().slice(0, 32) || await resolveDisplayName(ownerId);
+  const name = cleanDisplayName(displayName) || await resolveDisplayName(ownerId);
   if (!name) return { ok: false as const, error: "Pick a name your class will recognise." };
 
   await prisma.classroomMember.upsert({
@@ -1537,12 +1550,36 @@ export async function classworkHistory(classroomId: string) {
   }));
 }
 
+/**
+ * A name a class is going to see, cleaned.
+ *
+ * `trim().slice(0, 32)` was the whole of it, and `String.prototype.trim` does
+ * not remove U+200B: two zero-width spaces are a two-character string that
+ * passes the `!name` check and renders as nothing on the roster, so a member
+ * could sit in a class with no name at all. U+202E is worse, because it
+ * reverses what follows it and can be used to make one pupil's row read as
+ * another's. The roster is the one screen in this app where a stranger's text
+ * is shown to a teacher beside real pupils' names.
+ *
+ * `\p{C}` is every control, format and unassigned code point, which is the
+ * category both of those are in, and NFC first so a name is compared and
+ * stored in one normalisation. At least one letter or digit, because a row
+ * of punctuation is the same "renders as nothing" fault wearing a visible
+ * character.
+ */
+function cleanDisplayName(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const cleaned = value.normalize("NFC").replace(/\p{C}/gu, "").replace(/\s+/g, " ").trim().slice(0, 32);
+  return /[\p{L}\p{N}]/u.test(cleaned) ? cleaned : "";
+}
+
 /** The name to show in a class: their chosen one, else their account's. */
 async function resolveDisplayName(ownerId: string): Promise<string> {
-  const stored = await readSetting(ownerId, SETTING_KEYS.displayName);
-  if (stored?.trim()) return stored.trim().slice(0, 32);
+  const stored = cleanDisplayName(await readSetting(ownerId, SETTING_KEYS.displayName));
+  if (stored) return stored;
   const learner = await currentLearner();
-  return learner.name === "you" ? "A learner" : learner.name.slice(0, 32);
+  const account = cleanDisplayName(learner.name);
+  return !account || learner.name === "you" ? "A learner" : account;
 }
 
 // ─────────────────────────────── Tasks ────────────────────────────────────
@@ -1577,12 +1614,13 @@ export async function toggleTask(id: string) {
  * The passage is never stored. It is somebody's homework, a news article or a
  * private message, and the app has no reason to keep it.
  */
-export async function buildClozeFromText(text: string) {
+export async function buildClozeFromText(passageIn: string) {
   const ownerId = await requireUserId();
+  const raw = text(passageIn);
 
   const busy = throttleAction(ownerId, "buildCloze");
   if (busy) return busy;
-  const passage = text.slice(0, MAX_PASSAGE_CHARS);
+  const passage = raw.slice(0, MAX_PASSAGE_CHARS);
   if (!passage.trim()) return { ok: false as const, error: "Paste some Estonian first." };
 
   // Ordered, because past the cap which of somebody's words could be blanked
@@ -1823,7 +1861,19 @@ export interface RestoreSummary {
 export async function inspectBackup(json: string): Promise<
   { ok: true; summary: RestoreSummary } | { ok: false; error: string }
 > {
-  await requireUserId();
+  const ownerId = await requireUserId();
+
+  /*
+    The restore route limits itself and this is not that route: every export
+    of this file is an endpoint, so a caller can reach the parse directly and
+    the route's allowance says nothing about it. Nothing is written here,
+    which is exactly why it had no limit and exactly why it needed one: a loop
+    of 16 MB bodies is a parse and a zod walk of every row, per request, for
+    free.
+  */
+  const busy = throttleAction(ownerId, "inspectBackup");
+  if (busy) return { ok: false as const, error: busy.error };
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);

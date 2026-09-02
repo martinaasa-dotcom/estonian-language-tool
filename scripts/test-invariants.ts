@@ -4120,6 +4120,48 @@ check("first run is exercised, which means one suite runs before the fixture", (
  * because four checks in this repository's history have been satisfied by
  * prose, one of them mine.
  */
+/**
+ * THE LEDGER IS NEVER WRITTEN BY A PROMISE NOBODY IS HOLDING.
+ *
+ * Every settlement and every release was `void recordUsage(...)` immediately
+ * before the response was returned. The deployment target is Vercel, where a
+ * function may be suspended the moment its response is sent and a pending
+ * promise is not guaranteed to run: a settlement that never lands leaves the
+ * reserve standing, so a free model's call is billed at its estimate for ever,
+ * and a release that never lands rations a learner over a call they did not
+ * receive. `after()` is the platform's own answer, and it is the one thing
+ * here that says "keep this invocation alive until this finishes".
+ *
+ * Read comment-blind, because a paragraph explaining why `void` is wrong would
+ * otherwise satisfy a check looking for it.
+ */
+check("no ledger write is left to a promise the platform may drop", () => {
+  const roots = ["app", "lib"];
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.tsx?$/.test(entry.name) && !/\.(test|itest)\.tsx?$/.test(entry.name)) files.push(full);
+    }
+  };
+  for (const root of roots) walk(root);
+
+  let callers = 0;
+  for (const file of files) {
+    const source = code(file);
+    if (!/\b(recordUsage|releaseReservation)\s*\(/.test(source)) continue;
+    callers += 1;
+    assert.doesNotMatch(
+      source,
+      /\bvoid\s+(recordUsage|releaseReservation)\s*\(/,
+      `${file} leaves a ledger write to an unawaited promise. Wrap it in after() ` +
+      "from next/server, which is what keeps the invocation alive long enough to write it.",
+    );
+  }
+  assert.ok(callers >= 5, `only ${callers} files write to the ledger, so this check stopped looking`);
+});
+
 check("a suite that reveals a review card knows all the shapes it comes in", () => {
   const suites = readdirSync("scripts")
     .filter((f) => f.endsWith(".mjs"))
