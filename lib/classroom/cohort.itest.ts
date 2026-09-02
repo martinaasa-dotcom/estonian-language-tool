@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { classRoster, workplaceRoster } from "./roster";
 
@@ -178,35 +178,66 @@ describe("what it costs", () => {
     await history(JAAN, 60, 4);
 
     /*
-      Counted by spying on the delegates the function actually calls rather
-      than through Prisma's query log, which this client is not built to emit:
-      a listener nothing ever fires would have counted zero both times and this
-      test would have passed while measuring nothing.
+      Counted by wrapping the delegates by hand, and neither of the two
+      obvious ways works here.
+
+      Prisma's query log is the first: this client is built without it
+      (lib/db.ts), so a `$on("query")` listener never fires, and a counter it
+      feeds would have read zero for both halves and made `three === one` true
+      while measuring nothing.
+
+      `vi.spyOn` is the second, and it was what this test shipped with. A
+      delegate is a Proxy whose `getOwnPropertyDescriptor` reports no value for
+      `findMany`, so vitest saves `undefined` as the original and the spy calls
+      through to nothing: `workplaceRoster` got `undefined` back where it
+      expected members and threw. That is a genuinely useful failure, since a
+      spy that quietly returned an empty array instead would have left this
+      counting a function that had stopped doing anything.
+
+      So: capture, wrap, restore. The wrapper obviously calls through, because
+      the call is written here. `prisma.card` and the rest are the same object
+      on every access, which is what makes the patch visible to the code under
+      test, and the restore is in a `finally` because every later suite in this
+      run shares this client.
+
+      The two dictionary reads are deliberately not among the counted ones.
+      They go through `lib/dict/facts.ts`, which holds them for a minute, so
+      the first call here would pay for them and the second would not, and the
+      two halves would differ by two for a reason that has nothing to do with
+      cohort size. They also take no `ownerId`, so they cannot grow with the
+      group even in principle: what this test is for is the reads that could.
     */
-    const spies = [
-      vi.spyOn(prisma.classroomMember, "findMany"),
-      vi.spyOn(prisma.card, "findMany"),
-      vi.spyOn(prisma.lexeme, "findMany"),
-      vi.spyOn(prisma.lexeme, "groupBy"),
-      vi.spyOn(prisma.review, "findMany"),
-      vi.spyOn(prisma.review, "groupBy"),
-      vi.spyOn(prisma.examAttempt, "findMany"),
-      vi.spyOn(prisma.assessment, "findMany"),
-    ];
-    const calls = () => spies.reduce((sum, spy) => sum + spy.mock.calls.length, 0);
+    const patched: { delegate: Record<string, unknown>; method: string; original: unknown }[] = [];
+    let calls = 0;
+    const countCallsTo = (delegate: unknown, method: string) => {
+      const target = delegate as Record<string, unknown>;
+      const original = target[method] as (...args: unknown[]) => unknown;
+      patched.push({ delegate: target, method, original });
+      target[method] = (...args: unknown[]) => {
+        calls++;
+        return original.apply(delegate, args);
+      };
+    };
 
     try {
+      countCallsTo(prisma.classroomMember, "findMany");
+      countCallsTo(prisma.card, "findMany");
+      countCallsTo(prisma.review, "findMany");
+      countCallsTo(prisma.review, "groupBy");
+      countCallsTo(prisma.examAttempt, "findMany");
+      countCallsTo(prisma.assessment, "findMany");
+
       await workplaceRoster(workplaceId, "B1");
-      const three = calls();
+      const three = calls;
       expect(three).toBeGreaterThan(0);
 
-      spies.forEach((spy) => spy.mockClear());
+      calls = 0;
       await prisma.classroomMember.deleteMany({
         where: { classroomId: workplaceId, ownerId: { in: [ANU, JAAN] } },
       });
-      spies.forEach((spy) => spy.mockClear());
+      calls = 0;
       await workplaceRoster(workplaceId, "B1");
-      const one = calls();
+      const one = calls;
 
       /*
         Equal, not merely similar. A loop over members would show three times
@@ -216,7 +247,7 @@ describe("what it costs", () => {
       expect(three).toBe(one);
       expect(three).toBeLessThanOrEqual(10);
     } finally {
-      spies.forEach((spy) => spy.mockRestore());
+      for (const { delegate, method, original } of patched) delegate[method] = original;
     }
   });
 });
