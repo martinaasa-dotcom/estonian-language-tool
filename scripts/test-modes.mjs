@@ -26,8 +26,10 @@ page.on("console", (m) => {
 // Floor: 29, measured in the state CI seeds. A thinner database reads as short.
 // 23 before Sõnad added six, the crossword six more and the game of the day two,
 // then two when the crossword was renamed Ristsõna and both names had to keep
-// reaching it from the palette.
-const { check, absent, done } = suite("Practice modes", { floor: 40 });
+// reaching it from the palette, and four for the picture round. The last two
+// arrived on two branches at once, so the number is measured on the merged tree
+// rather than added from either side: 44.
+const { check, absent, done } = suite("Practice modes", { floor: 44 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -349,6 +351,37 @@ if ((await featured.count()) === 0) {
     modes.some((m) => hrefs.includes(m)));
   check("and says what is on tomorrow",
     (await page.getByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) is /).count()) > 0);
+}
+
+// 6e — Say what you see: a picture, a case, and the ending you actually wrote
+/*
+  The one thing this mode can do that no other screen can: when the ending is
+  wrong it says which ending you wrote, by name. That is worth driving in a
+  browser rather than trusting the unit test, because the sentence is assembled
+  out of three sources (the mechanical mark, the case table, and the form the
+  server revealed) and any of them going missing leaves a grammatical sentence
+  that says nothing.
+*/
+await page.goto(`${B}/review/describe`, { waitUntil: "networkidle" });
+const box = page.locator("#sentence");
+if ((await box.count()) === 0) {
+  absent(4, "no scene at this level: the dictionary has no banded noun with a picture and a stem");
+} else {
+  check("the picture is three characters and none of them is announced as an image",
+    (await page.locator("p [aria-hidden='true']").first().innerText()).trim().split(/\s+/).length === 3);
+  check("and a screen reader is told the same three things in English",
+    (await page.locator(".sr-only").filter({ hasText: /^A picture of/ }).count()) > 0);
+
+  // A sentence with none of the scene's words in it: the mark is certain and
+  // the reveal names what was in the picture.
+  await box.fill("Ma ei tea sellest midagi.");
+  await page.getByRole("button", { name: /Check it/ }).click();
+  await page.waitForTimeout(3500);
+  const verdict = (await page.locator("[aria-live='polite'] p").first().innerText()).replace(/\s+/g, " ");
+  check("a sentence without the word is marked against the dictionary and given the form",
+    /is not in that sentence/.test(verdict) && /The .+ is /.test(verdict));
+  check("and the three words are revealed with their meanings afterwards",
+    (await page.getByText("What was in the picture").count()) > 0);
 }
 
 // 7 — Command palette
