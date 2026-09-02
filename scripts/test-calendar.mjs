@@ -50,15 +50,38 @@ const MON = 1, TUE = 2, WED = 3;
  * safe is a sleep that makes the suite slow on every run; waiting for the thing
  * itself is neither.
  */
-async function until(page, text, present = true) {
+async function until(page, text, present = true, timeout = 10_000) {
   await page.waitForFunction(
     ({ text, present }) => {
       const seen = (document.querySelector("main")?.innerText ?? "").includes(text);
       return seen === present;
     },
     { text, present },
-    { timeout: 10_000 },
+    { timeout },
   ).catch(() => {});
+  return (await page.evaluate(() => document.querySelector("main")?.innerText ?? "")).includes(text) === present;
+}
+
+/**
+ * Waits for the week to show what was just written, and reloads if it will not.
+ *
+ * `until` alone waits on the router refresh that `revalidatePath` triggers, and
+ * that is the fast path: on a warm machine the row appears in about a quarter
+ * of a second. It is not a *reliable* path, and CI proved it. Both calendar
+ * actions revalidate `/` as well as `/calendar`, and Today is forty-odd queries
+ * on the same Postgres this suite is driving; on a loaded runner the refresh
+ * took longer than ten seconds and three checks failed on a reminder that was
+ * in the database and appeared two checks later.
+ *
+ * So the fallback is a plain navigation, which renders `/calendar` and nothing
+ * else and cannot be outrun by a slow revalidate. It is the same move the
+ * removal path already makes and for the same reason. On a good run it never
+ * happens; on a bad one it costs one page load rather than a red suite.
+ */
+async function settle(page, text) {
+  if (await until(page, text)) return;
+  await page.reload({ waitUntil: "networkidle" });
+  await until(page, text);
 }
 
 /**
@@ -148,7 +171,7 @@ check("and says which week it is showing", await page.getByText(/this week/).cou
   );
 
   await page.getByRole("button", { name: /Add it/ }).click();
-  await until(page, "Eesti keel B1");
+  await settle(page, "Eesti keel B1");
 
   const mon = await column(page, MON);
   const tue = await column(page, TUE);
@@ -184,7 +207,7 @@ check("and says which week it is showing", await page.getByText(/this week/).cou
   await page.locator('input[type="date"]').fill(monday);
 
   await page.getByRole("button", { name: /Add it/ }).click();
-  await until(page, "A test reminder");
+  await settle(page, "A test reminder");
 
   const mon = await column(page, MON);
   check("a reminder written here appears on its day", /A test reminder/.test(mon), mon.slice(0, 120));
