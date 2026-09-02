@@ -4,6 +4,7 @@ import { shuffle } from "@/lib/random/shuffle";
 import { EMOJI_LEMMAS, emojiFor } from "@/lib/collections/emoji";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
+import { acceptedAnswers } from "@/lib/estonian/answer";
 import { CASES } from "@/lib/estonian/cases";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -103,6 +104,20 @@ export default async function EmojiPage() {
 
     const spec = CASES.find((c) => c.key === card.targetCase);
     if (!spec) continue;
+
+    /*
+      AND NOT A CARD WHOSE ANSWER SPELLS THE WORD. `lib/srs/cards.ts` stopped
+      building these, but a deck built before it did still holds them: a
+      CASE_FORM card for `liblikas` in the seesütlev carries `liblikas` on its
+      back, and this round's own lead promises the ending. Read off the card
+      rather than rederived, through `acceptedAnswers`, which is the function
+      that decides what counts as that card's answer everywhere else: it
+      splits the parallel forms on the separator the app prints them with and
+      flattens both sides the same way, so the board and the marker cannot
+      disagree about what the card says.
+    */
+    const spelt = new Set(acceptedAnswers(lemma, "et"));
+    if (acceptedAnswers(card.back, "et").some((f) => spelt.has(f))) continue;
 
     usedLemmas.add(lemma);
     usedEmoji.add(emoji);
