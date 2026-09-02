@@ -59,6 +59,7 @@ import { CASES } from "../lib/estonian/cases";
 import { buildCaseTable, caseAnswer, stemsFromParts } from "../lib/estonian/derive";
 import { EXPANDED_PATH, writeExpanded } from "./lib/expandedFile";
 import { isPrincipalFormType } from "../lib/estonian/types";
+import { formatGovernment } from "../lib/ekilex/mapper";
 import type { CaseKey } from "../lib/estonian/types";
 
 const ROOT = path.resolve(__dirname, "..");
@@ -367,6 +368,46 @@ async function main() {
 
   await fillNominativePlural();
   oneValuePerPrincipalPart();
+  nameEveryGovernedCase();
+}
+
+/**
+ * Re-annotates the case each government names, where the table has learned one.
+ *
+ * `formatGovernment` writes `kellena (essive)` beside Ekilex's own question
+ * word, and `parseGovernment` reads the case back out of that bracket: an
+ * unannotated part is a government the drill cannot use. The table of question
+ * words was missing the essive, the terminative and the abessive, so a handful
+ * of entries carry a bare `millena` that now has a name.
+ *
+ * Needs nothing from the network. The annotation is `formatGovernment`'s own
+ * output over the parts already stored, and stripping it recovers those parts
+ * exactly, because `caseOf` refuses any pattern with a space in it and so the
+ * bracket is only ever appended to a single word. A re-format is what a fresh
+ * expansion would write.
+ */
+function nameEveryGovernedCase() {
+  const rows = expanded as { lemma: string; government?: string | null }[];
+  const changed: string[] = [];
+  for (const e of rows) {
+    if (!e.government) continue;
+    const parts = e.government.split("·").map((p) => p.trim()).filter(Boolean);
+    const bare = parts.map((p) => p.replace(/\s*\([a-z]+\)$/, ""));
+    const rewritten = formatGovernment(bare);
+    if (!rewritten || rewritten === e.government) continue;
+    changed.push(`${e.lemma}: ${e.government}  ->  ${rewritten}`);
+    if (WRITE) e.government = rewritten;
+  }
+
+  console.log(`\nGovernment: ${changed.length} entries name a case the table has since learned.`);
+  if (changed.length === 0) return;
+  for (const line of changed.slice(0, 20)) console.log(`  ${line}`);
+  if (!WRITE) {
+    console.log("Re-run with --write to store them.");
+    return;
+  }
+  writeExpanded(rows);
+  console.log(`Re-annotated ${changed.length} governments in ${EXPANDED_PATH}.`);
 }
 
 /**

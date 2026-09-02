@@ -19996,7 +19996,7 @@
   "cefr": "A1",
   "gradation": "NONE",
   "gradationNote": null,
-  "government": "kus (location) · kellena",
+  "government": "kus (location) · kellena (essive)",
   "notes": null,
   "examples": [
    {
@@ -62227,7 +62227,7 @@
   "cefr": "B1",
   "gradation": "NONE",
   "gradationNote": null,
-  "government": "keda* (partitive) · kellele (allative) · kellena",
+  "government": "keda* (partitive) · kellele (allative) · kellena (essive)",
   "notes": "to submit, to provide; to nominate; to perform",
   "examples": [
    {
@@ -129889,7 +129889,7 @@
   "cefr": "B2",
   "gradation": "NONE",
   "gradationNote": null,
-  "government": "mida/keda* (partitive) · millena/kellena · mida* (partitive)",
+  "government": "mida/keda* (partitive) · millena/kellena (essive) · mida* (partitive)",
   "notes": "to apply, to implement",
   "examples": [
    {
@@ -156733,7 +156733,7 @@
   "cefr": "B2",
   "gradation": "NONE",
   "gradationNote": null,
-  "government": "milleni · mida tegema · kuhu (direction)",
+  "government": "milleni (terminative) · mida tegema · kuhu (direction)",
   "notes": "to date back",
   "examples": [
    {

@@ -1277,6 +1277,21 @@ watching them at all, `test-restore.mjs` among them. The source of truth is the 
 `scripts/lib/suites.mjs` with a written reason. Two are, and both are facts about the route rather
 than about anybody's schedule.
 
+**A browser refusing to autoplay is a fact about the gesture, and one module knows it.** Every
+browser blocks `HTMLAudioElement.play()` on a page the reader has not touched yet and rejects it
+with a `NotAllowedError`: the clip is in hand, the service answered, and the same call on a press is
+allowed. `components/Speak.tsx` knew that and said so in a comment. The minimal-pairs round kept its
+own copy of those three lines and did not: it wrapped the fetch and the play in one `try` and set a
+state that replaces the whole drill with "No audio, no drill. It runs on TartuNLP and needs a
+connection." That round autoplays on mount, which is the no-gesture case by construction, so on
+every phone and every Safari a learner who opened it was told their connection was the problem,
+handed a button back to Today, and never shown the 80px play button sitting behind that screen which
+would have worked. A failure may not misname its cause, and this one sent people to check their wifi
+about a browser policy. `playClip` in `lib/audio/clip.ts` is the one answer, `blocked` means ask for
+a press, and nothing else in the app may call `new Audio(...).play()`; `components/Recorder.tsx` is
+exempt by name, because it plays the learner's own recording from a blob it already holds, on a
+click.
+
 **A word is heard as often as it is met, and the voice is the learner's to choose.** Speech
 used to arrive on a button press only, in one voice chosen by whoever deployed the app, which on
 the daily path meant a learner clicking a speaker icon on every card or hearing nothing. A card
@@ -2471,6 +2486,24 @@ governed verbs in the shipped dictionary name more than one case: `aitama` is `k
 the elative and was marked wrong, and `alustama` governs three and could be shown two of them at
 once. Government is the one thing an English speaker cannot reason out, so a drill that marks them
 wrong for being right is the drill teaching them to ignore it.
+
+**And the table of question words was missing three cases, so three governments could not be read at
+all.** Ekilex records a government as the question word a verb answers and `formatGovernment` names
+the case beside it, which is what `parseGovernment` reads. That table was typed and had eleven of
+the fourteen: essive, terminative and abessive had no row, so `kellena`, `kelleni` and `kelleta`
+came back unannotated and the entry parsed to no case. `töötama kellena`, which is how you say what
+you do for a living, had no government card; and `esitama` and `käsitama` govern the essive *beside*
+the partitive, so the drill could offer it as a wrong answer and mark a learner wrong for knowing
+it, which is the fault the paragraph above exists to prevent, arriving through a gap in a table
+rather than through the parser. It is read off `CASES` now, which already holds the question a case
+answers, so a case cannot be missing and the fourteenth would be covered by arriving.
+
+Reading it back out has one trap and it was walked into on the first attempt. `kus` is the question
+for the seesütlev *and* the alalütlev, and `kuhu` for the sisseütlev *and* the alaleütlev, so both
+appear in two rows and a loop that wrote them down leaves whichever it read last. The harvest's diff
+had `kus (adessive)` in it: a verb Ekilex records as taking a place would have been drilled as
+governing one particular case, which is inventing a government. The three adverbial questions keep
+the labels that name no case, and the loop does not overwrite them.
 
 `buildOptions` takes the parsed `Government` rather than a case key, which is what makes that
 unforgettable: the type cannot be satisfied by a caller holding only the answer, so a fifth drill

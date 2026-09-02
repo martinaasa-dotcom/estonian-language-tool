@@ -27,6 +27,7 @@ import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
+import { formatGovernment } from "../lib/ekilex/mapper";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
@@ -45,7 +46,26 @@ let checks = 0;
 function check(label: string, run: () => void) {
   checks += 1;
   try {
-    run();
+    /*
+      A CHECK THAT RETURNS A PROMISE IS A CHECK THAT CANNOT FAIL.
+
+      Nothing here is awaited, so an `async` body runs its assertions after this
+      `try` has already printed PASS, and the rejection lands as an unhandled
+      one that never reaches the tally. Written once, by accident, reaching for
+      a dynamic `import`: the check passed, and passed again with the thing it
+      was checking deliberately broken, which is the only reason it was noticed.
+
+      The suite's whole argument is that a check nobody has made fail once is a
+      check nobody knows the state of. This is the shape that makes that
+      impossible to tell by reading, so it is refused rather than documented.
+    */
+    const result = run() as unknown;
+    if (result && typeof (result as { then?: unknown }).then === "function") {
+      throw new Error(
+        "this check is async, so its assertions run after the suite has already "
+          + "counted it as passing. Import what it needs at the top of the file.",
+      );
+    }
     console.log(`PASS  ${label}`);
   } catch (error) {
     failures += 1;
@@ -349,6 +369,80 @@ check("no browser suite finds a field by a placeholder another field shares", ()
   three were a kind of task no deployment can produce, drawn in the fixture that
   every screenshot and every browser suite is measured in.
 */
+/*
+  ONE PLACE PLAYS A CLIP, BECAUSE ONE PLACE KNOWS WHAT A REFUSAL MEANS.
+
+  Every browser blocks `HTMLAudioElement.play()` on a page nobody has touched
+  yet and rejects it with a `NotAllowedError`. The clip is in hand and the
+  service answered: it is a fact about the gesture. `components/Speak.tsx` knew
+  that and said so in a comment; the minimal-pairs round kept its own copy of
+  the same three lines and did not, wrapping the fetch and the play in one
+  `try` and setting a state that replaces the whole drill with "No audio, no
+  drill. It runs on TartuNLP and needs a connection." That round autoplays on
+  mount, which is the no-gesture case by construction, so on every phone and
+  every Safari a learner opening it was told their connection was the problem
+  and never shown the 80px play button behind that screen.
+
+  `playClip` is the one answer. `components/Recorder.tsx` is exempt by name: it
+  plays back the learner's own recording, from a blob it already holds, on a
+  click, so there is no clip to fetch and no autoplay to be refused.
+*/
+/*
+  EVERY CASE A GOVERNMENT CAN NAME IS A CASE THE TABLE KNOWS.
+
+  Ekilex records a verb's government as the question word it answers, and
+  `formatGovernment` names the case beside it so `parseGovernment` can read one
+  out. The table of question words was typed and was missing three of the
+  fourteen: essive, terminative and abessive. So `kellena` was left unannotated,
+  the entry parsed to no case at all, and `töötama` had no government card even
+  though "to work as" is a first-year sentence. Worse, `esitama` and `käsitama`
+  govern the essive *beside* the partitive, so the drill could offer it as a
+  wrong answer and mark a learner wrong for knowing it, which is the exact
+  fault `alsoGoverned` was built to prevent, arriving through a gap in a table.
+
+  It is read off `CASES` now, so a case cannot be missing. This checks the
+  coverage rather than the code, because the point is the answer.
+*/
+check("every case a government can name is one the table knows", () => {
+  const unread: string[] = [];
+  for (const spec of CASES) {
+    if (spec.key === "NOMINATIVE") continue; // Nothing governs it.
+    // The question a class asks for this case, which is how Ekilex writes a
+    // government. If the table knows it, the round trip names the case.
+    const asked = spec.question.split(/\s+/)[0]!.replace(/\?/g, "");
+    const parsed = parseGovernment(formatGovernment([asked]));
+    if (parsed?.caseKey !== spec.key) {
+      unread.push(`${spec.key}: "${asked}" reads as ${parsed?.caseKey ?? "no case"}`);
+    }
+  }
+  assert.deepEqual(
+    unread,
+    [],
+    "a case the app teaches cannot be read back out of a government written the "
+      + "way Ekilex writes one, so a verb governing it has no card and can be "
+      + "offered as a wrong answer",
+  );
+});
+
+check("nothing plays a clip outside lib/audio/clip.ts", () => {
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== join("lib", "audio", "clip.ts"))
+    .filter((file) => file !== join("components", "Recorder.tsx"))
+    .filter((file) => /new Audio\([^)]*\)\s*\.play\(|new Audio\(/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "a clip is played outside `playClip`, so that caller decides for itself "
+      + "whether a browser refusing to autoplay is a missing speech service",
+  );
+  assert.match(
+    code(join("lib", "audio", "clip.ts")),
+    /NotAllowedError/,
+    "playClip stopped telling a blocked autoplay from a real failure",
+  );
+});
+
 check("a task's kind is the same set wherever it is written down", () => {
   const table = code("lib/ux/agenda.ts");
   const declared = [...table.matchAll(/^  ([A-Z_]+): "/gm)].map((m) => m[1] as string);

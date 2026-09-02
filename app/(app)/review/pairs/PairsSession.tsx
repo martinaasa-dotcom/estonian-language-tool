@@ -7,7 +7,7 @@ import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
-import { fetchClip } from "@/lib/audio/clip";
+import { playClip } from "@/lib/audio/clip";
 import { useAudioPrefs } from "@/components/AudioPrefs";
 
 export interface PairQuestion {
@@ -45,6 +45,13 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   const [correct, setCorrect] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [audioFailed, setAudioFailed] = useState(false);
+  /*
+    The browser would not autoplay, which is a fact about the gesture and not
+    about the audio. Separate from `audioFailed` because the two want opposite
+    screens: one is "there is nothing to hear", the other is "press the button
+    that is already on this page".
+  */
+  const [needsPress, setNeedsPress] = useState(false);
   const startedAt = useRef(Date.now());
 
   const question = questions[index];
@@ -52,7 +59,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   const revealed = picked !== null;
 
   const { voice } = useAudioPrefs();
-  const play = useCallback(async (text: string, slow = false) => {
+  const play = useCallback(async (text: string, slow = false, unasked = false) => {
     try {
       setPlaying(true);
       /*
@@ -62,8 +69,8 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
         words a minute and every one of them stayed. `fetchClip` is the one
         reader of that cache and the one place the key is built.
       */
-      const url = await fetchClip({ text, slow, voice });
-      await new Audio(url).play();
+      const outcome = await playClip({ text, slow, voice }, { unasked });
+      setNeedsPress(outcome === "blocked");
     } catch {
       setAudioFailed(true);
     } finally {
@@ -71,11 +78,19 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
     }
   }, [voice]);
 
-  // Play as soon as the question appears: this is a listening drill, and making
-  // someone press play before every item is friction with no purpose.
+  /*
+    Play as soon as the question appears: this is a listening drill, and making
+    someone press play before every item is friction with no purpose.
+
+    `unasked` is what stops that being the end of the drill. Every browser
+    refuses a gesture-less `play()` and every phone is that case on arrival, so
+    this call catching it as a failure replaced the whole round with a screen
+    blaming the connection, on the platform this app is measured on. It asks
+    for a press instead, on the button that was already there.
+  */
   useEffect(() => {
     if (!question) return;
-    void play(question.heard);
+    void play(question.heard, false, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
 
@@ -192,7 +207,11 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             type="button"
             onClick={() => void play(question.heard)}
             disabled={playing}
-            aria-label="Play again"
+            // The same correction as the hint below, and the one that matters
+            // more: a screen reader announces this button and nothing else on
+            // the card, so "Play again" before anything has played is the only
+            // thing that reader is told.
+            aria-label={needsPress ? "Play the word" : "Play again"}
             className="press flex h-20 w-20 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0"
             style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
           >
@@ -201,7 +220,9 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
               : <Volume2 size={30} aria-hidden />}
           </button>
           <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-            Play again <kbd>R</kbd> · or hear it{" "}
+            {/* "Play again" is a lie before anything has played, which is
+                every arrival on a browser that blocks autoplay. */}
+            {needsPress ? "Tap to hear it" : "Play again"} <kbd>R</kbd> · or hear it{" "}
             <span className="inline-flex items-center align-middle">
               <Speak text={question.heard} slow label="Hear it slowly" />
             </span>{" "}

@@ -1,3 +1,4 @@
+import { CASES } from "@/lib/estonian/cases";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import { usableExamples, type Example } from "@/lib/dict/examples";
 import type { EkilexDetails } from "./client";
@@ -38,19 +39,61 @@ const FORM_ORDER = [
 ];
 
 /** Estonian question words → the case they signal, for verb government. */
-const GOVERNMENT_CASES: Record<string, string> = {
-  mida: "partitive", keda: "partitive",
-  mille: "genitive", kelle: "genitive",
-  millele: "allative", kellele: "allative",
-  millel: "adessive", kellel: "adessive",
-  millelt: "ablative", kellelt: "ablative",
-  milles: "inessive", kelles: "inessive",
-  millest: "elative", kellest: "elative",
-  millesse: "illative", kellesse: "illative",
-  milleks: "translative", kelleks: "translative",
-  millega: "comitative", kellega: "comitative",
-  kus: "location", kuhu: "direction", kust: "source",
-};
+/**
+ * Which case each question word Ekilex writes a government as signals.
+ *
+ * READ OFF `CASES`, NOT TYPED, because the typed version was missing three.
+ * Essive, terminative and abessive had no row, so `caseOf` returned null for
+ * `kellena`, `kelleni` and `kelleta`, `formatGovernment` left them unannotated
+ * and `parseGovernment` could then read no case out of the entry at all.
+ * `töötama kellena`, which is how you say what you do for a living, had no
+ * government card; and `esitama` and `käsitama` govern the essive beside the
+ * partitive, so the drill could offer it as a wrong answer and mark a learner
+ * wrong for knowing it. That is the exact fault `alsoGoverned` exists to
+ * prevent, arriving through a gap in a table rather than through the parser.
+ *
+ * `lib/estonian/cases.ts` already holds the question a case answers, which is
+ * the `mille-` word, so nothing here is written down twice. The `kelle-` form
+ * is the same word for the other interrogative pronoun: `mis` and `kes`
+ * decline alike in every oblique case, which `npm run audit:cases` confirms
+ * against the Institute for both of them. So one substitution, on an attested
+ * word, rather than an ending joined to a stem.
+ *
+ * The three adverbial questions are named as what they are. Ekilex writes
+ * `kus`, `kuhu` and `kust` where a verb takes a place rather than a case, and
+ * each covers several: naming one would be inventing a government, so they are
+ * annotated for a reader and left unparseable, which is `parseGovernment`
+ * returning null and the drill skipping the verb.
+ */
+const GOVERNMENT_CASES: Record<string, string> = (() => {
+  /*
+    The three that name a place rather than a case, and which the loop below
+    must not touch. `kus` is the question for the inessive *and* the adessive
+    and `kuhu` for the illative *and* the allative, so both appear in two rows
+    of `CASES` and a loop that wrote them down would leave whichever it read
+    last: `kus` read as adessive, and a verb Ekilex records as taking a place
+    would have been drilled as governing one particular case. That is inventing
+    a government, which is what the old typed table's comment forbade and what
+    reading the table back out of `CASES` nearly undid.
+  */
+  const table: Record<string, string> = {
+    kus: "location", kuhu: "direction", kust: "source",
+  };
+  for (const spec of CASES) {
+    if (spec.key === "NOMINATIVE") continue; // Nothing governs it.
+    for (const asked of spec.question.split(/\s+/)) {
+      const word = asked.replace(/\?/g, "").trim().toLowerCase();
+      if (!word || word in table) continue;
+      table[word] = spec.en.toLowerCase();
+      // `mille` and `kelle` are the same case of two pronouns. `cases.ts`
+      // writes whichever reads better in a heading; a government can use
+      // either, and `keda` is the one it uses most.
+      if (word.startsWith("mille")) table[`kelle${word.slice("mille".length)}`] = spec.en.toLowerCase();
+      if (word === "mida") table.keda = spec.en.toLowerCase();
+    }
+  }
+  return table;
+})();
 
 export interface MappedForm {
   formType: string;
