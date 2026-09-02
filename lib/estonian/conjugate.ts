@@ -94,6 +94,40 @@ const IRREGULAR_PRESENT: ReadonlySet<string> = new Set(["olema"]);
 const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema", "pidama"]);
 
 /**
+ * Every slot of the verb a learner is shown on an entry or asked on a card.
+ *
+ * The union of what `conjugatedForms` prints and what `CONJUGATION_SLOTS`
+ * asks, which is the same question from two directions: what has to come from
+ * somewhere. `IndIpfSg1` is the stored past first person, and `IndIpfSg3` is
+ * the one slot in this list no rule reaches for any verb in the language.
+ */
+export const VERB_SLOTS: readonly string[] = [
+  "IndPrSg1", "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",
+  "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3", "ImpPrSg2",
+  "IndIpfSg1", "IndIpfSg3",
+];
+
+/**
+ * The slots the rule cannot fill for this verb, so the dictionary has to.
+ *
+ * Asked of the rule itself rather than listed beside it, because a list of
+ * exceptions kept next to the exceptions is two copies of one fact. What comes
+ * back is `IndIpfSg3` for every verb, since the simple past is never derived
+ * and may not be; the whole present for `olema`, whose third person is `on`;
+ * and the imperative for `minema`, which says `mine`. `pidama` has no
+ * imperative at all and Ekilex records none, so asking for it costs nothing
+ * and stores nothing, which is the right shape for a form that does not exist.
+ *
+ * `IndIpfSg1` is excluded because it is a principal part the dictionary already
+ * holds under its own name, not because the rule reaches it.
+ */
+export function unreachableSlots(verb: VerbStems): readonly string[] {
+  const reached = new Set(derivedVerbForms(verb).map((f) => f.morphCode as string));
+  reached.add("IndIpfSg1");
+  return VERB_SLOTS.filter((code) => !reached.has(code));
+}
+
+/**
  * The first persons a written verb form could have been derived from.
  *
  * THE DICTIONARY KNEW `helistab` AND COULD NOT FIND IT.

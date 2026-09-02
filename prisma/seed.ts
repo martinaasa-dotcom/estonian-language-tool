@@ -153,7 +153,25 @@ async function main() {
       gradationNote: gradation.note ?? null,
       government: word.government,
       examples: JSON.stringify(word.usages.map((et) => ({ et, source: "EKILEX" }))),
-      forms: forms(p),
+      /*
+        The principal parts, and beside them the whole forms no rule of this
+        app reaches: the simple past third person of every verb, the present of
+        `olema`, `pole`, the imperative of `minema`, and the short forms of
+        every pronoun and numeral. `EKILEX:<code>` is the spelling `stemsFrom`,
+        `conjugatedForms` and `conjugationAnswer` already read for a retrieved
+        form, so nothing downstream had to learn a new shape, and `Form`'s
+        unique key is (lexeme, formType, value), so `minule` and `mulle` sit
+        beside each other under one code rather than one overwriting the other.
+
+        They are written as principal, like everything else the seed writes,
+        and that is deliberate: `runEnrich` reads a non-principal form as "this
+        entry has already been enriched", so a seed writing one would strand
+        every reseeded word half-upgraded. See the note on that query.
+      */
+      forms: [
+        ...forms(p),
+        ...word.extraForms.map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+      ],
     });
   }
 

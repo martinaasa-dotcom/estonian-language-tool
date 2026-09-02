@@ -112,6 +112,18 @@ export function conjugatedForms(
     const code = f.morphCode ?? (f.formType.startsWith("EKILEX:") ? f.formType.slice(7) : null);
     if (code && !attested.has(code)) attested.set(code, f.value);
   }
+  /*
+    The present first person is a principal part, so the seed writes it under
+    its own name rather than under Ekilex's code, and the loop above cannot see
+    it. Nothing noticed while every verb whose first person we hold also had a
+    rule to derive the rest from, because that rule hands back the first person
+    too, marked STORED. `olema` is the verb the rule refuses, and the moment the
+    dictionary could answer the other five persons for it the table printed them
+    and started at `oled`: the forms of the commonest verb in the language with
+    a hole exactly where the headword should be.
+  */
+  const firstPersonIsPrincipal = !attested.has("IndPrSg1");
+  if (firstPersonIsPrincipal) attested.set("IndPrSg1", pres1sg);
   const derived = new Map(
     derivedVerbForms({ lemma, pres1sg }).map((f) => [f.morphCode, f] as const),
   );
@@ -120,7 +132,10 @@ export function conjugatedForms(
   for (const code of CODES) {
     const fromEkilex = attested.get(code);
     if (fromEkilex) {
-      out.push({ code, value: fromEkilex, origin: "EKILEX" });
+      // The principal part is STORED wherever it comes from, so the provenance
+      // a reader sees for `olen` is the one they see for `loen`.
+      const principal = code === "IndPrSg1" && firstPersonIsPrincipal;
+      out.push({ code, value: fromEkilex, origin: principal ? "STORED" : "EKILEX" });
       continue;
     }
     const rule = derived.get(code);

@@ -35,6 +35,8 @@ import { fetchEkilexDetails, searchEkilex } from "../lib/ekilex/client";
 import { mapEkilexDetails } from "../lib/ekilex/mapper";
 import { extractEstonianEntries, type EstonianSense } from "../lib/dict/wiktionary";
 import { resolvePos } from "../lib/dict/pos";
+import { unreachableSlots } from "../lib/estonian/conjugate";
+import { unreachableCaseForms } from "../lib/estonian/derive";
 
 const CACHE = "prisma/data/.cache/expand.jsonl";
 const CATEGORY_CACHE = "prisma/data/.cache/categories.json";
@@ -200,6 +202,43 @@ function cache(lemma: string, entry: ExpandedEntry | null): void {
 }
 
 /**
+ * The forms an entry has to store because no rule of this app produces them.
+ *
+ * Asked of the rules themselves, exactly as the course harvest asks them, so
+ * that "underivable" means one thing in both files.
+ */
+function unreachableForms(
+  mapped: { pos: string; forms: readonly { formType: string; value: string; morphCode: string | null }[] },
+): { formType: string; value: string }[] {
+  const byCode = new Map<string, string[]>();
+  for (const f of mapped.forms) {
+    if (!f.morphCode) continue;
+    const seen = byCode.get(f.morphCode) ?? [];
+    if (!seen.includes(f.value)) seen.push(f.value);
+    byCode.set(f.morphCode, seen);
+  }
+  const parts: Record<string, string> = {};
+  for (const f of mapped.forms) if (!f.formType.startsWith("EKILEX:")) parts[f.formType] = f.value;
+  const lemma = parts.NOM_SG ?? parts.INF_MA ?? "";
+
+  const out: { formType: string; value: string }[] = [];
+  if (mapped.pos === "VERB") {
+    if (!parts.PRES_1SG) return out;
+    for (const code of unreachableSlots({ lemma, pres1sg: parts.PRES_1SG })) {
+      const value = byCode.get(code)?.[0];
+      if (value && !Object.values(parts).includes(value)) out.push({ formType: `EKILEX:${code}`, value });
+    }
+    const negative = byCode.get("IndPrPsN")?.[0];
+    if (negative) out.push({ formType: "EKILEX:IndPrPsN", value: negative });
+    return out;
+  }
+  for (const [code, values] of Object.entries(unreachableCaseForms(lemma, parts, byCode))) {
+    for (const value of values) out.push({ formType: `EKILEX:${code}`, value });
+  }
+  return out;
+}
+
+/**
  * One candidate, from two sources.
  *
  * Returns null whenever either side is missing or incomplete. A word with no
@@ -256,7 +295,28 @@ async function build(lemma: string, pos: string): Promise<ExpandedEntry | null> 
     government: mapped.government,
     notes: senses.length > 1 ? senses.slice(1, 4).map((s) => s.gloss).join("; ") : null,
     examples: mapped.examples.slice(0, 3).map((e) => ({ et: e.et, en: e.en ?? null })),
-    forms: principal.map((f) => ({ formType: f.formType, value: f.value })),
+    /*
+      The principal parts, and the whole forms no rule of this app reaches.
+
+      The second half is what `scripts/harvest-ekilex.ts` does for the course
+      and this did not, so a verb in the built expansion could not answer
+      `lihtminevik · ta`: the simple past third person is not derivable from
+      the first for any verb in the language, and nothing else in the entry
+      says it. The rules are asked what they miss rather than told, which is
+      the same call the harvest makes, so the two files cannot drift on what
+      counts as underivable.
+
+      THE SHIPPED `expanded.json` PREDATES THIS. It is a build product of a run
+      that fetches every entry from two sources, so it carries what the run
+      that made it captured, and this reaches it on the next one. The course
+      harvest is where every verb a unit teaches comes from and it has them
+      now, so what is outstanding is a verb somebody adds to their deck by
+      hand on a deployment with no Ekilex key.
+    */
+    forms: [
+      ...principal.map((f) => ({ formType: f.formType, value: f.value })),
+      ...unreachableForms(mapped),
+    ],
     ekilexWordId: exact.wordId,
   };
 }

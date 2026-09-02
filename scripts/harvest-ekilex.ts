@@ -37,6 +37,8 @@ import { courseWords, type CourseWord } from "../lib/collections/syllabus/index"
 import { RETIRED_WORDS } from "../lib/collections/syllabus/retired";
 import { inferPos } from "../lib/collections/syllabus/types";
 import { formatGovernment } from "../lib/ekilex/mapper";
+import { unreachableSlots } from "../lib/estonian/conjugate";
+import { unreachableCaseForms } from "../lib/estonian/derive";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = path.join(ROOT, ".ekilex-cache");
@@ -173,6 +175,26 @@ function formMap(formSet: RawFormSet): Map<string, string> {
   return map;
 }
 
+/**
+ * The same, keeping every value rather than the first.
+ *
+ * Estonian has genuine parallel forms and a principal part wants one of them,
+ * so `formMap` taking the first is right for what it is used for. It is wrong
+ * for the question below, which is what the dictionary has to store because no
+ * rule reaches it: Ekilex records the allative of `mina` as `minule` and
+ * `mulle` under one code, and the second is the one anybody says.
+ */
+function allForms(formSet: RawFormSet): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const f of formSet.forms ?? []) {
+    if (!f.value || f.value === "-" || !f.morphCode) continue;
+    const seen = map.get(f.morphCode) ?? [];
+    if (!seen.includes(f.value)) seen.push(f.value);
+    map.set(f.morphCode, seen);
+  }
+  return map;
+}
+
 const isVerbFormSet = (p: RawFormSet) =>
   (p.wordClass ?? "").toLowerCase() === "verb" || (p.forms ?? []).some((f) => f.morphCode === "Sup");
 
@@ -289,6 +311,8 @@ interface Harvested {
   /** What Ekilex calls it, beside what this course calls it. See HarvestedWord. */
   ekilexPos: string[];
   parts: Record<string, string>;
+  /** Whole forms Ekilex recorded that no rule reaches. See HarvestedWord. */
+  extraForms: { code: string; value: string }[];
   cefr: string | null;
   government: string | null;
   usages: string[];
@@ -349,6 +373,17 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       the sense the seed stores them, so it is kept the way an adverb is: real
       because Ekilex has it, with its sentences and level, and no forms to get
       wrong. Its case table arrives with the first enrichment.
+
+      WHAT IT DOES NOT ARRIVE WITHOUT ANY MORE IS ITS FORMS. Ekilex records a
+      full set of plural forms for these words, `meie` beside `me`, `nemad` beside
+      `nad`, `nendel` beside `neil`, and the seed threw all of it away because
+      the shape it stores is built round a singular. Nothing derives any of it:
+      there is no genitive stem to put an ending on, so the rule reaches
+      exactly none of these and the test the other branch applies would keep
+      every one. `me`, `te`, `nad` and `neil` are among the commonest words in
+      the attested corpus that this dictionary could not vouch for, which is
+      how they were found. An adverb has no forms at all and so stores
+      nothing, which is the same rule giving the right answer twice.
     */
     const first = candidates[0];
     if (!first) return { lemma, gloss, pos, error: "not in Ekilex" };
@@ -380,11 +415,19 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
 
     const detail = await details(first.wordId);
     const extra = extractLexemeData(detail);
+    const formless = pickFormSet(detail, false);
     return {
       lemma, gloss, pos,
       ekilexWordId: first.wordId,
       ekilexPos: extra.ekilexPos,
       parts: {},
+      extraForms: formless
+        ? [...allForms(formless)]
+          // An indeclinable word's one recorded form is itself, under Ekilex's
+          // `ID` code. Storing it says nothing the lemma did not already say.
+          .filter(([, values]) => values.some((v) => v !== lemma))
+          .flatMap(([code, values]) => values.map((value) => ({ code, value })))
+        : [],
       cefr: extra.cefr,
       government: null,
       usages: extra.usages,
@@ -414,6 +457,57 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
     if (required.some((r) => !parts[r])) continue;
 
     /*
+      AND THE FORMS NO RULE REACHES, WHICH THE DICTIONARY HAS TO HOLD.
+
+      ADR-005 amendment 1 lets a deterministic rule build a form off a stored
+      one, and the rules are real: ten case endings on a genitive stem, six
+      persons on a stored first person. What they are not is complete, and a
+      deployment without an Ekilex key has nothing else. `olema` showed `olen`
+      and stopped, so the commonest verb in the language could not answer
+      `olevik · ta`; no verb at all could answer `lihtminevik · ta`, because
+      the simple past is not derivable and may not be; and every pronoun's
+      short case forms, which is what an Estonian sentence is actually made of,
+      were absent, so the pronoun unit shipped with no case cards rather than
+      teach `minule` and mark `mulle` wrong.
+
+      The rules are asked which slots they miss rather than told: a list of
+      exceptions kept beside the exceptions is two copies of one fact, and this
+      one would go stale silently. Stored under `EKILEX:<code>`, which is the
+      spelling `conjugatedForms`, `stemsFrom` and `conjugationAnswer` already
+      read for a form the seed retrieved, so nothing downstream had to learn a
+      new shape.
+
+      They stay `isPrincipal` on the way into the database, which the seed
+      decides and this only has to not break: `runEnrich` reads a non-principal
+      form as "this entry has been enriched", so a seed writing one would strand
+      every reseeded word half-upgraded. See the note on `runEnrich`.
+    */
+    const recorded = allForms(formSet);
+    const extraForms: { code: string; value: string }[] = [];
+    // A form the entry can already say is not worth a second row: `olema`
+    // reports its whole present as unreachable, first person included, and the
+    // first person is `PRES_1SG` sitting in `parts`.
+    const held = new Set([lemma, ...Object.values(parts)]);
+    if (wantVerb) {
+      for (const code of unreachableSlots({ lemma: word.lemma, pres1sg: parts.PRES_1SG })) {
+        const value = recorded.get(code)?.[0];
+        if (value && !held.has(value)) extraForms.push({ code, value });
+      }
+      /*
+        `pole`. A negative with a stem of its own rather than `ei` plus the
+        verb's, and one word in the whole course has one, which is why it is
+        named here rather than derived from anything: Ekilex records `IndPrPsN`
+        for `olema` and for nothing else the syllabus asks about.
+      */
+      const negative = recorded.get("IndPrPsN")?.[0];
+      if (negative) extraForms.push({ code: "IndPrPsN", value: negative });
+    } else {
+      for (const [code, values] of Object.entries(unreachableCaseForms(lemma, parts, recorded))) {
+        for (const value of values) extraForms.push({ code, value });
+      }
+    }
+
+    /*
       UNPINNED AND AMBIGUOUS IS REPORTED, LOUDLY, AND STILL HARVESTED.
 
       Dropping it was the first answer and it is the wrong one: 87 course
@@ -441,6 +535,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       ekilexWordId: candidate.wordId,
       ekilexPos: extra.ekilexPos,
       parts,
+      extraForms,
       cefr: extra.cefr,
       government: wantVerb ? formatGovernment(extra.governments) : null,
       usages: extra.usages,
@@ -514,6 +609,22 @@ export interface HarvestedWord {
   ekilexPos: string[];
   /** Principal parts by formType. Unpredictable forms only. */
   parts: Record<string, string>;
+  /**
+   * Whole forms a lexicographer recorded that no rule of this app reaches.
+   *
+   * Beside parts rather than inside it, because a case can have two of them
+   * and a Record can hold one: Ekilex gives the allative of mina as minule
+   * and mulle, and Form's own unique key is (lexeme, formType, value) for
+   * exactly that reason. The seed writes each as EKILEX:code, which is the
+   * spelling the app already reads for a retrieved form.
+   *
+   * What is in here is decided by asking the rules what they miss, never by a
+   * list: unreachableSlots for a verb and unreachableCaseForms for a nominal.
+   * So it is the simple past third person for every verb, the present of
+   * olema, the imperative of minema, pole, and the short forms of every
+   * pronoun and numeral. A regular noun has none.
+   */
+  extraForms: { code: string; value: string }[];
   /** The case the verb demands of its complement, as Ekilex words it. */
   government: string | null;
   /** Attested sentences. Never generated, only ever hidden or reordered. */
@@ -543,6 +654,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
       `    ekilexWordId: ${r.ekilexWordId},`,
       `    ekilexPos: [${r.ekilexPos.map(q).join(", ")}],`,
       `    parts: { ${parts} },`,
+      `    extraForms: [${r.extraForms.map((f) => `{ code: ${q(f.code)}, value: ${q(f.value)} }`).join(", ")}],`,
       `    government: ${r.government ? q(r.government) : "null"},`,
       `    usages: [${usages}],`,
       `    note: ${r.note ? q(r.note) : "null"},`,

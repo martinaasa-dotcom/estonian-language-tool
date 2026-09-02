@@ -565,11 +565,19 @@ export const A1 = [
     canDo: "Say I, you, he, we and they, point at this and that, and put each in the case the sentence needs.",
     blurb: "Six persons and a pointer. They decline like nouns, and the short forms are what you hear.",
     grammar: ["nominative", "genitive", "partitive"],
-    // No case cards from the seed alone: a pronoun's everyday case forms are
-    // the short ones (`mulle`, `mul`), which no rule over the genitive reaches,
-    // and a card answering `minule` would mark the form everybody says wrong.
-    // Ekilex records both, so an enriched entry shows the pair on its table.
-    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
+    /*
+      Case cards, at last, and the reason they were absent is worth keeping.
+      A pronoun's everyday case forms are the short ones, `mulle` and `mul`,
+      which no rule over the genitive reaches, so a card built from the rule
+      answered `minule` and marked the form everybody says wrong. Withholding
+      the cards was the honest stopgap while that was true.
+
+      The dictionary holds both now: Ekilex records them under one code and the
+      harvest stores what no rule reaches, so `caseAnswer` returns the pair and
+      the card carries both answers on its back. `mina → kellele?` takes
+      `mulle` and takes `minule`.
+    */
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["inimesed"],
     words: [
       ["mina", "I", "PRONOUN"],

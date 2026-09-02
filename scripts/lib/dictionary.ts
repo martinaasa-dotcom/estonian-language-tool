@@ -28,6 +28,15 @@ export interface ShippedEntry {
   readonly gloss: string;
   /** Principal parts by formType, exactly as the seed stores them. */
   readonly parts: Readonly<Record<string, string>>;
+  /**
+   * Whole forms Ekilex recorded that no rule reaches, by its own morph code.
+   *
+   * Beside `parts` rather than folded into it, for the reason `Form`'s unique
+   * key carries the value: a case can have two, `minule` and `mulle`, and a
+   * Record holds one. `formValues` is what a caller that only wants the
+   * spellings should use.
+   */
+  readonly extraForms: readonly { code: string; value: string }[];
   /** Sentences a lexicographer recorded against this entry. */
   readonly usages: readonly string[];
   /** Ekilex's own definition of the sense. Course words only. */
@@ -52,7 +61,7 @@ function clean(parts: Record<string, string | undefined>): Record<string, string
   return out;
 }
 
-const bare = { note: null, ekilexPos: [] as string[] };
+const bare = { note: null, ekilexPos: [] as string[], extraForms: [] as { code: string; value: string }[] };
 
 /**
  * Every entry the seed would write, first writer wins.
@@ -106,7 +115,8 @@ export function shippedDictionary(): ShippedEntry[] {
   for (const h of HARVESTED) {
     rows.push({
       lemma: h.lemma, pos: h.pos, cefr: h.cefr, gloss: h.gloss,
-      parts: h.parts, usages: h.usages, note: h.note, ekilexPos: h.ekilexPos,
+      parts: h.parts, extraForms: h.extraForms,
+      usages: h.usages, note: h.note, ekilexPos: h.ekilexPos,
     });
   }
 
@@ -132,4 +142,11 @@ export function shippedDictionary(): ShippedEntry[] {
     if (!seen.has(key)) seen.set(key, row);
   }
   return [...seen.values()];
+}
+
+/** Every spelling one entry can be written as: its principal parts and the rest. */
+export function formValues(entry: ShippedEntry): string[] {
+  const out = new Set<string>([entry.lemma, ...Object.values(entry.parts)]);
+  for (const f of entry.extraForms) out.add(f.value);
+  return [...out];
 }

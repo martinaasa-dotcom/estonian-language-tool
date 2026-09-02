@@ -97,32 +97,50 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  * is on the reference page this card links back to, which is the right place
  * for a cross-reference and the wrong place for the prompt.
  */
-const CONJUGATION_SLOTS: { code: string; formType?: string; label: string; negative?: boolean }[] = [
+const CONJUGATION_SLOTS: {
+  code: string; formType?: string; label: string; negative?: boolean;
+  /** A second Ekilex code whose form is also a right answer for this slot. */
+  alsoCode?: string;
+}[] = [
   { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
   { code: "IndPrSg3", label: "olevik · ta" },
   { code: "IndPrPl1", label: "olevik · me" },
   // The negative is one form for every person, said after `ei`. The card
   // shows and accepts the two words together, since `loe` on its own is not
   // what anybody says.
-  { code: "IndPrPs_", label: "eitus · ma ei", negative: true },
+  //
+  // `pole` is the other half of that for the one verb that has one. Estonian
+  // contracts `ei ole` and the contraction is what people say and write, so a
+  // learner typing it was being marked wrong on the commonest verb in the
+  // language. Ekilex records it as `IndPrPsN`, for `olema` and for nothing
+  // else the course asks about, and the card carries both answers the way the
+  // illative does: joined with the separator `acceptedAnswers` splits on, so
+  // what the screen shows and what the marker takes are one string.
+  { code: "IndPrPs_", label: "eitus · ma ei", negative: true, alsoCode: "IndPrPsN" },
   { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
   { code: "IndIpfSg3", label: "lihtminevik · ta" },
   { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
   { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
 ];
 
+/** A whole form the dictionary holds under one Ekilex code, however it is spelled. */
+function attestedForm(lex: LexemeForCards, code: string, formType?: string): string | null {
+  const found = lex.forms.find(
+    (f) =>
+      f.morphCode === code ||
+      f.formType === `EKILEX:${code}` ||
+      (formType !== undefined && f.formType === formType),
+  );
+  return found?.value ?? null;
+}
+
 /**
  * The form for one conjugation slot: attested where the dictionary has it,
  * derived where the rule reaches, and nothing otherwise.
  */
 function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string | null {
-  const attested = lex.forms.find(
-    (f) =>
-      f.morphCode === slot.code ||
-      f.formType === `EKILEX:${slot.code}` ||
-      (slot.formType !== undefined && f.formType === slot.formType),
-  );
-  if (attested) return attested.value;
+  const attested = attestedForm(lex, slot.code, slot.formType);
+  if (attested) return attested;
   const derived = derivedVerbForms({ lemma: lex.lemma, pres1sg: pres1sgFrom(lex.forms) })
     .find((f) => f.morphCode === slot.code);
   return derived?.value ?? null;
@@ -273,10 +291,13 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
         for (const slot of CONJUGATION_SLOTS) {
           const value = conjugationAnswer(lex, slot);
           if (!value) continue;
+          const answers = [slot.negative ? `ei ${value}` : value];
+          const also = slot.alsoCode ? attestedForm(lex, slot.alsoCode) : null;
+          if (also && also !== answers[0]) answers.push(also);
           out.push({
             cardType: type,
             front: `${lex.lemma} → ${slot.label}`,
-            back: slot.negative ? `ei ${value}` : value,
+            back: answers.join(" / "),
             hint: lex.translation,
             targetCase: null,
           });

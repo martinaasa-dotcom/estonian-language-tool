@@ -213,6 +213,33 @@ describe("generateCards — CONJUGATION", () => {
     expect(conditional?.back).toBe("loeksin");
   });
 
+  /*
+    `pole`. Estonian contracts `ei ole`, the contraction is what people say and
+    write, and a learner typing it was marked wrong on the commonest verb in
+    the language. One word in the course has one, so this is not a rule about
+    negatives, it is the dictionary holding a form and the card carrying it.
+  */
+  it("accepts pole beside ei ole, where the dictionary holds one", () => {
+    const olema: LexemeForCards = {
+      lemma: "olema", translation: "to be", pos: "VERB",
+      gradation: "NONE", gradationNote: null, government: null,
+      forms: [
+        { formType: "INF_MA", value: "olema", morphCode: "Sup" },
+        { formType: "PRES_1SG", value: "olen", morphCode: "IndPrSg1" },
+        { formType: "PAST_1SG", value: "olin", morphCode: "IndIpfSg1" },
+        { formType: "EKILEX:IndPrPs_", value: "ole", morphCode: "IndPrPs_" },
+        { formType: "EKILEX:IndPrPsN", value: "pole", morphCode: "IndPrPsN" },
+      ],
+    };
+    const negative = generateCards(olema, ["CONJUGATION"]).find((c) => c.front.includes("eitus"));
+    expect(negative?.back).toBe("ei ole / pole");
+  });
+
+  it("carries one answer where the dictionary holds no contraction", () => {
+    const negative = generateCards(lugema, ["CONJUGATION"]).find((c) => c.front.includes("eitus"));
+    expect(negative?.back).toBe("ei loe");
+  });
+
   it("derives the present, the negative, the conditional and the imperative for a seeded verb", () => {
     // Every seeded verb holds five principal parts and nothing else. The
     // simple past third person has no rule and is left out; the rest come

@@ -208,6 +208,68 @@ check("the keyed services are only ever reached from the server", () => {
   regex can see: the field stays required, and nobody rebuilds the old
   shortcut beside it.
 */
+/*
+  WHAT THE DICTIONARY STORES IS DECIDED BY THE RULES, NOT BESIDE THEM.
+
+  ADR-005 amendment 1 lets a deterministic rule build a form off a stored one,
+  and the rules are real: ten case endings on a genitive stem, six persons on a
+  stored first person. What they are not is complete. A seeded deployment could
+  not say `on`, could not say `oli` for any verb in the language, and had no
+  short pronoun forms at all, which is what an Estonian sentence is made of.
+
+  So the two builders store what the rules miss, and they ask the rules rather
+  than carrying a list: `unreachableSlots` for a verb and `unreachableCaseForms`
+  for a nominal. A list would be two copies of one fact, and the copy in the
+  builder is the one that goes stale in silence, because nothing about a
+  missing form looks like an error. It looks like a word that inflects less.
+
+  Anchored on the calls, because a builder can import a function and go on using
+  a table of its own, which is exactly what the weakest-case query did one
+  directory over.
+*/
+check("the harvest asks the rules which forms they cannot reach", () => {
+  for (const file of ["scripts/harvest-ekilex.ts", "scripts/expand-seed.ts"]) {
+    const src = code(file);
+    assert.match(
+      src, /unreachableSlots\(/,
+      `${file} stopped asking which verb slots the rule misses, so a seeded verb `
+        + "goes back to answering seven of its eight conjugation cards",
+    );
+    assert.match(
+      src, /unreachableCaseForms\(/,
+      `${file} stopped asking which case forms the rule misses, so the short `
+        + "pronoun forms go back to being absent from the dictionary",
+    );
+  }
+});
+
+/*
+  And the pair a learner is shown is two forms somebody wrote down.
+
+  `alsoRight` is what puts `tuppa / toasse` and `minule / mulle` on a screen and
+  on a card's back, and it may hold only forms the dictionary attests. The one
+  exception is the long illative, which is regular and is the other half of a
+  pair Estonian genuinely has; anywhere else a suffix guess printed beside a
+  retrieved form would assert the guess is a word.
+*/
+check("only the illative may offer a derived form as the pair", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /spec\.key === "ILLATIVE" && short\s*\n?\s*\?\s*retrieved\[0\] \?\? derived/,
+    "the illative's own pair rule changed shape, so either the long form stopped "
+      + "being offered beside `tuppa` or a suffix guess started standing in as a "
+      + "second attested word elsewhere",
+  );
+  assert.match(
+    derive,
+    /attested\.length === 2 \? attested\[1\] : undefined/,
+    "the pair stopped being drawn only where a case has exactly two attested "
+      + "forms, so the second of a list of variants can reach a screen: Ekilex "
+      + "records three elatives for `kodu` and the second is not one to teach",
+  );
+});
+
 check("the short illative is a required stem, not an optional one", () => {
   const derive = code("lib/estonian/derive.ts");
   assert.match(

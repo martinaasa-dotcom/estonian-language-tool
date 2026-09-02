@@ -324,10 +324,7 @@ told from a mistake. `ekilexPos` records it. The table of legitimate coarsenings
 narrowing until something honest complained rather than widening until nothing did, and with it
 written down the course's label and Ekilex's agree on all 1,404 words. `PRONOUN` is a part of speech for it, harvested as a nominal
 because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
-`nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
-unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
-short ones (`mulle`, `mul`) that no rule over the genitive reaches, and a card answering `minule`
-would mark the form everybody says wrong; Ekilex records both and an enriched entry shows the pair.
+`nemad`) is kept the way an adverb is, attested and formless, rather than dropped.
 `lib/collections/syllabus/retired.ts` is the other half: the ten C2 units were cut in §19 of the
 status doc with the note that their 170 words stay in the dictionary, and the harvest reads the
 syllabus, so the first re-run after that cut would have quietly taken them out of the seed. They
@@ -368,14 +365,55 @@ that also holds the exceptions. `olema` gets no present from it, because its thi
 and nothing about `olen` predicts that; `minema` gets no imperative, because it says `mine` off
 the infinitive. **The simple past is not derived and may not be**: `lugesin` goes to `luges` but
 `tahtsin` to `tahtis` and `võtsin` to `võttis`, with the grade changing on the way, so its third
-person stays attested-only and a seeded verb makes seven conjugation cards where an enriched one
-makes eight. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+person can never be derived, for any verb in the language. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
 and compares it with every form Ekilex records for the same word: 797 verbs, thirteen slots
 each, no disagreement, and the two exceptions above are the ones it found. Re-run it before
 widening the table. Every derived form says so on screen, the dictionary entry prints the table
 under "worked out from loen" with the stored form in bold, the four verb topic pages show the point
 on the learner's own verbs with a provenance chip, and an attested form always answers first, so
 the moment an entry is enriched the rule steps aside.
+
+**A rule that cannot reach a form is a reason to store it, not a reason to have none.** The rule
+above is complete for a regular verb and the paragraph stating its exceptions was also, without
+saying so, a list of what a keyless deployment simply could not say. `olema` showed `olen` and
+stopped: no `on`, no `pole`, and the commonest verb in Estonian could not answer `olevik · ta`. No
+verb at all could answer `lihtminevik · ta`, since the simple past is not derivable, so every one
+of them made seven conjugation cards where an enriched one made eight. And the pronouns had it
+worst, because their everyday case forms are the short ones, `mulle` and `mul`, which no ending on
+a genitive stem reaches: a card built from the rule answered `minule` and marked the form everybody
+says wrong, so the pronoun unit shipped with **no case cards at all** rather than teach the wrong
+one. `me`, `te`, `nad`, `neil`, `ta`, `tal` and `mu` were among the commonest words in the attested
+corpus that this dictionary could not vouch for, which is how the whole of it was found.
+
+So the harvest stores what the rules miss, and it **asks the rules rather than carrying a list**:
+`unreachableSlots` in `conjugate.ts` and `unreachableCaseForms` in `derive.ts`, each living beside
+the rule it is the complement of. A list would be two copies of one fact and the copy in the
+builder is the one that rots, because a missing form does not look like an error, it looks like a
+word that inflects less. Asserted on the call in both builders. That is 544 forms across 329 of the
+1,404 course words, and every one of them is a verb's simple past, `olema`'s present, `minema`'s
+imperative, `pole`, or the short forms of a pronoun or numeral. A regular noun stores nothing,
+which is what says the test is drawn in the right place, and `pidama`, which has no imperative at
+all, stores none either, because Ekilex records none and asking cost nothing.
+
+Three things fell out of it and each is worth knowing. The pronoun unit **has** case cards now, and
+`mina → kellele?` takes `mulle` and takes `minule`, because `caseAnswer` returns the pair and the
+card carries both answers on its back. `NounStems.retrieved` holds a **list** per case rather than
+one form: `Form`'s own unique key is `(lexeme, formType, value)` and says in a comment that
+otherwise the second of two parallel forms overwrites the first, and this field was making exactly
+that mistake one layer up. And a pair is printed only where a case has **exactly two** attested
+forms, the illative's own long form excepted: Ekilex records three elatives for `kodu` and the
+second of a list is not a form to put on a learner's screen. All of them stay in `accepted`,
+because somebody who writes one is not wrong.
+
+**And the tie-break in the scanner is a separate question that was measured and left alone.**
+`matchEstonianForm` scores a diacritic-folded lemma at 90 and a stored form at 88, so `oli` resolves
+to `õli`, oil, rather than to `olema`. Storing the simple past made 20 words reach that tier which
+had not reached it before, and it is worth writing down that **none of them regressed**: `oli` was
+not a stored form at all before, so it resolved to `õli` then too. The ordering is genuinely
+two-sided, which is why it stands: `oli` says an exact spelling should beat a repaired one, and
+`parast` says the opposite, since `pärast` is far commoner than the partitive of `paras`. Deciding
+it needs frequency data this project does not have, and it changes what the scanner offers for the
+whole dictionary.
 
 **The one card the course never built was the one every other card is built on.** `GRADATION` asks
 `hammas → kelle? mille?` and takes `hamba`. Nothing else in the deck asks for the genitive:

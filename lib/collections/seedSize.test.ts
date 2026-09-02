@@ -34,7 +34,16 @@ function countSeed(): { words: number; forms: number } {
   }
   for (const [lemma] of PHRASES) put(lemma, "PHRASE", []);
 
-  for (const word of HARVESTED) put(word.lemma, word.pos, Object.values(word.parts));
+  /*
+    The principal parts and the forms no rule reaches, because the seed writes
+    both and this has to count what the seed writes. `Form`'s unique key is
+    (lexeme, formType, value), so `minule` and `mulle` are two rows under one
+    code and both count, and a principal part and an extra form that happen to
+    be the same word are two rows under two formTypes.
+  */
+  for (const word of HARVESTED) {
+    put(word.lemma, word.pos, [...Object.values(word.parts), ...word.extraForms.map((f) => f.value)]);
+  }
 
   const built: { lemma: string; pos: string; forms: unknown[] }[] =
     JSON.parse(readFileSync("prisma/data/expanded.json", "utf8"));
