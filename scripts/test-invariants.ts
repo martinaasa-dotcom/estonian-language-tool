@@ -4050,9 +4050,47 @@ check("nothing reaches a paid provider without going through the ledger", () => 
 
   for (const file of callers) {
     const source = read(file);
-    assert.match(source, /authoriseCall\(/, `${file} opens a provider without asking the ledger first`);
+    /*
+      AUTHORISED HERE, OR SPENDING A BOOKING SOMETHING ELSE MADE.
+
+      The rule is that nothing reaches a paid provider unmetered, and for four
+      callers that is `authoriseCall` in the same file. `app/api/scene/route.ts`
+      is the first one where it honestly is not, and the reason is the design
+      rather than an omission: a scene books **one call for the whole
+      conversation** (docs/19-situations.md §16), because running out of
+      allowance halfway through one is the worst failure available to that
+      module. The other side simply stops talking and there is nothing honest to
+      put on the screen.
+
+      So the booking is made once in `beginScene` and each turn *proves* it,
+      against the ledger's own row, scoped to the owner, rather than believing a
+      value out of a request body. Widening the rule to admit that is the right
+      move rather than contorting the route into asking again per turn: a check
+      that fires on honest code is a check people learn to waive. What may not
+      be waived is the settlement, so `recordUsage` is still required of every
+      one of them.
+    */
+    assert.match(
+      source,
+      /authoriseCall\(|kind: "SCENE", entry: "CALL"/,
+      `${file} opens a provider without asking the ledger first, and without ` +
+      "proving a booking the ledger already made",
+    );
     assert.match(source, /recordUsage\(/, `${file} opens a provider and never files what it spent`);
   }
+
+  /*
+    And the booking a scene turn proves has to be made somewhere. Without this
+    the branch above is a hole the width of a string literal: a route could
+    claim a reservation nothing ever created and pass.
+  */
+  const actions = read("app/actions.ts");
+  assert.match(
+    actions,
+    /authoriseCall\(ownerId, "SCENE"\)/,
+    "nothing books a scene any more, so app/api/scene/route.ts verifies a reservation " +
+    "that is never made and composition is unmetered.",
+  );
 });
 
 check("an export holds every category the account holds", () => {

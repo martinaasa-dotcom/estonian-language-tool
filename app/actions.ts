@@ -7,6 +7,8 @@ import { throttleAction } from "@/lib/security/actionLimits";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
 import { finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
+import { authoriseCall } from "@/lib/usage/ledger";
+import { resolveProviders } from "@/lib/tutor/provider";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { formName } from "@/lib/estonian/morph";
 import {
@@ -948,6 +950,59 @@ export async function recordSonad(day: string, guesses: unknown) {
  * Every entry is one card at most, so a seven-word grid is at most seven rows
  * in an append-only table, which is the size of one review session.
  */
+/**
+ * Starts a conversation, and books the whole of it once.
+ *
+ * §16: a scene books **one call rather than one per turn**, because running out
+ * of allowance halfway through a conversation is the worst failure available to
+ * this module. The other side simply stops talking and there is nothing honest
+ * to put on the screen. So the reservation is the whole scene's expected
+ * tokens, and the real figures arrive at the end as the settlements each
+ * composed line reports, which are negative whenever the estimate was generous.
+ *
+ * A scene abandoned before it composed anything hands the booking back through
+ * `releaseReservation`, which is what that function is for: a call that reached
+ * nobody is not a question anybody asked.
+ *
+ * **It is not a refusal to run the scene.** A deployment with no key, and a
+ * learner who has spent the day's allowance, both get a real conversation built
+ * from the beats retrieval can fill, and the screen says so. What the booking
+ * buys is composition.
+ */
+export async function beginScene(sceneId: unknown, difficulty: unknown) {
+  const ownerId = await requireUserId();
+  const scene = sceneById(text(sceneId).slice(0, 64));
+  if (!scene) return { ok: false as const, error: "No scene by that name." };
+  if (!(text(difficulty) in BUDGETS)) {
+    return { ok: false as const, error: "Not a difficulty." };
+  }
+
+  /*
+    The seed is the server's, not the client's. A seed a learner picks is a
+    learner picking their persona, their card and their curveballs, which is
+    every axis of §5 at once; and the server rebuilds the run from it to mark
+    the scene, so it has to be a value this side chose.
+  */
+  const seed = crypto.randomUUID();
+
+  if (resolveProviders().length === 0) {
+    return { ok: true as const, seed, reservation: null, composed: false };
+  }
+
+  const decision = await authoriseCall(ownerId, "SCENE");
+  if (!decision.allowed || !decision.reservation) {
+    return {
+      ok: true as const,
+      seed,
+      reservation: null,
+      composed: false,
+      message: decision.message,
+    };
+  }
+
+  return { ok: true as const, seed, reservation: decision.reservation.id, composed: true };
+}
+
 /**
  * A finished conversation, marked by the server and written down.
  *
