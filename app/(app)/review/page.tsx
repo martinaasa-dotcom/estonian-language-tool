@@ -8,6 +8,7 @@ import { aroundFirst } from "@/lib/collections/levels";
 import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
+import { isPhrase } from "@/lib/dict/pos";
 import { decoyGlosses } from "@/lib/dict/facts";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
@@ -317,6 +318,7 @@ function introFor(c: CardRow, glossLanguage: GlossLanguage): ReviewCard["intro"]
     sentence: found
       ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
       : null,
+    isPhrase: isPhrase(c.lexeme.pos),
   };
 }
 

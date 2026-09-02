@@ -5264,6 +5264,84 @@ check("a practice round has a heading, not only its empty and finished screens",
  * passed to the server, and a locale is a list of preferences that only the
  * browser has.
  */
+/*
+  A MISSING EXAMPLE IS NEWS. A PHRASE HAVING NONE IS NOT.
+
+  Ekilex records a usage against a *word*, to illustrate it in a sentence, so
+  the twenty entries the A1 greetings unit teaches have none and never will:
+  `Tere!`, `Aitäh!`, `Kuidas läheb?`, `Ma ei saa aru` are already the sentence.
+  Both screens that report an absence reported theirs. The first meeting said
+  "No example sentence for this one yet" on the first twenty cards a beginner
+  ever sees, and the dictionary entry went further and promised that one "shows
+  up the first time you look this word up", which nothing was ever going to
+  keep.
+
+  So a screen that tells somebody an example is missing has to know the
+  difference, and `isPhrase` in `lib/dict/pos.ts` is where that difference
+  lives. Anchored on the copy rather than on the two filenames, because the next
+  screen to grow an empty state for examples is the one this is for.
+*/
+check("a screen that reports a missing example knows a phrase is not one", () => {
+  const POS_HOME = "lib/dict/pos.ts";
+  assert.match(
+    code(POS_HOME), /export function isPhrase\(/,
+    `${POS_HOME} stopped answering whether an entry is a whole utterance`,
+  );
+
+  let screens = 0;
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    if (!/No example sentences? /.test(source)) continue;
+    screens++;
+    /*
+      The answer, however it reached the screen. A client component is handed
+      it by its page rather than calling the predicate itself, which is the
+      right way round: the review card's own page already narrows what crosses
+      the wire and is the only side holding the entry's part of speech. What
+      may not happen is a screen reporting the absence without the answer in
+      its hands at all.
+    */
+    assert.match(
+      source, /\bisPhrase\b/,
+      `${file}: tells a reader an example sentence is missing without asking whether the entry `
+      + `is a phrase. Ekilex records a usage against a word, so a phrase has none and never `
+      + `will, and saying it is missing reports a gap in the dictionary that is not there. `
+      + `Ask isPhrase() from ${POS_HOME}.`,
+    );
+  }
+  assert.ok(screens >= 2, `only ${screens} screens report a missing example; this check has stopped looking`);
+
+  /*
+    AND THE ANSWER IS THE PREDICATE'S, NOT A COMPARISON SOMEBODY WROTE OUT.
+    A page that hands a screen `isPhrase: entry.pos === "PHRASE"` is a second
+    copy of the one fact, and it is the copy that stops agreeing the day the
+    dictionary grows another kind of whole utterance. Whoever writes the field
+    imports the function that decides it.
+  */
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    /*
+      A value being written, not the field's type on the interface that
+      declares it: `isPhrase: boolean` is the shape, `isPhrase: isPhrase(pos)`
+      is the answer, and only the second one decides anything.
+
+      Read as a capture and compared, rather than as a negative lookahead after
+      `\s*`: the lookahead backtracks to zero width and passes on the very
+      declaration it was written to skip, which is how this check first failed
+      on a file holding no decision at all.
+    */
+    const written = [...source.matchAll(/\bisPhrase\s*:\s*([A-Za-z_$][\w$]*)/g)]
+      .map((m) => m[1])
+      .filter((token) => token !== "boolean");
+    if (written.length === 0) continue;
+    assert.match(
+      source, /import \{[^}]*\bisPhrase\b[^}]*\} from "@\/lib\/dict\/pos"/,
+      `${file}: writes an isPhrase field without importing the predicate from ${POS_HOME}, so `
+      + `it is deciding what a phrase is on its own.`,
+    );
+  }
+});
+
 check("a date is written in the reader's own locale, not the server's", () => {
   for (const file of [...APP, ...COMPONENTS]) {
     const source = code(file);
@@ -5273,7 +5351,24 @@ check("a date is written in the reader's own locale, not the server's", () => {
       page writes a word count with `toLocaleString("en-GB")` so the thousands
       separator does not move about, which is the opposite of this fault.
     */
-    const LEFT_TO_THE_RUNTIME = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/;
+    /*
+      THREE SPELLINGS, NOT ONE. This asked only about `toLocaleString`, which
+      is one of the three ways to write a date here and the one nobody uses
+      twice: `lib/time/clock.ts` exports `formatDateTime` and `formatTime`
+      precisely so a screen does not have to write the options out, and both
+      end in `Intl.DateTimeFormat(undefined, …)` with no `timeZone`. So four
+      server components went straight through a check whose own header says
+      what they were doing wrong, and a learner in Tallinn who sat a paper at
+      01:30 read "2 Sept, 22:30" on the exam hub, the result page, their own
+      reports and the level check. The wrong hour is a nuisance. The wrong day
+      on a page whose subject is when something happened is not.
+
+      A bare `new Intl.DateTimeFormat()` is left alone, because that is how
+      `TimeZoneSync` asks the browser which zone it is in and it formats
+      nothing.
+    */
+    const LEFT_TO_THE_RUNTIME =
+      /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))|\bformat(?:DateTime|Time)\(|new Intl\.DateTimeFormat\(\s*undefined/;
     if (!LEFT_TO_THE_RUNTIME.test(source)) continue;
     /*
       A client component is the reader's own machine, so there is nothing to
@@ -5299,7 +5394,8 @@ check("a date is written in the reader's own locale, not the server's", () => {
       `fallback` a `LocalDate` renders while it waits, which is what the server
       is *supposed* to write, and it is the only shape that passes.
     */
-    const call = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/g;
+    const call =
+      /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))|\bformat(?:DateTime|Time)\(|new Intl\.DateTimeFormat\(\s*undefined/g;
     for (let m = call.exec(source); m; m = call.exec(source)) {
       const before = source.slice(Math.max(0, m.index - 160), m.index);
       assert.ok(
@@ -5314,6 +5410,30 @@ check("a date is written in the reader's own locale, not the server's", () => {
   const local = code(join("components", "LocalDate.tsx"));
   assert.match(local, /^\s*"use client"/m, "LocalDate stopped being a client component");
   assert.match(local, /fallback/, "LocalDate no longer renders what the server wrote while it waits");
+
+  /*
+    AND THE FALLBACK IS WRITTEN IN THE LEARNER'S ZONE, WHICH IS THE HALF THE
+    RULE ABOVE CANNOT SEE. A server rendering handed to `LocalDate` is only
+    right for a couple of hundred milliseconds either way; what it must not do
+    is name the wrong *day*, and it will whenever the deployment's zone is not
+    the reader's, which on Vercel is everybody. `DateText` is the pairing:
+    one set of options for the fallback and for the client formatter, in the
+    zone `learnerDayClock` resolved, so the two cannot drift and neither can
+    be written without the zone.
+  */
+  const dateText = code(join("components", "DateText.tsx"));
+  assert.ok(
+    !/^\s*"use client"/m.test(dateText),
+    "DateText became a client component, so nothing writes the server's rendering any more",
+  );
+  assert.match(
+    dateText, /timeZone: zone/,
+    "DateText stopped writing its fallback in the learner's zone, so the server can name the wrong day",
+  );
+  assert.match(
+    dateText, /hourCycle: "h23"/,
+    "DateText stopped pinning the hour, so a browser in en-US would read the time back in am and pm",
+  );
 });
 
 /*

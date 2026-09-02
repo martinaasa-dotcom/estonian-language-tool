@@ -536,7 +536,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
         </div>
       )}
 
-      <Examples lexemeId={entry.id} examples={entry.examples} tutorReady={tutorReady} />
+      <Examples lexemeId={entry.id} examples={entry.examples} tutorReady={tutorReady} pos={entry.pos} />
 
       {entry.forms.length > 0 && (
         <div>

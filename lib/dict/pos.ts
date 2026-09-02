@@ -22,6 +22,29 @@
  *            Fallback only.
  */
 
+/**
+ * Whether an entry is a whole utterance rather than a word.
+ *
+ * `Tere!`, `Aitäh!`, `Kuidas läheb?`, `Ma ei saa aru`: the twenty entries the
+ * A1 greetings unit teaches, and all twenty carry `PHRASE`. Ekilex records no
+ * usage under any of them and never will, because a usage illustrates a *word*
+ * in a sentence and these are already the sentence.
+ *
+ * Two screens did not know that and said so out loud. The first meeting told
+ * every one of them "No example sentence for this one yet", which is the app
+ * reporting a gap in itself on the first twenty cards a beginner ever sees, and
+ * the dictionary entry promised that "one shows up the first time you look this
+ * word up", which will not happen for any of them. An absence somebody can wait
+ * out is worth saying; an absence that is simply what a phrase is, is not.
+ *
+ * A predicate rather than a comparison at each call site, because those two
+ * screens are two readings of one fact about the entry, and the next screen
+ * that needs it should not have to work it out again.
+ */
+export function isPhrase(pos: string | null | undefined): boolean {
+  return pos === "PHRASE";
+}
+
 /** Parts of speech a built entry may carry. `Lexeme.pos` also allows PHRASE and OTHER. */
 const NOMINALS = new Set(["NOUN", "ADJECTIVE", "ADVERB"]);
 

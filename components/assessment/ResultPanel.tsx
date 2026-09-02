@@ -3,6 +3,7 @@ import { Card, Chip, SectionTitle } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { PRE_A1, type Confidence, type Placement, type SkillResult } from "@/lib/assessment/types";
 import { levelLabel } from "./PlanPanel";
+import type { ReactNode } from "react";
 
 /**
  * The result, said plainly.
@@ -73,7 +74,7 @@ function SkillRow({ result }: { result: SkillResult }) {
   );
 }
 
-export function ResultPanel({ result, heading = "Where you are" }: { result: Placement; heading?: string }) {
+export function ResultPanel({ result, heading = "Where you are" }: { result: Placement; heading?: ReactNode }) {
   const measured = result.skills.filter((s) => s.measured && s.skill !== "speaking");
   const overall = levelLabel(result.overall);
 

@@ -56,6 +56,14 @@ export interface ReviewCard {
     equivalent: { text: string; lang: string } | null;
     /** An attested sentence, and which form of the word it carries. */
     sentence: { et: string; en: string | null; form: string | null } | null;
+    /**
+     * Whether the entry is a whole utterance rather than a word.
+     *
+     * `Tere!` and `Kuidas läheb?` have no example sentence and never will, and
+     * saying "no example sentence for this one yet" about them told a beginner
+     * the app had let them down on twenty of the first cards it ever shows.
+     */
+    isPhrase: boolean;
   } | null;
   /** Four options including the right one, when this card can be asked as multiple choice. */
   choices: string[] | null;
@@ -186,9 +194,17 @@ function MeetWord({ card }: { card: ReviewCard }) {
            No report button: an absence is not a dead end, the word and its
            meaning and its audio are all still here, and the nearest category
            this app has covers an example that is *wrong* rather than one that
-           is missing. */
+           is missing.
+
+           AND A PHRASE IS NOT AN ABSENCE. Ekilex records a usage against a
+           word, so it has none for `Tere!` or `Kuidas läheb?` and never will:
+           those are already the sentence. Every one of the twenty phrases the
+           A1 greetings unit teaches used to read as a gap in the dictionary,
+           on the first cards anybody meets. */
         <p className="max-w-[38ch] text-sm" style={{ color: "var(--ink-3)" }}>
-          No example sentence for this one yet. Say it out loud a couple of times.
+          {card.intro?.isPhrase
+            ? "A whole phrase, said just as it stands. Say it out loud a couple of times."
+            : "No example sentence for this one yet. Say it out loud a couple of times."}
         </p>
       )}
 

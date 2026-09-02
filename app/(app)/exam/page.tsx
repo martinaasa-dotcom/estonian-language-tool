@@ -9,7 +9,8 @@ import {
   OFFICIAL_LEVELS, PASS_PCT, bandFor, specFor, writtenMinutes,
 } from "@/lib/exam/spec";
 import { SKILLS, SKILL_LABEL } from "@/lib/exam/types";
-import { formatDateTime } from "@/lib/time/clock";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { DATE_AND_TIME, DateText } from "@/components/DateText";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
 
@@ -29,10 +30,11 @@ export const dynamic = "force-dynamic";
  */
 export default async function ExamPage() {
   const ownerId = await requireUserId();
-  const [signals, attempts, goals] = await Promise.all([
+  const [signals, attempts, goals, clock] = await Promise.all([
     readinessSignals(ownerId),
     recentAttempts(ownerId),
     goalsFor(ownerId),
+    learnerDayClock(ownerId),
   ]);
   const readiness = assessReadiness(signals);
 
@@ -342,7 +344,7 @@ export default async function ExamPage() {
                     </Chip>
                   </span>
                   <span className="text-xs" style={{ color: "var(--ink-3)" }}>
-                    {formatDateTime(new Date(attempt.at))}
+                    <DateText iso={new Date(attempt.at).toISOString()} zone={clock.zone} options={DATE_AND_TIME} />
                   </span>
                 </Card>
               </li>

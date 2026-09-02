@@ -1214,6 +1214,25 @@ miss is still graded Hard by the marker, and `Review`, undo and the offline repl
 what they always did. What went is the asking, and that distinction is what keeps this a change to
 one screen rather than to the append-only log underneath it.
 
+**A missing example is news; a phrase having none is not.** Ekilex records a usage against a
+*word*, to show it doing its job in a sentence, so it holds none for `Tere!`, `Aitäh!`,
+`Kuidas läheb?` or `Ma ei saa aru` and never will: those are already the sentence. All twenty
+entries the A1 greetings unit teaches are `PHRASE`, all twenty have no usage, and both screens
+that report an absence reported theirs. The first meeting said "No example sentence for this one
+yet" on twenty of the first cards anybody ever sees, which is the app opening a beginner's first
+evening by naming a gap in itself; the dictionary entry went further and promised that one "shows
+up the first time you look this word up", which nothing was ever going to keep. An absence
+somebody can wait out is worth saying. An absence that is simply what the entry *is* reads as the
+dictionary being thin on the commonest thing in the language.
+
+`isPhrase` in `lib/dict/pos.ts` is the one place that difference lives, and the invariant is the
+pairing rather than the two filenames: a screen carrying that copy has to have the answer in its
+hands, and whoever writes the field has to get it from the predicate rather than comparing a
+string themselves. The review card is handed it by its own page, which is the right way round,
+since that page is the side holding the part of speech and already decides what crosses the wire.
+The offer to add a sentence from class stays on both, because a sentence somebody met using a
+phrase is worth having.
+
 **A card never answers the card before it.** FSRS decides when a card comes back and has no
 opinion on the order of the cards already due, which the queue took from `due` alone. A word's
 cards are written in one `createMany`, graded in one session and come back within seconds of each
@@ -2212,6 +2231,20 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   `components/LocalDate.tsx` renders what the server wrote and lets the browser replace it on mount.
   A separate rule from the day boundary above, because the fix is different: a zone can be stored and
   handed to the server, and a locale is a list of preferences only the browser has.
+- **And a date written on a server is written in the learner's zone, not the deployment's.**
+  The rule above was half enforced. Its invariant asked about `toLocaleString(undefined`, which is
+  one of the three ways to write a date here and the one nobody uses twice: `formatDateTime` and
+  `formatTime` exist so a screen does not have to spell the options out, and both end in
+  `Intl.DateTimeFormat(undefined, …)` with **no `timeZone`**. So four server components went
+  straight through a check whose own header describes what they were doing, and on Vercel, which
+  runs UTC, a learner in Tallinn who sat a paper at 01:30 on the third read "2 Sept, 22:30" on the
+  exam hub, on their result, on their own reports and on the level check. A locale gets the shape
+  of a reading wrong. A zone gets the **day** wrong, on four pages whose whole subject is when
+  something happened. `components/DateText.tsx` is the server half of `LocalDate` and pairs the
+  two things that were drifting: one set of options for the fallback and for the client formatter,
+  in the zone `learnerDayClock` resolved, with the hour pinned to 24 wherever an hour is asked for.
+  The invariant reads all three spellings now, and was made to fail on each.
+
 - **24-hour clock everywhere** (`lib/time/clock.ts`), never am/pm. Estonia writes the time that
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`

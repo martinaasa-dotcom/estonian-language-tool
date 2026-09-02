@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { isAdmin } from "@/lib/auth/admin";
 import { Card, Chip, Empty, Page } from "@/components/ui";
-import { formatDateTime } from "@/lib/time/clock";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { DATE_AND_TIME, DateText } from "@/components/DateText";
 import { CATEGORY_KEYS, SUGGESTION_CATEGORIES, parsePatch, summarisePatch } from "@/lib/suggestions/model";
 import type { SuggestionCategory } from "@/lib/suggestions/model";
 
@@ -22,13 +23,14 @@ export const dynamic = "force-dynamic";
  */
 export default async function MySuggestionsPage() {
   const ownerId = await requireUserId();
-  const [mine, reviewer] = await Promise.all([
+  const [mine, reviewer, clock] = await Promise.all([
     prisma.suggestion.findMany({
       where: { ownerId },
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
     isAdmin(),
+    learnerDayClock(ownerId),
   ]);
 
   return (
@@ -86,7 +88,7 @@ export default async function MySuggestionsPage() {
                   </p>
                 )}
                 <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-                  {formatDateTime(new Date(row.createdAt))}
+                  <DateText iso={new Date(row.createdAt).toISOString()} zone={clock.zone} options={DATE_AND_TIME} />
                   {row.context ? ` · ${row.context}` : ""}
                 </p>
               </Card>
