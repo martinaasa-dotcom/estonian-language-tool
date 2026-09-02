@@ -1831,6 +1831,19 @@ now, in digits rather than in words, because a count nothing can read is a count
 and the number that had been right when it was written was wrong on the merge result with nothing
 but the invariant to say so.
 
+### And the page that says what this costs was stale the day it was written
+
+`/funding` is measured on a stated day and prints the command that gets the same number again,
+which is the whole reason a reader is asked to believe it. Its dictionary line was typed: **18 MB
+for 6,050 entries and 34,554 forms**, while the seed it describes holds **6,102 and 38,577**, the
+nominative plural having become a stored principal part in between. Re-measured against a freshly
+dropped and seeded database it is **20 MB**, and the two counts now come from `SEED_SET_SIZE`,
+which its own test proves against the files the seed loads.
+
+`DICTIONARY_MB` feeds the storage line of the cost model as well as that sentence, so the stale
+figure was not only a wrong number on a page. It made the projected bill lower than the truth,
+which is the one direction that page exists not to be wrong in.
+
 ### Six things measured that were already right
 
 Recorded rather than left unasked, because a check nobody has made fail once is a check nobody

@@ -8313,6 +8313,37 @@ check("the picture board asks the dictionary for the words that have a picture",
   at all. That is the difference between an id somebody owns and an id that
   names a page.
 */
+/*
+  THE PUBLIC PAGE THAT SAYS WHAT THIS COSTS READS THE SEED'S OWN COUNT.
+
+  `/funding` is measured on a stated day and prints the command that gets the
+  same number again, which is the whole reason a reader is asked to believe it.
+  The dictionary line was typed, and it was stale on the day it was written: it
+  said 6,050 entries and 34,554 forms while the seed it described held 6,102 and
+  38,577, the nominative plural having become a stored principal part in
+  between. Re-measured at 20 MB against a freshly dropped and seeded database,
+  and the two counts now come from `SEED_SET_SIZE`, which its own test proves
+  against the files the seed loads.
+
+  `DICTIONARY_MB` feeds the storage line of the cost model as well as that
+  sentence, so a stale figure was not only a wrong number on a page: it made
+  the projected bill lower than the truth, which is the direction this page
+  exists not to be wrong in.
+*/
+check("the funding page's dictionary size is the seed's own count", () => {
+  const src = code(join("lib", "funding", "facts.ts"));
+  assert.match(
+    src,
+    /SEED_SET_SIZE\.words[\s\S]{0,200}SEED_SET_SIZE\.forms/,
+    "lib/funding/facts.ts no longer reads the seed's own counts, so its measurement can go stale again",
+  );
+  assert.match(
+    src,
+    /\$\{DICTIONARY_MB\} MB/,
+    "the measured dictionary line no longer reads DICTIONARY_MB, so the sentence and the cost model can disagree",
+  );
+});
+
 check("a page addressed by a row id proves the row is the learner's", () => {
   const pages = APP.filter((file) => file.endsWith("page.tsx") && /\[[^\]]+\]/.test(file));
   assert.ok(pages.length >= 8, "app/ no longer holds the parameterised routes the usual way");
