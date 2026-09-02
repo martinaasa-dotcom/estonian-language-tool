@@ -28,6 +28,8 @@ import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { formatGovernment } from "../lib/ekilex/mapper";
+import { OFFICIAL_LEVELS, PASS_PCT, RETAKE_WAIT_PCT, specFor } from "../lib/exam/spec";
+import type { Skill } from "../lib/assessment/types";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
@@ -422,6 +424,72 @@ check("every case a government can name is one the table knows", () => {
       + "way Ekilex writes one, so a verb governing it has no card and can be "
       + "offered as a wrong answer",
   );
+});
+
+/*
+  THE PAPER'S OWN NUMBERS ARE THE BOARD'S, AND THE DOCUMENT IS WHERE THEY COME
+  FROM.
+
+  `docs/16-exam.md` cites the state examination's published shape: how long each
+  part runs, what it is worth, what a pass is and how far below one a candidate
+  has to wait six months. `lib/exam/spec.ts` is a second copy of all of that,
+  and the whole feature's claim is that it imitates the real paper: a minute or
+  a mark out of step is a candidate rehearsing the wrong exam, which is the one
+  thing a mock is for.
+
+  The document is the authority and the code is the copy, so this reads the
+  table and compares. It is the shape the README's dictionary size already
+  takes: a figure stated twice is a figure that drifts, and the fix is to make
+  one of them read the other rather than to check them by eye.
+*/
+check("the mock paper's minutes and marks are the ones the exam doc cites", () => {
+  const doc = read(join("docs", "16-exam.md"));
+  /*
+    | A2 | 30 min | 30 min | 50 min | 15 min | 80, twenty per part |
+    The columns are in the order the document heads them, which is the order a
+    candidate sits them in and not the order `specFor` lists its parts, so the
+    comparison is by skill rather than by position.
+  */
+  const HEADED: readonly Skill[] = ["writing", "listening", "reading", "speaking"];
+  const wrong: string[] = [];
+  let compared = 0;
+
+  for (const level of OFFICIAL_LEVELS) {
+    const row = new RegExp(`^\\| ${level} \\|(.+)\\|\\s*$`, "m").exec(doc);
+    if (!row?.[1]) { wrong.push(`${level}: the doc has no row for it`); continue; }
+    const cells = row[1].split("|").map((c) => c.trim());
+    const spec = specFor(level);
+
+    HEADED.forEach((skill, i) => {
+      // "30 to 35 min" is the Board publishing a range; the app sits the longer
+      // one, which is the honest choice and is what the cell's last number says.
+      const minutes = [...(cells[i] ?? "").matchAll(/(\d+)/g)].map((m) => Number(m[1]));
+      const published = minutes[minutes.length - 1];
+      const part = spec.parts.find((p) => p.skill === skill);
+      if (published === undefined || !part) {
+        wrong.push(`${level} ${skill}: nothing to compare`);
+        return;
+      }
+      compared++;
+      if (part.minutes !== published) {
+        wrong.push(`${level} ${skill}: the paper runs ${part.minutes} min, the doc says ${published}`);
+      }
+    });
+
+    const stated = Number(/^(\d+),/.exec(cells[HEADED.length] ?? "")?.[1]);
+    const total = spec.parts.reduce((n, p) => n + p.points, 0);
+    compared++;
+    if (stated !== total) wrong.push(`${level}: the paper is out of ${total}, the doc says ${stated}`);
+  }
+
+  assert.ok(compared >= 20, `only ${compared} figures compared; the doc's table stopped being readable`);
+  assert.deepEqual(wrong, [], "the mock paper and the document that cites the Board disagree");
+
+  // The two thresholds the same document states in a sentence rather than a table.
+  assert.match(doc, new RegExp(`pass is sixty percent`, "i"), "the doc stopped stating the pass mark");
+  assert.equal(PASS_PCT, 60, "PASS_PCT drifted from the sixty percent the doc cites");
+  assert.match(doc, /forty five percent/i, "the doc stopped stating the retake threshold");
+  assert.equal(RETAKE_WAIT_PCT, 45, "RETAKE_WAIT_PCT drifted from the forty five percent the doc cites");
 });
 
 check("nothing plays a clip outside lib/audio/clip.ts", () => {
