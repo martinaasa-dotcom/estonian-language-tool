@@ -40,6 +40,9 @@ import { buildPaper as buildPlacement, type WordRow } from "../lib/assessment/it
 import { EXAM_LEVELS } from "../lib/exam/spec";
 import { clueFrom } from "../lib/progress/crossword";
 import { mentions } from "../lib/estonian/cloze";
+import { SCENES } from "../lib/collections/scenes";
+import { emojiFor } from "../lib/collections/emoji";
+import { ASKABLE_CASES, taskFor, type SceneWord } from "../lib/games/describe";
 
 interface Row { lemma: string; pos: string; cefr: string | null; translation: string;
   forms: { formType: string; value: string }[]; examples: { et: string; en?: string | null }[];
@@ -60,10 +63,39 @@ let asked = 0;
   seconds; a paper is assembled per seed and is most of the run.
 */
 const spent = new Map<string, number>();
+
+/*
+  AND HOW MANY EACH ONE ASKED, WHICH IS THE HALF A SINGLE FLOOR CANNOT SAY.
+
+  The floor at the bottom bounds the whole run, so it catches the deck, which
+  is most of it, and would wave through a section that stopped producing
+  entirely: the crossword is 5,329 of some 46,000 and the scene game 1,972, and
+  either could return nothing without moving the total below 40,000. A section
+  that asks nothing looks exactly like a section that passed, which is the
+  fault `scripts/lib/checks.mjs` gives a suite a floor to prevent.
+
+  So each one declares what it reaches and is held to four fifths of it. Four
+  fifths rather than the number itself, because these counts move with the
+  dictionary: a reseed adds words, and a floor that has to be edited on every
+  reseed is a floor somebody edits without reading.
+
+  The figures are measured rather than estimated, and the first version of this
+  proved why: `exam` was guessed at 6,000 from a sentence in a pull request
+  about a different measurement and actually asks 2,500, so the check failed on
+  the run that introduced it. A floor is a fact about what the code does, and
+  the only way to know it is to print it, which the line below now does.
+*/
+const REACHES: Record<string, number> = {
+  deck: 36_404, exam: 2_500, check: 619, crossword: 5_295, scene: 1_972,
+};
+
+const askedIn = new Map<string, number>();
 function timed<T>(what: string, run: () => T): T {
   const began = Date.now();
+  const before = asked;
   const out = run();
   spent.set(what, (spent.get(what) ?? 0) + (Date.now() - began));
+  askedIn.set(what, (askedIn.get(what) ?? 0) + (asked - before));
   return out;
 }
 
@@ -181,6 +213,53 @@ for (const e of entries) {
 }
 });
 
+/* ── The scene game ──────────────────────────────────────────────────────── */
+/*
+  A scene puts three words on the screen and asks for one of them in a case, so
+  a task whose answer is one of those three is completed by copying, and
+  `markDescription` grades the copy Good. Eight of the 1,980 tasks the sixty
+  scenes can set were free that way, all of them the seesütlev of a word that
+  ends in `s` already: `liblikas`, `sipelgas`, `kotkas`, `kirves`, `labidas`,
+  `maasikas`, `lusikas`, `haldjas`.
+
+  Pure and file-backed like everything else here: `SCENES` names lemmas,
+  `emojiFor` says which have a picture, and `taskFor` builds the task.
+*/
+timed("scene", () => {
+const nouns = new Map<string, Row>();
+for (const e of entries) if (e.pos === "NOUN" && !nouns.has(e.lemma)) nouns.set(e.lemma, e);
+
+for (const scene of SCENES) {
+  const words: SceneWord[] = [];
+  for (const lemma of scene.lemmas) {
+    const row = nouns.get(lemma);
+    const emoji = emojiFor(lemma);
+    if (!row || !emoji) break;
+    words.push({
+      lemma: row.lemma,
+      pos: "NOUN",
+      translation: row.translation ?? "",
+      emoji,
+      forms: (row.forms ?? []).map((f) => ({ formType: f.formType, value: f.value })),
+    });
+  }
+  if (words.length !== scene.lemmas.length) continue;
+
+  // Every word of the scene, in every case the round could pick, because the
+  // builder walks them in priority order and takes the first that answers.
+  for (let index = 0; index < words.length; index++) {
+    for (const caseKey of ASKABLE_CASES) {
+      const task = taskFor(scene, words, index, caseKey);
+      if (!task) continue;
+      // The prompt is the situation and all three words, which is what makes
+      // this different from a card: the answer may be any of the three.
+      const prompt = `${scene.situation} ${words.map((w) => w.lemma).join(" ")}`;
+      ask(`scene ${scene.id} ${words[index]!.lemma} ${caseKey}`, prompt, task.accepted.join(" / "));
+    }
+  }
+}
+});
+
 /* ── The verdict ─────────────────────────────────────────────────────────── */
 
 /*
@@ -201,9 +280,22 @@ const FLOOR = 40_000;
 console.log(`Asked ${asked.toLocaleString("en-GB")} questions over ${entries.length.toLocaleString("en-GB")} entries.`);
 console.log(
   "  "
-  + [...spent].map(([what, ms]) => `${what} ${Math.round(ms / 100) / 10}s`).join(", ")
+  + [...spent]
+    .map(([what, ms]) =>
+      `${what} ${(askedIn.get(what) ?? 0).toLocaleString("en-GB")} in ${Math.round(ms / 100) / 10}s`)
+    .join(", ")
   + ` (${SEEDS} seeds per paper)`,
 );
+const thin = Object.entries(REACHES)
+  .filter(([what, reaches]) => (askedIn.get(what) ?? 0) < Math.floor(reaches * 0.8))
+  .map(([what, reaches]) => `${what} asked ${(askedIn.get(what) ?? 0).toLocaleString("en-GB")} against ${reaches.toLocaleString("en-GB")}`);
+if (thin.length > 0) {
+  console.error(
+    "\nA section stopped producing rather than started passing:\n  " + thin.join("\n  ")
+    + "\nRaise the figure in REACHES if a generator legitimately shrank; do not lower it to pass.",
+  );
+  process.exit(1);
+}
 if (asked < FLOOR) {
   console.error(
     `\nOnly ${asked.toLocaleString("en-GB")} questions were built, against a floor of `
