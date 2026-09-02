@@ -292,6 +292,29 @@ under "worked out from loen" with the stored form in bold, the four verb topic p
 on the learner's own verbs with a provenance chip, and an attested form always answers first, so
 the moment an entry is enriched the rule steps aside.
 
+**A verb the app can conjugate is a verb the dictionary can find, and for a year it was not.** The
+search strips a case ending to look for a genitive stem, which is how `toas` finds `tuba`, and it
+knew nothing whatever about a person ending. So a verb was findable by its lemma, by its two
+infinitives, by its stored first person and its stored simple past, and by nothing else: not
+`helistad`, not `helistab`, not `helistame`, not `loeksin`. `ta helistab` is the shape a beginner
+meets in every sentence of a textbook, and this app derives it, prints it on the entry under
+"worked out from helistan", and drills it on a card. Measured over sixty graded words and six forms
+each, that one gap was **every miss the search had**: 87.5% of forms found before and 100% after,
+first hit 85.6% to 97.8%.
+
+`possibleFirstPersons` is the ending table read backwards and it lives in `lib/estonian/conjugate.ts`
+beside the table it reverses, because an ending stripped in another module is an ending that stops
+agreeing with the one this module adds. It returns candidates rather than answers: the search asks
+the database whether any of them is a stored `PRES_1SG`, and `derivedVerbForms` decides afterwards
+whether the word really is that verb's, so a wrong strip costs a lookup and never a wrong answer,
+and the exceptions the rule already knows about are the exceptions the search inherits. A fifth
+union branch and a partial index, measured at 0.05ms.
+
+The label reads `olevik ta (present)`. It used to read `olevik ta (present ta)`, because `formName`
+put the person in both halves and the person is an Estonian pronoun: the English gloss exists for
+somebody reading an English reference grammar, and the pronoun is already in front of them in the
+half that leads.
+
 **And a derivation never stands where the dictionary has the real thing.** The paragraph above is
 the licence to derive; this is its limit, and it was broken for a year in the one case that has an
 exception. Estonian has two illatives: the long one is the genitive stem plus `sse`, which a rule
