@@ -26,6 +26,9 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { SYLLABUS } from "../lib/collections/syllabus";
+import { PRACTICE_MODES } from "../lib/ux/modes";
+import { CARD_TYPES } from "../lib/srs/cards";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { formatGovernment } from "../lib/ekilex/mapper";
 import { OFFICIAL_LEVELS, PASS_PCT, RETAKE_WAIT_PCT, specFor } from "../lib/exam/spec";
@@ -7767,6 +7770,45 @@ check("the README's dictionary size is the seed's own count", () => {
     readme.includes(`${printed} words`),
     `README.md does not say "${printed} words", which is what the seed loads`,
   );
+});
+
+/*
+  THE OTHER TWO NUMBERS THE README LEADS WITH, WHICH HAD BOTH GONE STALE.
+
+  The dictionary size above was already held to the seed, and the two counts
+  beside it were not, so both drifted the moment a unit or a round was added.
+  The course bullet said seventy-nine units against 82 in `lib/collections/
+  syllabus/`, and the practice bullet said seven modes against 18 in
+  `lib/ux/modes.ts`, which is the whole of the games this app grew and did not
+  mention: the crossword, the picture board, the word a day, flash cards and
+  Target. The flashcard line said five card types against seven, having missed
+  gradation and government, which are the two nothing else drills. The course
+  page's own header had a fourth answer, eighty-three, and counted six CEFR
+  levels after C2 was cut.
+
+  This is the first page anybody reads about the project and the one a funder
+  or a teacher reads before installing anything, so an undercount is not a
+  typo: it is the app selling itself short on the two things it is largest at.
+
+  Digits rather than words, because a count nothing can read is a count nothing
+  checks, and the README already writes "6,101 words" and "44 notes" that way.
+*/
+check("the README's course and practice counts are the code's own", () => {
+  const readme = read("README.md");
+  assert.ok(SYLLABUS.length > 50, "the syllabus no longer collects its units the usual way");
+  assert.ok(PRACTICE_MODES.length > 10, "lib/ux/modes.ts no longer lists the modes the usual way");
+  assert.ok(CARD_TYPES.length > 3, "lib/srs/cards.ts no longer lists the card types the usual way");
+
+  for (const [count, what] of [
+    [SYLLABUS.length, "units"],
+    [PRACTICE_MODES.length, "ways to practise"],
+    [CARD_TYPES.length, "card types"],
+  ] as const) {
+    assert.ok(
+      readme.includes(`${count} ${what}`),
+      `README.md does not say "${count} ${what}", which is what the code has`,
+    );
+  }
 });
 
 check("the data model page names every model the schema has, and no others", () => {

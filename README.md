@@ -40,7 +40,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A course.** Seventy-nine units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
+- **A course.** 82 units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
   sitting's worth of words, and the words between the words too: question words, pronouns, the
   postpositions, the months and the adverbs of time have units of their own. Adding a unit builds real flashcards, every form, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
@@ -58,10 +58,14 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **Seven practice modes over one deck**, the daily review, a 60-second Case Sprint, a Match round
-  against the clock, Sentences, Speaking, Listening and Dictation, plus a one-click drill for
-  whichever case you keep missing and a conjugation table to type out, five persons at a time. Everything writes to the same review log, so a game still moves
-  the schedule forward.
+- **18 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
+  Sprint, Match, Sentences, Listening, Dictation and Speaking), five games (flash cards, a picture
+  board with no English on it, a six-letter word a day in six guesses, a crossword with English
+  clues and Estonian answers, and Target for endings before the timer runs out), a two-minute daily
+  quest aimed at whatever is going worst, and six drills that sit on the page naming the thing they
+  drill: a sentence you write in a named case, verb government, long against short, your own pasted
+  Estonian, the conjugation table, and the cards you keep failing. Everything writes to the same
+  review log, so a game still moves the schedule forward.
 - **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
   citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
   real points, under the real rule that sixty percent passes and a zero in any one part fails the
@@ -105,8 +109,12 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   offers to measure you rather than making you guess, shows the timeline before you have picked a
   single word, and says in one line what this app will not do for you before it asks for anything.
 - **Classes.** A six-character join code, a roster showing who is keeping up, the cases the group
-  keeps missing, and a unit set as homework into each student's own task list. A class is a view
+  keeps missing, and a unit set as homework onto each student's own Today. A class is a view
   over what learners already own, joining shares progress, never your deck, and leaving stops it.
+- **Your Estonian week.** Almost everybody using this is also sitting in a class, and the app knew
+  what was due and nothing about the Monday evening that produced it. Put your class times and the
+  slots you study in, and what is due shows up beside them. Estonian only: a dentist appointment
+  belongs in the calendar you already have.
 - **Progress worth looking at.** XP, levels, a streak with shields, three daily quests, badges, a
   six-month heatmap, a two-week forecast, per-case accuracy and vocabulary reach by CEFR, all
   computed live from the review log, never stored, so none of it can drift from what you actually
@@ -162,6 +170,14 @@ under it. A word the dictionary will not vouch for is left plain rather than gue
 nothing from the feed is stored. `NEWS_FEED_URL` points it at another RSS feed, or `off` turns it
 off.
 
+Which words are worth learning first is answered by counting rather than by opinion. **The words
+you will hear most** is a published frequency count over a corpus of film and television subtitles,
+gated through the dictionary so every word on the page is one the app can teach, with your own deck
+marked against it. The page names the corpus, because subtitles are dialogue: `tere` and `aitäh`
+rank high there and the vocabulary of a newspaper leader does not, which is the right corpus for
+somebody learning to talk to people and the wrong one to call "the most common words in Estonian"
+without saying so.
+
 ## What works without any API key
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
@@ -174,7 +190,7 @@ Everything except the two things that need a model, Anu and reading a photograph
 - **Audio**, real Estonian speech from the University of Tartu's neural voices, twelve of them to
   choose from. A card reads itself aloud when a word is met and when its answer appears, and the
   next card's clip is fetched while you answer this one. No key, no setup.
-- **Flashcards**. FSRS scheduling, five card types, typed or flipped, keyboard-only review.
+- **Flashcards**. FSRS scheduling, 7 card types, typed or flipped, keyboard-only review.
 - **The learning path, every practice mode, the grammar reference, printable worksheets, XP, quests,
   badges and the progress charts.**
 - **Writing**. Write your own sentence using a word in a named case. The form is checked against
@@ -191,8 +207,8 @@ Everything except the two things that need a model, Anu and reading a photograph
   osastav except on gradating stems", and the cards you keep failing taken apart properly.
 - **Offline review**. Grades queue on the device and replay in order when you are back. The review
   log is append-only, which is what makes that sync conflict-free.
-- **Tasks, import, export, week view**, all local. The course week ties vocabulary and homework
-  together.
+- **The calendar, import and export**, all local. Your class times, the slots you study in and
+  what is due, in one week.
 
 ## Turning on Anu, the tutor
 
