@@ -269,11 +269,11 @@ enum GrammCase {
 enum CardType {
   RECOGNITION      // et → en
   PRODUCTION       // en → et
-  CASE_FORM        // cloze: produce a named case form
-  GRADATION        // strong ↔ weak grade
+  CASE_FORM        // produce a named case form
+  GRADATION        // the genitive of a word whose stem changes
   GOVERNMENT       // which case does this verb take
-  LISTENING        // audio → meaning
-  OBJECT_CASE      // total vs partial object minimal pair
+  CLOZE            // fill the gap in a sentence somebody recorded
+  CONJUGATION      // produce a named form of a verb
 }
 
 enum CardSource { MANUAL DICTIONARY TUTOR IMPORT }

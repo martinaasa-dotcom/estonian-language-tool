@@ -6517,6 +6517,42 @@ check("nothing grades a card outside lib/srs/grade.ts", () => {
   against them. That is a change to a measurement rather than to an exercise
   and it is not made in passing.
 */
+/*
+  THE CARD TYPES ARE NAMED IN THREE PLACES AND TWO OF THEM HAD DRIFTED.
+
+  `CARD_TYPES` in `lib/srs/cards.ts` is the one that decides. The schema's own
+  comment beside `cardType String` listed five of the seven, missing the
+  gap-fill and the conjugation card, which are two of the three a default deck
+  is mostly made of. `docs/04-data-model.md` printed an enum of seven that was
+  the wrong seven: it had `LISTENING` and `OBJECT_CASE`, which have never
+  existed in the code, and lacked the same two.
+
+  Neither is load-bearing at runtime, which is exactly why nobody noticed. They
+  are what a contributor reads first, and a schema comment that names five card
+  types is a schema comment that tells them the app has five.
+*/
+check("the card types are the same seven wherever they are written down", () => {
+  const declared = [...code("lib/srs/cards.ts").matchAll(/\{\s*type:\s*"(\w+)"/g)].map((m) => m[1]!);
+  assert.ok(declared.length >= 7, "lib/srs/cards.ts no longer declares its card types as a table");
+
+  const schema = read(join("prisma", "schema.prisma"));
+  const comment = /cardType\s+String\s*\/\/\s*([A-Z_ ]+)/.exec(schema)?.[1]?.trim().split(/\s+/) ?? [];
+  assert.deepEqual(
+    [...comment].sort(),
+    [...declared].sort(),
+    "prisma/schema.prisma names a different set of card types from lib/srs/cards.ts",
+  );
+
+  const doc = read(join("docs", "04-data-model.md"));
+  const block = /enum CardType \{([^}]*)\}/.exec(doc)?.[1] ?? "";
+  const documented = [...block.matchAll(/^\s*([A-Z_]+)/gm)].map((m) => m[1]!);
+  assert.deepEqual(
+    [...documented].sort(),
+    [...declared].sort(),
+    "docs/04-data-model.md names a different set of card types from lib/srs/cards.ts",
+  );
+});
+
 check("nothing decides what a gap can hide outside lib/estonian/gapForms.ts", () => {
   const allowed = new Set([
     // Where `buildCloze` is written, and where `gapForms` is.
