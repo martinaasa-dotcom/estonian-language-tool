@@ -5796,6 +5796,39 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
   );
 });
 
+check("the game of the day comes from the one table of them", () => {
+  /*
+    "Each weekday could have a different game focus. It becomes predictable and
+    also something to look forward to" was the ask, and the failure mode is the
+    one every list-in-two-places has: a round renamed in `lib/ux/modes.ts` and
+    still called something else by the home page, or a seventh game added to
+    the app and never reaching a day.
+
+    So Today asks the table and the table names modes by href.
+    `weekGames.test.ts` is the half that resolves every one of them through
+    `modeAt`, which is the check that can fail on a rename; this is the half
+    that keeps the page reading it at all.
+
+    Nothing is *hidden* by any of this, which is the distinction `within`
+    already draws in lib/ux/nav.ts: every round stays on /practice, in the
+    palette and at its own URL on every day of the week. What the table decides
+    is what the home page leads with.
+  */
+  const page = code("app/(app)/page.tsx");
+  assert.match(page, /gameOn\(/, "Today no longer asks which game today's is");
+  assert.match(page, /gameAfter\(/, "Today stopped saying what is on tomorrow, which is what makes it a week");
+  assert.match(
+    page, /modeAt\(/,
+    "Today names the featured round itself rather than reading lib/ux/modes.ts, so a rename splits",
+  );
+
+  const table = code("lib/ux/weekGames.ts");
+  assert.doesNotMatch(
+    table, /title:|icon:|tone:/,
+    "the week table has started describing a mode, which lib/ux/modes.ts already does",
+  );
+});
+
 check("Sonad decides nothing on the client but what to type", () => {
   /*
     THE BOARD KNOWS THE ANSWER AND MUST NOT KNOW THE SCORE.

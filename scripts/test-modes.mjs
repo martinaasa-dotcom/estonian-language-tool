@@ -24,8 +24,8 @@ page.on("console", (m) => {
 });
 
 // Floor: 29, measured in the state CI seeds. A thinner database reads as short.
-// 23 before Sõnad added six and the crossword six more.
-const { check, absent, done } = suite("Practice modes", { floor: 35 });
+// 23 before Sõnad added six, the crossword six more and the game of the day two.
+const { check, absent, done } = suite("Practice modes", { floor: 37 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -325,6 +325,29 @@ await page.reload({ waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 check("the grid comes back after a reload",
   (await grid.evaluateAll((els) => els.filter((e) => e.value).length)) === shown);
+
+// 6d — The game of the day, on Today
+/*
+  Which game it is depends on what day the suite runs, so nothing here names
+  one: what is checked is that the card points at a round the app has and says
+  what is on tomorrow, which is the pair that makes it a week rather than a
+  tile. `lib/ux/weekGames.test.ts` is what holds every href to a real mode.
+*/
+await page.goto(`${B}/`, { waitUntil: "networkidle" });
+const featured = page.getByText("Today's game", { exact: false });
+if ((await featured.count()) === 0) {
+  // Sunday: the quest already has its own richer card on this page, so the
+  // game card stands down rather than drawing the same round twice.
+  absent(2, "today's featured game is the quest, which has its own card");
+} else {
+  const inCard = page.locator("a").filter({ hasNotText: "Every mode" });
+  const hrefs = await inCard.evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+  const modes = ["/sonad", "/crossword", "/review/emoji", "/review/target", "/review/match", "/review/sprint"];
+  check("the game of the day links to a round this app has",
+    modes.some((m) => hrefs.includes(m)));
+  check("and says what is on tomorrow",
+    (await page.getByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) is /).count()) > 0);
+}
 
 // 7 — Command palette
 await page.goto(`${B}/`, { waitUntil: "networkidle" });

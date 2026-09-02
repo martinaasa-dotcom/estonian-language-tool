@@ -674,6 +674,23 @@ browser in both themes: 7.40 and 5.31 and 5.62 in the light, 11.70 and 9.27 and 
 draft that dropped the fill and kept only the ring measured 3.52, because `--butter-ink` is drawn to
 sit on butter's tint and not on a card.
 
+**One game a day, the same one every week, and nothing hidden by it.** Eleven rounds on a menu is a
+decision to make before you can start; one on the home page with a reason beside it is an invitation,
+and Thursday being Match every week is a thing somebody comes to know about their own Thursdays.
+`lib/ux/weekGames.ts` is the table, it names rounds by their own href so a rename in
+`lib/ux/modes.ts` carries, and every round is still on `/practice`, in the palette and at its own URL
+on every day of the week. This is not `lib/ux/disclosure.ts` and does not overlap it: that module
+decides what a screen leads with by how far in a learner is, this one by what day it is.
+
+The two puzzles that really are one a day get the days that suit them. Sõnad and the crossword build
+a new one each morning and are finished once you have done it, so featuring them is a nudge rather
+than a limit: Sõnad opens the week because it is three minutes and the crossword is Saturday because
+it is fifteen. The other five days carry a round that can be played again, so a Tuesday with ten
+spare minutes is not a Tuesday that runs out. The card stands down on the day the quest is featured,
+because the quest already has a card on Today and it is the better one, naming the learner's own
+weakest case and what it is at; two cards for one round is furniture, and the cost is the "tomorrow"
+line one day in seven.
+
 **A crossword's format is nobody's; its grids and its clues and its name are somebody's.** The
 interlocking grid with numbered clues is from 1913 and is not owned. What a newspaper owns is the
 puzzles it publishes. So nothing here is taken from one: `lib/games/crossword.ts` compiles the grid,

@@ -20,7 +20,7 @@ import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
-import { FIRST_DOORS, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { FIRST_DOORS, modeAt, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, CardLink, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
@@ -30,7 +30,8 @@ import type { TaskView } from "@/components/TaskRow";
 import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
-import { eventsOn, kindFrom, span, KIND_LABEL, KIND_TONE } from "@/lib/ux/schedule";
+import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LONG } from "@/lib/ux/schedule";
+import { gameAfter, gameOn } from "@/lib/ux/weekGames";
 import { WordOfDayCard } from "@/components/WordOfDay";
 import { BadgeCheck } from "./BadgeCheck";
 
@@ -639,6 +640,46 @@ export default async function TodayPage() {
     </Card>
   ) : null;
 
+  /*
+    THE GAME OF THE DAY.
+
+    Asked for in one line of the brief and given its own reason there: "it
+    becomes predictable and also something to look forward to". Eleven rounds
+    on a menu is a decision to make before you can start; one on the home page
+    with a reason beside it is an invitation, and Thursday being Match every
+    week is a thing somebody comes to know about their own Thursdays.
+
+    `lib/ux/weekGames.ts` is the table and nothing is hidden by it: every round
+    is still on /practice, in the palette and at its own URL, every day.
+
+    Not drawn on the day the quest is featured, because the quest already has a
+    card on this page and it is the better one: it names the learner's own
+    weakest case and what it is at. Two cards for one round is furniture. The
+    cost is the "tomorrow" line one day in seven, which is the right way round.
+  */
+  const featured = gameOn(weekdayOf(summary.dayKey));
+  const featuredMode = modeAt(featured.href);
+  const tomorrow = gameAfter(weekdayOf(summary.dayKey));
+  const gameCard = featuredMode && featured.href !== "/quest" ? (
+    <Card>
+      <SectionTitle hint={WEEKDAY_LONG[weekdayOf(summary.dayKey)]}>Today&apos;s game</SectionTitle>
+      <p className="mt-1 text-lg font-semibold" style={{ color: "var(--ink)" }}>
+        {featuredMode.title}
+      </p>
+      <p className="mt-1 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {featured.why}
+      </p>
+      <div className="mt-3">
+        <ButtonLink href={featured.href} variant="primary">
+          {featuredMode.title} <ArrowRight size={15} aria-hidden />
+        </ButtonLink>
+      </div>
+      <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
+        {tomorrow.weekday} is {modeAt(tomorrow.game.href)?.title ?? "another one"}.
+      </p>
+    </Card>
+  ) : null;
+
   const practiceCard = shows(stage, "practice") ? (
 
     <Card>
@@ -771,6 +812,7 @@ export default async function TodayPage() {
 
         <Stack className="min-w-0">
           {examCard}
+          {gameCard}
           {wordCard}
           {nextCard}
           {stage !== "arriving" && practiceCard}
