@@ -40,6 +40,7 @@ import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
 import { gapFormsFromParts } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFromParts } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
+import { caseFits, caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import type { CaseKey } from "@/lib/estonian/types";
 import { shuffle } from "@/lib/random/shuffle";
 import { differentMeaning } from "@/lib/questions/distractors";
@@ -65,6 +66,12 @@ export interface LessonWord {
    */
   equivalent?: { text: string; lang: string } | null;
   pos: string;
+  /**
+   * The Institute's semantic type codes, which decide which of the two sets of
+   * local cases the word takes and whether it answers `kes?` or `mis?`.
+   * See lib/estonian/caseQuestion.ts.
+   */
+  semanticTypes: string | null;
   /** Attested Estonian sentences. Never generated. */
   examples: readonly string[];
   /** Stored principal parts, by formType. */
@@ -320,7 +327,16 @@ function knownForms(word: LessonWord): string[] {
   return [...gapFormsFromParts(word).keys()];
 }
 
-/** The cases worth asking a learner to produce, in the order they are taught. */
+/**
+ * The cases worth asking a learner to produce, in the order they are taught.
+ *
+ * Both local trios are in the list and `caseFits` decides which of them this
+ * word takes, because that is a fact about the word rather than about the
+ * lesson: `Saksamaa` answers `kus?` with `Saksamaal`, a horse with `hobusel`,
+ * and a room with `toas`. This file had its own list and never asked, so the
+ * `-maa` rule written in 2026 to stop the country unit teaching `Venemaas`
+ * reached the flashcards and not the lesson that introduces them.
+ */
 const DRILL_CASES: readonly CaseKey[] = [
   "INESSIVE", "ILLATIVE", "ELATIVE", "ALLATIVE", "ADESSIVE", "COMITATIVE", "TRANSLATIVE",
 ];
@@ -383,6 +399,7 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
   const genitive = word.parts.GEN_SG;
   if (!genitive) return null;
   for (const key of shuffle(DRILL_CASES, rand)) {
+    if (!caseFits(key, word)) continue;
     // The attested form, and every spelling that counts as right with it: a
     // lesson that asks for the illative of `tuba` wants `tuppa`.
     const found = caseAnswer(stemsFromParts(word.parts), key);
@@ -390,7 +407,9 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
     if (!found || !spec) continue;
     return {
       id, kind: "case", lemma: word.lemma, gloss: word.gloss,
-      caseKey: key, caseName: spec.en, question: spec.question,
+      // The question this word answers, not the case's whole name: a horse is
+      // a `kes`, and `kus?` names two cases at once. See `caseQuestionFor`.
+      caseKey: key, caseName: spec.en, question: caseQuestionFor(spec, word),
       answer: found.accepted.join(" / "),
     };
   }

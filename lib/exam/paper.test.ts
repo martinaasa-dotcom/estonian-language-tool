@@ -17,6 +17,7 @@ function word(over: Partial<PoolWord> & { lemma: string }): PoolWord {
     translation: "gloss",
     pos: "NOUN",
     cefr: "A1",
+    semanticTypes: null,
     forms: [],
     examples: [],
     government: null,
@@ -420,6 +421,7 @@ describe("a dictionary with no recorded sentences, which is what a keyless insta
       // out of one question.
       translation: `${nth(Math.floor(i / 2), "mean")}, ${nth(i, "sense")}`,
       cefr: "B1",
+      semanticTypes: null,
       forms: [
         { formType: "NOM_SG", value: nth(i), morphCode: null, morphName: null },
         { formType: "GEN_SG", value: `${nth(i)}a`, morphCode: null, morphName: null },

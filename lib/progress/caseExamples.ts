@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { INSIDE_CASES, localCasesFor, OUTSIDE_CASES } from "@/lib/estonian/place";
+import { caseFits } from "@/lib/estonian/caseQuestion";
 import { parseExamples, sentenceContaining } from "@/lib/dict/examples";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseFromMorphCode, numberFromMorphCode } from "@/lib/estonian/morph";
@@ -60,6 +60,8 @@ interface Candidate {
   id: string;
   lemma: string;
   translation: string;
+  /** Which of the two local sets the word takes. See lib/estonian/caseQuestion.ts. */
+  semanticTypes: string | null;
   examples: string;
   forms: { formType: string; value: string; morphCode: string | null }[];
 }
@@ -73,6 +75,9 @@ export async function caseExamples(
     id: true,
     lemma: true,
     translation: true,
+    // Which of the two local sets this word takes, which is not in its
+    // spelling: see lib/estonian/caseQuestion.ts.
+    semanticTypes: true,
     examples: true,
     forms: { select: { formType: true, value: true, morphCode: true } },
   } as const;
@@ -132,10 +137,12 @@ export async function caseExamples(
     A WORD ONLY ILLUSTRATES A CASE IT ACTUALLY TAKES. The illative page led
     with `Inglismaa / Inglismaasse`, which is not how anybody says "to
     England": a place name in `-maa` uses the outside cases and the rule over
-    a genitive stem cannot know that. See lib/estonian/place.ts.
+    a genitive stem cannot know that. The same is true of a person or an
+    animal, which this page could not know either until the dictionary started
+    carrying the Institute's own classification: the seesütlev page was
+    illustrating itself with `hobuses`. See lib/estonian/caseQuestion.ts.
   */
-  const local = ([...INSIDE_CASES, ...OUTSIDE_CASES] as CaseKey[]).includes(key);
-  const fits = (lex: Candidate) => !local || localCasesFor(lex.lemma).includes(key);
+  const fits = (lex: Candidate) => caseFits(key, lex);
   const built = [
     ...mine.filter(fits).map((lex) => toExample(lex, key, true)),
     ...rest.filter(fits).map((lex) => toExample(lex, key, false)),

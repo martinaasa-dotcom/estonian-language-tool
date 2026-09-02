@@ -168,6 +168,9 @@ async function loadLexemes(lemmas: readonly string[]): Promise<DeckLexeme[]> {
       gradation: true,
       gradationNote: true,
       government: true,
+      // What kind of thing the word is, which decides whether its case cards
+      // ask for `õpetajale` or `õpetajasse`. See lib/estonian/caseQuestion.ts.
+      semanticTypes: true,
       examples: true,
       forms: { select: { formType: true, value: true, morphCode: true } },
     },

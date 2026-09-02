@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ChevronDown } from "lucide-react";
 import { CASES } from "@/lib/estonian/cases";
+import { caseQuestionFor, type CaseSubject } from "@/lib/estonian/caseQuestion";
 import { caseFromMorphCode, VERB_GROUP_LABELS, verbSlot, type VerbSlot } from "@/lib/estonian/morph";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { Speak } from "@/components/Speak";
@@ -28,7 +29,16 @@ export interface WordForm {
  * a beginner will not produce) is still shown, behind a disclosure, because
  * hiding a form the dictionary holds would be its own kind of lie.
  */
-export function WordForms({ forms, pos }: { forms: WordForm[]; pos: string }) {
+export function WordForms({ forms, pos, subject }: {
+  forms: WordForm[];
+  pos: string;
+  /**
+   * The word the table is about, so the Answers column can name the question
+   * *this* word answers: a horse answers `kellega?`, a room `millega?`.
+   * See lib/estonian/caseQuestion.ts.
+   */
+  subject: CaseSubject;
+}) {
   const isVerb = pos === "VERB";
   return (
     <div>
@@ -39,7 +49,7 @@ export function WordForms({ forms, pos }: { forms: WordForm[]; pos: string }) {
         These are the real forms, not worked out from a stem. Irregular plurals and the
         parallel forms Estonian really has are included.
       </p>
-      {isVerb ? <VerbTable forms={forms} /> : <CaseTable forms={forms} />}
+      {isVerb ? <VerbTable forms={forms} /> : <CaseTable forms={forms} subject={subject} />}
       <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
         Forms from{" "}
         <a href="https://ekilex.ee" target="_blank" rel="noreferrer" style={{ color: "var(--ink-3)" }}>
@@ -76,7 +86,7 @@ function Cell({ values }: { values: string[] }) {
 }
 
 /** Cases down, singular and plural across — the shape of every Estonian noun table. */
-function CaseTable({ forms }: { forms: WordForm[] }) {
+function CaseTable({ forms, subject }: { forms: WordForm[]; subject: CaseSubject }) {
   const singular: Record<string, string> = {};
   const plural: Record<string, string> = {};
   for (const spec of CASES) {
@@ -136,7 +146,7 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
                 </td>
                 <td className="px-3 py-2"><Cell values={singular[spec.key] ? valuesFor(forms, singular[spec.key]!) : []} /></td>
                 <td className="px-3 py-2"><Cell values={plural[spec.key] ? valuesFor(forms, plural[spec.key]!) : []} /></td>
-                <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
+                <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{caseQuestionFor(spec, subject)}</td>
               </tr>
               {/*
                 THE SHORT ILLATIVE SITS UNDER THE LONG ONE, NOT AT THE BOTTOM

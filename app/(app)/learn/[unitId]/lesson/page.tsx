@@ -5,7 +5,8 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
 import { planLesson, splitIntoLessons, type LessonWord } from "@/lib/collections/lesson";
-import { parseExamples } from "@/lib/dict/examples";
+import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { isPrincipalFormType } from "@/lib/estonian/types";
 import { LessonSession } from "./LessonSession";
 import { oneEntryPerLemma } from "@/lib/dict/search";
@@ -46,6 +47,9 @@ export default async function LessonPage({
   const select = {
     id: true, lemma: true, translation: true, pos: true, provenance: true,
     examples: true, government: true,
+    // Which of the two sets of local cases the word takes, and whether it
+    // answers `kes?` or `mis?`. See lib/estonian/caseQuestion.ts.
+    semanticTypes: true,
     // For the meeting step only: see `LessonWord.equivalent`.
     translationRu: true, translationUk: true,
     forms: { select: { formType: true, value: true } },
@@ -86,7 +90,7 @@ export default async function LessonPage({
   const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
   const pool = await prisma.lexeme.findMany({
     where: { cefr: unit.level, lemma: { notIn: [...unit.lemmas] } },
-    select: { lemma: true, translation: true, pos: true },
+    select: { lemma: true, translation: true, pos: true, semanticTypes: true },
     orderBy: { lemma: "asc" },
     skip: atLevel > DISTRACTOR_POOL ? poolSeed % (atLevel - DISTRACTOR_POOL) : 0,
     take: DISTRACTOR_POOL,
@@ -99,9 +103,20 @@ export default async function LessonPage({
       ? { text: equivalentIn(row, glossLanguage)!, lang: glossLanguage }
       : null,
     pos: row.pos,
-    // Only the sentences a lexicographer recorded. `parseExamples` degrades a
-    // malformed or outdated blob to nothing rather than throwing on the page.
-    examples: parseExamples(row.examples).map((e) => e.et),
+    semanticTypes: row.semanticTypes,
+    /*
+      Only the sentences a lexicographer recorded, and only the ones that are
+      sentences. `parseExamples` degrades a malformed or outdated blob to
+      nothing rather than throwing on the page; `usableExamples` drops the
+      fragments and the paragraphs and puts the attested ones first, which this
+      was not calling at all; and `naturalSentence` is the gate the mock exam
+      and the level check put every sentence through, so a gap-fill is never
+      built out of `Nii ____ on öelda, et ..` or of a usage that leaves the
+      answer standing beside the gap in its other spelling.
+    */
+    examples: usableExamples(parseExamples(row.examples))
+      .filter((e) => naturalSentence(e.et, nominalOpener(row.pos, [row.lemma, ...row.forms.map((f) => f.value)])))
+      .map((e) => e.et),
     parts: Object.fromEntries(
       row.forms.filter((f) => isPrincipalFormType(f.formType)).map((f) => [f.formType, f.value]),
     ),
@@ -125,7 +140,8 @@ export default async function LessonPage({
     unit,
     words: chosen,
     distractors: pool.map((p) => ({
-      lemma: p.lemma, gloss: p.translation, pos: p.pos, examples: [], parts: {}, government: null,
+      lemma: p.lemma, gloss: p.translation, pos: p.pos, semanticTypes: p.semanticTypes,
+      examples: [], parts: {}, government: null,
     })),
     // Stable for this unit and part, so re-entering a lesson gives the same one
     // rather than reshuffling the questions under someone who came back to it.

@@ -57,6 +57,17 @@ export interface EkilexDetails {
   usages: string[];
   cefr: string | null;
   /**
+   * The Institute's semantic type codes for the word's primary sense.
+   *
+   * `loom` for a horse, `in_elukutse` for a teacher, `koht_hoone` for a room.
+   * Estonian chooses between two whole sets of local cases on this fact and
+   * nothing in a word's spelling carries it, so without this the app drilled
+   * `hobusesse` and `koeras`. See `lib/estonian/semantics.ts`, which is the
+   * only place these are read, and `primarySemanticTypes` below for why the
+   * primary sense alone.
+   */
+  semanticTypes: string[];
+  /**
    * THE INSTITUTE'S OWN RUSSIAN AND UKRAINIAN, WHICH IS NOT A TRANSLATION THIS
    * APP MADE.
    *
@@ -102,6 +113,44 @@ export async function searchEkilex(query: string): Promise<EkilexWordSummary[]> 
     `/word/search/${encodeURIComponent(query)}/${DATASETS}`,
   );
   return (data?.words ?? []).filter((w) => w.lang === "est");
+}
+
+/**
+ * The semantic type codes on the word's primary sense.
+ *
+ * THE PRIMARY SENSE, NOT THE UNION. Ekilex answers for the whole word, senses
+ * and all, and a word's later senses wander far enough to be wrong about it:
+ * `jõgi` carries `inimene` on a metaphor about a river of people and `pilv`
+ * carries `loom_putukas`, so a union would have the app drilling a river as
+ * though it were a person. Taking the source's own sense order is the same
+ * rule the gloss pipeline follows over a Wiktionary page.
+ *
+ * ALL OF THAT SENSE'S CODES, THOUGH, because one meaning carries several and
+ * the one that matters is not always first: `arst` is `esitus_tiitel` and
+ * `in_elukutse`, and only the second says it is a person.
+ *
+ * `eki` alone, because the other datasets on a word id are etymology and term
+ * bases which carry no semantic type at all, and letting one of those be the
+ * first lexeme would decide the answer by which dataset happened to sort first.
+ *
+ * Exported because two scripts read the same field off their own cached copies
+ * of this response, and a second reading of somebody else's JSON is where the
+ * two stop agreeing.
+ */
+export function primarySemanticTypes(
+  lexemes: readonly { datasetCode?: string; meaning?: { semanticTypes?: { code?: string }[] } }[]
+    | undefined,
+): string[] {
+  for (const lexeme of lexemes ?? []) {
+    if (lexeme.datasetCode !== "eki") continue;
+    const codes = (lexeme.meaning?.semanticTypes ?? [])
+      .map((s) => s.code)
+      .filter((code): code is string => Boolean(code));
+    // A sense the Institute has typed nothing on is not an answer, so the next
+    // one is asked rather than the word being written down as unclassified.
+    if (codes.length > 0) return [...new Set(codes)];
+  }
+  return [];
 }
 
 export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails | null> {
@@ -170,6 +219,7 @@ export async function fetchEkilexDetails(wordId: number): Promise<EkilexDetails 
     governments,
     usages,
     cefr,
+    semanticTypes: primarySemanticTypes(data.lexemes),
     translations,
   };
 }
@@ -185,10 +235,14 @@ interface RawDetails {
     }[];
   };
   lexemes?: {
+    datasetCode?: string;
     lexemeProficiencyLevelCode?: string | null;
     governments?: { value?: string }[];
     usages?: { value?: string; lang?: string; public?: boolean }[];
-    meaning?: { definitions?: { value?: string; lang?: string }[] };
+    meaning?: {
+      definitions?: { value?: string; lang?: string }[];
+      semanticTypes?: { code?: string }[];
+    };
     synonymLangGroups?: {
       lang?: string;
       synonyms?: { type?: string; words?: { wordValue?: string }[] }[];

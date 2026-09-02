@@ -52,6 +52,16 @@ export interface PoolWord {
   translation: string;
   pos: string;
   cefr: string | null;
+  /**
+   * Which of the two sets of local cases the word takes, and whether it
+   * answers `kes?` or `mis?`.
+   *
+   * A narrowing of what this paper asks rather than a widening of it, which is
+   * why it is here despite the rule about not changing a measurement in
+   * passing: the case-form task was setting the sisseütlev of `hobune` and
+   * marking `hobusesse` correct. See lib/estonian/caseQuestion.ts.
+   */
+  semanticTypes: string | null;
   /** Stored principal parts plus anything retrieved from Ekilex. */
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
   /** Attested sentences. Never generated. */

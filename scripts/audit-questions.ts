@@ -43,7 +43,8 @@ import { mentions } from "../lib/estonian/cloze";
 
 interface Row { lemma: string; pos: string; cefr: string | null; translation: string;
   forms: { formType: string; value: string }[]; examples: { et: string; en?: string | null }[];
-  government: string | null; gradation?: string | null; gradationNote?: string | null }
+  government: string | null; gradation?: string | null; gradationNote?: string | null;
+  semanticTypes?: string | null }
 
 const entries = readExpanded() as unknown as Row[];
 
@@ -84,7 +85,8 @@ for (const e of entries) {
   const lex = {
     id: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos,
     gradation: e.gradation ?? null, gradationNote: e.gradationNote ?? null,
-    government: e.government ?? null, examples: JSON.stringify(e.examples ?? []),
+    government: e.government ?? null, semanticTypes: e.semanticTypes ?? null,
+    examples: JSON.stringify(e.examples ?? []),
     forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
   } as unknown as LexemeForCards;
   let cards;
@@ -103,6 +105,7 @@ for (const e of entries) {
 /* ── The mock exam ───────────────────────────────────────────────────────── */
 const pool: PoolWord[] = entries.map((e) => ({
   lexemeId: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos, cefr: e.cefr,
+  semanticTypes: e.semanticTypes ?? null,
   forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null, morphName: null })),
   examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null })),
   government: e.government, cardId: null,
@@ -128,7 +131,7 @@ for (const level of EXAM_LEVELS) {
 /* ── The level check ─────────────────────────────────────────────────────── */
 const words: WordRow[] = entries.map((e) => ({
   id: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos, cefr: e.cefr,
-  government: e.government,
+  government: e.government, semanticTypes: e.semanticTypes ?? null,
   forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
   examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null })),
 }));

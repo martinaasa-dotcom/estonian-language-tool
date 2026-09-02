@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { naturalSentence } from "@/lib/estonian/cloze";
 import { SpeakingSession, type SpeakingCard } from "./SpeakingSession";
 
 export const metadata = { title: "Speaking" };
@@ -49,7 +50,16 @@ export default async function SpeakingPage() {
 
   const cards: SpeakingCard[] = pool.map((card) => {
     const lemma = card.lexeme?.lemma ?? card.front;
-    const translated = usableExamples(parseExamples(card.lexeme?.examples)).find((e) => e.en);
+    /*
+      And only a sentence somebody could be asked to say aloud. `usableExamples`
+      keeps what is worth printing on a dictionary entry, which is not the same
+      thing: `Uuringud näitavad, et ..` trails off and `Elekter läks ära /
+      kadus.` is two alternatives round a slash, and neither is speakable.
+      `naturalSentence` is the gate the mock exam and the level check already
+      put every sentence through.
+    */
+    const translated = usableExamples(parseExamples(card.lexeme?.examples))
+      .find((e) => e.en && naturalSentence(e.et));
     if (translated?.en) {
       return { cardId: card.id, et: translated.et, prompt: translated.en, lemma, isSentence: true };
     }

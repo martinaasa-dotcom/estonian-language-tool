@@ -6,6 +6,7 @@ import {
 const tuba: LexemeForCards = {
   lemma: "tuba", translation: "room", pos: "NOUN",
   gradation: "QUALITATIVE", gradationNote: "b : ∅", government: null,
+  semanticTypes: "koht_hoone",
   forms: [
     { formType: "NOM_SG", value: "tuba" },
     { formType: "GEN_SG", value: "toa" },
@@ -17,6 +18,7 @@ const aitama: LexemeForCards = {
   lemma: "aitama", translation: "to help", pos: "VERB",
   gradation: "NONE", gradationNote: null,
   government: "partitive — aitan sind",
+  semanticTypes: null,
   forms: [{ formType: "INF_MA", value: "aitama" }],
 };
 
@@ -33,9 +35,11 @@ describe("generateCards", () => {
     const inessive = cards.find((c) => c.targetCase === "INESSIVE");
     expect(inessive?.back).toBe("toas");
     expect(inessive?.front).toContain("tuba");
-    // Asked by the question, which is how a class is asked for a case. The
-    // Latin name is the cross-reference on the hint, not the prompt.
-    expect(inessive?.front).toContain("kus?");
+    // Asked by the question, which is how a class is asked for a case, and by
+    // the half of it this word answers: a room is a `mis`, and `kus?` names
+    // the seesütlev and the alalütlev at once so it cannot ask for one of
+    // them. The Latin name is the cross-reference on the hint, not the prompt.
+    expect(inessive?.front).toBe("tuba → milles?");
     expect(inessive?.front).not.toMatch(/inessive/i);
     expect(inessive?.hint).toContain("seesütlev");
     expect(inessive?.hint).toContain("inessive");
@@ -74,6 +78,7 @@ describe("generateCards — CLOZE", () => {
     gradation: "NONE",
     gradationNote: null,
     government: null,
+    semanticTypes: null,
     examples: JSON.stringify([
       { et: "Jõin tassi kohvi.", source: "EKILEX" },
       { et: "Kohv on laual.", source: "EKILEX" },
@@ -189,6 +194,7 @@ describe("generateCards — CASE_FORM", () => {
   const dear = {
     id: "kallis", lemma: "kallis", translation: "dear, expensive", pos: "ADJECTIVE",
     gradation: "NONE", gradationNote: null, government: null, examples: null,
+    semanticTypes: "omadus_kval",
     forms: [
       { formType: "NOM_SG", value: "kallis", morphCode: "SgN" },
       { formType: "GEN_SG", value: "kalli", morphCode: "SgG" },
@@ -221,7 +227,7 @@ describe("generateCards — CASE_FORM", () => {
   */
   it("builds no card where the word is one of two answers either", () => {
     const bed = {
-      ...dear, id: "voodi", lemma: "voodi", translation: "bed", pos: "NOUN",
+      ...dear, id: "voodi", lemma: "voodi", translation: "bed", pos: "NOUN", semanticTypes: "ese",
       forms: [
         { formType: "NOM_SG", value: "voodi", morphCode: "SgN" },
         { formType: "GEN_SG", value: "voodi", morphCode: "SgG" },
@@ -236,7 +242,7 @@ describe("generateCards — CASE_FORM", () => {
 
   it("keeps the illative where neither answer is the word", () => {
     const room = {
-      ...dear, id: "tuba", lemma: "tuba", translation: "room", pos: "NOUN",
+      ...dear, id: "tuba", lemma: "tuba", translation: "room", pos: "NOUN", semanticTypes: "koht_hoone",
       forms: [
         { formType: "NOM_SG", value: "tuba", morphCode: "SgN" },
         { formType: "GEN_SG", value: "toa", morphCode: "SgG" },
@@ -257,6 +263,7 @@ describe("generateCards — CONJUGATION", () => {
     gradation: "QUALITATIVE",
     gradationNote: "g : ∅",
     government: null,
+    semanticTypes: null,
     forms: [
       { formType: "INF_MA", value: "lugema", morphCode: "Sup" },
       { formType: "PRES_1SG", value: "loen", morphCode: "IndPrSg1" },

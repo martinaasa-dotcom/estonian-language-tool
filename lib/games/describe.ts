@@ -1,4 +1,5 @@
 import { CASES } from "@/lib/estonian/cases";
+import { caseFits } from "@/lib/estonian/caseQuestion";
 import { caseAnswer, shownForms, stemsFromParts } from "@/lib/estonian/derive";
 import { caseIndex, caseWritten, type CaseVerdict } from "@/lib/estonian/whichCase";
 import { looksLikeSentence } from "@/lib/estonian/writing";
@@ -43,6 +44,15 @@ export interface SceneWord extends RequiredWord {
   readonly translation: string;
   /** A character, never artwork. See `lib/collections/emoji.ts`. */
   readonly emoji: string;
+  /**
+   * Which of the two sets of local cases the word takes.
+   *
+   * Here rather than on `RequiredWord`, which is the marker's shape and has no
+   * business knowing: what counts as a word being *used* is every spelling it
+   * has, and this only decides which of them a task may ask for. See
+   * lib/estonian/caseQuestion.ts.
+   */
+  readonly semanticTypes: string | null;
 }
 
 export interface DescribeTask {
@@ -104,6 +114,13 @@ export function taskFor(
 ): DescribeTask | null {
   const word = words[askIndex];
   if (!word) return null;
+  /*
+    And not a local case this word does not take. The scene words are pictures,
+    so a third of them are animals and people: 🐴 with "put `hobune` in the
+    sisseütlev" wants `hobusesse`, which is not a sentence anybody would write
+    about a picture of a horse. See lib/estonian/caseQuestion.ts.
+  */
+  if (!caseFits(caseKey, word)) return null;
 
   const parts: Record<string, string> = {};
   for (const form of word.forms) parts[form.formType] = form.value;

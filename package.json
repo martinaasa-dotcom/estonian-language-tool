@@ -40,6 +40,7 @@
     "fixture:load": "tsx scripts/load-fixture.ts",
     "measure:asr": "node scripts/measure-asr.mjs",
     "audit:questions": "tsx scripts/audit-questions.ts",
+    "audit:sense": "tsx scripts/audit-sense.ts",
     "audit:decks": "tsx scripts/audit-decks.ts"
   },
   "prisma": {

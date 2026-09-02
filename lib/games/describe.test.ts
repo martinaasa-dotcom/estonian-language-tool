@@ -5,11 +5,11 @@ const forms = (parts: Record<string, string>) =>
   Object.entries(parts).map(([formType, value]) => ({ formType, value }));
 
 const maja: SceneWord = {
-  lemma: "maja", pos: "NOUN", translation: "house", emoji: "🏠",
+  lemma: "maja", pos: "NOUN", translation: "house", emoji: "🏠", semanticTypes: null,
   forms: forms({ NOM_SG: "maja", GEN_SG: "maja", PART_SG: "maja" }),
 };
 const koer: SceneWord = {
-  lemma: "koer", pos: "NOUN", translation: "dog", emoji: "🐕",
+  lemma: "koer", pos: "NOUN", translation: "dog", emoji: "🐕", semanticTypes: null,
   forms: forms({ NOM_SG: "koer", GEN_SG: "koera", PART_SG: "koera" }),
 };
 /*
@@ -22,7 +22,7 @@ const koer: SceneWord = {
   word the dictionary has never been asked about rather than an ordinary entry.
 */
 const lind: SceneWord = {
-  lemma: "lind", pos: "NOUN", translation: "bird", emoji: "🐦",
+  lemma: "lind", pos: "NOUN", translation: "bird", emoji: "🐦", semanticTypes: null,
   forms: forms({ NOM_SG: "lind", GEN_SG: "linnu", PART_SG: "lindu", NOM_PL: "linnud" }),
 };
 
@@ -38,7 +38,7 @@ describe("taskFor", () => {
 
   it("sets no task on a word with no genitive stem", () => {
     const aitah: SceneWord = {
-      lemma: "aitäh", pos: "NOUN", translation: "thanks", emoji: "🙏",
+      lemma: "aitäh", pos: "NOUN", translation: "thanks", emoji: "🙏", semanticTypes: null,
       forms: forms({ NOM_SG: "aitäh" }),
     };
     expect(taskFor(scene, [aitah], 0, "INESSIVE")).toBeNull();
@@ -57,7 +57,7 @@ describe("taskFor", () => {
 
   it("keeps both illatives, and shows both", () => {
     const tuba: SceneWord = {
-      lemma: "tuba", pos: "NOUN", translation: "room", emoji: "🛏️",
+      lemma: "tuba", pos: "NOUN", translation: "room", emoji: "🛏️", semanticTypes: null,
       forms: forms({ NOM_SG: "tuba", GEN_SG: "toa", PART_SG: "tuba", ILL_SG_SHORT: "tuppa" }),
     };
     const task = taskFor(scene, [tuba], 0, "ILLATIVE")!;
@@ -102,7 +102,7 @@ describe("markDescription", () => {
 
   it("accepts the other true illative without printing it as the answer", () => {
     const tuba: SceneWord = {
-      lemma: "tuba", pos: "NOUN", translation: "room", emoji: "🛏️",
+      lemma: "tuba", pos: "NOUN", translation: "room", emoji: "🛏️", semanticTypes: null,
       forms: forms({ NOM_SG: "tuba", GEN_SG: "toa", PART_SG: "tuba", ILL_SG_SHORT: "tuppa" }),
     };
     const illative = taskFor(scene, [tuba], 0, "ILLATIVE")!;

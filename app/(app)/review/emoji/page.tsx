@@ -6,6 +6,7 @@ import { oneEntryPerLemma } from "@/lib/dict/search";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { CASES } from "@/lib/estonian/cases";
+import { caseFits, caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { courseLevelFor } from "@/lib/progress/level";
 import { bandsAround } from "@/lib/collections/levels";
@@ -81,7 +82,9 @@ export default async function EmojiPage() {
       },
       orderBy: [{ due: "asc" }, { id: "asc" }],
       take: POOL,
-      include: { lexeme: { select: { id: true, lemma: true } } },
+      // `semanticTypes` so the tile can name the question this word answers:
+      // a horse is a `kes`. See lib/estonian/caseQuestion.ts.
+      include: { lexeme: { select: { id: true, lemma: true, semanticTypes: true } } },
     }),
   ]);
 
@@ -136,7 +139,7 @@ export default async function EmojiPage() {
       // The card's own back, which is the form the dictionary vouches for and
       // may be a pair (`tuppa / toasse`). The first is the one to print.
       form: card.back.split(" / ")[0]!.trim(),
-      question: spec.question,
+      question: caseQuestionFor(spec, card.lexeme!),
       caseEt: grammarTerm(spec.key)?.et ?? spec.et,
     });
   }
@@ -207,6 +210,10 @@ export default async function EmojiPage() {
       */
       let picked: { form: string; key: string } | null = null;
       for (const spec of shuffle(askable)) {
+        // AND NOT A LOCAL CASE THE WORD DOES NOT TAKE. 🐴 beside `hobuses` is
+        // the wrong half of the language, and a picture round is full of
+        // animals. See lib/estonian/caseQuestion.ts.
+        if (!caseFits(spec.key, row)) continue;
         const answer = caseAnswer(stems, spec.key);
         if (!answer) continue;
         if (answer.accepted.some((f) => f.trim().toLocaleLowerCase("et") === lemma)) continue;
@@ -224,7 +231,7 @@ export default async function EmojiPage() {
         emoji,
         lemma: row.lemma,
         form: picked.form,
-        question: spec.question,
+        question: caseQuestionFor(spec, row),
         caseEt: grammarTerm(spec.key)?.et ?? spec.et,
       });
     }

@@ -36,6 +36,7 @@ import { fileURLToPath } from "node:url";
 import { courseWords, type CourseWord } from "../lib/collections/syllabus/index";
 import { RETIRED_WORDS } from "../lib/collections/syllabus/retired";
 import { inferPos } from "../lib/collections/syllabus/types";
+import { primarySemanticTypes } from "../lib/ekilex/client";
 import { formatGovernment } from "../lib/ekilex/mapper";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -89,9 +90,13 @@ interface RawFormSet { wordClass?: string | null; forms?: RawForm[] }
 interface RawWord { wordId: number; wordValue: string; lang: string; paradigms?: RawFormSet[] }
 interface RawUsage { value?: string; lang?: string; public?: boolean }
 interface RawLexeme {
+  datasetCode?: string;
   lexemeProficiencyLevelCode?: string | null;
   governments?: { value?: string }[];
-  meaning?: { definitions?: { lang?: string; value?: string }[] };
+  meaning?: {
+    definitions?: { lang?: string; value?: string }[];
+    semanticTypes?: { code?: string }[];
+  };
   usages?: RawUsage[];
   /** Ekilex's equivalents in other languages, which is where rus and ukr live. */
   synonymLangGroups?: {
@@ -252,6 +257,16 @@ function extractLexemeData(detail: RawDetails | null) {
     governments,
     usages: usages.slice(0, MAX_USAGES),
     definition: definitions[0] ?? null,
+    /*
+      What kind of thing the word is, as the Institute classified it, and the
+      one field in this response the harvest used to throw away that a card
+      depends on. Estonian picks between two whole sets of local cases on it,
+      so without it `hobune` was drilled as `hobusesse` and `õpetaja` as
+      `õpetajasse`. `primarySemanticTypes` is in the client rather than here,
+      because two scripts and the live lookup read the same field off their own
+      cached copies of this response.
+    */
+    semanticTypes: primarySemanticTypes(detail?.lexemes),
     // Two at most, which is what a card has room for and is where a third
     // stops adding meaning and starts being a list.
     rus: rus.slice(0, MAX_EQUIVALENTS),
@@ -269,6 +284,8 @@ interface Harvested {
   government: string | null;
   usages: string[];
   note: string | null;
+  /** The Institute's semantic type codes for the word's primary sense. */
+  semanticTypes: string[];
   /** Ekilex's own equivalents in the other two languages of the country. */
   rus: string[];
   ukr: string[];
@@ -338,6 +355,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       government: null,
       usages: extra.usages,
       note: extra.definition,
+      semanticTypes: extra.semanticTypes,
       rus: extra.rus,
       ukr: extra.ukr,
     };
@@ -393,6 +411,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       government: wantVerb ? formatGovernment(extra.governments) : null,
       usages: extra.usages,
       note: extra.definition,
+      semanticTypes: extra.semanticTypes,
       rus: extra.rus,
       ukr: extra.ukr,
     };
@@ -459,6 +478,15 @@ export interface HarvestedWord {
   /** Ekilex's Estonian explanatory definition, where it has one. */
   note: string | null;
   /**
+   * The Institute's semantic type codes for the word's primary sense.
+   *
+   * A horse is loom, a teacher is in_elukutse, a room is koht_hoone. Estonian
+   * chooses between two whole sets of local cases on this and nothing in a
+   * word's spelling carries it, so it is what stops a flashcard asking for the
+   * illative of an animal. Read only by lib/estonian/semantics.ts.
+   */
+  semanticTypes: string[];
+  /**
    * The Institute's own Russian and Ukrainian equivalents.
    *
    * Not a translation this app made and not one a model made: they come from
@@ -483,6 +511,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
       `    government: ${r.government ? q(r.government) : "null"},`,
       `    usages: [${usages}],`,
       `    note: ${r.note ? q(r.note) : "null"},`,
+      `    semanticTypes: [${r.semanticTypes.map(q).join(", ")}],`,
       `    rus: [${r.rus.map(q).join(", ")}], ukr: [${r.ukr.map(q).join(", ")}],`,
       "  },",
     ].join("\n");

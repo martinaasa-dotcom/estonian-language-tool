@@ -70,6 +70,8 @@ export async function describeRound(
     where: { lemma: { in: [...SCENE_LEMMAS] }, pos: "NOUN" },
     select: {
       id: true, lemma: true, translation: true, cefr: true, pos: true, provenance: true,
+      // Which local cases the word takes: see lib/estonian/caseQuestion.ts.
+      semanticTypes: true,
       forms: { select: { formType: true, value: true } },
     },
     orderBy: [{ lemma: "asc" }, { id: "asc" }],
@@ -124,6 +126,7 @@ export async function describeRound(
         lemma: row.lemma,
         pos: "NOUN",
         translation: row.translation,
+        semanticTypes: row.semanticTypes,
         emoji,
         forms: row.forms,
       });
@@ -239,6 +242,7 @@ export async function taskById(
     where: { lemma: { in: [...scene.lemmas] }, pos: "NOUN" },
     select: {
       id: true, lemma: true, translation: true, examples: true, pos: true, provenance: true,
+      semanticTypes: true,
       forms: { select: { formType: true, value: true } },
     },
     orderBy: [{ lemma: "asc" }, { id: "asc" }],
@@ -254,7 +258,10 @@ export async function taskById(
     const row = chosen.find((r) => r.lemma === lemma);
     const emoji = emojiFor(lemma);
     if (!row || !emoji) return null;
-    words.push({ lemma: row.lemma, pos: "NOUN", translation: row.translation, emoji, forms: row.forms });
+    words.push({
+      lemma: row.lemma, pos: "NOUN", translation: row.translation, emoji,
+      semanticTypes: row.semanticTypes, forms: row.forms,
+    });
   }
 
   const task = taskFor(scene, words, askIndex, caseKey as (typeof ASKABLE_CASES)[number]);

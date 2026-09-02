@@ -9,6 +9,8 @@ import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable, shownForms, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
+import { caseByKey } from "@/lib/estonian/cases";
+import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
@@ -1099,7 +1101,11 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       // who has been to one lesson recognises them.
       const principal = (isVerb
         ? [["ma-tegevusnimi", form("INF_MA")], ["da-tegevusnimi", form("INF_DA")], ["olevik · ma", form("PRES_1SG")], ["lihtminevik · ma", form("PAST_1SG")]]
-        : [["nimetav · kes? mis?", form("NOM_SG")], ["omastav · kelle? mille?", form("GEN_SG")], ["osastav · keda? mida?", form("PART_SG")]]
+        : [
+            [`nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, lex)}`, form("NOM_SG")],
+            [`omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, lex)}`, form("GEN_SG")],
+            [`osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, lex)}`, form("PART_SG")],
+          ]
       ).flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
 
       const table = isVerb
@@ -1145,13 +1151,21 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         principal: [
           ...principal,
           ...learnt.flatMap((row) => (row.singular
-            ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: shownForms(row).join(" / ") }]
+            ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, lex)}`, value: shownForms(row).join(" / ") }]
             : [])),
         ],
         cases: table.map((row) => ({
           en: row.spec.en,
           et: row.spec.et,
-          question: row.spec.question,
+          /*
+            The question *this* word answers. Two of the five words on this
+            card are people, so the `mille-` series printed `milles?` over
+            `mehes` and `sõbras`, which is the interrogative for a thing asked
+            about a `kes` on the app's own front page. Every row is still
+            shown, because a table of forms is a reference rather than a
+            question. See lib/estonian/caseQuestion.ts.
+          */
+          question: caseQuestionFor(row.spec, lex),
           singular: row.singular ? shownForms(row).join(" / ") : null,
           plural: row.plural ?? null,
           principal: row.spec.principal || isLearnt(row),
@@ -1196,17 +1210,17 @@ const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
     lemma: w.lemma,
     genitive: w.genSg,
     principal: [
-      { label: "nimetav · kes? mis?", value: w.nomSg },
-      { label: "omastav · kelle? mille?", value: w.genSg },
-      { label: "osastav · keda? mida?", value: w.partSg },
+      { label: `nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, w)}`, value: w.nomSg },
+      { label: `omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, w)}`, value: w.genSg },
+      { label: `osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, w)}`, value: w.partSg },
       ...learnt.flatMap((row) => (row.singular
-        ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: shownForms(row).join(" / ") }]
+        ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, w)}`, value: shownForms(row).join(" / ") }]
         : [])),
     ],
     cases: table.map((row) => ({
       en: row.spec.en,
       et: row.spec.et,
-      question: row.spec.question,
+      question: caseQuestionFor(row.spec, w),
       singular: row.singular ? shownForms(row).join(" / ") : null,
       plural: row.plural ?? null,
       principal: row.spec.principal || isLearnt(row),

@@ -91,7 +91,7 @@ describe("a grammar point carries both names", () => {
     const inessive = grammarPoint("inessive");
     expect(inessive?.title).toBe("seesütlev");
     expect(inessive?.estonian).toBe(true);
-    expect(inessive?.english).toBe("milles? kus?");
+    expect(inessive?.english).toBe("kelles? milles? kus?");
 
     const pluperfect = grammarPoint("pluperfect");
     expect(pluperfect?.title).toBe("enneminevik");
