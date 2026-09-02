@@ -741,4 +741,102 @@ export const A1 = [
       ["rahvus", "nationality"],
     ],
   }),
+  /*
+    The words between the words, second pass.
+
+    The seventeenth pass added six units for the words a sentence is made of and
+    caught the question words, the pronouns, the time adverbs, the postpositions,
+    the months and the countries. It did not catch the two kinds below, and
+    nothing noticed until `npm run measure:scenes` counted: 13,458 distinct words
+    in the attested corpus cannot be vouched for by any entry in the dictionary,
+    and they appear in 79% of every sentence a lexicographer recorded. The
+    commonest of them is `ja`, 1,507 times, and the course had never taught it.
+
+    That is not an exotic gap. A learner who cannot say `ja`, `aga` or `ka` cannot
+    join two thoughts or agree with anybody, and every attested sentence in the
+    app was unreadable to them by one or two words they had known since their
+    first week of class.
+
+    Both units are ADVERB, which is what this course already calls an uninflecting
+    function word: `kas`, `kui` and `palju` are ADVERB in `kusisonad`, and the
+    harvest's own comment says demanding forms for one "would drop every single
+    connective in the course". Ekilex labels most of these `konj`, and adding a
+    part of speech for it would move the conflict key `Lexeme` is unique on for
+    the sake of a label.
+
+    Every gloss below was checked against the Ekilex entry it names rather than
+    written from memory, which caught two: `ehk` is first of all "perhaps" rather
+    than "or", and `vaid` is "only" rather than "but rather". Every homonym is
+    pinned by word id in the fourth slot, because the adverb path of the harvest
+    takes the first candidate without reporting the choice, and the first
+    candidate for `siin` could have been the curtain rail.
+  */
+  unit({
+    id: "sidesonad",
+    title: "Sidesõnad",
+    subtitle: "Joining two thoughts",
+    icon: "Link",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Join two thoughts into one sentence: and, but, because, that, or.",
+    blurb: "Nine words that turn a list of sentences into something somebody would say.",
+    grammar: ["word-order"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
+    requires: ["pohiverbid"],
+    words: [
+      ["ja", "and", "ADVERB"],
+      // Also a noun meaning a troubling circumstance, and a place in Russia.
+      ["aga", "but", "ADVERB", 155181],
+      // The conjunction, not the butter the food unit already teaches.
+      ["või", "or", "ADVERB", 258019],
+      // Also the ISO code for Estonian, which Ekilex holds as a word.
+      ["et", "that", "ADVERB", 165201],
+      ["sest", "because", "ADVERB"],
+      ["ega", "nor, and not", "ADVERB"],
+      ["nagu", "like, as", "ADVERB"],
+      ["ehk", "perhaps, maybe", "ADVERB"],
+      ["kuni", "until", "ADVERB"],
+    ],
+  }),
+  unit({
+    id: "maarsonad",
+    title: "Määrsõnad",
+    subtitle: "Also, only, quite, almost",
+    icon: "SlidersHorizontal",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Say also, only, quite, almost and not, and put the weight where you mean it.",
+    blurb: "The small words that decide whether you sound like a textbook or a person.",
+    grammar: ["word-order"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
+    requires: ["sidesonad"],
+    words: [
+      ["ka", "also, too", "ADVERB"],
+      ["ju", "after all, of course", "ADVERB"],
+      // Also a noun meaning abundance.
+      ["küll", "indeed, certainly", "ADVERB", 191080],
+      ["siis", "then", "ADVERB"],
+      ["nii", "so, like this", "ADVERB"],
+      ["ainult", "only", "ADVERB"],
+      ["mitte", "not", "ADVERB", 203249],
+      ["hästi", "well", "ADVERB"],
+      ["üsna", "quite, fairly", "ADVERB"],
+      // Also an adjective meaning blocked or impassable.
+      ["umbes", "about, roughly", "ADVERB", 251199],
+      // Also a sports league, and a tie in musical notation.
+      ["liiga", "too, too much", "ADVERB", 194792],
+      ["rohkem", "more", "ADVERB", 228501],
+      ["peaaegu", "almost", "ADVERB"],
+      ["tavaliselt", "usually", "ADVERB"],
+      ["kiiresti", "quickly", "ADVERB"],
+      // Also a steel rail a curtain runs along.
+      ["siin", "here", "ADVERB", 233338],
+      ["alles", "still, only just", "ADVERB"],
+      ["isegi", "even", "ADVERB"],
+      ["eriti", "especially", "ADVERB"],
+      // Also a noun meaning a small amount.
+      ["vähe", "little, not much", "ADVERB", 258910],
+      ["pigem", "rather", "ADVERB"],
+    ],
+  }),
 ] as const;

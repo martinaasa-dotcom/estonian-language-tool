@@ -9,7 +9,7 @@ become, and the measurements that decide whether it can be built at all.
 
 ## 1. The promise the course already made
 
-`lib/collections/syllabus/` holds 79 units and every one of them carries a `canDo`, which is a claim
+`lib/collections/syllabus/` holds 81 units and every one of them carries a `canDo`, which is a claim
 about what the learner will be able to do:
 
 > Greet someone, thank them, apologise, and say you do not understand.
@@ -20,7 +20,7 @@ about what the learner will be able to do:
 >
 > Buy something, ask the price, and find your way to a place in town.
 
-Not one of those 79 claims is ever tested. The app has four verbs and this is not among them: it
+Not one of those 81 claims is ever tested. The app has four verbs and this is not among them: it
 teaches a word, drills it, looks it up and measures it. Every one of those happens with the learner
 alone, at their own pace, with the right answer sitting in the dictionary the whole time. The
 closest thing to a conversation anywhere in the product is the mock exam's spoken part, which is a
@@ -625,7 +625,7 @@ Individual scenes carry `within: "/situations"`, which is the rule `lib/ux/modes
 to the five targeted drills: a scene is offered on the unit page whose `canDo` it tests, and a unit
 links to the scene that tests its promise. That two-way link is what makes this part of the course
 rather than a side game, and it is the reason the module is worth building: the syllabus has been
-claiming for 79 units that a learner will be able to do something, and this is where it finds out.
+claiming for 81 units that a learner will be able to do something, and this is where it finds out.
 
 **A scene's required beats are that `canDo` taken apart.** "Describe a symptom to a doctor and
 understand the advice you are given" is three beats, and they are the three the scene marks, so the
@@ -969,21 +969,31 @@ scene's worth of variety. It is enough to seed a phrase bank by hand and no more
 ### The finding nobody was looking for
 
 **The words that hold an Estonian sentence together are not in this app's dictionary.** 13,458
-distinct words the attested corpus uses cannot be vouched for by any entry, and they appear in 79%
-of all attested lines. The commonest are not obscure: `ja`, `ta`, `oli`, `et`, `ka`, `pole`, `nii`,
-`ole`, `olid`, `ning`, `aga`, `nagu`, `siis`. That list is the conjunctions and the particles, plus
-the present and past of `olema`, which is irregular and so is neither stored past its first person
-nor derivable (`lib/estonian/conjugate.ts` excludes it by name, correctly).
-
-The seventeenth pass added six units for the words between the words and caught question words,
-pronouns, time adverbs, postpositions, months and countries. It did not catch these. The fix is the
-same one: **a syllabus unit, harvested from Ekilex like every other one**, so nobody writes a word
-of Estonian to get it. The script prints the ranked list precisely so that unit can be built from a
-measurement rather than from somebody's memory. It is worth doing on its own account, before any of
-this module ships, because a learner who cannot say `ja` or `on` is missing more than a scene.
+distinct words the attested corpus used could not be vouched for by any entry, and they appeared in
+79% of all attested lines. The commonest were not obscure: `ja` 1,507 times, then `ta`, `oli`, `et`,
+`ka`, `pole`, `nii`.
 
 The measurement deliberately does not hard-code that list. Writing Estonian function words into a
-file would be this project writing Estonian, and the frequency ranking is the better answer anyway.
+file would be this project writing Estonian, and a frequency ranking is the better answer anyway.
+
+**Reading the list turned out to matter more than the number, because it holds three faults and only
+one of them is a missing unit.**
+
+1. **Untaught closed-class words.** `ja`, `et`, `ka`, `nii`, `aga`, `nagu`, `siis`, `ainult` and
+   their kind. The course had never taught a single conjunction. This is the missing unit and it is
+   built: §26.
+2. **Forms of `olema`.** `oli`, `pole`, `ole`, `olid`, `olnud`, `oled`, `polnud`, about a thousand
+   occurrences between them. `olema` is in the dictionary; its present is irregular, so
+   `lib/estonian/conjugate.ts` excludes it by name and correctly refuses to derive one, and its past
+   is not derivable for any verb. A unit teaching `oli` as a headword would be wrong, because the
+   headword is `olema`. The fix is stored or enriched forms on the entry that already exists.
+3. **Short pronoun forms and the simple past.** `ta`, `tal`, `mu`, `me`, `su`, `nad`, and `jäi`,
+   `läks`, `hakkas`, `tegi`. Both are documented decisions rather than oversights: CLAUDE.md says a
+   pronoun's everyday case forms are the short ones that no rule over the genitive reaches, and that
+   the simple past is not derived and may not be. Both arrive with the first enrichment of the entry.
+
+Only the first is a syllabus unit, and conflating the three would have produced a unit teaching
+inflected forms as headwords, which is the one thing a unit may not do.
 
 ### Three things the measurement got wrong first
 
@@ -1021,3 +1031,60 @@ So every count above is an upper bound, and the honest conclusion is stronger th
 rather than weaker. The composer is load-bearing, the gate in §2 is what the module rests on, and
 the reviewed phrase bank is what a keyless deployment needs to hold a conversation rather than a
 greeting.
+
+## 26. The unit the measurement asked for
+
+Two units, both A1, appended after the twenty that were there, so the first three units at A1 stay
+what they were and first run still builds the same deck.
+
+| Unit | Words | What it is for |
+|---|---|---|
+| `sidesonad` | 9 | `ja`, `aga`, `või`, `et`, `sest`, `ega`, `nagu`, `ehk`, `kuni`. Joining two thoughts. |
+| `maarsonad` | 21 | `ka`, `ju`, `küll`, `siis`, `nii`, `ainult`, `mitte` and fourteen more. The words that put the weight where you mean it. |
+
+Every one came back from Ekilex through `npm run harvest` with four attested sentences and its own
+CEFR level, which is what makes this a request rather than this project writing Estonian: the
+syllabus named 30 lemmas and Ekilex decided whether they exist. All 30 arrived; none was dropped.
+
+Four things about how it was built are worth keeping.
+
+**The part of speech is `ADVERB`, and that is what this course already calls an uninflecting function
+word.** `kas`, `kui` and `palju` are `ADVERB` in `kusisonad`, and the harvest's own comment says
+demanding forms for one "would drop every single connective in the course". Ekilex labels most of
+these `konj`. Adding a part of speech for that would move the key `Lexeme` is unique on, which
+`docs/13-mvp-status.md` §22 is the story of, for the sake of a label.
+
+**Every gloss was checked against the Ekilex entry rather than written from memory, and two were
+wrong.** `ehk` is first of all "perhaps" rather than "or", and `vaid` is "only" rather than "but
+rather". A gloss is the answer side of a flashcard, so a wrong one is drilled rather than displayed.
+
+**Every homonym is pinned by word id.** The adverb path of the harvest takes the first candidate
+without reporting the choice, so the pin is the only defence: `siin` is also a curtain rail, `liiga`
+is also a sports league, `aga` is also a noun and a place in Russia, `et` is also the ISO code for
+Estonian, and `või` is the butter the food unit already teaches. Six of the thirty needed one.
+
+**Three words were deliberately left out.** `ning`, `vaid` and `enam` are exact synonyms of `ja`,
+`ainult` and `rohkem`, and Ekilex gives each pair the same definition. A production card asks
+"English to Estonian", so two words glossed "and" would each mark the other wrong, which is the
+fault the illative taught this project. They stay out of the course and stay out of the lexicon, and
+that cost is named here rather than hidden.
+
+### What it bought
+
+| | Before | After |
+|---|---|---|
+| Attested lines containing a word nothing can vouch for | 79% | 76% |
+| Readable questions at A1 | 23 | 30 |
+| Readable questions at A2 | 31 | 40 |
+| Readable questions at B1 | 37 | 48 |
+| Beats filled by retrieval, of 21 | 13 | 13 |
+
+A third more readable questions at every level, and **no change at all to the beat count**. That is
+not a disappointment, it is the same finding twice: the beats retrieval cannot fill are limited by
+how few recorded sentences are questions, not by how many words a learner knows. Teaching `ja` does
+not make a lexicographer write a question they did not write.
+
+The re-harvest is worth one line of its own. It refetched all 1,371 existing words from a cold cache
+and reproduced every one of them byte for byte: 30 added, none removed, **none changed**. That is
+the harvest being deterministic and Ekilex being stable, and it is the reason a full re-run is a
+safe thing to do rather than a diff nobody can review.

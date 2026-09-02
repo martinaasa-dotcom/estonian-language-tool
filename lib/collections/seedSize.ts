@@ -25,6 +25,13 @@
  * of plural forms with it. The word count did not move, because the words are
  * the same words; what changed is which word each of them is.
  *
+ * It moved by thirty words and by *no forms at all*, which is the shape of the
+ * two units added for the words that hold a sentence together. `ja`, `aga`,
+ * `ka` and the rest do not inflect, so the harvest keeps them the way it keeps
+ * an adverb: real because Ekilex has them, with their sentences and their
+ * level, and no forms to get wrong. A word count that moves while the form
+ * count does not is what that looks like from here.
+ *
  * It went *down* by twelve once, which is the only interesting thing that has
  * happened to it. The part-of-speech audit corrected 61 labels in the built
  * file, and twelve of those words were ones the course harvest also carries:
@@ -33,4 +40,4 @@
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
  */
-export const SEED_SET_SIZE = { words: 6_050, forms: 34_554 };
+export const SEED_SET_SIZE = { words: 6_080, forms: 34_554 };

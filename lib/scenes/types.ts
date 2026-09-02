@@ -132,7 +132,7 @@ export interface SceneSpec {
   /**
    * The unit whose `canDo` this scene takes apart.
    *
-   * The course has been claiming for 79 units that a learner will be able to
+   * The course has been claiming for 81 units that a learner will be able to
    * do something. A scene is where one of those claims is checked, so it names
    * which one rather than being a situation somebody thought sounded useful.
    */

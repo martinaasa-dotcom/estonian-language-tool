@@ -12,7 +12,7 @@
  * first time a word is viewed — storing it here would be a second source of
  * truth that goes stale.
  *
- * 1371 words, harvested 2026-09-02.
+ * 1401 words, harvested 2026-09-02.
  */
 
 export interface HarvestedWord {
@@ -115,6 +115,24 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Majanduse aeglane areng.", "Aeglase vooluga jõgi.", "Lapse areng on aeglane.", "Ta teeb korralikku tööd, aga on väga aeglane."],
     note: "aegamööda, pikkamööda toimuv, kulgev või arenev",
     rus: ["медленный", "неторопливый"], ukr: ["повільний", "неквапливий"],
+  },
+  {
+    lemma: "aga", gloss: "but", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 155181,
+    parts: {  },
+    government: null,
+    usages: ["Olen kuulnud küll, aga ei tule meelde.", "Andres on koduhoidja tüüp, aga mina mitte.", "Lootust on, aga vähe.", "Aga siis jäi see kõik sinnapaika, nagu poleks olnudki."],
+    note: "(vastandavalt:) seob lauseid või lauseosi, mis sisaldavad vastandavaid või piiravaid väiteid või asjaolusid",
+    rus: ["но", "а"], ukr: ["але", "та"],
+  },
+  {
+    lemma: "ainult", gloss: "only", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 155557,
+    parts: {  },
+    government: null,
+    usages: ["Raamatut on trükitud ainult 200 eksemplari.", "Tal on ainult üks laps.", "Reis kestis ainult ühe nädala.", "Tule ainult korraks!"],
+    note: "osutab, et midagi on vähem kui vaja või eeldatud",
+    rus: ["только", "лишь"], ukr: ["тільки", "лише"],
   },
   {
     lemma: "aitama", gloss: "to help", pos: "VERB", cefr: "A1",
@@ -241,6 +259,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["All orus linn, üleval mäeharjal loss.", "Kotid silmade all.", "Akna peal ja all on tavaliselt karniisid.", "Kiige all on veelomp."],
     note: "kuskilt vaadates, millegi suhtes madalamas kohas",
     rus: ["под", "подо"], ukr: ["під", "внизу"],
+  },
+  {
+    lemma: "alles", gloss: "still, only just", pos: "ADVERB", cefr: "B1",
+    ekilexWordId: 156608,
+    parts: {  },
+    government: null,
+    usages: ["Pool leiba on söödud, pool on alles.", "Pool kooki on söödud, aga pool on veel alles.", "Täiesti uus maja, alles sai valmis.", "Alles ostsin uue pastapliiatsi ja nüüd juba kadunud."],
+    note: "(endisest) säilinud, veel või endist viisi olemas",
+    rus: ["осталось", "сохранилось"], ukr: ["залишилося", "лишилося"],
   },
   {
     lemma: "allikas", gloss: "source", pos: "NOUN", cefr: "B1",
@@ -999,6 +1026,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["этика", "мораль"], ukr: [],
   },
   {
+    lemma: "ega", gloss: "nor, and not", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 162700,
+    parts: {  },
+    government: null,
+    usages: ["Siin polnud ühtegi puud ega põõsast.", "Auto ei pääsenud edasi ega tagasi.", "Unistab mehest, kes ei joo ega suitseta.", "Ta vaatas võõrale otsa ega lausunud sõnagi."],
+    note: "ka mitte, samuti mitte, ja ei",
+    rus: ["и не", "также не"], ukr: ["ні", "і не"],
+  },
+  {
     lemma: "ehitama", gloss: "to build", pos: "VERB", cefr: "A1",
     ekilexWordId: 162765,
     parts: { INF_MA: "ehitama", INF_DA: "ehitada", PRES_1SG: "ehitan", PAST_1SG: "ehitasin", PART_TUD: "ehitatud" },
@@ -1006,6 +1042,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Viiekorruseline maja ehitati valmis vaid viie kuuga.", "Kiireid autosid ehitati ka juba ligemale 100 aastat tagasi.", "Mees ehitas perele maja.", "See firma ehitab hooneid betoonist."],
     note: "hoonet vm ehitist püstitama või rajama",
     rus: ["строить", "построить"], ukr: ["будувати", "збудувати"],
+  },
+  {
+    lemma: "ehk", gloss: "perhaps, maybe", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 162830,
+    parts: {  },
+    government: null,
+    usages: ["Ehk on tal õiguski.", "See asi annab ehk veel korraldada.", "Ehk homme on ilusam ilm.", "Küsi Mari käest, ehk tema teab."],
+    note: "osutab oletatavale või loodetavale võimalusele, milles siiski ei olda päris kindel",
+    rus: ["возможно", "вероятно"], ukr: ["можливо", "може"],
   },
   {
     lemma: "eile", gloss: "yesterday", pos: "ADVERB", cefr: "A1",
@@ -1269,6 +1314,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["распечатка звонков", "выделение"], ukr: [],
   },
   {
+    lemma: "eriti", gloss: "especially", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 164813,
+    parts: {  },
+    government: null,
+    usages: ["Hooaeg kujuneb eriti huvitavaks.", "Eriti hull oli olukord kuu aega tagasi.", "Eriti kasulik on süüa ingverit.", "Eriti raske on palavust taluda südamehaigetel."],
+    note: "iseäranis, eriti",
+    rus: ["очень", "исключительно"], ukr: ["особливо", "зокрема"],
+  },
+  {
     lemma: "esile tõstma", gloss: "to highlight", pos: "VERB", cefr: "B1",
     ekilexWordId: 164956,
     parts: { INF_MA: "esile tõstma", INF_DA: "esile tõsta", PRES_1SG: "tõstan esile", PAST_1SG: "tõstsin esile", PART_TUD: "esile tõstetud" },
@@ -1339,6 +1393,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: [],
     note: "lühem subjektiivses laadis kunstipärane teadusliku, ühiskondliku või kirjanduskriitilise sisuga kirjutis",
     rus: ["эссе", "очерк"], ukr: ["есе"],
+  },
+  {
+    lemma: "et", gloss: "that", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 165201,
+    parts: {  },
+    government: null,
+    usages: ["Tundub, et kedagi pole.", "Kuulsin, et koer hakkas haukuma.", "Olukord oli säärane, et pidime kiiresti lahkuma.", "Saavutasime niipalju, et koosolek lükati edasi."],
+    note: "alustab lauseosa, mis täpsustab, kirjeldab midagi või toob esile mingi tegevuse eesmärgi, tagajärje või otstarbe",
+    rus: ["что", "чтобы"], ukr: ["що", "щоб"],
   },
   {
     lemma: "ette kujutama", gloss: "to imagine", pos: "VERB", cefr: "B1",
@@ -1809,6 +1872,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["постыдный", "позорный"], ukr: ["ганебний"],
   },
   {
+    lemma: "hästi", gloss: "well", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 170844,
+    parts: {  },
+    government: null,
+    usages: ["Ta oskab hästi hispaania keelt.", "Kaugele näen ma hästi, aga lugemiseks on prille vaja.", "Kõik lõppes õnneks hästi.", "Publik võttis etenduse hästi vastu."],
+    note: "nii, et millegagi ollakse rohkem kui ainult rahul",
+    rus: ["хорошо", "неплохо"], ukr: ["добре", "гаразд"],
+  },
+  {
     lemma: "hääldus", gloss: "pronunciation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 170870,
     parts: { NOM_SG: "hääldus", GEN_SG: "häälduse", PART_SG: "hääldust", ILL_SG_SHORT: "hääldusse", PART_PL: "hääldusi", GEN_PL: "häälduste" },
@@ -2034,6 +2106,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["сам", "сама"], ukr: ["сам", "сама"],
   },
   {
+    lemma: "isegi", gloss: "even", pos: "ADVERB", cefr: "B1",
+    ekilexWordId: 173011,
+    parts: {  },
+    government: null,
+    usages: ["Naabripoiss ei öelnud mulle isegi tere.", "Isegi kampsuniga oli toas külm.", "Juhtunu ei olnud isegi naljakas.", "Naine teenis isegi rohkem kui mees."],
+    note: "(tõstab esile järgnevat sõna või lauseosa:) vastupidi ootustele, lisaks kõigele, lausa",
+    rus: ["даже", "аж"], ukr: ["навіть", "аж"],
+  },
+  {
     lemma: "iseloom", gloss: "character", pos: "NOUN", cefr: "A2",
     ekilexWordId: 173031,
     parts: { NOM_SG: "iseloom", GEN_SG: "iseloomu", PART_SG: "iseloomu", ILL_SG_SHORT: "iseloomu", PART_PL: "iseloome", GEN_PL: "iseloomude" },
@@ -2068,6 +2149,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Ta istus mugavas tugitoolis.", "Istusin autosse ja käivitasin mootori.", "Istusime diivanil.", "Istu minu kõrvale."],
     note: "sellises asendis olema, kus istmik toetub mingile alusele ja selg on püstine",
     rus: ["сидеть", "посидеть"], ukr: ["сидіти", "посидіти"],
+  },
+  {
+    lemma: "ja", gloss: "and", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 173324,
+    parts: {  },
+    government: null,
+    usages: ["Söödi ja joodi tublisti.", "Tekst oli eesti ja soome keeles.", "Söödi. Ja joodi natuke veel. Ja siis oli õige hea olla.", "Tüdrukule meeldib laulda ja tantsida."],
+    note: "(ühendavalt:) seob sisu poolest samaväärseid, võrreldavaid või loetletavaid sõnu, lauseosi või lauseid",
+    rus: ["и", "а также"], ukr: ["і", "й"],
   },
   {
     lemma: "jaam", gloss: "station", pos: "NOUN", cefr: "A2",
@@ -2149,6 +2239,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Tuult pidav kapuutsiga jope.", "Nahkjope.", "Mul oli seljas soe jope, mis kaitses tuule eest.", "Ta kandis heledat kapuutsiga jopet."],
     note: "lühem sportlik ülerõivas",
     rus: ["куртка", "полупальто"], ukr: ["куртка"],
+  },
+  {
+    lemma: "ju", gloss: "after all, of course", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 174173,
+    parts: {  },
+    government: null,
+    usages: ["Me ju tegime kõik ära.", "Ta ei lase ju teistel rääkida.", "Sa olid ju ise ka seal.", "Seda teab ju igaüks."],
+    note: "(rõhutav üldlaiend:) tugevdab kergelt lauses esitatut, vahel seetõttu, et öeldut peetakse endastmõistetavaks või tuntuks",
+    rus: ["ведь", "же"], ukr: ["адже", "ж"],
   },
   {
     lemma: "juba", gloss: "already", pos: "ADVERB", cefr: "A1",
@@ -2455,6 +2554,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Radioaktiivsed jäätmed.", "Koduses majapidamises sorteeritakse jäätmeid.", "Kas patareid kuuluvad ohtlike jäätmete hulka?", "Jäätmed liigitatakse ohtlikeks ja tavajäätmeteks jäätmenimistu alusel."],
     note: "kasutuselt kõrvaldatud ained, esemed või nende jäägid",
     rus: ["отходы", "отбросы"], ukr: ["відходи"],
+  },
+  {
+    lemma: "ka", gloss: "also, too", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 175637,
+    parts: {  },
+    government: null,
+    usages: ["Kui tahate, võite ka tulla.", "Ma tulin tema juurde ka järgmisel õhtul.", "Mina ka mitte.", "Ka minu mees on väga pragmaatiline."],
+    note: "millegagi võrreldes samamoodi, ühesuguselt, nagu keegi teine või miski muu",
+    rus: ["также", "тоже"], ukr: ["також", "так само"],
   },
   {
     lemma: "kaalukas", gloss: "weighty", pos: "ADJECTIVE", cefr: "B2",
@@ -3175,6 +3283,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Kiire jooks.", "Kiire vooluga jõgi.", "Majanduse kiire areng.", "Lapse areng on väga kiire."],
     note: "ruttu, suure hooga, hoogsalt toimuv või kulgev",
     rus: ["быстрый", "стремительный"], ukr: ["швидкий", "стрімкий"],
+  },
+  {
+    lemma: "kiiresti", gloss: "quickly", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 180787,
+    parts: {  },
+    government: null,
+    usages: ["Kiiresti riknev toiduaine.", "Õhtusöök valmis lihtsalt ja kiiresti.", "Varas kadus kiiresti nurga taha.", "Kuhu sa nii kiiresti jooksed?"],
+    note: "lühikese ajaga, ilma pikemata",
+    rus: ["быстро", "скоро"], ukr: ["швидко", "прудко"],
   },
   {
     lemma: "kindlustus", gloss: "insurance", pos: "NOUN", cefr: "B1",
@@ -4077,6 +4194,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["когда-то", "как-то"], ukr: ["колись", "коли-небудь"],
   },
   {
+    lemma: "kuni", gloss: "until", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 187768,
+    parts: {  },
+    government: null,
+    usages: ["Tüdruk nuttis, kuni viha üle läks.", "Kuni päike paistis, oli soe.", "Nad vaidlesid niikaua, kuni kaubale said.", "Käisin talle senikaua peale, kuni ta nõusse jäi."],
+    note: "nii kaua kui",
+    rus: ["пока", "пока не"], ukr: ["поки", "поки не"],
+  },
+  {
     lemma: "kunst", gloss: "art", pos: "NOUN", cefr: "A2",
     ekilexWordId: 187802,
     parts: { NOM_SG: "kunst", GEN_SG: "kunsti", PART_SG: "kunsti", ILL_SG_SHORT: "kunsti", PART_PL: "kunste", GEN_PL: "kunstide" },
@@ -4435,6 +4561,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Küberturvalisus mängib tuleviku ühiskonnas üha olulisemat rolli.", "Riigid saavad küberturvalisuse heaks palju ära teha.", "Ettevõttes küberturvalisuse tagamine on pidev vägikaikavedu mugavuse ja piisava kaitse vahel.", "Eksperdid viisid läbi e-teenuste ja küberturvalisuse koolituse ajakirjanikele."],
     note: "arvutivõrkude keskkonna, küberruumi kaitstus, mis saavutatakse turvameetmete rakendamisega",
     rus: ["кибербезопасность"], ukr: [],
+  },
+  {
+    lemma: "küll", gloss: "indeed, certainly", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 191080,
+    parts: {  },
+    government: null,
+    usages: ["Ole mureta, küll me saame hakkama.", "Nüüd ma pean küll minema.", "Töö on küll raske, aga huvitav.", "Kurb küll, aga nii see on."],
+    note: "(rõhutav üldlaiend:) tugevdab väite jaatamist",
+    rus: ["да-да", "да"], ukr: ["так-так", "так"],
   },
   {
     lemma: "külm", gloss: "cold", pos: "ADJECTIVE", cefr: "A1",
@@ -4840,6 +4975,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["See kõlab vaimukalt, kuid on ilmne liialdus.", "Moes on elegantsed liialdused: näiteks luksuslikud detailid käistel ja pluusidel."],
     note: "millegagi liialdamine",
     rus: ["преувеличение", "излишество"], ukr: ["перебільшення", "надмірність"],
+  },
+  {
+    lemma: "liiga", gloss: "too, too much", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 194792,
+    parts: {  },
+    government: null,
+    usages: ["Tööd on liiga palju.", "Ta suri liiga vara.", "Korvpalluriks olen ma liiga lühike.", "Olen juba liiga oma, et asja kõrvalseisja pilguga vaadata."],
+    note: "üle tavalise või otstarbeka määra, rohkem kui vaja või kasulik",
+    rus: ["слишком", "излишне"], ukr: ["надто", "занадто"],
   },
   {
     lemma: "liik", gloss: "species, kind", pos: "NOUN", cefr: "B1",
@@ -5652,6 +5796,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["неоднозначность", "многозначность"], ukr: [],
   },
   {
+    lemma: "mitte", gloss: "not", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 203249,
+    parts: {  },
+    government: null,
+    usages: ["Mitte ei tule meelde.", "Mitte ei vea!", "Ma ei saa sellega mitte kuidagi nõus olla.", "Sa ei tee seda mitte!"],
+    note: "(rõhutav üldlaiend:) eitussõna, mis tugevdab väite eitust",
+    rus: ["не", "ни"], ukr: ["не", "ні"],
+  },
+  {
     lemma: "mitteametlik", gloss: "informal", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 203254,
     parts: { NOM_SG: "mitteametlik", GEN_SG: "mitteametliku", PART_SG: "mitteametlikku", ILL_SG_SHORT: "mitteametlikku", PART_PL: "mitteametlikke", GEN_PL: "mitteametlike" },
@@ -6201,6 +6354,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["сосед", "соседка"], ukr: ["сусід", "сусідка"],
   },
   {
+    lemma: "nagu", gloss: "like, as", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 206858,
+    parts: {  },
+    government: null,
+    usages: ["Elu nagu seiklusfilmis.", "Trükikoda töötas nagu kellavärk.", "Tunne ennast nagu kodus.", "Parem tee nii, nagu ma ütlesin."],
+    note: "esineb sarnasusele osutavates võrdlustes, alustab võrdluse varjundiga lauseosa",
+    rus: ["как", "словно"], ukr: ["як", "наче"],
+  },
+  {
     lemma: "naine", gloss: "woman, wife", pos: "NOUN", cefr: "A1",
     ekilexWordId: 207120,
     parts: { NOM_SG: "naine", GEN_SG: "naise", PART_SG: "naist", PART_PL: "naisi", GEN_PL: "naiste" },
@@ -6298,6 +6460,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Ajakirjanik ei olnud täiesti neutraalne.", "Rootsi jäi neutraalseks mõlemas maailmasõjas.", "Neutraalne hinnang.", "Ehk tuleks arutelu korraldada neutraalsel pinnal, mitte ühe osapoole peakorteris."],
     note: "mitte kellegi poolt ega vastu, mitte kumbagi poolt eelistav",
     rus: ["нейтральный", "беспристрастный"], ukr: ["нейтральний", "безсторонній"],
+  },
+  {
+    lemma: "nii", gloss: "so, like this", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 208119,
+    parts: {  },
+    government: null,
+    usages: ["Nii asjad ei käi.", "Ta seisis nii, et ma ei näinud ta nägu.", "Tee nii.", "Tee nii, nagu ma näitan."],
+    note: "sel kombel või viisil, seda moodi (nagu lause kontekstist teada, nagu keegi näitab või ütleb)",
+    rus: ["так", "таким образом"], ukr: ["так", "таким чином"],
   },
   {
     lemma: "nimi", gloss: "name", pos: "NOUN", cefr: "A1",
@@ -7011,6 +7182,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["голова", "рассудок"], ukr: ["голова", "розум"],
   },
   {
+    lemma: "peaaegu", gloss: "almost", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 214508,
+    parts: {  },
+    government: null,
+    usages: ["Mees kaalub peaaegu sada kilo.", "Peaaegu neljandik vastanutest oli rahulolematu oma tööga.", "Väljas on peaaegu valge.", "Laps juba peaaegu magab."],
+    note: "nii, et vaid pisut jääb vajaka (mingist kogusest, hulgast, seisundist vm)",
+    rus: ["практически", "почти"], ukr: ["майже", "мало не"],
+  },
+  {
     lemma: "peal", gloss: "on, on top of", pos: "ADVERB", cefr: "A1",
     ekilexWordId: 214621,
     parts: {  },
@@ -7117,6 +7297,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Festivali pidulik avamine.", "Konverentsi lõpetas rektori pidulik vastuvõtt.", "Rahvas oli väga pidulikus meeleolus.", "Külalise auks korraldati pidulik õhtusöök."],
     note: "mingi sündmuse tähistamisega seotud, selle juurde kuuluv",
     rus: ["торжественный", "праздничный"], ukr: ["святковий", "урочистий"],
+  },
+  {
+    lemma: "pigem", gloss: "rather", pos: "ADVERB", cefr: "B1",
+    ekilexWordId: 216181,
+    parts: {  },
+    government: null,
+    usages: ["Ta eelistab olla pigem vaatleja kui vaadeldav.", "Ma pigem suren, kui temalt vabandust palun!", "Film oli pigem naljakas kui õudne.", "Seal ma tundsin end pigem võõra kui omana."],
+    note: "(valiku puhul:) midagi eelistades, millegi poole kaldudes",
+    rus: ["лучше", "больше"], ukr: ["ліпше", "краще"],
   },
   {
     lemma: "piim", gloss: "milk", pos: "NOUN", cefr: "A1",
@@ -8046,6 +8235,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["трава", "быльё"], ukr: ["трава", "ліки"],
   },
   {
+    lemma: "rohkem", gloss: "more", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 228501,
+    parts: {  },
+    government: null,
+    usages: ["Läänemaal sündis lapsi rohkem kui mullu.", "Rohkem muudatusi ei tule.", "Poisse oli klassis rohkem kui tüdrukuid.", "Mul on rohkem jõudu kui sul."],
+    note: "millegagi võrreldes suuremal hulgal või määral",
+    rus: ["больше", "более"], ukr: ["більше", "далі"],
+  },
+  {
     lemma: "romaan", gloss: "novel", pos: "NOUN", cefr: "B1",
     ekilexWordId: 228626,
     parts: { NOM_SG: "romaan", GEN_SG: "romaani", PART_SG: "romaani", ILL_SG_SHORT: "romaani", PART_PL: "romaane", GEN_PL: "romaanide" },
@@ -8658,6 +8856,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["сентябрь", "вересень"], ukr: ["вересень"],
   },
   {
+    lemma: "sest", gloss: "because", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 232835,
+    parts: {  },
+    government: null,
+    usages: ["Koole pannakse kinni, sest laste arv jääb väiksemaks.", "Kohus andis hagi tagasi, sest see olevat puudulikult koostatud.", "Katrin läks tuppa, sest tal hakkas külm.", "Ma ei saa kooki teha, sest jahu sai otsa."],
+    note: "sellepärast et, sel põhjusel et",
+    rus: ["поскольку", "так как"], ukr: ["бо", "тому що"],
+  },
+  {
     lemma: "sidesõna", gloss: "conjunction", pos: "NOUN", cefr: null,
     ekilexWordId: 233021,
     parts: { NOM_SG: "sidesõna", GEN_SG: "sidesõna", PART_SG: "sidesõna", ILL_SG_SHORT: "sidesõnna", PART_PL: "sidesõnu", GEN_PL: "sidesõnade" },
@@ -8692,6 +8899,24 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Lähtekeele sõna on võimalik sihtkeelde tõlkida mitmel viisil."],
     note: "keel, millesse sõna, väljend või tekst tõlgitakse",
     rus: ["целевой язык"], ukr: [],
+  },
+  {
+    lemma: "siin", gloss: "here", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 233338,
+    parts: {  },
+    government: null,
+    usages: ["Poole tunni pärast on nad siin.", "Mida sina siin poe juures teed?", "Mina ei tunne siin kedagi.", "Siin kerkib sigala, seal laut."],
+    note: "kõneleja ligidal, lähedal olevas kohas",
+    rus: ["здесь", "тут"], ukr: ["тут"],
+  },
+  {
+    lemma: "siis", gloss: "then", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 233414,
+    parts: {  },
+    government: null,
+    usages: ["Üks aasta veel ja siis on kõik.", "See oli siis, kui ema veel elas.", "Kui ma koju jõudsin, siis teised juba magasid.", "Esmalt tuleb minna otse, siis keerata paremale."],
+    note: "osutab teatavale (olnud või tulevale) ajahetkele: sel ajal, sel hetkel",
+    rus: ["тогда", "в то время"], ukr: ["тоді", "то"],
   },
   {
     lemma: "sild", gloss: "bridge", pos: "NOUN", cefr: "A1",
@@ -9646,6 +9871,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Panin kohvivee keema ja seadsin tassid lauale.", "Marve kallas kohvi tassidesse.", "Tassis on kuum kohv.", "Valasin tassidesse teed."],
     note: "hrl kõrvaga varustatud (väiksem) jooginõu",
     rus: ["чашка", "полная чашка"], ukr: ["чашка"],
+  },
+  {
+    lemma: "tavaliselt", gloss: "usually", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 242627,
+    parts: {  },
+    government: null,
+    usages: ["Sel hooajal siin tavaliselt sajab.", "Võõrliigid tavaliselt ohustavad kohalikku loomastikku.", "Lähen pärast tööd tavaliselt otse koju.", "Ta käib väga tavaliselt riides."],
+    note: "suuremal osal juhtudest, enamasti",
+    rus: ["обычно", "обыкновенно"], ukr: ["звичайно", "зазвичай"],
   },
   {
     lemma: "teade", gloss: "announcement", pos: "NOUN", cefr: "A2",
@@ -10719,6 +10953,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["обширный", "огромный"], ukr: [],
   },
   {
+    lemma: "umbes", gloss: "about, roughly", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 251199,
+    parts: {  },
+    government: null,
+    usages: ["Nii seal umbes kirjas oli.", "Tunne oli umbes sama kui peapõrutuse puhul.", "Pood asub umbes kilomeetri kaugusel.", "Merike on umbes sama pikk kui mina."],
+    note: "mitte päris täpselt, enam-vähem, ligilähedaselt",
+    rus: ["почти", "приблизительно"], ukr: ["майже", "приблизно"],
+  },
+  {
     lemma: "unustama", gloss: "to forget", pos: "VERB", cefr: "A1",
     ekilexWordId: 251459,
     parts: { INF_MA: "unustama", INF_DA: "unustada", PRES_1SG: "unustan", PAST_1SG: "unustasin", PART_TUD: "unustatud" },
@@ -11502,6 +11745,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["масло", "сливочное масло"], ukr: ["масло"],
   },
   {
+    lemma: "või", gloss: "or", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 258019,
+    parts: {  },
+    government: null,
+    usages: ["Olla või mitte olla.", "Kas kohvi või teed?", "Varem või hiljem lahkuvad lapsed kodust.", "Kas te maksate sularahas või ülekandega?"],
+    note: "seob sisu poolest vastanduvaid, üksteist välistavaid, teist võimalust väljendavaid sõnu ja lauseosi",
+    rus: ["или", "иль"], ukr: ["або", "чи"],
+  },
+  {
     lemma: "võim", gloss: "power", pos: "NOUN", cefr: "B1",
     ekilexWordId: 258105,
     parts: { NOM_SG: "võim", GEN_SG: "võimu", PART_SG: "võimu", ILL_SG_SHORT: "võimu", PART_PL: "võime", GEN_PL: "võimude" },
@@ -11626,6 +11878,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["Võta kott ja lähme!", "Vares võttis leivatüki noka vahele.", "Võtsin laua pealt võtmed.", "Võta kott ja lähme."],
     note: "enda kätte (loomade-lindude korral suhu, nokka, küünte vahele vms) toimetama",
     rus: ["брать", "взять"], ukr: ["брати", "взяти"],
+  },
+  {
+    lemma: "vähe", gloss: "little, not much", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 258910,
+    parts: {  },
+    government: null,
+    usages: ["Vähe on hingelt vabu inimesi.", "Aega on vähe, aga ma usun, et nad jõuavad.", "On seda palju või vähe?", "On vähe tõenäoline, et ajaleht vabandaks."],
+    note: "tavapärasest, vajaminevast, soovitust vms väiksemal hulgal, ebapiisavalt",
+    rus: ["мало", "недостаточно"], ukr: ["мало", "трохи"],
   },
   {
     lemma: "vähendama", gloss: "to reduce", pos: "VERB", cefr: "B1",
@@ -12337,6 +12598,15 @@ export const HARVESTED: readonly HarvestedWord[] = [
     usages: ["On tavaline, et seltskonnas püütakse napsust keeldujat ümber veenda.", "Näib, et põhimõttelisi vaktsineerimise vastaseid ei veena ümber ühegi ratsionaalse argumendiga."],
     note: "veenmise jõul kedagi oma arvamust, tõekspidamisi vms muutma panema",
     rus: ["переубеждать", "переубедить"], ukr: [],
+  },
+  {
+    lemma: "üsna", gloss: "quite, fairly", pos: "ADVERB", cefr: "B1",
+    ekilexWordId: 264128,
+    parts: {  },
+    government: null,
+    usages: ["Vastus on üsna lihtne.", "Olin endaga üsna rahul.", "Väljas oli üsna soe.", "Ma olen üsna kindel, et saan töö homseks valmis."],
+    note: "(nõrgendab omadust või asjaolu:) peaaegu täiel määral",
+    rus: ["достаточно", "довольно"], ukr: ["відносно", "порівняно"],
   },
   {
     lemma: "ütlema", gloss: "to say", pos: "VERB", cefr: "A1",

@@ -234,10 +234,26 @@ on it.
 **The words between the words are a request like any other, and a unit that was cut does not take
 its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
 words every sentence is made of: nobody asking `kes?` or `millal?`, or looking up `täna`, `peal`
-or `september`, found anything, in a dictionary of six thousand words. Six units carry them now,
-question words, pronouns, the adverbs of time, the postpositions, the months and the countries,
-appended after the fourteen so that the first three units at A1, which is what first run builds a
-deck from, stay what they were. `PRONOUN` is a part of speech for it, harvested as a nominal
+or `september`, found anything, in a dictionary of six thousand words. Eight units carry them now,
+question words, pronouns, the adverbs of time, the postpositions, the months and the countries, and
+then the conjunctions and the particles, appended after the fourteen so that the first three units
+at A1, which is what first run builds a deck from, stay what they were.
+
+**The first sweep missed the two commonest kinds and nothing noticed for two passes.** It went
+looking for the words a learner would try to *look up*, and a conjunction is not a word anybody
+looks up: `npm run measure:scenes` counted instead, and found that 13,458 distinct words in the
+attested corpus could not be vouched for by any entry and appeared in 79% of every sentence a
+lexicographer recorded. The commonest was `ja`, 1,507 times, which the course had never taught. So
+`sidesonad` and `maarsonad` are the same request as the other six and were built the same way,
+30 lemmas named and Ekilex asked, all 30 back with four attested sentences each and none dropped.
+Reading the ranked list rather than the total is what made it right, because the list holds three
+faults and only one is a missing unit: the untaught conjunctions and particles, the forms of
+`olema` that are neither stored nor derivable, and the short pronoun forms and the simple past that
+two rules above already say arrive with enrichment. A unit built off the total would have taught
+`oli` as a headword. `docs/19-situations.md` §26 has the measurements and the four decisions,
+including why three words were deliberately left out: `ning`, `vaid` and `enam` are exact synonyms
+of words in the same unit, Ekilex gives each pair one definition, and a production card asking
+"English to Estonian" would mark the other one wrong. `PRONOUN` is a part of speech for it, harvested as a nominal
 because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
 `nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
 unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
