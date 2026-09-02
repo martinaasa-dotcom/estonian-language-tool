@@ -140,10 +140,10 @@ describe("prompts more than one word answers", () => {
 
   it("gives every word in a group the others as also accepted", () => {
     const map = alsoAcceptedByLemma(groups);
-    const and = groups.find((g) => g.key === "and|ADVERB");
-    expect(and?.lemmas).toEqual(["ja", "ning"]);
-    expect(map.get("ja|ADVERB")).toEqual(["ning"]);
-    expect(map.get("ning|ADVERB")).toEqual(["ja"]);
+    const witty = groups.find((g) => g.key === "witty|ADJECTIVE");
+    expect(witty?.lemmas).toEqual(["teravmeelne", "vaimukas"]);
+    expect(map.get("teravmeelne|ADJECTIVE")).toEqual(["vaimukas"]);
+    expect(map.get("vaimukas|ADJECTIVE")).toEqual(["teravmeelne"]);
     // A word nothing shares a prompt with is simply absent, not an empty entry.
     expect(map.has("tuba|NOUN")).toBe(false);
   });

@@ -308,6 +308,11 @@ jobs:
       - run: node scripts/test-modes.mjs
       - run: node scripts/test-teaching.mjs
       - run: node scripts/test-polish.mjs
+      # The learner's own week: a repeating class landing in the right columns,
+      # a reminder beside the homework a teacher set, and both coming off again.
+      # It adds rows and removes them, so it is runnable twice and leaves the
+      # database as it found it for everything after it.
+      - run: node scripts/test-calendar.mjs
       # Paper to deck, driven end to end with only the model stubbed: the
       # picture leaving the device, the confirmation list, a ticked word
       # becoming a card, and the review session asking about it.

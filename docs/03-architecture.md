@@ -498,7 +498,7 @@ percent from pre-A1 to C1. Three things came out of that sweep. Two thirds has t
 somebody can reach, so a band size is a multiple of three and 4 per band measured *worse* than 3.
 Writing is the noisiest of the three skills, because its answers are typed and nothing puts a floor
 under a band the way four options do, so at a fixed eighty items spending them there beat spending
-them on listening or on reading. And the overall level is the weakest of three skills, so noise in
+them on listening or on reading. And the overall level is drawn from three skills, so noise in
 any one of them lands on the result, which is why raising reading alone took it only to 52%. Questions climb the bands in order and a skill asks at most one band above
 the first band it was not passed at, and nothing above one that came in under half, so a beginner
 answers a dozen questions and somebody at C1 answers all sixty, which is the paper each of them
@@ -511,14 +511,34 @@ question says which (ADR-005, ADR-017). **No model marks anything**: a choice ag
 index, a dictation against the recorded sentence, a written sentence against a form the dictionary
 vouches for, which is the same ordering `/review/write` already uses. **Speaking is never scored**
 (ADR-018): it collects the learner's own rating, reports it as theirs, and is excluded from the
-level entirely, which `scripts/test-invariants.ts` asserts. *The level itself follows the weakest
-measured skill*, because a CEFR level is a claim about everything a person can do at it; the
-strongest is reported beside it so the flattering half is not lost. *Consequences:* the result is
+level entirely, which `scripts/test-invariants.ts` asserts. *The level itself is the average of the
+measured skills, floored* (amendment 2); the strongest is reported beside it so the flattering half
+is not lost. *Consequences:* the result is
 `Assessment`, the second table after `Review` that is written once and never edited, and the third
 exception to "progress is derived" (ADR-014) after a personal best and a shield date, because a
 measurement of answers that were never cards cannot be recomputed from the review log. The questions
 are drawn from words the learner does **not** have in their deck wherever there are enough of them,
-so the check measures their Estonian rather than their revision. *Rejected:* marking with a model
+so the check measures their Estonian rather than their revision. **Amendment 2 (2026-09-02): the overall level is the average of the measured skills, not the
+weakest.** The original rule read the floor, on the reasoning that a CEFR level is a claim about
+everything a person can do at it. That is a good argument about a certificate and this screen says
+twice that it is not one. What the rule did in practice was report a sitting of B2 reading, A1
+listening and B2 writing as **below A1**, which is three bands under any honest reading of that
+learner, on the one screen whose whole job is telling somebody where they stand. A minimum takes
+the noise by construction, and one skill can miss for reasons that are not the learner's level:
+listening abandons itself when the speech service will not answer, and writing is the noisiest
+skill in the paper by measurement, because its answers are typed and nothing puts a floor under a
+band the way four options do. So `overallFrom` takes the mean of the scored skills over
+`rank` and floors it. The floor is the cautious half of the old rule, kept, and it is what the old
+rule was reaching for. Where the average lands at least half a band short of the next one, the
+result names it: *a confident A2, and nearly B1*, which is the true sentence about a sitting that
+fell between two bands and is deliberately rare, because a caveat printed on every result stops
+being read. The strongest skill is still reported beside the level. *Consequence:* `overall` is a
+**derivation** from the per skill columns rather than a measurement of its own, so
+`readOverall` in `lib/progress/assessment.ts` recomputes it for stored rows and the history list
+does not show two rules side by side. The per skill columns are the measurement and are never
+touched, which is what keeps `Assessment` append-only in the sense that matters.
+
+*Rejected:* marking with a model
 (a hallucination that marks a right answer wrong on somebody's first day destroys the only trust
 this app has), a single number rather than a profile (it hides which skill is behind, which is the
 one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest

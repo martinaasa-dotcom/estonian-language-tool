@@ -24,8 +24,9 @@ import type { ScannedItem } from "@/lib/scan/extract";
 import type { ResolvedItem } from "@/lib/scan/items";
 import { possibleFirstPersons } from "@/lib/estonian/conjugate";
 import {
-  FOLD_FROM, FOLD_TO, fold, matchEstonianForm, possibleStems, type Candidate,
+  matchEstonianForm, possibleStems, type Candidate,
 } from "./search";
+import { FOLD_FROM, FOLD_TO, fold } from "@/lib/estonian/fold";
 
 /**
  * Narrowing the dictionary to the rows a page could possibly match.

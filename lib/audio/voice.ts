@@ -48,17 +48,42 @@ export function voiceFrom(value: string | null | undefined): string {
 /**
  * Whether a card reads itself aloud when it appears.
  *
- * On by default: hearing a word every time it is met is the cheapest thing an
- * app can do for somebody learning a language whose spelling only half
- * records its length, and pressing a speaker icon on every card is a tax on
- * exactly the learners who need it most. Off is for a library, a bus, or
- * somebody who would rather read.
+ * **Off by default**, and that is a reversal worth writing down, because the
+ * usual rule here is that a missing row reads as the behaviour everybody
+ * already had. This one deliberately changes under existing learners.
+ *
+ * The argument for `on` was that hearing a word every time it is met is the
+ * cheapest thing an app can do for somebody learning a language whose spelling
+ * only half records its length. That is still true, and it is not what the
+ * setting was doing. A card reads itself aloud when the word is first met *and*
+ * again when the answer appears, so a review session is a speaker firing twice
+ * a card, unasked, on a phone in a room with other people in it. The learner
+ * who wanted it got it; the learner who did not had to find Settings to stop
+ * it, and the one who was somewhere they could not have sound reached for the
+ * volume key instead and turned the whole thing off, including the feedback
+ * tones.
+ *
+ * Silence is the safer default for the same reason a video does not autoplay
+ * with sound: the cost of being wrong is asymmetric. A learner who wanted audio
+ * and has silence presses a speaker icon, which is on every card. A learner who
+ * did not want it and gets it is startled in a library.
+ *
+ * What pays for the flip is that the speaker is easy to reach rather than that
+ * the sound is easy to stop: `SpeakPair` is a labelled control on the card, not
+ * a hover target, and the setting is one chip in Settings for anybody who wants
+ * the old behaviour back.
  */
 export type Autoplay = "on" | "off";
-export const DEFAULT_AUTOPLAY: Autoplay = "on";
+export const DEFAULT_AUTOPLAY: Autoplay = "off";
 
+/**
+ * An unset row and an unrecognised value both read as the default, which is
+ * why this tests for `"on"` rather than against `"off"`. Written the other way
+ * round, flipping the constant above would have left every existing learner on
+ * the old behaviour and only new spellings on the new one.
+ */
 export function autoplayFrom(value: string | null | undefined): Autoplay {
-  return value === "off" ? "off" : "on";
+  return value === "on" ? "on" : "off";
 }
 
 /**

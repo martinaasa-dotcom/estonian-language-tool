@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  type Candidate, fold, likeLiteral, matchEstonianForm, oneEntryPerLemma, rankCandidates,
+  type Candidate, likeLiteral, matchEstonianForm, oneEntryPerLemma, rankCandidates,
 } from "./search";
+import { fold } from "@/lib/estonian/fold";
 
 describe("fold", () => {
   it.each([

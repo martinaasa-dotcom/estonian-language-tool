@@ -1,5 +1,6 @@
 "use client";
 
+import { fold } from "@/lib/estonian/fold";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -130,7 +131,21 @@ export function CommandPalette() {
   }, [open, units]);
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    /*
+      FOLDED, BECAUSE THE ONE PLACE IN THIS BOX WITH AN ESTONIAN NAME WAS
+      UNREACHABLE FROM IT.
+
+      A plain `includes` over the label meant typing `sonad` found nothing, and
+      Sõnad was missing from the box that promises to go anywhere — for exactly
+      the learner `lib/ux/letterBar.ts` exists for, who has no õ key and cannot
+      type the name. The dictionary has folded a search since it was written;
+      this is the same six letters from the same table.
+
+      Folding the haystack as well as the query, since it is the label that
+      carries the diacritic. A learner who *can* type õ is unaffected: `sõnad`
+      folds to `sonad` on both sides and still matches.
+    */
+    const q = fold(query.trim());
     if (!q) {
       /*
         Nothing typed: every place, under its heading, in the order the rail
@@ -144,7 +159,7 @@ export function CommandPalette() {
     }
     const pool = [...COMMANDS, ...(units ?? [])];
     const matches = pool
-      .filter((c) => `${c.label} ${c.keywords}`.toLowerCase().includes(q))
+      .filter((c) => fold(`${c.label} ${c.keywords}`).includes(q))
       .slice(0, 8);
     // The dictionary can answer for a word nothing here matches, so it is always
     // offered rather than leaving a dead end.

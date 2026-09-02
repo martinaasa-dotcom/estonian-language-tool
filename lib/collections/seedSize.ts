@@ -25,12 +25,21 @@
  * of plural forms with it. The word count did not move, because the words are
  * the same words; what changed is which word each of them is.
  *
- * It moved by thirty three words and by *no forms at all*, which is the shape
- * of the two units added for the words that hold a sentence together. `ja`, `aga`,
- * `ka` and the rest do not inflect, so the harvest keeps them the way it keeps
- * an adverb: real because Ekilex has them, with their sentences and their
- * level, and no forms to get wrong. A word count that moves while the form
- * count does not is what that looks like from here.
+ * It went up by fifty-one when three units of connectives, replies and degree
+ * words were added, which is the second interesting thing. A frequency count
+ * over film and television subtitles found that a hundred and twenty-five of
+ * the four hundred commonest words in Estonian were ones the dictionary could
+ * not vouch for in any form, and the top of that list is `ja`, `et`, `aga`,
+ * `jah` and `ei`. The forms did not move, because an Estonian connective does
+ * not inflect and the harvest keeps it attested and formless.
+ *
+ * The forms moved next, by 577, and that is a different thing again: the same
+ * words, with what no rule of this app can work out from them. A seeded verb
+ * could not say `oli` for want of a simple past third person, `olema` could
+ * not say `on`, and a pronoun had none of the short forms anybody uses. See
+ * `unreachableSlots` and `unreachableCaseForms`; the one extra word beside
+ * them is `või`, which the connective unit had left out because Ekilex's first
+ * candidate for it is the butter the food unit teaches.
  *
  * It went *down* by twelve once, which is the only interesting thing that has
  * happened to it. The part-of-speech audit corrected 61 labels in the built
@@ -40,4 +49,4 @@
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
  */
-export const SEED_SET_SIZE = { words: 6_083, forms: 35_098 };
+export const SEED_SET_SIZE = { words: 6_102, forms: 35_103 };

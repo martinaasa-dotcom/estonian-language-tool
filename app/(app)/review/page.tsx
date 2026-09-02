@@ -1,21 +1,18 @@
-import { equivalentIn, glossLanguageFrom, type GlossLanguage } from "@/lib/collections/glossLanguage";
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { nextCardLine } from "@/lib/time/day";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
-import { aroundFirst } from "@/lib/collections/levels";
+import { aroundFirst, bandsAround, isAround } from "@/lib/collections/levels";
 import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
-import { parseExamples, teachingSentence } from "@/lib/dict/examples";
-import { decoyGlosses } from "@/lib/dict/facts";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
 import { spaceSiblings } from "@/lib/srs/queue";
-import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
-import { ReviewSession, type ReviewCard } from "./ReviewSession";
-import { shuffle } from "@/lib/random/shuffle";
+import { ReviewSession } from "./ReviewSession";
+import { include, withChoices, type CardRow } from "./cards";
 
 export const metadata = { title: "Review" };
 
@@ -38,7 +35,6 @@ const NEW_PER_SESSION = 10;
  */
 const NEW_CANDIDATES = 60;
 const MAX_SESSION = 60;
-const CHOICES = 4;
 
 export default async function ReviewPage({
   searchParams,
@@ -64,23 +60,6 @@ export default async function ReviewPage({
   const glossChosen = async () =>
     glossLanguageFrom((await settingsPromise)[SETTING_KEYS.glossLanguage]);
 
-  // `examples` rides along because a card's first outing is a teaching screen
-  // and a word taught without a sentence is a word taught as a label. The
-  // column is a handful of short sentences, and only the one that gets shown
-  // crosses to the client (see `introFor`).
-  const include = {
-    // `cefr` rides along for the new-card queue below, which introduces words
-    // around the learner's level before words far off it.
-    lexeme: {
-      select: {
-        lemma: true, translation: true, pos: true, examples: true, cefr: true,
-        // For the first meeting only, which is the one screen where a meaning
-        // in the learner's own language earns the most: the word is being
-        // learned there rather than tested.
-        translationRu: true, translationUk: true,
-      },
-    },
-  } as const;
 
   // A drill ignores scheduling: the point is to attack one weakness — a case the
   // heatmap found, or the unit just added — not to review whatever is due.
@@ -98,7 +77,7 @@ export default async function ReviewPage({
     const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill.map((c) => toReviewCard(c, gloss)))}
+        cards={await withChoices(drill, gloss)}
         drillCase={targetCase}
         totalCards={0}
         mode={await modeChosen()}
@@ -119,7 +98,7 @@ export default async function ReviewPage({
     const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill.map((c) => toReviewCard(c, gloss)))}
+        cards={await withChoices(drill, gloss)}
         drillUnit={unitId}
         totalCards={0}
         mode={await modeChosen()}
@@ -157,7 +136,7 @@ export default async function ReviewPage({
     const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill.map((c) => toReviewCard(c, gloss)))}
+        cards={await withChoices(drill, gloss)}
         drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
         mode={await modeChosen()}
@@ -220,12 +199,10 @@ export default async function ReviewPage({
   */
   const spaced = spaceSiblings(due, (card) => card.lexemeId);
 
-  const fresh = atLevelFirst(freshPool, level)
-    .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
+  const room = Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length));
+  const fresh = atLevelFirst(await inBandPool(ownerId, freshPool, level, room), level).slice(0, room);
   const gloss = await glossChosen();
-  const cards = await withChoices(
-    [...spaced, ...inTeachingOrder(fresh)].map((c) => toReviewCard(c, gloss)),
-  );
+  const cards = await withChoices([...spaced, ...inTeachingOrder(fresh)], gloss);
 
   /*
     WHEN THE NEXT CARD COMES BACK, WHICH IS THE ONLY QUESTION AN EMPTY QUEUE
@@ -264,6 +241,49 @@ export default async function ReviewPage({
 }
 
 /**
+ * The window of unseen cards, widened when none of it is anywhere near the
+ * learner's level.
+ *
+ * `atLevelFirst` orders the window and never drops from it, which is right, and
+ * it can only order what it was given. The window is the sixty oldest unseen
+ * cards, and age is a fact about when a card was added rather than about who is
+ * being taught: a learner placed at A1 by a check that got them wrong, or one
+ * who started at A1 a year ago, has a backlog of unseen beginner cards, and the
+ * B1 unit they added last week sits behind all of it. Ordering sixty A1 cards
+ * by how near A1 they are cannot help. That is the shape of the report this
+ * fixes: an A2 or B1 learner being asked about `Tere`.
+ *
+ * So when the window turns out to hold nothing in band, one more query asks for
+ * the same thing filtered to the bands around the learner. It costs a round
+ * trip and it costs it only for the learner this hurts: a deck whose oldest
+ * unseen cards are already in band, which is everybody set up at their own
+ * level, never reaches the second read. Returning the original window when the
+ * filtered one is empty is what keeps a level an ordering rather than a gate:
+ * a learner with nothing in band still gets taught something.
+ *
+ * The card's own bands come from `lib/collections/levels.ts`, one either side,
+ * and an untagged word counts as in band there, so a word somebody typed in or
+ * photographed is never what sends this to a second query.
+ */
+async function inBandPool(
+  ownerId: string, window: CardRow[], level: Level, room: number,
+): Promise<CardRow[]> {
+  if (room === 0) return window;
+  if (window.some((c) => isAround(c.lexeme?.cefr, level))) return window;
+
+  const inBand = await prisma.card.findMany({
+    where: {
+      ownerId, suspended: false, state: 0,
+      lexeme: { cefr: { in: [...bandsAround(level)] } },
+    },
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
+    take: NEW_CANDIDATES,
+    include,
+  });
+  return inBand.length > 0 ? inBand : window;
+}
+
+/**
  * New words around the learner's level first.
  *
  * The one place a level can honestly reach the daily loop. What is *due* is
@@ -281,129 +301,4 @@ function atLevelFirst(cards: readonly CardRow[], level: Level): CardRow[] {
   return aroundFirst(cards, level, (c) => c.lexeme?.cefr);
 }
 
-type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
-  lexeme: { lemma: string; translation: string; pos: string; examples: string; cefr: string | null } | null;
-};
-
-/**
- * What a first meeting with a word shows.
- *
- * Assembled here rather than in the browser for two reasons: the sentence is
- * picked out of a column holding up to eight of them and only the chosen one
- * needs to cross the wire, and `teachingSentence` is the same function the
- * grammar pages and the lesson use, so a word is introduced the same way
- * wherever it is met.
- *
- * Every string in here came out of the dictionary. Nothing is written, and
- * nothing is derived (ADR-005).
- */
-function introFor(c: CardRow, glossLanguage: GlossLanguage): ReviewCard["intro"] {
-  if (!c.lexeme) return null;
-
-  // The form the card is about to ask for comes first, then the lemma. On a
-  // recognition card the front *is* the lemma, and on a gap-fill the front is a
-  // sentence with a hole in it and would match nothing, which is why this asks
-  // the card what it is rather than reading whichever side happens to be
-  // Estonian.
-  const asked = c.cardType === "RECOGNITION" ? c.front : c.back;
-  const found = teachingSentence(parseExamples(c.lexeme.examples), [asked, c.lexeme.lemma]);
-
-  const equivalent = equivalentIn(c.lexeme, glossLanguage);
-
-  return {
-    lemma: c.lexeme.lemma,
-    gloss: c.lexeme.translation,
-    equivalent: equivalent ? { text: equivalent, lang: glossLanguage } : null,
-    sentence: found
-      ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
-      : null,
-  };
-}
-
-function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
-  return {
-    id: c.id,
-    cardType: c.cardType,
-    front: c.front,
-    back: c.back,
-    hint: c.hint,
-    targetCase: c.targetCase,
-    lemma: c.lexeme?.lemma ?? null,
-    isNew: c.state === 0,
-    // Only on a card that has never been seen. Every other card in the session
-    // would carry a sentence nothing renders.
-    intro: c.state === 0 ? introFor(c, glossLanguage) : null,
-    choices: null,
-    scheduling: {
-      due: c.due.toISOString(),
-      stability: c.stability,
-      difficulty: c.difficulty,
-      elapsedDays: c.elapsedDays,
-      scheduledDays: c.scheduledDays,
-      reps: c.reps,
-      lapses: c.lapses,
-      state: c.state,
-      lastReview: c.lastReview?.toISOString() ?? null,
-      learningSteps: c.learningSteps,
-    },
-  };
-}
-
-/**
- * Which recognition cards are asked as four options rather than recalled.
- *
- * Only the ones still being learned, which is the whole point of the shape.
- * Options were once attached to every recognition card a session held, and the
- * effect was that half a deck could never be asked properly: `askFor` routes to
- * a pick whenever options exist, and neither review mode overrides it, so the
- * one question this app is named for, what does this Estonian word mean, was
- * always answered with the answer already on the screen. Recognising a gloss
- * among four is a different and much weaker memory than producing it, and a
- * schedule built on the easier one says a word is known when it is not.
- *
- * A card still in learning keeps them for the same reason a new card leads with
- * its answer at all (see `askFor`): the memory is not there yet, and asking for
- * it cold is a guessing game rather than a test. A lapsed card is back in that
- * position by definition, which `isStillLearning` reads as Relearning.
- */
-function wantsChoices(card: ReviewCard): boolean {
-  /*
-    A NEW CARD NOW GETS THEM TOO, BECAUSE IT IS NOW ASKED.
-
-    `!card.isNew` was right while meeting a word was the whole of its first
-    outing: there was no question, so there was nothing to offer options for.
-    A newly met word is asked back before the session ends now, and the memory
-    at that point is minutes old, which is exactly the position the sentence
-    above describes for a card still in learning.
-  */
-  return card.cardType === "RECOGNITION"
-    && (card.isNew || isStillLearning(card.scheduling.state));
-}
-
-/**
- * Attaches multiple-choice options to the recognition cards that get them.
- *
- * Wrong answers are real translations of other words rather than invented text
- * — nothing here writes Estonian, and a decoy that is obviously nonsense makes
- * the question free. They are drawn once for the whole session, so the pool is
- * one query rather than one per card.
- */
-async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
-  if (!cards.some(wantsChoices)) return cards;
-
-  /*
-    Which words the dictionary holds is not a fact about the person being
-    asked, so the pool is read once per instance rather than once per session:
-    two thousand rows off the render path of the screen this app exists to get
-    people to. See lib/dict/facts.ts.
-  */
-  const translations = await decoyGlosses();
-  if (translations.length < CHOICES) return cards;
-
-  return cards.map((card) => {
-    if (!wantsChoices(card)) return card;
-    const decoys = shuffle(translations.filter((t) => t !== card.back)).slice(0, CHOICES - 1);
-    return { ...card, choices: shuffle([...decoys, card.back]) };
-  });
-}
 

@@ -5,11 +5,12 @@ import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
 import { caseAccuracy } from "@/lib/stats/history";
 import { caseReviewsFor } from "@/lib/progress/cases";
+import { masteryCounts, masteryFor } from "@/lib/progress/mastery";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { GAMES, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { WeakestCases } from "@/components/WeakestCases";
@@ -27,7 +28,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function PracticePage() {
   const ownerId = await requireUserId();
-  const [snapshot, settings, caseReviews, sentenceReady] = await Promise.all([
+  const [snapshot, settings, caseReviews, sentenceReady, words] = await Promise.all([
     deckSnapshot(ownerId),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     // The one reader, so Practice and Progress cannot disagree about which case
@@ -55,6 +56,9 @@ export default async function PracticePage() {
       take: 2000,
       select: { examples: true },
     }),
+    // Where every met word stands. The same read the Flash cards round makes,
+    // so the count on its tile and the round behind it are one answer.
+    masteryFor(ownerId),
   ]);
 
   const sprintBest = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
@@ -92,9 +96,17 @@ export default async function PracticePage() {
     anybody pressed them: a title, what it does in three words, and whether
     there is anything ready to play is the whole decision.
   */
-  const dailyMeta = snapshot.dueCount > 0
-    ? `${snapshot.dueCount} due now`
-    : snapshot.newCount > 0 ? `${Math.min(snapshot.newCount, 10)} new waiting` : "Nothing due";
+  /*
+    What the top slot says about itself: how many met words are not yet
+    mastered, which is the number the round is about. `masteryCounts` and the
+    round read one query, so the tile cannot promise words the round will not
+    find.
+  */
+  const counts = masteryCounts(words);
+  const unfinished = counts.struggling + counts.almost + counts.learning;
+  const flashMeta = unfinished > 0
+    ? `${unfinished} to work on`
+    : words.length > 0 ? "All mastered" : "Nothing met yet";
 
   /*
     What is ready right now, per mode. The table in lib/ux/modes.ts says what
@@ -120,15 +132,26 @@ export default async function PracticePage() {
         />
       ) : (
         <Stack>
+          {/*
+            THE TOP SLOT IS NOT A LINK BACK TO REVIEW.
+
+            It was, and `/review` is the page most people arrive here from, so
+            the first thing this page offered was the door they had just come
+            through. Flash cards is what the learner asked for in its place: the
+            words review has already introduced, asked in a way it does not ask
+            them, across a variety of case endings, until the app can be
+            confident the word is known. See lib/srs/mastery.ts for what
+            confident means and app/(app)/review/flashcards for the round.
+          */}
           <ModeCard
-            href="/review"
-            iconName="GraduationCap"
+            href="/review/flashcards"
+            iconName="Layers"
             tone="accent"
-            title="Review"
-            subtitle="The daily loop"
-            body="Everything due, timed to when you are about to forget."
-            meta={dailyMeta}
-            primary={snapshot.dueCount > 0}
+            title="Flash cards"
+            subtitle="Words you have met"
+            body="A different form each time, typed rather than picked, until the word is solid."
+            meta={flashMeta}
+            primary={unfinished > 0}
           />
 
           <section>
@@ -139,6 +162,31 @@ export default async function PracticePage() {
               ))}
             </div>
           </section>
+
+          {/*
+            THE GAMES, WHICH ARE ROUNDS THAT ARE NOT ABOUT THE SCHEDULE.
+
+            Drawn from the table rather than listed here, so a game added to
+            `lib/ux/modes.ts` with `within: "/practice"` appears without anybody
+            remembering this file. That is not tidiness: Picture match and Target
+            shipped claiming to be reached from here while nothing here linked to
+            them, so both were unfindable outside the command palette, and
+            `nav.test.ts` is what said so.
+
+            A section of their own rather than seven tiles in the grid above,
+            because the six rounds are six hues and a seventh would have to
+            borrow one and read as a duplicate of whichever it took.
+          */}
+          {GAMES.length > 0 && (
+            <section>
+              <SectionTitle hint="for the fun of it">Games</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {GAMES.map((m) => (
+                  <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
+                ))}
+              </div>
+            </section>
+          )}
 
           <section>
             <SectionTitle hint="an afternoon, not five minutes">Sit the paper</SectionTitle>

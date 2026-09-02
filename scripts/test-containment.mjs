@@ -122,10 +122,18 @@ const ROUTES = [
   "/review/sentences",
   "/review/speaking",
   "/review/sprint",
+  "/review/flashcards",
+  "/review/emoji",
+  "/review/target",
   "/practice",
+  "/quest",
+  "/sonad",
+  "/crossword",
+  "/calendar",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
   "/dictionary",
+  "/dictionary/common",
   "/dictionary?q=tuba",
   "/words",
   "/grammar",
@@ -216,7 +224,32 @@ const SPARSE = new Map([
   are made now, which is one more route's worth of checks: the run counts 960
   where it counted 940, and the floor keeps its twenty.
 */
-const { check, absent, done } = suite("Containment", { floor: 940 });
+// 1040 rather than 920: five routes joined the sweep (the Flash cards round,
+// Picture match, Target, the daily quest and the calendar). Its own header is
+// why they had to: "a route that is not in this list is a screen where the
+// whole rule is unenforced", and the calendar was over its box at 768 on the
+// first run.
+//
+// 1050 rather than 1040: the commonest words joined it, which is one route and
+// twenty checks, and it is the densest page in the app by some way. Four
+// hundred Estonian chips in four disclosures, and the longest of them
+// (`sellepärast`, `suurepärane`) are exactly the shape the unbreakable pass
+// asks about.
+// 1070 rather than 1050: Sonad joined it, which is one route and twenty
+// checks. It is the tightest board in the app at 360, six circles across with
+// a 32-key alphabet under them, so it is exactly the route this suite exists
+// for.
+// 1090 rather than 1070: the crossword joined it. Nine columns of cells with
+// a clue number in each corner at 360 is the densest arrangement of small
+// boxes in the app, which is what this suite is for.
+// And 940 rather than 920 came the other way, with the sponsor's workplace
+// group, which this suite had never drawn: `/class/[classroomId]` renders two
+// different screens and only one of them was ever walked. Merged rather than
+// chosen, since both sides added coverage. Measured at 1120 against a database
+// with the demo fixture in it, which is what CI seeds; without `npm run demo`
+// the workplace group does not exist and the run comes in at 1100 and says so,
+// which is the floor doing its job rather than a regression.
+const { check, absent, done } = suite("Containment", { floor: 1110 });
 
 const browser = await launchChromium();
 

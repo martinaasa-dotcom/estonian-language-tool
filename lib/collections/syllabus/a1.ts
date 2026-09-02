@@ -565,19 +565,11 @@ export const A1 = [
     canDo: "Say I, you, he, we and they, point at this and that, and put each in the case the sentence needs.",
     blurb: "Six persons and a pointer. They decline like nouns, and the short forms are what you hear.",
     grammar: ["nominative", "genitive", "partitive"],
-    /*
-      Case cards, at last, and the reason they were absent is worth keeping.
-      A pronoun's everyday case forms are the short ones, `mulle` and `mul`,
-      which no rule over the genitive reaches, so a card built from the rule
-      answered `minule` and marked the form everybody says wrong. Withholding
-      the cards was the honest stopgap while that was true.
-
-      The dictionary holds both now: Ekilex records them under one code and the
-      harvest stores what no rule reaches, so `caseAnswer` returns the pair and
-      the card carries both answers on its back. `mina → kellele?` takes
-      `mulle` and takes `minule`.
-    */
-    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
+    // No case cards from the seed alone: a pronoun's everyday case forms are
+    // the short ones (`mulle`, `mul`), which no rule over the genitive reaches,
+    // and a card answering `minule` would mark the form everybody says wrong.
+    // Ekilex records both, so an enriched entry shows the pair on its table.
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
     requires: ["inimesed"],
     words: [
       ["mina", "I", "PRONOUN"],
@@ -749,45 +741,30 @@ export const A1 = [
       ["rahvus", "nationality"],
     ],
   }),
+
   /*
-    The words between the words, second pass.
+    THE WORDS BETWEEN THE WORDS, PART TWO.
 
-    The seventeenth pass added six units for the words a sentence is made of and
-    caught the question words, the pronouns, the time adverbs, the postpositions,
-    the months and the countries. It did not catch the two kinds below, and
-    nothing noticed until `npm run measure:scenes` counted: 13,458 distinct words
-    in the attested corpus cannot be vouched for by any entry in the dictionary,
-    and they appear in 79% of every sentence a lexicographer recorded. The
-    commonest of them is `ja`, 1,507 times, and the course had never taught it.
+    Six units were appended here for the words every sentence is made of, and
+    a frequency count over a large corpus of film and television subtitles
+    said the job was half done: of the four hundred commonest words in
+    Estonian, a hundred and twenty-five were ones the dictionary could not
+    vouch for in any form, and the top of that list is not exotic. It is `ja`,
+    `et`, `aga`, `jah`, `ei`, `ka`, `siis`, `nii` and `väga`: the words that
+    hold a sentence together, which a learner meets in their first hour and
+    could not look up.
 
-    That is not an exotic gap. A learner who cannot say `ja`, `aga` or `ka` cannot
-    join two thoughts or agree with anybody, and every attested sentence in the
-    app was unreadable to them by one or two words they had known since their
-    first week of class.
+    They are labelled ADVERB for the reason `scripts/harvest-ekilex.ts`
+    already gives about the connectives it had: an Estonian adverb does not
+    inflect, so demanding a set of forms for one would drop every connective
+    in the course, and existing in Ekilex is the whole check that matters.
+    The label is a bucket saying which card types a word can take rather than
+    a claim that `ja` is an adverb, which is the same latitude `kas` has been
+    taking in the question words unit since it was written.
 
-    Both units are ADVERB, which is what this course already calls an uninflecting
-    function word: `kas`, `kui` and `palju` are ADVERB in `kusisonad`, and the
-    harvest's own comment says demanding forms for one "would drop every single
-    connective in the course". Ekilex labels most of these `konj`, and adding a
-    part of speech for it would move the conflict key `Lexeme` is unique on for
-    the sake of a label.
-
-    Every gloss below was checked against the Ekilex entry it names rather than
-    written from memory, which caught two: `ehk` is first of all "perhaps" rather
-    than "or", and `vaid` is "only" rather than "but rather". Every homonym is
-    pinned by word id in the fourth slot; the harvest reports an unpinned one on
-    this path now, which it did not when these were written, and the first
-    candidate for `siin` would otherwise have been the curtain rail.
-
-    `ning`, `vaid` and `enam` are here despite sharing an Ekilex definition with
-    `ja`, `ainult` and `rohkem`, which makes each pair one meaning and therefore
-    two right answers to one production card. They were left out for a day on
-    that reasoning and it was the wrong trade: `npm run audit:senses` measured
-    the same collision on nine pairs the course already shipped, none of them
-    these, so dropping three of the commonest words in Estonian would have made
-    this the one unit that pays for a course-wide fault. It is reported rather
-    than dropped, which is the rule the ambiguous homonyms already follow, and
-    the audit names all twelve pairs for the card pipeline to fix properly.
+    Three units rather than one, because sixty words in a row is a list
+    nobody works through, and because these are three different jobs: joining
+    two clauses, answering somebody, and saying how much.
   */
   unit({
     id: "sidesonad",
@@ -796,69 +773,105 @@ export const A1 = [
     icon: "Link",
     level: "A1",
     module: "Esimesed sammud",
-    canDo: "Join two thoughts into one sentence: and, but, because, that, or.",
-    blurb: "Ten words that turn a list of sentences into something somebody would say.",
+    canDo: "Join two clauses, give a reason, and set one thing against another.",
+    blurb: "Estonian puts a comma before et, sest, kui and kes, always, even where English would not.",
     grammar: ["word-order"],
-    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
-    requires: ["pohiverbid"],
+    cardTypes: ["RECOGNITION", "PRODUCTION"],
+    requires: ["tervitused"],
     words: [
       ["ja", "and", "ADVERB"],
-      ["ning", "and", "ADVERB"],
-      // Also a noun meaning a troubling circumstance, and a place in Russia.
+      ["ning", "and (joining the last of a list)", "ADVERB"],
+      // Also a noun meaning a troubling circumstance, and a district in Russia.
       ["aga", "but", "ADVERB", 155181],
-      // The conjunction, not the butter the food unit already teaches.
-      ["või", "or", "ADVERB", 258019],
+      ["vaid", "only, and nothing else", "ADVERB"],
       // Also the ISO code for Estonian, which Ekilex holds as a word.
       ["et", "that", "ADVERB", 165201],
       ["sest", "because", "ADVERB"],
-      ["ega", "nor, and not", "ADVERB"],
-      ["nagu", "like, as", "ADVERB"],
+      ["kuna", "since, because", "ADVERB"],
+      ["ega", "nor", "ADVERB"],
+      // The conjunction, not the butter the food unit already teaches.
+      ["või", "or", "ADVERB", 258019],
       ["ehk", "perhaps, maybe", "ADVERB"],
       ["kuni", "until", "ADVERB"],
-    ],
-  }),
-  unit({
-    id: "maarsonad",
-    title: "Määrsõnad",
-    subtitle: "Also, only, quite, almost",
-    icon: "SlidersHorizontal",
-    level: "A1",
-    module: "Esimesed sammud",
-    canDo: "Say also, only, quite, almost and not, and put the weight where you mean it.",
-    blurb: "The small words that decide whether you sound like a textbook or a person.",
-    grammar: ["word-order"],
-    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
-    requires: ["sidesonad"],
-    words: [
-      ["ka", "also, too", "ADVERB"],
-      ["ju", "after all, of course", "ADVERB"],
-      // Also a noun meaning abundance.
-      ["küll", "indeed, certainly", "ADVERB", 191080],
+      ["nagu", "like, as", "ADVERB"],
+      ["sellepärast", "for that reason", "ADVERB"],
+      ["seega", "so, therefore", "ADVERB"],
       ["siis", "then", "ADVERB"],
       ["nii", "so, like this", "ADVERB"],
-      ["ainult", "only", "ADVERB"],
-      ["vaid", "only", "ADVERB"],
       ["mitte", "not", "ADVERB", 203249],
+    ],
+  }),
+
+  unit({
+    id: "vastused",
+    title: "Vastused",
+    subtitle: "Yes, no and everything between",
+    icon: "MessageCircle",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Answer a question, agree, disagree, and say how sure you are.",
+    blurb: "Estonian answers a negative question with jah for yes, where English hesitates over which one it means.",
+    grammar: ["politeness"],
+    cardTypes: ["RECOGNITION", "PRODUCTION"],
+    requires: ["tervitused"],
+    words: [
+      ["jah", "yes", "ADVERB"],
+      ["ei", "no, not", "ADVERB"],
+      ["muidugi", "of course", "ADVERB"],
+      ["kindlasti", "definitely", "ADVERB"],
+      ["vist", "probably, I think", "ADVERB"],
+      ["äkki", "maybe, suddenly", "ADVERB"],
+      ["küll", "indeed, do (an emphasising word)", "ADVERB", 191080],
+      ["eks", "right? (asking for agreement)", "ADVERB"],
+      ["tõesti", "really", "ADVERB"],
+      ["tegelikult", "actually", "ADVERB"],
+      // An adjective, not a particle, and the one word in this unit that
+      // declines: `õige, õige, õiget`. Labelled ADVERB it would be harvested
+      // formless, get no case table and no case cards, and `npm run
+      // audit:senses` says so, because Ekilex calls it `adj`.
+      ["õige", "right, correct", "ADJECTIVE"],
+      ["tere", "hello", "ADVERB"],
+      ["aitäh", "thank you", "ADVERB"],
+    ],
+  }),
+
+  unit({
+    id: "maaramine",
+    title: "Kui palju",
+    subtitle: "How much, how often, how far",
+    icon: "Gauge",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Say how much of something there is, and how strongly you mean it.",
+    blurb: "These are the words that change a sentence without changing a single ending.",
+    grammar: ["word-order"],
+    cardTypes: ["RECOGNITION", "PRODUCTION"],
+    requires: ["tervitused"],
+    words: [
+      ["ka", "also, too", "ADVERB"],
+      ["ju", "you know (a softening word)", "ADVERB"],
+      ["just", "just, exactly", "ADVERB"],
+      ["väga", "very", "ADVERB"],
       ["hästi", "well", "ADVERB"],
-      ["üsna", "quite, fairly", "ADVERB"],
-      // Also an adjective meaning blocked or impassable.
-      ["umbes", "about, roughly", "ADVERB", 251199],
-      // Also a sports league, and a tie in musical notation.
-      ["liiga", "too, too much", "ADVERB", 194792],
-      ["rohkem", "more", "ADVERB", 228501],
-      // Also an adjective meaning greater in number.
-      ["enam", "more", "ADVERB", 164013],
-      ["peaaegu", "almost", "ADVERB"],
-      ["tavaliselt", "usually", "ADVERB"],
-      ["kiiresti", "quickly", "ADVERB"],
-      // Also a steel rail a curtain runs along.
-      ["siin", "here", "ADVERB", 233338],
-      ["alles", "still, only just", "ADVERB"],
+      ["ainult", "only", "ADVERB"],
+      ["enam", "any more", "ADVERB", 164013],
       ["isegi", "even", "ADVERB"],
+      ["ikka", "still, always", "ADVERB"],
+      ["rohkem", "more", "ADVERB", 228501],
+      // Not the sports league.
+      ["liiga", "too (much)", "ADVERB", 194792],
+      ["päris", "quite, fairly", "ADVERB"],
+      ["natuke", "a little", "ADVERB"],
+      ["üldse", "at all", "ADVERB"],
       ["eriti", "especially", "ADVERB"],
-      // Also a noun meaning a small amount.
-      ["vähe", "little, not much", "ADVERB", 258910],
-      ["pigem", "rather", "ADVERB"],
+      ["sama", "the same", "ADVERB"],
+      ["uuesti", "again", "ADVERB"],
+      ["varem", "earlier", "ADVERB"],
+      ["kaua", "for a long time", "ADVERB"],
+      // Not the steel rail a curtain runs along.
+      ["siin", "here", "ADVERB", 233338],
+      ["siit", "from here", "ADVERB"],
+      ["sinna", "to there", "ADVERB"],
     ],
   }),
 ] as const;

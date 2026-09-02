@@ -72,6 +72,10 @@ export interface Destination {
    *     the homework filed under it already was.
    *   - `/scan` — a way of getting words *in*, which is what the dictionary is
    *     for. It sat under "Look it up", which is not what it does.
+   *   - `/dictionary/common` — the commonest words are a way *into* the
+   *     dictionary rather than a place beside it, and the screen somebody is
+   *     standing on when they want a list of words to learn is the one with a
+   *     search box on it.
    *
    * The value is where it is reached from, so this file says so rather than
    * leaving the next reader to find out.
@@ -112,6 +116,18 @@ export const SECTIONS: NavSection[] = [
       {
         href: "/practice", label: "Practice", blurb: "Sprint, match, sentences, speaking, listening",
         icon: "Swords", tone: "peach", keywords: "games modes drill weakest case",
+      },
+      /*
+        A row of its own rather than a `within`, because a calendar is not
+        reached from the thing it is about: you open it to decide when to study,
+        which is before you have opened anything else. It sits in "Every day"
+        beside Review and Practice for the same reason, since what it holds is
+        the shape of a learner's week rather than a report on it.
+      */
+      {
+        href: "/calendar", label: "Calendar", blurb: "Your classes, study slots and what is due",
+        icon: "CalendarDays", tone: "sky",
+        keywords: "calendar week class schedule timetable homework reminder due plan tasks",
       },
     ],
   },
@@ -173,6 +189,12 @@ export const SECTIONS: NavSection[] = [
       {
         href: "/grammar", label: "Grammar", blurb: "What each of the fourteen cases is for", icon: "Languages",
         tone: "butter", keywords: "cases reference partitive genitive inessive endings rules seesutlev",
+      },
+      {
+        href: "/dictionary/common", label: "Commonest words",
+        blurb: "The hundred of each kind you will meet most", icon: "TrendingUp",
+        tone: "sky", within: "/dictionary",
+        keywords: "frequency common most used top 100 hundred subtitles corpus first learn order",
       },
       {
         href: "/scan", label: "Scan a page", blurb: "Photograph a word list and study what is on it",

@@ -31,6 +31,24 @@ const EVERYONE = [...OWNERS, OPTED_OUT];
 const TOKEN = "itest-research-token";
 const LEMMA = "uurimisproovisona";
 
+/**
+ * A second invented word with a gradation pattern of its own, and fewer answers.
+ *
+ * NOT DECORATION: `gradation_pattern` has `groupBy: 0`, so every pattern in the
+ * corpus is in one group, and the gate's complementary rule withholds a second
+ * cell from any group that withheld exactly one. A single stray review on any
+ * gradating word, by anybody this fixture did not write, is therefore enough to
+ * make the group hide one cell and then hide its smallest survivor as well.
+ *
+ * With one fixture pattern the smallest survivor *is* the assertion, and this
+ * test failed on any machine that had ever run `npm run demo`, which is a suite
+ * inheriting a precondition rather than stating one. With two it does not: zero
+ * strays and the rule never fires, one stray and this smaller pattern is the
+ * victim, two or more and the rule does not fire either. CI seeds fresh and so
+ * never saw it.
+ */
+const OTHER_LEMMA = "uurimisproovisonake";
+
 /*
   Made-up grouping keys, so that every figure this file asserts on is one this
   file put there.
@@ -53,7 +71,7 @@ async function wipe() {
   await prisma.review.deleteMany({ where: { ownerId: { in: EVERYONE } } });
   await prisma.card.deleteMany({ where: { ownerId: { in: EVERYONE } } });
   await prisma.setting.deleteMany({ where: { ownerId: { in: EVERYONE } } });
-  await prisma.lexeme.deleteMany({ where: { lemma: LEMMA } });
+  await prisma.lexeme.deleteMany({ where: { lemma: { in: [LEMMA, OTHER_LEMMA] } } });
 }
 
 /*
@@ -79,6 +97,22 @@ async function seedWord(): Promise<string> {
   return lexeme.id;
 }
 
+/** The decoy pattern. See `OTHER_LEMMA` for what it is holding off. */
+async function seedOtherWord(): Promise<string> {
+  const lexeme = await prisma.lexeme.create({
+    data: {
+      lemma: OTHER_LEMMA,
+      pos: "NOUN",
+      translation: "a second fixture, not a word",
+      cefr: "A1",
+      gradation: "QUALITATIVE",
+      gradationNote: "itest2 : itest2",
+      provenance: "SEED",
+    },
+  });
+  return lexeme.id;
+}
+
 /**
  * `people` learners answering one case card `each` times, with `wrong` of those
  * answers graded Again.
@@ -98,12 +132,14 @@ async function answers(
     holding a `cardId` nothing matches, so writing one is the whole of it.
   */
   cardIsGone = false,
+  /** Which word, for the one caller that wants the second fixture. */
+  word = lexemeId,
 ) {
   for (const ownerId of owners) {
     const card = await prisma.card.create({
       data: {
         ownerId,
-        lexemeId,
+        lexemeId: word,
         cardType: "CASE_FORM",
         front: "front",
         back: "back",
@@ -115,7 +151,7 @@ async function answers(
       data: Array.from({ length: each }, (_, i) => ({
         ownerId,
         cardId: cardIsGone ? "a card that is not there" : card.id,
-        lexemeId,
+        lexemeId: word,
         rating: i < wrong ? 1 : 3,
         stateBefore: 2,
         targetCase,
@@ -223,6 +259,10 @@ describe("what the gate does to real rows", () => {
 
   it("reaches the tables built on a join, not only the one that needs none", async () => {
     await answers(OWNERS, 10, 4);
+    // A smaller second pattern, so a stray gradating review from outside this
+    // fixture cannot make the complementary rule take the one being asserted.
+    // See `OTHER_LEMMA`.
+    await answers(OWNERS, 3, 1, ONE, false, await seedOtherWord());
     const body = await (await pull()).json();
     /** A cell in `id` carrying every one of `keys`, which is how a crosstab is pinned. */
     const has = (id: string, ...keys: string[]) =>

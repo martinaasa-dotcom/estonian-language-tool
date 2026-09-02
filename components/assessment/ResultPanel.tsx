@@ -84,12 +84,19 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
         <p className="mt-2 text-5xl font-bold leading-none" style={{ color: "var(--ink)" }}>
           {overall}
         </p>
+        {result.nearly && (
+          <p className="mt-2 text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>
+            A confident {overall}, and nearly {levelLabel(result.nearly)}.
+          </p>
+        )}
         <p className="mt-3 max-w-[58ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           {result.overall === null
             ? "Nothing was measured, so there is no level to report. That is an honest blank rather than a zero."
             : result.overall === PRE_A1
               ? "You have not reached the first band yet, which is where almost everybody starts. It is a starting point, not a verdict."
-              : `That is the level your weakest measured skill reached. A CEFR level is a claim about everything you can do, so it goes by your weakest skill, not the average.`}
+              : result.nearly
+                ? "Your skills averaged out between two bands, so this is the lower one. You are at the top of it rather than the bottom."
+                : "That is the average of the skills this measured. One weak section does not pull the whole level down, and one strong one does not carry it."}
           {result.ceiling && result.ceiling !== result.overall && (
             <> Your strongest measured skill looks like {levelLabel(result.ceiling)}, which is worth knowing too.</>
           )}

@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BAR, DESTINATIONS, isUnder, LISTED, PLACES, SECTIONS } from "./nav";
-import { PRACTICE_MODES, QUICK_MODES, TARGETED_MODES } from "./modes";
+import { GAMES, PRACTICE_MODES, QUICK_MODES, TARGETED_MODES } from "./modes";
 import { ICONS } from "../../components/icons";
 
 /** Every `page.tsx` under app/(app), as the route a learner would type. */
@@ -33,6 +33,17 @@ function filesUnder(dir: string): string[] {
     else if (/\.tsx?$/.test(entry)) out.push(path);
   }
   return out;
+}
+
+/**
+ * A file's code with its comments taken out.
+ *
+ * A check that reads a file has to read what it does rather than what it says
+ * about itself, which `scripts/test-invariants.ts` says at length and has been
+ * caught by four times. This one made it twice in a row.
+ */
+function code(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*\/\/.*$/gm, " ");
 }
 
 describe("the navigation table", () => {
@@ -173,11 +184,50 @@ describe("the practice modes", () => {
       grammar folder's own page.
     */
     for (const mode of TARGETED_MODES) {
-      const home = mode.within!.split("/").filter(Boolean)[0]!;
-      const dir = join("app/(app)", home);
-      expect(existsSync(dir), `${mode.href} says it is reached from ${mode.within}, which is not a route`)
-        .toBe(true);
-      const linked = filesUnder(dir).some((f) => readFileSync(f, "utf8").includes(mode.href));
+      const segment = mode.within!.split("/").filter(Boolean)[0];
+
+      /*
+        Today is a `within` like any other and is the one route with no
+        directory of its own, so `"/"` splits to nothing and the path join threw.
+        Its files are the root page and what it renders, which is `app/(app)`
+        minus the subdirectories: reading the whole tree instead would find any
+        href somewhere and pass every mode trivially.
+      */
+      const files = segment
+        ? filesUnder(join("app/(app)", segment))
+        : [join("app/(app)", "page.tsx")];
+
+      expect(files.length > 0 && files.every((f) => existsSync(f)),
+        `${mode.href} says it is reached from ${mode.within}, which is not a route`).toBe(true);
+      /*
+        Two ways a page can link to a mode, and both count.
+
+        A literal href is the obvious one. The other is rendering a group this
+        module exports, which is how `/practice` draws the games: it maps
+        `GAMES`, so the href never appears there as a string. That is stronger
+        wiring rather than weaker, because a game added to the table appears on
+        the page without anybody editing it, and the group's own definition is
+        what pins the route.
+
+        The group arm is not a loophole, and it took two goes to make it one.
+        It counts only for a group that really contains *this* mode, so a page
+        mapping `QUICK_MODES` cannot vouch for a drill that is not in it; it
+        looks for `NAME.map(`, which is what rendering a list is, because the
+        first version matched the bare name and so was satisfied by the import
+        line with the whole section deleted; and it reads `code()`, because the
+        version after that was satisfied by the comment above the section. That
+        is the oldest recurring mistake in this repository's own checks, made
+        twice in five minutes here. Made to fail: with the section removed, this
+        reports the mode as unreachable.
+      */
+      const sources = files.map((f) => code(readFileSync(f, "utf8")));
+      const groups: Record<string, readonly { href: string }[]> =
+        { GAMES, QUICK_MODES, TARGETED_MODES, PRACTICE_MODES };
+      const linked = sources.some((source) =>
+        source.includes(mode.href)
+        || Object.entries(groups).some(([name, list]) =>
+          list.some((m) => m.href === mode.href) && new RegExp(`\\b${name}\\.map\\(`).test(source)));
+
       expect(linked, `${mode.href} is reached from ${mode.within} and nothing there links to it`)
         .toBe(true);
     }

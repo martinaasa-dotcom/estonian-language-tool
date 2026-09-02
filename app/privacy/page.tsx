@@ -209,14 +209,17 @@ export default function PrivacyPage() {
           browser itself: whether you chose the dark theme, whether you have already been
           offered the install prompt, an outbox holding any card you graded while the
           network was down, so that grade is not lost and is sent with the time you actually
-          answered it, and a mock exam paper you have started but not handed in, so that
-          closing the tab three hours into a B2 paper does not throw the whole sitting away.
+          answered it, a mock exam paper you have started but not handed in, so that
+          closing the tab three hours into a B2 paper does not throw the whole sitting away,
+          and today&apos;s word puzzle, so a reload does not lose the guesses you have made.
         </P>
         <P>
           The unfinished paper holds your answers and when each part&apos;s clock runs out. It
           holds no marks and no questions: the paper is rebuilt from a seed and marked on the
           server, so nothing kept here can change a score. It is replaced as you write and
-          removed the moment the paper is handed in.
+          removed the moment the paper is handed in. The puzzle keeps your guesses and
+          nothing else, and today&apos;s word is worked out from the date rather than kept
+          beside them.
         </P>
         <P>
           None of that is a tracker and none of it is shared with anybody. Estonian law
@@ -224,7 +227,7 @@ export default function PrivacyPage() {
           strictly necessary for the service you asked for, and each of these is: a review
           app that silently drops the answers you gave on a train is broken, not private.
           That is why there is no cookie banner. Signing out removes the outbox, the saved
-          session, the pages kept for offline use and any unfinished paper, so the next person
+          session, the pages kept for offline use, any unfinished paper and any puzzle, so the next person
           on a shared computer starts from nothing; the theme and the install prompt stay,
           since they are about the device rather than about you. The browser also keeps a
           short code for which account last used it, so that a different account signing in

@@ -6,6 +6,7 @@ import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/adva
 import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { applyPosCorrections, writeExpanded } from "./expanded";
+import { writeWordlist } from "./wordlist";
 import { repairProductionBacks } from "./repair";
 import { ensureSearchIndexes } from "./indexes";
 import { classifyGradation, classifyVerbGradation, gradates } from "../lib/estonian/gradation";
@@ -31,6 +32,14 @@ async function main() {
     indexes have to be ensured on every deploy, not only the first.
   */
   await ensureSearchIndexes(prisma);
+
+  /*
+    And the headword list, before the early return for the same reason: a
+    deployment seeded before this existed has a full dictionary and an empty
+    `KnownWord`, which is precisely what `--only-if-empty` skips.
+  */
+  const known = await writeWordlist(prisma);
+  if (known > 0) console.log(`Added ${known} Estonian headwords to the word list.`);
 
   /*
     Before the early return for the same reason, and it is the reason this
