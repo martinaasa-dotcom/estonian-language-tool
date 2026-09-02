@@ -1,5 +1,8 @@
 import { singleFlight } from "@/lib/cache/singleFlight";
 import { prisma } from "@/lib/db";
+import {
+  alsoAcceptedByLemma as sharedAlsoAccepted, sharedPrompts,
+} from "@/lib/collections/senses";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -223,6 +226,32 @@ export function decoyGlosses(): Promise<string[]> {
       take: DECOY_POOL,
     });
     return [...new Set(rows.map((row) => row.translation))];
+  });
+}
+
+/**
+ * Every lemma that answers the same production prompt as another one.
+ *
+ * A production card is front `translation`, hint `pos`, back `lemma`, so two
+ * entries sharing a gloss and a part of speech are one question with two right
+ * answers, and each card marks the other's answer wrong. `lib/srs/cards.ts`
+ * puts the whole set on the back; this is what finds it.
+ *
+ * A fact about the shared dictionary and therefore exactly what this file is
+ * for: the answer is the same for every learner and the same on the next
+ * request, and a deck build would otherwise ask it once per word. The result is
+ * small even though the query is not, because only a prompt more than one entry
+ * answers is kept: 372 groups out of 6,083 entries, nearly all of them pairs.
+ *
+ * Keyed `lemma|pos`, which is what `Lexeme` is unique on, because a lemma alone
+ * would merge the noun `hall` meaning frost with the adjective meaning grey.
+ */
+export function alsoAcceptedByLemma(): Promise<Map<string, string[]>> {
+  return remember("also-accepted", FACTS_TTL_MS, async () => {
+    const rows = await prisma.lexeme.findMany({ select: { lemma: true, pos: true, translation: true } });
+    return sharedAlsoAccepted(
+      sharedPrompts(rows.map((r) => ({ lemma: r.lemma, pos: r.pos, gloss: r.translation }))),
+    );
   });
 }
 

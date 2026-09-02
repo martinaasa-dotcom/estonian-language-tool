@@ -141,6 +141,21 @@ export interface LexemeForCards {
   /** The raw `Lexeme.examples` JSON column; parsed defensively. */
   examples?: string | null;
   forms: { formType: string; value: string; morphCode?: string | null }[];
+  /**
+   * Other lemmas the dictionary glosses exactly the same way.
+   *
+   * A production card is front `translation`, hint `pos`, back `lemma`, so two
+   * entries with one gloss and one part of speech are one question with two
+   * right answers, and each of their cards marks the other one wrong. The
+   * dictionary ships 372 such prompts, `ja` and `ning` among them.
+   *
+   * `lib/collections/senses.ts` is what finds them and `lib/dict/facts.ts` is
+   * what caches the answer. Empty for a word nothing shares a prompt with,
+   * which is the overwhelming majority, and absent for a caller that has not
+   * looked, which is the honest default: an unset field builds the card that
+   * was built before rather than silently claiming a word has no synonym.
+   */
+  alsoAccepted?: readonly string[];
 }
 
 export interface GeneratedCard {
@@ -177,9 +192,32 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
         out.push({ cardType: type, front: lex.lemma, back: lex.translation, hint: null, targetCase: null });
         break;
 
-      case "PRODUCTION":
-        out.push({ cardType: type, front: lex.translation, back: lex.lemma, hint: lex.pos.toLowerCase(), targetCase: null });
+      case "PRODUCTION": {
+        /*
+          EVERY WORD THIS PROMPT COULD BE ASKING FOR GOES ON THE BACK.
+
+          The same fix the illative got, and for the same reason. `checkAnswer`
+          marks against the back and `acceptedAnswers` splits it on the
+          separator, so what the screen shows and what the marker takes are one
+          string. Before this, a learner shown "and" who typed `ning` was marked
+          wrong by `ja`'s card and shown it again until they stopped, and the
+          dictionary had 372 prompts able to do that to somebody.
+
+          The lemma leads, because it is this card's own word and the one the
+          screen should teach first. The rest follow in the order the dictionary
+          gives them, which `sharedPrompts` sorts, so the back does not depend
+          on which entry the deck happened to build first.
+        */
+        const answers = [lex.lemma, ...(lex.alsoAccepted ?? []).filter((w) => w !== lex.lemma)];
+        out.push({
+          cardType: type,
+          front: lex.translation,
+          back: answers.join(" / "),
+          hint: lex.pos.toLowerCase(),
+          targetCase: null,
+        });
         break;
+      }
 
       case "CASE_FORM": {
         if (!genSg) break;

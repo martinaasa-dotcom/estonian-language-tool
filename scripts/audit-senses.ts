@@ -1,93 +1,78 @@
 /**
- * Checks the course's authored English against the Ekilex sense it was written
- * for, using evidence the harvest already stores.
+ * Every production card whose prompt more than one word answers.
  *
  *   npm run audit:senses
- *   npm run audit:senses -- --all    # every shared sense, not only the faults
+ *   npm run audit:senses -- --all    # the synonym groups too, not only the faults
  *
- * THE GAP THIS FILLS. `audit:glosses` re-reads every built entry's Wiktionary
- * page and `audit:pos` does the same for its part of speech, and both of them
- * point at `prisma/data/expanded.json`. Nothing had ever looked at
- * `prisma/data/harvested.ts`, which is the course: 1,404 words whose English is
- * the one authored column in the whole pipeline, and therefore the one column
- * no upstream source can be blamed for. Two of the thirty glosses written for
- * the connective units were wrong, and both were caught by a person reading
- * Ekilex definitions one at a time, which is not a method.
+ * A production card is front `translation`, hint `pos`, back `lemma`, and it is
+ * marked by `checkAnswer` against the back. Two entries with one gloss and one
+ * part of speech are therefore one question with two right answers, and each of
+ * their cards marks the other's answer wrong. The dictionary ships 372 of them.
  *
- * It needs no key and no network, because the evidence came back with the
- * harvest and was sitting unread: `note` is Ekilex's own definition of the
- * sense whose forms, level and sentences an entry carries, and `ekilexPos` is
- * what Ekilex calls the word.
+ * `lib/srs/cards.ts` fixes the marking by putting every answer on the back, the
+ * way the illative already does. What it cannot fix is the half of these where
+ * the gloss is not describing its own word, and that is what this reports.
+ * `iseseisvus` and `suveräänsus` are a synonym pair somebody can leave alone;
+ * `iseloom` "character" and `tegelane` "character" are a person's character and
+ * a character in a story, and the prompt cannot be answered by anybody.
  *
- * `lib/collections/senses.ts` is the rule. This file is the report and
- * `senses.test.ts` is the check; a copy of the rule in either is how the two
- * start disagreeing about what a collision is.
+ * Ekilex's own definition is what tells the two apart, and the course harvest
+ * has been storing it all along without anything reading it: where the Institute
+ * gives a group one definition they are synonyms, and where it gives them two
+ * the gloss is the thing to fix.
  *
- * Reports, and does not fail. A shared sense is evidence for a person rather
- * than a verdict, and the test is the half that holds a line.
+ * `lib/collections/senses.ts` is the rule, this is the report, and
+ * `senses.test.ts` is the check. No key and no network: every input is a file
+ * the app ships.
  */
-import { HARVESTED } from "../prisma/data/harvested";
-import { mislabelled, sharedSenses, type SenseWord } from "../lib/collections/senses";
+import { shippedDictionary } from "./lib/dictionary";
+import { mislabelled, sharedPrompts, type SenseWord } from "../lib/collections/senses";
 
 const ALL = process.argv.includes("--all");
 
-const words: SenseWord[] = HARVESTED.map((w) => ({
-  lemma: w.lemma, pos: w.pos, gloss: w.gloss, note: w.note, ekilexPos: w.ekilexPos,
+const words: SenseWord[] = shippedDictionary().map((e) => ({
+  lemma: e.lemma, pos: e.pos, gloss: e.gloss, note: e.note, ekilexPos: e.ekilexPos,
 }));
 
-const { collisions, disagreements } = sharedSenses(words);
+const groups = sharedPrompts(words);
+const ambiguous = groups.filter((g) => g.diagnosis === "ambiguous");
+const synonyms = groups.filter((g) => g.diagnosis === "synonyms");
+const unjudged = groups.filter((g) => g.diagnosis === "unjudged");
 const wrongLabel = mislabelled(words);
 
-const label = (w: SenseWord) => `${w.lemma} (${w.pos})`;
-const withSense = words.filter((w) => w.note).length;
-const withPos = words.filter((w) => w.ekilexPos.length > 0).length;
-const senses = new Set(words.filter((w) => w.note).map((w) => w.note!.trim().toLowerCase()));
+const judged = words.filter((w) => w.note).length;
 
-console.log(`\n${words.length} course words`);
-console.log(`  ${withSense} carry an Ekilex definition, across ${senses.size} distinct senses`);
-console.log(`  ${withPos} carry an Ekilex part of speech`);
+console.log(`\n${words.length} entries in the shipped dictionary, ${judged} with an Ekilex definition`);
+console.log(`  ${groups.length} prompts are answered by more than one word`);
+console.log(`  every one of them now marks all its answers right; what follows is which glosses to fix`);
 
-console.log(`\nOne meaning, two right answers: ${collisions.length}`);
-if (collisions.length > 0) {
-  console.log("  A production card asks English to Estonian. Each pair below shares an Ekilex");
-  console.log("  sense and an English gloss, so the card has two right answers and marks one wrong.");
-  for (const { a, b } of collisions) {
-    console.log(`    ${label(a)} "${a.gloss}"  =  ${label(b)} "${b.gloss}"`);
-  }
+console.log(`\nThe gloss cannot identify its own word: ${ambiguous.length}`);
+console.log("  Ekilex gives these words different definitions, so they are not synonyms and the");
+console.log("  prompt is unanswerable. A distinct gloss is the fix; accepting both is the stopgap.");
+for (const g of ambiguous) {
+  console.log(`    "${g.gloss}" (${g.pos.toLowerCase()}): ${g.lemmas.join(", ")}`);
 }
 
-console.log(`\nOne Ekilex sense, two different glosses: ${disagreements.length}`);
-if (disagreements.length > 0) {
-  console.log("  The Institute gives these one definition and the course gives them two meanings.");
-  console.log("  Usually a synonym pair worth keeping apart, sometimes a gloss written for a sense");
-  console.log("  the entry does not carry, which is the fault that put \"but rather\" on vaid.");
-  for (const { a, b, sense } of disagreements) {
-    console.log(`    ${label(a)} "${a.gloss}"  vs  ${label(b)} "${b.gloss}"`);
-    console.log(`      ${sense.slice(0, 96)}`);
+console.log(`\nGenuine synonyms, nothing to fix: ${synonyms.length}`);
+for (const g of synonyms) {
+  console.log(`    "${g.gloss}" (${g.pos.toLowerCase()}): ${g.lemmas.join(", ")}`);
+}
+
+console.log(`\nNo Ekilex definition to judge by: ${unjudged.length}`);
+console.log("  Entries outside the course carry no definition, so which of these are synonyms and");
+console.log("  which are a gloss failing to identify its word is not something this can say.");
+if (ALL) {
+  for (const g of unjudged) {
+    console.log(`    "${g.gloss}" (${g.pos.toLowerCase()}): ${g.lemmas.join(", ")}`);
   }
 }
 
 console.log(`\nThe course calls it one thing and Ekilex calls it another: ${wrongLabel.length}`);
 for (const w of wrongLabel) {
-  console.log(`    ${label(w)} "${w.gloss}" is ${w.ekilexPos.join(", ")} to Ekilex`);
-}
-
-if (ALL) {
-  const bySense = new Map<string, SenseWord[]>();
-  for (const w of words) {
-    if (!w.note) continue;
-    const k = w.note.trim().toLowerCase();
-    bySense.set(k, [...(bySense.get(k) ?? []), w]);
-  }
-  console.log("\nEvery shared sense");
-  for (const [sense, group] of bySense) {
-    if (group.length < 2) continue;
-    console.log(`  ${group.map(label).join(", ")}`);
-    console.log(`    ${sense.slice(0, 110)}`);
-  }
+  console.log(`    ${w.lemma} (${w.pos}) "${w.gloss}" is ${(w.ekilexPos ?? []).join(", ")} to Ekilex`);
 }
 
 console.log(
-  "\nNothing here fails. The collisions that are known are pinned with a reason in\n"
+  "\nNothing here fails. The prompts a gloss cannot tell apart are pinned in\n"
   + "lib/collections/senses.test.ts, which does fail on a new one.\n",
 );

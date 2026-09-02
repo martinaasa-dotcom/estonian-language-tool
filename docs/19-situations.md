@@ -1084,6 +1084,16 @@ not a disappointment, it is the same finding twice: the beats retrieval cannot f
 how few recorded sentences are questions, not by how many words a learner knows. Teaching `ja` does
 not make a lexicographer write a question they did not write.
 
+**Both columns of that table are high, and the delta is the part to keep.** The measurement built
+its pool by reading the six files the seed reads and did not dedupe them, where the seed writes
+under a conflict key of `(lemma, pos)` and keeps the first writer. A word in both the hand-checked
+seed and the course harvest was therefore counted twice, and its sentences with it. Corrected, the
+dictionary is 6,083 entries rather than 7,127, which is exactly `SEED_SET_SIZE`, and the corpus is
+13,683 attested lines rather than 15,920. Both columns were measured the same way on the same day,
+so the comparison holds and the absolute figures did not. `scripts/lib/dictionary.ts` is the one
+assembly now, shared with `audit-senses.ts`, because two scripts reading the same six files their
+own way is how two reports about one dictionary start disagreeing about its size.
+
 The re-harvest is worth one line of its own. It refetched all 1,371 existing words from a cold cache
 and reproduced every one of them byte for byte: 30 added, none removed, **none changed**. That is
 the harvest being deterministic and Ekilex being stable, and it is the reason a full re-run is a
@@ -1136,17 +1146,8 @@ meaning by the Institute's own account**. That one fact reads two ways and both 
 gloss means a production card with two right answers, and different glosses mean one of them
 describes a sense the entry does not carry. The second is what would have caught `vaid`.
 
-It found **twelve production cards that mark a right answer wrong**, nine of them older than these
-units and none of them ever noticed: `defineerima` and `määratlema` are both "to define",
-`struktuur` and `ülesehitus` are both "structure", `söök` and `toit` are both food. A learner who
-types the other true answer is shown the card again until they stop.
-
-The fix belongs in the card pipeline rather than here. A production card whose answer is one of a
-synonym set should accept the set, exactly as a case card already puts every accepted spelling on
-its back and `acceptedAnswers` splits them; that needs Ekilex's definition seeded into
-`Lexeme.notes`, a column that exists and is written for phrases only. So it is its own change, and
-`lib/collections/senses.test.ts` holds the line until then: the twelve are pinned with a reason, a
-thirteenth fails, and a pair that stops colliding has to come off the list.
+It found twelve pairs that way, and then the rule turned out to be the wrong one and the real number
+is **372**. §28 is that story, because it changed what the fix is.
 
 ### The label was thrown away, so a coarsening could not be told from a mistake
 
@@ -1163,3 +1164,73 @@ widening is `num` on the two nominal labels, because an Estonian numeral decline
 has to be a nominal here or the numbers unit has no case table to teach from.
 
 With that written down, the course's label and Ekilex's agree on **all 1,404 words**.
+
+## 28. The rule was about meaning and the fault was about the prompt
+
+The check in §27 grouped course words by Ekilex's own definition, on the reasoning that two words
+the Institute gives one definition are one meaning and therefore one production card with two right
+answers. It found twelve pairs. Both halves of that reasoning were wrong.
+
+**A card knows nothing but its front.** A production card is front `translation`, hint `pos`, back
+`lemma`, and `checkAnswer` marks against the back. Two entries collide when a learner cannot tell
+which of them is wanted, and what the learner sees is the gloss and the part of speech. Whether the
+Institute considers them one meaning does not enter into it. Grouping by the prompt instead finds
+**372 prompts in the shipped dictionary that more than one word answers**, and every one of them
+was a card able to mark a right answer wrong.
+
+`sameMeaning` from `lib/questions/distractors.ts` was tried as the grouping and is wrong in the
+other direction. It is built for "could these two be offered as different answers to one question"
+and is deliberately generous, so it called `abi` "help" and `aitama` "to help" one prompt, which no
+learner reading the hint would confuse. It found 459.
+
+### The fix is the one the illative got
+
+Every answer the prompt fits goes on the back, joined with the separator `acceptedAnswers` splits
+on, so what the screen shows and what the marker takes are one string. `ja` and `ning` both build a
+card reading "and" with the back `ja / ning`, and both words are marked right.
+
+`lib/collections/senses.ts` is the rule, `lib/dict/facts.ts` caches the answer across requests
+because which words share a prompt is a fact about the shared dictionary rather than about the
+person waiting, and `lib/srs/deck.ts` reads it once per build rather than once per word, which is
+the rule a deck build is already held to. `LexemeForCards.alsoAccepted` is optional: a caller that
+has not looked builds the card that was built before, rather than silently claiming a word has no
+synonym.
+
+The one thing this does not do is repair a card already in somebody's deck. A `Card` row holds its
+own back and nothing rewrites it, so a learner who added `defineerima` last month keeps the card
+that marks `määratlema` wrong until it is rebuilt. That is a data migration over owner-scoped rows
+and it deserves its own change rather than a rider on this one.
+
+### And half of them are not synonyms at all
+
+Ekilex's definition earns its place as the **diagnosis** rather than the trigger. Where the
+Institute gives a group one definition they really are synonyms and accepting both is the whole
+fix: `ja` and `ning` are both "and" and no gloss could separate them. Where it gives them two, the
+gloss is not describing its own word, and that is a worse bug that accepting both only makes fair
+rather than right.
+
+Eleven of those are in the course and every one is a card no learner can answer as asked:
+
+| Prompt | What the two words actually are |
+|---|---|
+| "character" | `iseloom` is a person's character, `tegelane` is a character in a story |
+| "application" | `avaldus` is a form you submit, `rakendus` is a piece of software |
+| "competition" | `konkurents` is rivalry, `võistlus` is a contest |
+| "connection" | `seos` is a relation between things, `ühendus` is a link or a service |
+| "to adapt" | `kohandama` adapts something, `kohanema` is adapting oneself |
+| "to justify" | `põhjendama` gives reasons, `õigustama` defends as right |
+| "expression" | `väljend` is a phrase, `väljendus` is the act of expressing |
+| "everyday" | `argine` is humdrum, `igapäevane` is daily |
+| "equivalent" | `ekvivalent` is the borrowed term, `vaste` the everyday one |
+| "on the other hand" | `seevastu` contrasts, `teisalt` enumerates a second view |
+| "witty" | `teravmeelne` is sharp, `vaimukas` is playful |
+
+They are pinned in `lib/collections/senses.test.ts` as a defect list rather than an exemption list:
+a twelfth fails, and one that stops being ambiguous because somebody wrote a gloss that identifies
+its word has to come off. Writing those eleven pairs of glosses is authoring work on the one column
+in this pipeline a person writes, and it wants somebody who knows the register of both words rather
+than somebody who has just read two dictionary definitions.
+
+The other 355 are outside the course, so they carry no Ekilex definition and there is nothing to
+judge them by. They are marked correctly all the same, which is the point of fixing the card rather
+than the list.

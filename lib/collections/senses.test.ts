@@ -1,121 +1,125 @@
 /**
- * The production cards that have two right answers, pinned so a thirteenth
- * cannot arrive quietly.
+ * The prompts more than one word answers, and which of them are a bug.
  *
- * A production card asks "English to Estonian" and accepts what is on its back.
- * Two course words that Ekilex gives one definition and the course gives one
- * gloss are therefore one question with two right answers, and a learner who
- * types the other one is marked wrong and shown the card again until they stop.
- * That is the fault the illative taught this project, arriving through the
- * vocabulary instead of through the morphology.
+ * A production card is front `translation`, hint `pos`, back `lemma`. Two
+ * entries sharing a gloss and a part of speech are one question with two right
+ * answers, and the dictionary ships 372 of them. `lib/srs/cards.ts` fixes the
+ * marking by putting the whole set on the back, so none of the 372 can mark a
+ * right answer wrong any more.
  *
- * THIS LIST IS A DEFECT LIST, NOT AN EXEMPTION LIST. Every entry is a card that
- * marks a right answer wrong today. The right fix is in the card pipeline: a
- * production card whose answer is one of a synonym set should accept the set,
- * exactly as a case card already puts every accepted spelling on its back and
- * `acceptedAnswers` splits them. That needs Ekilex's definition seeded into
- * `Lexeme.notes`, which is a column that exists and is written for phrases
- * only, so it is its own change rather than a rider on a syllabus unit. What
- * this test does is stop the list growing while that is true.
- *
- * Nine of the twelve predate the connective units and none of them was noticed
- * until the audit existed, which is the argument for the audit. Three arrived
- * with those units and were briefly deleted instead: `ning`, `vaid` and `enam`
- * were left out of the course for a day to avoid colliding with `ja`, `ainult`
- * and `rohkem`, which would have made one unit pay for a course-wide fault by
- * dropping three of the commonest words in Estonian. They are in, and reported.
+ * What it cannot fix is a gloss that does not describe its own word.
+ * `iseloom` and `tegelane` are both glossed "character", and one is a person's
+ * character while the other is a character in a story: accepting both is fair,
+ * because the learner is being punished for a prompt nobody could answer, and
+ * the prompt is still wrong. Ekilex's own definition is what tells that case
+ * from a real synonym pair, and this pins the ones that are known so the list
+ * can only shrink.
  */
 import { describe, expect, it } from "vitest";
-import { HARVESTED } from "@/prisma/data/harvested";
-import { COARSENS, mislabelled, pairKey, sharedSenses, type SenseWord } from "./senses";
+import { shippedDictionary } from "@/scripts/lib/dictionary";
+import {
+  COARSENS, alsoAcceptedByLemma, mislabelled, promptKey, sharedPrompts, type SenseWord,
+} from "./senses";
 
-const words: SenseWord[] = HARVESTED.map((w) => ({
-  lemma: w.lemma, pos: w.pos, gloss: w.gloss, note: w.note, ekilexPos: w.ekilexPos,
+const words: SenseWord[] = shippedDictionary().map((e) => ({
+  lemma: e.lemma, pos: e.pos, gloss: e.gloss, note: e.note, ekilexPos: e.ekilexPos,
 }));
+const groups = sharedPrompts(words);
 
 /**
- * Every pair whose production card is known to have two right answers.
+ * Prompts where the two words are not synonyms and the gloss cannot say which
+ * is wanted. Ekilex gives each of these pairs two different definitions.
  *
- * Keyed the way `pairKey` names them, with what the shared gloss is, so a
- * reader can see at a glance whether the pair is worth a distinct gloss or
- * whether both words genuinely mean the one thing.
+ * A DEFECT LIST, NOT AN EXEMPTION LIST. Each line is a card no learner can
+ * answer as asked, waiting for somebody to write a gloss that identifies its
+ * word. The value beside it is what the two words actually are, so whoever
+ * picks one up does not have to look it up again.
  */
-const KNOWN_COLLISIONS = new Map<string, string>([
-  ["ainult = vaid", "both 'only'; Ekilex gives them one definition"],
-  ["avalikkus = üldsus", "'the public sphere' and 'the public'"],
-  ["defineerima = määratlema", "both 'to define'"],
-  ["enam = rohkem", "both 'more'"],
-  ["ja = ning", "both 'and'"],
-  ["kalambuur = sõnamäng", "'pun' and 'wordplay, pun'"],
-  ["nüüd = praegu", "'now' and 'right now, at the moment'"],
-  ["oskussõna = termin", "'technical term' and 'term'"],
-  ["sageli = tihti", "'often, frequently' and 'often'"],
-  ["struktuur = ülesehitus", "both 'structure'"],
-  ["söök = toit", "'food, a meal' and 'food'"],
-  ["tähenduslik = tähendusrikas", "both 'meaningful'"],
+const AMBIGUOUS_PROMPTS = new Map<string, string>([
+  ["application|NOUN", "avaldus is a form you submit, rakendus is a piece of software"],
+  ["character|NOUN", "iseloom is a person's character, tegelane is a character in a story"],
+  ["competition|NOUN", "konkurents is rivalry, võistlus is a contest"],
+  ["connection|NOUN", "seos is a relation between things, ühendus is a link or a service"],
+  ["equivalent|NOUN", "ekvivalent is the borrowed term, vaste is the everyday one"],
+  ["everyday|ADJECTIVE", "argine is humdrum, igapäevane is daily"],
+  ["expression|NOUN", "väljend is a phrase, väljendus is the act of expressing"],
+  ["on the other hand|ADVERB", "seevastu contrasts, teisalt enumerates a second view"],
+  ["to adapt|VERB", "kohandama adapts something, kohanema is adapting oneself"],
+  ["to justify|VERB", "põhjendama gives reasons, õigustama defends as right"],
+  ["witty|ADJECTIVE", "teravmeelne is sharp, vaimukas is playful"],
 ]);
 
-describe("one Ekilex sense, two right answers", () => {
-  const { collisions } = sharedSenses(words);
+describe("prompts more than one word answers", () => {
+  it("finds them at the size the dictionary actually has", () => {
+    expect(groups.length).toBeGreaterThan(300);
+    expect(groups.every((g) => g.lemmas.length > 1)).toBe(true);
+  });
 
-  it("has not grown", () => {
-    const found = collisions.map((p) => pairKey(p.a, p.b));
-    const fresh = found.filter((k) => !KNOWN_COLLISIONS.has(k));
+  it("has no new prompt whose gloss cannot identify its word", () => {
+    const fresh = groups
+      .filter((g) => g.diagnosis === "ambiguous")
+      .map((g) => g.key)
+      .filter((key) => !AMBIGUOUS_PROMPTS.has(key));
     expect(
       fresh,
-      "a new pair of course words shares an Ekilex sense and an English gloss, so one production "
-      + "card now marks a right answer wrong. Give one of them a gloss that tells them apart, or "
-      + "add it here with the reason it has to stay.",
+      "a new pair of entries shares a prompt and Ekilex says they are different words, so the card "
+      + "asks a question neither of them answers. Give one a gloss that tells them apart, or add it "
+      + "here with what the two words actually are.",
     ).toEqual([]);
   });
 
   /*
-    Keeps the list honest. A pair that stops colliding, because somebody gave
-    one of them a distinct gloss or the card pipeline learned to accept a set,
-    has to come out, or the list becomes the parking space every exemption list
-    turns into when nobody prunes it.
+    Keeps the list honest. A prompt that stops being ambiguous, because somebody
+    wrote a gloss that identifies its word, has to come off, or the list becomes
+    the parking space every exemption list turns into when nobody prunes it.
   */
   it("has no stale entry", () => {
-    const found = new Set(collisions.map((p) => pairKey(p.a, p.b)));
-    const stale = [...KNOWN_COLLISIONS.keys()].filter((k) => !found.has(k));
-    expect(stale, "these no longer collide and should come off the list").toEqual([]);
+    const ambiguous = new Set(groups.filter((g) => g.diagnosis === "ambiguous").map((g) => g.key));
+    const stale = [...AMBIGUOUS_PROMPTS.keys()].filter((key) => !ambiguous.has(key));
+    expect(stale, "these are no longer ambiguous and should come off the list").toEqual([]);
+  });
+
+  it("tells a synonym pair from a gloss that cannot identify its word", () => {
+    const one = "seob sisu poolest samaväärseid sõnu";
+    const two = "hoopis midagi muud";
+    const pair = (noteA: string, noteB: string): SenseWord[] => [
+      { lemma: "a", pos: "ADVERB", gloss: "and", note: noteA, ekilexPos: ["konj"] },
+      { lemma: "b", pos: "ADVERB", gloss: "and", note: noteB, ekilexPos: ["konj"] },
+    ];
+    expect(sharedPrompts(pair(one, one))[0]?.diagnosis).toBe("synonyms");
+    expect(sharedPrompts(pair(one, two))[0]?.diagnosis).toBe("ambiguous");
+    expect(sharedPrompts(pair(one, ""))[0]?.diagnosis).toBe("unjudged");
   });
 
   /*
-    The rule has to be able to fire. Written the way it was actually proved:
-    the same two words with one gloss changed stop being a collision, so the
-    check is reading the glosses rather than the lemmas.
+    The part of speech is half the prompt, because it is the card's hint. Two
+    entries glossed "help" as a noun and as a verb are not one question, and an
+    earlier version of this that grouped on the gloss alone said they were.
   */
-  it("fires on a collision and not on a distinguished pair", () => {
-    const sense = "seob sisu poolest samaväärseid sõnu";
-    const pair = (glossA: string, glossB: string): SenseWord[] => [
-      { lemma: "a", pos: "ADVERB", gloss: glossA, note: sense, ekilexPos: ["konj"] },
-      { lemma: "b", pos: "ADVERB", gloss: glossB, note: sense, ekilexPos: ["konj"] },
+  it("does not group two words a learner could tell apart by the hint", () => {
+    const apart: SenseWord[] = [
+      { lemma: "abi", pos: "NOUN", gloss: "help", note: null },
+      { lemma: "aitama", pos: "VERB", gloss: "to help", note: null },
     ];
-    expect(sharedSenses(pair("and", "and")).collisions).toHaveLength(1);
-    expect(sharedSenses(pair("and", "and also")).collisions).toHaveLength(1);
-    expect(sharedSenses(pair("and", "until")).collisions).toHaveLength(0);
-    expect(sharedSenses(pair("and", "until")).disagreements).toHaveLength(1);
+    expect(sharedPrompts(apart)).toEqual([]);
+    expect(promptKey("Help ", "NOUN")).toBe(promptKey("help", "NOUN"));
+    expect(promptKey("help", "NOUN")).not.toBe(promptKey("help", "VERB"));
   });
 
-  it("says nothing about words that do not share a sense", () => {
-    const apart: SenseWord[] = [
-      { lemma: "a", pos: "NOUN", gloss: "one", note: "üks asi", ekilexPos: ["s"] },
-      { lemma: "b", pos: "NOUN", gloss: "one", note: "teine asi", ekilexPos: ["s"] },
-    ];
-    expect(sharedSenses(apart).collisions).toEqual([]);
+  it("gives every word in a group the others as also accepted", () => {
+    const map = alsoAcceptedByLemma(groups);
+    const and = groups.find((g) => g.key === "and|ADVERB");
+    expect(and?.lemmas).toEqual(["ja", "ning"]);
+    expect(map.get("ja|ADVERB")).toEqual(["ning"]);
+    expect(map.get("ning|ADVERB")).toEqual(["ja"]);
+    // A word nothing shares a prompt with is simply absent, not an empty entry.
+    expect(map.has("tuba|NOUN")).toBe(false);
   });
 });
 
 describe("the course's part of speech against Ekilex's", () => {
-  /*
-    Every course label has to be one Ekilex's own could reasonably coarsen to.
-    This passed at zero the moment `num` was allowed on the two nominal labels,
-    which is what a numeral needs to be here in order to have a case table at
-    all, and it is the only widening the table has.
-  */
   it("agrees on every word Ekilex has an opinion about", () => {
-    const wrong = mislabelled(words).map((w) => `${w.lemma} is ${w.pos} here, ${w.ekilexPos.join("/")} there`);
+    const wrong = mislabelled(words).map((w) => `${w.lemma} is ${w.pos} here, ${(w.ekilexPos ?? []).join("/")} there`);
     expect(wrong).toEqual([]);
   });
 
@@ -127,17 +131,16 @@ describe("the course's part of speech against Ekilex's", () => {
   /*
     A word Ekilex has no opinion about is not a disagreement. Asserted because
     the natural way to write the filter treats an empty list as "matches
-    nothing" and fails every entry harvested before the field existed.
+    nothing" and fails every entry outside the course.
   */
   it("says nothing about a word with no Ekilex label", () => {
-    const silent: SenseWord = { lemma: "x", pos: "NOUN", gloss: "x", note: null, ekilexPos: [] };
-    expect(mislabelled([silent])).toEqual([]);
+    expect(mislabelled([{ lemma: "x", pos: "NOUN", gloss: "x", note: null, ekilexPos: [] }])).toEqual([]);
+    expect(mislabelled([{ lemma: "x", pos: "NOUN", gloss: "x", note: null }])).toEqual([]);
   });
 
-  it("covers every label the course actually uses", () => {
-    const used = new Set(words.map((w) => w.pos));
-    for (const pos of used) {
-      expect(COARSENS[pos], `${pos} is a course label with no coarsening written down`).toBeDefined();
+  it("covers every label the dictionary actually uses", () => {
+    for (const pos of new Set(words.map((w) => w.pos))) {
+      expect(COARSENS[pos], `${pos} is a label with no coarsening written down`).toBeDefined();
     }
   });
 });

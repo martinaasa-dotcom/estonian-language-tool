@@ -268,14 +268,31 @@ it needs no key, because the evidence came back with the harvest and sat unread:
 own definition of the sense an entry carries, so two course words with the same definition are one
 meaning, and that reads two ways. Same gloss is a production card with two right answers; different
 glosses mean one of them describes a sense the entry does not carry, which is the fault that put
-"but rather" on `vaid`. It found **twelve production cards that mark a right answer wrong**, nine of
-them older than these units: `defineerima` and `määratlema` are both "to define", `söök` and `toit`
-are both food. The fix belongs in the card pipeline, where a production card whose answer is one of
-a synonym set should accept the set the way a case card already does, and that needs Ekilex's
-definition seeded into `Lexeme.notes`. `lib/collections/senses.test.ts` pins the twelve with a
-reason until then and fails on a thirteenth. `ning`, `vaid` and `enam` were dropped for a day to
-avoid three of those twelve and are back, because deleting three of the commonest words in Estonian
-to dodge a course-wide fault is one unit paying for everybody.
+"but rather" on `vaid`. It found twelve pairs, and then the rule turned out to be wrong.
+
+**A production card accepts every word its prompt could be asking for.** The check above grouped by
+Ekilex's definition, on the reasoning that two words the Institute calls one meaning are one card
+with two right answers. A card knows nothing but its front: it is `translation`, its hint is `pos`,
+and `checkAnswer` marks against the back, so two entries collide when a learner cannot tell which is
+wanted, whatever a lexicographer thinks. Grouping on the prompt finds **372 of them in the shipped
+dictionary** rather than twelve, and every one was a card able to mark a right answer wrong.
+`sameMeaning` was tried as the grouping and is wrong the other way, since it is built for "could
+these be different answers to one question" and called `abi` "help" and `aitama` "to help" one
+prompt. The fix is the illative's: every answer on the back, joined with the separator
+`acceptedAnswers` splits on, so what the screen shows and what the marker takes are one string.
+`lib/collections/senses.ts` is the rule, `lib/dict/facts.ts` caches which words share a prompt
+because that is a fact about the shared dictionary, and `lib/srs/deck.ts` reads it once per build
+rather than once per word. It does **not** repair a card already in a deck, which is a migration
+over owner-scoped rows and its own change.
+
+Ekilex's definition is the **diagnosis** rather than the trigger, and half of what it diagnoses is
+worse than a synonym pair: where the Institute gives two definitions, the gloss is not describing
+its own word. `iseloom` and `tegelane` are both "character", and one is a person's character and the
+other a character in a story. Eleven of those are in the course, pinned in `senses.test.ts` as a
+defect list that can only shrink, and accepting both only makes them fair rather than right.
+`ning`, `vaid` and `enam` were dropped for a day to avoid three of the twelve and are back, because
+deleting three of the commonest words in Estonian to dodge a fault the dictionary has 372 of is one
+unit paying for everybody.
 
 **And Ekilex's own part of speech was being discarded**, so a deliberate coarsening could not be
 told from a mistake. `ekilexPos` records it. The table of legitimate coarsenings was set by

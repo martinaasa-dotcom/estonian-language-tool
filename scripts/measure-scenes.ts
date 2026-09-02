@@ -20,17 +20,12 @@
  * no database, no key. It reports rather than passes or fails: a coverage
  * figure is an input to a decision, not a check somebody can break.
  */
-import { NOUNS } from "../prisma/data/nouns";
-import { VERBS } from "../prisma/data/verbs";
-import { ADJECTIVES, PHRASES } from "../prisma/data/other";
-import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "../prisma/data/advanced";
-import { HARVESTED } from "../prisma/data/harvested";
-import expandedRaw from "../prisma/data/expanded.json";
 import { LEVELS, SYLLABUS, unitById } from "../lib/collections/syllabus";
 import { SCENES } from "../lib/scenes/catalogue";
 import { buildLexicon, formsOf, withExtras, words, type DictEntry, type Lexicon } from "../lib/scenes/lexicon";
 import { fits, isQuestion, spokenLine, topicForms, unknownWords, type Line } from "../lib/scenes/retrieval";
 import type { BeatSpec, SceneSpec } from "../lib/scenes/types";
+import { shippedDictionary } from "./lib/dictionary";
 
 const arg = (name: string, fallback: number) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -50,86 +45,16 @@ const SHOW = arg("show", 2);
 const sceneArg = process.argv.indexOf("--scene");
 const onlyScene = sceneArg >= 0 ? process.argv[sceneArg + 1] : undefined;
 
-/* The pool, assembled the way the seed assembles it. */
-
-interface ExpandedEntry {
-  lemma: string;
-  pos: string;
-  cefr: string | null;
-  examples?: { et: string; en: string | null }[];
-  forms?: { formType: string; value: string }[];
-}
-
-function clean(parts: Record<string, string | undefined>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(parts)) if (v) out[k] = v;
-  return out;
-}
-
-const pool: DictEntry[] = [];
-
-for (const [lemma, , cefr, nomSg, genSg, partSg, partPl, genPl, illSgShort] of [
-  ...NOUNS,
-  ...ADVANCED_NOUNS,
-]) {
-  pool.push({
-    lemma,
-    pos: "NOUN",
-    cefr,
-    parts: clean({
-      NOM_SG: nomSg, GEN_SG: genSg, PART_SG: partSg,
-      PART_PL: partPl, GEN_PL: genPl, ILL_SG_SHORT: illSgShort,
-    }),
-    usages: [],
-  });
-}
-
-for (const [lemma, , cefr, nomSg, genSg, partSg] of [...ADJECTIVES, ...ADVANCED_ADJECTIVES]) {
-  pool.push({
-    lemma,
-    pos: "ADJECTIVE",
-    cefr,
-    parts: clean({ NOM_SG: nomSg, GEN_SG: genSg, PART_SG: partSg }),
-    usages: [],
-  });
-}
-
-for (const [lemma, , cefr, infMa, infDa, pres1sg, past1sg, partTud] of [...VERBS, ...ADVANCED_VERBS]) {
-  pool.push({
-    lemma,
-    pos: "VERB",
-    cefr,
-    parts: clean({ INF_MA: infMa, INF_DA: infDa, PRES_1SG: pres1sg, PAST_1SG: past1sg, PART_TUD: partTud }),
-    usages: [],
-  });
-}
-
 /*
-  A course phrase is an attested line in its own right, which is why it goes
-  into the corpus and not only into the lexicon. `Tere!` is a thing somebody
-  says. It is not a usage recorded against a headword, because Ekilex has no
-  headword for a greeting, and the seed carries the hand-checked ones the
-  built-in dictionary already had. A greeting beat is filled by exactly these.
+  The pool, assembled the way the seed assembles it.
+
+  `scripts/lib/dictionary.ts` is that assembly, shared with `audit-senses.ts`,
+  because two scripts reading the same six files their own way is how two
+  reports about one dictionary start disagreeing about its size.
 */
-for (const [lemma, , cefr] of PHRASES) {
-  pool.push({ lemma, pos: "PHRASE", cefr, parts: {}, usages: [lemma] });
-}
-
-for (const h of HARVESTED) {
-  pool.push({ lemma: h.lemma, pos: h.pos, cefr: h.cefr, parts: h.parts, usages: h.usages });
-}
-
-for (const e of expandedRaw as ExpandedEntry[]) {
-  const parts: Record<string, string> = {};
-  for (const f of e.forms ?? []) if (!parts[f.formType]) parts[f.formType] = f.value;
-  pool.push({
-    lemma: e.lemma,
-    pos: e.pos,
-    cefr: e.cefr,
-    parts,
-    usages: (e.examples ?? []).map((x) => x.et),
-  });
-}
+const pool: DictEntry[] = shippedDictionary().map((e) => ({
+  lemma: e.lemma, pos: e.pos, cefr: e.cefr, parts: e.parts, usages: e.usages,
+}));
 
 /* The corpus: every attested line the dictionary ships, tokenised once. */
 

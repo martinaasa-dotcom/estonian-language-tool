@@ -2,6 +2,8 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { SYLLABUS } from "@/lib/collections/syllabus";
 import { addUnitsToDeck, planUnits, previewUnits } from "./deck";
+import { sharedPrompts } from "@/lib/collections/senses";
+import { acceptedAnswers } from "@/lib/estonian/answer";
 
 /**
  * The deck builder, against the database, because the thing that was wrong with
@@ -112,5 +114,43 @@ describe("addUnitsToDeck", () => {
       where: { ownerId: MINE }, select: { id: true, due: true }, orderBy: { id: "asc" },
     });
     expect(after).toEqual(before);
+  });
+
+  /*
+    THE PRODUCTION CARD ACCEPTS EVERY WORD ITS PROMPT COULD BE ASKING FOR.
+
+    Two entries with one gloss and one part of speech are one question with two
+    right answers, and each of their cards used to mark the other's answer
+    wrong. `generateCards` joins the set onto the back and `cards.test.ts`
+    covers that; what only a database can show is the wiring, because the set
+    comes from `lib/dict/facts.ts` reading the whole dictionary and is handed
+    through `loadLexemes`. A unit test cannot tell a working query from one
+    that returns an empty map, and an empty map builds exactly the card that
+    was built before.
+  */
+  it("builds a production card that marks every word the prompt fits", async () => {
+    await requireDictionary();
+    const groups = sharedPrompts(
+      (await prisma.lexeme.findMany({ select: { lemma: true, pos: true, translation: true } }))
+        .map((r) => ({ lemma: r.lemma, pos: r.pos, gloss: r.translation })),
+    );
+    const group = groups.find((g) => g.lemmas.length > 1);
+    if (!group) return; // A dictionary with no shared prompt has nothing to check.
+
+    const unit = SYLLABUS.find((u) => group.lemmas.some((l) => u.lemmas.includes(l)));
+    if (!unit) return; // The pair is outside the course, so no unit builds it.
+
+    await addUnitsToDeck(MINE, [unit.id]);
+    const cards = await prisma.card.findMany({
+      where: { ownerId: MINE, cardType: "PRODUCTION", front: group.gloss },
+      select: { back: true },
+    });
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      const accepted = acceptedAnswers(card.back, "et");
+      for (const lemma of group.lemmas) {
+        expect(accepted, `${card.back} should accept ${lemma}`).toContain(lemma.toLowerCase());
+      }
+    }
   });
 });

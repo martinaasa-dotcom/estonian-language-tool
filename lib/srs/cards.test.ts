@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   availableCardTypes, generateCards, inTeachingOrder, teachingRank, type LexemeForCards,
 } from "./cards";
+import { checkAnswer } from "@/lib/estonian/answer";
 
 const tuba: LexemeForCards = {
   lemma: "tuba", translation: "room", pos: "NOUN",
@@ -19,6 +20,56 @@ const aitama: LexemeForCards = {
   government: "partitive — aitan sind",
   forms: [{ formType: "INF_MA", value: "aitama" }],
 };
+
+/*
+  THE PRODUCTION CARD THAT USED TO MARK A RIGHT ANSWER WRONG.
+
+  Front is the gloss, hint is the part of speech, back is the lemma, and
+  `checkAnswer` marks against the back. So two entries with one gloss and one
+  part of speech were one question with two right answers, each card marking
+  the other's answer wrong: the dictionary ships 372 such prompts, `ja` and
+  `ning` both glossed "and" among them.
+
+  These assert the whole path rather than the join, because the join is only
+  right if `acceptedAnswers` splits it back out: that is what makes what the
+  screen shows and what the marker takes the same string, and it is the reason
+  the separator is the one it is.
+*/
+describe("a prompt more than one word answers", () => {
+  const ja: LexemeForCards = {
+    lemma: "ja", translation: "and", pos: "ADVERB",
+    gradation: "NONE", gradationNote: null, government: null, forms: [],
+    alsoAccepted: ["ning"],
+  };
+
+  it("puts every answer on the back, its own word first", () => {
+    const [card] = generateCards(ja, ["PRODUCTION"]);
+    expect(card).toMatchObject({ front: "and", back: "ja / ning", hint: "adverb" });
+  });
+
+  it("marks both of them right, which is the whole point", () => {
+    const [card] = generateCards(ja, ["PRODUCTION"]);
+    expect(checkAnswer("ja", card!.back, "et").verdict).toBe("correct");
+    expect(checkAnswer("ning", card!.back, "et").verdict).toBe("correct");
+    expect(checkAnswer("aga", card!.back, "et").verdict).toBe("wrong");
+  });
+
+  it("leaves a word nothing shares a prompt with exactly as it was", () => {
+    const [card] = generateCards(tuba, ["PRODUCTION"]);
+    expect(card).toMatchObject({ front: "room", back: "tuba" });
+    expect(generateCards({ ...tuba, alsoAccepted: [] }, ["PRODUCTION"])[0]!.back).toBe("tuba");
+  });
+
+  /*
+    A caller that has not looked builds the card that was built before. The
+    field is optional so that every existing caller keeps working, and this is
+    what stops that default quietly claiming a word has no synonym.
+  */
+  it("never lists its own lemma twice", () => {
+    const [card] = generateCards({ ...ja, alsoAccepted: ["ja", "ning"] }, ["PRODUCTION"]);
+    expect(card!.back).toBe("ja / ning");
+  });
+});
 
 describe("generateCards", () => {
   it("makes both directions for a plain word", () => {

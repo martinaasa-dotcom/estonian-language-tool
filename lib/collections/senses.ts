@@ -1,51 +1,133 @@
 /**
- * What two course words sharing one Ekilex sense tells you.
+ * Two dictionary entries that ask the same question, and what to do about it.
  *
- * The English gloss is the only authored column in the whole pipeline, which
- * makes it the only one no upstream source can be blamed for, and until now
- * nothing checked it. `audit:glosses` and `audit:pos` both read the built
- * expansion; the course harvest was checked by people reading definitions one
- * at a time, which is how `ehk` shipped glossed "or" when the sense it carries
- * is "perhaps".
+ * A production card is front `translation`, hint `pos`, back `lemma`, and it is
+ * marked by `checkAnswer` against the back. So two entries with the same gloss
+ * and the same part of speech are **one question with two right answers**, and
+ * whichever of them the learner types, one of the two cards marks them wrong
+ * and shows the card again until they stop. That is the fault the illative
+ * taught this project, arriving through the vocabulary rather than through the
+ * morphology, and the dictionary ships 372 of them.
  *
- * The evidence was already in `prisma/data/harvested.ts`. Every course word
- * stores `note`, which is Ekilex's own Estonian definition of the sense whose
- * forms, level and sentences that entry carries. Two words with the same
- * definition are, by the Institute's own account, one meaning, and that single
- * fact reads two ways:
+ * THE FIX IS THE ONE THE ILLATIVE GOT. Every accepted answer goes on the back,
+ * joined the way `acceptedAnswers` already splits stored alternatives, so what
+ * a screen shows and what a marker takes are the same string. `lib/srs/cards.ts`
+ * does the joining and `lib/dict/facts.ts` finds the set.
  *
- *   - same meaning, same English gloss: a production card asks "English to
- *     Estonian" and has two right answers, so it marks one of them wrong. This
- *     is the illative fault in a different coat, and the course ships twelve.
- *   - same meaning, different English glosses: either a synonym pair somebody
- *     deliberately keeps apart, or a gloss written for a sense this entry does
- *     not carry. Only a person can tell which, so it is reported rather than
- *     judged.
+ * WHY THE PROMPT AND NOT THE MEANING. The first version of this grouped by
+ * Ekilex's own definition, on the reasoning that two words the Institute gives
+ * one definition are one meaning. That found twelve pairs and missed ten more,
+ * because the fault is not that two words mean the same thing. It is that one
+ * card cannot tell them apart, and a card knows nothing but its front. Grouping
+ * by `sameMeaning` was tried too and is worse in the other direction: it is
+ * built for "could these be offered as different answers to one question" and
+ * is deliberately generous, so it called `abi` "help" and `aitama` "to help"
+ * one prompt, which no learner reading the hint would confuse.
  *
- * One definition of the rule, read by `scripts/audit-senses.ts` for a person
- * and by `senses.test.ts` for CI. Two copies of it is how the report and the
- * check start disagreeing about what a collision is.
+ * WHAT EKILEX'S DEFINITION IS STILL FOR. It is the diagnosis rather than the
+ * trigger. Where the Institute gives the group one definition, they really are
+ * synonyms and there is nothing to fix beyond accepting both: `ja` and `ning`
+ * are both "and" and no gloss could separate them. Where it gives them two, the
+ * gloss is failing to identify its own word, which is a different and worse
+ * bug: `iseloom` is a person's character and `tegelane` is a character in a
+ * story, and both are glossed "character". Accepting both is still the fair
+ * thing to do while that is true, because the learner is being punished for a
+ * prompt that cannot be answered, but the gloss is what wants fixing.
  *
- * Pure: plain data in, plain data out. The caller supplies the words.
+ * Pure: plain data in, plain data out. The caller supplies the entries.
  */
-import { sameMeaning } from "@/lib/questions/distractors";
-
-/** A course word, as this module needs to see it. */
+/** A dictionary entry, as this module needs to see it. */
 export interface SenseWord {
   readonly lemma: string;
   readonly pos: string;
+  /** The English gloss, which is a production card's whole prompt. */
   readonly gloss: string;
-  /** Ekilex's own Estonian definition of the sense this entry carries. */
-  readonly note: string | null;
+  /**
+   * Ekilex's own Estonian definition of the sense this entry carries, where
+   * there is one. Only the course harvest has these.
+   */
+  readonly note?: string | null;
   /** What Ekilex calls the word: s, v, adj, adv, konj, pron, num. */
-  readonly ekilexPos: readonly string[];
+  readonly ekilexPos?: readonly string[];
 }
 
-export interface SensePair {
-  readonly a: SenseWord;
-  readonly b: SenseWord;
-  /** The Ekilex definition both of them carry. */
-  readonly sense: string;
+/**
+ * What a production card actually asks, as one string.
+ *
+ * The front and the hint together, because the hint is the part of speech and
+ * a learner reading "help · noun" is not being asked the same question as one
+ * reading "to help · verb".
+ */
+export function promptKey(gloss: string, pos: string): string {
+  return `${gloss.trim().toLowerCase()}|${pos}`;
+}
+
+export type SharedPromptDiagnosis =
+  /** Ekilex gives the group one definition: real synonyms, nothing else to fix. */
+  | "synonyms"
+  /** Ekilex gives them different definitions: the gloss cannot identify its word. */
+  | "ambiguous"
+  /** No Ekilex definition to judge by, which is every entry outside the course. */
+  | "unjudged";
+
+export interface PromptGroup {
+  readonly key: string;
+  /** The gloss as the first entry writes it, for a report to print. */
+  readonly gloss: string;
+  readonly pos: string;
+  /** Every lemma that answers this prompt, in a stable order. */
+  readonly lemmas: readonly string[];
+  readonly diagnosis: SharedPromptDiagnosis;
+}
+
+/** Every prompt more than one entry answers. */
+export function sharedPrompts(words: readonly SenseWord[]): PromptGroup[] {
+  const byPrompt = new Map<string, SenseWord[]>();
+  for (const word of words) {
+    const key = promptKey(word.gloss, word.pos);
+    const group = byPrompt.get(key) ?? [];
+    group.push(word);
+    byPrompt.set(key, group);
+  }
+
+  const out: PromptGroup[] = [];
+  for (const [key, group] of byPrompt) {
+    if (group.length < 2) continue;
+    const notes = new Set(group.map((w) => (w.note ?? "").trim().toLowerCase()));
+    const diagnosis: SharedPromptDiagnosis = notes.has("")
+      ? "unjudged"
+      : notes.size === 1
+        ? "synonyms"
+        : "ambiguous";
+    out.push({
+      key,
+      gloss: group[0]!.gloss,
+      pos: group[0]!.pos,
+      lemmas: [...new Set(group.map((w) => w.lemma))].sort((a, b) => a.localeCompare(b, "et")),
+      diagnosis,
+    });
+  }
+  return out.sort((a, b) => a.key.localeCompare(b.key, "et"));
+}
+
+/**
+ * A lemma to every other lemma answering the same prompt.
+ *
+ * What `generateCards` needs, and the reason it is a map rather than a lookup
+ * per word: a deck build asks this for every word it is about to build, and the
+ * dictionary is the same for all of them.
+ */
+export function alsoAcceptedByLemma(groups: readonly PromptGroup[]): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const group of groups) {
+    for (const lemma of group.lemmas) {
+      out.set(
+        `${lemma}|${group.pos}`,
+        group.lemmas.filter((other) => other !== lemma),
+      );
+    }
+  }
+  return out;
 }
 
 /**
@@ -80,50 +162,18 @@ export const COARSENS: Record<string, readonly string[]> = {
   ADJECTIVE: ["adj", "s", "num"],
   PRONOUN: ["pron", "s"],
   ADVERB: ["adv", "konj", "prep", "interj"],
+  /*
+    Empty on purpose, and not a gap. A multi-word greeting is not a headword,
+    so the harvest does not fetch one and Ekilex never labels it: `mislabelled`
+    skips an entry with no Ekilex label at all, so this never fires today. It
+    fires the day a phrase arrives carrying one, which would mean the harvest
+    had started fetching them and somebody should know.
+  */
+  PHRASE: [],
 };
 
-/** A stable name for a pair, so a report and a check can agree on one. */
-export function pairKey(a: SenseWord, b: SenseWord): string {
-  return [a.lemma, b.lemma].sort((x, y) => x.localeCompare(y, "et")).join(" = ");
-}
-
-export interface SharedSenses {
-  /** One meaning, one gloss: a production card with two right answers. */
-  readonly collisions: SensePair[];
-  /** One meaning, two glosses: a synonym pair, or a gloss for the wrong sense. */
-  readonly disagreements: SensePair[];
-}
-
-export function sharedSenses(words: readonly SenseWord[]): SharedSenses {
-  const bySense = new Map<string, SenseWord[]>();
-  for (const word of words) {
-    if (!word.note) continue;
-    const key = word.note.trim().toLowerCase();
-    const group = bySense.get(key) ?? [];
-    group.push(word);
-    bySense.set(key, group);
-  }
-
-  const collisions: SensePair[] = [];
-  const disagreements: SensePair[] = [];
-  for (const [sense, group] of bySense) {
-    if (group.length < 2) continue;
-    for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        const a = group[i]!;
-        const b = group[j]!;
-        (sameMeaning(a.gloss, b.gloss) ? collisions : disagreements).push({ a, b, sense });
-      }
-    }
-  }
-  const order = (p: SensePair) => pairKey(p.a, p.b);
-  collisions.sort((x, y) => order(x).localeCompare(order(y), "et"));
-  disagreements.sort((x, y) => order(x).localeCompare(order(y), "et"));
-  return { collisions, disagreements };
-}
-
 /**
- * Words whose course label and Ekilex label cannot both be true.
+ * Entries whose course label and Ekilex label cannot both be true.
  *
  * A word Ekilex has no opinion about is not a disagreement, which is why an
  * empty `ekilexPos` is skipped rather than counted: the harvest has only
@@ -132,8 +182,9 @@ export function sharedSenses(words: readonly SenseWord[]): SharedSenses {
  */
 export function mislabelled(words: readonly SenseWord[]): SenseWord[] {
   return words.filter((w) => {
-    if (w.ekilexPos.length === 0) return false;
+    const codes = w.ekilexPos ?? [];
+    if (codes.length === 0) return false;
     const allowed = COARSENS[w.pos] ?? [];
-    return !w.ekilexPos.some((code) => allowed.includes(code));
+    return !codes.some((code) => allowed.includes(code));
   });
 }
