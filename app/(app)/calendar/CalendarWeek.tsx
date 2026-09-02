@@ -65,7 +65,22 @@ export function CalendarWeek({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 md:grid-cols-7">
+        {/*
+        SEVEN COLUMNS NEED THE WIDTH FOR SEVEN COLUMNS, and at 768 they do not
+        have it. Measured: the week grid there gives each day card so little
+        room that an event row comes out **17 pixels wide**, and the delete
+        button inside it is 44, which is the tap-target floor and not
+        negotiable, so the icon was drawn 13px outside the row it belongs to.
+        `scripts/test-containment.mjs` failed on it four times over, at 768 in
+        both passes and at 360 in both themes.
+
+        A week is a list of days before it is a grid of them, so below the
+        width where the grid is honest it stays a list, which is what a phone
+        already showed. 1280 is where seven columns first leave room for a
+        title beside the control: at 1024 the row is 55px and the button and
+        its gap take 50 of them.
+      */}
+      <div className="mt-4 grid gap-2 xl:grid-cols-7">
           {days.map((key) => (
             <DayColumn
               key={key}
@@ -113,15 +128,26 @@ function DayColumn({ dayKey, isToday, events, reminders }: {
       // A stable hook for the suite, because "the third div in the grid" is a
       // fact about today's markup and this page has several grids on it.
       data-day={dayKey}
-      className="rounded-[var(--r)] border p-2.5"
+      /*
+        `min-w-0`, because a grid item's automatic minimum is its min-content
+        and this card's min-content is the longest event title on it: a
+        `truncate` paragraph is `white-space: nowrap`, and `overflow: hidden`
+        clips what is drawn without reducing what the box asks for. So one long
+        title made every day in the week 382px wide inside a 360px phone, and
+        the `min-w-0` already on the text block could not help, since that
+        floors a flex item rather than capping what the column is sized to.
+        The same fault the shell had against `main`, one container in.
+      */
+      className="min-w-0 rounded-[var(--r)] border p-2.5"
       style={{
         borderColor: isToday ? "var(--accent)" : "var(--rule-soft)",
         background: isToday ? "var(--accent-soft)" : "var(--surface)",
       }}
     >
       <p className="label-xs" style={{ color: isToday ? "var(--accent-deep)" : "var(--ink-3)" }}>
-        <span className="md:hidden">{WEEKDAY_LONG[weekday]}</span>
-        <span className="hidden md:inline">{WEEKDAY_SHORT[weekday]}</span>{" "}
+        {/* The short name is for a column, so it arrives with the columns. */}
+        <span className="xl:hidden">{WEEKDAY_LONG[weekday]}</span>
+        <span className="hidden xl:inline">{WEEKDAY_SHORT[weekday]}</span>{" "}
         {Number(dayKey.slice(8, 10))}
       </p>
 

@@ -2731,6 +2731,20 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   chips set a floor it could not meet, the landing page's ornaments swallowing taps on the card
   they are tucked over, and `Chip` itself. With the four declarations removed the suite fails 395
   of its 1010 checks, which is how anybody knows it is looking.
+- **A grid item needs `min-w-0` for the same reason `main` did, and a column count is a fact about
+  the width.** The week calendar failed the containment sweep four times over and the two causes are
+  worth keeping apart. A `truncate` paragraph is `white-space: nowrap` and `overflow: hidden` clips
+  what is *drawn* without reducing what the box *asks for*, so the day card's min-content was its
+  longest event title; a grid item's automatic minimum is its min-content, so one long title made
+  every day of the week 382px wide inside a 360px phone. The `min-w-0` already on the text block
+  cannot help, because that floors a flex item rather than capping what the column is sized to. And
+  seven columns at 768 gave each event row **17 pixels**, with a 44px delete button inside it that
+  is the tap-target floor and not negotiable, so the icon was drawn 13px outside the row it belongs
+  to. A week is a list of days before it is a grid of them, so the columns arrive at 1280, which is
+  the first width where they leave room for a title beside the control: at 1024 the row is 55px and
+  the button and its gap take 50 of them. The short weekday name moved with them, since an
+  abbreviation is for a column.
+
 - **The root element declares no overflow.** Setting either axis on `html` makes it a scroll
   container, and every library that positions a floating element works in document coordinates
   instead of viewport ones when it is: a menu hung off the sticky rail or the fixed phone bar is
