@@ -159,6 +159,7 @@ const ROUTES = [
   "/start",
   "/privacy",
   "/terms",
+  "/funding",
   "/offline",
 ];
 
@@ -210,7 +211,12 @@ const SPARSE = new Map([
   it counted 1020. The margin of twenty under the count is the one the floor
   has always kept.
 */
-const { check, absent, done } = suite("Containment", { floor: 920 });
+/*
+  And 940 rather than 920: /funding is one more route, and a route is twenty
+  checks here. Arithmetic on the route list, in the direction the comment above
+  says a floor is allowed to move.
+*/
+const { check, absent, done } = suite("Containment", { floor: 940 });
 
 const browser = await launchChromium();
 

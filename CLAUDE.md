@@ -249,6 +249,58 @@ syllabus, so the first re-run after that cut would have quietly taken them out o
 are a request list of their own now, in a unit's shape, read by the harvest beside the units and
 listed by no screen.
 
+**What it costs to run is published, and every number on that page says where it came from.**
+`/funding` answers the question three kinds of funder and one learner ask from different
+directions: a ministry wants to know it is not underwriting a margin, a university wants to know
+what happens when the money stops, a company's community budget wants the number to be real and
+small, and somebody using a free app wants to know what is being sold instead. Nothing is, and a
+page that only asserted that would be worth less than one showing the bill.
+
+**Three kinds of number, kept apart, because they are not equally solid.** `MEASURED` in
+`lib/funding/facts.ts` was taken off this repository on a stated day and each entry carries the
+command that produced it, so a reader who doubts one can re-run it: `pg_total_relation_size` after
+a seed, 80,000 rows from `scripts/load-fixture.ts`, `curl --compressed` against a production
+build, one request to TartuNLP read back off its WAV header. The vendor prices are somebody else's
+and carry the page they came off and the day it was read, because they date faster than anything
+else here. `ASSUMPTIONS` in `lib/funding/model.ts` is everything left, seven numbers, on the page
+in full, each with the reason it is that number. Keeping the third list short and visible is most
+of the honesty: burying "how many pages somebody opens in a sitting" inside the arithmetic hides
+exactly the number a reader would want to argue with.
+
+**The tutor line reads the app's own ledger rather than a number of its own.** It is the one line
+that could run away, and the app already answers it twice a second: `lib/usage/pricing.ts` says
+what a call of a given shape costs and `lib/usage/quota.ts` says what everybody together may spend
+in a day, with no off switch. So the projection calls `reserveMicros` and reads
+`DEFAULT_LIMITS.dailyMicrosGlobal`, and cannot show a bill the running app would refuse to run up.
+That needed the reservation profile to move out of `ledger.ts`, which imports Prisma, into the
+pricing table, which imports nothing; it moved rather than being copied, for the reason
+`PROVIDER_KEY_ENV` gives about itself.
+
+**The four things on it worth reading are all things the model found rather than things anybody
+chose to admit.** The worst value is around **ten** learners and not a hundred thousand, because
+one person pays for a domain and ten are already past the free tier. What puts them there is
+**speech**: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a
+three-word sentence, so a gigabyte of free storage holds about 5,300 clips and the whole spoken
+dictionary is 2.8 GB. A **school pays twenty dollars before its first pupil arrives**, because
+Vercel's free plan forbids commercial use, which is a term rather than a threshold and so is a
+question the panel asks outright. And the cost per learner is a **sawtooth rather than a curve**:
+it falls for three decades and steps back up between ten thousand and a hundred thousand, because
+the database instance ladder goes up in jumps a tenfold rise in learners does not always cover.
+The first version of the test asserted a smooth curve, failed twice, and both failures were the
+model telling the truth. It asserts the teeth now.
+
+**A public page that reads the environment reads it as a yes or a no.** The page says which parts
+of the infrastructure this deployment has switched on, which it can only know by looking, and
+several of those variables are keys. CI's bundle scan cannot see this one, because nothing ships
+to the client and the server simply prints it. So `lib/funding/` reads the environment not at all
+and the page reads it in exactly one place, through a helper that can only return a boolean. Two
+reads is where the second one stops being a boolean, so the count is asserted.
+
+Five invariants, each made to fail once: the tutor priced off the ledger, every quoted price
+rendering the link it came from, the single boolean environment read, every variable
+`lib/funding/infra.ts` names being one the app actually reads, and the page staying outside the
+sign-in gate, like `/privacy` and `/terms` and for the same reason.
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
@@ -1822,7 +1874,7 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
   `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/questions/`, `lib/ux/`,
-  `lib/random/` and `lib/copy/` stay free of
+  `lib/random/`, `lib/funding/` and `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route. Asserted, because it
   had been prose alone and it is not a tidiness rule: the unit suite gates every
@@ -2528,7 +2580,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `alsoRight`, `shownForms`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
-`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`. Most of them now
+`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
+`billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `INFRA`, `.range`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

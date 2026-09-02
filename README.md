@@ -294,6 +294,34 @@ The defaults are live whether or not you configure anything. There is no way to 
 because sign-up is open by default. If you would rather run a private instance, `ALLOWED_EMAILS` or
 `ALLOWED_EMAIL_DOMAINS` turns the same deployment into one.
 
+### What it costs to run
+
+`/funding` is the whole bill, itemised, with a slider on it. It is a public page, like `/privacy`
+and `/terms`, because the people most likely to want it (somebody deciding whether to fund this,
+and somebody wondering what a free app is selling instead) have no account here.
+
+Every number on it is one of three things and the page says which. Measured on this repository,
+with the command that produced it: the dictionary is 18 MB in Postgres, a review row is 300 bytes
+with its indexes, a page is 21 KB of HTML, and one spoken clip is 188 KB. Published by a vendor,
+with the day the price was read. Or an assumption, of which there are seven, listed in full.
+
+Four things on it are worth knowing before you deploy this for anybody.
+
+- **The awkward size is about ten learners, not ten thousand.** One person pays for a domain and
+  nothing else. Ten are already past Supabase's free gigabyte of storage.
+- **Speech is the biggest thing this app moves.** TartuNLP returns uncompressed 32-bit audio, so
+  a two-second phrase is 188 KB and the whole spoken dictionary is 2.8 GB. Turning card audio off
+  is the single largest saving available, and it is also the feature hardest to justify losing.
+- **A school pays $20 a month before its first pupil.** Vercel's free plan forbids commercial use.
+  That is a term rather than a threshold, so the panel asks who is running the deployment.
+- **Cost per learner is a sawtooth, not a curve.** It falls for three decades and steps back up,
+  because the database instance ladder goes up in jumps that a tenfold rise in learners does not
+  always cover.
+
+The tutor line is priced by the same code that decides when to stop spending
+(`lib/usage/pricing.ts` and `lib/usage/quota.ts`), so the page cannot project a bill the running
+app would refuse to run up.
+
 ### When the app gets something wrong
 
 The dictionary is built from Ekilex and Wiktionary rather than typed, which keeps invented Estonian

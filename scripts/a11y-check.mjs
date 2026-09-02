@@ -134,7 +134,7 @@ const BASE = baseUrl();
 const ROUTES = [
   "/", "/learn", "/practice", "/progress", "/words", "/dictionary",
   "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
-  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/funding", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
   "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
@@ -172,7 +172,11 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   stopped being skippable rather than by however many the run happens to
   reach.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 307 });
+/*
+  And 316: /funding is one more route at nine checks, counted off the list
+  rather than off a run.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 316 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });

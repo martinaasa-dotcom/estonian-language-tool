@@ -1786,8 +1786,8 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     while the module under it can be imported without a framework.
   */
   const pure = [
-    "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "random", "scan", "security", "stats", "time", "ux",
+    "assessment", "collections", "copy", "estonian", "exam", "funding", "gamification",
+    "offline", "random", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -4407,6 +4407,191 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 });
 
 /**
+ * THE FUNDING PAGE PRICES THE TUTOR OUT OF THE APP'S OWN LEDGER.
+ *
+ * `/funding` projects what a month costs at a given number of learners, and
+ * the one line on it that could run away is the model. The app already answers
+ * that question twice a second: `lib/usage/pricing.ts` says what a call of a
+ * given shape costs, and `lib/usage/quota.ts` says what everybody together may
+ * spend in a day, with no off switch. A projection that priced a tutor answer
+ * with a number of its own would be a second answer to a question this
+ * repository has already answered, and the two would come apart the first time
+ * anybody tuned the reservation.
+ *
+ * That is not hypothetical about this file in particular: the reservation
+ * profile it reads used to live inside `ledger.ts`, next to Prisma, where a
+ * pure module could not reach it. It moved into the pricing table rather than
+ * being copied, which is the whole reason this check can exist.
+ *
+ * Anchored on the calls rather than on the imports, because a file can import
+ * the ledger's numbers and then use its own beside them.
+ */
+check("the funding model prices a call the way the ledger prices one", () => {
+  const model = code(join("lib", "funding", "model.ts"));
+
+  assert.match(
+    model,
+    /reserveMicros\(/,
+    "lib/funding/model.ts no longer asks the pricing table what a call costs, so its tutor line " +
+    "and the app's ledger are two guesses about one number.",
+  );
+  assert.match(
+    model,
+    /DEFAULT_LIMITS\.dailyMicrosGlobal/,
+    "lib/funding/model.ts no longer reads the app's own daily spend cap, so it can project " +
+    "a bill the running app would refuse to run up.",
+  );
+  /*
+    A per-token rate typed in here would be the drift this exists to prevent,
+    and it is the shape somebody reaches for when the import gets awkward.
+  */
+  assert.doesNotMatch(
+    model,
+    /PerMTok|per[ _]?million[ _]?tokens/i,
+    "lib/funding/model.ts has grown a token price of its own. Rates live in lib/usage/pricing.ts.",
+  );
+});
+
+/**
+ * A PRICE ON THE FUNDING PAGE CARRIES THE PAGE IT CAME OFF.
+ *
+ * Every figure on `/funding` is one of three things: measured on this
+ * repository, published by a vendor, or an assumption. The published ones date
+ * fastest and are the only ones a reader has no way to check for themselves,
+ * so each carries a source and the day it was read, and the page renders both.
+ *
+ * A price with no link is the failure mode this stops, and it is a quiet one:
+ * the number stays plausible for years after the vendor changed it, on a page
+ * whose entire claim is that its numbers can be checked.
+ */
+check("every price the funding page quotes links to where it came from", () => {
+  const page = read(join("app", "funding", "page.tsx"));
+  const facts = readFileSync(join("lib", "funding", "facts.ts"), "utf8");
+
+  const sources = [...facts.matchAll(/source:\s*"(https:\/\/[^"]+)"/g)].map((m) => m[1]!);
+  assert.ok(sources.length >= 4, `only found ${sources.length} priced sources, so this check stopped looking`);
+
+  /*
+    Counted rather than matched by URL, and the first version of this matched
+    by URL and failed honestly. The page renders `{VERCEL.ref.source}` rather
+    than the address itself, which is the right way round: an address typed
+    into the page is a second copy of it, and the two would disagree the day
+    a vendor moved their pricing page. So what is asserted is that every
+    priced source is rendered *through* its reference.
+  */
+  const linked = [...page.matchAll(/\.ref\.source/g)].length;
+  assert.ok(
+    linked >= sources.length,
+    `lib/funding/facts.ts prices ${sources.length} sources and the funding page links ${linked}. ` +
+    "A price with no link is a number a reader is asked to take on trust.",
+  );
+
+  assert.match(
+    page,
+    /PRICES_CHECKED|MEASURED_ON/,
+    "the funding page no longer says when its numbers were taken, which is the half that dates.",
+  );
+});
+
+/**
+ * A PUBLIC PAGE THAT READS THE ENVIRONMENT READS IT AS A YES OR A NO.
+ *
+ * `/funding` says which parts of the infrastructure this deployment has
+ * switched on, which it can only know by looking at the environment, and
+ * several of those variables are API keys. The page is public and needs no
+ * session, so a `process.env` read that reached a rendered string would put a
+ * credential in front of anybody with the URL. The bundle scan in CI cannot
+ * see this one: nothing is shipped to the client, the value is simply printed
+ * by the server.
+ *
+ * So the rule is the shape rather than the intent. `lib/funding/` reads the
+ * environment not at all, and the page reads it in exactly one place, through
+ * a helper that can only return a boolean. Two reads is where the second one
+ * stops being a boolean.
+ */
+check("the funding page reads the environment once, and only for a yes or a no", () => {
+  for (const file of sourceFiles(join("lib", "funding"))) {
+    if (file.includes(".test.")) continue;
+    assert.doesNotMatch(
+      code(file),
+      /process\.env/,
+      `${file} reads the environment. lib/funding is a pure layer and the page is the only ` +
+      "place allowed to ask what this deployment has configured.",
+    );
+  }
+
+  const page = code(join("app", "funding", "page.tsx"));
+  const reads = [...page.matchAll(/process\.env/g)];
+  assert.equal(
+    reads.length,
+    1,
+    `app/funding/page.tsx reads process.env ${reads.length} times. One helper returning a ` +
+    "boolean is the whole allowance: this page is public and several of those variables are keys.",
+  );
+  assert.match(
+    page,
+    /Boolean\(process\.env\[[^\]]+\]\?\.trim\(\)\)/,
+    "the funding page's environment read is no longer wrapped in Boolean(), so it can render a key.",
+  );
+});
+
+/**
+ * THE INFRASTRUCTURE LIST NAMES VARIABLES THAT DO SOMETHING.
+ *
+ * `lib/funding/infra.ts` is a catalogue of what this app runs on, and each
+ * entry that can be switched on names the variable that switches it. A name
+ * that nothing in the app reads is worse than no name: the page prints "not
+ * set here" for ever, whoever is running it sets the variable, and nothing
+ * changes.
+ *
+ * Checked against the source rather than against a list, so renaming a
+ * variable fails here rather than in a reader's eyes a year later.
+ */
+check("every variable the funding page names is one the app actually reads", () => {
+  /*
+    The schema is in the haystack because `DATABASE_URL` is read by Prisma's
+    own `env()` rather than by anything in `app/` or `lib/`, and leaving it out
+    made this check fail on the most load-bearing variable in the app.
+  */
+  const everywhere = [
+    ...ALL, join("middleware.ts"), join("next.config.ts"), join("prisma", "schema.prisma"),
+  ].map((f) => read(f)).join("\n");
+
+  const named = [...read(join("lib", "funding", "infra.ts")).matchAll(/setBy:\s*"([A-Z_0-9]+)"/g)]
+    .map((m) => m[1]!);
+  assert.ok(named.length >= 5, `only found ${named.length} named variables, so this check stopped looking`);
+
+  for (const key of named) {
+    assert.ok(
+      new RegExp(
+        `process\\.env\\.${key}\\b|process\\.env\\["${key}"\\]|\\benv\\.${key}\\b|env\\("${key}"\\)`,
+      ).test(everywhere),
+      `lib/funding/infra.ts says ${key} switches something on, and nothing in the app reads it. ` +
+      "The page would print \"not set here\" whatever anybody configured.",
+    );
+  }
+});
+
+/**
+ * WHAT IT COSTS IS PUBLIC, LIKE WHAT IT STORES.
+ *
+ * `/privacy` and `/terms` are outside the sign-in gate because somebody has to
+ * be able to read what an app holds about them before they hand it anything.
+ * The funding page is the same question pointed at the money, and the readers
+ * most likely to want it (somebody deciding whether to fund this, and somebody
+ * deciding whether to trust a free app) have no account here at all.
+ */
+check("the funding page is readable without signing in", () => {
+  const middleware = code("middleware.ts");
+  assert.match(
+    middleware,
+    /path\.startsWith\("\/funding"\)/,
+    "middleware.ts no longer lets /funding through, so the page about what this costs is " +
+    "behind the sign-in it exists to explain.",
+  );
+});
+
+/**
  * The layers that are pure are still pure, which nothing was checking.
  *
  * CLAUDE.md names thirteen directories that "stay free of React, Next.js and
@@ -4431,7 +4616,7 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
     "assessment", "estonian", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "questions", "ux", "random", "copy",
+    "offline", "security", "scan", "questions", "ux", "random", "copy", "funding",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],

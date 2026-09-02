@@ -1,11 +1,19 @@
 import { prisma } from "@/lib/db";
 import { reportError } from "@/lib/observability/report";
-import { estimateCostMicros } from "./pricing";
+import { type UsageKind, estimateCostMicros, reserveMicros } from "./pricing";
 import {
   type QuotaDecision, type UsageSnapshot, checkQuota, readLimits, utcDay,
 } from "./quota";
 
-export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN";
+/*
+  Declared next to the token profile it keys, in `pricing.ts`, and re-exported
+  here because this is the module a caller reaches for when they mean "a
+  metered call". The profile had to move: `lib/funding` prices a hypothetical
+  month of traffic off the same numbers this reserves against, and it may not
+  import a module that opens a database. Moved rather than copied, for the
+  reason `PROVIDER_KEY_ENV` gives about itself.
+*/
+export type { UsageKind };
 
 /** A request that was authorised. Counted against the burst and daily limits. */
 const CALL = "CALL";
@@ -92,49 +100,6 @@ const ALLOWANCE: Record<UsageKind, { burst: number; daily: number }> = {
   TTS: { burst: 6, daily: 30 },
   SCAN: { burst: 1, daily: 2 },
 };
-
-/**
- * What one call of each kind is assumed to cost until it says otherwise.
- *
- * A reservation has to be written before the provider is opened, and at that
- * moment nobody knows what the answer will cost — not the tokens, and on a
- * chain with fallback, not even the model. So it is booked at a stated
- * expectation and corrected the moment the real numbers arrive.
- *
- * The numbers are a rough profile of each kind of request, priced below
- * against one mid-range model. They do not have to be right, because a
- * settlement follows every one of them within seconds and the ledger's totals
- * come out identical either way. They have to be *non-zero and roughly the
- * right size*, which is the whole job: to make ten requests in flight at once
- * look like ten requests in flight at once rather than like none.
- */
-const EXPECTED_TOKENS: Record<UsageKind, { input: number; output: number }> = {
-  // A question with a conversation behind it, and a full answer.
-  TUTOR: { input: 4_000, output: 700 },
-  // A few hundred tokens about one sentence or one word.
-  GRADER: { input: 700, output: 200 },
-  // Free, and priced as free. The row still exists: the call count is what
-  // rations speech, not the money.
-  TTS: { input: 0, output: 0 },
-  // A photograph, which is a few thousand input tokens of image.
-  SCAN: { input: 3_000, output: 400 },
-};
-
-/**
- * The model a reservation is priced against.
- *
- * Named rather than derived, because the point of an estimate is that it is
- * stated. The dearest rate in the table would refuse honest traffic for the
- * seconds a call is in flight; zero would reserve nothing at all. A mid-range
- * paid model is the middle of that, and a deployment running free models
- * simply settles every reservation back down to nothing.
- */
-const RESERVE_PRICED_AS = "claude-sonnet-5";
-
-function reserveMicros(kind: UsageKind): number {
-  const expected = EXPECTED_TOKENS[kind];
-  return estimateCostMicros(RESERVE_PRICED_AS, expected.input, expected.output);
-}
 
 /**
  * An authorised call, before it has happened.

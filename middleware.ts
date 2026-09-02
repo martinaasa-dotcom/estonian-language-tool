@@ -102,6 +102,9 @@ export async function middleware(request: NextRequest) {
     // What the app stores has to be readable before anyone signs in to it.
     path.startsWith("/privacy") ||
     path.startsWith("/terms") ||
+    // What it costs to run and who pays for it is the same kind of question,
+    // and the people most likely to ask it have no account here.
+    path.startsWith("/funding") ||
     // The offline fallback holds no data and has to render from the service
     // worker's cache, where there is no session to check.
     path.startsWith("/offline") ||

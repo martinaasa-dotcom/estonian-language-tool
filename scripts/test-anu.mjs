@@ -8,7 +8,7 @@ const page = await (await browser.newContext({ viewport: { width: 1280, height: 
 
 await page.goto(`${B}/tutor`, { waitUntil: "networkidle" });
 check("Anu is connected now that a key is set",
-  (await page.getByText("Anu needs an API key").count()) === 0);
+  (await page.getByText(/Anu needs an .{1,6} key/).count()) === 0);
 check("the provider in use is shown", (await page.getByText(/OpenRouter ·/).count()) > 0);
 
 await page.getByLabel("Ask Anu a question").fill("Why is it 'Lugesin raamatut' and not 'Lugesin raamatu'?");

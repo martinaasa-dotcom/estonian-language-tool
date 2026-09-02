@@ -1694,3 +1694,50 @@ it: Ekilex 213895 is the comparative of `hea`. Directions take the adverbs anywa
 6,050 words in the seed, 1,371 of them the course harvest with attested sentences, Ekilex CEFR
 levels and, for most, the Institute's Russian and Ukrainian. More words come from the two live
 paths and never from a model.
+
+## 26. The twentieth pass: what it costs, said out loud
+
+A page at `/funding` saying what this app runs on, what each piece costs, who is paying for the
+copy you are reading, and what money would change. Public, like `/privacy` and `/terms`, because
+the readers most likely to want it have no account here: somebody deciding whether to fund this,
+and somebody wondering what a free app is selling instead. Nothing is, and asserting that is worth
+less than showing the bill.
+
+### The arithmetic is on the page rather than behind it
+
+Three kinds of number, kept apart because they are not equally solid. **Measured** on this
+repository, each with the command that produced it, so a reader who doubts one can re-run it.
+**Published** by a vendor, each with the page it came off and the day it was read, because those
+date fastest and are the only figures a reader cannot check against the code. **Assumed**, of
+which there are seven, listed in full on the page with the reason each is the number it is.
+
+The tutor is the one line that could run away, and it is priced by the code that already decides
+when to stop spending: `reserveMicros` from `lib/usage/pricing.ts` and
+`DEFAULT_LIMITS.dailyMicrosGlobal` from `lib/usage/quota.ts`. So the projection cannot show a bill
+the running app would refuse to run up. That needed the reservation profile to move out of
+`ledger.ts`, which imports Prisma, and into the pricing table, which imports nothing. It moved
+rather than being copied.
+
+### What the model found, which is not what a pitch would have said
+
+- **The worst value is around ten learners.** One person pays for a domain and nothing else; ten
+  are already past the free tier. It is cheapest per head at ten thousand.
+- **Speech is the largest thing this app moves, by a long way.** TartuNLP returns uncompressed
+  32-bit audio at 22,050 Hz, which is 88 KB a second and 188 KB for a three-word sentence. A free
+  gigabyte of storage holds about 5,300 clips; the whole spoken dictionary is 2.8 GB.
+- **A school pays $20 a month before its first pupil arrives**, because Vercel's free plan forbids
+  commercial use. A term rather than a threshold, so the panel asks who is running the deployment
+  instead of inferring it from traffic.
+- **Cost per learner is a sawtooth rather than a curve.** The test asserting a smooth curve failed
+  twice and both failures were the model telling the truth. It asserts the teeth now.
+
+### Measured
+
+- 26 MB for a freshly seeded database, of which 18 MB is 6,050 entries and 34,554 forms with their
+  indexes; 300 bytes for a review row and 352 for a card, over 80,000 synthetic rows; 21 KB of
+  compressed HTML for a median page and 102 KB of shared JavaScript once per build; about 35
+  requests behind a page view, of which 11 to 15 reach the server on a warm cache.
+- 168 invariants, five of them new and every one made to fail before it was left passing. 1,622
+  unit tests. The containment suite at 960 checks with `/funding` at three widths and in the dark,
+  the accessibility suite at 321 with axe clean on it in both themes, and the design suite
+  reporting no contrast failures with the page in its sweep.
