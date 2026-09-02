@@ -150,6 +150,17 @@ const ROUTES = [
   */
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
+  /*
+    The frequency rounds. `/review/common` is the index and one of its four
+    lists stands for the round, which is a whole `ReviewSession` rendered from
+    one component: the shape this list's own header says was once found drawing
+    a progress bar, a card and four buttons with no heading in it at all.
+
+    One of the four rather than all four, because the group decides which words
+    are asked and not how the screen is built, so the other three would be the
+    same eight checks over the same markup.
+  */
+  "/review/common", "/review/common/noun",
 ];
 
 const browser = await launchChromium();
@@ -198,7 +209,11 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   the merged tree, which is the 307 above plus nine for /funding and
   eighty-six for these, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 397 });
+/*
+  And 420: two routes for the frequency rounds, at nine checks each, counted
+  off the list rather than off a run, with the same five of slack under it.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 415 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

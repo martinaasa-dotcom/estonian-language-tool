@@ -2,7 +2,7 @@
  * What a scene is, as data.
  *
  * A scene is a machine that knows the shape of an encounter without knowing
- * what anybody says in it. `docs/19-situations.md` is the design; this is the
+ * what anybody says in it. `docs/21-situations.md` is the design; this is the
  * half of it Phase 0 needs, because the question that decides whether the
  * module can be built at all is "how many attested sentences could fill this
  * beat", and that cannot be asked until the beats exist.

@@ -3698,6 +3698,59 @@ check("a deletion that leaves something behind says so", () => {
   assert.match(danger, /result\.remaining/, "the screen ignores what the deletion left behind");
 });
 
+/**
+ * A PANEL NOBODY RENDERS IS A FEATURE NOBODY HAS.
+ *
+ * `DangerZone.tsx` and `UsagePanel.tsx` were complete, commented, correct, and
+ * imported by nothing. Not dropped by a merge: `git log -S` finds no commit on
+ * any branch where the settings page ever named either. So for the whole life
+ * of this app there was no way to delete an account from inside it, while
+ * `/privacy` promised somebody could take everything away, and the tutor's own
+ * spending meter, which several rules above describe as the place a learner
+ * reads what they have used, was on no screen.
+ *
+ * The check above is how that survived. It reads `DangerZone.tsx` and asserts
+ * the copy inside it, so it passed with feeling on a component the router
+ * could not reach: this repository's oldest recurring mistake is a check that
+ * reads a file rather than the screen, and this is that mistake pointed at a
+ * whole component instead of a comment. A file being right is not the same
+ * claim as a reader being able to get to it.
+ *
+ * So the pairing is asserted rather than either half. Every module beside
+ * `page.tsx` in that folder has to put something on the page, tested on a name
+ * the module actually exports being used as an element, because an import
+ * nobody renders is the same silence one import earlier. It carries a floor
+ * for the reason every sweep here does: a folder that stops matching would
+ * otherwise assert nothing and say so in the same words as a folder that is
+ * entirely fine.
+ */
+check("every settings panel is on the settings screen", () => {
+  const dir = join("app", "(app)", "settings");
+  const panels = readdirSync(dir).filter((f) => f.endsWith(".tsx") && f !== "page.tsx");
+  assert.ok(
+    panels.length >= 10,
+    `only found ${panels.length} settings panels, so this check stopped looking`,
+  );
+
+  const page = code(join(dir, "page.tsx"));
+  for (const file of panels) {
+    const exported = [...code(join(dir, file))
+      .matchAll(/export\s+(?:async\s+)?(?:function|const)\s+([A-Z]\w*)/g)]
+      .map((m) => m[1]!);
+    assert.ok(exported.length > 0, `${file} exports no component for the page to render`);
+
+    /*
+      The element, not the import. An unused import is what a lint rule
+      catches; a rendered-nowhere component is what nothing did.
+    */
+    assert.ok(
+      exported.some((name) => new RegExp(`<${name}[\\s/>]`).test(page)),
+      `app/(app)/settings/${file} exports ${exported.join(", ")} and the settings page renders ` +
+      `none of them, so whatever it does is unreachable. Render it, or delete the file.`,
+    );
+  }
+});
+
 /** Every model in the schema carrying an `ownerId`: one person's own data. */
 function ownerScopedModels(): string[] {
   const owned = [...SCHEMA.matchAll(/model (\w+) \{([^}]*)\}/g)]
@@ -5286,7 +5339,7 @@ check("the funding page reads the environment once, and only for a yes or a no",
 /**
  * THE INFRASTRUCTURE LIST NAMES VARIABLES THAT DO SOMETHING.
  *
- * `lib/funding/infra.ts` is a catalogue of what this app runs on, and each
+ * `lib/funding/services.ts` is a catalogue of what this app runs on, and each
  * entry that can be switched on names the variable that switches it. A name
  * that nothing in the app reads is worse than no name: the page prints "not
  * set here" for ever, whoever is running it sets the variable, and nothing
@@ -7281,6 +7334,94 @@ check("the commonest words are counted, gated, and never written down twice", ()
     action, /lemmasIn\(/,
     "addCommonWords takes its words from somewhere other than the checked-in table",
   );
+});
+
+check("a frequency list is named once, asked one way, and never built by a render", () => {
+  /*
+    THE FOUR LISTS ARE NOW TWO SCREENS AND A ROUND, AND EACH IS A WAY OF
+    GETTING THIS WRONG.
+
+    ONE TABLE OF WHAT A LIST IS CALLED. `TITLE` and `BLURB` were two maps
+    inside `CommonWords.tsx`, which was right while one screen printed them.
+    Four do now: the dictionary's lists, the card on `/practice`, the round
+    index and the round itself. A second copy is how "Describing words"
+    becomes "Adjectives" on one screen out of four, which is the fault
+    `lib/ux/modes.ts` and `lib/ux/nav.ts` each exist to prevent and which this
+    app has fixed four times. Anchored on the label appearing exactly once in
+    the tree, because a screen that imports the table and then writes its own
+    heading beside it satisfies any check that only looks for the import.
+
+    ONE ANSWER TO WHICH CARD OF A WORD TO ASK. `leastPractisedSlot` is the
+    variety half of mastery: the slot the learner has been asked in least. Two
+    routes render the Flash cards session now, the whole deck and one
+    frequency list, and a second copy of that rule is two answers to "what
+    should this word be asked as" that drift apart a tie break at a time.
+
+    THE DEEPENING NAMES NO CARD TYPE. `deepenCommonWords` plans `CARD_TYPES`
+    entire and lets `generateCards` decide what each word can build, so it
+    cannot ask for a card its own words cannot make, which is the `objekt`
+    fault. A hand-typed list here would be a fifth place the seven are written
+    down, and would go stale the day an eighth arrives.
+
+    AND IT IS BOUNDED. A hundred nouns built out into every case is well over
+    a thousand cards for one press, which is the backlog first run already
+    learned not to assemble by accident. `nextCommonBatch` is the bound.
+
+    AND NO RENDER WRITES CARDS. This is the one that would be invisible.
+    `PrefetchLink` fetches a whole page once a pointer has settled on a link
+    for 90ms, so a round that topped the deck up while rendering would build
+    somebody twenty words for hovering over the button, and the browser suites
+    would never see it because they click. The add is a Server Action behind a
+    press, and these two pages may not reach a deck write at all.
+  */
+  const label = "Describing words";
+  // `code()`, not `read()`: this is the oldest recurring mistake in this
+  // repository's own checks, and the comment in `CommonWords.tsx` explaining
+  // why the label moved out of that file names the label to do it.
+  const naming = [...APP, ...LIB, ...COMPONENTS].filter((f) => code(f).includes(label));
+  assert.deepEqual(
+    naming, ["lib/collections/commonGroups.ts"],
+    `"${label}" is written down somewhere other than the one table of what a list is called`,
+  );
+
+  const rounds = [
+    "app/(app)/review/flashcards/page.tsx",
+    "app/(app)/review/common/[group]/page.tsx",
+  ];
+  for (const file of rounds) {
+    const source = code(file);
+    assert.match(
+      source, /leastPractisedSlot\(/,
+      `${file} no longer asks lib/srs/mastery.ts which card of a word to put up`,
+    );
+    assert.doesNotMatch(
+      source, /function leastPractised/,
+      `${file} has grown its own copy of the slot rule, which is two answers to one question`,
+    );
+  }
+
+  const deepen = /export async function deepenCommonWords\(([\s\S]*?)\n\}/
+    .exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.ok(deepen, "deepenCommonWords has gone, or changed shape past recognition");
+  assert.match(
+    deepen, /FREQUENCY_GROUPS\.includes\(/,
+    "deepenCommonWords no longer checks its argument against the closed list of groups",
+  );
+  assert.match(
+    deepen, /CARD_TYPES\.map\(/,
+    "deepenCommonWords names card types of its own rather than planning the one table of them",
+  );
+  assert.match(
+    deepen, /nextCommonBatch\(/,
+    "deepenCommonWords stopped bounding what one press builds",
+  );
+
+  for (const file of [...rounds.slice(1), "app/(app)/review/common/page.tsx"]) {
+    assert.doesNotMatch(
+      code(file), /addPlanToDeck|deepenCommonWords|addCommonWords|card\.createMany/,
+      `${file} writes to the deck while rendering, and a settled pointer is enough to fetch it`,
+    );
+  }
 });
 
 check("the word of the day reads the learner's level, and reads it in the right place", () => {

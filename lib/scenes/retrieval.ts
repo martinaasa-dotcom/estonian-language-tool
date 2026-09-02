@@ -1,7 +1,7 @@
 /**
  * Whether a sentence somebody recorded can be a line somebody says.
  *
- * This is the first rung of the ladder in `docs/19-situations.md` §2, and
+ * This is the first rung of the ladder in `docs/21-situations.md` §2, and
  * Phase 0 exists to find out how far it reaches. Where a recorded usage fits a
  * beat, the other side's line costs a query, needs no model and needs no gate,
  * because nothing was generated. Where it does not, a model composes one inside
