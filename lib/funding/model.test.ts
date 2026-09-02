@@ -5,8 +5,8 @@ import {
   billFor, ladderFor, volumeOf, type Shape,
 } from "./model";
 import {
-  COMPUTE, DEVTOOLS, EMAIL, ERRORS, GIVING_BACK, MEASURED, PRICE_REFS, SPEECH_MARKET,
-  SUPABASE, TUTOR_MODELS, VERCEL, computeFor, distinctClips,
+  COMPUTE, DEVTOOLS, EMAIL, ERRORS, FX, MEASURED, PRICE_REFS, SPEECH_MARKET,
+  SUPABASE, TUTOR_MODELS, VERCEL, computeFor, distinctClips, usdFromEur,
 } from "./facts";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 
@@ -65,9 +65,9 @@ describe("the registry", () => {
     }
   });
 
-  it("gives every service exactly one of the three honest answers", () => {
+  it("gives every service exactly one of the four honest answers", () => {
     for (const { service, cost } of billFor(DEFAULT_SHAPE).lines) {
-      expect(["charged", "partOf", "notOurs"], service.id).toContain(cost.kind);
+      expect(["charged", "partOf", "notOurs", "given"], service.id).toContain(cost.kind);
       if (cost.kind === "partOf") {
         expect(SERVICES.map((s) => s.id), service.id).toContain(cost.line);
       }
@@ -86,7 +86,7 @@ describe("the registry", () => {
   most easily: a new service added with a zero, or a free tier reintroduced
   because it happens to fit at small scale.
 */
-describe("nothing is counted as free", () => {
+describe("nothing anybody bills us for is counted as free", () => {
   it("charges for every service that is switched on and bills its own use", () => {
     for (const learners of SCALE_LADDER) {
       for (const { service, cost } of billFor(at({ learners })).lines) {
@@ -103,14 +103,55 @@ describe("nothing is counted as free", () => {
 
   it("puts a floor under the bill that one learner already pays in full", () => {
     const floor = VERCEL.pro.baseUsd + SUPABASE.pro.baseUsd;
-    expect(billFor(at({ learners: 1 })).invoicedUsd).toBeGreaterThan(floor);
+    expect(billFor(at({ learners: 1 })).totalUsd).toBeGreaterThan(floor);
   });
 
-  it("prices the two nobody invoices, and says which they are", () => {
+  /*
+    THE PUBLIC ONES ARE CREDITED, NOT BILLED, AND NOT IN THE TOTAL.
+
+    An earlier version priced Ekilex, Wiktionary and TartuNLP at what the same
+    thing costs commercially and added it to the bill. They are public
+    institutions that ask for nothing, and a shadow price turns a gift into an
+    invoice nobody sent. These hold the line the other way round from the ones
+    above: the charged services may never be free, and the given ones may never
+    be charged for.
+  */
+  it("credits the public services rather than billing them", () => {
     const bill = billFor(at({ learners: 1_000 }));
-    const given = bill.lines.filter((l) => l.cost.kind === "charged" && l.cost.notInvoiced);
+    const given = bill.lines.filter((l) => l.cost.kind === "given");
     expect(given.map((l) => l.service.id).sort()).toEqual(["dictionary", "speech"]);
-    expect(bill.notInvoicedUsd).toBeGreaterThan(0);
+  });
+
+  it("keeps what is given out of the total entirely", () => {
+    const bill = billFor(at({ learners: 100_000 }));
+    const charged = bill.lines.reduce(
+      (sum, l) => sum + (l.cost.kind === "charged" ? l.cost.usd : 0), 0,
+    );
+    expect(Math.round(charged * 100) / 100).toBe(bill.totalUsd);
+    expect(bill.creditedUsd).toBeGreaterThan(0);
+    expect(bill.totalUsd).toBeLessThan(charged + bill.creditedUsd);
+  });
+
+  it("gives every credited service a name for what it gives", () => {
+    for (const { service, cost } of billFor(DEFAULT_SHAPE).lines) {
+      if (cost.kind !== "given") continue;
+      expect(cost.gives.length, service.id).toBeGreaterThan(20);
+      expect(cost.why.length, service.id).toBeGreaterThan(20);
+    }
+  });
+
+  it("says what the speech would cost without charging for it", () => {
+    const bill = billFor(at({ learners: 100_000 }));
+    const speech = bill.lines.find((l) => l.service.id === "speech")!.cost;
+    if (speech.kind === "given") {
+      expect(speech.wouldCostUsd).toBeGreaterThan(1_000);
+      expect(bill.creditedUsd).toBeGreaterThanOrEqual(speech.wouldCostUsd!);
+    }
+  });
+
+  it("quotes no price for the dictionaries, because there is none to quote", () => {
+    const cost = lineFor("dictionary").cost;
+    if (cost.kind === "given") expect(cost.wouldCostUsd).toBeUndefined();
   });
 });
 
@@ -122,7 +163,6 @@ describe("the bill", () => {
         (s, l) => s + (l.cost.kind === "charged" ? l.cost.usd : 0), 0,
       );
       expect(Math.round(summed * 100) / 100, `${learners} learners`).toBe(bill.totalUsd);
-      expect(Math.round((bill.invoicedUsd + bill.notInvoicedUsd) * 100) / 100).toBe(bill.totalUsd);
     }
   });
 
@@ -156,9 +196,9 @@ describe("the bill", () => {
       .toBeLessThan(billFor(at({ learners: 10_000 })).totalUsd);
   });
 
-  it("hands the donated part past the invoiced one at a size worth funding", () => {
+  it("is given more than it pays for, at a size worth funding", () => {
     const big = billFor(at({ learners: 100_000 }));
-    expect(big.notInvoicedUsd).toBeGreaterThan(big.invoicedUsd);
+    expect(big.creditedUsd).toBeGreaterThan(big.totalUsd);
   });
 });
 
@@ -194,39 +234,31 @@ describe("the model, which is the only line that could run away", () => {
   });
 });
 
-describe("speech, which is the fastest-growing line once it is priced", () => {
-  it("is priced per character at the published commercial rate", () => {
+describe("speech, whose gift is the fastest-growing thing on the page", () => {
+  it("measures what it would cost per character at the published commercial rate", () => {
     const shape = at({ learners: 1_000 });
     const cost = lineFor("speech", shape).cost;
     const expected =
       (volumeOf(shape).spokenCharacters / 1e6) * SPEECH_MARKET.usdPerMillionCharacters;
-    if (cost.kind === "charged") expect(cost.usd).toBeCloseTo(Math.round(expected * 100) / 100, 2);
+    if (cost.kind === "given") {
+      expect(cost.wouldCostUsd).toBeCloseTo(Math.round(expected * 100) / 100, 2);
+    }
   });
 
-  it("outgrows every invoiced line by a hundred thousand learners", () => {
+  it("would outgrow every line anybody bills us for, by a hundred thousand learners", () => {
     const bill = billFor(at({ learners: 100_000 }));
     const speech = bill.lines.find((l) => l.service.id === "speech")!.cost;
-    const invoiced = bill.lines
-      .filter((l) => l.cost.kind === "charged" && !l.cost.notInvoiced)
+    const charged = bill.lines
+      .filter((l) => l.cost.kind === "charged")
       .map((l) => (l.cost.kind === "charged" ? l.cost.usd : 0));
-    if (speech.kind === "charged") {
-      expect(speech.usd).toBeGreaterThan(Math.max(...invoiced));
+    if (speech.kind === "given") {
+      expect(speech.wouldCostUsd!).toBeGreaterThan(Math.max(...charged));
     }
   });
-});
 
-describe("the dictionaries, whose line is a commitment rather than a price", () => {
-  it("never falls below the floor, however small the deployment", () => {
-    const cost = lineFor("dictionary", at({ learners: 1 })).cost;
-    if (cost.kind === "charged") expect(cost.usd).toBe(GIVING_BACK.monthlyFloorUsd);
-  });
-
-  it("grows with the use it is giving back for", () => {
-    const small = lineFor("dictionary", at({ learners: 1_000 })).cost;
-    const large = lineFor("dictionary", at({ learners: 100_000 })).cost;
-    if (small.kind === "charged" && large.kind === "charged") {
-      expect(large.usd).toBeGreaterThan(small.usd);
-    }
+  it("asks for nothing when the audio is switched off", () => {
+    const cost = lineFor("speech", at({ learners: 10_000, audio: false })).cost;
+    if (cost.kind === "given") expect(cost.wouldCostUsd).toBe(0);
   });
 });
 
@@ -243,8 +275,21 @@ describe("the lines that are easy to leave out", () => {
     const small = lineFor("devtools", at({ learners: 10 })).cost;
     const large = lineFor("devtools", at({ learners: 100_000 })).cost;
     if (small.kind === "charged" && large.kind === "charged") {
-      expect(small.usd).toBe(DEVTOOLS.monthlyUsd);
+      expect(small.usd).toBeCloseTo(usdFromEur(DEVTOOLS.eurPerMonth), 2);
       expect(large.usd).toBe(small.usd);
+    }
+  });
+
+  /*
+    Two lines are billed in euros and the rest in dollars, so the rate is a
+    fact with a source and a date rather than something rounded in by hand.
+  */
+  it("converts the euro-billed lines at the published reference rate", () => {
+    expect(FX.usdPerEur).toBeGreaterThan(0.5);
+    expect(FX.ref.source).toContain("ecb.europa.eu");
+    const devtools = lineFor("devtools").cost;
+    if (devtools.kind === "charged") {
+      expect(devtools.usd).toBeGreaterThan(DEVTOOLS.eurPerMonth);
     }
   });
 

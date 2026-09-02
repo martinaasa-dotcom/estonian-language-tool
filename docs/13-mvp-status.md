@@ -1712,27 +1712,30 @@ That started as three lists, which is the fault worth recording: a catalogue in 
 hand-written line functions in the cost model, and whatever the page had been told about. Nothing
 fails when a line is missing from a total. It just comes out lower than the truth.
 
-### Nothing is counted as free
+### Nothing anybody bills for is counted as free, and what is given is credited
 
 The first version modelled a free tier for the host and one for the database and picked between
 them by traffic. It described a deployment nobody runs and produced a page saying this app costs
-nothing at a hundred learners. A service is now charged, or inside another charge, or somebody
-else's to pay with the page saying who. There is no fourth answer and the cost type has no shape
-for one.
+nothing at a hundred learners. Every vendor is now on the plan a real deployment is on.
 
-Four lines were missing entirely and two of them are among the largest: speech (TartuNLP sends no
-invoice, priced at Amazon Polly's neural rate), the two dictionaries (no commercial equivalent
-exists, so that line is a stated commitment to give back), transactional mail, and the tooling that
-writes the app.
+The second version overcorrected: it priced Ekilex, Wiktionary and TartuNLP at what the same thing
+costs commercially and added it to the total. They are public institutions that decided this work
+should be available and ask for nothing, and a shadow price turns that into a line on an invoice
+nobody sent. A service is now charged, or inside another charge, or somebody else's to pay, or
+given, and a given one is named with what it provides and its licence and appears in no total.
+Where a commercial equivalent exists the page says what buying it would come to, as the size of the
+gift rather than a charge.
+
+Two lines were missing from the bill: transactional mail, and the tooling that writes the app.
 
 ### What the model found
 
 - The floor is about $300 a month before a single learner arrives, and most of it does not move
   when they do.
-- Speech is the fastest-growing line once it is priced, and at a hundred thousand learners it is
-  larger than every invoiced line put together.
-- The donated part overtakes the invoiced part at that size, which is the argument for paying a
-  share of it.
+- Speech is the fastest-growing thing on the page: at a hundred thousand learners, buying what
+  TartuNLP gives would come to more than every billed line put together.
+- What is given outgrows what is paid for at that size, which is worth knowing about a project this
+  small.
 - The per-learner curve was asserted three times before it was right. The first version claimed a
   smooth fall, failed twice, and both failures were the model telling the truth.
 
@@ -1743,7 +1746,7 @@ writes the app.
   compressed HTML for a median page and 102 KB of shared JavaScript once per build; about 35
   requests behind a page view, of which 11 to 15 reach the server on a warm cache; 188 KB for a
   2.1 second spoken phrase, which is 88 KB a second of uncompressed 32-bit audio.
-- 170 invariants, seven of them new and every one made to fail before it was left passing. 1,634
+- 184 invariants, eight of them new and every one made to fail before it was left passing. 1,634
   unit tests. The containment suite with `/funding` at three widths and in the dark, the
   accessibility suite with axe clean on it in both themes, and the design suite reporting no
   contrast failures with the page in its sweep.

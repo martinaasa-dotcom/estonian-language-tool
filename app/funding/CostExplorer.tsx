@@ -88,11 +88,12 @@ function allowance(figure: MeterFigure): string {
       : `${count(figure.included)} included`;
 }
 
-/** What a line says on its right-hand side, whichever of the three shapes it is. */
+/** What a line says on its right-hand side, whichever shape it is. */
 function figureFor(line: Line): { text: string; muted: boolean } {
   const { cost } = line;
   if (cost.kind === "charged") return { text: money(cost.usd), muted: cost.usd === 0 };
   if (cost.kind === "partOf") return { text: "inside another line", muted: true };
+  if (cost.kind === "given") return { text: "given", muted: true };
   return { text: `${cost.who} pays`, muted: true };
 }
 
@@ -100,6 +101,7 @@ function planFor(line: Line): string {
   const { cost } = line;
   if (cost.kind === "charged") return cost.plan;
   if (cost.kind === "partOf") return "No bill of its own";
+  if (cost.kind === "given") return "Public, and asks for nothing";
   return "Not the operator's to pay";
 }
 
@@ -159,11 +161,16 @@ export function CostExplorer() {
             {money(bill.totalUsd)}
           </p>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            {perLearner(bill.perLearnerUsd)} a learner. Of that,{" "}
-            <strong>{money(bill.invoicedUsd)}</strong> arrives as invoices and{" "}
-            <strong>{money(bill.notInvoicedUsd)}</strong> is what the parts nobody bills us for
-            would cost if they did. In US dollars, because that is what the bills come in.
+            {perLearner(bill.perLearnerUsd)} a learner, and every cent of it an invoice
+            somebody sends. In US dollars and net of VAT, which is how the vendors quote
+            their own prices.
           </p>
+          {bill.creditedUsd > 0 && (
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
+              Not counted above: buying the speech this app is given would come to a further{" "}
+              <strong>{money(bill.creditedUsd)}</strong> a month. Nobody has ever asked for it.
+            </p>
+          )}
         </div>
       </div>
 
@@ -264,10 +271,18 @@ export function CostExplorer() {
                 </div>
                 <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
                   {planFor(line)}
-                  {line.cost.kind === "charged" && line.cost.notInvoiced
-                    ? " · nobody invoices us for this"
+                  {line.cost.kind === "given" && line.cost.licence
+                    ? ` · ${line.cost.licence}`
                     : ""}
                 </p>
+                {line.cost.kind === "given" && (
+                  <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--ink)" }}>
+                    {line.cost.gives}
+                    {line.cost.wouldCostUsd
+                      ? `, which would come to ${money(line.cost.wouldCostUsd)} a month to buy.`
+                      : "."}
+                  </p>
+                )}
                 <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                   {line.cost.why}
                 </p>
@@ -361,7 +376,7 @@ export function CostExplorer() {
               <tr style={{ color: "var(--ink-3)" }}>
                 <th scope="col" className="label-xs py-1 pr-3 text-left">Learners</th>
                 <th scope="col" className="label-xs py-1 text-right">A month</th>
-                <th scope="col" className="label-xs py-1 pl-3 pr-3 text-right">Invoiced</th>
+                <th scope="col" className="label-xs py-1 pl-3 pr-3 text-right">Given</th>
                 <th scope="col" className="label-xs py-1 text-right">Each</th>
               </tr>
             </thead>
@@ -378,7 +393,7 @@ export function CostExplorer() {
                 >
                   <td className="tnum py-1.5 pr-3">{count(rung.learners)}</td>
                   <td className="tnum py-1.5 text-right">{money(rung.bill.totalUsd)}</td>
-                  <td className="tnum py-1.5 pl-3 pr-3 text-right">{money(rung.bill.invoicedUsd)}</td>
+                  <td className="tnum py-1.5 pl-3 pr-3 text-right">{money(rung.bill.creditedUsd)}</td>
                   <td className="tnum py-1.5 text-right">{perLearner(rung.bill.perLearnerUsd)}</td>
                 </tr>
               ))}

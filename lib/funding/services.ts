@@ -16,13 +16,19 @@
  * chart, the ladder and the page's own description all read this array, and
  * `scripts/test-invariants.ts` fails if any of them stops.
  *
- * NOTHING IN HERE IS FREE, and that is a rule rather than an accident of who
- * we happen to buy from. A free tier is a plan that pauses when nobody is on
- * it, forbids commercial use, or hands out an allowance the day somebody
- * launches. Modelling one made this page cheerful and wrong. Where a service
- * genuinely sends no invoice, it is priced at what the same thing costs
- * elsewhere and marked `notInvoiced`, so the page can show what is bought and
- * what is being given to us without pretending the second is worth nothing.
+ * NO SERVICE ANYBODY BILLS US FOR IS MODELLED AS FREE. A free tier is a plan
+ * that pauses when nobody is on it, forbids commercial use, or hands out an
+ * allowance the day somebody launches, and modelling one made this page
+ * cheerful and wrong. Every vendor here is on the plan a real deployment is on.
+ *
+ * WHAT IS GIVEN IS CREDITED, NOT PRICED. Ekilex, Wiktionary and TartuNLP are
+ * public institutions that have decided this work should be available. They
+ * ask for nothing. An earlier version put a shadow price on them and added it
+ * to the total, which turns a thing to be grateful for into a line on an
+ * invoice nobody sent. They are `given` instead: named, with what each one
+ * provides and the licence it comes under, and kept out of every total. Where
+ * there is a commercial equivalent, the page says what buying the same thing
+ * would come to, so the size of the gift is visible without being charged for.
  *
  * Pure: no React, no Next, no Prisma, and no environment. Which of these a
  * particular deployment has switched on is read by the page.
@@ -31,9 +37,9 @@ import { reserveMicros } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 import {
   ASSUMPTIONS, CLIP_KB, DAYS_PER_MONTH, DEVTOOLS, DOMAIN, EMAIL, ERRORS,
-  GIVING_BACK, HTML_KB, REQUESTS_PER_PAGE, SHARED_JS_KB, SPEECH_MARKET, SUPABASE,
+  HTML_KB, REQUESTS_PER_PAGE, SHARED_JS_KB, SPEECH_MARKET, SUPABASE,
   TUTOR_MODELS, VERCEL,
-  assumed, computeFor, distinctClips, gbOf, listOf, overageUsd, round2,
+  assumed, computeFor, distinctClips, gbOf, listOf, overageUsd, round2, usdFromEur,
 } from "./facts";
 import type { Service, ServiceCost, Shape, Volume } from "./types";
 
@@ -220,24 +226,15 @@ export const SERVICES: readonly Service[] = [
     whenItIsGone: "Cards are silent, and the listening part of the mock exam says so rather than failing.",
     ref: SPEECH_MARKET.ref,
     bill(v: Volume, shape: Shape): ServiceCost {
-      if (!shape.audio) {
-        return {
-          kind: "charged",
-          plan: "Switched off",
-          usd: 0,
-          why: "Cards are silent on this deployment, which is the largest saving available and the hardest to argue for.",
-        };
-      }
-      const usd = (v.spokenCharacters / 1e6) * SPEECH_MARKET.usdPerMillionCharacters;
       return {
-        kind: "charged",
-        plan: "Given away, priced at what it is worth",
-        usd: round2(usd),
-        notInvoiced: true,
-        why: `Nobody bills for this. Priced at ${SPEECH_MARKET.equivalentOf}, because a page that counted it at nothing would be understating what the app takes to run.`,
-        meters: [
-          { label: "Characters spoken", used: v.spokenCharacters, included: 0, as: "count" },
-        ],
+        kind: "given",
+        gives: shape.audio
+          ? `${Math.round(v.spokenCharacters).toLocaleString("en-GB")} characters read aloud a month, in a real Estonian voice`
+          : "Speech in twelve Estonian voices, switched off on this deployment",
+        why: "A public research group at the University of Tartu, which asks for nothing and sends no invoice.",
+        wouldCostUsd: shape.audio
+          ? round2((v.spokenCharacters / 1e6) * SPEECH_MARKET.usdPerMillionCharacters)
+          : 0,
       };
     },
   },
@@ -249,18 +246,16 @@ export const SERVICES: readonly Service[] = [
     does: "Every Estonian form and example sentence, and the English meaning of most of the dictionary.",
     whenItIsGone: "Live lookups stop. The seeded dictionary carries on, and a word it lacks is simply missing.",
     setBy: "EKILEX_API_KEY",
-    ref: GIVING_BACK.ref,
-    bill(_v: Volume, shape: Shape): ServiceCost {
-      const usd = Math.max(
-        GIVING_BACK.monthlyFloorUsd,
-        (shape.learners / 1000) * GIVING_BACK.usdPerThousandLearners,
-      );
+    ref: {
+      source: "https://ekilex.ee",
+      checked: SPEECH_MARKET.ref.checked,
+    },
+    bill(): ServiceCost {
       return {
-        kind: "charged",
-        plan: "What this budgets to give back",
-        usd: round2(usd),
-        notInvoiced: true,
-        why: "Neither sends an invoice and neither has a commercial equivalent to quote, because nothing else holds this data. So this line is a commitment rather than a price.",
+        kind: "given",
+        gives: "6,050 checked entries with 34,554 forms, and the attested sentences every exercise is built from",
+        licence: "Ekilex under CC BY 4.0, Wiktionary under CC BY-SA 4.0",
+        why: "Neither asks for anything, and neither has a price to quote: nothing else holds a checked Estonian case table with attested sentences, so there is nothing to compare it against.",
       };
     },
   },
@@ -319,7 +314,7 @@ export const SERVICES: readonly Service[] = [
       return {
         kind: "charged",
         plan: DEVTOOLS.plan,
-        usd: DEVTOOLS.monthlyUsd,
+        usd: round2(usdFromEur(DEVTOOLS.eurPerMonth)),
         why: "The only line here that is not runtime. It does not move with the number of learners, so it is most of the bill at a hundred and a rounding error at a hundred thousand.",
       };
     },
@@ -336,7 +331,7 @@ export const SERVICES: readonly Service[] = [
       return {
         kind: "charged",
         plan: "One a year",
-        usd: round2(DOMAIN.usdPerYear / 12),
+        usd: round2(usdFromEur(DOMAIN.eurPerYear) / 12),
         why: DOMAIN.note,
       };
     },

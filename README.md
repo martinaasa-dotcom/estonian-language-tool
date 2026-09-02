@@ -300,11 +300,15 @@ because sign-up is open by default. If you would rather run a private instance, 
 and `/terms`, because the people most likely to want it (somebody deciding whether to fund this,
 and somebody wondering what a free app is selling instead) have no account here.
 
-**Nothing on it is counted as free.** A free tier is a plan that pauses when nobody is on it,
-forbids commercial use, or hands out an allowance that goes the week you launch, so modelling one
-would describe a deployment nobody runs. Every service is charged, or is inside a charge already
-paid, or is somebody else's to pay and the page says whose. The two that send no invoice, TartuNLP
-and the dictionaries, are on the bill at what the same thing costs elsewhere.
+**Nothing anybody bills for is counted as free.** A free tier is a plan that pauses when nobody is
+on it, forbids commercial use, or hands out an allowance that goes the week you launch, so
+modelling one would describe a deployment nobody runs. Every vendor is on the plan a real
+deployment is on.
+
+**What is given is credited, not priced.** Ekilex, Wiktionary and TartuNLP are public institutions
+that decided this work should be available. They ask for nothing, they are named with what each one
+gives and its licence, and they are in no total. Where buying the same thing is possible the page
+says what that would come to, so the size of the gift is visible without being charged for.
 
 **One list.** `lib/funding/services.ts` is every piece of infrastructure with its own price
 function. Adding a new tool is one entry there: the bill, the totals, the chart, the ladder and the
@@ -312,18 +316,19 @@ page's own description all read the registry, and the invariants fail if any of 
 
 Every number is measured on this repository with the command that produced it, quoted off a
 vendor's price list with the date it was read, or named as one of the assumptions listed in full on
-the page.
+the page. Two lines are billed in euros and the rest in dollars; the rate is the European Central
+Bank's, and every price is net of VAT because that is how the vendors quote their own.
 
 Four things on it are worth knowing before you deploy this for anybody.
 
 - **The floor is about $300 a month before a single learner arrives**, and most of it does not move
   when they do. The first thousand people are close to free to serve.
-- **Speech is the fastest-growing line.** TartuNLP returns uncompressed 32-bit audio, so a
-  two-second phrase is 188 KB and the whole spoken dictionary is 2.8 GB. Priced at a commercial
-  rate it outgrows every invoiced line put together at a hundred thousand learners.
+- **Speech is the fastest-growing thing on the page.** TartuNLP returns uncompressed 32-bit audio,
+  so a two-second phrase is 188 KB and the whole spoken dictionary is 2.8 GB. At a hundred thousand
+  learners, buying that speech would come to more than every billed line put together.
 - **The tooling is on the bill.** What writes and maintains the app is not runtime infrastructure
-  and is most of the cost at the sizes anybody starts at, so leaving it out would understate this
-  as badly as valuing TartuNLP at nothing.
+  and is most of the cost at the sizes anybody starts at, so leaving it out would imply the
+  software maintains itself.
 - **The model line has a ceiling in the code.** Every call is booked against a shared daily budget
   (`AI_DAILY_USD_GLOBAL`) that cannot be turned off, so the projection cannot show a bill the
   running app would refuse to run up.

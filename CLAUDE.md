@@ -268,16 +268,31 @@ came from, and a `bill()` that says what it costs at a given size. Adding a new 
 Asserted, both that the bill is generated from the registry and that no screen singles a service
 out by id.
 
-**Nothing it runs on is counted as free.** The first version modelled a free tier for the host and
-one for the database and picked between them by traffic, which described a deployment nobody runs:
-a free plan pauses when nobody is on it, forbids commercial use, and hands out an allowance that
-goes the week somebody launches. What it produced was a page saying this app costs nothing at a
-hundred learners, which was cheerful and wrong. A service is **charged**, or it is **inside another
-charge** (the news feed rides on a function already paid for), or **somebody else pays** and the
-page says who (the learner's own phone). There is no fourth answer, and the cost type has no shape
-for one. A service that sends no invoice is priced at what the same thing costs elsewhere and
-marked `notInvoiced`, so the page can show what is bought and what is being given without valuing
-the second at nothing.
+**Nothing anybody bills for is counted as free.** The first version modelled a free tier for the
+host and one for the database and picked between them by traffic, which described a deployment
+nobody runs: a free plan pauses when nobody is on it, forbids commercial use, and hands out an
+allowance that goes the week somebody launches. What it produced was a page saying this app costs
+nothing at a hundred learners, which was cheerful and wrong. Every vendor is on the plan a real
+deployment is on.
+
+**And what is given is credited, never priced.** Ekilex, Wiktionary and TartuNLP are public
+institutions that decided this work should be available, and they ask for nothing. Pricing them at
+a commercial equivalent and adding it to the total was tried and reverted: it turns a thing to be
+grateful for into a line on an invoice nobody sent. So a service is **charged**, or **inside
+another charge** (the news feed rides on a function already paid for), or **somebody else pays**
+and the page says who (the learner's own phone), or it is **given**, in which case it is named with
+what it provides and the licence it comes under and appears in no total. `wouldCostUsd` is the size
+of the gift rather than a charge, so the page can show the scale of what is handed to this app
+without billing for it, and an invariant fails on a `given` service that grows a `usd` or on a
+total that reads the credit.
+
+**Two lines are billed in euros and the rest in dollars, and every price is net of VAT.** The
+operator is in Estonia, the tooling and the domain are billed in euros, and Vercel, Supabase,
+Resend, Sentry and Amazon bill in dollars, so there is no arrangement where one currency is native
+to everything. The model runs in dollars, a euro line carries its euro figure, and the rate is the
+European Central Bank's own reference rate with the day it was published. VAT is on none of them,
+because that is how every vendor quotes its own price: putting it on one line would make the bill
+inconsistent rather than more complete.
 
 **Three kinds of number, kept apart, because they are not equally solid.** `MEASURED` in
 `lib/funding/facts.ts` was taken off this repository on a stated day and each entry carries the
@@ -302,27 +317,21 @@ imports nothing; it moved rather than being copied, for the reason `PROVIDER_KEY
 itself.
 
 **The lines that are easy to leave out are the ones that make the number wrong.** A funding page
-errs in one direction by default: everything anybody forgets makes the total smaller. Four were
-missing from the first pass and two of them are among the largest at any size a person would
-actually run. **Speech**, because TartuNLP sends no invoice, priced at Amazon Polly's neural rate
-since that is the closest published equivalent. **The two dictionaries**, which have no commercial
-equivalent at all because nothing else holds a checked Estonian case table with attested sentences,
-so that line is a stated commitment to give back rather than a rate. **Transactional mail**, since
-the README already says Supabase's built-in sender is for testing and a deployment that tells
-anybody about itself needs its own. And **the tooling that writes the app**, which is not runtime
-infrastructure and is most of the bill at the sizes anybody starts at, so leaving it out was the
-same mistake as pricing TartuNLP at nothing.
+errs in one direction by default: everything anybody forgets makes the total smaller. Two were
+missing from the bill. **Transactional mail**, since the README already says Supabase's built-in
+sender is for testing and a deployment that tells anybody about itself needs its own. And **the
+tooling that writes the app**, which is not runtime infrastructure and is most of the bill at the
+sizes anybody starts at, so leaving it out implied the software maintains itself.
 
 **What the model found, rather than what anybody chose to admit.** The floor is about three hundred
 dollars a month before a single learner arrives, and most of it does not move when they do, so the
-first thousand people are close to free to serve. **Speech** is the fastest-growing line once it is
-priced: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a three-word
-sentence, so the whole spoken dictionary is 2.8 GB and at a hundred thousand learners the speech
-line is larger than every invoiced line put together. And **the donated part overtakes the invoiced
-part** at that size, which is the argument for paying a share of it rather than staying a polite
-guest. Each is asserted, and the per-learner curve was asserted three times before it was right:
-the first version claimed a smooth fall, failed twice, and both failures were the model telling the
-truth.
+first thousand people are close to free to serve. **Speech** is the fastest-growing thing on the
+page: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a three-word
+sentence, so the whole spoken dictionary is 2.8 GB, and at a hundred thousand learners buying that
+speech would come to more than every billed line put together. **What is given outgrows what is
+paid for** at that size, which is worth knowing about a project this small. Each is asserted, and
+the per-learner curve was asserted three times before it was right: the first version claimed a
+smooth fall, failed twice, and both failures were the model telling the truth.
 
 **A public page that reads the environment reads it as a yes or a no.** The page says which parts
 of the infrastructure this deployment has switched on, which it can only know by looking, and
@@ -331,11 +340,12 @@ to the client and the server simply prints it. So `lib/funding/` reads the envir
 and the page reads it in exactly one place, through a helper that can only return a boolean. Two
 reads is where the second one stops being a boolean, so the count is asserted.
 
-Seven invariants, each made to fail once: the bill generated from the registry, no free tier
-surviving in the facts or the cost type, the model priced off the ledger, every quoted price
-rendering the link it came from, the single boolean environment read, every variable
-`services.ts` names being one the app actually reads, and the page staying outside the sign-in
-gate, like `/privacy` and `/terms` and for the same reason.
+Eight invariants, each made to fail once: the bill generated from the registry, no free tier
+surviving in the facts or the cost type, what is given credited rather than billed and never read
+into a total, the model priced off the ledger, every quoted price rendering the link it came from,
+the single boolean environment read, every variable `services.ts` names being one the app actually
+reads, and the page staying outside the sign-in gate, like `/privacy` and `/terms` and for the same
+reason.
 
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may

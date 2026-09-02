@@ -78,24 +78,29 @@ export function billFor(shape: Shape): Bill {
     cost: service.bill(volume, shape),
   }));
 
-  let invoicedUsd = 0;
-  let notInvoicedUsd = 0;
+  let totalUsd = 0;
+  let creditedUsd = 0;
   let modelCapBinds = false;
   for (const { cost } of lines) {
-    if (cost.kind !== "charged") continue;
-    if (cost.notInvoiced) notInvoicedUsd += cost.usd;
-    else invoicedUsd += cost.usd;
-    if (cost.cappedByUs) modelCapBinds = true;
+    if (cost.kind === "charged") {
+      totalUsd += cost.usd;
+      if (cost.cappedByUs) modelCapBinds = true;
+    } else if (cost.kind === "given") {
+      /*
+        Counted separately and never into the total. It is the size of what
+        public institutions hand this app for nothing, which the page shows as
+        credit rather than as a charge.
+      */
+      creditedUsd += cost.wouldCostUsd ?? 0;
+    }
   }
-  invoicedUsd = round2(invoicedUsd);
-  notInvoicedUsd = round2(notInvoicedUsd);
-  const totalUsd = round2(invoicedUsd + notInvoicedUsd);
+  totalUsd = round2(totalUsd);
+  creditedUsd = round2(creditedUsd);
 
   return {
     lines,
     totalUsd,
-    invoicedUsd,
-    notInvoicedUsd,
+    creditedUsd,
     perLearnerUsd: shape.learners > 0 ? totalUsd / shape.learners : 0,
     modelCapBinds,
     volume,

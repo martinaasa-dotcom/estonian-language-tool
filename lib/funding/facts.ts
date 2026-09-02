@@ -19,6 +19,11 @@
  * measured. It is deliberately short, and every entry is on the page in full
  * with the reason it is the number it is.
  *
+ * WHAT IS GIVEN IS NOT PRICED HERE. Ekilex, Wiktionary and TartuNLP ask for
+ * nothing and are credited in `services.ts` rather than billed. The one figure
+ * kept for them is `SPEECH_MARKET`, and it is there to show the size of the
+ * gift rather than to charge for it.
+ *
  * NOTHING HERE HAS A FREE TIER. Earlier versions of this file carried one for
  * Vercel and one for Supabase and picked between them by traffic, which
  * described a deployment nobody actually runs: a free plan pauses when nobody
@@ -118,6 +123,31 @@ export const MEASURED: readonly Measurement[] = [
     how: "time npx tsx prisma/seed.ts",
   },
 ];
+
+/**
+ * The euro, because two lines are priced in one and five are priced in dollars.
+ *
+ * The operator is in Estonia and the tooling and the domain are billed in
+ * euros; Vercel, Supabase, Resend, Sentry and Amazon bill in dollars. There is
+ * no arrangement in which every line is native to one currency, so the model
+ * runs in dollars, the euro lines carry their euro figure, and the rate is the
+ * European Central Bank's own reference rate with the day it was published.
+ *
+ * PRICES HERE ARE ALL NET OF VAT, which is how every vendor above quotes its
+ * own. An operator adds whatever their country charges and reclaims it if they
+ * are registered for it, so putting VAT on one line and not the others would
+ * make the bill inconsistent rather than more complete.
+ */
+export const FX = {
+  ref: {
+    source: "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/eurofxref-graph-usd.en.html",
+    checked: PRICES_CHECKED,
+  } satisfies PriceRef,
+  usdPerEur: 1.1578,
+} as const;
+
+/** A euro price in dollars, which is the currency the rest of the model runs in. */
+export const usdFromEur = (eur: number) => eur * FX.usdPerEur;
 
 /**
  * Vercel, which runs the app itself.
@@ -243,33 +273,8 @@ export const DOMAIN = {
     source: "https://www.internet.ee/help-and-info/faq",
     checked: PRICES_CHECKED,
   } satisfies PriceRef,
-  usdPerYear: 16,
+  eurPerYear: 15,
   note: "A .ee domain. The registry charges 6 euros a year; a registrar asks about 15.",
-} as const;
-
-/**
- * The two dictionaries, and why their line is a decision rather than a price.
- *
- * Ekilex and Wiktionary have no commercial equivalent to quote. Nothing else
- * holds a checked Estonian case table with attested example sentences, and no
- * amount of money buys one this week, which is a stronger statement about
- * what they are worth than any figure would be. So this line is not a market
- * rate pretending to be one: it is what a deployment budgets to give back to
- * the public infrastructure it is built on, and it is an operator's policy
- * rather than an invoice.
- *
- * It is here rather than in `ASSUMPTIONS` because it is a commitment somebody
- * makes rather than a guess about behaviour, and the page says so.
- */
-export const GIVING_BACK = {
-  ref: {
-    source: "https://ekilex.ee",
-    checked: PRICES_CHECKED,
-  } satisfies PriceRef,
-  /** The floor, so a deployment with three learners still contributes. */
-  monthlyFloorUsd: 10,
-  /** And it grows with use, because the use grows. */
-  usdPerThousandLearners: 3,
 } as const;
 
 /**
@@ -283,9 +288,7 @@ export const GIVING_BACK = {
  * at a hundred users it is most of the bill and at a hundred thousand it is a
  * rounding error.
  *
- * The plan page presents Max as one tier starting at $100 with the multiplier
- * chosen inside it; this is the 20x option. Anybody who reads the link and
- * finds otherwise should change the number here, which is one edit.
+ * Billed in euros and quoted net of VAT, like every other price here.
  */
 export const DEVTOOLS = {
   ref: {
@@ -293,7 +296,7 @@ export const DEVTOOLS = {
     checked: PRICES_CHECKED,
   } satisfies PriceRef,
   plan: "Claude Max, 20x",
-  monthlyUsd: 200,
+  eurPerMonth: 180,
 } as const;
 
 /**
@@ -355,8 +358,8 @@ export const TUTOR_MODELS: readonly { readonly id: string; readonly name: string
 
 /** Every published price on this page, for the check that they all cite one. */
 export const PRICE_REFS: readonly PriceRef[] = [
-  VERCEL.ref, SUPABASE.ref, COMPUTE.ref, SPEECH_MARKET.ref, DOMAIN.ref, GIVING_BACK.ref,
-  DEVTOOLS.ref, EMAIL.ref, ERRORS.ref,
+  VERCEL.ref, SUPABASE.ref, COMPUTE.ref, SPEECH_MARKET.ref, DOMAIN.ref,
+  DEVTOOLS.ref, EMAIL.ref, ERRORS.ref, FX.ref,
 ];
 
 /* ── What was measured, as numbers the arithmetic can use ─────────────────── */

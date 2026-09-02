@@ -4779,7 +4779,7 @@ check("the funding bill is generated from the registry rather than a list beside
  * back: somebody adds a cheaper plan object beside the paid one and a branch to
  * pick it.
  */
-check("the funding page keeps no free tier for anything", () => {
+check("the funding page keeps no free tier for anything it is billed for", () => {
   const facts = code(join("lib", "funding", "facts.ts"));
 
   for (const [pattern, what] of [
@@ -4797,16 +4797,78 @@ check("the funding page keeps no free tier for anything", () => {
   }
 
   /*
-    And the cost shape itself has no way to say "free". Three answers, and the
-    one that reads as nothing has to name who is paying instead.
+    And the cost shape itself has no way to say "free". Four answers, and the
+    ones that read as nothing have to say who is paying or who is giving.
   */
   const types = code(join("lib", "funding", "types.ts"));
-  assert.match(types, /kind: "charged"/, "the funding cost type no longer has a charged shape");
-  assert.match(types, /kind: "notOurs"/, "the funding cost type can no longer say who else pays");
+  for (const [shape, what] of [
+    [/kind: "charged"/, "a charged shape"],
+    [/kind: "notOurs"/, "a way to say who else pays"],
+    [/kind: "given"/, "a way to credit what is given"],
+  ] as const) {
+    assert.match(types, shape, `the funding cost type no longer has ${what}`);
+  }
   assert.doesNotMatch(
     types,
     /kind: "free"/,
     "the funding cost type has grown a free shape, which is the thing this page exists to avoid.",
+  );
+});
+
+/**
+ * WHAT IS GIVEN IS CREDITED, AND NEVER BILLED.
+ *
+ * Ekilex, Wiktionary and TartuNLP are public institutions that have decided
+ * this work should be available, and they ask for nothing. An earlier version
+ * of this page priced them at what the same thing costs commercially and added
+ * it to the total, which turns a thing to be grateful for into a line on an
+ * invoice nobody sent.
+ *
+ * So a `given` service names what it gives and is kept out of every total.
+ * Where there is a commercial equivalent the page may say what buying it would
+ * come to, and that figure lives in `wouldCostUsd`, which no total reads. The
+ * two halves of the rule pull in opposite directions, which is why both are
+ * asserted: a charged service may never be free, and a given one may never be
+ * charged for.
+ */
+check("what is given to this app is credited rather than added to the bill", () => {
+  const services = code(join("lib", "funding", "services.ts"));
+
+  /*
+    Anchored on the shape of a returned cost: a `given` branch that also
+    carried a `usd` would be back to charging for the gift, and it is the exact
+    edit somebody makes when they want the total to look complete.
+  */
+  for (const match of services.matchAll(/kind: "given",([\s\S]{0,600}?)\n      \};/g)) {
+    const body = match[1]!;
+    assert.doesNotMatch(
+      body,
+      /\busd:/,
+      "a given service in lib/funding/services.ts carries a `usd`. Public infrastructure that " +
+      "asks for nothing is credited, not billed: the figure for what it would cost belongs in " +
+      "`wouldCostUsd`, which no total reads.",
+    );
+    assert.match(
+      body,
+      /gives:/,
+      "a given service names no gift. Crediting is the whole of what this shape is for.",
+    );
+  }
+
+  const model = code(join("lib", "funding", "model.ts"));
+  assert.match(
+    model,
+    /creditedUsd/,
+    "lib/funding/model.ts no longer counts what is given, so the page cannot show the size of it.",
+  );
+  /*
+    The one line that would undo all of it: adding the credit into the total.
+  */
+  assert.doesNotMatch(
+    model,
+    /totalUsd \+?= [^;\n]*creditedUsd|creditedUsd[^;\n]*\+ totalUsd/,
+    "lib/funding/model.ts adds what is given into the total somebody is billed. It is credit, " +
+    "not a charge.",
   );
 });
 

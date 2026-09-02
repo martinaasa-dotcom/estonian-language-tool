@@ -10,7 +10,7 @@ import { priceFor } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 import { SERVICES } from "@/lib/funding/model";
 import {
-  COMPUTE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, GIVING_BACK, MEASURED, MEASURED_ON,
+  COMPUTE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, FX, MEASURED, MEASURED_ON,
   PRICES_CHECKED, SPEECH_MARKET, SUPABASE, VERCEL,
 } from "@/lib/funding/facts";
 
@@ -46,9 +46,9 @@ export const dynamic = "force-dynamic";
  * decoration: a total somebody can move is a total they can check, and the
  * three least flattering findings on the page (that the floor is about
  * forty-six dollars before anybody arrives, that speech is the fastest-growing
- * line once it is priced honestly, and that the donated part outgrows the
- * invoiced part) are all things the model surfaced rather than things anybody
- * chose to admit.
+ * line once anybody puts a figure on it, and that what is given to this app
+ * outgrows what it pays for) are all things the model surfaced rather than
+ * things anybody chose to admit.
  */
 export default function FundingPage() {
   const operator = resolveOperator();
@@ -126,12 +126,20 @@ export default function FundingPage() {
           the database without ever being told who a learner is.
         </P>
         <P>
-          <strong>Nothing here is counted as free.</strong> Two of these send no invoice
-          and they are still on the bill, priced at what the same thing costs elsewhere,
-          because a page that valued donated infrastructure at nothing would be describing
-          an app that runs on five paid services and a miracle. The last line of each card
-          is the one worth reading: every entry is a state the app already handles rather
-          than a disaster.
+          <strong>Nothing anybody bills us for is counted as free.</strong> Every vendor
+          here is on the plan a real deployment is on, because a free tier is one that
+          pauses when nobody is on it or forbids commercial use, and modelling one would
+          describe a deployment nobody runs.
+        </P>
+        <P>
+          <strong>What is given is credited, not priced.</strong> Ekilex, Wiktionary and
+          TartuNLP are public institutions that decided this work should be available.
+          They ask for nothing, and that is a good arrangement rather than a gap in the
+          accounts, so they are named here with what each one gives and the licence it
+          comes under, and they appear in no total. Where buying the same thing is
+          possible the panel says what that would come to, because the size of the gift is
+          worth seeing. The last line of each card is the one worth reading: every entry
+          is a state the app already handles rather than a disaster.
         </P>
 
         <ul className="space-y-3">
@@ -254,14 +262,8 @@ export default function FundingPage() {
           <li>
             <a href={SPEECH_MARKET.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Speech</a>
             : ${SPEECH_MARKET.usdPerMillionCharacters} a million characters, which is what{" "}
-            {SPEECH_MARKET.equivalentOf} charge. TartuNLP charge nothing and this page
-            prices their work at that rate anyway.
-          </li>
-          <li>
-            <a href={GIVING_BACK.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">The two dictionaries</a>
-            : ${GIVING_BACK.monthlyFloorUsd} a month, or{" "}
-            ${GIVING_BACK.usdPerThousandLearners} for every thousand learners if that is
-            more. Not a price anybody quoted: a figure this budgets to give back.
+            {SPEECH_MARKET.equivalentOf} charge. TartuNLP charge nothing. That rate is here
+            only to show the size of what they give, and it is in no total on this page.
           </li>
           <li>
             <a href={EMAIL.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Resend</a>
@@ -276,21 +278,26 @@ export default function FundingPage() {
           </li>
           <li>
             <a href={DEVTOOLS.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">{DEVTOOLS.plan}</a>
-            : ${DEVTOOLS.monthlyUsd} a month. The tooling that writes and maintains this, which
-            is the one line here that is not runtime and the one that does not grow.
+            : {DEVTOOLS.eurPerMonth} euros a month. The tooling that writes and maintains
+            this, which is the one line here that is not runtime and the one that does not grow.
+          </li>
+          <li>
+            <a href={FX.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">The euro</a>
+            : {FX.usdPerEur} dollars, the European Central Bank&rsquo;s reference rate. Two
+            lines here are billed in euros and the rest in dollars, and every price is net
+            of VAT, which is how each vendor quotes its own.
           </li>
           <li>
             <a href={DOMAIN.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">A .ee domain</a>
-            : about ${DOMAIN.usdPerYear} a year.
+            : about {DOMAIN.eurPerYear} euros a year.
           </li>
         </ul>
         <P>
-          The last two are the ones to read carefully, because they are the two nobody
-          invoices. Speech has a commercial equivalent and is priced at it, so that figure
-          is checkable. The dictionaries do not: nothing else holds a checked Estonian
-          case table with attested sentences, and no amount of money buys one this week.
-          That line is therefore a commitment rather than a rate, and it is the one figure
-          on this page an operator simply decides.
+          Ekilex, Wiktionary and TartuNLP are not on that list, because they do not charge
+          and this page does not pretend otherwise. They are credited above instead, with
+          what each one gives and the licence it comes under. Where buying the same thing
+          is possible the panel says what that would come to, so the size of the gift is
+          visible, and that figure is in no total here.
         </P>
       </S>
 
@@ -336,12 +343,12 @@ export default function FundingPage() {
           and does not make every entry right. Learners already report the wrong ones.
         </P>
         <P>
-          <strong>The donated part could stop being donated.</strong> The panel above
-          shows what TartuNLP, Ekilex and Wiktionary would cost if they billed, and at any
-          real scale it is a large share of the whole. They are public research
-          infrastructure and this app leans on all three, so the right thing at a size
-          worth funding is to pay a share of what we use rather than to keep being a
-          polite guest.
+          <strong>Something could go back to the institutions this is built on.</strong>{" "}
+          Ekilex, Wiktionary and TartuNLP ask for nothing and there is no suggestion they
+          should start. But this app would not exist without any of the three, and at a
+          size worth funding the decent thing is to support the work rather than only to
+          use it: a contribution, a corrected entry sent back, or paying for the compute
+          somebody else is currently absorbing.
         </P>
       </S>
 

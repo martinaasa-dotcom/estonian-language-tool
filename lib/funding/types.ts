@@ -77,12 +77,6 @@ export type ServiceCost =
       readonly why: string;
       readonly meters?: readonly Meter[];
       /**
-       * Set where nobody actually sends an invoice and the figure is what the
-       * same thing costs elsewhere. It still counts towards the total, and the
-       * page says which part of the total is of this kind.
-       */
-      readonly notInvoiced?: boolean;
-      /**
        * Set where the app's own spend cap, rather than the traffic, is what
        * decided this figure.
        *
@@ -102,6 +96,38 @@ export type ServiceCost =
       readonly kind: "notOurs";
       /** Who pays for it instead. */
       readonly who: string;
+      readonly why: string;
+    }
+  | {
+      /**
+       * Public infrastructure that asks for nothing.
+       *
+       * NOT A BILL LINE, AND THAT IS THE POINT. An earlier version priced these
+       * at what the same thing costs commercially and added them to the total,
+       * on the reading that "nothing is free" meant everything needed a number.
+       * It is the wrong reading of what these are. Ekilex, Wiktionary and
+       * TartuNLP are public institutions that have decided this work should be
+       * available, they ask for nothing, and putting a shadow price on the gift
+       * turns a thing to be grateful for into a line on an invoice nobody sent.
+       *
+       * So they are credited instead, by name, with what each one provides and
+       * the licence it provides it under. `wouldCostUsd` is the size of the
+       * gift rather than a charge: it says what buying the same thing would
+       * come to, so a reader can see the scale of what is being given, and it
+       * is kept out of every total on the page.
+       */
+      readonly kind: "given";
+      /** What this one gives, in the reader's terms. */
+      readonly gives: string;
+      /** The licence it is given under, where it states one. */
+      readonly licence?: string;
+      /**
+       * What the same thing would come to if it were bought, where there is a
+       * commercial equivalent to price against. Absent where there is none,
+       * which is itself worth saying: nothing else holds a checked Estonian
+       * case table with attested sentences.
+       */
+      readonly wouldCostUsd?: number;
       readonly why: string;
     };
 
@@ -160,12 +186,16 @@ export interface Line {
 
 export interface Bill {
   readonly lines: readonly Line[];
-  /** Everything charged, invoiced or not. */
+  /** What somebody is actually billed, which is every charged line and no more. */
   readonly totalUsd: number;
-  /** The part of the total somebody actually gets an invoice for. */
-  readonly invoicedUsd: number;
-  /** The part nobody bills for, priced at what it would cost. */
-  readonly notInvoicedUsd: number;
+  /**
+   * What the given services would come to if they were bought.
+   *
+   * Deliberately not part of `totalUsd`. It is here so the page can show the
+   * scale of what public institutions are handing this app for nothing, which
+   * is credit rather than accounting.
+   */
+  readonly creditedUsd: number;
   readonly perLearnerUsd: number;
   /** Set when the app's own spend cap is what stopped the model line growing. */
   readonly modelCapBinds: boolean;
