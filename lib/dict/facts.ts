@@ -1,5 +1,7 @@
 import { singleFlight } from "@/lib/cache/singleFlight";
 import { prisma } from "@/lib/db";
+import { unitIntroducing } from "@/lib/collections/syllabus";
+import { bandOf, glossOption, type GlossOption } from "@/lib/questions/distractors";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -43,9 +45,6 @@ import { prisma } from "@/lib/db";
  * of a learner. Nothing keyed on an `ownerId` may be cached here: it would be
  * one person's deck served to the next person through the same door.
  */
-
-/** How many entries a wrong answer may be drawn from. */
-const DECOY_POOL = 2_000;
 
 /** How long a fact about the dictionary is reused before it is asked again. */
 export const FACTS_TTL_MS = 60_000;
@@ -200,59 +199,55 @@ export async function lemmaCountsByLevel(): Promise<Map<string, number>> {
 }
 
 /**
- * The pool a multiple-choice question draws its wrong answers from.
+ * The pool a multiple-choice question draws its wrong answers from, built once
+ * and ranked by the module that decides what a wrong answer is worth.
  *
- * Real translations of other words rather than invented text: nothing in this
- * app writes Estonian, and a decoy that is obviously nonsense makes the
- * question free. Easiest first, so a wrong answer is one the learner has a
- * chance of having met.
+ * This used to be two functions and neither of them was this. `decoyGlosses`
+ * returned two thousand bare strings and the review screen took three at
+ * random out of them; `glossesByPos` returned the same strings grouped by part
+ * of speech and the listening round preferred its own group. So the app had
+ * two answers to one question, and the screen this app exists to get people to
+ * had the worse of them: a learner asked what `jooma` means chose between
+ * "to drink", "window", "October" and "friendship", where the three nouns
+ * standing around one verb are one glance and the question measured nothing.
  *
- * Two thousand rows out of about six thousand, read on every load of the
- * review screen and of the listening round, and the same two thousand every
- * time for everybody: which words the dictionary holds is not a fact about the
- * person being asked. Cached with the rest of it.
+ * `lib/questions/distractors.ts` has been the one table of what a wrong answer
+ * is worth since the placement check and the mock exam were fixed for exactly
+ * this, and it ranks on four signals rather than one: the course unit that
+ * teaches the word, the part of speech, the CEFR band, and the shape of the
+ * line. A bare string can carry none of them, which is why this returns a
+ * `GlossOption` rather than a gloss. Everything the ranking needs about a line
+ * is counted here, once a minute per instance, rather than inside a comparison
+ * that runs a few hundred times a question.
+ *
+ * Read in full rather than truncated, and deliberately: a `take` here has to
+ * be ordered, every order available is a property of the word rather than of
+ * the question, and `cefr asc` (which is what the truncated version used) means
+ * the wrong answers for every question in the app come from the easiest two
+ * thousand entries. That is the fault the minimal pairs round had. Which words
+ * the dictionary holds is not a fact about the person being asked, so the whole
+ * of it is one cached read for everybody.
  */
-export function decoyGlosses(): Promise<string[]> {
-  return remember("decoy-glosses", FACTS_TTL_MS, async () => {
+export function decoyOptions(): Promise<GlossOption[]> {
+  return remember("decoy-options", FACTS_TTL_MS, async () => {
     const rows = await prisma.lexeme.findMany({
-      select: { translation: true },
-      // Ordered to the end, because this is a `take`: `cefr` and `lemma`
-      // together are not unique, and past the cap which words can ever be a
-      // decoy would otherwise be the query plan's answer rather than this one.
-      orderBy: [{ cefr: "asc" }, { lemma: "asc" }, { id: "asc" }],
-      take: DECOY_POOL,
+      select: { translation: true, pos: true, cefr: true, lemma: true },
     });
-    return [...new Set(rows.map((row) => row.translation))];
-  });
-}
-
-/**
- * The same pool, grouped by part of speech, for a question that wants its
- * wrong answers to be the same kind of word as its right one.
- *
- * The listening round read the whole dictionary for this on every round and
- * then built the grouping with an `includes` inside the loop, which is a scan
- * of a growing array per row: about six thousand rows and, at the end of it,
- * an answer identical to the one the previous round worked out. Both halves
- * are cached, the query and the grouping.
- *
- * The arrays are shared, so a caller reads and never writes: every use of them
- * filters, which makes a new one.
- */
-export function glossesByPos(): Promise<{ byPos: Map<string, string[]>; all: string[] }> {
-  return remember("glosses-by-pos", FACTS_TTL_MS, async () => {
-    const rows = await prisma.lexeme.findMany({ select: { translation: true, pos: true } });
-    const byPos = new Map<string, Set<string>>();
-    const all = new Set<string>();
+    const seen = new Set<string>();
+    const out: GlossOption[] = [];
     for (const row of rows) {
-      all.add(row.translation);
-      const held = byPos.get(row.pos) ?? new Set<string>();
-      held.add(row.translation);
-      byPos.set(row.pos, held);
+      const text = row.translation.trim();
+      // One line per meaning. Two entries glossed the same way are one option,
+      // and offering both would be two right answers wearing different ids.
+      if (!text || seen.has(text)) continue;
+      seen.add(text);
+      out.push(glossOption({
+        text,
+        pos: row.pos,
+        band: bandOf(row.cefr),
+        theme: unitIntroducing(row.lemma, row.pos),
+      }));
     }
-    return {
-      byPos: new Map([...byPos].map(([pos, set]) => [pos, [...set]])),
-      all: [...all],
-    };
+    return out;
   });
 }

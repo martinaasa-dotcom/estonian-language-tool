@@ -5,13 +5,16 @@ import { aroundFirst } from "@/lib/collections/levels";
 import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
-import { decoyGlosses } from "@/lib/dict/facts";
+import { decoyOptions } from "@/lib/dict/facts";
+import { unitIntroducing } from "@/lib/collections/syllabus";
+import {
+  bandOf, differentMeaning, glossNearness, glossOption, pickOptions,
+} from "@/lib/questions/distractors";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
-import { shuffle } from "@/lib/random/shuffle";
 
 export const metadata = { title: "Review" };
 
@@ -76,7 +79,7 @@ export default async function ReviewPage({
     });
     return (
       <ReviewSession
-        cards={await withChoices(drill.map(toReviewCard))}
+        cards={await withChoices(drill)}
         drillCase={targetCase}
         totalCards={0}
         mode={await modeChosen()}
@@ -96,7 +99,7 @@ export default async function ReviewPage({
       : [];
     return (
       <ReviewSession
-        cards={await withChoices(drill.map(toReviewCard))}
+        cards={await withChoices(drill)}
         drillUnit={unitId}
         totalCards={0}
         mode={await modeChosen()}
@@ -133,7 +136,7 @@ export default async function ReviewPage({
       : [];
     return (
       <ReviewSession
-        cards={await withChoices(drill.map(toReviewCard))}
+        cards={await withChoices(drill)}
         drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
         mode={await modeChosen()}
@@ -180,7 +183,7 @@ export default async function ReviewPage({
 
   const fresh = atLevelFirst(freshPool, level)
     .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
-  const cards = await withChoices([...due, ...inTeachingOrder(fresh)].map(toReviewCard));
+  const cards = await withChoices([...due, ...inTeachingOrder(fresh)]);
 
   return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
 }
@@ -290,29 +293,67 @@ function wantsChoices(card: ReviewCard): boolean {
 }
 
 /**
- * Attaches multiple-choice options to the recognition cards that get them.
+ * Maps the rows to cards, attaching multiple-choice options to the recognition
+ * cards that get them.
  *
- * Wrong answers are real translations of other words rather than invented text
- * — nothing here writes Estonian, and a decoy that is obviously nonsense makes
+ * Wrong answers are real translations of other words rather than invented text:
+ * nothing here writes Estonian, and a decoy that is obviously nonsense makes
  * the question free. They are drawn once for the whole session, so the pool is
  * one query rather than one per card.
+ *
+ * **Which three are offered is ranked, not shuffled.** This screen took the
+ * first three strings off a shuffle of the whole dictionary, so a learner asked
+ * what `jooma` means chose between "to drink", "window", "October" and
+ * "friendship". Three nouns standing around one verb is a single glance, and
+ * the question measured whether somebody can spot the odd option rather than
+ * whether they know the word. The learner who reported it put it plainly: if
+ * the Estonian word is a verb then all four options need to be verbs.
+ *
+ * `lib/questions/distractors.ts` has been the one table of what a wrong answer
+ * is worth since the placement check and the mock exam were fixed for exactly
+ * this fault, and the daily review screen was simply never wired to it. It
+ * ranks on the course unit, the part of speech, the CEFR band and the shape of
+ * the line, and `differentMeaning` is what stops a near option becoming a
+ * second right one. `pickOptions` returns null rather than padding when it
+ * cannot find three that are genuinely wrong, and that card is asked as recall
+ * instead, which is the honest answer and is what this screen does with every
+ * card that never had options.
+ *
+ * Takes the rows rather than the mapped cards, because the ranking needs the
+ * part of speech and the band and a `ReviewCard` carries neither. Threading a
+ * second parallel array in beside the cards would be two lists that can come
+ * apart.
  */
-async function withChoices(cards: ReviewCard[]): Promise<ReviewCard[]> {
+async function withChoices(rows: CardRow[]): Promise<ReviewCard[]> {
+  const cards = rows.map(toReviewCard);
   if (!cards.some(wantsChoices)) return cards;
 
   /*
     Which words the dictionary holds is not a fact about the person being
-    asked, so the pool is read once per instance rather than once per session:
-    two thousand rows off the render path of the screen this app exists to get
-    people to. See lib/dict/facts.ts.
+    asked, so the pool is read once per instance rather than once per session,
+    off the render path of the screen this app exists to get people to.
+    See lib/dict/facts.ts.
   */
-  const translations = await decoyGlosses();
-  if (translations.length < CHOICES) return cards;
+  const pool = await decoyOptions();
+  if (pool.length < CHOICES) return cards;
 
-  return cards.map((card) => {
+  return cards.map((card, i) => {
     if (!wantsChoices(card)) return card;
-    const decoys = shuffle(translations.filter((t) => t !== card.back)).slice(0, CHOICES - 1);
-    return { ...card, choices: shuffle([...decoys, card.back]) };
+    const lexeme = rows[i]?.lexeme;
+    const answer = glossOption({
+      text: card.back,
+      pos: lexeme?.pos ?? "OTHER",
+      band: bandOf(lexeme?.cefr),
+      theme: lexeme ? unitIntroducing(lexeme.lemma, lexeme.pos) : null,
+    });
+    const picked = pickOptions({
+      answer,
+      candidates: pool,
+      rng: Math.random,
+      distinct: differentMeaning,
+      nearness: glossNearness,
+    });
+    return picked ? { ...card, choices: picked.options } : card;
   });
 }
 
