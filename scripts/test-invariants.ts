@@ -1978,7 +1978,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     while the module under it can be imported without a framework.
   */
   const pure = [
-    "assessment", "collections", "copy", "estonian", "exam", "games", "gamification",
+    "assessment", "collections", "copy", "estonian", "exam", "funding", "games", "gamification",
     "offline", "random", "research", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
@@ -4724,6 +4724,355 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 });
 
 /**
+ * THE FUNDING PAGE PRICES THE TUTOR OUT OF THE APP'S OWN LEDGER.
+ *
+ * `/funding` projects what a month costs at a given number of learners, and
+ * the one line on it that could run away is the model. The app already answers
+ * that question twice a second: `lib/usage/pricing.ts` says what a call of a
+ * given shape costs, and `lib/usage/quota.ts` says what everybody together may
+ * spend in a day, with no off switch. A projection that priced a tutor answer
+ * with a number of its own would be a second answer to a question this
+ * repository has already answered, and the two would come apart the first time
+ * anybody tuned the reservation.
+ *
+ * That is not hypothetical about this file in particular: the reservation
+ * profile it reads used to live inside `ledger.ts`, next to Prisma, where a
+ * pure module could not reach it. It moved into the pricing table rather than
+ * being copied, which is the whole reason this check can exist.
+ *
+ * Anchored on the calls rather than on the imports, because a file can import
+ * the ledger's numbers and then use its own beside them.
+ */
+check("the funding model prices a call the way the ledger prices one", () => {
+  const model = code(join("lib", "funding", "services.ts"));
+
+  assert.match(
+    model,
+    /reserveMicros\(/,
+    "lib/funding/services.ts no longer asks the pricing table what a call costs, so its model line " +
+    "and the app's ledger are two guesses about one number.",
+  );
+  assert.match(
+    model,
+    /DEFAULT_LIMITS\.dailyMicrosGlobal/,
+    "lib/funding/services.ts no longer reads the app's own daily spend cap, so it can project " +
+    "a bill the running app would refuse to run up.",
+  );
+  /*
+    A per-token rate typed in here would be the drift this exists to prevent,
+    and it is the shape somebody reaches for when the import gets awkward.
+  */
+  assert.doesNotMatch(
+    model,
+    /PerMTok|per[ _]?million[ _]?tokens/i,
+    "lib/funding/services.ts has grown a token price of its own. Rates live in lib/usage/pricing.ts.",
+  );
+});
+
+/**
+ * A PRICE ON THE FUNDING PAGE CARRIES THE PAGE IT CAME OFF.
+ *
+ * Every figure on `/funding` is one of three things: measured on this
+ * repository, published by a vendor, or an assumption. The published ones date
+ * fastest and are the only ones a reader has no way to check for themselves,
+ * so each carries a source and the day it was read, and the page renders both.
+ *
+ * A price with no link is the failure mode this stops, and it is a quiet one:
+ * the number stays plausible for years after the vendor changed it, on a page
+ * whose entire claim is that its numbers can be checked.
+ */
+check("every price the funding page quotes links to where it came from", () => {
+  const page = read(join("app", "funding", "page.tsx"));
+  const facts = readFileSync(join("lib", "funding", "facts.ts"), "utf8");
+
+  const sources = [...facts.matchAll(/source:\s*"(https:\/\/[^"]+)"/g)].map((m) => m[1]!);
+  assert.ok(sources.length >= 4, `only found ${sources.length} priced sources, so this check stopped looking`);
+
+  /*
+    Counted rather than matched by URL, and the first version of this matched
+    by URL and failed honestly. The page renders `{VERCEL.ref.source}` rather
+    than the address itself, which is the right way round: an address typed
+    into the page is a second copy of it, and the two would disagree the day
+    a vendor moved their pricing page. So what is asserted is that every
+    priced source is rendered *through* its reference.
+  */
+  const linked = [...page.matchAll(/\.ref\.source/g)].length;
+  assert.ok(
+    linked >= sources.length,
+    `lib/funding/facts.ts prices ${sources.length} sources and the funding page links ${linked}. ` +
+    "A price with no link is a number a reader is asked to take on trust.",
+  );
+
+  assert.match(
+    page,
+    /PRICES_CHECKED|MEASURED_ON/,
+    "the funding page no longer says when its numbers were taken, which is the half that dates.",
+  );
+});
+
+/**
+ * A PUBLIC PAGE THAT READS THE ENVIRONMENT READS IT AS A YES OR A NO.
+ *
+ * `/funding` says which parts of the infrastructure this deployment has
+ * switched on, which it can only know by looking at the environment, and
+ * several of those variables are API keys. The page is public and needs no
+ * session, so a `process.env` read that reached a rendered string would put a
+ * credential in front of anybody with the URL. The bundle scan in CI cannot
+ * see this one: nothing is shipped to the client, the value is simply printed
+ * by the server.
+ *
+ * So the rule is the shape rather than the intent. `lib/funding/` reads the
+ * environment not at all, and the page reads it in exactly one place, through
+ * a helper that can only return a boolean. Two reads is where the second one
+ * stops being a boolean.
+ */
+check("the funding page reads the environment once, and only for a yes or a no", () => {
+  for (const file of sourceFiles(join("lib", "funding"))) {
+    if (file.includes(".test.")) continue;
+    assert.doesNotMatch(
+      code(file),
+      /process\.env/,
+      `${file} reads the environment. lib/funding is a pure layer and the page is the only ` +
+      "place allowed to ask what this deployment has configured.",
+    );
+  }
+
+  const page = code(join("app", "funding", "page.tsx"));
+  const reads = [...page.matchAll(/process\.env/g)];
+  assert.equal(
+    reads.length,
+    1,
+    `app/funding/page.tsx reads process.env ${reads.length} times. One helper returning a ` +
+    "boolean is the whole allowance: this page is public and several of those variables are keys.",
+  );
+  assert.match(
+    page,
+    /Boolean\(process\.env\[[^\]]+\]\?\.trim\(\)\)/,
+    "the funding page's environment read is no longer wrapped in Boolean(), so it can render a key.",
+  );
+});
+
+/**
+ * THE INFRASTRUCTURE LIST NAMES VARIABLES THAT DO SOMETHING.
+ *
+ * `lib/funding/infra.ts` is a catalogue of what this app runs on, and each
+ * entry that can be switched on names the variable that switches it. A name
+ * that nothing in the app reads is worse than no name: the page prints "not
+ * set here" for ever, whoever is running it sets the variable, and nothing
+ * changes.
+ *
+ * Checked against the source rather than against a list, so renaming a
+ * variable fails here rather than in a reader's eyes a year later.
+ */
+check("every variable the funding page names is one the app actually reads", () => {
+  /*
+    The schema is in the haystack because `DATABASE_URL` is read by Prisma's
+    own `env()` rather than by anything in `app/` or `lib/`, and leaving it out
+    made this check fail on the most load-bearing variable in the app.
+  */
+  const everywhere = [
+    ...ALL, join("middleware.ts"), join("next.config.ts"), join("prisma", "schema.prisma"),
+  ].map((f) => read(f)).join("\n");
+
+  const named = [...read(join("lib", "funding", "services.ts")).matchAll(/setBy:\s*"([A-Z_0-9]+)"/g)]
+    .map((m) => m[1]!);
+  assert.ok(named.length >= 4, `only found ${named.length} named variables, so this check stopped looking`);
+
+  for (const key of named) {
+    assert.ok(
+      new RegExp(
+        `process\\.env\\.${key}\\b|process\\.env\\["${key}"\\]|\\benv\\.${key}\\b|env\\("${key}"\\)`,
+      ).test(everywhere),
+      `lib/funding/services.ts says ${key} switches something on, and nothing in the app reads it. ` +
+      "The page would print \"not set here\" whatever anybody configured.",
+    );
+  }
+});
+
+/**
+ * WHAT IT COSTS IS PUBLIC, LIKE WHAT IT STORES.
+ *
+ * `/privacy` and `/terms` are outside the sign-in gate because somebody has to
+ * be able to read what an app holds about them before they hand it anything.
+ * The funding page is the same question pointed at the money, and the readers
+ * most likely to want it (somebody deciding whether to fund this, and somebody
+ * deciding whether to trust a free app) have no account here at all.
+ */
+check("the funding page is readable without signing in", () => {
+  const middleware = code("middleware.ts");
+  assert.match(
+    middleware,
+    /path\.startsWith\("\/funding"\)/,
+    "middleware.ts no longer lets /funding through, so the page about what this costs is " +
+    "behind the sign-in it exists to explain.",
+  );
+});
+
+/**
+ * THE BILL IS GENERATED FROM THE REGISTRY, NEVER ASSEMBLED BESIDE IT.
+ *
+ * What this app runs on, what a reader is told it runs on, and what appears on
+ * the bill used to be three lists: a catalogue in one module, a set of
+ * hand-written line functions in the cost model, and whatever the page had
+ * been told about. Adding a service meant remembering all three, and the one
+ * certain to go stale is the bill, because nothing fails when a line is
+ * missing from a total. It simply comes out lower than the truth, which is the
+ * worst way for a page like this to be wrong.
+ *
+ * So `lib/funding/services.ts` is the list, and everything downstream maps
+ * over it. This is what makes adding a new tool one edit, and it is exactly
+ * the property that decays the first time somebody finds it quicker to special
+ * case one service in the page.
+ */
+check("the funding bill is generated from the registry rather than a list beside it", () => {
+  const model = code(join("lib", "funding", "model.ts"));
+  assert.match(
+    model,
+    /SERVICES\.map\(/,
+    "lib/funding/model.ts no longer maps over the registry, so a service added to it " +
+    "would not reach the bill.",
+  );
+
+  /*
+    And nothing downstream names a service. Anchored on the ids rather than on
+    the vendor names, because the page is allowed to *write about* Vercel in a
+    sentence and is not allowed to single it out in the arithmetic.
+  */
+  const ids = [...read(join("lib", "funding", "services.ts")).matchAll(/^\s{4}id: "([a-z]+)",$/gm)]
+    .map((m) => m[1]!);
+  assert.ok(ids.length >= 6, `only found ${ids.length} services, so this check stopped looking`);
+
+  for (const file of [join("app", "funding", "page.tsx"), join("app", "funding", "CostExplorer.tsx")]) {
+    const source = code(file);
+    assert.match(
+      source,
+      /\.map\(/,
+      `${file} draws no list, so it cannot be reading the registry.`,
+    );
+    for (const id of ids) {
+      assert.doesNotMatch(
+        source,
+        new RegExp(`["']${id}["']`),
+        `${file} singles out the "${id}" service by name. Everything on this page is drawn ` +
+        "from lib/funding/services.ts, so that a tool added there appears without touching a screen.",
+      );
+    }
+  }
+});
+
+/**
+ * NOTHING THIS APP RUNS ON IS COUNTED AS FREE.
+ *
+ * The first version of the funding page modelled a free tier for the host and
+ * one for the database and picked between them by traffic. It described a
+ * deployment nobody runs: a free plan pauses when nobody is on it, forbids
+ * commercial use, and hands out an allowance that disappears the week somebody
+ * launches. What it produced was a page that said this app costs nothing to
+ * run at a hundred learners, which was cheerful and wrong.
+ *
+ * The rule now is that a service is charged, or it is inside another charge,
+ * or somebody other than the operator pays for it and the page says who. There
+ * is no fourth answer, and in particular a service that sends no invoice is
+ * priced at what the same thing costs elsewhere rather than at nothing.
+ *
+ * Asserted on the shape of the tables, because that is where a free tier comes
+ * back: somebody adds a cheaper plan object beside the paid one and a branch to
+ * pick it.
+ */
+check("the funding page keeps no free tier for anything it is billed for", () => {
+  const facts = code(join("lib", "funding", "facts.ts"));
+
+  for (const [pattern, what] of [
+    [/\bhobby\s*:/i, "a Hobby tier"],
+    [/\bfree\s*:\s*\{/i, "a free tier"],
+    [/name:\s*"(Free|Hobby)"/i, "a plan named Free or Hobby"],
+  ] as const) {
+    assert.doesNotMatch(
+      facts,
+      pattern,
+      `lib/funding/facts.ts has grown ${what}. Nothing this app runs on is modelled as free: ` +
+      "a plan that pauses, forbids commercial use, or hands out an allowance is not what " +
+      "anybody hosting this for other people is on.",
+    );
+  }
+
+  /*
+    And the cost shape itself has no way to say "free". Four answers, and the
+    ones that read as nothing have to say who is paying or who is giving.
+  */
+  const types = code(join("lib", "funding", "types.ts"));
+  for (const [shape, what] of [
+    [/kind: "charged"/, "a charged shape"],
+    [/kind: "notOurs"/, "a way to say who else pays"],
+    [/kind: "given"/, "a way to credit what is given"],
+  ] as const) {
+    assert.match(types, shape, `the funding cost type no longer has ${what}`);
+  }
+  assert.doesNotMatch(
+    types,
+    /kind: "free"/,
+    "the funding cost type has grown a free shape, which is the thing this page exists to avoid.",
+  );
+});
+
+/**
+ * WHAT IS GIVEN IS CREDITED, AND NEVER BILLED.
+ *
+ * Ekilex, Wiktionary and TartuNLP are public institutions that have decided
+ * this work should be available, and they ask for nothing. An earlier version
+ * of this page priced them at what the same thing costs commercially and added
+ * it to the total, which turns a thing to be grateful for into a line on an
+ * invoice nobody sent.
+ *
+ * So a `given` service names what it gives and is kept out of every total.
+ * Where there is a commercial equivalent the page may say what buying it would
+ * come to, and that figure lives in `wouldCostUsd`, which no total reads. The
+ * two halves of the rule pull in opposite directions, which is why both are
+ * asserted: a charged service may never be free, and a given one may never be
+ * charged for.
+ */
+check("what is given to this app is credited rather than added to the bill", () => {
+  const services = code(join("lib", "funding", "services.ts"));
+
+  /*
+    Anchored on the shape of a returned cost: a `given` branch that also
+    carried a `usd` would be back to charging for the gift, and it is the exact
+    edit somebody makes when they want the total to look complete.
+  */
+  for (const match of services.matchAll(/kind: "given",([\s\S]{0,600}?)\n      \};/g)) {
+    const body = match[1]!;
+    assert.doesNotMatch(
+      body,
+      /\busd:/,
+      "a given service in lib/funding/services.ts carries a `usd`. Public infrastructure that " +
+      "asks for nothing is credited, not billed: the figure for what it would cost belongs in " +
+      "`wouldCostUsd`, which no total reads.",
+    );
+    assert.match(
+      body,
+      /gives:/,
+      "a given service names no gift. Crediting is the whole of what this shape is for.",
+    );
+  }
+
+  const model = code(join("lib", "funding", "model.ts"));
+  assert.match(
+    model,
+    /creditedUsd/,
+    "lib/funding/model.ts no longer counts what is given, so the page cannot show the size of it.",
+  );
+  /*
+    The one line that would undo all of it: adding the credit into the total.
+  */
+  assert.doesNotMatch(
+    model,
+    /totalUsd \+?= [^;\n]*creditedUsd|creditedUsd[^;\n]*\+ totalUsd/,
+    "lib/funding/model.ts adds what is given into the total somebody is billed. It is credit, " +
+    "not a charge.",
+  );
+});
+
+/**
  * The layers that are pure are still pure, which nothing was checking.
  *
  * CLAUDE.md names the directories that "stay free of React, Next.js and
@@ -4748,9 +5097,8 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
     "assessment", "estonian", "games", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "questions", "ux", "random", "copy", "research",
-    "assessment", "estonian", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "questions", "ux", "random", "copy", "research", "scenes",
+    "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
+    "scenes",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],

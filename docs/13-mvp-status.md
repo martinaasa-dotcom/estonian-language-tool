@@ -1694,3 +1694,59 @@ it: Ekilex 213895 is the comparative of `hea`. Directions take the adverbs anywa
 6,083 words in the seed, 1,404 of them the course harvest with attested sentences, Ekilex CEFR
 levels and, for most, the Institute's Russian and Ukrainian. More words come from the two live
 paths and never from a model.
+
+## 26. The twentieth pass: what it costs, said out loud
+
+A page at `/funding` saying what this app runs on, what each piece costs, who is paying for the
+copy you are reading, and what money would change. Public, like `/privacy` and `/terms`, because
+the readers most likely to want it have no account here.
+
+### One list, so a new tool cannot go uncosted
+
+`lib/funding/services.ts` is every piece of infrastructure, each carrying what it is, who runs it,
+what a learner loses without it, the variable that switches it on, where its price came from, and
+a function that says what it costs at a given size. `model.ts` maps over it; the page, the chart
+and the ladder read it. Adding a tool is one entry.
+
+That started as three lists, which is the fault worth recording: a catalogue in one module,
+hand-written line functions in the cost model, and whatever the page had been told about. Nothing
+fails when a line is missing from a total. It just comes out lower than the truth.
+
+### Nothing anybody bills for is counted as free, and what is given is credited
+
+The first version modelled a free tier for the host and one for the database and picked between
+them by traffic. It described a deployment nobody runs and produced a page saying this app costs
+nothing at a hundred learners. Every vendor is now on the plan a real deployment is on.
+
+The second version overcorrected: it priced Ekilex, Wiktionary and TartuNLP at what the same thing
+costs commercially and added it to the total. They are public institutions that decided this work
+should be available and ask for nothing, and a shadow price turns that into a line on an invoice
+nobody sent. A service is now charged, or inside another charge, or somebody else's to pay, or
+given, and a given one is named with what it provides and its licence and appears in no total.
+Where a commercial equivalent exists the page says what buying it would come to, as the size of the
+gift rather than a charge.
+
+Two lines were missing from the bill: transactional mail, and the tooling that writes the app.
+
+### What the model found
+
+- The floor is about $300 a month before a single learner arrives, and most of it does not move
+  when they do.
+- Speech is the fastest-growing thing on the page: at a hundred thousand learners, buying what
+  TartuNLP gives would come to more than every billed line put together.
+- What is given outgrows what is paid for at that size, which is worth knowing about a project this
+  small.
+- The per-learner curve was asserted three times before it was right. The first version claimed a
+  smooth fall, failed twice, and both failures were the model telling the truth.
+
+### Measured
+
+- 26 MB for a freshly seeded database, of which 18 MB is 6,050 entries and 34,554 forms with their
+  indexes; 300 bytes for a review row and 352 for a card, over 80,000 synthetic rows; 21 KB of
+  compressed HTML for a median page and 102 KB of shared JavaScript once per build; about 35
+  requests behind a page view, of which 11 to 15 reach the server on a warm cache; 188 KB for a
+  2.1 second spoken phrase, which is 88 KB a second of uncompressed 32-bit audio.
+- 184 invariants, eight of them new and every one made to fail before it was left passing. 1,634
+  unit tests. The containment suite with `/funding` at three widths and in the dark, the
+  accessibility suite with axe clean on it in both themes, and the design suite reporting no
+  contrast failures with the page in its sweep.

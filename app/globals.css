@@ -601,6 +601,7 @@
   input[type="checkbox"],
   input[type="radio"],
   input[type="file"],
+  input[type="range"],
   label:has(> input[type="checkbox"]),
   label:has(> input[type="radio"]) {
     cursor: pointer;
@@ -905,6 +906,87 @@
     scrollbar-width: thin;
     scrollbar-color: var(--rule) transparent;
     touch-action: pan-y;
+  }
+
+  /*
+    THE ONE SLIDER IN THE APP, AND IT IS ON THE FUNDING PAGE.
+
+    Nothing else here asks for a continuous number: a daily goal is a set of
+    chips, a level is a set of chips, and that is right, because those are
+    answers with names. What a hosting bill does at ten thousand learners is
+    not an answer with a name, it is a curve, and the only honest control for a
+    curve is one you can sweep.
+
+    A browser draws a range input differently in every engine and none of the
+    defaults belong to this palette, so all three parts are drawn here: the
+    track, the thumb, and the box around them. The box is the interesting one.
+    It is 44px tall while the track is 8px, so the thumb clears the coarse
+    pointer floor without an 8px line turning into a 44px slab across the card.
+    The floor rule one section up lists elements rather than inputs, so a range
+    would have slipped past it: this is that rule met deliberately rather than
+    inherited.
+
+    `accent-color` alone would have been a shorter answer and is the wrong one,
+    since it colours the thumb and leaves the track the browser's grey, which
+    is the one colour in the app that means nothing.
+  */
+  .range {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2.75rem;
+    background: transparent;
+  }
+
+  .range::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--raised);
+    border: 1px solid var(--rule);
+  }
+
+  .range::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--raised);
+    border: 1px solid var(--rule);
+  }
+
+  /*
+    The ring round the thumb is `--surface` rather than nothing, so the thumb
+    keeps its edge where it sits on top of the filled part of the track. Its
+    top margin centres it on the track: half the track's height less half the
+    thumb's, which is the arithmetic every engine but Firefox makes you do.
+  */
+  .range::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    margin-top: -8px;
+    border-radius: 999px;
+    background: var(--accent);
+    border: 3px solid var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .range::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--accent);
+    border: 3px solid var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .range:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
+  }
+
+  .range:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--accent-deep);
+    outline-offset: 2px;
   }
 
   .key-cap { background: var(--key-cap); }
