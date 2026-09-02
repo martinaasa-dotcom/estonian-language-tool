@@ -68,7 +68,7 @@ export async function GET() {
     learner wrote, which no log reconstructs and no other table keeps.
   */
   const [
-    lexemes, cards, reviews, tasks, scans,
+    lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
     examAttempts, classrooms, classroomMembers, suggestions,
   ] = await Promise.all([
@@ -76,6 +76,9 @@ export async function GET() {
     prisma.card.findMany({ where: { ownerId } }),
     prisma.review.findMany({ where: { ownerId }, orderBy: { reviewedAt: "asc" } }),
     prisma.task.findMany({ where: { ownerId } }),
+    // Their own calendar: class times, study slots, exam dates. Typed by hand
+    // and derivable from nothing, which is the test a backup row has to pass.
+    prisma.studyEvent.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
     // The word lists off photographed pages. The pictures were never kept, so
     // there is nothing here but what the learner confirmed.
     prisma.scan.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
@@ -111,9 +114,9 @@ export async function GET() {
       assessments: assessments.length, stars: stars.length,
       achievements: achievements.length, examAttempts: examAttempts.length,
       classrooms: classrooms.length, classroomMembers: classroomMembers.length,
-      suggestions: suggestions.length,
+      suggestions: suggestions.length, studyEvents: studyEvents.length,
     },
-    lexemes, cards, reviews, tasks, scans,
+    lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
     examAttempts, classrooms, classroomMembers, suggestions,
   };

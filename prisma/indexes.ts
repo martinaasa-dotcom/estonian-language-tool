@@ -42,6 +42,18 @@ const INDEXES: { name: string; sql: string }[] = [
           WHERE "formType" IN ('GEN_SG', 'GEN_PL')`,
   },
   {
+    /*
+      The same, on the 155,000-word headword list. Its primary key is the lemma
+      and would serve an exact match on its own; what it will not serve is
+      `LIKE 'uud%'` under a non-C collation, and the spelling suggestion is
+      entirely prefix queries. Folded, because a learner who cannot type õ
+      should still be told their word exists.
+    */
+    name: "KnownWord_lemma_folded_idx",
+    sql: `CREATE INDEX IF NOT EXISTS "KnownWord_lemma_folded_idx"
+          ON "KnownWord" (translate(lower(lemma), '${FROM}', '${TO}') text_pattern_ops)`,
+  },
+  {
     // The stored first persons a written verb form could be derived from.
     // Partial for the reason the stems index is: one form type, tested one way.
     name: "Form_pres1sg_folded_idx",

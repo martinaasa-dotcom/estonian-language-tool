@@ -16,6 +16,8 @@
  * form that already came from the dictionary (ADR-005 stays intact).
  */
 
+import { FOLD, fold } from "@/lib/estonian/fold";
+
 export type Verdict = "correct" | "diacritics" | "typo" | "wrong";
 
 export interface AnswerCheck {
@@ -29,14 +31,6 @@ export interface AnswerCheck {
 }
 
 /** Estonian letters that are their own letter, not an accented Latin one. */
-const FOLD: Record<string, string> = {
-  õ: "o", ä: "a", ö: "o", ü: "u", š: "s", ž: "z",
-};
-
-function fold(text: string): string {
-  return [...text].map((ch) => FOLD[ch] ?? ch).join("");
-}
-
 /** Lowercase, collapse whitespace, drop surrounding punctuation and articles. */
 function normalise(text: string, language: "et" | "en"): string {
   let s = text

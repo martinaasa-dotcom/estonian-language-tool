@@ -23,8 +23,9 @@ page.on("console", (m) => {
   if (m.type() === "error" && !m.text().includes("ERR_INTERNET_DISCONNECTED")) errors.push(m.text());
 });
 
-// Floor: 23, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("Practice modes", { floor: 23 });
+// Floor: 29, measured in the state CI seeds. A thinner database reads as short.
+// 23 before Sõnad added six, the crossword six more and the game of the day two.
+const { check, absent, done } = suite("Practice modes", { floor: 38 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -239,6 +240,115 @@ for (let i = 0; i < 20 && stillQueued !== 0; i++) {
 }
 check("the queue is sent once the connection is back", stillQueued === 0, `${stillQueued} left`);
 
+// 6b — Sõnad, the one game with a board rather than a queue
+/*
+  Driven with the on-screen keys and not the keyboard, and that is a fact about
+  the platform rather than a shortcut. Playwright's `type()` inserts a
+  non-ASCII character as text rather than as a key press, so a guess with ü in
+  it never reaches the page's `keydown` handler; a real Estonian keyboard sends
+  it as a key and does. Tapping the letters is what a learner without those
+  keys does anyway, which is the whole reason that card of keys is on the
+  screen, so it is the path worth covering.
+*/
+await page.goto(`${B}/sonad`, { waitUntil: "networkidle" });
+await page.evaluate(() => { try { localStorage.clear(); } catch { /* blocked */ } });
+await page.reload({ waitUntil: "networkidle" });
+
+const board = page.locator('[lang="et"].rounded-full');
+check("Sõnad draws six rows of six", (await board.count()) === 36);
+
+async function tapWord(word) {
+  for (const letter of [...word]) await page.getByLabel(letter, { exact: true }).first().click();
+}
+
+// A word the dictionary knows, so the board takes it and marks it.
+await tapWord("kastan");
+await page.getByRole("button", { name: "Guess" }).click();
+await page.waitForTimeout(600);
+const marked = await board.evaluateAll((els) =>
+  els.filter((e) => e.textContent.trim()).map((e) => getComputedStyle(e).backgroundColor));
+check("a guess lands and every circle in it is marked", marked.length === 6);
+check("the marks are not all the same",
+  new Set(marked).size > 1 || marked.every((c) => c === marked[0]));
+
+// The letters say what they are in words, because a fill and a ring are both
+// visual and a colour may not be the only thing carrying a distinction.
+const spoken = await board.first().getAttribute("aria-label");
+check("a marked circle says what it is in words", /in place|in the word|not in the word/.test(spoken ?? ""));
+
+// And a string of letters that is not a word is refused rather than spent.
+await tapWord("zzzzzz");
+await page.getByRole("button", { name: "Guess" }).click();
+await page.waitForTimeout(300);
+check("a non-word is refused", (await page.getByText(/Not a word/).count()) > 0);
+
+await page.reload({ waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+const restored = await board.evaluateAll((els) =>
+  els.filter((e) => e.textContent.trim()).map((e) => e.textContent.trim()).join(""));
+check("the board comes back after a reload", restored === "kastan");
+
+// 6c — The daily crossword
+await page.goto(`${B}/crossword`, { waitUntil: "networkidle" });
+await page.evaluate(() => { try { localStorage.clear(); } catch { /* blocked */ } });
+await page.reload({ waitUntil: "networkidle" });
+
+const grid = page.locator('input[aria-label^="Row "]');
+const cellCount = await grid.count();
+check("the crossword draws a grid", cellCount > 10);
+check("it has clues in both directions",
+  (await page.getByText("Across", { exact: true }).count()) > 0
+  && (await page.getByText("Down", { exact: true }).count()) > 0);
+
+// A wrong letter, then Check, which has to say so on the cell rather than
+// somewhere else: the grid is where the mistake is.
+await grid.first().click();
+await page.keyboard.type("q");
+const beforeCheck = await grid.first().evaluate((el) => getComputedStyle(el).backgroundColor);
+await page.getByRole("button", { name: "Check" }).click();
+await page.waitForTimeout(300);
+const afterCheck = await grid.evaluateAll((els) =>
+  els.map((e) => getComputedStyle(e).backgroundColor));
+check("Check marks a wrong letter on the cell", new Set(afterCheck).size >= 2 && beforeCheck !== undefined);
+
+// The letter bar is the only way to write õ on a keyboard that has no key for
+// it, which is most of them, so it has to be on this screen.
+check("the Estonian letter bar is on the grid",
+  (await page.locator('button[aria-label^="Insert "]').count()) === 6);
+
+await page.getByRole("button", { name: "Show this one" }).click();
+await page.waitForTimeout(300);
+const shown = await grid.evaluateAll((els) => els.filter((e) => e.value).length);
+check("Show fills the clue that is selected", shown >= 3);
+
+await page.reload({ waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+check("the grid comes back after a reload",
+  (await grid.evaluateAll((els) => els.filter((e) => e.value).length)) === shown);
+
+// 6d — The game of the day, on Today
+/*
+  Which game it is depends on what day the suite runs, so nothing here names
+  one: what is checked is that the card points at a round the app has and says
+  what is on tomorrow, which is the pair that makes it a week rather than a
+  tile. `lib/ux/weekGames.test.ts` is what holds every href to a real mode.
+*/
+await page.goto(`${B}/`, { waitUntil: "networkidle" });
+const featured = page.getByText("Today's game", { exact: false });
+if ((await featured.count()) === 0) {
+  // Sunday: the quest already has its own richer card on this page, so the
+  // game card stands down rather than drawing the same round twice.
+  absent(2, "today's featured game is the quest, which has its own card");
+} else {
+  const inCard = page.locator("a").filter({ hasNotText: "Every mode" });
+  const hrefs = await inCard.evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+  const modes = ["/sonad", "/crossword", "/review/emoji", "/review/target", "/review/match", "/review/sprint"];
+  check("the game of the day links to a round this app has",
+    modes.some((m) => hrefs.includes(m)));
+  check("and says what is on tomorrow",
+    (await page.getByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) is /).count()) > 0);
+}
+
 // 7 — Command palette
 await page.goto(`${B}/`, { waitUntil: "networkidle" });
 await page.keyboard.press("Control+k");
@@ -248,6 +358,17 @@ await page.getByLabel("Search commands and words").fill("tuba");
 await page.waitForTimeout(200);
 check("the palette offers a dictionary lookup for anything it doesn't know",
   (await page.getByText(/Look up/).count()) > 0);
+
+/*
+  And it finds a place whose name a UK keyboard cannot type, which is the
+  fault this caught: `Sõnad` was matched with a plain `includes`, so typing
+  `sonad` found nothing and the one place in the app with an Estonian name was
+  unreachable from the box that promises to go anywhere.
+*/
+await page.getByLabel("Search commands and words").fill("sonad");
+await page.waitForTimeout(250);
+check("and finds Sõnad typed without the diacritic",
+  (await page.getByText("Sõnad", { exact: false }).count()) > 0);
 await page.keyboard.press("Escape");
 
 // 8 — The app is installable

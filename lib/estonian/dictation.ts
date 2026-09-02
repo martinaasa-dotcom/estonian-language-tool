@@ -1,5 +1,3 @@
-import { droppedDiacritics, editDistance } from "./answer";
-
 /**
  * Marking a dictation.
  *
@@ -21,6 +19,9 @@ import { droppedDiacritics, editDistance } from "./answer";
  * Nothing here writes Estonian. It compares a typed string against a sentence
  * that came from Ekilex (ADR-005).
  */
+
+import { droppedDiacritics, editDistance } from "./answer";
+import { fold } from "@/lib/estonian/fold";
 
 export type WordStatus =
   /** Typed exactly, ignoring case and punctuation. */
@@ -57,12 +58,6 @@ export interface DictationResult {
   suggestedRating: 1 | 2 | 3;
   /** A one-line summary, ready to display. */
   note: string;
-}
-
-const FOLD: Record<string, string> = { õ: "o", ä: "a", ö: "o", ü: "u", š: "s", ž: "z" };
-
-function fold(text: string): string {
-  return [...text].map((ch) => FOLD[ch] ?? ch).join("");
 }
 
 /** Lowercase and strip the punctuation a listener cannot hear. */

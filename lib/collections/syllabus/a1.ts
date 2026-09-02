@@ -741,4 +741,127 @@ export const A1 = [
       ["rahvus", "nationality"],
     ],
   }),
+
+  /*
+    THE WORDS BETWEEN THE WORDS, PART TWO.
+
+    Six units were appended here for the words every sentence is made of, and
+    a frequency count over a large corpus of film and television subtitles
+    said the job was half done: of the four hundred commonest words in
+    Estonian, a hundred and twenty-five were ones the dictionary could not
+    vouch for in any form, and the top of that list is not exotic. It is `ja`,
+    `et`, `aga`, `jah`, `ei`, `ka`, `siis`, `nii` and `väga`: the words that
+    hold a sentence together, which a learner meets in their first hour and
+    could not look up.
+
+    They are labelled ADVERB for the reason `scripts/harvest-ekilex.ts`
+    already gives about the connectives it had: an Estonian adverb does not
+    inflect, so demanding a set of forms for one would drop every connective
+    in the course, and existing in Ekilex is the whole check that matters.
+    The label is a bucket saying which card types a word can take rather than
+    a claim that `ja` is an adverb, which is the same latitude `kas` has been
+    taking in the question words unit since it was written.
+
+    Three units rather than one, because sixty words in a row is a list
+    nobody works through, and because these are three different jobs: joining
+    two clauses, answering somebody, and saying how much.
+  */
+  unit({
+    id: "sidesonad",
+    title: "Sidesõnad",
+    subtitle: "Joining two thoughts",
+    icon: "Link",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Join two clauses, give a reason, and set one thing against another.",
+    blurb: "Estonian puts a comma before et, sest, kui and kes, always, even where English would not.",
+    grammar: ["word-order"],
+    cardTypes: ["RECOGNITION", "PRODUCTION"],
+    requires: ["tervitused"],
+    words: [
+      ["ja", "and", "ADVERB"],
+      ["ning", "and (joining the last of a list)", "ADVERB"],
+      ["aga", "but", "ADVERB"],
+      ["vaid", "but rather", "ADVERB"],
+      ["et", "that", "ADVERB"],
+      ["sest", "because", "ADVERB"],
+      ["kuna", "since, because", "ADVERB"],
+      ["ega", "nor", "ADVERB"],
+      ["ehk", "or, that is to say", "ADVERB"],
+      ["kuni", "until", "ADVERB"],
+      ["nagu", "like, as", "ADVERB"],
+      ["sellepärast", "for that reason", "ADVERB"],
+      ["seega", "so, therefore", "ADVERB"],
+      ["siis", "then", "ADVERB"],
+      ["nii", "so, like this", "ADVERB"],
+      ["mitte", "not", "ADVERB"],
+    ],
+  }),
+
+  unit({
+    id: "vastused",
+    title: "Vastused",
+    subtitle: "Yes, no and everything between",
+    icon: "MessageCircle",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Answer a question, agree, disagree, and say how sure you are.",
+    blurb: "Estonian answers a negative question with jah for yes, where English hesitates over which one it means.",
+    grammar: ["politeness"],
+    cardTypes: ["RECOGNITION", "PRODUCTION"],
+    requires: ["tervitused"],
+    words: [
+      ["jah", "yes", "ADVERB"],
+      ["ei", "no, not", "ADVERB"],
+      ["muidugi", "of course", "ADVERB"],
+      ["kindlasti", "definitely", "ADVERB"],
+      ["vist", "probably, I think", "ADVERB"],
+      ["äkki", "maybe, suddenly", "ADVERB"],
+      ["küll", "indeed, do (an emphasising word)", "ADVERB"],
+      ["eks", "right? (asking for agreement)", "ADVERB"],
+      ["tõesti", "really", "ADVERB"],
+      ["tegelikult", "actually", "ADVERB"],
+      ["õige", "right, correct", "ADVERB"],
+      ["tere", "hello", "ADVERB"],
+      ["aitäh", "thank you", "ADVERB"],
+    ],
+  }),
+
+  unit({
+    id: "maaramine",
+    title: "Kui palju",
+    subtitle: "How much, how often, how far",
+    icon: "Gauge",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Say how much of something there is, and how strongly you mean it.",
+    blurb: "These are the words that change a sentence without changing a single ending.",
+    grammar: ["word-order"],
+    cardTypes: ["RECOGNITION", "PRODUCTION"],
+    requires: ["tervitused"],
+    words: [
+      ["ka", "also, too", "ADVERB"],
+      ["ju", "you know (a softening word)", "ADVERB"],
+      ["just", "just, exactly", "ADVERB"],
+      ["väga", "very", "ADVERB"],
+      ["hästi", "well", "ADVERB"],
+      ["ainult", "only", "ADVERB"],
+      ["enam", "any more", "ADVERB"],
+      ["isegi", "even", "ADVERB"],
+      ["ikka", "still, always", "ADVERB"],
+      ["rohkem", "more", "ADVERB"],
+      ["liiga", "too (much)", "ADVERB"],
+      ["päris", "quite, fairly", "ADVERB"],
+      ["natuke", "a little", "ADVERB"],
+      ["üldse", "at all", "ADVERB"],
+      ["eriti", "especially", "ADVERB"],
+      ["sama", "the same", "ADVERB"],
+      ["uuesti", "again", "ADVERB"],
+      ["varem", "earlier", "ADVERB"],
+      ["kaua", "for a long time", "ADVERB"],
+      ["siin", "here", "ADVERB"],
+      ["siit", "from here", "ADVERB"],
+      ["sinna", "to there", "ADVERB"],
+    ],
+  }),
 ] as const;

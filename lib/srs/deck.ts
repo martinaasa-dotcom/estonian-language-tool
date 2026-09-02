@@ -228,15 +228,46 @@ export interface DeckResult {
  * of it costs nothing and loses no scheduling. That was true of the per-word
  * version and stays true here; what changed is only how many round trips it
  * takes to be true.
+ */
+export async function addUnitsToDeck(
+  ownerId: string, unitIds: readonly string[], source = "DICTIONARY",
+): Promise<DeckResult> {
+  return addPlanToDeck(ownerId, planUnits(unitIds), source);
+}
+
+/**
+ * What a bare list of words asks for, for a caller that is not a unit.
+ *
+ * The frequency page is the first of those: its hundred commonest verbs are
+ * not a unit of the course and never will be, since the course teaches in
+ * themes and a corpus counts. Recognition and production and no more, because
+ * the caller is offering a hundred words at once and a case card apiece would
+ * be eight hundred cards nobody asked for.
+ *
+ * Deduplicated on the way in, so a caller handing over the same lemma twice
+ * builds one word's cards. Pure, like `planUnits`.
+ */
+export function planLemmas(lemmas: readonly string[], types: readonly CardType[]): DeckPlan {
+  const byLemma = new Map<string, CardType[]>();
+  const order: string[] = [];
+  for (const lemma of lemmas) {
+    if (byLemma.has(lemma)) continue;
+    byLemma.set(lemma, [...types]);
+    order.push(lemma);
+  }
+  return { lemmas: order, types: byLemma };
+}
+
+/**
+ * The body of both, once the plan is settled.
  *
  * The owner is a parameter, so this lives here rather than in `app/actions.ts`:
  * every export in a `"use server"` file is a public endpoint, and one taking an
  * owner id would let a learner write cards into somebody else's deck.
  */
-export async function addUnitsToDeck(
-  ownerId: string, unitIds: readonly string[], source = "DICTIONARY",
+export async function addPlanToDeck(
+  ownerId: string, plan: DeckPlan, source: string,
 ): Promise<DeckResult> {
-  const plan = planUnits(unitIds);
   if (plan.lemmas.length === 0) return { added: 0, words: 0 };
 
   // Outside the lock on purpose: the dictionary is shared reference data, so

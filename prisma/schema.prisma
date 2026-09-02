@@ -1,5 +1,6 @@
 // Lean MVP schema. Deliberately smaller than docs/04-data-model.md:
-// calendar, decks, audio rows and the usage ledger are cut for the MVP.
+// decks and audio rows are cut. The calendar is `StudyEvent` below, added when
+// a learner asked to keep their class times beside their homework.
 // Kept Postgres-portable (no SQLite-specific types), which is what made this
 // datasource swap possible — see docs/03-architecture.md ADR-002 and ADR-011.
 
@@ -77,6 +78,23 @@ model Lexeme {
   @@unique([lemma, pos])
   @@index([lemma])
   @@index([cefr])
+}
+
+/// Every Estonian headword there is, so the dictionary knows what exists.
+///
+/// A word and nothing else: no forms, no gloss, no level. `Lexeme` is the
+/// dictionary and holds 5,363 entries a learner can actually study; this holds
+/// 154,995 and answers one question, "is this an Estonian word", which is the
+/// question the search screen could not answer before. A miss that is a real
+/// word says so and fetches it; a miss that is not gets a spelling suggestion
+/// instead of a shrug, and a typo stops costing Ekilex two requests.
+///
+/// Reference data like `Lexeme`, shared by everybody and owned by nobody, so
+/// it is not in a backup and not in an erasure: there is nothing personal in
+/// a list of Estonian words. Built by `scripts/build-wordlist.ts` in
+/// thirty-two requests, one per initial letter.
+model KnownWord {
+  lemma String @id
 }
 
 /// A user bookmarking a dictionary word. Per-user, unlike the word itself.
@@ -203,6 +221,37 @@ model Task {
   createdAt   DateTime  @default(now())
 
   @@index([ownerId, completed, dueAt])
+}
+
+/// A learner's own Estonian calendar: a class, a study slot, an exam date.
+///
+/// Separate from `Task`, which is a to-do with a due date and is also what a
+/// teacher assigns. An event happens *at* a time and often every week, and
+/// overloading one model with both would mean every reader of either asking
+/// which kind it had.
+///
+/// THE TIME IS MINUTES FROM MIDNIGHT, NOT A TIMESTAMP. A class at 18:00 every
+/// Monday is at 18:00 in the learner's own zone in March and in November, and a
+/// stored instant is not: it moves an hour when the clocks change. So a
+/// repeating event stores a wall-clock minute and the weekdays it falls on, and
+/// the learner's zone (`SETTING_KEYS.timeZone`) says what that means.
+model StudyEvent {
+  id        String   @id @default(uuid())
+  ownerId   String
+  title     String
+  notes     String?
+  /// CLASS STUDY EXAM OTHER. What it is, for the colour and the icon.
+  kind      String   @default("CLASS")
+  /// Minutes from local midnight, 0 to 1439.
+  startMinute Int
+  durationMinutes Int @default(60)
+  /// Weekdays it repeats on, 0 Sunday to 6 Saturday. Empty for a one-off.
+  weekdays  Int[]    @default([])
+  /// A one-off's day, as `YYYY-MM-DD` in the learner's own zone. Null when it repeats.
+  onDate    String?
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
 }
 
 model Message {

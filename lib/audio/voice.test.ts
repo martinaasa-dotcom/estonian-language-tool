@@ -26,10 +26,21 @@ describe("the voice allowlist", () => {
 });
 
 describe("the two switches", () => {
-  it("read a missing answer as on, which is what everybody had before the question existed", () => {
-    expect(autoplayFrom(undefined)).toBe("on");
-    expect(autoplayFrom("off")).toBe("off");
-    expect(autoplayFrom("anything")).toBe("on");
+  it("reads a missing autoplay answer as off, so nothing speaks unasked", () => {
+    expect(autoplayFrom(undefined)).toBe("off");
+    expect(autoplayFrom(null)).toBe("off");
+    expect(autoplayFrom("on")).toBe("on");
+  });
+
+  it("reads an unrecognised autoplay value as the default rather than as on", () => {
+    // The flip to a silent default is only real if it reaches a stored row
+    // nobody recognises. Written as `value === "off" ? "off" : "on"`, this
+    // would answer "on" here and the default would apply to nobody.
+    expect(autoplayFrom("anything")).toBe("off");
+    expect(autoplayFrom("")).toBe("off");
+  });
+
+  it("still reads a missing feedback answer as on, which is what everybody had", () => {
     expect(feedbackSoundsFrom(null)).toBe("on");
     expect(feedbackSoundsFrom("off")).toBe("off");
   });

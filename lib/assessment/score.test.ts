@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { confidenceFrom, decisiveItems, gradeChoice, gradeDictation, gradeWrite, levelFrom, placement } from "./score";
+import { confidenceFrom, decisiveItems, gradeChoice, gradeDictation, gradeWrite, levelFrom, overallFrom, placement } from "./score";
 import type { Band, ChoiceItem, DictationItem, Item, Response, WriteItem } from "./types";
 
 const choice = (over: Partial<ChoiceItem> = {}): ChoiceItem => ({
@@ -197,14 +197,20 @@ describe("placement", () => {
     { id: "s1", kind: "speak", skill: "speaking", band: "A1", lemma: "tuba", question: "Say it.", et: "tuba", translation: "room", isSentence: false, source: "dictionary" },
   ];
 
-  it("takes the overall level from the weakest measured skill", () => {
+  it("averages the measured skills rather than taking the weakest", () => {
+    /*
+      Reading A2, listening A1, writing pre-A1. The old rule read that as
+      pre-A1, on the strength of one skill, and reported a level below the
+      band two of the three had cleared. The mean of -1, 0 and 1 is 0, which
+      is A1.
+    */
     const result = placement(items, [
       answer({ itemId: "r1", band: "A1", credit: 1 }),
       answer({ itemId: "r2", band: "A2", credit: 1 }),
       answer({ itemId: "l1", skill: "listening", band: "A1", credit: 1 }),
       answer({ itemId: "w1", skill: "writing", band: "A1", credit: 0 }),
     ]);
-    expect(result.overall).toBe("pre-A1");
+    expect(result.overall).toBe("A1");
     expect(result.ceiling).toBe("A2");
   });
 
@@ -229,5 +235,49 @@ describe("placement", () => {
   it("gets less sure the fewer questions were answered", () => {
     const few = placement(items, [answer({ itemId: "r1", credit: 1 })]);
     expect(few.confidence).toBe("rough");
+  });
+});
+
+describe("overallFrom", () => {
+  it("reads the sitting that produced this rule as B1 rather than below A1", () => {
+    /*
+      The real result that got the rule changed: reading B2, listening A1,
+      writing B2. The screen said "below A1" to somebody who reads and writes
+      at B2, which is three bands under any honest reading of them. The mean of
+      3, 0 and 3 is 2, which is B1.
+    */
+    expect(overallFrom(["B2", "A1", "B2"])).toEqual({ level: "B1", nearly: null });
+  });
+
+  it("names the next band when the average fell between two", () => {
+    // B1, B2, B2 averages 2.67: a confident B1 who was nearly B2.
+    expect(overallFrom(["B1", "B2", "B2"])).toEqual({ level: "B1", nearly: "B2" });
+  });
+
+  it("stays silent about the next band when the average was not close to it", () => {
+    // 2.33 is inside B1, not between B1 and B2. A "nearly" on every result
+    // would stop meaning anything.
+    expect(overallFrom(["B1", "B1", "B2"])).toEqual({ level: "B1", nearly: null });
+  });
+
+  it("takes the lower band on a straight tie, and says which one it nearly was", () => {
+    expect(overallFrom(["A2", "B1"])).toEqual({ level: "A2", nearly: "B1" });
+  });
+
+  it("keeps pre-A1 for somebody who reached no band, and never says nearly pre-A1", () => {
+    expect(overallFrom(["pre-A1", "pre-A1"])).toEqual({ level: "pre-A1", nearly: null });
+    expect(overallFrom(["pre-A1", "A1"])).toEqual({ level: "pre-A1", nearly: "A1" });
+  });
+
+  it("does not climb past the top band", () => {
+    expect(overallFrom(["C1", "C1", "C1"])).toEqual({ level: "C1", nearly: null });
+  });
+
+  it("reports one measured skill as itself", () => {
+    expect(overallFrom(["B1"])).toEqual({ level: "B1", nearly: null });
+  });
+
+  it("has no level to report when nothing was measured", () => {
+    expect(overallFrom([])).toEqual({ level: null, nearly: null });
   });
 });
