@@ -106,5 +106,14 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
  * button and writes nothing at all.
  */
 export function gradeButtons(page) {
-  return page.locator("main").getByRole("button", { name: /^(Not yet|Got it, next|Got it)$/ });
+  /*
+    Matched on the accessible name, which is not the words on the button.
+    A self-grade carries `aria-label="Got it, next in 10 min"`, the
+    acknowledgement a miss leaves behind reads "Got it, next Enter" because
+    its key cap is inside it, and the first-meeting button, which writes
+    nothing at all, is "Got it, ask me later Space". Anchoring on `$` matched
+    none of the three and the suite waived four checks a run saying the deck
+    had nothing due. The lookahead is what keeps the meeting out.
+  */
+  return page.locator("main").getByRole("button", { name: /^(Not yet|Got it)(?!, ask me later)/ });
 }

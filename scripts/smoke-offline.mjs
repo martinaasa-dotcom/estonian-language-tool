@@ -80,8 +80,12 @@ async function answerOneCard(depth = 0) {
   if (await show.count()) {
     await show.first().click();
     await page.waitForTimeout(250);
-    // Two buttons, not four: "Not yet" and "Got it".
-    const got = app.getByRole("button", { name: /^Got it$/ });
+    /*
+      Two buttons, not four, and neither is named what it says. A self-grade
+      carries `aria-label="Got it, next in 10 min"`, so `/^Got it$/` matched
+      nothing and the flip was revealed and never graded.
+    */
+    const got = app.getByRole("button", { name: /^Got it(?!, ask me later)/ });
     if (await got.count()) await got.first().click();
   } else if (await page.getByText(/Pick the meaning/).count()) {
     // The keyboard rather than a click on the option, because it is what the
@@ -108,7 +112,8 @@ async function answerOneCard(depth = 0) {
     ever written: the outbox read 0 and the suite reported the app as unable to
     grade offline, which was a fact about the driver.
   */
-  const next = app.getByRole("button", { name: /^Got it, next$/ });
+  // "Got it, next Enter": the key cap inside the button is part of its name.
+  const next = app.getByRole("button", { name: /^Got it, next/ });
   if (await next.count()) {
     await next.first().click();
     await page.waitForTimeout(300);
