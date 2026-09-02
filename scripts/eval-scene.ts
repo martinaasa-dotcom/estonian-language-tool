@@ -39,8 +39,11 @@ import { buildCaseTable, caseAnswer, stemsFrom } from "../lib/estonian/derive";
 import { parseGovernment } from "../lib/estonian/government";
 import { FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS } from "../lib/tutor/provider";
 import { SCENES } from "../lib/scenes/catalogue";
-import { buildLexicon, formsOf, words, type DictEntry } from "../lib/scenes/lexicon";
-import { MAX_WORDS, isQuestion } from "../lib/scenes/retrieval";
+import { buildLexicon, formsOf, words, type DictEntry, type Lexicon } from "../lib/scenes/lexicon";
+import {
+  governmentSuspect, runGate, type Check, type GateContext, type GovernedWord,
+} from "../lib/scenes/gate";
+import { MAX_WORDS } from "../lib/scenes/retrieval";
 import { QUESTION_SHAPE, type BeatSpec, type SceneSpec } from "../lib/scenes/types";
 import { LEVELS, SYLLABUS, unitById } from "../lib/collections/syllabus";
 import { shippedDictionary } from "./lib/dictionary";
@@ -100,8 +103,6 @@ function sceneLexicon(scene: SceneSpec) {
  * whole rather than shown with a caveat.
  * ------------------------------------------------------------------ */
 
-type Check = "shape" | "vouching" | "register" | "government";
-
 /** The pronoun forms a register forbids. One lookup, per §2 check 3. */
 function wrongRegisterForms(scene: SceneSpec): ReadonlySet<string> {
   const forbidden = scene.register === "teie" ? ["sina"] : ["teie"];
@@ -119,14 +120,13 @@ function wrongRegisterForms(scene: SceneSpec): ReadonlySet<string> {
  * `parseGovernment` reads the whole string rather than the primary alone,
  * because a word governs every case its entry names and marking a learner
  * wrong for one of the others is the fault `buildOptions` exists to prevent.
+ *
+ * The shape is `lib/scenes/gate.ts`'s, because the gate lives there now: this
+ * script measured a rejection rate against an implementation of its own, which
+ * is a number measured on code that was not going to ship. Everything below
+ * builds the *context* the shipped checks need out of the shipped dictionary.
  */
-interface Governed {
-  readonly lemma: string;
-  readonly forms: ReadonlySet<string>;
-  readonly cases: ReadonlySet<CaseKey>;
-}
-
-const GOVERNED: Governed[] = [];
+const GOVERNED: GovernedWord[] = [];
 for (const entry of shipped) {
   const government = parseGovernment(entry.government ?? null);
   if (!government || entry.pos !== "VERB") continue;
@@ -201,52 +201,17 @@ for (const entry of shipped) {
   }
 }
 
-/**
- * The government check, as §2 proposes it and as generously as it can be read.
- *
- * There is no parser here, so nothing can say which noun is the verb's
- * complement. The strictest reading, that every noun must be in a governed
- * case, would fire on any sentence with an adjunct in it, which is most of
- * them. So this asks the weakest thing that is still a check: a line holding a
- * governed verb has to hold **at least one** nominal in a case that verb
- * governs. A line with no governed verb and a line with no nominal are both
- * outside what this can say, and it passes them.
- */
-function governmentSuspect(tokens: readonly string[]): boolean {
-  const lower = tokens.map((t) => t.toLowerCase());
-  const verb = GOVERNED.find((g) => lower.some((t) => g.forms.has(t)));
-  if (!verb) return false;
-  const nominals = lower.filter((t) => CASE_OF.has(t) && !verb.forms.has(t));
-  if (nominals.length === 0) return false;
-  return !nominals.some((t) => [...(CASE_OF.get(t) ?? [])].some((c) => verb.cases.has(c)));
+/** The gate's context, built from the shipped dictionary rather than a database. */
+function gateContext(lexicon: Lexicon, wrongRegister: ReadonlySet<string>): GateContext {
+  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF };
 }
 
-function runGate(
-  text: string, beat: BeatSpec,
-  lexicon: { forms: ReadonlySet<string> }, wrongRegister: ReadonlySet<string>,
-): { failed: Check[]; unknown: string[] } {
-  const failed: Check[] = [];
-  const tokens = words(text);
-
-  const shape = QUESTION_SHAPE[beat.move];
-  const sentences = text.trim().split(/[.!?]+\s+/).filter(Boolean).length;
-  const punctuated = /[.!?]"?$/.test(text.trim());
-  const markdown = /[*_`#[\]]/.test(text);
-  if (
-    sentences !== 1 || !punctuated || markdown ||
-    tokens.length > MAX_WORDS || tokens.length === 0 ||
-    (shape === "required" && !isQuestion(text)) ||
-    (shape === "forbidden" && isQuestion(text))
-  ) failed.push("shape");
-
-  const unknown = tokens.filter((t) => !lexicon.forms.has(t.toLowerCase()));
-  if (unknown.length > 0) failed.push("vouching");
-
-  if (tokens.some((t) => wrongRegister.has(t.toLowerCase()))) failed.push("register");
-  if (governmentSuspect(tokens)) failed.push("government");
-
-  return { failed, unknown };
+/** The one government check, so Part B measures what a learner would meet. */
+function suspect(tokens: readonly string[]): boolean {
+  return governmentSuspect(tokens, gateContext(EMPTY_LEXICON, new Set()));
 }
+
+const EMPTY_LEXICON: Lexicon = { forms: new Set(), byLemma: new Map(), byCase: new Map() };
 
 /* ------------------------------------------------------------------ *
  * Part A: the rejection rate, against the chain a deployment gets.
@@ -376,13 +341,14 @@ async function partA() {
         const line = await compose(scene, beat, lemmas);
         if (!line) { refused++; continue; }
         asked++; sceneAsked++;
-        const first = runGate(line, beat, lexicon, wrongRegister);
+        const gate = gateContext(lexicon, wrongRegister);
+        const first = runGate(line, beat, gate);
         for (const word of first.unknown) reached.set(word, (reached.get(word) ?? 0) + 1);
         if (first.failed.length === 0) { firstPass++; continue; }
 
         // The one retry, with the words that failed named. §6.
         const second = await compose(scene, beat, lemmas, first.unknown);
-        const after = second ? runGate(second, beat, lexicon, wrongRegister) : null;
+        const after = second ? runGate(second, beat, gate) : null;
         if (after && after.failed.length === 0) { rescued++; continue; }
 
         withheld++; sceneWithheld++;
@@ -529,8 +495,8 @@ function partB() {
     console.log("  No labelled pair could be built, so this says nothing.");
     return;
   }
-  const flaggedGood = good.filter((l) => governmentSuspect(words(l))).length;
-  const flaggedBad = bad.filter((l) => governmentSuspect(words(l))).length;
+  const flaggedGood = good.filter((l) => suspect(words(l))).length;
+  const flaggedBad = bad.filter((l) => suspect(words(l))).length;
 
   console.log(`  ${good.length} attested lines of a governed verb, and the same ${bad.length} with one`);
   console.log("  nominal moved into a case the verb does not govern.\n");

@@ -8783,6 +8783,63 @@ check("a case is named only when one case claims the spelling", () => {
  * later `advance(state, verdict: string)` would pass every other check in this
  * file.
  */
+/**
+ * THE RATE §29 PUBLISHES IS MEASURED ON THE CODE THAT SHIPS.
+ *
+ * `npm run eval:scene` exists to answer whether composition is safe, and the
+ * first version of it implemented the four checks inside the script. That is a
+ * number measured on code nobody was going to run: the script could drift from
+ * the module by one condition and the published rejection rate would go on
+ * describing the script. It is the fault `PROVIDER_KEY_ENV` was moved for, and
+ * the fault the unit suite had when it kept its own list of provider keys.
+ *
+ * So `lib/scenes/gate.ts` is the one copy and the script builds its context.
+ * Checked by reading the import rather than by counting conditions, because a
+ * fifth check added to the module is a fifth check the script should inherit
+ * without anybody remembering.
+ *
+ * The second half is ADR-025's: a line reaching a screen carries where it came
+ * from. `sceneLine` returns a provenance rather than a string, so a caller
+ * holding only the text cannot print the chip, and a composed line cannot be
+ * read as a lexicographer's by a screen that forgot to ask.
+ */
+check("the scene gate has one implementation, and a line says where it came from", () => {
+  const evalScript = code("scripts/eval-scene.ts");
+  assert.match(
+    evalScript,
+    /from "\.\.\/lib\/scenes\/gate"/,
+    "scripts/eval-scene.ts no longer reads lib/scenes/gate.ts. A rejection rate measured " +
+    "against a copy of the checks is a rate for the copy.",
+  );
+  assert.doesNotMatch(
+    evalScript,
+    /function runGate\(/,
+    "scripts/eval-scene.ts has its own gate again. There is one, in lib/scenes/gate.ts.",
+  );
+
+  const line = code("lib/scenes/line.ts");
+  assert.match(
+    line,
+    /provenance: "attested"/,
+    "lib/scenes/line.ts stopped saying an attested line was attested.",
+  );
+  assert.match(
+    line,
+    /provenance: "composed"/,
+    "lib/scenes/line.ts stopped marking a composed line as composed (ADR-025).",
+  );
+  /*
+    Withheld whole, never caveated. A caveat still puts a wrong form in front of
+    somebody trying to learn one, which is the rule `lib/tutor/verify.ts`
+    follows about a grader's note.
+  */
+  assert.match(
+    line,
+    /if \(first && firstVerdict && passes\(firstVerdict\)\)/,
+    "lib/scenes/line.ts no longer requires a composed line to pass the gate before showing it.",
+  );
+});
+
 check("nothing but the dictionary can advance a scene", () => {
   const turn = code("lib/scenes/turn.ts");
   const state = code("lib/scenes/state.ts");
