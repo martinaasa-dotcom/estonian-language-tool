@@ -1769,6 +1769,23 @@ estimated**, and the first version proved why: `exam` was guessed at 6,000 from 
 different measurement and actually asks 2,500, so the check failed on the run that introduced it,
 which is the check working.
 
+**And Target was the fourth, which is when a rule stops being three coincidences.** The aim-and-hit
+round draws four forms of one word under the lemma and the question its case answers, so a form
+spelled like the lemma is the one option nobody has to read: 122 of the 51,447 case slots the
+shipped dictionary can fill, every one a word ending in `s` whose seesütlev comes back to the
+nominative. It is dropped from the pool rather than only from the answer, because such a form is no
+better as a wrong answer than as a right one. **The test here is on what is printed**, and that is
+where this differs from `lib/srs/cards.ts`: a typed card accepts every spelling, so any of them
+showing makes it free, while a target carries one string and the learner hits it, so `voodi` in the
+illative is refused for what the target would say rather than for what a marker would take.
+
+`caseQuestion` is exported for the audit, because the round is a database read and cannot be asked
+from a file. That section **samples where the others are exhaustive** and says so: the builder picks
+one of the word's eleven cases itself, so one call asks one of them, and with the guard removed the
+audit reported 15 of the 122 rather than all of them. Every one is a failure and the count is not
+the point, but a fault on a single word could be missed on a single run. The rule in the round is
+total; the audit is the backstop.
+
 **A matching board is unique by what it asks with, not by what it answers.** 313 words carry a
 picture and there are 249 pictures: the house stands for `maja` and `elamu`, the bus for `buss` and
 `autobuss`, the man for `mees`, `meesisik` and `meesterahvas`, fifty of them in all. That is the table being right rather
