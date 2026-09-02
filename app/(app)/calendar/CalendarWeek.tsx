@@ -1,0 +1,375 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { CalendarPlus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import { Button } from "@/components/Button";
+import { Card, Chip, SectionTitle } from "@/components/ui";
+import { ChoiceChip, ChoiceGroup } from "@/components/Choice";
+import { addReminder, addStudyEvent, deleteReminder, deleteStudyEvent } from "@/app/actions";
+import {
+  EVENT_KINDS, KIND_LABEL, KIND_TONE, WEEKDAY_LONG, WEEKDAY_SHORT,
+  eventsOn, repeatLabel, span, weekdayOf, type EventKind, type StudyEvent,
+} from "@/lib/ux/schedule";
+
+export interface Reminder {
+  id: string;
+  title: string;
+  notes: string | null;
+  dueKey: string | null;
+  completed: boolean;
+  mine: boolean;
+}
+
+/**
+ * A week, one column per day, with a form under it.
+ *
+ * A WEEK RATHER THAN A MONTH, and that is the whole layout decision. What a
+ * learner asked this for is "class on Monday and Wednesday, homework on Tuesday
+ * and Thursday", which is a question about a week; a month grid answers "what
+ * is the 14th" instead, and it cannot show a time without a cell so small
+ * nothing fits in it. A week also survives a phone, where a month does not: the
+ * columns stack.
+ *
+ * Times are minutes from midnight and are drawn as written text rather than as
+ * a positioned grid of hours. An hour grid is what a desktop calendar draws and
+ * it needs the height of a screen to be readable; this is a list per day, which
+ * says the same thing in the space a phone has.
+ */
+export function CalendarWeek({
+  days, today, offset, events, reminders,
+}: {
+  days: string[];
+  today: string;
+  offset: number;
+  events: StudyEvent[];
+  reminders: Reminder[];
+}) {
+  const [adding, setAdding] = useState(false);
+
+  return (
+    <>
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SectionTitle hint={weekLabel(days, offset)}>This week</SectionTitle>
+          <div className="flex items-center gap-2">
+            <WeekStep to={offset - 1} label="Previous week"><ChevronLeft size={16} aria-hidden /></WeekStep>
+            {offset !== 0 && (
+              <Link href="/calendar" className="tap-tint rounded-full px-3 py-1.5 text-xs font-semibold"
+                style={{ color: "var(--accent-deep)" }}>
+                Today
+              </Link>
+            )}
+            <WeekStep to={offset + 1} label="Next week"><ChevronRight size={16} aria-hidden /></WeekStep>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 md:grid-cols-7">
+          {days.map((key) => (
+            <DayColumn
+              key={key}
+              dayKey={key}
+              isToday={key === today}
+              events={eventsOn(events, key)}
+              reminders={reminders.filter((r) => r.dueKey === key)}
+            />
+          ))}
+        </div>
+      </Card>
+
+      {adding ? (
+        <AddPanel days={days} onDone={() => setAdding(false)} />
+      ) : (
+        <Button variant="primary" size="lg" onClick={() => setAdding(true)}>
+          <CalendarPlus size={16} aria-hidden /> Add to this week
+        </Button>
+      )}
+    </>
+  );
+}
+
+function WeekStep({ to, label, children }: { to: number; label: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={to === 0 ? "/calendar" : `/calendar?w=${to}`}
+      aria-label={label}
+      className="tap-tint flex min-h-11 min-w-11 items-center justify-center rounded-full"
+      style={{ color: "var(--ink-2)" }}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function DayColumn({ dayKey, isToday, events, reminders }: {
+  dayKey: string; isToday: boolean; events: StudyEvent[]; reminders: Reminder[];
+}) {
+  const weekday = weekdayOf(dayKey);
+  const empty = events.length === 0 && reminders.length === 0;
+
+  return (
+    <div
+      // A stable hook for the suite, because "the third div in the grid" is a
+      // fact about today's markup and this page has several grids on it.
+      data-day={dayKey}
+      className="rounded-[var(--r)] border p-2.5"
+      style={{
+        borderColor: isToday ? "var(--accent)" : "var(--rule-soft)",
+        background: isToday ? "var(--accent-soft)" : "var(--surface)",
+      }}
+    >
+      <p className="label-xs" style={{ color: isToday ? "var(--accent-deep)" : "var(--ink-3)" }}>
+        <span className="md:hidden">{WEEKDAY_LONG[weekday]}</span>
+        <span className="hidden md:inline">{WEEKDAY_SHORT[weekday]}</span>{" "}
+        {Number(dayKey.slice(8, 10))}
+      </p>
+
+      <ul className="mt-2 flex flex-col gap-1.5">
+        {events.map((e) => <EventRow key={e.id} event={e} />)}
+        {reminders.map((r) => <ReminderRow key={r.id} reminder={r} />)}
+      </ul>
+
+      {/* Said plainly rather than left blank: an empty column and a column that
+          failed to load look the same, and on a phone the difference matters. */}
+      {empty && <p className="mt-1 text-2xs" style={{ color: "var(--ink-3)" }}>Nothing</p>}
+    </div>
+  );
+}
+
+function EventRow({ event }: { event: StudyEvent }) {
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  return (
+    <li
+      className="rounded-[var(--r-sm)] px-2 py-1.5"
+      style={{ background: `var(--${KIND_TONE[event.kind]}-soft)` }}
+    >
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-semibold" style={{ color: "var(--ink)" }}>{event.title}</p>
+          <p className="text-2xs" style={{ color: "var(--ink-2)" }}>
+            {span(event.startMinute, event.durationMinutes)}
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-label={`Remove ${event.title}`}
+          disabled={pending}
+          onClick={() => start(async () => { await deleteStudyEvent(event.id); router.refresh(); })}
+          className="tap-tint rounded-full p-1"
+          style={{ color: "var(--ink-3)" }}
+        >
+          <Trash2 size={12} aria-hidden />
+        </button>
+      </div>
+      {event.notes && <p className="mt-0.5 text-2xs" style={{ color: "var(--ink-3)" }}>{event.notes}</p>}
+    </li>
+  );
+}
+
+function ReminderRow({ reminder }: { reminder: Reminder }) {
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  return (
+    <li className="rounded-[var(--r-sm)] px-2 py-1.5" style={{ background: "var(--raised)" }}>
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="min-w-0">
+          <p
+            className="truncate text-xs font-semibold"
+            style={{
+              color: reminder.completed ? "var(--ink-3)" : "var(--ink)",
+              textDecoration: reminder.completed ? "line-through" : undefined,
+            }}
+          >
+            {reminder.title}
+          </p>
+          <Chip tone={reminder.completed ? "good" : "hard"}>
+            {reminder.completed ? "Done" : "To do"}
+          </Chip>
+        </div>
+        {reminder.mine && (
+          <button
+            type="button"
+            aria-label={`Remove ${reminder.title}`}
+            disabled={pending}
+            onClick={() => start(async () => { await deleteReminder(reminder.id); router.refresh(); })}
+            className="tap-tint rounded-full p-1"
+            style={{ color: "var(--ink-3)" }}
+          >
+            <Trash2 size={12} aria-hidden />
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * One form for both shapes, because a learner adding "class, Mondays, six
+ * o'clock" and one adding "hand in the essay on Friday" are doing the same
+ * thing and should not have to find two buttons for it.
+ *
+ * What tells them apart is whether any weekday is ticked: repeat days make it
+ * an event, and no repeat days plus a date makes it a reminder unless a time
+ * was given, in which case it is a one-off event. That is stated on the screen
+ * rather than inferred silently.
+ */
+function AddPanel({ days, onDone }: { days: string[]; onDone: () => void }) {
+  const [kind, setKind] = useState<EventKind | "REMINDER">("CLASS");
+  const [title, setTitle] = useState("");
+  const [time, setTime] = useState("18:00");
+  const [minutes, setMinutes] = useState(90);
+  const [weekdays, setWeekdays] = useState<number[]>([]);
+  const [date, setDate] = useState(days[0] ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  const isReminder = kind === "REMINDER";
+
+  const submit = () => {
+    setError(null);
+    start(async () => {
+      const result = isReminder
+        ? await addReminder({ title, dueAt: date })
+        : await addStudyEvent({
+            title,
+            kind,
+            startMinute: minuteOf(time),
+            durationMinutes: minutes,
+            weekdays,
+            onDate: weekdays.length > 0 ? null : date,
+          });
+      if (!result.ok) {
+        setError(("error" in result && result.error) || "That did not save.");
+        return;
+      }
+      setTitle("");
+      setWeekdays([]);
+      router.refresh();
+      onDone();
+    });
+  };
+
+  return (
+    <Card>
+      <SectionTitle hint="classes, study slots, things due">Add to your week</SectionTitle>
+
+      <ChoiceGroup ariaLabel="What kind of thing" className="mt-3 flex flex-wrap gap-2">
+        {EVENT_KINDS.map((k) => (
+          <ChoiceChip key={k} selected={kind === k} onSelect={() => setKind(k)}>
+            {KIND_LABEL[k]}
+          </ChoiceChip>
+        ))}
+        <ChoiceChip selected={isReminder} onSelect={() => setKind("REMINDER")}>Reminder</ChoiceChip>
+      </ChoiceGroup>
+
+      <label className="mt-4 block">
+        <span className="label-xs" style={{ color: "var(--ink-3)" }}>What is it</span>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={isReminder ? "Hand in the essay" : "Eesti keel B1"}
+          className="mt-1 w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+          style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+        />
+      </label>
+
+      {!isReminder && (
+        <>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="label-xs" style={{ color: "var(--ink-3)" }}>Starts</span>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="mt-1 w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+                style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+              />
+            </label>
+            <label className="block">
+              <span className="label-xs" style={{ color: "var(--ink-3)" }}>For how long</span>
+              <select
+                value={minutes}
+                onChange={(e) => setMinutes(Number(e.target.value))}
+                className="mt-1 w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+                style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+              >
+                {[30, 45, 60, 90, 120, 180].map((m) => (
+                  <option key={m} value={m}>{m < 60 ? `${m} minutes` : `${m / 60} hour${m === 60 ? "" : "s"}`}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <p className="mt-4 label-xs" style={{ color: "var(--ink-3)" }}>Repeats on</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-pressed={weekdays.includes(d)}
+                onClick={() => setWeekdays((w) => w.includes(d) ? w.filter((x) => x !== d) : [...w, d])}
+                className="choice-btn min-h-11 rounded-full px-3 text-sm font-semibold"
+                style={weekdays.includes(d)
+                  ? { ["--choice-bg" as string]: "var(--accent-soft)", color: "var(--accent-deep)" }
+                  : undefined}
+              >
+                {WEEKDAY_SHORT[d]}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
+            {weekdays.length > 0 ? repeatLabel(weekdays) : "Leave these blank for a one-off, and pick a date."}
+          </p>
+        </>
+      )}
+
+      {(isReminder || weekdays.length === 0) && (
+        <label className="mt-3 block">
+          <span className="label-xs" style={{ color: "var(--ink-3)" }}>
+            {isReminder ? "Due" : "On"}
+          </span>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="mt-1 w-full max-w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+            style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+          />
+        </label>
+      )}
+
+      {error && (
+        <p className="mt-3 text-sm" style={{ color: "var(--again-ink)" }} role="status">{error}</p>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="primary" onClick={submit} disabled={pending || !title.trim()}>
+          {pending ? "Saving" : "Add it"}
+        </Button>
+        <Button onClick={onDone} disabled={pending}>Cancel</Button>
+      </div>
+    </Card>
+  );
+}
+
+/** "18:30" to minutes from midnight. Anything else is six in the evening. */
+function minuteOf(value: string): number {
+  const [h, m] = value.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return 18 * 60;
+  return Math.min(1439, Math.max(0, (h ?? 0) * 60 + (m ?? 0)));
+}
+
+/** "1 to 7 September", the week a column of days covers. */
+function weekLabel(days: string[], offset: number): string {
+  const first = days[0];
+  const last = days[6];
+  if (!first || !last) return "";
+  const when = offset === 0 ? "this week" : offset < 0 ? `${-offset} back` : `${offset} ahead`;
+  return `${first.slice(5)} to ${last.slice(5)} · ${when}`;
+}

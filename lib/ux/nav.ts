@@ -113,6 +113,18 @@ export const SECTIONS: NavSection[] = [
         href: "/practice", label: "Practice", blurb: "Sprint, match, sentences, speaking, listening",
         icon: "Swords", tone: "peach", keywords: "games modes drill weakest case",
       },
+      /*
+        A row of its own rather than a `within`, because a calendar is not
+        reached from the thing it is about: you open it to decide when to study,
+        which is before you have opened anything else. It sits in "Every day"
+        beside Review and Practice for the same reason, since what it holds is
+        the shape of a learner's week rather than a report on it.
+      */
+      {
+        href: "/calendar", label: "Calendar", blurb: "Your classes, study slots and what is due",
+        icon: "CalendarDays", tone: "sky",
+        keywords: "calendar week class schedule timetable homework reminder due plan tasks",
+      },
     ],
   },
   {

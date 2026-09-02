@@ -36,6 +36,7 @@ import {
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
+import { kindFrom } from "@/lib/ux/schedule";
 import {
   availableCardTypes, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -1491,6 +1492,124 @@ export async function toggleTask(id: string) {
 }
 
 
+// ──────────────────────────── The learner's calendar ───────────────────────
+
+/**
+ * Adds something to the learner's own Estonian week.
+ *
+ * No throttle, deliberately, and `lib/security/actionLimits.ts` says why most
+ * actions must not have one: this is a single small insert, and a limit here
+ * would be met by somebody filling in their term timetable on a Sunday evening
+ * and by nobody else.
+ *
+ * Every field is clamped rather than trusted. `"use server"` makes this a public
+ * endpoint, so a start minute of a million or a weekday of 9 has to come out
+ * the other side as something a calendar can draw, and the owner comes from
+ * `requireUserId` rather than from the caller.
+ */
+export async function addStudyEvent(input: {
+  title: string;
+  notes?: string;
+  kind: string;
+  startMinute: number;
+  durationMinutes: number;
+  weekdays: number[];
+  onDate?: string | null;
+}) {
+  const ownerId = await requireUserId();
+
+  const title = input.title.trim().slice(0, 120);
+  if (!title) return { ok: false as const, error: "Give it a name." };
+
+  const weekdays = [...new Set(input.weekdays)].filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  /*
+    A one-off needs a day and a repeat must not carry one. Reading a stray
+    `onDate` on a repeating event would make `eventsOn` answer two ways about
+    the same row, since it tests the weekdays first and would never look.
+  */
+  const onDate = weekdays.length > 0 ? null : dayKeyOrNull(input.onDate);
+  if (weekdays.length === 0 && !onDate) {
+    return { ok: false as const, error: "Pick a day, or the days it repeats on." };
+  }
+
+  await prisma.studyEvent.create({
+    data: {
+      ownerId,
+      title,
+      notes: input.notes?.trim().slice(0, 500) || null,
+      kind: kindFrom(input.kind),
+      startMinute: clamp(Math.round(input.startMinute), 0, 1439),
+      durationMinutes: clamp(Math.round(input.durationMinutes), 5, 12 * 60),
+      weekdays,
+      onDate,
+    },
+  });
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/** Removes one of the learner's own events. Scoped by owner, like every delete. */
+export async function deleteStudyEvent(id: string) {
+  const ownerId = await requireUserId();
+  const { count } = await prisma.studyEvent.deleteMany({ where: { id, ownerId } });
+  if (count === 0) return { ok: false as const };
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/**
+ * Adds a reminder: a task with a due date, which is what Today already draws.
+ *
+ * A reminder and a piece of homework are the same row, and that is on purpose.
+ * `Task` is what `lib/ux/agenda.ts` buckets and what `components/TodayPlan.tsx`
+ * prints, so a note a learner writes themselves lands in the same place a
+ * teacher's assignment does rather than in a second list beside it.
+ */
+export async function addReminder(input: { title: string; notes?: string; dueAt?: string | null }) {
+  const ownerId = await requireUserId();
+  const title = input.title.trim().slice(0, 200);
+  if (!title) return { ok: false as const, error: "Give it a name." };
+
+  const key = dayKeyOrNull(input.dueAt);
+  await prisma.task.create({
+    data: {
+      ownerId,
+      title,
+      notes: input.notes?.trim().slice(0, 500) || null,
+      tag: "HOMEWORK",
+      // Stored at midnight UTC, which is what `<input type="date">` sends and
+      // what `bucketFor` already expects: it counts whole days on the learner's
+      // own clock rather than comparing instants. See lib/ux/agenda.ts.
+      dueAt: key ? new Date(`${key}T00:00:00.000Z`) : null,
+    },
+  });
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/** Removes a reminder the learner wrote. A teacher's assignment is theirs to remove. */
+export async function deleteReminder(id: string) {
+  const ownerId = await requireUserId();
+  const { count } = await prisma.task.deleteMany({ where: { id, ownerId, classWeek: null } });
+  if (count === 0) return { ok: false as const };
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+const clamp = (n: number, lo: number, hi: number) =>
+  Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo;
+
+/** A `YYYY-MM-DD` string, or null for anything that is not one. */
+function dayKeyOrNull(value: string | null | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) ? null : value;
+}
+
+
 // ──────────────────────── Gap-fill from pasted reading ─────────────────────
 
 /**
@@ -1610,6 +1729,7 @@ export async function deleteMyAccount(confirmation: string) {
       await tx.review.deleteMany({ where: { ownerId } });
       await tx.card.deleteMany({ where: { ownerId } });
       await tx.task.deleteMany({ where: { ownerId } });
+      await tx.studyEvent.deleteMany({ where: { ownerId } });
       await tx.message.deleteMany({ where: { ownerId } });
       await tx.starredWord.deleteMany({ where: { ownerId } });
       await tx.achievement.deleteMany({ where: { ownerId } });
@@ -1704,6 +1824,8 @@ const BackupSchema = z.object({
     still works.
   */
   scans: z.array(z.record(z.unknown())).optional(),
+  /** The learner's own calendar. Optional for the reason `scans` is. */
+  studyEvents: z.array(z.record(z.unknown())).optional(),
   /*
     Optional for the same reason `scans` is: a file written before the export
     carried them has no such key and must still restore. Every one of these is
@@ -1808,6 +1930,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         // which is why Review carries its own ownerId and no foreign key.
         await tx.card.deleteMany({ where: { ownerId } });
         await tx.task.deleteMany({ where: { ownerId } });
+        await tx.studyEvent.deleteMany({ where: { ownerId } });
         await tx.scan.deleteMany({ where: { ownerId } });
       }
 
@@ -1854,6 +1977,24 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         const existing = await tx.task.findUnique({ where: { id: String(data.id) }, select: { ownerId: true } });
         if (existing && existing.ownerId !== ownerId) continue;
         await tx.task.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
+      }
+
+      /*
+        The calendar, on the same terms: written by its original id so a second
+        restore changes nothing, and always attributed to whoever is restoring.
+        A replace deletes these, so a restore that did not put them back would
+        take somebody's class times away in the name of giving them their data.
+      */
+      for (const raw of backup.studyEvents ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const existing = await tx.studyEvent.findUnique({
+          where: { id: String(data.id) }, select: { ownerId: true },
+        });
+        if (existing && existing.ownerId !== ownerId) continue;
+        await tx.studyEvent.upsert({
+          where: { id: String(data.id) }, create: data as never, update: data as never,
+        });
       }
 
       // Photographed pages, on the same terms as everything else here: written

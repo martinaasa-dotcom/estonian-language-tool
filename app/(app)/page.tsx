@@ -28,6 +28,7 @@ import type { TaskView } from "@/components/TaskRow";
 import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
+import { eventsOn, kindFrom, span, KIND_LABEL, KIND_TONE } from "@/lib/ux/schedule";
 import { WordOfDayCard } from "@/components/WordOfDay";
 import { BadgeCheck } from "./BadgeCheck";
 
@@ -113,7 +114,7 @@ export default async function TodayPage() {
   // with a deck or a finished setup never sees it again.
   if (!settings[SETTING_KEYS.onboardedAt] && snapshot.totalCards === 0) redirect("/start");
 
-  const [summary, units, tasks, weekReviews, learner] = await Promise.all([
+  const [summary, units, tasks, events, weekReviews, learner] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     /*
@@ -127,6 +128,17 @@ export default async function TodayPage() {
       where: { ownerId, completed: false },
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
       take: 12,
+    }),
+    /*
+      The learner's own calendar. In this batch for the same reason the tasks
+      are: it is one indexed read on a small table, and a second round trip to
+      decide whether to draw one card costs more than the read does. Which of
+      them fall on today is `eventsOn`, which is pure and needs no query.
+    */
+    prisma.studyEvent.findMany({
+      where: { ownerId },
+      orderBy: [{ startMinute: "asc" }, { id: "asc" }],
+      take: 50,
     }),
     prisma.review.findMany({
       where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - 7 * 86_400_000) } },
@@ -376,6 +388,59 @@ export default async function TodayPage() {
     <TodayPlan tasks={tasks.map(taskView)} clock={clock} now={now} />
   ) : null;
 
+  /*
+     What is on today, from the learner's own calendar.
+     
+     Held to a day that actually has something on it rather than to a
+     disclosure stage: an empty schedule card is a skeleton where an answer
+     should be, and a learner with no calendar yet is told about it by the rail
+     rather than by a card saying "nothing". It sits above the plan because a
+     class at six decides what the evening looks like and a due date does not.
+  */
+  const todayEvents = eventsOn(
+    events.map((e) => ({
+      id: e.id, title: e.title, notes: e.notes, kind: kindFrom(e.kind),
+      startMinute: e.startMinute, durationMinutes: e.durationMinutes,
+      weekdays: e.weekdays, onDate: e.onDate,
+    })),
+    clock.dayKey(now),
+  );
+  const scheduleCard = todayEvents.length > 0 ? (
+    <Card>
+      <SectionTitle hint={todayEvents.length === 1 ? "one thing" : `${todayEvents.length} things`}>
+        On today
+      </SectionTitle>
+      <ul className="flex flex-col gap-2">
+        {todayEvents.map((e) => (
+          <li
+            key={e.id}
+            className="flex items-center justify-between gap-3 rounded-[var(--r)] px-3.5 py-3"
+            style={{ background: `var(--${KIND_TONE[e.kind]}-soft)` }}
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold" style={{ color: "var(--ink)" }}>
+                {e.title}
+              </span>
+              <span className="text-xs" style={{ color: "var(--ink-2)" }}>
+                {KIND_LABEL[e.kind]}
+              </span>
+            </span>
+            <span className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "var(--ink-2)" }}>
+              {span(e.startMinute, e.durationMinutes)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <Link
+        href="/calendar"
+        className="mt-3 inline-block text-sm font-semibold underline underline-offset-2"
+        style={{ color: "var(--accent-deep)" }}
+      >
+        Open the week
+      </Link>
+    </Card>
+  ) : null;
+
   const questsCard = shows(stage, "quests") ? (
 
     <section>
@@ -570,6 +635,7 @@ export default async function TodayPage() {
         <Stack className="min-w-0">
           {doNowCard}
           {stage === "arriving" && practiceCard}
+          {scheduleCard}
           {planCard}
           {struggleCard}
           {streakCard}
