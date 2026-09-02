@@ -292,6 +292,97 @@ under "worked out from loen" with the stored form in bold, the four verb topic p
 on the learner's own verbs with a provenance chip, and an attested form always answers first, so
 the moment an entry is enriched the rule steps aside.
 
+**The one card the course never built was the one every other card is built on.** `GRADATION` asks
+`hammas → kelle? mille?` and takes `hamba`. Nothing else in the deck asks for the genitive:
+`PRODUCTION` wants the nominative, `CLOZE` wants whatever form the sentence happens to have, and
+every `CASE_FORM` card is the genitive stem plus an ending, so a learner who cannot say `hamba`
+cannot answer any of them. Consonant gradation is where that form gets hard and no rule predicts it,
+and not one of the 79 units named the type. The landing page has been promising it the whole time,
+beside government and the partial object, which units do ask for.
+
+It is added in `unit()` rather than typed into 53 unit literals, because it is a property of the
+word and not a choice a unit makes, and only where the unit asks for a form at all: a unit of
+greetings teaches phrases, which have no stem to gradate. The generator produces nothing for a word
+that does not gradate, so this is 86 cards across a course of 5,248. And the hint had to change with
+it: it read `astmevaheldus mm : mb`, which is shown *before* the answer and hands `hamba` straight
+over, so the card was not a question. The pattern is on the entry, on the grammar page the answer
+links to, and in the chip beside the word.
+
+The unit page's line names what a unit will build rather than what it asked for, which was already
+loose and is now checked for this one type, since the column is a single field. The honest check for
+the others would be fetching every example sentence to see whether a gap can be made, which is the
+query this file warns about two sections down.
+
+**And a unit does not ask for a card its own words cannot make.** `cardTypes` is a request against a
+generator that builds only what a word supports, so a mismatch is silent: the page lists the type,
+no card appears, and nothing says why. `objekt`, the B1 unit whose subject is the single hardest
+thing in Estonian grammar, asked for `CASE_FORM` over twelve verbs. A case card needs a genitive
+stem and a verb has none, so it built nothing at all, for as long as the unit had existed; it drills
+persons now, and the object rule is taught on the grammar pages it links to and met in its gap-fill
+cards. `syllabus.test.ts` walks every unit against the harvest and fails on a type none of its words
+can make, `GRADATION` excepted because nobody declares it. Made to fail on `objekt` first.
+
+The same audit is why gradation is added on `CASE_FORM` alone and not on `CONJUGATION`: a verb
+gradates too, `andma` is `nd : nn`, and it shows in the present stem rather than in a case, so eight
+units of verbs would have advertised a card the generator cannot build. And it is why the landing
+page's FAQ no longer says all three hard parts "get a card of their own": gradation and government
+do, and the whole-or-partial object has a unit and a grammar page.
+
+**Which forms a gap-fill may hide is one answer, and it was five.** `buildCloze` hides a word it is
+told to look for, so what it can hide is whatever list the caller hands it. Two callers, the lesson
+planner and the level checkpoint, added the ten regular cases and were the same twenty lines twice.
+Three did not: the review card, the printable worksheet and the mock exam, and the worksheet's own
+comment said "a sentence about `tuba` usually contains `toas`, not `tuba`, and hiding the inflected
+form is the more useful exercise" over a list that could not hide `toas` unless Ekilex happened to
+have stored it. And none of the five knew a verb person at all, so `Kontsert algab kell 18.` could
+not be gapped for `algama` and `Kuidas sa elad?` could not be gapped for `elama`, which are the two
+commonest sentence shapes in the language. Measured over the graded half of the shipped dictionary,
+2,201 words could carry a gap and 2,758 can now.
+
+`lib/estonian/gapForms.ts` is the one answer: every stored form, the ten cases built on the genitive
+stem, and a verb's persons off the stored first person. **Nothing is invented and the sentence is
+the second opinion**, which is what makes this safe: a derived form only ever becomes a card by
+matching a word a lexicographer wrote, so a wrong derivation matches nothing and disappears while a
+right one is confirmed by the sentence it was found in. A principal part is deliberately **not**
+labelled with a case, because `tuba` is its own nominative and its own partitive and the label is
+what the accuracy chart counts, so a guess there is a wrong row rather than a missing one; the short
+illative is the exception, since the dictionary only promotes it where it differs from all three.
+
+`lib/exam/paper.ts` and `lib/assessment/items.ts` are exempt by name. Both build a marked instrument
+from a pool and a seed, the exam rebuilds its paper server-side to mark it, and both surround the
+answer with distractors drawn from the same list, so widening what can be gapped changes which
+questions a candidate is asked and what is offered against them. That is a change to a measurement
+rather than to an exercise and it is not made in passing.
+
+**A verb the app can conjugate is a verb the dictionary can find, and for a year it was not.** The
+search strips a case ending to look for a genitive stem, which is how `toas` finds `tuba`, and it
+knew nothing whatever about a person ending. So a verb was findable by its lemma, by its two
+infinitives, by its stored first person and its stored simple past, and by nothing else: not
+`helistad`, not `helistab`, not `helistame`, not `loeksin`. `ta helistab` is the shape a beginner
+meets in every sentence of a textbook, and this app derives it, prints it on the entry under
+"worked out from helistan", and drills it on a card. Measured over sixty graded words and six forms
+each, that one gap was **every miss the search had**: 87.5% of forms found before and 100% after,
+first hit 85.6% to 97.8%.
+
+`possibleFirstPersons` is the ending table read backwards and it lives in `lib/estonian/conjugate.ts`
+beside the table it reverses, because an ending stripped in another module is an ending that stops
+agreeing with the one this module adds. It returns candidates rather than answers: the search asks
+the database whether any of them is a stored `PRES_1SG`, and `derivedVerbForms` decides afterwards
+whether the word really is that verb's, so a wrong strip costs a lookup and never a wrong answer,
+and the exceptions the rule already knows about are the exceptions the search inherits. A fifth
+union branch and a partial index, measured at 0.05ms. `candidatesFor` in `lib/dict/resolveScan.ts`
+is the same narrowing for the scanner and the news headlines and had the same three branches, so
+`ta helistab` on a photographed page fetched no candidate at all and `matchEstonianForm` was handed
+nothing to decide about. Both have five branches now: a stem here, a first person there. That is a
+widening of what the scanner vouches for, at exactly the standard a derived case already met, since
+a person built on a stored first person is wrong the same way for every verb that takes the ending
+and a form the entry itself prints.
+
+The label reads `olevik ta (present)`. It used to read `olevik ta (present ta)`, because `formName`
+put the person in both halves and the person is an Estonian pronoun: the English gloss exists for
+somebody reading an English reference grammar, and the pronoun is already in front of them in the
+half that leads.
+
 **And a derivation never stands where the dictionary has the real thing.** The paragraph above is
 the licence to derive; this is its limit, and it was broken for a year in the one case that has an
 exception. Estonian has two illatives: the long one is the genitive stem plus `sse`, which a rule
@@ -2448,6 +2539,25 @@ the dictionary and would trip the one clause that is supposed to mean "you did n
 The client never sends a mark, only a level, a seed and the answers. A result anybody can type is
 not a measurement. (ADR-022.)
 
+**And "did they use the word" is answered by the word's own forms, not by its first three
+letters.** `usesRequiredWord` prefix-matched the lemma minus its last letter, floored at three
+characters, on the reasoning that Estonian inflects and `raamatust` is `raamat` used. It is, and so
+was `kirjutan` for `kiri`, `arvan` for `arv`, `aeglane` for `aeg` and `abikaasa` for `abi`.
+Measured over the shipped dictionary, 1,529 of its 5,363 headwords have a needle that reaches a
+different headword, so on nearly a third of the words a written task can name, a candidate could be
+credited for a word they never wrote. A mock exam that marks generously tells somebody they are
+ready to book the state examination when they are not, which is the one thing it exists not to do.
+
+No prefix rule tells `kirja` from `kirjutan`, because the difference is not in the first letters.
+What does is the table of forms the dictionary already holds, so `MustUseWord` carries the part of
+speech and the forms, and `acceptedUses` is the lemma, every stored form, and the forms a rule
+builds off those: the ten regular cases from the genitive stem, or the present, negative, conditional and
+imperative from the stored first person (ADR-005 amendment 1). Nothing is written; `written.ts`
+stays pure because both derivation modules are, which is what lets the marker and the screen agree
+on which spellings count without either reaching a database. The rule is stricter and had to be checked for
+being *too* strict: the thinnest entry in the dictionary accepts ten spellings and none accepts only
+its headword, which is asserted rather than remembered.
+
 **A confidence figure carries the evidence behind it.** `lib/exam/readiness.ts` predicts a score per
 part and then a chance of clearing sixty percent, as a logistic whose spread widens as the evidence
 thins, under a ceiling set by how many reviews are behind the claim: 60 under 150 reviews, 85 under
@@ -2667,6 +2777,17 @@ no-key empty state dropped the question a review card had just handed her, so
 the key was the price of even seeing what you were about to ask. Neither was
 reachable on a machine with the keys set, which is the argument for running a
 suite in the state a stranger installs into.
+
+**And one suite's position is the whole of its safety.** `test-restore.mjs` empties the shared
+dictionary and rebuilds it from a backup, which is what it exists to prove, and everything it puts
+back is created as the restorer's own, because that is what a restore may do to a word the
+dictionary does not already hold. Afterwards not one row is marked `SEED`, so every suite that
+reads a seeded word is looking at a dictionary that no longer has one. `test-scan.mjs` says so out
+loud when it happens, waiving seventeen checks and naming the cause, which is the right behaviour
+and is not a substitute for the order: the person reading it is sent to reseed a database that was
+seeded correctly an hour ago. The only thing that kept this harmless was the order of two lines in
+a workflow file, so it is asserted, inside the browser job, since the sign-in suite is a separate
+job with a database of its own and appears later in the same file.
 
 **And a waiver that fires on every possible run is a hole wearing a waiver's clothes.** That
 is the one thing the machinery above cannot see: `absent(n, why)` states a fact about *this*

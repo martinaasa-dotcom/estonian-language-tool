@@ -79,8 +79,15 @@ export interface BadgeStats {
   questsDoneToday: number;
   /** The session that just ended, if this check runs at the end of one. */
   session?: { count: number; accuracy: number };
-  /** Local hour a review happened at, when this check runs right after one. */
-  reviewHour?: number;
+  /**
+   * Local hours the session's reviews fall in, when a session has just ended.
+   *
+   * A list rather than one number, because the badges say "review before 7am"
+   * and "review after 11pm" and a session has a beginning and an end. Reading
+   * one moment denied the badge to somebody who sat down at half past six and
+   * carried on past seven, which is the learner it is most obviously about.
+   */
+  reviewHours?: readonly number[];
 }
 
 /** Every badge key whose condition `stats` currently satisfies. */
@@ -107,8 +114,8 @@ export function earnedBadgeKeys(stats: BadgeStats): string[] {
   if (stats.level >= 5) earned.push("level_5");
   if (stats.level >= 10) earned.push("level_10");
   if (stats.questsDoneToday >= 3) earned.push("all_quests");
-  if (stats.reviewHour !== undefined && stats.reviewHour < 7) earned.push("early_bird");
-  if (stats.reviewHour !== undefined && stats.reviewHour >= 23) earned.push("night_owl");
+  if (stats.reviewHours?.some((hour) => hour < 7)) earned.push("early_bird");
+  if (stats.reviewHours?.some((hour) => hour >= 23)) earned.push("night_owl");
   return earned;
 }
 

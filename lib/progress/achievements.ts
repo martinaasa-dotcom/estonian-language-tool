@@ -1,6 +1,6 @@
+import { lastSession } from "@/lib/progress/session";
 import { prisma } from "@/lib/db";
 import { BADGES, earnedBadgeKeys, type Badge, type BadgeStats } from "@/lib/achievements/badges";
-import { dictionarySize } from "@/lib/dict/facts";
 import { caseAccuracy } from "@/lib/stats/history";
 import { numberSetting, readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
 import { learnerDayClock } from "@/lib/progress/dayClock";
@@ -25,17 +25,14 @@ export interface BadgeContext {
   summary: DailySummary;
   units: UnitView[];
   session?: { count: number; accuracy: number };
-  /** Local hour of the session that just ended, for the early-bird/night-owl pair. */
-  reviewHour?: number;
+  /** Local hours the session's reviews fell in, for the early-bird/night-owl pair. */
+  reviewHours?: readonly number[];
 }
 
 /** Everything a badge condition can depend on, gathered for one learner. */
 export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promise<BadgeStats> {
-  const [totalReviews, totalWords, settings, caseReviews] = await Promise.all([
+  const [totalReviews, settings, caseReviews] = await Promise.all([
     prisma.review.count({ where: { ownerId } }),
-    // A fact about the shared dictionary, not about this learner: read once
-    // per instance per minute rather than once per render. lib/dict/facts.ts.
-    dictionarySize(),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     /*
       Ordered, because a badge that can appear and disappear is worse than one
@@ -60,7 +57,21 @@ export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promi
     streak: ctx.summary.streak,
     totalReviews,
     cardsKnown: ctx.snapshot.knownCards,
-    totalWords,
+    /*
+      THE LEARNER'S OWN WORDS, WHICH IS WHAT THE BADGE SAYS.
+
+      This read `dictionarySize()`, which is how many entries the shared
+      dictionary holds: 6,050 for everybody, the same number on the first
+      morning as on the four hundredth. `deck_50` and `deck_200` say "add 50
+      words to your dictionary" and "add 200 words", and both were handed out
+      on the first load of Today, before a card had been answered. That is
+      ADR-014's "awarded for something that never happened", and `Achievement`
+      is never re-awarded and never removed, so it stayed.
+
+      `startedLemmas` is lemmas with at least one card in the deck, already
+      fetched for the snapshot, so this is free as well as right.
+    */
+    totalWords: ctx.snapshot.startedLemmas.size,
     bestCaseAccuracy: bestCase ? { grammCase: bestCase.grammCase, accuracy: bestCase.accuracy } : null,
     sprintBest: numberSetting(settings[SETTING_KEYS.sprintBest], 0),
     matchBestSeconds: numberSetting(settings[SETTING_KEYS.matchBest], 0),
@@ -68,7 +79,7 @@ export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promi
     level: ctx.summary.level.level,
     questsDoneToday: ctx.summary.questsDone,
     ...(ctx.session ? { session: ctx.session } : {}),
-    ...(ctx.reviewHour !== undefined ? { reviewHour: ctx.reviewHour } : {}),
+    ...(ctx.reviewHours?.length ? { reviewHours: ctx.reviewHours } : {}),
   };
 }
 
@@ -138,7 +149,18 @@ export async function awardBadges(ownerId: string, stats: BadgeStats): Promise<B
  */
 export async function checkAchievementsFor(
   ownerId: string,
-  session?: { count: number; accuracy: number },
+  /**
+   * Whether a review session has just ended, and nothing more.
+   *
+   * It used to be `{ count, accuracy }`, handed in by the browser. Every
+   * export of `app/actions.ts` is a public endpoint, so those two numbers were
+   * a claim: `checkAchievements({ count: 10, accuracy: 100 })` earned
+   * `perfect_session` with no card answered, into a table that is never
+   * re-awarded and never removed. Now the caller says only *that* a session
+   * ended, which is the one thing it knows and cannot lie usefully about, and
+   * the run itself is read off the review log. See `lib/progress/session.ts`.
+   */
+  sessionEnded = false,
   now = new Date(),
 ): Promise<Badge[]> {
   // The learner's clock, because two of these badges are about the hour of the
@@ -150,11 +172,22 @@ export async function checkAchievementsFor(
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
   ]);
+  const session = sessionEnded ? await lastSession(ownerId, now) : null;
   const stats = await buildBadgeStats(ownerId, {
     snapshot,
     summary,
     units,
-    ...(session ? { session, reviewHour: clock.hourOf(now) } : {}),
+    // The hours the reviews actually fell in, not the hour the check ran: a
+    // session that began at 06:40 and ended at 07:05 is an early bird by the
+    // half of it that happened before seven.
+    ...(session
+      ? {
+          session,
+          reviewHours: [session.startedAt, session.endedAt]
+            .filter((at): at is Date => at !== null)
+            .map((at) => clock.hourOf(at)),
+        }
+      : {}),
   });
   return awardBadges(ownerId, stats);
 }

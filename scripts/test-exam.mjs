@@ -276,13 +276,23 @@ check("a written task counts the words it asked for, and starts at none of them"
 const wordChips = page.locator("p", { hasText: /Use every one of these/ }).first();
 const firstWord = (await wordChips.locator('span[lang="et"]').first().innerText()).trim();
 const firstArea = page.locator("textarea").first();
-await firstArea.fill(`Tere, ma kirjutan sulle ${firstWord} kohta pikalt ja pohjalikult iga paev.`);
+/*
+  The count is read before and after rather than asserted to be exactly one.
+  Which words a paper asks for depends on the pool, so a fixed sentence can
+  happen to contain a second one: this check spent a run failing because the
+  paper asked for `kiri` and the sentence said `kirjutan`, which the marker
+  correctly counts as nothing and used to count as `kiri`. What is being
+  checked is that using a word moves the count, and that survives any pool.
+*/
+const usedBefore = Number((/(\d+) of \d+ used/.exec(await page.locator("body").innerText()) ?? [])[1] ?? "0");
+await firstArea.fill(`Tere, siin on ${firstWord} ja veel palju muud head.`);
 await page.waitForTimeout(250);
 
 const afterTyping = await page.locator("body").innerText();
+const usedAfter = Number((/(\d+) of \d+ used/.exec(afterTyping) ?? [])[1] ?? "0");
 check("a word the task asked for is ticked off once it is used",
-  /1 of \d used/.test(afterTyping),
-  firstWord);
+  usedAfter > usedBefore,
+  `${firstWord}: ${usedBefore} then ${usedAfter}`);
 
 check("the length meter counts what was written towards the length that carries the marks",
   /\d+ of \d+ words/.test(afterTyping));

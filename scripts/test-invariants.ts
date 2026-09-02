@@ -320,10 +320,19 @@ check("every screen and marker that needs a case form asks the one function for 
     "lib/collections/checkpoint.ts",
     "lib/assessment/items.ts",
   ];
+  /*
+    Reaching it through `lib/estonian/gapForms.ts` counts, and widening the rule
+    is what this file's own instruction says to do when a check fires on honest
+    code. That module's whole job is to answer "every spelling of this word",
+    it asks `caseAnswer` for every case, and it has an invariant of its own
+    saying it must keep doing so. Two of these callers stopped writing the loop
+    themselves and started asking it.
+  */
+  const asksForACase = /caseAnswer\(|gapForms(?:FromParts)?\(/;
   for (const file of callers) {
     assert.match(
       code(file),
-      /caseAnswer\(/,
+      asksForACase,
       `${file} produces a case form without asking caseAnswer, so it cannot see the short illative`,
     );
   }
@@ -4055,6 +4064,50 @@ check("every browser suite that exists is a browser suite CI runs", () => {
 });
 
 /**
+ * And the other one, at the far end of the same list.
+ *
+ * `test-restore.mjs` empties the shared dictionary and rebuilds it from a
+ * backup, which is the whole of what it exists to prove. Everything it puts
+ * back is created as the restorer's own, because that is what a restore is
+ * allowed to do to a word it does not already hold, so afterwards not one row
+ * in the dictionary is marked `SEED`. Every suite that reads a seeded word is
+ * then looking at a dictionary that no longer has one.
+ *
+ * `test-scan.mjs` says so out loud when it happens, which is the right
+ * behaviour and is not a substitute for the ordering: it reports "no seeded
+ * words" and waives seventeen checks, and the person reading that is sent to
+ * reseed a database that was seeded correctly an hour ago. Run second to last
+ * on somebody's own machine it costs a suite; the only thing keeping it
+ * harmless in CI is the order of two lines in a workflow file.
+ *
+ * Asserted inside the browser job, because the sign-in suite is a separate job
+ * with a database of its own and appears later in the same file.
+ */
+check("the suite that empties the dictionary runs after every suite that reads it", () => {
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const start = workflow.indexOf("name: The browser suites");
+  assert.ok(start > 0, "ci.yml no longer has a job called The browser suites");
+  const next = workflow.indexOf("\n  signin:", start);
+  const job = workflow.slice(start, next > 0 ? next : undefined);
+
+  const suites = [...job.matchAll(/node scripts\/([\w-]+)\.mjs/g)].map((m) => m[1]);
+  assert.ok(suites.includes("test-restore"), "the browser job does not run scripts/test-restore.mjs");
+  assert.equal(
+    suites[suites.length - 1],
+    "test-restore",
+    `scripts/test-restore.mjs has to be the last browser suite: ${suites[suites.length - 1]} runs after it, ` +
+    "against a dictionary it has just rebuilt with no SEED row in it",
+  );
+
+  // And it is last because of what it does, not because somebody put it there.
+  assert.match(
+    read(join("scripts", "test-restore.mjs")),
+    /lexeme\.deleteMany/,
+    "test-restore.mjs no longer empties the dictionary, so its position no longer has to be last",
+  );
+});
+
+/**
  * And the one suite whose *position* in that list is the whole of its value.
  *
  * `/start` redirects anyone carrying `onboardedAt` or a single card, which is
@@ -4147,6 +4200,52 @@ check("first run is exercised, which means one suite runs before the fixture", (
  * Read comment-blind, because a paragraph explaining why `void` is wrong would
  * otherwise satisfy a check looking for it.
  */
+/**
+ * EVERY PROVIDER KEY IS IN THE CREDENTIAL CANARY.
+ *
+ * CI builds with a marked value in every server-only variable and greps
+ * `.next/static` for it, which is the check CLAUDE.md leads with. It is only
+ * as good as the list of variables it marks, and that list was seven names
+ * somebody typed: `GROQ_API_KEY` and `GEMINI_API_KEY` joined the provider
+ * chain, `PROVIDER_KEY_ENV` grew to five, and the canary stayed at three of
+ * them. A key nothing marks is a key the grep cannot find, so the check would
+ * have passed over exactly the two the default free chain holds.
+ *
+ * `PROVIDER_KEY_ENV` is the one list of provider keys and the chain reads it,
+ * so this reads it too rather than keeping a fourth copy. Adding a provider
+ * now fails here until its key is marked.
+ */
+check("every provider key the chain can hold is marked in the credential canary", () => {
+  const chain = read(join("lib", "tutor", "provider.ts"));
+  const listed = chain.match(/export const PROVIDER_KEY_ENV = \[([\s\S]*?)\] as const;/);
+  assert.ok(listed, "PROVIDER_KEY_ENV is not where this check expects it");
+  const keys = [...listed![1]!.matchAll(/"([A-Z_]+)"/g)].map((m) => m[1]!);
+  assert.ok(keys.length >= 3, `only ${keys.length} provider keys found, so this check stopped looking`);
+
+  const ci = read(join(".github", "workflows", "ci.yml"));
+  for (const key of keys) {
+    assert.match(
+      ci,
+      new RegExp(`^\\s*${key}: .*canary-${key}-must-not-ship`, "m"),
+      `${key} is in PROVIDER_KEY_ENV and is not marked in the CI credential canary, ` +
+      "so a build that leaked it into the client bundle would pass the grep.",
+    );
+  }
+
+  /*
+    And the marker carries the variable's name. Every one of them used to be
+    the same string, so a failure could say that something had leaked and not
+    which: on the one check whose whole job is naming a leak.
+  */
+  const assigned = [...ci.matchAll(/^\s*([A-Z_]+): .*canary-([A-Z_]+)-must-not-ship/gm)];
+  const mismatched = assigned.filter(([, variable, marker]) => variable !== marker);
+  assert.deepEqual(
+    mismatched.map(([, v, m]) => `${v} is marked canary-${m}`), [],
+    "a variable's canary marker does not carry its own name, so a failure cannot say which leaked",
+  );
+  assert.ok(assigned.length >= 10, `only ${assigned.length} variables are marked, so this stopped looking`);
+});
+
 check("no ledger write is left to a promise the platform may drop", () => {
   const roots = ["app", "lib"];
   const files: string[] = [];
@@ -6343,6 +6442,170 @@ check("nothing builds a verb form out of a stem and a person ending outside lib/
   const audit = code("scripts/audit-verbs.ts");
   assert.match(audit, /derivedVerbForms/, "scripts/audit-verbs.ts stopped auditing the rule the app ships");
   assert.match(audit, /morphCode === d\.morphCode/, "scripts/audit-verbs.ts stopped comparing against Ekilex's own slot");
+});
+
+/*
+  A CARD IS GRADED IN ONE PLACE.
+
+  `Review` is append-only, so a row written wrongly is permanent, and the row
+  was being written in two places: `gradeCard` for a learner who is online and
+  `applyGradeBatch` for a device coming back. Both created the row and then
+  updated the card's scheduling, and the two had drifted on the one thing that
+  is genuinely hard here, which moment the grade is recorded at.
+
+  `gradeCard` floored it at the card's own creation, and said why in a comment:
+  a review dated before its card existed is a review of something that was not
+  there, and the streak, the heatmap and every "reviews this week" figure read
+  that column with no way to tell a replayed grade from a forged one. The
+  replay path had no such floor, and it is the door a device's own timestamps
+  actually come through, so the fix had been written on the one nobody was
+  using.
+
+  `lib/srs/grade.ts` is the one writer now. A third caller inherits the floor
+  by reaching for the function, which is the only way this stays true.
+*/
+check("nothing grades a card outside lib/srs/grade.ts", () => {
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !["lib/srs/grade.ts", "app/actions.ts"].includes(file))
+    .filter((file) => !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\breview\.create(?:Many)?\s*\(/.test(code(file)));
+  assert.deepEqual(offenders, [], "a Review row is being written outside lib/srs/grade.ts");
+
+  /*
+    `restoreBackup` is the one exemption and it is exempt by name rather than
+    wholesale, because `app/actions.ts` is also where `gradeCard` lives and
+    excusing the file would excuse that too. Restoring is not grading: it puts
+    a learner's own rows back exactly as the file holds them, inside the
+    transaction, and never touches a card's scheduling. Flooring those dates
+    would buy nothing anyway, since the card's own creation comes out of the
+    same file.
+  */
+  const writes = [...code("app/actions.ts").matchAll(/(\w+)\.review\.create(?:Many)?\s*\(/g)]
+    .map((m) => m[1]);
+  assert.deepEqual(writes, ["tx"], "app/actions.ts writes a Review row outside the restore transaction");
+
+  const writer = code("lib/srs/grade.ts");
+  assert.match(
+    writer,
+    /at < createdAt \? createdAt : at/,
+    "lib/srs/grade.ts stopped flooring a grade at the moment its card was created",
+  );
+  for (const caller of ["app/actions.ts", "lib/srs/replay.ts"]) {
+    assert.match(code(caller), /\bwriteGrade\(/, `${caller} stopped writing its grade through lib/srs/grade.ts`);
+  }
+});
+
+/*
+  WHICH FORMS CAN BE HIDDEN IN A SENTENCE IS ONE ANSWER.
+
+  `buildCloze` hides a word it is told to look for, so what it can hide is
+  whatever list the caller hands it, and there were five such lists. Two added
+  the ten regular cases and were the same twenty lines twice; three did not,
+  and the printable worksheet's own comment said "a sentence about `tuba`
+  usually contains `toas`, not `tuba`, and hiding the inflected form is the
+  more useful exercise" over a list that could not hide `toas`. None of the
+  five knew a verb person, so `Kontsert algab kell 18.` could not be gapped for
+  `algama`. Measured over the graded half of the dictionary, 2,201 words could
+  carry a gap and 2,758 can now.
+
+  `lib/exam/paper.ts` and `lib/assessment/items.ts` are the two exceptions and
+  are exempt by name. Both build a marked instrument out of a pool and a seed,
+  the exam rebuilds its paper server-side to mark it, and both surround the
+  answer with distractors drawn from the same list, so widening what can be
+  gapped changes which questions a candidate is asked and what is offered
+  against them. That is a change to a measurement rather than to an exercise
+  and it is not made in passing.
+*/
+/*
+  THE CARD TYPES ARE NAMED IN THREE PLACES AND TWO OF THEM HAD DRIFTED.
+
+  `CARD_TYPES` in `lib/srs/cards.ts` is the one that decides. The schema's own
+  comment beside `cardType String` listed five of the seven, missing the
+  gap-fill and the conjugation card, which are two of the three a default deck
+  is mostly made of. `docs/04-data-model.md` printed an enum of seven that was
+  the wrong seven: it had `LISTENING` and `OBJECT_CASE`, which have never
+  existed in the code, and lacked the same two.
+
+  Neither is load-bearing at runtime, which is exactly why nobody noticed. They
+  are what a contributor reads first, and a schema comment that names five card
+  types is a schema comment that tells them the app has five.
+*/
+check("the card types are the same seven wherever they are written down", () => {
+  const declared = [...code("lib/srs/cards.ts").matchAll(/\{\s*type:\s*"(\w+)"/g)].map((m) => m[1]!);
+  assert.ok(declared.length >= 7, "lib/srs/cards.ts no longer declares its card types as a table");
+
+  const schema = read(join("prisma", "schema.prisma"));
+  const comment = /cardType\s+String\s*\/\/\s*([A-Z_ ]+)/.exec(schema)?.[1]?.trim().split(/\s+/) ?? [];
+  assert.deepEqual(
+    [...comment].sort(),
+    [...declared].sort(),
+    "prisma/schema.prisma names a different set of card types from lib/srs/cards.ts",
+  );
+
+  const doc = read(join("docs", "04-data-model.md"));
+  const line = /^CardType\s+(.+)$/m.exec(doc)?.[1]?.trim().split(/\s+/) ?? [];
+  assert.deepEqual(
+    [...line].sort(),
+    [...declared].sort(),
+    "docs/04-data-model.md names a different set of card types from lib/srs/cards.ts",
+  );
+});
+
+/*
+  AND THE PAGE A NEW CONTRIBUTOR READS ABOUT THE SCHEMA NAMES THE SCHEMA'S OWN
+  MODELS.
+
+  `docs/04-data-model.md` used to carry 272 lines of Prisma, and the copy went
+  stale exactly as a second source of truth does: ten models that no longer
+  exist, none of the nine that had arrived since, and `provider = "sqlite"` at
+  the top of a Postgres app. `CLAUDE.md` sends a new contributor to that page
+  third, so more than half of what they read about the schema was wrong.
+
+  The fields live in the schema file, which comments every model that needs
+  one. What the page keeps is the map and the reasoning, and a map is exactly
+  the shape a check can hold to the thing it maps.
+*/
+check("the data model page names every model the schema has, and no others", () => {
+  const schema = read(join("prisma", "schema.prisma"));
+  const models = [...schema.matchAll(/^model (\w+)/gm)].map((m) => m[1]!);
+  assert.ok(models.length > 10, "prisma/schema.prisma no longer declares models the usual way");
+
+  const doc = read(join("docs", "04-data-model.md"));
+  const named = new Set([...doc.matchAll(/`(\w+)`/g)].map((m) => m[1]!));
+
+  const missing = models.filter((model) => !named.has(model));
+  assert.deepEqual(missing, [], "docs/04-data-model.md does not name every model in the schema");
+
+  /*
+    And the other direction, over the models it once described and no longer
+    should. A name may still appear in the paragraph explaining that it went,
+    which is why this reads the map's own table rather than the whole page.
+  */
+  const table = [...doc.matchAll(/^\| `([^`]+)`[^|]*\|/gm)]
+    .flatMap((m) => m[1]!.split(/`,\s*`/));
+  const invented = table.filter((model) => !models.includes(model));
+  assert.deepEqual(invented, [], "docs/04-data-model.md maps a model the schema does not have");
+});
+
+check("nothing decides what a gap can hide outside lib/estonian/gapForms.ts", () => {
+  const allowed = new Set([
+    // Where `buildCloze` is written, and where `gapForms` is.
+    "lib/estonian/cloze.ts",
+    "lib/estonian/gapForms.ts",
+    "lib/exam/paper.ts",
+    "lib/assessment/items.ts",
+  ]);
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !allowed.has(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\bbuildCloze\s*\(/.test(code(file)))
+    .filter((file) => !/\bgapForms(?:FromParts)?\s*\(/.test(code(file)));
+  assert.deepEqual(offenders, [], "a caller of buildCloze builds its own list of forms to hide");
+
+  const forms = code("lib/estonian/gapForms.ts");
+  assert.match(forms, /derivedVerbForms\(/, "gapForms stopped offering a verb's persons");
+  assert.match(forms, /caseAnswer\(/, "gapForms stopped offering the cases built on the stem");
 });
 
 check("a screen that prints a derived verb form says it was derived", () => {

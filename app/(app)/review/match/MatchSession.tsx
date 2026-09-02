@@ -88,8 +88,8 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
     }
 
     const result = await recordMatchTime(finalSeconds);
-    setIsNewBest(result.isNewBest);
-    const check = await checkAchievements({ count: pairs.length, accuracy: accuracyFrom(missMap, pairs.length) });
+    setIsNewBest(result.ok && result.isNewBest);
+    const check = await checkAchievements(true);
     if (check.ok) setNewBadges(check.newBadges);
   }, [pairs]);
 
@@ -275,8 +275,4 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
   );
 }
 
-function accuracyFrom(misses: Record<string, number>, pairs: number): number {
-  const clean = pairs - Object.values(misses).filter((n) => n > 0).length;
-  return pairs > 0 ? Math.round((clean / pairs) * 100) : 0;
-}
 

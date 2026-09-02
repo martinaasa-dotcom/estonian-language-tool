@@ -22,12 +22,22 @@ async function wipe() {
   await prisma.card.deleteMany({ where: { ownerId: { in: [OWNER, OTHER] } } });
 }
 
+/**
+ * `createdAt` is set, and that is not tidiness.
+ *
+ * A grade may not be dated before the card it is about existed, which is what
+ * `writeGrade` floors it at, so a fixture that leaves the card created now and
+ * then replays a grade from last month is asking for a review of something
+ * that was not there. Every card here is created before anything grades it.
+ */
+const BORN = new Date("2026-07-01T00:00:00Z");
+
 async function makeCard(ownerId = OWNER, id = crypto.randomUUID()) {
   return prisma.card.create({
     data: {
       id, ownerId, cardType: "RECOGNITION",
       front: "tuba", back: "room", targetCase: "INESSIVE",
-      due: new Date("2026-08-01T00:00:00Z"),
+      due: new Date("2026-08-01T00:00:00Z"), createdAt: BORN,
     },
   });
 }

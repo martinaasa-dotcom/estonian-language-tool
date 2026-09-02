@@ -20,7 +20,12 @@ export const B1 = [
     canDo: "Choose between the partitive and the genitive object and say why.",
     blurb: "The single hardest thing in Estonian grammar, and the one that marks out a B1 speaker.",
     grammar: ["object", "partitive", "genitive", "aspect"],
-    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
+    // Verbs, so the form worth drilling is a person and not a case. It asked
+    // for `CASE_FORM`, which needs a genitive stem: twelve words, no genitive
+    // between them, and not one card built. The object rule itself is taught
+    // on the grammar pages this unit links to and met in the gap-fill cards,
+    // where the verb stands in a sentence somebody recorded.
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CONJUGATION", "CLOZE"],
     requires: ["plaanid"],
     words: [
       ["ehitama", "to build"],

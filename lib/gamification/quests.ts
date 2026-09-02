@@ -91,8 +91,15 @@ const SPECS: readonly QuestSpec[] = [
   },
   {
     key: "sharp_recall",
-    title: (t) => `Recall ${t} cards cleanly`,
-    detail: "Right first time, with no peeking",
+    /*
+      It said "right first time, with no peeking", and `Review` has no column
+      for either. A flip card is self-graded and nothing records whether the
+      answer was on screen first, so what this counts is what it has always
+      counted: a card the learner marked as recalled. Promising a stricter bar
+      than the log can hold is how a quest teaches somebody to ignore one.
+    */
+    title: (t) => `Recall ${t} cards`,
+    detail: "Cards you got right, in any mode",
     icon: "Target",
     target: (s) => Math.max(8, Math.round(s.dailyGoal * 0.6)),
     progress: (s) => s.recalledToday,
