@@ -15,6 +15,12 @@ import { candidatesFor, resolveOneWord, resolveScannedItems } from "./resolveSca
 
 const LEMMA = "itest-scan-tuba";
 const DECOY = "itest-scan-mitteseotud";
+/*
+  A page of homework is mostly verbs, and a verb in a sentence is in the third
+  person. This one stores its first person and nothing else, which is what a
+  seeded verb holds, so only the rule can reach `itest-scan-zurptab`.
+*/
+const VERB = "itest-scan-zurptama";
 
 async function wipe() {
   const lexemes = await prisma.lexeme.findMany({
@@ -42,6 +48,12 @@ beforeEach(async () => {
           { formType: "EKILEX:SgIn", value: "itest-scan-toas", morphCode: "SgIn", isPrincipal: false },
         ],
       },
+    },
+  });
+  await prisma.lexeme.create({
+    data: {
+      lemma: VERB, pos: "VERB", translation: "to test", cefr: "A1", provenance: "SEED",
+      forms: { create: [{ formType: "PRES_1SG", value: "itest-scan-zurptan" }] },
     },
   });
   // A word with nothing to do with the one being looked for, so that "the
@@ -75,6 +87,15 @@ describe("resolveScannedItems", () => {
     const [item] = await resolveScannedItems([{ et: "itest-scan-toale", en: "" }]);
     expect(item?.lemma).toBe(LEMMA);
     expect(item?.matchedAs).toContain("alaleütlev");
+  });
+
+  it("traces a verb person worked out from the stored first person", async () => {
+    // The narrowing had three branches where the search had four, so a verb in
+    // the third person, which is what a sentence on somebody's paper is written
+    // in, fetched no candidate at all and came back for them to type by hand.
+    const [item] = await resolveScannedItems([{ et: "itest-scan-zurptab", en: "" }]);
+    expect(item?.lemma).toBe(VERB);
+    expect(item?.matchedAs).toContain("olevik ta");
   });
 
   it("hands back a word it cannot vouch for, marked as exactly that", async () => {

@@ -308,7 +308,13 @@ agreeing with the one this module adds. It returns candidates rather than answer
 the database whether any of them is a stored `PRES_1SG`, and `derivedVerbForms` decides afterwards
 whether the word really is that verb's, so a wrong strip costs a lookup and never a wrong answer,
 and the exceptions the rule already knows about are the exceptions the search inherits. A fifth
-union branch and a partial index, measured at 0.05ms.
+union branch and a partial index, measured at 0.05ms. `candidatesFor` in `lib/dict/resolveScan.ts`
+is the same narrowing for the scanner and the news headlines and had the same three branches, so
+`ta helistab` on a photographed page fetched no candidate at all and `matchEstonianForm` was handed
+nothing to decide about. Both have five branches now: a stem here, a first person there. That is a
+widening of what the scanner vouches for, at exactly the standard a derived case already met, since
+a person built on a stored first person is wrong the same way for every verb that takes the ending
+and a form the entry itself prints.
 
 The label reads `olevik ta (present)`. It used to read `olevik ta (present ta)`, because `formName`
 put the person in both halves and the person is an Estonian pronoun: the English gloss exists for
