@@ -177,21 +177,39 @@ function formMap(formSet: RawFormSet): Map<string, string> {
 }
 
 /**
- * The same, keeping every value rather than the first.
+ * The same, keeping every value rather than the first, ACROSS EVERY MATCHING
+ * PARADIGM RATHER THAN THE ONE THE PRINCIPAL PARTS WERE READ FROM.
  *
  * Estonian has genuine parallel forms and a principal part wants one of them,
- * so `formMap` taking the first is right for what it is used for. It is wrong
- * for the question below, which is what the dictionary has to store because no
- * rule reaches it: Ekilex records the allative of `mina` as `minule` and
- * `mulle` under one code, and the second is the one anybody says.
+ * so `formMap` taking the first of one set is right for what it is used for. It
+ * is wrong for the question below, which is what the dictionary has to store
+ * because no rule reaches it: Ekilex records the allative of `mina` as `minule`
+ * and `mulle` under one code, and the second is the one anybody says.
+ *
+ * AND A PARALLEL IS OFTEN A WHOLE SECOND PARADIGM. `pickFormSet` takes one,
+ * which is right for the six forms a learner memorises and was silently wrong
+ * for everything else: `ütlema` is recorded as two verb paradigms, one on
+ * `ütle-` and one on `öel-`, so `öelge`, `öelnud` and `öelda` were in the
+ * response and thrown away, and `öelge` was the word `eval:scene` watched a
+ * model reach for more than any other. `ise` is the same shape, `enese` in one
+ * paradigm and `enda`, which is the form anybody says, in the other.
+ *
+ * Safe because these are paradigms of one `wordId`. A homonym is a different
+ * word with its own id and its own cache entry, which is what `pickFormSet`'s
+ * verb-or-nominal filter and the pinning above are for; two matching paradigms
+ * under one id are two inflection patterns of one word, `haigus` with `haigusi`
+ * and `haiguseid`, and both are Estonian. 167 of the 2,057 sets the course
+ * reads have a second.
  */
-function allForms(formSet: RawFormSet): Map<string, string[]> {
+function allForms(sets: readonly RawFormSet[]): Map<string, string[]> {
   const map = new Map<string, string[]>();
-  for (const f of formSet.forms ?? []) {
-    if (!f.value || f.value === "-" || !f.morphCode) continue;
-    const seen = map.get(f.morphCode) ?? [];
-    if (!seen.includes(f.value)) seen.push(f.value);
-    map.set(f.morphCode, seen);
+  for (const formSet of sets) {
+    for (const f of formSet.forms ?? []) {
+      if (!f.value || f.value === "-" || !f.morphCode) continue;
+      const seen = map.get(f.morphCode) ?? [];
+      if (!seen.includes(f.value)) seen.push(f.value);
+      map.set(f.morphCode, seen);
+    }
   }
   return map;
 }
@@ -205,13 +223,16 @@ const isVerbFormSet = (p: RawFormSet) =>
  * Homonyms are the reason this exists. Asking for a verb and being handed a noun's
  * forms is a mismatch we drop rather than guess through.
  */
-function pickFormSet(detail: RawDetails | null, wantVerb: boolean): RawFormSet | null {
+function matchingFormSets(detail: RawDetails | null, wantVerb: boolean): RawFormSet[] {
   const sets = detail?.word?.paradigms ?? [];
   const matching = sets.filter((p) => isVerbFormSet(p) === wantVerb);
-  // Prefer the set carrying the most forms — a stub with three forms is a
-  // lexicographic placeholder, not a usable set.
-  const sorted = [...matching].sort((a, b) => (b.forms?.length ?? 0) - (a.forms?.length ?? 0));
-  return sorted[0] ?? null;
+  // Ordered by how much each carries — a stub with three forms is a
+  // lexicographic placeholder, not a usable set, so it may not lead.
+  return [...matching].sort((a, b) => (b.forms?.length ?? 0) - (a.forms?.length ?? 0));
+}
+
+function pickFormSet(detail: RawDetails | null, wantVerb: boolean): RawFormSet | null {
+  return matchingFormSets(detail, wantVerb)[0] ?? null;
 }
 
 function extractLexemeData(detail: RawDetails | null) {
@@ -423,7 +444,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       ekilexPos: extra.ekilexPos,
       parts: {},
       extraForms: formless
-        ? [...allForms(formless)]
+        ? [...allForms(matchingFormSets(detail, false))]
           // An indeclinable word's one recorded form is itself, under Ekilex's
           // `ID` code. Storing it says nothing the lemma did not already say.
           .filter(([, values]) => values.some((v) => v !== lemma))
@@ -483,7 +504,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       form as "this entry has been enriched", so a seed writing one would strand
       every reseeded word half-upgraded. See the note on `runEnrich`.
     */
-    const recorded = allForms(formSet);
+    const recorded = allForms(matchingFormSets(detail, wantVerb));
     const extraForms: { code: string; value: string }[] = [];
     // A form the entry can already say is not worth a second row: `olema`
     // reports its whole present as unreachable, first person included, and the

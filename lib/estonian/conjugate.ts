@@ -94,17 +94,39 @@ const IRREGULAR_PRESENT: ReadonlySet<string> = new Set(["olema"]);
 const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema", "pidama"]);
 
 /**
- * Every slot of the verb a learner is shown on an entry or asked on a card.
+ * Every slot of the verb the dictionary has to be able to answer for.
  *
- * The union of what `conjugatedForms` prints and what `CONJUGATION_SLOTS`
- * asks, which is the same question from two directions: what has to come from
- * somewhere. `IndIpfSg1` is the stored past first person, and `IndIpfSg3` is
- * the one slot in this list no rule reaches for any verb in the language.
+ * Mostly the union of what `conjugatedForms` prints and what
+ * `CONJUGATION_SLOTS` asks, which is the same question from two directions:
+ * what has to come from somewhere. `IndIpfSg1` is the stored past first person,
+ * and `IndIpfSg3` is the one slot in that half no rule reaches for any verb in
+ * the language.
+ *
+ * THE TWO PARTICIPLES ARE HERE FOR A DIFFERENT REASON, and they are the reason
+ * this list is no longer only about what a screen prints. Nothing shows them
+ * and no card asks one. What they are is the form the perfect is built out of:
+ * `Kui kaua see on kestnud?` is how anybody asks how long something has been
+ * going on, the course teaches täisminevik on its own grammar page, and the
+ * dictionary could not vouch for a single `nud` in the language. `eval:scene`
+ * is what found that, the same way it found the polite imperative, and it is
+ * the same answer: neither is derivable, since `minna` goes to `läinud`, `teha`
+ * to `teinud` and `näha` to `näinud`, so what the rule cannot reach is stored
+ * from Ekilex rather than left absent.
+ *
+ * Storing a form and asking a card about it are two decisions and only the
+ * first is made here. A participle is met inside a construction rather than as
+ * a slot, so what this buys is that the dictionary can vouch for one, gap-fill
+ * one, and find one from the search box.
+ *
+ * THE TWO INFINITIVES ARE HERE FOR THEIR PARALLELS ALONE. Both are principal
+ * parts, so the entry already holds one of each and the harvest drops what it
+ * already holds. What is left is the second stem of a verb Ekilex records as
+ * two paradigms: `öelda` beside `ütelda`, which is the infinitive anybody says.
  */
 export const VERB_SLOTS: readonly string[] = [
   "IndPrSg1", "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",
   "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3", "ImpPrSg2",
-  "ImpPrPl2", "IndIpfSg1", "IndIpfSg3",
+  "ImpPrPl2", "IndIpfSg1", "IndIpfSg3", "PtsPtPs", "PtsPrPs", "Inf", "Sup",
 ];
 
 /**
@@ -115,7 +137,8 @@ export const VERB_SLOTS: readonly string[] = [
  * back is `IndIpfSg3` for every verb, since the simple past is never derived
  * and may not be; `ImpPrPl2` for every verb, since the polite imperative is
  * not a suffix on anything this module holds (`annan` goes to `andke`,
- * `lähen` to `minge`, `loen` to `lugege`); the whole present for `olema`,
+ * `lähen` to `minge`, `loen` to `lugege`); both participles for every verb,
+ * which no rule reaches either; the whole present for `olema`,
  * whose third person is `on`;
  * and the imperative for `minema`, which says `mine`. `pidama` has no
  * imperative at all and Ekilex records none, so asking for it costs nothing

@@ -35,7 +35,7 @@
  * a script measures the script.
  */
 import { CASES } from "../lib/estonian/cases";
-import { caseAnswer, stemsFromParts } from "../lib/estonian/derive";
+import { buildCaseTable, caseAnswer, stemsFrom } from "../lib/estonian/derive";
 import { parseGovernment } from "../lib/estonian/government";
 import { FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS } from "../lib/tutor/provider";
 import { SCENES } from "../lib/scenes/catalogue";
@@ -139,27 +139,66 @@ for (const entry of shipped) {
   });
 }
 
-/** Every case form of every nominal, so a token can be asked which case it is. */
+/**
+ * Ekilex's own name for a case, in either number.
+ *
+ * `MORPH_TO_CASE` in `lib/estonian/derive.ts` is deliberately singular only,
+ * because what it feeds is a singular table. This asks a different question,
+ * whether a token in a line is in a case a verb governs, and a case is a case
+ * whether the word is singular or plural: `Ma andestan teile` and
+ * `Ma andestan talle` are one government.
+ *
+ * A pronoun is why this cannot be skipped. `teie` is stored with no principal
+ * parts at all and seventeen plural forms, because it has no singular for a
+ * lexicographer to record, so a table built off a genitive stem knows nothing
+ * about it. `teile` and `teil` are the commonest case forms in a conversation
+ * held in `teie`, which is every scene here.
+ */
+const CASE_BY_CODE: Record<string, CaseKey | undefined> = {
+  N: "NOMINATIVE", G: "GENITIVE", P: "PARTITIVE", Ill: "ILLATIVE", In: "INESSIVE",
+  El: "ELATIVE", All: "ALLATIVE", Ad: "ADESSIVE", Abl: "ABLATIVE", Tr: "TRANSLATIVE",
+  Ter: "TERMINATIVE", Es: "ESSIVE", Ab: "ABESSIVE", Kom: "COMITATIVE",
+};
+
+/**
+ * Every case form of every nominal, so a token can be asked which case it is.
+ *
+ * TWO SOURCES, AND THE FIRST RUN OF THIS HAD ONLY ONE. `stemsFromParts` returns
+ * `retrieved: {}` by design, so a table built through it is the rule's answer
+ * and nothing else: no `mulle`, no `teile`, no short illative, and nothing at
+ * all for the pronouns held as an attested paradigm with no principal parts.
+ * That made the government check report the polite register as ungoverned,
+ * which is the register every scene is set in, and `Kas kell kolm sobib teile?`
+ * was withheld over the one word in it that answers `kellele`. `formsOf` one
+ * file over had already learned this and said so; this had not.
+ */
 const CASE_OF = new Map<string, Set<CaseKey>>();
 for (const entry of shipped) {
   if (entry.pos !== "NOUN" && entry.pos !== "ADJECTIVE" && entry.pos !== "PRONOUN") continue;
+  const note = (form: string | null | undefined, key: CaseKey) => {
+    if (!form) return;
+    const lower = form.toLowerCase();
+    const seen = CASE_OF.get(lower) ?? new Set<CaseKey>();
+    seen.add(key);
+    CASE_OF.set(lower, seen);
+  };
+
+  const extra = entry.extraForms ?? [];
+  for (const form of extra) {
+    const key = CASE_BY_CODE[form.code.replace(/^(Sg|Pl)/, "")];
+    if (key) note(form.value, key);
+  }
   if (!entry.parts.GEN_SG) continue;
-  const stems = stemsFromParts(entry.parts);
-  for (const spec of CASES) {
-    const answer = spec.principal ? null : caseAnswer(stems, spec.key);
-    const forms = answer ? answer.accepted : [entry.parts[principalPart(spec.key)] ?? ""];
-    for (const form of forms) {
-      if (!form) continue;
-      const key = form.toLowerCase();
-      const seen = CASE_OF.get(key) ?? new Set<CaseKey>();
-      seen.add(spec.key);
-      CASE_OF.set(key, seen);
+
+  const rows = [
+    ...Object.entries(entry.parts).map(([formType, value]) => ({ formType, value })),
+    ...extra.map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+  ];
+  for (const row of buildCaseTable(stemsFrom(rows))) {
+    for (const form of [row.singular, row.plural, row.alsoRight, ...row.accepted]) {
+      note(form, row.spec.key);
     }
   }
-}
-
-function principalPart(key: CaseKey): string {
-  return key === "NOMINATIVE" ? "NOM_SG" : key === "GENITIVE" ? "GEN_SG" : "PART_SG";
 }
 
 /**
@@ -461,7 +500,16 @@ function labelledSet(): { good: string[]; bad: string[] } {
               .includes(token.toLowerCase()),
         );
         if (!owner) continue;
-        const other = caseAnswer(stemsFromParts(owner.parts), wrong.key);
+        /*
+          `stemsFrom` with the attested rows rather than the parts alone, for
+          the reason the case index above gives: the corrupted line should carry
+          the spelling a lexicographer recorded for the wrong case, not the
+          rule's answer where the two differ.
+        */
+        const other = caseAnswer(stemsFrom([
+          ...Object.entries(owner.parts).map(([formType, value]) => ({ formType, value })),
+          ...(owner.extraForms ?? []).map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+        ]), wrong.key);
         if (!other || other.value.toLowerCase() === token.toLowerCase()) continue;
         swapped = { from: token, to: other.value };
         break;
