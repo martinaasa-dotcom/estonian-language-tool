@@ -97,35 +97,73 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  * is on the reference page this card links back to, which is the right place
  * for a cross-reference and the wrong place for the prompt.
  */
-const CONJUGATION_SLOTS: { code: string; formType?: string; label: string; negative?: boolean }[] = [
+const CONJUGATION_SLOTS: {
+  code: string; formType?: string; label: string; negative?: boolean;
+  /** A second Ekilex code whose form is also a right answer for this slot. */
+  alsoCode?: string;
+}[] = [
   { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
   { code: "IndPrSg3", label: "olevik · ta" },
   { code: "IndPrPl1", label: "olevik · me" },
   // The negative is one form for every person, said after `ei`. The card
   // shows and accepts the two words together, since `loe` on its own is not
   // what anybody says.
-  { code: "IndPrPs_", label: "eitus · ma ei", negative: true },
+  //
+  // `pole` is the other half of that for the one verb that has one. Estonian
+  // contracts `ei ole` and the contraction is what people say and write, so a
+  // learner typing it was being marked wrong on the commonest verb in the
+  // language. Ekilex records it as `IndPrPsN`, for `olema` and for nothing
+  // else the course asks about, and the card carries both answers the way the
+  // illative does: joined with the separator `acceptedAnswers` splits on, so
+  // what the screen shows and what the marker takes are one string.
+  { code: "IndPrPs_", label: "eitus · ma ei", negative: true, alsoCode: "IndPrPsN" },
   { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
   { code: "IndIpfSg3", label: "lihtminevik · ta" },
   { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
   { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
+  /*
+    The polite imperative, which is the one a learner is addressed with. Every
+    counter, every receptionist and every official in the country says `öelge`,
+    `andke`, `täitke` and `oodake`, and the app could not produce one for any
+    verb in the language: it is not a suffix on anything the rule holds, since
+    `annan` goes to `andke`, `lähen` to `minge` and `loen` to `lugege`. It is
+    stored now, like every other form no rule reaches, and it was found by
+    `eval:scene`, where a model writing a `teie` scene reached for it over and
+    over and the gate withheld every line.
+  */
+  { code: "ImpPrPl2", label: "käskiv kõneviis · te!" },
 ];
+
+/**
+ * Every spelling the dictionary holds under one Ekilex code.
+ *
+ * A list rather than the first, because a verb slot has parallel forms exactly
+ * as a case does: the polite imperative of `ütlema` is `ütelge` and `öelge`,
+ * and a card that took one of them would mark the other wrong. That is the
+ * illative's rule, and `Form`'s unique key carries the value so that both rows
+ * can sit under one code.
+ */
+function attestedForms(lex: LexemeForCards, code: string, formType?: string): string[] {
+  const out: string[] = [];
+  for (const f of lex.forms) {
+    const matches = f.morphCode === code
+      || f.formType === `EKILEX:${code}`
+      || (formType !== undefined && f.formType === formType);
+    if (matches && !out.includes(f.value)) out.push(f.value);
+  }
+  return out;
+}
 
 /**
  * The form for one conjugation slot: attested where the dictionary has it,
  * derived where the rule reaches, and nothing otherwise.
  */
-function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string | null {
-  const attested = lex.forms.find(
-    (f) =>
-      f.morphCode === slot.code ||
-      f.formType === `EKILEX:${slot.code}` ||
-      (slot.formType !== undefined && f.formType === slot.formType),
-  );
-  if (attested) return attested.value;
+function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string[] {
+  const attested = attestedForms(lex, slot.code, slot.formType);
+  if (attested.length > 0) return attested;
   const derived = derivedVerbForms({ lemma: lex.lemma, pres1sg: pres1sgFrom(lex.forms) })
     .find((f) => f.morphCode === slot.code);
-  return derived?.value ?? null;
+  return derived ? [derived.value] : [];
 }
 
 /** At most this many gap-fill cards per word: two sentences teach, eight nag. */
@@ -141,6 +179,21 @@ export interface LexemeForCards {
   /** The raw `Lexeme.examples` JSON column; parsed defensively. */
   examples?: string | null;
   forms: { formType: string; value: string; morphCode?: string | null }[];
+  /**
+   * Other lemmas the dictionary glosses exactly the same way.
+   *
+   * A production card is front `translation`, hint `pos`, back `lemma`, so two
+   * entries with one gloss and one part of speech are one question with two
+   * right answers, and each of their cards marks the other one wrong. The
+   * dictionary ships 372 such prompts, `ja` and `ning` among them.
+   *
+   * `lib/collections/senses.ts` is what finds them and `lib/dict/facts.ts` is
+   * what caches the answer. Empty for a word nothing shares a prompt with,
+   * which is the overwhelming majority, and absent for a caller that has not
+   * looked, which is the honest default: an unset field builds the card that
+   * was built before rather than silently claiming a word has no synonym.
+   */
+  alsoAccepted?: readonly string[];
 }
 
 export interface GeneratedCard {
@@ -177,9 +230,32 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
         out.push({ cardType: type, front: lex.lemma, back: lex.translation, hint: null, targetCase: null });
         break;
 
-      case "PRODUCTION":
-        out.push({ cardType: type, front: lex.translation, back: lex.lemma, hint: lex.pos.toLowerCase(), targetCase: null });
+      case "PRODUCTION": {
+        /*
+          EVERY WORD THIS PROMPT COULD BE ASKING FOR GOES ON THE BACK.
+
+          The same fix the illative got, and for the same reason. `checkAnswer`
+          marks against the back and `acceptedAnswers` splits it on the
+          separator, so what the screen shows and what the marker takes are one
+          string. Before this, a learner shown "and" who typed `ning` was marked
+          wrong by `ja`'s card and shown it again until they stopped, and the
+          dictionary had 372 prompts able to do that to somebody.
+
+          The lemma leads, because it is this card's own word and the one the
+          screen should teach first. The rest follow in the order the dictionary
+          gives them, which `sharedPrompts` sorts, so the back does not depend
+          on which entry the deck happened to build first.
+        */
+        const answers = [lex.lemma, ...(lex.alsoAccepted ?? []).filter((w) => w !== lex.lemma)];
+        out.push({
+          cardType: type,
+          front: lex.translation,
+          back: answers.join(" / "),
+          hint: lex.pos.toLowerCase(),
+          targetCase: null,
+        });
         break;
+      }
 
       case "CASE_FORM": {
         if (!genSg) break;
@@ -258,12 +334,16 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       case "CONJUGATION": {
         if (lex.pos !== "VERB") break;
         for (const slot of CONJUGATION_SLOTS) {
-          const value = conjugationAnswer(lex, slot);
-          if (!value) continue;
+          const values = conjugationAnswer(lex, slot);
+          if (values.length === 0) continue;
+          const answers = values.map((v) => (slot.negative ? `ei ${v}` : v));
+          for (const also of slot.alsoCode ? attestedForms(lex, slot.alsoCode) : []) {
+            if (!answers.includes(also)) answers.push(also);
+          }
           out.push({
             cardType: type,
             front: `${lex.lemma} → ${slot.label}`,
-            back: slot.negative ? `ei ${value}` : value,
+            back: answers.join(" / "),
             hint: lex.translation,
             targetCase: null,
           });

@@ -2,9 +2,9 @@ import {
   Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarDays, CalendarRange, Camera,
   ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
   CircleDot, Clock, Compass, Ear, Eye, Flame, Footprints, GraduationCap, Grid2x2, Grid3x3, Hand, Headphones, Heart, HeartPulse,
-  Hourglass, House, Landmark, Languages, Layers, Library, Map, MessageCircleQuestion,
+  Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
   MessageSquareWarning, MessagesSquare, Mic, Moon, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
-  ScrollText, Settings, ShoppingBag, Sparkles, Stamp, Stethoscope, Sun,
+  ScrollText, Settings, ShoppingBag, SlidersHorizontal, Sparkles, Stamp, Stethoscope, Sun,
   Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap, type LucideIcon,
 } from "lucide-react";
 
@@ -21,9 +21,9 @@ export const ICONS: Record<string, LucideIcon> = {
   Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarDays, CalendarRange, Camera,
   ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
   CircleDot, Clock, Compass, Ear, Eye, Flame, Footprints, GraduationCap, Grid2x2, Grid3x3, Hand, Headphones, Heart, HeartPulse,
-  Hourglass, House, Landmark, Languages, Layers, Library, Map, MessageCircleQuestion,
+  Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
   MessageSquareWarning, MessagesSquare, Mic, Moon, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
-  ScrollText, Settings, ShoppingBag, Sparkles, Stamp, Stethoscope, Sun,
+  ScrollText, Settings, ShoppingBag, SlidersHorizontal, Sparkles, Stamp, Stethoscope, Sun,
   Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap,
 };
 

@@ -20,6 +20,7 @@ import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/
 import { BLANK } from "@/lib/estonian/cloze";
 import { splitOnForm } from "@/lib/dict/examples";
 import { xpForRating } from "@/lib/gamification/xp";
+import { sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade } from "@/lib/offline/db";
 import { LEARN_BATCH, ratingFor, rungOf, tally, type Outcome, type Rung } from "@/lib/learn/ladder";
 import type { LearnScheduling, LearnWord } from "@/lib/progress/learn";
@@ -157,7 +158,23 @@ export function LearnSession({
   );
   const cardId = seat?.cardId;
   const word = cardId ? byId.get(cardId) : undefined;
-  const rung = seat?.rung ?? "meet";
+  /*
+    AND A WORD SPELLED THE SAME IN BOTH LANGUAGES IS NOT ASKED WHAT IT MEANS.
+
+    Thirty entries in the shipped dictionary have an English gloss that is the
+    very same string, twelve of them taught by the course: `film`, `park`,
+    `sport`, `minister`, `risk`. Asking which of four meanings `film` has puts
+    the answer at the top of the screen, and a question nobody can get wrong is
+    worse than no question: the scheduler reads the pass as a recall and
+    stretches the interval on a memory nothing tested.
+
+    So such a word goes straight to the gap, which is a real question about it,
+    and takes both its grades there. Exact rather than case-insensitive, which
+    is the rule `sameSpelling` already carries: `august` is `August`, and the
+    capital letter is the lesson.
+  */
+  const free = word !== undefined && word.gap !== null && sameSpelling(word.lemma, word.gloss);
+  const rung: Rung = seat?.rung === "choice" && free ? "gap" : seat?.rung ?? "meet";
   const finished = !word;
   const total = words.length;
   const left = queue.length;

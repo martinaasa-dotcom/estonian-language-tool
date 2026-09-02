@@ -1691,7 +1691,7 @@ it: Ekilex 213895 is the comparative of `hea`. Directions take the adverbs anywa
 
 ### The dictionary, stated plainly
 
-6,101 words in the seed, 1,371 of them the course harvest with attested sentences, Ekilex CEFR
+6,102 words in the seed, 1,391 of them the course harvest with attested sentences, Ekilex CEFR
 levels and, for most, the Institute's Russian and Ukrainian. More words come from the two live
 paths and never from a model.
 
@@ -1751,7 +1751,134 @@ Two lines were missing from the bill: transactional mail, and the tooling that w
   accessibility suite with axe clean on it in both themes, and the design suite reporting no
   contrast failures with the page in its sweep.
 
-## 27. The twenty-first pass: learning a word, which is not the same as reviewing one
+## 27. The twenty-first pass: questions that answered themselves
+
+Three merges over one afternoon, and one rule under most of them: **a question may not print its
+own answer**. It was found on a flashcard, and by the end of the pass it had been found on five
+screens, which is when a coincidence stops being one.
+
+### The rule, and the five screens that broke it
+
+A card nobody can get wrong is worse than no card. The scheduler reads every pass as a recall and
+stretches the interval, so the slot is spent for ever, and the learner is told they knew something
+they were shown.
+
+- **The case card.** Estonian genuinely spells some cases like the nominative: `kallis` has the
+  genitive `kalli`, so its seesütlev is `kalli` plus `s`, which is `kallis` again. 115 cards asked
+  `kallis → milles? kus?` with `kallis` on the back.
+- **The gap-fill hint.** 2,468 cards, 302 of them in the course, gave the lemma as the hint for a
+  gap that wanted the lemma.
+- **The gap itself.** `buildCloze` blanks one occurrence, so a sentence could leave the answer
+  standing four words along. Fixed in `cloze.ts`, because the mock exam and the level check draw
+  their gaps from the same function.
+- **The crossword clue.** The clue is the English gloss beside the entry, and a few dozen Estonian
+  words are spelled the same in English: `film` was clued as "film". 34 of 5,329.
+- **The picture tile and the scene task and the target.** Three rounds that arrived in the same
+  fortnight, each showing a word and asking for a case of it. Eight of the 1,980 scene tasks and
+  122 of the 51,447 case slots Target can fill were the word again.
+
+The test differs by screen, and the difference is the interesting part. A typed card accepts every
+spelling, so **any** accepted spelling showing makes it free. A target draws one string and the
+learner hits it, so the test is on **what is printed** rather than on what a marker would take.
+`voodi` in the illative is refused on a target for what the target would say; a word whose long
+form is drawn beside a short one spelled like the lemma is still worth asking.
+
+### What the audit is, and what its floor could not see
+
+`npm run audit:questions` builds every question the shipped dictionary can make and asks the one
+thing no unit test can: is the answer already visible in what the learner is shown. **51,467
+questions over six generators**, no database and no key, about ninety seconds, and a job in CI.
+Four instances of one fault in an afternoon is a rule, and a rule found four times by hand will be
+found a fifth time by a learner.
+
+It disagreed with the rule written to fix the first three, which is the argument for it. The case
+rule was written to skip a card only where *every* accepted spelling was the word in the question,
+keeping seven where the lemma is one of two; that was wrong and had shipped.
+
+**A single floor over six generators is a floor over the largest one.** The deck is 36,404 of those
+51,467 questions, so the crossword at 5,295 or the scene game at 1,972 could stop producing
+entirely and the total would still clear 40,000: the script would report a clean run having asked
+nothing at all about either. Each section declares what it reaches and is held to four fifths of
+it, printed beside the timings. The figures are measured rather than estimated, which the first
+version proved by failing on a guess of 6,000 for a section that asks 2,500.
+
+One section says out loud that it **samples** where the others are exhaustive. Target's builder
+picks one of a word's eleven cases itself, so one call asks one of them, and with the guard removed
+the audit reported 15 of the 122 rather than all of them. The rule in the round is total; the audit
+is the backstop.
+
+### A generator fix settles nothing already in a deck
+
+The audit reads `prisma/data/expanded.json`, so it can say what the builder would write today and
+nothing about the rows in somebody's deck. A deck made before the case fix still holds
+`liblikas → milles? kus?`, and nothing in the app will ever take one out. `npm run audit:decks` is
+the other half: it reports by default, names every card it would remove, and removes them with
+`--write`. A command somebody runs rather than anything the app does on its own, because every row
+it touches belongs to a learner. Removing rather than suspending, and the schema is what makes that
+safe: `Review` has no foreign key to `Card` and carries its own `ownerId` and `lexemeId`, so the
+history stays and only the unanswerable question goes.
+
+### Three numbers the README had wrong about its own app
+
+The first page anybody reads about this project was undercounting it on the three things it is
+largest at: seventy-nine units against 82, seven practice modes against 18, five card types against
+seven. The eleven missing modes were everything that had landed since it was last counted. Two more
+claims were stale rather than short: a week view and a task list, both cut in §24.
+
+The dictionary size was already held to the seed's own count; the other three are held the same way
+now, in digits rather than in words, because a count nothing can read is a count nothing checks.
+**The check earned itself within the hour**: a nineteenth mode landed while the branch was open,
+and the number that had been right when it was written was wrong on the merge result with nothing
+but the invariant to say so.
+
+### And the page that says what this costs was stale the day it was written
+
+`/funding` is measured on a stated day and prints the command that gets the same number again,
+which is the whole reason a reader is asked to believe it. Its dictionary line was typed: **18 MB
+for 6,050 entries and 34,554 forms**, while the seed it describes holds **6,102 and 38,577**, the
+nominative plural having become a stored principal part in between. Re-measured against a freshly
+dropped and seeded database it is **20 MB**, and the two counts now come from `SEED_SET_SIZE`,
+which its own test proves against the files the seed loads.
+
+`DICTIONARY_MB` feeds the storage line of the cost model as well as that sentence, so the stale
+figure was not only a wrong number on a page. It made the projected bill lower than the truth,
+which is the one direction that page exists not to be wrong in.
+
+**And fixing it left a second copy**, which is the fault §26 recorded about this very file: the cost
+model started as three lists and nothing failed when a line went missing from a total. Ekilex's
+entry says what the Institute gives, in the same stale pair, so the page understated the gift by 52
+entries and 4,023 forms. Both read the seed now, and a typed number next to the word "entries" or
+"forms" anywhere under `lib/funding/` fails the invariant, because a third copy would go stale the
+same way.
+
+### Six things measured that were already right
+
+Recorded rather than left unasked, because a check nobody has made fail once is a check nobody
+knows the state of, and a sweep that finds nothing is worth the words when it says what it looked at.
+
+- Every route addressed by a row id proves the row is the learner's, in the page and in its
+  `generateMetadata` half, and so does every server action and every API route.
+- The crossword compiles a grid on all 365 days at every level.
+- Sõnad has between 196 and 467 six-letter words a level, and its guess list is the 154,995
+  headwords of `KnownWord` rather than the answers.
+- No board in 10,000 simulated picture rounds shows two tiles reading the same form.
+- All 60 scenes are fillable, and a learner is offered between 10 and 50 of them by level.
+- Example sentence coverage across the course is 98.3%.
+
+### Measured
+
+- 214 invariants, **21 of them added across these three merges**, and every one made to fail before
+  it was left passing: main stood at 193 the moment the first of them opened. 1,966 unit tests over
+  121 files, the integration suite against a real Postgres, and the twenty-one browser suites green
+  against a freshly seeded database in CI's own order.
+- 2,644 cards printed their own answer and now none does, re-asked the same way. 42 nominative
+  plural disagreements against live Ekilex and now none. 90 of 288 readiness states contradicted
+  the paper the learner had sat, and 802 of 3,125 vocabulary states ranked the levels the wrong way
+  round; both are none.
+- Reachable pictured nouns on the matching board, before and after, by level: 79 to 106, 79 to 176,
+  47 to 173, 38 to 128, 31 to 58.
+
+## 28. The twenty-second pass: learning a word, which is not the same as reviewing one
 
 The daily row in the rail said Review, and what it opened was two jobs at once: the cards that were
 due, and a trickle of words the learner had never seen, taught in among them. Reviewing is keeping a

@@ -119,7 +119,7 @@ describe("the short illative beats the suffix rule", () => {
   });
 
   it("prefers a whole form a lexicographer wrote down over the suffix rule", () => {
-    const withRetrieved = { ...raamat, retrieved: { INESSIVE: "raamatuis" } } as const;
+    const withRetrieved = { ...raamat, retrieved: { INESSIVE: ["raamatuis"] } } as const;
     const answer = caseAnswer(withRetrieved, "INESSIVE");
     expect(answer?.value).toBe("raamatuis");
     expect(answer?.origin).toBe("EKILEX");
@@ -163,9 +163,42 @@ describe("reading stems off what a caller happens to hold", () => {
     expect(stems.illSgShort).toBe("tuppa");
   });
 
+  /*
+    The pronouns are the illative's fault in another case. Ekilex records the
+    allative of `mina` as `minule` and `mulle` under one code, and holding the
+    first of two is what kept the form everybody says off the screen and marked
+    it wrong. Both are printed and both are accepted.
+  */
+  it("keeps both parallel forms a lexicographer recorded for one case", () => {
+    const mina = {
+      nomSg: "mina", genSg: "minu", partSg: "mind", illSgShort: null, nomPl: null,
+      retrieved: { ALLATIVE: ["minule", "mulle"], ADESSIVE: ["minul", "mul"] },
+    } as const;
+    const allative = caseAnswer(mina, "ALLATIVE");
+    expect(allative?.alsoRight).toBe("mulle");
+    expect(allative?.accepted).toContain("minule");
+    expect(allative?.accepted).toContain("mulle");
+    expect(shownForms({ singular: allative!.value, alsoRight: allative!.alsoRight })).toEqual(["minule", "mulle"]);
+    expect(caseAnswer(mina, "ADESSIVE")?.accepted).toEqual(["minul", "mul"]);
+  });
+
+  /*
+    And a suffix guess is not a second attested word. The illative is the one
+    place a derived form may stand in as the pair, because Estonian genuinely
+    has two of them and the long one is regular; anywhere else, printing the
+    rule's output beside a retrieved form would assert the guess is a word.
+  */
+  it("does not offer a derived form as the pair outside the illative", () => {
+    const one = {
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", illSgShort: null, nomPl: null,
+      retrieved: { INESSIVE: ["toas"] },
+    } as const;
+    expect(caseAnswer(one, "INESSIVE")?.alsoRight).toBeNull();
+  });
+
   it("reads a retrieved form off either column", () => {
-    expect(stemsFrom([{ formType: "EKILEX:SgIn", value: "toas" }]).retrieved?.INESSIVE).toBe("toas");
-    expect(stemsFrom([{ formType: "x", morphCode: "SgIn", value: "toas" }]).retrieved?.INESSIVE).toBe("toas");
+    expect(stemsFrom([{ formType: "EKILEX:SgIn", value: "toas" }]).retrieved?.INESSIVE).toEqual(["toas"]);
+    expect(stemsFrom([{ formType: "x", morphCode: "SgIn", value: "toas" }]).retrieved?.INESSIVE).toEqual(["toas"]);
   });
 
   it("says null rather than nothing when a word genuinely has no short illative", () => {
