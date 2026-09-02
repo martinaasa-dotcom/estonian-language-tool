@@ -8,8 +8,11 @@ import { ekilexConfigured } from "@/lib/ekilex/client";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
-import { INFRA, KIND_NOTE, type InfraKind } from "@/lib/funding/infra";
-import { MEASURED, MEASURED_ON, PRICES_CHECKED, COMPUTE, DOMAIN, OPENROUTER_FREE, SUPABASE, VERCEL } from "@/lib/funding/facts";
+import { SERVICES } from "@/lib/funding/model";
+import {
+  COMPUTE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, GIVING_BACK, MEASURED, MEASURED_ON,
+  PRICES_CHECKED, SPEECH_MARKET, SUPABASE, VERCEL,
+} from "@/lib/funding/facts";
 
 export const metadata = { title: "Funding" };
 
@@ -41,10 +44,11 @@ export const dynamic = "force-dynamic";
  * this repository, quoted off a vendor's price list with the date it was read,
  * or named as an assumption the reader can change. The interactive part is not
  * decoration: a total somebody can move is a total they can check, and the
- * three least flattering findings on the page (that ten users is the worst
- * value, that the free tier cannot hold the speech, and that a school pays
- * twenty dollars before its first pupil arrives) are all things the model
- * surfaced rather than things anybody chose to admit.
+ * three least flattering findings on the page (that the floor is about
+ * forty-six dollars before anybody arrives, that speech is the fastest-growing
+ * line once it is priced honestly, and that the donated part outgrows the
+ * invoiced part) are all things the model surfaced rather than things anybody
+ * chose to admit.
  */
 export default function FundingPage() {
   const operator = resolveOperator();
@@ -78,8 +82,6 @@ export default function FundingPage() {
   */
   const switchedOn = (key: string | undefined): boolean =>
     key === undefined ? true : Boolean(process.env[key]?.trim());
-
-  const byKind = (kind: InfraKind) => INFRA.filter((i) => i.kind === kind);
 
   return (
     <Legal title="Funding" updated="2 September 2026">
@@ -117,65 +119,63 @@ export default function FundingPage() {
 
       <S title="What it runs on">
         <P>
-          Twelve things, and only some of them send anybody a bill. The list is longer
-          than the one on <Link href="/privacy" className="underline underline-offset-2">the privacy page</Link>,
+          {SERVICES.length} things, and every one of them has a price on it. The list is
+          longer than the one on{" "}
+          <Link href="/privacy" className="underline underline-offset-2">the privacy page</Link>,
           because that page answers a narrower question: a service can hold every row in
           the database without ever being told who a learner is.
         </P>
         <P>
-          The last column is the one worth reading. Every entry is a state the app
-          already handles rather than a disaster: the dictionary works with no Ekilex
-          key, review works with no network at all, and the tutor is the only part with
-          nothing to fall back on.
+          <strong>Nothing here is counted as free.</strong> Two of these send no invoice
+          and they are still on the bill, priced at what the same thing costs elsewhere,
+          because a page that valued donated infrastructure at nothing would be describing
+          an app that runs on five paid services and a miracle. The last line of each card
+          is the one worth reading: every entry is a state the app already handles rather
+          than a disaster.
         </P>
 
-        {(["paid", "public", "goodwill", "device"] as InfraKind[]).map((kind) => (
-          <div key={kind} className="pt-1">
-            <h3 className="label-xs" style={{ color: "var(--ink-3)" }}>{KIND_NOTE[kind]}</h3>
-            <ul className="mt-2 space-y-3">
-              {byKind(kind).map((item) => (
-                <li
-                  key={item.id}
-                  className="rounded-[var(--r-lg)] border p-4"
-                  style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+        <ul className="space-y-3">
+          {SERVICES.map((service) => (
+            <li
+              key={service.id}
+              className="rounded-[var(--r-lg)] border p-4"
+              style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>
+                  {service.name}
+                </span>
+                <span
+                  className="label-xs"
+                  style={{ color: switchedOn(service.setBy) ? "var(--mint-ink)" : "var(--ink-3)" }}
                 >
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>
-                      {item.name}
-                    </span>
-                    <span
-                      className="label-xs"
-                      style={{ color: switchedOn(item.setBy) ? "var(--mint-ink)" : "var(--ink-3)" }}
-                    >
-                      {switchedOn(item.setBy) ? "on here" : "not set here"}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>{item.who}</p>
-                  <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                    {item.does}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
-                    Without it: {item.whenItIsGone}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+                  {switchedOn(service.setBy) ? "on here" : "not set here"}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>{service.who}</p>
+              <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                {service.does}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
+                Without it: {service.whenItIsGone}
+              </p>
+            </li>
+          ))}
+        </ul>
 
         <P>
           <strong>On this installation.</strong> Sign-in is{" "}
           {supabaseConfigured()
             ? "on, so every learner has a deck of their own"
             : "off, so this copy is one local learner"}. Live dictionary lookups are{" "}
-          {ekilexConfigured() ? "on" : "off, so the built-in dictionary answers by itself"}. Speech is
-          cached {audioCacheIsDurable() ? "in shared storage" : "on the server's own disk"}.{" "}
+          {ekilexConfigured() ? "on" : "off, so the built-in dictionary answers by itself"}, and
+          speech is cached {audioCacheIsDurable() ? "in shared storage" : "on the server's own disk"}.{" "}
           {chain.length === 0
             ? "No model key is set, so Anu is not here at all and nothing on this page bills for her."
             : `Anu is answered by ${modelLabels.length > 1
               ? `${modelLabels.slice(0, -1).join(", ")} and ${modelLabels[modelLabels.length - 1]}`
               : modelLabels[0]}, on ${freeChain
-              ? "models that cost nothing"
+              ? "models that are given away at the tier this uses, which the panel below still prices as though they were bought"
               : "at least one model that charges"}.`}
         </P>
       </S>
@@ -237,25 +237,47 @@ export default function FundingPage() {
         <ul className="space-y-1.5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           <li>
             <a href={VERCEL.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Vercel</a>
-            : free at nought, then ${VERCEL.pro.baseUsd} a month, with{" "}
+            : ${VERCEL.pro.baseUsd} a month, then{" "}
             ${VERCEL.overage.perTransferGb} a gigabyte out past the first{" "}
-            {VERCEL.pro.included.transferGb?.toLocaleString("en-GB")}. The free plan may not be used commercially.
+            {VERCEL.pro.included.transferGb?.toLocaleString("en-GB")}.
           </li>
           <li>
             <a href={SUPABASE.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Supabase</a>
-            : free with {SUPABASE.free.included.dbGb} GB of database and{" "}
-            {SUPABASE.free.included.storageGb} GB of files, paused after{" "}
-            {SUPABASE.freePausesAfter}, then ${SUPABASE.pro.baseUsd} a month.
+            : ${SUPABASE.pro.baseUsd} a month with {SUPABASE.pro.included.dbGb} GB of
+            database, {SUPABASE.pro.included.storageGb} GB of files and{" "}
+            ${SUPABASE.computeCreditUsd} of compute credit.
           </li>
           <li>
             <a href={COMPUTE.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Database instances</a>
             : from ${COMPUTE.sizes[0]!.usd} a month to ${COMPUTE.sizes[COMPUTE.sizes.length - 1]!.usd.toLocaleString("en-GB")}. This is the steepest ladder on the page.
           </li>
           <li>
-            <a href={OPENROUTER_FREE.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">OpenRouter</a>
-            : free models are capped at {OPENROUTER_FREE.requestsPerMinute} requests a
-            minute and {OPENROUTER_FREE.requestsPerDayWithCredit.toLocaleString("en-GB")} a
-            day, shared across the whole deployment rather than one allowance each.
+            <a href={SPEECH_MARKET.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Speech</a>
+            : ${SPEECH_MARKET.usdPerMillionCharacters} a million characters, which is what{" "}
+            {SPEECH_MARKET.equivalentOf} charge. TartuNLP charge nothing and this page
+            prices their work at that rate anyway.
+          </li>
+          <li>
+            <a href={GIVING_BACK.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">The two dictionaries</a>
+            : ${GIVING_BACK.monthlyFloorUsd} a month, or{" "}
+            ${GIVING_BACK.usdPerThousandLearners} for every thousand learners if that is
+            more. Not a price anybody quoted: a figure this budgets to give back.
+          </li>
+          <li>
+            <a href={EMAIL.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Resend</a>
+            : ${EMAIL.pro.baseUsd} a month for{" "}
+            {EMAIL.pro.included.emails?.toLocaleString("en-GB")} emails, then{" "}
+            ${EMAIL.overage.perThousandEmails} a thousand.
+          </li>
+          <li>
+            <a href={ERRORS.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">Error reporting</a>
+            : ${ERRORS.team.baseUsd} a month for{" "}
+            {ERRORS.team.included.events?.toLocaleString("en-GB")} events.
+          </li>
+          <li>
+            <a href={DEVTOOLS.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">{DEVTOOLS.plan}</a>
+            : ${DEVTOOLS.monthlyUsd} a month. The tooling that writes and maintains this, which
+            is the one line here that is not runtime and the one that does not grow.
           </li>
           <li>
             <a href={DOMAIN.ref.source} target="_blank" rel="noreferrer" className="underline underline-offset-2">A .ee domain</a>
@@ -263,10 +285,12 @@ export default function FundingPage() {
           </li>
         </ul>
         <P>
-          Ekilex, Wiktionary and TartuNLP charge nothing and are named here anyway,
-          because a bill that leaves them out would suggest this app could exist without
-          them. Every Estonian form, every English meaning and every spoken word in it
-          comes from one of those three.
+          The last two are the ones to read carefully, because they are the two nobody
+          invoices. Speech has a commercial equivalent and is priced at it, so that figure
+          is checkable. The dictionaries do not: nothing else holds a checked Estonian
+          case table with attested sentences, and no amount of money buys one this week.
+          That line is therefore a commitment rather than a rate, and it is the one figure
+          on this page an operator simply decides.
         </P>
       </S>
 
@@ -283,22 +307,22 @@ export default function FundingPage() {
         </P>
         <P>
           <strong>A bad month.</strong> The projection is a steady month. It does not
-          model the week something is on the radio, and the free tiers are exactly where a
-          spike is felt first.
+          model the week something is on the radio, and a plan&rsquo;s included allowance is
+          exactly where a spike is felt first.
         </P>
       </S>
 
       <S title="What money would change">
         <P>
-          Four things, in the order they would matter, and the first two are switches the
-          code already has.
+          Four things, in the order they would matter.
         </P>
         <P>
-          <strong>The tutor could stop being the free one.</strong> Anu runs on free models
-          by default, which are rate-limited hard and vaguer about Estonian than a paid
-          model is. The spend cap is{" "}
-          ${(DEFAULT_LIMITS.dailyMicrosGlobal / 1e6).toFixed(0)} a day and cannot be turned
-          off, so this is a knob with a stop on it rather than an open cheque.
+          <strong>The daily cap on the tutor could go up.</strong> Every model call in the
+          app is booked against a shared budget of{" "}
+          ${(DEFAULT_LIMITS.dailyMicrosGlobal / 1e6).toFixed(0)} a day, which cannot be
+          turned off and is what stops the one line that could run away. Raising it is a
+          knob with a stop on it rather than an open cheque, and at ten thousand learners
+          it is already the thing holding that line down.
         </P>
         <P>
           <strong>A school could keep its history.</strong> Everything on the progress
@@ -312,10 +336,12 @@ export default function FundingPage() {
           and does not make every entry right. Learners already report the wrong ones.
         </P>
         <P>
-          <strong>The free services could stop being free to us.</strong> TartuNLP and
-          Ekilex are public research infrastructure and this app leans on both. At a
-          scale worth funding, the right thing is to pay a share of what we use rather
-          than to keep being a polite guest.
+          <strong>The donated part could stop being donated.</strong> The panel above
+          shows what TartuNLP, Ekilex and Wiktionary would cost if they billed, and at any
+          real scale it is a large share of the whole. They are public research
+          infrastructure and this app leans on all three, so the right thing at a size
+          worth funding is to pay a share of what we use rather than to keep being a
+          polite guest.
         </P>
       </S>
 

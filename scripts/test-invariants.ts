@@ -4427,18 +4427,18 @@ check("a truncated query in the progress layer ends on the primary key", () => {
  * the ledger's numbers and then use its own beside them.
  */
 check("the funding model prices a call the way the ledger prices one", () => {
-  const model = code(join("lib", "funding", "model.ts"));
+  const model = code(join("lib", "funding", "services.ts"));
 
   assert.match(
     model,
     /reserveMicros\(/,
-    "lib/funding/model.ts no longer asks the pricing table what a call costs, so its tutor line " +
+    "lib/funding/services.ts no longer asks the pricing table what a call costs, so its model line " +
     "and the app's ledger are two guesses about one number.",
   );
   assert.match(
     model,
     /DEFAULT_LIMITS\.dailyMicrosGlobal/,
-    "lib/funding/model.ts no longer reads the app's own daily spend cap, so it can project " +
+    "lib/funding/services.ts no longer reads the app's own daily spend cap, so it can project " +
     "a bill the running app would refuse to run up.",
   );
   /*
@@ -4448,7 +4448,7 @@ check("the funding model prices a call the way the ledger prices one", () => {
   assert.doesNotMatch(
     model,
     /PerMTok|per[ _]?million[ _]?tokens/i,
-    "lib/funding/model.ts has grown a token price of its own. Rates live in lib/usage/pricing.ts.",
+    "lib/funding/services.ts has grown a token price of its own. Rates live in lib/usage/pricing.ts.",
   );
 });
 
@@ -4557,16 +4557,16 @@ check("every variable the funding page names is one the app actually reads", () 
     ...ALL, join("middleware.ts"), join("next.config.ts"), join("prisma", "schema.prisma"),
   ].map((f) => read(f)).join("\n");
 
-  const named = [...read(join("lib", "funding", "infra.ts")).matchAll(/setBy:\s*"([A-Z_0-9]+)"/g)]
+  const named = [...read(join("lib", "funding", "services.ts")).matchAll(/setBy:\s*"([A-Z_0-9]+)"/g)]
     .map((m) => m[1]!);
-  assert.ok(named.length >= 5, `only found ${named.length} named variables, so this check stopped looking`);
+  assert.ok(named.length >= 4, `only found ${named.length} named variables, so this check stopped looking`);
 
   for (const key of named) {
     assert.ok(
       new RegExp(
         `process\\.env\\.${key}\\b|process\\.env\\["${key}"\\]|\\benv\\.${key}\\b|env\\("${key}"\\)`,
       ).test(everywhere),
-      `lib/funding/infra.ts says ${key} switches something on, and nothing in the app reads it. ` +
+      `lib/funding/services.ts says ${key} switches something on, and nothing in the app reads it. ` +
       "The page would print \"not set here\" whatever anybody configured.",
     );
   }
@@ -4588,6 +4588,108 @@ check("the funding page is readable without signing in", () => {
     /path\.startsWith\("\/funding"\)/,
     "middleware.ts no longer lets /funding through, so the page about what this costs is " +
     "behind the sign-in it exists to explain.",
+  );
+});
+
+/**
+ * THE BILL IS GENERATED FROM THE REGISTRY, NEVER ASSEMBLED BESIDE IT.
+ *
+ * What this app runs on, what a reader is told it runs on, and what appears on
+ * the bill used to be three lists: a catalogue in one module, a set of
+ * hand-written line functions in the cost model, and whatever the page had
+ * been told about. Adding a service meant remembering all three, and the one
+ * certain to go stale is the bill, because nothing fails when a line is
+ * missing from a total. It simply comes out lower than the truth, which is the
+ * worst way for a page like this to be wrong.
+ *
+ * So `lib/funding/services.ts` is the list, and everything downstream maps
+ * over it. This is what makes adding a new tool one edit, and it is exactly
+ * the property that decays the first time somebody finds it quicker to special
+ * case one service in the page.
+ */
+check("the funding bill is generated from the registry rather than a list beside it", () => {
+  const model = code(join("lib", "funding", "model.ts"));
+  assert.match(
+    model,
+    /SERVICES\.map\(/,
+    "lib/funding/model.ts no longer maps over the registry, so a service added to it " +
+    "would not reach the bill.",
+  );
+
+  /*
+    And nothing downstream names a service. Anchored on the ids rather than on
+    the vendor names, because the page is allowed to *write about* Vercel in a
+    sentence and is not allowed to single it out in the arithmetic.
+  */
+  const ids = [...read(join("lib", "funding", "services.ts")).matchAll(/^\s{4}id: "([a-z]+)",$/gm)]
+    .map((m) => m[1]!);
+  assert.ok(ids.length >= 6, `only found ${ids.length} services, so this check stopped looking`);
+
+  for (const file of [join("app", "funding", "page.tsx"), join("app", "funding", "CostExplorer.tsx")]) {
+    const source = code(file);
+    assert.match(
+      source,
+      /\.map\(/,
+      `${file} draws no list, so it cannot be reading the registry.`,
+    );
+    for (const id of ids) {
+      assert.doesNotMatch(
+        source,
+        new RegExp(`["']${id}["']`),
+        `${file} singles out the "${id}" service by name. Everything on this page is drawn ` +
+        "from lib/funding/services.ts, so that a tool added there appears without touching a screen.",
+      );
+    }
+  }
+});
+
+/**
+ * NOTHING THIS APP RUNS ON IS COUNTED AS FREE.
+ *
+ * The first version of the funding page modelled a free tier for the host and
+ * one for the database and picked between them by traffic. It described a
+ * deployment nobody runs: a free plan pauses when nobody is on it, forbids
+ * commercial use, and hands out an allowance that disappears the week somebody
+ * launches. What it produced was a page that said this app costs nothing to
+ * run at a hundred learners, which was cheerful and wrong.
+ *
+ * The rule now is that a service is charged, or it is inside another charge,
+ * or somebody other than the operator pays for it and the page says who. There
+ * is no fourth answer, and in particular a service that sends no invoice is
+ * priced at what the same thing costs elsewhere rather than at nothing.
+ *
+ * Asserted on the shape of the tables, because that is where a free tier comes
+ * back: somebody adds a cheaper plan object beside the paid one and a branch to
+ * pick it.
+ */
+check("the funding page keeps no free tier for anything", () => {
+  const facts = code(join("lib", "funding", "facts.ts"));
+
+  for (const [pattern, what] of [
+    [/\bhobby\s*:/i, "a Hobby tier"],
+    [/\bfree\s*:\s*\{/i, "a free tier"],
+    [/name:\s*"(Free|Hobby)"/i, "a plan named Free or Hobby"],
+  ] as const) {
+    assert.doesNotMatch(
+      facts,
+      pattern,
+      `lib/funding/facts.ts has grown ${what}. Nothing this app runs on is modelled as free: ` +
+      "a plan that pauses, forbids commercial use, or hands out an allowance is not what " +
+      "anybody hosting this for other people is on.",
+    );
+  }
+
+  /*
+    And the cost shape itself has no way to say "free". Three answers, and the
+    one that reads as nothing has to name who is paying instead.
+  */
+  const types = code(join("lib", "funding", "types.ts"));
+  assert.match(types, /kind: "charged"/, "the funding cost type no longer has a charged shape");
+  assert.match(types, /kind: "notOurs"/, "the funding cost type can no longer say who else pays");
+  assert.doesNotMatch(
+    types,
+    /kind: "free"/,
+    "the funding cost type has grown a free shape, which is the thing this page exists to avoid.",
   );
 });
 

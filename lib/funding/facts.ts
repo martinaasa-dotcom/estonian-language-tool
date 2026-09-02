@@ -1,7 +1,7 @@
 /**
- * What this app actually costs to run, and how anybody knows.
+ * What this app costs to run, and how anybody knows.
  *
- * Two kinds of number live here and they are kept apart on purpose.
+ * Three kinds of number live here and they are kept apart on purpose.
  *
  * `MEASURED` is what a stopwatch, `pg_total_relation_size` and a browser said
  * about this repository on a stated day. Every entry carries the command that
@@ -9,19 +9,26 @@
  * word, and so the next person to change the schema or the bundle can see
  * which figure they have just invalidated.
  *
- * `VERCEL`, `SUPABASE` and `COMPUTE` are somebody else's published prices,
- * each with the page it came off and the day it was read. They are not facts
- * about this app at all and they date faster than anything else here, which is
- * why they are quoted with a date rather than folded into the arithmetic.
+ * `VERCEL`, `SUPABASE`, `COMPUTE`, `SPEECH_MARKET` and `DOMAIN` are somebody
+ * else's published prices, each with the page it came off and the day it was
+ * read. They are not facts about this app at all and they date faster than
+ * anything else here, which is why they are quoted with a date rather than
+ * folded into the arithmetic.
  *
- * Nothing in this file is a guess. What the projection needs and cannot
- * measure lives in `model.ts` under `ASSUMPTIONS`, where it is labelled as an
- * assumption and the reader can change it.
+ * `ASSUMPTIONS` is everything left: what the projection needs and nothing
+ * measured. It is deliberately short, and every entry is on the page in full
+ * with the reason it is the number it is.
  *
- * Pure: no React, no Next, no Prisma. The funding page renders it, the tests
- * check it, and `scripts/test-invariants.ts` fails on an entry that has
- * stopped saying where it came from.
+ * NOTHING HERE HAS A FREE TIER. Earlier versions of this file carried one for
+ * Vercel and one for Supabase and picked between them by traffic, which
+ * described a deployment nobody actually runs: a free plan pauses when nobody
+ * is on it, forbids commercial use, and is not what anybody hosting this for
+ * other people is on. Modelling it made the page cheerful and wrong. The paid
+ * plan is the only plan.
+ *
+ * Pure: no React, no Next, no Prisma.
  */
+import type { PlanTier, PriceRef, Shape } from "./types";
 
 /** The day the vendor pricing pages below were read. */
 export const PRICES_CHECKED = "2 September 2026";
@@ -112,40 +119,19 @@ export const MEASURED: readonly Measurement[] = [
   },
 ];
 
-export interface PriceRef {
-  /** Where the numbers came from. */
-  readonly source: string;
-  /** The day that page was read. */
-  readonly checked: string;
-}
-
-export interface PlanTier {
-  readonly name: string;
-  /** What the plan costs a month before any overage. */
-  readonly baseUsd: number;
-  /** What each meter gives you before it starts charging. */
-  readonly included: Readonly<Record<string, number>>;
-}
-
 /**
  * Vercel, which runs the app itself.
  *
- * Four meters, and they are not equally interesting. Function invocations and
- * active CPU are what a rendered page costs; edge requests count every file a
- * browser asks for, including the ones it already had; transfer is bytes out.
- * The one that decides the plan is usually none of them, because Hobby forbids
- * commercial use, so a school or a company is on Pro at any traffic at all.
+ * One plan, because there is one plan anybody hosting this for other people
+ * can be on. The free plan forbids commercial use outright, so a school or a
+ * company is on Pro at one learner, and a private deployment that fits inside
+ * the free allowances is still a deployment that pauses and has no support.
  */
 export const VERCEL = {
   ref: {
     source: "https://vercel.com/pricing",
     checked: PRICES_CHECKED,
   } satisfies PriceRef,
-  hobby: {
-    name: "Hobby",
-    baseUsd: 0,
-    included: { invocations: 1_000_000, cpuHours: 4, edgeRequests: 1_000_000, transferGb: 100 },
-  } satisfies PlanTier,
   pro: {
     name: "Pro",
     baseUsd: 20,
@@ -160,23 +146,12 @@ export const VERCEL = {
   },
 } as const;
 
-/**
- * Supabase, which holds the database, the sign-ins and the cached speech.
- *
- * The free tier pauses a project after a week with nobody on it, which is fine
- * for somebody trying this out and is the reason a class cannot live there:
- * the app would be asleep every Monday morning of the holidays.
- */
+/** Supabase, which holds the database, the sign-ins and the cached speech. */
 export const SUPABASE = {
   ref: {
     source: "https://supabase.com/pricing",
     checked: PRICES_CHECKED,
   } satisfies PriceRef,
-  free: {
-    name: "Free",
-    baseUsd: 0,
-    included: { dbGb: 0.5, egressGb: 5, storageGb: 1, mau: 50_000 },
-  } satisfies PlanTier,
   pro: {
     name: "Pro",
     baseUsd: 25,
@@ -190,8 +165,6 @@ export const SUPABASE = {
   },
   /** What the Pro plan's monthly compute credit covers. */
   computeCreditUsd: 10,
-  /** How long a free project may sit idle before it is paused. */
-  freePausesAfter: "a week with nobody on it",
 } as const;
 
 export interface ComputeSize {
@@ -205,14 +178,13 @@ export interface ComputeSize {
 /**
  * The database instance ladder, which is the steepest thing on this page.
  *
- * Two separate reasons push a deployment up it, and the model in `model.ts`
- * takes whichever is higher. One is the working set: an instance whose memory
- * is a small fraction of the database reads from disk on every page, and this
- * app derives its progress from the whole review log on each request
- * (ADR-014), so that is the worst possible shape to be in. The other is
- * concurrency, which is the pooler column: a hundred learners in a computer
- * room at the same time is a hundred clients, and the instance either holds
- * them or refuses them.
+ * Two separate reasons push a deployment up it, and `computeFor` takes
+ * whichever is higher. One is the working set: an instance whose memory is a
+ * small fraction of the database reads from disk on every page, and this app
+ * derives its progress from the whole review log on each request (ADR-014), so
+ * that is the worst possible shape to be in. The other is concurrency, which
+ * is the pooler column: a hundred learners in a computer room at the same time
+ * is a hundred clients, and the instance either holds them or refuses them.
  */
 export const COMPUTE = {
   ref: {
@@ -231,6 +203,29 @@ export const COMPUTE = {
     { name: "12XL", usd: 2_800, memoryGb: 192, poolerClients: 9_000 },
     { name: "16XL", usd: 3_730, memoryGb: 256, poolerClients: 12_000 },
   ] as readonly ComputeSize[],
+} as const;
+
+/**
+ * What speech synthesis costs when you buy it, which is how TartuNLP's is
+ * priced here.
+ *
+ * TartuNLP sends no invoice. Pricing their work at nothing would say this app
+ * runs on five paid services and a miracle, and it is the line that grows
+ * fastest with use, so leaving it out understates the thing most worth
+ * understanding. Amazon's neural rate is the closest published equivalent to
+ * what the University of Tartu is giving away: a neural voice, per character,
+ * at a rate anybody can check.
+ *
+ * It is marked `notInvoiced` where it is used, so the page can say which part
+ * of the total somebody would actually be billed for.
+ */
+export const SPEECH_MARKET = {
+  ref: {
+    source: "https://aws.amazon.com/polly/pricing/",
+    checked: PRICES_CHECKED,
+  } satisfies PriceRef,
+  usdPerMillionCharacters: 16,
+  equivalentOf: "Amazon Polly's neural voices",
 } as const;
 
 /**
@@ -253,25 +248,301 @@ export const DOMAIN = {
 } as const;
 
 /**
- * The free-model allowance, which is a rate limit rather than a price.
+ * The two dictionaries, and why their line is a decision rather than a price.
  *
- * The default chain is free models on OpenRouter, so the tutor costs nothing
- * and is capped by requests instead. Fifty a day across a whole deployment is
- * one shared allowance, not one each, which is the thing most likely to
- * surprise somebody who read "free" and planned a class around it.
+ * Ekilex and Wiktionary have no commercial equivalent to quote. Nothing else
+ * holds a checked Estonian case table with attested example sentences, and no
+ * amount of money buys one this week, which is a stronger statement about
+ * what they are worth than any figure would be. So this line is not a market
+ * rate pretending to be one: it is what a deployment budgets to give back to
+ * the public infrastructure it is built on, and it is an operator's policy
+ * rather than an invoice.
+ *
+ * It is here rather than in `ASSUMPTIONS` because it is a commitment somebody
+ * makes rather than a guess about behaviour, and the page says so.
  */
-export const OPENROUTER_FREE = {
+export const GIVING_BACK = {
   ref: {
-    source: "https://openrouter.ai/docs/api-reference/limits",
+    source: "https://ekilex.ee",
     checked: PRICES_CHECKED,
   } satisfies PriceRef,
-  requestsPerMinute: 20,
-  requestsPerDay: 50,
-  requestsPerDayWithCredit: 1_000,
-  creditThresholdUsd: 10,
+  /** The floor, so a deployment with three learners still contributes. */
+  monthlyFloorUsd: 10,
+  /** And it grows with use, because the use grows. */
+  usdPerThousandLearners: 3,
 } as const;
+
+/**
+ * The tooling that writes and maintains this, which is a real monthly bill and
+ * was missing from the first version of this page.
+ *
+ * It is the one line here that is not runtime infrastructure, and leaving it
+ * out was the same mistake as pricing TartuNLP at nothing: the page said what
+ * the servers cost and quietly implied the software maintains itself. It does
+ * not scale with learners, which is worth seeing rather than hiding, because
+ * at a hundred users it is most of the bill and at a hundred thousand it is a
+ * rounding error.
+ *
+ * The plan page presents Max as one tier starting at $100 with the multiplier
+ * chosen inside it; this is the 20x option. Anybody who reads the link and
+ * finds otherwise should change the number here, which is one edit.
+ */
+export const DEVTOOLS = {
+  ref: {
+    source: "https://claude.com/pricing",
+    checked: PRICES_CHECKED,
+  } satisfies PriceRef,
+  plan: "Claude Max, 20x",
+  monthlyUsd: 200,
+} as const;
+
+/**
+ * Transactional email, which is how somebody signs in without a Google account.
+ *
+ * The README is blunt about this already: Supabase's built-in email service
+ * sends from a shared address at a low rate and is for testing, so a
+ * deployment that tells anybody about itself needs its own sender. That makes
+ * it infrastructure rather than a nicety, and it was missing from this page.
+ */
+export const EMAIL = {
+  ref: {
+    source: "https://resend.com/pricing",
+    checked: PRICES_CHECKED,
+  } satisfies PriceRef,
+  pro: {
+    name: "Pro",
+    baseUsd: 20,
+    included: { emails: 50_000 },
+  } satisfies PlanTier,
+  overage: { perThousandEmails: 0.9 },
+} as const;
+
+/**
+ * Error reporting, which the app already has a variable for.
+ *
+ * `ERROR_WEBHOOK_URL` has been in this app since before the funding page
+ * existed, and `/privacy` names whatever it points at as a recipient. The
+ * endpoint on the other end is somebody's paid product, so it belongs here
+ * with a price rather than as an env var nobody costed.
+ */
+export const ERRORS = {
+  ref: {
+    source: "https://sentry.io/pricing/",
+    checked: PRICES_CHECKED,
+  } satisfies PriceRef,
+  team: {
+    name: "Team",
+    baseUsd: 26,
+    included: { events: 50_000 },
+  } satisfies PlanTier,
+} as const;
+
+/**
+ * Which model the tutor runs on, offered as a choice because it is the one
+ * decision on this page that funding actually changes.
+ *
+ * The ids are keys of the app's own price table in `lib/usage/pricing.ts`, and
+ * the cost comes from `reserveMicros` against that table, so this page cannot
+ * quote a rate the running app does not also charge. A free model is
+ * deliberately not among the options: the point of funding this is that Anu
+ * stops being the cheapest thing that answers.
+ */
+export const TUTOR_MODELS: readonly { readonly id: string; readonly name: string }[] = [
+  { id: "claude-haiku-4-5", name: "Haiku" },
+  { id: "claude-sonnet-5", name: "Sonnet" },
+  { id: "claude-opus-5", name: "Opus" },
+];
 
 /** Every published price on this page, for the check that they all cite one. */
 export const PRICE_REFS: readonly PriceRef[] = [
-  VERCEL.ref, SUPABASE.ref, COMPUTE.ref, DOMAIN.ref, OPENROUTER_FREE.ref,
+  VERCEL.ref, SUPABASE.ref, COMPUTE.ref, SPEECH_MARKET.ref, DOMAIN.ref, GIVING_BACK.ref,
+  DEVTOOLS.ref, EMAIL.ref, ERRORS.ref,
 ];
+
+/* ── What was measured, as numbers the arithmetic can use ─────────────────── */
+
+export const REVIEW_BYTES = 300;
+export const CARD_BYTES = 352;
+export const CLIP_KB = 188;
+export const HTML_KB = 21;
+export const SHARED_JS_KB = 102;
+export const REQUESTS_PER_PAGE = 13;
+export const DICTIONARY_MB = 18;
+export const POSTGRES_ITSELF_MB = 8;
+/** The deck first run builds, from `lib/collections/starter.ts`. */
+export const STARTER_CARDS = 400;
+/** A card costs about ten reviews in its first year, so a goal of fifteen sustains one and a half. */
+export const REVIEWS_PER_NEW_CARD = 10;
+/** Words and recorded sentences the dictionary could ever be asked to speak. */
+export const DISTINCT_PHRASES = 15_000;
+/** How far a database may exceed the instance's memory before the instance is too small. */
+const MEMORY_HEADROOM = 8;
+
+export const WEEKS_PER_MONTH = 4.345;
+export const DAYS_PER_MONTH = 30.44;
+
+export interface Assumption {
+  readonly id: string;
+  /** What the number is, in the reader's terms. */
+  readonly what: string;
+  readonly value: number;
+  readonly unit: string;
+  /** Why that number and not another. */
+  readonly why: string;
+}
+
+/**
+ * Everything the projection needs that nothing measured.
+ *
+ * Each one is a judgement, and each one is here so it can be disagreed with
+ * rather than discovered. The two that move the total most are the clips a
+ * learner fetches and the processor time a request burns, and they are the two
+ * with the least behind them, which is worth saying rather than hiding behind
+ * a decimal place.
+ */
+export const ASSUMPTIONS: readonly Assumption[] = [
+  {
+    id: "pages",
+    what: "Pages opened in a sitting",
+    value: 6,
+    unit: "pages",
+    why: "Today, review, and a few looks at the dictionary or a grammar page on the way past.",
+  },
+  {
+    id: "clips",
+    what: "New spoken clips a learner fetches in a month",
+    value: 60,
+    unit: "clips",
+    why: "A phone keeps 400, so only new words cost anything. This is roughly the new cards a month at the default pace, plus their sentences.",
+  },
+  {
+    id: "phrase",
+    what: "Characters in a spoken phrase",
+    value: 30,
+    unit: "characters",
+    why: "A word is about eight and a recorded sentence about forty. Speech is billed per character, so this is what decides that line.",
+  },
+  {
+    id: "tutor",
+    what: "Questions a learner asks Anu in a month",
+    value: 4,
+    unit: "questions",
+    why: "The per-person cap is ten a day, so this is far under it. Most people never open her.",
+  },
+  {
+    id: "grader",
+    what: "Pieces of writing a learner has looked at in a month",
+    value: 8,
+    unit: "notes",
+    why: "Cheaper per call than a question and asked more often, because the writing exercise offers one every time.",
+  },
+  {
+    id: "emails",
+    what: "Emails a learner is sent in a month",
+    value: 3,
+    unit: "emails",
+    why: "A mailed sign-in link lasts a session, so this is a couple of sign-ins and the occasional reminder.",
+  },
+  {
+    id: "cpu",
+    what: "Processor time behind one request",
+    value: 40,
+    unit: "milliseconds",
+    why: "A page is mostly waiting on the database, which is not charged. This is the part that is, and it is the softest number here.",
+  },
+  {
+    id: "dbread",
+    what: "What one page reads out of the database",
+    value: 25,
+    unit: "kilobytes",
+    why: "Eight or so queries over a deck and a review log, none of which return much.",
+  },
+  {
+    id: "peak",
+    what: "Learners on the app at the same moment, at the busiest",
+    value: 3,
+    unit: "per cent of the month's learners",
+    why: "A class arrives together, so this is higher than it looks. It decides the database instance and nothing else.",
+  },
+  {
+    id: "builds",
+    what: "Times the shared JavaScript is re-fetched by a device in a month",
+    value: 4,
+    unit: "times",
+    why: "It is cached until a deploy changes its name, so this is really how often the app ships.",
+  },
+];
+
+export function assumed(id: string): number {
+  const found = ASSUMPTIONS.find((a) => a.id === id);
+  if (!found) throw new Error(`No assumption called ${id}`);
+  return found.value;
+}
+
+/* ── Small derivations over the tables above, shared by the services ─────── */
+
+/** The smallest instance that answers both reasons for needing a bigger one. */
+export function computeFor(databaseGb: number, peakConcurrent: number): ComputeSize {
+  const sizes = COMPUTE.sizes;
+  const forMemory = sizes.findIndex((s) => s.memoryGb * MEMORY_HEADROOM >= databaseGb);
+  const forClients = sizes.findIndex((s) => s.poolerClients >= peakConcurrent);
+  const at = Math.max(
+    forMemory === -1 ? sizes.length - 1 : forMemory,
+    forClients === -1 ? sizes.length - 1 : forClients,
+  );
+  return sizes[at]!;
+}
+
+/**
+ * How many *different* clips a number of fetches works out to.
+ *
+ * A clip is stored by its content, so two learners on the same unit asking for
+ * the same word are one file. Counting a fetch as a file would have said ten
+ * learners need 1.3 GB of speech, when between them they are studying the same
+ * few hundred words, and the whole point of content-addressing it was that
+ * they are not each other's cost.
+ *
+ * Saturating rather than linear, and saturating at the number of things there
+ * are to say: the dictionary is finite, so past a certain traffic every fetch
+ * is a word somebody has already asked for and storage stops growing. The
+ * curve is the standard one for drawing with replacement, which assumes every
+ * phrase is equally likely and so is pessimistic here, since a course teaches
+ * its first unit to everybody.
+ */
+export function distinctClips(fetches: number): number {
+  return DISTINCT_PHRASES * (1 - Math.exp(-Math.max(0, fetches) / DISTINCT_PHRASES));
+}
+
+/** What a set of meters costs above a tier, at a set of per-unit rates. */
+export function overageUsd(
+  used: Readonly<Record<string, number>>,
+  tier: PlanTier,
+  rate: Readonly<Record<string, number>>,
+): number {
+  let total = 0;
+  for (const [meter, amount] of Object.entries(used)) {
+    const over = Math.max(0, amount - (tier.included[meter] ?? 0));
+    total += over * (rate[meter] ?? 0);
+  }
+  return total;
+}
+
+/** "a, b and c", because "a and b and c" reads as a list nobody proof-read. */
+export function listOf(parts: readonly string[]): string {
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+export const round2 = (n: number) => Math.round(n * 100) / 100;
+export const gbOf = (kilobytes: number) => kilobytes / 1e6;
+
+/** The shape the page starts on: a small real deployment, everything switched on. */
+export const DEFAULT_SHAPE: Shape = {
+  learners: 100,
+  sessionsPerWeek: 5,
+  reviewsPerSession: 15,
+  audio: true,
+  tutor: "paid",
+  tutorModel: "claude-opus-5",
+  years: 1,
+};

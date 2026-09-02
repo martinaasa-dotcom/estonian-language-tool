@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { Meter } from "@/components/ui";
 import { ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import {
-  ASSUMPTIONS, DEFAULT_SHAPE, SCALE_LADDER, TUTOR_CAP_USD,
-  billFor, ladderFor, type Meter as MeterFigure, type Shape, type TutorMode,
+  ASSUMPTIONS, DEFAULT_SHAPE, MODEL_CAP_USD, SCALE_LADDER, TUTOR_MODELS,
+  billFor, ladderFor, type Line, type Meter as MeterFigure, type Shape, type TutorMode,
 } from "@/lib/funding/model";
 
 /**
@@ -21,6 +21,10 @@ import {
  * to argue about. Nothing here is a preference to be remembered; it is a
  * question being asked of the arithmetic, so none of it is stored and a reload
  * puts it back where it started.
+ *
+ * IT NAMES NO SERVICE. Every line it draws comes from the registry in
+ * `lib/funding/services.ts`, so a tool added there appears here, in the chart,
+ * in the ladder and in the totals without this file being touched.
  */
 
 /** Where the slider's hundred stops land: one learner up to a hundred thousand. */
@@ -42,17 +46,16 @@ const count = (n: number) => Math.round(n).toLocaleString("en-GB");
 
 function money(usd: number): string {
   if (usd >= 1000) return `$${Math.round(usd).toLocaleString("en-GB")}`;
-  if (usd >= 1) return `$${usd.toFixed(2)}`;
-  return usd === 0 ? "nothing" : `$${usd.toFixed(2)}`;
+  return `$${usd.toFixed(2)}`;
 }
 
 /**
  * The per-learner figure, in whatever unit stops it reading as zero.
  *
- * It runs from about two and a half dollars to under a penny across the range
- * this page covers, and `$0.0083` is a number a reader has to count the noughts
- * on. Cents below a dollar is the same rule `lib/time/duration.ts` applies to a
- * stretch of study: the unit is part of the number.
+ * It runs from tens of dollars down to a few cents across the range this page
+ * covers, and `$0.055` is a number a reader has to count the noughts on. Cents
+ * below a dollar is the same rule `lib/time/duration.ts` applies to a stretch
+ * of study: the unit is part of the number.
  */
 function perLearner(usd: number): string {
   if (usd >= 1) return `$${usd.toFixed(2)}`;
@@ -78,12 +81,26 @@ function amount(figure: MeterFigure): string {
 }
 
 function allowance(figure: MeterFigure): string {
-  if (figure.included === 0) return "no allowance to be over";
   return figure.as === "gb"
     ? `${figure.included < 1 ? `${figure.included * 1000} MB` : `${count(figure.included)} GB`} included`
     : figure.as === "hours"
       ? `${count(figure.included)} hours included`
       : `${count(figure.included)} included`;
+}
+
+/** What a line says on its right-hand side, whichever of the three shapes it is. */
+function figureFor(line: Line): { text: string; muted: boolean } {
+  const { cost } = line;
+  if (cost.kind === "charged") return { text: money(cost.usd), muted: cost.usd === 0 };
+  if (cost.kind === "partOf") return { text: "inside another line", muted: true };
+  return { text: `${cost.who} pays`, muted: true };
+}
+
+function planFor(line: Line): string {
+  const { cost } = line;
+  if (cost.kind === "charged") return cost.plan;
+  if (cost.kind === "partOf") return "No bill of its own";
+  return "Not the operator's to pay";
 }
 
 export function CostExplorer() {
@@ -109,7 +126,7 @@ export function CostExplorer() {
             {count(shape.learners)}
           </span>
           <span className="text-sm" style={{ color: "var(--ink-3)" }}>
-            {shape.learners === 1 ? "one person, on their own machine" : "learners"}
+            {shape.learners === 1 ? "one person" : "learners"}
           </span>
         </div>
 
@@ -141,23 +158,16 @@ export function CostExplorer() {
           <p className="tnum mt-1 text-4xl font-bold leading-none" style={{ color: "var(--accent-deep)" }}>
             {money(bill.totalUsd)}
           </p>
-          <p className="mt-2 text-sm" style={{ color: "var(--ink-2)" }}>
-            {perLearner(bill.perLearnerUsd)} a learner. In US dollars, because that is what
-            the hosting bills arrive in.
+          <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            {perLearner(bill.perLearnerUsd)} a learner. Of that,{" "}
+            <strong>{money(bill.invoicedUsd)}</strong> arrives as invoices and{" "}
+            <strong>{money(bill.notInvoicedUsd)}</strong> is what the parts nobody bills us for
+            would cost if they did. In US dollars, because that is what the bills come in.
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <ChoiceGroup label="Who is running it" select="one">
-          <ChoiceChip selected={!shape.commercial} onSelect={() => set("commercial", false)}>
-            A person
-          </ChoiceChip>
-          <ChoiceChip selected={shape.commercial} onSelect={() => set("commercial", true)}>
-            A school or a company
-          </ChoiceChip>
-        </ChoiceGroup>
-
         <ChoiceGroup label="How hard they study" select="one">
           {([
             [3, 10, "Lightly"],
@@ -183,8 +193,7 @@ export function CostExplorer() {
 
         <ChoiceGroup label="The tutor" select="one">
           {([
-            ["free", "Free models"],
-            ["paid", "A paid model"],
+            ["paid", "On"],
             ["off", "No key"],
           ] as const).map(([mode, name]) => (
             <ChoiceChip
@@ -193,6 +202,19 @@ export function CostExplorer() {
               onSelect={() => set("tutor", mode as TutorMode)}
             >
               {name}
+            </ChoiceChip>
+          ))}
+        </ChoiceGroup>
+
+        <ChoiceGroup label="Which model answers" select="one">
+          {TUTOR_MODELS.map((model) => (
+            <ChoiceChip
+              key={model.id}
+              disabled={shape.tutor === "off"}
+              selected={shape.tutorModel === model.id}
+              onSelect={() => set("tutorModel", model.id)}
+            >
+              {model.name}
             </ChoiceChip>
           ))}
         </ChoiceGroup>
@@ -206,77 +228,77 @@ export function CostExplorer() {
         </ChoiceGroup>
       </div>
 
-      {bill.tutorCapBinds && (
+      {bill.modelCapBinds && (
         <p
           className="rounded-[var(--r)] px-4 py-3 text-sm"
           style={{ background: "var(--butter-soft)", color: "var(--butter-ink)" }}
         >
-          The tutor line stops at {money(TUTOR_CAP_USD)}, and it stops there in the running
-          app too. The daily budget in <code>lib/usage/quota.ts</code> has no off switch,
-          so this is a ceiling rather than a forecast.
-        </p>
-      )}
-
-      {bill.freeTutorRunsOut && (
-        <p
-          className="rounded-[var(--r)] px-4 py-3 text-sm"
-          style={{ background: "var(--sky-soft)", color: "var(--sky-ink)" }}
-        >
-          At this size the free models run out partway through each day. Anu goes quiet and
-          says so. Nothing else in the app is touched, and the bill does not move.
+          The model line stops at {money(MODEL_CAP_USD)}, and it stops there in the running
+          app too. The daily budget in <code>lib/usage/quota.ts</code> has no off switch, so
+          this is a ceiling rather than a forecast.
         </p>
       )}
 
       <div>
         <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Where it goes</h3>
         <ul className="space-y-2">
-          {bill.lines.map((line) => (
-            <li
-              key={line.id}
-              className="rounded-[var(--r-lg)] border p-4"
-              style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>
-                  {line.service}
-                </span>
-                <span className="tnum text-base font-bold" style={{ color: line.usd > 0 ? "var(--ink)" : "var(--ink-3)" }}>
-                  {money(line.usd)}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>{line.plan}</p>
-              <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>{line.why}</p>
+          {bill.lines.map((line) => {
+            const figure = figureFor(line);
+            const meters = line.cost.kind === "charged" ? line.cost.meters ?? [] : [];
+            return (
+              <li
+                key={line.service.id}
+                className="rounded-[var(--r-lg)] border p-4"
+                style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>
+                    {line.service.name}
+                  </span>
+                  <span
+                    className="tnum text-base font-bold"
+                    style={{ color: figure.muted ? "var(--ink-3)" : "var(--ink)" }}
+                  >
+                    {figure.text}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
+                  {planFor(line)}
+                  {line.cost.kind === "charged" && line.cost.notInvoiced
+                    ? " · nobody invoices us for this"
+                    : ""}
+                </p>
+                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                  {line.cost.why}
+                </p>
 
-              {line.meters.some((m) => m.included > 0) && (
-                <ul className="mt-3 space-y-2">
-                  {line.meters.filter((m) => m.included > 0).map((figure) => {
-                    const pct = (figure.used / figure.included) * 100;
-                    const over = pct > 100;
-                    return (
-                      <li key={figure.label}>
-                        <p className="tnum flex flex-wrap justify-between gap-x-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                          <span>{figure.label}</span>
-                          <span>
-                            {amount(figure)}
-                            {" of "}
-                            {allowance(figure)}
-                          </span>
-                        </p>
-                        <div className="mt-1">
-                          <Meter
-                            pct={pct}
-                            height={6}
-                            label={`${figure.label}, ${amount(figure)} against ${allowance(figure)}`}
-                            tone={over ? "var(--peach)" : "var(--accent)"}
-                          />
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </li>
-          ))}
+                {meters.some((m) => m.included > 0) && (
+                  <ul className="mt-3 space-y-2">
+                    {meters.filter((m) => m.included > 0).map((figureRow) => {
+                      const pct = (figureRow.used / figureRow.included) * 100;
+                      const past = pct > 100;
+                      return (
+                        <li key={figureRow.label}>
+                          <p className="tnum flex flex-wrap justify-between gap-x-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                            <span>{figureRow.label}</span>
+                            <span>{amount(figureRow)} of {allowance(figureRow)}</span>
+                          </p>
+                          <div className="mt-1">
+                            <Meter
+                              pct={pct}
+                              height={6}
+                              label={`${figureRow.label}, ${amount(figureRow)} against ${allowance(figureRow)}`}
+                              tone={past ? "var(--peach)" : "var(--accent)"}
+                            />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
@@ -295,11 +317,6 @@ export function CostExplorer() {
           a bar and its number line up by construction rather than by a margin
           somebody guessed. Both are hidden from a reader using a screen reader,
           because the table underneath is the same six numbers said properly.
-
-          The first version had no labels at all and sat flush against the
-          table, which read as one object with a bar chart floating over its
-          header: the eye tried to line the bars up with the columns, and they
-          are not the same six things.
         */}
         <div aria-hidden>
           <div className="flex items-end gap-1.5" style={{ height: 96 }}>
@@ -344,8 +361,8 @@ export function CostExplorer() {
               <tr style={{ color: "var(--ink-3)" }}>
                 <th scope="col" className="label-xs py-1 pr-3 text-left">Learners</th>
                 <th scope="col" className="label-xs py-1 text-right">A month</th>
-                <th scope="col" className="label-xs py-1 pl-3 pr-3 text-right">Each</th>
-                <th scope="col" className="label-xs py-1 text-left">Database</th>
+                <th scope="col" className="label-xs py-1 pl-3 pr-3 text-right">Invoiced</th>
+                <th scope="col" className="label-xs py-1 text-right">Each</th>
               </tr>
             </thead>
             <tbody>
@@ -361,10 +378,8 @@ export function CostExplorer() {
                 >
                   <td className="tnum py-1.5 pr-3">{count(rung.learners)}</td>
                   <td className="tnum py-1.5 text-right">{money(rung.bill.totalUsd)}</td>
-                  <td className="tnum py-1.5 pl-3 pr-3 text-right">{perLearner(rung.bill.perLearnerUsd)}</td>
-                  <td className="py-1.5 pl-3">
-                    {rung.bill.lines.find((l) => l.id === "supabase")?.plan}
-                  </td>
+                  <td className="tnum py-1.5 pl-3 pr-3 text-right">{money(rung.bill.invoicedUsd)}</td>
+                  <td className="tnum py-1.5 text-right">{perLearner(rung.bill.perLearnerUsd)}</td>
                 </tr>
               ))}
             </tbody>
@@ -372,17 +387,19 @@ export function CostExplorer() {
         </div>
 
         <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          The worst value is around ten people, not a hundred thousand. One person pays for
-          a domain; ten are already past the free tier because ten learners&rsquo; worth of
-          spoken words is more than a gigabyte. It then falls for three decades and steps
-          back up, because the database instances go up in jumps a tenfold rise in learners
-          does not always cover.
+          The floor is the interesting end. The plans, the tooling, the mail and the
+          domain come to about three hundred dollars a month before a single learner
+          arrives, and most of that does not move when they do: the first thousand people
+          are nearly free to serve, and the cost per head falls by roughly a factor of ten
+          for each decade. What grows instead is speech and the database, so past ten
+          thousand the shape is set by how much is said aloud and how many years of
+          reviews are being kept.
         </p>
       </div>
 
       <details className="rounded-[var(--r-lg)] border p-4" style={{ borderColor: "var(--rule)" }}>
         <summary className="cursor-pointer text-sm font-semibold" style={{ color: "var(--ink)" }}>
-          The seven numbers nothing measured
+          The {ASSUMPTIONS.length} numbers nothing measured
         </summary>
         <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
           Everything else on this page came off a stopwatch, a database or somebody&rsquo;s

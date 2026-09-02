@@ -256,38 +256,73 @@ what happens when the money stops, a company's community budget wants the number
 small, and somebody using a free app wants to know what is being sold instead. Nothing is, and a
 page that only asserted that would be worth less than one showing the bill.
 
+**There is one list, and it is `lib/funding/services.ts`.** What the app runs on, what a reader is
+told it runs on, and what appears on the bill were three lists in the first version: a catalogue in
+one module, hand-written line functions in the cost model, and whatever the page had been told
+about. Adding a service meant remembering all three, and the one certain to go stale is the bill,
+because nothing fails when a line is missing from a total. It simply comes out lower than the
+truth, which is the worst way for a page like this to be wrong. A service now declares what it is,
+who runs it, what a learner loses without it, the variable that switches it on, where its price
+came from, and a `bill()` that says what it costs at a given size. Adding a new tool is one entry:
+`model.ts` maps over the registry, and the page, the chart, the ladder and the totals all read it.
+Asserted, both that the bill is generated from the registry and that no screen singles a service
+out by id.
+
+**Nothing it runs on is counted as free.** The first version modelled a free tier for the host and
+one for the database and picked between them by traffic, which described a deployment nobody runs:
+a free plan pauses when nobody is on it, forbids commercial use, and hands out an allowance that
+goes the week somebody launches. What it produced was a page saying this app costs nothing at a
+hundred learners, which was cheerful and wrong. A service is **charged**, or it is **inside another
+charge** (the news feed rides on a function already paid for), or **somebody else pays** and the
+page says who (the learner's own phone). There is no fourth answer, and the cost type has no shape
+for one. A service that sends no invoice is priced at what the same thing costs elsewhere and
+marked `notInvoiced`, so the page can show what is bought and what is being given without valuing
+the second at nothing.
+
 **Three kinds of number, kept apart, because they are not equally solid.** `MEASURED` in
 `lib/funding/facts.ts` was taken off this repository on a stated day and each entry carries the
 command that produced it, so a reader who doubts one can re-run it: `pg_total_relation_size` after
 a seed, 80,000 rows from `scripts/load-fixture.ts`, `curl --compressed` against a production
 build, one request to TartuNLP read back off its WAV header. The vendor prices are somebody else's
 and carry the page they came off and the day it was read, because they date faster than anything
-else here. `ASSUMPTIONS` in `lib/funding/model.ts` is everything left, seven numbers, on the page
-in full, each with the reason it is that number. Keeping the third list short and visible is most
-of the honesty: burying "how many pages somebody opens in a sitting" inside the arithmetic hides
-exactly the number a reader would want to argue with.
+else here. `ASSUMPTIONS` is everything left, on the page in full, each with the reason it is that
+number. Keeping the third list short and visible is most of the honesty: burying "how many pages
+somebody opens in a sitting" inside the arithmetic hides exactly the number a reader would want to
+argue with.
 
-**The tutor line reads the app's own ledger rather than a number of its own.** It is the one line
+**The model line reads the app's own ledger rather than a number of its own.** It is the one line
 that could run away, and the app already answers it twice a second: `lib/usage/pricing.ts` says
 what a call of a given shape costs and `lib/usage/quota.ts` says what everybody together may spend
-in a day, with no off switch. So the projection calls `reserveMicros` and reads
-`DEFAULT_LIMITS.dailyMicrosGlobal`, and cannot show a bill the running app would refuse to run up.
-That needed the reservation profile to move out of `ledger.ts`, which imports Prisma, into the
-pricing table, which imports nothing; it moved rather than being copied, for the reason
-`PROVIDER_KEY_ENV` gives about itself.
+in a day, with no off switch. So the projection calls `reserveMicros` with the chosen model and
+reads `DEFAULT_LIMITS.dailyMicrosGlobal`, and cannot show a bill the running app would refuse to
+run up. Which model answers is a choice on the page rather than a constant, because it is the one
+decision funding changes directly, and the options are keys of that same table. That needed the
+reservation profile to move out of `ledger.ts`, which imports Prisma, into the pricing table, which
+imports nothing; it moved rather than being copied, for the reason `PROVIDER_KEY_ENV` gives about
+itself.
 
-**The four things on it worth reading are all things the model found rather than things anybody
-chose to admit.** The worst value is around **ten** learners and not a hundred thousand, because
-one person pays for a domain and ten are already past the free tier. What puts them there is
-**speech**: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a
-three-word sentence, so a gigabyte of free storage holds about 5,300 clips and the whole spoken
-dictionary is 2.8 GB. A **school pays twenty dollars before its first pupil arrives**, because
-Vercel's free plan forbids commercial use, which is a term rather than a threshold and so is a
-question the panel asks outright. And the cost per learner is a **sawtooth rather than a curve**:
-it falls for three decades and steps back up between ten thousand and a hundred thousand, because
-the database instance ladder goes up in jumps a tenfold rise in learners does not always cover.
-The first version of the test asserted a smooth curve, failed twice, and both failures were the
-model telling the truth. It asserts the teeth now.
+**The lines that are easy to leave out are the ones that make the number wrong.** A funding page
+errs in one direction by default: everything anybody forgets makes the total smaller. Four were
+missing from the first pass and two of them are among the largest at any size a person would
+actually run. **Speech**, because TartuNLP sends no invoice, priced at Amazon Polly's neural rate
+since that is the closest published equivalent. **The two dictionaries**, which have no commercial
+equivalent at all because nothing else holds a checked Estonian case table with attested sentences,
+so that line is a stated commitment to give back rather than a rate. **Transactional mail**, since
+the README already says Supabase's built-in sender is for testing and a deployment that tells
+anybody about itself needs its own. And **the tooling that writes the app**, which is not runtime
+infrastructure and is most of the bill at the sizes anybody starts at, so leaving it out was the
+same mistake as pricing TartuNLP at nothing.
+
+**What the model found, rather than what anybody chose to admit.** The floor is about three hundred
+dollars a month before a single learner arrives, and most of it does not move when they do, so the
+first thousand people are close to free to serve. **Speech** is the fastest-growing line once it is
+priced: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a three-word
+sentence, so the whole spoken dictionary is 2.8 GB and at a hundred thousand learners the speech
+line is larger than every invoiced line put together. And **the donated part overtakes the invoiced
+part** at that size, which is the argument for paying a share of it rather than staying a polite
+guest. Each is asserted, and the per-learner curve was asserted three times before it was right:
+the first version claimed a smooth fall, failed twice, and both failures were the model telling the
+truth.
 
 **A public page that reads the environment reads it as a yes or a no.** The page says which parts
 of the infrastructure this deployment has switched on, which it can only know by looking, and
@@ -296,10 +331,11 @@ to the client and the server simply prints it. So `lib/funding/` reads the envir
 and the page reads it in exactly one place, through a helper that can only return a boolean. Two
 reads is where the second one stops being a boolean, so the count is asserted.
 
-Five invariants, each made to fail once: the tutor priced off the ledger, every quoted price
+Seven invariants, each made to fail once: the bill generated from the registry, no free tier
+surviving in the facts or the cost type, the model priced off the ledger, every quoted price
 rendering the link it came from, the single boolean environment read, every variable
-`lib/funding/infra.ts` names being one the app actually reads, and the page staying outside the
-sign-in gate, like `/privacy` and `/terms` and for the same reason.
+`services.ts` names being one the app actually reads, and the page staying outside the sign-in
+gate, like `/privacy` and `/terms` and for the same reason.
 
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
@@ -2581,7 +2617,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
-`billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `INFRA`, `.range`. Most of them now
+`billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

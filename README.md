@@ -300,27 +300,33 @@ because sign-up is open by default. If you would rather run a private instance, 
 and `/terms`, because the people most likely to want it (somebody deciding whether to fund this,
 and somebody wondering what a free app is selling instead) have no account here.
 
-Every number on it is one of three things and the page says which. Measured on this repository,
-with the command that produced it: the dictionary is 18 MB in Postgres, a review row is 300 bytes
-with its indexes, a page is 21 KB of HTML, and one spoken clip is 188 KB. Published by a vendor,
-with the day the price was read. Or an assumption, of which there are seven, listed in full.
+**Nothing on it is counted as free.** A free tier is a plan that pauses when nobody is on it,
+forbids commercial use, or hands out an allowance that goes the week you launch, so modelling one
+would describe a deployment nobody runs. Every service is charged, or is inside a charge already
+paid, or is somebody else's to pay and the page says whose. The two that send no invoice, TartuNLP
+and the dictionaries, are on the bill at what the same thing costs elsewhere.
+
+**One list.** `lib/funding/services.ts` is every piece of infrastructure with its own price
+function. Adding a new tool is one entry there: the bill, the totals, the chart, the ladder and the
+page's own description all read the registry, and the invariants fail if any of them stops.
+
+Every number is measured on this repository with the command that produced it, quoted off a
+vendor's price list with the date it was read, or named as one of the assumptions listed in full on
+the page.
 
 Four things on it are worth knowing before you deploy this for anybody.
 
-- **The awkward size is about ten learners, not ten thousand.** One person pays for a domain and
-  nothing else. Ten are already past Supabase's free gigabyte of storage.
-- **Speech is the biggest thing this app moves.** TartuNLP returns uncompressed 32-bit audio, so
-  a two-second phrase is 188 KB and the whole spoken dictionary is 2.8 GB. Turning card audio off
-  is the single largest saving available, and it is also the feature hardest to justify losing.
-- **A school pays $20 a month before its first pupil.** Vercel's free plan forbids commercial use.
-  That is a term rather than a threshold, so the panel asks who is running the deployment.
-- **Cost per learner is a sawtooth, not a curve.** It falls for three decades and steps back up,
-  because the database instance ladder goes up in jumps that a tenfold rise in learners does not
-  always cover.
-
-The tutor line is priced by the same code that decides when to stop spending
-(`lib/usage/pricing.ts` and `lib/usage/quota.ts`), so the page cannot project a bill the running
-app would refuse to run up.
+- **The floor is about $300 a month before a single learner arrives**, and most of it does not move
+  when they do. The first thousand people are close to free to serve.
+- **Speech is the fastest-growing line.** TartuNLP returns uncompressed 32-bit audio, so a
+  two-second phrase is 188 KB and the whole spoken dictionary is 2.8 GB. Priced at a commercial
+  rate it outgrows every invoiced line put together at a hundred thousand learners.
+- **The tooling is on the bill.** What writes and maintains the app is not runtime infrastructure
+  and is most of the cost at the sizes anybody starts at, so leaving it out would understate this
+  as badly as valuing TartuNLP at nothing.
+- **The model line has a ceiling in the code.** Every call is booked against a shared daily budget
+  (`AI_DAILY_USD_GLOBAL`) that cannot be turned off, so the projection cannot show a bill the
+  running app would refuse to run up.
 
 ### When the app gets something wrong
 
