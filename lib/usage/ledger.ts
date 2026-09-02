@@ -162,44 +162,69 @@ export async function snapshotUsage(
   ownerId: string,
   kind: UsageKind,
   now = new Date(),
-  client: Pick<typeof prisma, "usageEvent"> = prisma,
+  client: Pick<typeof prisma, "$queryRaw"> = prisma,
 ): Promise<UsageSnapshot> {
   const limits = readLimits();
   const day = utcDay(now);
   const burstSince = new Date(now.getTime() - limits.burstWindowSeconds * 1000);
 
   /*
-    A call that was handed back is not a call. Counted rather than subtracted
-    from a filter, because `entry` is a plain column and `NOT IN` over two
-    values reads the same index either way; two counts keep each number
-    something you can look up in the table by hand when a limit surprises
+    TWO STATEMENTS, BECAUSE THIS RUNS INSIDE THE LOCK.
+
+    `authoriseCall` holds a deployment-wide advisory lock across this, and
+    Prisma queues every query of an interactive transaction on that
+    transaction's single connection: a `Promise.all` there is sequential round
+    trips, not concurrent ones. So each count is lock-held latency multiplied
+    by every AI call the whole deployment is making, and this was four of them
+    before a release had to be counted and would have been eight after.
+
+    Postgres does the counting instead. Seven of the eight numbers are over one
+    owner's rows for one day, which is one index scan and a handful of `FILTER`
+    clauses; the eighth is everybody's spend and is a different `where`, so it
+    stays its own statement. Two, where it was four before any of this.
+
+    A call that was handed back is not a call, which is why each kind is
+    counted rather than filtered out: `CALL` minus `RELEASE` keeps both numbers
+    something a person can look up in the table by hand when a limit surprises
     somebody.
   */
-  const [
-    burstCalls, burstReleased, dailyCalls, dailyReleased, allCalls, allReleased,
-    userSpend, globalSpend,
-  ] =
-    await Promise.all([
-      client.usageEvent.count({
-        where: { ownerId, kind, entry: CALL, createdAt: { gte: burstSince } },
-      }),
-      client.usageEvent.count({
-        where: { ownerId, kind, entry: RELEASE, createdAt: { gte: burstSince } },
-      }),
-      client.usageEvent.count({ where: { ownerId, kind, entry: CALL, day } }),
-      client.usageEvent.count({ where: { ownerId, kind, entry: RELEASE, day } }),
-      client.usageEvent.count({ where: { ownerId, entry: CALL, day } }),
-      client.usageEvent.count({ where: { ownerId, entry: RELEASE, day } }),
-      client.usageEvent.aggregate({ where: { ownerId, day }, _sum: { costMicros: true } }),
-      client.usageEvent.aggregate({ where: { day }, _sum: { costMicros: true } }),
-    ]);
+  const [row] = await client.$queryRaw<{
+    burstCalls: bigint; burstReleased: bigint;
+    dailyCalls: bigint; dailyReleased: bigint;
+    allCalls: bigint; allReleased: bigint;
+    userMicros: bigint | null;
+  }[]>`
+    SELECT
+      count(*) FILTER (
+        WHERE "entry" = ${CALL} AND "kind" = ${kind} AND "createdAt" >= ${burstSince}
+      ) AS "burstCalls",
+      count(*) FILTER (
+        WHERE "entry" = ${RELEASE} AND "kind" = ${kind} AND "createdAt" >= ${burstSince}
+      ) AS "burstReleased",
+      count(*) FILTER (WHERE "entry" = ${CALL} AND "kind" = ${kind}) AS "dailyCalls",
+      count(*) FILTER (WHERE "entry" = ${RELEASE} AND "kind" = ${kind}) AS "dailyReleased",
+      count(*) FILTER (WHERE "entry" = ${CALL}) AS "allCalls",
+      count(*) FILTER (WHERE "entry" = ${RELEASE}) AS "allReleased",
+      coalesce(sum("costMicros"), 0) AS "userMicros"
+    FROM "UsageEvent"
+    WHERE "ownerId" = ${ownerId} AND "day" = ${day}
+  `;
+
+  const [global] = await client.$queryRaw<{ globalMicros: bigint | null }[]>`
+    SELECT coalesce(sum("costMicros"), 0) AS "globalMicros"
+    FROM "UsageEvent" WHERE "day" = ${day}
+  `;
+
+  // `count(*)` and `sum()` come back as bigint, which is not a number until it
+  // is made one: every reader of this compares it against a plain limit.
+  const n = (value: bigint | null | undefined) => Number(value ?? 0);
 
   return {
-    burstCalls: Math.max(0, burstCalls - burstReleased),
-    dailyCalls: Math.max(0, dailyCalls - dailyReleased),
-    dailyCallsAllKinds: Math.max(0, allCalls - allReleased),
-    dailyMicros: userSpend._sum.costMicros ?? 0,
-    globalMicros: globalSpend._sum.costMicros ?? 0,
+    burstCalls: Math.max(0, n(row?.burstCalls) - n(row?.burstReleased)),
+    dailyCalls: Math.max(0, n(row?.dailyCalls) - n(row?.dailyReleased)),
+    dailyCallsAllKinds: Math.max(0, n(row?.allCalls) - n(row?.allReleased)),
+    dailyMicros: n(row?.userMicros),
+    globalMicros: n(global?.globalMicros),
   };
 }
 
