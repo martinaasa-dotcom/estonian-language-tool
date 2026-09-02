@@ -106,6 +106,7 @@ export const A2 = [
       ["haige", "ill, sick", "ADJECTIVE"],
       ["terve", "healthy, whole", "ADJECTIVE"],
       ["väsinud", "tired", "ADJECTIVE"],
+      ["valutama", "to hurt, to ache"],
     ],
   }),
 
@@ -205,6 +206,7 @@ export const A2 = [
       ["riidekapp", "wardrobe"],
       ["nõu", "dish, advice"],
       ["prügi", "rubbish"],
+      ["katki", "broken", "ADVERB"],
     ],
   }),
 
@@ -237,6 +239,7 @@ export const A2 = [
       ["täitma", "to fill in, to fulfil"],
       ["saatma", "to send"],
       ["tellima", "to order"],
+      ["esitama", "to submit, to hand in"],
     ],
   }),
 
@@ -426,6 +429,7 @@ export const A2 = [
       ["murelik", "worried", "ADJECTIVE"],
       ["rahulik", "calm", "ADJECTIVE"],
       ["üllatunud", "surprised", "ADJECTIVE"],
+      ["tunduma", "to seem"],
     ],
   }),
 
@@ -456,6 +460,8 @@ export const A2 = [
       ["uskuma", "to believe"],
       ["arvama", "to think, to reckon"],
       ["nõustuma", "to agree"],
+      ["sobima", "to suit, to be convenient"],
+      ["kestma", "to last, to go on"],
     ],
   }),
 ] as const;
