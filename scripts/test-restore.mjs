@@ -25,12 +25,13 @@ const prisma = new PrismaClient({
   datasourceUrl: requireLocalDatabase("delete every word, card, task and review row"),
 });
 /*
-  Floor: eleven checks, all unconditional. It said ten while the suite reached
+  Floor: twelve checks, all unconditional. It said ten while the suite reached
   eleven, so a check could have stopped running and the tally would still have
-  cleared the bar, which is the one failure a floor exists to make visible.
-  The 429 branch below exits before any of them and does not count.
+  cleared the bar, which is the one failure a floor exists to make visible. The
+  twelfth arrived with the export narrowing to the learner's own words. The 429
+  branch below exits before any of them and does not count.
 */
-const { check, done } = suite("Backup and restore", { floor: 11 });
+const { check, done } = suite("Backup and restore", { floor: 12 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext()).newPage();
@@ -67,6 +68,25 @@ if (exported.status() === 429) {
   done();
 }
 check("export produced a backup", backup.length > 1000, `${Math.round(backup.length / 1024)} KB`);
+
+/*
+  AND IT IS THE LEARNER'S WORDS, NOT THE WHOLE DICTIONARY.
+
+  The export used to carry every lexeme in the database, so a personal backup
+  grew every time somebody else's word was added and had reached 16.5 MB, which
+  is over both of `next.config.ts`'s 16 MB body limits. The restore then refused
+  a learner's own file and this suite reported that the page "never accepted the
+  backup", which is the failure it was written to catch.
+
+  So the new contract is asserted here rather than described: the file carries
+  the words this learner's rows point at. It is checked before anything is
+  deleted, because a file that has quietly gone back to carrying everything is a
+  reason to stop rather than a reason to restore.
+*/
+const parsed = JSON.parse(backup);
+check("the backup carries the learner's own words, not the whole dictionary",
+  parsed.counts.words > 0 && parsed.counts.words < before.words,
+  `${parsed.counts.words} of ${before.words} in the dictionary, ${Math.round(backup.length / 1024)} KB`);
 
 // On disk before anything is deleted. If the suite dies from here on, this file
 // is the way back — Settings → Restore takes it as it stands.
@@ -139,7 +159,15 @@ const after = {
   tasks: await prisma.task.count(),
   scans: await prisma.scan.count(),
 };
-check("every word came back", after.words === before.words, `${after.words}/${before.words}`);
+/*
+  Every word the file carried, which is every word the learner's rows are about.
+  `before.words` is the whole dictionary and the file no longer holds it: what a
+  restore owes is that nothing it took away is missing afterwards, and the seed
+  is what puts the rest of the dictionary back on a fresh installation.
+*/
+check("every word the backup held came back",
+  after.words === parsed.counts.words && after.words > 0,
+  `${after.words}/${parsed.counts.words}`);
 check("every card came back", after.cards === before.cards, `${after.cards}/${before.cards}`);
 check("every review came back", after.reviews === before.reviews, `${after.reviews}/${before.reviews}`);
 check("every task came back", after.tasks === before.tasks, `${after.tasks}/${before.tasks}`);
@@ -147,7 +175,15 @@ check("every task came back", after.tasks === before.tasks, `${after.tasks}/${be
 // of the backup would make a restore quietly lossy in a way nobody would notice
 // until they went looking for a page they scanned in March.
 check("every scanned page came back", after.scans === before.scans, `${after.scans}/${before.scans}`);
-check("forms came back with their words", (await prisma.form.count()) > 1000, `${await prisma.form.count()} forms`);
+/*
+  Counted against the file rather than against a round number. `> 1000` was a
+  stand-in for "the whole dictionary" and would now pass on a backup carrying
+  nothing at all, since a fixture deck of thirty words has a few hundred forms.
+*/
+const formsBack = await prisma.form.count();
+const formsInFile = parsed.lexemes.reduce((n, l) => n + (l.forms?.length ?? 0), 0);
+check("forms came back with their words", formsBack === formsInFile && formsBack > 0,
+  `${formsBack}/${formsInFile} forms`);
 
 // Scheduling state must survive, or the restore silently resets everyone's progress.
 const scheduled = await prisma.card.findFirst({ where: { state: 2 }, orderBy: { due: "desc" } });

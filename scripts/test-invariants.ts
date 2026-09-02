@@ -284,6 +284,48 @@ check("the nominative plural is a required stem, and is never an ending", () => 
   hermetic and lives in `lib/estonian/attested.test.ts`, where it can fail on a
   word. What a regex can see is that the mapper still keeps one.
 */
+/*
+  A SUITE FINDS A FORM FIELD BY ITS NAME, NOT BY A PREFIX OF ITS PLACEHOLDER.
+
+  `getByPlaceholder` is a substring match. `scripts/e2e.mjs` and
+  `scripts/test-edit.mjs` both addressed the add-word genitive box as
+  `getByPlaceholder("toa")`, which was unique until the form grew a nominative
+  plural whose example is `toad`. Both suites then threw on their first
+  interaction and reported a Playwright timeout, which sends whoever reads it
+  to the app rather than to the locator: e2e lost 9 of its 27 checks and the
+  editing suite 9 of 10.
+
+  The check is exact rather than a ban on `getByPlaceholder`: a placeholder is
+  a perfectly good handle where it is unambiguous, and the English boxes
+  ("word", "sõna") stay that way. What is caught is a locator that is a strict
+  prefix of another example on the same form, which is the shape that breaks
+  when a field is added and is invisible until it does.
+*/
+check("no browser suite finds a field by a placeholder another field shares", () => {
+  const examples = [...code("app/(app)/dictionary/AddWord.tsx")
+    .matchAll(/\["[A-Z_]+", "[^"]+", "([^"]+)"\]/g)]
+    .map((m) => m[1] as string);
+  assert.ok(examples.length >= 10, "the add-word field table stopped being readable from here");
+
+  const bad: string[] = [];
+  for (const file of readdirSync("scripts").filter((f) => f.endsWith(".mjs"))) {
+    for (const m of code(join("scripts", file)).matchAll(/getByPlaceholder\(\s*"([^"]+)"/g)) {
+      const used = m[1] as string;
+      const shadowed = examples.filter((e) => e !== used && e.startsWith(used));
+      if (examples.includes(used) && shadowed.length > 0) {
+        bad.push(`${file}: "${used}" is also the start of ${shadowed.map((e) => `"${e}"`).join(", ")}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    bad,
+    [],
+    "a suite addresses a form field by a placeholder that another field's "
+      + "placeholder begins with, so adding a field makes the locator ambiguous "
+      + "and the suite throws before its first check",
+  );
+});
+
 check("a principal part is one form, whatever Ekilex sends", () => {
   const mapper = code("lib/ekilex/mapper.ts");
   assert.match(
