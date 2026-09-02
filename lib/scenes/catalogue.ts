@@ -28,14 +28,21 @@ import type { SceneSpec } from "./types";
 /*
   The units every scene declares, whatever it is about.
 
-  `pohiverbid` is here because `eval:scene` measured what its absence cost, and
-  the absence was an oversight rather than a decision: it is the unit that
-  teaches `olema`, and no Estonian sentence is built without the verb "to be".
-  Every other unit here is the machinery a conversation is made of rather than
-  the subject of one, which is the test for adding another.
+  The test for being here is that a unit teaches the machinery a conversation
+  is made of rather than the subject of one, and four were added after
+  `eval:scene` measured what leaving them out cost. Each absence was an
+  oversight rather than a decision, and each was invisible until the ranked
+  list of words the model reached for named it.
+
+  `pohiverbid` teaches `olema`, and no Estonian sentence is built without the
+  verb "to be". `sidesonad`, `vastused` and `maaramine` are the words between
+  the words, and the two commonest things the gate withheld a line over were
+  `ja` and `või`: a scene that cannot say "and" or "or" cannot say much.
+  `millal` carries `praegu` and `juba`, which is how anybody says when.
 */
 const COMMON = [
   "tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused", "pohiverbid",
+  "sidesonad", "vastused", "maaramine", "millal",
 ] as const;
 
 /** The closing phrases, which are the same wherever you are leaving. */
