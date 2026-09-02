@@ -5855,6 +5855,84 @@ check("a confidence figure carries its evidence, on every screen that prints one
   }
 });
 
+check("a workplace group is a narrower query, never a hidden column", () => {
+  /*
+    A class and a sponsored group of colleagues are the same rows underneath,
+    and the seats reading them are not the same seat. `classRoster` shows a
+    teacher which case one named student keeps missing, widened to that
+    deliberately on a pedagogical argument: the aggregate said the class was
+    weak on the partitive and nothing about who to sit next to. That argument
+    does not survive the move into a workplace. An employer has no lesson to
+    plan, and "Kadri keeps getting the partitive wrong" follows somebody into a
+    review they never see.
+
+    The obvious way to build the narrower screen is the wider query with fields
+    left unrendered, and it is one careless render away from being the wider
+    screen. So the boundary is which query runs: `workplaceRoster` never selects
+    a case, its summary type has nowhere to put one, and the page picks between
+    the two before either has read anything.
+  */
+  const roster = code("lib/classroom/roster.ts");
+  const workplace = between(roster, "export async function workplaceRoster");
+  assert.ok(workplace.length > 0, "workplaceRoster is gone; the sponsor's screen has no narrower read");
+
+  for (const leak of ["targetCase", "caseAccuracy", "xpFromRatingCounts"]) {
+    assert.ok(
+      !workplace.includes(leak),
+      `workplaceRoster reads ${leak}; a sponsor's query has started collecting what a teacher's does`,
+    );
+  }
+  // And the teacher's still does, or the two have quietly become one query and
+  // this check is passing by measuring nothing.
+  assert.match(
+    between(roster, "export async function classRoster"),
+    /targetCase/,
+    "classRoster no longer reads a case, so the two seats are no longer different",
+  );
+
+  /*
+    The shape, which is the half that outlives whoever wrote the view. A field
+    that never reaches the type cannot be printed by a screen written next year
+    by somebody who has not read any of this.
+  */
+  const cohort = code("lib/classroom/cohort.ts");
+  const member = between(cohort, "export interface CohortMember");
+  assert.ok(member.length > 0, "CohortMember is gone");
+  for (const field of ["confidence", "weakestCase", "weeklyXp", "grammCase"]) {
+    assert.ok(
+      !member.includes(field),
+      `CohortMember carries ${field}, which a sponsor has no reason to see`,
+    );
+  }
+
+  /*
+    A band is a claim about somebody's chances, so it obeys the rule above it:
+    nothing prints one without saying what it rests on. Anchored on the member
+    access rather than the word, for the reason the confidence check gives.
+  */
+  const screens = [...APP, ...COMPONENTS].filter((file) => /BAND_LABEL/.test(code(file)));
+  assert.ok(screens.length >= 1, "nothing prints a band; this check has stopped finding its screens");
+  for (const file of screens) {
+    const source = code(file);
+    assert.match(
+      source,
+      /EVIDENCE_(NOTE|LABEL)|\.evidence\b/,
+      `${file} prints a readiness band with no account of what it rests on`,
+    );
+    for (const leak of [".weakestCase", ".weeklyXp"]) {
+      assert.ok(
+        !source.includes(leak),
+        `${file} prints ${leak} beside a colleague's name`,
+      );
+    }
+  }
+
+  // The page chooses between the two reads rather than fetching both.
+  const page = code("app/(app)/class/[classroomId]/page.tsx");
+  assert.match(page, /cohortKind\(/, "the class page no longer asks which kind of group it is showing");
+  assert.match(page, /workplaceRoster\(/, "the class page never runs the narrower read");
+});
+
 check("what the learner has kept is counted, never stored", () => {
   /*
     ADR-014 over the newest number on Today. The word of the day panel says how

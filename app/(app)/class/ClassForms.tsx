@@ -6,18 +6,26 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Check, Copy, LogOut, Plus, Printer } from "lucide-react";
 import { archiveClassroom, assignHomework, assignUnit, createClassroom, joinClassroom, leaveClassroom } from "@/app/actions";
 import { Button } from "@/components/Button";
+import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { CODE_LENGTH } from "@/lib/classroom/code";
+import {
+  COHORT_DETAIL, COHORT_KINDS, COHORT_LABEL, type CohortKind,
+} from "@/lib/classroom/cohort";
+import { EXAM_LEVELS } from "@/lib/exam/spec";
 
 export function CreateClass() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [kind, setKind] = useState<CohortKind>("CLASS");
+  const [level, setLevel] = useState<string>("B1");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const workplace = kind === "WORKPLACE";
 
   const create = () => {
     setError(null);
     start(async () => {
-      const result = await createClassroom(name);
+      const result = await createClassroom(name, kind, level);
       if (!result.ok) { setError(result.error); return; }
       router.push(`/class/${result.id}`);
       router.refresh();
@@ -26,21 +34,52 @@ export function CreateClass() {
 
   return (
     <div className="flex flex-col gap-3">
+      <ChoiceGroup label="What is this?" select="one" className="grid gap-2">
+        {COHORT_KINDS.map((option) => (
+          <ChoiceCard
+            key={option}
+            selected={kind === option}
+            onSelect={() => setKind(option)}
+            title={COHORT_LABEL[option]}
+            detail={COHORT_DETAIL[option]}
+          />
+        ))}
+      </ChoiceGroup>
+
       <label htmlFor="class-name" className="label-xs" style={{ color: "var(--ink-3)" }}>
-        Class name
+        {workplace ? "Group name" : "Class name"}
       </label>
       <input
         id="class-name"
         value={name}
         maxLength={60}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Eesti keel A2, teisipäev"
+        placeholder={workplace ? "Estonian at work, autumn" : "Eesti keel A2, teisipäev"}
         className="rounded-[var(--r)] border px-3.5 py-2.5 text-base outline-none transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
+
+      {/*
+        Only a workplace group is asked. A band saying somebody is on track has
+        to be on track *for* something, and the whole reason a workplace pays
+        for this is a paper with a date on it. A teacher is working through a
+        syllabus rather than aiming at one level, so asking them would be a
+        question with no use for the answer.
+      */}
+      {workplace && (
+        <ChoiceGroup label="Which paper are they working towards?" select="one">
+          {EXAM_LEVELS.map((band) => (
+            <ChoiceChip key={band} selected={level === band} onSelect={() => setLevel(band)} even>
+              {band}
+            </ChoiceChip>
+          ))}
+        </ChoiceGroup>
+      )}
+
       {error && <p role="alert" className="text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
       <Button variant="primary" onClick={create} disabled={pending || name.trim().length < 2}>
-        <Plus size={15} aria-hidden /> {pending ? "Creating…" : "Create the class"}
+        <Plus size={15} aria-hidden />{" "}
+        {pending ? "Creating…" : workplace ? "Create the group" : "Create the class"}
       </Button>
     </div>
   );
@@ -100,8 +139,9 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         Joining shares your name, your streak, your XP for the week and how many words you know
         with your teacher and classmates. It shares one more thing with your teacher alone: which
         grammar case you personally get wrong most, as one percentage across your own reviews,
-        never a specific answer. Not your deck, not your searches, not your mistakes one by one.
-        Leaving stops all of it right away.
+        never a specific answer. A workplace group shares less: your name, whether you have been
+        practising, and one of four bands for the paper the group works towards. Not your deck, not
+        your searches, not your mistakes one by one. Leaving stops all of it right away.
       </p>
     </div>
   );
