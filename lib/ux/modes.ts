@@ -116,7 +116,21 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "word is already in your deck, finishing the round counts towards it.",
   },
   {
-    href: "/crossword", title: "Crossword", subtitle: "Clued in English",
+    /*
+      Named the way Sõnad is, in the language it is played in. `ristsõna` is
+      the word a shop in Tallinn prints on the puzzle book, and a learner who
+      meets it here can read it on one. The English name is not dropped, it
+      moves to the subtitle, which is where every screen already puts what a
+      mode does: the title says what this is called and the line under it says
+      what it is, which is the shape the grammar screens take with a case.
+
+      That also keeps it findable both ways. The palette folds both sides, so
+      `ristsona` off a keyboard with no õ lands on the title, and `crossword`
+      lands on the subtitle, which the palette searches too. Which is why the
+      subtitle spends the whole 24-character budget `nav.test.ts` sets: it is
+      carrying the English name now as well as saying what the round does.
+    */
+    href: "/crossword", title: "Ristsõna", subtitle: "Crossword, English clues",
     icon: "Grid3x3", tone: "butter", group: "targeted", note: "A new grid daily",
     within: "/practice",
     blurb:

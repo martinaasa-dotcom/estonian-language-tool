@@ -132,14 +132,16 @@ export function CommandPalette() {
 
   const results = useMemo(() => {
     /*
-      FOLDED, BECAUSE THE ONE PLACE IN THIS BOX WITH AN ESTONIAN NAME WAS
+      FOLDED, BECAUSE THE PLACES IN THIS BOX WITH ESTONIAN NAMES WERE
       UNREACHABLE FROM IT.
 
       A plain `includes` over the label meant typing `sonad` found nothing, and
-      Sõnad was missing from the box that promises to go anywhere — for exactly
+      Sõnad was missing from the box that promises to go anywhere, for exactly
       the learner `lib/ux/letterBar.ts` exists for, who has no õ key and cannot
       type the name. The dictionary has folded a search since it was written;
-      this is the same six letters from the same table.
+      this is the same six letters from the same table. Ristsõna is the second
+      such name and inherits all of it without being mentioned here, which is
+      the point of folding rather than listing.
 
       Folding the haystack as well as the query, since it is the label that
       carries the diacritic. A learner who *can* type õ is unaffected: `sõnad`
