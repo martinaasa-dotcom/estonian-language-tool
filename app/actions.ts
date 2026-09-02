@@ -800,13 +800,40 @@ export async function setDailyGoal(goal: number) {
   return { ok: true as const, goal: clamped };
 }
 
+/*
+  A PERSONAL BEST IS THE ONE FIGURE THE LOG CANNOT REBUILD, AND IT IS STILL A
+  NUMBER OFF A POST BODY.
+
+  ADR-014 says progress is derived and names a personal best as one of its
+  three exceptions, because `Review` records no note of which mode wrote a row
+  and so cannot say what a sixty-second sprint scored. That exception is why
+  these two are stored, and it is not a reason to store whatever arrives.
+  Neither of these clamped anything: `recordSprintScore(NaN)` wrote the string
+  "NaN", `recordMatchTime(NaN)` slipped through its own `Math.max(1, ...)`
+  because `Math.max(1, NaN)` is `NaN`, and `1e21` came back on the sprint
+  screen as somebody's best score in scientific notation.
+
+  What is *not* attempted is bounding a score against the review log. Every
+  answer in both rounds grades through it (ADR-016), so a count is there, but
+  the grades are in flight when the round ends and go to the outbox entirely
+  when the connection is down: a clamp would take an honest best away from
+  somebody who played on a train. The exposure is a learner lying to
+  themselves, on a board that no longer has anybody else on it.
+*/
+
+/** A round of this app is a minute long; nothing honest reaches these. */
+const MAX_SPRINT_SCORE = 500;
+const MAX_MATCH_SECONDS = 3_600;
+
 /** Records a Case Sprint score, keeping only the personal best. */
 export async function recordSprintScore(score: number) {
   const ownerId = await requireUserId();
+  if (!Number.isFinite(score)) return { ok: false as const, error: "That is not a score." };
+  const clamped = Math.min(MAX_SPRINT_SCORE, Math.max(0, Math.round(score)));
   const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.sprintBest), 0);
-  const isNewBest = score > best;
-  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.sprintBest, String(score));
-  return { ok: true as const, best: Math.max(score, best), isNewBest };
+  const isNewBest = clamped > best;
+  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.sprintBest, String(clamped));
+  return { ok: true as const, best: Math.max(clamped, best), isNewBest };
 }
 
 /**
@@ -818,7 +845,8 @@ export async function recordSprintScore(score: number) {
  */
 export async function recordMatchTime(seconds: number) {
   const ownerId = await requireUserId();
-  const rounded = Math.max(1, Math.round(seconds));
+  if (!Number.isFinite(seconds)) return { ok: false as const, error: "That is not a time." };
+  const rounded = Math.min(MAX_MATCH_SECONDS, Math.max(1, Math.round(seconds)));
   const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.matchBest), 0);
   const isNewBest = best === 0 || rounded < best;
   if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.matchBest, String(rounded));

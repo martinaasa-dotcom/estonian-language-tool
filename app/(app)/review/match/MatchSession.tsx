@@ -88,7 +88,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
     }
 
     const result = await recordMatchTime(finalSeconds);
-    setIsNewBest(result.isNewBest);
+    setIsNewBest(result.ok && result.isNewBest);
     const check = await checkAchievements(true);
     if (check.ok) setNewBadges(check.newBadges);
   }, [pairs]);
