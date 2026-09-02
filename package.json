@@ -36,7 +36,8 @@
     "build:frequency": "tsx scripts/build-frequency.ts",
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts",
-    "measure:asr": "node scripts/measure-asr.mjs"
+    "measure:asr": "node scripts/measure-asr.mjs",
+    "audit:questions": "tsx scripts/audit-questions.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

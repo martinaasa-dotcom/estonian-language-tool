@@ -208,11 +208,18 @@ describe("generateCards — CASE_FORM", () => {
   });
 
   /*
-    ONLY WHERE EVERY ANSWER IS THE WORD. Seven words have the lemma as one of
-    two, `voodi / voodisse` among them, and there the pair is exactly what a
-    learner should be shown: one of them is the form nobody predicts.
+    ANY ANSWER, NOT EVERY ONE, and the first version of this test asserted the
+    opposite. `voodi` has the short illative `voodi` and the long `voodisse`,
+    and the marker has to take both, because refusing the short one is the
+    `tuppa` fault pointed the other way. So the card asked
+    `voodi → millesse? kuhu?` and a learner who copied the word out of the
+    question was right. `npm run audit:questions` found all seven of these
+    after the rule had been written and shipped the other way round.
+
+    The pair is still the right thing to show, and the dictionary and grammar
+    pages still show it: `shownForms` is that reader and is untouched.
   */
-  it("keeps a card where the word is one of two answers", () => {
+  it("builds no card where the word is one of two answers either", () => {
     const bed = {
       ...dear, id: "voodi", lemma: "voodi", translation: "bed", pos: "NOUN",
       forms: [
@@ -222,8 +229,23 @@ describe("generateCards — CASE_FORM", () => {
         { formType: "ILL_SG_SHORT", value: "voodi", morphCode: "SgAdt" },
       ],
     };
-    const illative = generateCards(bed, ["CASE_FORM"]).find((c) => c.targetCase === "ILLATIVE");
-    expect(illative?.back).toBe("voodi / voodisse");
+    const cards = generateCards(bed, ["CASE_FORM"]);
+    expect(cards.some((c) => c.targetCase === "ILLATIVE")).toBe(false);
+    expect(cards.some((c) => c.targetCase === "COMITATIVE")).toBe(true);
+  });
+
+  it("keeps the illative where neither answer is the word", () => {
+    const room = {
+      ...dear, id: "tuba", lemma: "tuba", translation: "room", pos: "NOUN",
+      forms: [
+        { formType: "NOM_SG", value: "tuba", morphCode: "SgN" },
+        { formType: "GEN_SG", value: "toa", morphCode: "SgG" },
+        { formType: "PART_SG", value: "tuba", morphCode: "SgP" },
+        { formType: "ILL_SG_SHORT", value: "tuppa", morphCode: "SgAdt" },
+      ],
+    };
+    const illative = generateCards(room, ["CASE_FORM"]).find((c) => c.targetCase === "ILLATIVE");
+    expect(illative?.back).toBe("tuppa / toasse");
   });
 });
 

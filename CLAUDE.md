@@ -1513,6 +1513,31 @@ rather than optional for the reason `illSgShort` is: a caller that has not thoug
 not compile. Case-insensitive, because a crossword is typed without case and "August" over `august`
 hands over every letter.
 
+**So the question is asked mechanically now, and it is `npm run audit:questions`.** Four instances
+of one fault in an afternoon is a rule, and a rule found four times by hand will be found a fifth
+time by a learner. It builds every card, every paper at every level, every level check and every
+crossword clue the shipped dictionary can make, **44,818 questions**, and asks the one thing no unit
+test can: is the answer already visible in what the learner is shown. No database and no key, since
+it reads `prisma/data/expanded.json`, which is what the seed loads; about ninety seconds, most of it
+the deck; a job in `ci.yml` rather than in the drift workflow, because this is a fact about our own
+code rather than about anything upstream.
+
+Two shapes are **not** faults and are excluded by name rather than by luck, because the first two
+runs reported 2,060 of them and both times it was the harness. A matching task shows its word list,
+since pairing sentences to words needs both halves on screen. A `heard` question hides its prompt
+from the eye on purpose, so the answer written beside it is the exercise. And it carries a **floor**:
+every generator sits in a loop that a `continue` away produces nothing, and this printed "none of
+them prints its own answer" in exactly that case, which is the fault `scripts/lib/checks.mjs` gives
+a suite a floor to prevent and which an audit script inherits from nobody.
+
+**It disagreed with the rule written to fix the first three faults, which is the argument for it.**
+The case rule was written to skip a card only where *every* accepted spelling was the word in the
+question, keeping seven where the lemma is one of two. That was wrong, and shipped: the marker has
+to accept `voodi` for the short illative of `voodi`, because refusing it is the `tuppa` fault
+pointed the other way, so a learner who copies the word out of the question is marked right.
+Showing the pair and asking it are different questions; `shownForms` still shows `voodi / voodisse`
+wherever a screen prints a case, and no card asks for it.
+
 `mentions` in `lib/estonian/cloze.ts` is the one whole-word test all three read, with the boundaries
 the module already splits on rather than `\b`, which is ASCII and so does not know what õ is. After
 all three: **zero cards print their own answer**, measured the same way.

@@ -76,6 +76,30 @@ jobs:
       # push, and they run in about eight seconds.
       - run: npm test
 
+  questions:
+    name: No question prints its own answer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      # No database and no key: it reads prisma/data/expanded.json, which is
+      # what `npm run db:seed` loads, and builds every card, paper and clue the
+      # app can make out of it.
+      #
+      # Here rather than in the drift workflow, because this is a fact about
+      # our own code rather than about anything upstream: the generators are
+      # each correct on the word a fixture picks and wrong on a handful
+      # somewhere in five thousand, which is the one shape no unit test can
+      # see. It found four separate faults the day it was written, one of them
+      # in the rule that had been written to fix the first three.
+      #
+      # 44,818 questions in about ninety seconds, most of it the deck.
+      - run: npm run audit:questions
+
   invariants:
     name: Invariants
     runs-on: ubuntu-latest

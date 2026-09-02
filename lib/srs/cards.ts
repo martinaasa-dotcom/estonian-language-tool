@@ -211,12 +211,19 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
             reads every pass as a recall and pushes the interval out, and the
             slot is spent for ever on a card that asks nothing.
 
-            Only where *every* accepted spelling is the word itself. Seven
-            words have the lemma as one of two, `voodi / voodisse` among them,
-            and there the pair is exactly what a learner should be shown.
+            ANY ACCEPTED SPELLING, NOT EVERY ONE, and that correction came from
+            `npm run audit:questions` disagreeing with the first version of this
+            rule. Seven words have the lemma as one of two: `voodi` has the
+            short illative `voodi` and the long `voodisse`, and the marker has
+            to take both, because refusing the short one is the `tuppa` fault
+            pointed the other way. So the card asks `voodi → millesse? kuhu?`
+            and a learner who copies the word out of the question is right. The
+            pair is still the right thing to *show*, and the dictionary and the
+            grammar pages still show it; what cannot happen is asking a question
+            whose answer is printed in it.
           */
           const lemma = lex.lemma.trim().toLocaleLowerCase("et");
-          if (answer.accepted.every((form) => form.trim().toLocaleLowerCase("et") === lemma)) continue;
+          if (answer.accepted.some((form) => form.trim().toLocaleLowerCase("et") === lemma)) continue;
           const spec = CASES.find((c) => c.key === key)!;
           out.push({
             cardType: type,
