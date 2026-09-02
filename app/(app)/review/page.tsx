@@ -305,7 +305,17 @@ function toReviewCard(c: CardRow): ReviewCard {
  * position by definition, which `isStillLearning` reads as Relearning.
  */
 function wantsChoices(card: ReviewCard): boolean {
-  return card.cardType === "RECOGNITION" && !card.isNew && isStillLearning(card.scheduling.state);
+  /*
+    A NEW CARD NOW GETS THEM TOO, BECAUSE IT IS NOW ASKED.
+
+    `!card.isNew` was right while meeting a word was the whole of its first
+    outing: there was no question, so there was nothing to offer options for.
+    A newly met word is asked back before the session ends now, and the memory
+    at that point is minutes old, which is exactly the position the sentence
+    above describes for a card still in learning.
+  */
+  return card.cardType === "RECOGNITION"
+    && (card.isNew || isStillLearning(card.scheduling.state));
 }
 
 /**

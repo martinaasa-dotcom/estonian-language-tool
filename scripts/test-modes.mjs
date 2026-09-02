@@ -55,7 +55,7 @@ async function revealCurrentCard() {
 
 /** Whether the card is holding, rather than having graded itself and moved on. */
 async function waitingOnMe() {
-  const carryOn = await page.getByRole("button", { name: /Got it, next/ }).count();
+  const carryOn = await page.getByRole("button", { name: /Got it/ }).count();
   const selfGrade = await page.getByRole("button", { name: /^Got it$/ }).count();
   return carryOn + selfGrade > 0;
 }
@@ -83,8 +83,8 @@ async function answerCurrentCard() {
     await page.waitForTimeout(300);
   }
 
-  // "Got it, next" on a miss or a first meeting, both of which answer to Enter.
-  if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+  // "Got it" on a miss or a first meeting, both of which answer to Enter.
+  if (await page.getByRole("button", { name: /Got it/ }).count()) {
     await page.keyboard.press("Enter");
     await page.waitForTimeout(1400);
     return true;
@@ -151,7 +151,7 @@ for (let i = 0; i < 30 && !typedReached; i++) {
     // And nothing asks who was right: the verdict is the app's, and the button
     // under it acknowledges the correction rather than grading it.
     check("a miss offers one way on rather than four grades",
-      (await page.getByRole("button", { name: /Got it, next/ }).count()) === 1
+      (await page.getByRole("button", { name: /Got it/ }).count()) === 1
       && (await page.getByRole("button", { name: /^(Again|Hard|Easy)/ }).count()) === 0);
     break;
   }
@@ -183,7 +183,7 @@ if (rateable) {
   // Enter carries on from a miss or a first meeting, and 2 is "Got it" on a
   // flip card. Both grade, which is all undo needs to have something to take
   // back; pressing "3" blind used to answer a multiple-choice question instead.
-  if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+  if (await page.getByRole("button", { name: /Got it/ }).count()) {
     await page.keyboard.press("Enter");
   } else {
     await page.keyboard.press("2");

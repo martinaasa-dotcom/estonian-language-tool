@@ -902,6 +902,21 @@ Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value on
 a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
 on any other.
 
+**Meeting a word is not answering it.** The intro screen ended in `submit(3)`: a card the learner
+had done nothing with but read was graded Good, in the append-only log, and the scheduler set its
+first interval from a recall that never happened. The next real question was the next day, because
+the ten-minute learning step lands after a seven-minute session has ended. Karpicke and Roediger
+measured what that costs: learners who kept retrieving new pairs *inside* the first session
+recalled about 80 percent a week later against about 35 for those who only restudied, and the whole
+difference was whether retrieval happened while the word was being learned. So a first meeting
+writes nothing and puts the card back five places on, where it is asked in its ordinary shape, and
+that retrieval is the grade. `requeue` in `lib/srs/queue.ts` is the same helper the Again path uses,
+so a miss and a first meeting wait the same distance, and a session too short for the gap asks at
+the end rather than not at all. `wantsChoices` reaches a new recognition card now, for the reason
+it already reached one still in learning: the memory is minutes old and asking for it cold is a
+guessing game. Nothing about `Review`, undo or the offline replay changed; what changed is that the
+row now records something that happened.
+
 **A word is taught before it is asked, and the app marks what it can mark.** Two rules, one
 screen, and the code already believed both of them before it did either.
 

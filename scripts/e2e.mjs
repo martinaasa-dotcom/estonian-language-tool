@@ -160,7 +160,7 @@ await page.waitForTimeout(900);
 // answer was marked correct and the card has gone; one button, on a miss or on
 // a word being met for the first time, which Enter takes; or the two self-grade
 // buttons of a flip card, where 2 is "Got it".
-const carryOn = (await page.getByRole("button", { name: /Got it, next/ }).count()) > 0;
+const carryOn = (await page.getByRole("button", { name: /Got it/ }).count()) > 0;
 const selfGrade = (await page.getByRole("button", { name: /^Got it$/ }).count()) > 0;
 const alreadyGraded = (await graded()) > gradedBefore;
 check("the answer is reachable from the keyboard", carryOn || selfGrade || alreadyGraded,

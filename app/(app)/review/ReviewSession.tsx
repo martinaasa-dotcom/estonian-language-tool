@@ -23,6 +23,7 @@ import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db
 import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { requeue } from "@/lib/srs/queue";
 import { AI_TAG } from "@/lib/copy/values";
 
 export interface ReviewCard {
@@ -224,11 +225,26 @@ const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 
-function askFor(card: ReviewCard, mode: ReviewMode): Ask {
-  // A card you have never seen cannot be recalled, only met. Asking someone to
-  // produce a word they have not been shown is a guessing game that teaches
-  // nothing, so a new card leads with its answer.
-  if (card.isNew) return "intro";
+function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): Ask {
+  /*
+    A card you have never seen cannot be recalled, only met. Asking someone to
+    produce a word they have not been shown is a guessing game that teaches
+    nothing, so a new card leads with its answer.
+
+    MEETING IT IS NOT ANSWERING IT, THOUGH. That screen used to end in
+    `submit(3)`: the card was graded Good, in the append-only log, on a word
+    the learner had done nothing with but read. The scheduler then set the
+    first interval from a recall that never happened, and the next real
+    question was the next day. Karpicke and Roediger measured what that costs:
+    learners who kept retrieving new pairs inside the first session recalled
+    about 80 percent a week later, against about 35 for those who only
+    restudied, and the whole difference was whether retrieval happened while
+    the word was being learned.
+
+    So the meeting writes nothing, and the card comes back a few places later
+    as the question it would ordinarily be. That retrieval is the grade.
+  */
+  if (card.isNew && !met.has(card.id)) return "intro";
   if (mode === "type" && TYPEABLE.has(card.cardType)) return "type";
   if (card.cardType === "RECOGNITION" && card.choices && card.choices.length > 1) return "choice";
   return "flip";
@@ -270,6 +286,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Done[]>([]);
+  /** Cards whose word has been met this session and which are now asked properly. */
+  const [met, setMet] = useState<ReadonlySet<string>>(() => new Set());
   const [pendingOffline, setPendingOffline] = useState(0);
   const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
@@ -281,7 +299,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
 
   const card = queue[index];
   const finished = !card;
-  const ask = card ? askFor(card, mode) : "flip";
+  const ask = card ? askFor(card, mode, met) : "flip";
 
   /*
     Whether the answer is on the screen, which is not the same question as
@@ -378,6 +396,30 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     );
   }, [card, mounted]);
 
+  /**
+   * The learner has met the word. Nothing is written, and the card comes back.
+   *
+   * `requeue` is the same helper the Again path uses, so a first meeting and a
+   * miss are reinserted the same distance on: far enough that the answer is
+   * not still on the screen, near enough that a short session still reaches
+   * it. A session too short for the gap puts the card last, which is the best
+   * a short session can do, and the card is asked either way.
+   */
+  const meetDone = useCallback(() => {
+    if (!card || busy) return;
+    setMet((m) => new Set(m).add(card.id));
+    setQueue((q) => {
+      const next = [...q];
+      const [seen] = next.splice(index, 1);
+      return seen ? requeue(next, seen, index) : next;
+    });
+    setRevealed(false);
+    setTyped("");
+    setVerdict(null);
+    setChosen(null);
+    shownAt.current = Date.now();
+  }, [card, busy, index]);
+
   const submit = useCallback(async (rating: RatingValue) => {
     if (!card || busy) return;
     setBusy(true);
@@ -412,8 +454,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       setQueue((q) => {
         const next = [...q];
         const [failed] = next.splice(index, 1);
-        if (failed) next.splice(Math.min(next.length, index + 5), 0, failed);
-        return next;
+        // The same distance a newly met word waits: see `requeue`.
+        return failed ? requeue(next, failed, index) : next;
       });
       setRevealed(false);
       setTyped("");
@@ -522,7 +564,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         // set — and would grade the card before it had been read.
         if (typing) return;
         e.preventDefault();
-        if (ask === "intro") { void submit(3); return; }
+        if (ask === "intro") { meetDone(); return; }
         if (ask === "type" && !verdict) { checkTyped(); return; }
         if (ask === "type" && verdict) { void submit(verdict.suggestedRating); return; }
         // A right pick grades itself on a timer; a wrong one waits here.
@@ -553,7 +595,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
+  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, meetDone, undo, history.length]);
 
   if (wasEmptyAtStart) {
     return (
@@ -905,8 +947,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             Hard is still what a near miss is graded. What went is the asking.
           */}
           {ask === "intro" ? (
-            <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(3)} disabled={busy}>
-              Got it, next
+            <Button variant="primary" size="lg" className="w-full" onClick={meetDone} disabled={busy}>
+              Got it, ask me later
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Space
               </kbd>

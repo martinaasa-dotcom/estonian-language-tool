@@ -60,8 +60,21 @@ async function gradedCount() {
  *     wrong one waits on a button;
  *   - a typed answer, the same, checked against the dictionary.
  */
-async function answerOneCard() {
+async function answerOneCard(depth = 0) {
   const before = await gradedCount();
+
+  /*
+    A word met for the first time teaches and writes nothing: it puts the card
+    back a few places on, where it is asked properly, and that retrieval is
+    what grades. So this presses through and answers whatever comes up next
+    rather than reporting a grade that did not happen.
+  */
+  const meet = app.getByRole("button", { name: /Got it, ask me later/ });
+  if (await meet.count() && depth < 4) {
+    await meet.first().click();
+    await page.waitForTimeout(400);
+    return answerOneCard(depth + 1);
+  }
 
   const show = app.getByRole("button", { name: /Show answer/ });
   if (await show.count()) {
@@ -83,11 +96,6 @@ async function answerOneCard() {
       await page.waitForTimeout(300);
     }
   }
-
-  // A miss and a first meeting both end on this one button. A clean hit and a
-  // right pick have already graded themselves and moved on.
-  const carryOn = app.getByRole("button", { name: /Got it, next/ });
-  if (await carryOn.count()) await carryOn.first().click();
 
   await page.waitForTimeout(700);
   return (await gradedCount()) > before;
@@ -266,7 +274,7 @@ await page.reload({ waitUntil: "domcontentloaded" }).catch(() => {});
 await page.waitForTimeout(2000);
 const offlineBody = (await page.textContent("body")) ?? "";
 check("review still renders with the network gone",
-  /left|Show answer|Pick the meaning|Got it, next/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
+  /left|Show answer|Pick the meaning|Got it/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
   offlineBody.slice(0, 60).replace(/\s+/g, " "));
 
 // The outbox must survive the reload.

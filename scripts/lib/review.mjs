@@ -32,6 +32,19 @@
 export async function revealAnswer(page, { timeout = 900 } = {}) {
   const app = page.locator("main");
 
+  /*
+    A word met for the first time is a teaching screen rather than a question:
+    it writes nothing now and puts the card back a few places on, where it is
+    asked in its ordinary shape. A driver that stopped here would report a
+    card answered when none was, so it presses through and asks again.
+  */
+  const meet = app.getByRole("button", { name: /Got it, ask me later/ });
+  if (await meet.count()) {
+    await meet.first().click();
+    await page.waitForTimeout(300);
+    return revealAnswer(page, { timeout });
+  }
+
   const show = app.getByRole("button", { name: /Show answer/ });
   if (await show.count()) {
     await show.first().click();
