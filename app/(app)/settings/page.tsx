@@ -1,24 +1,28 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { ReactNode } from "react";
-import { Bell, Download, Keyboard, Shield, Smartphone } from "lucide-react";
+import { Bell, Download, Keyboard, Smartphone } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { ekilexConfigured } from "@/lib/ekilex/client";
-import { BADGES } from "@/lib/achievements/badges";
-import { dailyGoalFrom, numberSetting, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
+import { dailyGoalFrom, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { letterBarFrom } from "@/lib/ux/letterBar";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
-import { BadgeShelf } from "@/components/achievements/BadgeShelf";
+import { courseLevelFor } from "@/lib/progress/level";
 import { Card, Chip, Page, SectionTitle, Stack } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
+import { LevelPanel } from "./LevelPanel";
 import { EkilexSetupGuide } from "./EkilexSetupGuide";
 import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
-import { LeaderboardPanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
+import { ClassNamePanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
+import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, VoicePanel } from "./AudioPanel";
+import { GlossLanguagePanel } from "./GlossLanguagePanel";
+import { GLOSS_LANGUAGES, glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { autoplayFrom, feedbackSoundsFrom, voiceFrom, VOICES } from "@/lib/audio/voice";
 import { RestorePanel } from "./RestorePanel";
 import { SetupGuide } from "./SetupGuide";
 import { providerResilience } from "@/lib/tutor/provider";
@@ -80,36 +84,56 @@ export default async function SettingsPage() {
   const hosted = supabaseConfigured();
   const ekilexOn = ekilexConfigured();
 
-  const [words, cards, reviews, earned, settings, learner, goals, latestCheck] = await Promise.all([
+  const [words, cards, reviews, settings, learner, goals, latestCheck, courseLevel] = await Promise.all([
     prisma.lexeme.count(),
     prisma.card.count({ where: { ownerId } }),
     prisma.review.count({ where: { ownerId } }),
-    prisma.achievement.findMany({ where: { ownerId }, select: { key: true } }),
     readSettings(ownerId, [
-      SETTING_KEYS.dailyGoal, SETTING_KEYS.streakShields, SETTING_KEYS.reviewMode,
+      SETTING_KEYS.dailyGoal, SETTING_KEYS.reviewMode,
       SETTING_KEYS.letterBar,
-      SETTING_KEYS.displayName, SETTING_KEYS.leaderboard,
+      SETTING_KEYS.displayName,
+      SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
+      SETTING_KEYS.glossLanguage,
     ]),
     currentLearner(),
     goalsFor(ownerId),
     latestFor(ownerId),
+    /*
+      The level the app is actually going on, which is not always the last
+      check: `courseLevelFor` takes whichever of the measurement and the
+      learner's own answer was stated later. Reading the check alone here
+      would print one level in the hint and hand the picker another.
+    */
+    courseLevelFor(ownerId),
   ]);
 
-  const earnedKeys = new Set(earned.map((a) => a.key));
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
-  const shields = numberSetting(settings[SETTING_KEYS.streakShields], 0);
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
+  const voice = voiceFrom(settings[SETTING_KEYS.ttsVoice]);
+  const voiceName = VOICES.find((v) => v.id === voice)?.name ?? voice;
+  const autoplay = autoplayFrom(settings[SETTING_KEYS.autoplayAudio]);
+  const sounds = feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]);
+  const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
+  const glossLanguageName =
+    GLOSS_LANGUAGES.find((l) => l.id === glossLanguage)?.label ?? "English";
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
-  const optedIn = settings[SETTING_KEYS.leaderboard] === "1";
+  /*
+    Whether the level on screen is one a check produced, which is the only
+    thing the panel's copy changes on. Compared by value rather than by asking
+    which source won, because a check that put somebody at B1 and a learner who
+    then picked B1 are the same claim and saying "you set this" over it would
+    be the app arguing with itself about a number both agree on.
+  */
+  const measuredIsCurrent = (latestCheck?.overall ?? null) === courseLevel;
 
   return (
     <Page
       title="Settings"
       lead={
         hosted
-          ? "Your deck, reviews and tasks belong to your account and are visible only to you."
-          : "This copy runs locally. Nothing is uploaded anywhere."
+          ? "Your deck, reviews and tasks are yours alone. Nobody else can see them."
+          : "This is running on your own computer. Nothing is uploaded anywhere."
       }
     >
       <Stack>
@@ -118,9 +142,74 @@ export default async function SettingsPage() {
             <SectionTitle hint={mode === "type" ? "typing" : "flipping"}>How review asks</SectionTitle>
             <ReviewModePanel current={mode} />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Either way, brand-new cards are shown with their answer first, being asked to produce a
+              Either way, brand-new cards are shown with their answer first. Being asked to produce a
               word you have never seen teaches nothing.
             </p>
+          </section>
+
+          {/*
+            How Estonian sounds. Three questions in one section because they
+            are one decision about the same thing: who says it, whether they
+            say it unasked, and whether the app answers back. The voices come
+            from the same Tartu service every clip in the app does.
+          */}
+          <section>
+            <SectionTitle hint={voiceName}>Voice</SectionTitle>
+            <Card className="flex flex-col gap-5">
+              <div>
+                <p className="mb-3 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                  Who reads Estonian to you. Press the ear beside a name to hear it, and the chip to keep it.
+                  <CurrentVoiceSample />
+                </p>
+                <VoicePanel current={voice} />
+                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                  Twelve voices from the University of Tartu&rsquo;s speech synthesis. The state examination
+                  is read by more than one speaker, so it is worth changing this now and then.
+                </p>
+              </div>
+              <div>
+                <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>When it speaks</h3>
+                <AutoplayPanel current={autoplay} />
+              </div>
+              <div>
+                <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Right and wrong</h3>
+                <FeedbackSoundsPanel current={sounds} />
+              </div>
+            </Card>
+          </section>
+
+          {/*
+            WHICH LANGUAGE A MEANING IS GIVEN IN, WHICH IS NOT A COSMETIC
+            SETTING HERE.
+
+            Most people learning Estonian in Estonia already speak Russian or
+            Ukrainian, and an app that can only say `kohv` is "coffee" asks
+            them to reach a word through the language they are least sure of.
+            The equivalents are the Institute's own, out of the same Ekilex
+            response as the forms and the sentences: no model is anywhere near
+            them.
+          */}
+          <section id="meanings">
+            <SectionTitle hint={glossLanguageName}>Meanings</SectionTitle>
+            <Card>
+              <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
+                What a word means, in the language you think in. The English gloss stays on every
+                entry; this decides what is printed beside it.
+              </p>
+              <GlossLanguagePanel current={glossLanguage} />
+              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                The Russian and Ukrainian come from Ekilex, written by the same lexicographers as
+                the Estonian. Where they recorded none, the entry says so by showing the English
+                on its own.
+              </p>
+            </Card>
+          </section>
+
+          <section id="level">
+            <SectionTitle hint={courseLevel}>Your level</SectionTitle>
+            <Card>
+              <LevelPanel current={courseLevel} measured={measuredIsCurrent} />
+            </Card>
           </section>
 
           <section id="goals">
@@ -131,20 +220,16 @@ export default async function SettingsPage() {
             </SectionTitle>
             <Card>
               <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                These answers build the timeline on the level check screen: how many hours the level you
-                want usually takes, how many of them your daily goal covers, and what is left to find
-                elsewhere. Change them whenever the answer changes.
+                These answers shape the timeline on the level check screen: how many hours the level
+                you want usually takes, how many of them your daily goal covers, and what is left to
+                find elsewhere. Change them whenever the answer changes.
               </p>
               <GoalsPanel current={goals} />
               <p className="mt-5 text-sm" style={{ color: "var(--ink-3)" }}>
                 <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
                   Take the level check
                 </Link>{" "}
-                to measure where you are, or read{" "}
-                <Link href="/guide" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
-                  what this app can and cannot do
-                </Link>
-                .
+                to measure where you are.
               </p>
             </Card>
           </section>
@@ -153,8 +238,8 @@ export default async function SettingsPage() {
             <SectionTitle hint={`${dailyGoal} reviews/day`}>Daily goal</SectionTitle>
             <Card>
               <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
-                Sets how full the ring on Today fills up, and the target of your first daily quest.
-                Purely motivational. It never caps or blocks a session.
+                This sets how full the ring on Today gets, and what your first daily quest aims for.
+                It is only there to motivate you. It never stops you from reviewing more.
               </p>
               <DailyGoalPanel currentGoal={dailyGoal} />
             </Card>
@@ -174,18 +259,18 @@ export default async function SettingsPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <Chip tone="good">Connected</Chip>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-                    Words beyond the built-in set are fetched live from Ekilex, at the Institute of the
-                    Estonian Language, and stored as they arrive so the next lookup is local and works
-                    offline. Example sentences, dictation and the fuller mock exam all draw on this.
+                    Words beyond the built-in set come straight from Ekilex, at the Institute of the
+                    Estonian Language, and are saved here so the next lookup works offline too.
+                    Example sentences, dictation and the fuller mock exam all draw on this.
                   </p>
                 </div>
               ) : (
                 <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
                   <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
-                    No Ekilex key is configured on this deployment, so search stops at the {words}{" "}
+                    There is no Ekilex key set up here yet, so search stops at the {words}{" "}
                     built-in words: nothing outside that set can be looked up, and dictation, the
                     sentence builder and the mock exam&rsquo;s reading and listening parts stay thin or
-                    empty because the built-in set carries almost no attested sentences.
+                    empty, because the built-in set has almost no real example sentences.
                   </p>
                   <EkilexSetupGuide />
                 </div>
@@ -194,31 +279,11 @@ export default async function SettingsPage() {
           </section>
         </Group>
 
-        <Group title="Progress and sharing">
+        <Group title="Sharing">
           <section>
-            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
+            <SectionTitle>Your name in a class</SectionTitle>
             <Card>
-              <BadgeShelf earnedKeys={earnedKeys} />
-              <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
-                <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent-deep)" }} />
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-                    {shields} streak shield{shields === 1 ? "" : "s"} banked
-                  </p>
-                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
-                    Earned automatically at 7-, 30- and 100-day streaks. Each one protects your streak
-                    through a single day you miss entirely, no action needed, it is spent
-                    automatically the next time you&rsquo;re back.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </section>
-
-          <section>
-            <SectionTitle hint={optedIn ? "you're on it" : "off"}>Class leaderboard</SectionTitle>
-            <Card>
-              <LeaderboardPanel currentName={displayName} optedIn={optedIn} />
+              <ClassNamePanel currentName={displayName} />
             </Card>
           </section>
         </Group>
@@ -230,7 +295,9 @@ export default async function SettingsPage() {
           </section>
 
           <section>
-            <SectionTitle hint={provider ? undefined : "Anu is off until you add a key"}>AI tutor</SectionTitle>
+            {/* Named the way every other screen names her. "AI tutor" here
+                against "Anu" everywhere else made two things out of one. */}
+            <SectionTitle hint={provider ? undefined : "off until you add a key"}>Anu</SectionTitle>
             <Card>
               {provider ? (
                 <div>
@@ -242,7 +309,7 @@ export default async function SettingsPage() {
                   </div>
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     {resilience.models === 1
-                      ? "One model is configured."
+                      ? "Just one model is set up right now."
                       : `${resilience.models} models are tried in order, across ${resilience.providers.join(" and ")}.`}
                   </p>
                   {/*
@@ -254,14 +321,15 @@ export default async function SettingsPage() {
                   */}
                   {resilience.singlePointOfFailure && (
                     <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                      Everything above is {resilience.providers[0]}, on one account. If that key stops
-                      answering, whether it runs out of credit or has a bad minute, Anu stops with it.
+                      Everything above runs through {resilience.providers[0]}, on one account. If
+                      that key stops answering, whether it runs out of credit or just has a bad
+                      minute, Anu stops with it.
                       Adding <code className="text-xs">GROQ_API_KEY</code> or{" "}
                       <code className="text-xs">GEMINI_API_KEY</code> to <code className="text-xs">.env</code>{" "}
-                      gives the chain somewhere to fall through to. Both have a free tier and neither
-                      asks for a card. Read the note beside them in{" "}
-                      <code className="text-xs">.env.example</code> first: a free tier is usually free
-                      because the provider may look at what goes through it.
+                      gives Anu somewhere else to turn. Both are free and neither asks for a card.
+                      Read the note beside them in{" "}
+                      <code className="text-xs">.env.example</code> first: free usually means the
+                      provider may look at what goes through it.
                     </p>
                   )}
                 </div>
@@ -309,8 +377,9 @@ export default async function SettingsPage() {
             <SectionTitle hint={letters === "on" ? "shown" : "hidden"}>Typing Estonian</SectionTitle>
             <LetterBarPanel current={letters} />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Only ever on a computer. A phone keyboard already has these letters, on a long press
-              or a keyboard switched to Estonian, so no row is drawn there either way.
+              Only ever shows up on a computer. A phone keyboard already has these letters, on a
+              long press or a keyboard switched to Estonian, so there is nothing to show on a phone
+              either way.
             </p>
           </section>
 
@@ -369,10 +438,6 @@ export default async function SettingsPage() {
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     The time is read on your own clock, wherever you are, and stays put when the
                     clocks change.
-                  </p>
-                  <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                    Web push was the alternative. It needs a server that stays awake and still does
-                    nothing on an iPhone unless the app is installed. A calendar entry just works.
                   </p>
                 </div>
               </div>

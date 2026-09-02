@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { Fragment, useState } from "react";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ChevronDown } from "lucide-react";
 import { CASES } from "@/lib/estonian/cases";
 import { caseFromMorphCode, VERB_GROUP_LABELS, verbSlot, type VerbSlot } from "@/lib/estonian/morph";
+import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { Speak } from "@/components/Speak";
 import { NO_VALUE } from "@/lib/copy/values";
 
@@ -35,8 +36,8 @@ export function WordForms({ forms, pos }: { forms: WordForm[]; pos: string }) {
         Every form, from Ekilex
       </h3>
       <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-        These are the authoritative forms, not worked out from a stem, irregular plurals and the
-        parallel forms Estonian really has, included.
+        These are the real forms, not worked out from a stem. Irregular plurals and the
+        parallel forms Estonian really has are included.
       </p>
       {isVerb ? <VerbTable forms={forms} /> : <CaseTable forms={forms} />}
       <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
@@ -86,12 +87,21 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
     }
   }
 
-  const rows = CASES.filter((c) => singular[c.key] || plural[c.key]);
+  const shortIllativeValues = valuesFor(forms, "SgAdt");
+  /*
+    The illative row has to exist for the short one to sit under it, and an
+    entry can carry `SgAdt` without `SgIll`. Without this the short illative
+    would silently vanish for exactly the words whose illative is only ever
+    the short one.
+  */
+  const rows = CASES.filter(
+    (c) => singular[c.key] || plural[c.key] || (c.key === "ILLATIVE" && shortIllativeValues.length > 0),
+  );
   if (rows.length === 0) return <OtherForms forms={forms} used={new Set()} />;
 
   const used = new Set([...Object.values(singular), ...Object.values(plural)]);
   // The short illative is a separate code on the same case; show it in its own row.
-  const shortIllative = valuesFor(forms, "SgAdt");
+  const shortIllative = shortIllativeValues;
   if (shortIllative.length > 0) used.add("SgAdt");
 
   return (
@@ -109,7 +119,8 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
           </thead>
           <tbody>
             {rows.map((spec) => (
-              <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
+              <Fragment key={spec.key}>
+              <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
                 <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                   {/* The case name is the way into the reference page: this table
                       says what the form is, that page says when to use it. The
@@ -127,20 +138,38 @@ function CaseTable({ forms }: { forms: WordForm[] }) {
                 <td className="px-3 py-2"><Cell values={plural[spec.key] ? valuesFor(forms, plural[spec.key]!) : []} /></td>
                 <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
               </tr>
+              {/*
+                THE SHORT ILLATIVE SITS UNDER THE LONG ONE, NOT AT THE BOTTOM
+                OF THE TABLE.
+
+                It was appended after all fourteen cases, eleven rows below the
+                case it is a form of. A learner reading down the "Answers"
+                column for `kuhu?` meets `sisseütlev toasse` first and stops,
+                which for `tuba` hands them the form almost nobody says while
+                `tuppa` sits out of sight under a name they have not met yet.
+                Both are attested and both are labelled correctly, so nothing
+                here was wrong; it was ordered so that the wrong one is what
+                gets read.
+
+                It keeps its own row rather than being crammed into the
+                illative's cell, because it is a different form with a
+                different name and a course teaches it as one.
+              */}
+              {spec.key === "ILLATIVE" && shortIllative.length > 0 && (
+                <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
+                  <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
+                    <span lang="et">lühike sisseütlev</span>
+                    <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
+                      short illative
+                    </span>
+                  </td>
+                  <td className="px-3 py-2"><Cell values={shortIllative} /></td>
+                  <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span></td>
+                  <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>kuhu?</td>
+                </tr>
+              )}
+              </Fragment>
             ))}
-            {shortIllative.length > 0 && (
-              <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
-                <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
-                  <span lang="et">lühike sisseütlev</span>
-                  <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>
-                    short illative
-                  </span>
-                </td>
-                <td className="px-3 py-2"><Cell values={shortIllative} /></td>
-                <td className="px-3 py-2"><span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span></td>
-                <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>kuhu?</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
@@ -272,6 +301,134 @@ function OtherForms({ forms, used }: { forms: WordForm[]; used: Set<string> }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * The present tense, the negative, the conditional and the singular
+ * imperative, worked out from the first person.
+ *
+ * What a seeded verb shows before Ekilex has been asked about it, which on a
+ * deployment without a key is for ever. Five principal parts are the whole
+ * entry there, so `lugema` stopped at `loen` and a learner met a verb with
+ * one person. The rule in `lib/estonian/conjugate.ts` is the same licence the
+ * case table above takes over the genitive, and it was checked against every
+ * verb in the dictionary before it was allowed on a screen: 797 verbs, every
+ * slot, no disagreement with Ekilex. `olema` is the one it declines, and this
+ * says so rather than printing a present tense with a hole in it.
+ *
+ * Drawn as the same table the retrieved forms use, persons down and tenses
+ * across, so a word that gets enriched later does not change shape under the
+ * reader. Labelled as derived, once, at the top, the way the case table is.
+ */
+export function DerivedVerbForms({ lemma, forms }: {
+  lemma: string;
+  forms: { formType: string; value: string }[];
+}) {
+  const pres1sg = pres1sgFrom(forms);
+  const derived = derivedVerbForms({ lemma, pres1sg });
+  const present = derived.filter((f) => f.morphCode.startsWith("IndPr") && f.morphCode !== "IndPrPs_");
+  const conditionalForms = derived.filter((f) => f.morphCode.startsWith("KndPr"));
+  const negative = derived.find((f) => f.morphCode === "IndPrPs_");
+  const imperative = derived.find((f) => f.morphCode === "ImpPrSg2");
+  if (!pres1sg || derived.length === 0) return null;
+
+  const groups: { key: "PRESENT" | "CONDITIONAL"; rows: typeof derived }[] = [];
+  if (present.length) groups.push({ key: "PRESENT", rows: present });
+  if (conditionalForms.length) groups.push({ key: "CONDITIONAL", rows: conditionalForms });
+  const order = (code: string) => Number(
+    { Sg1: 1, Sg2: 2, Sg3: 3, Ps: 3, Pl1: 4, Pl2: 5, Pl3: 6 }[code.replace(/^(IndPr|KndPr)/, "")] ?? 0,
+  );
+
+  return (
+    <div>
+      <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
+        The rest, worked out from <span lang="et" className="normal-case" style={{ letterSpacing: 0 }}>{pres1sg}</span>
+      </h3>
+      <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
+        {present.length > 0
+          ? "Take the n off the first person and the other five persons, the negative and the conditional are regular endings on what is left. The simple past has to be learned per verb."
+          : "This is the one verb whose present tense does not follow the rule. The conditional still does; the rest is on Ekilex."}
+      </p>
+      <div className="overflow-x-auto rounded-[var(--r-lg)] border" style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
+        <table className="w-full min-w-[360px] text-sm">
+          <thead>
+            <tr>
+              <th className="label-xs px-3 py-2.5 text-left" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
+                Person
+              </th>
+              {groups.map((g) => (
+                <th key={g.key} className="label-xs px-3 py-2.5 text-left" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
+                  <span lang="et">{VERB_GROUP_LABELS[g.key].et}</span>
+                  <span className="ml-1.5 font-normal normal-case italic" style={{ letterSpacing: 0 }}>
+                    {VERB_GROUP_LABELS[g.key].en.toLowerCase()}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {PERSONS.map((person) => (
+              <tr key={person.order} style={{ borderTop: "1px solid var(--rule-soft)" }}>
+                <td lang="et" className="px-3 py-2 text-sm" style={{ color: "var(--ink-2)" }}>{person.et}</td>
+                {groups.map((g) => {
+                  const match = g.rows.find((f) => order(f.morphCode) === person.order);
+                  return (
+                    <td key={g.key} className="px-3 py-2">
+                      {match ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span
+                            lang="et"
+                            className={match.origin === "STORED" ? "text-base font-bold" : "text-base"}
+                            style={{ color: match.origin === "STORED" ? "var(--accent-deep)" : "var(--ink)" }}
+                          >
+                            {match.value}
+                          </span>
+                          <Speak text={match.value} size={13} />
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            {negative && (
+              <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
+                <td className="px-3 py-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                  <span lang="et">eitus</span>
+                  <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>every person</span>
+                </td>
+                <td className="px-3 py-2" colSpan={groups.length}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>ei {negative.value}</span>
+                    <Speak text={`ei ${negative.value}`} size={13} />
+                  </span>
+                </td>
+              </tr>
+            )}
+            {imperative && (
+              <tr style={{ borderTop: "1px solid var(--rule-soft)" }}>
+                <td className="px-3 py-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                  <span lang="et">käskiv kõneviis</span>
+                  <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>to one person</span>
+                </td>
+                <td className="px-3 py-2" colSpan={groups.length}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span lang="et" className="text-base" style={{ color: "var(--ink)" }}>{imperative.value}!</span>
+                    <Speak text={imperative.value} size={13} />
+                  </span>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-2xs" style={{ color: "var(--ink-3)" }}>
+        The bold form is stored. The rest are regular endings on it, checked against Ekilex for every verb in this dictionary.
+      </p>
     </div>
   );
 }

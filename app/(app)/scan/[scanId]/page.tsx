@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Grid2x2, GraduationCap, Zap } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -117,7 +117,7 @@ export default async function ScanSetPage({ params }: { params: Promise<{ scanId
                 href={`/review?scan=${scan.id}`}
                 tone="accent"
                 title="Drill the page"
-                body="Just these words, scheduling ignored, graded into the same log as everything else."
+                body="Just the words from this page, regardless of when they are due, graded the same as any other review."
               />
               <PractiseTile
                 href="/review/match"
@@ -137,10 +137,10 @@ export default async function ScanSetPage({ params }: { params: Promise<{ scanId
 
         {unverified > 0 && (
           <Note tone="again">
-            {unverified} of these {unverified === 1 ? "word was" : "words were"} not in the
-            dictionary when this page was read, so {unverified === 1 ? "it carries" : "they carry"} the
-            English from the photo and no verified forms. Open one in the dictionary to correct it,
-            and it is corrected everywhere.
+            {unverified} of these {unverified === 1 ? "word wasn't" : "words weren't"} in the
+            dictionary when we read this page, so {unverified === 1 ? "it has" : "they have"} just
+            the English from the photo, and no verified forms. Open one in the dictionary to fix it,
+            and the fix applies everywhere.
           </Note>
         )}
 

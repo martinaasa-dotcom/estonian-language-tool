@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { supabaseConfigured } from "@/lib/auth/mode";
+import { halfConfigured, supabaseConfigured } from "@/lib/auth/mode";
 import { isAllowedEmail, safeNext } from "@/lib/auth/access";
 import { boundedTransport, hasSessionCookie, readIdentity } from "@/lib/auth/identity";
 import { buildContentSecurityPolicy } from "@/lib/security/headers";
@@ -72,6 +72,23 @@ export async function middleware(request: NextRequest) {
             headers: { "content-type": "text/plain; charset=utf-8" },
           }),
     );
+  }
+
+  /*
+    A HALF-CONFIGURED DEPLOYMENT IS NEITHER MODE, AND IS ANSWERED AS NEITHER.
+
+    Local mode is the absence of the Supabase keys; one of the two present is
+    a hosted install with a typo in it, and letting that fall through here
+    would run it open to the internet under one shared id. See
+    lib/auth/mode.ts.
+  */
+  const missing = halfConfigured();
+  if (missing) {
+    return withCsp(new NextResponse(
+      `This installation is half configured: ${missing} is not set. `
+      + "Set it, or unset the other Supabase variable to run as a single local learner.",
+      { status: 503, headers: { "content-type": "text/plain; charset=utf-8" } },
+    ));
   }
 
   if (!supabaseConfigured()) return withCsp(NextResponse.next({ request }));

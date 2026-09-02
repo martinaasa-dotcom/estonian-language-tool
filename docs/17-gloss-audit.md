@@ -231,3 +231,30 @@ The three residual known-wrong entries are `kõrb` (above), `krõps`, glossed "f
 from its adjective sense where the noun is a crisp, and `talguline`, "participant at.", truncated
 because the Estonian word it pointed at was correctly refused. All three need a person, not a
 rule.
+
+## 8. The rest of the dictionary, 2026-08-31
+
+Everything above is A1 to B1, which was the band the faults were found in and is 2,164 of the
+5,363 entries in `prisma/data/expanded.json`. The 3,199 above it had never been asked, so the
+number this file reports was a number about two fifths of the dictionary.
+
+The whole file has now been through the same pass. **All 5,363 entries agree with their own
+Wiktionary page, and nothing was written.** The four parser faults in section 3 were the whole
+of it: fixing them at A1 fixed them at C2, which is what a mechanical fault looks like from the
+other end, and is the argument for having found them by parsing rather than by sampling.
+
+A clean result is only worth reading if the check that produced it can fail, and this one had
+never printed anything but a pass over the untested three fifths, so it was made to fail first.
+Running the same comparison against a stored translation known to be wrong flags all 5,363. The
+comparison fires; there was simply nothing to fire on.
+
+`.github/workflows/drift.yml` asks this question every Monday and had not yet fired: it reached
+main on 2026-08-31, after that morning's cron, so its first execution was this one by hand. What
+it is watching for from here is not the parser, which is now agreed with end to end, but
+Wiktionary editing a page out from under a gloss. That is drift rather than a bug, which is why
+the job reports it to a person instead of writing to the repository.
+
+The senses this cannot see are unchanged and are section 6's: a page that is wrong about its own
+word, or right in a sense a learner does not need. `kõrb` is still glossed "a large uninhabited
+forest". Those are for a person to correct, which is what the report queue on every dead end and
+the reviewers in `ADMIN_EMAILS` are for.

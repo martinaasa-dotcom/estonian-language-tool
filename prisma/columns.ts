@@ -16,6 +16,15 @@ export interface SeedEntry {
   lemma: string;
   pos: string;
   translation: string;
+  /**
+   * The Institute's own Russian and Ukrainian equivalents, comma separated.
+   *
+   * Null where Ekilex records none, which most of the built expansion is: the
+   * course harvest carries them and the Wiktionary-derived words do not, and
+   * a screen that has none says so rather than pretending.
+   */
+  translationRu: string | null;
+  translationUk: string | null;
   cefr: string;
   gradation: string;
   gradationNote: string | null;
@@ -52,6 +61,11 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
   { name: "lemma", value: (e) => e.lemma, reseeded: false },
   { name: "pos", value: (e) => e.pos, reseeded: false },
   { name: "translation", value: (e) => e.translation, reseeded: true },
+  // Reseeded, like the English gloss beside them: they come from Ekilex and a
+  // reseed is how a corrected harvest reaches an existing deployment. Nobody
+  // edits these by hand, so there is no work to walk over.
+  { name: "translationRu", cast: "text", value: (e) => e.translationRu, reseeded: true },
+  { name: "translationUk", cast: "text", value: (e) => e.translationUk, reseeded: true },
   { name: "cefr", cast: "text", value: (e) => e.cefr, reseeded: true },
   { name: "gradation", value: (e) => e.gradation, reseeded: true },
   { name: "gradationNote", cast: "text", value: (e) => e.gradationNote, reseeded: true },

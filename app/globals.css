@@ -39,6 +39,7 @@
   --text-4xl: 40px;     /* display */
   --text-5xl: 52px;     /* landing hero */
   --text-6xl: 68px;     /* the same hero, once there is room for it */
+  --text-7xl: 88px;     /* and again, once the window is wide and tall enough */
 
   /* Tailwind's radius names, mapped onto the four the system actually has, so
      a stray `rounded-md` lands on 10px rather than inventing a 6px corner. */
@@ -485,12 +486,41 @@
     already carry their own height, and a min-height on an element that
     centres its content pushes the content away from where it was drawn.
   */
+  /*
+    THE FLOOR IS FOR ANYTHING A THUMB HAS TO HIT, NOT FOR ANYTHING SPELT
+    `<button>`.
+
+    It listed the button elements, and this app reaches half its screens
+    through links: measured on Today with a coarse pointer, "Entry" was 74x29,
+    the help mark beside a case 28x28, "See the full entry" 128x19, "Change
+    the goal" 105x19. `scripts/test-mobile.mjs` measured exactly the same set
+    of selectors, so none of them had ever been flagged by the suite whose job
+    that is. A link drawn as a pill or as an icon is a control.
+
+    AN INLINE LINK IN A SENTENCE IS NOT ON THIS LIST, AND THE ATTEMPT TO PUT IT
+    THERE IS WHY THAT IS WRITTEN DOWN. It was given `padding-block: 0.375rem`
+    on the argument that a taller link is easier to press and the line still
+    reads the same. Vertical padding on an inline box does not grow the line
+    box, it grows the element's border box past it, so the link on the last
+    line of a paragraph reaches 6px below the paragraph it is in: measured on
+    the landing page's credit line at 360 with a coarse pointer, "TartuNLP" sat
+    5px outside the footer's own border, and `scripts/test-containment.mjs`
+    failed on it six times. Overlaying a bigger hit area with an absolutely
+    positioned pseudo-element is the other way and is worse, because in running
+    prose it would take the taps meant for a link on the line above.
+
+    WCAG 2.2's target-size rule makes exactly this exception, for exactly this
+    reason: a target in a sentence is constrained by the line-height of the
+    text around it, and the way to make it easier to hit is to give it a line
+    of its own, not to inflate it where it stands.
+  */
   @media (pointer: coarse) {
     button:not(.inline-edit),
     [role="button"]:not(.inline-edit),
     a[role="button"],
-    summary,
-    .touch-target {
+    a.pill,
+    a[aria-label]:has(> svg:only-child),
+    summary {
       min-height: 2.75rem;
       min-width: 2.75rem;
     }
@@ -825,6 +855,152 @@
     animation: grad-sweep 9s ease-in-out infinite;
   }
 
+  /*
+    THE LANDING HERO IS AS TALL AS THE SCREEN, LESS A DELIBERATE PEEK.
+
+    It used to be 483px whatever it was drawn on, because its height was two
+    paddings and whatever the copy came to. Measured: on a 1080px screen that
+    left 558px of window under the last line of the hero, which the browser
+    filled with the next section, so the first thing anybody saw was the hero
+    sitting in the top half and the whole of "You didn't fail Estonian" and its
+    paragraph crowded in under it. Two openings arguing at once, and a band of
+    dead air between them wide enough to read as a mistake. On a 780px phone
+    the same fault was 207px of it.
+
+    So the hero takes the window and centres its column in it, and the leftover
+    space goes above and below the copy in equal measure rather than into one
+    gap under it. What it does not take is `--hero-peek`, which is the point of
+    the whole rule: a hero that ends exactly at the fold is a page that looks
+    like it has nothing after it, and the honest way to say there is more is to
+    let the next section start where you can see it. The band is sized to clear
+    that section's own top padding and show its eyebrow with the heading rising
+    into the last of it, which is a beginning rather than an ornament. No arrow
+    and no second link: the page already made its one loud action, and the rule
+    the button primitive is written under is one per screen.
+
+    `svh` rather than `vh` or `dvh`. `vh` is the tall viewport on a phone, so
+    the peek would be hidden under the browser's own toolbar exactly when the
+    toolbar is showing, which is on arrival. `dvh` re-lays the page out as the
+    toolbar retracts, which moves the copy under the reader's thumb mid-scroll.
+    `svh` is the small one: the peek is honest with the toolbar there and grows
+    a little when it goes, which is the direction that costs nothing.
+
+    `--landing-nav` is measured rather than reasoned about, and it is the same
+    79px at every width this app is drawn at, because the nav pill's height is
+    set by the button in it rather than by anything that reflows.
+    `scripts/test-design.mjs` measures the real nav against it, since a typed
+    constant standing in for something on screen is a constant that drifts.
+
+    Both numbers sit on the rule that reads them rather than in `:root` with
+    the palette. They are two facts about one page, and a name in the token
+    block is an invitation to the rest of the app to build on them.
+  */
+  .hero-screen {
+    --landing-nav: 79px;
+    --hero-peek: 96px;
+
+    min-height: calc(100svh - var(--landing-nav) - var(--hero-peek));
+  }
+
+  @media (min-width: 768px) {
+    .hero-screen {
+      --hero-peek: 124px;
+    }
+  }
+
+  /*
+    The three gaps down the hero grow with the window the hero now fills.
+
+    Centring a fixed 363px column in an 877px box is the first fault wearing a
+    better hat: the copy stops being piled at the top and becomes a postage
+    stamp with a void over it and a void under it. What a tall screen is for is
+    letting the three beats stand apart, so the space goes between them rather
+    than around them, and the block grows until the air left over is a margin
+    instead of a gap.
+
+    They keep their proportions to each other while they do it, which is the
+    half that took two passes. Scaled apart, the gap over the button grew to
+    four times the one over the paragraph and the button stopped belonging to
+    the sentence that argues for it: a column read from the top down is one
+    thing with air in it rather than three things with distance between them.
+    So all three step up together, by about a third on a tall screen, and the
+    rest of the height stays in the margins, which is where a hero's air is
+    supposed to be.
+
+    Every one of these is a `clamp`, and the floor is the spacing the hero had
+    before any of this: on a short laptop or a phone held sideways nothing
+    grows at all, which is the case where there is no room to spend. `svh`
+    rather than `vh` for the reason `.hero-screen` gives, and the same unit as
+    the box these sit in, since a gap measured against a taller viewport than
+    its own container is a gap that overflows it.
+  */
+  .hero-lead { margin-top: clamp(1.25rem, 3.2svh, 2.5rem); }
+  .hero-action { margin-top: clamp(1.75rem, 6.4svh, 4.5rem); }
+  .hero-claims { margin-top: clamp(1.5rem, 4svh, 3rem); }
+
+  /*
+    THE HEADLINE IS THE THING THE AIR IS AROUND.
+
+    Filling the window and centring the column was half a fix and read as the
+    other half of the fault: the same small block, now with a margin over it
+    and a margin under it instead of a gap under it alone. Air does not read as
+    generous on its own. It reads as generous around something with enough
+    weight to deserve it, and 68px of headline in a 1512px window is not that,
+    so the page came out as a postage stamp in a field.
+
+    So the display steps once more, to 88px, and the paragraph under it goes
+    with it, and the gaps between them open up. The block that was 363px tall
+    on every desktop is about 520px, which is two thirds of the window rather
+    than a third, and the air left over is a margin at last.
+
+    The step is taken on width *and* height together, which is the part a
+    breakpoint alone gets wrong. 88px of headline over a 19px paragraph is
+    about 520px of column, and a 1024x600 laptop has 397px to put it in: the
+    hero would outgrow the window, the peek band would go under the fold, and
+    the page would open on a headline with its own paragraph cut off. Wide
+    enough is not the question. Wide and tall enough is.
+
+    Both numbers are what the step needs rather than a breakpoint borrowed from
+    the grid. The width is 768 because the longest line, "Estonian that", is
+    536px at this size and the column has 704px to draw it in there, so a
+    portrait tablet gets the big headline its height is crying out for; gating
+    it at the `lg` breakpoint left 768x1024 with 216px of air over a headline
+    two steps too small for it, which is the fault this whole pass is about.
+
+    `--text-7xl` is on the scale rather than a fluid `clamp` between two of
+    them, and that is what keeps `test-design.mjs` able to ask the question it
+    asks: a fluid size computes to whatever the window makes it, so a sweep for
+    sizes that are on the scale would have to stop reading this element, and
+    the eleven steps would be twelve steps and a hole.
+  */
+  .hero-display { font-size: var(--text-5xl); }
+  .hero-sub { font-size: var(--text-md); }
+
+  @media (min-width: 768px) {
+    .hero-display { font-size: var(--text-6xl); }
+  }
+
+  /*
+    The action grows with the statement, or the bottom half of the composition
+    is three small things under one big one. The doubled class is specificity
+    and not a typo: `size="lg"` puts `px-6 py-3.5 text-base` on the same
+    element from Tailwind's own utilities, in this same layer, so a single
+    class ties and the winner is whichever the build happens to emit last.
+    Two of the same class is 0-2-0 against 0-1-0, which is a rule that holds
+    wherever the file lands.
+  */
+  @media (min-width: 768px) and (min-height: 740px) {
+    .hero-display { font-size: var(--text-7xl); }
+    .hero-sub { font-size: var(--text-lg); }
+    .hero-claims { font-size: var(--text-sm); }
+
+    .hero-cta.hero-cta {
+      padding-inline: 2rem;
+      padding-block: 1rem;
+      font-size: var(--text-md);
+    }
+  }
+
   /* Soft pastel light behind a section, so the ground never reads as flat grey. */
   .wash {
     position: absolute;
@@ -1022,22 +1198,30 @@
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
   .float { animation: float 6s ease-in-out infinite; }
   /*
-    THE MASCOT BOBS; THE LANDING PAGE'S LETTERS WANDER.
+    THE MASCOT BOBS; THE LETTERS HAVE CHARACTERS.
 
     Four squares rising and falling together on one six-second bob is a
     machine, and a machine is the one thing this page is arguing it is not.
-    `drift` gives each letter a small wander of its own and, more to the
-    point, its own period, so the four are never in step: the shortest is
-    7.5s and the longest 11s, which puts them back in phase about once every
-    twenty minutes rather than on every cycle.
+    So each letter has a way of moving of its own, out of the four in
+    `lib/ux/letterMotion.ts`: one ambles, one crouches and springs, one hangs
+    and swings, one rolls. Their periods are all different, so the set falls
+    back into step about once an hour rather than on every cycle.
 
-    IT IS SMALL ON PURPOSE. Six or seven pixels and about two degrees, which
-    is enough that a reader notices the page is alive and not enough to pull
-    the eye off the sentence beside it. Everything about the placement is
-    within a few pixels of a real edge, so a wander that reads as generous
-    in a keyframe is one that lifts a letter off the card, drops it on a
-    control or hangs it past the page: `scripts/test-design.mjs` steps every
-    letter through twelve frames of its own cycle and measures all three.
+    IT USED TO BE SMALL ON PURPOSE AND IT WAS TOO SMALL TO SEE. Six or seven
+    pixels over ten seconds is a letter nobody can tell is moving, and the
+    reason it was that small was that the wander was pointed at the card: a
+    letter tucked over a top edge has about four pixels before it is sitting
+    on a word. THE ROOM IS ALONG THE EDGE, not across it. A letter on the top
+    edge can slide most of the width of the card and never come nearer to
+    anything it might land on, so that is where the travel goes now, and the
+    small budget across the edge is spent on the rock and the squash instead.
+
+    THEY ANSWER A POINTER. Coming near one makes it slide along its edge
+    towards the cursor and settle further onto the card, which is a decoration
+    noticing somebody rather than a decoration on a loop. The rule is
+    `leanFor()` and it is the same rule as the wander: along the edge either
+    way, across it inward only. They stay `pointer-events-none`, so none of
+    this is a decoration eating a tap meant for the card underneath.
 
     THE SLANT IS A `rotate` OF ITS OWN, and that is why it can be rocked here
     without being lost. `prefers-reduced-motion` shortens every animation to
@@ -1045,22 +1229,82 @@
     declared one is what the element falls back to, which is the slant a
     reader who asked for less motion still gets. The wander uses `translate`
     rather than `transform` for the same reason: they are separate properties
-    and neither has to know about the other.
+    and neither has to know about the other, and the lean gets `transform` on
+    the wrapper, which is the one property left.
 
-    IT DRIFTS INWARD, never further out than it was placed, and "inward" is
-    per letter rather than one direction for all four: they hang off four
-    different sides now, so the one on the top edge drifts down, the one on
-    the bottom edge drifts up, and the two on the sides drift across. What
-    they have in common is the rule, which is that the wander only ever moves
-    a letter further onto the card it is tucked over. The gutter it hangs in
-    is 20px at `sm` and mostly spent, so an outward swing of three pixels is a
-    letter clipped flat against the edge of the window.
+    `scripts/test-design.mjs` steps every letter through twelve frames of its
+    own cycle at three widths and measures all of it: every letter over an
+    edge, none on a word, none past the page, and the slant still there with
+    the animation stopped.
   */
   .drift {
     rotate: var(--float-tilt, 0deg);
-    animation: drift var(--drift-time, 9s) ease-in-out infinite;
+    transform-origin: var(--drift-origin, 50% 50%);
+    animation: var(--drift-name, letter-wander) var(--drift-time, 5.5s)
+      var(--drift-ease, ease-in-out) var(--drift-delay, 0s) infinite;
   }
+
+  /*
+    THE LEAN IS A SECOND ELEMENT, AND THAT IS WHAT KEEPS IT MEASURABLE.
+
+    A letter is doing two things at once: its own wander, which is keyframes on
+    `translate`, `rotate` and `scale`, and its answer to a pointer, which is a
+    transition on `transform`. Those cannot share an element, because a
+    keyframe and a transition on one property is the keyframe winning and the
+    pointer doing nothing at all.
+
+    So the wrapper leans and the tile inside it wanders. The wrapper is what is
+    positioned, so an ancestor transform is what a descendant's rectangle is
+    measured through: `scripts/test-design.mjs` reads the tile's own box and
+    sees the lean as well as the wander, which is the only arrangement where
+    the suite that guards the placement can see both halves of it.
+  */
+  .letter-lean {
+    transform: translate(var(--lean-x, 0px), var(--lean-y, 0px)) rotate(var(--lean-turn, 0deg));
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /*
+    THE SIX KEYS THAT TYPE THE LETTERS AN ENGLISH KEYBOARD HAS NOT GOT.
+
+    The one place in the app where a letter is a control rather than an
+    ornament, so it is the one that earns a press worth feeling. It leans and
+    grows under a pointer, which is the rule about a hover making a control
+    more present, and it wiggles once on the way in, which is the ornaments
+    on the landing page recognising the keys in the app as their own.
+
+    `.press` supplies the push on `:active` and this supplies the rest, so a
+    key is one control with one set of states rather than two rules arguing
+    about `transform`.
+  */
+  .letter-key {
+    transition: scale 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      rotate 220ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 160ms ease;
+  }
+  .letter-key:hover:not(:disabled) {
+    scale: 1.12;
+    animation: letter-wiggle 480ms ease-in-out;
+  }
+  .letter-key:active:not(:disabled) { scale: 0.94; }
   .pop-in { animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .shake { animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+  .ring-fill { animation: ring-fill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .meter-fill > * { transform-origin: left; animation: meter-fill 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  /*
+    The ending of a form, lit: the letters a case or a person adds to a stem.
+    Underlined in the accent rather than coloured, so it survives sitting on a
+    verdict that has already spent the ink on being right or wrong, and it
+    lifts a little under a pointer on the row it belongs to.
+  */
+  .ending {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    display: inline-block;
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ending-row:hover .ending, .ending-row:focus-within .ending { transform: translateY(-2px); }
 }
 
 /*
@@ -1120,9 +1364,6 @@
   nav[aria-label="Main"], .no-print { display: none !important; }
   .wash { display: none !important; }
 
-  /* Ink, not toner: the pastel tiles turn into thin rules on paper. */
-  .print-plain { background: #fff !important; box-shadow: none !important; }
-
   .page-break { break-before: page; }
   .avoid-break { break-inside: avoid; }
 
@@ -1139,24 +1380,163 @@
   50% { transform: translateY(-10px); }
 }
 
+/*
+  FOUR WAYS OF MOVING, AND EVERY ONE OF THEM SPENDS THE SAME BUDGET.
+
+  `lib/ux/letterMotion.ts` is the table of which letter moves how and why there
+  are four of these rather than one. What matters here is that all four read
+  the same five properties and never reach past them: the outward leg is
+  `--drift-x` and `--drift-y`, the way home is `--drift-x2` and `--drift-y2`,
+  the rock is `--drift-turn` either side of the letter's declared slant, and
+  the squash is `--drift-pop`. Every multiplier below is between 0 and 1, so
+  the furthest any letter ever gets is the travel its caller handed it.
+
+  THE SIGNS LIVE IN THE MODULE, NOT HERE. A keyframe cannot know which edge a
+  letter is tucked over, and the axis pointing at a card and the axis pointing
+  at the edge of the window are opposite rules. So a return leg that overshoots
+  is computed by `returnLeg()`, where the edge is known, and arrives as a
+  second pair of pixels. Multiplying a travel by a negative number in this file
+  is how a letter walks off the page the day somebody moves it to another side.
+
+  Squash and stretch are two numbers on `scale` rather than one, because a
+  thing that changes size is a balloon and a thing that squashes as it lands is
+  alive. It is a separate property from `rotate` and `translate`, so none of
+  the three has to know what the others are doing.
+*/
+
 /* Out, over, and back by a different route: three stops rather than two, so
    the return is not the outward leg reversed and the letter never looks like
    it is on rails. */
-@keyframes drift {
-  0%, 100% { translate: 0 0; rotate: var(--float-tilt, 0deg); }
-  30% {
-    translate: var(--drift-x, 0px) var(--drift-y, -6px);
-    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 1.6deg));
+@keyframes letter-wander {
+  0%, 100% { translate: 0 0; rotate: var(--float-tilt, 0deg); scale: 1 1; }
+  26% {
+    translate: var(--drift-x, 0px) var(--drift-y, 0px);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg));
+    scale: calc(1 + var(--drift-pop, 0) * 0.8) calc(1 - var(--drift-pop, 0) * 0.5);
   }
-  65% {
-    translate: calc(var(--drift-x, 0px) * 0.35) calc(var(--drift-y, -6px) * 0.4);
-    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 1.6deg));
+  55% {
+    translate: var(--drift-x2, 0px) var(--drift-y2, 0px);
+    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 6deg));
+    scale: calc(1 - var(--drift-pop, 0) * 0.5) calc(1 + var(--drift-pop, 0) * 0.8);
   }
+  80% {
+    translate: calc(var(--drift-x2, 0px) * 0.4) calc(var(--drift-y2, 0px) * 0.4);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg) * 0.3);
+    scale: 1 1;
+  }
+}
+
+/* A crouch, a spring, and a landing that takes a moment to settle. The whole
+   character is in the timing: the crouch is a tenth of the cycle and the
+   settle is a third of it, which is what a thing with weight does. */
+@keyframes letter-hop {
+  0%, 100% { translate: 0 0; rotate: var(--float-tilt, 0deg); scale: 1 1; }
+  10% {
+    translate: 0 0;
+    rotate: var(--float-tilt, 0deg);
+    scale: calc(1 + var(--drift-pop, 0)) calc(1 - var(--drift-pop, 0));
+  }
+  32% {
+    translate: var(--drift-x, 0px) var(--drift-y, 0px);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg));
+    scale: calc(1 - var(--drift-pop, 0) * 0.8) calc(1 + var(--drift-pop, 0));
+  }
+  48% {
+    translate: calc(var(--drift-x, 0px) * 0.45) calc(var(--drift-y, 0px) * 0.15);
+    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 6deg) * 0.4);
+    scale: calc(1 + var(--drift-pop, 0)) calc(1 - var(--drift-pop, 0));
+  }
+  66% {
+    translate: var(--drift-x2, 0px) var(--drift-y2, 0px);
+    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 6deg) * 0.7);
+    scale: 1 1;
+  }
+  84% {
+    translate: calc(var(--drift-x2, 0px) * 0.3) calc(var(--drift-y2, 0px) * 0.3);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg) * 0.25);
+    scale: calc(1 + var(--drift-pop, 0) * 0.4) calc(1 - var(--drift-pop, 0) * 0.4);
+  }
+}
+
+/* A pendulum. Nearly all of it is the rotation, and it hangs from its top edge
+   rather than its middle, which is what tells a swing from a wobble. */
+@keyframes letter-swing {
+  0%, 100% {
+    translate: calc(var(--drift-x2, 0px) * 0.6) calc(var(--drift-y2, 0px) * 0.6);
+    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 6deg));
+    scale: 1 1;
+  }
+  50% {
+    translate: var(--drift-x, 0px) var(--drift-y, 0px);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg));
+    scale: calc(1 + var(--drift-pop, 0) * 0.5) calc(1 - var(--drift-pop, 0) * 0.5);
+  }
+}
+
+/* A roll. The rotation leads and the travel follows it, so the letter looks
+   like it is going somewhere under its own steam rather than being carried. */
+@keyframes letter-tumble {
+  0%, 100% { translate: 0 0; rotate: var(--float-tilt, 0deg); scale: 1 1; }
+  28% {
+    translate: var(--drift-x, 0px) var(--drift-y, 0px);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg));
+    scale: calc(1 + var(--drift-pop, 0) * 0.5) calc(1 - var(--drift-pop, 0) * 0.3);
+  }
+  52% {
+    translate: calc(var(--drift-x, 0px) * 0.35) calc(var(--drift-y, 0px) * 0.35);
+    rotate: calc(var(--float-tilt, 0deg) - var(--drift-turn, 6deg) * 0.5);
+    scale: calc(1 - var(--drift-pop, 0) * 0.4) calc(1 + var(--drift-pop, 0) * 0.4);
+  }
+  78% {
+    translate: var(--drift-x2, 0px) var(--drift-y2, 0px);
+    rotate: calc(var(--float-tilt, 0deg) + var(--drift-turn, 6deg) * 0.75);
+    scale: 1 1;
+  }
+}
+
+/* One shake, on the way into a hover. A key that only grew would be a hover
+   like any other; a key that shakes itself is the letter saying it is the
+   thing you came for. */
+@keyframes letter-wiggle {
+  0%, 100% { rotate: 0deg; }
+  25% { rotate: -9deg; }
+  55% { rotate: 7deg; }
+  80% { rotate: -3deg; }
 }
 
 @keyframes pop-in {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/*
+  WHAT MOVES WHEN AN ANSWER LANDS, AND WHAT MOVES WHEN A NUMBER ARRIVES.
+
+  A wrong answer shakes its verdict once, the way a head does; a right one
+  pops, which `pop-in` already did for a finished round. A ring and a meter
+  fill from nothing on arrival rather than appearing full, because a figure
+  that draws itself is read as a measurement and one that is simply there is
+  read as furniture. The ring's angle is a registered custom property so the
+  conic gradient can animate at all; a browser without `@property` shows the
+  ring full, which is what it showed before. `prefers-reduced-motion` flattens
+  every one of these to nothing, through the block near the top of this file.
+*/
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+@property --ring-deg {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes ring-fill {
+  from { --ring-deg: 0deg; }
+}
+@keyframes meter-fill {
+  from { transform: scaleX(0); }
 }
 
 @keyframes confetti-fall {
@@ -1315,4 +1695,19 @@
 */
 @media (prefers-reduced-motion: reduce) {
   .ptr-ring[data-working] { animation: none; }
+}
+
+/*
+  THE WAY OUT OF A CARD MEETS THE FLOOR THE WAY AN INLINE LINK CANNOT.
+
+  `components/ui.tsx`'s `CardLink` is a block-level link on a line of its own,
+  so vertical padding grows the line it sits on rather than pushing the link
+  out of a paragraph, which is exactly what happened when the same padding was
+  put on inline links in running text. Measured at 390 with a coarse pointer,
+  these were 128x19 and 240x19; with this they clear the floor.
+*/
+@media (pointer: coarse) {
+  .card-link {
+    padding-block: 0.625rem;
+  }
 }

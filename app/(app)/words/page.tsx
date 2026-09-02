@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
@@ -13,14 +13,17 @@ export const dynamic = "force-dynamic";
 
 export default async function WordsPage() {
   const ownerId = await requireUserId();
-  const totalCards = await prisma.card.count({ where: { ownerId } });
   /*
     Two queries, not three. The third read five thousand reviews to tally case
     accuracy for a panel Progress already draws from the same log, with its own
     copy of the arithmetic: the same learner could read two different numbers
     for one case and nothing here would disagree with either.
+
+    The count rides beside them rather than in front: an empty deck pays for
+    two cheap reads it will not show, and everybody else saves a round trip.
   */
-  const [cards, counts] = await Promise.all([
+  const [totalCards, cards, counts] = await Promise.all([
+    prisma.card.count({ where: { ownerId } }),
     prisma.card.findMany({
       where: { ownerId },
       orderBy: [{ suspended: "asc" }, { due: "asc" }],

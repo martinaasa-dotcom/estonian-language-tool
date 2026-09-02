@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, MoreHorizontal, Moon, Sun, X } from "lucide-react";
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
@@ -8,6 +8,9 @@ import { supabaseConfigured } from "@/lib/auth/mode";
 import { useDockClearance } from "@/lib/layout/dockClearance";
 import { useNavMarker } from "@/lib/layout/navMarker";
 import { createClient } from "@/lib/supabase/client";
+import { useOffline } from "@/components/OfflineProvider";
+import { outboxSize } from "@/lib/offline/db";
+import { forgetThisDevice } from "@/lib/offline/forget";
 import { BAR, isUnder, LISTED, PLACES, SECTIONS, type Destination, type NavSection } from "@/lib/ux/nav";
 import { NavMarker } from "@/components/NavMarker";
 import { Wordmark } from "@/components/brand";
@@ -159,8 +162,6 @@ export function Sidebar() {
             {
               "--nav-marker-bg": "var(--surface)",
               "--nav-marker-shadow": "var(--shadow-sm)",
-              "--nav-ghost-bg": "var(--accent-soft)",
-              "--nav-ghost-halo": "3px",
             } as CSSProperties
           }
         >
@@ -279,7 +280,6 @@ export function Sidebar() {
               background: "var(--surface)",
               boxShadow: "var(--shadow)",
               "--nav-marker-bg": "var(--raised)",
-              "--nav-ghost-bg": "var(--accent-soft)",
             } as CSSProperties
           }
         >
@@ -409,12 +409,14 @@ export function Sidebar() {
  * One row of the desktop rail.
  *
  * It paints no background of its own in either state now. The card the
- * current row used to draw for itself is one pane that travels between them,
- * and a row that also painted itself would be a second answer to the same
+ * current row used to draw for itself is one pane that the marker places, and
+ * a row that also painted itself would be a second answer to the same
  * question arriving a beat later. What is left here is what a pane cannot
- * say: which row is bold, and which glyph wears its own colour.
+ * say: which row is bold, and which glyph wears its own colour. Those two are
+ * also the whole of what tells the row you are on from the row you are
+ * pointing at, since both now carry the same pane; see `app/nav.css`.
  *
- * The disc reads `--nav-disc` rather than naming its resting fill, because an
+ * The ink reads `--nav-ink` rather than naming its resting colour, because an
  * inline style beats a class hover, silently, which is the mechanism that
  * left half the controls in this app dead under a pointer. A custom property
  * is how a caller passes a tone *through* one, and `app/nav.css` spends it
@@ -439,7 +441,7 @@ function RailLink({ item, active }: { item: Destination; active: boolean }) {
       <span
         className="nav-glyph flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors"
         style={{
-          background: active ? `var(--${item.tone})` : "var(--nav-disc, var(--raised))",
+          background: active ? `var(--${item.tone})` : "var(--raised)",
           color: active ? "var(--surface)" : "var(--ink-3)",
         }}
       >
@@ -500,13 +502,41 @@ function IconButton({ onClick, label, labelled, children }: {
   );
 }
 
+/**
+ * Signing out leaves the device the way a stranger should find it.
+ *
+ * The outbox gets one last chance to reach the server, then the pages the
+ * worker cached, the stashed session and any unfinished exam paper are
+ * removed (`lib/offline/forget.ts`), and only then does the cookie go. A grade
+ * that still could not land is the one thing this cannot keep and cannot
+ * quietly drop, so it asks: the person pressing this on a train may prefer to
+ * stay signed in until the tunnel ends.
+ */
 function SignOutButton({ labelled }: { labelled?: boolean }) {
   const router = useRouter();
+  const { flush } = useOffline();
   // Local installs have no accounts to sign out of — see lib/auth/mode.ts.
   if (!supabaseConfigured()) return null;
 
   const signOut = async () => {
-    await createClient().auth.signOut();
+    await flush();
+    const stranded = await outboxSize();
+    if (stranded > 0) {
+      const grades = stranded === 1 ? "1 grade" : `${stranded} grades`;
+      const ok = window.confirm(
+        `${grades} from this device have not reached your account yet. Signing out now loses them. Sign out anyway?`,
+      );
+      if (!ok) return;
+    }
+    // The session goes first and the device is forgotten only once it has:
+    // a sign-out that could not reach the service leaves the cookie in place,
+    // and forgetting the outbox before that would lose the grades for nothing.
+    const { error } = await createClient().auth.signOut();
+    if (error) {
+      window.alert("The sign-in service could not be reached, so you are still signed in. Try again once you are back online.");
+      return;
+    }
+    await forgetThisDevice();
     router.push("/welcome");
     router.refresh();
   };

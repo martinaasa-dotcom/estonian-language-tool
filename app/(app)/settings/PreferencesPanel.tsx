@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Keyboard, PenLine } from "lucide-react";
-import { setLeaderboardPreferences, setLetterBar, setReviewMode } from "@/app/actions";
+import { setClassDisplayName, setLetterBar, setReviewMode } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import { LetterSample } from "@/components/DiacriticBar";
@@ -14,7 +14,7 @@ const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof Pe
   {
     value: "type",
     label: "Type the answer",
-    detail: "Stronger recall, and near misses are explained: a dropped õ is told apart from a wrong word.",
+    detail: "Stronger recall. Near misses get explained too, so a dropped õ isn't marked the same as a wrong word.",
     icon: PenLine,
   },
   {
@@ -101,30 +101,36 @@ export function LetterBarPanel({ current }: { current: LetterBar }) {
 }
 
 /**
- * The class leaderboard opt-in.
+ * The name a class sees.
  *
- * Off unless someone deliberately turns it on, and the name is theirs to choose
- * — no email, no Google account name, nothing they did not type here.
+ * This was an opt-in to a board of everybody on the deployment who had ticked
+ * the same box, and that board is gone: sign-up here is open, so it drew a
+ * table of strangers ranked by owner id, and it was the one surface where a
+ * stranger chose what every other stranger read. See the note in
+ * `app/(app)/progress/page.tsx`.
+ *
+ * What is left is the half that was always real. A class board shows the name
+ * typed here rather than a Google account name, so being on one never means
+ * publishing an email address or a legal name nobody chose to share, and
+ * joining the class is the consent (ADR-019). There is nothing to opt into
+ * from this screen any more, which is why the button went with the board.
  */
-export function LeaderboardPanel({ currentName, optedIn }: { currentName: string; optedIn: boolean }) {
+export function ClassNamePanel({ currentName }: { currentName: string }) {
   const [name, setName] = useState(currentName);
-  const [joined, setJoined] = useState(optedIn);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const save = (next: boolean) => {
+  const save = () => {
     start(async () => {
-      const result = await setLeaderboardPreferences({ displayName: name, optIn: next });
-      if (!result.ok) { setMessage(result.error); return; }
-      setJoined(next);
-      setMessage(next ? "You're on the board." : "Removed from the board.");
+      const result = await setClassDisplayName({ displayName: name });
+      setMessage(result.ok ? "Saved." : result.error);
     });
   };
 
   return (
     <div className="flex flex-col gap-3">
       <label htmlFor="display-name" className="label-xs" style={{ color: "var(--ink-3)" }}>
-        Name shown on the board
+        Name your class sees
       </label>
       <div className="flex flex-wrap gap-2">
         <input
@@ -137,20 +143,20 @@ export function LeaderboardPanel({ currentName, optedIn }: { currentName: string
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
         <Button
-          variant={joined ? "secondary" : "primary"}
-          disabled={pending || (!joined && name.trim().length === 0)}
-          onClick={() => save(!joined)}
+          variant="primary"
+          disabled={pending || name.trim() === currentName.trim()}
+          onClick={save}
         >
-          {joined ? "Leave the board" : "Join the board"}
+          Save
         </Button>
       </div>
       {message && (
         <p role="status" className="text-xs" style={{ color: "var(--ink-3)" }}>{message}</p>
       )}
       <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-        Sharing this puts your chosen name and your XP for the week in front of everyone else who has
-        opted in. Nothing else, not your email, not your words, not your history, is visible to
-        them, and leaving removes you immediately.
+        Used to greet you, and shown beside your XP for the week if you join a class. Nothing else,
+        not your email, not your words, not your history, goes with it. Leaving the class takes it
+        back off.
       </p>
     </div>
   );

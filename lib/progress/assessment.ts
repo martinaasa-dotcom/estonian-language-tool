@@ -1,5 +1,8 @@
+import { cache } from "react";
+
 import { prisma } from "@/lib/db";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { lemmaCountsByLevel } from "@/lib/dict/facts";
 import { buildPaper, type Paper, type WordRow } from "@/lib/assessment/items";
 import { normaliseGoals, type Goals } from "@/lib/assessment/goals";
 import { BANDS, type Band, type Placement, type SkillResult } from "@/lib/assessment/types";
@@ -20,10 +23,27 @@ import { DEFAULT_DAYS_PER_WEEK } from "@/lib/assessment/goals";
  * that rises every time they revise and means nothing outside this app.
  */
 
-/** Words sampled per CEFR band before the paper is assembled from them. */
-const PER_BAND = 60;
-/** Below this, a band falls back to including words already in the deck. */
-const MIN_UNOWNED = 10;
+/**
+ * Words sampled per CEFR band before the paper is assembled from them.
+ *
+ * Raised with the blueprint, and it had to be. A band now wants twelve
+ * questions across the four skills rather than six, every one of them about a
+ * different word, and most of them need more of a word than its gloss: a gap
+ * needs a recorded sentence short enough to read and at least three other
+ * forms to offer, and a dictation needs one shorter still. Sixty words a band
+ * was enough to fill six questions and would have left the harder sections
+ * reporting themselves thin on a dictionary that is not.
+ */
+const PER_BAND = 100;
+/**
+ * Below this, a band falls back to including words already in the deck.
+ *
+ * Raised with `PER_BAND` for the same reason: a band with twenty unowned words
+ * left in it has to build twelve questions out of them, so what it is choosing
+ * between is nearly nothing, and a paper made of whatever survived is a worse
+ * measurement than one that asks about a word the learner happens to own.
+ */
+const MIN_UNOWNED = 30;
 
 function toRow(lexeme: {
   id: string; lemma: string; translation: string; pos: string; cefr: string | null;
@@ -65,14 +85,17 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
   /*
     A window into each band, moved by the seed.
 
-    Ordering by lemma and taking the first hundred and twenty is stable, which
-    a test wants, and on a dictionary of a few hundred words it is most of the
-    band anyway. On a real one it is the same slice of the alphabet every
+    Ordering by lemma and taking the first two hundred is stable, which a test
+    wants, and on a dictionary of a few hundred words it is most of the band
+    anyway. On a real one it is the same slice of the alphabet every
     sitting: every learner would meet the same words, and a retake would redraw
     the paper it had just been shown the answers to. So the window starts
     wherever the seed points, which costs one count per band.
   */
-  const totals = await Promise.all(BANDS.map((band) => prisma.lexeme.count({ where: { cefr: band } })));
+  // Six `count(*)`s over the shared dictionary, which is the same six answers
+  // for everybody who sits this. One cached tally instead. lib/dict/facts.ts.
+  const byLevel = await lemmaCountsByLevel();
+  const totals = BANDS.map((band) => byLevel.get(band) ?? 0);
   const window = PER_BAND * 2;
 
   const perBand = await Promise.all(
@@ -162,10 +185,24 @@ export async function historyFor(ownerId: string, take = 10): Promise<StoredAsse
   return rows.map((row) => ({ ...row, skills: parseDetail(row.detail) }));
 }
 
-export async function latestFor(ownerId: string): Promise<StoredAssessment | null> {
+/**
+ * The most recent level check, asked once per request however many ask.
+ *
+ * Two things want it on Today and they want it for different reasons:
+ * `courseLevelFor` to decide which unit the course opens at, and
+ * `readinessSignals` because a measured level is the only source the exam hub
+ * has for listening and speaking. Neither knows about the other, and the row
+ * cannot change mid-render: `Assessment` is append-only and a sitting is
+ * written when it ends.
+ *
+ * React's `cache` is request-scoped, so this is one read on a page and no read
+ * held between two. Outside a request it does not memoize, which leaves a
+ * script and a test exactly as they were.
+ */
+export const latestFor = cache(async (ownerId: string): Promise<StoredAssessment | null> => {
   const [first] = await historyFor(ownerId, 1);
   return first ?? null;
-}
+});
 
 /** The goal answers, normalised, with the daily goal that goes with them. */
 export async function goalsFor(ownerId: string): Promise<Goals & { dailyGoal: number }> {

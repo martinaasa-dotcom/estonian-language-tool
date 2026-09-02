@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Compass, History } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { goalsFor, historyFor, latestFor, paperFor } from "@/lib/progress/assessment";
@@ -41,7 +40,7 @@ export default async function AssessPage({
         <Page title="Level check" lead="Reading, listening, writing and speaking, measured against the dictionary.">
           <Empty
             title="No questions could be built"
-            body="The questions are built from dictionary entries tagged with a level, and there are none."
+            body="Questions come from dictionary entries that have a level set, and there are none yet."
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>
@@ -63,6 +62,16 @@ export default async function AssessPage({
         ceiling: (latest.ceiling ?? null) as Placement["ceiling"],
         confidence: latest.confidence as Confidence,
         itemsAnswered: latest.answered,
+        /*
+          A stored sitting knows how many questions it asked and not how many
+          of them settled the boundary, and `Assessment` is append-only, so a
+          row written before that number existed cannot grow one. Nought is the
+          honest value and the panel reads it as "say nothing", the same way
+          `parseDetail` reads an old row's missing breakdown as no breakdown.
+          Rebuilding it here would mean recomputing a level from responses this
+          row does not keep.
+        */
+        decisive: 0,
       }
     : null;
 
@@ -85,7 +94,7 @@ export default async function AssessPage({
         ) : (
           <Empty
             title="Nothing measured yet"
-            body="About ten minutes of reading, listening and writing, plus speaking you judge yourself."
+            body="Reading, listening and writing, climbing until it finds your level. Speaking you judge yourself."
             action={<ButtonLink href="/assess?take=1" variant="primary" size="lg">Start the check</ButtonLink>}
           />
         )}
@@ -132,22 +141,6 @@ export default async function AssessPage({
           </div>
         )}
 
-        <Card>
-          <SectionTitle>Before you read too much into it</SectionTitle>
-          <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            This is an estimate from a handful of questions, and it is built out of words this
-            dictionary happens to hold. It is not a state exam and it certifies nothing. What it is
-            good for is direction: which of the four skills is behind, and whether the date you have
-            in mind survives contact with the hours the level actually takes.
-          </p>
-          <Link
-            href="/guide"
-            className="mt-4 inline-block text-sm underline underline-offset-2"
-            style={{ color: "var(--accent-deep)" }}
-          >
-            What this app can and cannot do
-          </Link>
-        </Card>
       </Stack>
     </Page>
   );

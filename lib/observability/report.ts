@@ -26,11 +26,17 @@ export interface ErrorContext {
 const SENSITIVE = /(key|token|secret|password|authorization|cookie|email|dsn)/i;
 
 /**
- * Something that looks like a credential regardless of the key it arrived under —
+ * Something that looks like a credential regardless of the key it arrived under,
  * the same shapes CI greps the client bundle for.
+ *
+ * The chain grew two providers after this was written and this did not follow:
+ * Groq's keys open `gsk_` and Gemini's `AIza`, neither of which is an `sk-`,
+ * so a provider error quoting one back would have been written to the webhook
+ * whole. Keep this and `scripts/check-secrets.mjs` in step with
+ * `PROVIDER_KEY_ENV`.
  */
 const SECRET_SHAPE =
-  /\b(sk-[A-Za-z0-9_-]{16,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}|postgres(?:ql)?:\/\/[^\s]+:[^\s@]+@)/g;
+  /\b(sk-[A-Za-z0-9_-]{16,}|gsk_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{35}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}|postgres(?:ql)?:\/\/[^\s]+:[^\s@]+@)/g;
 
 export function redact(value: unknown, depth = 0): unknown {
   if (depth > 4) return "[deep]";

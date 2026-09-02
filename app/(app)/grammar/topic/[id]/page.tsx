@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
@@ -7,6 +7,8 @@ import { grammarTerm } from "@/lib/estonian/terms";
 import { SYLLABUS } from "@/lib/collections/syllabus";
 import { Card, Chip, Note, Page, SectionTitle, Stack } from "@/components/ui";
 import { DrillLink } from "@/components/DrillLink";
+import { VerbTable } from "./VerbTable";
+import { verbExamples } from "@/lib/progress/verbExamples";
 
 /**
  * The grammar topics with a drill of their own.
@@ -22,6 +24,18 @@ import { DrillLink } from "@/components/DrillLink";
 const TOPIC_DRILL: Record<string, string> = {
   government: "/review/government",
   gradation: "/review/pairs",
+  // The same drill from both, since it asks for either table: the present
+  // from the first lesson, and the conditional once a learner is at B1.
+  "present-tense": "/review/conjugation",
+  conditional: "/review/conjugation",
+};
+
+/** The topics with a table of real verbs, and which slots that table shows. */
+const VERB_TOPICS: Record<string, "present" | "negative" | "conditional" | "imperative"> = {
+  "present-tense": "present",
+  negation: "negative",
+  conditional: "conditional",
+  imperative: "imperative",
 };
 
 export const dynamic = "force-dynamic";
@@ -60,11 +74,25 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   const topic = grammarTopic(id);
   if (!topic) notFound();
 
-  await requireUserId();
+  const ownerId = await requireUserId();
 
   const term = grammarTerm(id);
 
   const units = SYLLABUS.filter((u) => u.grammar.includes(id));
+
+  /*
+    THE FOUR POINTS THAT CAN BE SHOWN ON REAL VERBS.
+
+    The header above says a topic page is sparser than a case page because
+    there is no safe way to illustrate most of these on real words. For the
+    present tense, the negative, the conditional and the singular imperative
+    there is, and it is the case page's own way: every form is either what
+    Ekilex recorded or the regular ending on a stored first person that
+    `scripts/audit-verbs.ts` checked against Ekilex for every verb in the
+    dictionary. Each form says which. The other topics keep to English.
+  */
+  const shown = VERB_TOPICS[id];
+  const verbs = shown ? await verbExamples(ownerId, 4) : [];
 
   return (
     <Page
@@ -121,14 +149,27 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
             </dl>
-            <p className="mt-4 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
-              {term
-                ? "The heading is what a course, a textbook and the state examination call this. The English name is here so that an English reference grammar is still usable, not because anybody teaching Estonian says it. "
-                : "There is no settled Estonian term a class would use for this one, so it keeps its English description rather than being given an invented name. "}
-              {topic.marker
-                ? "The ending above is named as terminology; the forms themselves live on the dictionary entries, where every one of them came from Ekilex rather than from this app."
-                : "Every Estonian form the app shows comes from the dictionary, never from this page."}
-            </p>
+            {/*
+              WHAT IS LEFT HERE IS THE ONE THING A READER WOULD OTHERWISE
+              WONDER ABOUT.
+
+              Every topic used to carry a paragraph explaining why the heading
+              is in Estonian and why the English name is under it, and a second
+              saying that the forms came from Ekilex. Both are true, both are
+              this app talking about itself on a page somebody opened to learn
+              a point of grammar, and the labels in the list above ("Answers",
+              "In plain English", "In English references") already say all of
+              it. What survives is the note for a topic that has no Estonian
+              term, because a heading in English on a page whose neighbours are
+              headed in Estonian looks like an omission until somebody says it
+              is not.
+            */}
+            {!term && (
+              <p className="mt-4 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
+                There is no settled Estonian term a class would use for this one, so it keeps its
+                English description rather than being given an invented name.
+              </p>
+            )}
           </Card>
         )}
 
@@ -153,6 +194,15 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
             <span>{topic.watchOut}</span>
           </span>
         </Note>
+
+        {shown && verbs.length > 0 && (
+          <section>
+            <SectionTitle hint={verbs.some((v) => v.inDeck) ? "verbs from your deck first" : "from the dictionary"}>
+              On real verbs
+            </SectionTitle>
+            <VerbTable verbs={verbs} show={shown} />
+          </section>
+        )}
 
         <section>
           <SectionTitle hint={`${units.length} unit${units.length === 1 ? "" : "s"}`}>

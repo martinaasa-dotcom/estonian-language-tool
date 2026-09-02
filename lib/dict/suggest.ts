@@ -49,7 +49,7 @@ import { courseLevelFor } from "@/lib/progress/level";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { themeFor, themeLemmas } from "@/lib/collections/topical";
 import { newsWords } from "@/lib/news/feed";
-import type { Level } from "@/lib/collections/syllabus";
+import { bandsAround } from "@/lib/collections/levels";
 import { candidatesFor } from "./resolveScan";
 import { matchEstonianForm } from "./search";
 import { shuffle } from "@/lib/random/shuffle";
@@ -69,23 +69,10 @@ const ROW = 12;
 /** The fewest a source may fill before the next one is tried instead. */
 const MIN_ROW = 6;
 
-/** The parts of speech with a paradigm to open. */
+/** The parts of speech with a case or verb table to open. */
+// Not PRONOUN: a plural-only pronoun is harvested with no forms at all, and
+// the chip promises a table to open.
 const POS = ["NOUN", "VERB", "ADJECTIVE"];
-
-/**
- * The levels worth offering somebody at each level.
- *
- * One either side rather than an exact match, because a dictionary is where
- * you go to meet a word you do not know yet, and a row that never reaches
- * above where the learner already is has nothing to teach them.
- */
-const BAND: Record<Level, readonly string[]> = {
-  A1: ["A1", "A2"],
-  A2: ["A1", "A2", "B1"],
-  B1: ["A2", "B1", "B2"],
-  B2: ["B1", "B2", "C1"],
-  C1: ["B2", "C1"],
-};
 
 /**
  * How many headline words are worth asking the dictionary about.
@@ -120,7 +107,7 @@ export async function suggestWords(
     courseLevelFor(ownerId),
     learnerDayClock(ownerId),
   ]);
-  const band = BAND[level];
+  const band = bandsAround(level);
   const today = clock.dayKey(now);
 
   for (const source of order(random())) {
@@ -255,6 +242,10 @@ async function presentLemmas(lemmas: string[], band: readonly string[] | null): 
       ...(band ? { cefr: { in: [...band] } } : { cefr: { not: null } }),
     },
     select: { lemma: true },
+    // Ordered because it is cut. The row is shuffled afterwards, so this is not
+    // about which words lead; it is that the 200 shuffled from are the same 200
+    // rather than whichever the plan returned.
+    orderBy: { id: "asc" },
     take: 200,
   });
   return [...new Set(rows.map((row) => row.lemma))];

@@ -16,6 +16,7 @@ function readinessAt(level: ExamLevel, confidence: number, evidence: Evidence): 
       expectedTotal: 0,
       evidence,
       measured: false,
+      seen: { reading: false, writing: false, listening: false, speaking: false },
       verdict: "",
     }],
     assessed: null,

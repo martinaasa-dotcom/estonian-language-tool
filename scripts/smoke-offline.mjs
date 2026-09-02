@@ -60,15 +60,32 @@ async function gradedCount() {
  *     wrong one waits on a button;
  *   - a typed answer, the same, checked against the dictionary.
  */
-async function answerOneCard() {
+async function answerOneCard(depth = 0) {
   const before = await gradedCount();
+
+  /*
+    A word met for the first time teaches and writes nothing: it puts the card
+    back a few places on, where it is asked properly, and that retrieval is
+    what grades. So this presses through and answers whatever comes up next
+    rather than reporting a grade that did not happen.
+  */
+  const meet = app.getByRole("button", { name: /Got it, ask me later/ });
+  if (await meet.count() && depth < 4) {
+    await meet.first().click();
+    await page.waitForTimeout(400);
+    return answerOneCard(depth + 1);
+  }
 
   const show = app.getByRole("button", { name: /Show answer/ });
   if (await show.count()) {
     await show.first().click();
     await page.waitForTimeout(250);
-    // Two buttons, not four: "Not yet" and "Got it".
-    const got = app.getByRole("button", { name: /^Got it$/ });
+    /*
+      Two buttons, not four, and neither is named what it says. A self-grade
+      carries `aria-label="Got it, next in 10 min"`, so `/^Got it$/` matched
+      nothing and the flip was revealed and never graded.
+    */
+    const got = app.getByRole("button", { name: /^Got it(?!, ask me later)/ });
     if (await got.count()) await got.first().click();
   } else if (await page.getByText(/Pick the meaning/).count()) {
     // The keyboard rather than a click on the option, because it is what the
@@ -84,10 +101,23 @@ async function answerOneCard() {
     }
   }
 
-  // A miss and a first meeting both end on this one button. A clean hit and a
-  // right pick have already graded themselves and moved on.
-  const carryOn = app.getByRole("button", { name: /Got it, next/ });
-  if (await carryOn.count()) await carryOn.first().click();
+  /*
+    A MISS DOES NOT GRADE ITSELF, AND THAT IS THE WHOLE OF WHAT BROKE HERE.
+
+    A clean hit on a choice or a typed card grades and moves on. A miss keeps
+    its screen, because the correction is the one moment in a review worth
+    stopping for, and leaves "Got it, next" as the acknowledgement. This driver
+    types "zzz" on purpose, which is always a miss, so after that change every
+    typed card it drove ended on a screen waiting for a press and no grade was
+    ever written: the outbox read 0 and the suite reported the app as unable to
+    grade offline, which was a fact about the driver.
+  */
+  // "Got it, next Enter": the key cap inside the button is part of its name.
+  const next = app.getByRole("button", { name: /^Got it, next/ });
+  if (await next.count()) {
+    await next.first().click();
+    await page.waitForTimeout(300);
+  }
 
   await page.waitForTimeout(700);
   return (await gradedCount()) > before;
@@ -266,7 +296,7 @@ await page.reload({ waitUntil: "domcontentloaded" }).catch(() => {});
 await page.waitForTimeout(2000);
 const offlineBody = (await page.textContent("body")) ?? "";
 check("review still renders with the network gone",
-  /left|Show answer|Pick the meaning|Got it, next/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
+  /left|Show answer|Pick the meaning|Got it/i.test(offlineBody) && !/No cards yet/i.test(offlineBody),
   offlineBody.slice(0, 60).replace(/\s+/g, " "));
 
 // The outbox must survive the reload.

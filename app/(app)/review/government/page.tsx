@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { courseLevelFor } from "@/lib/progress/level";
+import { bandsAround } from "@/lib/collections/levels";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { parseExamples, sentenceContaining, usableExamples } from "@/lib/dict/examples";
 import { ButtonLink } from "@/components/Button";
@@ -13,6 +15,17 @@ export const metadata = { title: "Verb government" };
 export const dynamic = "force-dynamic";
 
 const ROUND = 12;
+
+/**
+ * The fewest governed verbs a level's own band may draw before the whole set
+ * answers instead.
+ *
+ * A round is twelve questions and a verb only makes one if the distractor pool
+ * can offer a case it does not itself govern, so the band needs several times
+ * the round to fill it. Forty is where this dictionary's thinnest band still
+ * builds a full round.
+ */
+const MIN_VERBS = 40;
 
 /**
  * The verb-government drill.
@@ -30,22 +43,54 @@ const ROUND = 12;
 export default async function GovernmentPage() {
   const ownerId = await requireUserId();
 
-  const [governed, inDeck] = await Promise.all([
+  const level = await courseLevelFor(ownerId);
+  const verbs = {
+    select: { id: true, lemma: true, translation: true, government: true, cefr: true, examples: true },
     // Easiest first and stable, rather than whichever two hundred verbs the
     // plan returned. This is a reference a learner comes back to, so the page
     // should be the same page.
+    orderBy: [{ cefr: "asc" as const }, { lemma: "asc" as const }],
+    take: 200,
+  };
+
+  const [banded, inDeck] = await Promise.all([
+    /*
+      Around the learner's level.
+
+      Government is the one thing about an Estonian verb an English speaker
+      cannot reason out, so this is a drill somebody comes back to for years,
+      and it was pinned to the same two hundred verbs for all of them: the
+      dictionary records government for 268 verbs and `ORDER BY cefr ASC` took
+      the easiest two hundred, so the C1 verbs were the ones nobody was ever
+      shown. One band either side (`lib/collections/levels.ts`) moves the
+      window with the learner and leaves the cefr key doing what it was for,
+      which is opening on the easier verb inside it.
+    */
     prisma.lexeme.findMany({
-      where: { pos: "VERB", government: { not: null } },
-      select: { id: true, lemma: true, translation: true, government: true, cefr: true, examples: true },
-      orderBy: [{ cefr: "asc" }, { lemma: "asc" }],
-      take: 200,
+      where: { pos: "VERB", government: { not: null }, cefr: { in: [...bandsAround(level)] } },
+      ...verbs,
     }),
     prisma.card.findMany({
       where: { ownerId, lexemeId: { not: null } },
       select: { id: true, lexemeId: true, cardType: true },
+      // Ordered because it is cut: this decides which verbs count as already in
+      // the deck, and therefore which answers grade a real card. An unordered
+      // slice hands that to the plan, so the same verb could score on one visit
+      // and not on the next.
+      orderBy: { id: "asc" },
       take: 2000,
     }),
   ]);
+
+  /*
+    A band too thin to build a round from is a fact about the dictionary, not
+    about the learner, so the whole governed set answers instead. That is what
+    this page did for everybody before it learned about levels, and it is the
+    same widening the minimal pairs pool does one route over.
+  */
+  const governed = banded.length >= MIN_VERBS
+    ? banded
+    : await prisma.lexeme.findMany({ where: { pos: "VERB", government: { not: null } }, ...verbs });
 
   const mine = new Set(inDeck.map((c) => c.lexemeId));
 

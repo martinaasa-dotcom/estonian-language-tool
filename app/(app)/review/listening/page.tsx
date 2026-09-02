@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ListeningSession, type ListeningCard } from "./ListeningSession";
 import { shuffle } from "@/lib/random/shuffle";
+import { glossesByPos } from "@/lib/dict/facts";
 
 export const metadata = { title: "Listening" };
 
@@ -58,14 +59,16 @@ export default async function ListeningPage() {
   // The dictionary's overall size is stable across a session (grading never
   // changes it), so this check is safe to keep here rather than in the client.
   if (cards.length > 0) {
-    const decoyPool = await prisma.lexeme.findMany({ select: { translation: true, pos: true } });
-    const distinctTranslations = new Set(decoyPool.map((l) => l.translation));
-    if (distinctTranslations.size < MIN_LEXEMES_FOR_CHOICES) {
+    // Which words the dictionary holds is the same answer for everybody and
+    // the same answer next round, so it is read once per instance rather than
+    // once per round: see lib/dict/facts.ts.
+    const { byPos, all: allTranslations } = await glossesByPos();
+    if (allTranslations.length < MIN_LEXEMES_FOR_CHOICES) {
       return (
         <Page title="Listening" lead="Hear a word, pick its meaning.">
           <Empty
             title="Not quite enough words yet"
-            body={`The wrong answers come from other words, and there are fewer than ${MIN_LEXEMES_FOR_CHOICES} to draw on.`}
+            body={`The wrong answers come from other words, and there aren't ${MIN_LEXEMES_FOR_CHOICES} yet to pick from.`}
             action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
           />
         </Page>
@@ -74,14 +77,6 @@ export default async function ListeningPage() {
 
     // Decoys are drawn from the whole dictionary, favouring the same part of
     // speech so the wrong answers aren't trivially implausible.
-    const byPos = new Map<string, string[]>();
-    for (const l of decoyPool) {
-      const arr = byPos.get(l.pos) ?? [];
-      if (!arr.includes(l.translation)) arr.push(l.translation);
-      byPos.set(l.pos, arr);
-    }
-    const allTranslations = [...distinctTranslations];
-
     const shuffled = shuffle(cards);
     const listeningCards: ListeningCard[] = shuffled.map((c) => {
       const correct = c.back;

@@ -228,3 +228,35 @@ describe("the capsule's breath", () => {
     expect(swellFrames(null, NAV_MOTION.bar.swellPeak)).toBe(null);
   });
 });
+
+describe("what each surface spends", () => {
+  it("gives the phone bar a travel and the rail none", () => {
+    /*
+      A travelling pill is company for a thumb and an argument with a pointer.
+      A finger has nothing else to do while a server answers, so the bar's
+      marker slides from the cell you left to the cell you asked for; a pointer
+      has already arrived, and the pane that has been following it down the rail
+      is where the marker lands, so there is nothing left to watch it cross. A
+      duration of zero is what `glide` reads as "write the resting geometry and
+      return", so this is the off switch rather than a fast animation.
+    */
+    expect(NAV_MOTION.rail.travelMs).toBe(0);
+    expect(NAV_MOTION.bar.travelMs).toBeGreaterThan(0);
+  });
+
+  it("still stretches on the surface that does travel", () => {
+    const to = cell(200);
+    const frames = travelKeyframes(cell(0), to, {
+      axis: "x",
+      durationMs: NAV_MOTION.bar.travelMs,
+      lagMs: NAV_MOTION.bar.lagMs,
+    });
+    const longest = Math.max(
+      ...frames.map((f) => {
+        const { start, end } = edges(f, to, "x");
+        return end - start;
+      }),
+    );
+    expect(longest).toBeGreaterThan(to.size * 1.15);
+  });
+});

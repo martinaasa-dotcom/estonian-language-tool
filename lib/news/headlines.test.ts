@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { headlineWords, parseHeadlines } from "./headlines";
+import { headlineWords, parseHeadlines, tokenise } from "./headlines";
 
 const FEED = `<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0"><channel>
@@ -66,5 +66,17 @@ describe("the words in a headline", () => {
   it("counts a colon as a sentence break, so the word after one is not a name", () => {
     expect(headlineWords(["Politico: Prantsusmaa otsustas"])).toContain("prantsusmaa");
     expect(headlineWords(["Politico ütles Prantsusmaa kohta"])).not.toContain("prantsusmaa");
+  });
+});
+
+describe("tokenise", () => {
+  it("keeps every character and marks the words", () => {
+    const tokens = tokenise("Tallinn: uus sild avatakse 12. mail!");
+    expect(tokens.map((t) => t.text).join("")).toBe("Tallinn: uus sild avatakse 12. mail!");
+    expect(tokens.filter((t) => t.word).map((t) => t.text)).toEqual(["Tallinn", "uus", "sild", "avatakse", "mail"]);
+  });
+
+  it("treats a diacritic as part of a word", () => {
+    expect(tokenise("õun ja päev").filter((t) => t.word).map((t) => t.text)).toEqual(["õun", "ja", "päev"]);
   });
 });

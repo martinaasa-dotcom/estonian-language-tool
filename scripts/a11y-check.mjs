@@ -27,7 +27,7 @@ import { createRequire } from "node:module";
 
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
-import { ratingButtons, revealAnswer } from "./lib/review.mjs";
+import { gradeButtons, revealAnswer } from "./lib/review.mjs";
 
 /*
   Read off disk and injected, rather than imported and called in Node: axe
@@ -132,11 +132,11 @@ const BASE = baseUrl();
   of checking a route that has never broken is a second of wall clock.
 */
 const ROUTES = [
-  "/", "/learn", "/practice", "/progress", "/tasks", "/words", "/week", "/dictionary",
-  "/grammar", "/grammar/inessive", "/guide", "/settings", "/scan", "/class", "/tutor",
-  "/placement", "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/", "/learn", "/practice", "/progress", "/words", "/dictionary",
+  "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
+  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
-  "/review", "/review/write", "/review/government", "/review/cloze", "/review/clinic",
+  "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
   "/review/sentences", "/review/speaking", "/review/sprint",
 ];
@@ -155,7 +155,24 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   complains is a floor low enough to miss the thing it exists for, so it is set
   to the count rather than to a number that happens to pass.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 339 });
+/*
+  330 rather than 339, for the reason the containment suite gives at its own
+  floor: `/guide` is gone and it was one of the routes this walks. Nine checks,
+  counted off the route list rather than off a run.
+
+  And 303 rather than 330: the placement ladder, the homework list and the
+  class week were cut as not being learning, three routes at nine checks
+  each. The run before the cut counted 335 and the run after it 308, which
+  is the same twenty-seven, and the floor keeps the five it always sat under.
+*/
+/*
+  Raised by exactly four: the two-per-theme checks on a graded review card had
+  been waived on every run, because `gradeButtons` named four buttons the
+  screen stopped drawing. They run now, so the floor rises by the number that
+  stopped being skippable rather than by however many the run happens to
+  reach.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 307 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
@@ -307,7 +324,7 @@ for (const theme of ["light", "dark"]) {
   await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
   await graded.waitForTimeout(300);
   const shape = await revealAnswer(graded);
-  const ratings = ratingButtons(graded);
+  const ratings = gradeButtons(graded);
   if (shape && (await ratings.count())) {
     await ratings.first().click();
     await graded.waitForTimeout(1200);
@@ -321,8 +338,9 @@ for (const theme of ["light", "dark"]) {
     check(`/review once a card is graded, in ${theme}: axe finds nothing`,
       violations.length === 0, violations.slice(0, 2).join("; "));
   } else {
-    absent(2, `/review with a card graded, in ${theme}: the deck had nothing due, ` +
-      "so the controls a grade unlocks were never drawn. Run `npm run demo`");
+    absent(2, `/review with a card graded, in ${theme}: no card offered a grade button, ` +
+      "so the controls a grade unlocks were never drawn. Either the deck has nothing due " +
+      "(run `npm run demo`) or every card that came up graded itself, which a clean hit does");
   }
   await graded.close();
 }

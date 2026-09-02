@@ -7,6 +7,7 @@ import { deleteMyAccount } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { Card, SectionTitle } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import { forgetThisDevice } from "@/lib/offline/forget";
 
 /**
  * Deleting everything.
@@ -47,6 +48,8 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
       }
       // Signing out here as well: the data is gone, so a session pointing at it
       // would show a stranger's-eye view of an empty app rather than a sign-in.
+      // The device forgets too, or the cached pages would outlive the account.
+      await forgetThisDevice();
       await createClient().auth.signOut().catch(() => {});
       router.push("/sign-in");
       router.refresh();
@@ -82,7 +85,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
             <div className="mt-3">
               <Button
                 onClick={() => {
-                  void createClient().auth.signOut().catch(() => {});
+                  void forgetThisDevice().then(() => createClient().auth.signOut()).catch(() => {});
                   router.push("/sign-in");
                   router.refresh();
                 }}

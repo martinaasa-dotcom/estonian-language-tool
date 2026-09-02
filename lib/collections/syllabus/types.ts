@@ -23,7 +23,7 @@ export const LEVELS: readonly Level[] = ["A1", "A2", "B1", "B2", "C1"];
  * the course are the hand-checked ones the built-in dictionary already carried,
  * and no new ones are written here.
  */
-export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE";
+export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PRONOUN" | "PHRASE";
 
 /**
  * A word the unit teaches: the Estonian lemma, an English gloss, and the part of
@@ -35,9 +35,27 @@ export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE";
  * its `-ma` infinitive, which is unambiguous. Everything else defaults to a noun
  * and is marked where it is not one.
  */
+/**
+ * A word the course asks for.
+ *
+ * THE FOURTH SLOT NAMES WHICH WORD, WHERE ESTONIAN HAS TWO OF THEM SPELT THE
+ * SAME. Ekilex numbers homonyms, and the harvest used to take the first one
+ * whose forms fit, silently: 87 of the 1,185 course words have more than one
+ * exact match and six of them came back as the wrong word entirely. `kohus`
+ * was taught as "court" with the forms and sentences of the moral duty
+ * (kohuse, not kohtu); `kaste` as "sauce" with the forms of dew; `pidama`,
+ * the A1 verb for must, with the past of the verb for keeping a farm, so the
+ * conjugation card for lihtminevik answered `pidasin` and marked `pidin`
+ * wrong. A number here is how a person resolves that, and it is a number
+ * rather than a word because this file may not write Estonian either.
+ *
+ * Unpinned and ambiguous is now a reported drop rather than a guess, which is
+ * what the script's own header always promised.
+ */
 export type WordSpec =
   | readonly [lemma: string, gloss: string]
-  | readonly [lemma: string, gloss: string, pos: Pos];
+  | readonly [lemma: string, gloss: string, pos: Pos]
+  | readonly [lemma: string, gloss: string, pos: Pos, ekilexWordId: number];
 
 export interface UnitSpec {
   id: string;
@@ -73,7 +91,7 @@ export interface UnitSpec {
 export interface SyllabusUnit extends UnitSpec {
   /** Lemmas only, in order. The form every consumer before the rewrite used. */
   readonly lemmas: readonly string[];
-  readonly vocabulary: readonly { lemma: string; gloss: string; pos: Pos }[];
+  readonly vocabulary: readonly { lemma: string; gloss: string; pos: Pos; ekilexWordId?: number }[];
   readonly requires: readonly string[];
   /** Kept for the pre-syllabus consumers that read `unit.cefr`. */
   readonly cefr: Level;
@@ -95,6 +113,8 @@ export function unit(spec: UnitSpec): SyllabusUnit {
     lemma: w[0],
     gloss: w[1],
     pos: inferPos(w[0], w[2]),
+    // Which of Ekilex's homonyms, where a person has had to say. See WordSpec.
+    ...(w.length > 3 && typeof w[3] === "number" ? { ekilexWordId: w[3] } : {}),
   }));
   return {
     ...spec,

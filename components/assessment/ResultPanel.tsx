@@ -9,7 +9,7 @@ import { levelLabel } from "./PlanPanel";
  *
  * Four numbers and a paragraph of caveats, in that order, because the caveats
  * are the part that makes the numbers usable. A learner told "you are B1" by an
- * app they met ten minutes ago will either believe it and sit an exam they fail,
+ * app they met half an hour ago will either believe it and sit an exam they fail,
  * or disbelieve it and ignore everything else here. Told "reading looks B1,
  * writing looks A2, from nine questions, which is thin", they have something
  * they can actually use.
@@ -18,7 +18,7 @@ import { levelLabel } from "./PlanPanel";
 const SKILL_META: Record<string, { icon: typeof BookOpen; label: string; note: string }> = {
   reading: { icon: BookOpen, label: "Reading", note: "Words, endings and sentences from the dictionary." },
   listening: { icon: Headphones, label: "Listening", note: "Estonian audio with nothing written down." },
-  writing: { icon: PenLine, label: "Writing", note: "Your own sentence, marked on the form it had to contain." },
+  writing: { icon: PenLine, label: "Writing", note: "Your own sentence, checked for the form it needed to contain." },
   speaking: { icon: Mic, label: "Speaking", note: "Your own rating. Never scored here, and never part of the level." },
 };
 
@@ -88,14 +88,17 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
           {result.overall === null
             ? "Nothing was measured, so there is no level to report. That is an honest blank rather than a zero."
             : result.overall === PRE_A1
-              ? "The first band was not reached yet, which is where almost everybody starts. It is a starting point, not a verdict."
-              : `That is the level your weakest measured skill reached. A CEFR level is a claim about everything you can do at it, so it follows the floor rather than the average.`}
+              ? "You have not reached the first band yet, which is where almost everybody starts. It is a starting point, not a verdict."
+              : `That is the level your weakest measured skill reached. A CEFR level is a claim about everything you can do, so it goes by your weakest skill, not the average.`}
           {result.ceiling && result.ceiling !== result.overall && (
             <> Your strongest measured skill looks like {levelLabel(result.ceiling)}, which is worth knowing too.</>
           )}
         </p>
         <p className="mt-3 text-sm" style={{ color: "var(--ink-2)" }}>
-          {result.itemsAnswered} scored {result.itemsAnswered === 1 ? "question" : "questions"}.{" "}
+          {result.itemsAnswered} scored {result.itemsAnswered === 1 ? "question" : "questions"}
+          {result.decisive > 0 && result.decisive < result.itemsAnswered
+            ? `, ${result.decisive} of them at the levels this turned on`
+            : ""}.{" "}
           {CONFIDENCE_COPY[result.confidence]}
         </p>
       </Card>
@@ -112,19 +115,21 @@ export function ResultPanel({ result, heading = "Where you are" }: { result: Pla
         <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           <li>
             Not a certificate. The exams that count are the state language exams, run at A2, B1, B2
-            and C1 by the authority that sets them. This is ten minutes in an app.
+            and C1 by the authority that sets them. This is half an hour in an app.
           </li>
           <li>
-            Not a measurement of your speaking. Nothing here can score a recording honestly, so the
-            speaking line is your own judgement and is kept out of the level entirely.
+            Not a measurement of your speaking. Nothing here can score how you say Estonian
+            honestly, so the speaking line is how confident you said you felt and is kept out of
+            the level entirely.
           </li>
           <li>
-            Not a measurement of conversation. Nothing in this app talks back at speed, and reading a
-            sentence you can take your time over is an easier thing than following one.
+            Not a measurement of conversation. Nothing in this app talks back to you at real speed,
+            and reading a sentence when you can take your time is easier than following one as it
+            is spoken.
           </li>
           <li>
-            Built from this dictionary. The words came from the same set the rest of the app teaches
-            from, which is broad but not the whole language.
+            Built from this dictionary. Every word and sentence came from Ekilex and the same set
+            the rest of the app teaches from, which is broad but not the whole language.
           </li>
         </ul>
       </Card>

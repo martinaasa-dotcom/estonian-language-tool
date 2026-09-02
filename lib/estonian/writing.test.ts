@@ -29,17 +29,17 @@ const withEkilex: WritingSource = {
 describe("authoritativeForm", () => {
   it("prefers an Ekilex form over the app's derivation", () => {
     expect(authoritativeForm(withEkilex, "INESSIVE")).toEqual({
-      value: "toas", provenance: "ekilex",
+      value: "toas", alsoRight: null, provenance: "ekilex",
     });
   });
 
   it("uses a stored principal part for the genitive", () => {
-    expect(authoritativeForm(tuba, "GENITIVE")).toEqual({ value: "toa", provenance: "ekilex" });
+    expect(authoritativeForm(tuba, "GENITIVE")).toEqual({ value: "toa", alsoRight: null, provenance: "ekilex" });
   });
 
   it("falls back to deriving from the genitive stem", () => {
     const derived = authoritativeForm(tuba, "INESSIVE");
-    expect(derived).toEqual({ value: "toas", provenance: "derived" });
+    expect(derived).toEqual({ value: "toas", alsoRight: null, provenance: "derived" });
   });
 
   it("returns null rather than inventing a form when there is no stem", () => {
@@ -83,12 +83,45 @@ describe("writingTasksFor", () => {
 const task: WritingTask = {
   lemma: "tuba", translation: "room", caseKey: "INESSIVE",
   caseEn: "Inessive", caseEt: "seesütlev", caseQuestion: "milles? kus?",
-  targetForm: "toas", provenance: "derived",
+  targetForm: "toas",
+  alsoRight: null, provenance: "derived",
 };
 
 const OTHER_FORMS = ["tuba", "toa", "tuppa", "tubade"];
 
+/*
+  The illative task, which is the one with two right answers. `tuppa` is what
+  the dictionary records and what the exercise asks for; `toasse` is the same
+  case by the regular ending, and a learner who writes it has done what was
+  asked.
+*/
+const illative: WritingTask = {
+  lemma: "tuba", translation: "room", caseKey: "ILLATIVE",
+  caseEn: "Illative", caseEt: "sisseütlev", caseQuestion: "millesse? kuhu?",
+  targetForm: "tuppa",
+  alsoRight: "toasse", provenance: "ekilex",
+};
+
 describe("checkForm", () => {
+  it("accepts the other illative, because both are the illative", () => {
+    expect(checkForm("Ma lähen toasse.", illative, OTHER_FORMS).used).toBe(true);
+    expect(checkForm("Ma lähen tuppa.", illative, OTHER_FORMS).used).toBe(true);
+  });
+
+  it("does not call the other illative a different form of the word", () => {
+    // An enriched entry carries `toasse` among its Ekilex forms, so it reaches
+    // `allForms` and the near-miss branch is where a correct sentence used to
+    // be reported back as the wrong case. It has to be in the list for this
+    // check to be able to fail.
+    const check = checkForm("Ma lähen toasse.", illative, [...OTHER_FORMS, "toasse"]);
+    expect(check).toEqual({ used: true, usedAnotherForm: false });
+  });
+
+  it("still reports a genuinely different form", () => {
+    expect(checkForm("Ma olen toas.", illative, [...OTHER_FORMS, "toas"]))
+      .toEqual({ used: false, usedAnotherForm: true });
+  });
+
   it("accepts a sentence containing the required form", () => {
     expect(checkForm("Ma olen toas.", task, OTHER_FORMS)).toEqual({
       used: true, usedAnotherForm: false,

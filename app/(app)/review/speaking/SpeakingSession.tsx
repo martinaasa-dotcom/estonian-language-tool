@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Mic, X } from "lucide-react";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
@@ -218,8 +218,8 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
               </div>
               <Recorder />
               <p className="max-w-[44ch] text-xs" style={{ color: "var(--ink-3)" }}>
-                Compare the two, then rate how close you were. Nothing is uploaded, the app has no
-                Estonian speech recogniser and will not pretend to score you.
+                Compare the two, then rate how close you were. Nothing is uploaded. This app can&rsquo;t
+                understand Estonian speech, so it won&rsquo;t pretend to score you.
               </p>
             </>
           )}

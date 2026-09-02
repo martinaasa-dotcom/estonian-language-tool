@@ -25,10 +25,6 @@ export const BANDS: readonly Band[] = ["A1", "A2", "B1", "B2", "C1"] as const;
 export const PRE_A1 = "pre-A1" as const;
 export type Level = Band | typeof PRE_A1;
 
-export function bandIndex(band: Band): number {
-  return BANDS.indexOf(band);
-}
-
 /** Where the Estonian in an item came from, shown to the learner. */
 export type ItemSource =
   /** A form or gloss stored in the dictionary, seeded or retrieved. */
@@ -94,6 +90,16 @@ export interface WriteItem extends ItemBase {
   targetForm: string;
   /** Every other form of the word, so a near miss can be named as one. */
   otherForms: readonly string[];
+  /**
+   * Why the sentence wanted that form, in the same words the reading gap uses.
+   *
+   * The screen used to answer "why that form" with the sentence put back
+   * together and nothing else, which tells a learner what the answer was and
+   * not what they got wrong. It is the same `explainGap` string the multiple
+   * choice version of this task shows, because the two are one task typed and
+   * chosen and two explanations of it would drift.
+   */
+  because: string;
 }
 
 /** Say it, hear it back beside a native voice, judge for yourself. */
@@ -178,4 +184,15 @@ export interface Placement {
   ceiling: Level | null;
   confidence: Confidence;
   itemsAnswered: number;
+  /**
+   * Questions asked at the two bands the level turned on, which is what the
+   * confidence tier is a statement about.
+   *
+   * Reported beside the tier rather than left inside the calculation, because
+   * the screen used to print the whole paper's count and then a tier computed
+   * from a subset of it, which is a headline and a sentence answering one
+   * question two ways. Somebody who climbed to C1 answered sixty-odd questions
+   * and forty of them told us only what the first three already had.
+   */
+  decisive: number;
 }

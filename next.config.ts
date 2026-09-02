@@ -10,6 +10,37 @@ import { STATIC_SECURITY_HEADERS } from "./lib/security/headers";
  */
 const config: NextConfig = {
   /*
+    WHERE THE BUILD GOES, WHICH IS ONLY EVER A QUESTION FOR ONE SUITE.
+
+    Whether this app gates every route or runs as one local learner is decided
+    by `supabaseConfigured()`, and `NEXT_PUBLIC_` variables are inlined when
+    the bundle is built rather than read when it starts. So the mode is a
+    property of the build: a server started with the keys cleared still gates
+    every route if the build had them, which was measured rather than assumed.
+
+    Every browser suite runs against a local-mode build, which is why the
+    hosted sign-in screen, the first thing any stranger meets, had never been
+    rendered by anything. `scripts/test-signin.mjs` builds its own in hosted
+    mode, and it needs somewhere to put it that is not the build the other
+    suites are running against.
+
+    Defaults to `.next`, so nothing else in the repository or on a deployment
+    sees any of this.
+  */
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+
+  /*
+    NOTHING ADVERTISES THE FRAMEWORK.
+
+    Next sends `X-Powered-By: Next.js` on every response by default, which is
+    the version-shaped half of a fingerprint handed to anybody who curls the
+    site once. It buys a reader nothing, and this app already sets every other
+    header on the list deliberately (lib/security/headers.ts), so the one that
+    arrived by default was the odd one out.
+  */
+  poweredByHeader: false,
+
+  /*
     LINT IS PART OF THE BUILD, NOT ONLY PART OF CI.
 
     This was `ignoreDuringBuilds: true`, and the `lint` job in CI was the only
@@ -67,6 +98,36 @@ const config: NextConfig = {
       one needs to find the other in the same glance.
     */
     middlewareClientMaxBodySize: "16mb",
+
+    /*
+      HOW LONG THE BROWSER MAY REUSE A PAGE IT HAS ALREADY FETCHED.
+
+      Next's default for a dynamic route is **zero**, and every route in this
+      app is dynamic, correctly: a deck, a streak and a due count are facts
+      about the person reading. Zero means the router cache holds nothing, so
+      going back to the page you were on ten seconds ago is a fresh render of
+      it, queries and all. Somebody moving between Today, Practice and their
+      deck the way this app is meant to be used paid full price for every one
+      of those, in both directions, and that is what "the navigation feels
+      slow" turned out to mean.
+
+      Thirty seconds is chosen against what a stale panel actually costs here.
+      A mutation is not covered by it and does not have to be: every one in
+      this app is a Server Action and every one of them calls
+      `revalidatePath`, which drops the client's copy of those routes as well
+      as the server's. So grading a card, adding a word or ticking a task
+      still shows up immediately on Today. What thirty seconds buys is the
+      case with no mutation in it at all. Reading the grammar page, going
+      back, opening the dictionary, going back: that is most of what moving
+      around an app is.
+
+      `static` is what a link marked `prefetch` is held under, which here means
+      a page fetched because a pointer settled on it (components/PrefetchLink).
+      Two minutes rather than the default five: a page fetched on a hover is
+      still a page somebody is about to read, and it should not be able to be
+      much older than the moment they reached for it.
+    */
+    staleTimes: { dynamic: 30, static: 120 },
   },
   async headers() {
     return [{ source: "/:path*", headers: STATIC_SECURITY_HEADERS }];

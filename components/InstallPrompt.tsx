@@ -124,7 +124,7 @@ export function InstallPrompt() {
               <strong>Add to Home Screen</strong>. It opens straight into review and works offline.
             </>
           ) : (
-            "It opens straight into review, and reviewing keeps working with no connection."
+            "It opens straight into review, and review works offline too."
           )}
         </p>
         <p className="mt-1.5 text-2xs" style={{ color: "var(--ink-3)" }}>

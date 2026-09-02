@@ -35,12 +35,10 @@ const GROUPS: Group[] = [
     title: "Reviewing",
     hint: "the daily loop, and the case drills",
     keys: [
-      { press: ["Space"], does: "Show the answer, then grade it Good" },
+      { press: ["Space"], does: "Show the answer on a card you flip" },
       { press: ["Enter"], does: "Check what you typed, then grade it" },
-      { press: ["1"], does: "Again, no idea" },
-      { press: ["2"], does: "Hard, struggled" },
-      { press: ["3"], does: "Good, got it" },
-      { press: ["4"], does: "Easy, instant" },
+      { press: ["1"], does: "Pick the first answer, and 2 to 4 for the rest" },
+      { press: ["1", "2"], does: "On a card you flip: I did not know it, I knew it" },
       { press: ["U"], does: "Undo the last grade, scheduling and all" },
     ],
   },
@@ -161,8 +159,8 @@ export function Shortcuts() {
         </div>
 
         <p className="border-t px-5 py-3 text-xs" style={{ borderColor: "var(--rule-soft)", color: "var(--ink-3)" }}>
-          Every control is reachable by tab as well, with a visible focus ring, the shortcuts are a
-          shortcut, never the only way in.
+          You can also tab to every control, with a clear focus ring. These shortcuts are just a
+          faster way in, never the only way.
         </p>
       </div>
     </div>

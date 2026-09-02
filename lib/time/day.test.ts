@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dayClock, isTimeZone, normaliseZone } from "./day";
+import { dayClock, isTimeZone, nextCardLine, normaliseZone } from "./day";
 
 /*
   The bug these exist for, stated once.
@@ -138,5 +138,51 @@ describe("a stored zone is never trusted blind", () => {
     expect(clock.dayKey(new Date("2026-08-24T12:00:00.000Z"))).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(normaliseZone("Mars/Olympus")).toBeUndefined();
     expect(normaliseZone(TALLINN)).toBe(TALLINN);
+  });
+});
+
+/*
+  The caught-up screen's one sentence.
+
+  Every case is a day count rather than a clock reading, because FSRS schedules
+  in days: a card due at 04:12 on Thursday is a card due on Thursday. The zone
+  is the part that decides which day, which is why the last of these is here at
+  all: 23:30 UTC is already tomorrow in Tallinn, and a learner there is told
+  "tomorrow" for a card an hour away while a learner in London is told "later
+  today" for the same card.
+*/
+describe("nextCardLine", () => {
+  const clock = dayClock(TALLINN);
+  const now = new Date("2026-09-02T09:00:00Z"); // Wednesday, 12:00 in Tallinn
+
+  it("names the rest of today when the card is hours away", () => {
+    expect(nextCardLine(new Date("2026-09-02T18:00:00Z"), now, clock))
+      .toBe("The next card comes back later today.");
+  });
+
+  it("says tomorrow rather than naming a weekday for it", () => {
+    expect(nextCardLine(new Date("2026-09-03T05:00:00Z"), now, clock))
+      .toBe("The next card comes back tomorrow.");
+  });
+
+  it("names the weekday inside a week", () => {
+    expect(nextCardLine(new Date("2026-09-05T05:00:00Z"), now, clock))
+      .toBe("The next card comes back on Saturday.");
+  });
+
+  it("counts the days once a weekday would be ambiguous", () => {
+    expect(nextCardLine(new Date("2026-09-14T05:00:00Z"), now, clock))
+      .toBe("The next card comes back in 12 days.");
+  });
+
+  it("reads the learner's zone rather than the server's", () => {
+    // 23:00 in Tallinn, 21:00 in London, on the same Wednesday evening.
+    const evening = new Date("2026-09-02T20:00:00Z");
+    // Two and a half hours on: past midnight in Tallinn, not in London.
+    const soon = new Date("2026-09-02T22:30:00Z");
+    expect(nextCardLine(soon, evening, dayClock(TALLINN)))
+      .toBe("The next card comes back tomorrow.");
+    expect(nextCardLine(soon, evening, dayClock("Europe/London")))
+      .toBe("The next card comes back later today.");
   });
 });

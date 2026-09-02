@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Check, Ear, Sparkles, X } from "lucide-react";
 import { completeLesson } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
@@ -91,7 +91,7 @@ export function LessonSession({
       <Page title={unitTitle} lead="Nothing to teach here yet.">
         <Empty
           title="This unit has no words in the dictionary yet"
-          body="Its words arrive with an Ekilex key, or you can add them by hand."
+          body="Its words show up once Ekilex is connected, or you can add them yourself."
           action={<ButtonLink href={`/learn/${unitId}`}>Back to the unit</ButtonLink>}
         />
       </Page>
@@ -276,7 +276,7 @@ function StepCard({
               </ul>
             </div>
           )}
-          <Continue onNext={onNext} label={`Start ${step.words} words`} />
+          <Continue onNext={onNext} label={`Start these ${step.words} words`} />
         </Card>
       );
 
@@ -289,6 +289,19 @@ function StepCard({
             <Speak text={step.lemma} size={20} />
           </div>
           <p className="text-lg">{step.gloss}</p>
+          {/*
+            The meaning in the language the learner thinks in, on the one step
+            of a lesson where a word is being learned rather than tested. Under
+            the English rather than instead of it, and never on a question's
+            options: those are drawn from a pool of English glosses, and one
+            option in a second language would be the answer before anybody read
+            it. From Ekilex, like everything else on this screen.
+          */}
+          {step.equivalent && (
+            <p lang={step.equivalent.lang} className="text-lg" style={{ color: "var(--ink-2)" }}>
+              {step.equivalent.text}
+            </p>
+          )}
           {step.example && (
             <p className="text-sm" style={{ color: "var(--ink-2)" }}>
               <Et>{step.example}</Et>
@@ -515,7 +528,7 @@ function StepCard({
           </p>
           {summary.saving && <p className="text-sm" style={{ color: "var(--ink-3)" }}>Saving your answers…</p>}
           {summary.saved && !summary.saved.ok && (
-            <Verdict ok={false} note={summary.saved.error ?? "Your answers could not be saved."} />
+            <Verdict ok={false} note={summary.saved.error ?? "We couldn't save your answers."} />
           )}
           <div className="flex flex-wrap gap-2">
             <ButtonLink href="/learn">Back to the path</ButtonLink>

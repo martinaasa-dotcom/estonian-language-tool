@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEADLINES, REASONS, TARGETS, countdownPhrase, daysUntil, deadlineFrom, normaliseGoals, reasonById, targetByBand, weeksUntil } from "./goals";
+import { DEADLINES, REASONS, TARGETS, countdownPhrase, daysUntil, deadlineFrom, impliedTarget, normaliseGoals, reasonById, reasonsFor, reasonsToStored, targetByBand, weeksUntil } from "./goals";
 import { BANDS } from "./types";
 import { dayClock } from "@/lib/time/day";
 
@@ -142,5 +142,36 @@ describe("countdownPhrase", () => {
   it("has something to say about a date that has gone", () => {
     expect(countdownPhrase(-1)).toBe("that date has gone");
     expect(countdownPhrase(-400)).toBe("that date has gone");
+  });
+});
+
+describe("more than one reason", () => {
+  it("reads a stored list back as reasons, in the table's own order", () => {
+    expect(reasonsFor("work living").map((r) => r.id)).toEqual(["living", "work"]);
+    expect(reasonsFor(null)).toEqual([]);
+    expect(reasonsFor("nonsense")).toEqual([]);
+  });
+
+  it("still reads a row written when this was one reason", () => {
+    expect(reasonsFor("citizenship").map((r) => r.id)).toEqual(["citizenship"]);
+  });
+
+  it("stores nothing rather than an empty string for no reason", () => {
+    expect(reasonsToStored([])).toBeNull();
+    expect(reasonsToStored(["nonsense"])).toBeNull();
+    expect(reasonsToStored(["work", "travel"])).toBe("work travel");
+  });
+
+  it("offers the highest level any of the reasons needs", () => {
+    // Travel implies A2 and work implies B2. The smaller goal sits inside the
+    // bigger one, so planning for A2 would say they were finished when they
+    // were not.
+    expect(impliedTarget(["travel"])).toBe("A2");
+    expect(impliedTarget(["travel", "work"])).toBe("B2");
+    expect(impliedTarget([])).toBeNull();
+  });
+
+  it("normalises a whole set rather than keeping only the first", () => {
+    expect(normaliseGoals({ reason: "work travel nonsense", daysPerWeek: 5 }).reason).toBe("work travel");
   });
 });

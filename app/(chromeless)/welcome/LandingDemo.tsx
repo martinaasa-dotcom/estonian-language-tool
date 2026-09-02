@@ -1,7 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { CASES } from "@/lib/estonian/cases";
+import { ArrowRight } from "lucide-react";
+
+/**
+ * How many, in words, because the two headings inside the card are prose and
+ * the rest of this page counts in words rather than digits.
+ *
+ * They are counted rather than typed. "Three" and "eleven" are true of the
+ * nouns the explorer can show today and neither is a fact about Estonian: a
+ * dictionary entry missing its partitive has two principal parts, and how many
+ * regular cases can be derived depends on which stems came back with the word.
+ * A heading promising eleven over a list of nine is the card arguing with
+ * itself in the one place the whole page is asking to be believed.
+ */
+const COUNTED = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen"] as const;
+const counted = (n: number): string => COUNTED[n] ?? String(n);
 
 export interface DemoCase {
   en: string;
@@ -21,14 +37,26 @@ export interface DemoWord {
 }
 
 /**
- * "Learn one form, get eleven." The single most motivating fact about Estonian
- * nouns, shown rather than claimed — every form below is derived by the same
- * function the app itself uses.
+ * Learn three forms and get most of the rest: the single most encouraging fact
+ * about Estonian nouns, shown rather than claimed. Every form on the right is
+ * produced by the same function the app itself uses, which takes the form the
+ * dictionary attests wherever there is one and applies the regular ending only
+ * where there is not. Nothing here was written by hand or by a model.
+ *
+ * SOMETIMES IT IS FOUR, and the card says so by counting. `tuppa` and `kätte`
+ * are not the genitive stem with an ending on it and no rule reaches either,
+ * so they are stored, and a word that has one puts it on the left with the
+ * forms you memorise. The two headings count what is under them, which is what
+ * the note above them has always said they do, so pressing `tuba` reads four
+ * and ten where `raamat` reads three and eleven. The alternative is printing
+ * `toasse`, which is defensible Estonian and a sentence nobody says.
  */
 export function CaseExplorer({ words }: { words: DemoWord[] }) {
   const [active, setActive] = useState(0);
   const word = words[active] ?? words[0];
   if (!word) return null;
+
+  const derived = word.cases.filter((c) => !c.principal && c.singular);
 
   return (
     <div
@@ -57,15 +85,44 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
       </div>
 
       <div className="grid gap-6 p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:p-6">
-        <div>
+        {/*
+          The two headings say what each column is, which is what they were for
+          and not what they said.
+
+          "What you memorise" and "What you get for free" were a pair of jokes
+          at the reader's expense: the left one names a chore before naming the
+          thing, and the right one offers as a gift the one thing every other
+          Estonian dictionary also gives away. Neither says what is in the
+          column under it. These name the cases and say where each set comes
+          from, which is the whole argument of the section standing over them.
+        */}
+        {/*
+          THE THREE FILL THE HEIGHT THE ELEVEN SET.
+
+          Two lists of very different lengths in two columns leaves the shorter
+          one ending a third of the way down, and the card then reads as having
+          lost something out of its bottom left corner rather than as holding
+          two answers. The note that used to sit in that space said in a
+          sentence what the two headings now say in four words each, so filling
+          it back up with words would be putting the sentence back.
+
+          What fills it instead is the thing the column is about. Three rows
+          grown to the height of eleven are three rows worth looking at, which
+          is the claim: these are the ones you have to hold in your head, and
+          they are bigger on the page for the same reason they are shorter in
+          number. Centred rather than baselined once they have room, because a
+          baseline is a way of lining two runs of text up in a box that fits
+          them and reads as text stuck to the top of one that does not.
+        */}
+        <div className="flex flex-col">
           <p className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
-            What you memorise
+            The {counted(word.principal.length)} cases you learn
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-1 flex-col gap-2">
             {word.principal.map((p) => (
               <div
                 key={p.label}
-                className="flex items-baseline justify-between gap-3 rounded-[var(--r)] px-4 py-2.5"
+                className="flex flex-1 items-center justify-between gap-3 rounded-[var(--r)] px-4 py-2.5"
                 style={{ background: "var(--raised)" }}
               >
                 <span lang="et" className="text-xs" style={{ color: "var(--ink-3)" }}>{p.label}</span>
@@ -73,27 +130,23 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
               </div>
             ))}
           </div>
-          <p
-            className="mt-4 flex items-start gap-2 rounded-[var(--r)] px-4 py-3 text-xs leading-relaxed"
-            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)" }}
-          >
-            <Sparkles size={15} className="mt-0.5 shrink-0" aria-hidden />
-            <span>
-              Learn <strong lang="et">{word.genitive ?? word.lemma}</strong> and the eleven cases on
-              the right follow as regular endings.
-            </span>
-          </p>
         </div>
 
         <div>
+          {/*
+            "that follow the pattern" was a claim about all eleven, and the
+            illative does not: `tuba` gives `tuppa`, which no ending on `toa`
+            produces. The heading says what the column is rather than making a
+            promise the row under it breaks. The box stays as plain as it was.
+          */}
           <p className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
-            What you get for free
+            The {counted(derived.length)} that come with it
           </p>
           <ul key={word.lemma} className="fade-up grid grid-cols-2 gap-1.5">
-            {word.cases.filter((c) => !c.principal && c.singular).map((c) => (
+            {derived.map((c) => (
               <li
                 key={c.et}
-                className="flex items-baseline justify-between gap-2 rounded-[var(--r-sm)] px-3 py-2"
+                className="ending-row flex items-baseline justify-between gap-2 rounded-[var(--r-sm)] px-3 py-2"
                 style={{ background: "var(--accent-soft)" }}
               >
                 {/* No opacity: `--accent-deep` on `--accent-soft` is 5.16, and three
@@ -101,14 +154,11 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
                     which is the label this app leads with everywhere else. */}
                 <span lang="et" className="text-2xs" style={{ color: "var(--accent-deep)" }}>{c.et}</span>
                 <span lang="et" className="text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
-                  {c.singular}
+                  <WithEnding form={c.singular} et={c.et} />
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
-            Derived live by the same function the app uses, never invented by an AI.
-          </p>
         </div>
       </div>
     </div>
@@ -135,10 +185,10 @@ export function TutorPeek() {
           style={{ background: "var(--surface)", borderColor: "var(--rule)", color: "var(--ink-2)" }}
         >
           <span className="label-xs mb-1.5 block" style={{ color: "var(--blush-ink)" }}>Anu</span>
-          Because the action is unfinished. <span lang="et" className="font-semibold">Ma loen raamatut</span>{" "}
-          is “I am reading a book”: partitive, still going. Swap in the genitive and you get{" "}
+          Because the action is not finished yet. <span lang="et" className="font-semibold">Ma loen raamatut</span>{" "}
+          means “I am reading a book”: partitive, so it is still going. Swap in the genitive and you get{" "}
           <span lang="et" className="font-semibold">Ma loen raamatu läbi</span>, a whole book,
-          finished. The object case is where Estonian hides its aspect.
+          finished. In Estonian, the case of the object is what tells you whether the action is done.
         </div>
       ) : (
         <button
@@ -151,5 +201,25 @@ export function TutorPeek() {
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * A derived form with its ending lit, which is the whole argument of the card
+ * made visible: the eleven on the right are the stem on the left plus a few
+ * letters, and hovering a row lifts exactly those letters. The ending is read
+ * off the case table rather than guessed, and a form that does not end in
+ * its case's suffix (the short illative `tuppa`) is left whole, because
+ * lighting the wrong letters would teach the wrong rule.
+ */
+function WithEnding({ form, et }: { form: string | null; et: string }) {
+  if (!form) return null;
+  const suffix = CASES.find((c) => c.et === et)?.suffix;
+  if (!suffix || !form.endsWith(suffix) || form.length <= suffix.length) return <>{form}</>;
+  return (
+    <>
+      {form.slice(0, -suffix.length)}
+      <span className="ending">{suffix}</span>
+    </>
   );
 }

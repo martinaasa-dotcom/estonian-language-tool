@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, BookOpen, MessageCircleQuestion, PenLine, Target, TriangleAlert,
@@ -36,7 +36,10 @@ const ORIGIN_LABEL: Record<CaseExample["origin"], { label: string; title: string
     title: "The form as the Institute of the Estonian Language records it",
   },
   STORED: {
-    label: "principal part",
+    // "memorised" rather than "principal part", because on the sisseütlev page
+    // every stored form is the short illative and `tuppa` is not one of the
+    // three. The title under it was already saying the true thing.
+    label: "memorised",
     title: "A memorised form held in the dictionary, not worked out from a stem",
   },
   DERIVED: {
@@ -198,10 +201,22 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                         {example.genitive ?? NO_VALUE}
                       </td>
                       <td className="px-3 py-2.5">
+                        {/* Both illatives where the word has both: one answer
+                            to one question, and a table that prints either
+                            alone has chosen which word to be wrong about. The
+                            second is set in the quieter ink because it is the
+                            regular ending rather than the form the dictionary
+                            recorded, which is the same distinction the chip
+                            beside it makes. */}
                         <span className="inline-flex items-center gap-1.5">
                           <span lang="et" className="text-base font-semibold" style={{ color: "var(--accent-deep)" }}>
                             {example.form}
                           </span>
+                          {example.alsoRight && (
+                            <span lang="et" className="text-base" style={{ color: "var(--ink-3)" }}>
+                              / {example.alsoRight}
+                            </span>
+                          )}
                           <Speak text={example.form} label={`Hear "${example.form}"`} size={13} />
                         </span>
                       </td>
@@ -237,14 +252,14 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                     {example.sentence!.en && (
                       <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
-                        <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
+                        <Chip tone="again" title="Machine translation. Trust the Estonian above, not this.">
                           {AI_TAG}
                         </Chip>
                       </p>
                     )}
                     <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                       contains{" "}
-                      <span lang="et" style={{ color: "var(--accent-deep)" }}>{example.form}</span>
+                      <span lang="et" style={{ color: "var(--accent-deep)" }}>{example.sentenceForm ?? example.form}</span>
                       {", "}the <span lang="et">{ref.spec.et}</span> of{" "}
                       <span lang="et">{example.lemma}</span>
                     </p>
@@ -275,8 +290,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
 
         <Note tone="neutral">
           A drill only opens for words in your deck that carry this case. If nothing comes up, add a
-          noun unit from the path, the case cards are generated from the forms the dictionary
-          holds, never from a pattern applied blindly.
+          noun unit from the path. The case cards come from forms the dictionary actually holds,
+          never from a pattern applied blindly.
         </Note>
 
         {/*

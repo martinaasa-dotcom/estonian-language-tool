@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Ear, Loader2, Volume2, X } from "lucide-react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
-import { cachedClip, rememberClip } from "@/lib/audio/clipCache";
+import { fetchClip } from "@/lib/audio/clip";
+import { useAudioPrefs } from "@/components/AudioPrefs";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -50,33 +51,25 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   const finished = !question;
   const revealed = picked !== null;
 
+  const { voice } = useAudioPrefs();
   const play = useCallback(async (text: string, slow = false) => {
-    const key = `${text}|${slow ? 0.6 : 1}`;
     try {
       setPlaying(true);
       /*
         Shared with `Speak` rather than a ref of its own. A ref's clips became
         unreachable when the round ended and were still held by the browser,
         because nothing revoked them: a listening round meets a dozen new
-        words a minute and every one of them stayed.
+        words a minute and every one of them stayed. `fetchClip` is the one
+        reader of that cache and the one place the key is built.
       */
-      let url = cachedClip(key);
-      if (!url) {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text, speed: slow ? 0.6 : 1 }),
-        });
-        if (!res.ok) throw new Error(String(res.status));
-        url = rememberClip(key, await res.blob());
-      }
+      const url = await fetchClip({ text, slow, voice });
       await new Audio(url).play();
     } catch {
       setAudioFailed(true);
     } finally {
       setPlaying(false);
     }
-  }, []);
+  }, [voice]);
 
   // Play as soon as the question appears: this is a listening drill, and making
   // someone press play before every item is friction with no purpose.
@@ -120,8 +113,8 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           No audio, no drill
         </h1>
         <p className="mx-auto mt-2 max-w-[44ch] text-base" style={{ color: "var(--ink-2)" }}>
-          This exercise is entirely about what a word sounds like, so without the speech service
-          there is nothing honest to show. It runs on TartuNLP and needs a connection.
+          This exercise is all about what a word sounds like, so without audio there&rsquo;s nothing
+          to show you. It runs on TartuNLP and needs a connection.
         </p>
         <div className="mt-6 flex justify-center">
           <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
@@ -139,7 +132,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Length is phonemic in Estonian: <span lang="et">maja</span> and{" "}
+          In Estonian, length changes the word: <span lang="et">maja</span> and{" "}
           <span lang="et">majja</span> are different words, not the same word said twice. Ears take
           longer than eyes.
         </p>
@@ -270,10 +263,10 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {question.letter
-                ? <>The two differ only in how long the <strong lang="et">{question.letter}</strong> is.
-                    The doubled spelling (<strong lang="et">{question.longer}</strong>) is the longer one.</>
-                : <>The two differ only in length.</>}
-              {question.sameWord && " Both are forms of one word, so the length is carrying the grammar here, not the meaning."}
+                ? <>The two only differ in how long the <strong lang="et">{question.letter}</strong> sounds.
+                    The doubled spelling, <strong lang="et">{question.longer}</strong>, is the longer one.</>
+                : <>The two only differ in length.</>}
+              {question.sameWord && " Both are forms of the same word. Here the length shows the grammar, not a different meaning."}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               {question.options.map((o) => (

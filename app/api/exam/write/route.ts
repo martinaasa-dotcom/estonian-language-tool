@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
@@ -41,12 +42,12 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     if (typeof body.text !== "string") {
-      return Response.json({ error: "Malformed request." }, { status: 400 });
+      return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
     }
     text = body.text.trim().slice(0, MAX_CHARS);
     if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
   } catch {
-    return Response.json({ error: "Malformed request." }, { status: 400 });
+    return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   if (text.split(/\s+/).filter(Boolean).length < 5) {
@@ -70,11 +71,11 @@ export async function POST(request: Request) {
   let settled = false;
   try {
     const { graded, usage } = await gradeComposition(config, text, level);
-    void recordUsage({
+    after(() => recordUsage({
       ownerId, kind: "GRADER", provider: config.name, model: config.model,
       inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
       reservation: decision.reservation,
-    });
+    }));
     settled = true;
 
     if (!graded) return Response.json({ comment: "", rule: "", aiAvailable: true });
@@ -110,7 +111,8 @@ export async function POST(request: Request) {
 
     return Response.json({ comment: verified.comment ?? "", rule: graded.rule, aiAvailable: true });
   } catch (error) {
-    if (!settled && decision.reservation) void releaseReservation(decision.reservation);
+    const booking = decision.reservation;
+    if (!settled && booking) after(() => releaseReservation(booking));
     if (!(error instanceof TutorError)) {
       reportError(error, { at: "api/exam/write", ownerId, extra: { model: config.model } });
     }

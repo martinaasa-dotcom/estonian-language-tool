@@ -8,7 +8,7 @@ import {
   normaliseModel, priceFor,
 } from "./pricing";
 
-const clear: UsageSnapshot = { burstCalls: 0, dailyCalls: 0, dailyMicros: 0, globalMicros: 0 };
+const clear: UsageSnapshot = { burstCalls: 0, dailyCalls: 0, dailyCallsAllKinds: 0, dailyMicros: 0, globalMicros: 0 };
 const NOON = new Date("2026-08-29T12:00:00.000Z");
 
 describe("checkQuota", () => {
@@ -20,6 +20,7 @@ describe("checkQuota", () => {
     const usage: UsageSnapshot = {
       burstCalls: DEFAULT_LIMITS.burstCalls - 1,
       dailyCalls: DEFAULT_LIMITS.dailyCallsPerUser - 1,
+      dailyCallsAllKinds: DEFAULT_LIMITS.dailyCallsPerUser - 1,
       dailyMicros: DEFAULT_LIMITS.dailyMicrosPerUser - 1,
       // Under the reserve threshold, not one micro under the hard cap: past
       // the threshold a user with nine calls behind them is meant to wait, and
@@ -167,6 +168,29 @@ describe("the reserve at the end of the shared budget", () => {
     const usage = {
       ...clear,
       dailyCalls: DEFAULT_LIMITS.reserveCallsPerUser,
+      dailyCallsAllKinds: DEFAULT_LIMITS.reserveCallsPerUser,
+      globalMicros: deepInReserve,
+    };
+    const decision = checkQuota(usage, DEFAULT_LIMITS, NOON);
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toBe("GLOBAL_BUSY");
+  });
+
+  /*
+    THE RESERVE IS ABOUT THE PERSON, SO IT COUNTS THE PERSON.
+
+    It read `dailyCalls`, which `snapshotUsage` fills with calls *of the kind
+    being asked about*. So a learner on their tenth tutor call waited, and the
+    same learner's first scan, the dearest single call in the app at ten
+    thousand micros reserved, went through as though they had asked nothing
+    all day, with 29 grader calls behind it.
+  */
+  it("counts every kind of call when deciding who has already had a few", () => {
+    const usage = {
+      ...clear,
+      // Nothing of *this* kind yet, and a full day of something else.
+      dailyCalls: 0,
+      dailyCallsAllKinds: DEFAULT_LIMITS.reserveCallsPerUser,
       globalMicros: deepInReserve,
     };
     const decision = checkQuota(usage, DEFAULT_LIMITS, NOON);
@@ -178,6 +202,7 @@ describe("the reserve at the end of the shared budget", () => {
     const usage = {
       ...clear,
       dailyCalls: DEFAULT_LIMITS.reserveCallsPerUser,
+      dailyCallsAllKinds: DEFAULT_LIMITS.reserveCallsPerUser,
       globalMicros: deepInReserve,
     };
     // The learner did nothing wrong and can do nothing about it, so the message
@@ -186,7 +211,7 @@ describe("the reserve at the end of the shared budget", () => {
   });
 
   it("does not hold anyone back while the budget is still comfortable", () => {
-    const usage = { ...clear, dailyCalls: 9, globalMicros: reserveFrom() - 1 };
+    const usage = { ...clear, dailyCalls: 9, dailyCallsAllKinds: 9, globalMicros: reserveFrom() - 1 };
     expect(checkQuota(usage, DEFAULT_LIMITS, NOON).allowed).toBe(true);
   });
 

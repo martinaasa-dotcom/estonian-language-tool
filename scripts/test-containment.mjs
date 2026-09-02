@@ -116,13 +116,13 @@ const ROUTES = [
   "/review/pairs",
   "/review/clinic",
   "/review/government",
+  "/review/conjugation",
   "/review/listening",
   "/review/match",
   "/review/sentences",
   "/review/speaking",
   "/review/sprint",
   "/practice",
-  "/tasks",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
   "/dictionary",
@@ -138,18 +138,14 @@ const ROUTES = [
   "/learn/kodu/lesson",
   "/learn/kodu/worksheet",
   "/learn/checkpoint/A1",
-  "/week",
-  "/week/1",
 
   // Measurement, and the things built on it.
   "/progress",
   "/exam",
   "/assess",
-  "/placement",
 
   // Everything else a signed-in learner can reach.
   "/settings",
-  "/guide",
   "/class",
   "/tutor",
   "/scan",
@@ -200,7 +196,21 @@ const SPARSE = new Map([
   it could not make a scanned page rather than quietly checking twenty fewer
   things.
 */
-const { check, absent, done } = suite("Containment", { floor: 1020 });
+/*
+  1000 rather than 1020, and the twenty are a route that no longer exists.
+  `/guide` was a second description of the app offered to somebody already
+  inside it, and this suite walks every route the app has at three widths in
+  two themes, twice over, so deleting one screen takes a fixed block of checks
+  with it. Lowering a floor is otherwise how a suite stops noticing: this one
+  is arithmetic on the route list, not a run being waved through.
+
+  And 920 rather than 1000 for the same reason, three routes at once: the
+  placement ladder, the homework list and the class week were cut as not
+  being learning, and the run after the cut counted 940 where the one before
+  it counted 1020. The margin of twenty under the count is the one the floor
+  has always kept.
+*/
+const { check, absent, done } = suite("Containment", { floor: 920 });
 
 const browser = await launchChromium();
 

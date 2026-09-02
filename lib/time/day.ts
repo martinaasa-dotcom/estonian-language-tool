@@ -252,3 +252,37 @@ export function recentDayKeys(days: number, from: Date = new Date()): DayKey[] {
 export function daysBetween(a: Date, b: Date): number {
   return processClock.daysBetween(a, b);
 }
+
+/**
+ * One sentence saying when the next card comes back.
+ *
+ * The caught-up review screen said "All 312 cards are scheduled for later",
+ * which is a count the learner already knows and is not what somebody looking
+ * at an empty queue wants. `docs/18-voice.md` uses this exact screen as its
+ * worked example and the answer it gives is a day.
+ *
+ * A day rather than a time, because FSRS schedules in days and a card due at
+ * 04:12 is a card due on Thursday. Inside a week it is named by its weekday,
+ * which is how anybody talks about the next few days; past that a weekday
+ * would be ambiguous, so it says how many days. "Later today" and "tomorrow"
+ * are the two the calendar has better words for than a weekday does.
+ *
+ * The weekday is written in the deployment's locale rather than the reader's,
+ * which is the one thing here that is not perfect and is deliberate: this
+ * string is built on a server so that it can use the learner's own *zone*,
+ * which decides which day it is, and every screen of this app is in English
+ * anyway. Getting the zone wrong names the wrong day; getting the locale wrong
+ * spells the right one differently.
+ */
+export function nextCardLine(due: Date, now: Date, clock: DayClock): string {
+  const days = clock.daysBetween(now, due);
+  if (days <= 0) return "The next card comes back later today.";
+  if (days === 1) return "The next card comes back tomorrow.";
+  if (days < 7) {
+    const weekday = new Intl.DateTimeFormat(undefined, {
+      weekday: "long", timeZone: clock.zoneName,
+    }).format(due);
+    return `The next card comes back on ${weekday}.`;
+  }
+  return `The next card comes back in ${days} days.`;
+}

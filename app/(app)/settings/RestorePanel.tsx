@@ -94,9 +94,9 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
   return (
     <div>
       <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-        Restore from a backup file, after moving to a new computer, or to undo something. A backup
-        you have never restored is only a hypothesis, so it is worth trying once while nothing is
-        at stake.
+        Restore from a backup file: after moving to a new computer, or to undo something. You
+        never really know a backup works until you have tried restoring it, so it is worth doing
+        once while nothing is at stake.
       </p>
 
       <div className="mt-3">
@@ -157,7 +157,8 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
                 <span>
                   <span style={{ color: "var(--ink)" }}>Replace everything</span>
                   <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
-                    Wipes the current deck first. Only use this to roll back to the backup exactly.
+                    Wipes what is here first. Only use this if you want to end up with exactly
+                    what is in the backup.
                   </span>
                 </span>
               </label>

@@ -36,7 +36,12 @@ function open(): Promise<IDBDatabase | null> {
       if (!db.objectStoreNames.contains(OUTBOX)) db.createObjectStore(OUTBOX, { keyPath: "id" });
       if (!db.objectStoreNames.contains(SESSION)) db.createObjectStore(SESSION);
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      // A connection that closes itself when asked is what lets
+      // `deleteLocalDatabase` finish now rather than when the tab dies.
+      request.result.onversionchange = () => request.result.close();
+      resolve(request.result);
+    };
     request.onerror = () => resolve(null);
     request.onblocked = () => resolve(null);
   });
@@ -57,8 +62,34 @@ function run<T>(
       request.onsuccess = () => resolve(request.result ?? fallback);
       request.onerror = () => resolve(fallback);
       tx.onabort = () => resolve(fallback);
+      // One connection per call, closed when the call is done, rather than a
+      // handle held for the life of the page.
+      tx.oncomplete = () => db.close();
     } catch {
       resolve(fallback);
+    }
+  });
+}
+
+/**
+ * Removes the whole database, outbox and stashed session together.
+ *
+ * Called on sign-out by `lib/offline/forget.ts`, after the outbox has had its
+ * chance to drain. A connection this tab still holds would leave the delete
+ * `blocked` for as long as the tab lives, so the request resolves on that
+ * event too: the data is then removed the moment the connection closes, which
+ * is the next navigation, and a sign-out is one.
+ */
+export function deleteLocalDatabase(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof indexedDB === "undefined") return resolve();
+    try {
+      const request = indexedDB.deleteDatabase(DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    } catch {
+      resolve();
     }
   });
 }
@@ -85,7 +116,7 @@ export async function dropFromOutbox(ids: string[]): Promise<void> {
       const tx = db.transaction(OUTBOX, "readwrite");
       const store = tx.objectStore(OUTBOX);
       for (const id of ids) store.delete(id);
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = () => { db.close(); resolve(); };
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();
     } catch {

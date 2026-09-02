@@ -84,18 +84,52 @@ describe("who a request is charged to", () => {
       .not.toBe(bucketForRequest(req({ "x-real-ip": "203.0.113.7" }), null, TRUSTED));
   });
 
-  it("prefers the platform's own forwarding header over one a client can write", () => {
+  /*
+    WHICH HEADER, AND WHICH HOP IN IT.
+
+    `x-vercel-forwarded-for` is written and overwritten by one platform, so it
+    is trustworthy exactly there and is a value the caller typed anywhere else.
+    Reading it under `TRUST_PROXY_HEADERS` on a self-hosted deployment hands a
+    caller their own bucket key, which is an unlimited number of allowances.
+  */
+  const ON_VERCEL = { VERCEL: "1" };
+
+  it("prefers the platform's own forwarding header where the platform sets it", () => {
     expect(
       clientIp(
         req({ "x-vercel-forwarded-for": "198.51.100.4", "x-forwarded-for": "1.1.1.1" }),
-        TRUSTED,
+        ON_VERCEL,
       ),
     ).toBe("198.51.100.4");
   });
 
-  it("takes the first hop when a chain is forwarded", () => {
-    expect(clientIp(req({ "x-forwarded-for": "203.0.113.7, 70.41.3.18" }), TRUSTED))
+  it("ignores the platform's header on a deployment that is not that platform", () => {
+    expect(
+      clientIp(
+        req({ "x-vercel-forwarded-for": "198.51.100.4", "x-forwarded-for": "203.0.113.7" }),
+        TRUSTED,
+      ),
+    ).toBe("203.0.113.7");
+  });
+
+  it("takes the first hop on the platform that overwrites the whole header", () => {
+    expect(clientIp(req({ "x-forwarded-for": "203.0.113.7, 70.41.3.18" }), ON_VERCEL))
       .toBe("203.0.113.7");
+  });
+
+  /*
+    A self-hosted proxy *appends*, so the leftmost element is whatever the
+    caller put there and the rightmost is the hop the trusted proxy added
+    about the connection it actually accepted.
+  */
+  it("takes the nearest hop behind a proxy that appends", () => {
+    expect(clientIp(req({ "x-forwarded-for": "9.9.9.9, 203.0.113.7" }), TRUSTED))
+      .toBe("203.0.113.7");
+  });
+
+  it("cannot be given a bucket key by a caller who forges the whole chain", () => {
+    const forged = (n: number) => clientIp(req({ "x-forwarded-for": `${n}.0.0.1, 203.0.113.7` }), TRUSTED);
+    expect(new Set([forged(1), forged(2), forged(3)]).size).toBe(1);
   });
 });
 

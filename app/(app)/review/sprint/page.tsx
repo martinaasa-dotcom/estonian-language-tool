@@ -2,8 +2,9 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { SprintSession, type SprintCard } from "./SprintSession";
 import { shuffle } from "@/lib/random/shuffle";
+import { numberSetting, readSetting, SETTING_KEYS } from "@/lib/settings/store";
 
-export const metadata = { title: "Case sprint" };
+export const metadata = { title: "Case Sprint" };
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,9 @@ export default async function SprintPage() {
     cardType: c.cardType,
   }));
 
-  const bestSetting = await prisma.setting.findUnique({ where: { ownerId_key: { ownerId, key: "sprintBest" } } });
-  const best = bestSetting ? Number(bestSetting.value) || 0 : 0;
+  // Through the store, not straight at the table: the key lives there, and so
+  // does the one settings read this request has already made.
+  const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.sprintBest), 0);
 
   return <SprintSession cards={sprintCards} best={best} />;
 }

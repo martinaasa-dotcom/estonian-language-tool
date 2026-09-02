@@ -164,6 +164,18 @@ export interface LevelReadiness {
   confidence: number;
   /** Predicted score for each part, 0 to 100. */
   expected: Record<SkillKey, number>;
+  /**
+   * Whether anything at all has been seen of that part.
+   *
+   * A `Review` row carries no note of which mode wrote it, so a dictation and
+   * a flip of the same card are one row and the app genuinely has nothing on
+   * speaking until a level check is sat. The model still needs a number for
+   * every part, because the total is an average of four; the screen must not
+   * print that number as a prediction. It said "Speaking predicted at 0
+   * percent" to somebody who had never been asked to speak, which reads as a
+   * verdict rather than as an absence.
+   */
+  seen: Record<SkillKey, boolean>;
   /** Predicted total, 0 to 100. */
   expectedTotal: number;
   evidence: Evidence;
@@ -284,7 +296,7 @@ function expectedPart(
     apart.
 
     Blended rather than substituted, two thirds to the measurement. The check is
-    ten minutes long and says so, and its own confidence field exists because it
+    half an hour long and says so, and its own confidence field exists because it
     knows it is short; letting it overwrite months of review history would be
     taking the smaller sample on its own account.
   */
@@ -299,6 +311,13 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
   const expected = Object.fromEntries(
     SKILLS.map((skill) => [skill, expectedPart(signals, skill, coverage, level)]),
   ) as Record<SkillKey, number>;
+
+  const seen = Object.fromEntries(
+    SKILLS.map((skill) => [
+      skill,
+      signals.skills[skill].attempts > 0 || Boolean(signals.placement?.skills?.[skill]),
+    ]),
+  ) as Record<SkillKey, boolean>;
 
   const modelled = Math.round(SKILLS.reduce((sum, s) => sum + expected[s], 0) / SKILLS.length);
 
@@ -317,6 +336,7 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
     level,
     confidence,
     expected,
+    seen,
     expectedTotal,
     evidence,
     measured: Boolean(sat),
@@ -469,7 +489,10 @@ function gapsFrom(signals: ReadinessSignals, target: ExamLevel): Feedback[] {
     if (pct < 80) {
       out.push({
         id: "vocabulary",
-        title: `${missing} words short at ${target}`,
+        // "513 words short at A1" under a B1 target read as being short of A1,
+        // which is the first sentence a nervous learner screenshots for their
+        // teacher. It is the band of the words still to meet.
+        title: `${missing} ${target} words still to meet`,
         detail: `${row.known} of ${row.available} have stuck, which is ${pct} percent. The paper draws on all of them.`,
         href: "/learn",
         cta: "Open the path",

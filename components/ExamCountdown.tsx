@@ -1,11 +1,11 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, CalendarClock } from "lucide-react";
 import type { ExamCountdown } from "@/lib/progress/countdown";
 import { EVIDENCE_LABEL } from "@/lib/exam/readiness";
 import { PASS_PCT } from "@/lib/exam/spec";
 import { ButtonLink } from "@/components/Button";
 import { LocalDate } from "@/components/LocalDate";
-import { Card, Ring, SectionTitle } from "@/components/ui";
+import { Card, CardLink, Ring, SectionTitle } from "@/components/ui";
 
 /**
  * THE DATE THEY GAVE US, ON THE SCREEN THEY OPEN.
@@ -45,6 +45,8 @@ export function ExamCountdownCard({ countdown, zone, className }: {
           pct={countdown.confidence}
           size={68}
           tone={passing ? "var(--mint)" : "var(--accent)"}
+          // This card is tinted, so the ring's own default track vanishes into it.
+          track="var(--rule)"
           label={`${countdown.confidence} percent likely to pass ${countdown.band}`}
         >
           <span className="tnum text-md font-bold" style={{ color: "var(--ink)" }}>
@@ -72,7 +74,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
       {countdown.deadline && (
         <p className="mt-3.5 flex items-center gap-1.5 text-sm" style={{ color: "var(--ink-2)" }}>
           <CalendarClock size={14} aria-hidden style={{ color: "var(--ink-3)" }} />
-          {gone ? "The date you set has gone: " : "The date you set: "}
+          {gone ? "That date has already passed: " : "Your date: "}
           {/*
             The reader's own date order and month names, which only their
             browser knows. Rendered on a server, `undefined` as a locale is the
@@ -98,7 +100,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
       */}
       <p className="mt-2.5 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {passing ? (
-          "We would put you through it today, on the evidence there is."
+          "Based on what we've seen so far, you would pass if you sat it today."
         ) : countdown.gap ? (
           <>
             {countdown.gap.title}.{" "}
@@ -113,7 +115,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
             )}
           </>
         ) : (
-          "There is not enough here yet to say what is standing in the way."
+          "We don't have enough here yet to tell you what's slowing you down."
         )}
       </p>
 
@@ -121,13 +123,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
         <ButtonLink href="/exam" variant="secondary" size="sm">
           Where you stand <ArrowRight size={14} aria-hidden />
         </ButtonLink>
-        <Link
-          href="/settings#goals"
-          className="text-sm underline underline-offset-4"
-          style={{ color: "var(--ink-3)" }}
-        >
-          Change the goal
-        </Link>
+        <CardLink href="/settings#goals">Change the goal</CardLink>
       </div>
     </Card>
   );

@@ -55,7 +55,7 @@ async function revealCurrentCard() {
 
 /** Whether the card is holding, rather than having graded itself and moved on. */
 async function waitingOnMe() {
-  const carryOn = await page.getByRole("button", { name: /Got it, next/ }).count();
+  const carryOn = await page.getByRole("button", { name: /Got it/ }).count();
   const selfGrade = await page.getByRole("button", { name: /^Got it$/ }).count();
   return carryOn + selfGrade > 0;
 }
@@ -83,8 +83,8 @@ async function answerCurrentCard() {
     await page.waitForTimeout(300);
   }
 
-  // "Got it, next" on a miss or a first meeting, both of which answer to Enter.
-  if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+  // "Got it" on a miss or a first meeting, both of which answer to Enter.
+  if (await page.getByRole("button", { name: /Got it/ }).count()) {
     await page.keyboard.press("Enter");
     await page.waitForTimeout(1400);
     return true;
@@ -119,13 +119,14 @@ for (const mode of ["Review", "Case Sprint", "Match", "Listening"]) {
 await page.goto(`${B}/progress`, { waitUntil: "networkidle" });
 check("progress shows a level", (await page.getByText(/XP total/).count()) > 0);
 check("progress shows the study heatmap", (await page.getByText(/reviews on \d+ days/).count()) > 0);
-// Either the instance-wide board is offered opt-in, or a class board is shown
-// because this learner is in a class — both are correct, and which one depends
-// on the deck this suite happens to be run against.
-const optInOffered = (await page.getByText(/Off by default/).count()) > 0;
+// A class board where this learner is in a class, and the way into one where
+// they are not. There is no third state: the instance-wide board of everybody
+// who ticked a box is gone, so a stranger is never ranked against strangers.
+// Which of the two shows depends on the deck this suite is run against.
 const classBoardShown = (await page.getByText(/Open the class/).count()) > 0;
-check("the leaderboard is either a class you joined or an explicit opt-in",
-  optInOffered !== classBoardShown, optInOffered ? "opt-in offered" : "class board");
+const invitedToJoin = (await page.getByText(/Start or join a class/).count()) > 0;
+check("the board is a class you joined, or the way into one",
+  classBoardShown !== invitedToJoin, classBoardShown ? "class board" : "invited to join");
 
 // 4 — Review: a typed answer is checked, not self-graded.
 // Typing is only asked of a card that has been seen before — a brand-new card
@@ -150,7 +151,7 @@ for (let i = 0; i < 30 && !typedReached; i++) {
     // And nothing asks who was right: the verdict is the app's, and the button
     // under it acknowledges the correction rather than grading it.
     check("a miss offers one way on rather than four grades",
-      (await page.getByRole("button", { name: /Got it, next/ }).count()) === 1
+      (await page.getByRole("button", { name: /Got it/ }).count()) === 1
       && (await page.getByRole("button", { name: /^(Again|Hard|Easy)/ }).count()) === 0);
     break;
   }
@@ -182,7 +183,7 @@ if (rateable) {
   // Enter carries on from a miss or a first meeting, and 2 is "Got it" on a
   // flip card. Both grade, which is all undo needs to have something to take
   // back; pressing "3" blind used to answer a multiple-choice question instead.
-  if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+  if (await page.getByRole("button", { name: /Got it/ }).count()) {
     await page.keyboard.press("Enter");
   } else {
     await page.keyboard.press("2");

@@ -102,6 +102,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             it has to sit above both route groups — the offline fallback is
             reachable from either. */}
         <OfflineProvider>{children}</OfflineProvider>
+        {/*
+          NO ANALYTICS SCRIPT, BECAUSE /privacy SAYS THERE IS NONE.
+
+          Vercel Analytics was mounted here for every visitor of the hosted
+          build. It posts the path of each page opened, the referrer and a
+          derived visitor id to a company outside the European Economic Area,
+          and it reaches signed-in learners as readily as strangers. The
+          deployment's own notice says, in the section headed what is not
+          stored: "No analytics, no advertising identifiers, no third-party
+          trackers", and the generated recipients list, which exists so a
+          reader is told which companies see what, never named Vercel. Two of
+          the three could have been changed to make the third true. This app
+          is for people whose data is the reason they are careful, and
+          /api/metrics already answers whether anybody comes back, from this
+          deployment's own database, which is what the notice describes.
+        */}
       </body>
     </html>
   );

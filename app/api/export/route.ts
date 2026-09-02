@@ -28,7 +28,7 @@ export async function GET() {
       // Says which limit was reached. The old wording, "that backup is already
       // on its way", describes a request in flight, so somebody who had taken
       // six today would wait for a download that was never coming.
-      "You have taken six backups in the last hour, which is the limit. Your data is safe and nothing has changed; try again a little later.",
+      "You have taken six backups in the last hour, which is the limit. Your data is safe and nothing has changed. Try again a little later.",
     );
   }
 
@@ -123,6 +123,15 @@ export async function GET() {
     headers: {
       "content-type": "application/json",
       "content-disposition": `attachment; filename="kodukeel-backup-${date}.json"`,
+      /*
+        Every review, every conversation with Anu and every exam composition
+        this learner has written, in one response at one URL. It carried no
+        freshness directive at all, so a shared cache in front of the app with
+        a default TTL for a 200 would have been free to hand it to the next
+        request. `private, no-store` and a `Cookie` vary say who it belongs to.
+      */
+      "cache-control": "private, no-store",
+      vary: "Cookie",
     },
   });
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { gradedLemmas, lemmaCountsByLevel } from "@/lib/dict/facts";
 import { caseByKey } from "@/lib/estonian/cases";
 import { caseAccuracy } from "@/lib/stats/history";
 import { buildPaper, type PoolWord, type Paper } from "@/lib/exam/paper";
@@ -70,9 +71,17 @@ export async function examPool(ownerId: string, level: ExamLevel): Promise<PoolW
   const cards = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { in: lexemes.map((l) => l.id) } },
     select: { id: true, lexemeId: true },
+    // Ordered for the same reason the pool above is. A word usually has two
+    // cards in a deck, recognition and production, and answering in the exam
+    // grades one of them (ADR-016). Which one was whichever Postgres returned
+    // last, so the paper built to mark a sitting could name a different card
+    // from the one the sitting was built with. The first by id, every time.
+    orderBy: { id: "asc" },
   });
   const cardFor = new Map<string, string>();
-  for (const card of cards) if (card.lexemeId) cardFor.set(card.lexemeId, card.id);
+  for (const card of cards) {
+    if (card.lexemeId && !cardFor.has(card.lexemeId)) cardFor.set(card.lexemeId, card.id);
+  }
 
   return lexemes.map((lexeme) => ({
     lexemeId: lexeme.id,
@@ -130,8 +139,14 @@ export async function readinessSignals(
   const [snapshot, byLevel, knownRows, matureReviews, caseReviews, cardTypeRows, attempts, placed] =
     await Promise.all([
       known ?? deckSnapshot(ownerId),
-      prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
-      prisma.lexeme.findMany({ select: { lemma: true, cefr: true } }),
+      /*
+        Both of these are facts about the shared dictionary rather than about
+        the learner waiting for the page, and the second is every row in it.
+        They are read once per instance per minute now instead of once per
+        render: see lib/dict/facts.ts for what that trades.
+      */
+      lemmaCountsByLevel(),
+      gradedLemmas(),
       /*
         The most recent twenty thousand, not an arbitrary twenty thousand.
 
@@ -169,9 +184,9 @@ export async function readinessSignals(
     ]);
 
   const vocabulary = emptyVocabulary();
-  for (const row of byLevel) {
-    if (!row.cefr || !(row.cefr in vocabulary)) continue;
-    vocabulary[row.cefr as ExamLevel].available = row._count;
+  for (const [cefr, count] of byLevel) {
+    if (!(cefr in vocabulary)) continue;
+    vocabulary[cefr as ExamLevel].available = count;
   }
   for (const row of knownRows) {
     if (!row.cefr || !(row.cefr in vocabulary)) continue;

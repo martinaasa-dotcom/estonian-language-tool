@@ -1,9 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { Check, Trash2 } from "lucide-react";
-import { deleteTask, toggleTask } from "@/app/actions";
-import { Chip } from "@/components/ui";
+import { Check } from "lucide-react";
+import { toggleTask } from "@/app/actions";
 import { bucketFor } from "@/lib/ux/agenda";
 import { dayClock } from "@/lib/time/day";
 
@@ -12,7 +11,6 @@ export interface TaskView {
   title: string;
   tag: string;
   completed: boolean;
-  classWeek: number | null;
   dueAt: string | null;
 }
 
@@ -24,7 +22,7 @@ const TAG_LABEL: Record<string, string> = {
   SPEAKING: "Speaking",
 };
 
-export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boolean }) {
+export function TaskRow({ task }: { task: TaskView }) {
   const [pending, start] = useTransition();
   const due = task.dueAt ? new Date(task.dueAt) : null;
   /*
@@ -75,7 +73,6 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ color: "var(--ink-3)" }}>
           <span>{TAG_LABEL[task.tag] ?? task.tag}</span>
-          {task.classWeek !== null && <span>Week {task.classWeek}</span>}
           {due && (
             <span style={{ color: overdue ? "var(--again-ink)" : undefined }}>
               {overdue ? "Overdue · " : "Due "}
@@ -85,19 +82,7 @@ export function TaskRow({ task, showDelete }: { task: TaskView; showDelete?: boo
         </div>
       </div>
 
-      {overdue && <Chip tone="again">Late</Chip>}
 
-      {showDelete && (
-        <button
-          type="button"
-          onClick={() => start(() => void deleteTask(task.id))}
-          aria-label={`Delete task "${task.title}"`}
-          className="tap-tint shrink-0 rounded-md p-1.5"
-          style={{ color: "var(--ink-3)" }}
-        >
-          <Trash2 size={15} aria-hidden />
-        </button>
-      )}
     </li>
   );
 }

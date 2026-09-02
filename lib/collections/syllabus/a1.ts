@@ -18,7 +18,7 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Greet someone, thank them, apologise, and say you do not understand.",
-    blurb: "The twenty phrases that get you through a first conversation without grammar.",
+    blurb: "The phrases that get you through a first conversation without grammar.",
     grammar: ["politeness"],
     cardTypes: ["RECOGNITION", "PRODUCTION"],
     words: [
@@ -85,12 +85,23 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Count, give your phone number, say a price and tell someone your age.",
-    blurb: "Counting is where the partitive first bites: kaks raamatut, not kaks raamat.",
+    blurb: "Counting is where the partitive first bites: kaks raamatut, not kaks raamat. The teens end in -teist and the tens in -kümmend, and two of each is the whole pattern.",
     grammar: ["numerals", "partitive"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["inimesed"],
     words: [
+      /*
+        The can-do says "give your phone number, say a price and tell someone
+        your age", and the list stopped at ten and then jumped to a hundred, so
+        a teacher checking the unit against the promise on its own page finds
+        the gap on the first screen. Zero, two teens and two tens is what a
+        class actually teaches: the pattern is `-teist` and `-kümmend`, and
+        somebody who has met two of each has met the rule. Each of these is a
+        request rather than a fact, and the harvest drops and reports any that
+        Ekilex will not confirm.
+      */
       ["number", "number"],
+      ["null", "zero"],
       ["üks", "one"],
       ["kaks", "two"],
       ["kolm", "three"],
@@ -101,6 +112,11 @@ export const A1 = [
       ["kaheksa", "eight"],
       ["üheksa", "nine"],
       ["kümme", "ten"],
+      ["üksteist", "eleven"],
+      ["kaksteist", "twelve"],
+      ["kakskümmend", "twenty"],
+      ["kolmkümmend", "thirty"],
+      ["vanus", "age"],
       ["sada", "hundred"],
       ["tuhat", "thousand"],
       ["esimene", "first", "ADJECTIVE"],
@@ -231,11 +247,16 @@ export const A1 = [
       ["tulema", "to come"],
       ["tegema", "to do, to make"],
       ["saama", "to get, to become"],
-      ["pidama", "to have to, to keep"],
+      ["pidama", "to have to, must", "VERB", 216079],
       ["sööma", "to eat"],
       ["jooma", "to drink"],
       ["tooma", "to bring"],
-      ["viima", "to take away"],
+      // Not "to take away": in English that means to remove, and Ekilex's own
+      // definition and all three stored sentences are about taking somebody or
+      // something somewhere ("Isa viis hommikul lapsed kooli"). The unit pairs
+      // it with tooma, which is the other direction of the same act, and "take
+      // away" points a beginner at ära viima instead.
+      ["viima", "to take (somewhere), to carry"],
       ["andma", "to give"],
       ["võtma", "to take"],
       ["panema", "to put"],
@@ -366,6 +387,16 @@ export const A1 = [
       ["taskurätik", "handkerchief"],
       ["vöö", "belt"],
       ["riie", "cloth, fabric"],
+      /*
+        "Shop for clothes by size" needs a word for size and a word for
+        trousers, and this unit had neither: it taught a handkerchief and a
+        belt, which Ekilex rates B1, and left out the two garments a beginner
+        buys first. Requests, checked by the harvest like every other lemma.
+      */
+      ["suurus", "size"],
+      ["püksid", "trousers"],
+      ["kampsun", "jumper, sweater"],
+      ["saabas", "boot"],
     ],
   }),
 
@@ -459,6 +490,255 @@ export const A1 = [
       ["kohvik", "café"],
       ["restoran", "restaurant"],
       ["hotell", "hotel"],
+      /*
+        The can-do promises "understand the directions you are given", and
+        neither this unit nor Kohasõnad had a word for left, right or straight
+        on. Somebody who has met every building in the town centre and cannot
+        follow "vasakule, siis otse" has not been taught to follow directions.
+        Requests, like every other lemma here.
+      */
+      ["vasak", "left", "ADJECTIVE"],
+      /*
+        The adverbs, not the adjective, because that is what a direction is
+        given with: "vasakul, siis otse". `parem` was requested first and came
+        back as Ekilex 213895, whose note and all four sentences are the
+        comparative of `hea`, better: the homonym fault this whole pass is
+        about, made while fixing it. `paremal` has no such twin.
+      */
+      ["vasakul", "on the left", "ADVERB"],
+      ["paremal", "on the right", "ADVERB"],
+      ["otse", "straight on", "ADVERB"],
+      ["edasi", "onwards, further", "ADVERB"],
+      ["tagasi", "back", "ADVERB"],
+    ],
+  }),
+
+  /*
+    THE WORDS EVERY SENTENCE IS MADE OF, WHICH THE COURSE HAD LEFT OUT.
+
+    Fourteen units of nouns, verbs and adjectives, and no unit for the words
+    between them: nobody asking "kes?" or "millal?" or looking up "täna" or
+    "peal" found anything, and two of the twelve months were missing from the
+    dictionary altogether. These six are appended after the fourteen so that
+    the first three units at A1, which is what first run builds a deck from,
+    stay what they were. Every lemma is still a request the harvest either
+    honours or reports, and a pronoun is harvested as a nominal because it
+    declines like one: `kes`, `kelle`, `keda`, and the case table follows.
+  */
+  unit({
+    id: "kusisonad",
+    title: "Küsisõnad",
+    subtitle: "Question words",
+    icon: "CircleHelp",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Ask who, what, where, when, why and how, and follow the question when it comes back.",
+    blurb: "Every conversation is a question first. These are the words it starts with.",
+    grammar: ["word-order"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
+    requires: ["tervitused"],
+    words: [
+      ["kes", "who", "PRONOUN"],
+      ["mis", "what", "PRONOUN"],
+      ["kus", "where", "ADVERB"],
+      ["kuhu", "where to", "ADVERB"],
+      ["kust", "where from", "ADVERB"],
+      ["millal", "when", "ADVERB"],
+      ["miks", "why", "ADVERB"],
+      ["kuidas", "how", "ADVERB"],
+      ["kas", "whether (opens a yes or no question)", "ADVERB"],
+      ["milline", "which, what kind of", "PRONOUN"],
+      ["kumb", "which of the two", "PRONOUN"],
+      ["mitu", "how many", "PRONOUN"],
+      ["palju", "much, many, a lot", "ADVERB"],
+      ["kui", "how, as, if, than", "ADVERB"],
+    ],
+  }),
+
+  unit({
+    id: "asesonad",
+    title: "Asesõnad",
+    subtitle: "Pronouns",
+    icon: "Users",
+    level: "A1",
+    module: "Esimesed sammud",
+    canDo: "Say I, you, he, we and they, point at this and that, and put each in the case the sentence needs.",
+    blurb: "Six persons and a pointer. They decline like nouns, and the short forms are what you hear.",
+    grammar: ["nominative", "genitive", "partitive"],
+    // No case cards from the seed alone: a pronoun's everyday case forms are
+    // the short ones (`mulle`, `mul`), which no rule over the genitive reaches,
+    // and a card answering `minule` would mark the form everybody says wrong.
+    // Ekilex records both, so an enriched entry shows the pair on its table.
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
+    requires: ["inimesed"],
+    words: [
+      ["mina", "I", "PRONOUN"],
+      ["sina", "you (one person)", "PRONOUN"],
+      ["tema", "he, she", "PRONOUN"],
+      ["meie", "we", "PRONOUN"],
+      ["teie", "you (several people, or one politely)", "PRONOUN"],
+      ["nemad", "they", "PRONOUN"],
+      ["see", "this, it", "PRONOUN"],
+      ["too", "that (one over there)", "PRONOUN"],
+      ["ise", "self, myself, yourself", "PRONOUN"],
+      ["keegi", "somebody, anybody", "PRONOUN"],
+      ["miski", "something, anything", "PRONOUN"],
+      ["kõik", "all, everything, everybody", "PRONOUN"],
+      ["igaüks", "everyone, each one", "PRONOUN"],
+      ["mõni", "some, a few", "PRONOUN"],
+      ["iga", "every, each", "PRONOUN", 171378],
+    ],
+  }),
+
+  unit({
+    id: "millal",
+    title: "Millal ja kui tihti",
+    subtitle: "When, and how often",
+    icon: "Clock",
+    level: "A1",
+    module: "Igapäevaelu",
+    canDo: "Say when something happens and how often, from today to hardly ever.",
+    blurb: "No case endings at all: twenty adverbs that carry half of every plan.",
+    grammar: ["time-expressions"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
+    requires: ["aeg"],
+    words: [
+      ["täna", "today", "ADVERB"],
+      ["homme", "tomorrow", "ADVERB"],
+      ["eile", "yesterday", "ADVERB"],
+      ["ülehomme", "the day after tomorrow", "ADVERB"],
+      ["üleeile", "the day before yesterday", "ADVERB"],
+      ["nüüd", "now", "ADVERB"],
+      ["praegu", "right now, at the moment", "ADVERB"],
+      ["kohe", "at once, straight away", "ADVERB"],
+      ["varsti", "soon", "ADVERB"],
+      ["hiljem", "later", "ADVERB"],
+      ["alati", "always", "ADVERB"],
+      ["tihti", "often", "ADVERB"],
+      ["sageli", "often, frequently", "ADVERB"],
+      ["harva", "rarely, seldom", "ADVERB"],
+      ["mõnikord", "sometimes", "ADVERB"],
+      ["kunagi", "ever, at some time; never (with a negative)", "ADVERB"],
+      ["juba", "already", "ADVERB"],
+      ["veel", "still, yet, more", "ADVERB"],
+      ["jälle", "again", "ADVERB"],
+      ["ammu", "long ago, for a long time", "ADVERB"],
+    ],
+  }),
+
+  unit({
+    id: "kohasonad",
+    title: "Peal, all, ees, taga",
+    subtitle: "Where things are",
+    icon: "Compass",
+    level: "A1",
+    module: "Maailm ümber",
+    canDo: "Say what is on, under, in front of, behind and next to what.",
+    blurb: "Most of these come after the noun and put it in the genitive: laua peal, not peal laud. A few go in front and ask for another case, and this unit has both.",
+    /*
+      All four cases this unit's twenty words actually take, not the two it
+      used to name. Fifteen of them take the genitive; koos takes the
+      comitative, ilma the abessive, and enne, pärast and mööda the partitive.
+      A beginner following a unit that named only the genitive writes "ilma
+      raha" and "koos sõbra", and the app's own dictionary contradicts the
+      unit on the rektsioon of the very words it links to. Each id resolves to
+      a case page through `grammarPoint`, so the chips say the Estonian name
+      and the question it answers.
+    */
+    grammar: ["genitive", "adessive", "partitive", "comitative", "abessive"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
+    requires: ["kus-ja-kuhu"],
+    words: [
+      ["peal", "on, on top of", "ADVERB"],
+      ["all", "under, below", "ADVERB"],
+      ["ees", "in front of", "ADVERB"],
+      ["taga", "behind", "ADVERB"],
+      ["kõrval", "next to, beside", "ADVERB"],
+      ["juures", "at, by, with (a person or a place)", "ADVERB"],
+      ["vahel", "between", "ADVERB"],
+      ["sees", "inside", "ADVERB"],
+      ["keskel", "in the middle of", "ADVERB"],
+      ["vastas", "opposite", "ADVERB"],
+      ["ümber", "around", "ADVERB"],
+      ["üle", "over, across", "ADVERB"],
+      ["läbi", "through", "ADVERB"],
+      ["koos", "together with", "ADVERB"],
+      ["ilma", "without", "ADVERB"],
+      ["enne", "before", "ADVERB"],
+      ["pärast", "after", "ADVERB"],
+      ["lähedal", "near, close to", "ADVERB"],
+      ["kohal", "above, over", "ADVERB"],
+      ["mööda", "along", "ADVERB"],
+    ],
+  }),
+
+  unit({
+    id: "kuud",
+    title: "Kuud ja tähtpäevad",
+    subtitle: "Months and the days that matter",
+    icon: "CalendarRange",
+    level: "A1",
+    module: "Igapäevaelu",
+    canDo: "Name the months, give a date, and say when your birthday is.",
+    blurb: "Twelve months, all in the inessive when something happens in them: jaanuaris, mais.",
+    grammar: ["inessive", "time-expressions"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
+    requires: ["aeg"],
+    words: [
+      ["jaanuar", "January"],
+      ["veebruar", "February"],
+      ["märts", "March"],
+      ["aprill", "April"],
+      ["mai", "May"],
+      ["juuni", "June"],
+      ["juuli", "July"],
+      ["august", "August"],
+      ["september", "September"],
+      ["oktoober", "October"],
+      ["november", "November"],
+      ["detsember", "December"],
+      ["kuupäev", "date"],
+      ["sünnipäev", "birthday"],
+      ["tähtpäev", "anniversary, special day"],
+      ["jaanipäev", "Midsummer Day"],
+      ["nädalavahetus", "weekend"],
+      ["puhkepäev", "day off"],
+    ],
+  }),
+
+  unit({
+    id: "riigid",
+    title: "Riigid ja rahvad",
+    subtitle: "Countries and peoples",
+    icon: "Landmark",
+    level: "A1",
+    module: "Maailm ümber",
+    canDo: "Say where you are from, what you are, and which language you speak.",
+    blurb: "The neighbours first. A nationality ends in -lane. Eesti and Soome take the inside cases, Eestist; the countries ending in -maa take the outside ones, the way the islands do: Saksamaal, Saksamaale, Saksamaalt.",
+    grammar: ["elative", "nominative"],
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
+    requires: ["kus-ja-kuhu"],
+    words: [
+      ["Eesti", "Estonia"],
+      ["Soome", "Finland"],
+      ["Läti", "Latvia"],
+      ["Venemaa", "Russia"],
+      ["Rootsi", "Sweden"],
+      ["Saksamaa", "Germany"],
+      ["Inglismaa", "England"],
+      ["Ameerika", "America"],
+      ["Euroopa", "Europe"],
+      ["eestlane", "an Estonian"],
+      ["soomlane", "a Finn"],
+      ["lätlane", "a Latvian"],
+      ["venelane", "a Russian"],
+      ["rootslane", "a Swede"],
+      ["sakslane", "a German"],
+      ["inglane", "an English person"],
+      ["ameeriklane", "an American"],
+      ["välismaalane", "foreigner"],
+      ["kodumaa", "homeland"],
+      ["rahvus", "nationality"],
     ],
   }),
 ] as const;

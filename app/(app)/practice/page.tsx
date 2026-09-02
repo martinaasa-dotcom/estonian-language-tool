@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ClipboardCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
@@ -126,7 +126,7 @@ export default async function PracticePage() {
             tone="accent"
             title="Review"
             subtitle="The daily loop"
-            body="Everything due, scheduled by FSRS."
+            body="Everything due, timed to when you are about to forget."
             meta={dailyMeta}
             primary={snapshot.dueCount > 0}
           />

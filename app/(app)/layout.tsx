@@ -2,7 +2,9 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Shortcuts } from "@/components/Shortcuts";
+import { createHash } from "node:crypto";
 import { Sidebar } from "@/components/Sidebar";
+import { DeviceOwner } from "@/components/DeviceOwner";
 import { Wash } from "@/components/ui";
 import { AnuFab } from "@/components/anu/AnuFab";
 import { TimeZoneSync } from "@/components/TimeZoneSync";
@@ -12,6 +14,8 @@ import { requireUserId } from "@/lib/auth/session";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { letterBarFrom } from "@/lib/ux/letterBar";
+import { AudioPrefsProvider } from "@/components/AudioPrefs";
+import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
 
 // Not cached at build time: `configured` below is read from the environment,
 // and a notice baked in from the build machine's environment describes
@@ -41,14 +45,27 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     See lib/ux/letterBar.ts for why the bar is a question at all, and
     lib/time/day.ts for what the zone is worth.
   */
+  const ownerId = await requireUserId();
   const settings = await readSettings(
-    await requireUserId(),
-    [SETTING_KEYS.letterBar, SETTING_KEYS.timeZone],
+    ownerId,
+    [
+      SETTING_KEYS.letterBar, SETTING_KEYS.timeZone,
+      SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
+    ],
   );
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
   const storedZone = settings[SETTING_KEYS.timeZone] ?? null;
+  // How Estonian is read aloud, published once for every speaker button and
+  // every round inside the shell. See components/AudioPrefs.tsx.
+  const audio = {
+    voice: voiceFrom(settings[SETTING_KEYS.ttsVoice]),
+    autoplay: autoplayFrom(settings[SETTING_KEYS.autoplayAudio]),
+    sounds: feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]),
+  };
   return (
+    <AudioPrefsProvider value={audio}>
     <LetterBarScope value={letters} dismissible>
+      <DeviceOwner owner={ownerDigest(ownerId)} />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-full focus:px-4 focus:py-2"
@@ -73,7 +90,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Below `md:` this is a column and the question never arose, which is
           why it took measuring at 768 to see it at all.
         */}
-        <main id="main" className="dock-pad min-w-0 flex-1">{children}</main>
+        {/*
+          A GUTTER FOR THE BUTTON THAT FLOATS OVER THIS COLUMN.
+
+          Anu's button is fixed 1rem from the right and 56px wide, so its left
+          edge is at 1208 on a 1280 window while the content column ends at
+          1232, and at 768 the column ends at 728 with the button starting at
+          696. It scrolled over the right-hand cards on Today and over the far
+          right of every case row. From the width the rail appears at up to the
+          point the window is wide enough that the column no longer reaches,
+          the column gives it room instead.
+        */}
+        <main id="main" className="dock-pad min-w-0 flex-1 md:pr-[5rem] 2xl:pr-0">{children}</main>
       </div>
       {/* The browser's own pull to refresh went with `overscroll-behavior-y:
           none` in globals.css, and there is no setting that keeps one and not
@@ -87,11 +115,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Offered once, inside the app only: someone still reading the landing
           page has not decided they want this on their home screen. */}
       <InstallPrompt />
-      <AnuFab
-        configured={chain.length > 0}
-        readerCanConfigure={!supabaseConfigured()}
-        plannedLabel={chain[0] ? `${chain[0].label} · ${chain[0].model}` : null}
-      />
+      {/* No planned label: the panel names the model that answered and makes no
+          prediction about one that has not. `/tutor` has the room for both. */}
+      <AnuFab configured={chain.length > 0} readerCanConfigure={!supabaseConfigured()} />
     </LetterBarScope>
+    </AudioPrefsProvider>
   );
+}
+
+/**
+ * What the browser is told about who is using it: enough to notice a change
+ * of account, and nothing that names one. See `components/DeviceOwner.tsx`.
+ */
+function ownerDigest(ownerId: string): string {
+  return createHash("sha256").update(ownerId).digest("hex").slice(0, 16);
 }

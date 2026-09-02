@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, BadgeCheck, CalendarClock, CircleAlert, ClipboardCheck, Clock, Compass, Info, Lightbulb, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { goalsFor } from "@/lib/progress/assessment";
@@ -13,7 +13,7 @@ import { formatDateTime } from "@/lib/time/clock";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
 
-export const metadata = { title: "Mock state exam" };
+export const metadata = { title: "Mock exam" };
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +50,6 @@ export default async function ExamPage() {
     ? readiness.levels.find((l) => l.level === target.band)
     : undefined;
   const weeks = weeksUntil(goals.deadline, new Date());
-  const weakest = targetLevel
-    ? [...SKILLS].sort((a, b) => targetLevel.expected[a] - targetLevel.expected[b])[0]
-    : undefined;
 
   // The words live beside the tier in `readiness.ts`, because Today prints the
   // same percentage and two copies of "what this number is worth" is how one
@@ -62,12 +59,15 @@ export default async function ExamPage() {
   return (
     <Page
       eyebrow="Mock examination"
-      title="Sit the state exam, before you sit the state exam"
-      lead={
-        "Estonia examines at A2, B1, B2 and C1. Each paper is four parts, sixty percent to pass, " +
-        "and a zero in any one part fails the whole thing. These are imitations of those papers, " +
-        "built out of the dictionary, plus two levels the state does not examine at all."
-      }
+      title="Practise the state exam, before you sit the real one"
+      /*
+        278 characters, in four literals joined with `+`, which is how it got
+        past the 95-character ceiling on a page lead: the sweep measured each
+        fragment. It also said "two extra levels the state doesn't test" over a
+        list with one, and the pass rule it spent a sentence on is the hint on
+        the section that lists the papers, three screens down.
+      */
+      lead="Estonia examines at A2, B1, B2 and C1. These are practice papers, built from the dictionary."
     >
       {target && targetLevel && (
         <section className="mb-10">
@@ -94,15 +94,24 @@ export default async function ExamPage() {
                 </p>
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                   {weeks === null
-                    ? "You set no deadline for it. "
+                    ? "You haven't set a deadline. "
                     : weeks === 0
-                      ? "The date you set has arrived. "
-                      : `${weeks} ${weeks === 1 ? "week" : "weeks"} until the date you set. `}
+                      ? "Your deadline is here. "
+                      : `${weeks} ${weeks === 1 ? "week" : "weeks"} left. `}
+                  {/*
+                    ONE OPINION PER QUESTION. This named the lowest of the four
+                    predictions and printed its percentage, which for a part
+                    nobody has ever attempted is a zero: "Speaking is holding
+                    you back, we predict 0 percent" to somebody who had never
+                    been asked to speak. `readiness.gaps` already ranks what to
+                    do about it and knows the difference between bad news and
+                    no news, so the card prints its first line.
+                  */}
                   {targetLevel.confidence >= PASS_PCT
-                    ? "We would put you through it today, on the evidence there is."
-                    : weakest
-                      ? `${SKILL_LABEL[weakest]} is the part standing in the way, predicted at ${targetLevel.expected[weakest]} percent against the sixty a pass needs.`
-                      : "There is not enough here yet to say."}
+                    ? "You'd pass it today, based on what we've seen so far."
+                    : readiness.gaps[0]
+                      ? `${readiness.gaps[0].title}. ${readiness.gaps[0].detail}`
+                      : "There isn't enough here yet to say."}
                 </p>
                 <p className="mt-3 flex flex-wrap items-center gap-3">
                   <ButtonLink href={`/exam/${target.band}`} variant="secondary" size="sm">
@@ -140,21 +149,21 @@ export default async function ExamPage() {
             <div className="min-w-[16rem] flex-1">
               <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>
                 {readiness.assessed
-                  ? `We would bet on you passing ${readiness.assessed} today.`
-                  : "We would not bet on any paper yet."}
+                  ? `We'd bet on you passing ${readiness.assessed} today.`
+                  : "We wouldn't bet on any paper yet."}
               </p>
               <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                 {!readiness.next
-                  ? "Every paper here is within reach, which is as far as this app can measure."
+                  ? "You could pass every paper here. That's as far as we can tell."
                   : readiness.assessed
-                    ? `The next one up is ${readiness.next}, and the gaps below are what stands between you and it.`
-                    : `${readiness.next} is the one to aim at first, and the gaps below are what stands between you and it.`}
+                    ? `${readiness.next} is next, and the gaps below are what's in your way.`
+                    : `${readiness.next} is the one to aim for first, and the gaps below are what's in your way.`}
               </p>
               {/*
                 A page that says "no level assessed yet" and offers no way to be
                 assessed is a dead end, and this one was: the figure it leads
                 with comes from the level check, and nothing on it said so or
-                said where to take one. Ten minutes against the three hours a
+                said where to take one. Half an hour against the three hours a
                 paper costs, so the difference is worth printing.
               */}
               <p className="mt-3 flex flex-wrap items-center gap-3">
@@ -163,7 +172,7 @@ export default async function ExamPage() {
                   {readiness.assessed ? "Check your level again" : "Take the level check"}
                 </ButtonLink>
                 <span className="text-sm" style={{ color: "var(--ink-3)" }}>
-                  About ten minutes, and it is what this figure is built on.
+                  About half an hour. It&apos;s what this number comes from.
                 </span>
               </p>
             </div>
@@ -172,7 +181,7 @@ export default async function ExamPage() {
       </section>
 
       <section className="mb-10">
-        <SectionTitle hint={`${PASS_PCT} percent to pass, and no part may score nothing`}>
+        <SectionTitle hint={`${PASS_PCT} percent to pass, and no part can be a zero`}>
           Every paper, and how likely you are to pass it
         </SectionTitle>
         <ul className="grid gap-4 md:grid-cols-2">
@@ -222,12 +231,18 @@ export default async function ExamPage() {
                         {SKILL_LABEL[skill]}
                       </dt>
                       <dd>
-                        <Meter
-                          pct={level.expected[skill]}
-                          label={`${SKILL_LABEL[skill]} predicted at ${level.expected[skill]} percent`}
-                          tone={level.expected[skill] >= PASS_PCT ? "var(--mint)" : "var(--peach)"}
-                          height={6}
-                        />
+                        {level.seen[skill] ? (
+                          <Meter
+                            pct={level.expected[skill]}
+                            label={`${SKILL_LABEL[skill]} predicted at ${level.expected[skill]} percent`}
+                            tone={level.expected[skill] >= PASS_PCT ? "var(--mint)" : "var(--peach)"}
+                            height={6}
+                          />
+                        ) : (
+                          <span className="text-xs" style={{ color: "var(--ink-3)" }}>
+                            nothing measured yet
+                          </span>
+                        )}
                       </dd>
                     </div>
                   ))}
@@ -255,7 +270,7 @@ export default async function ExamPage() {
           <SectionTitle>What you are already good at</SectionTitle>
           {readiness.strengths.length === 0 ? (
             <Note tone="neutral">
-              Nothing to report yet. Review for a week or two and this fills in.
+              Nothing here yet. Review for a week or two and it will start to fill in.
             </Note>
           ) : (
             <ul className="grid gap-3">
@@ -277,7 +292,7 @@ export default async function ExamPage() {
         <section>
           <SectionTitle>What is standing in the way</SectionTitle>
           {readiness.gaps.length === 0 ? (
-            <Note tone="good">Nothing this app can find. Book the paper.</Note>
+            <Note tone="good">Nothing here is holding you back. Go sit the paper.</Note>
           ) : (
             <ul className="grid gap-3">
               {readiness.gaps.map((item) => (
@@ -310,8 +325,8 @@ export default async function ExamPage() {
         {attempts.length === 0 ? (
           <Note tone="neutral">
             <ClipboardCheck size={14} className="mr-1.5 inline" aria-hidden />
-            None yet. A paper you sit is worth more to the estimate above than a month of flashcards,
-            because it is the only thing here that measures all four parts at once.
+            None yet. One paper tells us more than a month of flashcards, since it&apos;s the only
+            thing here that tests all four parts at once.
           </Note>
         ) : (
           <ul className="grid gap-2">
@@ -343,25 +358,26 @@ export default async function ExamPage() {
         </p>
         <ul className="mt-2 grid gap-1.5 text-sm leading-relaxed" style={{ color: "var(--sky-ink)" }}>
           <li>
-            The frame is real: the parts, the minutes, the points, the sixty percent, and the rule
-            that a zero anywhere fails the paper. Sit one and you meet the same clock and the same
-            arithmetic.
+            The structure is real: the parts, the timing, the points, the sixty percent to pass, and
+            a zero on any part failing you, just like the real exam. Sit one of these and
+            you&apos;ll know what the real exam feels like.
           </li>
           <li>
-            The questions are not the real questions. Every Estonian word in them came out of the
-            dictionary, because this app never writes Estonian, so the reading part is built from
-            recorded sentences rather than a magazine article and the examiner is a microphone.
+            The questions themselves aren&apos;t the real ones, but every word in them is real Estonian,
+            straight from the dictionary. The reading part uses real recorded sentences instead of a
+            magazine article, and in the speaking part a microphone stands in for the examiner.
           </li>
           <li>
             <CircleAlert size={13} className="mr-1 inline" aria-hidden />
-            Nothing scores your pronunciation. There is no verified Estonian speech recogniser
-            available here, so you record yourself, listen back and mark yourself against the
-            criteria, and the paper says as much on the result.
+            Nothing here scores your pronunciation. We tested a speech recogniser and it
+            wasn&apos;t accurate enough, so instead you record yourself, listen back, and judge how
+            you did. You&apos;ll see this note again on your result.
           </li>
           <li>
             <Lightbulb size={13} className="mr-1 inline" aria-hidden />
-            The A1 paper is ours. The state has never set one at that level, so it is built to the
-            shape of the A2 paper, one step easier, for a first sitting that is meant to be passable.
+            The A1 paper is ours, not the state&apos;s. Estonia doesn&apos;t test at that level, so
+            we made it like the A2 paper but a little easier, so your first attempt is one you can
+            pass.
           </li>
         </ul>
       </Card>

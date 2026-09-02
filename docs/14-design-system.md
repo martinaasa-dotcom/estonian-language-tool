@@ -133,7 +133,7 @@ in the other one, and the next step asks the same question the other way round a
 over. Weight and size are what a heading is told apart by now, which is what they were already
 doing on every screen that had no Estonian on it.
 
-**Eleven steps, and nothing between them.** The app previously used twenty-eight distinct sizes,
+**Twelve steps, and nothing between them.** The app previously used twenty-eight distinct sizes,
 13px and 13.5px and 14px appearing inside one card, each chosen once and never compared with the
 others. A reader does not see half a pixel; they see a page that will not settle.
 
@@ -149,7 +149,22 @@ others. A reader does not see half a pixel; they see a page that will not settle
 | `text-2xl` | 27 | the number a screen is about |
 | `text-3xl` | 32 | page title |
 | `text-4xl` | 40 | display |
-| `text-5xl` / `6xl` | 52 / 68 | landing hero |
+| `text-5xl` / `6xl` / `7xl` | 52 / 68 / 88 | landing hero |
+
+**The twelfth is the landing hero and nothing else.** 68px was the top of the scale and it was
+too small for the job: filling the window with the hero and centring the
+column in it left a 363px block of copy inside an 877px box, which reads as a postage stamp in a
+field rather than as a page with room to breathe. Air is generous around something with the
+weight to deserve it. So the display steps once more, the paragraph under it goes from 17 to 19,
+and the block comes out about two thirds of the window instead of a third.
+
+88px is taken on **width and height together**, at 768 and 740, which is the part a breakpoint
+alone gets wrong. The width is what the longest line needs, since "Estonian that" is 536px at
+this size against the 704px the column has at 768; gating it at `lg` instead left a portrait
+tablet with 216px of air over a headline two steps too small for it. The height is what the
+column needs: 88px over a 19px paragraph is about 490px of copy, and a 1024x600 laptop has 397px
+to put it in, so the hero would outgrow the window and take its own peek band under the fold.
+Measured at the boundary: 740 leaves 64px over the headline, 739 falls back to 68px.
 
 11.5px is a floor, not a suggestion: below it an uppercase label stops being readable on a phone
 held at arm's length in the evening, which is when this app is actually used. `.label-xs` sits on
@@ -211,23 +226,44 @@ Small, physical, and never blocking:
   watches it arrive.
 - `.fade-up`, `.pop-in`: entrances for content that has just arrived (a flipped card, a summary).
 - `.float`: the mascot's bob, six seconds up and down.
-- `.drift`: the landing page's four letters. The same idea with nothing shared between them: each
-  wanders six or seven pixels and about two degrees on its own period, between 7.5 and 11 seconds,
-  so the four are never in step. It drifts inward only, since a letter hangs in the page's own
-  padding and an outward swing of three pixels is a letter clipped against the edge of the window.
+- `.drift` and `.letter-lean`: the four letters tucked over the sides of the landing page's case
+  explorer, and nowhere else. They belong to that card because its contents are the letters
+  themselves; one drifting in the margin beside a headline is a decoration that has come loose.
+  Four characters rather than one wander, declared in `lib/ux/letterMotion.ts` and drawn by
+  `components/LetterTile.tsx`: one ambles, one crouches and springs, one hangs and swings, one
+  rolls. No two share a period, so a set of them falls back into step about once an hour.
+  **The travel goes along the edge a letter hangs off, not across it.** A letter tucked over the
+  top of a card has about four pixels before it is sitting on a word and most of the card's width
+  sideways, so the one that used to wander six pixels towards the card now slides forty along it
+  and crosses the edge by one. What the small budget buys instead is the rock and the squash, and
+  `room` scales both per placement: a rotated square is wider than its side, so eight degrees on
+  the tightest letter costs more than fifteen on the one with a gutter under it.
+  **They answer a pointer.** Coming near one slides it towards the cursor along that same free axis
+  and settles it further onto the card, which is `leanFor()` and is the same rule as the wander:
+  either way along the edge, inward only across it. They stay `pointer-events-none`, so none of it
+  reaches a control underneath.
   The slant itself is a `rotate` property rather than a keyframe, so it survives
   `prefers-reduced-motion` turning every animation here into 0.01ms; the wander rocks it around
-  that declared value. `scripts/test-design.mjs` steps each letter through twelve frames of its own
-  cycle, because the amplitude that makes this pleasant is a few pixels from the one that lifts a
+  that declared value, and the lean is `transform` on a wrapper, which is the one property left.
+  `scripts/test-design.mjs` steps each letter through twelve frames of its own cycle at three
+  widths, because the amplitude that makes this pleasant is a few pixels from the one that lifts a
   letter off the card or drops it on the button.
+- `.letter-key`: the six keys that type õ, ä, ö, ü, š and ž. The one place a letter is a control
+  rather than an ornament, so it grows under a pointer and shakes once on the way in. `.press`
+  still supplies the dip, so a key is one control with one set of states.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
-- The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pill that travels from the
-  place you left to the place you asked for, down the rail and across the phone bar. Borrowed from
-  Upside Lab's dock with its measurements intact, and three things carry it. Its leading edge sets
-  off before its trailing edge follows, so it stretches across the ground it covers and gathers
-  itself up on arrival, by a distance rather than by a fixed keyframe: one row up is 1.20x and the
-  length of the rail is 4.28x, measured. It runs as a transform animation handed to the compositor,
+- The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pane that says where you are,
+  down the rail and across the phone bar, and a second fainter one that says what you are reaching
+  for. Borrowed from Upside Lab's dock with its measurements intact.
+  **Whether the marker travels is a question about the input.** A thumb has nothing else to do while
+  a server answers, so the phone bar's pill slides from the cell you left to the cell you asked for.
+  A pointer has already arrived and its own pane has been following it down the column all along,
+  so the rail's marker does not travel at all: it is written straight to its resting geometry and is
+  simply there on the row you pressed. On the bar, where it does travel, its leading edge sets off
+  before its trailing edge follows, so it stretches across the ground it covers and gathers itself
+  up on arrival, by a distance rather than by a fixed keyframe: one cell of the phone bar is 1.40x,
+  measured. That runs as a transform animation handed to the compositor,
   never a transition on `top` or `left`, because those are laid out and painted on the main thread
   and the main thread is exactly what a page navigation is busy with. And it leaves on the press
   rather than on the page, since these pages are rendered on a server and the wait is real; a press
@@ -235,9 +271,14 @@ Small, physical, and never blocking:
   while a click on the cell ends the betting, since calling a bet off mid-navigation puts the pill
   back on the row you are leaving and then sends it out again. A bet that loses arrives rather than
   travels: reverting is a correction and not a journey.
-  A pointer drags a second pane on the same physics, which is the hover the rail never had: the
-  accent's softest tint, the row's words in the accent's ink, and the pill reaching 3px past the
-  row as a shadow spread, so a row under the pointer grows rather than merely tinting.
+  **Reaching and arriving are one object at two weights.** The pointer's pane was a second material
+  once, the accent's softest tint reaching 3px past the row with the words in the accent's ink, and
+  that made the two states of one row two different objects: a lavender pill where you were
+  pointing, a white card where you had clicked, and on the row you were already on the tint stuck
+  out round the card as a second outline. Both panes read one fill now, `--nav-marker-bg`, and the
+  marker's own `--nav-marker-shadow` is the whole difference, so pointing at a row previews pressing
+  it. What tells them apart is what a pane cannot say: the marked row is bold and its glyph wears
+  its own colour.
   The phone bar's capsule also breathes, three percent uniformly on both axes over 460ms with a
   slight undershoot; the rail does not, because a column that lurched beside the page it just
   changed would be arguing with a decision the reader has already made.
@@ -388,8 +429,7 @@ eleven behind one disclosure that opens itself whenever the current page is insi
 **Fold it, do not cut it.** The comparison table on the landing page is eight checkable claims
 against three real products, three of them ticks for somebody else, and deleting it to save scroll
 would have been the cheapest kind of tidying: it is the block that makes the rest checkable. It is
-behind its own summary now. The same applies to the walkthrough's tour, which is `/guide`, and to
-the plan's working, which is on `/assess`. Nothing that was true stopped being said; it stopped
+behind its own summary now. The same applies to the plan's working, which is on `/assess`. Nothing that was true stopped being said; it stopped
 being said in the way of somebody who has not decided yet.
 
 What none of this licenses is hiding a thing because a screen looks busy. The test is whether the

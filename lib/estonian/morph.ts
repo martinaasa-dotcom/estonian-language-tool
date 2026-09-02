@@ -107,7 +107,7 @@ export const VERB_GROUP_LABELS: Record<VerbSlot["group"], { en: string; et: stri
   PAST: { en: "Simple past", et: "lihtminevik" },
   CONDITIONAL: { en: "Conditional", et: "tingiv kõneviis" },
   IMPERATIVE: { en: "Imperative", et: "käskiv kõneviis" },
-  NON_FINITE: { en: "Infinitives and participles", et: "tegevusnimed" },
+  NON_FINITE: { en: "Infinitives and participles", et: "tegevusnimed ja kesksõnad" },
   OTHER: { en: "Other forms", et: "muud vormid" },
 };
 

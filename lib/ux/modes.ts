@@ -126,6 +126,13 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
     within: "/dictionary",
   },
   {
+    href: "/review/conjugation", title: "Conjugation", subtitle: "Fill the table", icon: "Repeat",
+    tone: "accent", group: "targeted", note: "Typed, six persons", within: "/grammar/topic/present-tense",
+    blurb:
+      "One verb, the first person given, the other five to type. Every form is checked against " +
+      "the dictionary, and the conditional joins in from B1.",
+  },
+  {
     href: "/review/clinic", title: "Leech clinic", subtitle: "What keeps failing", icon: "Stethoscope",
     tone: "blush", group: "targeted", note: "From your log",
     blurb:
@@ -143,6 +150,25 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
  * a fresh account, and Today shows the first `practiceTiles(stage)` of them.
  */
 export const QUICK_MODES = PRACTICE_MODES.filter((m) => m.group === "quick" && !m.within);
+
+/**
+ * The two doors offered on the first morning, before anything has been graded.
+ *
+ * Today shows two practice tiles at `arriving` and took them off the front of
+ * `QUICK_MODES`, which is Case Sprint and Match. Case Sprint is sixty seconds
+ * of case forms "drawn from the cards you are weakest on", offered to somebody
+ * who has answered nothing and has no weakest anything: it can only draw at
+ * random, and a timer is the wrong first impression of an app whose whole
+ * argument is that answering honestly beats answering fast.
+ *
+ * Match and Listening are the two that work on a deck with no history. Match
+ * is eight words and their meanings, which is a first sitting; Listening asks
+ * for a word with nothing written down, which is the thing a beginner in
+ * Tallinn actually cannot do yet and the reason they installed this.
+ */
+export const FIRST_DOORS = ["/review/match", "/review/listening"]
+  .map((href) => QUICK_MODES.find((m) => m.href === href))
+  .filter((m): m is PracticeMode => m !== undefined);
 
 /**
  * The drills for a named weakness, and where each is reached from.

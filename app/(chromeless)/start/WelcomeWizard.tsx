@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Compass, Loader2 } from "lucide-react";
-import { completeOnboarding, skipOnboarding } from "@/app/actions";
+import { completeOnboarding } from "@/app/actions";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel, minutesFor } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
@@ -13,11 +13,13 @@ import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
-import { DEADLINES, REASONS, TARGETS, deadlineFrom, type Goals } from "@/lib/assessment/goals";
+import { DEADLINES, REASONS, TARGETS, deadlineFrom, impliedTarget, reasonsToStored, type Goals } from "@/lib/assessment/goals";
 import { weeksToLearn } from "@/lib/assessment/plan";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
-import { WHAT_IT_IS_SHORT } from "@/lib/copy/tour";
 import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
+import {
+  DEFAULT_GLOSS_LANGUAGE, GLOSS_LANGUAGES, type GlossLanguage,
+} from "@/lib/collections/glossLanguage";
 
 /**
  * The deck a learner at one level starts with, sized by the server.
@@ -47,12 +49,23 @@ export interface StarterDeck {
   person can already do rather than by its code, since somebody who needs to
   pick a level is exactly somebody who does not know what B2 means.
 */
+/*
+  ONE VOICE, AND IT IS WHAT YOU CAN DO.
+
+  The first two were written as things ("Tere, aitäh, and not much else yet")
+  and the last three as the learner speaking ("I am able to comprehend and add
+  to most conversations"), so the list changed person halfway down on the
+  screen that decides somebody's year, ninety seconds into the app. The last
+  one also assumed a motive nobody had been asked about. Every row is now the
+  same shape as the first two, which is the shape CEFR itself uses: what you
+  can already do.
+*/
 const LEVELS = [
   { key: "A1", label: "Just starting", detail: "Tere, aitäh, and not much else yet." },
-  { key: "A2", label: "I get by", detail: "Shopping, ordering, the lihtminevik." },
-  { key: "B1", label: "Conversational", detail: "I can hold a conversation and read the news slowly." },
-  { key: "B2", label: "Confident", detail: "I follow a debate and want precision, not basics." },
-  { key: "C1", label: "Fluent", detail: "I work in Estonian and want to write it well." },
+  { key: "A2", label: "I get by", detail: "Shopping, online orders, simple sentences." },
+  { key: "B1", label: "Conversational", detail: "A clear conversation, and holding your own side of it." },
+  { key: "B2", label: "Confident", detail: "A meeting, and an article read without stopping." },
+  { key: "C1", label: "Fluent", detail: "Anything, near enough. Here for the shades of meaning." },
 ] as const;
 
 /**
@@ -114,9 +127,15 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
   const [step, setStep] = useState(0);
   const [name, setName] = useState(suggestedName);
   const [letters, setLetters] = useState<LetterBar>(DEFAULT_LETTER_BAR);
+  const [gloss, setGloss] = useState<GlossLanguage>(DEFAULT_GLOSS_LANGUAGE);
 
-  const [reason, setReason] = useState<string | null>(null);
+  // A set, because almost nobody has one reason: living here, an Estonian
+  // partner and a job where the meetings are in Estonian are three answers to
+  // one question and the app used to make somebody pick a favourite.
+  const [reasons, setReasons] = useState<string[]>([]);
   const [target, setTarget] = useState<Band | null>(null);
+  /** True once the learner has pressed a target themselves, which ends the offer. */
+  const [targetChosen, setTargetChosen] = useState(false);
   const [deadlineId, setDeadlineId] = useState<string>("1y");
   const [daysPerWeek, setDaysPerWeek] = useState(5);
 
@@ -133,24 +152,43 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
   const startBand = level === null || level === PRE_A1 ? "A1" : level;
 
   const goals: Goals = useMemo(() => ({
-    reason,
+    reason: reasonsToStored(reasons),
     target,
     deadline: deadlineFrom(DEADLINES.find((d) => d.id === deadlineId) ?? DEADLINES[4]!, new Date()),
     daysPerWeek,
     note: "",
-  }), [reason, target, deadlineId, daysPerWeek]);
+  }), [reasons, target, deadlineId, daysPerWeek]);
 
   const chooseLevel = (key: string) => {
     setEstimated(key);
     setMeasured(null);
   };
 
-  const chooseReason = (id: string) => {
-    setReason(id);
-    // The level a reason usually needs, offered rather than imposed: a learner
-    // who has not picked a target yet gets one, a learner who has keeps theirs.
-    const implied = REASONS.find((r) => r.id === id)?.implies ?? null;
-    setTarget((current) => current ?? implied);
+  /*
+    THE OFFERED GOAL FOLLOWS THE REASONS UNTIL SOMEBODY OVERRULES IT.
+
+    `setTarget((current) => current ?? implied)` was right while this was one
+    reason and is wrong for a set, because the *first* tick fills the target in
+    and every tick after it then finds one already there. Somebody choosing
+    citizenship and then work was offered B1 and kept it, which is the level
+    below the one their own answers ask for.
+
+    So the app's own suggestion is tracked separately from the learner's. Until
+    they press a target chip, the offer is the highest level any chosen reason
+    needs, and it moves with the set; the moment they press one, it is theirs
+    and nothing here touches it again.
+  */
+  const toggleReason = (id: string) => {
+    setReasons((all) => {
+      const next = all.includes(id) ? all.filter((r) => r !== id) : [...all, id];
+      if (!targetChosen) setTarget(impliedTarget(next));
+      return next;
+    });
+  };
+
+  const chooseTarget = (band: Band) => {
+    setTargetChosen(true);
+    setTarget(band);
   };
 
   /*
@@ -158,7 +196,6 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
     screens back. Nothing here is chosen twice.
   */
   const deck = starters.find((d) => d.level === startBand) ?? starters[0] ?? null;
-  const chosenTarget = TARGETS.find((t) => t.band === target);
 
   const finish = () => {
     start(async () => {
@@ -168,6 +205,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
         dailyGoal: goal,
         unitIds: deck?.unitIds ?? [],
         letterBar: letters,
+        glossLanguage: gloss,
         goals: {
           reason: goals.reason,
           target: goals.target,
@@ -181,14 +219,6 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
     });
   };
 
-  const skip = () => {
-    start(async () => {
-      await skipOnboarding();
-      router.push("/dictionary");
-      router.refresh();
-    });
-  };
-
   // The check owns the screen while it runs: a wizard frame around a test is a
   // Back button somebody presses by accident nine questions in.
   if (checking) {
@@ -198,10 +228,20 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
           <AssessmentRunner
           items={paper.items}
           missing={paper.missing}
+          /*
+            Back to the level step, not past it.
+
+            It used to jump to the goal screen, so somebody who had just spent
+            twenty minutes on eighty questions was asked why they were learning
+            Estonian and had to press Back to find out what they had scored.
+            The result panel lives on step 1 and this is what puts it in front
+            of them: the answer to the question they just sat, on the screen
+            that asked it, with Continue underneath.
+          */
           onFinish={(result) => {
             setMeasured(result);
             setChecking(false);
-            setStep(2);
+            setStep(1);
           }}
         />
         </main>
@@ -245,35 +285,25 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
 
         {step === 0 && (
           <section>
+            {/*
+              The heading, then straight into the first question.
+
+              What used to sit between them was "Kodukeel means home language.
+              This is how Estonian becomes yours.", which is the right sentence
+              on the wrong screen: it is the pitch, and the pitch belongs on the
+              page somebody read before pressing the button that brought them
+              here. Repeating it is the app introducing itself to somebody who
+              has already agreed.
+
+              And the limits moved to the bottom. They still have to be said
+              before an evening goes into a deck, and they do not have to be the
+              thing standing between the welcome and the name field.
+            */}
             <h1 lang="et" className="text-3xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Tere tulemast!
             </h1>
-            <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              {WHAT_IT_IS_SHORT}
-            </p>
-            <div className="mt-5">
-              {/*
-                The limits, up front and in one sentence. They used to be a
-                screen of their own, seven steps in, which is after the
-                investment rather than before it. Both lists in full are at
-                /guide, which opens in its own tab so nobody loses this one.
-              */}
-              <Note tone="hard">
-                It will not score your pronunciation, teach you to hold a conversation, or replace a
-                teacher.{" "}
-                <a
-                  href="/guide"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold underline underline-offset-2"
-                  style={{ color: "var(--accent-deep)" }}
-                >
-                  What it does and does not do, in full
-                </a>
-                .
-              </Note>
-            </div>
-            <label htmlFor="learner-name" className="label-xs mt-7 block" style={{ color: "var(--ink-3)" }}>
+
+            <label htmlFor="learner-name" className="label-xs mt-8 block" style={{ color: "var(--ink-3)" }}>
               What should we call you?
             </label>
             <input
@@ -286,7 +316,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Only used to greet you, and on the class leaderboard if you ever turn that on.
+              Only used to greet you, and shown beside your XP if you ever join a class.
             </p>
 
             {/*
@@ -307,11 +337,20 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               Answered live, and the next screen is the level check, which is
               full of Estonian fields. Whatever is chosen here is what they
               meet there.
+
+              It sits in its own panel because it was the most crowded thing on
+              this screen: two cards each holding a title, six letter samples
+              and a line of explanation, pressed straight up against the field
+              above and the note below with the same 8px everything else on the
+              page used.
             */}
-            <div className="letters-choice mt-7">
+            <div
+              className="letters-choice mt-10 rounded-[var(--r-lg)] border p-5"
+              style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
+            >
               <ChoiceGroup
                 label="How do you type õ, ä, ö and ü?"
-                className="grid gap-2 sm:grid-cols-2"
+                className="grid gap-3 sm:grid-cols-2"
               >
                 {LETTER_BAR_CHOICES.map((o) => (
                   <ChoiceCard
@@ -324,9 +363,67 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
                   />
                 ))}
               </ChoiceGroup>
-              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+              <p className="mt-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Change it whenever you like, in Settings or from the row itself.
               </p>
+            </div>
+
+            {/*
+              WHICH LANGUAGE A MEANING IS GIVEN IN, ASKED ON THE FIRST SCREEN.
+
+              Most people learning Estonian in Estonia already speak Russian or
+              Ukrainian, and this is the answer that decides whether the app is
+              readable to them at all. Buried in Settings it would be found by
+              the people who least need it. It is one row of three buttons, on
+              the screen that already asks the other thing we need before
+              anybody meets an Estonian word, and unlike the letter bar it is
+              asked on a phone too: it is not a fact about the keyboard.
+
+              English stays the default, so somebody who wants it presses
+              nothing. The equivalents come from Ekilex, so nothing here was
+              written by this app or by a model.
+            */}
+            <div
+              className="mt-4 rounded-[var(--r-lg)] border p-5"
+              style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
+            >
+              <ChoiceGroup
+                label="What language would you like meanings in?"
+                className="grid gap-3 sm:grid-cols-3"
+              >
+                {GLOSS_LANGUAGES.map((o) => (
+                  <ChoiceCard
+                    key={o.id}
+                    layout="stacked"
+                    selected={gloss === o.id}
+                    onSelect={() => setGloss(o.id)}
+                    title={o.label}
+                    detail={o.id === "en" ? "The course's own glosses" : o.native}
+                  />
+                ))}
+              </ChoiceGroup>
+              <p className="mt-4 text-xs" style={{ color: "var(--ink-3)" }}>
+                The English stays either way. The Russian and Ukrainian are Ekilex&rsquo;s own,
+                written by the same lexicographers as the Estonian.
+              </p>
+            </div>
+
+            {/*
+              The limits, last and in one sentence.
+
+              It used to carry a link to /guide reading "What it does and does
+              not do, in full", and that page is gone: the landing page makes
+              the case, and a learner who skipped it finds out what the app does
+              by using it rather than by reading a second description of it. A
+              link out of a setup wizard is a way to lose somebody ninety
+              seconds in, and the sentence in front of it was already the part
+              that mattered.
+            */}
+            <div className="mt-10">
+              <Note tone="hard">
+                It will not score your pronunciation, teach you to hold a conversation, or replace a
+                teacher.
+              </Note>
             </div>
           </section>
         )}
@@ -336,9 +433,23 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
               Where are you now?
             </h1>
-            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              Measure it in about ten minutes, or estimate it and move on. Nothing is locked either
-              way, and the check is on the Level check screen whenever you want it.
+            {/*
+              NO NUMBER OF MINUTES, AND THAT IS THE HONEST VERSION.
+
+              This said "the ten-minute level check", which was written when the
+              paper was nineteen questions. It is eighty now and a skill stops
+              one band past the first it was not passed at, so ten minutes is
+              true for a beginner and nowhere near true for anybody else: a B1
+              learner was still in the reading section after ten minutes with
+              three sections to go, having been promised the whole thing in
+              that time. A figure that is right at one end of the range and
+              three times out at the other is worse than no figure, because the
+              learner who is furthest through is the one who was told wrong.
+            */}
+            <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              Take the level check now, or estimate and move on. The check stops as soon as it has
+              found your level, and nothing here is locked in: Settings can change it, or sit the
+              check, whenever you like.
             </p>
 
             {measured ? (
@@ -351,20 +462,23 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             ) : (
               <>
                 {paper.items.length > 0 ? (
-                  <Button variant="primary" size="lg" className="mt-6 w-full" onClick={() => setChecking(true)}>
+                  <Button variant="primary" size="lg" className="mt-7 w-full" onClick={() => setChecking(true)}>
                     <Compass size={16} aria-hidden /> Take the level check
                   </Button>
                 ) : (
                   <div className="mt-6">
                     <Note tone="sky">
-                      The level check needs a dictionary with levelled entries and this deployment
-                      has none yet, so estimating is the only option right now.
+                      The level check needs dictionary entries that are tagged with a level, and
+                      this copy of Kodukeel does not have that yet. Estimating is your only
+                      option for now.
                     </Note>
                   </div>
                 )}
 
-                <SectionTitle hint="a guess is a guess, and it says so on the plan">Or estimate it</SectionTitle>
-                <ChoiceGroup ariaLabel="Estimate your level" className="flex flex-col gap-2">
+                <div className="mt-8">
+                  <SectionTitle>Or estimate it</SectionTitle>
+                </div>
+                <ChoiceGroup ariaLabel="Estimate your level" className="flex flex-col gap-3">
                   {LEVELS.map((l) => (
                     <ChoiceCard
                       key={l.key}
@@ -384,11 +498,11 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
         {step === 2 && (
           <section>
             <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--ink)" }}>
-              Why Estonian, and how far?
+              Why Estonian?
             </h1>
-            <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              This is not a personality quiz. Different reasons need different levels, one of them
-              has an exam attached, and the hours underneath change with every answer.
+            <p className="mt-3 max-w-[54ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              Pick as many as are true. Different reasons need different levels, one of them has a
+              real exam attached, and the numbers below change as you answer.
             </p>
 
             {/*
@@ -399,14 +513,18 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               this pass exists to remove. Eight short rows in two columns fit
               without one.
             */}
-            <ChoiceGroup ariaLabel="Why you are learning Estonian" className="mt-6 grid gap-2 sm:grid-cols-2">
+            <ChoiceGroup
+              ariaLabel="Why you are learning Estonian"
+              select="many"
+              className="mt-6 grid gap-3 sm:grid-cols-2"
+            >
               {REASONS.map((r) => {
                 const Icon = icon(r.icon);
                 return (
                   <ChoiceCard
                     key={r.id}
-                    selected={reason === r.id}
-                    onSelect={() => chooseReason(r.id)}
+                    selected={reasons.includes(r.id)}
+                    onSelect={() => toggleReason(r.id)}
                     icon={<Icon size={18} aria-hidden />}
                     title={r.label}
                     detail={r.detail}
@@ -416,30 +534,29 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             </ChoiceGroup>
 
             {/*
-              Three rows of chips rather than three screens of cards. Each
-              target used to carry its can and cannot lines whether or not it
-              was the one chosen, which is five paragraphs to read before
-              pressing one button. The pair is shown for the chosen one, where
-              it is the thing being decided rather than a wall to scan.
+              Three rows of chips rather than three screens of cards, and the
+              chip is the whole answer.
+
+              Under the chosen one sat a paragraph pairing what the level lets
+              you do with what it does not ("Manage most situations that come
+              up... Still out of reach: keep up with fast speech between
+              natives"). It is honest and it is the wrong screen for it: this is
+              somebody choosing where they are headed, and a caveat that appears
+              the moment they choose reads as the app arguing with them. The
+              plan directly below already tells them how many hours that target
+              costs, which is the version of the same warning they can act on.
+              `TARGETS` keeps both strings; Settings still shows `can` on hover.
             */}
-            <div className="mt-7 flex flex-col gap-6">
+            <div className="mt-8 flex flex-col gap-7">
               <div>
-                <SectionTitle>How far</SectionTitle>
-                <ChoiceGroup ariaLabel="How far">
+                <SectionTitle>What is your goal?</SectionTitle>
+                <ChoiceGroup ariaLabel="What is your goal">
                   {TARGETS.map((t) => (
-                    <ChoiceChip key={t.band} selected={target === t.band} onSelect={() => setTarget(t.band)}>
+                    <ChoiceChip key={t.band} selected={target === t.band} onSelect={() => chooseTarget(t.band)}>
                       {t.band} · {t.label}
                     </ChoiceChip>
                   ))}
                 </ChoiceGroup>
-                {chosenTarget && (
-                  <p className="mt-2.5 max-w-[60ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-                    {chosenTarget.can}{" "}
-                    <span style={{ color: "var(--butter-ink)" }}>
-                      Still out of reach: {chosenTarget.cannot.charAt(0).toLowerCase() + chosenTarget.cannot.slice(1)}
-                    </span>
-                  </p>
-                )}
               </div>
 
               <div>
@@ -476,8 +593,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               {!measured && (
                 <div className="mb-4">
                   <Note tone="sky">
-                    Built on the level you estimated. Take the check when you have ten minutes and
-                    the plan is rebuilt on a measurement instead.
+                    This plan is built on the level you estimated. Take the level check whenever
+                    you like, and it rebuilds around a real measurement instead.
                   </Note>
                 </div>
               )}
@@ -499,9 +616,10 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               Your first words
             </h1>
             <Note tone="hard">
-              The dictionary on this installation has no words in it yet, so there is no starter deck
+              There is no dictionary loaded yet on this installation, so there is no starter deck
               to hand you. Whoever runs it can load one with <code>npm run db:seed</code>. You can
-              still set your pace below, and add words from the dictionary as you meet them.
+              still choose your pace below, and add words from the dictionary as you come across
+              them.
             </Note>
 
             <div className="mt-7">
@@ -516,8 +634,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             </ChoiceGroup>
             <p className="mt-2.5 max-w-[62ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
               {minutesFor(goal)} minutes a day, {daysPerWeek} days a week. That is {goal} cards to
-              answer, not {goal} new ones: about nine in ten will be words you have already met,
-              coming back at the moment you were starting to forget them.
+              answer, not {goal} new ones. About nine in ten will be words you have already met,
+              coming back right when you are starting to forget them.
             </p>
           </section>
         )}
@@ -528,9 +646,9 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               Your first words
             </h1>
             <p className="mt-2 max-w-[54ch] text-base" style={{ color: "var(--ink-2)" }}>
-              The course starts you here, at {startBand}. These are the words a day actually needs,
-              in the order they are usually taught, and each one becomes real flashcards with audio
-              and every form of the word.
+              The course starts you here, at {startBand}. These are the words you actually need to
+              begin, taught in the order a course teaches them, and each one turns into real
+              flashcards with audio and every form of the word.
             </p>
 
             {/*
@@ -614,11 +732,12 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             */}
             <p className="mt-2.5 max-w-[62ch] text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
               {minutesFor(goal)} minutes a day, {daysPerWeek} days a week. That is {goal} cards to
-              answer, not {goal} new ones: about nine in ten will be words you have already met,
-              coming back at the moment you were starting to forget them. So these {deck.cards} cards
-              take roughly {weeksToLearn(deck.cards, goal, daysPerWeek)} weeks to work through, and a
-              faster setting really does bring them in faster. It also makes every day after this one
-              longer, for a year. Pick the one you would still open on a bad Wednesday.
+              answer, not {goal} new ones. About nine in ten will be words you have already met,
+              coming back right when you are starting to forget them. These {deck.cards} cards take
+              roughly {weeksToLearn(deck.cards, goal, daysPerWeek)} weeks to work through this way,
+              and a faster setting really does bring them in sooner. It also makes every day&rsquo;s
+              session longer, for the next year. Pick the one you would still open on a bad
+              Wednesday.
             </p>
           </section>
         )}
@@ -653,8 +772,24 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
           )}
         </div>
 
-        <div className="mt-6 text-center">
-          {step === 2 ? (
+        {/*
+          NO WAY OUT OF SETUP, AND ONE WAY PAST ONE QUESTION.
+
+          "Skip setup and go straight to the dictionary" sat under every screen
+          of this wizard and was the wrong offer twice over. It landed somebody
+          on `/dictionary` with no name, no level, no goal and an empty deck,
+          which is the app at its least useful and the state every other screen
+          then has to apologise for; and it was the most prominent thing on the
+          first screen after the Continue button, so the app's own suggestion to
+          a stranger was to not use it. Four questions is ninety seconds and
+          every one of them changes what the learner is shown afterwards.
+
+          What stays is skipping the *goal*, which is the one screen whose
+          answers only feed the plan. Somebody in a hurry can press past it and
+          Settings asks the same four questions whenever they want them.
+        */}
+        {step === 2 && (
+          <div className="mt-6 text-center">
             <button
               type="button"
               onClick={() => setStep(3)}
@@ -664,18 +799,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             >
               Skip the goal and go straight to the words
             </button>
-          ) : (
-            <button
-              type="button"
-              onClick={skip}
-              disabled={pending}
-              className="text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
-              style={{ color: "var(--ink-3)" }}
-            >
-              Skip setup and go straight to the dictionary
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       </main>
     </LetterBarScope>

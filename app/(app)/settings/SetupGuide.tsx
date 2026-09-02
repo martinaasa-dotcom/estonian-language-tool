@@ -27,9 +27,9 @@ export function SetupGuide() {
   return (
     <div>
       <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-        Anu needs an API key to answer questions. Everything else (the dictionary, your cards,
-        audio) works without one. The key is free and needs no card: Anu asks free models, and
-        moves to the next one when the first is busy. Here is the whole process:
+        Anu needs a free key to answer questions. Everything else (the dictionary, your cards,
+        audio) works without one. The key costs nothing and needs no card: Anu asks free models,
+        and moves on to the next one when the first is busy. Here is the whole thing, step by step:
       </p>
 
       <ol className="mt-4 flex flex-col gap-3">
@@ -81,10 +81,17 @@ export function SetupGuide() {
         </pre>
       </div>
 
+      {/*
+        The snippet is one line, and this told the reader to change its second
+        one. There has never been a second line: the model is not named there
+        at all, it comes from `OPENROUTER_MODEL` with a free default, so the
+        instruction pointed at nothing and the reader who followed it would
+        have been looking for a line that does not exist.
+      */}
       <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-        That model is free. If Anu ever feels vague about Estonian, a paid model will be noticeably
-        sharper, change the second line to <code>anthropic/claude-sonnet-5</code> or{" "}
-        <code>openai/gpt-4o</code>, which cost a fraction of a cent per question.
+        The models Anu asks are free. If she ever feels vague about Estonian, adding{" "}
+        <code>OPENROUTER_MODEL=&quot;anthropic/claude-sonnet-5&quot;</code> on a line of its own
+        buys a noticeably sharper answer for a fraction of a cent a question.
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 import { checkDictation, type DictationResult } from "@/lib/estonian/dictation";
 import { checkAnswer } from "@/lib/estonian/answer";
 import {
-  BANDS, PRE_A1, type BandScore, type ChoiceItem, type Confidence,
+  BANDS, PRE_A1, type Band, type BandScore, type ChoiceItem, type Confidence,
   type DictationItem, type ItemRef, type Level, type Placement, type Response,
   type Skill, type SkillResult, type WriteItem,
 } from "./types";
@@ -132,16 +132,48 @@ function bandScores(items: readonly ItemRef[], responses: readonly Response[]): 
 /**
  * The level a set of band scores supports.
  *
- * The highest band the learner passed, provided nothing underneath it
- * collapsed. Climbing past a band that scored under half would be reporting a
- * level on the strength of a lucky guess two rungs up.
+ * **The highest band passed consecutively, starting from the bottom.** That is
+ * the rule every published CEFR placement test scores on, and it is not what
+ * this function used to do. The old version raised the level on any band that
+ * cleared `PASS` and only stopped climbing on one that came in under `FLOOR`,
+ * so the whole range between half and two thirds was a band the learner had
+ * visibly not passed and was promoted straight past anyway: A1 at 100%, A2 at
+ * 55% and B1 at 70% reported B1, on the strength of a band underneath it that
+ * the same result screen was about to print as failed.
+ *
+ * That gap is where a four-option question lands most often, because 55% is
+ * roughly what a learner scores at a band they half know and exactly what
+ * guessing plus a little knowledge looks like. A level is a claim about
+ * everything you can do at it, so a band that was asked and not passed ends
+ * the climb, whatever happens above it.
+ *
+ * A band that was never asked is not evidence either way, so it is stepped
+ * over rather than read as a failure. On a full paper that does not arise; on
+ * a dictionary too thin to fill a band it is the difference between reporting
+ * the level the answered questions support and reporting `pre-A1` to somebody
+ * who answered everything correctly.
+ *
+ * **And the floor is the band below the lowest one asked, not always `pre-A1`.**
+ * Writing has no A1 question and structurally cannot: its task is choosing the
+ * ending a sentence needs, which is a step past reading the word, so
+ * `writingItems` raises every gap to A2 for the same reason the reading gaps
+ * are raised. Starting the count at `pre-A1` regardless then read a failed A2
+ * as "below A1" on the strength of a band nobody had been asked about, and
+ * since the overall level follows the *weakest* skill, that put "below A1" on
+ * the result of anybody whose writing was not yet A2. Measured on the shipped
+ * dictionary, writing comes out A1:0 at every seed, so it was not an edge
+ * case, it was most sittings. The most a failed A2 supports is A1, and saying
+ * so is the honest end of a section that never set an A1 question.
  */
 export function levelFrom(bands: readonly BandScore[]): Level | null {
   if (bands.length === 0) return null;
-  let level: Level = PRE_A1;
-  for (const score of bands) {
-    if (score.ratio >= PASS) level = score.band;
-    if (score.ratio < FLOOR) break;
+  const lowestAsked = BANDS.findIndex((band) => bands.some((s) => s.band === band));
+  let level: Level = BANDS[lowestAsked - 1] ?? PRE_A1;
+  for (const band of BANDS) {
+    const score = bands.find((b) => b.band === band);
+    if (!score) continue;
+    if (score.ratio < PASS) break;
+    level = score.band;
   }
   return level;
 }
@@ -160,10 +192,48 @@ export function rank(level: Level): number {
   return level === PRE_A1 ? -1 : BANDS.indexOf(level);
 }
 
-export function confidenceFrom(itemsAnswered: number): Confidence {
-  if (itemsAnswered >= 12) return "reasonable";
-  if (itemsAnswered >= 6) return "indicative";
+/**
+ * How much evidence stands behind the level, and it is not the size of the paper.
+ *
+ * This read `itemsAnswered` against 12 and 6, which was written for a
+ * nineteen-question paper and is now a threshold two thirds of the questions
+ * at one band would clear on their own. Counting the whole paper is also the
+ * wrong question twice over. A learner who stopped after A2 answered a third
+ * of the paper and is not a third as measured: everything they answered was
+ * about the boundary that decided them. A learner who went all the way to C1
+ * answered the lot, of which everything below their level told us only what we
+ * already knew after the first three.
+ *
+ * So it counts the questions asked at the two bands the decision actually
+ * turns on: the highest band passed, and the first band above it that was not.
+ * That number scales with the paper rather than with a constant somebody has
+ * to remember to raise, and it is low for exactly the reason a result should
+ * be hedged, which is a band decided on two questions.
+ */
+export function confidenceFrom(decisiveItems: number): Confidence {
+  if (decisiveItems >= 12) return "reasonable";
+  if (decisiveItems >= 6) return "indicative";
   return "rough";
+}
+
+/**
+ * Questions asked at the bands that settled the level.
+ *
+ * The band the learner reached and the one above it, which is the boundary
+ * being measured. Below `pre-A1` there is no band underneath, so the evidence
+ * is whatever was asked at A1. Speaking is excluded here for the same reason
+ * it is excluded everywhere else: it is not scored (ADR-018), so it is not
+ * evidence for anything.
+ */
+export function decisiveItems(responses: readonly Response[], level: Level | null): number {
+  if (level === null) return 0;
+  const reached = level === PRE_A1 ? -1 : BANDS.indexOf(level);
+  const decisive = new Set<Band>(
+    [BANDS[reached], BANDS[reached + 1]].filter((b): b is Band => !!b),
+  );
+  return responses.filter(
+    (r) => !r.skipped && r.skill !== "speaking" && decisive.has(r.band),
+  ).length;
 }
 
 /**
@@ -208,12 +278,15 @@ export function placement(items: readonly ItemRef[], responses: readonly Respons
     .map((s) => s.level as Level);
 
   const itemsAnswered = responses.filter((r) => !r.skipped && r.skill !== "speaking").length;
+  const overall = lowest(scored);
+  const decisive = decisiveItems(responses, overall);
 
   return {
     skills,
-    overall: lowest(scored),
+    overall,
     ceiling: highest(scored),
-    confidence: confidenceFrom(itemsAnswered),
+    confidence: confidenceFrom(decisive),
     itemsAnswered,
+    decisive,
   };
 }

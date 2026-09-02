@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { CASE_GROUPS, TOPIC_GROUPS, TOPIC_NOTES, caseReference, grammarTopic } from "@/lib/estonian/grammar";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Grammar · käänded, kõneviisid ja laused",
   description:
-    "Every case and every verb form under the name a course gives it and the question it answers, explained in English, with real forms from the dictionary.",
+    "Every case and verb form, named the way a course names them and explained in plain English, with real examples straight from the dictionary.",
 };
 
 /**
@@ -258,9 +258,10 @@ export default async function GrammarIndexPage() {
         </section>
 
         <Note tone="neutral">
-          The endings above attach to the genitive singular, and to the genitive plural for the
-          plural column. Estonian does not derive the plural stem from the singular one, so where
-          the app has not been given a genitive plural it shows a gap rather than a guess.
+          The endings above attach to the genitive singular for the singular column, and the
+          genitive plural for the plural column. Estonian doesn&rsquo;t build the plural stem from
+          the singular one, so if we don&rsquo;t have a genitive plural for a word, the table shows
+          a gap rather than a guess.
         </Note>
 
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>

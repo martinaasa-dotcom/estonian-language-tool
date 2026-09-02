@@ -37,10 +37,11 @@
  * dictionary rows and hands them in.
  */
 import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
-import { deriveCase } from "@/lib/estonian/derive";
+import { caseAnswer, stemsFromParts } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
 import { shuffle } from "@/lib/random/shuffle";
+import { differentMeaning } from "@/lib/questions/distractors";
 
 export type StepKind =
   | "intro" | "meet" | "choose" | "produce" | "type"
@@ -50,6 +51,18 @@ export type StepKind =
 export interface LessonWord {
   lemma: string;
   gloss: string;
+  /**
+   * The Institute's own equivalent in the learner's chosen language, or null.
+   *
+   * Shown on the *meeting* step and nowhere else in a lesson, which is the
+   * same rule review follows: that is the moment a word is being learned
+   * rather than tested, and somebody who already speaks Russian or Ukrainian
+   * reaches the meaning in one step instead of two. A question's options are
+   * drawn from a pool of English glosses and stay English, because an option
+   * in a second language would be recognisable as the answer before anybody
+   * read it.
+   */
+  equivalent?: { text: string; lang: string } | null;
   pos: string;
   /** Attested Estonian sentences. Never generated. */
   examples: readonly string[];
@@ -78,6 +91,8 @@ export interface MeetStep extends StepBase {
   kind: "meet";
   lemma: string;
   gloss: string;
+  /** The meaning in the learner's own language, where Ekilex recorded one. */
+  equivalent?: { text: string; lang: string } | null;
   pos: string;
   /** One attested sentence, when the word has one, purely to see it in use. */
   example: string | null;
@@ -215,11 +230,26 @@ function pickWrong(
   count: number,
   rand: () => number,
   seen: Set<string>,
+  /**
+   * Nothing that means what the answer means.
+   *
+   * The exact string of the correct answer was the whole of the test, and a
+   * unit teaches its words in themes, so the pairs that break it sit a line
+   * apart in the same unit: `toit` "food" beside `söök` "food, a meal",
+   * `leib` "bread (dark)" beside `sai` "bread (white)", `kuidas` "how" beside
+   * `kui` "how, as, if, than". Measured over the whole course at 60 seeds a
+   * unit: 766 of 22,260 multiple-choice questions carried a second right
+   * answer, and 0 do now, with all 22,260 still asked. `differentMeaning` is
+   * the rule the mock exam and the level check already use, and this is the
+   * third caller of it rather than a fourth answer to the same question.
+   */
+  distinctFrom?: string,
 ): string[] {
   const out: string[] = [];
   for (const candidate of shuffle(candidates, rand)) {
     const key = candidate.toLowerCase();
     if (seen.has(key)) continue;
+    if (distinctFrom !== undefined && !differentMeaning(candidate, distinctFrom)) continue;
     seen.add(key);
     out.push(candidate);
     if (out.length === count) break;
@@ -241,7 +271,7 @@ function choiceOf(
   rand: () => number,
 ): { options: string[]; answer: number } | null {
   const seen = new Set([correct.toLowerCase()]);
-  const wrong = pickWrong(pool, OPTIONS - 1, rand, seen);
+  const wrong = pickWrong(pool, OPTIONS - 1, rand, seen, correct);
   if (wrong.length < OPTIONS - 1) return null;
   const options = shuffle([correct, ...wrong], rand);
   return { options, answer: options.indexOf(correct) };
@@ -268,9 +298,9 @@ function choiceOfNear(
   const seen = new Set([correct.toLowerCase()]);
   const near = pool.filter((c) => c.pos === correctPos).map((c) => c.text);
   const far = pool.filter((c) => c.pos !== correctPos).map((c) => c.text);
-  const wrong = pickWrong(near, OPTIONS - 1, rand, seen);
+  const wrong = pickWrong(near, OPTIONS - 1, rand, seen, correct);
   if (wrong.length < OPTIONS - 1) {
-    wrong.push(...pickWrong(far, OPTIONS - 1 - wrong.length, rand, seen));
+    wrong.push(...pickWrong(far, OPTIONS - 1 - wrong.length, rand, seen, correct));
   }
   if (wrong.length < OPTIONS - 1) return null;
   const options = shuffle([correct, ...wrong], rand);
@@ -282,10 +312,12 @@ function knownForms(word: LessonWord): string[] {
   const forms = new Set<string>([word.lemma, ...Object.values(word.parts)]);
   const genitive = word.parts.GEN_SG;
   if (genitive) {
+    // Every accepted spelling, so a gap-fill never treats the short illative
+    // as a word belonging to some other entry.
+    const stems = stemsFromParts(word.parts);
     for (const spec of CASES) {
       if (spec.principal) continue;
-      const derived = deriveCase(genitive, spec.key);
-      if (derived) forms.add(derived);
+      for (const value of caseAnswer(stems, spec.key)?.accepted ?? []) forms.add(value);
     }
   }
   return [...forms].filter(Boolean);
@@ -296,6 +328,13 @@ const DRILL_CASES: readonly CaseKey[] = [
   "INESSIVE", "ILLATIVE", "ELATIVE", "ALLATIVE", "ADESSIVE", "COMITATIVE", "TRANSLATIVE",
 ];
 
+/*
+  Not PRONOUN, although a pronoun declines: its everyday case forms are the
+  short ones (`mulle`, `mul`) that no rule over the genitive reaches, so a
+  question built off `minu` would accept `minule` alone and mark the form
+  everybody says wrong. The pronoun unit builds no case cards for the same
+  reason; an enriched entry shows both.
+*/
 const isInflecting = (w: LessonWord) => w.pos === "NOUN" || w.pos === "ADJECTIVE";
 
 /**
@@ -347,12 +386,15 @@ function caseStep(word: LessonWord, id: string, rand: () => number): CaseStep | 
   const genitive = word.parts.GEN_SG;
   if (!genitive) return null;
   for (const key of shuffle(DRILL_CASES, rand)) {
-    const answer = deriveCase(genitive, key);
+    // The attested form, and every spelling that counts as right with it: a
+    // lesson that asks for the illative of `tuba` wants `tuppa`.
+    const found = caseAnswer(stemsFromParts(word.parts), key);
     const spec = CASES.find((c) => c.key === key);
-    if (!answer || !spec) continue;
+    if (!found || !spec) continue;
     return {
       id, kind: "case", lemma: word.lemma, gloss: word.gloss,
-      caseKey: key, caseName: spec.en, question: spec.question, answer,
+      caseKey: key, caseName: spec.en, question: spec.question,
+      answer: found.accepted.join(" / "),
     };
   }
   return null;
@@ -531,6 +573,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
    */
   const meetLane = (block: readonly LessonWord[]) => block.map((word): LessonStep => ({
     id: nextId("meet"), kind: "meet", lemma: word.lemma, gloss: word.gloss,
+    equivalent: word.equivalent ?? null,
     pos: word.pos, example: word.examples[0] ?? null,
   }));
 

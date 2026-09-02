@@ -77,7 +77,7 @@ export function ScanCapture() {
       });
       const body = (await response.json()) as { items?: ResolvedItem[]; error?: string };
       if (!response.ok) {
-        setError(body.error ?? "That photo could not be read.");
+        setError(body.error ?? "We couldn't read that photo.");
         setPhase("idle");
         return;
       }
@@ -85,8 +85,8 @@ export function ScanCapture() {
       const found = body.items ?? [];
       if (found.length === 0) {
         setError(
-          "No Estonian words were found on that. A flatter angle and more light help, and so " +
-          "does filling the frame with just the list.",
+          "We couldn't find any Estonian words on that. Try a flatter angle, more light, and " +
+          "filling the frame with just the list.",
         );
         setPhase("idle");
         return;
@@ -99,7 +99,7 @@ export function ScanCapture() {
       setTitle(defaultTitle());
       setPhase("review");
     } catch {
-      setError("That photo could not be sent. Check your connection and try again.");
+      setError("We couldn't send that photo. Check your connection and try again.");
       setPhase("idle");
     }
   };
@@ -263,10 +263,10 @@ export function ScanCapture() {
         {summary.unknown > 0 && (
           <div className="flex flex-col gap-3">
             <Note tone="again">
-              {summary.unknown} of these {summary.unknown === 1 ? "is" : "are"} not in the dictionary.
-              They came straight off the photo, so open one and check the spelling against the paper.
-              Added as they are, they get a recognition and a production card, and no case forms,
-              because there are no verified forms to build one from.
+              {summary.unknown} of these {summary.unknown === 1 ? "is" : "are"} not in the dictionary
+              yet. They came straight off the photo, so open one and check the spelling against the
+              paper. Add them as they are and you&apos;ll get a recognition card and a production
+              card, but no case forms: there&apos;s nothing verified yet to build those from.
             </Note>
             {/*
               A word the dictionary would not vouch for is a gap in the
@@ -318,10 +318,9 @@ export function ScanCapture() {
     <div className="flex flex-col gap-4">
       <Card>
         <p className="text-base" style={{ color: "var(--ink-2)" }}>
-          Photograph a vocabulary list, a page of your textbook, or last night&apos;s homework. The
-          words on it are matched against the dictionary, so anything it recognises arrives with its
-          real principal parts, and an inflected form on an exercise sheet is traced back to the
-          word it belongs to.
+          Photograph a vocabulary list, a page from your textbook, or last night&apos;s homework. We
+          match the words against the dictionary, so anything it recognises comes with its real
+          forms, and an inflected form on a worksheet gets traced back to the word it belongs to.
         </p>
 
         {phase === "reading" ? (

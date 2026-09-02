@@ -40,6 +40,21 @@ function isDeclensionTypeNotGradation(nom: string, gen: string): boolean {
   if (nom.endsWith("ne") && gen.endsWith("se")) {
     return nom.slice(0, -2) === gen.slice(0, -2);
   }
+  /*
+    A NOMINATIVE -S THAT SIMPLY GOES IS AN ENDING, NOT A GRADE.
+
+    `kapsas : kapsa`, `kuningas : kuninga`, `rahvas : rahva`, `kallis : kalli`:
+    the consonant centre does not move at all, the nominative just carries an
+    -s the other cases do not. EKK calls that lõpuvaheldus and keeps it apart
+    from astmevaheldus, which is a change *inside* the centre. The classifier
+    counted the -s as part of the centre, so it reported `s : ∅` on 121 of the
+    133 words it labelled that way, and the chip on the dictionary entry said
+    "Consonant gradation, this is why the stem changes" over a word whose stem
+    does not change. `käsi : käe` and `vesi : vee` are the dozen that really
+    do alternate, and they are not this shape: their stem loses more than the
+    -s.
+  */
+  if (nom.endsWith("s") && nom.slice(0, -1) === gen) return true;
   return false;
 }
 
@@ -79,6 +94,40 @@ export function classifyGradation(nomSg: string, genSg: string): GradationResult
 
   if (isDeclensionTypeNotGradation(nom, gen)) return { type: "NONE", note: undefined };
 
+  /*
+    THE NOMINATIVE -S COMES OFF BEFORE THE CENTRES ARE COMPARED.
+
+    `hammas : hamba` is mm : mb and `ratas : ratta` is t : tt, which is what a
+    class writes on the board. With the -s left on, the skeletons were `hmms`
+    against `hmb` and the fallback reported "ms : b" and "s : t", alternations
+    that are not patterns in the language, on the entry and on the flashcard
+    hint for hundreds of A1 and A2 words: lammas, sammas, puhas, mätas,
+    saabas, varvas, kobras, küngas.
+
+    Only where something is left to compare: `uus : uue` peels to `uu`, which
+    has no consonant centre at all, so it keeps the reading it had.
+  */
+  const peeled = nom.slice(0, -1);
+  const peelable = nom.endsWith("s") && !gen.endsWith("s") && Boolean(stem(peeled));
+  if (peelable) {
+    /*
+      Try it with the -s off first, and keep that reading only if it finds
+      something. `hammas` peeled is `hamma` against `hamba`, which is mm : mb;
+      unpeeled it was `hmms` against `hmb` and the fallback invented "ms : b".
+
+      The fallback back to the whole word is what keeps the real ones: `mees :
+      mehe` is s : h, `poiss : poisi` is ss : s and `viis : viie` is s : ∅, and
+      peeling those leaves nothing for the patterns to match. So the peel adds
+      readings and never removes one.
+    */
+    const withoutS = compareStems(peeled, gen);
+    if (withoutS.type !== "NONE") return withoutS;
+  }
+  return compareStems(nom, gen);
+}
+
+/** The comparison itself, over whatever pair of forms it is handed. */
+function compareStems(nom: string, gen: string): GradationResult {
   const nomStem = stem(nom);
   const genStem = stem(gen);
 
@@ -98,9 +147,18 @@ export function classifyGradation(nomSg: string, genSg: string): GradationResult
   // strong one (`toode : toote`, `mõte : mõtte`). Same alternation, other way round.
   for (const [strong, weak] of PATTERNS) {
     if (!genStem.endsWith(strong)) continue;
+    /*
+      Never the other way with nothing on the weak side. Estonian has no
+      grade pair where the weak one is an absence and the strong one a bare
+      consonant, so a match here is the arithmetic finding a stem that simply
+      grew a letter: `armas : armsa` loses a vowel rather than weakening a
+      centre, and read this way it reported "∅ : s", which is not a pattern
+      in the language.
+    */
+    if (!weak) continue;
     const base = genStem.slice(0, genStem.length - strong.length);
     if (base && nomStem === base + weak) {
-      return { type: "QUALITATIVE", note: `${weak || "∅"} : ${strong}` };
+      return { type: "QUALITATIVE", note: `${weak} : ${strong}` };
     }
   }
 
@@ -133,9 +191,15 @@ export function classifyVerbGradation(infMa: string, pres1sg: string): Gradation
 }
 
 /**
- * Quantitative gradation (vältevaheldus) is a change in duration that Estonian
- * orthography does not record — `linna` (Q3) and `linna` (Q2) are spelled alike.
- * It is therefore undetectable from text, and this module only ever reports the
- * qualitative kind. The UI says so rather than implying a word has no alternation.
+ * Whether a part of speech can gradate at all.
+ *
+ * Gradation is an alternation inside a stem, and a pronoun does not have one
+ * in that sense: `kes` goes to `kelle` and `mina` to `minu` by suppletion,
+ * a different stem rather than a weakened one. Run through the classifier
+ * those read as `s : ll` and `n : ∅`, and a chip saying "gradation s : ll"
+ * on the entry for `kes` teaches a pattern that is not there. Nouns,
+ * adjectives and verbs gradate; nothing else is asked.
  */
-export const DETECTS_ONLY_QUALITATIVE = true;
+export function gradates(pos: string): boolean {
+  return pos === "NOUN" || pos === "ADJECTIVE" || pos === "VERB";
+}

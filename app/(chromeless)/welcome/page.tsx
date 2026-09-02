@@ -1,30 +1,30 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import type { Metadata } from "next";
 import {
   ArrowRight, BookOpen, Check, CircleHelp, Minus,
-  Map as MapIcon, Sparkles,
+  Plus, Sparkles, Target, X,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { LEVELS, PATH } from "@/lib/collections/syllabus";
+import { DEMO_LEMMAS, DEMO_STEMS } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
-import { buildCaseTable } from "@/lib/estonian/derive";
+import { buildCaseTable, shownForms, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
 import { CaseExplorer, TutorPeek, type DemoWord } from "./LandingDemo";
+import { LetterTile } from "@/components/LetterTile";
 import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const metadata: Metadata = {
   title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
-    "Fourteen cases, a stem that changes when you look at it. Kodukeel turns Estonian into fifteen quiet minutes a day: real forms from Ekilex, spaced repetition, native audio and a tutor that explains the rule.",
+    "Kodukeel means home language. Fifteen quiet minutes a day, real forms from Ekilex, native audio and a tutor who explains the rule, for anybody making a home in Estonia.",
 };
 
 /** The landing page is public and read-only, so it can be cached hard. */
 export const revalidate = 3600;
-
-const DEMO_LEMMAS = ["tuba", "raamat", "õppima"];
 
 export default async function WelcomePage() {
   const { words, stats } = await loadDemo();
@@ -182,8 +182,23 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     `${PATH.length} units, ${LEVELS[0]} to ${LEVELS[LEVELS.length - 1]}`,
     "Free, and it works offline",
   ];
+  /*
+    Centred in the window rather than stacked from the top of it. The height
+    and the reason are in `.hero-screen`; what belongs here is that the top
+    padding is a floor and not the spacing. On a screen tall enough it never
+    applies, because `justify-center` has already put the air above and below
+    the column; on a short laptop or a phone held sideways the column outgrows
+    the box and it is what keeps the headline off the nav.
+
+    There is no bottom padding at all, and that is the balance rather than an
+    omission. The air under the last line is the peek band and the next
+    section's own top padding, which is 56px of page rhythm the hero does not
+    get to spend twice: with a `pb` to match the `pt` the gap under the claims
+    came out 72px wider than the one over the headline at every size, which is
+    a column that reads as dropped rather than placed.
+  */
   return (
-    <section className="mx-auto flex max-w-3xl flex-col items-center px-5 pb-6 pt-14 text-center md:px-8 md:pb-10 md:pt-20">
+    <section className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
       {/*
         No badge over the headline. It read "for everyone who bounced off
         Estonian once already", which is the same sentiment as the heading one
@@ -193,7 +208,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         is a page saying its best line twice, second-best first.
       */}
       <h1
-        className="fade-up text-5xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl"
+        className="fade-up hero-display font-bold leading-[1.02] tracking-[-0.02em]"
         style={{ color: "var(--ink)", animationDelay: "90ms" }}
       >
         Estonian that
@@ -202,12 +217,12 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
       </h1>
 
       <p
-        className="fade-up mt-5 max-w-[52ch] text-md leading-relaxed"
+        className="fade-up hero-lead hero-sub max-w-[52ch] leading-relaxed"
         style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
       >
-        Fourteen cases, and a stem that changes shape when you look at it. Fifteen quiet minutes a
-        day, real forms from Ekilex, native audio, and a tutor who tells you the rule instead of
-        marking you wrong.
+        Kodukeel means home language. You live here now, and this is where Estonian starts to feel
+        like home: fifteen quiet minutes a day, real forms from a real dictionary, and a tutor who
+        explains the rule instead of marking you wrong.
       </p>
 
       {/*
@@ -223,14 +238,14 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         down and the next thing a reader meets anyway, and the nav carries the
         same jump under "The cases" for anybody who wants to aim.
       */}
-      <div className="fade-up mt-7 w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
-        <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
-          Start learning, free <ArrowRight size={17} aria-hidden />
+      <div className="fade-up hero-action w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
+        <ButtonLink href="/sign-in" variant="primary" size="lg" className="hero-cta w-full sm:w-auto">
+          Start learning for free <ArrowRight size={17} aria-hidden />
         </ButtonLink>
       </div>
 
       <ul
-        className="fade-up mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
+        className="fade-up hero-claims flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
         style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
       >
         {claims.map((t) => (
@@ -261,25 +276,40 @@ function Cases({ words }: { words: DemoWord[] }) {
   if (derivable.length === 0) return null;
 
   return (
-    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
+    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <div className="mx-auto max-w-[48ch] text-center">
-          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn one form, get eleven</p>
-          <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            You didn&rsquo;t fail Estonian. Your tools did.
+        {/*
+          The heading is one line where there is room for one.
+
+          "You didn't fail Estonian. Your tools did." is 820px of 40px display
+          type, and the section has 960px inside its padding from `lg` up and
+          704px at `md`. Broken by the column it reads as a sentence that ran
+          out of room, with "tools did." stranded on a line of its own. So the
+          break is placed rather than left to the wrap: below `lg` it falls
+          where the sentence already ends, at the full stop, and above it there
+          is no break at all. A `br` rather than `whitespace-nowrap`, because a
+          nowrap that turns out not to fit is a heading hanging off the page,
+          and this one wraps honestly instead.
+
+          The wrapper is wide enough for that line, and the paragraph under it
+          keeps its own measure: a 48ch box around both was what forced the
+          heading into two lines in the first place.
+        */}
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Learn three forms, get most of the rest</p>
+          <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+            You didn&rsquo;t fail Estonian.<br className="lg:hidden" /> Your tools did.
           </h2>
-          <p className="mt-4 text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            You can hold a 400-day streak and still not know whether it is{" "}
-            <span lang="et" className="font-semibold">majja</span>,{" "}
-            <span lang="et" className="font-semibold">majas</span> or{" "}
-            <span lang="et" className="font-semibold">majast</span>. Three principal parts are
-            unpredictable, so you memorise those; the other eleven are regular endings on the
-            genitive stem. Press a word.
+          <p className="mx-auto mt-5 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            You can hold a 400-day streak and still freeze when somebody speaks to you at the
+            counter. Three forms of a word are yours to learn, sometimes four. Everything after
+            them is the same regular endings every time, and where a word breaks the pattern you
+            get the form Estonians say beside the one the rule predicts. Press a word and watch.
           </p>
         </div>
       </Reveal>
       <Reveal>
-        <div className="relative mt-8">
+        <div className="relative mt-10 md:mt-12">
           {/*
             THE FOUR VOWELS A UK OR US KEYBOARD CANNOT WRITE, over the four
             sides of the card that is full of them.
@@ -319,58 +349,61 @@ function Cases({ words }: { words: DemoWord[] }) {
             than its side's margin, wander included, cannot touch a glyph
             whatever the reader presses: that is a property of the placement
             rather than a lucky gap, which matters because pressing a chip
-            changes how many rows the card has. Each of these reaches in by 12
-            to 20px and drifts at most 4px further.
+            changes how many rows the card has.
+
+            THE TRAVEL IS ALONG THE EDGE, WHICH IS WHERE THE ROOM IS. These
+            used to wander three or four pixels towards the card, because that
+            is the only direction anybody had thought to spend, and against a
+            17px margin there is nothing to spend: the movement was real and
+            invisible. A letter on the top edge can slide the better part of
+            the card's width without coming a pixel nearer anything it could
+            land on, so õ and ö now travel 26 and 30px sideways, ä and ü the
+            same up and down their own sides, and what crosses the edge is one
+            to three pixels. The rock and the squash are what the small budget
+            buys, and `room` is what scales them per letter: a rotated square
+            is wider than its side, so 8deg on the tightest of the four is
+            worth more than 15deg on the one with a gutter under it.
 
             The hang is bounded by the other end: the gutter is 20px at 640,
             and a rotated square is wider than its side, so 14deg on 40px puts
             its corners about 4px past the box. That is the difference between
             hanging inside the page's padding and being clipped against it, and
-            it is why the side letters are smaller below `md` than above it.
+            it is why every letter is smaller below `md` than above it.
 
-            They are `pointer-events-none` and `aria-hidden`: an ornament that
+            EACH ONE MOVES DIFFERENTLY, and that is the point of there being
+            four characters in `lib/ux/letterMotion.ts` rather than one
+            keyframe with four delays on it. Four squares doing the same thing
+            a second and a half apart is a mechanism. õ ambles, ä crouches and
+            springs, ü rolls, ö hangs and swings.
+
+            AND THEY NOTICE A POINTER. Coming near one slides it along its own
+            edge towards the cursor and settles it further onto the card, which
+            is the same rule as the wander for the same reason. They are still
+            `pointer-events-none` and `aria-hidden`: an ornament that
             eats a tap on the card underneath it is a decoration doing
             something no decoration should, and the card underneath is the one
             interactive thing on this page.
-
-            `scripts/test-design.mjs` measures all of it at 640, 768 and 1280,
-            stepping each letter through twelve frames of its own wander rather
-            than reading it where it happens to rest: every letter over an
-            edge, none on a control, none past the page, and the slant still
-            there with the animation stopped.
-
-            One hue each, and the fourth takes butter because it is the hue
-            left: blush, mint and sky are spoken for and peach means "missed"
-            on every other screen in the app.
           */}
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -top-7 left-72 z-20 hidden h-10 w-10 sm:flex items-center justify-center rounded-[var(--r)] text-lg font-bold md:-top-11 md:left-80 md:h-14 md:w-14 md:text-2xl"
-            style={{ background: "var(--blush-soft)", color: "var(--blush-ink)", boxShadow: "var(--shadow-sm)", "--float-tilt": "-14deg", "--drift-x": "2px", "--drift-y": "4px", "--drift-turn": "2deg", "--drift-time": "9s" } as React.CSSProperties}
-          >
-            õ
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -right-3 top-24 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-right-6 md:top-28 md:h-12 md:w-12 md:text-xl"
-            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "1.2s", "--float-tilt": "12deg", "--drift-x": "-4px", "--drift-y": "-3px", "--drift-turn": "1.6deg", "--drift-time": "7.5s" } as React.CSSProperties}
-          >
-            ä
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -left-3 bottom-24 z-20 hidden h-7 w-7 sm:flex items-center justify-center rounded-[var(--r-sm)] text-sm font-bold md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-lg"
-            style={{ background: "var(--sky-soft)", color: "var(--sky-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "2.4s", "--float-tilt": "-9deg", "--drift-x": "4px", "--drift-y": "-3px", "--drift-turn": "2.2deg", "--drift-time": "11s" } as React.CSSProperties}
-          >
-            ü
-          </span>
-          <span
-            aria-hidden
-            className="drift pointer-events-none absolute -bottom-5 right-14 z-20 hidden h-8 w-8 sm:flex items-center justify-center rounded-[var(--r-sm)] text-base font-bold md:-bottom-6 md:right-20 md:h-9 md:w-9 md:text-lg"
-            style={{ background: "var(--butter-soft)", color: "var(--butter-ink)", boxShadow: "var(--shadow-sm)", animationDelay: "3.6s", "--float-tilt": "15deg", "--drift-x": "-3px", "--drift-y": "-4px", "--drift-turn": "1.8deg", "--drift-time": "10s" } as React.CSSProperties}
-          >
-            ö
-          </span>
+          <LetterTile
+            letter="õ" hue="blush" edge="top" character="wander"
+            tilt={-7} travel={{ x: 26, y: 1 }} room={0.5} reach={280}
+            className="-top-6 left-72 z-20 hidden h-8 w-8 text-base sm:block md:-top-8 md:left-80 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ä" hue="mint" edge="right" character="hop"
+            tilt={12} travel={{ x: -3, y: -30 }} room={0.75} delay={0.7} reach={280}
+            className="-right-3 top-24 z-20 hidden h-8 w-8 text-base sm:block md:-right-6 md:top-28 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ü" hue="sky" edge="left" character="tumble"
+            tilt={-9} travel={{ x: 2, y: -28 }} room={0.6} delay={1.5} reach={280}
+            className="-left-3 bottom-24 z-20 hidden h-8 w-8 text-base sm:block md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-xl"
+          />
+          <LetterTile
+            letter="ö" hue="butter" edge="bottom" character="swing"
+            tilt={15} travel={{ x: -30, y: -3 }} room={0.85} delay={2.2} reach={280}
+            className="-bottom-5 right-14 z-20 hidden h-8 w-8 text-base sm:block md:-bottom-6 md:right-20 md:h-10 md:w-10 md:text-xl"
+          />
 
           <CaseExplorer words={derivable} />
         </div>
@@ -383,6 +416,27 @@ function Cases({ words }: { words: DemoWord[] }) {
 
 function Features() {
   /*
+    THREE CARDS, AND WHAT EACH ONE IS FOR CHANGED.
+
+    They were a dictionary, a course and a tutor, which is a list of the parts
+    this app is built out of rather than an answer to the question the section
+    above just asked. That section ends on somebody who freezes at the counter,
+    and the honest next line is how they stop doing that. So the cards are the
+    three ways this app is used rather than the three things it contains: the
+    person you can ask without anybody watching, the practice that puts the
+    words in, and the plan that keeps you turning up. The dictionary did not go
+    anywhere; it is the first sentence of the practice card, because looking a
+    word up here is how a card gets made.
+
+    ANU LEADS NOW. She was third of three, behind two cards describing
+    machinery, and she is the part of this nobody else in the list offers: a
+    teacher you can ask a question you are embarrassed by, at eleven at night,
+    who answers the question rather than marking it. Her card is also the one
+    with something to press, which is worth having early rather than last.
+
+    The history the three replaced, kept because it is the argument for there
+    being three of anything at all:
+
     Eight cards became five, five became four, four became three.
 
     Three of the original eight said what the hero, the FAQ or another card was
@@ -412,42 +466,42 @@ function Features() {
     two, then a gap where the sixth would go.
   */
   return (
-    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
+    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <div className="mx-auto max-w-[44ch] text-center">
-          <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you actually get</p>
-          <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Three things, each doing one job well
+          <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What&rsquo;s inside</p>
+          <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+            How you get there
           </h2>
         </div>
       </Reveal>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+      <div className="mt-10 grid gap-5 md:mt-14 md:grid-cols-3">
+        <Reveal>
+          <Feature
+            tone="blush"
+            icon={<Sparkles size={18} aria-hidden />}
+            title="Anu, who never sighs"
+            body="Ask her the thing you would not ask in class. She will build a sentence with you, read the one you wrote, and say why the ending changed. Every Estonian word she shows you is looked up, never guessed at."
+          >
+            <TutorPeek />
+          </Feature>
+        </Reveal>
         <Reveal>
           <Feature
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
-            title="A dictionary that shows the whole word"
-            body="Search a form you half-remember from class and it finds the word, says which one you typed, and lays out all the rest with gradation marked and every form spoken aloud."
+            title="Practice that feels like a game"
+            body={`Look a word up and it becomes a card in one press, whole word, gradation marked, audio on every form. Then ${PATH.length} units of them, in sprints, dictation, listening and matching rounds that all count.`}
           />
         </Reveal>
         <Reveal>
           <Feature
             tone="mint"
-            icon={<MapIcon size={18} aria-hidden />}
-            title={`A course of ${PATH.length} units that schedules itself`}
-            body="Each unit is a sitting's worth of words that becomes real cards in one press. FSRS brings each one back on the day you were going to forget it, then tells you you're done. Sprint, dictation and listening all grade those same cards."
+            icon={<Target size={18} aria-hidden />}
+            title="A plan you can actually keep"
+            body="Say what you are aiming for and by when. It works out the daily goal, brings each word back the day before you would forget it, and tells you how far off the date you are."
           />
-        </Reveal>
-        <Reveal>
-          <Feature
-            tone="blush"
-            icon={<Sparkles size={18} aria-hidden />}
-            title="Anu explains the rule"
-            body="Ask a chatbot for an inflected form and you get a confident, wrong one. Anu explains the rule and checks your sentence, and she may never supply an Estonian form: those come from the dictionary."
-          >
-            <TutorPeek />
-          </Feature>
         </Reveal>
       </div>
     </section>
@@ -556,30 +610,40 @@ const ROWS: readonly { label: string; cells: readonly [Verdict, Verdict, Verdict
  */
 const COUNTED = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight"] as const;
 const shared = ROWS.filter((row) => row.cells.slice(1).includes("yes")).length;
-/** It opens the sentence, so it opens with a capital. */
+/**
+ * Capitalised at the source and lowered at the one call site that needs it
+ * mid-sentence, rather than the other way about: this is the count of claims
+ * in the table and is the kind of thing a second caller wants to open with.
+ */
 const CLAIM_COUNT = (COUNTED[ROWS.length] ?? String(ROWS.length)).replace(/^./, (c) => c.toUpperCase());
 const SHARED_ROWS = COUNTED[shared] ?? String(shared);
 
+/*
+  ONE LINE EACH, AND THE LINE IS WHAT THEY ARE BETTER AT.
+
+  These were four paragraphs describing four other products, which is a page
+  selling somebody else's app inside a section about ours. What the credit is
+  for is the sentence CLAUDE.md asks for, that each of them does something we
+  do not, and that is one clause long. The detail underneath it (a price list,
+  a chapter count, which platforms are free) is theirs to publish and is a
+  click away on their own site, where it will also be current.
+*/
 const CREDITS = [
   {
     name: "Speakly",
-    body:
-      "Built in Estonia, and the closest thing here to a like for like comparison. It teaches the 4,000 words you will meet most often in the order you will meet them, with audio, grammar notes and its own spaced repetition, in ten languages. For getting words into your ear quickly it is good, and it is a subscription: its App Store listing runs from 9.99 euros a month to 69.99 euros once.",
+    body: "Built in Estonia, and the fastest way to get 4,000 common words into your ear. It costs money.",
   },
   {
     name: "Keeleklikk and Keeletee",
-    body:
-      "Free courses funded by the Integration Foundation: A1 to A2, then B1, sixteen chapters of animation and grammar video, and an Estonian teacher who answers your questions by email. If you are starting from nothing and want a course rather than a tool, start there. Kodukeel is the thing to keep open alongside it and after it.",
+    body: "Free state-funded courses with a real teacher answering by email. Start there, and keep this open beside it.",
   },
   {
     name: "Anki",
-    body:
-      "Free, open source, works offline, and it will schedule anything you are willing to type onto a card. What it will not do is supply the Estonian: every form is yours to find, and yours to get wrong. The desktop and Android apps cost nothing; the iPhone one is a single purchase.",
+    body: "Schedules anything you are willing to type. Finding the Estonian is your job, and so is getting it right.",
   },
   {
     name: "The vocabulary apps",
-    body:
-      "Drops, Mondly, uTalk, Ling, Memrise, Clozemaster and Lingvist all include Estonian and all do words in five quiet minutes rather well. Kodukeel is aimed at the part that comes after the word: which form of it, and why that one.",
+    body: "Drops, Mondly, Memrise, Ling and the rest do words well. This is aimed at which form of the word, and why.",
   },
 ] as const;
 
@@ -643,14 +707,11 @@ function Comparison() {
         for by name.
       */}
       <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-        Duolingo has never offered an Estonian course, so the choice you actually face is between
-        the tools that do. {CLAIM_COUNT} claims, checked against their own public pages, and on{" "}
-        {SHARED_ROWS} of them somebody else ticks too.
-      </p>
-      <p className="mt-3 max-w-[68ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-        None of them is trying to do quite this: get you to the point of saying{" "}
-        <span lang="et" className="font-semibold">ma lähen tuppa</span> and knowing why it
-        is not <span lang="et" className="font-semibold">tuba</span>.
+        Duolingo has never offered Estonian, so the real choice is between the tools that do. Of{" "}
+        {CLAIM_COUNT.toLowerCase()} claims checked against their own public pages, somebody else
+        earns a tick on {SHARED_ROWS}. None of them is trying to get you to{" "}
+        <span lang="et" className="font-semibold">ma lähen tuppa</span> and knowing why it is not{" "}
+        <span lang="et" className="font-semibold">tuba</span>.
       </p>
 
       {/* Phones get a card per claim: four columns of ticks at 390px would
@@ -732,11 +793,10 @@ function Comparison() {
       </div>
 
       <p className="mx-auto mt-6 max-w-[68ch] text-center text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-        A tick means yes, a dash means not from anything its own public pages say, and a question
-        mark means we could not tell and would rather say so. Checked in August 2026 against each
-        product&rsquo;s own site and store listing. Every name here belongs to its owner, Kodukeel
-        is not affiliated with any of them and none of them has endorsed it. If something is out
-        of date or simply wrong, tell us and it gets corrected.
+        A tick is yes, a dash is their pages not saying so, a question mark is us not being able to
+        tell. Checked in August 2026 against each product&rsquo;s own site. Every name belongs to
+        its owner and none of them has endorsed this. If something is wrong, tell us and we will
+        fix it.
       </p>
     </FaqItem>
   );
@@ -744,22 +804,45 @@ function Comparison() {
 
 /* ───────────────────────────────────────────────────── questions ── */
 
+/*
+  TWO SENTENCES EACH, WHICH IS THE WHOLE EDIT.
+
+  Every one of these was true and three of them ran past ninety words. A
+  question somebody opened because they wanted a yes or a no was answered with
+  a paragraph, and the thing they asked about was in the middle of it: the
+  payment answer listed four daily limits with their numbers before saying the
+  word that matters, which is no. A reader skims that and leaves knowing less
+  than the heading told them.
+
+  So each answer leads with the answer and stops. What went is the detail a
+  reader only wants once they are inside, which is a screen they reach by
+  signing in rather than a paragraph they scroll past to reach the button.
+*/
 const FAQS = [
   [
     "Do I need to pay for anything?",
-    "No, and there is nothing to set up either. Sign in with Google and the dictionary, the flashcards, every practice mode, the mock exam and your exports are yours with nothing counted. What is counted is the handful of things that cost this site money each time they run, and they carry a day's allowance rather than a price: ten questions to Anu, thirty notes back from the writing grader, twenty photographed pages, and three hundred phrases of speech nobody has asked for before. Audio is cached once it has been spoken, so a review session never reaches that last number.",
+    "No, and there is nothing to set up. A handful of things cost real money to run, so Anu, the writing grader and the camera have a daily allowance, and a normal evening never reaches one.",
   ],
   [
     "Where do the Estonian forms come from?",
-    "Ekilex, the Institute of the Estonian Language, for every Estonian form and every example sentence; English Wiktionary for the English, checked word by word against its own page; plus a hand-checked built-in set of common words. The eleven regular cases are worked out from the genitive by a function with its own unit tests. An AI is never allowed to supply an Estonian form: it invents plausible, wrong ones, and a flashcard would then drill the mistake in.",
+    "Every form and example sentence comes from Ekilex, run by the Institute of the Estonian Language, and every English gloss from Wiktionary or the course itself. An AI is never allowed to write an Estonian form: it invents plausible ones that are wrong, and a flashcard would drill the mistake straight in. Where Anu translates a sentence for you, it says so on the sentence.",
   ],
   [
     "Is this only for beginners?",
-    "It covers A1 to C1. The parts that make Estonian hard later (consonant gradation, verb government, total versus partial objects) each get their own card type rather than being left to guesswork. There is a ten-minute placement check if you would rather not guess where you are, and a mock paper for the state examination at A2, B1, B2 and C1, assembled from recorded sentences and marked by comparison against the dictionary.",
+    /*
+      Main's rewrite of this answer, with the one word this branch is here for
+      taken out of it. "A ten-minute check" was written when the paper was
+      nineteen questions; it is eighty now and a skill climbs until it stops
+      passing, so ten minutes is right for a beginner and three times out for
+      anybody else, and the learner who is furthest through is the one it
+      misleads. The shorter answer is main's and is better than what this
+      branch had.
+    */
+    "It runs A1 to C1, and the parts that stay hard get a card of their own: gradation, verb government, whether an object is whole or partial. There is a level check if you would rather not guess where you are, and a mock state examination paper at A2, B1, B2 and C1.",
   ],
   [
     "What happens to my data?",
-    "It stays in your account, scoped to you, and you can download the whole thing as JSON from Settings at any time. Your review history is the one thing here that cannot be recreated, so it is append-only and never overwritten.",
+    "It stays in your account, and you can download all of it from Settings whenever you like. Your review history is the one thing we could never rebuild, so nothing in it is ever changed or deleted.",
   ],
 ] as const;
 
@@ -784,12 +867,44 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
         style={{ color: "var(--ink)" }}
       >
         {question}
+        {/*
+          TWO ICONS SWAPPED, RATHER THAN ONE CHARACTER TURNED.
+
+          It was the character "+", rotated 45 degrees when the question opens.
+          A typed plus is a glyph on a baseline, and a baseline is not the
+          middle of the line box: `items-center` centres the line box and the
+          font then draws the bar wherever its own metrics say, which in Plus
+          Jakarta is above centre. So every one of these circles was off centre,
+          and the rotation spun the mark about a point that was not its own
+          middle, which is why the cross wobbled as it turned. A lucide icon is
+          drawn inside a square viewBox, so its centre is the centre of the box
+          it is given, and it measures dead centre on both axes.
+
+          THE ROTATION HAD TO GO WITH IT, and that is `test-containment`
+          reading the icon correctly rather than a limitation to work around.
+          It asks whether an icon is drawn at the size it declared, and
+          `getBoundingClientRect` reports the box *after* an ancestor's
+          transform: a 15px square turned 45 degrees is 21px across the axes,
+          so the check called it deformed, at all three widths, and it was
+          right that something was up. The character it replaced declared no
+          width or height, so the check had skipped it and never had an opinion
+          about the rotation before.
+
+          A cross-fade of the two stacked on top of each other is the other
+          way to keep the motion, and it trades this fault for the collision
+          check instead. So the icon swaps: `hidden` is `display: none`, which
+          is the one state that leaves nothing behind to measure or to sit
+          under. What the animation was carrying was never the meaning anyway;
+          the meaning is the mark, and the mark is now the right one and in the
+          middle of its circle.
+        */}
         <span
           aria-hidden
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-md leading-none transition-transform group-open:rotate-45"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
         >
-          +
+          <Plus size={15} strokeWidth={2.5} className="group-open:hidden" />
+          <X size={15} strokeWidth={2.5} className="hidden group-open:block" />
         </span>
       </summary>
       {children}
@@ -799,13 +914,13 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 
 function Questions() {
   return (
-    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-10 md:px-8 md:py-14">
+    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
         <h2 className="text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
           The questions people ask
         </h2>
       </Reveal>
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="mt-10 flex flex-col gap-3 md:mt-14">
         {FAQS.map(([q, a]) => (
           <Reveal key={q}>
             <FaqItem question={q}>
@@ -840,7 +955,7 @@ function Questions() {
  */
 function FinalCta() {
   return (
-    <section className="px-5 py-10 md:px-8 md:py-14">
+    <section className="px-5 pb-16 pt-14 md:px-8 md:pb-24 md:pt-20">
       <Reveal>
         <div
           className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-9 text-center md:px-16 md:py-12"
@@ -851,16 +966,45 @@ function FinalCta() {
 
           <div className="relative">
             <MascotWatch size={68} mood="cheer" className="float mx-auto" />
-            <h2 className="mx-auto mt-6 max-w-[18ch] text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
-              Fifteen minutes. Starting today.
+            {/*
+              The break is placed, not left to the column.
+
+              "Fifteen minutes. Starting today." is 884px of 52px display type
+              and the panel has 896px inside its padding at the widest this
+              page is drawn, so the one line it fits on is a line with twelve
+              pixels to spare: a font that loads a hair wider, or a window a
+              step narrower, and the wrap lands wherever it lands, which was
+              "Starting" on the first line and "today." alone on the second.
+              Two sentences break at the full stop between them or they do not
+              break at all, and only one of those is available at every width.
+            */}
+            <h2 className="mx-auto mt-6 text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
+              Fifteen minutes.<br />Starting today.
             </h2>
+            {/*
+              The close pays off the section that opens the page's argument.
+
+              It described the loop instead: look a word up, press once, let
+              the scheduler remember. That is what the app does, and it is a
+              third answer to a question the feature grid and this heading have
+              both already answered. What it never said is what any of it is
+              for. The cases section opens on somebody freezing when they are
+              spoken to at a counter, and this is the same person a screen
+              later, with something to say back.
+
+              It opened "Start today" and lost the words: the heading two lines
+              above it ends on "Starting today", and the same day named twice
+              in three lines reads as a page that has forgotten what it just
+              said. The heading carries the date, so the line under it carries
+              the payoff and nothing else.
+            */}
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              Look up one word, add it in a press, and let the scheduler do the remembering. That
-              is the whole commitment.
+              The next time somebody speaks to you in Estonian, you will have something to say
+              back.
             </p>
             <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">
-                Start learning, free <ArrowRight size={17} aria-hidden />
+                Start learning for free <ArrowRight size={17} aria-hidden />
               </ButtonLink>
             </div>
             <p className="mt-5 text-xs" style={{ color: "var(--ink-3)" }}>
@@ -875,13 +1019,22 @@ function FinalCta() {
 
 function Footer() {
   return (
-    <footer className="relative px-5 pb-10 md:px-8">
+    <footer className="relative px-5 pb-12 md:px-8">
+      {/* The rule sits well clear of the closing panel: a credit line tucked
+          under the last card reads as part of it rather than as the end of the
+          page. */}
       <div
-        className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 border-t pt-8 text-xs md:flex-row"
+        className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 border-t pt-10 text-xs md:flex-row"
         style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}
       >
         <Wordmark size={26} />
-        <p className="text-center md:text-right">
+        {/*
+          Balanced rather than ragged. The credit is one sentence long enough to
+          wrap on any width, and left to itself it filled the row and dropped
+          "University of Tartu." onto a line of its own, which reads as a line
+          that fell off rather than as the end of a sentence.
+        */}
+        <p className="text-balance text-center md:text-right">
           Forms and example sentences from{" "}
           <a href="https://ekilex.ee" target="_blank" rel="noreferrer" className="underline underline-offset-2">Ekilex</a>
           , Institute of the Estonian Language · CC BY 4.0. English glosses from{" "}
@@ -908,7 +1061,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
   try {
     const [lexemes, wordCount, formCount] = await Promise.all([
       prisma.lexeme.findMany({
-        where: { lemma: { in: DEMO_LEMMAS } },
+        where: { lemma: { in: [...DEMO_LEMMAS] } },
         include: { forms: true },
       }),
       prisma.lexeme.count(),
@@ -923,7 +1076,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
       moment somebody confirms it off a photograph. The case table under it
       is the whole argument this page makes, and it would have been empty.
     */
-    const words = oneEntryPerLemma(lexemes, DEMO_LEMMAS).flatMap((lex) => {
+    const words = oneEntryPerLemma(lexemes, [...DEMO_LEMMAS]).flatMap((lex) => {
       const form = (t: string) => lex.forms.find((f) => f.formType === t)?.value;
       const isVerb = lex.pos === "VERB";
 
@@ -935,25 +1088,60 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         : [["nimetav · kes? mis?", form("NOM_SG")], ["omastav · kelle? mille?", form("GEN_SG")], ["osastav · keda? mida?", form("PART_SG")]]
       ).flatMap(([label, value]) => (label && value ? [{ label, value }] : []));
 
-      const cases = isVerb
+      const table = isVerb
         ? []
-        : buildCaseTable({
-            nomSg: form("NOM_SG"), genSg: form("GEN_SG"), partSg: form("PART_SG"),
-            partPl: form("PART_PL"), genPl: form("GEN_PL"),
-          }).map((row) => ({
-            en: row.spec.en,
-            et: row.spec.et,
-            question: row.spec.question,
-            singular: row.singular ?? null,
-            plural: row.plural ?? null,
-            principal: row.spec.principal,
-          }));
+        : buildCaseTable(stemsFrom(lex.forms));
+
+      /*
+        A FOURTH FORM, WHERE THE WORD HAS ONE.
+
+        `tuppa` and `kätte` are not `toa` and `käe` with an ending on them, and
+        no rule reaches either, which is why the dictionary stores them. So
+        they sit with the forms you memorise rather than with the ones that
+        follow, and the two headings count what is under them: press `tuba` and
+        the card says four and ten rather than three and eleven. That is the
+        card doing its job. The alternative is printing `toasse`, which is
+        defensible Estonian and is not a sentence anybody says.
+
+        The stems come from `stemsFrom`, which is the one reader of the short
+        illative: it takes the seeded `ILL_SG_SHORT` and Ekilex's `SgAdt`, so
+        an entry enriched from Ekilex carries its aditiiv here too.
+
+        IT ONLY EARNS THE FOURTH SLOT IF IT IS A DIFFERENT WORD. Most short
+        illatives are spelled like one of the three above them, because that
+        is what the case does: `aeg` goes to `aega`, which is also its
+        partitive. Printing it again under a second name teaches nobody
+        anything, so the card leaves it out of the column you memorise. This
+        is a question about the card and not about the language, which is why
+        it is answered here: `caseAnswer` still says `aega`, the case table
+        still shows it, and a learner who types it is still right.
+      */
+      const shown = new Set(principal.map((p) => p.value));
+      // One predicate, read twice: which column a row goes in and which
+      // heading counts it are the same question, and answering it twice is
+      // how a form ends up in neither.
+      const isLearnt = (row: DerivedForm) => (
+        row.origin === "STORED" && !row.spec.principal && !!row.singular && !shown.has(row.singular)
+      );
+      const learnt = table.filter(isLearnt);
 
       return [{
         lemma: lex.lemma,
         genitive: form("GEN_SG") ?? null,
-        principal,
-        cases,
+        principal: [
+          ...principal,
+          ...learnt.flatMap((row) => (row.singular
+            ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: shownForms(row).join(" / ") }]
+            : [])),
+        ],
+        cases: table.map((row) => ({
+          en: row.spec.en,
+          et: row.spec.et,
+          question: row.spec.question,
+          singular: row.singular ? shownForms(row).join(" / ") : null,
+          plural: row.plural ?? null,
+          principal: row.spec.principal || isLearnt(row),
+        })),
       }];
     });
 
@@ -971,35 +1159,43 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
 
 /**
  * The set the page falls back to when the database is unreachable or has not
- * been seeded yet — which is the state a fresh deployment builds in, so this
+ * been seeded yet, which is the state a fresh deployment builds in, so this
  * path is load-bearing rather than theoretical.
  *
- * The principal parts are copied verbatim from the checked seed data; the rest
- * is derived by `buildCaseTable()`, exactly as the live path does it. Nothing
- * here is a hand-written Estonian form.
+ * The stems are copied verbatim from the checked seed data and live in
+ * `lib/collections/demoWords.ts` beside the list of words to ask for; the rest
+ * is derived by `buildCaseTable()`, exactly as the live path does it, down to
+ * the short illative going in with the forms you memorise. Nothing here is a
+ * hand-written Estonian form, and `scripts/test-invariants.ts` checks the copy
+ * against the built dictionary rather than trusting that it was copied.
  */
-
-const FALLBACK_STEMS = [
-  { lemma: "tuba",
-    nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade" },
-  { lemma: "raamat",
-    nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute" },
-] as const;
-
-const FALLBACK_WORDS: DemoWord[] = FALLBACK_STEMS.map((w) => ({
-  lemma: w.lemma,
-  genitive: w.genSg,
-  principal: [
-    { label: "nimetav · kes? mis?", value: w.nomSg },
-    { label: "omastav · kelle? mille?", value: w.genSg },
-    { label: "osastav · keda? mida?", value: w.partSg },
-  ],
-  cases: buildCaseTable(w).map((row) => ({
-    en: row.spec.en,
-    et: row.spec.et,
-    question: row.spec.question,
-    singular: row.singular ?? null,
-    plural: row.plural ?? null,
-    principal: row.spec.principal,
-  })),
-}));
+const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
+  const table = buildCaseTable(w);
+  // The same rule as the live path above, for the same reason: `sõber` records
+  // `sõpra` as its short illative and `sõpra` is already its partitive.
+  const shown = new Set([w.nomSg, w.genSg, w.partSg]);
+  const isLearnt = (row: DerivedForm) => (
+    row.origin === "STORED" && !row.spec.principal && !!row.singular && !shown.has(row.singular)
+  );
+  const learnt = table.filter(isLearnt);
+  return {
+    lemma: w.lemma,
+    genitive: w.genSg,
+    principal: [
+      { label: "nimetav · kes? mis?", value: w.nomSg },
+      { label: "omastav · kelle? mille?", value: w.genSg },
+      { label: "osastav · keda? mida?", value: w.partSg },
+      ...learnt.flatMap((row) => (row.singular
+        ? [{ label: `${row.spec.et} · ${row.spec.question}`, value: shownForms(row).join(" / ") }]
+        : [])),
+    ],
+    cases: table.map((row) => ({
+      en: row.spec.en,
+      et: row.spec.et,
+      question: row.spec.question,
+      singular: row.singular ? shownForms(row).join(" / ") : null,
+      plural: row.plural ?? null,
+      principal: row.spec.principal || isLearnt(row),
+    })),
+  };
+});

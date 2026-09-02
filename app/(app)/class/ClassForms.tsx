@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Check, Copy, LogOut, Plus, Printer } from "lucide-react";
 import { archiveClassroom, assignHomework, assignUnit, createClassroom, joinClassroom, leaveClassroom } from "@/app/actions";
 import { Button } from "@/components/Button";
@@ -120,7 +120,7 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <label htmlFor="join-name" className="label-xs" style={{ color: "var(--ink-3)" }}>
-        Name your class will recognise
+        The name your class will see
       </label>
       <input
         id="join-name"
@@ -136,12 +136,12 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         {pending ? "Joining…" : "Join the class"}
       </Button>
       <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-        Joining a class shares your name, your streak, your XP for the week and how many words you
-        know with your teacher and classmates, and one more thing with your teacher alone: which
-        grammar case you personally get wrong most, as a rolled-up percentage over your own reviews,
+        Joining shares your name, your streak, your XP for the week and how many words you know
+        with your teacher and classmates. It shares one more thing with your teacher alone: which
+        grammar case you personally get wrong most, as one percentage across your own reviews,
         never a specific answer. A workplace group shares less: your name, whether you have been
-        practising, and one of four bands for the paper the group works towards. Neither shares your
-        deck, your searches, or your mistakes one by one. Leaving stops it immediately.
+        practising, and one of four bands for the paper the group works towards. Not your deck, not
+        your searches, not your mistakes one by one. Leaving stops all of it right away.
       </p>
     </div>
   );

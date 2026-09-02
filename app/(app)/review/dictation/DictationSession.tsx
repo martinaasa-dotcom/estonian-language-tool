@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Check, Ear, X, Volume2 } from "lucide-react";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
@@ -137,7 +137,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       <Page title="Dictation" lead="Hear a sentence, write it down.">
         <Empty
           title="No sentences short enough yet"
-          body="Dictation reads the short Ekilex sentences attached to words in your deck."
+          body="Dictation only uses short Ekilex sentences for words already in your deck."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -156,7 +156,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             Writing down what you hear is the closest thing to using the language. Every sentence in
-            this round was recorded by lexicographers, not by this app.
+            this round was recorded by dictionary editors, not by this app.
           </p>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -250,8 +250,8 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
                 <p className="label-xs" style={{ color: "var(--hard-ink)" }}>No audio right now</p>
                 <p lang="et" className="text-lg" style={{ color: "var(--ink)" }}>{task.et}</p>
                 <p className="max-w-[42ch] text-xs" style={{ color: "var(--ink-2)" }}>
-                  The pronunciation service could not be reached, so the sentence is shown instead of
-                  played. Copying it out still drills the spelling. Come back for the listening half.
+                  We couldn&rsquo;t reach the audio, so here&rsquo;s the sentence instead. Copying it
+                  out still helps with spelling. Come back later for the listening half.
                 </p>
               </div>
             ) : (
@@ -299,7 +299,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
           {result && task.en && (
             <p className="text-center text-sm" style={{ color: "var(--ink-2)" }}>
               {task.en}
-              <Chip tone="again" title="Machine translation, the Estonian is authoritative, this is not">
+              <Chip tone="again" title="Machine translation. Trust the Estonian over this.">
                 {AI_TAG}
               </Chip>
             </p>
@@ -326,7 +326,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       </div>
 
       <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
-        {correct} word-perfect of {done} · +{xp} XP · graded from the marking, sentences from Ekilex
+        {correct} word-perfect of {done} · +{xp} XP · graded word by word, sentences from Ekilex
       </p>
     </div>
   );

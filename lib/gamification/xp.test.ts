@@ -70,7 +70,6 @@ describe("levels", () => {
 
 const stats: QuestStats = {
   reviewsToday: 0,
-  xpToday: 0,
   newCardsToday: 0,
   recalledToday: 0,
   cardsAddedToday: 0,
@@ -111,6 +110,12 @@ describe("questsForDay", () => {
     const done = questsForDay("2026-08-28", { ...stats, reviewsToday: 99 })[0]!;
     expect(done.done).toBe(true);
     expect(done.progress).toBe(done.target);
+  });
+
+  it("never asks for XP, which is the review count under another name", () => {
+    for (const day of ["2026-01-01", "2026-03-14", "2026-07-04", "2026-12-31"]) {
+      expect(questsForDay(day, stats).map((q) => q.key)).not.toContain("xp_burst");
+    }
   });
 
   it("does not offer 'clear everything due' on a day with nothing due", () => {

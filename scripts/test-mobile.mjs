@@ -23,7 +23,13 @@ const WIDE = [768, 1280];
 const browser = await launchChromium();
 
 // Floor: 59, measured in the state CI seeds. A thinner database reads as short.
-const { check, done } = suite("The phone", { floor: 59 });
+/*
+  58 rather than 59: `/guide` was one of the routes in the overflow sweep and
+  the page is gone. One check, off the route list.
+*/
+// 57 rather than 58: `/placement` was cut, and it was one of the thirteen routes
+// the 44px pass walks. The sliver pass visits the lesson in its place.
+const { check, done } = suite("The phone", { floor: 57 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -144,13 +150,17 @@ for (const width of PHONES) {
 // Neither route was covered here before, which is why a whole screen of
 // controls could be redrawn without this suite having an opinion.
 for (const path of [
-  "/", "/review", "/dictionary", "/scan", "/assess", "/guide", "/exam",
-  "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
+  "/", "/review", "/dictionary", "/scan", "/assess", "/exam",
+  "/learn", "/learn/kodu", "/learn/kodu/lesson", "/grammar",
   "/settings", "/practice",
 ]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
-    [...document.querySelectorAll("button, [role=button], a[role=button]")]
+    // The same set the floor in globals.css covers, which is what a thumb has
+    // to hit rather than what is spelt `<button>`: a link drawn as a pill or
+    // as a lone icon is a control, and this suite could not see one.
+    [...document.querySelectorAll("button, [role=button], a[role=button], a.pill, a[aria-label]")]
+      .filter((el) => el.tagName !== "A" || el.classList.contains("pill") || el.querySelector("svg"))
       .map((el) => ({ el, r: el.getBoundingClientRect() }))
       .filter(({ r }) => r.width > 0 && (r.height < 44 || r.width < 44))
       .map(({ el, r }) => `${(el.textContent || el.getAttribute("aria-label") || "?").trim().slice(0, 20)} ${Math.round(r.width)}x${Math.round(r.height)}`),
@@ -162,7 +172,7 @@ for (const path of [
 // 6b — Nothing important is squeezed into a sliver.
 //      A block of prose narrower than about fifteen characters is not a layout
 //      choice, it is a flex row that should have wrapped and did not.
-for (const path of ["/learn", "/learn/kodu", "/placement"]) {
+for (const path of ["/learn", "/learn/kodu", "/learn/kodu/lesson"]) {
   const { ctx, page } = await open(390, 844, path);
   const slivers = await page.evaluate(() =>
     [...document.querySelectorAll("main p, main h1, main h2")]

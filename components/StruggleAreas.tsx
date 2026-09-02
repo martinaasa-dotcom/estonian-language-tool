@@ -1,10 +1,8 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import type { CaseAccuracy } from "@/lib/stats/history";
 import type { StickingPoint } from "@/lib/stats/sticking";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
-import { Card, SectionTitle } from "@/components/ui";
+import { Card, CardLink, SectionTitle } from "@/components/ui";
 
 /**
  * THE WORDS AND THE CASES THAT KEEP GOING WRONG, ON THE PAGE SOMEBODY OPENS.
@@ -50,13 +48,7 @@ export function StruggleAreas({ sticking, cases, className }: {
         </div>
       )}
 
-      <Link
-        href="/progress"
-        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold"
-        style={{ color: "var(--accent-deep)" }}
-      >
-        The whole picture, with the charts behind it <ArrowRight size={13} aria-hidden />
-      </Link>
+      <CardLink href="/progress" className="mt-4">See the whole picture on Progress</CardLink>
     </Card>
   );
 }

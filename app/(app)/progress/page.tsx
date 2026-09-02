@@ -1,13 +1,10 @@
-import Link from "next/link";
-import { Compass, Flame, Trophy, Users } from "lucide-react";
+import { Suspense } from "react";
+import { Compass, Flame, Shield } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
-import { xpFromRatingCounts } from "@/lib/gamification/xp";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
-import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { classRoster } from "@/lib/classroom/roster";
 import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading,
@@ -20,7 +17,13 @@ import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
 import { caseReviewsFor } from "@/lib/progress/cases";
-import { Card, Chip, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import { Board, BoardSkeleton } from "./Board";
+import { BADGES } from "@/lib/achievements/badges";
+import { BadgeShelf } from "@/components/achievements/BadgeShelf";
+import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { lemmasByCardLexeme } from "@/lib/dict/facts";
+import { Card, Chip, Empty, Meter, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
 import { NO_VALUE } from "@/lib/copy/values";
 import { formatHour } from "@/lib/time/clock";
 
@@ -37,10 +40,9 @@ export default async function ProgressPage() {
   const now = new Date();
   // Every figure below is a fact about a *day*, and this page renders on the
   // server, whose midnight is the deployment's. See lib/time/day.ts.
-  const clock = await learnerDayClock(ownerId);
-  const snapshot = await deckSnapshot(ownerId, now);
+  const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
-  const [summary, units, reviews, dueDates, cefrRows, learnerSettings, caseReviews] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -52,11 +54,24 @@ export default async function ProgressPage() {
       where: { ownerId, suspended: false, state: { not: 0 } },
       select: { due: true },
     }),
+    /*
+      ONE READ OF THE DECK, NOT TWO, AND ONE ROUND TRIP RATHER THAN FOUR.
+
+      This page used to read every card twice: once here for the CEFR
+      breakdown and again below, sequentially, for the cards that keep coming
+      back. Both asked for the lemma through the relation, which Prisma serves
+      as a second statement carrying every lexeme id it just read, so the two
+      reads were four round trips over the same rows. They are one read with
+      both sets of columns, and the lemma comes out of the shared dictionary
+      (lib/dict/facts.ts).
+    */
     prisma.card.findMany({
       where: { ownerId },
-      select: { state: true, lexeme: { select: { lemma: true, cefr: true } } },
+      select: {
+        id: true, front: true, back: true, cardType: true, targetCase: true,
+        lapses: true, reps: true, suspended: true, state: true, lexemeId: true,
+      },
     }),
-    readSettings(ownerId, [SETTING_KEYS.leaderboard, SETTING_KEYS.displayName]),
     /*
       Read separately from the charts above, and on purpose.
 
@@ -68,21 +83,25 @@ export default async function ProgressPage() {
       input too, and the window is the one this page already used.
     */
     caseReviewsFor(ownerId, now),
+    // The shelf and the shields lived on Settings, which is where you change
+    // things, not where you find out how you are doing. Both are readings.
+    prisma.achievement.findMany({ where: { ownerId }, select: { key: true }, orderBy: { key: "asc" } }),
+    readSettings(ownerId, [SETTING_KEYS.streakShields]),
   ]);
+  const earnedKeys = new Set(earned.map((a) => a.key));
+  const shields = numberSetting(shieldRow[SETTING_KEYS.streakShields], 0);
+
+  // The lemma behind each card, out of the dictionary the whole deployment
+  // shares rather than a second statement per deck read. lib/dict/facts.ts.
+  const entries = await lemmasByCardLexeme(deck.map((card) => card.lexemeId));
+  const lemmaOf = (id: string | null) =>
+    (id === null ? undefined : entries.get(id)?.lemma) ?? null;
 
   // The cards that keep coming back. Lapses live on the card's own FSRS state;
   // the accuracy beside them is counted from the log above.
-  const deck = await prisma.card.findMany({
-    where: { ownerId },
-    select: {
-      id: true, front: true, back: true, cardType: true, targetCase: true,
-      lapses: true, reps: true, suspended: true,
-      lexeme: { select: { lemma: true } },
-    },
-  });
   const sticking = stickingPoints(
     deck.map((c) => ({
-      id: c.id, lemma: c.lexeme?.lemma ?? null, front: c.front, back: c.back,
+      id: c.id, lemma: lemmaOf(c.lexemeId), front: c.front, back: c.back,
       cardType: c.cardType, targetCase: c.targetCase,
       lapses: c.lapses, reps: c.reps, suspended: c.suspended,
     })),
@@ -98,24 +117,14 @@ export default async function ProgressPage() {
   const retention = retentionReading(reviews);
   const cases = caseAccuracy(caseReviews);
   const hour = bestStudyHour(reviews, 20, clock);
-  const optedIn = learnerSettings[SETTING_KEYS.leaderboard] === "1";
-  // A class you have joined is the leaderboard that means something: real people
-  // you sit next to, and joining was itself the consent. The instance-wide
-  // opt-in board is the fallback for someone studying alone.
-  const membership = await prisma.classroomMember.findFirst({
-    where: { ownerId, classroom: { archived: false } },
-    include: { classroom: { select: { id: true, name: true } } },
-    orderBy: { joinedAt: "desc" },
-  });
-  const classBoard = membership ? await classRoster(membership.classroomId, now) : null;
-  const leaderboard = !membership && optedIn ? await weeklyLeaderboard(now) : [];
 
   // Vocabulary reach by CEFR: known words per level, against what the deck holds.
   const byLevel = new Map<string, { total: Set<string>; known: Set<string> }>();
-  for (const card of cefrRows) {
-    const lemma = card.lexeme?.lemma;
-    if (!lemma) continue;
-    const level = card.lexeme?.cefr ?? NO_VALUE;
+  for (const card of deck) {
+    const word = card.lexemeId === null ? undefined : entries.get(card.lexemeId);
+    if (!word) continue;
+    const { lemma } = word;
+    const level = word.cefr ?? NO_VALUE;
     const entry = byLevel.get(level) ?? { total: new Set<string>(), known: new Set<string>() };
     entry.total.add(lemma);
     if (snapshot.knownLemmas.has(lemma)) entry.known.add(lemma);
@@ -129,7 +138,7 @@ export default async function ProgressPage() {
 
   if (reviews.length === 0 && snapshot.totalCards === 0) {
     return (
-      <Page title="Progress" lead="Computed live from your review log, never stored, so it cannot drift.">
+      <Page title="Progress" lead="Worked out fresh from your reviews every time you check.">
         <Empty
           title="No history yet"
           body="Charts appear after your first review."
@@ -142,7 +151,7 @@ export default async function ProgressPage() {
   return (
     <Page
       title="Progress"
-      lead="Computed live from your review log, never stored, so it cannot drift."
+      lead="Worked out fresh from your reviews every time you check."
       actions={
         <ButtonLink href="/assess">
           <Compass size={15} aria-hidden /> Level check
@@ -258,7 +267,7 @@ export default async function ProgressPage() {
               </div>
               {dueDates.length === 0 && (
                 <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  This fills in as cards graduate out of the learning steps.
+                  This fills in as you review more cards.
                 </p>
               )}
             </Card>
@@ -349,159 +358,48 @@ export default async function ProgressPage() {
                 })}
               </ul>
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                Counted once every card from a word has graduated, so it is a floor.
+                This counts a word only once you know every card for it, so the real number could
+                be a little higher.
               </p>
+            </Card>
+          </section>
+
+          <section>
+            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
+            <Card>
+              <BadgeShelf earnedKeys={earnedKeys} />
+              <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
+                <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent-deep)" }} />
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                    {shields} streak shield{shields === 1 ? "" : "s"} banked
+                  </p>
+                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
+                    Earned at 7-, 30- and 100-day streaks. Each one carries your streak
+                    through a single day you miss entirely, and is spent on its own the
+                    next time you are back.
+                  </p>
+                </div>
+              </div>
             </Card>
           </section>
         </div>
 
-        <section>
-          <SectionTitle hint="this week">
-            {classBoard ? membership?.classroom.name : "Class leaderboard"}
-          </SectionTitle>
-          <Card>
-            {classBoard && membership ? (
-              <>
-                <ol className="flex flex-col gap-1.5">
-                  {classBoard.entries.slice(0, 8).map((row, i) => (
-                    <li
-                      key={row.ownerId}
-                      className="flex items-center gap-3 rounded-md px-3 py-2"
-                      style={{
-                        background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
-                        color: row.ownerId === ownerId ? "var(--accent-deep)" : "var(--ink-2)",
-                      }}
-                    >
-                      <span className="tnum w-6 text-xs">{i + 1}</span>
-                      {i === 0 && row.weeklyXp > 0
-                        ? <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
-                        : <Users size={15} aria-hidden style={{ opacity: 0.5 }} />}
-                      <span className="min-w-0 flex-1 truncate text-sm">{row.displayName}</span>
-                      <span className="tnum text-xs">{row.weeklyXp} XP</span>
-                    </li>
-                  ))}
-                </ol>
-                <Link
-                  href={`/class/${membership.classroomId}`}
-                  className="mt-3 inline-block text-xs"
-                  style={{ color: "var(--accent-deep)" }}
-                >
-                  Open the class
-                </Link>
-              </>
-            ) : !optedIn ? (
-              <>
-                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  Off by default. Turn it on and everyone else who has opted in (your class, say)
-                  sees the name you choose and your XP for the week. Nothing else is shared: no
-                  email, no word lists, no history.
-                </p>
-                <ButtonLink href="/settings" className="mt-4">Set a name and join</ButtonLink>
-              </>
-            ) : leaderboard.length <= 1 ? (
-              <Note tone="accent">
-                You are in. Nobody else has joined yet. Share the app with your class and this fills
-                up. Your XP this week: {leaderboard[0]?.xp ?? 0}.
-              </Note>
-            ) : (
-              <ol className="flex flex-col gap-1.5">
-                {leaderboard.map((row, i) => (
-                  <li
-                    key={row.ownerId}
-                    className="flex items-center gap-3 rounded-[var(--r)] px-3 py-2"
-                    style={{
-                      background: row.ownerId === ownerId ? "var(--accent-soft)" : "transparent",
-                      color: row.ownerId === ownerId ? "var(--accent)" : "var(--ink-2)",
-                    }}
-                  >
-                    <span className="tnum w-6 text-xs">{i + 1}</span>
-                    {i === 0 ? (
-                      <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
-                    ) : (
-                      <Users size={15} aria-hidden style={{ opacity: 0.5 }} />
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-sm">{row.name}</span>
-                    <span className="tnum text-xs">{row.xp} XP</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Card>
-        </section>
+        {/*
+          THE BOARD IS THE LAST THING ON THIS PAGE AND IT WAS FOUR ROUND TRIPS
+          IN FRONT OF THE FIRST.
+
+          Finding the class, reading its name through the relation, then the
+          roster: a chain nothing above it needed the answer to, at the bottom
+          of a page of charts. Behind a boundary it is fetched while the rest
+          of the page is already being read, which is what a `Suspense` is
+          for, and it is three trips rather than four now that the name comes
+          back beside the roster instead of in front of it. See ./Board.
+        */}
+        <Suspense fallback={<BoardSkeleton />}>
+          <Board ownerId={ownerId} now={now} />
+        </Suspense>
       </Stack>
     </Page>
   );
-}
-
-/** How many opted-in learners the weekly board is ranked from. */
-const BOARD_CANDIDATES = 2000;
-
-/**
- * This week's XP for everyone who has opted in.
- *
- * Only opted-in learners are read at all, and only their chosen display name
- * and a number leave the query — a leaderboard that leaked email addresses
- * would be a privacy incident, not a feature.
- *
- * The cap said it was there "since the whole thing is tallied in memory", and
- * the tallying was the reason it had to be so small: this read every review
- * every opted-in learner had written all week, which for two hundred people is
- * tens of thousands of rows fetched to produce four numbers each. Postgres
- * counts them now, so what comes back is at most four rows per learner and the
- * cap can be a bound on the `IN` list rather than on the work.
- */
-async function weeklyLeaderboard(now: Date) {
-  const since = new Date(now.getTime() - 7 * 86_400_000);
-  /*
-    Ordered, because which learners the board is drawn from was the plan's
-    choice: past the cap somebody could be on it one week and gone the next
-    having done nothing differently.
-
-    There is nothing on `Setting` that ranks people, so this is stable rather
-    than meaningful, and worth saying plainly: past the cap the board is the
-    top twenty of a fixed two thousand opted-in learners rather than of the
-    whole deployment. Ranking properly would mean tallying everybody first,
-    which is the query this function just stopped doing.
-  */
-  const optedIn = await prisma.setting.findMany({
-    where: { key: SETTING_KEYS.leaderboard, value: "1" },
-    select: { ownerId: true },
-    orderBy: { ownerId: "asc" },
-    take: BOARD_CANDIDATES,
-  });
-  const ids = optedIn.map((s) => s.ownerId);
-  if (ids.length === 0) return [];
-
-  const [names, counts] = await Promise.all([
-    prisma.setting.findMany({
-      where: { key: SETTING_KEYS.displayName, ownerId: { in: ids } },
-      select: { ownerId: true, value: true },
-    }),
-    prisma.review.groupBy({
-      by: ["ownerId", "rating"],
-      where: { reviewedAt: { gte: since }, ownerId: { in: ids } },
-      _count: { _all: true },
-    }),
-  ]);
-
-  const nameByOwner = new Map(names.map((n) => [n.ownerId, n.value]));
-  const tally = new Map<string, Record<number, number>>();
-  for (const row of counts) {
-    const owner = row.ownerId;
-    const forOwner = tally.get(owner) ?? {};
-    forOwner[row.rating] = (forOwner[row.rating] ?? 0) + row._count._all;
-    tally.set(owner, forOwner);
-  }
-
-  return ids
-    .map((ownerId) => ({
-      ownerId,
-      name: nameByOwner.get(ownerId)?.trim() || "A learner",
-      xp: xpFromRatingCounts(tally.get(ownerId) ?? {}),
-    }))
-    // Total, so two learners level on the week are not ordered by whatever the
-    // rows arrived in. Same rule as `bySubstance` in the dictionary: a
-    // comparator that can return 0 for two different rows decides nothing.
-    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name) || a.ownerId.localeCompare(b.ownerId))
-    .slice(0, 20);
 }

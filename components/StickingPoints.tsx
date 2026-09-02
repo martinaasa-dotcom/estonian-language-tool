@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { BookOpen, Compass, EyeOff, Undo2 } from "lucide-react";
 import { setCardSuspended } from "@/app/actions";
 import { Chip } from "@/components/ui";
@@ -56,10 +56,19 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
           <li
             key={point.id}
             className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[var(--r)] px-4 py-3"
+            /*
+              NO `opacity` ON A BOX THAT HOLDS WORDS.
+
+              A fade multiplies through everything inside it, and what is
+              inside a set-aside row is the one sentence explaining what just
+              happened to the card. `--ink-2` at 70% over the raised ground is
+              about 3.5:1, so the state that needs explaining was the state
+              drawn hardest to read. The ground, the icon and the sentence say
+              "set aside" between them and none of them needs a fade to do it.
+            */
             style={{
               background: isSuspended ? "var(--raised)" : "var(--surface)",
               border: "1px solid var(--rule)",
-              opacity: isSuspended ? 0.7 : 1,
             }}
           >
             {/*
@@ -96,7 +105,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
                   : <Chip tone="hard">{point.accuracy}%</Chip>}
               </p>
               <p className="mt-0.5 text-xs" style={{ color: "var(--ink-2)" }}>
-                {isSuspended ? "Set aside, it will not come up until you put it back." : stickingNote(point)}
+                {isSuspended ? "Set aside. It will not come up until you put it back." : stickingNote(point)}
               </p>
             </div>
 
@@ -104,7 +113,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
               {point.targetCase && (
                 <Link
                   href={`/grammar/${point.targetCase.toLowerCase()}`}
-                  className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
+                  className="pill press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                 >
                   <Compass size={12} aria-hidden /> The {point.targetCase.toLowerCase()}

@@ -33,7 +33,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Review", short_name: "Review", url: "/review" },
-      { name: "Learning path", short_name: "Learn", url: "/learn" },
+      { name: "The course", short_name: "Course", url: "/learn" },
       { name: "Dictionary", short_name: "Dictionary", url: "/dictionary" },
     ],
   };

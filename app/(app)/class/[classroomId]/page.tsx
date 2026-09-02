@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Flame, GraduationCap, Target, Trophy } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -230,8 +230,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                 ))}
               </ul>
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                Aggregated across everyone who has answered a case-form card. Individual answers are
-                not shown to anyone but the learner who gave them.
+                Combined across everyone who has answered a case-form card. Nobody but the learner
+                who gave an answer can see it on its own.
               </p>
             </Card>
           </section>

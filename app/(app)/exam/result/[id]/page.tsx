@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import {
   ArrowRight, BadgeCheck, FileWarning, Info, Repeat, TrendingDown, TrendingUp, Trophy,
@@ -41,8 +41,8 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
     return (
       <Page title="That result cannot be read" eyebrow="Mock examination">
         <Note tone="again">
-          The stored paper is in a shape this version of the app does not understand. The score is
-          still {attempt.pct} percent, which counted as {attempt.passed ? "a pass" : "a fail"}.
+          This result was saved in a format this version of the app can&apos;t read anymore. The
+          score is still {attempt.pct} percent, which counted as {attempt.passed ? "a pass" : "a fail"}.
         </Note>
       </Page>
     );
@@ -105,16 +105,16 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               {result.absentParts.length > 0 && (
                 <p className="mt-2 flex items-center gap-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
                   <FileWarning size={14} aria-hidden />
-                  {result.absentParts.map((skill) => SKILL_ET[skill]).join(" and ")} could not be
-                  set at all, so {result.absentParts.length === 1 ? "it is" : "they are"} left out
-                  of the total rather than scored as nothing.
+                  {result.absentParts.map((skill) => SKILL_ET[skill]).join(" and ")} couldn&apos;t be
+                  set at all, so {result.absentParts.length === 1 ? "it's" : "they're"} left out
+                  of your total instead of counted as zero.
                 </p>
               )}
               {result.thin && (
                 <p className="mt-2 flex items-center gap-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
                   <FileWarning size={14} aria-hidden />
-                  The dictionary could not fill every task, so this is a percentage of a shorter
-                  paper than the specification sets.
+                  The dictionary couldn&apos;t fill every task, so this percentage is out of a
+                  shorter paper than usual.
                 </p>
               )}
             </div>
@@ -142,8 +142,8 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                   style={{ color: moved >= 0 ? "var(--mint-ink)" : "var(--peach-ink)" }}
                 >
                   {previous.pct} percent on {formatDateTime(previous.at)}, {result.pct} today. The
-                  questions were not the same ones, so this is two samples of the same paper rather
-                  than a rerun of one.
+                  questions were different both times, so think of this as two tries at this level,
+                  not the same paper twice.
                 </p>
               </Card>
             )}
@@ -156,7 +156,7 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
                   {best === null
                     ? "Your first paper at this level, so it is the one to beat."
-                    : `Better than anything you had sat at this level, which stood at ${best} percent.`}
+                    : `Better than anything you've sat at this level. Your old best was ${best} percent.`}
                 </p>
               </Card>
             )}
@@ -297,11 +297,11 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
           <div className="mb-4">
             <Note tone="neutral">
               <Info size={14} className="mr-1.5 inline" aria-hidden />
-              These marks are for length and for using the words you were given. Whether the
-              Estonian itself is right is what an examiner marks and what nothing here may judge, so
-              treat this part of your score as the most you could have got rather than what you
-              would have got. Anu will read either text back and say what she thinks, and her note
-              carries no marks.
+              These marks are for length, and for using the words you were given. A real examiner
+              also checks whether your Estonian itself is correct, and nothing here can judge that.
+              So treat this score as a ceiling, not a guarantee: it&apos;s the most you could get, not
+              what an examiner would actually give you. Anu can read either text back and tell you
+              what she thinks. Her note carries no marks.
             </Note>
           </div>
           <ul className="grid gap-4">
@@ -386,8 +386,8 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
 
       <p className="mt-8 text-sm" style={{ color: "var(--ink-3)" }}>
         {spec.official
-          ? "The frame of this paper is the real one. The questions are not."
-          : "The state does not examine at this level, so nothing about this paper is official."}
+          ? "The structure of this paper is real. The questions aren't."
+          : "Estonia doesn't test at this level, so nothing about this paper is official."}
         {" "}
         <Link href="/exam" className="underline underline-offset-4">Back to the exam hub</Link>
       </p>

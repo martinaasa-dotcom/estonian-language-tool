@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
+import { ArrowRight } from "lucide-react";
 import { Mascot } from "@/components/brand";
+import { PrefetchLink } from "@/components/PrefetchLink";
 
 /**
  * Three soft pastel lights, fixed behind the page content.
@@ -265,7 +267,7 @@ export function StatTile({ value, label, tone = "accent", icon, hint }: {
  * which all want the same shape — a conic gradient rather than an SVG arc,
  * because it animates cheaply and needs no viewBox arithmetic.
  */
-export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "var(--accent)" }: {
+export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "var(--accent)", track = "var(--raised)" }: {
   pct: number;
   size?: number;
   thickness?: number;
@@ -273,12 +275,27 @@ export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "v
   label: string;
   children?: ReactNode;
   tone?: string;
+  /**
+   * The unfilled part. `--raised` is right on the app's own ground and
+   * disappears on a tinted card: measured at 1.01 to 1.17:1 against
+   * `--accent-soft` in both themes, so a ring at two percent read as a white
+   * disc with a fleck at twelve o'clock rather than as a ring nearly empty. A
+   * card that paints itself passes the rule it is sitting on.
+   */
+  track?: string;
 }) {
   const clamped = Math.max(0, Math.min(100, pct));
+  // The angle is a custom property so the fill can draw itself on arrival
+  // (`.ring-fill` in globals.css); the gradient reads it, the keyframe moves it.
+  const ring = {
+    width: size, height: size,
+    background: `conic-gradient(${tone} var(--ring-deg), ${track} 0deg)`,
+    "--ring-deg": `${clamped * 3.6}deg`,
+  } as CSSProperties;
   return (
     <div
-      className="relative flex shrink-0 items-center justify-center rounded-full"
-      style={{ width: size, height: size, background: `conic-gradient(${tone} ${clamped * 3.6}deg, var(--raised) 0deg)` }}
+      className="ring-fill relative flex shrink-0 items-center justify-center rounded-full"
+      style={ring}
       role="img"
       aria-label={label}
     >
@@ -299,7 +316,7 @@ export function Meter({ pct, label, tone = "var(--accent)", height = 8 }: {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
     <div
-      className="w-full overflow-hidden rounded-full"
+      className="meter-fill w-full overflow-hidden rounded-full"
       style={{ background: "var(--raised)", height }}
       role="progressbar"
       aria-label={label}
@@ -338,5 +355,48 @@ export function Skeleton({ className = "", height = 16 }: { className?: string; 
       style={{ height, background: "var(--raised)" }}
       aria-hidden
     />
+  );
+}
+
+/**
+ * The way out of a card, drawn once.
+ *
+ * Today had five of these and every one was invented where it stood: "See the
+ * whole picture on Progress" with a trailing arrow at `text-sm`, "See the full
+ * entry" with a leading book at `text-sm`, "Every mode, and a drill for your
+ * weakest case" with an arrow at `text-xs`, "Open the path" as underlined
+ * text inside a sentence, and "Change the goal" underlined in `--ink-3` at a
+ * four-pixel offset. Five affordances for one job, down one column, so the
+ * eye has to work out what is pressable five times on a page somebody opens
+ * every morning.
+ *
+ * The arrow trails, always, because it is what says "this goes somewhere"
+ * and a leading icon reads as decoration on the sentence rather than as a
+ * direction. An `icon` is for the rare card whose way out needs naming as
+ * well as pointing, and it sits before the words with the arrow still after
+ * them.
+ *
+ * `py-2.5` under a coarse pointer is the 44px floor met the way an inline
+ * link cannot meet it: this is a block-level link on a line of its own, so
+ * padding it grows the line rather than pushing it out of a paragraph. That
+ * is the whole difference, and it is why the floor covers this and leaves a
+ * link inside a sentence alone.
+ */
+export function CardLink({ href, children, icon, className = "" }: {
+  href: string;
+  children: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <PrefetchLink
+      href={href}
+      className={`card-link inline-flex items-center gap-1.5 text-sm font-semibold ${className}`}
+      style={{ color: "var(--accent-deep)" }}
+    >
+      {icon}
+      {children}
+      <ArrowRight size={13} aria-hidden />
+    </PrefetchLink>
   );
 }

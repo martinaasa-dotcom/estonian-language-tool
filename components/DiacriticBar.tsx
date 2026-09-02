@@ -112,6 +112,47 @@ export function DiacriticBar({
     });
   };
 
+  /*
+    A KEY THAT BEHAVES LIKE THE LETTERS ON THE LANDING PAGE.
+
+    These six are the only place in the app where one of those letters is a
+    control rather than an ornament, and they were the flattest thing on the
+    screen: a one pixel lift, which is the hover a row in a list gets. `.press`
+    still supplies the push, and `.letter-key` supplies the growing and the one
+    shake on the way in, so a key is one control with one set of states rather
+    than two rules arguing over `transform`. See app/globals.css.
+  */
+  const letter = (ch: string) => (
+    <button
+      key={ch}
+      type="button"
+      // Keep focus in the field being typed into.
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => insert(ch, fallbackRef?.current)}
+      aria-label={`Insert ${ch}`}
+      className="press letter-key h-9 w-9 shrink-0 rounded-full text-base font-semibold"
+      style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+    >
+      {ch}
+    </button>
+  );
+
+  /*
+    The way out travels with the last letter, welded to it.
+
+    The moment somebody notices they do not need this row is the moment they
+    are looking at it, so the way out is here rather than three screens away in
+    Settings. But it is a control *on* the row, not a seventh letter, and as a
+    wrap item of its own it could be pushed onto a line by itself: under Anu's
+    box the six letters fitted and the cross did not, so it sat alone under the
+    row, left-aligned, reading as something that had come loose rather than as
+    a way to dismiss anything. So the pair is one flex item. Whatever the width,
+    the cross is beside a letter or it is not drawn, and the hairline is the
+    same divider `SpeakPair` uses to say two halves are one control.
+  */
+  const last = ESTONIAN_LETTERS[ESTONIAN_LETTERS.length - 1]!;
+  const rest = ESTONIAN_LETTERS.slice(0, -1);
+
   return (
     /*
       Wrapping. This bar is desktop-only now, so it is no longer one pixel of
@@ -123,39 +164,25 @@ export function DiacriticBar({
       {standalone && (
         <span className="label-xs mr-1" style={{ color: "var(--ink-3)" }}>Insert</span>
       )}
-      {ESTONIAN_LETTERS.map((ch) => (
-        <button
-          key={ch}
-          type="button"
-          // Keep focus in the field being typed into.
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => insert(ch, fallbackRef?.current)}
-          aria-label={`Insert ${ch}`}
-          className="press h-9 w-9 rounded-full text-base font-semibold transition-ui hover:-translate-y-px"
-          style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-        >
-          {ch}
-        </button>
-      ))}
-      {dismissible && (
-        /*
-          The moment somebody notices they do not need this is the moment they
-          are looking at it, so the way out is here rather than only three
-          screens away in Settings. Quiet, and it says where it went.
-        */
-        <button
-          type="button"
-          disabled={pending}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={(e) => hide(e.currentTarget)}
-          title="Hide these. Settings turns them back on."
-          aria-label="Hide the Estonian letters. Settings turns them back on."
-          className="press tap-tint ml-1 flex h-9 w-9 items-center justify-center rounded-full"
-          style={{ color: "var(--ink-3)" }}
-        >
-          <X size={15} aria-hidden />
-        </button>
-      )}
+      {rest.map(letter)}
+      {dismissible ? (
+        <span className="flex shrink-0 items-center gap-1.5">
+          {letter(last)}
+          <span aria-hidden className="h-4 w-px shrink-0" style={{ background: "var(--rule)" }} />
+          <button
+            type="button"
+            disabled={pending}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => hide(e.currentTarget)}
+            title="Hide these. Settings turns them back on."
+            aria-label="Hide the Estonian letters. Settings turns them back on."
+            className="press tap-tint flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+            style={{ color: "var(--ink-3)" }}
+          >
+            <X size={15} aria-hidden />
+          </button>
+        </span>
+      ) : letter(last)}
     </div>
   );
 }

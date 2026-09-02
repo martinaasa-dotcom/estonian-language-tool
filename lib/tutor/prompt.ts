@@ -47,12 +47,12 @@ const meeldib = WORKED_FORMS.meeldin.value.replace(/n$/, "b");
 
 /**
  * Closed-class words a case or a principal part cannot cover at all: a
- * pronoun's oblique case, a demonstrative, a particle. Estonian's pronouns
- * and function words are not built from a genitive stem or a principal part
- * the way an ordinary noun or verb is, and the harvested dictionary (which
- * exists to hold content words a syllabus names, per CLAUDE.md) carries no
- * forms for them at all, so there is no `Form` row for
- * `lib/tutor/prompt.itest.ts` to check them against.
+ * pronoun's short oblique form, a particle. The pronoun units harvest `mina`
+ * and `see` with their principal parts now, so `see` could be checked against
+ * a `Form` row; `mulle` and `sulle` are the short allatives, which no rule
+ * over the genitive reaches and the seed does not store, and `läbi` is a
+ * particle with no forms at all. They stay listed together because the check
+ * that names them is one list.
  *
  * They stay hand-verified rather than machine-checked, which is a real gap,
  * not a hidden one: `scripts/test-invariants.ts` names this exact list, so a
@@ -63,9 +63,30 @@ export const CLOSED_CLASS_EXAMPLES = ["mulle", "sulle", "see", "läbi"] as const
 const [mulle, sulle, see, labi] = CLOSED_CLASS_EXAMPLES;
 
 export function buildSystemPrompt(level: string): string {
-  const caseTable = CASES.map(
-    (c) => `${c.et} (${c.en}): ${c.question}${c.suffix ? ` (genitive stem + -${c.suffix})` : " (principal part, memorised)"}`,
-  ).join("\n");
+  /*
+    THE ILLATIVE IS NOT DESCRIBED AS REGULAR, BECAUSE IT IS NOT.
+
+    This handed Anu "sisseütlev: kuhu? (genitive stem + -sse)" alongside the
+    ten that really are regular, which is the same false rule the case table
+    itself used to apply: `tuba` goes to `tuppa`, not `toasse`. A tutor told
+    the ending is predictable will predict it, and `lib/tutor/verify.ts` only
+    withholds a form she was not given rather than one she reasoned her way to
+    inside an explanation.
+
+    So the one irregular case says so, and says where the real form comes from.
+    The forms she is handed for the word in question are the answer, and the
+    honest thing when she has not been handed one is to say she is not sure.
+  */
+  const caseTable = CASES.map((c) => {
+    const ending = c.suffix ? ` (genitive stem + -${c.suffix})` : " (principal part, memorised)";
+    const irregular = c.key === "ILLATIVE"
+      ? ". BUT thousands of words have a short form (aditiiv) that this rule does"
+        + " not produce: tuba goes to tuppa, aeg to aega. Use the form you were"
+        + " given for the word being asked about, and say you are not sure rather"
+        + " than applying -sse to a word whose short form you were not given."
+      : "";
+    return `${c.et} (${c.en}): ${c.question}${ending}${irregular}`;
+  }).join("\n");
 
   const { tuba, sepp, loen, lugesin, aitan, sind, helistan, meeldin, raamatut, raamatu } = WORKED_FORMS;
 
@@ -90,10 +111,10 @@ WHAT YOU MUST NOT DO
 THE ESTONIAN CASE SYSTEM
 ${caseTable}
 
-Eleven of the fourteen cases are regular endings on the genitive singular stem. Only the nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural and, for some words, the short illative.
+Eleven of the fourteen cases are regular endings on the genitive singular stem. The nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural. The sisseütlev is the one of the eleven with a second form the rule cannot give: the short one, which is what people say (tuppa, not toasse), and a place name in -maa takes the outside cases rather than the inside ones (Saksamaal, not Saksamaas).
 
 NOUN PRINCIPAL PARTS: nominative sg, genitive sg, partitive sg, short illative, partitive plural.
-VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-participle. The present 1sg is in the weak grade and cannot be guessed from the infinitive (${loen.lemma} → ${loen.value}).
+VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-participle. The present stem cannot be read off the -ma form: some verbs weaken it (${loen.lemma} → ${loen.value}) and others keep the strong grade in the present and weaken the second infinitive instead. Always use the stored first person; never work it out from the infinitive.
 
 THE THINGS THIS LEARNER WILL GET WRONG
 1. Object case. Estonian marks aspect on the object: partitive for ongoing, partial, or negated events; total object (genitive sg / nominative pl) for completed, whole ones. Negation is always partitive. This is the single most persistent English-speaker error, so check for it whenever you see an object.
@@ -106,4 +127,47 @@ Keep answers under about 200 words unless asked for more. Use short paragraphs. 
 VOCAB: estonian word | english translation
 
 Only include words you are confident about.`;
+}
+
+/**
+ * What is true of this learner today, in a block sent after the static prompt.
+ *
+ * ANU USED TO KNOW ONE THING ABOUT THE PERSON SHE WAS TEACHING, AND IT WAS
+ * WRONG. The chat posted `level: "B1"` for everybody, typed into the client,
+ * so a beginner on their first evening and a C1 speaker were both taught as
+ * B1, and nothing the app had measured reached her: not the level check, not
+ * the six months of case answers on the Progress page, not which unit was open.
+ * A teacher who has been looking is what "warm is attention" means, and she
+ * had not been given anything to look at.
+ *
+ * Three facts, and the wording keeps them from becoming a tic. The weakest
+ * case is offered as something to use when a question touches it, not to
+ * raise in every answer, because a learner who hears about their partitive
+ * every time they ask about the weather stops asking. Everything here is
+ * derived on the server from the learner's own log (`lib/progress/tutorContext.ts`);
+ * nothing the client sends reaches this block.
+ */
+export interface LearnerNote {
+  level: string;
+  /** A case key from `CASES`, with how often it was answered right and out of how many. */
+  weakestCase: { grammCase: string; accuracy: number; total: number } | null;
+  /** The course unit currently open: its Estonian title, the English under it, and its band. */
+  unit: { title: string; subtitle: string; level: string } | null;
+}
+
+export function learnerNote(note: LearnerNote): string {
+  const lines: string[] = [];
+  const weak = note.weakestCase && CASES.find((c) => c.key === note.weakestCase?.grammCase);
+  if (weak && note.weakestCase) {
+    lines.push(
+      `- Over the last six months their weakest case is the ${weak.et} (${weak.en}), right ${note.weakestCase.accuracy}% of ${note.weakestCase.total} times. When a question touches it, say so and build the example around it. Do not raise it unprompted in every answer.`,
+    );
+  }
+  if (note.unit) {
+    lines.push(
+      `- They are working through the unit "${note.unit.title}" (${note.unit.subtitle}) at ${note.unit.level}. Prefer everyday words from around that level in examples.`,
+    );
+  }
+  if (lines.length === 0) return "";
+  return `ABOUT THIS LEARNER\n- Their level is ${note.level}.\n${lines.join("\n")}`;
 }

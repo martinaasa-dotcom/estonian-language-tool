@@ -40,9 +40,16 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **A course.** Seventy-three units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
-  sitting's worth of words. Adding a unit builds real flashcards, every form, audio, both
+- **A course.** Seventy-nine units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
+  sitting's worth of words, and the words between the words too: question words, pronouns, the
+  postpositions, the months and the adverbs of time have units of their own. Adding a unit builds real flashcards, every form, audio, both
   directions, and a unit only reads as finished when the scheduler agrees the words are retained.
+- **A meaning in the language you think in.** Most people learning Estonian in Estonia already
+  speak Russian or Ukrainian, and being told that `kohv` is "coffee" asks you to reach a word
+  through the language you are least sure of. `tuba` is комната and кімната, from Ekilex, written
+  by the same lexicographers as the Estonian: 1,367 of the course's words carry a Russian
+  equivalent and 1,165 a Ukrainian one. Chosen in Settings, printed beside the English rather than
+  instead of it, and no model is anywhere near it.
 - **Words in context.** Every entry carries the sentences Ekilex's lexicographers recorded for it,
   with audio and a translation on request. Those same sentences become gap-fill cards
   ("Hotelli ____ on näha vanalinna.") and a word-order builder. Nothing is generated: the app only
@@ -53,7 +60,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   recognition. `u` undoes the last grade without touching the review log.
 - **Seven practice modes over one deck**, the daily review, a 60-second Case Sprint, a Match round
   against the clock, Sentences, Speaking, Listening and Dictation, plus a one-click drill for
-  whichever case you keep missing. Everything writes to the same review log, so a game still moves
+  whichever case you keep missing and a conjugation table to type out, five persons at a time. Everything writes to the same review log, so a game still moves
   the schedule forward.
 - **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
   citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
@@ -71,14 +78,23 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **Speaking that does not lie to you.** Say the word, then hear a native voice and your own
   recording back to back. It is not scored: there is no verified Estonian speech recogniser this app
   can use, and an invented confidence number would be believed.
-- **A level check that measures rather than asks.** Reading, listening, writing and speaking, about
-  ten minutes, assembled entirely out of the dictionary: meanings, case forms, case identification,
-  verb government, recorded sentences, dictation, and a sentence you write that has to contain a
-  named case. Questions climb the levels and a skill stops as soon as a band is clearly past you.
-  Nothing is marked by an AI. Speaking is not scored, because nothing here honestly can, so it is
-  yours to rate and it is kept out of the level. The result is a profile per skill, not a badge, and
-  the overall figure follows your weakest measured skill because that is what a CEFR level claims.
-  Take it whenever you like, and every sitting is kept.
+- **A level check that measures rather than asks.** Eighty questions across A1 to C1: six reading
+  and six writing at each level, three listening, one spoken. Assembled entirely out of the
+  dictionary, so it is meanings, sentences with a word taken out of them, dictation, and forms you
+  type. Questions climb the levels, and a skill asks one level past the first one you do not pass
+  and then stops, so a beginner answers about fifteen of them and nobody answers all eighty
+  without earning it. The size is measured rather than picked: simulated against the real
+  dictionary, the old nineteen-question paper placed 43% of learners correctly and put 57% of them
+  below where they were, and this one places between 72% and 98% depending on the level. Nothing
+  is marked by an AI. Speaking is not scored, because nothing here
+  honestly can, so it is yours to rate and it is kept out of the level. The result is a profile per
+  skill, not a badge, and the overall figure follows your weakest measured skill because that is
+  what a CEFR level claims. Take it whenever you like, and every sitting is kept.
+- **A level you can just set.** Settings has the level the app is going on and a row of five chips
+  to change it. A measurement is the wrong instrument for having been moved up in your class, or
+  for a check taken on a bad evening, and whichever of the two was stated later is the one the app
+  holds. It decides where the course opens, which words review introduces next, and the band the
+  practice rounds and the dictionary draw from.
 - **A plan in hours, and it is not flattering.** Say why you are learning, how far you want to get
   and by when, and the app does the arithmetic: how many study hours that level usually takes, how
   many of them your daily goal actually covers, and how many are left to find in a class or a
@@ -87,8 +103,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   numbers are on the same screen, with their sources named.
 - **Setup that teaches the app.** First run asks what you are here for before it asks which level,
   offers to measure you rather than making you guess, shows the timeline before you have picked a
-  single word, and walks through every screen along with an equally long list of what this app
-  cannot do. That list is kept at `/guide`.
+  single word, and says in one line what this app will not do for you before it asks for anything.
 - **Classes.** A six-character join code, a roster showing who is keeping up, the cases the group
   keeps missing, and a unit set as homework into each student's own task list. A class is a view
   over what learners already own, joining shares progress, never your deck, and leaving stops it.
@@ -134,6 +149,19 @@ Ekilex carries no English on a reader key, so translations are resolved in layer
 already accepted, then Wiktionary, then Anu, then an honest blank for you to fill. Every layer says
 where it came from, and you can always overwrite it.
 
+It does carry Russian and Ukrainian, though, in the same response as the forms, and the course
+harvest keeps them: 1,367 of the 1,371 course words have a Russian equivalent and 1,165 a
+Ukrainian one, written by the same lexicographers. Pick a language in Settings and it is printed
+beside the English on the entry and on the first meeting with a word in review. The English stays,
+because it is the one gloss every entry has and the Wiktionary-derived words have no other.
+
+The dictionary's landing page also reads the morning's front page. A few of the day's headlines
+from ERR, Estonia's public broadcaster, are printed as written, and every word the dictionary can
+vouch for is a link to its entry, so the most ordinary Estonian there is comes with a case table
+under it. A word the dictionary will not vouch for is left plain rather than guessed at, and
+nothing from the feed is stored. `NEWS_FEED_URL` points it at another RSS feed, or `off` turns it
+off.
+
 ## What works without any API key
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
@@ -142,7 +170,9 @@ Everything except the two things that need a model, Anu and reading a photograph
   full case table worked out from the genitive. Search an inflected form you met in class, 
   `toas`, `lugesin`, `tubadega`, and it finds the word *and* tells you which form you typed.
   Anything missing can be added by hand, principal parts and all.
-- **Audio**, real Estonian speech from the University of Tartu's neural voice. No key, no setup.
+- **Audio**, real Estonian speech from the University of Tartu's neural voices, twelve of them to
+  choose from. A card reads itself aloud when a word is met and when its answer appears, and the
+  next card's clip is fetched while you answer this one. No key, no setup.
 - **Flashcards**. FSRS scheduling, five card types, typed or flipped, keyboard-only review.
 - **The learning path, every practice mode, the grammar reference, printable worksheets, XP, quests,
   badges and the progress charts.**
@@ -150,6 +180,9 @@ Everything except the two things that need a model, Anu and reading a photograph
   the dictionary *before* any model runs, so the verdict is certain and works with no API key.
 - **Verb government**. Which case a verb demands (`aitan sind`, `helistan sulle`). The error
   English speakers never stop making, and the one nothing else drills systematically.
+- **Every verb conjugated**. The present tense, the negative, the conditional and the imperative
+  are worked out from the stored first person for every verb in the dictionary, a rule checked
+  against Ekilex for all 797 of them, and the conjugation drill asks you to type the table back.
 - **Minimal pairs**. The length contrasts Estonian spelling only half records, found automatically
   wherever two forms in the dictionary differ by a doubled letter.
 - **From your reading**. Paste real Estonian; words already in your deck are blanked out.
@@ -206,6 +239,25 @@ rebuild, documented in `docs/03-architecture.md` ADR-011:
    want preview deploys to work): `DATABASE_URL`, `DIRECT_URL`, plus whichever of
    `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` and `EKILEX_API_KEY` you're using.
    Never prefix any of these `NEXT_PUBLIC_`, they must stay server-side.
+
+   **Run the app in the same region as the database, and put the pair as near Estonia as you
+   can.** Those are two rules and the first one comes first, because the two distances are not
+   paid the same number of times. This app derives everything from the review log on each request
+   (ADR-014), so a page is a handful of database round trips: Today makes about eight it cannot
+   avoid, and every one of them crosses whatever sits between the function and the database. A
+   learner's own distance to the function is crossed once per page. So a function 30ms nearer the
+   reader and 35ms further from the database is a page that got slower, by a factor of about eight.
+
+   `vercel.json` says `"regions": ["dub1"]`, which is Dublin, which is AWS `eu-west-1`, which is
+   where a Supabase project on `aws-*-eu-west-1.pooler.supabase.com` lives. Vercel's own default
+   is `iad1`, in Washington, and against a database in Ireland that is roughly 80ms a query, which
+   is most of a second on Today before the page has drawn anything.
+
+   Nearly everybody learning Estonian is in Estonia, and the nearest pair to Tallinn is Stockholm:
+   Supabase's `eu-north-1` and Vercel's `arn1`, about 400km away against Dublin's 1,800. Moving
+   there means moving the Supabase project, which is a migration rather than a setting, so **move
+   both or neither**. A deployment in `arn1` reading a database in Ireland is the worst of the
+   three arrangements, and it is the one you get by changing the easy half first.
 3. Deploy. Vercel's build runs `prisma generate && prisma db push && npm run db:seed:ensure &&
    next build` (see `package.json`), so a hosted deployment sets itself up: the schema is
    created/updated against `DIRECT_URL`, and a database with an empty dictionary gets the built-in
@@ -258,7 +310,7 @@ that; with sign-in configured and nobody named, the queue says so instead of sho
 Running locally there is one learner and they review their own. Anyone can see what they sent, and
 what happened to it, at `/suggestions`.
 
-### Adding Google sign-in (multi-user)
+### Adding sign-in (multi-user)
 
 Every route is gated behind sign-in (`middleware.ts`); each Google account gets its own dictionary
 deck, tasks and review history, while the dictionary itself stays shared, see ADR-012. Two accounts
@@ -280,6 +332,28 @@ to set up, both one-time:
 
 Neither Google credential nor the Supabase service role key is ever needed in this app's own code, 
 the OAuth exchange happens entirely inside Supabase.
+
+**A mailed link, so a Google account is not the price of entry.** Anyone without one, or unwilling
+to attach one to a language app, could not reach the product at all. Supabase dashboard →
+**Authentication → Providers → Email**: turn it on and leave "Confirm email" as it is. Then
+**Authentication → URL Configuration → Redirect URLs**: add `https://<your-app>/auth/callback`,
+which is the one address either way in lands on, so the allowlist is checked in a single place.
+
+**Set up your own SMTP before you tell anybody about it.** Supabase's built-in email service sends
+a couple of messages an hour for the whole project and says itself it is for testing, so on a
+public copy the second person to ask for a link does not get one. **Project Settings → Auth → SMTP
+Settings** takes any provider (Resend, Postmark, SES).
+
+Which is why the mailed link is **off until `EMAIL_SIGN_IN="on"`**, and why off is the default. A
+form that takes an address, says "check your email" and mails nobody is worse than no form: the
+learner waits, checks their spam and decides the app is broken. Google is the door that works
+until the day your mail does, and on that day this is a one-word change.
+
+The link is opened in the browser that asked for it, because that is where the verifier lives, and
+the sign-in screen says so. If you would rather it survived being forwarded to a phone, change the
+magic-link email template to point at
+`{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`. `app/auth/callback/route.ts`
+already answers that shape; nothing in the app needs changing.
 
 ## The way it looks
 

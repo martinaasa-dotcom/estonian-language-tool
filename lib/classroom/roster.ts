@@ -10,6 +10,7 @@ import {
   ATTEMPT_WINDOW, MATURE_STATE, partPercentages, skillEvidenceFrom,
 } from "@/lib/progress/exam";
 import { knownLemmasFrom } from "@/lib/progress/summary";
+import { gradedLemmas, lemmaCountsByLevel } from "@/lib/dict/facts";
 import { summariseCohort, type CohortInput, type CohortSummary } from "./cohort";
 
 /**
@@ -230,8 +231,15 @@ export async function workplaceRoster(
         where: { ownerId: { in: ids } },
         select: { id: true, ownerId: true, cardType: true, state: true, lexeme: { select: { lemma: true } } },
       }),
-      prisma.lexeme.groupBy({ by: ["cefr"], _count: true }),
-      prisma.lexeme.findMany({ select: { lemma: true, cefr: true } }),
+      /*
+        Both of these are facts about the shared dictionary rather than about
+        anybody in this group, so they come from the same cache
+        `readinessSignals` reads them through. Asking here directly would be
+        the whole lemma table again, once per render of a screen a sponsor
+        opens as often as a learner opens Today.
+      */
+      lemmaCountsByLevel(),
+      gradedLemmas(),
       prisma.review.findMany({
         where: { ownerId: { in: ids }, reviewedAt: { gte: windowStart } },
         // No `targetCase`. See the header: the boundary is what this selects.
@@ -278,7 +286,7 @@ export async function workplaceRoster(
   // Ordered most recent first above, so the first one seen per owner is theirs.
   for (const row of placements) if (!placementBy.has(row.ownerId)) placementBy.set(row.ownerId, row);
 
-  const availableBy = new Map(available.map((row) => [row.cefr, row._count]));
+  const availableBy = available;
 
   const input: CohortInput[] = members.map((member) => {
     const own = cardsBy.get(member.ownerId) ?? [];

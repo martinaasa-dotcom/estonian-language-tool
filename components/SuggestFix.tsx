@@ -147,8 +147,8 @@ export function SuggestFix({
         setSent(result.message);
       } catch {
         setError(
-          "That did not reach us. If you are offline it will need sending again once you are back; " +
-          "if you have been signed out, signing in again is the fix.",
+          "That didn't reach us. If you're offline, you'll need to send it again once you're " +
+          "back. If you've been signed out, signing in again should fix it.",
         );
       }
     });
@@ -280,8 +280,8 @@ export function SuggestFix({
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           />
           <p className="mt-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
-            Leave it as it is if you are sure it is wrong but not sure what is right. That is still
-            worth telling us.
+            Not sure what the right answer is? Leave this blank. Just knowing it&apos;s wrong is
+            still useful to us.
           </p>
         </div>
       )}

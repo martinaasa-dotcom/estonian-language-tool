@@ -131,7 +131,7 @@ are worth the top model (a wrong case explanation is actively harmful to a learn
 means the multi-thousand-token grammar prompt is paid for once per session rather than per turn.
 Details and cost model in `06-anu-tutor.md`.
 
-**ADR-005: Retrieve morphology, never generate it. (AMENDED, twice, below.)**
+**ADR-005: Retrieve morphology, never generate it. (AMENDED, three times, below.)**
 *Context:* an LLM will happily produce a plausible, wrong partitive plural. *Decision:* authoritative
 forms come from Ekilex only; AI output is tagged `provenance: AI` and requires explicit confirmation
 before entering a card's answer field. *Consequences:* the dictionary is bounded by Ekilex coverage;
@@ -171,6 +171,20 @@ line on the day it is right. The chat is therefore the path where ADR-005 is enf
 most, and the compensating control is the UI rather than the check: every claim Anu makes about a
 form is boxed and tagged, and a word only becomes a card through a confirmation step. If that trade
 is ever revisited, the thing to change is the reply's shape, not the extractor's threshold.
+
+*Amendment 3: the verb has one derivable part, and it is derived under amendment 1's licence.* The
+present indicative, the negative after `ei`, the present conditional and the singular imperative are
+regular endings on the stored first person for every verb in the language but `olema`, whose third
+person is `on`, and `minema`, whose imperative is `mine`. `lib/estonian/conjugate.ts` is the one
+module that joins those endings to a stem, asserted, and it declines both exceptions rather than
+guessing at them. The rule was not reasoned about but measured: `npm run audit:verbs` derives every
+slot for every verb in the shipped dictionary and compares it with every form Ekilex records for the
+same word, 797 verbs and thirteen slots each, with no disagreement. What is *not* derived, and may
+not be, is the simple past: `lugesin` goes to `luges` but `tahtsin` to `tahtis` and `võtsin` to
+`võttis`, with the grade changing on the way, so its third person stays attested-only. An attested
+form always answers ahead of the rule, every derived form says so on screen, and the moment an entry
+is enriched from Ekilex the rule steps aside. The same principle as the ten regular cases on the
+genitive: one bug for the whole language rather than one word wrong unpredictably.
 
 **ADR-006: Generic importer instead of a Speakly integration.**
 *Context:* Speakly has no public API and no verifiable export (audit A3). *Decision:* one
@@ -463,9 +477,24 @@ government string names every case it governs while the distractors were drawn f
 marked wrong for it. So the questions are gaps now, in sentences a lexicographer recorded, which
 `lib/estonian/cloze.ts` already hid words out of for the mock exam. A case is named in the
 explanation *after* an answer, where it is a cross-reference for somebody also taking a course,
-and `scripts/test-invariants.ts` fails on one in a question. Questions climb the bands in order and
-a skill stops as soon as a whole band comes in under half, so the paper is about ten minutes rather
-than forty. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
+and `scripts/test-invariants.ts` fails on one in a question. *The paper is eighty questions and every number in it was measured*:
+six reading and six writing at each of the five bands, three listening and one spoken. It was
+nineteen at two per band per skill, and two four-option questions cannot decide a band, because one
+lucky guess moves it from half to full and one slip moves it back. Learners at each true level were
+simulated against papers built from the shipped dictionary: the old paper placed 43% of them
+correctly and put 57% *below* where they were, and this one places 97, 98, 93, 85, 80 and 72
+percent from pre-A1 to C1. Three things came out of that sweep. Two thirds has to be a score
+somebody can reach, so a band size is a multiple of three and 4 per band measured *worse* than 3.
+Writing is the noisiest of the three skills, because its answers are typed and nothing puts a floor
+under a band the way four options do, so at a fixed eighty items spending them there beat spending
+them on listening or on reading. And the overall level is the weakest of three skills, so noise in
+any one of them lands on the result, which is why raising reading alone took it only to 52%. Questions climb the bands in order and a skill asks at most one band above
+the first band it was not passed at, and nothing above one that came in under half, so a beginner
+answers a dozen questions and somebody at C1 answers all sixty, which is the paper each of them
+needed. *The level is the highest band passed consecutively from the bottom*, which is the rule
+those tests score on and was not the rule here: the old one climbed past any band between half and
+two thirds, so A1 at 100%, A2 at 55% and B1 at 70% reported B1 over a band the same screen printed
+as failed. *Three rules make the result trustworthy.* **No Estonian is written for it**: every
 form is retrieved, stored or derived from the genitive stem by the app's own derivation, and every
 question says which (ADR-005, ADR-017). **No model marks anything**: a choice against a stored
 index, a dictation against the recorded sentence, a written sentence against a form the dictionary

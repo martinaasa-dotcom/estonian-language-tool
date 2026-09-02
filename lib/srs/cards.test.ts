@@ -154,14 +154,18 @@ describe("generateCards — CONJUGATION", () => {
     ],
   };
 
-  it("asks by the name a class uses, and answers with the stored form", () => {
+  it("asks by the name a class uses, and answers with the stored form where there is one", () => {
     const cards = generateCards(lugema, ["CONJUGATION"]);
     const third = cards.find((c) => c.front.includes("olevik · ta"));
     expect(third?.back).toBe("loeb");
-    expect(cards.every((c) => lugema.forms.some((f) => f.value === c.back))).toBe(true);
+    const conditional = cards.find((c) => c.front.includes("tingiv kõneviis · ma"));
+    expect(conditional?.back).toBe("loeksin");
   });
 
-  it("falls back to the seeded principal parts when there are no Ekilex codes", () => {
+  it("derives the present, the negative, the conditional and the imperative for a seeded verb", () => {
+    // Every seeded verb holds five principal parts and nothing else. The
+    // simple past third person has no rule and is left out; the rest come
+    // from lib/estonian/conjugate.ts, checked against Ekilex for every verb.
     const seeded: LexemeForCards = {
       ...lugema,
       forms: [
@@ -170,7 +174,27 @@ describe("generateCards — CONJUGATION", () => {
       ],
     };
     const cards = generateCards(seeded, ["CONJUGATION"]);
-    expect(cards.map((c) => c.back)).toEqual(["loen", "lugesin"]);
+    expect(cards.map((c) => c.back)).toEqual([
+      "loen", "loeb", "loeme", "ei loe", "lugesin", "loeksin", "loe",
+    ]);
+    expect(cards.find((c) => c.back === "ei loe")?.front).toBe("lugema → eitus · ma ei");
+  });
+
+  it("prefers an attested form over the rule, and leaves olema's present to Ekilex", () => {
+    const olema: LexemeForCards = {
+      ...lugema,
+      lemma: "olema",
+      translation: "to be",
+      forms: [
+        { formType: "PRES_1SG", value: "olen" },
+        { formType: "PAST_1SG", value: "olin" },
+        { formType: "EKILEX:IndPrSg3", value: "on", morphCode: "IndPrSg3" },
+      ],
+    };
+    const cards = generateCards(olema, ["CONJUGATION"]);
+    expect(cards.find((c) => c.front.includes("olevik · ta"))?.back).toBe("on");
+    expect(cards.find((c) => c.front.includes("olevik · me"))).toBeUndefined();
+    expect(cards.find((c) => c.front.includes("tingiv"))?.back).toBe("oleksin");
   });
 
   it("makes nothing for a noun", () => {

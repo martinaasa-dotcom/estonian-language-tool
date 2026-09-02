@@ -1,11 +1,11 @@
-import Link from "next/link";
+import { Suspense } from "react";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
 import { ArrowRight, Flame, Shield, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
 import { resolveProvider } from "@/lib/tutor/provider";
-import { awardBadges, buildBadgeStats } from "@/lib/progress/achievements";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { examCountdown } from "@/lib/progress/countdown";
@@ -14,20 +14,22 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
+import { caseReviewsFor } from "@/lib/progress/cases";
+import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
-import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { FIRST_DOORS, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
+import { Card, CardLink, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
 import type { TaskView } from "@/components/TaskRow";
 import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
 import { WordOfDayCard } from "@/components/WordOfDay";
+import { BadgeCheck } from "./BadgeCheck";
 
 export const metadata = { title: "Today" };
 
@@ -73,17 +75,38 @@ export default async function TodayPage() {
   const ownerId = await requireUserId();
   const now = new Date();
   /*
-    The learner's own midnight, not this server's. Every day-shaped figure on
-    this page reads it: the streak, the goal ring, the quests and the week
-    strip. Without it they all break at the deployment's midnight, which on
-    Vercel is UTC — see lib/time/day.ts for what that cost.
-  */
-  const clock = await learnerDayClock(ownerId);
+    FOUR ANSWERS THAT NEED NOTHING FROM EACH OTHER, SO THEY ARE ASKED AT ONCE.
 
-  const snapshot = await deckSnapshot(ownerId, now);
-  const settings = await readSettings(ownerId, [
-    SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
-    SETTING_KEYS.currentWeek,
+    Three of them were `await`s in a row and the fourth was read at the very
+    end of the page, after everything else had finished. On a socket on the
+    same machine that is a rounding error; against a hosted Postgres each one
+    is a round trip, and this page made fourteen of them one after another,
+    which was measured by giving every query a 20ms delay and watching the page
+    take four hundred milliseconds to answer a database that was idle.
+
+    The clock is a settings read and the settings are the same read, so those
+    two are now one query between them (lib/settings/store.ts). What is left is
+    the deck, and the level this learner placed at.
+  */
+  const [clock, snapshot, settings, placement] = await Promise.all([
+    /*
+      The learner's own midnight, not this server's. Every day-shaped figure on
+      this page reads it: the streak, the goal ring, the quests and the week
+      strip. Without it they all break at the deployment's midnight, which on
+      Vercel is UTC — see lib/time/day.ts for what that cost.
+    */
+    learnerDayClock(ownerId),
+    deckSnapshot(ownerId, now),
+    readSettings(ownerId, [
+      SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
+    ]),
+    /*
+      Which level the course opens at. It was read last, after everything else
+      on the page had finished, and it depends on none of it: the placement and
+      the latest level check, both of which this request can ask for straight
+      away.
+    */
+    courseLevelFor(ownerId),
   ]);
 
   // A brand-new learner gets the wizard instead of an empty dashboard. Anyone
@@ -122,17 +145,11 @@ export default async function TodayPage() {
   const [word, collection, struggle, countdown] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now)) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
-    shows(stage, "struggle") ? loadStruggle(ownerId) : null,
+    shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already
     // has one for the due counts, and the readiness figures only need the deck.
     shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
   ]);
-
-  // Streak and deck-size badges can be earned just by reaching a milestone, so
-  // Today checks on every load. Idempotent, and it reuses the data this page
-  // already loaded rather than asking for it all over again.
-  const stats = await buildBadgeStats(ownerId, { snapshot, summary, units });
-  const newBadges = await awardBadges(ownerId, stats);
 
   const tutorReady = resolveProvider() !== null;
   /*
@@ -146,10 +163,6 @@ export default async function TodayPage() {
   const readerCanConfigure = !supabaseConfigured();
   const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
-  // Written by `setCurrentWeek`, which clamps to 1..60, so anything else in the
-  // column is a value from before that clamp or from a restored backup.
-  const storedWeek = Number(settings[SETTING_KEYS.currentWeek]);
-  const classWeek = Number.isInteger(storedWeek) && storedWeek > 0 ? storedWeek : null;
   /*
     The course decides what comes next, not this page. Its own rule respects
     where the learner placed: picking the first unfinished unit in order sent a
@@ -157,7 +170,6 @@ export default async function TodayPage() {
     for them. `nextUnit` prefers finishing something already started, then the
     first open unit at or above their level.
   */
-  const placement = await courseLevelFor(ownerId);
   const nextSyllabusUnit = pickNextUnit({
     doneUnitIds: new Set(units.filter((u) => u.state === "done").map((u) => u.unit.id)),
     startedUnitIds: new Set(units.filter((u) => u.state === "learning").map((u) => u.unit.id)),
@@ -174,7 +186,16 @@ export default async function TodayPage() {
     isToday: day === summary.dayKey,
   }));
 
-  const modes = QUICK_MODES.slice(0, practiceTiles(stage));
+  /*
+    On the first morning the two doors are the two that work on a deck with no
+    history, and not simply the first two in the table: `QUICK_MODES` opens
+    with Case Sprint, which is sixty seconds of case forms "drawn from the
+    cards you are weakest on", offered to somebody who has answered nothing.
+    See `FIRST_DOORS`.
+  */
+  const modes = stage === "arriving"
+    ? FIRST_DOORS.slice(0, practiceTiles(stage))
+    : QUICK_MODES.slice(0, practiceTiles(stage));
 
   /*
     THE MODULES.
@@ -211,10 +232,19 @@ export default async function TodayPage() {
                 {summary.goalPct}%
               </span>
             </Ring>
-            <div aria-hidden className="sm:hidden">
+            {/*
+              Shown at every width. It was `sm:hidden`, so from 640 up the card
+              carried two labelled tiles and one unlabelled circle reading
+              100%, with the meaning in an aria-label and nowhere else. Past
+              the goal it said "24 of 15 reviews", which reads as a counting
+              fault rather than as a day gone well.
+            */}
+            <div aria-hidden>
               <p className="label-xs" style={{ color: "var(--ink-3)" }}>Daily goal</p>
               <p className="tnum mt-1 text-xs" style={{ color: "var(--ink-2)" }}>
-                {summary.reviewsToday} of {summary.dailyGoal} reviews
+                {summary.reviewsToday >= summary.dailyGoal
+                  ? `Met, ${summary.reviewsToday} reviews`
+                  : `${summary.reviewsToday} of ${summary.dailyGoal} reviews`}
               </p>
             </div>
           </div>
@@ -224,7 +254,7 @@ export default async function TodayPage() {
       {snapshot.totalCards === 0 ? (
         <Empty
           title="Your deck is empty"
-          body="A unit becomes real cards, with every form and audio."
+          body="A unit becomes real cards, with every form and its audio."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
       ) : toReview > 0 ? (
@@ -233,17 +263,36 @@ export default async function TodayPage() {
           <ArrowRight size={17} aria-hidden />
         </ButtonLink>
       ) : (
-        <Note tone="good">
-          Caught up. Reviewing early doesn&rsquo;t help memory. Try a game below, or add new
-          words for tomorrow.
-        </Note>
+        /*
+          THE ONE CARD ON THE PAGE THAT EXISTS TO SAY WHAT TO DO NOW, SAYING IT.
+
+          With nothing due this was a sentence and no control, and it pointed
+          "below" at practice tiles that sit in the other column from `lg` up.
+          The lead above already says there is nothing due. So the note is one
+          line and the next unit is a button, which is the honest next thing on
+          a day the learner has earned.
+        */
+        <div className="flex flex-col gap-3">
+          <Note tone="good">
+            Caught up. Reviewing early does not help memory, so this is a good moment for
+            something new.
+          </Note>
+          {nextUnit ? (
+            <ButtonLink href={`/learn/${nextUnit.unit.id}/lesson`} variant="secondary" className="w-full justify-center">
+              Meet {nextUnit.unit.title} <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+          ) : (
+            <ButtonLink href="/practice" variant="secondary" className="w-full justify-center">
+              Open practice <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+          )}
+        </div>
       )}
 
       {stage === "arriving" && snapshot.totalCards > 0 && toReview > 0 && (
         <p className="text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Answer honestly rather than generously. The scheduler uses your ratings to work out
-          when to ask again, so a card you nearly knew is worth more to it than a card you
-          said you knew.
+          Type or pick where you can, and where a card just asks, say honestly whether you
+          knew it. The scheduler works out when to ask again from that.
         </p>
       )}
     </Card>
@@ -269,7 +318,7 @@ export default async function TodayPage() {
         />
         {/* A week at a glance: the streak, made concrete. */}
         <div className="flex min-w-[210px] flex-1 items-center justify-between gap-2">
-          {week.map((d) => (
+          {week.map((d, i) => (
             <div key={d.day} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
               {/*
                 Sized to the column it is in, up to 36px, rather than
@@ -280,7 +329,9 @@ export default async function TodayPage() {
                 circle at whatever width it ends up with.
               */}
               <span
-                className="flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold"
+                // A reviewed day pops in, one after another across the week,
+                // so the run of days reads as a run rather than as seven dots.
+                className={`${d.done ? "pop-in " : ""}flex aspect-square w-full max-w-9 items-center justify-center rounded-full text-xs font-bold`}
                 /*
                   The ring is what makes a reviewed day visible.
 
@@ -304,18 +355,34 @@ export default async function TodayPage() {
                   // 2.52:1 and the tick is the channel carrying
                   // "reviewed" without relying on the colour.
                   color: d.done ? "var(--on-mint)" : "var(--ink-3)",
-                  boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
-                  outline: d.isToday ? "2px solid var(--accent)" : "none",
-                  outlineOffset: 2,
+                  /*
+                    Today was marked with a 2px outline at a 2px offset, which
+                    is this app's focus ring exactly, sitting permanently on a
+                    span nobody can focus. A reader who tabs sees the real one
+                    move and this one stay, which reads as the page being
+                    stuck. It is an inset ring instead: inside the circle,
+                    where no focus ring in this app ever sits, and the letter
+                    under it carries the same colour so the mark is not the
+                    ring alone.
+                  */
+                  boxShadow: d.isToday
+                    ? "inset 0 0 0 2px var(--accent-deep)"
+                    : d.done
+                      ? "inset 0 0 0 1.5px var(--mint-ink)"
+                      : "none",
+                  animationDelay: d.done ? `${i * 60}ms` : undefined,
                 }}
                 aria-hidden
               >
                 {d.done ? "✓" : "·"}
               </span>
               <span className="sr-only">
-                {d.day}: {d.done ? "reviewed" : "no reviews"}
+                {d.day}{d.isToday ? " (today)" : ""}: {d.done ? "reviewed" : "no reviews"}
               </span>
-              <span className="text-2xs font-semibold" style={{ color: "var(--ink-3)" }}>
+              <span
+                className="text-2xs font-semibold"
+                style={{ color: d.isToday ? "var(--accent-deep)" : "var(--ink-3)" }}
+              >
                 {weekdayLetter(d.day)}
               </span>
             </div>
@@ -326,7 +393,7 @@ export default async function TodayPage() {
       {summary.shieldsAvailable > 0 && (
         <p className="flex items-center gap-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
           <Shield size={13} aria-hidden style={{ color: "var(--accent-deep)" }} />
-          {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked, one
+          {summary.shieldsAvailable} streak shield{summary.shieldsAvailable === 1 ? "" : "s"} banked. One
           missed day won&rsquo;t break your streak.
         </p>
       )}
@@ -335,7 +402,8 @@ export default async function TodayPage() {
         <div className="border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
           <div className="mb-2 flex items-baseline justify-between gap-3">
             <span className="label-xs" style={{ color: "var(--ink-3)" }}>
-              Level {summary.level.level} · <span lang="et">{summary.level.title}</span>
+              Level {summary.level.level} · <span lang="et">{summary.level.title}</span>,{" "}
+              {summary.level.gloss}
             </span>
             <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
               {summary.level.into}/{summary.level.span} XP
@@ -354,14 +422,22 @@ export default async function TodayPage() {
     </Card>
   ) : null;
 
-  /* What is written down for today, under headings rather than four loose dates. */
-  const planCard = shows(stage, "tasks") ? (
-    <TodayPlan tasks={tasks.map(taskView)} classWeek={classWeek} clock={clock} now={now} />
+  /* What a teacher has assigned, under headings rather than loose dates. Only
+     drawn when there is something in it: the manual homework list is gone, so
+     a learner studying alone has nothing to put here and no reason to see it. */
+  const planCard = shows(stage, "tasks") && tasks.length > 0 ? (
+    <TodayPlan tasks={tasks.map(taskView)} clock={clock} now={now} />
   ) : null;
 
+  /*
+    A Card like every one of its neighbours. It was a bare `<section>`, so its
+    heading sat 25px further left than the four above it and its rows read as
+    three loose boxes under a heading belonging to nothing. The rows keep their
+    own borders, because a quest that is done is drawn as a filled row and
+    losing that would lose the only thing the panel says at a glance.
+  */
   const questsCard = shows(stage, "quests") ? (
-
-    <section>
+    <Card>
       <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
         Today&rsquo;s quests
       </SectionTitle>
@@ -410,7 +486,7 @@ export default async function TodayPage() {
           );
         })}
       </ul>
-    </section>
+    </Card>
   ) : null;
 
   /* The words and the cases that keep going wrong, from the one calculation each. */
@@ -469,13 +545,9 @@ export default async function TodayPage() {
       </div>
       {/* The hub rather than a seventh tile: six hues, six modes, and the
           grid stays a grid. */}
-      <Link
-        href="/practice"
-        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold"
-        style={{ color: "var(--accent-deep)" }}
-      >
-        Every mode, and a drill for your weakest case <ArrowRight size={13} aria-hidden />
-      </Link>
+      <CardLink href="/practice" className="mt-3">
+        Every mode, and a drill for your weakest case
+      </CardLink>
     </Card>
   ) : null;
 
@@ -490,9 +562,9 @@ export default async function TodayPage() {
       </div>
       <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {tutorReady
-          ? "Anu explains Estonian grammar, which case to use, why a stem changed, whether your sentence is right."
+          ? "Anu explains Estonian grammar, which case to use, why a stem changed, and whether your sentence is right."
           : readerCanConfigure
-            ? "Anu can explain which case to use and why a stem changed. She needs a free API key first, about two minutes."
+            ? "Anu can explain which case to use and why a stem changed. She needs a free key first, which takes about two minutes to set up."
             : "Anu is not switched on for this site yet. Everything else here works without her."}
       </p>
       {(tutorReady || readerCanConfigure) && (
@@ -549,7 +621,15 @@ export default async function TodayPage() {
         left column has the plan and the streak in it and no longer needs the
         help. Below `lg` all of this is one column in reading order anyway.
       */}
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      {/*
+        `gap-8` down, `lg:gap-6` across. Below `lg` this grid is one column, so
+        its gap is the seam between the last card of the left stack and the
+        first of the right, and at 24px it was the one tighter join on a page
+        whose every other section sits 32px from its neighbour. Across, at the
+        width where the two columns are actually side by side, 24px is the
+        gutter between them and is right.
+      */}
+      <div className="grid gap-8 lg:gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Stack className="min-w-0">
           {doNowCard}
           {stage === "arriving" && practiceCard}
@@ -567,7 +647,11 @@ export default async function TodayPage() {
           {tutorCard}
         </Stack>
       </div>
-      <AchievementToasts badges={newBadges} />
+      {/* Behind a Suspense boundary so three round trips of badge checking do
+          not sit in front of the first byte of this page. See ./BadgeCheck. */}
+      <Suspense fallback={null}>
+        <BadgeCheck ownerId={ownerId} snapshot={snapshot} summary={summary} units={units} />
+      </Suspense>
     </Page>
   );
 }
@@ -582,7 +666,9 @@ function PracticeTile({ mode }: { mode: PracticeMode }) {
     >
       <span style={{ color: toneInk(mode.tone) }}><Glyph size={17} aria-hidden /></span>
       <span className="mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
-      <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
+      {/* Lowercase running text, so `text-xs`: the 11.5px step is the floor for
+          tracked uppercase labels and this is a sentence on a pastel tile. */}
+      <span className="text-xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
     </Link>
   );
 }
@@ -638,12 +724,11 @@ function greeting(clock: DayClock, now: Date): string {
 
 /** A `Task` row in the shape `TaskRow` can hold, which is a client component. */
 function taskView(task: {
-  id: string; title: string; tag: string; completed: boolean;
-  classWeek: number | null; dueAt: Date | null;
+  id: string; title: string; tag: string; completed: boolean; dueAt: Date | null;
 }): TaskView {
   return {
     id: task.id, title: task.title, tag: task.tag, completed: task.completed,
-    classWeek: task.classWeek, dueAt: task.dueAt ? task.dueAt.toISOString() : null,
+    dueAt: task.dueAt ? task.dueAt.toISOString() : null,
   };
 }
 
@@ -651,10 +736,18 @@ function taskView(task: {
  * What is fighting this learner: the words that keep lapsing and the cases they
  * keep missing.
  *
- * BOTH ARE THE ONE CALCULATION EACH. `stickingPoints` and `caseAccuracy` are
- * what Progress and Practice already read, and a home page tallying its own
- * would let one learner read two different numbers for the comitative with
- * nothing in the app to say which was right. That has happened here before.
+ * BOTH ARE THE ONE CALCULATION EACH, AND THE CASES ARE THE ONE QUERY.
+ * `stickingPoints` and `caseAccuracy` are what Progress and Practice already
+ * read, and a home page tallying its own would let one learner read two
+ * different numbers for the comitative with nothing in the app to say which was
+ * right. That has happened here before.
+ *
+ * So the reviews behind the cases come from `caseReviewsFor` rather than from a
+ * query written beside this one. A shared calculation over an unshared input is
+ * not a shared answer: the query this replaced took an arbitrary five thousand
+ * rows of all time with no order between them, which is the exact shape that
+ * module exists to remove, and all-time accuracy answers a different question
+ * from the one a drill button asks.
  *
  * The deck is narrowed in SQL, which is the one thing this does that Progress
  * does not. Progress loads every card the learner owns because it is going to
@@ -669,7 +762,7 @@ function taskView(task: {
  * this page and found on Progress, which is why the panel links there and calls
  * it the whole picture.
  */
-async function loadStruggle(ownerId: string) {
+async function loadStruggle(ownerId: string, now: Date) {
   const [deck, caseReviews] = await Promise.all([
     prisma.card.findMany({
       where: {
@@ -677,32 +770,48 @@ async function loadStruggle(ownerId: string) {
         suspended: false,
         OR: [{ lapses: { gte: LAPSE_THRESHOLD } }, { reps: { gte: MIN_REPS } }],
       },
-      orderBy: [{ lapses: "desc" }, { reps: "desc" }],
+      // And on the primary key, because neither lapses nor reps is unique and
+      // this is cut at sixty: a tie at the boundary would otherwise be settled
+      // by whatever the plan did that day, so the panel could name a different
+      // card on two loads of one morning.
+      orderBy: [{ lapses: "desc" }, { reps: "desc" }, { id: "asc" }],
       take: 60,
       select: {
         id: true, front: true, back: true, cardType: true, targetCase: true,
-        lapses: true, reps: true, suspended: true,
-        lexeme: { select: { lemma: true } },
+        lapses: true, reps: true, suspended: true, lexemeId: true,
       },
     }),
-    prisma.review.findMany({
-      where: { ownerId, targetCase: { not: null } },
-      select: { targetCase: true, rating: true },
-      take: 5000,
-    }),
+    /*
+      THE SAME QUERY THE OTHER TWO SCREENS ASK, RATHER THAN A FOURTH OF ITS OWN.
+
+      This drew `WeakestCases`, the component Progress and Practice draw, off
+      five thousand rows of all time with no `orderBy` between them: the exact
+      shape `lib/progress/cases.ts` was written to remove, still here on the
+      one page everybody opens. So a learner could be told one number on Today
+      and another on Progress about the same case on the same day, and which
+      five thousand rows decided it was the plan's answer rather than theirs.
+    */
+    caseReviewsFor(ownerId, now),
   ]);
 
-  const reviews = deck.length
-    ? await prisma.review.findMany({
-        where: { ownerId, cardId: { in: deck.map((c) => c.id) } },
-        select: { cardId: true, rating: true },
-      })
-    : [];
+  const [reviews, entries] = await Promise.all([
+    deck.length
+      ? prisma.review.findMany({
+          where: { ownerId, cardId: { in: deck.map((c) => c.id) } },
+          select: { cardId: true, rating: true },
+        })
+      : [],
+    // Out of the shared dictionary rather than through the relation, which
+    // Prisma serves as a second statement. See lib/dict/facts.ts.
+    lemmasByCardLexeme(deck.map((c) => c.lexemeId)),
+  ]);
 
   return {
     sticking: stickingPoints(
       deck.map((c) => ({
-        id: c.id, lemma: c.lexeme?.lemma ?? null, front: c.front, back: c.back,
+        id: c.id,
+        lemma: (c.lexemeId === null ? undefined : entries.get(c.lexemeId)?.lemma) ?? null,
+        front: c.front, back: c.back,
         cardType: c.cardType, targetCase: c.targetCase,
         lapses: c.lapses, reps: c.reps, suspended: c.suspended,
       })),

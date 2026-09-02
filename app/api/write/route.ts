@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
@@ -51,14 +52,14 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Record<string, unknown>;
     if (typeof body.lexemeId !== "string" || typeof body.caseKey !== "string" ||
         typeof body.sentence !== "string") {
-      return Response.json({ error: "Malformed request." }, { status: 400 });
+      return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
     }
     lexemeId = body.lexemeId;
     caseKey = body.caseKey as CaseKey;
     sentence = body.sentence.trim().slice(0, MAX_SENTENCE_CHARS);
     if (typeof body.level === "string" && /^[ABC][12]$/.test(body.level)) level = body.level;
   } catch {
-    return Response.json({ error: "Malformed request." }, { status: 400 });
+    return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
   }
 
   if (!looksLikeSentence(sentence)) {
@@ -128,11 +129,11 @@ export async function POST(request: Request) {
       })),
     }, formCheck.used);
 
-    void recordUsage({
+    after(() => recordUsage({
       ownerId, kind: "GRADER", provider: config.name, model: config.model,
       inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
       reservation: decision.reservation,
-    });
+    }));
     settled = true;
 
     // ADR-005, enforced rather than requested. The prompt tells the model it may
@@ -160,7 +161,8 @@ export async function POST(request: Request) {
 
     return Response.json({ formCheck, graded, aiAvailable: true, withheld, withheldReason });
   } catch (error) {
-    if (!settled && decision.reservation) void releaseReservation(decision.reservation);
+    const booking = decision.reservation;
+    if (!settled && booking) after(() => releaseReservation(booking));
     if (!(error instanceof TutorError)) {
       reportError(error, { at: "api/write", ownerId, extra: { model: config.model } });
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Check, Eye, RotateCcw, X } from "lucide-react";
 import { checkAchievements, gradeCard, translateExample } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
@@ -145,7 +145,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
       <Page title="Sentences" lead="Put real Estonian sentences back in order.">
         <Empty
           title="No sentences to build yet"
-          body="Sentences arrive from Ekilex with the forms, attached to words in your deck."
+          body="Sentences come from Ekilex, already linked to words in your deck."
           action={<ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>}
         />
       </Page>
@@ -164,7 +164,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
             Word order is the part a flashcard cannot teach. Every sentence here was written by
-            lexicographers, not by this app.
+            dictionary editors, not by this app.
           </p>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">

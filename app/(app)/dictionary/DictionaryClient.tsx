@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguage";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Camera, Check, Plus, ScissorsLineDashed, Search, Star } from "lucide-react";
@@ -9,17 +10,19 @@ import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
-import { buildCaseTable } from "@/lib/estonian/derive";
+import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { Examples } from "./Examples";
-import { WordForms } from "./Forms";
+import { DerivedVerbForms, WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
 import { SuggestFix } from "@/components/SuggestFix";
 import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
 import type { Suggestions } from "@/lib/dict/suggest";
+import type { ReadableHeadline } from "@/lib/dict/headlines";
+import { Headlines } from "@/components/Headlines";
 
 export interface EntryForm {
   formType: string;
@@ -34,6 +37,15 @@ export interface EntryView {
   id: string;
   lemma: string;
   translation: string;
+  /**
+   * The Institute's own Russian and Ukrainian, where Ekilex recorded them.
+   *
+   * Not a translation this app or a model made: they come from the same
+   * response as the forms and the sentences. Null on most of the built
+   * expansion, which is drawn from Wiktionary and has none.
+   */
+  translationRu: string | null;
+  translationUk: string | null;
   pos: string;
   cefr: string | null;
   gradation: string;
@@ -64,12 +76,21 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, openedId, entry, matchedAs, suggestions, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, heard, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
 }: {
   initialQuery: string;
+  /** Which language the learner asked for their meanings in. */
+  glossLanguage: GlossLanguage;
   /** True when this word was pulled from Ekilex on this request. */
   justFetched?: boolean;
   hits: SearchHit[];
+  /**
+   * Words that sound like the query, when nothing matched it.
+   *
+   * Empty on every path but the dead end, because that is the only screen it
+   * has anything to say on. See `lib/estonian/sounds.ts`.
+   */
+  heard: string[];
   /**
    * Which of the hits is the one on screen. Usually the first, and not when a
    * link asked for another entry of the same lemma by name.
@@ -86,6 +107,8 @@ export function DictionaryClient({
    * random. "In the news today" earns the same twelve chips a second look.
    */
   suggestions: Suggestions;
+  headlines: ReadableHeadline[];
+  feedHost: string | null;
   /** Words this learner has starred — shown on the landing view. */
   starred: { lemma: string; translation: string }[];
   /** Whether Anu can be asked to translate an example sentence. */
@@ -226,12 +249,46 @@ export function DictionaryClient({
         </div>
       )}
 
+      {!initialQuery && <Headlines headlines={headlines} host={feedHost} />}
+
       {initialQuery && hits.length === 0 && (
         <div className="flex flex-col gap-4">
           <Empty
             title={`Nothing found for "${initialQuery}"`}
             body="The built-in dictionary covers common words to B2. Add this one with its genitive."
           />
+          {/*
+            WHAT THEY MIGHT HAVE HEARD, BEFORE ANYTHING ELSE ON THIS SCREEN.
+
+            Every other way out of this dead end assumes the learner can spell
+            the word. Nobody using this app has only read these words: somebody
+            who heard `poiss` writes "pois" and somebody who heard `padi`
+            writes "pati", and the search folds diacritics and case endings and
+            has nothing to say about either. It leads because it is the only
+            one that might mean they are not at a dead end at all.
+          */}
+          {heard.length > 0 && (
+            <Card>
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                If you heard it rather than read it, Estonian writes some sounds two ways.
+                One of these might be it.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {heard.map((lemma) => (
+                  <li key={lemma}>
+                    <Link
+                      href={`/dictionary?q=${encodeURIComponent(lemma)}`}
+                      lang="et"
+                      className="press inline-flex items-center rounded-full px-3.5 py-2 text-base font-semibold transition-ui hover:-translate-y-px"
+                      style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                    >
+                      {lemma}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           <AddWord initialLemma={initialQuery} />
           {/*
             A search that found nothing is the commonest dead end in the app,
@@ -264,7 +321,7 @@ export function DictionaryClient({
               className="rounded-[var(--r)] px-4 py-3 text-sm font-medium"
               style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
             >
-              Fetched from Ekilex and saved, this word now works offline too.
+              We got this from Ekilex and saved it. It works offline now too.
             </p>
           )}
           {matchedAs && (
@@ -275,7 +332,7 @@ export function DictionaryClient({
               <Et className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
             </p>
           )}
-          <Entry entry={entry} tutorReady={tutorReady} />
+          <Entry entry={entry} tutorReady={tutorReady} glossLanguage={glossLanguage} />
         </>
       )}
 
@@ -320,7 +377,12 @@ export function DictionaryClient({
   );
 }
 
-function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean }) {
+function Entry({ entry, tutorReady, glossLanguage }: {
+  entry: EntryView;
+  tutorReady: boolean;
+  glossLanguage: GlossLanguage;
+}) {
+  const equivalent = equivalentIn(entry, glossLanguage);
   const isNoun = entry.pos === "NOUN" || entry.pos === "ADJECTIVE";
   const isVerb = entry.pos === "VERB";
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
@@ -334,12 +396,10 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
   // leaving it out left a hole in the middle of the table.
   const retrieved = entry.forms.filter((f) => f.morphCode);
 
-  const table = isNoun
-    ? buildCaseTable({
-        nomSg: form("NOM_SG"), genSg: form("GEN_SG"),
-        partSg: form("PART_SG"), partPl: form("PART_PL"), genPl: form("GEN_PL"),
-      })
-    : [];
+  // `stemsFrom` rather than five hand-picked slots: it reads the short
+  // illative and the retrieved paradigm too, which is what keeps this table
+  // from printing `toasse` over the `tuppa` sitting in the same form list.
+  const table = isNoun ? buildCaseTable(stemsFrom(entry.forms)) : [];
 
   return (
     <Card className="flex flex-col gap-6">
@@ -352,6 +412,17 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
             <SpeakPair text={entry.lemma} />
           </div>
           <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
+          {/*
+            The meaning in the language the learner thinks in, where Ekilex
+            recorded one. Under the English rather than instead of it: the
+            English is the one gloss every entry has, and hiding it would leave
+            the words with no equivalent looking like words with no meaning.
+          */}
+          {equivalent && (
+            <p lang={glossLanguage} className="mt-1 text-md" style={{ color: "var(--ink-2)" }}>
+              {equivalent}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Chip>{entry.pos.toLowerCase()}</Chip>
             {entry.cefr && <Chip tone="accent">{entry.cefr}</Chip>}
@@ -431,8 +502,18 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                   ) : (
                     <span className="block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
                   )}
-                  <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
-                  <span lang="et" className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  {/*
+                    The Estonian name leads and the English is the
+                    cross-reference under it, which is the rule everywhere else
+                    in this app and was the wrong way round on the one screen a
+                    learner opens to look a word up. The case table two rows
+                    below already did it correctly, so the entry disagreed with
+                    itself: "SHORT ILLATIVE" in caps over `lühike sisseütlev`
+                    in small italics is the exact layout CLAUDE.md names as the
+                    fault it was written to stop.
+                  */}
+                  <span lang="et" className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  <span className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{label}</span>
                 </div>
               );
             })}
@@ -445,13 +526,24 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           pos={entry.pos}
           forms={retrieved.map((f) => ({ value: f.value, morphCode: f.morphCode, morphName: f.morphName }))}
         />
+      ) : isVerb && form("PRES_1SG") ? (
+        <DerivedVerbForms lemma={entry.lemma} forms={entry.forms} />
       ) : isNoun && form("GEN_SG") && (
         <div>
           <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
             The rest, worked out from the genitive
           </h3>
+          {/*
+            Counted rather than typed, because the short illative is stored and
+            not worked out: a word with one has that many fewer rows following
+            the rule, and a sentence promising eleven over ten of them is the
+            table arguing with itself. `tuppa` is bold in the column below for
+            the same reason.
+          */}
           <p className="mb-3 text-xs" style={{ color: "var(--ink-3)" }}>
-            Learn <Et className="text-base" >{form("GEN_SG")}</Et> and these eleven follow as regular endings.
+            Learn <Et className="text-base" >{form("GEN_SG")}</Et> and these{" "}
+            {table.filter((row) => row.origin === "DERIVED" && row.singular).length} follow as
+            regular endings.
           </p>
           <div className="overflow-x-auto rounded-[var(--r)] border" style={{ borderColor: "var(--rule)" }}>
             <table className="w-full min-w-[440px] text-sm">
@@ -465,7 +557,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                 </tr>
               </thead>
               <tbody>
-                {table.map(({ spec, singular, plural, origin }) => (
+                {table.map(({ spec, singular, alsoRight, plural, origin }) => (
                   <tr key={spec.key} style={{ borderTop: "1px solid var(--rule-soft)" }}>
                     <td className="px-3 py-2" style={{ color: "var(--ink-2)" }}>
                       {/* The same way the retrieved forms give: this
@@ -478,8 +570,16 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                       </Link>
                       <span className="ml-1.5 text-2xs italic" style={{ color: "var(--ink-3)" }}>{spec.en.toLowerCase()}</span>
                     </td>
+                    {/* Both illatives, where the word has both. `tuppa` and
+                        `toasse` are one answer to one question and a course
+                        teaches them as a pair, so printing either alone means
+                        choosing which word to be wrong about. Joined with the
+                        separator this app already uses for the parallel forms
+                        Estonian has, which is the one `acceptedAnswers`
+                        splits, so typing either half of what is on screen is
+                        right. */}
                     <td lang="et" className="px-3 py-2 text-base" style={{ color: origin === "STORED" ? "var(--ink)" : "var(--ink-2)", fontWeight: origin === "STORED" ? 600 : 400 }}>
-                      {singular ?? NO_VALUE}
+                      {singular ? shownForms({ singular, alsoRight }).join(" / ") : NO_VALUE}
                     </td>
                     <td lang="et" className="px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
@@ -493,7 +593,7 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
           {!form("GEN_PL") && (
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
               Plural forms need the genitive plural, which isn&rsquo;t stored for this word. We leave
-              them blank rather than guess, an invented form is worse than a gap.
+              them blank rather than guess. An invented form is worse than a gap.
             </p>
           )}
         </div>
@@ -517,7 +617,7 @@ function EntryProblem({ entry }: { entry: EntryView }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-        Something here wrong?
+        Something wrong here?
       </p>
       <SuggestFix
         category="WRONG_MEANING"

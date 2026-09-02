@@ -1,5 +1,5 @@
 import { CASES, type CaseSpec } from "./cases";
-import { deriveCase } from "./derive";
+import { caseAnswer, stemsFrom } from "./derive";
 import type { CaseKey } from "./types";
 
 /**
@@ -45,17 +45,19 @@ export interface WritingTask {
   caseQuestion: string;
   /** The form the learner must produce. Authoritative — never model-generated. */
   targetForm: string;
+  /**
+   * The other form that is also right, or `null`. The illative is the one case
+   * that has one, and this is the field the comment on `authoritativeForm`
+   * has always claimed made the marking fair: it said `accepted` was what did
+   * that, and then kept `value` alone, so a learner asked for the illative of
+   * `tuba` who wrote `toasse` was told they had not used the form at all.
+   */
+  alsoRight: string | null;
   /** Where the form came from, so the UI can be honest about it. */
   provenance: "ekilex" | "derived";
 }
 
 /** Ekilex morph codes for the singular of each case we set exercises on. */
-const MORPH_FOR_CASE: Partial<Record<CaseKey, string>> = {
-  GENITIVE: "SgG", PARTITIVE: "SgP", ILLATIVE: "SgIll", INESSIVE: "SgIn",
-  ELATIVE: "SgEl", ALLATIVE: "SgAll", ADESSIVE: "SgAd", ABLATIVE: "SgAbl",
-  TRANSLATIVE: "SgTr", COMITATIVE: "SgKom",
-};
-
 /** Principal parts we store directly, for the two cases that have one. */
 const FORM_TYPE_FOR_CASE: Partial<Record<CaseKey, string>> = {
   GENITIVE: "GEN_SG", PARTITIVE: "PART_SG",
@@ -69,25 +71,36 @@ const FORM_TYPE_FOR_CASE: Partial<Record<CaseKey, string>> = {
 export function authoritativeForm(
   source: WritingSource,
   caseKey: CaseKey,
-): { value: string; provenance: "ekilex" | "derived" } | null {
-  const morph = MORPH_FOR_CASE[caseKey];
-  if (morph) {
-    const fromEkilex = source.forms.find(
-      (f) => f.morphCode === morph || f.formType === `EKILEX:${morph}`,
-    );
-    if (fromEkilex?.value) return { value: fromEkilex.value, provenance: "ekilex" };
-  }
-
+): { value: string; alsoRight: string | null; provenance: "ekilex" | "derived" } | null {
   const stored = FORM_TYPE_FOR_CASE[caseKey];
   if (stored) {
     const principal = source.forms.find((f) => f.formType === stored);
-    if (principal?.value) return { value: principal.value, provenance: "ekilex" };
+    // A principal part is one word: `FORM_TYPE_FOR_CASE` maps only the three,
+    // and none of them is the illative, so there is no second form here.
+    if (principal?.value) return { value: principal.value, alsoRight: null, provenance: "ekilex" };
   }
 
-  const genSg = source.forms.find((f) => f.formType === "GEN_SG")?.value;
-  if (!genSg) return null;
-  const derived = deriveCase(genSg, caseKey);
-  return derived ? { value: derived, provenance: "derived" } : null;
+  /*
+    THE ILLATIVE WAS BEING SET AS AN EXERCISE AND MARKED AGAINST THE WRONG FORM.
+
+    This walked its own precedence: an Ekilex morph form, then the two
+    principal parts, then a suffix on the genitive. `ILL_SG_SHORT` appeared in
+    neither table, so a seeded word was marked against `X-sse` and a learner
+    writing `tuppa` failed the exercise. Worse for an enriched word, where
+    `SgIll` was found first and the short illative beside it was never looked
+    at.
+
+    `caseAnswer` is that precedence written once, in the module that owns it,
+    with the short illative ahead of both. Its `accepted` list is what makes
+    the marking fair where a word genuinely has two.
+  */
+  const answer = caseAnswer(stemsFrom(source.forms), caseKey);
+  if (!answer) return null;
+  return {
+    value: answer.value,
+    alsoRight: answer.alsoRight,
+    provenance: answer.origin === "DERIVED" ? "derived" : "ekilex",
+  };
 }
 
 /** Every exercise this word can support. Empty for a word with no genitive stem. */
@@ -111,6 +124,7 @@ export function writingTasksFor(source: WritingSource): WritingTask[] {
       caseEt: spec.et,
       caseQuestion: spec.question,
       targetForm: form.value,
+      alsoRight: form.alsoRight,
       provenance: form.provenance,
     });
   }
@@ -154,11 +168,23 @@ export interface FormCheck {
  */
 export function checkForm(sentence: string, task: WritingTask, allForms: string[]): FormCheck {
   const words = new Set(normalise(sentence).split(" "));
-  const used = words.has(normalise(task.targetForm));
+  /*
+    EITHER ILLATIVE COUNTS, because both are the illative. `tuppa` and `toasse`
+    are one answer to one question, and marking the second of them as "you used
+    a different case" is the fault this module's header describes, arriving
+    through the door marked "the exercise was still technically right".
+
+    It also has to leave `others`, or the near miss below reports the learner's
+    correct sentence as the wrong form of the word.
+  */
+  const right = [task.targetForm, task.alsoRight]
+    .filter((f): f is string => !!f)
+    .map(normalise);
+  const used = right.some((f) => words.has(f));
 
   const others = allForms
     .map(normalise)
-    .filter((f) => f && f !== normalise(task.targetForm));
+    .filter((f) => f && !right.includes(f));
 
   return { used, usedAnotherForm: !used && others.some((f) => words.has(f)) };
 }

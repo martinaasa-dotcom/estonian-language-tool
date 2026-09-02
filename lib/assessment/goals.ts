@@ -92,6 +92,47 @@ export function reasonById(id: string | null | undefined): Reason | undefined {
   return REASONS.find((r) => r.id === id);
 }
 
+/**
+ * More than one reason, because almost nobody has one.
+ *
+ * Somebody living in Estonia with an Estonian partner and a job where the
+ * meetings are in Estonian was being asked to pick which of those three was
+ * the real one, and whichever they picked, the app then implied a target from
+ * it and got the answer a third right. The stored value is still one string,
+ * space separated, so nothing downstream had to learn a new shape and every
+ * row written before this reads back as the single reason it holds.
+ *
+ * Unknown ids are dropped rather than kept, and the order is the table's
+ * rather than the order somebody happened to press them in, so two learners
+ * who chose the same three reasons store the same string.
+ */
+export function reasonsFor(stored: string | null | undefined): Reason[] {
+  if (!stored) return [];
+  const chosen = new Set(stored.split(/[\s,]+/).filter(Boolean));
+  return REASONS.filter((r) => chosen.has(r.id));
+}
+
+/** The chosen reasons back as a stored value, or null for none. */
+export function reasonsToStored(ids: readonly string[]): string | null {
+  const chosen = new Set(ids);
+  const kept = REASONS.filter((r) => chosen.has(r.id)).map((r) => r.id);
+  return kept.length > 0 ? kept.join(" ") : null;
+}
+
+/**
+ * The level a set of reasons usually needs, which is the highest of them.
+ *
+ * Offered rather than imposed, exactly as one reason's `implies` was: somebody
+ * who is here for travel and for work needs the work level, because the
+ * smaller goal is inside the bigger one and a plan built on the smaller one
+ * would tell them they were finished when they were not.
+ */
+export function impliedTarget(ids: readonly string[]): Band | null {
+  const bands = reasonsFor(ids.join(" ")).map((r) => r.implies);
+  if (bands.length === 0) return null;
+  return bands.reduce((a, b) => (BANDS.indexOf(b) > BANDS.indexOf(a) ? b : a));
+}
+
 export interface TargetLevel {
   band: Band;
   label: string;
@@ -243,6 +284,13 @@ export function weeksUntil(deadline: string | null | undefined, now: Date): numb
 }
 
 export interface Goals {
+  /**
+   * Why they are learning: the chosen reason ids, space separated.
+   *
+   * One column rather than a table, because it is read in three places and
+   * written in two and none of them wants a join for a set of at most eight
+   * flags. `reasonsFor` is the one parser.
+   */
   reason: string | null;
   /** What the learner wants to reach. */
   target: Band | null;
@@ -260,7 +308,7 @@ export function normaliseGoals(input: Partial<Goals>): Goals {
   const target = BANDS.includes(input.target as Band) ? (input.target as Band) : null;
   const days = Number(input.daysPerWeek);
   return {
-    reason: reasonById(input.reason)?.id ?? null,
+    reason: reasonsToStored(reasonsFor(input.reason).map((r) => r.id)),
     target,
     deadline: input.deadline && !Number.isNaN(new Date(input.deadline).getTime()) ? input.deadline : null,
     daysPerWeek: Number.isFinite(days) ? Math.min(7, Math.max(1, Math.round(days))) : DEFAULT_DAYS_PER_WEEK,

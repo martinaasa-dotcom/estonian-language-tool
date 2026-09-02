@@ -89,8 +89,16 @@ cost four fifths of the dictionary on the first run and looked like a clean resu
 
 **A gloss is the answer side of a flashcard, so a wrong one is drilled rather than displayed.**
 `npm run audit:glosses` re-runs the parser over every entry's own Wiktionary page and prints
-what disagrees; `--write` applies it. The first systematic pass over A1 to B1 corrected 25 of
-2,164, and four of those were a different word rather than a different sense: `lamp` was being
+what disagrees; `--write` applies it. **The first pass over the whole of `expanded.json`, all
+5,363 entries, came back clean on 2026-08-31**, which is worth writing down because every pass
+before it stopped at B1: A1 to B1 is 2,164 entries and the 3,199 above it had never been asked.
+`.github/workflows/drift.yml` asks weekly and had not fired yet, having landed on main the same
+day after that Monday's cron, so this was its first execution by hand. A clean result over a
+parser this quiet is only worth the words if the check can fail, so it was made to: run the same
+comparison against a translation known to be wrong and all 5,363 flag. What remains is not parser
+drift but a page being wrong about its own word, which is what the report queue is for. The
+first systematic pass over A1 to B1 corrected 25 of 2,164, and four of those were a different
+word rather than a different sense: `lamp` was being
 taught as "random", `oktoober` as "hard hat", `ooper` as "opera house", `rida` as "many, much".
 One cause under all of them. `{{l|en|lamp}}` renders as the word "lamp", `cleanWikitext` deleted
 balanced templates wholesale, and an emptied line sent the picker to the next sense, which on a
@@ -163,6 +171,31 @@ this was meant to replace. It writes no content, never touches a row somebody ed
 never moves a row onto a key another row holds, since `hall` is legitimately a noun meaning "frost"
 and an adjective meaning "grey".
 
+**Ekilex numbers its homonyms, and the harvest used to take the first one in silence.** The
+candidate loop returned on the first exact match whose forms fit and never looked at the next, and
+87 of the course's 1,185 words have more than one. Six came back as a different word: `kohus` was
+taught as "court" carrying the forms and eight sentences of the moral duty (`kohuse`, not `kohtu`),
+`kaste` as "sauce" with the forms of dew, `iga` as "every" with the case table of `iga : ea`, age,
+and `pidama`, the one A1 verb a learner needs for "ma pidin minema", with the past of the verb for
+keeping a farm, so the conjugation card answered `pidasin` and marked `pidin` wrong. `WordSpec`
+takes a fourth slot naming the Ekilex word id, which is a number rather than a word because this
+file may not write Estonian either, and the five that were wrong are pinned. Unpinned ambiguity is
+now printed at the end of the run, all 31 of them, with the ids to choose between: taking the first
+is right for about eighty of them and dropping the lot to fix six would cut a fifth of an A1 unit,
+so it is reported rather than dropped or hidden.
+
+**A nominative -s that simply goes is an ending, not a grade.** `classifyGradation` counted it as
+part of the consonant centre, so the chip on the dictionary entry and the hint on the flashcard
+said `hammas` alternates "ms : b" and `ratas` "s : t", which are not patterns in the language, and
+121 of the 133 entries labelled "s : ∅" were words whose only change is losing that -s: `kapsas`,
+`kuningas`, `rahvas`, `taevas`, `kallis`. EKK keeps astmevaheldus, a change inside the centre,
+apart from lõpuvaheldus, an ending that comes and goes. The -s comes off before the centres are
+compared, so `hammas : hamba` reads mm : mb and `ratas : ratta` reads t : tt, and where peeling it
+leaves exactly the genitive the word gradates in nothing. The peel **adds readings and never
+removes one**: `mees : mehe` is s : h, `poiss : poisi` is ss : s and `viis : viie` is s : ∅, and
+peeling those leaves the patterns nothing to match, so a peel that finds nothing falls back to the
+whole word. 174 entries in the built dictionary were re-graded by it.
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with forms matching the part of speech
@@ -174,6 +207,47 @@ in the whole pipeline, and English is the one language this project may write.
 bring back, which is what makes this mechanical rather than aspirational. Re-run the harvest with
 `npm run harvest`; responses are cached, so it costs Ekilex nothing.
 
+
+**A meaning is given in the language the learner thinks in, and Ekilex is the one that gives it.**
+Most people learning Estonian in Estonia already speak Russian or Ukrainian, and an app that can
+only say `kohv` is "coffee" asks them to reach a word through the language they are least sure of.
+Ekilex records the equivalents in `synonymLangGroups`, in the same response the forms and the
+sentences come from, written by the same lexicographers: 1,367 of the 1,371 course words carry a
+Russian one and 1,165 a Ukrainian one, and it costs no extra request because the harvest already
+had the response. `Lexeme.translationRu` and `translationUk` hold them, `lib/collections/glossLanguage.ts`
+is the choice, and Settings is where it is made.
+
+**The English never goes away, and that is what makes this safe.** This chooses what is printed
+*beside* the gloss, not instead of it: the authored English is the one column every entry has,
+Ekilex records an equivalent for the course and not for the Wiktionary expansion, and a card that
+hid the English would be blank on the words with no other. Where there is none, the entry prints
+the English alone rather than a dash, because "we have no Russian for this word" is not worth a
+line of somebody's card.
+
+**No model may reach either column.** They are the one place in the schema holding a language
+neither the app nor the person reviewing the code necessarily reads, which makes ADR-005 stronger
+here rather than weaker: a wrong gloss looks exactly like a right one, and more so in a language
+you cannot check. The files that may name the columns at all are a closed list, asserted, the way
+`prisma/columns.ts` is a closed list of what the seed writes, and nothing on the provider chain is
+on it.
+
+**The words between the words are a request like any other, and a unit that was cut does not take
+its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
+words every sentence is made of: nobody asking `kes?` or `millal?`, or looking up `täna`, `peal`
+or `september`, found anything, in a dictionary of six thousand words. Six units carry them now,
+question words, pronouns, the adverbs of time, the postpositions, the months and the countries,
+appended after the fourteen so that the first three units at A1, which is what first run builds a
+deck from, stay what they were. `PRONOUN` is a part of speech for it, harvested as a nominal
+because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
+`nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
+unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
+short ones (`mulle`, `mul`) that no rule over the genitive reaches, and a card answering `minule`
+would mark the form everybody says wrong; Ekilex records both and an enriched entry shows the pair.
+`lib/collections/syllabus/retired.ts` is the other half: the ten C2 units were cut in §19 of the
+status doc with the note that their 170 words stay in the dictionary, and the harvest reads the
+syllabus, so the first re-run after that cut would have quietly taken them out of the seed. They
+are a request list of their own now, in a unit's shape, read by the harvest beside the units and
+listed by no screen.
 
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
@@ -195,6 +269,85 @@ way for every word that takes the ending, so it is one bug found once, and the f
 that it was derived. A model is wrong about one word, unpredictably, in output that looks exactly
 like the attested forms beside it. ADR-005 amendment 1, because the ADR's own wording said "Ekilex
 only" and three later decisions had already been reading it the narrower way.
+
+**The verb has one derivable part, and it was checked against every verb before it was shipped.**
+A seeded verb holds five principal parts and nothing else, so on a deployment without an Ekilex key
+every one of the 799 verbs in the built dictionary showed `loen` and stopped: no `loed`, no `loeb`,
+no `ei loe`, and a conjugation card for `olevik · ta` could not be built at all. The present
+indicative is the one part of the Estonian verb that really is a suffix on a stored stem for every
+verb in the language but one: take the `n` off the first person and the other five persons, the
+negative after `ei`, the conditional in `-ksi-` and the singular imperative are regular endings on
+what is left. `lib/estonian/conjugate.ts` is that rule and it is the only module allowed to join a
+person ending to a stem, asserted, for the reason the case suffixes have one home: it is the module
+that also holds the exceptions. `olema` gets no present from it, because its third person is `on`
+and nothing about `olen` predicts that; `minema` gets no imperative, because it says `mine` off
+the infinitive. **The simple past is not derived and may not be**: `lugesin` goes to `luges` but
+`tahtsin` to `tahtis` and `võtsin` to `võttis`, with the grade changing on the way, so its third
+person stays attested-only and a seeded verb makes seven conjugation cards where an enriched one
+makes eight. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+and compares it with every form Ekilex records for the same word: 797 verbs, thirteen slots
+each, no disagreement, and the two exceptions above are the ones it found. Re-run it before
+widening the table. Every derived form says so on screen, the dictionary entry prints the table
+under "worked out from loen" with the stored form in bold, the four verb topic pages show the point
+on the learner's own verbs with a provenance chip, and an attested form always answers first, so
+the moment an entry is enriched the rule steps aside.
+
+**And a derivation never stands where the dictionary has the real thing.** The paragraph above is
+the licence to derive; this is its limit, and it was broken for a year in the one case that has an
+exception. Estonian has two illatives: the long one is the genitive stem plus `sse`, which a rule
+can produce, and the short one, the *aditiiv*, is lexically unpredictable and is the form people
+say. `tuba` goes to **tuppa**, not `toasse`; `aeg` to `aega`, not `ajasse`; `abi` to `appi`. The
+dictionary held it all along as `ILL_SG_SHORT`, on 2,969 of the shipped entries, every one of them
+different from what the ending gives. `NounStems` had no field to put it in and `deriveCase` took a
+bare genitive string, so none of the eight callers could have consulted it. The landing page taught
+`toasse` as its headline demonstration, the grammar reference printed it under a label saying a
+lexicographer wrote it down, and `lib/srs/cards.ts` put it on the back of a flashcard: a learner
+typing the correct answer was marked wrong and shown the card again until they stopped.
+
+So `illSgShort: string | null` is a **required** field on `NounStems`, and that is the whole of the
+fix that matters. `null` means the dictionary was asked and holds none; a caller that never asked
+does not compile. It is the shape `buildOptions` takes a parsed `Government` for, and for the same
+reason: prose had said an attested form wins since ADR-005 was written, and the code disagreed the
+entire time. `caseAnswer` is the one function that answers "what is this word in this case", it
+puts a retrieved form ahead of the seeded short illative ahead of a suffix, and it returns every
+spelling that counts as right, because a screen printing one form and a marker accepting one form
+are two different questions. Three invariants hold it: the field stays required, nothing joins a
+case suffix to a stem outside `lib/estonian/derive.ts`, and the six modules that produce a case
+form for a learner all read `caseAnswer`. `lib/estonian/attested.test.ts` is the other half, and
+it is the half that can fail on a word: it walks all 5,363 shipped entries and was made to fail
+first, on `tuba → toasse`.
+
+Two things this does **not** licence. The other ten cases really are one ending each, and the audit
+asserts that too, so the illative is singled out rather than the whole table distrusted. And the
+long form stays *accepted* everywhere the short one is shown, since both are Estonian and marking
+somebody wrong for the other true answer is the fault this started as, pointed the other way.
+
+**And accepted is not the same as printed, which is how one bug got fixed twice into two bugs.**
+Leading with the long form hides `tuppa` and teaches `toasse`, which is where this started.
+Leading with the short one and hiding the long one is the same fault turned around, and it is
+worse than it looks: 1,937 of the 2,700 short illatives in the shipped dictionary are spelled like
+the nominative, genitive or partitive, because that is what this case does, so `aadress` printed
+`aadressi` down three rows of one column and `aadressisse`, the form somebody writing a sentence
+needs, appeared nowhere. Both readings shipped three weeks apart and each was written as the fix
+for the other.
+
+There is no third form to choose. Estonian has two illatives, a course teaches them as a pair, and
+`alsoRight` on `DerivedForm` and `CaseAnswer` is that pair: `shownForms` is the one reader, and
+every screen that prints a case form prints `tuppa / toasse`. The separator is the one the app
+already uses for the parallel forms it has, and it is load-bearing rather than cosmetic, because
+`acceptedAnswers` splits on it: what a screen shows and what a marker takes are the same string.
+`lib/srs/cards.ts` and `lib/collections/lesson.ts` had been joining on it since long before any of
+this, so the app had already answered the question and three screens had not caught up.
+
+`accepted` is deliberately wider and may not stand in for it. It holds every spelling a marker lets
+through, including a suffix guess sitting beside a form Ekilex retrieved, and printing that pair
+would assert the guess is a word. `alsoRight` holds only the two that are.
+
+The one place they came apart was the writing exercise, whose own comment said `accepted` "is what
+makes the marking fair where a word genuinely has two" and which then kept `value` alone: a learner
+asked for the illative of `tuba` who wrote `toasse` was told they had not used the form at all, and
+the near miss beside it reported their correct sentence as the wrong case. `WritingTask` carries
+both now.
 
 **Nothing a person reads may sound like a machine wrote it.** Every screen, every error, every
 empty state, the README, the policy pages and Anu are one person explaining Estonian to another.
@@ -343,6 +496,18 @@ failure silent, because two sources sit behind it; a feed that will not answer i
 miss, which is the rule the seed and `enrichFromEkilex` each learned the expensive way. Nothing
 under `lib/news/` may touch the database or run in a browser, asserted.
 
+**And the headlines themselves are read, not only mined.** Every sentence a learner met here was
+one a lexicographer recorded to illustrate a word, which is the right sentence for a card and is not
+what a newspaper, a sign or a colleague says. The feed was being fetched once an hour for the
+suggestion row and thrown away down to its words. `lib/dict/headlines.ts` keeps a few of the
+headlines whole and puts the dictionary under them: the feed proposes, `matchEstonianForm` decides at
+the scanned-page floor, and a vouched word links to the dictionary's own headword while a word it
+will not vouch for is printed plain, because leaving it out would be editing the sentence and
+guessing would be worse. A headline is offered only when most of it can be opened, so a beginner
+meets one they can read through rather than a wall of names, and the block names the host it came
+from, since these are somebody else's words. It lives on the dictionary landing beside the row it
+grew out of, rendered from the same hourly cache and stored nowhere; asserted.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request
@@ -354,6 +519,25 @@ no window covers, and the invariant fails on an entry spelled like a word rather
 **Never let the correctness of a form be decided by a model.** The writing exercise checks the
 required form by string comparison against the dictionary *before* any call, so a hallucination
 cannot mark a right answer wrong and a missing key does not break the exercise. Keep that ordering.
+
+**The illative is the one case with two answers, and only one of them is derivable.** `toa` plus
+`sse` is `toasse`, which is a real form, is what Ekilex records as the sisseütlev, and is not what
+anybody says: the word is `tuppa`, and `käsi` goes to `kätte` rather than `käesse`. Both of those are
+stored, because no rule over the genitive stem reaches either, which is what `ILL_SG_SHORT` is for.
+`buildCaseTable` takes it and reports that row as STORED, so the landing page's case explorer puts it
+with the forms you memorise and its two headings count what is under them: `tuba` reads four and ten
+where `raamat` reads three and eleven. A stored short form has to *differ* from the three principal
+parts to be worth saying, though. `sõber` records `sõpra`, which is already its partitive, so
+promoting it would print one word twice under two names and hide `sõbrasse`, the form somebody
+writing a sentence needs.
+
+Everything else on that card was checked against Ekilex rather than reasoned about: 55 singular
+forms across the five words, all agreeing, and every long plural with them. What differs is the
+parallel short plural Estonian genuinely has, `raamatuis` beside `raamatutes`, which the card does
+not show. That comparison needs a live key, so what is asserted offline is the half that rots on its
+own: `lib/collections/demoWords.ts` is the one list of which words the card asks for and which stems
+it falls back to when the database is unreachable, and an invariant checks that copy against the
+built dictionary character for character.
 
 **Never store derived case forms.** Only principal parts are persisted (five per lexeme). The ten
 regular cases
@@ -423,6 +607,77 @@ caller picked, and a caller who picks a new one per request gets an unlimited nu
 allowances. So it is read only when `TRUST_PROXY_HEADERS` or `VERCEL` says a proxy is there, and
 every unattributed request otherwise shares one bucket, which is the honest shape for not
 knowing. Signed-in work never touches any of it.
+
+**And which header, and which hop in it, is the other half of that.** The rule above was written
+and then only half implemented: `x-vercel-forwarded-for` was read first whenever proxy headers
+were trusted *at all*, including the self-hosted `TRUST_PROXY_HEADERS=1` case the function exists
+for. No proxy but Vercel's sets that header and no proxy but Vercel's strips it, so anywhere else
+it is a value the caller typed, which is the fault the paragraph above rules out arriving through
+the door it opened. It is read only where `VERCEL` says the platform that owns it is there. The
+hop matters as much: `X-Forwarded-For` is a list the client starts and each proxy appends to, so
+the leftmost element is whatever the caller put there and the rightmost is the one the trusted
+proxy added about the connection it actually accepted. Vercel overwrites the whole header and is
+read from the left; a self-hosted proxy appends and is read from the right.
+
+**A release gives back the call, not only the money.** `releaseReservation` wrote a settlement at
+minus the reserve, which returns the spend to zero and leaves the `CALL` row standing, and two of
+the three limits count `CALL` rows. So a deployment with a rejected key still rationed its
+learners by how many refusals they had collected: eight in a minute and the burst limit closed
+over answers nobody received, which is the exact thing that function's header says it exists to
+prevent, met for one limit out of three. `RELEASE` is a third entry kind, append-only like the
+other two, and `snapshotUsage` counts `CALL` minus `RELEASE`. The Settings meter reads it too,
+since a call that reached nobody is not a question anybody asked.
+
+**And the reserve is about the person, so it counts the person.** The last slice of the global
+budget is kept for somebody who has not asked anything today, and the test read `dailyCalls`,
+which `snapshotUsage` fills with calls *of the kind being asked about*. A learner on their tenth
+tutor call waited while the same learner's first scan, the dearest single call in the app, went
+through as though they had asked nothing all day.
+
+**No ledger write is left to a promise nobody is holding.** Every settlement and every release was
+`void recordUsage(...)` next to the `return`. The deployment target suspends a function once its
+response is sent and does not guarantee a pending promise runs, so a settlement that never lands
+leaves the reserve standing and bills a free model at its estimate for ever, and a release that
+never lands rations a learner over a call they did not receive. `after()` from `next/server` is
+the platform's own answer and is the one thing that says "keep this invocation alive until this
+finishes". Asserted, comment-blind.
+
+**A mailed sign-in link may not change who is signed in without saying so.** The `token_hash`
+branch of `/auth/callback` is deliberately not tied to the browser that asked, which is the whole
+reason the template shape exists and is also login CSRF: an attacker who requests a link for an
+address they control and gets a signed-in learner to open it lands that learner in the attacker's
+account, silently, at whatever `next` says, and everything they write afterwards goes into a
+stranger's deck. A link that would change the account ends the session that is there and sends
+the learner to `/sign-in?switched=1` with a sentence saying what happened; `next` is dropped,
+because it was chosen by whoever wrote the link. Nobody signed in is the ordinary case and is
+untouched, which is what makes it safe: the link works exactly as it did for the person it was
+mailed to.
+
+**A name a class is going to see is cleaned, not trimmed.** `trim()` does not remove U+200B, so
+two zero-width spaces were a two-character name that passed the empty check and rendered as
+nothing on the roster; U+202E reverses what follows it and can make one pupil's row read as
+another's. `cleanDisplayName` strips `\p{C}`, normalises to NFC, and requires a letter or a digit.
+The roster is the one screen where a stranger's text is shown to a teacher beside real names.
+
+**An argument that is supposed to be a string is not one.** Every export of `app/actions.ts` is a
+public endpoint and its arguments are JSON off the wire whatever the types say, so
+`joinClassroom(42)` reached `.trim()` and threw, which the framework answers with a 500 and a
+digest where a refusal is the honest reply. `text()` in that file coerces; `normaliseCode` takes
+`unknown` because it is the boundary of a pure module.
+
+**Signing out leaves the device the way a stranger should find it.** It cleared one cookie and
+nothing else, and everything the app keeps in the browser to make review work on a train stayed
+behind for the next person on the same machine: the pages the service worker had cached, which are
+somebody's own deck and progress rendered and ready to serve; the last review session, stashed with
+every card in it; any grade still queued; and a mock exam paper they had started, composition
+included. A school computer, a shared laptop and a phone handed to a friend are the ordinary case,
+not the edge. `lib/offline/forget.ts` removes all three stores, after the outbox has been given its
+chance to drain through the provider's `flush`, and both places that sign a learner out go through
+it, asserted. A grade that still could not land is the one thing the device cannot keep and must
+not quietly drop, so the rail asks before losing it. And nobody signing out is the other case: the
+shell mounts `DeviceOwner` with a digest of the account id, and a different account appearing on the
+same browser clears what the last one left. What it does not touch is what is about the device
+rather than a person: the theme, the install prompt's memory, and the audio and build caches.
 
 **Nothing in a `"use server"` file may take an owner id from its caller.** Every export there is a
 public endpoint. Resolve the owner with `requireUserId()`; if a helper needs one as a parameter, it
@@ -577,6 +832,30 @@ and the `take` means a tie at the five hundredth row decides which of a pair is 
 all. All eleven end on `{ id: "asc" }` now and an invariant reads the *last* key, because an
 order that is total in the middle and loose at the end is loose.
 
+**And the invariant behind it stopped at `lib/progress/`, so five reads outside it said nothing at
+all.** Not a loose order: no `orderBy` whatever, next to a `take`, which is the plan choosing the
+rows a screen is built from. Today's weakest cases took an arbitrary five thousand; `/review/government`
+and the minimal-pairs round each took an arbitrary two thousand cards to decide which words were
+already in the deck, so whether an answer graded a real card changed between visits; the class week
+counted its three figures off an arbitrary three hundred; and the dictionary's suggestion row
+shuffled an arbitrary two hundred. All five say where to cut now, and a second invariant holds the
+rest of the app to that much. It asks only for an order and not for a unique one, because ending
+every truncated read in the app on the primary key is a larger change than the rule needs to be
+useful, and where a screen orders by `due` and cuts, arbitrary-but-stated still beats
+arbitrary-and-silent. The stricter rule stays where a number is derived.
+
+**A shared calculation over an unshared input is not a shared answer, and Today proved it twice.**
+`lib/progress/cases.ts` exists because "your weakest cases" was drawn from three different queries
+behind one calculation, so a learner who got the partitive wrong three hundred times last year and
+right three hundred times this month read 100% on one screen and 50% on another, on the same day.
+The home page was then rewritten, reached for `caseAccuracy` like everybody else, and wrote the old
+query beside it, which made it the fourth answer: all of time rather than the half-year, and
+unordered. The pairing is asserted now rather than described, anchored on the *call* rather than on
+the import, because a file can import the shared query and go on using its own rows, which is
+exactly what happened. It is scoped to `app/`: the class roster rolls a whole class up at once and
+the badge stats read all time on purpose, and a check that fires on honest code is a check people
+learn to waive.
+
 **And a `take` beside a `distinct` bounds nothing at all.** Prisma deduplicates in the client, so a
 `LIMIT` would cut rows before the deduplication and it emits none: the query reads every matching
 row, adds an id column of its own to deduplicate with, sorts, and throws the surplus away in
@@ -618,11 +897,24 @@ double-tapping "Add to deck", and `addUnitToDeck` walks it once per word with no
 so one impatient second on a nineteen-word unit is the worst case rather than the unlikely one. The
 answer is the ledger's, for the reasons its header already gives: a *transaction* advisory lock, so
 a pooler cannot strand it, and the blocking form, since the non-blocking one serialises nothing.
-Keyed on the owner and the word rather than deployment-wide, because two learners adding two
-different words are not each other's concern; the ledger is deployment-wide because a shared budget
-is. With it, sixteen concurrent adds make two cards in 28ms. A unique index is the other answer and
-is the one not taken: a deck that already holds duplicates from this bug would fail the push, and
-the deployment's own build is what runs it.
+Keyed on the learner rather than deployment-wide, because two learners adding two different words
+are not each other's concern; the ledger is deployment-wide because a shared budget is. With it,
+sixteen concurrent adds make two cards in 28ms. A unique index is the other answer and is the one
+not taken: a deck that already holds duplicates from this bug would fail the push, and the
+deployment's own build is what runs it.
+
+**And then the batched builder arrived without it, which is why the key is the learner and not the
+word.** `addUnitsToDeck` is the rewrite of the loop that called `addCardsFor` per word, and it kept
+the shape and inherited no lock, so the fault came back a whole unit at a time: eight concurrent
+adds of an eighteen-word unit wrote 180 cards where 36 is right, and the two screens that reach it
+are "Add to deck" on a unit and the last button of first run, which is the one place in the app
+where somebody is already waiting and inclined to press again. `lockDeck` in `lib/srs/deck.ts` is
+the one definition and both paths take it. The key had to widen to do that: a key naming the word
+is safe against another add of the same word and says nothing about a batch containing it, so two
+keys would leave each path guarded against itself and neither against the other. What that costs is
+that one person's own two adds queue, which is milliseconds of work they asked for twice, and first
+run still builds 982 cards in 217ms. `lib/srs/deck.itest.ts` fires eight at once, because no unit
+test can see any of this.
 
 **The syllabus names a lemma; the dictionary may hold two entries for it.** `@@unique` is on
 `(lemma, pos)`, so `where: { lemma: { in: [...unit.lemmas] } }` can return more rows than the unit
@@ -690,6 +982,21 @@ Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value on
 a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
 on any other.
 
+**Meeting a word is not answering it.** The intro screen ended in `submit(3)`: a card the learner
+had done nothing with but read was graded Good, in the append-only log, and the scheduler set its
+first interval from a recall that never happened. The next real question was the next day, because
+the ten-minute learning step lands after a seven-minute session has ended. Karpicke and Roediger
+measured what that costs: learners who kept retrieving new pairs *inside* the first session
+recalled about 80 percent a week later against about 35 for those who only restudied, and the whole
+difference was whether retrieval happened while the word was being learned. So a first meeting
+writes nothing and puts the card back five places on, where it is asked in its ordinary shape, and
+that retrieval is the grade. `requeue` in `lib/srs/queue.ts` is the same helper the Again path uses,
+so a miss and a first meeting wait the same distance, and a session too short for the gap asks at
+the end rather than not at all. `wantsChoices` reaches a new recognition card now, for the reason
+it already reached one still in learning: the memory is minutes old and asking for it cold is a
+guessing game. Nothing about `Review`, undo or the offline replay changed; what changed is that the
+row now records something that happened.
+
 **A word is taught before it is asked, and the app marks what it can mark.** Two rules, one
 screen, and the code already believed both of them before it did either.
 
@@ -723,6 +1030,22 @@ is a question about a scheduler nobody can see, put to somebody trying to learn 
 miss is still graded Hard by the marker, and `Review`, undo and the offline replay carry exactly
 what they always did. What went is the asking, and that distinction is what keeps this a change to
 one screen rather than to the append-only log underneath it.
+
+**A card never answers the card before it.** FSRS decides when a card comes back and has no
+opinion on the order of the cards already due, which the queue took from `due` alone. A word's
+cards are written in one `createMany`, graded in one session and come back within seconds of each
+other, so they arrived side by side: measured on the demo deck, 13 of 32 due cards sat next to a
+card of the same word, 17 of the 32 had a sibling within three places, and seven case cards of
+`Eesti` ran consecutively. Answering `Eesti → millesse? kuhu?` straight after `Eesti → milles?
+kus?` is reading the answer off the card before, and the log records a recall either way, so the
+scheduler raises the interval on a memory nothing tested; the retrieval-effort account is that
+what a recall is worth scales with how hard it was. `spaceSiblings` in `lib/srs/queue.ts` walks the
+due list and defers a card whose word is still on screen, narrowing the gap it asks for rather
+than giving up, so a session spends whatever room it has: six adjacent pairs become one on the
+shape that was measured. It **moves and never drops**, asserted, because a spacer that filtered
+would lose a due card in silence. New cards do not go through it: `inTeachingOrder` puts a word's
+cards together in the order a lesson teaches them, and a first meeting is a teaching screen rather
+than a retrieval.
 
 **Every mode grades through `gradeCard`.** Sprint, Listening and Match are not side games with their
 own scores. They write to the same review log, so the scheduler sees what was actually practised.
@@ -770,6 +1093,72 @@ watching them at all, `test-restore.mjs` among them. The source of truth is the 
 `scripts/*.mjs` that declares a suite is one CI runs, and anything else is named in
 `scripts/lib/suites.mjs` with a written reason. Two are, and both are facts about the route rather
 than about anybody's schedule.
+
+**A word is heard as often as it is met, and the voice is the learner's to choose.** Speech
+used to arrive on a button press only, in one voice chosen by whoever deployed the app, which on
+the daily path meant a learner clicking a speaker icon on every card or hearing nothing. A card
+now reads itself aloud when a word is first met and when its answer appears, the next card's clip
+is fetched while this one is being answered so the play is instant, and `lib/audio/voice.ts` is
+the allowlist of TartuNLP's twelve Estonian voices a learner may pick from in Settings. The state
+examination's listening part is read by more than one speaker and so is the country, so a learner
+who has only ever heard one voice say a word has learned that voice rather than the word. A
+requested voice is checked against that list on the way into the speech route and never passed to
+a third party as typed; the disk cache and the service worker's cache both key on it. A right or
+wrong answer makes a short sound made with the browser's own oscillator, so it costs no request
+and works offline. All three are settings, on by default because a missing row has to read as
+the behaviour everybody had, and `components/AudioPrefs.tsx` publishes them once from the shell so
+every speaker button and every round reads one answer. `lib/audio/clip.ts` is the one place a
+clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
+agreeing about what is in the cache.
+
+**A response built out of one learner's own rows says it is theirs and is never kept.** The
+framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
+max-age=31536000` on anything that does not say otherwise, so the share card, which carries a
+name, a streak and an XP total, was cached for a year at one fixed URL. Measured on the built app:
+three fetches made one request, and the second and third were served from the browser's own cache
+*after* everything `forgetThisDevice` clears had been cleared, so signing out on a shared laptop
+left the last person's card one fetch away. `/api/export` and `/api/reminder` sent no freshness
+directive at all, and the export is every review, every conversation with Anu and every exam
+composition somebody has written. Every owner-scoped route says `no-store` now, and the two shapes
+a shared cache would otherwise keep, a download and a picture, say `private` and vary on the
+cookie that chose them. Asserted, because the next such route inherits the same silence.
+
+**A call is booked once the request is worth answering, and not before.** The ledger writes a call
+down when it authorises it, which is what stops ten tabs reading the same "under the limit"; the
+price of that is that anything refused afterwards has to hand the booking back. `/api/tutor`
+authorised first and then returned 400 on an empty message list, so four empty posts left four
+pending calls against the global budget and spent four of that learner's ten for the day, having
+answered nothing. And the speech route had the opposite fault: a cache miss makes a request of
+TartuNLP and writes a WAV into storage nothing prunes, and nothing but an in-process limiter stood
+in front of it, so `ALLOWANCE.TTS` described a gate that had never existed. A miss is metered now,
+a joiner hands its booking back because it asked nobody for anything, and a failure hands it back
+too.
+
+**Adding to the shared dictionary is not the same as rewriting it, and a backup file is a document
+somebody hands the server.** `restoreBackup` upserted every `Lexeme` in the file by id and then
+deleted and recreated its forms, taking `lemma`, `provenance`, `editedBy`, `ekilexWordId` and every
+`Form` exactly as written: any signed-in learner could rewrite any word every other learner reads,
+forge "retrieved from Ekilex" on their own text, and delete the attested forms underneath. It does
+what the seed does now, `ON CONFLICT DO NOTHING`, and what it creates is marked as the restorer's
+own. `addExample` was the same door one plank narrower: no cap, no throttle, no attribution, and
+`usableExamples` sorted by length alone, so eight short sentences from one learner pushed every
+Ekilex usage off a word for everybody, including the sentences the mock exam and the level check
+are built from. An attested sentence now outranks a typed one and a learner may occupy at most two.
+
+**A half-configured deployment is neither mode and is answered as neither.** ADR-013 keys local
+mode on the *absence* of the Supabase keys, and one of the two present is not an absence: it is a
+hosted install with a typo in a dashboard. Read as local mode it opened that install to the
+internet under one shared id with `isAdmin()` true for every visitor, behind a sign-in screen that
+read as "set up later". `halfConfigured()` is the third state and the middleware answers 503
+naming the variable.
+
+**There is no analytics script, because /privacy says there is none.** Vercel Analytics was mounted
+for every visitor of the hosted build, posting each page's path, the referrer and a derived visitor
+id to a company outside the European Economic Area, while the deployment's own notice said "No
+analytics, no advertising identifiers, no third-party trackers" and the generated recipients list
+never named Vercel. Two of those three could have been edited to make the third true. This app is
+for people whose data is the reason they are careful, and `/api/metrics` already answers whether
+anybody comes back, out of the deployment's own database, which is what the notice describes.
 
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
@@ -839,6 +1228,57 @@ twenty-five starting the same unit lands in it. Speech worked this out first and
 needed the same thing; a second copy of the pattern is where the `finally` gets dropped and one
 bad minute upstream is remembered as a failure until the next deploy. A joiner is not charged for
 a request it did not make, which is why `singleFlightTagged` reports which caller it was.
+
+**A round trip is the unit of a page, not a query.** Nothing here is slow. Measured against a
+socket on the same machine, Today's forty queries were eighty-eight milliseconds of database time
+in total, which is why nobody had ever looked. The deployment reads a Supabase pooler in another
+AWS region, and there each of those is a round trip: giving every query a 20ms delay and measuring
+again, Today was 400ms and fourteen of those trips happened **one after another**, because the page
+awaited the clock, then the deck, then the settings, then a batch, then another batch, then the
+badge check, then the level. Nine of the forty queries were the same read of the same fifteen
+settings rows.
+
+Three rules came out of it and each has an invariant or a module behind it. **A read that is a fact
+about the shared dictionary is not a fact about the person waiting**, so it is cached across
+requests in `lib/dict/facts.ts`: every lemma with its band, the decoy pools, the course words the
+dictionary can answer for, and the id-to-lemma map that lets a deck read resolve its words without
+Prisma's second statement. A minute's TTL rather than a call site per write path, because a cache
+cleared from six places goes stale the first time somebody adds a seventh, silently and for ever.
+Nothing keyed on an `ownerId` may live there, asserted, since that map is shared between learners.
+**A read that is a fact about one learner and is wanted twice in one render is memoised for that
+render**, with `cache()` from React, which is what `requireUserId` already did and what
+`lib/settings/store.ts` and `latestFor` do now; a write corrects the held value rather than
+dropping it, because a Server Action that banks a shield and then reads the count back is real and
+is on Today. And **two answers that do not need each other are asked at once**, which is most of
+what was wrong: the four opening reads of Today were four `await`s in a row and are one `Promise.all`.
+
+**And what a page does not need before its first byte goes behind a `Suspense`.** The badge check
+on Today is three round trips to decide whether to draw a toast over a page that has not rendered
+yet, and the class board on Progress is four to fill the last panel on a page of charts. Both now
+stream in behind the page rather than in front of it. This is not licence to wrap everything: a
+panel that can turn out to be nothing (`ExamCountdownCard` when no target was set, `StruggleAreas`
+with nothing to report) would show a skeleton and then vanish, which is a layout jump on somebody's
+home page, and that is worse than the wait it saves. A boundary is right where the fallback is
+honestly the same shape as the answer, or where there is nothing to hold a place for at all.
+
+**A prefetch that stops at the skeleton is not a prefetch, and every route here is dynamic.**
+`components/PrefetchLink.tsx` is the app's one link, imported as `Link` everywhere, asserted.
+Next fetches a link that is on screen, but for a dynamic route that answer is 150 bytes and no
+query: the grey rectangle, not the page. So a full fetch is asked for on intent instead, when a
+pointer has *settled* on a link for 90ms or a link takes keyboard focus, which is early enough to
+matter and late enough that a pointer crossing four rows to reach the fifth does not render four
+pages. Measured in a browser with the same 20ms per query: pressing Progress in the rail was 458ms
+and is 64ms after the pointer had rested there. Touch keeps the skeleton and the router cache,
+which is the other half: `staleTimes.dynamic` is **zero** by default, so going back to the page you
+were on ten seconds ago was a fresh render of it, queries and all. Thirty seconds is safe here
+because every mutation in this app is a Server Action and every one of them calls `revalidatePath`,
+which drops the client's copy too.
+
+**Where the app runs is part of this and is the largest single number in it.** `vercel.json` pins
+the functions to the region the database is in. A page is several sequential round trips and a
+reader's own distance is one, so colocation beats proximity by about the number of queries on the
+page; a deployment nearer its learners and further from its database is slower, not faster. See the
+deploy section of the README, which says what to do when the two can move together.
 
 **Every cache the service worker keeps has a ceiling, and the one that does not is the reason
 why.** `lib/audio/clipCache.ts` was written because a cache that never evicts is a leak with a hit
@@ -981,12 +1421,13 @@ both, a fill for a bar and an ink for its label, is the pairing this protects ra
 it. `scripts/demo-data.ts` now sets the week and the goal for the same reason: a rule enforced only
 where a fixture happens to walk holds on about half the app.
 
-**Where a screen lives and what a card is are still two questions, and so are the week and the
-homework.** `lib/ux/nav.ts` says the class week lives inside Tasks, so Today does not get a panel for
-it; the "On today" card carries one line saying which week you are in, because that card is already
-"what is due" and the week is the frame that gives it a date. `SETTING_KEYS.currentWeek` moved out of
-`app/actions.ts` for it: that file is `"use server"` so it cannot export a constant, every export
-there being a public endpoint, and the only other way to read the key was to type it again.
+**Where a screen lives and what a card is are still two questions, and the homework list was
+neither.** `/tasks`, `/week` and the placement ladder were cut in the eighteenth pass
+(`docs/13-mvp-status.md` §24): a to-do list and a calendar a class can set but a learner alone never
+filled, and a second answer to the level check with nothing measured behind it. What stays is one
+card on Today for work a teacher assigns, drawn by `components/TodayPlan.tsx` from the same
+`agenda` buckets, because that card is already "what is due". Do not bring the pages back as
+"organisation"; a learner organises their evening by opening Review.
 
 **Late is decided in one place, and it was being decided twice and wrongly.** A due date is typed
 into `<input type="date">` and stored at midnight UTC, so `TaskRow`'s `due < new Date()` marked
@@ -1011,14 +1452,14 @@ That module decides what a *screen leads with* by how far in the learner is; thi
 a thing lives, and the answer is the same in the first minute as in the first year.
 
 A place that lives *inside* another place carries `within` and keeps its row out of the rail
-without leaving the table, so the palette still reaches it. Eight do. Three were there from the
-start: Anu, because her button is in the corner of every signed-in screen and a row saying "Ask
-Anu" was a second door onto a room whose door is always open; the class week, which leads the Tasks
-page where its homework already was; and the scanner, which is a way of getting words *into* the
-dictionary and sat under "Look it up", which is not what it does.
+without leaving the table, so the palette still reaches it. Two were there from the start: Anu,
+because her button is in the corner of every signed-in screen and a row saying "Ask Anu" was a
+second door onto a room whose door is always open; and the scanner, which is a way of getting words
+*into* the dictionary and sat under "Look it up", which is not what it does. The class week was a
+third until the page it led was cut.
 
-The other five are one question asked five ways. Homework is what Today already lists, and the
-deck, the level check, the mock exam and a class are four readings of "how am I doing", which is
+The others are one question asked four ways. The deck, the level check, the mock exam and a class
+are four readings of "how am I doing", which is
 the question `/progress` exists to answer: standing them beside it as four more rows made the rail
 a list of every noun in the app rather than a set of places to go. Seven rows are left, under three
 headings rather than four, because a heading over a single row is furniture: a heading earns itself
@@ -1043,12 +1484,14 @@ scanner, which is the other way of bringing your own text in. `components/DrillL
 drawing for all of them, reading the same table, so a mode renamed once is renamed everywhere it is
 offered. `/practice` is the six rounds, which is what a menu is the right shape for.
 
-The table is read by the rail, the phone sheet, the command palette and the guide, because it was
-four lists and they had drifted. The palette offered six practice modes while `/practice` offered
+The table is read by the rail, the phone sheet and the command palette, because it was four lists
+and they had drifted. The palette offered six practice modes while `/practice` offered
 eleven, so the Leech clinic was reachable from one screen and unfindable from the box that promises
 to go anywhere; `components/PracticeModes.tsx` held a seventh copy that no screen rendered at all
-and has been deleted; `lib/copy/tour.ts` named nine screens a second time with their own icons, and
-now carries the prose and joins the rest. `lib/ux/modes.ts` did the same for the practice modes, and
+and has been deleted; and `lib/copy/tour.ts` named nine screens a second time with their own icons,
+which went with the `/guide` page it fed, since a second description of the app offered to somebody
+who has just pressed "start" is the landing page again with a worse audience.
+`lib/ux/modes.ts` did the same for the practice modes, and
 the split is deliberate: what a mode *is* lives there, what it is like *right now* is a database
 question and stays in the page. Two invariants hold it, plus `scripts/smoke-new.mjs`, which opens
 the app and asks the two questions no source check can: the rail draws its links with nothing to
@@ -1056,16 +1499,80 @@ open first, and a phone reaches every place a desktop does. `icon()` falling bac
 why `nav.test.ts` checks every name in both tables resolves. Two modes shipped with the placeholder
 before a screenshot caught them.
 
-**Where you are is one pill that travels, and it leaves on the press rather than on the page.**
+**A letter lying on a page has a character, and the room it has is along the edge it hangs off.**
+õ, ä, ö and ü are the four letters an English keyboard has no key for, which is the most concrete
+thing there is about writing Estonian, so they are what this app decorates itself with. Four of them
+are tucked over the sides of the case explorer and they wandered three or four pixels towards the
+card over ten seconds, which is a page that is technically alive and reads as still: you have to
+watch one for several seconds to be sure it moved. The reason it was that small is that the wander
+was pointed the one way there is nothing to spend, since a letter on a top edge has about four
+pixels before it is sitting on a word.
+
+The room is **along** the edge. A letter on the top edge can slide most of the width of the card
+without coming a pixel nearer anything it could land on, so õ and ö travel 42 and 49px sideways now,
+ä and ü 56 and 43 up and down their own sides, and what crosses the edge is one to four pixels.
+Measured, at three widths, over twice the frames the suite asks for. The small budget goes on the
+rock and the squash instead, and `room` scales those per placement, because a rotated square is
+wider than its side and eight degrees on the tightest of the four costs more than fifteen on the one
+with a gutter under it.
+
+`lib/ux/letterMotion.ts` is the table of **four characters rather than one wander**: one ambles, one
+crouches and springs, one hangs and swings, one rolls. Four squares doing the same thing a second
+and a half apart is a mechanism, which is the thing the page is arguing it is not. The signs live in
+that module and never in the keyframes, because a keyframe cannot know which edge a letter is on and
+one written to reverse on x is a letter walking off the page the day somebody moves it to the left.
+
+**They answer a pointer, and the rule is the wander's rule.** Coming near one slides it towards the
+cursor along its free axis and settles it further onto the card; it never leans outward, since a
+letter that shied away from a pointer would leave the card at the exact moment somebody was looking
+at it. They stay `pointer-events-none` and `aria-hidden`. The lean is `transform` on a wrapper and
+the wander is `translate`, `rotate` and `scale` on the tile inside it, because a keyframe and a
+transition on one property is the keyframe winning and the pointer doing nothing. The tile is
+`absolute inset-0` rather than static, and that is load-bearing: every suite that measures whether
+something is inside its box skips an element that positions itself, and it reads the element rather
+than its ancestors, so a statically laid out tile inside a placed wrapper is walked as ordinary text
+lying across a card.
+
+Two invariants. Every character names keyframes the stylesheet declares and every declared set is
+named by a character, because an `animation-name` pointing at keyframes nobody wrote is not an error:
+it is a letter sitting perfectly still, looking exactly like one that was meant to. And a decorative
+letter is hidden, untouchable and placed, asserted on the one component, with no screen drawing its
+own. `components/LetterTile.tsx` is that component and `.letter-key` is the same idea where a letter
+is a control: the six keys that type õ, ä, ö, ü, š and ž grow under a pointer and shake once on the
+way in, which is the app's ornament recognising its own keys.
+
+**And they are the case card's, not the page's.** A set was tried in the landing page's own margins,
+where the reading column does not reach and a letter can travel forty pixels and roll right over.
+It is more room and it is the wrong room: these letters belong to the one object on the page whose
+contents are the letters themselves, and one drifting in the margin beside a headline reads as a
+decoration that has come loose rather than as one that was placed. `edge` is required on the tile
+for that reason, which is also what deletes the branch of `leanFor` that could move a letter on both
+axes at once.
+
+**Where you are is one pane, and under a pointer it arrives rather than travelling.**
 The rail and the phone bar used to say it by painting the row you arrived on and unpainting the one
 you left, which is two things happening at once and reads as two things: a light going out over
 here and another coming on over there, with nothing connecting them. What connects them is a marker
-that moves, borrowed from Upside Lab's dock with its measurements intact, and three things carry it.
-Its **leading edge sets off before its trailing edge follows**, so the pill stretches across the
+that moves, borrowed from Upside Lab's dock with its measurements intact.
+
+**Whether it travels is a question about the input, not about the design**, and the two surfaces
+answer it differently for the reason Lab's two docks do. A thumb has nothing else to do while a
+server answers, so the phone bar's pill slides from the cell you left to the cell you asked for. A
+pointer has already arrived: you clicked one row, you know which, and watching a marker take a
+quarter of a second to agree with you is the rail being slower than you are, next to the page it
+just changed. So `NAV_MOTION.rail.travelMs` is zero, `glide` writes the resting geometry and
+returns, and the marker is simply there on the row you pressed. What carries the movement on that
+surface instead is the pointer's own pane, which has been following the cursor down the column all
+along, so by the time you press, the card is already where the marker lands and clicking only
+settles it. Measured on the rail: a press puts the pane exactly on the row with **no animation in
+flight at all**, where it used to run a 260ms journey.
+
+On the bar, where it does travel, three things carry it. Its **leading edge sets off before its
+trailing edge follows**, so the pill stretches across the
 ground it is covering and gathers itself up on arrival, which is why a mark is two edges rather
 than a position and a size: the stretch falls out of the arithmetic and scales with the distance,
-1.20x for one row and 4.28x for the length of the rail, where a fixed keyframe would give both the
-same. It is a **transform animation handed to the compositor**, never a transition on `top` or
+measured at 1.40x for one cell of the phone bar, where a fixed keyframe would give every distance
+the same. It is a **transform animation handed to the compositor**, never a transition on `top` or
 `left`: those are laid out and painted on the main thread, and the main thread is exactly what a
 page navigation is busy with, which Lab measured as three frames of travel, five frames frozen
 while the new room rendered, then the rest of the way in one. And it **leaves on `pointerdown`**,
@@ -1077,9 +1584,36 @@ though, and that one is not a refinement: calling a bet off puts the marker back
 still marked, which during a navigation is the row you are *leaving*, so before this any pointer
 event landing off the cell while the new page rendered sent the pill all the way home and all the
 way back. Measured on this rail at three travels for one tap, 127 to 817, 817 to 127, then 127 to
-817 again, and on a phone the browser taking the gesture for a scroll does it on an ordinary tap. A
-cancel *before* the click is still a genuinely abandoned press, and a bet that loses **arrives
-rather than travels**, because reverting is a correction and not a journey.
+817 again, and on a phone the browser taking the gesture for a scroll does it on an ordinary tap. A bet that loses **arrives
+rather than travels**, because reverting is a correction and not a journey. A cancel *before* the
+click used to be read as an abandoned press outright, and on a bar a finger reaches that is wrong:
+the browser fires one at a finger that has done nothing at all, having taken the touch to stop the
+page's momentum. What tells the two apart is whether the pointer wandered, which is the same
+question the click deadline below asks.
+
+**And the page settles the bet, never the marked cell, because the bet is what moves the marked
+cell.** Reading it as "the marked cell is now the pressed one" holds only while that comes from the
+path alone, and the moment anything else lights the pressed cell the next measure declares the bet
+won about two frames after it was placed. That is not cosmetic: every way this has of standing down
+begins by asking whether a bet is outstanding, so a release off the cell, a `pointercancel` and the
+four-second backstop all quietly become no-ops. Lab measured the same shape at four seconds of the
+wrong room on screen. It is the address changing that settles it, to this cell's page or, on a
+redirect, to another one. And **the pressed cell is an address rather than a node**, since the
+surface re-renders between the press and the events that settle it, the bet itself being what makes
+it re-render.
+
+**A tap is a tap the first time, and on a phone the browser often does not make one.** A press
+becomes a navigation by becoming a click, and a touch landing while the page is still flinging is
+spent stopping the fling, while a drag begun on a fixed bar pans the document. Both leave an
+ordinary `pointerup` on the cell and no click behind it, which is invisible to the release rule and
+to `pointercancel` alike, so the tap did nothing and then took back the page it had already shown.
+A tab bar is not page content, so it judges the tap on its own evidence, landed on a cell, released
+on that cell or taken from it without ever having wandered past `TAP_SLOP`, and not held past
+`TAP_HOLD_MS`, which is somebody asking for the browser's link preview. It navigates itself and
+`preventDefault`s a click that arrives afterwards, so nothing is entered twice, measured as one
+history entry per tap. The hold is read off `Event.timeStamp` and never a wall clock, because the
+render the press itself starts is part of what is keeping the main thread busy and a perfectly
+ordinary tap can reach its handler hundreds of milliseconds later.
 `lib/ux/navMotion.ts` is the arithmetic and is
 pure, `lib/layout/navMarker.ts` measures the cells and plays it, `app/nav.css` says how a pane
 behaves once placed, and both surfaces read all three, because a second marker is two answers to
@@ -1110,19 +1644,31 @@ section they are in, which is the same measurement fault arriving through the do
 marker cannot be placed on a server, so the well declares the material once as `--nav-marker-bg`
 and the row wears it until `data-nav-marked` says the pane has taken it over, or every hard load
 would paint a rail with nothing marked and then flicker a card into place. The rail deliberately
-does **not** breathe on a travel the way the phone's capsule does, since a column lurching beside
+does **not** breathe the way the phone's capsule does, since a column lurching beside
 the page it just changed is arguing with a decision the reader has already made; what a pointer
 gets there instead is the pane following it, which is the hover those rows never had.
 
-**A pointer's pane has to be one you can see, and reading layout to place it is not free.** The
-pane started as the raised tint on the rail's own ground, two percent of lightness apart in the
-light theme, which is technically a hover and practically nothing on the surface a pointer spends
-most of its time over. It is the accent's softest tint now, the row's own words go to
-`--accent-deep`, and the pill reaches 3px past the row as a shadow spread rather than as geometry,
-so the measurement that places it stays the row's own box and the row appears to grow rather than
-merely tint. `test-design.mjs` hovers a row and measures the ink against the pill in both themes,
-because a hovered state is not one a page arrives in and nothing else sweeps it: 5.16 and 7.93
-against a bar of 4.5. And the measure that places the panes **runs on every render of the
+**Reaching and arriving are one object at two weights, and that took two goes.** The pointer's pane
+started as the raised tint on the rail's own ground, two percent of lightness apart in the light
+theme, which is technically a hover and practically nothing on the surface a pointer spends most of
+its time over. The answer to that was a second material: the accent's softest tint, the row's words
+in `--accent-deep`, and a 3px shadow spread so the pill reached past the row. It was visible and it
+was wrong, because it made the two states of one row two different objects. Point at a row and a
+lavender pill appeared; click it and a white card appeared somewhere else; and on the row you were
+already on, which is the row a pointer is nearest most of the time, the tint stuck out round the
+card as a second outline. That doubled ring is what a reader sees first.
+
+So both panes read one fill, `--nav-marker-bg`, and the marker's own `--nav-marker-shadow` is the
+whole of the difference: pointing at a row is a preview of pressing it, and pressing it settles what
+was already under the cursor. Neither pane reaches past the cell it was measured on, which is also
+what lets the two stack invisibly on the row you are on rather than ringing each other. The hovered
+row's ink goes to `--ink`, the ink the marked row wears, rather than to a hue of its own, since a
+row you are reaching for being a different colour from the row you are about to make it was the
+other half of the same fault. What still tells the two apart is what a pane cannot say: the marked
+row is bold and its glyph wears its own colour. `test-design.mjs` hovers a row and measures the ink
+against the pane in both themes, because a hovered state is not one a page arrives in and nothing
+else sweeps it: 15.88 and 15.39 against a bar of 4.5, where the tint it replaced measured 5.16 and
+7.93. And the measure that places the panes **runs on every render of the
 surface**, where `offsetTop` and `getClientRects` each force a style and layout recalculation of
 the whole document: measured at 26 to 37 forced reads for one navigation, on two surfaces at once,
 nearly all answering a question nothing asked. What moves a pane is the marked cell changing or
@@ -1151,8 +1697,8 @@ and the five thousand row query behind it and points at Progress instead, which 
 **Where a walkthrough is short, the reason is that the questions were spread, not that they were
 dropped.** First run was eight screens and is four. Every answer it used to collect it still
 collects: what to call you, where you are, why, how far, by when, how often and the daily goal. What
-went is four screens that each carried one question, a screen of feature tour that is `/guide` word
-for word, and a plan panel whose six cited facts and essay on where the hours come from now live on
+went is four screens that each carried one question, a screen of feature tour repeating the landing
+page, and a plan panel whose six cited facts and essay on where the hours come from now live on
 `/assess` behind `compact`. The order is still the argument: the limits are stated before anything
 is asked for, the level is measured before the plan is built on it, and the plan is seen before a
 deck is built on it. `test-assess.mjs` drives all four screens and would fail if the deck step ever
@@ -1199,6 +1745,36 @@ year they will not have. Both halves are said now, with this learner's own deck 
 rather than a general warning. The minutes are `minutesFor` and are no longer also written out per
 row, which is where "About about 8 minutes a day" came from: a figure written down twice is a figure
 nobody is checking.
+
+**A level is something a learner may simply tell the app, and the later answer wins.** Three
+things measure Estonian here and none of them can know that somebody was moved up in the class
+they sit in every Tuesday, or sat the real state examination, or read a check taken on a bad
+evening and knows it is wrong. Settings has a row of five chips for exactly that.
+`courseLevelFor` used to order by richness, taking the level check first and the stored setting
+only when there had never been one, which would have made that button do nothing: a check sat in
+March beats a correction made this morning, silently, on every screen that reads a level. So what
+decides is **when**, not which, and `cefrPlacementAt` is what makes that possible. A declaration
+with no timestamp reads as older than any measurement, which is both every row written before the
+picker existed and, deliberately, the level ticked in first run by somebody who has not answered
+a question yet.
+
+**And a level has to be worth setting, which means it decides which words somebody meets.**
+"Around your level" was one `Record<Level, readonly string[]>` inside `lib/dict/suggest.ts`, where
+exactly one of the three things that choose words for a learner could see it. The other two did
+not band at all, and it did not look like an omission because both had an `ORDER BY cefr ASC` in
+front of a `take` that reads as deliberate and is the bottom of the dictionary: the minimal pairs
+round drew two thousand rows starting at A1, so a C1 speaker got beginner contrasts on their first
+visit and on their four hundredth, and the government drill took the easiest two hundred of 268
+governed verbs, so the C1 ones were the verbs nobody was ever shown. `lib/collections/levels.ts`
+is the one table, one band either side, and an invariant fails on a second copy of it and on a
+reader that stopped asking.
+
+What is **due** in review is not banded and may not be: FSRS decides when a card comes back, and a
+level that reordered that is not a schedule. What has never been seen has no schedule yet, so
+`aroundFirst` puts those around the learner's level first. It **orders and never drops**, which is
+the whole of why this is safe on somebody's own deck, and a word with no CEFR tag counts as at
+level, because a word typed in, pasted or photographed is one the learner went to the trouble of
+putting there.
 
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
@@ -1331,6 +1907,18 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   to `not-allowed`: everything disabled in this app is waiting for the learner, a send button with
   an empty box or a rating key before the answer is shown, never refusing them. That is the one
   declaration `.choice-btn` used to carry for itself, and it is one declaration now.
+- **An inline link in a sentence is not a 44px target.** The floor covers a link drawn as a pill or
+  as a lone icon, because those are controls; an inline link was given `padding-block` on the
+  argument that a taller link is easier to press and the line still reads the same. Vertical
+  padding on an inline box does not grow the line box, it grows the element's border box past it,
+  so the link on a paragraph's last line reaches six pixels below the paragraph it is in: measured
+  on the landing page's credit line at 360 with a coarse pointer, "TartuNLP" sat 5px outside the
+  footer's own border and `scripts/test-containment.mjs` failed on it six times. Overlaying a
+  bigger hit area with an absolutely positioned pseudo-element is the other way and is worse,
+  since in running prose it takes the taps meant for a link on the line above. WCAG 2.2 makes
+  exactly this exception for exactly this reason: a target in a sentence is constrained by the
+  line-height of the text around it, and the way to make it easier to hit is to give it a line of
+  its own.
 - **A control the 44px floor makes bigger centres its own content.** The floor under a coarse
   pointer is a `min-width` and a `min-height`, and an inline box lays its content out from the top
   left, so on a button holding nothing but an icon all of the slack lands on one side: measured at
@@ -1535,6 +2123,20 @@ headers at all; the chat reads them back and the line under the conversation say
 a reply has arrived and "Answered by" after. A trailer was tried and is not an option, because no
 browser exposes one.
 
+**Anu is told who is asking, and she is told by the server.** The chat posted `level: "B1"` for
+everybody, typed into the client, and the route believed it: a beginner on their first evening and
+a C1 speaker were both taught as B1, and nothing the app had measured about either reached her.
+`lib/progress/tutorContext.ts` reads three things off the learner's own log at once, the level
+`courseLevelFor` gives every other screen, the weakest case `caseAccuracy` gives the Progress page
+over the same shared query, and the unit the deck has started and not finished, and `learnerNote`
+puts them in a block sent **after** the static prompt rather than inside it, so the part that does
+not change per person stays cached on every provider. The wording of that block is a decision: the
+weakest case is offered for when a question touches it and never as a refrain, because a learner
+who hears about their partitive every time they ask about the weather stops asking. It needs twelve
+answers before it names a case, four times the chart's floor, since a teacher raising it in
+conversation is a stronger claim than a bar. The route no longer reads a level from the request at
+all, asserted.
+
 **Anu's English is cleaned on its way past, and her Estonian never is.** `lib/tutor/humanize.ts`
 strips dashes used as clause breaks and stock openers, reading both from `lib/copy/voice.ts` rather
 than keeping a list of its own. It streams, holding text back only where a
@@ -1625,6 +2227,82 @@ osastav, and the version that named whichever the dictionary listed first called
 `scripts/test-assess.mjs` asks the same thing of the rendered screen, because a source check cannot
 see a name arriving through an interpolated option.
 
+**A placement check has no way to skip it, and one way past one question.** Every section opened
+with "Start this section" and "Skip reading" as two buttons of equal weight, and every typed
+question offered "Skip this one" beside Check. The overall level is the weakest of three skills
+(ADR-020), so a skipped section is not a gap in the report, it is a hole underneath the number: the
+app measures what somebody felt like doing and then prints a level as though it had measured them.
+Both are gone. What stays is `skipSkill` for listening, which is not a skip and is reached only
+when the speech service cannot make audio at all, so there is nothing on the screen to answer, and
+it leaves the section unmeasured rather than failed. Leaving a box empty and pressing Check is
+still allowed and is honest, because it marks nothing wrong that was not. The one skip left in
+first run is the *goal* screen, whose answers only feed the plan.
+
+**Feedback explains the sentence, it does not label it.** A gap's explanation read "Here kõhn is in
+the nimetav, the nominative. The dictionary form. The subject of a sentence, and what you point
+at.": three sentences of grammar vocabulary at somebody who has just been told they were wrong, and
+none of them about the sentence in front of them. `explainGap` leads with the sentence put back
+together, then says what the gap took and names the form as the cross-reference it is, then gives
+`CASE_NOTES`'s one line on what the case is *for* and its `englishHook`, which is the half that was
+missing entirely: "of the book", "the book's cover" lands in a glance where "possession, and the
+stem eleven other cases are built on" is a fact to be learned before it can be used. The Estonian
+name still leads the English one, because that is the rule above and a class uses the Estonian.
+**The typed version of the task prints the same string**, from the same function: the writing
+section used to answer "why that form" with the whole sentence and nothing else, which tells a
+learner what the answer was rather than why, and `WriteItem.because` is now `explainGap`'s own
+output so the two shapes of one task cannot say different things.
+
+**Speaking is asked, not recorded.** The check played a native rendering, recorded the learner, and
+asked them to rate the comparison. Nothing scored it (ADR-018), so what the microphone bought was a
+permission prompt and a clip in exchange for a rating that was going to be the learner's own
+judgement either way, and the two clips play one after the other rather than together, which is not
+how anybody hears their own accent. The recorder is gone from the placement check and the question
+is the honest version of what it was already collecting: hear it said properly, and say how
+confident you are saying it. `SCORED_SKILLS` is unchanged and speaking still contributes nothing.
+
+**A usage is not always a sentence, and `naturalSentence` is where that is decided.** Ekilex records
+a usage against a *sense*, so what comes back under a headword is sometimes lexicography rather than
+something somebody said, and three shapes of it reached a real sitting. A usage that trails off
+(`Uuringud näitavad, et ..`), offers two alternatives round a slash (`Elekter läks ära / kadus.`) or
+is numbered out of a list of definitions is not answerable. And a usage opening with its own
+headword before a comma is the label pattern, where the entry names itself and then illustrates a
+sense the gloss beside it does not name: `Kahvel, lipp kukub!` is filed under `kahvel` and is a
+sailing call about a gaff rather than about a fork, which is precisely the question a learner cannot
+answer and cannot argue with. Only a *nominal* is caught by that last one, because a verb before a
+comma is an ordinary main clause and `Usun, et ta ei valeta` is a sentence worth reading. It lives in
+`lib/estonian/cloze.ts` beside `buildCloze` and the placement check and the mock exam both read it,
+because two papers disagreeing about what counts as a sentence is two answers to one question. It
+rejects 101 of the 8,826 usages that pass the length rules, which is the cost of it.
+
+**A word means everything the dictionary files under its lemma, so none of that is a wrong answer.**
+"What does kallis mean" offered `expensive`, `beautiful`, `fast` and `morning`, and the learner who
+chose `beautiful` had a case, because `kallis` is also what you call somebody you are fond of.
+`differentMeaning` compares one gloss against another and a sense the printed gloss does not mention
+is invisible to it. What *is* visible is a second entry under the same lemma, and `@@unique` is on
+`(lemma, pos)` so the dictionary holds plenty of them: `hall` is a noun meaning frost and an
+adjective meaning grey, and offering "grey" against "frost" marks somebody wrong for knowing the
+word. `meaningTest` treats every gloss filed under the lemma as an answer. It does not reach a sense
+no entry records, which is `kallis` itself: that is a gloss worth correcting, and `npm run
+audit:glosses` and the report queue are the two ways that happens. `prisma/data/harvested.ts`
+already carries "expensive, dear" for it, so a deployment showing "expensive" alone is one seeded
+before the course harvest and is fixed by a reseed rather than by code.
+
+**Why somebody is learning Estonian is a set, not a choice.** Living here, an Estonian partner and a
+job whose meetings are in Estonian are three true answers, and the app made somebody pick a
+favourite and then implied the target the whole plan was built on from whichever they picked. The
+stored value is still one string, space separated, so every row written before this reads back as
+the single reason it holds; `reasonsFor` is the one parser and `impliedTarget` offers the *highest*
+band any chosen reason needs, because the smaller goal sits inside the bigger one and planning for
+the smaller would tell somebody they were finished when they were not.
+
+**There is no page describing this app to somebody already inside it.** `/guide` was the first-run
+feature tour kept at a URL: every screen with a reason to open it, and an equally long list of what
+this app cannot do. The landing page makes that case to somebody who has not decided yet, which is
+where it belongs, and a learner who skipped it finds out what the app does by using it. Offered from
+inside the setup wizard it was a link out of a flow ninety seconds from finishing. `lib/copy/tour.ts`
+went with it, which is the last second table of this app's own screen names; the one sentence of
+honest limits it led with is on the first screen of first run, last, in one line.
+
 **A word governs every case its entry names, so none of them is a wrong answer.** The two drills
 that keep asking the question rather than replacing it, the mock exam's `rektsioon` task and
 `/review/government`, had the same fault the placement check did. An Ekilex entry records a word's
@@ -1657,6 +2335,38 @@ from `lib/assessment/`. A learner meeting this app for the first time cannot tel
 is the one that is confused, so the machine is never the judge. The overall level follows the
 **weakest** measured skill, because a CEFR level is a claim about everything you can do at it.
 (ADR-020.)
+
+**A level read off two questions is a coin toss, and every number in the paper is measured now.**
+Nineteen questions at two per band per skill was the whole paper, and `PASS` is two thirds, so a
+band of two demanded a perfect score and one lucky guess out of four options moved it from half to
+full. Simulated against papers built from the shipped dictionary, that placed **43%** of learners
+at their own level and put **57% of them below it**, which is what a check that does not feel like
+your own Estonian is. It is eighty questions now: six reading and six writing at each band, three
+listening, one spoken, and the placement runs 97, 98, 93, 85, 80 and 72 percent from pre-A1 to C1.
+
+Three findings sit under those numbers and only the first is the obvious one. **Two thirds has to
+be a score somebody can reach**, so a band size is a multiple of three, and 4 per band measured
+worse than 3 because it demands three quarters. **Writing is the noisiest skill**, since its
+answers are typed and nothing puts a floor under a band the way four options do, so at a fixed
+eighty items spending them on writing beat spending them on listening or reading. And **the
+overall level is the weakest of three skills**, so noise anywhere lands on the result, which is
+why raising reading alone took it only to 52%.
+
+Two scoring rules changed with it. The level is **the highest band passed consecutively from the
+bottom**, which is the rule published placement tests use and was not the rule here: the old one
+climbed past any band between half and two thirds, so A1 at 100%, A2 at 55% and B1 at 70% reported
+B1 over a band the same screen printed as failed. And the floor is **the band below the lowest one
+asked**, not always `pre-A1`: writing sets no A1 question and structurally cannot, so a failed A2
+was being read as "below A1" on the strength of a band nobody had been asked about, on most
+sittings. `session.ts` stops a skill one band past the first it was not passed at, which is what
+keeps an eighty question paper at about fifteen questions for a beginner.
+
+**Two numbers for one paper is how a finished sitting stops being stored.** `recordAssessment`
+capped its posted arrays at a literal 60, written when the paper was nineteen, and the blueprint
+grew past it: every sitting then failed `safeParse` while the runner, which computes the level in
+the browser, showed the result anyway. The learner read their level and the hub said nothing had
+ever been measured. It is `PAPER_SIZE`, the blueprint added up, and an invariant fails on a literal
+coming back.
 
 **A question is only as hard as its second best option, and three of the four were free.** The
 check filled its wrong answers out of the whole dictionary in shuffle order, so a beginner asked
@@ -1837,11 +2547,16 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `overflow-wrap`, `svg.lucide`, `useStickToBottom`,
 `x-model-provider`, `isSameOriginMutation`, `checkRateLimit`, `markPaper`,
 `rawAvailable`, `absentParts`, `standsFor`, `stageOf`, `SuggestFix`, `groupKeyFor`,
-`requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `tourBySection`,
+`requireAdminId`, `upsertLexemeWithForms`, `PLACES`, `QUICK_MODES`, `naturalSentence`,
+`PAPER_SIZE`, `bandsAround`, `aroundFirst`, `recordCourseLevel`, `decisiveItems`,
 `VOICE_RULES`, `findTells`, `useNavMarker`, `travelKeyframes`, `--nav-marker-bg`,
 `FOUND_HOURS_PER_WEEK`, `appHoursPerWeek`, `readIdentity`, `boundedTransport`, `gapFrom`,
 `explainGap`, `ESTONIAN_WORD`, `formatDuration`, `alsoGoverned`, `teachingSentence`,
-`splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`. Most of them now
+`splitOnForm`, `inTeachingOrder`, `SELF_GRADES`, `DrillLink`, `lockDeck`, `caseReviewsFor`,
+`alsoRight`, `shownForms`,
+`PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
+`staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
+`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -1855,6 +2570,7 @@ npm run test:db          # integration tests, needs Postgres in DATABASE_URL
 npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
 npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
+npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary

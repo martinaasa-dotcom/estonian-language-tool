@@ -1,6 +1,8 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { CircleHelp } from "lucide-react";
 import type { CaseAccuracy } from "@/lib/stats/history";
+import { caseByKey } from "@/lib/estonian/cases";
+import type { CaseKey } from "@/lib/estonian/types";
 import { Meter } from "@/components/ui";
 
 /**
@@ -36,13 +38,27 @@ export function WeakestCases({ cases, empty }: {
   return (
     <ul className="flex flex-col gap-2">
       {cases.map((c) => {
-        const name = c.grammCase.toLowerCase();
+        /*
+          THE ESTONIAN NAME LEADS, HERE TOO.
+
+          This read `c.grammCase.toLowerCase()`, so the panel drawn on Today,
+          on Progress and on Practice named every case in Latin and nowhere in
+          Estonian: `inessive`, over a bar, on the home screen of an app whose
+          first rule is that a learner has to be able to follow their own
+          teacher. The invariant that catches this is anchored on a member
+          access and this file reached for neither, so it saw nothing. The
+          question the case answers goes in the label, which is how a class
+          actually names it.
+        */
+        const spec = caseByKey(c.grammCase as CaseKey);
+        const name = spec?.et ?? c.grammCase.toLowerCase();
+        const english = spec?.en.toLowerCase() ?? c.grammCase.toLowerCase();
         return (
           <li key={c.grammCase} className="flex min-w-0 items-center gap-1">
             <Link
               href={`/review?case=${c.grammCase}`}
-              aria-label={`Drill the ${name}, currently ${c.accuracy} percent over ${c.total} reviews`}
-              className="tap-tint flex min-w-0 flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 text-sm"
+              aria-label={`Drill the ${name}${spec ? `, ${spec.question}, the ${english}` : ""}, currently ${c.accuracy} percent over ${c.total} reviews`}
+              className="pill tap-tint flex min-w-0 flex-1 items-center gap-3 rounded-[var(--r)] px-2 py-1.5 text-sm"
             >
               {/*
                 A width to line the names up at, not a width to hold at any
@@ -54,11 +70,11 @@ export function WeakestCases({ cases, empty }: {
                 of the help link. The case names are one word, so a name that
                 has to give up a few pixels still reads.
               */}
-              <span className="w-24 shrink" style={{ color: "var(--ink-2)" }}>{name}</span>
+              <span lang="et" className="w-24 shrink" style={{ color: "var(--ink-2)" }}>{name}</span>
               <span className="min-w-0 flex-1">
                 <Meter
                   pct={c.accuracy}
-                  label={`${name}: ${c.accuracy}%`}
+                  label={`${name}, the ${english}: ${c.accuracy}%`}
                   tone={c.accuracy >= 85 ? "var(--good)" : c.accuracy >= 65 ? "var(--hard)" : "var(--again)"}
                   height={5}
                 />
@@ -68,9 +84,9 @@ export function WeakestCases({ cases, empty }: {
               </span>
             </Link>
             <Link
-              href={`/grammar/${name}`}
-              aria-label={`What the ${name} is for`}
-              title={`What the ${name} is for`}
+              href={`/grammar/${english}`}
+              aria-label={`What the ${name} is for, ${spec?.question ?? ""} (the ${english})`}
+              title={`${name}: ${spec?.question ?? ""} · the ${english}`}
               className="press flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--raised)]"
               style={{ color: "var(--ink-3)" }}
             >

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { modeAt } from "@/lib/ux/modes";
 import { icon } from "@/components/icons";
 

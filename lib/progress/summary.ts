@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { dictionaryLemmas, gradedLemmas, lemmasByCardLexeme } from "@/lib/dict/facts";
 import { PATH, unitProgress, type PathUnit, type UnitProgress } from "@/lib/collections/syllabus";
 import { computeStreakWithShields } from "@/lib/achievements/badges";
 import { levelFromXp, xpFromRatingCounts, type LevelInfo } from "@/lib/gamification/xp";
@@ -64,10 +65,27 @@ export function knownLemmasFrom(cards: { state: number; lemma: string | null }[]
 }
 
 export async function deckSnapshot(ownerId: string, now = new Date()): Promise<DeckSnapshot> {
-  const cards = await prisma.card.findMany({
-    where: { ownerId },
-    select: { state: true, due: true, suspended: true, lexeme: { select: { lemma: true } } },
-  });
+  /*
+    `lexemeId` and a lookup, not `lexeme: { select: { lemma: true } }`.
+
+    That relation reads as part of this query and is a second one: Prisma
+    fetches the cards, collects their lexeme ids and sends them all back to
+    ask for the lemmas. Two round trips and a deck's worth of uuids on the
+    wire, on the five screens that call this. `lemmasByCardLexeme` answers out
+    of the dictionary every request already shares, and asks only about what
+    it does not know. See lib/dict/facts.ts.
+  */
+  const [cards] = await Promise.all([
+    prisma.card.findMany({
+      where: { ownerId },
+      select: { state: true, due: true, suspended: true, lexemeId: true },
+    }),
+    // Beside the deck rather than after it. On a warm instance this is free;
+    // on a cold one it is the query that fills the cache, and paying for it
+    // here rather than on the line below keeps the round trips at one.
+    gradedLemmas(),
+  ]);
+  const entries = await lemmasByCardLexeme(cards.map((card) => card.lexemeId));
 
   const perLemma = new Map<string, { total: number; known: number }>();
   let dueCount = 0;
@@ -80,7 +98,7 @@ export async function deckSnapshot(ownerId: string, now = new Date()): Promise<D
       if (card.state === 0) newCount++;
       else if (card.due <= now) dueCount++;
     }
-    const lemma = card.lexeme?.lemma;
+    const lemma = card.lexemeId === null ? undefined : entries.get(card.lexemeId)?.lemma;
     if (!lemma) continue;
     const entry = perLemma.get(lemma) ?? { total: 0, known: 0 };
     entry.total++;
@@ -95,9 +113,13 @@ export async function deckSnapshot(ownerId: string, now = new Date()): Promise<D
     knownCards,
     startedLemmas: new Set(perLemma.keys()),
     // Through the shared rule rather than a second copy of it, for the reason
-    // written above `knownLemmasFrom`.
+    // written above `knownLemmasFrom`. The lemma comes from the same lookup the
+    // loop above uses, since the card rows carry an id rather than a relation.
     knownLemmas: knownLemmasFrom(
-      cards.map((card) => ({ state: card.state, lemma: card.lexeme?.lemma ?? null })),
+      cards.map((card) => ({
+        state: card.state,
+        lemma: card.lexemeId === null ? null : entries.get(card.lexemeId)?.lemma ?? null,
+      })),
     ),
   };
 }
@@ -116,13 +138,17 @@ export interface UnitView extends UnitProgress {
  * second to load.
  */
 export async function pathWithProgress(ownerId: string, snapshot?: DeckSnapshot): Promise<UnitView[]> {
-  const snap = snapshot ?? await deckSnapshot(ownerId);
-  const allLemmas = [...new Set(PATH.flatMap((u) => u.lemmas))];
-  const present = await prisma.lexeme.findMany({
-    where: { lemma: { in: allLemmas } },
-    select: { lemma: true },
-  });
-  const available = new Set(present.map((l) => l.lemma));
+  /*
+    Which of the course's words the dictionary holds is a fact about the
+    dictionary, not about this learner, and it was an `IN` of every lemma in
+    the course on every render of every course screen. Today ran it three
+    times in one pass. It is a membership test against a set the whole
+    deployment shares now: lib/dict/facts.ts.
+  */
+  const [snap, available] = await Promise.all([
+    snapshot ?? deckSnapshot(ownerId),
+    dictionaryLemmas(),
+  ]);
 
   return PATH.map((unit) => {
     const lemmas = unit.lemmas.filter((l) => available.has(l));
@@ -208,7 +234,6 @@ export async function dailySummary(
 
   const questStats: QuestStats = {
     reviewsToday: todayReviews.length,
-    xpToday,
     newCardsToday: todayReviews.filter((r) => r.stateBefore === 0).length,
     recalledToday: todayReviews.filter((r) => r.rating >= 3).length,
     cardsAddedToday,

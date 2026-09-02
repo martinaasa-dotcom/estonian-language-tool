@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import {
   CUMULATIVE_HOURS, FACTS, FOUND_HOURS_PER_WEEK, project, sustainableNewCardsPerDay,
   weeksNeeded, type Projection,
@@ -6,6 +6,7 @@ import {
 import { targetByBand, weeksUntil, type Goals } from "@/lib/assessment/goals";
 import { formatDuration, formatDurationRange } from "@/lib/time/duration";
 import { PRE_A1, type Band, type Level } from "@/lib/assessment/types";
+import { ChevronRight } from "lucide-react";
 import { Card, Note, SectionTitle, StatTile } from "@/components/ui";
 import { icon } from "@/components/icons";
 
@@ -92,8 +93,8 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
       <Card>
         <SectionTitle>Your plan</SectionTitle>
         <p className="text-base" style={{ color: "var(--ink-2)" }}>
-          Pick a level to aim for and this becomes a timeline: how many hours the distance usually
-          takes, how many of them your daily goal covers, and how many are left to find elsewhere.
+          Pick a level to aim for, and this turns into a timeline: how many hours the distance
+          usually takes, how many your daily goal covers, and how many are left to find elsewhere.
         </p>
         <Link
           href="/settings#goals"
@@ -163,30 +164,49 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
 
       {plan.otherHoursPerWeek && plan.otherHoursPerWeek.high > 0 && (
         <Note tone="sky">
-          To make that date you would need roughly{" "}
+          To make that date, you would need roughly{" "}
           <strong>
             {formatDurationRange(plan.otherHoursPerWeek.low, plan.otherHoursPerWeek.high, "long")} a week
           </strong>{" "}
           of Estonian beyond this app: a class, a conversation partner, reading, a film without
-          subtitles. At a found {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, the
-          distance is about {range(found.low, found.high, "weeks")}.
+          subtitles. Find {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, and that
+          distance drops to about {range(found.low, found.high, "weeks")}.
         </Note>
       )}
 
       {compact && (
         <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Published estimates for an English speaker, which are averages of other people on other
-          courses rather than a measurement of you.{" "}
+          These are published estimates for an English speaker, averages from other people on
+          other courses rather than a measurement of you.{" "}
           <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
             Where the numbers come from
           </Link>
-          , and the research behind the pace, are on the level check screen.
+          , and the research behind the pace, live on the level check screen.
         </p>
       )}
 
+      {/*
+        THE REFERENCE MATERIAL IS BEHIND A DISCLOSURE, WHICH IS WHERE A
+        READER FINDS IT AND A SKIMMER DOES NOT TRIP OVER IT. This screen used
+        to run to five thousand pixels on a phone: the result, then the plan,
+        then three paragraphs on where the hours come from, then six cited
+        facts, then a second caveat repeating the first. Somebody who has
+        just been told they are below A1 wants the number, the plan and the
+        way out, and the sources exactly once they ask "says who". The
+        `summary` says what is inside so nobody has to open it to find out.
+      */}
       {!compact && (
-      <Card>
-        <SectionTitle hint="what the numbers assume">Where these come from</SectionTitle>
+      <details className="group">
+        <summary
+          className="tap-tint flex cursor-pointer items-center gap-2 rounded-[var(--r)] px-1 py-2 text-sm font-medium"
+          style={{ color: "var(--accent-deep)" }}
+        >
+          <ChevronRight size={15} aria-hidden className="transition-ui group-open:rotate-90" />
+          Where these numbers come from, and six facts behind the pace
+        </summary>
+        <div className="mt-4 flex flex-col gap-6">
+        <Card>
+          <SectionTitle hint="what the numbers assume">Where these come from</SectionTitle>
         <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           {target} sits at roughly {range(CUMULATIVE_HOURS[target].low, CUMULATIVE_HOURS[target].high, "hours")} of
           study from nothing, for an English speaker. Estonian is at the harder end of the scale, so
@@ -212,19 +232,18 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           they will not have. Both halves are said now.
         */}
         <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          A daily goal of {dailyGoal} cards is {dailyGoal} cards to answer, not {dailyGoal} new ones.
-          A card you learn today costs roughly ten reviews over its first year, so once the reviews
-          arrive this settles at about {newCards} genuinely new{" "}
-          {newCards === 1 ? "card" : "cards"} a day. Raising it does bring words in faster, in
-          proportion. It also raises every day from here on, which is where week six goes wrong.
-          The goal worth setting is the one you would still meet on a bad Wednesday.
+          A daily goal of {dailyGoal} cards means {dailyGoal} cards to answer, not {dailyGoal} new
+          ones. A card you learn today needs roughly ten more reviews over its first year. Once
+          those reviews pile up, your daily goal settles into about {newCards} genuinely new{" "}
+          {newCards === 1 ? "card" : "cards"} a day. Raising the goal does bring new words in
+          faster, in proportion, but it also makes every day from here on longer, which is where
+          week six goes wrong. The goal worth choosing is the one you would still keep on a bad
+          Wednesday.
         </p>
-      </Card>
-      )}
+        </Card>
 
-      {!compact && (
-      <div>
-        <SectionTitle hint="checkable, not motivational">Facts worth knowing first</SectionTitle>
+        <div>
+          <SectionTitle hint="checkable, not motivational">Facts worth knowing first</SectionTitle>
         <ul className="flex flex-col gap-3">
           {FACTS.map((fact) => {
             const Icon = icon(fact.icon);
@@ -246,7 +265,9 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
             );
           })}
         </ul>
-      </div>
+        </div>
+        </div>
+      </details>
       )}
     </div>
   );

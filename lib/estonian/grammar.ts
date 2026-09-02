@@ -47,10 +47,10 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: [
       "The subject of a verb",
       "The form you look a word up under",
-      "What a whole, countable thing looks like as an object",
+      "A whole object, in the plural or after a command",
     ],
     watchOut:
-      "A whole object takes the nominative or the genitive, never the partitive, the choice says whether the action finished, not how polite you are being.",
+      "A whole object takes the genitive or the nominative, never the partitive. Whole against partial is what says whether the action finished. Which of the two whole forms you use is decided by the sentence: singular with an ordinary verb takes the genitive, and the nominative turns up with plurals, commands and the impersonal.",
     englishHook: "Closest to plain English word order: the thing doing the verb.",
   },
   {
@@ -59,7 +59,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: [
       "Possession, the way English uses ’s or “of”",
       "A completed whole object",
-      "After most prepositions and postpositions",
+      "Before nearly every postposition, and after a few prepositions",
       "The stem every case below this one attaches to",
     ],
     watchOut:
@@ -168,7 +168,7 @@ export const CASE_NOTES: readonly CaseNote[] = [
     summary: "Without something, the opposite of the comitative below it.",
     uses: ["The absence of a thing", "Doing something without a tool, a person or a permission"],
     watchOut:
-      "Rare in speech, where a preposition usually does the job instead, but it turns up in writing and on exams, which is exactly why it is worth recognising rather than producing.",
+      "Rare on its own in speech, where it usually comes with the preposition meaning without in front of it, saying the same thing twice. It turns up in writing and on exams, which is exactly why it is worth recognising rather than producing.",
     englishHook: "without, without a coat, without asking.",
   },
   {
@@ -275,10 +275,10 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     points: [
       "The one verb you cannot avoid, and one of the few genuinely irregular ones",
       "Having something is expressed as it being at you, using the adessive",
-      "The same pattern carries age, feelings and obligations",
+      "The same pattern carries feelings, needs and obligations",
     ],
     watchOut:
-      "There is no verb to have to reach for, so a sentence built on the English shape will not translate word for word. The owner goes into a case and the thing owned stays in the nominative.",
+      "There is no verb to have to reach for, so a sentence built on the English shape will not translate word for word. The owner goes into a case and the thing owned stays in the nominative, or in the partitive when it is a quantity or the sentence is negated.",
   },
   {
     id: "present-tense",
@@ -309,12 +309,12 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Saying what happened",
     summary: "The tense for anything that happened and finished, and the backbone of any story.",
     points: [
-      "Formed from a past stem that is often unpredictable",
-      "Used for completed events, however recent",
-      "Distinct from the perfect, which is about present relevance",
+      "Built on the second infinitive's stem, with -si- after it",
+      "A short list of the commonest verbs takes -i- instead, and those are learned as forms",
+      "Used for completed events, however recent, and distinct from the perfect",
     ],
     watchOut:
-      "The past stem is not derivable from the present one, which is why the first person past is stored as a principal part. Guessing it is the single most common source of invented verbs.",
+      "The past stem comes from the second infinitive, not from the present: that is the rule your teacher will give you. What is left to learn is which verbs take -i- instead, and the third person, whose grade can change on the way, which is why the first person past is stored as a principal part.",
   },
   {
     id: "perfect",
@@ -399,11 +399,11 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     marker: "-takse",
     points: [
       "Notices, instructions, official prose and news",
-      "Says an action happened without naming or implying an agent",
+      "Says that people did something without saying which people",
       "Has its own forms across the tenses",
     ],
     watchOut:
-      "The English passive lets you add by whom. The impersonal does not, because it is not demoting an agent, it is declining to have one. Translating it as a passive and then looking for the doer is the standard confusion.",
+      "The English passive lets you add by whom, and it can describe a door blown open by the wind. The impersonal has no slot for a doer and always assumes a person: somebody opened that door. Translating it as a passive and then looking for the doer, or reaching for it when nothing human did the thing, are the two standard confusions.",
   },
   {
     id: "participles",
@@ -429,7 +429,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
       "Has an impersonal counterpart for things done to something",
     ],
     watchOut:
-      "It does not agree with anything when it is part of a tense, but it does decline when it is used as an adjective. Which job it is doing decides whether it changes.",
+      "It never changes shape: not as part of a tense, and not in front of a noun either, where it is one of the few words in the language that stays the same whatever case the noun is in. The present participles do decline, which is where the two get mixed up.",
   },
   {
     id: "converb",
@@ -450,12 +450,12 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     summary: "Estonian has two, and which one a verb takes is a fact about that verb.",
     marker: "-ma",
     points: [
-      "One is the dictionary form and follows verbs of starting and going",
-      "The other follows verbs of wanting, being able and having to",
+      "One is the dictionary form and follows verbs of starting, going and having to",
+      "The other follows verbs of wanting and being able, and the impersonal ways of saying it is necessary",
       "Both are stored, because neither is derivable from the other",
     ],
     watchOut:
-      "English has one infinitive, so there is no intuition to fall back on. The pairing has to be learned with the verb, which is why both are principal parts.",
+      "The everyday verb for must takes the first infinitive, not the second, which is the pairing learners get wrong most: it is I must go in the -ma form, never the -da one. English has one infinitive, so there is no intuition to fall back on and the pairing has to be learned with the verb, which is why both are principal parts.",
   },
   {
     id: "particle-verbs",
@@ -488,7 +488,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "The object: whole or partial",
     summary: "The choice between a total and a partial object, and the hardest rule in the language.",
     points: [
-      "A completed action on a whole thing takes the genitive or nominative",
+      "Ask keda? mida? for a partial object, kelle? mille? or kes? mis? for a whole one",
+      "A completed action on a whole thing takes the genitive or the nominative",
       "An unfinished action, or part of a thing, takes the partitive",
       "Negation always takes the partitive, whatever else is true",
     ],
@@ -498,10 +499,10 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
   {
     id: "adjective-agreement",
     title: "Adjectives agree",
-    summary: "An adjective takes the same case and number as the noun it describes.",
+    summary: "An adjective takes the case and number of its noun through the first ten cases, and stops at the genitive for the last four.",
     points: [
-      "Agreement in case and in number",
-      "So an adjective declines exactly like a noun",
+      "Agreement in case and in number, so an adjective declines exactly like a noun",
+      "For the last four cases in the table, up to, as, without and with, the adjective stays in the genitive and only the noun takes the ending",
       "A few borrowed adjectives do not decline at all",
     ],
     watchOut:
@@ -514,11 +515,11 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     marker: "-m",
     points: [
       "Formed from the genitive stem, like almost everything else",
-      "The thing compared against goes into a case rather than after a word like than",
+      "The thing compared against either follows the word for than, or goes into the elative with no such word at all",
       "A handful of common adjectives are irregular",
     ],
     watchOut:
-      "There is no separate word for than to reach for. The comparison is carried by the case of the other thing, which English speakers routinely leave in the nominative.",
+      "Both shapes are common and both are correct: the word for than with the plain form after it, or no such word and the other thing in the elative. The mistake is mixing them, keeping the word for than and putting the other thing in the elative as well.",
   },
   {
     id: "superlative",
@@ -537,7 +538,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Numbers and what follows them",
     summary: "Counting looks simple until you notice what case the counted thing goes into.",
     points: [
-      "Anything after two takes the partitive singular",
+      "The counted noun after any number from two upwards is in the partitive singular",
       "Numerals decline like nouns when the phrase itself is in a case",
       "Ordinals are formed regularly and decline too",
     ],
@@ -709,7 +710,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Punctuation",
     summary: "Commas are grammatical here, not rhetorical, and the rules are stricter than English ones.",
     points: [
-      "A comma before every subordinate clause, without exception",
+      "A comma before a subordinate clause, whether or not you would pause there",
       "Rules for lists and for parenthetical material",
       "Quotation marks are shaped differently from English ones",
     ],
@@ -807,7 +808,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Saying when",
     summary: "Time is expressed with cases, and which case depends on the unit of time.",
     points: [
-      "Days and parts of the day take one case, months and years another",
+      "Days, parts of the day, seasons and years take the on-case; months take the in-case",
       "Duration is expressed differently again",
       "From and until each have their own case",
     ],

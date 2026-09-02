@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Headphones, X } from "lucide-react";
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { checkAchievements, gradeCard } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
@@ -10,6 +10,19 @@ import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
+import { VOICES } from "@/lib/audio/voice";
+
+/**
+ * A different speaker for each word, the way the examination's listening part
+ * is read by more than one voice and the country by several million. The
+ * round starts on a voice drawn once per session and walks the list from
+ * there, so two rounds in a row do not open on the same speaker, and the name
+ * is shown after the answer rather than before it: which voice said it is
+ * worth knowing, and not a clue.
+ */
+function voiceFor(start: number, index: number) {
+  return VOICES[(start + index) % VOICES.length]!;
+}
 
 export interface ListeningCard {
   id: string;
@@ -40,8 +53,10 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
   const checkedAchievements = useRef(false);
+  const [voiceStart] = useState(() => Math.floor(Math.random() * VOICES.length));
 
   const card = cards[index];
+  const voice = voiceFor(voiceStart, index);
   const finished = !card;
   const answered = selected !== null;
 
@@ -192,8 +207,8 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                   {card.lemma}
                 </p>
                 <p className="max-w-[40ch] text-xs" style={{ color: "var(--ink-3)" }}>
-                  No audio right now, the pronunciation service could not be reached, so the word is
-                  shown instead. Still worth answering; come back for the listening part.
+                  We couldn&rsquo;t reach the audio, so the word is shown instead. It&rsquo;s still
+                  worth answering, come back later for the listening part.
                 </p>
               </>
             ) : (
@@ -201,6 +216,8 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                 <Speak
                   text={card.lemma}
                   size={30}
+                  voice={voice.id}
+                  autoplay
                   onUnavailable={() => setNoAudio(true)}
                   className="press flex h-24 w-24 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
@@ -209,9 +226,12 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
               </>
             )
           ) : (
-            <div className="flex items-center gap-2">
-              <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
-              <Speak text={card.lemma} />
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
+                <Speak text={card.lemma} voice={voice.id} />
+              </div>
+              <p className="text-2xs" style={{ color: "var(--ink-3)" }}>Read by {voice.name}. The next word gets another voice.</p>
             </div>
           )}
         </div>

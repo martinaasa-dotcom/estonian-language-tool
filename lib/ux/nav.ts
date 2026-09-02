@@ -106,7 +106,7 @@ export const SECTIONS: NavSection[] = [
         keywords: "home dashboard streak quests goal xp", bar: true,
       },
       {
-        href: "/review", label: "Review", blurb: "Everything due, scheduled by FSRS", icon: "GraduationCap",
+        href: "/review", label: "Review", blurb: "Everything due, timed to when you are about to forget", icon: "GraduationCap",
         tone: "accent", keywords: "flashcards srs study due", bar: true,
       },
       {
@@ -121,18 +121,8 @@ export const SECTIONS: NavSection[] = [
     blurb: "The path through the levels, and how far along it you are.",
     items: [
       {
-        href: "/learn", label: "Learn", blurb: "Units from A1 to C1", icon: "Map", tone: "mint",
+        href: "/learn", label: "Course", blurb: "Units from A1 to C1", icon: "Map", tone: "mint",
         keywords: "course units path lessons syllabus", bar: true,
-      },
-      {
-        href: "/tasks", label: "Tasks", blurb: "Homework, and the week you are in", icon: "CalendarCheck",
-        tone: "peach", keywords: "homework todo class due week current",
-        within: "Today, which lists what is outstanding",
-      },
-      {
-        href: "/week", label: "This week", blurb: "The words and work filed under this week",
-        icon: "CalendarRange", tone: "butter", keywords: "week class lesson current",
-        within: "/tasks",
       },
       {
         href: "/class", label: "Classes", blurb: "Teach a class, or join one", icon: "School", tone: "sky",
@@ -199,7 +189,7 @@ export const SECTIONS: NavSection[] = [
   {
     id: "app",
     title: "This app",
-    blurb: "Your settings, your reports, and an honest account of what this cannot do.",
+    blurb: "Your settings, your reports, and the honest list of what this cannot do.",
     items: [
       {
         href: "/settings", label: "Settings", blurb: "Goal, review mode, backup", icon: "Settings", tone: "ink",
@@ -220,10 +210,6 @@ export const SECTIONS: NavSection[] = [
         blurb: "What you have reported, and what happened to it",
         icon: "MessageSquareWarning", tone: "peach",
         keywords: "report wrong mistake feedback correction missing word fix suggest admin review",
-      },
-      {
-        href: "/guide", label: "What this app is", blurb: "Every screen, and what this app cannot do",
-        icon: "CircleHelp", tone: "ink", keywords: "tour help onboarding walkthrough limits honest",
       },
     ],
   },
@@ -256,26 +242,9 @@ export const BAR = DESTINATIONS.filter((d) => d.bar);
  * Whether a path is inside a destination.
  *
  * Root is exact or every page would be "Today"; everything else matches its
- * subtree, so a unit page lights Learn and a sprint lights Review.
+ * subtree, so a unit page lights Course and a sprint lights Review.
  */
 export function isUnder(href: string, pathname: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-/** The section a path belongs to, or undefined for a page outside the rail. */
-export function sectionOf(pathname: string): NavSection | undefined {
-  /*
-    Longest href first. `/review` and `/review/sprint` are both destinations in
-    principle and `/learn/greetings` is under `/learn`, so a first match on the
-    table's own order would answer whichever happened to be written higher up.
-  */
-  let found: { section: NavSection; length: number } | undefined;
-  for (const section of SECTIONS) {
-    for (const item of section.items) {
-      if (!isUnder(item.href, pathname)) continue;
-      if (!found || item.href.length > found.length) found = { section, length: item.href.length };
-    }
-  }
-  return found?.section;
 }

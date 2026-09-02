@@ -194,13 +194,17 @@ deployment had quietly broken. This pass closes those.
 1. **Match grades on recognition, not production.** A pair found among eight is easier than producing
    the word cold; it is recorded as Good, which is generous but not dishonest. Sprint has the same
    shape and always did.
-2. **The leaderboard is a whole-instance board, not per class, and it is ranked from a bounded
-   set.** Everyone who opts in on one deployment sees everyone else who opted in. For a single class
-   that is the right behaviour; for a public instance it would need class codes, which is a feature,
-   not a fix. Past `BOARD_CANDIDATES` opted-in learners the top twenty is the top twenty of that many
-   rather than of the whole deployment, and there is nothing on `Setting` that ranks people, so which
-   ones is stable rather than meaningful. Ranking properly would mean tallying everybody first, which
-   is the query the board stopped making when the tally moved into Postgres.
+2. ~~**The leaderboard is a whole-instance board, not per class.**~~ **Removed, 2026-08-31.** It
+   was the right behaviour for one class on one school's copy and the wrong one everywhere else,
+   and sign-up here is open, so what it actually drew was a table of strangers. Two faults, and
+   only one of them was about privacy. It did not mean anything: past `BOARD_CANDIDATES` the top
+   twenty was the top twenty of the first two thousand opted-in learners by owner id, because
+   ranking the whole deployment is a tally of everybody, so who appeared was a fact about a uuid.
+   And it was the one surface where a stranger chose what every other stranger read, with no
+   report button on a leaderboard row and nobody named to review one. Class codes were the feature
+   this was waiting for and they already exist, so the board is a class you joined, joining is the
+   consent (ADR-019), and somebody studying alone is offered the way into a class rather than a
+   table of usernames. The `leaderboardOptIn` setting went with it, since what it gated is gone.
 3. **Undo trusts the client for the previous card state.** It is range-validated and can only ever be
    applied to a card the caller already owns, so the worst case is someone rewinding their own
    scheduling, which the button does anyway.
@@ -375,13 +379,13 @@ nothing said what the app cannot do.
 
 | Area | What it is |
 |---|---|
-| **Level check** (`/assess`) | Four skills, ten minutes, assembled out of the dictionary. Reading as meanings, case forms, case identification, verb government and recorded sentences; listening as the same with nothing written down, plus dictation; writing as a sentence that must contain a named case; speaking as shadowing. Take it whenever, as often as sensible |
-| **A ladder that stops** | Questions climb the bands and a skill is abandoned as soon as a whole band comes in under half. `lib/assessment/session.ts`, pure, so a test walks a whole sitting without a browser |
+| **Level check** (`/assess`) | Four skills, eighty questions, assembled out of the dictionary. Six reading and six writing at each level from A1 to C1, plus three listening and one spoken. Sized by simulation rather than by preference: the paper it replaced placed 43% of simulated learners correctly and put 57% below where they were, and this one places 72% to 98% depending on the level. Reading as meanings, sentences with a word taken out and recorded sentences to understand; listening as the same with nothing written down, plus dictation; writing as the same gap typed rather than chosen; speaking as shadowing. Take it whenever, as often as sensible |
+| **A ladder that stops** | Questions climb the bands, a skill asks at most one band above the first it was not passed at, and nothing above one that came in under half. `lib/assessment/session.ts`, pure, so a test walks a whole sitting without a browser |
+| **A level you can set** | Settings holds the level the app is going on, changeable by hand. Whichever of the measurement and the learner's own answer was stated later is the one it uses, and it decides where the course opens and which band review, practice and the dictionary draw words from |
 | **A profile, not a number** | Per skill levels with the band breakdown, an overall that follows the weakest measured skill, and a stated confidence that names how few questions it came from |
 | **Goals** | Why you are here, the level you want, the date you want it by, and how many days a week you will really practise. Asked at first run, editable in Settings for ever |
 | **A timeline with sources** (`lib/assessment/plan.ts`) | Hours between two levels, how many of them the stated daily goal covers, and how many are left to find elsewhere. Ranges, with the published estimates they came from named |
-| **What this app is** (`/guide`) | Every screen and when to open it, what the app does, and at the same length what it does not. Shown in first run and kept at a URL |
-| **First run, rewritten** | Eight steps: name, why, how far and by when, measure or estimate, pace, the plan, the walkthrough, the deck |
+| **First run, rewritten** | Four steps: name and keyboard, measure or estimate, why and how far with the plan live under it, the deck and the pace |
 
 ### Why the speaking section exists at all if it cannot be scored
 
@@ -1052,7 +1056,7 @@ restraint. The invariant fails both on Today ceasing to ask the module and on an
 a threshold of their own.
 
 **First run: eight screens to four.** Every answer it collected it still collects. What went is the
-spreading: four screens carrying one question each, a feature tour that is `/guide` word for word,
+spreading: four screens carrying one question each, a feature tour repeating the landing page,
 and a plan whose six cited facts and essay on the source of the hours are now on `/assess` behind a
 `compact` flag. Why, how far, by when and how often are one screen with the plan live underneath
 them, which is a better argument for asking than a screen of answers followed by a screen of
@@ -1450,3 +1454,243 @@ is generated and a correction belongs in the syllabus. Nothing new asserts the l
 `syllabus.test.ts` already keys the course's vocabulary on `lemma|pos` against the harvest alone: a
 label changed in one file and not the other fails `npm test`, which was confirmed by changing one
 and watching it fail. A second check of the same thing is how the first one rots.
+
+## 23. The seventeenth pass: the verb, heard, and the table a class runs down
+
+A pass over the whole app with one question, whether the Estonian on it is right at every point a
+learner meets it, and one finding worth the section: it was, and it stopped early. Every seeded
+verb held five principal parts and nothing else, so on a deployment without an Ekilex key, which is
+the default one, `lugema` was `loen` and no other person. The dictionary entry printed the five
+tiles and stopped, the `olevik` reference page explained the present tense in English and handed
+over to the units, and a conjugation card for `olevik · ta` could not be built because there was
+no `loeb` to put on it. A verb taught as one person is a verb taught as a noun.
+
+### What changed
+
+**The present tense, the negative, the conditional and the singular imperative are derived**, from
+the stored first person, by `lib/estonian/conjugate.ts`. That is the one part of the Estonian verb
+that genuinely is a suffix on a stored stem for every verb in the language but one, and it is the
+same licence ADR-005 amendment 1 already gives the ten regular cases on the genitive. It was not
+reasoned about: `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+and compares it with every form Ekilex records for the same word, 797 verbs and thirteen slots
+each, and it came back with no disagreement. The two exceptions the rule declines are the ones that
+audit named, `olema` in the present (`on`) and `minema` in the imperative (`mine`). The simple past
+is not derived and may not be, because `lugesin` goes to `luges` but `tahtsin` to `tahtis`, with
+the grade changing on the way, so a seeded verb makes seven conjugation cards where an enriched one
+makes eight. The dictionary entry prints the table under "worked out from loen" with the stored form
+in bold, the four verb topic pages show the point on the learner's own verbs with a chip saying
+which forms Ekilex recorded and which the rule supplied, and an attested form always answers first,
+so the moment an entry is enriched the rule steps aside.
+
+**A conjugation drill**, `/review/conjugation`. A conjugation card asks for one person of one verb,
+which is the right shape for spaced repetition and the wrong shape for what a class does on a
+Tuesday, which is run down the whole table out loud. This is that table, typed, the first person
+given, the other five marked a cell at a time the way a typed review answer is: a dropped õ is
+named as a dropped õ, a slipped key as a slip, a wrong form as wrong with the right one beside it.
+The conditional joins from B1. It is reached from the `olevik` and `tingiv kõneviis` reference
+pages rather than from the practice menu, for the reason every other targeted drill is, and a verb
+already in the deck grades its card (ADR-016).
+
+**A card reads itself aloud**, when a word is first met and when its answer appears, and the next
+card's clip is fetched while this one is being answered so the play is instant. Speech had been a
+button, so on the daily path a learner either clicked a speaker icon on every card or heard
+nothing, in a language whose spelling only half records its length. **The voice is the learner's
+to choose**: TartuNLP offers twelve Estonian voices, the app had used one of them for everybody,
+and a learner who has only ever heard one voice say a word has learned that voice rather than the
+word. The state examination's listening part is read by more than one speaker. The list in
+`lib/audio/voice.ts` is the allowlist the speech route checks a request against, so a value not on
+it is answered with the default rather than passed to a third party as typed. The listening round
+goes further and changes voice from word to word, naming the speaker after the answer, because a
+round read entirely in one voice tests that voice. **A right or wrong
+answer makes a short sound**, two notes up for a hit and one low note for a miss, made with the
+browser's own oscillator so it costs no request and works offline. All three are settings, on by
+default because a missing row has to read as the behaviour everybody had.
+
+**Five faults in the grammar prose.** The past participle was said to decline when used as an
+adjective, and the `nud`- and `tud`-participles are among the few words in the language that do not:
+`väsinud` stays `väsinud` in front of a noun in any case. Adjective agreement was stated as
+unconditional, and it stops at the genitive for the last four cases. The comparative page said
+there was no word for "than", and there is. The time-expressions page put months and years in one
+case, and months take the inessive where days, seasons and years take the adessive. And the numerals
+page said "after two" where the partitive singular follows any number from two up.
+
+### What this pass deliberately did not do
+
+- **No verb form was written.** Every form on every new screen is either what Ekilex recorded or a
+  regular ending on a stored first person, and the ending table lives in one module that an
+  invariant holds to being the only one.
+- **The past is still stored per verb.** A rule for the third person of the simple past was
+  considered and is wrong for too many common verbs to be a rule.
+- **No pronunciation is scored.** The voice setting changes who reads; it does not change what
+  ADR-018 says about listening to a learner.
+
+### Known limitations, stated plainly
+
+1. **`olema` has no derived present, so on a keyless deployment its entry shows five forms and the
+   conditional.** The one verb every sentence needs is the one the rule cannot reach, and its `on`
+   arrives with the first Ekilex enrichment. A deployment with a key gets it the first time anybody
+   opens the entry.
+2. **The plural imperative and the impersonal are not derived.** Both are built on the `da`-stem,
+   which changes vowel in ways a rule over the seed would have to guess at (`süüa` to `sööge`).
+3. **Autoplay obeys the browser's own policy.** A page nobody has touched yet may not play sound, so
+   the very first card of a session opened from a cold tab keeps its speaker button and waits for a
+   press; every card after it reads itself.
+
+### The words between the words
+
+Found on the same pass, and the larger content gap: the course had fourteen A1 units of nouns,
+verbs and adjectives and no unit for the words every sentence is made of. `kes`, `mis`, `millal`,
+`täna`, `homme`, `peal`, `taga`, `mina`, `see`, `Eesti`, `september` and `november` were in neither
+the course nor the built dictionary, and `sina` was in it labelled a noun. Six A1 units carry them
+now, harvested from Ekilex like every other unit, with `PRONOUN` added as a part of speech and a
+plural-only pronoun kept the way an adverb is. Re-running the harvest also showed that the ten C2
+units cut in §19 would have taken their 170 words out of the seed the first time anybody ran it,
+against what that section promised; `lib/collections/syllabus/retired.ts` keeps them as a request
+list of their own. The built-in dictionary is 6,039 words.
+
+## 24. The eighteenth pass: what was not learning, and who is asking
+
+The second half of the same audit, with one question kept from the first: does every screen earn
+its place for somebody trying to learn Estonian, and is what it tells them true.
+
+### What went
+
+- **The placement ladder, the homework list and the class week.** `/placement` was a second
+  answer to the level check with nothing measured behind it; `/tasks` and `/week` were a to-do
+  list and a calendar that a class can set but a learner alone never filled. Today keeps one card
+  for work a teacher assigns, and the rest is gone with its routes, its nav rows, its fixtures
+  and its checks. Four suite floors came down by exactly what the deleted screens counted, with
+  the arithmetic written beside each.
+- **The badge shelf from Settings.** Achievements and the streak shields are readings, so they
+  sit under Vocabulary reach on Progress, read in the same batch as everything else on that page.
+- **Three of the level check's four blocks of caveats.** The result screen ran to five thousand
+  pixels on a phone. The duplicate caveat is gone and the sources and six cited facts sit behind
+  one disclosure whose summary says what is inside.
+
+### What was wrong
+
+- **Signing out cleared one cookie.** The worker's page cache, the stashed review session, any
+  queued grade and an unfinished exam paper stayed behind for the next person on the same
+  machine. `lib/offline/forget.ts` removes all of it after the outbox has had its chance to
+  drain, both sign-out paths go through it, and a different account appearing on the same
+  browser clears what the last one left even when nobody signed out. `/privacy` says so.
+- **Anu was told every learner was B1.** The chat posted the level from the client and the route
+  believed it. `lib/progress/tutorContext.ts` reads the level, the weakest case over the shared
+  six-month query and the open unit off the learner's own log, and `learnerNote` sends them in a
+  block after the cached prompt. The prompt's case count was also off by one.
+- **The word of the day printed `Kokakool.` under "in a sentence".** The shortest usage Ekilex
+  recorded was one word with a full stop. Three words and the shape an exam sentence has to pass,
+  or no sentence.
+- **Names that did not match.** The rail said Learn over a page called The course; the sprint's
+  tab spelt its own name differently from its heading; the exam's tab said state where its rail
+  row did not; the manifest shortcut said Learning path. One name each.
+- **Four pages asked in turn what they could have asked at once.** Review, the dictionary,
+  Progress and My words each had one read waiting in front of others that did not need it. One
+  round trip fewer on each.
+- **Five letter bars on one conjugation table.** One now, under the table, typing into whichever
+  field has focus.
+
+### What was built
+
+- **Today's headlines, readable.** The news feed was already fetched hourly for the dictionary's
+  suggestion row and thrown away down to its words. A few headlines are kept whole on the
+  dictionary landing, printed as the feed spelled them and attributed, with every word the
+  dictionary vouches for at the scanned-page floor linked to its own headword and the rest left
+  plain. Offered only when most of a headline can be opened; stored nowhere; asserted.
+- **Motion where an answer lands or a number arrives.** A wrong answer shakes its verdict once
+  and a right one pops, in review and in Match; rings and meters fill on arrival rather than
+  appearing full; the week strip's ticks pop in one after another; and the letters a case or a
+  person adds to a stem are lit on the landing demo and in the conjugation drill, lifting under a
+  pointer on their own row. `prefers-reduced-motion` flattens all of it.
+
+### Measured
+
+- Every browser suite green against a production build on a fresh seed, in CI's order, after
+  the cut. The load test's ten checks pass with the heavy fixture: the whole review log for the
+  charts at 47ms p95, Today at 917ms p95 under eight concurrent readers on a local socket.
+- `npm run eval:anu` with Anu's own prompt rather than a one-line stand-in: five of five
+  answered correctly on the free chain, one refused by the model, which the script counts as
+  nothing rather than as wrong.
+
+### The dictionary, stated plainly
+
+The built-in dictionary is 6,039 words and that is the whole of what Wiktionary's four Estonian
+part-of-speech categories yield once proper nouns, multi-word entries and pages Ekilex cannot
+answer for are dropped. More words come from the two live paths, a lookup with an Ekilex key and
+a photographed page, and never from a model. The gloss and part-of-speech audits were clean over
+all of it on 2026-08-31 and the weekly drift check asks again.
+
+## 25. The nineteenth pass: a meaning in the language the learner thinks in
+
+Four adversarial audits, run in parallel over the whole tree: the content a learner reads, the
+security and performance of every route and action, the interface at phone and desktop widths, and
+what the app could be that it is not. Every finding was verified against the code, against Ekilex
+or in a browser before it was fixed, and the ones that turned out not to be faults were dropped
+rather than "fixed".
+
+### The largest thing that was missing
+
+Most people learning Estonian in Estonia already speak Russian or Ukrainian, and this app could
+only ever say that `kohv` is "coffee". That asks somebody to reach a word through the language they
+are least sure of, and it is the single biggest thing standing between the app and the people it is
+for.
+
+Ekilex has the answer and has had it all along: the equivalents sit in `synonymLangGroups` on the
+same response the forms and the sentences come from, written by the same lexicographers. 1,367 of
+the 1,371 course words carry a Russian one and 1,165 a Ukrainian one, and the harvest already had
+the response cached, so it cost no request. `tuba` is комната and кімната; `vasakul` is слева and
+ліворуч.
+
+ADR-005 is the reason this is worth having rather than an exception to it, and the rule is stronger
+here than anywhere else in the app: these two columns hold a language neither the app nor the
+person reviewing the code necessarily reads, so a wrong gloss would look exactly like a right one
+and nobody here could tell. The files that may name the columns are a closed list, asserted. The
+English never goes away either, because it is the one column every entry has, and a card that hid
+it would be blank on the words Ekilex has no equivalent for.
+
+### Words that were a different word
+
+`scripts/harvest-ekilex.ts` returned on the first exact match whose forms fit and never looked at
+the next. 87 of the course's words have more than one Ekilex homonym, and six came back wrong:
+`kohus` taught as "court" with the forms and eight sentences of the moral duty, `kaste` as "sauce"
+with the forms of dew, `iga` as "every" with the case table of age, and `pidama`, the one A1 verb a
+learner needs for "ma pidin minema", with the past of the verb for keeping a farm. `WordSpec` takes
+a fourth slot naming the word id, and the 31 lemmas that remain ambiguous are printed at the end of
+the run with the ids to choose between.
+
+### Promises the vocabulary could not keep
+
+Three A1 units promised what their word lists could not deliver: numbers with no zero, no teens and
+no tens; directions with no word for left, right or straight on; clothes by size with no word for
+size and no trousers. Fifteen lemmas requested, fifteen confirmed by Ekilex, every one with
+recorded sentences. `parem` was requested first and is the homonym fault again, made while fixing
+it: Ekilex 213895 is the comparative of `hea`. Directions take the adverbs anyway.
+
+### What the app was doing to the log
+
+- **Meeting a word is not answering it.** The intro screen ended in `submit(3)`, so a card the
+  learner had only read was graded Good in the append-only log and the scheduler set its first
+  interval from a recall that never happened. A first meeting now teaches, writes nothing, and puts
+  the card back five places on where the retrieval is the grade.
+- **A card never answers the card before it.** 13 of 32 due cards sat beside a card of the same
+  word on the demo deck, so answering one was reading the answer off the last.
+- **A release gives back the call, not only the money.** A deployment with a rejected key still
+  rationed its learners over answers nobody received.
+- **A nominative -s that simply goes is an ending, not a grade.** 174 entries re-graded.
+
+### Measured
+
+- All 24 browser and integration suites green against a production build on a fresh seed, plus
+  typecheck, lint, 1,594 unit tests and 163 invariants. Every new invariant was made to fail before
+  it was left passing.
+- 766 of 22,260 lesson questions carried a second right answer; 0 do now, with all 22,260 still
+  asked.
+- `a11y-check.mjs` was waiving four checks a run because its locator named four buttons the review
+  screen no longer draws, and `smoke-offline.mjs` was revealing every card and grading none for the
+  same reason: 312 checks and 0 waived, 15 of 15 with grades queued and drained.
+
+### The dictionary, stated plainly
+
+6,050 words in the seed, 1,371 of them the course harvest with attested sentences, Ekilex CEFR
+levels and, for most, the Institute's Russian and Ukrainian. More words come from the two live
+paths and never from a model.

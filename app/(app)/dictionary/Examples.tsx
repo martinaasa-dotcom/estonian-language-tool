@@ -37,7 +37,7 @@ export function Examples({ lexemeId, examples, tutorReady }: {
         <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Näited · in a sentence</h3>
         <p className="text-sm" style={{ color: "var(--ink-3)" }}>
           No example sentences for this word yet. Ekilex has them for most common words, and one
-          arrives the first time this entry is fetched. You can also{" "}
+          shows up the first time you look this word up. You can also{" "}
           <button
             type="button"
             onClick={() => setAdding(true)}
@@ -126,7 +126,7 @@ function ExampleRow({ lexemeId, example, tutorReady, onTranslated }: {
       {example.en ? (
         <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
           {example.en}
-          <Chip tone="again" title="Machine translation, the Estonian above is authoritative, this is not">
+          <Chip tone="again" title="Machine translation. Trust the Estonian above, not this.">
             {AI_TAG}
           </Chip>
         </p>

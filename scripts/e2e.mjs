@@ -11,7 +11,17 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
 // Floor: 26, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("The core flows", { floor: 26 });
+/*
+  25 rather than 26: the homework list was cut as not being learning, and the
+  one check that added a task to it went with the screen. Arithmetic on what
+  the app has, not a run being waved through.
+*/
+/*
+  Raised by two: the meaning in the learner's own language, and the English
+  still beside it. Both run whenever `tuba` has a paradigm behind it, which is
+  the same condition the four checks above it already depend on.
+*/
+const { check, absent, done } = suite("The core flows", { floor: 27 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -87,6 +97,41 @@ if (paradigm) {
     await eventually(async () => (await page.getByRole("button", { name: /In deck/ }).count()) > 0));
 }
 
+/*
+  1b — A MEANING IN THE LANGUAGE THE LEARNER THINKS IN.
+
+  Most people learning Estonian in Estonia already speak Russian or Ukrainian,
+  and the equivalents come from Ekilex rather than from anything this app or a
+  model wrote. Driven rather than reasoned about, because three separate things
+  have to line up for a word to arrive in Russian: the harvest kept the
+  equivalent, the seed wrote it, and the entry reads the learner's setting.
+
+  It puts the setting back afterwards. This runs third in CI's order and
+  everything after it reads the same database, so a suite that leaves the app
+  in Russian would be handing the next one a screen it was not written for.
+*/
+if (paradigm) {
+  await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+  const russian = page.locator("#meanings [role=radio]", { hasText: "Russian" }).first();
+  if (await russian.count()) {
+    await russian.click();
+    await page.waitForTimeout(1200);
+
+    await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
+    const entry = (await page.locator("main").innerText()).replace(/\n/g, " · ");
+    check("a meaning arrives in the learner's own language", /комната/.test(entry),
+      entry.slice(0, 120));
+    check("and the English is still there beside it", /\broom\b/.test(entry),
+      "the English gloss is the one every entry has, so it may never be replaced");
+
+    await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+    await page.locator("#meanings [role=radio]", { hasText: "English" }).first().click();
+    await page.waitForTimeout(1000);
+  } else {
+    absent(2, "the Meanings setting, which needs a build carrying it");
+  }
+}
+
 // 2 — Search box drives navigation, and the diacritic bar types Estonian
 await page.goto(`${B}/dictionary`, { waitUntil: "networkidle" });
 await page.getByLabel("Search the dictionary").fill("room");
@@ -155,7 +200,7 @@ await page.waitForTimeout(900);
 // answer was marked correct and the card has gone; one button, on a miss or on
 // a word being met for the first time, which Enter takes; or the two self-grade
 // buttons of a flip card, where 2 is "Got it".
-const carryOn = (await page.getByRole("button", { name: /Got it, next/ }).count()) > 0;
+const carryOn = (await page.getByRole("button", { name: /Got it/ }).count()) > 0;
 const selfGrade = (await page.getByRole("button", { name: /^Got it$/ }).count()) > 0;
 const alreadyGraded = (await graded()) > gradedBefore;
 check("the answer is reachable from the keyboard", carryOn || selfGrade || alreadyGraded,
@@ -178,34 +223,6 @@ else if (selfGrade) await page.keyboard.press("2");
 const gradedAfter = await eventually(async () => (await graded()) > gradedBefore);
 check("the keyboard gets from a question to a graded card", gradedAfter,
   `${gradedBefore} graded -> ${await graded()} graded, ${before} -> ${await page.getByText(/\d+ left/).textContent()}`);
-
-// 4 — Tasks
-await page.goto(`${B}/tasks`, { waitUntil: "networkidle" });
-await page.getByLabel("Task title").fill("Revise the comitative");
-await page.getByRole("button", { name: /^Add$/ }).click();
-/*
-  Same reporting as the word above, and for the same reason: this one failed
-  twice in CI, fifteen seconds each time, and "false" does not say whether the
-  task was never created or created and not shown.
-
-  IT POLLS ACROSS A RELOAD NOW, AND THAT IS WHAT THE CHECK CLAIMS TO TEST.
-  Adding a task writes through a Server Action and then asks for the route
-  again; the previous version waited fifteen seconds for that client-side
-  refresh to land in this DOM and never looked anywhere else, so a refresh that
-  raced or was dropped read as a task that was never written. Both are worth
-  failing on, but only one of them is "created and persists", and re-reading the
-  page from the server is the only way to tell them apart. It failed a third
-  time in CI on a tree that already carried the fix for the first two, which is
-  the argument for testing the claim rather than the mechanism that usually
-  delivers it.
-*/
-const taskShown = await eventually(async () => {
-  if ((await page.getByText("Revise the comitative").count()) > 0) return true;
-  await page.reload({ waitUntil: "networkidle" }).catch(() => {});
-  return (await page.getByText("Revise the comitative").count()) > 0;
-}, { everyMs: 500 });
-check("task is created and persists", taskShown,
-  taskShown ? "" : `list says: ${(await page.locator("main").innerText()).replace(/\n+/g, " · ").slice(0, 90)}`);
 
 // 5 — Import
 await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
@@ -317,7 +334,7 @@ await page.goto(`${B}/dictionary?q=zzznotaword`, { waitUntil: "networkidle" });
 const genField = page.getByPlaceholder("toa");
 await genField.click();
 await genField.fill("s");
-await page.getByLabel("Insert an Estonian character into the field you are typing in").getByLabel("Insert ä").click();
+await page.getByLabel("Insert an Estonian letter into the field you're typing in").getByLabel("Insert ä").click();
 check("shared diacritic bar types into the focused field",
   await eventually(async () => (await genField.inputValue()) === "sä"),
   `got "${await genField.inputValue()}"`);

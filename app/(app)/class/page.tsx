@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Building2, GraduationCap, School, Users } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
@@ -118,14 +118,15 @@ export default async function ClassIndexPage() {
               <SectionTitle hint="teachers and employers">Start a group</SectionTitle>
               <Card tone="accent">
                 <p className="mb-4 text-sm" style={{ color: "var(--ink-2)" }}>
-                  Either way you get a six-character join code and a list of who is actually
-                  reviewing. A class adds the cases the group keeps missing and the one each student
-                  personally keeps missing. A workplace group leaves both out and answers a
-                  different question instead: who is on track for the paper they have to pass.
+                  You get a six-character join code and a roster either way. A class shows who is
+                  actually reviewing, what the whole group keeps getting wrong, and which case each
+                  student personally struggles with most, which is the useful half of a progress
+                  report. A workplace group leaves the grammar out and answers a different question:
+                  who is on track for the paper they have to pass.
                 </p>
                 <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
-                  If your pupils are under 13, a parent has to agree before they sign up, and the
-                  school is the one answerable for that rather than this app. Worth knowing before
+                  If your pupils are under 13, a parent has to agree before they sign up. That is
+                  the school&rsquo;s responsibility, not this app&rsquo;s, but worth knowing before
                   you write the code on the board. The{" "}
                   <Link href="/privacy" className="underline underline-offset-2">privacy page</Link>{" "}
                   says what is held and what you can see.
@@ -140,10 +141,10 @@ export default async function ClassIndexPage() {
               <School size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
               <div>
                 <p className="text-base" style={{ color: "var(--ink-2)" }}>
-                  This copy is running in local mode, where there is one learner and no accounts, so
-                  there is nobody to share a class with. Classes need sign-in configured
+                  This copy is running in local mode: one learner, no accounts, so there is nobody
+                  here to share a class with. Classes need sign-in turned on
                   (<code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and its anon key);
-                  the README has the ten-minute version.
+                  the README walks through it in about ten minutes.
                 </p>
                 <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                   Everything else in the app works exactly the same either way.
@@ -154,13 +155,14 @@ export default async function ClassIndexPage() {
         )}
 
         <Note tone="neutral">
-          A teacher sees effort and progress: reviews this week, streak, words known, the
-          class&rsquo;s weakest cases in aggregate, and which case each student personally is
-          weakest at as a rolled-up percentage. Whoever runs a workplace group sees less than that,
-          not more: a name, whether somebody has been practising, and one of four bands for the
-          paper the group works towards. Never a search, a deck, or a specific answer, and never a
-          colleague&rsquo;s weak grammar. Both lines are drawn in the code rather than in a policy,
-          see <code className="text-xs">lib/classroom/roster.ts</code>.
+          A teacher sees effort and progress: reviews this week, streak, words known, the cases
+          the whole class keeps missing, and which case each student personally struggles with
+          most, as one percentage across all their reviews. Whoever runs a workplace group sees
+          less than that, not more: a name, whether somebody has been practising, and one of four
+          bands for the paper the group works towards. Never a search, a deck, or a single answer,
+          and never a colleague&rsquo;s weak grammar. Both lines are built into the code itself,
+          not just a policy, see{" "}
+          <code className="text-xs">lib/classroom/roster.ts</code>.
         </Note>
       </Stack>
     </Page>

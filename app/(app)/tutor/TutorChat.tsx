@@ -45,7 +45,7 @@ export function TutorChat({
   if (!configured) {
     return (
       <Empty
-        title={readerCanConfigure ? "Anu needs an API key" : "Anu is not available"}
+        title={readerCanConfigure ? "Anu needs an AI key" : "Anu is not available"}
         body={readerCanConfigure
           ? "Everything else works without one. Settings has a walkthrough for getting a free key."
           : "Everything else here works without her."}

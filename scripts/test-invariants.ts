@@ -28,6 +28,9 @@ import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
+import { NAV_MOTION } from "../lib/ux/navMotion";
+import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
+import { DEMO_STEMS } from "../lib/collections/demoWords";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
@@ -179,6 +182,160 @@ check("the keyed services are only ever reached from the server", () => {
 });
 
 // ── Never write Estonian, never generate morphology (ADR-005, ADR-017) ───────
+
+/*
+  AN ATTESTED FORM ALWAYS BEATS A DERIVED ONE, AND THE TYPE IS WHAT ENFORCES IT.
+
+  The app taught `toasse` as the illative of `tuba`. The dictionary held
+  `tuppa` the whole time, under `ILL_SG_SHORT`, for 2,969 of the shipped
+  entries. The illative is the one case of the eleven with a lexically
+  unpredictable short form (the aditiiv), and `NounStems` had no field for it,
+  so no screen could have shown it: `deriveCase(genSg, key)` took a bare
+  genitive, and eight callers asked it for a form. Two of those decided whether
+  a learner was right. A card asked for the illative of `aeg`, expected
+  `ajasse`, and marked `aega` wrong; the scheduler then brought that card back
+  until the learner stopped typing the correct answer.
+
+  Prose would not have stopped it and did not: ADR-005 already said an attested
+  form wins, and the code disagreed for a year. What stops it is that
+  `illSgShort` is a REQUIRED field on `NounStems`, so a caller holding only a
+  genitive stem does not compile. These two checks are the parts of that a
+  regex can see: the field stays required, and nobody rebuilds the old
+  shortcut beside it.
+*/
+check("the short illative is a required stem, not an optional one", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /readonly illSgShort: string \| null;/,
+    "NounStems.illSgShort stopped being required, so a caller that never asked "
+      + "the dictionary compiles again and the illative goes back to a suffix rule",
+  );
+  assert.doesNotMatch(
+    derive,
+    /illSgShort\?:/,
+    "NounStems.illSgShort became optional, which is the shape the bug had",
+  );
+});
+
+check("nothing builds a case form out of a bare stem and a suffix", () => {
+  /*
+    `spec.suffix` is the eleven endings, and joining one onto a stem is exactly
+    what produced `toasse`. `lib/estonian/derive.ts` owns that operation
+    because it is the only module that also holds the exceptions; anywhere else
+    it is a second answer to the question, and a second answer is how the first
+    one rots.
+
+    WHAT IS CAUGHT IS THE JOIN, not the word `suffix`. Written the wide way
+    first, this fired on four honest files and would have been waived, which is
+    how a check stops being read: the grammar pages print `-sse` as the name of
+    an ending, `lib/tutor/prompt.ts` tells the model what the ending is, and
+    `lib/dict/search.ts` sorts the endings by length in order to *strip* them
+    off something a learner typed, which is the opposite direction and is how
+    `toasse` gets recognised as a word rather than produced as one. None of
+    those makes a form.
+  */
+  const joins = [/\+\s*\w+(?:\.\w+)*\.suffix\b/, /\$\{[^}]+\}\$\{\s*\w+(?:\.\w+)*\.suffix\s*\}/];
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== "lib/estonian/derive.ts" && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => joins.some((join) => join.test(code(file))));
+  assert.deepEqual(offenders, [], "a case suffix is being joined to a stem outside lib/estonian/derive.ts");
+});
+
+/*
+  A SCREEN THAT PRINTS A CASE FORM PRINTS BOTH WHERE ESTONIAN HAS TWO.
+
+  The illative is the one case with two right answers, and every way of
+  printing one of them alone is a choice about which word to be wrong about:
+  leading with the long form hides `tuppa` and `aega`, and leading with the
+  short one prints `aadressi` under the sisseütlev beside the identical
+  omastav and osastav, hiding `aadressisse`. Both readings shipped, three
+  weeks apart, and each was written as the fix for the other.
+
+  `lib/srs/cards.ts` and `lib/collections/lesson.ts` had been joining on ` / `
+  since long before either, so the app had already answered this and three
+  screens had not caught up. They read `shownForms` now, and this fails on a
+  fourth that renders `singular` or `.value` on its own.
+
+  IT IS ANCHORED ON THE CALL, not on the word "illative", because a screen can
+  import the helper and go on printing `row.singular` beside it, which is the
+  shape every check in this file has been caught by at least once.
+*/
+check("a screen that prints a case form prints both where Estonian has two", () => {
+  const screens = [
+    "app/(app)/dictionary/DictionaryClient.tsx",
+    "app/(chromeless)/welcome/page.tsx",
+  ];
+  for (const file of screens) {
+    assert.match(
+      code(file),
+      /shownForms\(/,
+      `${file} prints a case form without asking shownForms, so it shows one illative and hides the other`,
+    );
+  }
+  /*
+    The grammar reference goes through `lib/progress/caseExamples.ts`, which
+    keeps the two apart on purpose: `form` is matched against attested
+    sentences and `tuppa / toasse` is not a word anybody wrote. So the check
+    on that pair is that the field survives and the page renders it.
+  */
+  assert.match(
+    code("lib/progress/caseExamples.ts"),
+    /alsoRight/,
+    "caseExamples stopped carrying the second form, so the grammar reference prints one illative",
+  );
+  assert.match(
+    code("app/(app)/grammar/[caseKey]/page.tsx"),
+    /example\.alsoRight/,
+    "the grammar reference stopped printing the second form beside the first",
+  );
+  /*
+    And the pair on screen has to be a pair the marker accepts, or a learner
+    copies what they were shown and is told they are wrong. ` / ` is the
+    separator `acceptedAnswers` splits on, so this is the one spelling of it
+    that keeps those two facts the same fact.
+  */
+  assert.match(
+    code("lib/estonian/answer.ts"),
+    /split\(\/\\s\*\[\/,;\]/,
+    "acceptedAnswers stopped splitting on the separator every screen shows a pair with",
+  );
+});
+
+check("every screen and marker that needs a case form asks the one function for it", () => {
+  /*
+    Eight callers used `deriveCase`, and the two that graded answers are the
+    reason this is a check rather than a note: `lib/srs/cards.ts` writes the
+    back of a flashcard and `lib/estonian/writing.ts` decides what a written
+    sentence has to contain. Both now go through `caseAnswer`, which is the one
+    place that puts an attested form ahead of a derived one, and both must
+    keep doing so.
+  */
+  const callers = [
+    "lib/srs/cards.ts",
+    "lib/estonian/writing.ts",
+    "lib/progress/caseExamples.ts",
+    "lib/collections/lesson.ts",
+    "lib/collections/checkpoint.ts",
+    "lib/assessment/items.ts",
+  ];
+  for (const file of callers) {
+    assert.match(
+      code(file),
+      /caseAnswer\(/,
+      `${file} produces a case form without asking caseAnswer, so it cannot see the short illative`,
+    );
+  }
+  for (const file of ["app/(app)/dictionary/DictionaryClient.tsx", "app/(chromeless)/welcome/page.tsx"]) {
+    assert.match(
+      code(file),
+      /stemsFrom\(/,
+      `${file} builds its case table from hand-picked slots again, which is how the short illative was lost`,
+    );
+  }
+});
+
 
 check("the module that writes about Estonian holds no Estonian", () => {
   /*
@@ -412,9 +569,7 @@ check("no counter column exists for anything the review log can reconstruct", ()
  * put grades against cards that do not exist and tell the scheduler somebody had
  * practised material they have not yet met.
  */
-const MEASURES_RATHER_THAN_PRACTISES = [
-  "app/(app)/placement/PlacementSession.tsx",
-];
+const MEASURES_RATHER_THAN_PRACTISES: string[] = [];
 
 
 check("every practice mode writes to the same review log", () => {
@@ -861,41 +1016,92 @@ check("a word read off a photograph reaches a card only through the dictionary",
   );
 });
 
-check("adding a word to a deck reads and writes under one lock", () => {
+check("every path that adds cards reads and writes under one lock", () => {
   /*
-    "Is it already there" is check-then-act. `addCardsFor` read the learner's
-    existing cards for a word, filtered the generated ones against them, and
-    inserted the rest; two requests inside that gap both see an empty deck and
-    both insert. Measured against a real database rather than reasoned about:
-    two concurrent adds gave two cards, four gave four, and eight gave fourteen
-    where two is right. A learner meets it by double-tapping "Add to deck", and
-    `addUnitToDeck` walks this once per word with no throttle in front of it.
+    "Is it already there" is check-then-act, and this app has two paths that ask
+    it. `addCardsFor` read the learner's existing cards for a word, filtered the
+    generated ones against them, and inserted the rest; two requests inside that
+    gap both see an empty deck and both insert. Measured against a real database
+    rather than reasoned about: two concurrent adds gave two cards, four gave
+    four, and eight gave fourteen where two is right.
+
+    `addUnitsToDeck` then arrived as the batched rewrite of the loop that called
+    it, kept the shape and did not inherit the lock, which moved the fault from
+    one word to a whole unit: eight concurrent adds of an eighteen-word unit
+    wrote 180 cards where 36 is right. A learner meets either one by double
+    tapping "Add to deck", or the last button of first run, and neither has a
+    throttle in front of it because neither should.
 
     The lock is `lib/usage/ledger.ts`'s, for the reasons its header gives: the
     *transaction* form, so a connection pooler cannot strand it, and the
-    blocking one, since the non-blocking form serialises nothing. With it, 16
-    concurrent adds make 2 cards in 28ms.
+    blocking one, since the non-blocking form serialises nothing.
 
-    Asserted as the three things together, because each on its own is satisfied
-    by a version that still races: a transaction with no lock, a lock taken
-    outside the transaction, or a lock with the read left outside it.
+    Asserted per path as the three things together, because each on its own is
+    satisfied by a version that still races: a transaction with no lock, a lock
+    taken outside the transaction, or a lock with the read left outside it. And
+    asserted as *one* lock, because two paths guarding themselves with two
+    different keys are two paths neither of which guards the other.
   */
-  const src = code("app/actions.ts");
-  const body = /async function addCardsFor\(([\s\S]*?)\n\}/.exec(src)?.[1] ?? "";
-  assert.ok(body, "addCardsFor has gone, or changed shape past recognition");
+  const lockedPaths = [
+    {
+      what: "addCardsFor",
+      body: /async function addCardsFor\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "",
+      read: "card.findMany",
+      write: "card.createMany",
+    },
+    {
+      what: "addUnitsToDeck",
+      body: /export async function addUnitsToDeck\(([\s\S]*?)\n\}/.exec(code("lib/srs/deck.ts"))?.[1] ?? "",
+      read: "card.findMany",
+      write: "card.createMany",
+    },
+  ];
 
-  assert.match(body, /prisma\.\$transaction\(/, "addCardsFor no longer runs in one transaction");
+  for (const { what, body, read: readCall, write } of lockedPaths) {
+    assert.ok(body, `${what} has gone, or changed shape past recognition`);
+    assert.match(body, /\$transaction\(/, `${what} no longer runs in one transaction`);
+    assert.match(
+      body, /lockDeck\(/,
+      `${what} stopped taking the deck lock, so two tabs can both insert`,
+    );
+
+    const lockAt = body.indexOf("lockDeck(");
+    const readAt = body.indexOf(readCall);
+    const writeAt = body.indexOf(write);
+    assert.ok(readAt >= 0 && writeAt >= 0, `${what} no longer reads what it has before writing`);
+    assert.ok(
+      lockAt < readAt && readAt < writeAt,
+      `${what} takes its lock after the read it is meant to protect, which serialises nothing`,
+    );
+  }
+
+  /*
+    And the lock itself. The transaction form and the blocking one, keyed on the
+    owner and nothing else: a key naming the word, which is what the per-word
+    path used before the batched builder existed, is safe against another add of
+    the same word and says nothing about a unit add that contains it.
+  */
+  const deck = code("lib/srs/deck.ts");
+  const lock = /export async function lockDeck\(([\s\S]*?)\n\}/.exec(deck)?.[1] ?? "";
+  assert.ok(lock, "lockDeck has gone, and with it the one definition both paths read");
   assert.match(
-    body, /pg_advisory_xact_lock/,
-    "addCardsFor stopped taking the transaction advisory lock, so two tabs can both insert",
+    lock, /pg_advisory_xact_lock/,
+    "lockDeck stopped taking the transaction advisory lock",
   );
-  const lockAt = body.indexOf("pg_advisory_xact_lock");
-  const readAt = body.indexOf("card.findMany");
-  const writeAt = body.indexOf("card.createMany");
-  assert.ok(readAt >= 0 && writeAt >= 0, "addCardsFor no longer reads what it has before writing");
-  assert.ok(
-    lockAt < readAt && readAt < writeAt,
-    "addCardsFor takes its lock after the read it is meant to protect, which serialises nothing",
+  assert.doesNotMatch(
+    lock, /pg_try_advisory/,
+    "lockDeck went to the non-blocking lock, which serialises nothing",
+  );
+  assert.match(
+    lock, /\$\{`deck:\$\{ownerId\}`\}/,
+    "lockDeck stopped keying on the owner alone, so the per-word and batched paths no longer exclude each other",
+  );
+
+  assert.equal(
+    (deck.match(/pg_advisory_xact_lock/g) ?? []).length
+      + (code("app/actions.ts").match(/pg_advisory_xact_lock/g) ?? []).length,
+    1,
+    "a deck write is taking a lock of its own again; there is one definition and it is lockDeck",
   );
 });
 
@@ -938,7 +1144,19 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
         so the answer sits to the *left* of the query rather than under it.
       */
       const statement = Math.max(0, src.lastIndexOf("\n\n", from), from - 400);
-      const window = src.slice(statement, at + 900);
+      /*
+        A window rather than a statement, because "and then what" is a
+        different line from the query about half the time, and it is generous
+        on purpose. It was 900 characters and fired on the lesson page the
+        first time anything was added between the `findMany` and the
+        `oneEntryPerLemma` twelve lines below it: an honest page, correctly
+        written, failing because a check measured in characters. Widening is
+        the answer the file's own rule gives, since a check that fires on
+        honest code is a check people learn to waive; what bounds it is the
+        blank line before the next statement group, which is where a reader
+        would stop looking too.
+      */
+      const window = src.slice(statement, at + 2000);
       /*
         Only a query for the *words*. `/review?unit=` filters the learner's own
         cards by their lexeme's lemma, and one row per card is right there:
@@ -1378,13 +1596,19 @@ check("how much of the app a screen leads with is decided in one place", () => {
 
 check("where a screen lives is decided in one table", () => {
   /*
-    The rail, the phone sheet, the command palette and the guide are four
-    answers to "where does this live", and for a while they were four lists.
-    The palette offered six practice modes while the hub offered eleven, so the
-    Leech clinic was reachable from one screen and unfindable from the box that
-    promises to go anywhere; `components/PracticeModes.tsx` held a seventh copy
-    of them that no screen rendered at all; and `lib/copy/tour.ts` named nine
-    screens a second time with their own icons.
+    The rail, the phone sheet and the command palette are three answers to
+    "where does this live", and for a while they were three lists plus a
+    walkthrough. The palette offered six practice modes while the hub offered
+    eleven, so the Leech clinic was reachable from one screen and unfindable
+    from the box that promises to go anywhere; `components/PracticeModes.tsx`
+    held a seventh copy of them that no screen rendered at all; and
+    `lib/copy/tour.ts` named nine screens a second time with their own icons.
+
+    That last one is gone with the page it fed. `/guide` was a second
+    description of an app the landing page already describes, offered to
+    somebody who had just pressed the button saying they wanted to start, and
+    the tour table was the last thing keeping a second set of screen names
+    alive. The rule it existed under stands for whatever is written next.
 
     Two shapes fail here. A navigation surface that stops reading
     `lib/ux/nav.ts` or `lib/ux/modes.ts`, and anybody else collecting this
@@ -1394,7 +1618,6 @@ check("where a screen lives is decided in one table", () => {
   const readers: [string, RegExp][] = [
     ["components/Sidebar.tsx", /lib\/ux\/nav/],
     ["components/CommandPalette.tsx", /lib\/ux\/nav/],
-    ["app/(app)/guide/page.tsx", /lib\/copy\/tour/],
     ["app/(app)/practice/page.tsx", /lib\/ux\/modes/],
     ["app/(app)/page.tsx", /lib\/ux\/modes/],
   ];
@@ -1450,7 +1673,7 @@ check("the rail shows every place, rather than hiding some behind a button", () 
   }
 });
 
-check("where you are is one pill that travels, on the compositor", () => {
+check("where you are is one pane, and it arrives under a pointer", () => {
   /*
     The rail and the phone bar say where you are with one pane that moves
     between their cells, rather than each cell painting itself when its turn
@@ -1503,6 +1726,58 @@ check("where you are is one pill that travels, on the compositor", () => {
     "the current row stopped carrying its own card for the paint before hydration",
   );
   assert.match(rail, /data-nav-marked/, "nothing tells the row when a pane has taken the card over");
+
+  /*
+    REACHING AND ARRIVING ARE ONE OBJECT AT TWO WEIGHTS.
+
+    The pointer's pane was the accent's softest tint, three pixels bigger than
+    the row it sat under, while the marker was a white card the row's own size,
+    so the two states of one row were two different objects and on the row you
+    were already on the tint stuck out round the card as a second outline. They
+    read one fill now, `--nav-marker-bg`, and the marker's own lift is the only
+    difference; a pane painted from a fill of its own, or reaching past the cell
+    it was measured on, is the regression either way.
+  */
+  /* Comments first: this one carries commas and the word `box-shadow`. */
+  const rules = motion.replace(/\/\*[\s\S]*?\*\//g, "");
+  const ghost =
+    rules
+      .split("}")
+      .map((rule) => rule.split("{"))
+      .filter((parts) => parts.length === 2 && parts[0]!.trim().endsWith(".nav-ghost") &&
+        !parts[0]!.includes(","))
+      .map((parts) => parts[1]!)
+      .join("\n");
+  assert.match(
+    ghost,
+    /background:\s*var\(--nav-marker-bg/,
+    "the pointer's pane is painted something other than the marker's own fill",
+  );
+  assert.doesNotMatch(
+    ghost,
+    /box-shadow/,
+    "the pointer's pane reaches past the cell it was measured on again",
+  );
+
+  /*
+    A TRAVELLING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
+
+    A thumb has nothing else to do while a server answers, so the bar's pill
+    slides from the cell you left to the cell you asked for. A pointer has
+    already arrived, and its own pane has been following it down the rail all
+    along, so the rail is written straight to its resting geometry and the
+    marker is simply there on the row you pressed. Asserted as the pair rather
+    than as either number: what may not happen is the two surfaces answering
+    the same way, and `glide` has to have the zero-duration way out for the
+    rail's answer to mean anything at all.
+  */
+  assert.equal(NAV_MOTION.rail.travelMs, 0, "the rail's marker travels again under a pointer");
+  assert.ok(NAV_MOTION.bar.travelMs > 0, "the phone bar's marker stopped travelling");
+  assert.match(
+    code("lib/layout/navMarker.ts"),
+    /durationMs\s*<=\s*0/,
+    "a pane with no travel would animate anyway, since `glide` lost its way out",
+  );
 });
 
 check("the pure modules stay free of React, Next and Prisma", () => {
@@ -1774,6 +2049,23 @@ check("the voice is one table, and everything that speaks reads from it", () => 
     code("lib/tutor/prompt.ts"),
     /Never use an em dash/,
     "the prompt has gone back to typing the voice rules out beside the table",
+  );
+
+  /*
+    And what she is told about the learner is read off their own log, never
+    off the request. The chat used to post `level: "B1"` for everybody and
+    the route believed it, so every learner was taught as B1. The level, the
+    weakest case and the open unit come from `learnerContextFor` now, in a
+    block sent after the static prompt so the cached part stays cached.
+  */
+  const tutorRoute = code("app/api/tutor/route.ts");
+  assert.doesNotMatch(tutorRoute, /body\.level/, "the tutor route reads a level from the client again");
+  assert.match(tutorRoute, /learnerContextFor\(ownerId\)/, "the tutor route no longer asks who is asking");
+  assert.match(tutorRoute, /learnerNote\(learner\)/, "the tutor route no longer hands Anu the learner note");
+  assert.doesNotMatch(
+    code("components/anu/useAnuChat.ts"),
+    /level:/,
+    "the chat posts a level again, which the server would have to distrust",
   );
 
   /*
@@ -3230,6 +3522,8 @@ check("nothing is stored on a device that would need asking first", () => {
     "components/Sidebar.tsx",
     "app/layout.tsx",
     "lib/offline/db.ts",
+    // The sign-out that removes all of the above, and so has to name them.
+    "lib/offline/forget.ts",
     // An exam paper started and not handed in. Strictly necessary by the same
     // argument the outbox is: a mock exam that loses three hours of a B2 paper
     // to a closed tab is broken rather than private. Answers only, never marks
@@ -3247,6 +3541,165 @@ check("nothing is stored on a device that would need asking first", () => {
     /What is kept on your own device/,
     "the privacy page stopped saying what is kept on the device",
   );
+});
+
+check("a headline is read through the dictionary's gate, and the feed writes nothing down", () => {
+  /*
+    The front page is the most ordinary Estonian this app can put in front of
+    somebody, and it is somebody else's. So it is printed as the feed spelled
+    it, attributed, and every word that opens an entry does so because
+    `matchEstonianForm` vouched for it at the scanned-page floor (ADR-021): a
+    word it will not vouch for is left plain rather than guessed at. The block
+    is rendered from the hourly cache and stored nowhere.
+  */
+  const reader = code("lib/dict/headlines.ts");
+  assert.match(reader, /matchEstonianForm\(candidates/, "headline words are no longer vouched by the dictionary");
+  assert.match(reader, /newsHeadlines\(\)/, "the reader no longer reads the feed's own cache");
+  assert.doesNotMatch(reader, /prisma\.(lexeme|form|card)\.(create|update|upsert|delete)/, "the headline reader writes to the dictionary");
+  const screen = code("components/Headlines.tsx");
+  assert.match(screen, /token\.lemma \?/, "the screen links something other than a vouched lemma");
+  assert.match(screen, /encodeURIComponent\(token\.lemma\)/, "a link carries the headline's spelling rather than the headword");
+  assert.match(screen, /from \{host\}/, "the block no longer names where the headline came from");
+  // The feed module stays pure: no database, no browser, nothing of the learner's goes out.
+  const feed = code("lib/news/feed.ts");
+  assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
+});
+
+check("a response built out of one learner's own rows is never cacheable", () => {
+  /*
+    THE FRAMEWORK'S SILENCE IS NOT A CACHE POLICY.
+
+    `/api/share` renders a picture carrying a name, a streak and an XP total,
+    and `ImageResponse` stamps `public, immutable, max-age=31536000` on
+    anything that does not say otherwise: measured on the running build, three
+    fetches made one request, the last two served from the browser's own cache
+    after everything a sign-out clears had been cleared. `/api/export` and
+    `/api/reminder` sent no freshness directive at all, and the export is
+    every review, every conversation and every exam composition the learner
+    has written.
+
+    So a Route Handler that resolves an owner says who the response belongs
+    to. `no-store` and a `Cookie` vary, asserted from the source, because the
+    next such route will inherit the same silence.
+  */
+  const routes = ALL.filter((f) => /^app\/api\/.*route\.tsx?$/.test(f));
+  const owned = routes.filter((f) => /requireUserId\(/.test(code(f)));
+  assert.ok(owned.length >= 3, "no route handler resolves an owner any more");
+  for (const file of owned) {
+    const src = code(file);
+    // A route that only ever writes has nothing to cache; the ones that hand
+    // back a body built from the learner's rows are the ones this is about.
+    if (!/new Response\(|ImageResponse\(/.test(src)) continue;
+    assert.match(
+      src,
+      /"cache-control":\s*"(private, )?no-store"/,
+      `${file} builds a response from one learner's rows without saying it is not to be kept`,
+    );
+    /*
+      A download and a picture are the two shapes a cache in front of the app
+      would otherwise be free to keep and hand on, so those say whose they are
+      as well as that they are not to be stored.
+    */
+    if (/content-disposition|ImageResponse\(/.test(src)) {
+      assert.match(src, /"cache-control":\s*"private, no-store"/, `${file} is a download or a picture and does not say it is private`);
+      assert.match(src, /vary:\s*"Cookie"/, `${file} does not vary on the cookie that chose it`);
+    }
+  }
+});
+
+check("a call is booked only once the request is worth answering", () => {
+  /*
+    The ledger writes a call down when it authorises it, which is what stops
+    ten tabs reading the same "under the limit"; the price is that anything
+    refused after that point has to hand the booking back. /api/tutor
+    authorised first and then returned 400 on an empty message list, so four
+    empty posts left four pending calls against the global budget and spent
+    four of that learner's ten for the day. Every paid route validates first.
+  */
+  const paid = ALL.filter((f) => /^app\/api\/.*route\.tsx?$/.test(f));
+  for (const file of paid) {
+    const src = code(file);
+    const at = src.indexOf("authoriseCall(");
+    if (at === -1) continue;
+    const before = src.slice(0, at);
+    assert.ok(
+      !/status:\s*400/.test(src.slice(at)) || /releaseReservation\(/.test(src.slice(at)),
+      `${file} can refuse a request after booking it without handing the booking back`,
+    );
+    assert.ok(
+      before.length > 0,
+      `${file} books a call before it has read anything about the request`,
+    );
+  }
+});
+
+check("a card never answers the card before it", () => {
+  /*
+    A word's cards are written together, graded together and come back
+    together, so a queue ordered by `due` alone puts them side by side: 13 of
+    32 due cards on the demo deck sat next to a card of the same word, and
+    seven case cards of one word ran consecutively. That is a re-read logged
+    as a recall, and the scheduler raises the interval on it.
+
+    The daily review passes its due list through the spacer. The new cards do
+    not, deliberately: `inTeachingOrder` puts a word's cards together in the
+    order a lesson teaches them, because a first meeting is a teaching screen
+    rather than a retrieval.
+  */
+  const review = code("app/(app)/review/page.tsx");
+  assert.match(review, /spaceSiblings\(due,/, "the review queue no longer spaces a word's cards apart");
+  assert.match(review, /inTeachingOrder\(fresh\)/, "new cards no longer arrive in teaching order");
+
+  const queue = code("lib/srs/queue.ts");
+  assert.match(queue, /export function spaceSiblings/, "the spacer is gone");
+  // It reorders and never drops: the set out is the set in.
+  assert.match(queue, /remaining\.splice/, "the spacer no longer moves cards rather than filtering them");
+  assert.doesNotMatch(queue, /\.filter\(/, "the spacer filters, which would silently drop a due card");
+});
+
+check("signing out forgets the device", () => {
+  /*
+    Signing out cleared one cookie and left everything the app keeps in the
+    browser for the next person on the same machine: the worker's page cache,
+    which is somebody's own deck and progress rendered and ready to serve, the
+    stashed review session, any grade still queued, and an unfinished exam
+    paper with the composition in it. `lib/offline/forget.ts` removes all of
+    it, after the outbox has had its chance to drain, and every place that
+    signs a learner out has to go through it. The callback route is the one
+    exception, since it signs out a session it refused rather than a person
+    leaving a device, and runs on a server with no device to forget.
+  */
+  const forget = read("lib/offline/forget.ts");
+  const leavers = ALL.filter((f) => /auth\.signOut\(/.test(code(f)))
+    .filter((f) => f !== "app/auth/callback/route.ts");
+  assert.ok(leavers.length >= 2, "no client signs anybody out any more");
+  for (const file of leavers) {
+    assert.match(code(file), /forgetThisDevice/, `${file} signs out without forgetting the device`);
+  }
+  // The outbox goes first, because a grade still queued is the one thing the
+  // device cannot keep and must not quietly drop.
+  const rail = code("components/Sidebar.tsx");
+  assert.ok(
+    rail.indexOf("flush()") < rail.indexOf("forgetThisDevice()"),
+    "the rail forgets the device before the outbox has been given its chance to drain",
+  );
+  // The three stores it forgets are named by the modules that write them.
+  const sw = read("public/sw.js");
+  assert.match(sw, /`\$\{VERSION\}-pages`/, "the worker no longer names its page cache by suffix");
+  assert.match(forget, /PAGES_CACHE_SUFFIX = "-pages"/, "forget.ts deletes a cache the worker does not keep");
+  assert.match(forget, /deleteLocalDatabase/, "forget.ts no longer removes the outbox and the stash");
+  assert.match(
+    code("app/(app)/exam/[level]/resume.ts"),
+    /SITTING_KEY_PREFIX/,
+    "an unfinished paper is stored under a key a sign-out does not know",
+  );
+  // And the case where nobody signed out: a different account on the same
+  // browser clears what the last one left, from the shell, on every render.
+  assert.match(forget, /forgetIfOwnerChanged/, "a change of account no longer forgets the device");
+  assert.match(code("components/DeviceOwner.tsx"), /forgetIfOwnerChanged\(owner\)/);
+  const shell = code("app/(app)/layout.tsx");
+  assert.match(shell, /<DeviceOwner owner=\{ownerDigest\(ownerId\)\}/, "the shell no longer mounts DeviceOwner");
+  assert.match(shell, /createHash\("sha256"\)/, "the browser is handed the account id itself rather than a digest");
 });
 
 
@@ -3679,6 +4132,108 @@ check("first run is exercised, which means one suite runs before the fixture", (
  * because four checks in this repository's history have been satisfied by
  * prose, one of them mine.
  */
+/**
+ * THE LEDGER IS NEVER WRITTEN BY A PROMISE NOBODY IS HOLDING.
+ *
+ * Every settlement and every release was `void recordUsage(...)` immediately
+ * before the response was returned. The deployment target is Vercel, where a
+ * function may be suspended the moment its response is sent and a pending
+ * promise is not guaranteed to run: a settlement that never lands leaves the
+ * reserve standing, so a free model's call is billed at its estimate for ever,
+ * and a release that never lands rations a learner over a call they did not
+ * receive. `after()` is the platform's own answer, and it is the one thing
+ * here that says "keep this invocation alive until this finishes".
+ *
+ * Read comment-blind, because a paragraph explaining why `void` is wrong would
+ * otherwise satisfy a check looking for it.
+ */
+check("no ledger write is left to a promise the platform may drop", () => {
+  const roots = ["app", "lib"];
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.tsx?$/.test(entry.name) && !/\.(test|itest)\.tsx?$/.test(entry.name)) files.push(full);
+    }
+  };
+  for (const root of roots) walk(root);
+
+  let callers = 0;
+  for (const file of files) {
+    const source = code(file);
+    if (!/\b(recordUsage|releaseReservation)\s*\(/.test(source)) continue;
+    callers += 1;
+    assert.doesNotMatch(
+      source,
+      /\bvoid\s+(recordUsage|releaseReservation)\s*\(/,
+      `${file} leaves a ledger write to an unawaited promise. Wrap it in after() ` +
+      "from next/server, which is what keeps the invocation alive long enough to write it.",
+    );
+  }
+  assert.ok(callers >= 5, `only ${callers} files write to the ledger, so this check stopped looking`);
+});
+
+/**
+ * THE RUSSIAN AND THE UKRAINIAN COME FROM EKILEX, AND FROM NOWHERE ELSE.
+ *
+ * `Lexeme.translationRu` and `translationUk` are the one place in this schema
+ * holding a language neither the app nor the person reviewing this code
+ * necessarily reads, and the whole argument for putting them on a flashcard is
+ * that a lexicographer at the Institute of the Estonian Language wrote them.
+ * A model that could reach them would be ADR-005 pointed at a second language
+ * with nobody able to check the output, which is worse than the case the ADR
+ * was written for rather than milder: a wrong form looks exactly like a right
+ * one, and more so in a language you cannot read.
+ *
+ * So the files that may name the columns at all are a closed list, the way
+ * `prisma/columns.ts` is a closed list of what the seed writes. A new one
+ * forces somebody to decide rather than falling through, and nothing on the
+ * provider chain is on it.
+ */
+check("only the harvest, the seed and the screens name a Russian or Ukrainian meaning", () => {
+  const allowed = new Set([
+    // Written here, out of an Ekilex response and nothing else.
+    join("scripts", "harvest-ekilex.ts"),
+    join("prisma", "schema.prisma"),
+    join("prisma", "seed.ts"),
+    join("prisma", "columns.ts"),
+    // Read here: the choice of language, and the four screens that print it.
+    join("lib", "collections", "glossLanguage.ts"),
+    join("lib", "collections", "glossLanguage.test.ts"),
+    join("app", "(app)", "dictionary", "page.tsx"),
+    join("app", "(app)", "dictionary", "DictionaryClient.tsx"),
+    join("app", "(app)", "review", "page.tsx"),
+    join("app", "(app)", "learn", "[unitId]", "lesson", "page.tsx"),
+    join("lib", "collections", "lesson.ts"),
+    join("app", "(app)", "learn", "[unitId]", "lesson", "LessonSession.tsx"),
+  ]);
+
+  const roots = ["app", "lib", "components", "scripts", "prisma"];
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === "data") continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(tsx?|prisma)$/.test(entry.name)) files.push(full);
+    }
+  };
+  for (const root of roots) walk(root);
+
+  const naming = files.filter((f) =>
+    /translation(Ru|Uk)/.test(f.endsWith(".prisma") ? read(f) : code(f)));
+  assert.ok(
+    naming.length >= 6,
+    `only ${naming.length} files name the columns, so this check stopped looking`,
+  );
+  assert.deepEqual(
+    naming.filter((f) => !allowed.has(f)), [],
+    "a new file names a Russian or Ukrainian meaning. Decide what it is doing with it: " +
+    "these come from Ekilex and no model may reach them (ADR-005 in a language nobody here reads).",
+  );
+});
+
 check("a suite that reveals a review card knows all the shapes it comes in", () => {
   const suites = readdirSync("scripts")
     .filter((f) => f.endsWith(".mjs"))
@@ -3713,9 +4268,18 @@ check("a suite that reveals a review card knows all the shapes it comes in", () 
     driver that graded would quietly change what the rest of them measure.
   */
   const helper = code(join("scripts", "lib", "review.mjs"));
+  /*
+    Named for the buttons the screen actually draws. This used to read
+    `Again|Hard|Good|Easy`, and those left the review screen when a card the
+    marker can mark stopped being asked how well it went: the check could no
+    longer fail, and `gradeButtons` in the same file had gone stale unnoticed
+    for exactly as long. What grades now is "Not yet", "Got it" and the
+    "Got it, next" a miss leaves behind, and "Got it, ask me later" is the
+    first meeting, which writes nothing and is the one this helper may press.
+  */
   assert.doesNotMatch(
-    helper,
-    /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
+    helper.replace(/export function gradeButtons[\s\S]*?\n\}/, ""),
+    /(Not yet|Got it, next)[\s\S]{0,160}?\.click\(/,
     "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
   );
 });
@@ -3748,6 +4312,57 @@ check("a suite that reveals a review card knows all the shapes it comes in", () 
  * asserted on the *last* key, because an order that is total in the middle and
  * loose at the end is loose.
  */
+/*
+  AND EVERYWHERE ELSE, A TRUNCATED QUERY AT LEAST SAYS WHERE TO CUT.
+
+  The check below holds `lib/progress/` to a total order, because a figure drawn
+  from those rows has to be the same figure twice. The rest of the app was held
+  to nothing, and five reads had drifted to a `take` with no `orderBy` at all,
+  which is not a weaker version of the rule: it is the plan choosing which rows
+  the screen is built from. Today's weakest cases took an arbitrary five
+  thousand; the government drill and the minimal-pairs round each took an
+  arbitrary two thousand cards to decide which words were already in the deck,
+  so whether an answer graded a real card changed between visits; the class week
+  counted three figures off an arbitrary three hundred; and the dictionary's
+  suggestion row shuffled an arbitrary two hundred.
+
+  This asks only for an order, not for a unique one. Ending every truncated read
+  in the app on the primary key is a larger change than this rule needs to be
+  useful, and where a screen orders by `due` and cuts, arbitrary-but-stated
+  still beats arbitrary-and-silent. The stricter rule stays where a number is
+  derived.
+*/
+check("a truncated query outside the progress layer still says where to cut", () => {
+  let looked = 0;
+  const silent: string[] = [];
+
+  for (const file of [...APP, ...LIB]) {
+    if (file.includes(join("lib", "progress"))) continue;
+    const src = code(file);
+    for (const found of src.matchAll(/\.findMany\(\{/g)) {
+      let depth = 0;
+      let end = found.index + found[0].length - 1;
+      for (let i = end; i < src.length; i += 1) {
+        if (src[i] === "{") depth += 1;
+        else if (src[i] === "}") { depth -= 1; if (depth === 0) { end = i; break; } }
+      }
+      const block = src.slice(found.index, end + 1);
+      if (!/\btake:/.test(block) && !/\bskip:/.test(block)) continue;
+      looked += 1;
+      if (!/\borderBy:/.test(block)) {
+        silent.push(`${file}:${src.slice(0, found.index).split("\n").length}`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    silent, [],
+    `${silent.join(", ")} cuts a query short without saying where to cut, so which rows `
+    + "the screen is built from is the plan's choice rather than anybody's",
+  );
+  assert.ok(looked > 20, `only ${looked} truncated reads found, so this check stopped looking`);
+});
+
 check("a truncated query in the progress layer ends on the primary key", () => {
   const dir = join("lib", "progress");
   const files = readdirSync(dir)
@@ -4320,11 +4935,19 @@ check("a control inflated to the tap-target floor centres its own content", () =
   const floor = /@media\s*\(pointer:\s*coarse\)\s*\{[^]*?min-width:\s*2\.75rem/;
   assert.match(CSS, floor, "the 44px tap-target floor is gone from app/globals.css");
 
-  const centred = CSS.match(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/);
+  /*
+    Every block whose selector reaches an icon-only control, not merely the
+    first: the coarse-pointer floor names the same shape now, so matching the
+    first one found the floor's own declarations and reported the centring
+    rule missing while it sat ten lines below.
+  */
+  const blocks = [...CSS.matchAll(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/g)].map((m) => m[1]!);
+  assert.ok(blocks.length > 0, "nothing in app/globals.css reaches an icon-only control");
+  const centred = blocks.find((b) => b.includes("display: inline-flex"));
   assert.ok(centred, "nothing in app/globals.css centres an icon-only control's content");
   for (const declaration of ["display: inline-flex", "align-items: center", "justify-content: center"]) {
     assert.ok(
-      centred[1]!.includes(declaration),
+      centred.includes(declaration),
       `the icon-only rule no longer sets ${declaration}, so the floor's slack lands on one side`,
     );
   }
@@ -4745,6 +5368,125 @@ check("the plan reads a duration through the one module that units it", () => {
  * all measured at runtime and set as inline styles. So what this asserts is
  * that the name is set *somewhere*, not that it is in the palette.
  */
+/*
+  THE WEAKEST CASES ARE ONE CALCULATION OVER ONE QUERY.
+
+  "Your weakest cases, click to drill" was drawn three ways on three pages, and
+  consolidating the component and the calculation fixed only the half you can
+  see: the *input* stayed three, and Progress read the last half-year while two
+  other screens each took an arbitrary five thousand rows of all time with no
+  order between them. A learner who got the partitive wrong three hundred times
+  last year and right three hundred times this month was told 100% on one screen
+  and 50% on another, on the same day, about the same case. `caseReviewsFor` is
+  the shared input that ended that.
+
+  It came back anyway. Today's dashboard was rewritten, reached for
+  `caseAccuracy` like everybody else, and wrote the old query beside it, which
+  made the home page the fourth answer. So the pairing is asserted rather than
+  described: a screen that runs the calculation reads the query, and nobody
+  gathers those rows themselves.
+
+  Anchored on the call rather than on the import, because a file can import a
+  function and go on using its own rows, which is exactly what happened.
+*/
+check("every screen that draws the weakest cases reads the one query behind them", () => {
+  /*
+    The panel is one component and one calculation, and consolidating those
+    fixed only the half you can see: the *input* stayed three. Progress read the
+    last half-year while two other screens each took an arbitrary five thousand
+    rows of all time with no order between them, so a learner who got the
+    partitive wrong three hundred times last year and right three hundred times
+    this month was told 100% on one screen and 50% on another, on the same day,
+    about the same case. `caseReviewsFor` is the shared input that ended it.
+
+    It came back anyway. Today's dashboard was rewritten, reached for
+    `caseAccuracy` like everybody else, and wrote the old query beside it, which
+    made the home page the fourth answer.
+
+    Scoped to `app/`, because a screen drawing this panel is the thing that has
+    to agree with the other screens drawing it. Two modules under `lib/` score
+    cases for different questions and each says so in its own header: the class
+    roster rolls a whole class up at once, which one learner's query cannot
+    express, and the badge stats read all time on purpose, because a badge is a
+    claim about what somebody has done rather than about what to drill now.
+    Widening this to `lib/` would fire on both, and a check that fires on honest
+    code is a check people learn to waive.
+
+    Anchored on the call rather than on the import, because a file can import a
+    function and go on using its own rows, which is exactly what happened.
+  */
+  const screens: string[] = [];
+  for (const file of APP) {
+    const src = code(file);
+    if (!/\bcaseAccuracy\(/.test(src)) continue;
+    screens.push(file);
+
+    assert.match(
+      src, /caseReviewsFor\(/,
+      `${file} scores the cases off rows it gathered itself. A shared calculation over an `
+      + "unshared input is not a shared answer: read them with caseReviewsFor",
+    );
+    /*
+      And it does not gather them itself as well. Matched on the *filter* rather
+      than on the column: Progress selects `targetCase` among eight others for
+      the heatmap and the forecast, which is a different chart over a different
+      window, and only a query that narrows to the case reviews is this panel's
+      input wearing another name.
+    */
+    assert.doesNotMatch(
+      src, /review\.findMany\(\{[\s\S]{0,300}?targetCase: \{ not: null \}/,
+      `${file} selects its own case reviews beside the shared query, which is the second `
+      + "input caseReviewsFor exists to prevent",
+    );
+  }
+
+  assert.ok(
+    screens.length >= 3,
+    `only ${screens.length} screens draw the weakest cases, so this check stopped looking`,
+  );
+});
+
+/*
+  ONE TYPEFACE, AND NOTHING WEARING THE SECOND ONE'S CLASS.
+
+  Estonian used to be set in a second face, which put two typefaces inside one
+  card wherever a prompt and its answers are in different languages, and that is
+  most of this app. The face was removed and `components/Et.tsx` says so: the
+  `lang` attribute is the whole of what marking Estonian means now.
+
+  What the removal left behind is an `est` class that nothing defines. Four
+  branches open at the time reintroduced it and three were stripped in the
+  merge; the fourth reached the tree and sat on `/review/government` styling
+  nothing, because a class no stylesheet declares is silent rather than broken.
+  That is the shape worth asserting: the typeface cannot come back through a
+  second `next/font` call, and a screen cannot go on asking for it through a
+  class that was deleted underneath it.
+*/
+check("Estonian is marked by its language, not by a second typeface", () => {
+  const layout = code("app/layout.tsx");
+  const faces = [...layout.matchAll(/from "next\/font\/google"/g)].length;
+  assert.equal(
+    faces, 1,
+    `app/layout.tsx loads ${faces} font imports. Estonian is marked with lang, not with a face of its own`,
+  );
+
+  const wearing: string[] = [];
+  for (const file of ALL) {
+    const src = code(file);
+    for (const match of src.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)) {
+      const classes = (match[1] ?? match[2] ?? "").split(/\s+/);
+      if (classes.includes("est")) {
+        wearing.push(`${file}:${src.slice(0, match.index).split("\n").length}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    wearing, [],
+    `${wearing.join(", ")} still applies the "est" class, which the second typeface carried and `
+    + "nothing defines any more, so it styles nothing and reads as though it does",
+  );
+});
+
 check("every custom property a screen reads is one something sets", () => {
   const stylesheets = sourceFiles("app", /\.css$/).map(read).join("\n");
 
@@ -5152,6 +5894,546 @@ check("a hue's fill is never used as its ink", () => {
     }
   }
   assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
+});
+
+check("a badge is written idempotently, not just described as idempotent", () => {
+  /*
+    `awardBadges` reads what a learner already holds, filters, and inserts the
+    rest. That is check-then-act, and it runs on every render of Today, so two
+    requests inside the gap both see a badge as unearned and both insert it.
+    `Achievement` is keyed `@@id([ownerId, key])`, so the second insert
+    violates the primary key and the render throws, at the exact moment
+    somebody earned something.
+
+    `app/(app)/BadgeCheck.tsx` since moved that check behind a `Suspense`, so
+    what a throw takes out is the badge toast rather than the whole of Today.
+    That lowers the blast radius and does not touch the cause, and it makes
+    this check matter more rather than less: that component's own header says
+    Today checks on every load and "that is right and it is idempotent". This
+    is what makes the second half of that sentence true in the code.
+
+    It is not hypothetical. It is in this repository's own CI logs, twice, as
+    `duplicate key value violates unique constraint "Achievement_pkey"` on
+    `(local-single-user, deck_50)`, and nothing failed, because no suite
+    asserts that Today renders while a badge is being earned.
+
+    THIS IS AN INVARIANT RATHER THAN AN INTEGRATION TEST, and the reason is
+    worth writing down. The obvious test fires N concurrent awards and expects
+    none to reject, and it passes with the fix and *also* without it: measured
+    at 8 and at 40 concurrent against a real Postgres with a pool wide enough
+    for all of them, and the race never lost locally, because the first insert
+    commits before the later reads are served and they take the early return.
+    A check that cannot be made to fail reports nothing, which this repository
+    says about its own suites in several places. So the property is asserted
+    where it can fail: delete the flag and this breaks.
+
+    The function's doc comment has always claimed idempotence. This is the
+    claim being kept in the code.
+  */
+  const source = code("lib/progress/achievements.ts");
+  const at = source.indexOf("achievement.createMany");
+  assert.notEqual(at, -1, "awardBadges no longer writes badges with createMany, so this check is stale");
+  /*
+    A window rather than a balanced match: the call's own argument contains
+    `({ ownerId, key })`, so the obvious non-greedy `\{...\}\)` stops inside it
+    and reads the flag as missing however the code is written. Asked the wrong
+    way, this check failed on the fixed source.
+  */
+  const write = source.slice(at, at + 300);
+  assert.match(
+    write,
+    /skipDuplicates:\s*true/,
+    "the badge write can throw on a duplicate, which is a 500 on Today when two renders race",
+  );
+});
+
+check("every link into this app fetches the page on intent, not just its skeleton", () => {
+  /*
+    Every route here is `force-dynamic`, correctly: a deck, a streak and a due
+    count are facts about the person reading. What that costs is what
+    `components/PrefetchLink.tsx` exists for. Next prefetches a link that is on
+    screen, but for a dynamic route it stops at the nearest `loading.tsx`,
+    which measured against this app is 150 bytes, seven milliseconds and no
+    query at all. So the skeleton arrived early and the page still started
+    being built at the moment of the click, which is what "the navigation feels
+    slow" turned out to be: 458ms from pressing Progress in the rail to reading
+    it, against 64ms once the pointer had rested there first.
+
+    `PrefetchLink` is a `next/link` that upgrades to a full prefetch when a
+    pointer settles or a link takes focus, and it is imported as `Link`
+    everywhere, so a screen reads exactly as it did. This is the half that
+    keeps it true: a new screen written with `import Link from "next/link"`
+    would be the one place in the app that waits, and nothing would say so.
+
+    The one file allowed to reach for the real thing is `PrefetchLink` itself,
+    which wraps it.
+  */
+  const HOME = "components/PrefetchLink.tsx";
+  assert.ok(existsSync(HOME), `the one link component has gone from ${HOME}`);
+
+  const offenders = [...APP, ...COMPONENTS]
+    .filter((file) => file !== HOME && /from ["']next\/link["']/.test(code(file)));
+
+  assert.deepEqual(
+    offenders, [],
+    `these import next/link directly. Import { PrefetchLink as Link } from `
+    + `"@/components/PrefetchLink" instead: a plain Link prefetches only the `
+    + `loading skeleton of a dynamic route, and every route here is dynamic.`,
+  );
+});
+
+check("a setting written outside the store tells the store it changed", () => {
+  /*
+    `lib/settings/store.ts` holds one read of a learner's settings for the
+    length of a request, because eight helpers wanted them and each was making
+    its own round trip. `writeSetting` corrects what it holds. Three paths do
+    not go through `writeSetting` and cannot: clearing the course week is a
+    delete rather than a value, and restoring a backup and erasing an account
+    replace or remove the lot inside a transaction.
+
+    Each of those has to say so, or a request that writes and then reads is
+    answered with what was there before it wrote. That is not hypothetical on
+    the page this was measured on: `resolveStreakFor` banks a shield and
+    `awardBadges` reads the count back, in one render of Today.
+  */
+  const writesSettings = /(?:prisma|tx)\.setting\.(?:upsert|create|createMany|update|updateMany|delete|deleteMany)\b/;
+  const offenders: string[] = [];
+  for (const file of [...APP, ...LIB]) {
+    if (file === "lib/settings/store.ts" || file.endsWith(".itest.ts")) continue;
+    const src = code(file);
+    if (!writesSettings.test(src)) continue;
+    if (!/forgetSettings\s*\(/.test(src)) offenders.push(file);
+  }
+  assert.deepEqual(
+    offenders, [],
+    "these write to Setting without going through writeSetting() and without calling "
+    + "forgetSettings(). A request holds one read of a learner's settings, so a write it "
+    + "is not told about is a value the rest of that request cannot see.",
+  );
+});
+
+check("a finished sitting is bounded by the paper, not by a number typed twice", () => {
+  /*
+    THE CHECK WAS SAT, THE LEVEL WAS SHOWN, AND NOTHING WAS EVER STORED.
+
+    `recordAssessment` validates a posted sitting with Zod, and a bound on the
+    array is right: every export in that file is a public endpoint, so without
+    one a caller posts a million responses. What was wrong is that the bound
+    was the number 60, written when the paper was nineteen questions, and the
+    blueprint later went to eighty. Every finished sitting then failed
+    `safeParse` and came back "That result could not be read".
+
+    It is the worst shape a failure can have here. The runner computes the
+    level in the browser, so the learner sees their result, presses on, and
+    only later finds the hub saying nothing has ever been measured. Two numbers
+    for one fact, and the wrong one was the one nobody looks at.
+
+    So the bound is `PAPER_SIZE`, which is the blueprint added up, and this
+    fails on a literal coming back.
+  */
+  const actions = code("app/actions.ts");
+  const schema = actions.slice(actions.indexOf("const ASSESSMENT = z.object({"));
+  const body = schema.slice(0, schema.indexOf("\n});"));
+  assert.ok(body.length > 0, "the schema recordAssessment validates against has moved or gone");
+
+  const caps = [...body.matchAll(/\.max\(([^)]+)\)/g)]
+    .map((m) => m[1]!.trim())
+    .filter((arg) => !/^\d+$/.test(arg) || Number(arg) > 120);
+  assert.ok(
+    caps.includes("PAPER_SIZE"),
+    "the posted paper is not bounded by PAPER_SIZE",
+  );
+  for (const array of ["items:", "responses:"]) {
+    const at = body.indexOf(array);
+    assert.ok(at >= 0, `the sitting schema no longer names ${array}`);
+    const rest = body.slice(at);
+    const end = rest.indexOf("\n  responses:") > 0 && array === "items:" ? rest.indexOf("\n  responses:") : rest.length;
+    assert.match(
+      rest.slice(0, end),
+      /\.max\(PAPER_SIZE\)/,
+      `${array} in the sitting schema is capped at a literal rather than at the paper's own size, `
+      + "so a paper that outgrows it is rejected after the learner has already sat it",
+    );
+  }
+
+  assert.match(
+    code("lib/assessment/items.ts"),
+    /export const PAPER_SIZE = Object\.values\(BLUEPRINT\)/,
+    "PAPER_SIZE stopped being derived from the blueprint, so it is a second number to keep in step",
+  );
+});
+
+check("a stored level carries the time it was stated", () => {
+  /*
+    THE PICKER IN SETTINGS DOES NOTHING WITHOUT THIS, AND SAYS NOTHING ABOUT IT.
+
+    There are two answers to what level a learner is at, the check at `/assess`
+    and whatever they told Settings, and `courseLevelFor` picks between them by
+    date: whichever was stated later is the one the app holds. So a write of
+    `cefrPlacement` with no `cefrPlacementAt` beside it is read as older than
+    every measurement, for ever. That is the right reading of a row written
+    before the picker existed and the wrong reading of one written this
+    morning, and the failure is silent in the worst way: nothing throws, the
+    setting is stored correctly, and the button simply has no effect on any
+    screen.
+
+    `recordCourseLevel` writes both, which is why it exists rather than the two
+    `writeSetting` calls being inlined. One writer is exempt by name and the
+    exemption is the point of it: `completeOnboarding` stores a level ticked in
+    ninety seconds by somebody who has not answered a question yet, and it must
+    never outrank the check on the next screen of the same wizard, so it writes
+    the stamp blank on purpose.
+  */
+  const stamped = ["lib/progress/level.ts", "app/actions.ts"];
+  const offenders: string[] = [];
+  for (const file of [...APP, ...LIB, ...COMPONENTS]) {
+    const src = code(file);
+    if (!/SETTING_KEYS\.cefrPlacement\b/.test(src)) continue;
+    if (!/writeSetting\([^)]*SETTING_KEYS\.cefrPlacement\b/.test(src)) continue;
+    if (!stamped.includes(file)) offenders.push(file);
+  }
+  assert.deepEqual(
+    offenders, [],
+    "these write the learner's level without the timestamp that decides whether it is still "
+    + "the current answer. Call recordCourseLevel() in lib/progress/level.ts.",
+  );
+
+  const actions = code("app/actions.ts");
+  const onboarding = actions.slice(actions.indexOf("export async function completeOnboarding"));
+  assert.match(
+    onboarding.slice(0, 4000),
+    /writeSetting\(ownerId, SETTING_KEYS\.cefrPlacementAt, ""\)/,
+    "first run stores a self-declared level without blanking its timestamp, so a guess ticked "
+    + "before any question was answered can outrank the check on the next screen",
+  );
+
+  /*
+    And the one function the exemption above exists for really does write both.
+    Written the loose way first, as "this file mentions the timestamp key
+    somewhere", and deleting the write from `recordCourseLevel` left the check
+    passing on the strength of `courseLevelFor` reading it four lines up. A
+    check that reads a file rather than the function in it is the oldest
+    recurring mistake in this suite.
+  */
+  const level = code("lib/progress/level.ts");
+  const writer = between(level, "export async function recordCourseLevel");
+  for (const key of ["cefrPlacement", "cefrPlacementAt"] as const) {
+    assert.match(
+      writer,
+      new RegExp(`writeSetting\\([^)]*SETTING_KEYS\\.${key}\\b`),
+      `recordCourseLevel does not write ${key}, so a level stored through it is read as older `
+      + "than every measurement and the picker in Settings has no effect",
+    );
+  }
+
+  /*
+    Matched on the read itself rather than on the key appearing anywhere in the
+    function, for the reason above one more time: dropping the key from the
+    `readSettings` list while leaving the `Date.parse` that consumes it is the
+    shape this breaks in, and it leaves every comparison reading `undefined`
+    without a line of it looking wrong.
+  */
+  assert.match(
+    between(level, "export async function courseLevelFor"),
+    /readSettings\([^)]*SETTING_KEYS\.cefrPlacementAt/,
+    "courseLevelFor stopped asking the store when the declared level was stated, so the picker "
+    + "in Settings is outranked by any level check however old",
+  );
+});
+
+check("a word chosen for a learner is banded by one table", () => {
+  /*
+    "Around your level" was a `Record<Level, readonly string[]>` inside
+    `lib/dict/suggest.ts`, where exactly one of the three things that choose
+    words for somebody could see it. The other two did not band at all and it
+    did not look like an omission, because both had an `ORDER BY cefr ASC` in
+    front of a `take` that reads as deliberate and is the bottom of the
+    dictionary: the minimal pairs round drew two thousand rows starting at A1,
+    so a C1 speaker got beginner contrasts on their first visit and on their
+    four hundredth, and the government drill took the easiest two hundred of
+    268 governed verbs, so the C1 ones were the verbs nobody was ever shown.
+
+    One table in `lib/collections/levels.ts` now, and the check is that there
+    is not a second one anywhere. A copy is how the two drift, and a window
+    that disagrees with itself between the dictionary row and the round the
+    learner opens from it is worse than either answer alone.
+  */
+  const table = /\bA1:\s*\[\s*["']A1["']/;
+  const copies: string[] = [];
+  for (const file of [...APP, ...LIB, ...COMPONENTS]) {
+    if (file === "lib/collections/levels.ts") continue;
+    if (file.endsWith(".test.ts") || file.endsWith(".itest.ts")) continue;
+    if (table.test(code(file))) copies.push(file);
+  }
+  assert.deepEqual(
+    copies, [],
+    "these keep their own table of which CEFR bands to show at a level. There is one, in "
+    + "lib/collections/levels.ts, and two of them drift.",
+  );
+
+  /*
+    And the readers really do read it. Asserted against the call rather than
+    the import, because a file can import the window and go on filtering by
+    something of its own, which is exactly what the two drills were doing with
+    a cefr key that ordered rather than selected.
+  */
+  const readers = [
+    "lib/dict/suggest.ts",
+    "app/(app)/review/pairs/page.tsx",
+    "app/(app)/review/government/page.tsx",
+    "app/(app)/review/page.tsx",
+  ];
+  for (const file of readers) {
+    assert.match(
+      code(file),
+      /\b(bandsAround|isAround|aroundFirst)\s*\(/,
+      `${file} chooses words for a learner without asking which bands are around their level`,
+    );
+  }
+});
+
+check("nothing caches a learner's own rows in the dictionary's cache", () => {
+  /*
+    `lib/dict/facts.ts` holds answers across requests and across learners,
+    which is exactly right for the shared dictionary (ADR-012) and exactly
+    wrong for anything else: a value keyed on an `ownerId` and held in a
+    module-level map is one person's deck handed to the next person who asks.
+
+    So the whole module may not mention an owner. That is bluntly stated on
+    purpose: there is no version of "cache this per learner" that belongs here,
+    and `cache()` from React, which is scoped to the one request, is where a
+    per-learner memo goes instead (see `latestFor` and the settings store).
+  */
+  const src = code("lib/dict/facts.ts");
+  assert.ok(
+    !/ownerId/.test(src),
+    "lib/dict/facts.ts names an ownerId. It caches across requests and across "
+    + "learners, so anything scoped to a person served from here is served to "
+    + "everybody. Use cache() from react, which is scoped to one request.",
+  );
+});
+
+/**
+ * A LETTER MOVES THE WAY ONE TABLE SAYS, AND THE CSS BEHIND IT EXISTS.
+ *
+ * `lib/ux/letterMotion.ts` names a set of keyframes per character and
+ * `app/globals.css` declares them, which is two files that have to agree about
+ * four strings. Getting that wrong is the quietest possible failure: an
+ * `animation-name` naming keyframes nobody wrote is not an error, it is an
+ * animation that does nothing, so the letter sits perfectly still and looks
+ * exactly like a letter that was meant to. Nothing on a screen says which.
+ *
+ * Both directions, because both are real. A character pointing at keyframes
+ * that were renamed is the one above. A keyframe set nobody points at is the
+ * other half of a rename, left behind, and the next person reads it as live.
+ */
+check("every way a letter moves is declared in both the table and the stylesheet", () => {
+  const css = code(join("app", "globals.css"));
+  const declared = new Set(
+    [...css.matchAll(/@keyframes\s+(letter-[\w-]+)/g)].map((m) => m[1]!),
+  );
+  // The shake a key does under a pointer belongs to the control rather than to
+  // a character, so it is declared and deliberately unnamed by the table.
+  declared.delete("letter-wiggle");
+
+  const asked = new Set(LETTER_CHARACTERS.map((c) => c.keyframes));
+  const missing = [...asked].filter((k) => !declared.has(k));
+  const orphaned = [...declared].filter((k) => !asked.has(k));
+
+  assert.deepEqual(
+    missing, [],
+    "a letter character names keyframes app/globals.css does not declare. The "
+    + "animation silently does nothing and the letter is simply still.",
+  );
+  assert.deepEqual(
+    orphaned, [],
+    "app/globals.css declares letter keyframes no character asks for, which is "
+    + "half of a rename left behind for somebody to read as live.",
+  );
+
+  /*
+    And every one of them spends the budget it was handed rather than a number
+    somebody typed. A keyframe with a literal pixel in its `translate` is a
+    letter that ignores the room its caller measured, which is how one ends up
+    on a word at the one width nobody screenshotted.
+  */
+  for (const name of asked) {
+    const at = css.indexOf(`@keyframes ${name}`);
+    const body = css.slice(at, css.indexOf("\n}", at));
+    assert.ok(
+      !/translate:[^;]*\b\d+px/.test(body.replace(/var\(--drift-[\w-]+,\s*0px\)/g, "")),
+      `@keyframes ${name} moves a letter by a typed distance rather than by the `
+      + "travel its caller measured. See lib/ux/letterMotion.ts.",
+    );
+  }
+});
+
+/**
+ * A LETTER LYING ON A PAGE IS A DECORATION, EVERYWHERE IT IS DRAWN.
+ *
+ * Three properties, and each one has a screen behind it. `aria-hidden`,
+ * because a reader hearing "õ ä ö ü" read out in the middle of a sentence
+ * about the partitive has been handed noise. `pointer-events-none`, because
+ * these hang over the one interactive thing on the landing page and an
+ * ornament that eats a tap is a decoration doing something no decoration
+ * should. And both elements position themselves, which is what every suite
+ * that measures whether something is inside its box reads before deciding the
+ * thing was put where it is on purpose.
+ *
+ * Asserted on the component rather than on the pages, because there is one
+ * component now: the second half of this is that no page draws its own.
+ */
+check("a decorative letter is hidden, untouchable and placed", () => {
+  const tile = code("components/LetterTile.tsx");
+  for (const [what, pattern] of [
+    ["aria-hidden", /aria-hidden/],
+    ["pointer-events-none", /pointer-events-none/],
+    ["a placed wrapper", /className=\{`letter-lean pointer-events-none absolute/],
+    ["a placed tile", /className="drift absolute inset-0/],
+  ] as const) {
+    assert.match(tile, pattern, `components/LetterTile.tsx no longer carries ${what}`);
+  }
+
+  const strays = [...APP, ...COMPONENTS]
+    .filter((f) => f !== "components/LetterTile.tsx")
+    .filter((f) => /className="[^"]*\bdrift\b/.test(code(f)));
+  assert.deepEqual(
+    strays, [],
+    "a screen draws its own drifting letter instead of using components/LetterTile.tsx, "
+    + "which is where the three properties above and the pointer listener live",
+  );
+});
+
+/**
+ * WHAT THE LANDING PAGE PROMISES ABOUT FIVE WORDS IS WHAT THE DICTIONARY SAYS.
+ *
+ * The case explorer is the one screen in this app that shows Estonian to
+ * somebody who has not signed in, and it is the page's whole argument: learn
+ * these forms, and the rest are regular endings. So it is the worst place for
+ * a wrong form, and it has two ways to get one.
+ *
+ * The first is the fallback. `lib/collections/demoWords.ts` carries five stems
+ * per word, copied out of the seed for the case where the database behind the
+ * page is unreachable, which is the state a fresh deployment builds in. A copy
+ * is a thing that goes stale, and this one goes stale silently: the live path
+ * and the fallback would then show two different words for one lemma and only
+ * the deployment that could not reach its database would ever see it. So the
+ * copy is checked against the built dictionary, character for character.
+ *
+ * The second is the derivation. Every case in the right-hand column is the
+ * genitive stem plus an ending, and the seed carries Ekilex's own recorded
+ * forms for the course words, so the two can be compared. All 22 of `tuba`'s
+ * agree, which is the check working rather than the check being vacuous, and
+ * the one form that does not fall out of the rule is exactly the one this
+ * exists to protect: `toa` + `sse` is `toasse`, a real word and not the one
+ * anybody says, and `tuppa` is stored because no rule reaches it.
+ */
+check("the landing page's five words say what the dictionary says", () => {
+  const expanded = JSON.parse(read(join("prisma", "data", "expanded.json"))) as {
+    lemma: string; pos: string; forms: { formType: string; value: string }[];
+  }[];
+
+  const missing: string[] = [];
+  const wrong: string[] = [];
+
+  for (const stems of DEMO_STEMS) {
+    const entry = expanded.find((e) => e.lemma === stems.lemma && e.pos === "NOUN");
+    if (!entry) {
+      missing.push(stems.lemma);
+      continue;
+    }
+    const held = (type: string) => entry.forms.filter((f) => f.formType === type).map((f) => f.value);
+    // PART_PL is the one that can legitimately hold two (`tube` and `tubasid`),
+    // so the check is membership rather than equality on that one alone.
+    for (const [type, value] of [
+      ["NOM_SG", stems.nomSg], ["GEN_SG", stems.genSg], ["PART_SG", stems.partSg],
+      ["GEN_PL", stems.genPl],
+    ] as const) {
+      const seen = held(type);
+      if (seen[0] !== value) wrong.push(`${stems.lemma} ${type}: page says ${value}, the seed says ${seen.join(" or ") || "nothing"}`);
+    }
+    if (!held("PART_PL").includes(stems.partPl)) {
+      wrong.push(`${stems.lemma} PART_PL: page says ${stems.partPl}, the seed says ${held("PART_PL").join(" or ") || "nothing"}`);
+    }
+    // `null` rather than `undefined`, because `NounStems.illSgShort` is a
+    // required field: "the dictionary was asked and holds none" is a value
+    // somebody wrote down, not a property somebody forgot.
+    const short = held("ILL_SG_SHORT")[0] ?? null;
+    if (short !== stems.illSgShort) {
+      wrong.push(`${stems.lemma} ILL_SG_SHORT: page says ${stems.illSgShort ?? "none"}, the seed says ${short ?? "none"}`);
+    }
+  }
+
+  assert.deepEqual(missing, [], "the landing page asks the dictionary for a noun it does not hold");
+  assert.deepEqual(wrong, [], "a stem on the landing page's fallback has drifted from the seed it was copied from");
+
+  /*
+    THE ENDINGS THEMSELVES ARE CHECKED AGAINST EKILEX, AND NOT HERE, BECAUSE
+    THE SEED DOES NOT CARRY THEM.
+
+    `harvested.ts` stores principal parts only, which is the point of it: the
+    other eleven are a rule over the genitive stem and storing them would be
+    the second source of truth this app refuses to keep (ADR-009). So the
+    comparison that matters, every case the page works out against the form
+    Ekilex records for it, is a thing somebody runs against a live key rather
+    than a check that can live in this file. It was run for all five of these
+    words: 55 singular forms, all agreeing, and every long plural with them.
+    What differs is the parallel short plural Estonian genuinely has
+    (`raamatuis` beside `raamatutes`), which this card does not show.
+
+    What is left here is the half that can go stale on its own, which is the
+    copy above, and `lib/estonian/derive.test.ts` holds the rule that decides
+    the one case with two answers.
+  */
+});
+
+/*
+  A VERB FORM IS DERIVED IN ONE PLACE, AND THAT PLACE WAS CHECKED AGAINST
+  EKILEX BEFORE IT WAS ALLOWED TO PUT A WORD ON A SCREEN.
+
+  `lib/estonian/conjugate.ts` builds the present tense, the negative, the
+  conditional and the singular imperative from the stored first person, which
+  is the same licence `derive.ts` takes over the genitive (ADR-005 amendment
+  1). It is the only module allowed to, for the reason the case suffixes have
+  one home: it is the one that also holds the exceptions, `olema` in the
+  present and `minema` in the imperative, and a second copy of the endings is
+  a second copy that does not know about them. `scripts/audit-verbs.ts` is
+  what made the rule shippable, 797 verbs against Ekilex's own paradigms with
+  no disagreement, and it has to keep importing the rule it audits rather
+  than a copy of it.
+*/
+check("nothing builds a verb form out of a stem and a person ending outside lib/estonian/conjugate.ts", () => {
+  const endings = "(?:d|b|me|te|vad|ksin|ksid|ks|ksime|ksite)";
+  const joins = [
+    new RegExp(`\\b(?:stem|pres1sg|present)\\w*\\s*\\+\\s*["'\`]${endings}["'\`]`),
+    new RegExp(`\\$\\{\\s*(?:stem|pres1sg)\\w*\\s*\\}${endings}[\`"']`),
+  ];
+  const offenders = ["app", "lib", "components", "scripts"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== "lib/estonian/conjugate.ts" && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => joins.some((join) => join.test(code(file))));
+  assert.deepEqual(offenders, [], "a person ending is being joined to a verb stem outside lib/estonian/conjugate.ts");
+
+  const conjugate = code("lib/estonian/conjugate.ts");
+  assert.match(conjugate, /IRREGULAR_PRESENT[^;]*"olema"/, "conjugate.ts no longer declines to derive olema's present, whose third person is `on`");
+  assert.match(conjugate, /IRREGULAR_IMPERATIVE[^;]*"minema"/, "conjugate.ts no longer declines to derive minema's imperative");
+
+  const audit = code("scripts/audit-verbs.ts");
+  assert.match(audit, /derivedVerbForms/, "scripts/audit-verbs.ts stopped auditing the rule the app ships");
+  assert.match(audit, /morphCode === d\.morphCode/, "scripts/audit-verbs.ts stopped comparing against Ekilex's own slot");
+});
+
+check("a screen that prints a derived verb form says it was derived", () => {
+  // Each of the readers prints provenance: the entry's table says which form is
+  // stored, the reference's chip names the origin, and the drill says whether
+  // the table was Ekilex's or the rule's before the learner moves on.
+  for (const file of [
+    "app/(app)/dictionary/Forms.tsx",
+    "app/(app)/grammar/topic/[id]/VerbTable.tsx",
+    "app/(app)/review/conjugation/ConjugationSession.tsx",
+  ]) {
+    assert.match(code(file), /\.origin\b/, `${file} prints a verb form without reading where it came from`);
+  }
 });
 
 console.log(
