@@ -167,13 +167,29 @@ export default async function EmojiPage() {
       const emoji = emojiFor(row.lemma)!;
       if (usedLemmas.has(row.lemma) || usedEmoji.has(emoji)) continue;
       const stems = stemsFrom(row.forms);
+      const lemma = row.lemma.trim().toLocaleLowerCase("et");
 
-      // One case per word, drawn at random, so the same word is a different
-      // question the next time it comes up.
+      /*
+        One case per word, drawn at random, so the same word is a different
+        question the next time it comes up.
+
+        AND NOT A CASE THAT SPELLS THE LEMMA. The three principal parts are
+        excluded above because `mis? maja` beside a house asks nothing, and
+        Estonian spells some of the other eleven the same way: `liblikas` is
+        its own inessive, and so are `sipelgas`, `kotkas` and `kirves`. This
+        round's own lead promises the ending, so a tile carrying none is the
+        one thing it must not print. Measured on the seeded dictionary it is
+        two of 1,166 case slots at A1 and eight of 1,903 at B1, so passing
+        over them costs the board nothing. `lib/srs/cards.ts` skips the same
+        shape by the same test, any accepted spelling rather than every one.
+      */
       let picked: { form: string; key: string } | null = null;
       for (const spec of shuffle(askable)) {
         const answer = caseAnswer(stems, spec.key);
-        if (answer) { picked = { form: answer.value, key: spec.key }; break; }
+        if (!answer) continue;
+        if (answer.accepted.some((f) => f.trim().toLocaleLowerCase("et") === lemma)) continue;
+        picked = { form: answer.value, key: spec.key };
+        break;
       }
       if (!picked) continue;
 
