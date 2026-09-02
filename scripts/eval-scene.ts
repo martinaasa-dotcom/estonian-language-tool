@@ -398,8 +398,21 @@ async function partA() {
 
   if (reached.size > 0) {
     const ranked = [...reached].sort((a, b) => b[1] - a[1]).slice(0, 30);
+    /*
+      Every FORM the course can vouch for, not every lemma it names. The first
+      version compared an inflected word against the lemma list and starred
+      `arsti`, `korteris` and `olen` as words the course does not teach, which
+      are the genitive of `arst`, the inessive of `korter` and the first person
+      of `olema`. A star has to mean what it says or the list is worse than no
+      list, because it is the half that says whose job the gap is.
+    */
     const inCourse = new Set<string>();
-    for (const unit of SYLLABUS) for (const spec of unit.words) inCourse.add(spec[0].toLowerCase());
+    const taught = new Set<string>();
+    for (const unit of SYLLABUS) for (const spec of unit.words) taught.add(spec[0]);
+    for (const entry of pool) {
+      if (!taught.has(entry.lemma)) continue;
+      for (const form of formsOf(entry)) inCourse.add(form);
+    }
     console.log("\n  Words the model reached for that the scene could not vouch for.");
     console.log("  A star means the course does not teach the word at all, at any level, so no");
     console.log("  scene could declare a unit for it and the gap is in the syllabus.");

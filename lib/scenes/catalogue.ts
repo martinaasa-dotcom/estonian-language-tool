@@ -25,7 +25,18 @@
 import type { SceneSpec } from "./types";
 
 /** Greetings, question words, pronouns, time and number. Every scene needs them. */
-const COMMON = ["tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused"] as const;
+/*
+  The units every scene declares, whatever it is about.
+
+  `pohiverbid` is here because `eval:scene` measured what its absence cost, and
+  the absence was an oversight rather than a decision: it is the unit that
+  teaches `olema`, and no Estonian sentence is built without the verb "to be".
+  Every other unit here is the machinery a conversation is made of rather than
+  the subject of one, which is the test for adding another.
+*/
+const COMMON = [
+  "tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused", "pohiverbid",
+] as const;
 
 /** The closing phrases, which are the same wherever you are leaving. */
 const FAREWELLS = ["Head aega!", "Nägemist!", "Aitäh!"] as const;
@@ -38,7 +49,13 @@ const DOCTOR: SceneSpec = {
   place: "The reception desk at a health centre",
   level: "A2",
   tests: "keha-ja-tervis",
-  units: [...COMMON, "keha-ja-tervis"],
+  /*
+    `inimesed` teaches `arst`, and a scene at a health centre whose word list
+    could not vouch for the word "doctor" is the shape of specification bug
+    that only a measurement finds: nothing about the scene looked wrong, and
+    the gate withheld every line the model wrote about one.
+  */
+  units: [...COMMON, "keha-ja-tervis", "inimesed"],
   register: "teie",
   beats: [
     {
@@ -120,7 +137,9 @@ const LANDLORD: SceneSpec = {
   place: "A phone call to the person you rent from",
   level: "B1",
   tests: "eluase",
-  units: [...COMMON, "eluase"],
+  // `eluase` is the vocabulary of renting; `kodu` is the vocabulary of the flat
+  // itself, and a scene about something broken in one needs both.
+  units: [...COMMON, "eluase", "kodu"],
   register: "teie",
   beats: [
     {
@@ -202,7 +221,9 @@ const COUNTER: SceneSpec = {
   place: "The desk at an office that wants your paperwork",
   level: "A2",
   tests: "linn-ja-teenused",
-  units: [...COMMON, "linn-ja-teenused"],
+  // `suhtlemine` teaches `aadress`, `kiri`, `teatama` and `helistama`, which is
+  // what a counter asks you for and what it tells you it will do next.
+  units: [...COMMON, "linn-ja-teenused", "suhtlemine"],
   register: "teie",
   beats: [
     {
