@@ -44,6 +44,22 @@ describe("taskFor", () => {
     expect(taskFor(scene, [aitah], 0, "INESSIVE")).toBeNull();
   });
 
+  /*
+    The prompt shows all three scene words, so a task whose answer is one of
+    them is completed by copying. `liblikas` has the genitive `liblika`, so its
+    seesütlev is `liblika` plus `s`, which is the word again, and eight of the
+    1,980 tasks the sixty scenes can set were free that way.
+  */
+  it("sets no task on a case the word is already spelled as", () => {
+    const liblikas: SceneWord = {
+      lemma: "liblikas", pos: "NOUN", translation: "butterfly", emoji: "🦋",
+      forms: forms({ NOM_SG: "liblikas", GEN_SG: "liblika", PART_SG: "liblikat" }),
+    };
+    expect(taskFor(scene, [liblikas], 0, "INESSIVE")).toBeNull();
+    // And the word is still askable in the ten cases that do change it.
+    expect(taskFor(scene, [liblikas], 0, "ELATIVE")?.shown).toEqual(["liblikast"]);
+  });
+
   it("sets no task on a principal part, which is stored rather than derived", () => {
     expect(taskFor(scene, words, 1, "GENITIVE")).toBeNull();
     expect(taskFor(scene, words, 1, "NOMINATIVE")).toBeNull();

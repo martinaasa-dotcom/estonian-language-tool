@@ -8315,6 +8315,95 @@ check("the picture board asks the dictionary for the words that have a picture",
   );
 });
 
+/*
+  A PAGE ADDRESSED BY A ROW ID PROVES THE ROW IS THE LEARNER'S.
+
+  Three routes name a row somebody owns: `/exam/result/[id]` is a sat paper
+  with the composition in it, `/scan/[scanId]` is the words read off a
+  photograph of somebody's homework, and `/class/[classroomId]` is a roster.
+  All three scope the read by the owner and answer `notFound()`, which is the
+  right shape and was true of every one of them when this was written. The
+  check is here so it stays true of the fourth.
+
+  What it reads is narrow on purpose: a `where` in a `[param]` page that names
+  the route's own parameter is a row being addressed by something a stranger
+  can type, and it has to name `ownerId` too. A page whose parameter is a key
+  rather than a row, which is the level, the case, the grammar topic and the
+  unit, never reaches this, because their parameters do not appear in a `where`
+  at all. That is the difference between an id somebody owns and an id that
+  names a page.
+*/
+/*
+  THE PUBLIC PAGE THAT SAYS WHAT THIS COSTS READS THE SEED'S OWN COUNT.
+
+  `/funding` is measured on a stated day and prints the command that gets the
+  same number again, which is the whole reason a reader is asked to believe it.
+  The dictionary line was typed, and it was stale on the day it was written: it
+  said 6,050 entries and 34,554 forms while the seed it described held 6,102 and
+  38,577, the nominative plural having become a stored principal part in
+  between. Re-measured at 20 MB against a freshly dropped and seeded database,
+  and the two counts now come from `SEED_SET_SIZE`, which its own test proves
+  against the files the seed loads.
+
+  `DICTIONARY_MB` feeds the storage line of the cost model as well as that
+  sentence, so a stale figure was not only a wrong number on a page: it made
+  the projected bill lower than the truth, which is the direction this page
+  exists not to be wrong in.
+*/
+check("the funding page's dictionary size is the seed's own count", () => {
+  const src = code(join("lib", "funding", "facts.ts"));
+  assert.match(
+    src,
+    /SEED_SET_SIZE\.words[\s\S]{0,200}SEED_SET_SIZE\.forms/,
+    "lib/funding/facts.ts no longer reads the seed's own counts, so its measurement can go stale again",
+  );
+  assert.match(
+    src,
+    /\$\{DICTIONARY_MB\} MB/,
+    "the measured dictionary line no longer reads DICTIONARY_MB, so the sentence and the cost model can disagree",
+  );
+
+  /*
+    AND NO THIRD COPY, which is the fault this file's own header records about
+    itself: the cost model started as three lists and nothing failed when a
+    line went missing from a total. Fixing the measured line left the same
+    stale pair in `services.ts`, where Ekilex's entry says what the Institute
+    gives, so the page understated the gift by 52 entries and 4,023 forms. A
+    typed count next to the word "entries" or "forms" anywhere under
+    `lib/funding/` is a fourth copy waiting to go stale.
+  */
+  const typed = sourceFiles(join("lib", "funding"))
+    .filter((file) => !file.endsWith(".test.ts"))
+    .flatMap((file) =>
+      [...code(file).matchAll(/\d[\d,_]*\s+(?:entries|forms)\b/g)].map((m) => `${file}: ${m[0]}`));
+  assert.deepEqual(
+    typed,
+    [],
+    "the funding page counts the dictionary with a typed number instead of reading SEED_SET_SIZE",
+  );
+});
+
+check("a page addressed by a row id proves the row is the learner's", () => {
+  const pages = APP.filter((file) => file.endsWith("page.tsx") && /\[[^\]]+\]/.test(file));
+  assert.ok(pages.length >= 8, "app/ no longer holds the parameterised routes the usual way");
+
+  const offenders: string[] = [];
+  for (const file of pages) {
+    const src = code(file);
+    const params = [...file.matchAll(/\[(\w+)\]/g)].map((m) => m[1]!);
+    for (const call of src.matchAll(/prisma\.(\w+)\.(findFirst|findUnique|findMany)\(\{([\s\S]{0,500}?)\n\s*\}\)/g)) {
+      const [, model, , body] = call;
+      if (!params.some((name) => new RegExp(`\\b${name}\\b`).test(body!))) continue;
+      if (!/ownerId/.test(body!)) offenders.push(`${file}: ${model} is read by the route's own id without an ownerId`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    "a page reads a row by the id in its own URL without proving it belongs to the learner asking",
+  );
+});
+
 check("the README's course and practice counts are the code's own", () => {
   const readme = read("README.md");
   assert.ok(SYLLABUS.length > 50, "the syllabus no longer collects its units the usual way");
