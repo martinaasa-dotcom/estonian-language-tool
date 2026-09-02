@@ -33,6 +33,7 @@
  * Pure: no React, no Next, no Prisma, and no environment. Which of these a
  * particular deployment has switched on is read by the page.
  */
+import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { reserveMicros } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 import {
@@ -253,7 +254,15 @@ export const SERVICES: readonly Service[] = [
     bill(): ServiceCost {
       return {
         kind: "given",
-        gives: "6,050 checked entries with 34,554 forms, and the attested sentences every exercise is built from",
+        /*
+          The seed's own count, for the reason the measured line in `facts.ts`
+          reads it: this said 6,050 entries and 34,554 forms while the seed it
+          describes held 6,102 and 38,577, and a page whose subject is what
+          somebody gives this project should not understate the gift.
+        */
+        gives: `${SEED_SET_SIZE.words.toLocaleString("en-GB")} checked entries with `
+          + `${SEED_SET_SIZE.forms.toLocaleString("en-GB")} forms, and the attested sentences `
+          + "every exercise is built from",
         licence: "Ekilex under CC BY 4.0, Wiktionary under CC BY-SA 4.0",
         why: "Neither asks for anything, and neither has a price to quote: nothing else holds a checked Estonian case table with attested sentences, so there is nothing to compare it against.",
       };

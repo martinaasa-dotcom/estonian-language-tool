@@ -1844,6 +1844,13 @@ which its own test proves against the files the seed loads.
 figure was not only a wrong number on a page. It made the projected bill lower than the truth,
 which is the one direction that page exists not to be wrong in.
 
+**And fixing it left a second copy**, which is the fault §26 recorded about this very file: the cost
+model started as three lists and nothing failed when a line went missing from a total. Ekilex's
+entry says what the Institute gives, in the same stale pair, so the page understated the gift by 52
+entries and 4,023 forms. Both read the seed now, and a typed number next to the word "entries" or
+"forms" anywhere under `lib/funding/` fails the invariant, because a third copy would go stale the
+same way.
+
 ### Six things measured that were already right
 
 Recorded rather than left unasked, because a check nobody has made fail once is a check nobody

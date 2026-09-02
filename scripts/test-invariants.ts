@@ -8342,6 +8342,25 @@ check("the funding page's dictionary size is the seed's own count", () => {
     /\$\{DICTIONARY_MB\} MB/,
     "the measured dictionary line no longer reads DICTIONARY_MB, so the sentence and the cost model can disagree",
   );
+
+  /*
+    AND NO THIRD COPY, which is the fault this file's own header records about
+    itself: the cost model started as three lists and nothing failed when a
+    line went missing from a total. Fixing the measured line left the same
+    stale pair in `services.ts`, where Ekilex's entry says what the Institute
+    gives, so the page understated the gift by 52 entries and 4,023 forms. A
+    typed count next to the word "entries" or "forms" anywhere under
+    `lib/funding/` is a fourth copy waiting to go stale.
+  */
+  const typed = sourceFiles(join("lib", "funding"))
+    .filter((file) => !file.endsWith(".test.ts"))
+    .flatMap((file) =>
+      [...code(file).matchAll(/\d[\d,_]*\s+(?:entries|forms)\b/g)].map((m) => `${file}: ${m[0]}`));
+  assert.deepEqual(
+    typed,
+    [],
+    "the funding page counts the dictionary with a typed number instead of reading SEED_SET_SIZE",
+  );
 });
 
 check("a page addressed by a row id proves the row is the learner's", () => {
