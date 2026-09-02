@@ -292,7 +292,7 @@ function markWritten(
   const written = wordsOf(text);
   const lengthPct = item.minWords === 0 ? 1 : Math.min(1, written.length / item.minWords);
 
-  const used = item.mustUse.filter((w) => usesRequiredWord(w.lemma, text));
+  const used = item.mustUse.filter((w) => usesRequiredWord(w, text));
   const wordsPct = item.mustUse.length === 0 ? 1 : used.length / item.mustUse.length;
 
   const share = lengthPct * COMPOSE_LENGTH_SHARE + wordsPct * (1 - COMPOSE_LENGTH_SHARE);

@@ -2448,6 +2448,25 @@ the dictionary and would trip the one clause that is supposed to mean "you did n
 The client never sends a mark, only a level, a seed and the answers. A result anybody can type is
 not a measurement. (ADR-022.)
 
+**And "did they use the word" is answered by the word's own forms, not by its first three
+letters.** `usesRequiredWord` prefix-matched the lemma minus its last letter, floored at three
+characters, on the reasoning that Estonian inflects and `raamatust` is `raamat` used. It is, and so
+was `kirjutan` for `kiri`, `arvan` for `arv`, `aeglane` for `aeg` and `abikaasa` for `abi`.
+Measured over the shipped dictionary, 1,529 of its 5,363 headwords have a needle that reaches a
+different headword, so on nearly a third of the words a written task can name, a candidate could be
+credited for a word they never wrote. A mock exam that marks generously tells somebody they are
+ready to book the state examination when they are not, which is the one thing it exists not to do.
+
+No prefix rule tells `kirja` from `kirjutan`, because the difference is not in the first letters.
+What does is the table of forms the dictionary already holds, so `MustUseWord` carries the part of
+speech and the forms, and `acceptedUses` is the lemma, every stored form, and the forms a rule
+builds off those: the ten regular cases from the genitive stem, or the present, negative, conditional and
+imperative from the stored first person (ADR-005 amendment 1). Nothing is written; `written.ts`
+stays pure because both derivation modules are, which is what lets the marker and the screen agree
+on which spellings count without either reaching a database. The rule is stricter and had to be checked for
+being *too* strict: the thinnest entry in the dictionary accepts ten spellings and none accepts only
+its headword, which is asserted rather than remembered.
+
 **A confidence figure carries the evidence behind it.** `lib/exam/readiness.ts` predicts a score per
 part and then a chance of clearing sixty percent, as a logistic whose spread widens as the evidence
 thins, under a ceiling set by how many reviews are behind the claim: 60 under 150 reviews, 85 under
