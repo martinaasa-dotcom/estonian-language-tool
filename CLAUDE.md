@@ -78,6 +78,39 @@ table of Estonian ("Case", "Singular"), the English prose that explains a point,
 in URLs. The ids are keys that 83 syllabus entries and any bookmarked link point at, and renaming
 them buys a slug and risks the course.
 
+**Knowing a word exists is a different job from teaching it, and thirty-two requests buys the
+first.** The dictionary ships 5,363 entries and every other Estonian word came back as "nothing
+found", which is the same blank a learner gets for a misspelling and for an English word. That was
+reported plainly and the example was the app's own copy: `uudishimulik` appears on screen in
+Kodukeel and searching for it in Kodukeel found nothing.
+
+Harvesting the language properly is one request per word, and Ekilex holds about 261,000 Estonian
+headwords: a quarter of a million requests against a free service the Institute runs for the good of
+the language, for a convenience. Ekilex's search takes a wildcard, so `a*` returns every word
+beginning with `a`, and thirty-two letters is thirty-two requests for the whole list.
+`scripts/build-wordlist.ts` is that, and `KnownWord` is 154,995 rows of one column.
+
+**It is not a dictionary and must not be made into one.** It holds a word and nothing else: no
+forms, no gloss, no level, because the search that returns it returns a headword and an id and
+asking for the rest is back to one request each. `Lexeme` stays the dictionary, the thing a learner
+can study, and this answers the one question a search screen could not: *is that a word*. That turns
+out to be most of what was missing, because it tells three dead ends apart that used to render
+identically. A real word with no entry says so and the live lookup fetches it. A near miss gets the
+spelling (`lib/dict/known.ts`, prefix-indexed candidates ranked by edit distance). Neither gets the
+blank, quickly, without spending two requests on somebody else's service to reach the same answer.
+
+Three filters keep it honest and each is a decision. **The general datasets only**: Ekilex hosts a
+hundred specialist term bases beside the general dictionary, and `esterm`, `mea` and the rest are
+95,000 words a learner will never search and would only meet as noise in a spelling row. **Single
+words**, because the search is given one. **Nothing with a capital in it**, which loses the place
+names and is the right side to err on, since an index full of two-letter abbreviations makes every
+typo look like a word.
+
+Reference data like `Lexeme`, so it is in no backup and no erasure: there is nothing personal in a
+list of Estonian words. Inserted and never updated, outside `--only-if-empty`'s early return for the
+reason `ensureSearchIndexes` is, because a deployment seeded before this has a full dictionary and
+an empty word list.
+
 **The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
 `prisma/data/expanded.json` from two sources with a strict division of labour: every Estonian
 form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
@@ -2567,6 +2600,7 @@ npm run audit:merge      # after merging: what the other side added that is no l
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
+npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y

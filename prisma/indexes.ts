@@ -42,6 +42,18 @@ const INDEXES: { name: string; sql: string }[] = [
           WHERE "formType" IN ('GEN_SG', 'GEN_PL')`,
   },
   {
+    /*
+      The same, on the 155,000-word headword list. Its primary key is the lemma
+      and would serve an exact match on its own; what it will not serve is
+      `LIKE 'uud%'` under a non-C collation, and the spelling suggestion is
+      entirely prefix queries. Folded, because a learner who cannot type õ
+      should still be told their word exists.
+    */
+    name: "KnownWord_lemma_folded_idx",
+    sql: `CREATE INDEX IF NOT EXISTS "KnownWord_lemma_folded_idx"
+          ON "KnownWord" (translate(lower(lemma), '${FROM}', '${TO}') text_pattern_ops)`,
+  },
+  {
     // Lemma prefix matches. text_pattern_ops is what lets LIKE 'x%' use an
     // index at all; a leading wildcard still cannot, which is what the trigram
     // indexes below are for.

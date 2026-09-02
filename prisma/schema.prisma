@@ -80,6 +80,23 @@ model Lexeme {
   @@index([cefr])
 }
 
+/// Every Estonian headword there is, so the dictionary knows what exists.
+///
+/// A word and nothing else: no forms, no gloss, no level. `Lexeme` is the
+/// dictionary and holds 5,363 entries a learner can actually study; this holds
+/// 154,995 and answers one question, "is this an Estonian word", which is the
+/// question the search screen could not answer before. A miss that is a real
+/// word says so and fetches it; a miss that is not gets a spelling suggestion
+/// instead of a shrug, and a typo stops costing Ekilex two requests.
+///
+/// Reference data like `Lexeme`, shared by everybody and owned by nobody, so
+/// it is not in a backup and not in an erasure: there is nothing personal in
+/// a list of Estonian words. Built by `scripts/build-wordlist.ts` in
+/// thirty-two requests, one per initial letter.
+model KnownWord {
+  lemma String @id
+}
+
 /// A user bookmarking a dictionary word. Per-user, unlike the word itself.
 model StarredWord {
   ownerId   String
