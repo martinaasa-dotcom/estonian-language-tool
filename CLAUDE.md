@@ -1445,6 +1445,24 @@ replace only the principal parts, and it must never touch a form retrieved from 
 scoped to a person (cards, reviews, tasks) is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
+**A panel nobody renders is a feature nobody has, and two of them were.** `DangerZone.tsx` and
+`UsagePanel.tsx` sat in `app/(app)/settings/` complete, commented and imported by nothing. Not
+dropped by a merge, which is the failure this repository already knows about: `git log -S` finds no
+commit on any branch where the settings page ever named either. So for the whole life of this app
+there was no way to delete an account from inside it, while `/privacy` promised somebody could take
+everything away and `deleteMyAccount` sat in `app/actions.ts` reachable from one file the router
+could not get to; and the tutor's spending meter, which four rules above describe as where a learner
+reads what they have used, was on no screen at all.
+
+What let it survive is the fault this file keeps finding in its own checks, pointed at a component
+instead of a comment. An invariant *reads* `DangerZone.tsx` and asserts the copy inside it, so it
+passed with feeling on a file no reader could reach. A file being right is a different claim from a
+reader being able to get to it, and only the first one was ever made. So the pairing is asserted
+now: every module beside `page.tsx` in that folder has to put something on the page, tested on a
+name the module exports being used as an element rather than on the import, because an import
+nobody renders is the same silence one line later. It has the floor every sweep here has, and it
+was made to fail first, on the real bug rather than on a hypothetical one.
+
 **A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
 somebody it cannot help them and then stop. A search that found nothing, an answer marked wrong that
 was right, a word off their own homework the dictionary would not vouch for, a grammar page that

@@ -91,16 +91,23 @@ check("it offers advice rather than only a verdict",
 /*
   The goal somebody stated on their first run and the paper they are being shown
   were two features that did not speak to each other. The card only appears when
-  a target has been set, which the CI seeds do not, so what is checked here is
-  the other half of the promise: with no goal set, nothing on the page claims
-  one.
+  a target has been set.
+
+  This used to say the CI seeds set none, and they do: `scripts/demo-data.ts`
+  writes `goalTarget` and `goalDeadline`, and CI runs this suite after it, so
+  the branch above is the one taken there and this waiver fires on no run CI
+  makes. Left as a waiver rather than deleted because a database without the
+  fixture is a state somebody runs this in, and reaching for a check that
+  cannot exist there is what `absent` is for. What it must not do is misname
+  its own cause: a reason that sends the reader off to set a target that is
+  already set is worse than no reason at all.
 */
 const aiming = /The paper you said you were aiming at/i.test(body);
 if (aiming) {
   check("the paper aimed at is named with the weeks and the confidence together",
     /weeks left|deadline is here|no deadline set/i.test(body));
 } else {
-  absent(1, "the goal card, because these seeds set no target level");
+  absent(1, "a target level set on this database, which the demo fixture writes");
 }
 
 const firstGapLink = page.locator("a", { hasText: /Open the path|Practise|Take a dictation|Record yourself|Fill some gaps|Write a sentence|Read the rule|Open the clinic|Review now/ }).first();
