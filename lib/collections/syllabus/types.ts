@@ -123,15 +123,17 @@ export function inferPos(lemma: string, given?: Pos): Pos {
  * landing page has been promising it the entire time, beside government and
  * the partial object, both of which units do ask for.
  *
- * It is added here rather than typed into 53 unit literals because it is a
+ * It is added here rather than typed into unit literals because it is a
  * property of the word and not a choice the unit makes: a learner who cannot
  * say `hamba` cannot say `hambaga` either. The generator produces nothing for
- * a word that does not gradate, so a unit of colours gets none. 128 cards
- * across the course, 45 of them at A1.
+ * a word that does not gradate, so a unit of colours gets none.
  */
 function withGradation(types: readonly CardType[]): readonly CardType[] {
-  const producesForms = types.includes("CASE_FORM") || types.includes("CONJUGATION");
-  if (!producesForms || types.includes("GRADATION")) return types;
+  // `CASE_FORM` and not `CONJUGATION`: the card asks for the genitive, and a
+  // verb has none. A verb gradates too (`andma` is `nd : nn`) and it shows in
+  // the present stem rather than in a case, so a unit of verbs that advertised
+  // this would be promising a card the generator cannot build.
+  if (!types.includes("CASE_FORM") || types.includes("GRADATION")) return types;
   return [...types, "GRADATION"];
 }
 

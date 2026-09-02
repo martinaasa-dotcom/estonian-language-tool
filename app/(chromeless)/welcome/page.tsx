@@ -838,7 +838,7 @@ const FAQS = [
       misleads. The shorter answer is main's and is better than what this
       branch had.
     */
-    "It runs A1 to C1, and the parts that stay hard get a card of their own: gradation, verb government, whether an object is whole or partial. There is a level check if you would rather not guess where you are, and a mock state examination paper at A2, B1, B2 and C1.",
+    "It runs A1 to C1, and the parts that stay hard are taught on their own: a card for consonant gradation, a card for the case each verb demands, and a unit and a grammar page for whether an object is whole or partial. There is a level check if you would rather not guess where you are, and a mock state examination paper at A2, B1, B2 and C1.",
   ],
   [
     "What happens to my data?",

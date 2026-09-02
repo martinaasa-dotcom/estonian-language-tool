@@ -112,22 +112,64 @@ describe("the course", () => {
     where it gets hard, went undrilled for the whole course. Not one of the 79
     units named the type, while the landing page promised it.
   */
-  it("drills the genitive wherever it asks a learner to produce a form", () => {
-    const producing = SYLLABUS.filter(
-      (u) => u.cardTypes.includes("CASE_FORM") || u.cardTypes.includes("CONJUGATION"),
-    );
-    expect(producing.length).toBeGreaterThan(40);
+  it("drills the genitive wherever it asks a learner to produce a case", () => {
+    const producing = SYLLABUS.filter((u) => u.cardTypes.includes("CASE_FORM"));
+    expect(producing.length).toBeGreaterThan(30);
     for (const unit of producing) {
       expect(unit.cardTypes, unit.id).toContain("GRADATION");
     }
   });
 
-  it("does not ask for it where nothing is produced", () => {
-    // A unit of greetings teaches phrases, which have no stem to gradate.
+  it("does not ask for it where there is no genitive to ask for", () => {
+    // A unit of greetings teaches phrases and a unit of verbs teaches persons.
+    // The card takes the genitive, and neither has one.
     for (const unit of SYLLABUS) {
-      if (unit.cardTypes.includes("CASE_FORM") || unit.cardTypes.includes("CONJUGATION")) continue;
+      if (unit.cardTypes.includes("CASE_FORM")) continue;
       expect(unit.cardTypes, unit.id).not.toContain("GRADATION");
     }
+  });
+  /*
+    A UNIT DOES NOT ASK FOR A CARD ITS OWN WORDS CANNOT MAKE.
+
+    `cardTypes` is a request against the generator, which builds only what a
+    word supports, so a mismatch is silent: the unit page lists the type, no
+    card appears, and nothing says why. `objekt`, the B1 unit whose subject is
+    the single hardest thing in Estonian grammar, asked for `CASE_FORM` over
+    twelve verbs. A case card needs a genitive stem and a verb has none, so it
+    built nothing at all, for as long as the unit had existed.
+
+    `GRADATION` is exempt because nobody declares it: `unit()` adds it wherever
+    a unit asks for a case, since the genitive is what every case is built on,
+    and the unit page drops it again where no word in the unit gradates. What
+    is checked here is what a person typed.
+
+    The words come from the harvest rather than the built expansion, because
+    the harvest is what the course is checked against everywhere else in this
+    file and it is the file that carries the course's own forms.
+  */
+  it("never asks for a card type not one of its words can make", () => {
+    const harvested = new Map(HARVESTED.map((w) => [`${w.lemma}|${w.pos}`, w]));
+    const dead: string[] = [];
+
+    for (const unit of SYLLABUS) {
+      const words = unit.vocabulary
+        .map((v) => harvested.get(`${v.lemma}|${v.pos}`))
+        .filter((w): w is NonNullable<typeof w> => !!w);
+      if (words.length === 0) continue;
+
+      for (const type of unit.cardTypes) {
+        if (type === "GRADATION") continue;
+        const buildable = words.some((w) => {
+          if (type === "CASE_FORM") return !!w.parts.GEN_SG;
+          if (type === "CONJUGATION") return w.pos === "VERB" && !!w.parts.PRES_1SG;
+          if (type === "GOVERNMENT") return !!w.government;
+          if (type === "CLOZE") return w.usages.length > 0;
+          return true;
+        });
+        if (!buildable) dead.push(`${unit.id} asks for ${type}`);
+      }
+    }
+    expect(dead).toEqual([]);
   });
 });
 

@@ -313,6 +313,21 @@ loose and is now checked for this one type, since the column is a single field. 
 the others would be fetching every example sentence to see whether a gap can be made, which is the
 query this file warns about two sections down.
 
+**And a unit does not ask for a card its own words cannot make.** `cardTypes` is a request against a
+generator that builds only what a word supports, so a mismatch is silent: the page lists the type,
+no card appears, and nothing says why. `objekt`, the B1 unit whose subject is the single hardest
+thing in Estonian grammar, asked for `CASE_FORM` over twelve verbs. A case card needs a genitive
+stem and a verb has none, so it built nothing at all, for as long as the unit had existed; it drills
+persons now, and the object rule is taught on the grammar pages it links to and met in its gap-fill
+cards. `syllabus.test.ts` walks every unit against the harvest and fails on a type none of its words
+can make, `GRADATION` excepted because nobody declares it. Made to fail on `objekt` first.
+
+The same audit is why gradation is added on `CASE_FORM` alone and not on `CONJUGATION`: a verb
+gradates too, `andma` is `nd : nn`, and it shows in the present stem rather than in a case, so eight
+units of verbs would have advertised a card the generator cannot build. And it is why the landing
+page's FAQ no longer says all three hard parts "get a card of their own": gradation and government
+do, and the whole-or-partial object has a unit and a grammar page.
+
 **Which forms a gap-fill may hide is one answer, and it was five.** `buildCloze` hides a word it is
 told to look for, so what it can hide is whatever list the caller hands it. Two callers, the lesson
 planner and the level checkpoint, added the ten regular cases and were the same twenty lines twice.
