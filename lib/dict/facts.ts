@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { bandOf, glossOption, type GlossOption } from "@/lib/questions/distractors";
 import { MAX_LETTERS, MIN_LETTERS } from "@/lib/games/crossword";
+import {
+  alsoAcceptedByLemma as sharedAlsoAccepted, sharedPrompts,
+} from "@/lib/collections/senses";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -255,6 +258,34 @@ export function decoyOptions(): Promise<GlossOption[]> {
 
 /**
  * Every Estonian word of one length that the app will accept as a guess.
+ * Every lemma that answers the same production prompt as another one.
+ *
+ * A production card is front `translation`, hint `pos`, back `lemma`, so two
+ * entries sharing a gloss and a part of speech are one question with two right
+ * answers, and each card marks the other's answer wrong. `lib/srs/cards.ts`
+ * puts the whole set on the back; this is what finds it.
+ *
+ * A fact about the shared dictionary and therefore exactly what this file is
+ * for: the answer is the same for every learner and the same on the next
+ * request, and a deck build would otherwise ask it once per word. The result is
+ * small even though the query is not, because only a prompt more than one entry
+ * answers is kept: 372 groups out of 6,083 entries, nearly all of them pairs.
+ *
+ * Keyed `lemma|pos`, which is what `Lexeme` is unique on, because a lemma alone
+ * would merge the noun `hall` meaning frost with the adjective meaning grey.
+ */
+export function alsoAcceptedByLemma(): Promise<Map<string, string[]>> {
+  return remember("also-accepted", FACTS_TTL_MS, async () => {
+    const rows = await prisma.lexeme.findMany({ select: { lemma: true, pos: true, translation: true } });
+    return sharedAlsoAccepted(
+      sharedPrompts(rows.map((r) => ({ lemma: r.lemma, pos: r.pos, gloss: r.translation }))),
+    );
+  });
+}
+
+/**
+ * The same pool, grouped by part of speech, for a question that wants its
+ * wrong answers to be the same kind of word as its right one.
  *
  * A word game has two word lists and they are not the same list. The answers
  * are graded dictionary entries, because an answer has to be a word the app can

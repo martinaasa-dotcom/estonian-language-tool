@@ -327,15 +327,97 @@ on it.
 **The words between the words are a request like any other, and a unit that was cut does not take
 its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
 words every sentence is made of: nobody asking `kes?` or `millal?`, or looking up `täna`, `peal`
-or `september`, found anything, in a dictionary of six thousand words. Six units carry them now,
-question words, pronouns, the adverbs of time, the postpositions, the months and the countries,
-appended after the fourteen so that the first three units at A1, which is what first run builds a
-deck from, stay what they were. `PRONOUN` is a part of speech for it, harvested as a nominal
+or `september`, found anything, in a dictionary of six thousand words. Eight units carry them now,
+question words, pronouns, the adverbs of time, the postpositions, the months and the countries, and
+then the conjunctions and the particles, appended after the fourteen so that the first three units
+at A1, which is what first run builds a deck from, stay what they were.
+
+**The first sweep missed the two commonest kinds and nothing noticed for two passes.** It went
+looking for the words a learner would try to *look up*, and a conjunction is not a word anybody
+looks up: `npm run measure:scenes` counted instead, and found that 13,458 distinct words in the
+attested corpus could not be vouched for by any entry and appeared in 79% of every sentence a
+lexicographer recorded. The commonest was `ja`, 1,507 times, which the course had never taught. So
+`sidesonad` and `maarsonad` are the same request as the other six and were built the same way,
+30 lemmas named and Ekilex asked, all 30 back with four attested sentences each and none dropped.
+Reading the ranked list rather than the total is what made it right, because the list holds three
+faults and only one is a missing unit: the untaught conjunctions and particles, the forms of
+`olema` that are neither stored nor derivable, and the short pronoun forms and the simple past that
+two rules above already say arrive with enrichment. A unit built off the total would have taught
+`oli` as a headword. `docs/19-situations.md` §26 has the measurements and §27 what
+building them turned up, which was three things nothing had been checking.
+
+**A homonym was reported on one path out of two.** The rule that a homonym is resolved by a person
+or reported, never guessed through, was written into the path that reads forms, and an uninflecting
+word has none, so every adverb and formless pronoun in the course took the first Ekilex candidate in
+silence. It reports now, and the fifteen words that added were already in the course, all of them
+from the six units the seventeenth pass added. All fourteen checkable ones had taken the right
+sense, which is luck rather than design: the rivals include the adjective for porous, a ship's
+course, a remixed piece of music and the name of the allative case.
+
+**Nothing had ever checked a course gloss.** `audit:glosses` and `audit:pos` both read the built
+expansion; the harvest's English, which is the one authored column in the whole pipeline, was
+checked by people reading Ekilex definitions one at a time. `npm run audit:senses` is the check and
+it needs no key, because the evidence came back with the harvest and sat unread: `note` is Ekilex's
+own definition of the sense an entry carries, so two course words with the same definition are one
+meaning, and that reads two ways. Same gloss is a production card with two right answers; different
+glosses mean one of them describes a sense the entry does not carry, which is the fault that put
+"but rather" on `vaid`. It found twelve pairs, and then the rule turned out to be wrong.
+
+**A production card accepts every word its prompt could be asking for.** The check above grouped by
+Ekilex's definition, on the reasoning that two words the Institute calls one meaning are one card
+with two right answers. A card knows nothing but its front: it is `translation`, its hint is `pos`,
+and `checkAnswer` marks against the back, so two entries collide when a learner cannot tell which is
+wanted, whatever a lexicographer thinks. Grouping on the prompt found **372 of them in the shipped
+dictionary** rather than twelve, and every one was a card able to mark a right answer wrong.
+`sameMeaning` was tried as the grouping and is wrong the other way, since it is built for "could
+these be different answers to one question" and called `abi` "help" and `aitama` "to help" one
+prompt. The fix is the illative's: every answer on the back, joined with the separator
+`acceptedAnswers` splits on, so what the screen shows and what the marker takes are one string.
+`lib/collections/senses.ts` is the rule, `lib/dict/facts.ts` caches which words share a prompt
+because that is a fact about the shared dictionary, and `lib/srs/deck.ts` reads it once per build
+rather than once per word. `repairProductionBacks` in `prisma/repair.ts` widens the cards already in a
+deck, because fixing the builder alone would reach new learners and nobody else. It runs where
+`applyPosCorrections` runs and for the same reason, before the `--only-if-empty` early return, since
+a card built the old way only exists on a database that was already seeded. It may touch the back
+and nothing else, never a scheduling column; it only ever widens, so the answer the card had stays
+first; and its guard is `back = lemma`, which is the signature of a card built before the fix, so a
+second run matches nothing.
+
+Ekilex's definition is the **diagnosis** rather than the trigger, and what it diagnoses is worse
+than a synonym pair: where the Institute gives two definitions, the gloss is not describing its own
+word. Accepting both only makes such a card fair rather than right, so the eleven that were in the
+course were fixed rather than pinned, and there are **none left**: ten now carry the Institute's own
+definition of their sense rendered in English, in the house style the course already had for one
+English word covering two Estonian ones. `iseloom` is "character (a person's)" beside `tegelane`,
+"character (in a story)"; `leib` and `sai` had been "bread (dark)" and "bread (white)" all along.
+`seevastu` is the one that took a different fix, because "on the other hand" was not a shared prompt
+so much as the wrong translation: it is "by contrast, whereas". Shared prompts fell from 372 to 362,
+and `senses.test.ts` now asserts the flat claim rather than keeping a list, since an empty exemption
+list with two tests round it is the parking space every exemption list becomes.
+`ning`, `vaid` and `enam` were dropped for a day to avoid three of the twelve and are back, because
+deleting three of the commonest words in Estonian to dodge a fault the dictionary had 372 of is one
+unit paying for everybody.
+
+**And the Institute says "synonym" in two ways, so a check reading one of them invents work.**
+Comparing two definitions as strings finds the pair that disagrees and also the pair that agrees in
+different words. Where Ekilex has nothing to add beyond naming the neighbours, its definition *is* a
+list of them: `teravmeelne` is "vaimukas, nutikas, leidlik" and `vaimukas` is "teravmeelne, ootamatu
+ja leidlik". That was the eleventh entry on the defect list, and it was asking somebody to invent a
+distinction Estonian does not draw, which is the one repair worse than leaving a gloss alone. The
+rule is **mutual** naming and that is the whole of why it is safe: a definition mentioning another
+word means nothing on its own, since `konkurents` is defined as a `võistlus` for supremacy and is
+not a contest, and `põhjendama` ends "seletama või `õigustama`" and is not self-defence. Measured
+over the shipped dictionary, one-way naming picks up both of those and mutual naming picks up
+neither, matching exactly one pair in the whole file. The boundaries are written out rather than
+left to `\b`, which is ASCII: a space and an `õ` are both non-word characters to it, with no
+boundary between them, so the obvious spelling misses the words this language is made of.
+
+**And Ekilex's own part of speech was being discarded**, so a deliberate coarsening could not be
+told from a mistake. `ekilexPos` records it. The table of legitimate coarsenings was set by
+narrowing until something honest complained rather than widening until nothing did, and with it
+written down the course's label and Ekilex's agree on all 1,404 words. `PRONOUN` is a part of speech for it, harvested as a nominal
 because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
-`nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
-unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
-short ones (`mulle`, `mul`) that no rule over the genitive reaches, and a card answering `minule`
-would mark the form everybody says wrong; Ekilex records both and an enriched entry shows the pair.
+`nemad`) is kept the way an adverb is, attested and formless, rather than dropped.
 `lib/collections/syllabus/retired.ts` is the other half: the ten C2 units were cut in §19 of the
 status doc with the note that their 170 words stay in the dictionary, and the harvest reads the
 syllabus, so the first re-run after that cut would have quietly taken them out of the seed. They
@@ -440,6 +522,37 @@ the single boolean environment read, every variable `services.ts` names being on
 reads, and the page staying outside the sign-in gate, like `/privacy` and `/terms` and for the same
 reason.
 
+**A coverage number is a measurement of whatever is wrong, and usually that is not what you were
+measuring.** `npm run eval:scene` is Phase 0's second half and it asks the one question the
+Situations design rests on: what share of composed lines does the gate withhold, against a stated
+line of one in twenty. It came back at 60 to 70 percent, and the number was never the useful part.
+The first thing it measured was that `arsti-aeg`, a scene set at a health centre, could not vouch
+for `arst`, and that none of the three scenes could vouch for `olema`, so every line built on "Kas
+teil **on** valu?" was thrown away. The second was that the two commonest words it withheld a line
+over were `ja` and `või`, taught by the course and declared by no scene. Neither is visible in a
+rate. Both are the first two entries of the ranked list of words the model reached for, which is
+the same instrument `measure:scenes` used to find the missing connectives unit, and which is why
+the script prints one and why the star on it has to mean what it says: written against the lemma
+list it starred `arsti`, `korteris` and `olen` as words the course does not teach, and they are the
+genitive of `arst`, the inessive of `korter` and the first person of `olema`.
+
+**And the residual is a fact about the course rather than about the gate.** Vouching is about 85%
+of what is withheld in every run, register is none of it, and the lines being thrown away are
+`Kui kaua see on kestnud?` and `Kas see aeg sobib teile?`, which is what a receptionist says.
+`kestma`, `sobima` and `valutama` are in no unit at any level, and nor are `asuma`, `esitama`,
+`korrus`, `katki` or `valmis`. The pattern is one sentence: the course teaches the nouns of a
+situation and not the verbs that do things with them, `valu` and `haige` but not `valutama`, a
+unit on housing but no `katki`. `docs/19-situations.md` §29 is the write-up and §19 is what it
+changed, which is that Phase 1 waits on that vocabulary rather than on any code.
+
+**Six runs of 63 lines cannot resolve eight points, and the table says so.** Two of the rows in
+§29 are the same configuration and differ by eight, which is what stops the round-by-round
+differences being reported as improvements: three lines per beat is a sampling floor rather than a
+sample, and only the first drop is larger than the noise. A range twelve times over the line is
+still a conclusion; a delta inside the noise is not. And a run that composes nothing says so
+rather than reporting a rate, because the first version of this hit a free model's daily cap and
+printed `0/0 withheld (0%)`, which reads as a perfect score.
+
 **Never generate Estonian morphology.** Inflected forms come from Ekilex, never from the model. This
 is not theoretical: `gpt-4o-mini` invented "Ma söön aitamat" when asked for an example. The AI may
 explain grammar and suggest an English translation; it may never supply an Estonian form. AI output
@@ -474,14 +587,55 @@ that also holds the exceptions. `olema` gets no present from it, because its thi
 and nothing about `olen` predicts that; `minema` gets no imperative, because it says `mine` off
 the infinitive. **The simple past is not derived and may not be**: `lugesin` goes to `luges` but
 `tahtsin` to `tahtis` and `võtsin` to `võttis`, with the grade changing on the way, so its third
-person stays attested-only and a seeded verb makes seven conjugation cards where an enriched one
-makes eight. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
+person can never be derived, for any verb in the language. `npm run audit:verbs` derives every slot for every verb in the shipped dictionary
 and compares it with every form Ekilex records for the same word: 797 verbs, thirteen slots
 each, no disagreement, and the two exceptions above are the ones it found. Re-run it before
 widening the table. Every derived form says so on screen, the dictionary entry prints the table
 under "worked out from loen" with the stored form in bold, the four verb topic pages show the point
 on the learner's own verbs with a provenance chip, and an attested form always answers first, so
 the moment an entry is enriched the rule steps aside.
+
+**A rule that cannot reach a form is a reason to store it, not a reason to have none.** The rule
+above is complete for a regular verb and the paragraph stating its exceptions was also, without
+saying so, a list of what a keyless deployment simply could not say. `olema` showed `olen` and
+stopped: no `on`, no `pole`, and the commonest verb in Estonian could not answer `olevik · ta`. No
+verb at all could answer `lihtminevik · ta`, since the simple past is not derivable, so every one
+of them made seven conjugation cards where an enriched one made eight. And the pronouns had it
+worst, because their everyday case forms are the short ones, `mulle` and `mul`, which no ending on
+a genitive stem reaches: a card built from the rule answered `minule` and marked the form everybody
+says wrong, so the pronoun unit shipped with **no case cards at all** rather than teach the wrong
+one. `me`, `te`, `nad`, `neil`, `ta`, `tal` and `mu` were among the commonest words in the attested
+corpus that this dictionary could not vouch for, which is how the whole of it was found.
+
+So the harvest stores what the rules miss, and it **asks the rules rather than carrying a list**:
+`unreachableSlots` in `conjugate.ts` and `unreachableCaseForms` in `derive.ts`, each living beside
+the rule it is the complement of. A list would be two copies of one fact and the copy in the
+builder is the one that rots, because a missing form does not look like an error, it looks like a
+word that inflects less. Asserted on the call in both builders. That is 544 forms across 329 of the
+1,404 course words, and every one of them is a verb's simple past, `olema`'s present, `minema`'s
+imperative, `pole`, or the short forms of a pronoun or numeral. A regular noun stores nothing,
+which is what says the test is drawn in the right place, and `pidama`, which has no imperative at
+all, stores none either, because Ekilex records none and asking cost nothing.
+
+Three things fell out of it and each is worth knowing. The pronoun unit **has** case cards now, and
+`mina → kellele?` takes `mulle` and takes `minule`, because `caseAnswer` returns the pair and the
+card carries both answers on its back. `NounStems.retrieved` holds a **list** per case rather than
+one form: `Form`'s own unique key is `(lexeme, formType, value)` and says in a comment that
+otherwise the second of two parallel forms overwrites the first, and this field was making exactly
+that mistake one layer up. And a pair is printed only where a case has **exactly two** attested
+forms, the illative's own long form excepted: Ekilex records three elatives for `kodu` and the
+second of a list is not a form to put on a learner's screen. All of them stay in `accepted`,
+because somebody who writes one is not wrong.
+
+**And the tie-break in the scanner is a separate question that was measured and left alone.**
+`matchEstonianForm` scores a diacritic-folded lemma at 90 and a stored form at 88, so `oli` resolves
+to `õli`, oil, rather than to `olema`. Storing the simple past made 20 words reach that tier which
+had not reached it before, and it is worth writing down that **none of them regressed**: `oli` was
+not a stored form at all before, so it resolved to `õli` then too. The ordering is genuinely
+two-sided, which is why it stands: `oli` says an exact spelling should beat a repaired one, and
+`parast` says the opposite, since `pärast` is far commoner than the partitive of `paras`. Deciding
+it needs frequency data this project does not have, and it changes what the scanner offers for the
+whole dictionary.
 
 **The one card the course never built was the one every other card is built on.** `GRADATION` asks
 `hammas → kelle? mille?` and takes `hamba`. Nothing else in the deck asks for the genitive:

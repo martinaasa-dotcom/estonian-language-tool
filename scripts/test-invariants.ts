@@ -233,6 +233,68 @@ check("the keyed services are only ever reached from the server", () => {
   regex can see: the field stays required, and nobody rebuilds the old
   shortcut beside it.
 */
+/*
+  WHAT THE DICTIONARY STORES IS DECIDED BY THE RULES, NOT BESIDE THEM.
+
+  ADR-005 amendment 1 lets a deterministic rule build a form off a stored one,
+  and the rules are real: ten case endings on a genitive stem, six persons on a
+  stored first person. What they are not is complete. A seeded deployment could
+  not say `on`, could not say `oli` for any verb in the language, and had no
+  short pronoun forms at all, which is what an Estonian sentence is made of.
+
+  So the two builders store what the rules miss, and they ask the rules rather
+  than carrying a list: `unreachableSlots` for a verb and `unreachableCaseForms`
+  for a nominal. A list would be two copies of one fact, and the copy in the
+  builder is the one that goes stale in silence, because nothing about a
+  missing form looks like an error. It looks like a word that inflects less.
+
+  Anchored on the calls, because a builder can import a function and go on using
+  a table of its own, which is exactly what the weakest-case query did one
+  directory over.
+*/
+check("the harvest asks the rules which forms they cannot reach", () => {
+  for (const file of ["scripts/harvest-ekilex.ts", "scripts/expand-seed.ts"]) {
+    const src = code(file);
+    assert.match(
+      src, /unreachableSlots\(/,
+      `${file} stopped asking which verb slots the rule misses, so a seeded verb `
+        + "goes back to answering seven of its eight conjugation cards",
+    );
+    assert.match(
+      src, /unreachableCaseForms\(/,
+      `${file} stopped asking which case forms the rule misses, so the short `
+        + "pronoun forms go back to being absent from the dictionary",
+    );
+  }
+});
+
+/*
+  And the pair a learner is shown is two forms somebody wrote down.
+
+  `alsoRight` is what puts `tuppa / toasse` and `minule / mulle` on a screen and
+  on a card's back, and it may hold only forms the dictionary attests. The one
+  exception is the long illative, which is regular and is the other half of a
+  pair Estonian genuinely has; anywhere else a suffix guess printed beside a
+  retrieved form would assert the guess is a word.
+*/
+check("only the illative may offer a derived form as the pair", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /spec\.key === "ILLATIVE" && short\s*\n?\s*\?\s*retrieved\[0\] \?\? derived/,
+    "the illative's own pair rule changed shape, so either the long form stopped "
+      + "being offered beside `tuppa` or a suffix guess started standing in as a "
+      + "second attested word elsewhere",
+  );
+  assert.match(
+    derive,
+    /attested\.length === 2 \? attested\[1\] : undefined/,
+    "the pair stopped being drawn only where a case has exactly two attested "
+      + "forms, so the second of a list of variants can reach a screen: Ekilex "
+      + "records three elatives for `kodu` and the second is not one to teach",
+  );
+});
+
 check("the short illative is a required stem, not an optional one", () => {
   const derive = code("lib/estonian/derive.ts");
   assert.match(
@@ -1662,6 +1724,61 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
       at = src.indexOf("lemma: { in:", at + 1);
     }
   }
+});
+
+check("there is one assembly of the shipped dictionary", () => {
+  /*
+    `prisma/seed.ts` reads six files and writes them into `Lexeme` under a
+    conflict key of `(lemma, pos)`, keeping the first writer. A script that
+    wants to measure or audit what shipped has to read the same six and dedupe
+    the same way, or its numbers describe a dictionary nobody has.
+
+    `scripts/measure-scenes.ts` grew one copy of that and did not dedupe, so a
+    word in both the hand-checked seed and the course harvest was counted twice
+    and its sentences with it: the corpus read 15,920 attested lines where it
+    has 13,683, and the entry count read 7,127 where `SEED_SET_SIZE` says 6,083.
+    Nothing was wrong with the conclusions and every absolute figure was.
+    `scripts/audit-senses.ts` was about to be the second copy.
+
+    So the assembly lives in `scripts/lib/dictionary.ts` and the check is that
+    nothing else builds one. The seed itself is the exception it has to be: it
+    is the thing being described, it writes rows rather than reading them, and
+    it computes gradation on the way.
+  */
+  const HOME = "scripts/lib/dictionary.ts";
+  assert.ok(existsSync(HOME), `the one assembly has gone from ${HOME}`);
+
+  // Reading one of these is ordinary. Reading several is assembling the seed.
+  const sources = [
+    /prisma\/data\/nouns/, /prisma\/data\/verbs/, /prisma\/data\/other/,
+    /prisma\/data\/advanced/, /prisma\/data\/harvested/, /prisma\/data\/expanded/,
+  ];
+  /*
+    Two exceptions and both have to be exceptions.
+
+    `prisma/seed.ts` is the thing being described: it writes rows rather than
+    reading them, and it computes gradation on the way.
+
+    `lib/collections/seedSize.test.ts` is the independent count that
+    `SEED_SET_SIZE` is checked against, and independence is the whole of its
+    value. A counter that read the shared assembly could not catch the shared
+    assembly being wrong, which is exactly the fault that made this check
+    necessary. It compares its own total against `shippedDictionary()` instead,
+    so the two are pinned to each other without either one trusting the other.
+  */
+  const allowed = new Set([HOME, "prisma/seed.ts", "lib/collections/seedSize.test.ts"]);
+
+  const copies: string[] = [];
+  for (const file of [...LIB, ...APP, ...sourceFiles("scripts")]) {
+    if (allowed.has(file)) continue;
+    const src = code(file);
+    if (sources.filter((pattern) => pattern.test(src)).length > 2) copies.push(file);
+  }
+  assert.deepEqual(
+    copies, [],
+    "these assemble the shipped dictionary out of the seed's own data files. There is one, in "
+    + `${HOME}, and two of them disagree about how big the dictionary is.`,
+  );
 });
 
 check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
@@ -5402,6 +5519,7 @@ check("the layers that promise to be pure import no database, React or Next", ()
   const pure = [
     "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
+    "scenes",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
