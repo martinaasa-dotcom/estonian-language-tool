@@ -64,7 +64,27 @@ const ASK_LINES = [
   /type the form you hear/i, /write a sentence using the /i,
 ];
 
+/*
+  THE ROWS THIS RUN WROTE, WHICH IS NOT THE SAME AS THE ROWS SINCE IT STARTED.
+
+  That was the first version and it was wrong twice over. `demo-data.ts` lays
+  down two months of history at times of day of its own, so a fixture built
+  minutes ago holds rows dated later this evening than this suite started: they
+  came back as answers this round had supposedly given, they carry no slot
+  because nothing asked them for one, and the check reported 24 rows missing
+  one. Worse, the tidy-up at the end deletes what this query returns, so a run
+  straight after `npm run demo` would have deleted a slice of the fixture it was
+  measuring.
+
+  So it is the ids rather than the clock: everything already there is
+  remembered, and what is left over afterwards is what this run did.
+*/
 const before = new Date();
+const alreadyThere = new Set(
+  (await prisma.review.findMany({ where: { ownerId: OWNER }, select: { id: true } }))
+    .map((r) => r.id),
+);
+
 const browser = await launchChromium();
 const page = await browser.newPage();
 
@@ -240,10 +260,10 @@ check(
   as an answer about a meaning, and the variety half of mastery could never
   move for a verb at all.
 */
-const written = await prisma.review.findMany({
+const written = (await prisma.review.findMany({
   where: { ownerId: OWNER, reviewedAt: { gte: before } },
   select: { id: true, slot: true, rating: true, targetCase: true },
-});
+})).filter((row) => !alreadyThere.has(row.id));
 
 check("every answer reached the review log", written.length >= asked, `${written.length} rows`);
 check(
