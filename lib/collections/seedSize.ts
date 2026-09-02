@@ -41,6 +41,13 @@
  * them is `või`, which the connective unit had left out because Ekilex's first
  * candidate for it is the butter the food unit teaches.
  *
+ * The last 304 are the polite imperative, one per verb the course teaches.
+ * `eval:scene` found it: a model writing a scene set in `teie` reached for
+ * `öelge`, `andke`, `oodake` and `täitke` over and over, the gate withheld
+ * every line, and the app had no such form for any verb in the language. It is
+ * not a suffix on anything a rule holds, since `annan` goes to `andke` and
+ * `lähen` to `minge`, so it is stored like everything else no rule reaches.
+ *
  * It went *down* by twelve once, which is the only interesting thing that has
  * happened to it. The part-of-speech audit corrected 61 labels in the built
  * file, and twelve of those words were ones the course harvest also carries:
@@ -49,4 +56,4 @@
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
  */
-export const SEED_SET_SIZE = { words: 6_102, forms: 35_103 };
+export const SEED_SET_SIZE = { words: 6_102, forms: 35_407 };

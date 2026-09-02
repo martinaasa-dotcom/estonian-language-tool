@@ -490,8 +490,15 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
     const held = new Set([lemma, ...Object.values(parts)]);
     if (wantVerb) {
       for (const code of unreachableSlots({ lemma: word.lemma, pres1sg: parts.PRES_1SG })) {
-        const value = recorded.get(code)?.[0];
-        if (value && !held.has(value)) extraForms.push({ code, value });
+        /*
+          Every value, not the first. A verb slot has parallel forms exactly as
+          a case does: Ekilex records the polite imperative of `ütlema` as
+          `ütelge` and `öelge`, both are Estonian, and keeping one of them is
+          the fault the illative taught this project.
+        */
+        for (const value of recorded.get(code) ?? []) {
+          if (!held.has(value)) extraForms.push({ code, value });
+        }
       }
       /*
         `pole`. A negative with a stem of its own rather than `ei` plus the

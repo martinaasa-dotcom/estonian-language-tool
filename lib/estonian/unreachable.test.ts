@@ -24,7 +24,25 @@ describe("the verb slots a rule cannot fill", () => {
     and a seeded verb could answer seven of its eight conjugation cards.
   */
   it("names the simple past third person for an ordinary verb", () => {
-    expect(unreachableSlots({ lemma: "lugema", pres1sg: "loen" })).toEqual(["IndIpfSg3"]);
+    expect(unreachableSlots({ lemma: "lugema", pres1sg: "loen" })).toContain("IndIpfSg3");
+  });
+
+  /*
+    And the polite imperative, for every verb in the language. It is the form a
+    learner is addressed with at every counter in the country and it is not a
+    suffix on anything this module holds: `annan` goes to `andke`, `lähen` to
+    `minge`, `loen` to `lugege`. The app could not say one until `eval:scene`
+    watched a model reach for it in a `teie` scene over and over.
+  */
+  it("names the polite imperative for every verb, which no rule reaches", () => {
+    for (const verb of [
+      { lemma: "lugema", pres1sg: "loen" },
+      { lemma: "andma", pres1sg: "annan" },
+      { lemma: "minema", pres1sg: "lähen" },
+    ]) {
+      expect(unreachableSlots(verb), `${verb.lemma} needs its teie imperative stored`)
+        .toContain("ImpPrPl2");
+    }
   });
 
   it("names the whole present for olema, whose third person is on", () => {

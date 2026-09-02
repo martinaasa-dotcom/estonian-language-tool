@@ -104,7 +104,7 @@ const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema", "pidama"]);
 export const VERB_SLOTS: readonly string[] = [
   "IndPrSg1", "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",
   "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3", "ImpPrSg2",
-  "IndIpfSg1", "IndIpfSg3",
+  "ImpPrPl2", "IndIpfSg1", "IndIpfSg3",
 ];
 
 /**
@@ -113,7 +113,10 @@ export const VERB_SLOTS: readonly string[] = [
  * Asked of the rule itself rather than listed beside it, because a list of
  * exceptions kept next to the exceptions is two copies of one fact. What comes
  * back is `IndIpfSg3` for every verb, since the simple past is never derived
- * and may not be; the whole present for `olema`, whose third person is `on`;
+ * and may not be; `ImpPrPl2` for every verb, since the polite imperative is
+ * not a suffix on anything this module holds (`annan` goes to `andke`,
+ * `lähen` to `minge`, `loen` to `lugege`); the whole present for `olema`,
+ * whose third person is `on`;
  * and the imperative for `minema`, which says `mine`. `pidama` has no
  * imperative at all and Ekilex records none, so asking for it costs nothing
  * and stores nothing, which is the right shape for a form that does not exist.

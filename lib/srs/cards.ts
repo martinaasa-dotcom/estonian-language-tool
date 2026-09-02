@@ -121,29 +121,49 @@ const CONJUGATION_SLOTS: {
   { code: "IndIpfSg3", label: "lihtminevik · ta" },
   { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
   { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
+  /*
+    The polite imperative, which is the one a learner is addressed with. Every
+    counter, every receptionist and every official in the country says `öelge`,
+    `andke`, `täitke` and `oodake`, and the app could not produce one for any
+    verb in the language: it is not a suffix on anything the rule holds, since
+    `annan` goes to `andke`, `lähen` to `minge` and `loen` to `lugege`. It is
+    stored now, like every other form no rule reaches, and it was found by
+    `eval:scene`, where a model writing a `teie` scene reached for it over and
+    over and the gate withheld every line.
+  */
+  { code: "ImpPrPl2", label: "käskiv kõneviis · te!" },
 ];
 
-/** A whole form the dictionary holds under one Ekilex code, however it is spelled. */
-function attestedForm(lex: LexemeForCards, code: string, formType?: string): string | null {
-  const found = lex.forms.find(
-    (f) =>
-      f.morphCode === code ||
-      f.formType === `EKILEX:${code}` ||
-      (formType !== undefined && f.formType === formType),
-  );
-  return found?.value ?? null;
+/**
+ * Every spelling the dictionary holds under one Ekilex code.
+ *
+ * A list rather than the first, because a verb slot has parallel forms exactly
+ * as a case does: the polite imperative of `ütlema` is `ütelge` and `öelge`,
+ * and a card that took one of them would mark the other wrong. That is the
+ * illative's rule, and `Form`'s unique key carries the value so that both rows
+ * can sit under one code.
+ */
+function attestedForms(lex: LexemeForCards, code: string, formType?: string): string[] {
+  const out: string[] = [];
+  for (const f of lex.forms) {
+    const matches = f.morphCode === code
+      || f.formType === `EKILEX:${code}`
+      || (formType !== undefined && f.formType === formType);
+    if (matches && !out.includes(f.value)) out.push(f.value);
+  }
+  return out;
 }
 
 /**
  * The form for one conjugation slot: attested where the dictionary has it,
  * derived where the rule reaches, and nothing otherwise.
  */
-function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string | null {
-  const attested = attestedForm(lex, slot.code, slot.formType);
-  if (attested) return attested;
+function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string[] {
+  const attested = attestedForms(lex, slot.code, slot.formType);
+  if (attested.length > 0) return attested;
   const derived = derivedVerbForms({ lemma: lex.lemma, pres1sg: pres1sgFrom(lex.forms) })
     .find((f) => f.morphCode === slot.code);
-  return derived?.value ?? null;
+  return derived ? [derived.value] : [];
 }
 
 /** At most this many gap-fill cards per word: two sentences teach, eight nag. */
@@ -289,11 +309,12 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       case "CONJUGATION": {
         if (lex.pos !== "VERB") break;
         for (const slot of CONJUGATION_SLOTS) {
-          const value = conjugationAnswer(lex, slot);
-          if (!value) continue;
-          const answers = [slot.negative ? `ei ${value}` : value];
-          const also = slot.alsoCode ? attestedForm(lex, slot.alsoCode) : null;
-          if (also && also !== answers[0]) answers.push(also);
+          const values = conjugationAnswer(lex, slot);
+          if (values.length === 0) continue;
+          const answers = values.map((v) => (slot.negative ? `ei ${v}` : v));
+          for (const also of slot.alsoCode ? attestedForms(lex, slot.alsoCode) : []) {
+            if (!answers.includes(also)) answers.push(also);
+          }
           out.push({
             cardType: type,
             front: `${lex.lemma} → ${slot.label}`,

@@ -18,7 +18,14 @@ import { derivedVerbForms, pres1sgFrom, type DerivedVerbCode } from "@/lib/eston
  * Topped up from the dictionary's easiest verbs, so the page reads on day one.
  */
 export interface VerbExampleForm {
-  readonly code: DerivedVerbCode;
+  /**
+   * Ekilex's own code for the slot.
+   *
+   * Wider than `DerivedVerbCode`, which names what the rule can build: a form
+   * the dictionary stores because no rule reaches it fills a slot on this
+   * table too, and the polite imperative is one.
+   */
+  readonly code: string;
   readonly value: string;
   readonly origin: "EKILEX" | "STORED" | "DERIVED";
 }
@@ -85,10 +92,17 @@ export async function verbExamples(ownerId: string, limit = 4): Promise<VerbExam
 /**
  * The slots the reference shows, in the order a table reads them. A
  * particle verb's particle rides along in every form, so it is fine here.
+ *
+ * `string` rather than `DerivedVerbCode`, because that type names what the
+ * rule can build and this table shows what the app can say. The polite
+ * imperative is the difference: `annan` goes to `andke` and `lähen` to
+ * `minge`, so no rule reaches it, and the dictionary stores it like every
+ * other form no rule reaches.
  */
-const CODES: readonly DerivedVerbCode[] = [
+const CODES: readonly string[] = [
   "IndPrSg1", "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",
-  "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3", "ImpPrSg2",
+  "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3",
+  "ImpPrSg2", "ImpPrPl2",
 ];
 
 /**
@@ -124,8 +138,8 @@ export function conjugatedForms(
   */
   const firstPersonIsPrincipal = !attested.has("IndPrSg1");
   if (firstPersonIsPrincipal) attested.set("IndPrSg1", pres1sg);
-  const derived = new Map(
-    derivedVerbForms({ lemma, pres1sg }).map((f) => [f.morphCode, f] as const),
+  const derived = new Map<string, ReturnType<typeof derivedVerbForms>[number]>(
+    derivedVerbForms({ lemma, pres1sg }).map((f) => [f.morphCode as string, f]),
   );
 
   const out: VerbExampleForm[] = [];
