@@ -58,14 +58,15 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **18 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
-  Sprint, Match, Sentences, Listening, Dictation and Speaking), five games (flash cards, a picture
-  board with no English on it, a six-letter word a day in six guesses, a crossword with English
-  clues and Estonian answers, and Target for endings before the timer runs out), a two-minute daily
-  quest aimed at whatever is going worst, and six drills that sit on the page naming the thing they
-  drill: a sentence you write in a named case, verb government, long against short, your own pasted
-  Estonian, the conjugation table, and the cards you keep failing. Everything writes to the same
-  review log, so a game still moves the schedule forward.
+- **19 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
+  Sprint, Match, Sentences, Listening, Dictation and Speaking), six games (flash cards, a picture
+  board with no English on it, a picture to write one Estonian sentence about, Sõnad, a six-letter
+  word a day in six guesses, Ristsõna, a crossword with English clues and Estonian answers, and
+  Target for endings before the timer runs out), a two-minute daily quest aimed at whatever is going
+  worst, and six drills that sit on the page naming the thing they drill: a sentence you write in a
+  named case, verb government, long against short, your own pasted Estonian, the conjugation table,
+  and the cards you keep failing. Everything writes to the same review log, so a game still moves
+  the schedule forward.
 - **A mock of the state examination.** Estonia examines at A2, B1, B2 and C1; B1 is what a
   citizenship application asks for. Sit an imitation of any of them, on the real clock, out of the
   real points, under the real rule that sixty percent passes and a zero in any one part fails the
