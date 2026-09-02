@@ -3,7 +3,7 @@ import {
   CEILING, EVIDENCE_FAIR, assessReadiness, evidenceFrom, expectationFromPlacement, passChance,
   readinessFor, type ReadinessSignals,
 } from "./readiness";
-import { PASS_PCT } from "./spec";
+import { EXAM_LEVELS, PASS_PCT, type ExamLevel } from "./spec";
 import { SKILLS } from "./types";
 
 function signals(over: Partial<ReadinessSignals> = {}): ReadinessSignals {
@@ -237,6 +237,78 @@ describe("a paper actually sat", () => {
       "B1",
     );
     expect(after.confidence).toBe(before);
+  });
+});
+
+describe("the level it puts you at, and the one it points you towards", () => {
+  /*
+    ONE HOLE IN THE LADDER USED TO PROMOTE SOMEBODY PAST IT. The hub took the
+    highest passable level anywhere in the list and the lowest unpassable one,
+    which are the same two levels only while confidence falls from left to
+    right. It does not: each level's figure rests on how much of this app's own
+    word list for it has stuck, and those lists are 1,069 entries at B1 against
+    99 at C1, so meeting every C1 word the dictionary carries outscores the B2
+    underneath it. 802 of 3,125 vocabulary states came out the wrong way round,
+    and the card said it in words: "We'd bet on you passing C1 today" over "B2
+    is next".
+
+    The real availabilities are used here rather than round numbers, because
+    the gap between them is the cause.
+  */
+  const AVAILABLE = { A1: 444, A2: 651, B1: 1069, B2: 1010, C1: 99 } as const;
+
+  function known(counts: Partial<Record<ExamLevel, number>>): ReadinessSignals {
+    return signals({
+      ...established(),
+      vocabulary: Object.fromEntries(
+        EXAM_LEVELS.map((l) => [l, { known: counts[l] ?? 0, available: AVAILABLE[l] }]),
+      ) as ReadinessSignals["vocabulary"],
+    });
+  }
+
+  it("stops climbing at the first level it would not bet on", () => {
+    const top = known({ A1: 444, A2: 651, B1: 900, B2: 200, C1: 99 });
+    const readiness = assessReadiness(top);
+    const b2 = readiness.levels.find((l) => l.level === "B2")!;
+    const c1 = readiness.levels.find((l) => l.level === "C1")!;
+    // The state that produced the fault: C1 reads higher than the B2 under it.
+    expect(c1.confidence).toBeGreaterThan(b2.confidence);
+    expect(readiness.assessed).toBe("B1");
+    expect(readiness.next).toBe("B2");
+  });
+
+  it("never points somebody at a level below the one it just put them at", () => {
+    const problems: string[] = [];
+    const shares = [0, 0.15, 0.4, 0.75, 1];
+    for (const a1 of shares) for (const a2 of shares) for (const b1 of shares) {
+      for (const b2 of shares) for (const c1 of shares) {
+        const readiness = assessReadiness(known({
+          A1: Math.round(a1 * AVAILABLE.A1), A2: Math.round(a2 * AVAILABLE.A2),
+          B1: Math.round(b1 * AVAILABLE.B1), B2: Math.round(b2 * AVAILABLE.B2),
+          C1: Math.round(c1 * AVAILABLE.C1),
+        }));
+        const at = readiness.assessed ? EXAM_LEVELS.indexOf(readiness.assessed) : -1;
+        const to = readiness.next ? EXAM_LEVELS.indexOf(readiness.next) : EXAM_LEVELS.length;
+        if (at >= 0 && to <= at) {
+          problems.push(`assessed ${readiness.assessed}, next ${readiness.next}`);
+        }
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it("does not promote past a paper the learner sat and failed", () => {
+    // A bad evening at B1 in July, a pass at B2 in September. Both are facts,
+    // and the one underneath is the one that decides.
+    const readiness = assessReadiness(signals({
+      ...known({ A1: 444, A2: 600, B1: 700, B2: 500, C1: 10 }),
+      attempts: [
+        { level: "B2", pct: 71, passed: true, at: "2026-09-01" },
+        { level: "B1", pct: 48, passed: false, at: "2026-07-01" },
+      ],
+    }));
+    expect(readiness.assessed).not.toBe("B2");
+    expect(readiness.next).toBe("B1");
   });
 });
 

@@ -1609,6 +1609,28 @@ below the pass mark, a paper failed never above it. Where the two agree, which i
 nothing changes. The check is a sweep rather than three examples, because the fault lives exactly
 where the two disagree and any case small enough to write by hand is one somebody chose.
 
+**And one hole in the ladder used to promote somebody straight past it.** The hub prints two
+levels, the one it would bet on and the one to aim at next, and it took the highest passable level
+*anywhere* in the list and the lowest unpassable one. Those are the same two levels only while
+confidence falls from left to right, and it does not: each level's figure rests on how much of this
+app's own word list for it has stuck, and the lists are 1,069 entries at B1 against 99 at C1, so
+meeting every C1 word the dictionary happens to carry outscores the B2 underneath it. A sitting
+inverts it outright, since the clamp above puts a failed paper below the pass mark and a passed one
+above, and a learner can fail B1 in July and pass B2 in September. Swept over 3,125 vocabulary
+states, 802 came out the wrong way round, and the card said so in words: "We'd bet on you passing C1
+today" over "B2 is next, and the gaps below are what's in your way", and at the bottom of the range
+"We'd bet on you passing A2" to somebody whose own record showed A1 sat and failed at 20 percent.
+
+`lib/assessment/score.ts` had this exact fault and corrected it, and its header explains at length
+why: **the highest band passed consecutively from the bottom** is what every published placement
+test scores on, because a level is a claim about everything you can do at it. The exam hub was
+answering the same question by the rule the placement check was fixed away from, so the two screens
+could disagree about one learner. The climb stops at the first level the app would not bet on,
+whatever sits above it, and `next` is the level it stopped at, one above `assessed` by construction,
+so the two can no longer point in opposite directions. The per-level figures stay as they are and
+stay non-monotone, which is honest: the app knows different amounts about each level and publishes
+the evidence tier beside each number.
+
 **And the card does not write its own advice.** It said "speaking is the part standing in the way,
 predicted at 0 against the 60 a pass needs", which for somebody who has never sat a paper is not a
 prediction: a `Review` row carries no note of which mode wrote it, so the app cannot tell a dictation
