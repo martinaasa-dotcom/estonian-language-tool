@@ -1039,12 +1039,12 @@ what they were and first run still builds the same deck.
 
 | Unit | Words | What it is for |
 |---|---|---|
-| `sidesonad` | 9 | `ja`, `aga`, `või`, `et`, `sest`, `ega`, `nagu`, `ehk`, `kuni`. Joining two thoughts. |
-| `maarsonad` | 21 | `ka`, `ju`, `küll`, `siis`, `nii`, `ainult`, `mitte` and fourteen more. The words that put the weight where you mean it. |
+| `sidesonad` | 10 | `ja`, `ning`, `aga`, `või`, `et`, `sest`, `ega`, `nagu`, `ehk`, `kuni`. Joining two thoughts. |
+| `maarsonad` | 23 | `ka`, `ju`, `küll`, `siis`, `nii`, `ainult`, `vaid`, `mitte` and fifteen more. The words that put the weight where you mean it. |
 
 Every one came back from Ekilex through `npm run harvest` with four attested sentences and its own
 CEFR level, which is what makes this a request rather than this project writing Estonian: the
-syllabus named 30 lemmas and Ekilex decided whether they exist. All 30 arrived; none was dropped.
+syllabus named 33 lemmas and Ekilex decided whether they exist. All 33 arrived; none was dropped.
 
 Four things about how it was built are worth keeping.
 
@@ -1058,16 +1058,16 @@ these `konj`. Adding a part of speech for that would move the key `Lexeme` is un
 wrong.** `ehk` is first of all "perhaps" rather than "or", and `vaid` is "only" rather than "but
 rather". A gloss is the answer side of a flashcard, so a wrong one is drilled rather than displayed.
 
-**Every homonym is pinned by word id.** The adverb path of the harvest takes the first candidate
-without reporting the choice, so the pin is the only defence: `siin` is also a curtain rail, `liiga`
-is also a sports league, `aga` is also a noun and a place in Russia, `et` is also the ISO code for
-Estonian, and `või` is the butter the food unit already teaches. Six of the thirty needed one.
+**Every homonym is pinned by word id**, because `siin` is also a curtain rail, `liiga` is also a
+sports league, `aga` is also a noun and a district in Russia, `et` is also the ISO code for Estonian,
+and `või` is the butter the food unit already teaches. Six of the thirty three needed one, and every
+one was found by a person reading Ekilex entries, which is not a method. See §27.
 
-**Three words were deliberately left out.** `ning`, `vaid` and `enam` are exact synonyms of `ja`,
-`ainult` and `rohkem`, and Ekilex gives each pair the same definition. A production card asks
-"English to Estonian", so two words glossed "and" would each mark the other wrong, which is the
-fault the illative taught this project. They stay out of the course and stay out of the lexicon, and
-that cost is named here rather than hidden.
+**Nothing was left out.** `ning`, `vaid` and `enam` were dropped for a day, because each is an exact
+synonym of `ja`, `ainult` or `rohkem` and Ekilex gives each pair one definition, so a production card
+asking "English to Estonian" has two right answers and marks one wrong. That was the wrong trade and
+§27 is why: the course already shipped nine of those pairs, so dropping three of the commonest words
+in Estonian would have made one unit pay for a course-wide fault. They are in, and reported.
 
 ### What it bought
 
@@ -1088,3 +1088,78 @@ The re-harvest is worth one line of its own. It refetched all 1,371 existing wor
 and reproduced every one of them byte for byte: 30 added, none removed, **none changed**. That is
 the harvest being deterministic and Ekilex being stable, and it is the reason a full re-run is a
 safe thing to do rather than a diff nobody can review.
+
+## 27. What the unit turned up on its way in
+
+Three of the four notes written when the units landed were decisions somebody would have to take on
+trust. They are checks now, and each one found something.
+
+### The harvest was reporting an ambiguous homonym on one path out of two
+
+`docs/13-mvp-status.md` tells the story of `kohus` at length: Ekilex numbers its homonyms, the
+harvest took the first one in silence, and six course words were a different word for a year. The
+answer was that a homonym is resolved by a person or reported, never guessed through, and the report
+was written into the path that reads forms.
+
+An adverb has no forms, so it returns before reaching it. Every uninflecting word in the course was
+taking the first Ekilex candidate silently, which is how six pins in these two units came to be
+found by hand. The formless path reports now, and there is no form set to filter a rival with, so
+every other entry for the lemma is named.
+
+It went from 73 reported to 88, and the fifteen it added were **already in the course**. All of them
+come from the six units the seventeenth pass added for the words between the words, which is exactly
+where you would expect them: `all`, `eile`, `enne`, `hiljem`, `homme`, `kohe`, `koos`, `kui`, `miks`,
+`otse`, `palju`, `sees`, `teie`, `täna`.
+
+Every one was then read against Ekilex, and **all fourteen had taken the right sense**. That is
+luck rather than design, and the rivals say how much: `kohe` would have been the adjective for
+porous, `koos` a ship's course, `miks` a remixed piece of music, `sees` the peplum of a blouse, and
+`all` the name of the allative case. They are left unpinned, which is what the other path does with
+the seventy three it reports, because the report is the mechanism and a pin is for a word that was
+actually wrong.
+
+Proved by removing the pin on `siin` and watching the run name the curtain rail, then putting it
+back. A check nobody has made fail once is a check nobody knows the state of.
+
+### Nothing had ever checked a course gloss
+
+`audit:glosses` re-reads every built entry against Wiktionary and `audit:pos` does the same for its
+label. Both point at the built expansion. The course harvest, whose English is the one authored
+column in the whole pipeline and therefore the one no upstream source can be blamed for, was checked
+by people reading definitions one at a time. Two of the thirty three glosses here were wrong that
+way, and both were caught by hand.
+
+`npm run audit:senses` is the check, and it needs no key and no network because the evidence came
+back with the harvest and was sitting unread. `note` is Ekilex's own definition of the sense whose
+forms, level and sentences an entry carries, so **two course words with the same definition are one
+meaning by the Institute's own account**. That one fact reads two ways and both are faults: same
+gloss means a production card with two right answers, and different glosses mean one of them
+describes a sense the entry does not carry. The second is what would have caught `vaid`.
+
+It found **twelve production cards that mark a right answer wrong**, nine of them older than these
+units and none of them ever noticed: `defineerima` and `määratlema` are both "to define",
+`struktuur` and `ülesehitus` are both "structure", `söök` and `toit` are both food. A learner who
+types the other true answer is shown the card again until they stop.
+
+The fix belongs in the card pipeline rather than here. A production card whose answer is one of a
+synonym set should accept the set, exactly as a case card already puts every accepted spelling on
+its back and `acceptedAnswers` splits them; that needs Ekilex's definition seeded into
+`Lexeme.notes`, a column that exists and is written for phrases only. So it is its own change, and
+`lib/collections/senses.test.ts` holds the line until then: the twelve are pinned with a reason, a
+thirteenth fails, and a pair that stops colliding has to come off the list.
+
+### The label was thrown away, so a coarsening could not be told from a mistake
+
+`ADVERB` is what this course calls an uninflecting function word, which is why `kas`, `kui` and
+`palju` were already ADVERB before any of this. Ekilex calls most of these `konj`. Using the coarser
+label is right, because `pos` is half the key `Lexeme` is unique on and adding one is a migration
+rather than a rename, but the harvest was **discarding Ekilex's own label**, so nothing could tell a
+deliberate coarsening from a mistake.
+
+It is recorded now, and the same audit reads it. The table of legitimate coarsenings was set by
+narrowing until something honest complained rather than widening until nothing did: written wide
+enough to admit `s` and `v` under ADVERB, nothing needed it, so it does not have it. The one real
+widening is `num` on the two nominal labels, because an Estonian numeral declines and `kakskümmend`
+has to be a nominal here or the numbers unit has no case table to teach from.
+
+With that written down, the course's label and Ekilex's agree on **all 1,404 words**.

@@ -767,9 +767,19 @@ export const A1 = [
     Every gloss below was checked against the Ekilex entry it names rather than
     written from memory, which caught two: `ehk` is first of all "perhaps" rather
     than "or", and `vaid` is "only" rather than "but rather". Every homonym is
-    pinned by word id in the fourth slot, because the adverb path of the harvest
-    takes the first candidate without reporting the choice, and the first
-    candidate for `siin` could have been the curtain rail.
+    pinned by word id in the fourth slot; the harvest reports an unpinned one on
+    this path now, which it did not when these were written, and the first
+    candidate for `siin` would otherwise have been the curtain rail.
+
+    `ning`, `vaid` and `enam` are here despite sharing an Ekilex definition with
+    `ja`, `ainult` and `rohkem`, which makes each pair one meaning and therefore
+    two right answers to one production card. They were left out for a day on
+    that reasoning and it was the wrong trade: `npm run audit:senses` measured
+    the same collision on nine pairs the course already shipped, none of them
+    these, so dropping three of the commonest words in Estonian would have made
+    this the one unit that pays for a course-wide fault. It is reported rather
+    than dropped, which is the rule the ambiguous homonyms already follow, and
+    the audit names all twelve pairs for the card pipeline to fix properly.
   */
   unit({
     id: "sidesonad",
@@ -779,12 +789,13 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Join two thoughts into one sentence: and, but, because, that, or.",
-    blurb: "Nine words that turn a list of sentences into something somebody would say.",
+    blurb: "Ten words that turn a list of sentences into something somebody would say.",
     grammar: ["word-order"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
     requires: ["pohiverbid"],
     words: [
       ["ja", "and", "ADVERB"],
+      ["ning", "and", "ADVERB"],
       // Also a noun meaning a troubling circumstance, and a place in Russia.
       ["aga", "but", "ADVERB", 155181],
       // The conjunction, not the butter the food unit already teaches.
@@ -818,6 +829,7 @@ export const A1 = [
       ["siis", "then", "ADVERB"],
       ["nii", "so, like this", "ADVERB"],
       ["ainult", "only", "ADVERB"],
+      ["vaid", "only", "ADVERB"],
       ["mitte", "not", "ADVERB", 203249],
       ["hästi", "well", "ADVERB"],
       ["üsna", "quite, fairly", "ADVERB"],
@@ -826,6 +838,8 @@ export const A1 = [
       // Also a sports league, and a tie in musical notation.
       ["liiga", "too, too much", "ADVERB", 194792],
       ["rohkem", "more", "ADVERB", 228501],
+      // Also an adjective meaning greater in number.
+      ["enam", "more", "ADVERB", 164013],
       ["peaaegu", "almost", "ADVERB"],
       ["tavaliselt", "usually", "ADVERB"],
       ["kiiresti", "quickly", "ADVERB"],

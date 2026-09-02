@@ -150,7 +150,7 @@ already accepted, then Wiktionary, then Anu, then an honest blank for you to fil
 where it came from, and you can always overwrite it.
 
 It does carry Russian and Ukrainian, though, in the same response as the forms, and the course
-harvest keeps them: 1,397 of the 1,401 course words have a Russian equivalent and 1,195 a
+harvest keeps them: 1,400 of the 1,404 course words have a Russian equivalent and 1,198 a
 Ukrainian one, written by the same lexicographers. Pick a language in Settings and it is printed
 beside the English on the entry and on the first meeting with a word in review. The English stays,
 because it is the one gloss every entry has and the Wiktionary-derived words have no other.

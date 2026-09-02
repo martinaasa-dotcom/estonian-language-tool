@@ -28,6 +28,7 @@
     "audit:glosses": "tsx scripts/audit-glosses.ts",
     "audit:pos": "tsx scripts/audit-pos.ts",
     "audit:verbs": "tsx scripts/audit-verbs.ts",
+    "audit:senses": "tsx scripts/audit-senses.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
     "test:containment": "node scripts/test-containment.mjs",
     "harvest": "tsx scripts/harvest-ekilex.ts",

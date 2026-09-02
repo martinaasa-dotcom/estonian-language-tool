@@ -90,6 +90,8 @@ interface RawUsage { value?: string; lang?: string; public?: boolean }
 interface RawLexeme {
   lexemeProficiencyLevelCode?: string | null;
   governments?: { value?: string }[];
+  /** Ekilex's own word class: `s`, `v`, `adj`, `adv`, `konj`, `pron`, `prep`. */
+  pos?: { code?: string }[];
   meaning?: { definitions?: { lang?: string; value?: string }[] };
   usages?: RawUsage[];
   /** Ekilex's equivalents in other languages, which is where rus and ukr live. */
@@ -191,6 +193,7 @@ function pickFormSet(detail: RawDetails | null, wantVerb: boolean): RawFormSet |
 
 function extractLexemeData(detail: RawDetails | null) {
   const cefrCodes: string[] = [];
+  const posCodes: string[] = [];
   const governments: string[] = [];
   const usages: string[] = [];
   const definitions: string[] = [];
@@ -198,6 +201,25 @@ function extractLexemeData(detail: RawDetails | null) {
   const ukr: string[] = [];
   for (const lx of detail?.lexemes ?? []) {
     if (lx.lexemeProficiencyLevelCode) cefrCodes.push(lx.lexemeProficiencyLevelCode);
+    /*
+      WHAT EKILEX CALLS IT, KEPT BESIDE WHAT THIS COURSE CALLS IT.
+
+      The course has six parts of speech and Ekilex has more, so `ja` is
+      `konj` there and `ADVERB` here, which is what this course already calls
+      an uninflecting function word. That coarser label is deliberate: `pos` is
+      half the key `Lexeme` is unique on, so adding one is a migration rather
+      than a rename (docs/13-mvp-status.md §22 is the story of the last time
+      twelve words ended up in the dictionary twice over a label).
+
+      What was wrong was not the label, it was that the source's own label was
+      thrown away, so nothing could tell a deliberate coarsening from a
+      mistake. Recording it costs nothing, it is in the response already, and
+      `npm run audit:senses` reads it to report where the two disagree in a way
+      no coarsening explains.
+    */
+    for (const p of lx.pos ?? []) {
+      if (p.code && !posCodes.includes(p.code)) posCodes.push(p.code);
+    }
     for (const g of lx.governments ?? []) {
       if (g.value && !governments.includes(g.value)) governments.push(g.value);
     }
@@ -248,6 +270,7 @@ function extractLexemeData(detail: RawDetails | null) {
     .sort((a, b) => CEFR_ORDER.indexOf(a) - CEFR_ORDER.indexOf(b));
   return {
     cefr: graded[0] ?? null,
+    ekilexPos: posCodes,
     governments,
     usages: usages.slice(0, MAX_USAGES),
     definition: definitions[0] ?? null,
@@ -263,6 +286,8 @@ interface Harvested {
   gloss: string;
   pos: string;
   ekilexWordId: number;
+  /** What Ekilex calls it, beside what this course calls it. See HarvestedWord. */
+  ekilexPos: string[];
   parts: Record<string, string>;
   cefr: string | null;
   government: string | null;
@@ -327,11 +352,38 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
     */
     const first = candidates[0];
     if (!first) return { lemma, gloss, pos, error: "not in Ekilex" };
+
+    /*
+      AND A FORMLESS WORD IS AS AMBIGUOUS AS ANY OTHER.
+
+      The rule three blocks up is that a homonym is resolved by a person or
+      reported, never guessed through, and it was enforced on exactly one path.
+      This one returned before reaching it, so an adverb or a formless pronoun
+      with several Ekilex entries took the first in silence: the same fault
+      `kohus` had for a year, left open on the path that has no forms to notice
+      it with. Six of the thirty words in the two connective units needed a pin
+      and every one of them was found by hand, which is not a method.
+
+      There is no form set to test a rival against here, which is why this
+      cannot filter the way the other path does. Every other entry for the
+      lemma is a rival, and saying so is the whole job: `siin` is also a steel
+      rail a curtain runs along, `liiga` is also a sports league, and `aga` is
+      also a noun and a district in Russia.
+    */
+    if (!word.ekilexWordId && candidates.length > 1) {
+      AMBIGUOUS.push({
+        lemma, gloss,
+        took: first.wordId,
+        rivals: candidates.filter((c) => c.wordId !== first.wordId).map((c) => c.wordId),
+      });
+    }
+
     const detail = await details(first.wordId);
     const extra = extractLexemeData(detail);
     return {
       lemma, gloss, pos,
       ekilexWordId: first.wordId,
+      ekilexPos: extra.ekilexPos,
       parts: {},
       cefr: extra.cefr,
       government: null,
@@ -387,6 +439,7 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
     return {
       lemma, gloss, pos,
       ekilexWordId: candidate.wordId,
+      ekilexPos: extra.ekilexPos,
       parts,
       cefr: extra.cefr,
       government: wantVerb ? formatGovernment(extra.governments) : null,
@@ -449,6 +502,16 @@ export interface HarvestedWord {
   /** Ekilex's own proficiency level, where it records one. */
   cefr: string | null;
   ekilexWordId: number;
+  /**
+   * What Ekilex calls this word: s, v, adj, adv, konj, pron.
+   *
+   * Kept beside pos, which is this course's coarser label, because a
+   * coarsening you can see is a decision and one you cannot is a mistake.
+   * A conjunction is konj to Ekilex and ADVERB here, which is what this course
+   * already calls an uninflecting function word. npm run audit:senses reads
+   * the pair and reports a disagreement no coarsening explains.
+   */
+  ekilexPos: string[];
   /** Principal parts by formType. Unpredictable forms only. */
   parts: Record<string, string>;
   /** The case the verb demands of its complement, as Ekilex words it. */
@@ -478,6 +541,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
       "  {",
       `    lemma: ${q(r.lemma)}, gloss: ${q(r.gloss)}, pos: ${q(r.pos)}, cefr: ${r.cefr ? q(r.cefr) : "null"},`,
       `    ekilexWordId: ${r.ekilexWordId},`,
+      `    ekilexPos: [${r.ekilexPos.map(q).join(", ")}],`,
       `    parts: { ${parts} },`,
       `    government: ${r.government ? q(r.government) : "null"},`,
       `    usages: [${usages}],`,

@@ -250,10 +250,37 @@ Reading the ranked list rather than the total is what made it right, because the
 faults and only one is a missing unit: the untaught conjunctions and particles, the forms of
 `olema` that are neither stored nor derivable, and the short pronoun forms and the simple past that
 two rules above already say arrive with enrichment. A unit built off the total would have taught
-`oli` as a headword. `docs/19-situations.md` §26 has the measurements and the four decisions,
-including why three words were deliberately left out: `ning`, `vaid` and `enam` are exact synonyms
-of words in the same unit, Ekilex gives each pair one definition, and a production card asking
-"English to Estonian" would mark the other one wrong. `PRONOUN` is a part of speech for it, harvested as a nominal
+`oli` as a headword. `docs/19-situations.md` §26 has the measurements and §27 what
+building them turned up, which was three things nothing had been checking.
+
+**A homonym was reported on one path out of two.** The rule that a homonym is resolved by a person
+or reported, never guessed through, was written into the path that reads forms, and an uninflecting
+word has none, so every adverb and formless pronoun in the course took the first Ekilex candidate in
+silence. It reports now, and the fifteen words that added were already in the course, all of them
+from the six units the seventeenth pass added. All fourteen checkable ones had taken the right
+sense, which is luck rather than design: the rivals include the adjective for porous, a ship's
+course, a remixed piece of music and the name of the allative case.
+
+**Nothing had ever checked a course gloss.** `audit:glosses` and `audit:pos` both read the built
+expansion; the harvest's English, which is the one authored column in the whole pipeline, was
+checked by people reading Ekilex definitions one at a time. `npm run audit:senses` is the check and
+it needs no key, because the evidence came back with the harvest and sat unread: `note` is Ekilex's
+own definition of the sense an entry carries, so two course words with the same definition are one
+meaning, and that reads two ways. Same gloss is a production card with two right answers; different
+glosses mean one of them describes a sense the entry does not carry, which is the fault that put
+"but rather" on `vaid`. It found **twelve production cards that mark a right answer wrong**, nine of
+them older than these units: `defineerima` and `määratlema` are both "to define", `söök` and `toit`
+are both food. The fix belongs in the card pipeline, where a production card whose answer is one of
+a synonym set should accept the set the way a case card already does, and that needs Ekilex's
+definition seeded into `Lexeme.notes`. `lib/collections/senses.test.ts` pins the twelve with a
+reason until then and fails on a thirteenth. `ning`, `vaid` and `enam` were dropped for a day to
+avoid three of those twelve and are back, because deleting three of the commonest words in Estonian
+to dodge a course-wide fault is one unit paying for everybody.
+
+**And Ekilex's own part of speech was being discarded**, so a deliberate coarsening could not be
+told from a mistake. `ekilexPos` records it. The table of legitimate coarsenings was set by
+narrowing until something honest complained rather than widening until nothing did, and with it
+written down the course's label and Ekilex's agree on all 1,404 words. `PRONOUN` is a part of speech for it, harvested as a nominal
 because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
 `nemad`) is kept the way an adverb is, attested and formless, rather than dropped. The pronoun
 unit builds no case cards from the seed alone, because a pronoun's everyday case forms are the
