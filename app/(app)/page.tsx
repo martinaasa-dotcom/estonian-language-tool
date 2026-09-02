@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
-import { ArrowRight, Flame, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, Flame, Shield, Sparkles, Target } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -14,6 +14,7 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
+import { grammarTerm } from "@/lib/estonian/terms";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
@@ -501,6 +502,43 @@ export default async function TodayPage() {
     own borders, because a quest that is done is drawn as a filled row and
     losing that would lose the only thing the panel says at a glance.
   */
+  /*
+     THE DAILY QUEST, ON THE SCREEN THAT KNOWS WHAT IS GOING WRONG.
+
+     Held to `settled` rather than shown from day one, and the reason is the
+     rule the disclosure module states: this is a figure computed from the
+     learner's own log, and on a log with nothing in it the card would be a
+     button promising two minutes on weaknesses nobody has measured yet. That
+     is the "does this say something true and useful on an empty log" test, and
+     this one fails it where the word of the day passes.
+  */
+  const weakest = struggle?.cases[0] ?? null;
+  const questCard = shows(stage, "quest") ? (
+    <Card tone="accent">
+      <SectionTitle hint="two minutes">Daily quest</SectionTitle>
+      <p className="mt-1 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {weakest ? (
+          <>
+            Your{" "}
+            {/* Named in Estonian, because that is what a class calls it and a
+                learner who has only met "inessive" cannot follow their teacher. */}
+            <span lang="et" className="font-semibold">
+              {grammarTerm(weakest.grammCase)?.et ?? weakest.grammCase.toLowerCase()}
+            </span>{" "}
+            is at {weakest.accuracy}%. Two minutes on it.
+          </>
+        ) : (
+          "Two minutes on the cards you get wrong most often."
+        )}
+      </p>
+      <div className="mt-3">
+        <ButtonLink href="/quest" variant="primary">
+          <Target size={15} aria-hidden /> Start the quest
+        </ButtonLink>
+      </div>
+    </Card>
+  ) : null;
+
   const questsCard = shows(stage, "quests") ? (
     <Card>
       <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
@@ -698,6 +736,7 @@ export default async function TodayPage() {
         <Stack className="min-w-0">
           {doNowCard}
           {stage === "arriving" && practiceCard}
+          {questCard}
           {scheduleCard}
           {planCard}
           {struggleCard}

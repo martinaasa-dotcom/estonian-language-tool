@@ -84,6 +84,21 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "three different forms.",
   },
   {
+    /*
+      Reached from Today, where it is a card rather than a row: the round is
+      about what is going wrong *today* and that is the screen that knows. It
+      stays in the table so the palette finds it, and out of `QUICK_MODES` for
+      the reason Flash cards is: six rounds, six hues, and a seventh tile would
+      have to borrow one and read as a duplicate.
+    */
+    href: "/quest", title: "Daily quest", subtitle: "Two minutes, your weak spots",
+    icon: "Target", tone: "accent", group: "targeted", note: "From your log",
+    within: "/",
+    blurb:
+      "Two minutes on the cases you get wrong most often, drawn from your own log. " +
+      "It grades like any other round, so the cards you miss come back sooner.",
+  },
+  {
     href: "/review/sprint", title: "Case Sprint", subtitle: "60 seconds", icon: "Zap", tone: "butter",
     group: "quick", note: "No score yet",
     blurb: "Sixty seconds, as many case forms as you can manage, drawn from the cards you are weakest on.",
