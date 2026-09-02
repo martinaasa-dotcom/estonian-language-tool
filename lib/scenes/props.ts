@@ -85,6 +85,15 @@ export interface DrawnProp {
   readonly lemmas: readonly string[];
   /** What was drawn, for the recency rule in §5. */
   readonly value: string;
+  /**
+   * Set when every candidate was in `avoid` and one was drawn regardless.
+   *
+   * §5 promises no prop value repeats within three runs, and a pool of three
+   * cannot keep it. A pool too thin for the promise is a fact about the scene
+   * and is **reported rather than papered over**, the way `paper.ts` reports a
+   * shortfall: the alternative is a card that comes out empty.
+   */
+  readonly repeated?: true;
 }
 
 /** The card as a whole: what you are doing here, and the facts you were given. */
@@ -110,18 +119,19 @@ export function drawProp(
   avoid: ReadonlySet<string> = new Set(),
 ): DrawnProp {
   switch (spec.kind) {
-    case "word": {
-      const lemma = pick(spec.oneOf, random, avoid);
-      return { slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma };
-    }
+    case "word":
     case "weekday": {
       const lemma = pick(spec.oneOf, random, avoid);
-      return { slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma };
+      return {
+        slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma,
+        ...worn(lemma, avoid),
+      };
     }
     case "time": {
       const slots = halfHours(spec.from, spec.to);
       const value = pick(slots, random, avoid);
       return {
+        ...worn(value, avoid),
         slot: spec.slot,
         card: `The time you were given: ${value}`,
         // `14:00`, `14.00` and `14` are all how somebody writes it down.
@@ -133,7 +143,10 @@ export function drawProp(
     case "number": {
       const span = Array.from({ length: spec.max - spec.min + 1 }, (_, i) => String(spec.min + i));
       const value = pick(span, random, avoid);
-      return { slot: spec.slot, card: `${spec.says} ${value}`, literal: [value], lemmas: [], value };
+      return {
+        slot: spec.slot, card: `${spec.says} ${value}`, literal: [value], lemmas: [], value,
+        ...worn(value, avoid),
+      };
     }
     case "code": {
       /*
@@ -169,6 +182,10 @@ export function propBySlot(card: RoleCard, slot: string): DrawnProp | undefined 
  * its recency window is a fact worth reporting (§5 says a run says so rather
  * than quietly cycling) and is not a reason for a card to come out empty.
  */
+function worn(value: string, avoid: ReadonlySet<string>): { repeated?: true } {
+  return avoid.has(value) ? { repeated: true } : {};
+}
+
 function pick(from: readonly string[], random: () => number, avoid: ReadonlySet<string>): string {
   const fresh = from.filter((value) => !avoid.has(value));
   const pool = fresh.length > 0 ? fresh : from;

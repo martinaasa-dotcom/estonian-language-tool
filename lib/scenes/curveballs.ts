@@ -204,6 +204,16 @@ export interface DrawnCurveball {
   readonly id: CurveballId;
   /** The index into `beats`. Never 0. */
   readonly at: number;
+  /**
+   * Set when this one was seen in the last five runs and was drawn anyway.
+   *
+   * §5 promises no curveball repeats within five, and a scene that admits fewer
+   * than five cannot keep it. A pool too thin for the promise is a fact about
+   * the catalogue and is **reported rather than papered over**, the way
+   * `paper.ts` reports a shortfall: the alternative is a run with nothing in it,
+   * or a quiet cycle that nobody could measure.
+   */
+  readonly repeated?: true;
 }
 
 /**
@@ -222,6 +232,10 @@ export interface DrawnCurveball {
  * the requirement has to resolve inside the scene's word list, so `admits` is
  * given the ids the scene allows and `catalogue.test.ts` is what checks that
  * list word by word.
+ *
+ * `prefer` is the persona's leans, which is how an agenda becomes something
+ * that happens rather than a label on a card: the one following the form draws
+ * `their-order`, the brisk one draws `faster`.
  */
 export function drawCurveballs(
   admits: readonly CurveballId[],
@@ -230,6 +244,7 @@ export function drawCurveballs(
   level: string,
   random: () => number,
   avoid: ReadonlySet<string> = new Set(),
+  prefer: readonly CurveballId[] = [],
 ): DrawnCurveball[] {
   const gap = 2;
   const pool = CURVEBALLS
@@ -242,20 +257,32 @@ export function drawCurveballs(
   let dear = 0;
 
   /*
-    FRESH ONES FIRST, AND SHUFFLED INSIDE EACH GROUP.
+    FOUR GROUPS, EACH SHUFFLED INSIDE ITSELF, AND NEVER A SORT.
 
-    §5 promises no curveball repeats within five runs, and the promise is kept
-    by preference rather than by refusing to draw: a catalogue thinner than the
-    window is a fact about the catalogue and not a reason for a run to have
-    nothing in it. Two groups rather than a sort, because a sort followed by a
-    shuffle is a shuffle, which is what the first version of this was and what
-    its test caught. The cost filter is why it mattered: a budget of two admits
-    the cheap ones far more often, and two of the three a run had just seen were
-    cheap, so the draw was worse than chance at avoiding them.
+    A sort followed by a shuffle is a shuffle. That was the first version of
+    this and its test caught it; then the persona's leans were expressed by
+    pre-ordering the `admits` list one file up, and *that* was the same fault
+    again, because this function shuffles whatever it is handed. So both
+    preferences live here, where the shuffle is, and they are nested in the
+    order they matter.
+
+    Freshness leads because §5 makes it a promise: no curveball repeats within
+    five runs. A lean is flavour, so it orders within each freshness group, and
+    it is a preference rather than a filter because a persona who leans nowhere
+    the scene admits would otherwise get no curveballs at all.
+
+    The cost filter is why the ordering mattered enough to measure: a budget of
+    two admits the cheap ones far more often, so a draw that had lost its
+    ordering was worse than chance at avoiding what a run had just seen.
   */
+  const group = (fresh: boolean, leaned: boolean) => shuffle(
+    pool.filter((c) => !avoid.has(c.id) === fresh && prefer.includes(c.id) === leaned),
+    random,
+  );
+  const stale = new Set(pool.filter((c) => avoid.has(c.id)).map((c) => c.id));
   const order = [
-    ...shuffle(pool.filter((c) => !avoid.has(c.id)), random),
-    ...shuffle(pool.filter((c) => avoid.has(c.id)), random),
+    ...group(true, true), ...group(true, false),
+    ...group(false, true), ...group(false, false),
   ];
   for (const candidate of order) {
     if (used.has(candidate.id)) continue;
@@ -265,7 +292,9 @@ export function drawCurveballs(
     const at = placeFor(beats, drawn, gap, random);
     if (at === null) break;
 
-    drawn.push({ id: candidate.id, at });
+    drawn.push(stale.has(candidate.id)
+      ? { id: candidate.id, at, repeated: true }
+      : { id: candidate.id, at });
     used.add(candidate.id);
     spent += candidate.cost;
     if (candidate.cost >= DEAR) dear += 1;

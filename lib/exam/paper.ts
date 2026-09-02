@@ -71,31 +71,16 @@ export interface PoolWord {
 
 // ── The random number generator ──────────────────────────────────────────────
 
-/**
- * A seeded generator, so a paper is reproducible.
- *
- * mulberry32, thirty lines shorter than pulling in a dependency and more than
- * good enough to shuffle a word list. The seed is hashed from a string so a
- * paper can be addressed by something a person can put in a URL.
- */
-export function seedFrom(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
+/*
+  `seedFrom` and `rng` moved to `lib/random/seeded.ts` when `lib/scenes/` needed
+  the same property for the same reason. Re-exported here because this module's
+  own header is about them and because the exam is where the rule that they may
+  never change was first written down. The sequence is unchanged: the move was
+  a move.
+*/
+import { rng, seedFrom } from "@/lib/random/seeded";
 
-export function rng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export { rng, seedFrom };
 
 /**
  * The one shuffle not folded into `lib/random/shuffle.ts`, on purpose.

@@ -88,11 +88,12 @@ const DOCTOR: SceneSpec = {
   role: "You are a patient. Something has been wrong since earlier this week and you would like to be seen.",
   props: [
     {
-      kind: "word", slot: "symptom", oneOf: ["valu", "palavik", "haigus"],
+      kind: "word", slot: "symptom", oneOf: ["valu", "palavik", "haigus", "haige", "väsinud"],
       says: "What is wrong: read it off the words below and say it in your own sentence.",
     },
     {
-      kind: "weekday", slot: "since", oneOf: ["esmaspäev", "teisipäev", "kolmapäev"],
+      kind: "weekday", slot: "since",
+      oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
       says: "It started earlier this week, on the day below.",
     },
     { kind: "time", slot: "time", from: 9, to: 16 },
@@ -217,11 +218,12 @@ const LANDLORD: SceneSpec = {
   role: "You rent a flat. Something in it stopped working earlier this week and you are ringing the person you rent from.",
   props: [
     {
-      kind: "word", slot: "problem", oneOf: ["küte", "elekter", "remont"],
+      kind: "word", slot: "problem", oneOf: ["küte", "elekter", "remont", "mööbel", "aken", "uks"],
       says: "What has gone wrong: the word is below, and the sentence is yours.",
     },
     {
-      kind: "weekday", slot: "since", oneOf: ["esmaspäev", "teisipäev", "kolmapäev"],
+      kind: "weekday", slot: "since",
+      oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
       says: "It has been like this since the day below.",
     },
     { kind: "time", slot: "time", from: 8, to: 18 },
@@ -348,7 +350,7 @@ const COUNTER: SceneSpec = {
   role: "You have a form to hand in. You were given a reference for it and you are at the desk that takes them.",
   props: [
     {
-      kind: "word", slot: "paper", oneOf: ["avaldus", "dokument", "luba"],
+      kind: "word", slot: "paper", oneOf: ["avaldus", "dokument", "luba", "arve", "allkiri"],
       says: "What you have come to hand in is the word below.",
     },
     /*
