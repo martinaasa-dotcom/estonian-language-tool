@@ -2620,6 +2620,21 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   parking space. Replacing a dash between two independent clauses with a comma
   makes a splice and reads worse than the dash did: use a full stop. A separator in a label takes
   the middot the app already uses.
+- **A character a reader cannot see is written down by name, and that is a rule about the file
+  rather than about the string.** `lib/research/corpus.ts` joined a cell's key parts on a NUL, which
+  is the right separator, since it cannot occur inside a dimension value and so two keys collide only
+  if they really are the same key. It was typed as the byte. A literal control character makes the
+  file **binary** to every text tool that opens it: `grep` stops printing matches and says "binary
+  file matches", which is how this was found, by searching that very file for its own anonymity floor
+  and getting nothing back. `git diff` and a review go the same way, and an editor or a paste can drop
+  one leaving no visible change. It happened twice more in one session here, both times a `\b` in a
+  Python heredoc becoming a backspace inside a regular expression, so a check could no longer fire on
+  anything and passed. `"\0"` and `"\b"` are the same strings at runtime and leave a text file on
+  disk, which is the argument `DASH_SEPARATED` already makes one directory over. Tab, newline and
+  carriage return are how a text file is laid out and are allowed; `lib/auth/access.test.ts` is
+  exempt by name, because the NUL in it is the thing under test, and the exemption is checked for
+  staleness so it cannot become a parking space.
+
 - **Some code reads a dash rather than writing one, and a sweep cannot tell those apart.** The word
   list separator in `ImportPanel` and the punctuation class in `lib/estonian/dictation.ts` were
   both rewritten once, silently: a pasted list stopped splitting and a stray dash in an Ekilex

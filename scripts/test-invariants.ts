@@ -5440,6 +5440,57 @@ check("the research note names the gradation values the classifier assigns", () 
   word down has to write its picture down too, so a third one cannot be added
   knowing only half the rule.
 */
+/*
+  A CHARACTER A READER CANNOT SEE IS WRITTEN DOWN BY NAME.
+
+  `lib/research/corpus.ts` joined a cell's key parts on a NUL, which is the
+  right separator (it cannot occur inside a dimension value, so two keys collide
+  only if they really are the same key) and was typed as the byte itself. A
+  literal control character makes the file **binary** to every text tool that
+  reads it: `grep` stops printing matches and says "binary file matches"
+  instead, which is how this was found, by searching that very file for its
+  anonymity floor and getting no lines back. `git diff` and a review go the same
+  way, and an editor or a paste can drop one leaving no visible change.
+
+  Twice in one session a literal control character got into a file here and
+  changed what a regular expression matched, invisibly, both times through a
+  heredoc: a `\b` written in a Python string is a backspace, and the check it
+  was in could no longer fire on anything. `"\\0"` and `"\\b"` are the same
+  strings at runtime and leave a text file on disk. It is the argument
+  `DASH_SEPARATED` already makes: a character a reader cannot see is named
+  rather than pasted.
+
+  Tab, newline and carriage return are how a text file is laid out and are
+  allowed. `lib/auth/access.test.ts` is exempt by name, because the NUL in it is
+  the thing under test: it checks that a path with one embedded is refused, and
+  writing that as an escape would be testing a different string.
+*/
+check("no source file holds a control character it could have named", () => {
+  const EXCUSED = new Map([
+    ["lib/auth/access.test.ts", "The NUL is the subject: it checks that a path with one embedded is refused."],
+  ]);
+  const NAMED = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
+
+  for (const file of [...ALL, ...sourceFiles("scripts"), ...sourceFiles("prisma")]) {
+    if (EXCUSED.has(file)) continue;
+    const raw = read(file);
+    const at = raw.search(NAMED);
+    if (at < 0) continue;
+    const code = raw.charCodeAt(at);
+    assert.fail(
+      `${file}:${raw.slice(0, at).split("\n").length}: holds U+${code.toString(16).padStart(4, "0")} `
+      + "as a literal character. Write it as an escape: a control character makes the file binary to "
+      + "grep and to git diff, and an editor can drop it leaving no visible change.",
+    );
+  }
+
+  // And the exemption stays honest: an entry for a file that no longer holds
+  // one is a parking space for the next person who wants to paste a byte.
+  for (const [file] of EXCUSED) {
+    assert.match(read(file), NAMED, `${file} no longer holds a control character, so its exemption is stale`);
+  }
+});
+
 check("the emoji board is unique by picture as well as by word", () => {
   const file = join("app", "(app)", "review", "emoji", "page.tsx");
   const source = code(file);
