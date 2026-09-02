@@ -2142,6 +2142,14 @@ export async function deleteMyAccount(confirmation: string) {
         is the row that ties the report to a person.
       */
       await tx.suggestion.deleteMany({ where: { ownerId } });
+      /*
+        Every conversation they had and every word one of them needed.
+        `SceneRun` is append-only like `Review` and `Assessment`, and this is
+        the single exception all three share: the promise on /privacy outranks
+        the rule. The gaps go first because they point at a run.
+      */
+      await tx.sceneGap.deleteMany({ where: { ownerId } });
+      await tx.sceneRun.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
       /*
         And the attribution on anything they reviewed, for the same reason the

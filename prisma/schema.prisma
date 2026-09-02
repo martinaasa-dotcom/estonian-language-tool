@@ -582,3 +582,65 @@ model Suggestion {
   @@index([ownerId, createdAt])
   @@index([lexemeId])
 }
+
+/// One conversation, from the desk to the debrief.
+///
+/// APPEND-ONLY, like `Review` and `Assessment`, with the same single exception:
+/// somebody erasing their own account, because the promise on /privacy outranks
+/// the rule. A run is written once when it ends; a second attempt is another
+/// row, and there is no update path.
+///
+/// NOTHING IN HERE IS TRUE ABOUT THE LEARNER. The role card is fiction
+/// (docs/19-situations.md §3), which is a marking rule and a legal one: a
+/// health-centre scene where somebody typed about their own symptoms would be
+/// Article 9 special category data, and no scene asks for a real document
+/// number either.
+model SceneRun {
+  id         String @id @default(uuid())
+  ownerId    String
+  sceneId    String
+  /// The draw is a pure function of this, so the server rebuilds the run to
+  /// re-mark it and a reload gives back the same conversation (ADR-022).
+  seed       String
+  level      String
+  /// The curveball budget this run was played at. 0 is Textbook.
+  difficulty Int
+  /// JSON: the persona, the card, the curveballs drawn, and every turn with its
+  /// provenance. The learner's own turns are in here and are fiction about a
+  /// card, which is what makes the table safe to hold at all.
+  transcript String @default("{}")
+  /// JSON: which required beats were met, and how it ended. Counts and an
+  /// outcome, never a percentage: a mark on a conversation is a claim about
+  /// somebody's Estonian and only the mock exam may make one (ADR-022).
+  outcome    String @default("{}")
+
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  @@index([ownerId, startedAt])
+  @@index([ownerId, sceneId, startedAt])
+}
+
+/// A word a conversation needed and the learner did not have.
+///
+/// A child table rather than a field inside the transcript, so "the words my
+/// conversations keep needing" is one indexed query instead of a JSON scan over
+/// every run a person has ever played.
+model SceneGap {
+  id      String @id @default(uuid())
+  ownerId String
+  runId   String
+  /// The dictionary entry, where the help button found one.
+  lexemeId String?
+  /// The word as the learner reached for it, which is the only handle a word
+  /// the dictionary could not vouch for has.
+  lemma    String?
+  /// `ASKED` (the help button) or `STALLED` (the beat could not be met).
+  kind     String
+
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, createdAt])
+  @@index([ownerId, lexemeId])
+  @@index([runId])
+}

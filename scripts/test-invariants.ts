@@ -8803,6 +8803,38 @@ check("a case is named only when one case claims the spelling", () => {
  * holding only the text cannot print the chip, and a composed line cannot be
  * read as a lexicographer's by a screen that forgot to ask.
  */
+/**
+ * A CLASS SEES EFFORT, NEVER A TRANSCRIPT.
+ *
+ * ADR-019 stands unchanged and `docs/19-situations.md` §18 names the way this
+ * module would break it: a roster row may say how many conversations somebody
+ * finished, and the class panel may say which objective the group most often
+ * misses, and a transcript belongs to one person. A `SceneRun` holds every turn
+ * a learner typed, so a teacher reading one would be reading their practice
+ * attempts, which is the thing the classroom boundary exists to prevent.
+ *
+ * Asserted as an absence, which is the only way to check a rule about what a
+ * query must not select. `lib/classroom/` is where a group is rolled up, and
+ * nothing in it may name the table at all: a count is a `count`, and a count
+ * cannot leak a sentence.
+ */
+check("a class cannot read a conversation", () => {
+  for (const file of LIB.filter((f) => f.startsWith("lib/classroom/") && !f.includes(".test."))) {
+    const src = code(file);
+    assert.doesNotMatch(
+      src,
+      /prisma\.sceneRun\.(findMany|findFirst|findUnique)/,
+      `${file} reads a scene transcript. A class sees effort and aggregate, never ` +
+      "one learner's turns (ADR-019, docs/19-situations.md §18).",
+    );
+    assert.doesNotMatch(
+      src,
+      /transcript/,
+      `${file} mentions a transcript. Nothing in a class roll-up may.`,
+    );
+  }
+});
+
 check("the scene gate has one implementation, and a line says where it came from", () => {
   const evalScript = code("scripts/eval-scene.ts");
   assert.match(
