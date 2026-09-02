@@ -33,6 +33,7 @@
     "test:containment": "node scripts/test-containment.mjs",
     "wordlist": "tsx scripts/build-wordlist.ts",
     "harvest": "tsx scripts/harvest-ekilex.ts",
+    "harvest:semantics": "tsx scripts/harvest-semantics.ts",
     "build:frequency": "tsx scripts/build-frequency.ts",
     "scenes:template": "tsx scripts/scene-template.ts",
     "scenes:import": "tsx scripts/import-scene-answers.ts",
