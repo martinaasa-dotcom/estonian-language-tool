@@ -176,6 +176,59 @@ describe("a paper actually sat", () => {
     expect(withFail.confidence).toBeLessThan(without);
   });
 
+  /*
+    THE HEADLINE AND THE NUMBER BESIDE IT ARE ONE CLAIM, and for a while they
+    were two. The card reads "You sat this and scored 85 percent, which is a
+    pass" over a confidence figure, and the figure was a blend: two thirds the
+    sitting, one third a model of coverage times recall. Coverage is the share
+    of *this app's* word list for the level that has stuck, which is not the
+    examination's list, so a learner who studied elsewhere and sat the paper to
+    check can pass it having met sixty of the five hundred words the course
+    happens to teach. Their third of the blend was single digits, and 90 of the
+    288 states swept here put a pass over a confidence under half.
+
+    So the sweep, rather than three examples: the fault only appears where the
+    two disagree, and any example small enough to write by hand is one somebody
+    picked.
+  */
+  it("never prints a confidence that argues with the sitting above it", () => {
+    const contradictions: string[] = [];
+    for (const known of [5, 60, 300, 480]) {
+      for (const accuracy of [45, 70, 92]) {
+        for (const reviews of [30, 400, 3000]) {
+          for (const pct of [12, 45, 59, 60, 72, 85, 98]) {
+            const passed = pct >= PASS_PCT;
+            const state = signals({
+              vocabulary: {
+                A1: { known: 100, available: 100 },
+                A2: { known: 100, available: 100 },
+                B1: { known, available: 500 },
+                B2: { known: 0, available: 500 },
+                C1: { known: 0, available: 500 },
+              },
+              accuracy: { pct: accuracy, reviews },
+              skills: {
+                writing: { attempts: 20, pct: accuracy },
+                listening: { attempts: 5, pct: accuracy },
+                reading: { attempts: 40, pct: accuracy },
+                speaking: { attempts: 0, pct: 0 },
+              },
+              attempts: [{ level: "B1", pct, passed, at: "2026-08-01" }],
+              totalReviews: reviews,
+            });
+            const { confidence, verdict } = readinessFor(state, "B1");
+            const saysPass = verdict.includes("which is a pass");
+            expect(saysPass).toBe(passed);
+            if (saysPass !== confidence >= 50) {
+              contradictions.push(`${verdict} beside ${confidence}%`);
+            }
+          }
+        }
+      }
+    }
+    expect(contradictions).toEqual([]);
+  });
+
   it("says nothing about the levels it was not sat at", () => {
     const base = established();
     const before = readinessFor(base, "B1").confidence;

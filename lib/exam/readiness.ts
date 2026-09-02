@@ -321,10 +321,40 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
 
   const modelled = Math.round(SKILLS.reduce((sum, s) => sum + expected[s], 0) / SKILLS.length);
 
-  // A sitting of this very paper is the best evidence there is. It does not
-  // replace the model outright, because one bad evening is one bad evening.
+  /*
+    A sitting of this very paper is the best evidence there is. It does not
+    replace the model outright, because one bad evening is one bad evening.
+
+    BUT THE BLEND MAY NOT CARRY THE FIGURE ACROSS THE LINE THE SITTING SETTLED,
+    and it did. The model is a coverage share times a recall figure, and
+    coverage is how much of *this app's* word list for the level a learner has
+    met, which is not the examination's: somebody who has learned Estonian
+    elsewhere and taken this paper to check can pass it knowing sixty of the
+    five hundred words the course happens to teach. Their coverage is 0.12,
+    their modelled score is single digits, and thirty-five percent of that is
+    enough to drag a real result under sixty.
+
+    Swept over the combinations a learner can actually be in: **90 of 288 put
+    "You sat this and scored 85 percent, which is a pass" over a confidence of
+    46**, and a sitting at exactly the pass mark read 25. That is a headline
+    being a second opinion on the sentence under it, which is the fault
+    `lib/assessment/plan.ts` has a paragraph about; here it is worse, because
+    one of the two is a fact and the other is an estimate of it.
+
+    "One bad evening" is an argument for not letting a low score condemn
+    somebody, and it is not an argument for letting a low model overrule a high
+    sitting. So the model still moves the number, and it moves it *within* what
+    the sitting established: a paper passed cannot be modelled below a pass, and
+    a paper failed cannot be modelled above one. Where the two agree, which is
+    most of the time, nothing changes at all.
+  */
   const sat = signals.attempts.find((a) => a.level === level);
-  const expectedTotal = sat ? Math.round(0.65 * sat.pct + 0.35 * modelled) : modelled;
+  const blended = sat ? Math.round(0.65 * sat.pct + 0.35 * modelled) : modelled;
+  const expectedTotal = !sat
+    ? blended
+    : sat.passed
+      ? Math.max(blended, PASS_PCT)
+      : Math.min(blended, PASS_PCT - 1);
 
   const evidence = evidenceFrom(signals);
   const spread = spreadFor(evidence, Boolean(sat));

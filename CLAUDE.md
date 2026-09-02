@@ -1591,6 +1591,24 @@ and fails on one that does not also read the tier. It is anchored on a **member 
 word: written loosely first, the word "evidence" sitting in a sentence of copy on the card satisfied
 it after the tier had been deleted, which is the same trap `code()` exists for one layer up.
 
+**And a model may not overrule a fact, only move it about inside one.** A sitting of a paper is
+the best evidence this app will ever have of whether somebody passes it, and the card puts the
+result and a confidence percentage side by side: "You sat this and scored 85 percent, which is a
+pass", over 46. Both were true of their own arithmetic. The figure was two thirds the sitting and
+one third a model of coverage times recall, and coverage is the share of *this app's* word list for
+the level that has stuck, which is not the examination's list. Somebody who learned Estonian in a
+class and sat the mock to check can pass it knowing sixty of the five hundred words the course
+happens to teach: their coverage is 0.12, their third of the blend is single digits, and it drags a
+real result under the pass mark. Swept over the states a learner can be in, 90 of 288 contradicted
+themselves and one sitting at exactly 60 read 25 percent.
+
+"One bad evening is one bad evening" is the argument for blending at all, and it is an argument
+about a *low* score, not a licence for a low model to overrule a high sitting. So the blend still
+moves the number and moves it within what the sitting settled: a paper passed is never modelled
+below the pass mark, a paper failed never above it. Where the two agree, which is most of the time,
+nothing changes. The check is a sweep rather than three examples, because the fault lives exactly
+where the two disagree and any case small enough to write by hand is one somebody chose.
+
 **And the card does not write its own advice.** It said "speaking is the part standing in the way,
 predicted at 0 against the 60 a pass needs", which for somebody who has never sat a paper is not a
 prediction: a `Review` row carries no note of which mode wrote it, so the app cannot tell a dictation
