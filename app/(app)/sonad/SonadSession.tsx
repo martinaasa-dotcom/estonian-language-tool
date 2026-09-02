@@ -113,6 +113,8 @@ export function SonadSession({ puzzle, day, guessable }: {
   const [ready, setReady] = useState(false);
   const [kept, setKept] = useState(puzzle.inDeck);
   const recorded = useRef(false);
+  /** In flight, so a re-render does not send the same round twice. */
+  const sending = useRef(false);
 
   const words = useMemo(() => new Set(guessable), [guessable]);
   const outcome = outcomeOf(guesses, puzzle.answer);
@@ -142,9 +144,31 @@ export function SonadSession({ puzzle, day, guessable }: {
   */
   useEffect(() => {
     if (!ready || !over || recorded.current) return;
-    recorded.current = true;
-    saveBoard({ day, guesses, recorded: true });
-    void recordSonad(day, guesses);
+    /*
+      Marked as sent only once it has been. The obvious order is to set the
+      flag first and fire, and that loses the round outright on a train: the
+      board reopens tomorrow already recorded and the grade is gone. `Review`
+      is append-only, so the thing to protect against is a *duplicate*, and the
+      in-flight guard below does that within the tab while the saved flag does
+      it across reloads. A round that could not be sent is simply sent again
+      the next time the board is opened, which is the same day.
+    */
+    if (sending.current) return;
+    sending.current = true;
+    void recordSonad(day, guesses)
+      .then((result) => {
+        if (!result?.ok) return;
+        recorded.current = true;
+        saveBoard({ day, guesses, recorded: true });
+      })
+      /*
+        A round that could not be sent leaves the flag alone and is sent again
+        the next time the board opens. Caught rather than left to reject: an
+        unhandled rejection is a page error, and the browser suites read those
+        as faults, which a learner on a train is not.
+      */
+      .catch(() => {})
+      .finally(() => { sending.current = false; });
   }, [ready, over, day, guesses]);
 
   const submit = useCallback(() => {

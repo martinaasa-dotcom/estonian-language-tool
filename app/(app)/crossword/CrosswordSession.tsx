@@ -34,6 +34,8 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
   const [helped, setHelped] = useState<number[]>([]);
   const [ready, setReady] = useState(false);
   const recorded = useRef(false);
+  /** In flight, so a re-render does not send the same grid twice. */
+  const sending = useRef(false);
   const cells = useRef(new Map<number, HTMLInputElement>());
 
   useEffect(() => {
@@ -62,9 +64,26 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
   */
   useEffect(() => {
     if (!ready || !done || recorded.current) return;
-    recorded.current = true;
-    saveGrid({ day, typed, helped, recorded: true });
-    void recordCrossword(day, typed, helped);
+    // Marked as sent only once it has been, for the reason Sõnad's own
+    // reporting gives: setting the flag first loses the round outright on a
+    // train, and `Review` being append-only means the thing to guard is a
+    // duplicate rather than a retry.
+    if (sending.current) return;
+    sending.current = true;
+    void recordCrossword(day, typed, helped)
+      .then((result) => {
+        if (!result?.ok) return;
+        recorded.current = true;
+        saveGrid({ day, typed, helped, recorded: true });
+      })
+      /*
+        A round that could not be sent leaves the flag alone and is sent again
+        the next time the board opens. Caught rather than left to reject: an
+        unhandled rejection is a page error, and the browser suites read those
+        as faults, which a learner on a train is not.
+      */
+      .catch(() => {})
+      .finally(() => { sending.current = false; });
   }, [ready, done, day, typed, helped]);
 
   const entry = puzzle.entries[active] ?? puzzle.entries[0]!;
