@@ -2025,6 +2025,24 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   `components/LocalDate.tsx` renders what the server wrote and lets the browser replace it on mount.
   A separate rule from the day boundary above, because the fix is different: a zone can be stored and
   handed to the server, and a locale is a list of preferences only the browser has.
+- **And Today's own date is the one exception, because it is not a date being reported, it is the
+  first Estonian a learner reads each morning.** The rule above is about a date the app hands back:
+  a deadline, the day somebody joined a class, when a paper was sat, and the shape of those belongs
+  to whoever is reading them. The line above the greeting is a word being taught. The seven weekday
+  names and the twelve month names are in every course's first fortnight, and a date is the one
+  piece of Estonian that needs no gloss to be useful, because the reader already knows what today
+  is: they are matching a word they have against a word they are learning, which is how a weekday
+  name is learned anywhere. So it leads `kolmapäev, 2. september` and keeps the English weekday
+  beside it as the cross-reference, the same shape every grammar screen takes with the Latin case
+  names, and that English is **pinned** rather than the reader's, because it is a gloss and every
+  other gloss in this app is English. `lib/time/estonianDate.ts` reads both out of CLDR, which is an
+  attested source in the sense Ekilex is and not a string anybody typed, so ADR-005 is kept the way
+  the almanac keeps it: delete the two Estonian words from that file's comments and its output is
+  identical. A build whose locale data has no Estonian **says nothing rather than English**, since
+  `et-EE` on a small-icu build formats as English and reports no error, and English under a
+  `lang="et"` would be read aloud by a screen reader with Estonian phonology; the page falls back to
+  the line it had before. The zone is still the learner's, because that half of the rule above is
+  about which day it is rather than how it is spelled.
 - **24-hour clock everywhere** (`lib/time/clock.ts`), never am/pm. Estonia writes the time that
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`

@@ -25,6 +25,7 @@ import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, CardLink, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
+import { dateLine } from "@/lib/time/estonianDate";
 import type { TaskView } from "@/components/TaskRow";
 import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
@@ -164,6 +165,7 @@ export default async function TodayPage() {
     shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
   ]);
 
+  const today = dateLine(now, clock.zone);
   const tutorReady = resolveProvider() !== null;
   /*
     Whether the person reading this is the person who could fix it.
@@ -680,20 +682,43 @@ export default async function TodayPage() {
 
   return (
     <Page
+      /*
+        THE ONE DATE IN THIS APP THAT IS NOT WRITTEN THE READER'S WAY.
+
+        Everywhere else a date is something the app is reporting back and its
+        shape belongs to whoever is reading it, which is what `LocalDate` is
+        for. This one is the first Estonian a learner meets each morning:
+        the weekday name and the month name are two of the nineteen words every
+        course teaches in its first fortnight, and a date is the one piece of
+        Estonian that needs no gloss to be useful, because the reader already
+        knows what today is. See lib/time/estonianDate.ts, which reads both
+        out of CLDR and writes neither.
+
+        The English weekday stays beside it as the cross-reference, the same
+        shape the grammar screens take with the Latin case names, and it is
+        pinned rather than the reader's because it is a gloss and not a date.
+        A build whose locale data has no Estonian gets the line it always had.
+      */
       eyebrow={
-        <LocalDate
-          iso={now.toISOString()}
-          zone={clock.zone}
-          options={{ weekday: "long", day: "numeric", month: "long" }}
-          /*
-            What the server writes, and what a reader sees if script never
-            runs. Its zone is the learner's; only the shape of the reading is
-            the deployment's until the browser has said otherwise.
-          */
-          fallback={new Intl.DateTimeFormat(undefined, {
-            timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
-          }).format(now)}
-        />
+        today ? (
+          <>
+            <span lang="et">{today.et}</span> · {today.en}
+          </>
+        ) : (
+          <LocalDate
+            iso={now.toISOString()}
+            zone={clock.zone}
+            options={{ weekday: "long", day: "numeric", month: "long" }}
+            /*
+              What the server writes, and what a reader sees if script never
+              runs. Its zone is the learner's; only the shape of the reading is
+              the deployment's until the browser has said otherwise.
+            */
+            fallback={new Intl.DateTimeFormat(undefined, {
+              timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
+            }).format(now)}
+          />
+        )
       }
       title={name ? `${greeting(clock, now)}, ${name}` : greeting(clock, now)}
       lead={lead(stage, toReview)}

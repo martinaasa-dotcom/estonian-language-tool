@@ -5712,6 +5712,49 @@ check("the word of the day is one the learner has not met", () => {
   assert.match(card, /Ekilex/, "the sentence's provenance no longer names its source");
 });
 
+check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
+  /*
+    The one date in this app that is not written the reader's way, and the
+    three things that make that safe rather than a rule broken by accident.
+
+    It is TAGGED. `lang="et"` is what tells a screen reader to say
+    `kolmapäev` in Estonian, and it is also what makes the third rule matter:
+    English read aloud under an Estonian tag is worse than English printed
+    plainly, which is exactly what a small-icu build would produce.
+
+    It COMES FROM CLDR AND NOT FROM A STRING. `lib/time/estonianDate.ts` reads
+    the weekday and the month out of the platform's locale data, in the sense
+    the almanac reads nothing and the syllabus writes nothing (ADR-005): every
+    Estonian character on that line came from an attested source.
+
+    It HAS A FALLBACK. `dateLine` returns null on a build with no Estonian in
+    it, and the page renders the reader's own date instead, which is the line
+    it had before any of this.
+  */
+  const page = code("app/(app)/page.tsx");
+  assert.match(page, /dateLine\(/, "Today no longer reads the Estonian date");
+  assert.match(
+    page,
+    /lang="et">\{today\.et\}/,
+    'Today prints the Estonian date without lang="et", so a screen reader says it in English',
+  );
+  assert.match(page, /<LocalDate/, "Today lost its fallback for a build whose locale data has no Estonian");
+
+  const module = code("lib/time/estonianDate.ts");
+  assert.match(module, /hasEstonian\(\)/, "the Estonian date no longer checks that the platform has Estonian");
+  /*
+    And it never asks Intl for the deployment's locale, which is the fault
+    `components/LocalDate.tsx` exists for: `undefined` there means whatever
+    machine the server happens to be, so a build set to en-US would answer an
+    Estonian request in English with nothing to say it had.
+  */
+  assert.doesNotMatch(
+    module,
+    /DateTimeFormat\(\s*undefined/,
+    "the Estonian date asks Intl for the deployment's locale",
+  );
+});
+
 check("the word of the day reads the learner's level, and reads it in the right place", () => {
   /*
     A B1 account was taught `keskmine`, an A1 adjective meaning "average". That
