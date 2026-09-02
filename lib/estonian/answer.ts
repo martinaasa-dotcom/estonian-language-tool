@@ -53,28 +53,51 @@ function normalise(text: string, language: "et" | "en"): string {
 }
 
 /**
- * The accepted answers hidden inside one stored string.
+ * One accepted answer, in both of the shapes a marker needs.
  *
- * Dictionary values genuinely carry alternatives — `raamatutes / raamatuis` are
- * both right, and an English gloss is often `woman, wife`. Splitting on `/` and
- * `,` means a learner is never marked wrong for picking the other true answer.
- * A parenthetical `(some)` is treated as optional, so both readings are accepted.
+ * `normalise` lowercases, drops punctuation and, in English, an article. That
+ * is exactly right for deciding whether two answers are the same and exactly
+ * wrong for printing one, and for a long time the two were the same string.
+ * So a learner who missed `Eesti` was corrected to `eesti`, which is a
+ * different word (the language, not the country); `Head aega!` came back as
+ * `head aega`, `Aitäh!` as `aitäh`, `April` as `april` and `To sleep` as
+ * `sleep`. Roughly one shipped entry in five prints a form the dictionary
+ * never held, on the one screen in the app worth stopping at.
+ *
+ * A stored value genuinely carries alternatives: `raamatutes / raamatuis` are
+ * both right and an English gloss is often `woman, wife`, so each part is
+ * accepted on its own and a parenthetical `(some)` is optional. Both readings
+ * of a part point back at the part as written, because the parentheses are
+ * what the dictionary says.
  */
-export function acceptedAnswers(expected: string, language: "et" | "en"): string[] {
-  const out = new Set<string>();
+export interface Accepted {
+  /** The spelling the dictionary holds, which is the one to print. */
+  shown: string;
+  /** The same answer flattened, which is the one to compare against. */
+  compared: string;
+}
+
+export function acceptedForms(expected: string, language: "et" | "en"): Accepted[] {
+  const out: Accepted[] = [];
+  const seen = new Set<string>();
+  const add = (shown: string, compared: string) => {
+    if (!compared || seen.has(compared)) return;
+    seen.add(compared);
+    out.push({ shown, compared });
+  };
   for (const raw of expected.split(/\s*[/,;]\s*|\s+or\s+/)) {
     const trimmed = raw.trim();
     if (!trimmed) continue;
-    const withParens = normalise(trimmed.replace(/[()]/g, " "), language);
-    const withoutParens = normalise(trimmed.replace(/\([^)]*\)/g, " "), language);
-    if (withParens) out.add(withParens);
-    if (withoutParens) out.add(withoutParens);
+    add(trimmed, normalise(trimmed.replace(/[()]/g, " "), language));
+    add(trimmed, normalise(trimmed.replace(/\([^)]*\)/g, " "), language));
   }
-  if (out.size === 0) {
-    const fallback = normalise(expected, language);
-    if (fallback) out.add(fallback);
-  }
-  return [...out];
+  if (out.length === 0) add(expected.trim(), normalise(expected, language));
+  return out;
+}
+
+/** Every spelling a marker lets through, flattened for comparison. */
+export function acceptedAnswers(expected: string, language: "et" | "en"): string[] {
+  return acceptedForms(expected, language).map((accepted) => accepted.compared);
 }
 
 /** Levenshtein distance, bailing out once it is past `max` (we only care about 1–2). */
@@ -132,6 +155,16 @@ function diacriticNote(typed: string, expected: string): string {
 }
 
 /**
+ * A form in quotes at the end of a sentence.
+ *
+ * Some stored answers carry their own terminal punctuation, and a full stop
+ * after `Head aega!` reads as a second one.
+ */
+function closing(form: string): string {
+  return /[!?.]$/.test(form) ? `“${form}”` : `“${form}”.`;
+}
+
+/**
  * Compares a typed answer with the stored one.
  *
  * `language` decides how forgiving the normalisation is: an English gloss may
@@ -142,27 +175,29 @@ export function checkAnswer(
   expected: string,
   language: "et" | "en" = "et",
 ): AnswerCheck {
-  const answers = acceptedAnswers(expected, language);
+  const answers = acceptedForms(expected, language);
   const given = normalise(typed, language);
-  const primary = answers[0] ?? normalise(expected, language);
+  const primary = answers[0]?.shown ?? expected.trim();
 
   if (!given) {
     return { verdict: "wrong", expected, note: "Nothing typed.", suggestedRating: 1 };
   }
 
-  if (answers.includes(given)) {
+  if (answers.some((answer) => answer.compared === given)) {
     return { verdict: "correct", expected, note: "", suggestedRating: 3 };
   }
 
   // Diacritics first: `soidan` matching `sõidan` is a spelling slip, not a typo,
-  // and the learner gets told exactly which letter it was.
+  // and the learner gets told exactly which letter it was. The letters are named
+  // off the flattened pair, which is the one that lines up character for
+  // character; what is shown back is the spelling that was stored.
   const givenFolded = fold(given);
   for (const answer of answers) {
-    if (fold(answer) === givenFolded) {
+    if (fold(answer.compared) === givenFolded) {
       return {
         verdict: "diacritics",
-        expected: answer,
-        note: diacriticNote(given, answer),
+        expected: answer.shown,
+        note: diacriticNote(given, answer.compared),
         suggestedRating: 2,
       };
     }
@@ -171,11 +206,11 @@ export function checkAnswer(
   // A single slipped keystroke. Short words are excluded: at three letters,
   // one edit is usually a different word rather than a mistyped one.
   for (const answer of answers) {
-    if (answer.length >= 4 && editDistance(given, answer, 1) <= 1) {
+    if (answer.compared.length >= 4 && editDistance(given, answer.compared, 1) <= 1) {
       return {
         verdict: "typo",
-        expected: answer,
-        note: `So close, the word is “${answer}”.`,
+        expected: answer.shown,
+        note: `So close, the word is ${closing(answer.shown)}`,
         suggestedRating: 2,
       };
     }
@@ -184,7 +219,7 @@ export function checkAnswer(
   return {
     verdict: "wrong",
     expected: primary,
-    note: `Not quite, it's “${primary}”.`,
+    note: `Not quite, it's ${closing(primary)}`,
     suggestedRating: 1,
   };
 }
