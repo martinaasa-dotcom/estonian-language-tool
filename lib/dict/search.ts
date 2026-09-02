@@ -3,14 +3,8 @@ import { prisma } from "@/lib/db";
 import { CASES } from "@/lib/estonian/cases";
 import { derivedVerbForms, possibleFirstPersons } from "@/lib/estonian/conjugate";
 import { formLabel } from "@/lib/estonian/morph";
+import { fold, FOLD_FROM, FOLD_TO } from "@/lib/estonian/fold";
 
-/** Strips Estonian diacritics so `sona` finds `sõna`. */
-export function fold(text: string): string {
-  return text
-    .toLowerCase()
-    .replaceAll("õ", "o").replaceAll("ä", "a").replaceAll("ö", "o")
-    .replaceAll("ü", "u").replaceAll("š", "s").replaceAll("ž", "z");
-}
 
 export interface SearchHit {
   id: string;
@@ -54,19 +48,11 @@ export interface Candidate {
  * SQLite has no unaccent, so folding happens in JS over the candidate set. At a
  * few hundred to a few thousand words that is single-digit milliseconds; if the
  * dictionary ever grows past that, this is the one function to revisit.
- */
-/**
- * The Estonian letters the ranker folds, and what it folds them to, as a pair
- * of arguments to Postgres `translate`.
  *
- * It has to agree with `fold` above, character for character, because the
- * database now does the first pass. `translate` rather than the `unaccent`
- * extension: this needs no extension installed, and it folds exactly the six
- * letters Estonian uses rather than everything with a diacritic.
+ * Which six letters fold is `lib/estonian/fold.ts`'s, in both directions: the
+ * `translate()` pair the SQL narrows with and the function that decides come
+ * from one table, so they cannot drift apart the way two hand-kept lists can.
  */
-export const FOLD_FROM = "õäöüšž";
-export const FOLD_TO = "oaousz";
-
 /**
  * Finds the words a query could match, in the database.
  *

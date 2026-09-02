@@ -166,7 +166,7 @@ off.
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
 
-- **Dictionary**, 6,050 words (A1 to C2) with principal parts, consonant gradation and the
+- **Dictionary**, 6,101 words (A1 to C2) with principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class,
   `toas`, `lugesin`, `tubadega`, `helistab`, and it finds the word *and* tells you which form you
   typed.
@@ -376,6 +376,30 @@ is harmless; replacing everything is behind a typed confirmation.
 Your review history is the one thing here that cannot be recreated, grab a copy now and then, and
 try restoring it once while nothing is at stake. A backup you have never restored is a hypothesis.
 
+## What learners get wrong, counted
+
+The review log already records every exercise anybody has answered and whether they got it right,
+because the scheduler needs it. Aggregated across everybody, that is a picture of where learners of
+Estonian actually fail, by case, by stem change and by word, which is not something a textbook or a
+single classroom can measure.
+
+Set `RESEARCH_TOKEN` and `/api/research` produces it as a CSV you can send to somebody who teaches
+Estonian or studies how it is learned. Leave it unset and the route does not exist.
+
+```
+curl -H "Authorization: Bearer $RESEARCH_TOKEN" \
+     "https://your-app/api/research?format=csv" -o learner-errors.csv
+```
+
+Nothing in that file rests on fewer than ten people or fifty answers, no one person may be more than
+half of any figure, counts are rounded and head counts are given as bands. A category below the
+threshold is missing from the file rather than shown as a small number, so a gap means too little
+data and never no errors. Anyone can leave their own answers out in **Settings → Anonymous
+statistics**, and out means their rows are never read rather than subtracted afterwards.
+
+Read `docs/19-research-export.md` before sending a file to anybody. It says what the tables can and
+cannot support, which is the half that makes the rest of it worth having.
+
 ## Commands
 
 ```
@@ -389,6 +413,7 @@ npm run check:secrets    # fails if a credential reached the client bundle
 npm run test:e2e         # the browser suites, needs the server running
 npm run test:browser     # routes, modes, offline, the level check, scanning and accessibility
 npm run test:mobile      # the phone, measured; needs the server running
+npm run build:frequency  # recount the commonest words from the published corpus
 npm run demo             # two months of sample history, to look around
 npm run db:seed          # reload the built-in dictionary (always)
 npm run db:seed:ensure   # load it only if the dictionary is empty, what the deploy runs

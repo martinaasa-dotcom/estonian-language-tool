@@ -42,9 +42,10 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 
 const B = baseUrl();
-/* Floor: one per route plus the precondition, measured on the 44 routes the
-   app has. It moves when a route is added, which is the point. */
-const { check, done } = suite("The first day", { floor: 44 });
+/* Floor: one per route plus the precondition, measured on the 52 routes the
+   app has. It moves when a route is added, which is the point: the games and
+   the calendar took it from 44 to 52 in one merge. */
+const { check, done } = suite("The first day", { floor: 53 });
 
 /** Every `page.tsx` under `app/`, as the URL that reaches it. */
 function routes(dir, prefix = "") {

@@ -122,10 +122,18 @@ const ROUTES = [
   "/review/sentences",
   "/review/speaking",
   "/review/sprint",
+  "/review/flashcards",
+  "/review/emoji",
+  "/review/target",
   "/practice",
+  "/quest",
+  "/sonad",
+  "/crossword",
+  "/calendar",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
   "/dictionary",
+  "/dictionary/common",
   "/dictionary?q=tuba",
   "/words",
   "/grammar",
@@ -209,8 +217,39 @@ const SPARSE = new Map([
   being learning, and the run after the cut counted 940 where the one before
   it counted 1020. The margin of twenty under the count is the one the floor
   has always kept.
+
+  Then 940, and this one is a raise rather than a cut. `/class/[classroomId]`
+  renders two different screens, a teacher's roster and a sponsor's view of a
+  workplace group, and this suite walked whichever the index listed first. Both
+  are made now, which is one more route's worth of checks: the run counts 960
+  where it counted 940, and the floor keeps its twenty.
 */
-const { check, absent, done } = suite("Containment", { floor: 920 });
+// 1040 rather than 920: five routes joined the sweep (the Flash cards round,
+// Picture match, Target, the daily quest and the calendar). Its own header is
+// why they had to: "a route that is not in this list is a screen where the
+// whole rule is unenforced", and the calendar was over its box at 768 on the
+// first run.
+//
+// 1050 rather than 1040: the commonest words joined it, which is one route and
+// twenty checks, and it is the densest page in the app by some way. Four
+// hundred Estonian chips in four disclosures, and the longest of them
+// (`sellepärast`, `suurepärane`) are exactly the shape the unbreakable pass
+// asks about.
+// 1070 rather than 1050: Sonad joined it, which is one route and twenty
+// checks. It is the tightest board in the app at 360, six circles across with
+// a 32-key alphabet under them, so it is exactly the route this suite exists
+// for.
+// 1090 rather than 1070: the crossword joined it. Nine columns of cells with
+// a clue number in each corner at 360 is the densest arrangement of small
+// boxes in the app, which is what this suite is for.
+// And 940 rather than 920 came the other way, with the sponsor's workplace
+// group, which this suite had never drawn: `/class/[classroomId]` renders two
+// different screens and only one of them was ever walked. Merged rather than
+// chosen, since both sides added coverage. Measured at 1120 against a database
+// with the demo fixture in it, which is what CI seeds; without `npm run demo`
+// the workplace group does not exist and the run comes in at 1100 and says so,
+// which is the floor doing its job rather than a regression.
+const { check, absent, done } = suite("Containment", { floor: 1110 });
 
 const browser = await launchChromium();
 
@@ -303,17 +342,33 @@ async function screensToMake() {
     return null;
   };
 
-  // A classroom.
-  const classroom = await budgeted("a classroom", 60_000, async (page) => {
+  /*
+    Every group this account is in, not the first one.
+
+    `/class/[classroomId]` renders two different screens off one route: a
+    teacher's roster, and a sponsor's view of a workplace group, which shows
+    strictly less and is a different component (`WorkplaceView`). Taking
+    `.first()` measured whichever the index happened to list first and called
+    the route covered, so adding the second kind to `scripts/demo-data.ts`
+    would have *swapped* which of the two was ever drawn rather than adding to
+    it. A route that renders two screens needs both of them walked.
+  */
+  const classrooms = await budgeted("the groups this account is in", 60_000, async (page) => {
     await page.goto(`${B}/class`, { waitUntil: "networkidle", timeout: 30_000 });
-    const link = page.locator('a[href^="/class/"]').first();
-    if (await link.count()) return link.getAttribute("href");
+    const links = page.locator('a[href^="/class/"]');
+    const found = [];
+    for (let i = 0; i < await links.count(); i += 1) {
+      const href = await links.nth(i).getAttribute("href");
+      if (href && !found.includes(href)) found.push(href);
+    }
+    if (found.length > 0) return found.join(" ");
     await page.getByLabel("Class name").fill("Containment, teisipäev", { timeout: 10_000 });
     await page.getByRole("button", { name: /Create the class/ }).click({ timeout: 10_000 });
     await eventually(async () => /\/class\/[^/]+$/.test(page.url()), { timeoutMs: 20_000 });
     return /\/class\/[^/]+$/.test(page.url()) ? new URL(page.url()).pathname : null;
   });
-  if (classroom) made.push(classroom); else missing.push("a classroom, which local mode cannot create by hand: run `npm run demo`");
+  if (classrooms) made.push(...classrooms.split(" "));
+  else missing.push("a classroom, which local mode cannot create by hand: run `npm run demo`");
 
   // A marked paper: sat, advanced part by part with the blanks left blank, and
   // handed in. The blanks are the point elsewhere and harmless here.

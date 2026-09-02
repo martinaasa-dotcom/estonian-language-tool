@@ -4,7 +4,7 @@ import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguag
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Camera, Check, Plus, ScissorsLineDashed, Search, Star } from "lucide-react";
+import { Camera, Check, Plus, ScissorsLineDashed, Search, Star, TrendingUp } from "lucide-react";
 import { addToDeck, toggleStar } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
@@ -79,7 +79,7 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, heard, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
+  initialQuery, hits, heard, known, spellings, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
 }: {
   initialQuery: string;
   /** Which language the learner asked for their meanings in. */
@@ -94,6 +94,14 @@ export function DictionaryClient({
    * has anything to say on. See `lib/estonian/sounds.ts`.
    */
   heard: string[];
+  /**
+   * Whether Ekilex holds this word at all, from the 154,995-headword list.
+   * True here means the word is real and this app simply has no entry for it,
+   * which is a different sentence from "no such word".
+   */
+  known: boolean;
+  /** Spellings close enough to be worth offering, when it is not a word. */
+  spellings: string[];
   /**
    * Which of the hits is the one on screen. Usually the first, and not when a
    * link asked for another entry of the same lemma by name.
@@ -252,14 +260,84 @@ export function DictionaryClient({
         </div>
       )}
 
+      {/*
+        THE OTHER WAY IN, FOR SOMEBODY WHO DOES NOT HAVE A WORD IN MIND.
+
+        The suggestion row above offers three or four words and the search box
+        wants one. Neither answers "which words are worth learning first",
+        which is a question about the language rather than about this app, and
+        `/dictionary/common` answers it by counting. It sits here rather than
+        in the rail because this is the screen somebody is on when they want
+        it, which is the whole of what `within` means in lib/ux/nav.ts.
+      */}
+      {!initialQuery && (
+        <Link
+          href="/dictionary/common"
+          className="tap-tint flex items-center justify-between gap-3 rounded-[var(--r)] px-4 py-3"
+          style={{ background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+        >
+          <span className="flex items-center gap-2.5">
+            <TrendingUp size={16} aria-hidden style={{ color: "var(--sky-ink)" }} />
+            <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
+              The words you will hear most
+            </span>
+          </span>
+          <span className="text-xs" style={{ color: "var(--ink-3)" }}>a hundred of each kind</span>
+        </Link>
+      )}
+
       {!initialQuery && <Headlines headlines={headlines} host={feedHost} />}
 
       {initialQuery && hits.length === 0 && (
         <div className="flex flex-col gap-4">
+          {/*
+            THREE DEAD ENDS THAT USED TO READ THE SAME.
+
+            "Nothing found" was the answer to a misspelling, to an English word
+            and to a perfectly ordinary Estonian word this app had no entry for.
+            The third is the one that was reported, and it is the one the app
+            was most wrong about: `uudishimulik` appears in Kodukeel's own copy,
+            and searching for it here said nothing found.
+
+            `KnownWord` tells them apart. It knows only which words exist, which
+            is exactly enough.
+          */}
           <Empty
-            title={`Nothing found for "${initialQuery}"`}
-            body="The built-in dictionary covers common words to B2. Add this one with its genitive."
+            title={known
+              ? `${initialQuery} is an Estonian word`
+              : `Nothing found for "${initialQuery}"`}
+            body={known
+              ? "It is not in the built-in dictionary yet. Add it with its genitive and it is yours straight away."
+              : "The built-in dictionary covers common words to B2. Add this one with its genitive."}
           />
+
+          {/*
+            Spellings, when it is not a word at all. Held behind `heard` in the
+            page, which knows which Estonian *sounds* a learner confuses and is
+            the better answer where it has one; this is the wider net, over
+            every headword rather than only the ones with entries.
+          */}
+          {spellings.length > 0 && (
+            <Card>
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                No word is spelled that way. One of these is close.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {spellings.map((lemma) => (
+                  <li key={lemma}>
+                    <Link
+                      href={`/dictionary?q=${encodeURIComponent(lemma)}`}
+                      lang="et"
+                      className="press inline-flex items-center rounded-full px-3.5 py-2 text-base font-semibold transition-ui hover:-translate-y-px"
+                      style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                    >
+                      {lemma}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           {/*
             WHAT THEY MIGHT HAVE HEARD, BEFORE ANYTHING ELSE ON THIS SCREEN.
 

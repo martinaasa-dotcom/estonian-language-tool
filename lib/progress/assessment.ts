@@ -5,7 +5,8 @@ import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { lemmaCountsByLevel } from "@/lib/dict/facts";
 import { buildPaper, type Paper, type WordRow } from "@/lib/assessment/items";
 import { normaliseGoals, type Goals } from "@/lib/assessment/goals";
-import { BANDS, type Band, type Placement, type SkillResult } from "@/lib/assessment/types";
+import { BANDS, type Band, type Level, type Placement, type SkillResult } from "@/lib/assessment/types";
+import { overallFrom, type Overall } from "@/lib/assessment/score";
 import { GOAL_KEYS, numberSetting, readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
 import { DEFAULT_DAYS_PER_WEEK } from "@/lib/assessment/goals";
 
@@ -139,6 +140,54 @@ export interface StoredAssessment {
   speakingSelf: number | null;
   /** The per band breakdown, or an empty list when an old row has none. */
   skills: SkillResult[];
+  /** The band `overall` came close to, when it did. See `readOverall`. */
+  nearly: Band | null;
+}
+
+/**
+ * The overall level of a stored sitting, read by today's rule rather than the
+ * one in force the day it was written.
+ *
+ * `Assessment` is append-only and every row carries its own `overall`, so the
+ * obvious thing is to print what the row says. That is wrong here, and it is
+ * wrong in a way worth spelling out, because "append-only" and "never
+ * reinterpret" are different promises.
+ *
+ * What the sitting *measured* is the three per skill levels, and those are
+ * stored in their own columns and never touched. `overall` is a derivation
+ * from them: one line of arithmetic, chosen by whichever rule this app held at
+ * the time. ADR-020 amendment 2 changed that rule from the weakest skill to the
+ * average, so a row written before it holds a number today's app would not
+ * produce from the same measurement. Printing it would put two rules on one
+ * screen, and the history list is exactly where they would sit side by side.
+ *
+ * So the measurement is what is preserved and the reading is recomputed. That
+ * is the same reasoning as "progress is derived, never stored", arriving one
+ * table late: the column stays because it is what a row written today records,
+ * and every reader goes through here.
+ *
+ * A row with no skill columns at all keeps its stored answer, because there is
+ * nothing to recompute from and a blank is worse than an old rule's number.
+ */
+export function readOverall(row: {
+  overall: string | null;
+  reading: string | null;
+  listening: string | null;
+  writing: string | null;
+}): Overall {
+  const measured = [row.reading, row.listening, row.writing].filter(
+    (level): level is Level => level !== null,
+  );
+  if (measured.length === 0) return { level: (row.overall ?? null) as Level | null, nearly: null };
+  return overallFrom(measured);
+}
+
+/** A stored row, with its overall level read by the current rule. */
+function withOverall<T extends {
+  overall: string | null; reading: string | null; listening: string | null; writing: string | null;
+}>(row: T): T & { overall: string | null; nearly: Band | null } {
+  const { level, nearly } = readOverall(row);
+  return { ...row, overall: level, nearly };
 }
 
 function parseDetail(json: string): SkillResult[] {
@@ -173,7 +222,7 @@ export async function saveResult(ownerId: string, placement: Placement): Promise
       detail: JSON.stringify(placement.skills),
     },
   });
-  return { ...row, skills: placement.skills };
+  return withOverall({ ...row, skills: placement.skills });
 }
 
 export async function historyFor(ownerId: string, take = 10): Promise<StoredAssessment[]> {
@@ -182,7 +231,7 @@ export async function historyFor(ownerId: string, take = 10): Promise<StoredAsse
     orderBy: [{ takenAt: "desc" }, { id: "asc" }],
     take,
   });
-  return rows.map((row) => ({ ...row, skills: parseDetail(row.detail) }));
+  return rows.map((row) => withOverall({ ...row, skills: parseDetail(row.detail) }));
 }
 
 /**

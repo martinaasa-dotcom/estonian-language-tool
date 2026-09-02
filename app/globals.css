@@ -732,11 +732,31 @@
     after it: a row that appears and then vanishes on every navigation is worse
     than one that was never asked about.
 
-    WHAT COUNTS AS A DESKTOP is stated once, here. `min-width` alone would give
-    the bar to a tablet in landscape with no keys attached to it; `pointer:
-    fine` alone would give it to a phone with a mouse paired, which is a
-    stranger thing but not an impossible one. Both, and the answer is a machine
-    somebody is typing on with their hands on physical keys.
+    WHAT COUNTS AS A DESKTOP is stated once, here, and it is the pointer alone.
+
+    It used to be `(min-width: 768px) and (pointer: fine)`, on the reasoning
+    that `min-width` alone would give the bar to a tablet in landscape with no
+    keys attached to it. The reasoning was right about tablets and the test was
+    wrong, because a viewport width is not a fact about a keyboard. Drag a
+    desktop window to half the screen and the row vanishes, on a machine whose
+    physical keyboard has not changed and still has no key for õ, which is the
+    one situation this row exists for. That is a learner losing the only way
+    they have of answering half the exercises in the app, for resizing a
+    window.
+
+    `pointer: fine` is the test that was doing the work all along. A tablet in
+    landscape with nothing attached reports a coarse pointer and is excluded by
+    it; a tablet in a keyboard case reports a fine one and has a physical
+    keyboard, which is a machine that should get the row. What the pointer
+    cannot exclude is a phone with a mouse paired, and that is the trade taken
+    deliberately: it is rare, the row is one line of buttons, and it carries its
+    own way out. A desktop at half width is neither rare nor recoverable
+    without a trip to Settings.
+
+    There is no layout floor hiding in the old width either. Six 44px buttons
+    and their gaps come to about 280px, so the row fits a 360px phone with room
+    to spare, and the reason a phone does not get it is the pointer rather than
+    the space.
 
     `.letters-choice` is the control that offers the bar, and it takes the same
     media query rather than a `md:` class, so a screen cannot end up offering a
@@ -746,10 +766,114 @@
   */
   .letter-bar, .letters-choice { display: none; }
 
-  @media (min-width: 768px) and (pointer: fine) {
+  @media (pointer: fine) {
     .letter-bar { display: flex; }
     .letters-choice { display: block; }
     [data-letters="off"] .letter-bar { display: none; }
+  }
+
+  /*
+    THE DAILY QUEST'S THREE MOVEMENTS.
+
+    The one round asked to "feel like a game", and the whole of what that means
+    here is three: the target breathes before you press it, a card arrives
+    rather than appearing, and a run of right answers pops the counter.
+
+    All three are `transform` and `opacity` only, which is what the compositor
+    can do without the main thread, and the main thread during a round is busy
+    with a Server Action per answer. A keyframe on `top` or `background` would
+    be laid out and painted on exactly the thread that is least free.
+
+    Held under `prefers-reduced-motion`, where all three become nothing: a
+    learner who has asked for less movement is asking for it most on the screen
+    that moves most.
+  */
+  .quest-pulse { animation: quest-pulse 2.4s ease-in-out infinite; }
+  .quest-card { animation: quest-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .quest-pop { animation: quest-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  @keyframes quest-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  @keyframes quest-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes quest-pop {
+    from { transform: scale(0.7); }
+    60% { transform: scale(1.15); }
+    to { transform: scale(1); }
+  }
+
+  /*
+    A wrong pair shakes and stays. Sideways only, and small: the tile is telling
+    you it is still in play, not that something broke.
+  */
+  .emoji-shake { animation: emoji-shake 400ms ease-in-out both; }
+  @keyframes emoji-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
+  /*
+    SÕNAD'S THREE MOVEMENTS, AND WHY NONE OF THEM IS A FLIP.
+
+    The game this is shaped like turns each square over on its horizontal axis
+    to reveal a colour, and shakes a row sideways when a guess is not a word.
+    Both of those are recognisable enough to be part of what that game *is*, so
+    neither is here. These are circles, and a circle has no axis to turn on.
+
+    A circle SETTLES: it dips, takes its colour at the bottom of the dip, and
+    comes back past its size before resting. Staggered along the row by
+    `--sonad-at`, which the board sets per circle, so the row reads left to
+    right the way a word does.
+
+    A guess that is not a word DROPS AND CATCHES ITSELF, downward rather than
+    sideways: the row is telling you it could not go anywhere, which is a
+    different sentence from something breaking.
+
+    A win RISES, one circle after another, and stops. It is a hop and not a
+    bounce, because the round is over and a thing that keeps moving after the
+    answer is on screen is asking for attention it has already had.
+
+    Transform and opacity only, so the compositor can run them without the main
+    thread, and all three become nothing under `prefers-reduced-motion`: the
+    board still colours in, which is the whole of the information.
+  */
+  .sonad-settle {
+    animation: sonad-settle 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation-delay: calc(var(--sonad-at, 0) * 90ms);
+  }
+  .sonad-refuse { animation: sonad-refuse 380ms cubic-bezier(0.36, 0, 0.66, -0.4) both; }
+  .sonad-rise {
+    animation: sonad-rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--sonad-at, 0) * 70ms);
+  }
+
+  @keyframes sonad-settle {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.62); }
+    70% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  @keyframes sonad-refuse {
+    0%, 100% { transform: translateY(0); }
+    35% { transform: translateY(9px); }
+    70% { transform: translateY(-3px); }
+  }
+  @keyframes sonad-rise {
+    0% { transform: translateY(0); }
+    45% { transform: translateY(-12px); }
+    100% { transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quest-pulse, .quest-card, .quest-pop, .emoji-shake,
+    .sonad-settle, .sonad-refuse, .sonad-rise { animation: none; }
   }
 
   /*

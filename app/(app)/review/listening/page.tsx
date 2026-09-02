@@ -4,7 +4,11 @@ import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ListeningSession, type ListeningCard } from "./ListeningSession";
 import { shuffle } from "@/lib/random/shuffle";
-import { glossesByPos } from "@/lib/dict/facts";
+import { decoyOptions } from "@/lib/dict/facts";
+import { unitIntroducing } from "@/lib/collections/syllabus";
+import {
+  bandOf, differentMeaning, glossNearness, glossOption, pickOptions,
+} from "@/lib/questions/distractors";
 
 export const metadata = { title: "Listening" };
 
@@ -38,7 +42,7 @@ export default async function ListeningPage() {
     where: { ownerId, suspended: false, cardType: "RECOGNITION", lexemeId: { not: null }, due: { lte: now }, state: { not: 0 } },
     orderBy: { due: "asc" },
     take: POOL_SIZE,
-    include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
+    include: { lexeme: { select: { lemma: true, translation: true, pos: true, cefr: true } } },
   });
 
   let cards = due;
@@ -51,7 +55,7 @@ export default async function ListeningPage() {
       },
       orderBy: { lapses: "desc" },
       take: POOL_SIZE - cards.length,
-      include: { lexeme: { select: { lemma: true, translation: true, pos: true } } },
+      include: { lexeme: { select: { lemma: true, translation: true, pos: true, cefr: true } } },
     });
     cards = [...cards, ...weak];
   }
@@ -62,8 +66,8 @@ export default async function ListeningPage() {
     // Which words the dictionary holds is the same answer for everybody and
     // the same answer next round, so it is read once per instance rather than
     // once per round: see lib/dict/facts.ts.
-    const { byPos, all: allTranslations } = await glossesByPos();
-    if (allTranslations.length < MIN_LEXEMES_FOR_CHOICES) {
+    const pool = await decoyOptions();
+    if (pool.length < MIN_LEXEMES_FOR_CHOICES) {
       return (
         <Page title="Listening" lead="Hear a word, pick its meaning.">
           <Empty
@@ -75,28 +79,42 @@ export default async function ListeningPage() {
       );
     }
 
-    // Decoys are drawn from the whole dictionary, favouring the same part of
-    // speech so the wrong answers aren't trivially implausible.
-    const shuffled = shuffle(cards);
-    const listeningCards: ListeningCard[] = shuffled.map((c) => {
+    /*
+      Wrong answers are ranked by `lib/questions/distractors.ts`, the same table
+      the review screen, the placement check and the mock exam read. This round
+      used to keep its own `pickDecoys`, which preferred the answer's own part
+      of speech and took whatever the shuffle gave after that. Preferring the
+      part of speech was the right instinct and it was one signal out of four:
+      it left a C1 noun standing beside an A1 one, and a three-sense gloss
+      beside three one-word options, which is the answer before a word of it has
+      been read. One table rather than a copy here, because two rankings of one
+      question drift a weight at a time.
+    */
+    const listeningCards: ListeningCard[] = [];
+    for (const c of shuffle(cards)) {
       const correct = c.back;
-      const pos = c.lexeme?.pos ?? "OTHER";
-      const decoys = pickDecoys(byPos, allTranslations, pos, correct, CHOICE_COUNT - 1);
-      const choices = shuffle([...decoys, correct]);
-      return { id: c.id, lemma: c.lexeme?.lemma ?? c.front, correct, choices };
-    });
+      const answer = glossOption({
+        text: correct,
+        pos: c.lexeme?.pos ?? "OTHER",
+        band: bandOf(c.lexeme?.cefr),
+        theme: c.lexeme ? unitIntroducing(c.lexeme.lemma, c.lexeme.pos) : null,
+      });
+      const picked = pickOptions({
+        answer, candidates: pool, rng: Math.random,
+        distinct: differentMeaning, nearness: glossNearness,
+      });
+      // A word the pool cannot supply three genuinely wrong answers for is
+      // dropped rather than padded, because this round has no shape to fall
+      // back to: it is four options or it is nothing.
+      if (!picked) continue;
+      listeningCards.push({
+        id: c.id, lemma: c.lexeme?.lemma ?? c.front, correct, choices: picked.options,
+      });
+    }
 
     return <ListeningSession cards={listeningCards} />;
   }
 
   return <ListeningSession cards={[]} />;
-}
-
-function pickDecoys(
-  byPos: Map<string, string[]>, allTranslations: string[], pos: string, correct: string, count: number,
-): string[] {
-  const sameOrder = shuffle((byPos.get(pos) ?? []).filter((t) => t !== correct));
-  const rest = shuffle(allTranslations.filter((t) => t !== correct && !sameOrder.includes(t)));
-  return [...sameOrder, ...rest].slice(0, count);
 }
 

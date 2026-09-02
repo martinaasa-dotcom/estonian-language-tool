@@ -5,7 +5,10 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { classworkHistory } from "@/app/actions";
 import { PATH } from "@/lib/collections/syllabus";
-import { classRoster } from "@/lib/classroom/roster";
+import { classRoster, workplaceRoster } from "@/lib/classroom/roster";
+import { cohortKind } from "@/lib/classroom/cohort";
+import type { ExamLevel } from "@/lib/exam/spec";
+import { WorkplaceView } from "./WorkplaceView";
 import { LocalDate } from "@/components/LocalDate";
 import { Card, Chip, Empty, Meter, Note, Page, SectionTitle, Stack, StatTile } from "@/components/ui";
 import { ArchiveClass, AssignHomework, AssignUnit, CopyCode, LeaveClass } from "../ClassForms";
@@ -30,12 +33,19 @@ export async function generateMetadata({ params }: { params: Promise<{ classroom
 export const dynamic = "force-dynamic";
 
 /**
- * One class.
+ * One class, or one sponsored group of colleagues.
  *
  * Teachers get the roster and the assign box; students get the same leaderboard
  * their classmates see and nothing more. The two views share one query because
- * they are the same data seen from different seats — what differs is only what
- * a student has no business acting on.
+ * they are the same data seen from different seats, and what differs is only
+ * what a student has no business acting on.
+ *
+ * A workplace group is the third seat and it does not share that query. It runs
+ * `workplaceRoster`, which never reads a case, and renders a screen with no XP
+ * column and no per-person weakness on it. The branch is here rather than
+ * inside the roster so that the narrower read is the only one a sponsor's page
+ * ever makes: a view that fetched the teacher's shape and then chose not to
+ * print half of it would be one careless render away from printing it.
  */
 export default async function ClassroomPage({ params }: { params: Promise<{ classroomId: string }> }) {
   const { classroomId } = await params;
@@ -51,29 +61,39 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
 
   const classroom = membership.classroom;
   const isTeacher = classroom.ownerId === ownerId;
-  const [roster, history] = await Promise.all([
-    classRoster(classroomId),
+  const workplace = cohortKind(classroom.kind) === "WORKPLACE";
+  const [roster, cohort, history] = await Promise.all([
+    workplace ? Promise.resolve(null) : classRoster(classroomId),
+    workplace ? workplaceRoster(classroomId, classroom.targetLevel as ExamLevel) : Promise.resolve(null),
     isTeacher ? classworkHistory(classroomId) : Promise.resolve([]),
   ]);
 
-  const leader = roster.entries[0];
-  const you = roster.entries.find((e) => e.ownerId === ownerId);
+  const leader = roster?.entries[0];
+  const you = roster?.entries.find((e) => e.ownerId === ownerId);
   const units = PATH.map((u) => ({ id: u.id, title: u.title, subtitle: u.subtitle }));
 
   return (
     <Page
-      eyebrow={isTeacher ? "You teach this class" : "Your class"}
+      eyebrow={
+        workplace
+          ? (isTeacher ? "You run this group" : "Your group at work")
+          : (isTeacher ? "You teach this class" : "Your class")
+      }
       title={classroom.name}
-      lead={isTeacher
-        ? "Who is keeping up, and what the class as a whole keeps getting wrong."
-        : "How your class is doing this week."}
+      lead={workplace
+        ? (isTeacher
+            ? `Who is practising, and who is on track for ${classroom.targetLevel}.`
+            : `Your group, working towards ${classroom.targetLevel}.`)
+        : (isTeacher
+            ? "Who is keeping up, and what the class as a whole keeps getting wrong."
+            : "How your class is doing this week.")}
       actions={
         <Link
           href="/class"
           className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
         >
-          <ArrowLeft size={14} aria-hidden /> All classes
+          <ArrowLeft size={14} aria-hidden /> {workplace ? "All groups" : "All classes"}
         </Link>
       }
     >
@@ -96,13 +116,17 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
               <div className="flex flex-col gap-2">
                 <CopyCode code={classroom.code} />
                 <span className="text-xs" style={{ color: "var(--ink-3)" }}>
-                  Students enter this under Classes → Join.
+                  {workplace ? "Colleagues" : "Students"} enter this under Classes → Join.
                 </span>
               </div>
             </div>
           </Card>
         )}
 
+        {workplace && cohort && <WorkplaceView summary={cohort} sponsor={isTeacher} />}
+
+        {roster && (
+          <>
         <div className="grid gap-3 sm:grid-cols-3">
           <StatTile value={roster.entries.length} label="Members" tone="sky" />
           <StatTile value={roster.activeThisWeek} label="Active this week" tone="mint" />
@@ -211,6 +235,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
               </p>
             </Card>
           </section>
+        )}
+          </>
         )}
 
         {isTeacher && !classroom.archived && (

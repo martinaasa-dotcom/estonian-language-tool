@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
 import { enrichWithinDeadline, lookupAndStore } from "@/lib/dict/lookup";
+import { didYouMean, isKnownWord } from "@/lib/dict/known";
 import { backfillClozeCards } from "@/lib/srs/backfill";
 import { ekilexConfigured } from "@/lib/ekilex/client";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
@@ -71,6 +72,30 @@ export default async function DictionaryPage({
   */
   const heard = hits.length === 0 && q ? soundAlike(q, await dictionaryLemmas()) : [];
 
+  /*
+    AND WHETHER IT IS A WORD AT ALL, WHICH IS A DIFFERENT QUESTION.
+
+    Everything above searches the 5,363 entries this app can teach. `KnownWord`
+    is the 154,995 headwords Ekilex holds, built in thirty-two requests, and it
+    knows only that they exist. That is enough to tell three dead ends apart
+    which used to render identically:
+
+      - A real Estonian word the dictionary has no entry for. The screen can
+        say so, which is the case that was reported: `uudishimulik` appears in
+        this app's own copy and searching for it returned nothing at all.
+      - A misspelling of one. Offer it.
+      - Neither, in which case the blank really is the answer.
+
+    Two indexed reads, and only on the path that was going to be a dead end.
+    `soundAlike` above stays and is the better answer where it fires, because
+    it knows which Estonian sounds a learner confuses; this is the wider net
+    behind it, over every word rather than the ones with entries.
+  */
+  const known = hits.length === 0 && q ? await isKnownWord(q) : false;
+  const spellings = hits.length === 0 && q && !known && heard.length === 0
+    ? await didYouMean(q)
+    : [];
+
   // Open the first hit straight away — searching a word and then having to click it
   // again is a wasted step when you already know what you looked up. Unless the
   // link asked for one of the others by name, which is the only way a second
@@ -135,6 +160,8 @@ export default async function DictionaryPage({
         initialQuery={q}
         hits={hits}
         heard={heard}
+        known={known}
+        spellings={spellings}
         glossLanguage={glossLanguage}
         openedId={opened?.id ?? null}
         entry={entry}

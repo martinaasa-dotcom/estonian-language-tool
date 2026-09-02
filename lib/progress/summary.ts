@@ -34,6 +34,36 @@ export interface DeckSnapshot {
   knownLemmas: Set<string>;
 }
 
+/**
+ * Which lemmas count as known, out of cards already loaded.
+ *
+ * A lemma is known when *every* card of it has reached the Known state, which
+ * is a stricter rule than it looks: a word whose recognition card has stuck and
+ * whose production card has not is a word you can read and cannot write, and
+ * counting it would overstate the deck.
+ *
+ * Split out of `deckSnapshot` because the cohort roster needs the same answer
+ * for several learners at once and gets its cards from one batched query
+ * (lib/classroom/roster.ts). Two readings of "known" would be two vocabulary
+ * figures for one deck, and the one on a colleague's screen would be the one
+ * nobody could check.
+ */
+export function knownLemmasFrom(cards: { state: number; lemma: string | null }[]): Set<string> {
+  const perLemma = new Map<string, { total: number; known: number }>();
+  for (const card of cards) {
+    if (!card.lemma) continue;
+    const entry = perLemma.get(card.lemma) ?? { total: 0, known: 0 };
+    entry.total++;
+    if (card.state === KNOWN_STATE) entry.known++;
+    perLemma.set(card.lemma, entry);
+  }
+  const out = new Set<string>();
+  for (const [lemma, entry] of perLemma) {
+    if (entry.total > 0 && entry.known === entry.total) out.add(lemma);
+  }
+  return out;
+}
+
 export async function deckSnapshot(ownerId: string, now = new Date()): Promise<DeckSnapshot> {
   /*
     `lexemeId` and a lookup, not `lexeme: { select: { lemma: true } }`.
@@ -76,18 +106,21 @@ export async function deckSnapshot(ownerId: string, now = new Date()): Promise<D
     perLemma.set(lemma, entry);
   }
 
-  const knownLemmas = new Set<string>();
-  for (const [lemma, entry] of perLemma) {
-    if (entry.total > 0 && entry.known === entry.total) knownLemmas.add(lemma);
-  }
-
   return {
     totalCards: cards.length,
     dueCount,
     newCount,
     knownCards,
     startedLemmas: new Set(perLemma.keys()),
-    knownLemmas,
+    // Through the shared rule rather than a second copy of it, for the reason
+    // written above `knownLemmasFrom`. The lemma comes from the same lookup the
+    // loop above uses, since the card rows carry an id rather than a relation.
+    knownLemmas: knownLemmasFrom(
+      cards.map((card) => ({
+        state: card.state,
+        lemma: card.lexemeId === null ? null : entries.get(card.lexemeId)?.lemma ?? null,
+      })),
+    ),
   };
 }
 

@@ -38,16 +38,28 @@ terms set by the people who made it:
       Attribution required, and share-alike: a work built on this text has
       to be offered on the same terms. https://en.wiktionary.org
 
+  Word frequency counts
+      From hermitdave/FrequencyWords over the OpenSubtitles corpus. MIT for
+      the code, CC BY-SA 4.0 for the counts: attribution required, and
+      share-alike. `lib/collections/frequency.ts` is built from them and
+      carries the same terms. https://github.com/hermitdave/FrequencyWords
+
   Synthesised speech
       From TartuNLP at the University of Tartu, fetched at runtime and
       cached. Not redistributed as part of this repository.
       https://tartunlp.ai
 
-`prisma/data/expanded.json` is a build product of the first two, so the
-share-alike clause reaches it: it may be redistributed, and a redistribution
-carries CC BY-SA 4.0 rather than this licence. Nothing about that is a
-restriction on the code around it.
+`prisma/data/expanded.json` is a build product of the first two and
+`lib/collections/frequency.ts` of the third, so the share-alike clause reaches
+both: they may be redistributed, and a redistribution carries CC BY-SA 4.0
+rather than this licence. Nothing about that is a restriction on the code
+around it.
 
-Both attributions are rendered in the running app, on the sign-in page, in
-the landing page footer and on /terms, which is where a licence of this shape
-expects to find them rather than in a file only a developer opens.
+The University of Tartu publishes a better Estonian frequency dictionary and
+it is CC BY-NC. It is deliberately not used: no charge today is not a promise
+of no charge ever, and a non-commercial clause is the one licence a project
+cannot walk itself back out of later.
+
+All three attributions are rendered in the running app, on the sign-in page,
+in the landing page footer and on /terms, which is where a licence of this
+shape expects to find them rather than in a file only a developer opens.

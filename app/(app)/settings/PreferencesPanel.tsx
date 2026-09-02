@@ -2,13 +2,17 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Keyboard, PenLine } from "lucide-react";
-import { setClassDisplayName, setLetterBar, setReviewMode } from "@/app/actions";
+import { BarChart3, EyeOff, Keyboard, PenLine } from "lucide-react";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import {
+  setClassDisplayName, setLetterBar, setResearchParticipation, setReviewMode,
+} from "@/app/actions";
 import { Button } from "@/components/Button";
 import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import { LetterSample } from "@/components/DiacriticBar";
 import type { ReviewMode } from "@/lib/settings/store";
 import { LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
+import type { Participation } from "@/lib/research/participation";
 
 const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof PenLine }[] = [
   {
@@ -157,6 +161,67 @@ export function ClassNamePanel({ currentName }: { currentName: string }) {
         Used to greet you, and shown beside your XP for the week if you join a class. Nothing else,
         not your email, not your words, not your history, goes with it. Leaving the class takes it
         back off.
+      </p>
+    </div>
+  );
+}
+
+const PARTICIPATION: { value: Participation; label: string; detail: string; icon: typeof BarChart3 }[] = [
+  {
+    value: "in",
+    label: "Count my answers",
+    detail:
+      "Adds them to the totals. Nothing is published that fewer than ten people are behind, and nothing in it can be traced back to one person.",
+    icon: BarChart3,
+  },
+  {
+    value: "out",
+    label: "Leave mine out",
+    detail:
+      "Your answers are skipped when the totals are worked out. Everything else in the app carries on exactly as it did.",
+    icon: EyeOff,
+  },
+];
+
+/**
+ * Whether this learner's answers are counted in the anonymous statistics.
+ *
+ * Two cards rather than a switch, because "on" and "off" do not say what is
+ * being turned off, and this is the one setting on the page where somebody may
+ * want to read a sentence before deciding. Both sides are stated in what they
+ * do rather than in what they protect: a card that says "protect my privacy"
+ * against one that says "help research" is not a choice, it is a nudge with two
+ * labels on it.
+ */
+export function ResearchPanel({ current, exported }: { current: Participation; exported: boolean }) {
+  const [value, setValue] = useState(current);
+  const [, start] = useTransition();
+
+  const pick = (next: Participation) => {
+    setValue(next);
+    start(() => { void setResearchParticipation(next); });
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ChoiceGroup ariaLabel="Anonymous statistics" className="grid gap-2 sm:grid-cols-2">
+        {PARTICIPATION.map((p) => (
+          <ChoiceCard
+            key={p.value}
+            layout="stacked"
+            selected={value === p.value}
+            onSelect={() => pick(p.value)}
+            icon={<p.icon size={16} aria-hidden />}
+            title={p.label}
+            detail={p.detail}
+          />
+        ))}
+      </ChoiceGroup>
+      <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+        {exported
+          ? "Which grammar learners here get wrong, counted across everybody, so that whoever teaches Estonian can see it. Which case, which stem change, which word. Never your deck, your searches or a single answer."
+          : "This installation is not set up to produce those totals, so nothing is being counted anywhere. Your answer is kept in case that changes."}{" "}
+        <Link href="/privacy" className="underline underline-offset-2">How this works</Link>.
       </p>
     </div>
   );

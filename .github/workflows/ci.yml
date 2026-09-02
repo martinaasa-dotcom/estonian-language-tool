@@ -117,6 +117,10 @@ jobs:
       # gates a route, and an error webhook's path is a common place to keep a
       # token. `scripts/test-invariants.ts` reads `PROVIDER_KEY_ENV` and checks
       # it against this list, so the next provider cannot be missed the same way.
+      # A second check there reads the list by shape rather than by inventory:
+      # a variable ending in KEY, TOKEN, SECRET or PASSWORD, read anywhere Next
+      # builds, has to be here. That is what covers the ones no chain declares,
+      # `METRICS_TOKEN` and `RESEARCH_TOKEN` among them.
       - name: Build with marked secrets
         env:
           CI_CANARY: canary-CI_CANARY-must-not-ship
@@ -130,6 +134,7 @@ jobs:
           EKILEX_API_KEY: canary-EKILEX_API_KEY-must-not-ship
           SUPABASE_SERVICE_ROLE_KEY: canary-SUPABASE_SERVICE_ROLE_KEY-must-not-ship
           METRICS_TOKEN: canary-METRICS_TOKEN-must-not-ship
+          RESEARCH_TOKEN: canary-RESEARCH_TOKEN-must-not-ship
           ERROR_WEBHOOK_URL: https://example.invalid/canary-ERROR_WEBHOOK_URL-must-not-ship
         run: npx next build
       - name: Grep the client bundle
@@ -314,6 +319,11 @@ jobs:
       - run: node scripts/test-modes.mjs
       - run: node scripts/test-teaching.mjs
       - run: node scripts/test-polish.mjs
+      # The learner's own week: a repeating class landing in the right columns,
+      # a reminder beside the homework a teacher set, and both coming off again.
+      # It adds rows and removes them, so it is runnable twice and leaves the
+      # database as it found it for everything after it.
+      - run: node scripts/test-calendar.mjs
       # Paper to deck, driven end to end with only the model stubbed: the
       # picture leaving the device, the confirmation list, a ticked word
       # becoming a card, and the review session asking about it.

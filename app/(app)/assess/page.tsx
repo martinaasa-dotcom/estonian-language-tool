@@ -61,6 +61,9 @@ export default async function AssessPage({
     ? {
         skills: latest.skills as SkillResult[],
         overall: (latest.overall ?? null) as Placement["overall"],
+        // Read by today's rule, not the one in force when the row was written.
+        // `latestFor` does that; this only carries it through. See `readOverall`.
+        nearly: latest.nearly,
         ceiling: (latest.ceiling ?? null) as Placement["ceiling"],
         confidence: latest.confidence as Confidence,
         itemsAnswered: latest.answered,

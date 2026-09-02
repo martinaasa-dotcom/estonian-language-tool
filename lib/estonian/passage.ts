@@ -1,4 +1,4 @@
-import { fold } from "@/lib/dict/search";
+import { fold } from "@/lib/estonian/fold";
 
 /**
  * Gap-fill exercises built from a passage the learner pasted.

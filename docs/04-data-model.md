@@ -25,10 +25,12 @@ comment on every model that needs one; what belongs here is the map and the reas
 |---|---|
 | `Lexeme` | A dictionary word. **Shared by every learner**: the built-in set plus the Ekilex cache, not anybody's deck. |
 | `Form` | An inflected form. Principal parts are the unpredictable ones a learner memorises; anything Ekilex retrieved keeps its own slot. |
+| `KnownWord` | Every Estonian headword there is, and nothing else about it. Shared reference data, like `Lexeme`: it answers "is this a word" for the search screen and for a word game's guesses. |
 | `StarredWord` | One learner bookmarking a word. Per learner, unlike the word. |
 | `Card` | One thing to answer about one word, in one of seven shapes, with its FSRS scheduling. |
 | `Review` | Every grade ever given. Append-only, and the one table whose loss cannot be undone. |
 | `Task` | Work a teacher assigned, which is the one thing left of the homework list §24 cut. |
+| `StudyEvent` | A class, a study slot or a one-off in the learner's own week. Wall-clock minutes rather than instants, so a Monday class stays at 18:00 across a daylight saving change. |
 | `Message` | A turn of a conversation with Anu. |
 | `Setting` | The learner's own answers, one key at a time, through `lib/settings/store.ts`. |
 | `Achievement` | A badge, written the moment its condition is first met and never removed. |

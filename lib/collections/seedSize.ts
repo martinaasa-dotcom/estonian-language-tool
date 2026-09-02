@@ -25,6 +25,14 @@
  * of plural forms with it. The word count did not move, because the words are
  * the same words; what changed is which word each of them is.
  *
+ * It went up by fifty-one when three units of connectives, replies and degree
+ * words were added, which is the second interesting thing. A frequency count
+ * over film and television subtitles found that a hundred and twenty-five of
+ * the four hundred commonest words in Estonian were ones the dictionary could
+ * not vouch for in any form, and the top of that list is `ja`, `et`, `aga`,
+ * `jah` and `ei`. The forms did not move, because an Estonian connective does
+ * not inflect and the harvest keeps it attested and formless.
+ *
  * It went *down* by twelve once, which is the only interesting thing that has
  * happened to it. The part-of-speech audit corrected 61 labels in the built
  * file, and twelve of those words were ones the course harvest also carries:
@@ -49,4 +57,4 @@
  * record with `Object.fromEntries` takes the last. Ekilex lists the primary
  * first, and that is now the one kept.
  */
-export const SEED_SET_SIZE = { words: 6_050, forms: 37_723 };
+export const SEED_SET_SIZE = { words: 6_101, forms: 37_723 };

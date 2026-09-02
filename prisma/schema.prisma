@@ -1,5 +1,6 @@
 // Lean MVP schema. Deliberately smaller than docs/04-data-model.md:
-// calendar, decks, audio rows and the usage ledger are cut for the MVP.
+// decks and audio rows are cut. The calendar is `StudyEvent` below, added when
+// a learner asked to keep their class times beside their homework.
 // Kept Postgres-portable (no SQLite-specific types), which is what made this
 // datasource swap possible — see docs/03-architecture.md ADR-002 and ADR-011.
 
@@ -92,6 +93,23 @@ model Lexeme {
   @@unique([lemma, pos])
   @@index([lemma])
   @@index([cefr])
+}
+
+/// Every Estonian headword there is, so the dictionary knows what exists.
+///
+/// A word and nothing else: no forms, no gloss, no level. `Lexeme` is the
+/// dictionary and holds 5,363 entries a learner can actually study; this holds
+/// 154,995 and answers one question, "is this an Estonian word", which is the
+/// question the search screen could not answer before. A miss that is a real
+/// word says so and fetches it; a miss that is not gets a spelling suggestion
+/// instead of a shrug, and a typo stops costing Ekilex two requests.
+///
+/// Reference data like `Lexeme`, shared by everybody and owned by nobody, so
+/// it is not in a backup and not in an erasure: there is nothing personal in
+/// a list of Estonian words. Built by `scripts/build-wordlist.ts` in
+/// thirty-two requests, one per initial letter.
+model KnownWord {
+  lemma String @id
 }
 
 /// A user bookmarking a dictionary word. Per-user, unlike the word itself.
@@ -225,6 +243,37 @@ model Task {
   @@index([ownerId, completed, dueAt])
 }
 
+/// A learner's own Estonian calendar: a class, a study slot, an exam date.
+///
+/// Separate from `Task`, which is a to-do with a due date and is also what a
+/// teacher assigns. An event happens *at* a time and often every week, and
+/// overloading one model with both would mean every reader of either asking
+/// which kind it had.
+///
+/// THE TIME IS MINUTES FROM MIDNIGHT, NOT A TIMESTAMP. A class at 18:00 every
+/// Monday is at 18:00 in the learner's own zone in March and in November, and a
+/// stored instant is not: it moves an hour when the clocks change. So a
+/// repeating event stores a wall-clock minute and the weekdays it falls on, and
+/// the learner's zone (`SETTING_KEYS.timeZone`) says what that means.
+model StudyEvent {
+  id        String   @id @default(uuid())
+  ownerId   String
+  title     String
+  notes     String?
+  /// CLASS STUDY EXAM OTHER. What it is, for the colour and the icon.
+  kind      String   @default("CLASS")
+  /// Minutes from local midnight, 0 to 1439.
+  startMinute Int
+  durationMinutes Int @default(60)
+  /// Weekdays it repeats on, 0 Sunday to 6 Saturday. Empty for a one-off.
+  weekdays  Int[]    @default([])
+  /// A one-off's day, as `YYYY-MM-DD` in the learner's own zone. Null when it repeats.
+  onDate    String?
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+}
+
 model Message {
   id        String   @id @default(uuid())
   ownerId   String
@@ -262,14 +311,29 @@ model Achievement {
 /// the app can actually make to a student: your deck is yours, and joining your
 /// teacher's class shares your progress, not your data.
 model Classroom {
-  id        String   @id @default(uuid())
-  name      String
+  id          String   @id @default(uuid())
+  name        String
   /// Six characters, shown to students to join with. Unique across the instance.
-  code      String   @unique
+  code        String   @unique
   /// The teacher's user id.
-  ownerId   String
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  ownerId     String
+  /// CLASS or WORKPLACE, from `COHORT_KINDS` in lib/classroom/cohort.ts.
+  ///
+  /// The two differ in what the owner is allowed to see, and the difference is
+  /// enforced by which query runs rather than by which fields a view happens to
+  /// render: a teacher has a reason to know which case one named student keeps
+  /// missing, and an employer looking at an employee does not. Defaulted rather
+  /// than required, so every class that existed before this stays a class.
+  kind        String   @default("CLASS")
+  /// The paper a workplace group is aiming at, "A1" to "C1".
+  ///
+  /// A band saying somebody is on track means nothing without one, and B1 is
+  /// the default because it is the level Estonian residency actually asks for,
+  /// which is why a workplace sponsors this at all. Ignored for a class, whose
+  /// owner is teaching a syllabus rather than aiming at one date.
+  targetLevel String   @default("B1")
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   members ClassroomMember[]
 

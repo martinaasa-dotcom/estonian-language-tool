@@ -263,6 +263,29 @@ const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 
+/**
+ * WHAT COUNTS AS HAVING MET A WORD.
+ *
+ * The word, not the card. `addCardsFor` writes a recognition card, a production
+ * card and one per case the dictionary can build, so `Euroopa` alone is five
+ * cards; keyed on the card id, each of them got its own introduction. Those
+ * screens differ only in a line at the bottom saying what the card will ask
+ * later, because the introduction shows the lemma, the gloss and a sentence and
+ * none of that changes between a word's cards. Driven in a browser, that was
+ * five near-identical screens for one word before a single question.
+ *
+ * Keyed on the lemma, a word is introduced once and its other cards are asked
+ * straight away, which is what the meeting was for. `spreadSiblings` keeps
+ * those questions apart; this only decides which of them teach.
+ *
+ * A card with no lemma behind it falls back to its own id, so it is its own
+ * word. Reading a missing lemma as one shared key would collapse every such
+ * card together and the rest would be asked having never been shown.
+ */
+function wordKey(card: ReviewCard): string {
+  return card.intro?.lemma ?? card.lemma ?? card.id;
+}
+
 function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): Ask {
   /*
     A card you have never seen cannot be recalled, only met. Asking someone to
@@ -282,7 +305,7 @@ function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): A
     So the meeting writes nothing, and the card comes back a few places later
     as the question it would ordinarily be. That retrieval is the grade.
   */
-  if (card.isNew && !met.has(card.id)) return "intro";
+  if (card.isNew && !met.has(wordKey(card))) return "intro";
   if (mode === "type" && TYPEABLE.has(card.cardType)) return "type";
   if (card.cardType === "RECOGNITION" && card.choices && card.choices.length > 1) return "choice";
   return "flip";
@@ -296,13 +319,23 @@ interface Done {
   before: ReviewCard["scheduling"];
 }
 
-export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, nextDue }: {
+export function ReviewSession({
+  cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, nextDue, title = "Review",
+}: {
   cards: ReviewCard[];
   drillCase?: string;
   drillUnit?: string;
   /** A photographed page being drilled on its own: its id, and what it is called. */
   drillScan?: { id: string; title: string };
   totalCards: number;
+  /**
+   * What this screen is called, for the heading no round has room to draw.
+   *
+   * Two routes render this session, and the Flash cards round announced itself
+   * as "Review" to a screen reader while its tab said "Flash cards". A screen
+   * names itself, and it has to be the same name in both places.
+   */
+  title?: string;
   /**
    * One sentence saying when the next card comes back, or null.
    *
@@ -490,7 +523,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
    */
   const meetDone = useCallback(() => {
     if (!card || busy) return;
-    setMet((m) => new Set(m).add(card.id));
+    setMet((m) => new Set(m).add(wordKey(card)));
     setQueue((q) => {
       const next = [...q];
       const [seen] = next.splice(index, 1);
@@ -787,7 +820,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           nothing back, while the four modes that happen to have a title bar
           answered fine. The `Empty` and finished states of these same files
           already carry one, which is how the gap survived a sweep. */}
-      <h1 className="sr-only">Review</h1>
+      <h1 className="sr-only">{title}</h1>
       <div className="mb-7 flex items-center gap-4">
         <Link
           href="/"
