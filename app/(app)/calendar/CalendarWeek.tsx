@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarPlus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Button } from "@/components/Button";
-import { Card, Chip, SectionTitle } from "@/components/ui";
+import { Card, SectionTitle } from "@/components/ui";
 import { ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { addReminder, addStudyEvent, deleteReminder, deleteStudyEvent } from "@/app/actions";
 import {
@@ -186,9 +186,25 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
           >
             {reminder.title}
           </p>
-          <Chip tone={reminder.completed ? "good" : "hard"}>
+          {/*
+            Plain text rather than a `Chip`, which the containment sweep caught
+            bleeding 11px out of this row at 768px. A week column at that width
+            is about ninety pixels and a chip is a padded inline-flex box with
+            an intrinsic minimum: it cannot shrink into the space, so it hangs
+            out of it. The row already says what it is by where it sits.
+
+            Block and truncating rather than inline, and without the uppercase
+            tracking the first attempt kept: an inline run still measured 2px
+            over, because `min-w-0` lets the column shrink and does nothing
+            about the text inside it. `truncate` is a way out somebody chose,
+            which is what the sweep accepts.
+          */}
+          <span
+            className="block truncate text-2xs font-semibold"
+            style={{ color: reminder.completed ? "var(--good-ink)" : "var(--hard-ink)" }}
+          >
             {reminder.completed ? "Done" : "To do"}
-          </Chip>
+          </span>
         </div>
         {reminder.mine && (
           <button

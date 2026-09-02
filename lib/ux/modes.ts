@@ -107,6 +107,14 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "house rather than maja. Six pairs against the clock.",
   },
   {
+    href: "/review/target", title: "Target", subtitle: "Fast, mostly endings",
+    icon: "Target", tone: "peach", group: "targeted", note: "Shrinking clock",
+    within: "/practice",
+    blurb:
+      "Four forms of one word and a question word telling you which. Nothing can be crossed " +
+      "out by meaning, so the only way through is the ending. Every hit shortens the clock.",
+  },
+  {
     href: "/review/sprint", title: "Case Sprint", subtitle: "60 seconds", icon: "Zap", tone: "butter",
     group: "quick", note: "No score yet",
     blurb: "Sixty seconds, as many case forms as you can manage, drawn from the cards you are weakest on.",

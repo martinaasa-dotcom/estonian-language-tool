@@ -122,7 +122,12 @@ const ROUTES = [
   "/review/sentences",
   "/review/speaking",
   "/review/sprint",
+  "/review/flashcards",
+  "/review/emoji",
+  "/review/target",
   "/practice",
+  "/quest",
+  "/calendar",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
   "/dictionary",
@@ -210,7 +215,12 @@ const SPARSE = new Map([
   it counted 1020. The margin of twenty under the count is the one the floor
   has always kept.
 */
-const { check, absent, done } = suite("Containment", { floor: 920 });
+// 1040 rather than 920: five routes joined the sweep (the Flash cards round,
+// Picture match, Target, the daily quest and the calendar). Its own header is
+// why they had to: "a route that is not in this list is a screen where the
+// whole rule is unenforced", and the calendar was over its box at 768 on the
+// first run.
+const { check, absent, done } = suite("Containment", { floor: 1030 });
 
 const browser = await launchChromium();
 
