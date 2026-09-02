@@ -1557,6 +1557,29 @@ wherever a screen prints a case, and no card asks for it.
 the module already splits on rather than `\b`, which is ASCII and so does not know what õ is. After
 all three: **zero cards print their own answer**, measured the same way.
 
+**A generator fix settles the cards built from now on and not one card already in a deck.** That is
+the half the audit cannot see, because it reads `prisma/data/expanded.json` and a learner's deck is
+rows. `lib/srs/cards.ts` stopped building a case card whose answer spells the word in the question,
+and a deck made before it still holds `liblikas → milles? kus?` with `liblikas` on the back: nothing
+in the app will ever take one out, so it comes back due, the answer is read off the question, the
+scheduler counts the pass as a recall and the slot is spent for ever. `npm run audit:decks` is the
+other half. It reports by default and names every card it would remove, `--write` removes them, and
+it is a command somebody runs rather than anything the app does on its own, because every row it
+touches belongs to a learner. **Removing rather than suspending**, and the schema is what makes that
+safe: `Review` has no foreign key to `Card` and carries its own `ownerId` and `lexemeId`, so the
+history stays and only the unanswerable question goes. Suspending would leave a row somebody has to
+decide about later, about a card that can never be right.
+
+**And the round that fills itself from a deck inherits whatever the deck kept.** `/review/emoji`
+draws its tiles from the learner's own case cards first, so it met those cards before any operator
+ran anything, on a screen whose own lead promises the ending. It reads the rule off the card through
+`acceptedAnswers`, which is the function that decides what counts as that card's answer everywhere
+else, so the board and the marker cannot disagree about what the card says. Its dictionary top-up
+applies the same test one layer up, since Estonian spells some of the eleven derivable cases like
+the nominative and `liblikas`, `sipelgas`, `kotkas` and `kirves` are exactly the pictured nouns a
+beginner meets: two of 1,166 case slots at A1 and eight of 1,903 at B1, so passing over them costs
+the board nothing and 500 simulated boards a level come out full with no tile spelling its own word.
+
 **A matching board is unique by what it asks with, not by what it answers.** 313 words carry a
 picture and there are 249 pictures: the house stands for `maja` and `elamu`, the bus for `buss` and
 `autobuss`, the man for `mees`, `meesisik` and `meesterahvas`, fifty of them in all. That is the table being right rather
@@ -3357,6 +3380,7 @@ npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
 npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
 npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
+npm run audit:decks      # case cards already in a deck whose answer spells the word in the question (--write removes)
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
