@@ -12,7 +12,7 @@
  * first time a word is viewed — storing it here would be a second source of
  * truth that goes stale.
  *
- * 1355 words, harvested 2026-09-02.
+ * 1371 words, harvested 2026-09-02.
  */
 
 export interface HarvestedWord {
@@ -769,6 +769,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Reisil peab kaasas olema isikut tõendav dokument: pass või ID-kaart.", "Piiripunktis tehti peatus dokumentide kontrolliks.", "Varastati kohver, mis sisaldas salajasi dokumente.", "Leiti rahakott koos dokumentidega."],
     note: "ametlik paber, kirjalikus vormis teade millegi tõendamiseks, õiguste kinnitamiseks vms",
+  },
+  {
+    lemma: "edasi", gloss: "onwards, further", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 162229,
+    parts: {  },
+    government: null,
+    usages: ["Minge otse edasi.", "Ei pääse rahvasummas edasi ega tagasi.", "Kell keeratakse tunni võrra edasi.", "Minge otse edasi!"],
+    note: "enda ees olevas suunas",
   },
   {
     lemma: "edasi andma", gloss: "to pass on", pos: "VERB", cefr: "B1",
@@ -2339,6 +2347,22 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "põhiarv 2",
   },
   {
+    lemma: "kakskümmend", gloss: "twenty", pos: "NOUN", cefr: "A1",
+    ekilexWordId: 176917,
+    parts: { NOM_SG: "kakskümmend", GEN_SG: "kahekümne", PART_SG: "kahtekümmend", PART_PL: "kahekümneid", GEN_PL: "kahekümnete" },
+    government: null,
+    usages: ["Arvutamine ühest kahekümneni.", "Buss nr 20.", "Hilinesin kakskümmend minutit.", "Raamat koosneb kahekümnest peatükist."],
+    note: "põhiarv 20",
+  },
+  {
+    lemma: "kaksteist", gloss: "twelve", pos: "NOUN", cefr: "A1",
+    ekilexWordId: 176923,
+    parts: { NOM_SG: "kaksteist", GEN_SG: "kaheteistkümne", PART_SG: "kahteteist", PART_PL: "kaheteistkümneid", GEN_PL: "kaheteistkümnete" },
+    government: null,
+    usages: ["Kaksteist pluss üks.", "Buss nr 12.", "Osales kaksteist veinitootjat.", "Aastas on kaksteist kuud."],
+    note: "arv 12",
+  },
+  {
     lemma: "kala", gloss: "fish", pos: "NOUN", cefr: "A1",
     ekilexWordId: 176939,
     parts: { NOM_SG: "kala", GEN_SG: "kala", PART_SG: "kala", PART_PL: "kalu", GEN_PL: "kalade" },
@@ -2369,6 +2393,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Edukas allkirjade kogumise kampaania.", "Suitsetamisvastane kampaania.", "Kampaania „Osta kolm, maksa kahe eest”.", "Teavituskampaania."],
     note: "sihipärane (lühiajaline) tegevus mingi eesmärgi saavutamiseks ning osalejate või ostjate ligimeelitamiseks (nt et midagi reklaamida ja müüa, valimistel hääli saada)",
+  },
+  {
+    lemma: "kampsun", gloss: "jumper, sweater", pos: "NOUN", cefr: "A2",
+    ekilexWordId: 177475,
+    parts: { NOM_SG: "kampsun", GEN_SG: "kampsuni", PART_SG: "kampsunit", PART_PL: "kampsuneid", GEN_PL: "kampsunite" },
+    government: null,
+    usages: ["Mõni eelistab sooja villast kampsunit pintsakule.", "Abikaasa on mulle kudunud hulga kampsuneid.", "Kootud kampsuneid Ruthi garderoobis ei leidu.", "Ta kannab villast kampsunit."],
+    note: "varrukatega, üle pea selga tõmmatav või eest lahti käiv silmkoeese",
   },
   {
     lemma: "kandidaat", gloss: "candidate", pos: "NOUN", cefr: "A2",
@@ -3241,6 +3273,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kohtume kolmapäeval kell 12.", "Kolmapäeval tuleb tavaline sajune sügisilm."],
     note: "nädala 3. päev, teisipäevale järgnev ja neljapäevale eelnev päev",
+  },
+  {
+    lemma: "kolmkümmend", gloss: "thirty", pos: "NOUN", cefr: "A1",
+    ekilexWordId: 184040,
+    parts: { NOM_SG: "kolmkümmend", GEN_SG: "kolmekümne", PART_SG: "kolmekümmend", PART_PL: "kolmekümneid", GEN_PL: "kolmekümnete" },
+    government: null,
+    usages: ["Kolmkümmend kaheksa.", "Buss nr 30.", "Septembris on kolmkümmend päeva.", "Lähim bensiinijaam on siit kolmekümne kilomeetri kaugusel."],
+    note: "põhiarv 30",
   },
   {
     lemma: "kolumnist", gloss: "columnist", pos: "NOUN", cefr: null,
@@ -5595,6 +5635,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "aasta 11. kuu, põhjapoolkeral kolmas sügiskuu",
   },
   {
+    lemma: "null", gloss: "zero", pos: "NOUN", cefr: "A1",
+    ekilexWordId: 209191,
+    parts: { NOM_SG: "null", GEN_SG: "nulli", PART_SG: "nulli", ILL_SG_SHORT: "nulli", PART_PL: "nulle", GEN_PL: "nullide" },
+    government: null,
+    usages: ["Mistahes arvu nulliga korrutamine annab vastuseks nulli.", "Mitme nulliga kirjutatakse miljon?", "Viis miinus null on viis (5 – 0 = 5).", "Miljon kirjutatakse kuue nulliga."],
+    note: "põhiarv 0",
+  },
+  {
     lemma: "number", gloss: "number", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209228,
     parts: { NOM_SG: "number", GEN_SG: "numbri", PART_SG: "numbrit", PART_PL: "numbreid", GEN_PL: "numbrite" },
@@ -5971,6 +6019,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "mingit abistavat toimingut sooritama, mingit vajadust rahuldavat tegevust võimaldama",
   },
   {
+    lemma: "otse", gloss: "straight on", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 212082,
+    parts: {  },
+    government: null,
+    usages: ["Kuus kilomeetrit sõitke otse, seejärel keerake paremale.", "Kas lips on otse?", "Sõida algul otse, siis pööra vasakule.", "Suits tõusis otse üles."],
+    note: "(liikumisega, kulgemisega seoses:) sirgjooneliselt mingis suunas, sellest kõrvale kaldumata",
+  },
+  {
     lemma: "otsene", gloss: "direct, literal", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 212117,
     parts: { NOM_SG: "otsene", GEN_SG: "otsese", PART_SG: "otsest", PART_PL: "otseseid", GEN_PL: "otseste" },
@@ -6121,6 +6177,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vananemine on elu paratamatus.", "Lapsed peaksid olema elu õied, mitte lihtsalt paratamatus suvalisest ööst."],
     note: "nähtuste olemusest, korrast tulenev vältimatus",
+  },
+  {
+    lemma: "paremal", gloss: "on the right", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 213903,
+    parts: {  },
+    government: null,
+    usages: ["Paremal all on lukustusnupp.", "Laps istus emast paremal."],
+    note: "keha keskjoonest südamest teisel pool",
   },
   {
     lemma: "park", gloss: "park", pos: "NOUN", cefr: "A1",
@@ -6731,6 +6795,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "nädala 7. päev, laupäevale järgnev ja esmaspäevale eelnev päev",
   },
   {
+    lemma: "püksid", gloss: "trousers", pos: "NOUN", cefr: "A2",
+    ekilexWordId: 224244,
+    parts: { NOM_SG: "püks", GEN_SG: "püksi", PART_SG: "püksi", ILL_SG_SHORT: "püksi", PART_PL: "pükse", GEN_PL: "pükste" },
+    government: null,
+    usages: ["Pikad püksid.", "Lühikesed püksid.", "Tõmbasin püksid jalga.", "Velvetpüksid."],
+    note: "vöölt jalgadeni ulatuv, jalgu kahe (pika või lühema) haruna ümbritsev riideese, mida kannavad nii mehed kui naised",
+  },
+  {
     lemma: "püsiühend", gloss: "fixed expression", pos: "NOUN", cefr: null,
     ekilexWordId: 224390,
     parts: { NOM_SG: "püsiühend", GEN_SG: "püsiühendi", PART_SG: "püsiühendit", PART_PL: "püsiühendeid", GEN_PL: "püsiühendite" },
@@ -7209,6 +7281,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viisi ta veel ei pea, aga rütmika on tal vinge.", "Linnulaulu rütmikaga tembitud muusika.", "Vitraažis on rütmika kõige tähtsam.", "Hoonel on päris hea rütmika."],
     note: "millegi rütmiline külg, liikumise, heli vm (tugev) korrapärane vaheldumine",
+  },
+  {
+    lemma: "saabas", gloss: "boot", pos: "NOUN", cefr: "A2",
+    ekilexWordId: 229992,
+    parts: { NOM_SG: "saabas", GEN_SG: "saapa", PART_SG: "saabast", PART_PL: "saapaid", GEN_PL: "saabaste" },
+    government: null,
+    usages: ["Pika säärega saapad.", "Tõmbasin saapad jalast.", "Tal on uued saapad jalas.", "Ma kannan musti saapaid."],
+    note: "jalats, mille sääreosa ulatub üle pahkluu",
   },
   {
     lemma: "saabuma", gloss: "to arrive", pos: "VERB", cefr: "A2",
@@ -7971,6 +8051,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "kogult, mahult vm mõõtmetelt üle keskmise",
   },
   {
+    lemma: "suurus", gloss: "size", pos: "NOUN", cefr: "A2",
+    ekilexWordId: 238161,
+    parts: { NOM_SG: "suurus", GEN_SG: "suuruse", PART_SG: "suurust", ILL_SG_SHORT: "suurusse", PART_PL: "suurusi", GEN_PL: "suuruste" },
+    government: null,
+    usages: ["Kannu suurus.", "Õppelaenu suurus on 1000 eurot.", "Keskmise suurusega perearstikeskus.", "Meie leibkonna suurus on kolm inimest."],
+    note: "millegi mõõtmed, ulatus, hulk või määr",
+  },
+  {
     lemma: "suveräänsus", gloss: "sovereignty", pos: "NOUN", cefr: "B2",
     ekilexWordId: 238363,
     parts: { NOM_SG: "suveräänsus", GEN_SG: "suveräänsuse", PART_SG: "suveräänsust", ILL_SG_SHORT: "suveräänsusse", PART_PL: "suveräänsusi", GEN_PL: "suveräänsuste" },
@@ -8337,6 +8425,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhjus ja tagajärg.", "Nõukogude okupatsiooni tagajärjed.", "Põhjust ja tagajärge ei tohi segi ajada.", "Fännid ootavad sportlastelt häid tagajärgi."],
     note: "asjaolu, nähtus, tegu, mille on esile kutsunud mingi teine asjaolu, nähtus, tegu",
+  },
+  {
+    lemma: "tagasi", gloss: "back", pos: "ADVERB", cefr: "A1",
+    ekilexWordId: 241095,
+    parts: {  },
+    government: null,
+    usages: ["Ei pääse kõrvale ega tagasi, vaid ainult edasi.", "Kella tuleb tagasi keerata.", "Kirves põrkas pakult tagasi.", "Mees vaatas üle õla tagasi."],
+    note: "seljataha, tagumise külje või otsa suunas",
   },
   {
     lemma: "tagasihoidlik", gloss: "modest", pos: "ADJECTIVE", cefr: "A2",
@@ -9755,6 +9851,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "lühike rahvapärane õpetliku sisuga ja lõpetatud lause kujuga ütlus",
   },
   {
+    lemma: "vanus", gloss: "age", pos: "NOUN", cefr: "A2",
+    ekilexWordId: 254112,
+    parts: { NOM_SG: "vanus", GEN_SG: "vanuse", PART_SG: "vanust", PART_PL: "vanuseid", GEN_PL: "vanuste" },
+    government: null,
+    usages: ["Kirja tuli panna nimi, vanus ja sugu.", "Sünnitajate keskmine vanus kasvab.", "Isa suri kõrges vanuses.", "Ülevaatuse sagedus sõltub auto vanusest."],
+    note: "aeg (aastates), mille keegi või miski on käesoleva või mingi teatava hetkeni elanud või olemas olnud",
+  },
+  {
     lemma: "varjund", gloss: "nuance, shade", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254374,
     parts: { NOM_SG: "varjund", GEN_SG: "varjundi", PART_SG: "varjundit", PART_PL: "varjundeid", GEN_PL: "varjundite" },
@@ -9769,6 +9873,22 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Küll asjad saavad varsti korda.", "Ta peaks üsna varsti tulema.", "Küll sa varsti terveks saad.", "Varsti näeme!"],
     note: "natukese aja pärast",
+  },
+  {
+    lemma: "vasak", gloss: "left", pos: "ADJECTIVE", cefr: "B1",
+    ekilexWordId: 254485,
+    parts: { NOM_SG: "vasak", GEN_SG: "vasaku", PART_SG: "vasakut", PART_PL: "vasakuid", GEN_PL: "vasakute" },
+    government: null,
+    usages: ["Vasak põlv valutab.", "Auto vasak suunatuli ei põle.", "Mu vasak silm näeb halvemini kui parem.", "Usutakse, et Niiluse jõe vasak kallas on Surma Org."],
+    note: "keha keskjoonest südame pool asuv või selline, mis asetseb vaataja suhtes tema südame pool",
+  },
+  {
+    lemma: "vasakul", gloss: "on the left", pos: "ADVERB", cefr: "A2",
+    ekilexWordId: 254509,
+    parts: {  },
+    government: null,
+    usages: ["Minust vasakul seisis kaks meest.", "Istusin Raulist vasakul."],
+    note: "keha keskjoonest südame pool",
   },
   {
     lemma: "vastama", gloss: "to answer", pos: "VERB", cefr: "A1",
@@ -10641,6 +10761,14 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üks pluss üks on kaks.", "Kell on üks öösel.", "Selles majas elab ainult üks inimene.", "Olen Rootsis käinud vaid ühe korra."],
     note: "põhiarv 1",
+  },
+  {
+    lemma: "üksteist", gloss: "eleven", pos: "NOUN", cefr: "A1",
+    ekilexWordId: 262910,
+    parts: { NOM_SG: "üksteist", GEN_SG: "üheteistkümne", PART_SG: "ühteteist", PART_PL: "üheteistkümneid", GEN_PL: "üheteistkümnete" },
+    government: null,
+    usages: ["Üksteist ja pool.", "Buss nr 11.", "Registreerinud on üksteist võistkonda.", "See juhtus üksteist aastat tagasi."],
+    note: "arv 11",
   },
   {
     lemma: "üldarusaadav", gloss: "generally comprehensible", pos: "ADJECTIVE", cefr: null,

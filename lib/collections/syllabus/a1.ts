@@ -18,7 +18,7 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Greet someone, thank them, apologise, and say you do not understand.",
-    blurb: "The twenty phrases that get you through a first conversation without grammar.",
+    blurb: "The phrases that get you through a first conversation without grammar.",
     grammar: ["politeness"],
     cardTypes: ["RECOGNITION", "PRODUCTION"],
     words: [
@@ -85,12 +85,23 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Count, give your phone number, say a price and tell someone your age.",
-    blurb: "Counting is where the partitive first bites: kaks raamatut, not kaks raamat.",
+    blurb: "Counting is where the partitive first bites: kaks raamatut, not kaks raamat. The teens end in -teist and the tens in -kümmend, and two of each is the whole pattern.",
     grammar: ["numerals", "partitive"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["inimesed"],
     words: [
+      /*
+        The can-do says "give your phone number, say a price and tell someone
+        your age", and the list stopped at ten and then jumped to a hundred, so
+        a teacher checking the unit against the promise on its own page finds
+        the gap on the first screen. Zero, two teens and two tens is what a
+        class actually teaches: the pattern is `-teist` and `-kümmend`, and
+        somebody who has met two of each has met the rule. Each of these is a
+        request rather than a fact, and the harvest drops and reports any that
+        Ekilex will not confirm.
+      */
       ["number", "number"],
+      ["null", "zero"],
       ["üks", "one"],
       ["kaks", "two"],
       ["kolm", "three"],
@@ -101,6 +112,11 @@ export const A1 = [
       ["kaheksa", "eight"],
       ["üheksa", "nine"],
       ["kümme", "ten"],
+      ["üksteist", "eleven"],
+      ["kaksteist", "twelve"],
+      ["kakskümmend", "twenty"],
+      ["kolmkümmend", "thirty"],
+      ["vanus", "age"],
       ["sada", "hundred"],
       ["tuhat", "thousand"],
       ["esimene", "first", "ADJECTIVE"],
@@ -371,6 +387,16 @@ export const A1 = [
       ["taskurätik", "handkerchief"],
       ["vöö", "belt"],
       ["riie", "cloth, fabric"],
+      /*
+        "Shop for clothes by size" needs a word for size and a word for
+        trousers, and this unit had neither: it taught a handkerchief and a
+        belt, which Ekilex rates B1, and left out the two garments a beginner
+        buys first. Requests, checked by the harvest like every other lemma.
+      */
+      ["suurus", "size"],
+      ["püksid", "trousers"],
+      ["kampsun", "jumper, sweater"],
+      ["saabas", "boot"],
     ],
   }),
 
@@ -464,6 +490,26 @@ export const A1 = [
       ["kohvik", "café"],
       ["restoran", "restaurant"],
       ["hotell", "hotel"],
+      /*
+        The can-do promises "understand the directions you are given", and
+        neither this unit nor Kohasõnad had a word for left, right or straight
+        on. Somebody who has met every building in the town centre and cannot
+        follow "vasakule, siis otse" has not been taught to follow directions.
+        Requests, like every other lemma here.
+      */
+      ["vasak", "left", "ADJECTIVE"],
+      /*
+        The adverbs, not the adjective, because that is what a direction is
+        given with: "vasakul, siis otse". `parem` was requested first and came
+        back as Ekilex 213895, whose note and all four sentences are the
+        comparative of `hea`, better: the homonym fault this whole pass is
+        about, made while fixing it. `paremal` has no such twin.
+      */
+      ["vasakul", "on the left", "ADVERB"],
+      ["paremal", "on the right", "ADVERB"],
+      ["otse", "straight on", "ADVERB"],
+      ["edasi", "onwards, further", "ADVERB"],
+      ["tagasi", "back", "ADVERB"],
     ],
   }),
 

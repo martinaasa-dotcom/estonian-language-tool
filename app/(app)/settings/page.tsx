@@ -262,7 +262,9 @@ export default async function SettingsPage() {
           </section>
 
           <section>
-            <SectionTitle hint={provider ? undefined : "Anu is off until you add a key"}>AI tutor</SectionTitle>
+            {/* Named the way every other screen names her. "AI tutor" here
+                against "Anu" everywhere else made two things out of one. */}
+            <SectionTitle hint={provider ? undefined : "off until you add a key"}>Anu</SectionTitle>
             <Card>
               {provider ? (
                 <div>
@@ -403,11 +405,6 @@ export default async function SettingsPage() {
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     The time is read on your own clock, wherever you are, and stays put when the
                     clocks change.
-                  </p>
-                  <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-                    We considered push notifications instead. They need a server that is always
-                    switched on, and still do nothing on an iPhone unless the app is installed. A
-                    calendar entry just works.
                   </p>
                 </div>
               </div>

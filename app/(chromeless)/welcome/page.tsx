@@ -825,7 +825,7 @@ const FAQS = [
   ],
   [
     "Where do the Estonian forms come from?",
-    "Every form and example sentence comes from Ekilex, run by the Institute of the Estonian Language, and every English translation from Wiktionary. An AI is never allowed to write an Estonian form: it invents plausible ones that are wrong, and a flashcard would drill the mistake straight in.",
+    "Every form and example sentence comes from Ekilex, run by the Institute of the Estonian Language, and every English gloss from Wiktionary or the course itself. An AI is never allowed to write an Estonian form: it invents plausible ones that are wrong, and a flashcard would drill the mistake straight in. Where Anu translates a sentence for you, it says so on the sentence.",
   ],
   [
     "Is this only for beginners?",

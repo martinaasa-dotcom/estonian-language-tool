@@ -60,17 +60,17 @@ export default function TermsPage() {
           as derived from a stored genitive stem, it is labelled as derived.
         </P>
         <P>
-          <strong>Anu is a machine, and says so on every screen it speaks from.</strong> You
+          <strong>Anu is a machine, and says so on every screen she speaks from.</strong> You
           are talking to a language model, not to a teacher, and the app is required to make
           that unmistakable rather than merely true. Which model answered is printed under
           each reply, because a screen naming the wrong one would be worse than naming none.
         </P>
         <P>
-          Anu, the AI tutor, is not the final word on anything. She can explain grammar and
-          suggest an English translation, and she is built so she can never hand you an
-          Estonian dictionary form, but her explanations can still be wrong. Anything she
-          suggests is marked <em>{AI_TAG}</em> and needs your confirmation before it becomes
-          a card. Do not rely on her for an exam answer without checking it yourself.
+          She is not the final word on anything. She can explain grammar and suggest an
+          English translation, and she is built so she can never hand you an Estonian
+          dictionary form, but her explanations can still be wrong. Anything she suggests is
+          marked <em>{AI_TAG}</em> and needs your confirmation before it becomes a card. Do
+          not rely on her for an exam answer without checking it yourself.
         </P>
         <P>
           The app is provided as it is, with no warranty. It is a learning aid, not a
