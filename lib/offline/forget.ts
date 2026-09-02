@@ -104,13 +104,29 @@ async function forgetPages(): Promise<void> {
  */
 export const SITTING_KEY_PREFIX = "kodukeel.exam.";
 
+/**
+ * And an unfinished puzzle under this one, by `app/(app)/sonad/resume.ts`.
+ *
+ * Smaller than a paper and the same argument: it is one person's morning left
+ * on a shared machine, and the next person opening the app should find the
+ * board empty rather than half solved by somebody else. Swept by prefix for
+ * the reason the sittings are, since which days were played is not something
+ * a sign-out can know.
+ */
+export const PUZZLE_KEY_PREFIX = "kodukeel.puzzle.";
+
 function forgetSittings(): void {
+  forgetByPrefix(SITTING_KEY_PREFIX);
+  forgetByPrefix(PUZZLE_KEY_PREFIX);
+}
+
+function forgetByPrefix(prefix: string): void {
   try {
     const store = window.localStorage;
     const doomed: string[] = [];
     for (let i = 0; i < store.length; i++) {
       const key = store.key(i);
-      if (key && key.startsWith(SITTING_KEY_PREFIX)) doomed.push(key);
+      if (key && key.startsWith(prefix)) doomed.push(key);
     }
     for (const key of doomed) store.removeItem(key);
   } catch {

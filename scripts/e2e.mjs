@@ -21,7 +21,9 @@ page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   still beside it. Both run whenever `tuba` has a paradigm behind it, which is
   the same condition the four checks above it already depend on.
 */
-const { check, absent, done } = suite("The core flows", { floor: 27 });
+// +3: the three dead ends a dictionary search can reach are three different
+// sentences now, and only a rendered page can say which one was shown.
+const { check, absent, done } = suite("The core flows", { floor: 30 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -52,6 +54,39 @@ await ensureLetterBar(browser, B, "on");
   `tuba` that opens without a paradigm is something shadowing it, which is a
   fault and says so in a sentence naming the likely culprit.
 */
+/*
+  THREE DEAD ENDS THAT USED TO READ THE SAME.
+
+  "Nothing found" answered a misspelling, an English word, and an ordinary
+  Estonian word this app had no entry for. `KnownWord` is 154,995 headwords
+  built in thirty-two Ekilex requests and tells them apart. Driven here rather
+  than unit tested because what matters is which of three sentences a learner
+  is shown, and only the rendered page knows.
+
+  `KontrollimatuSonaXyz` is invented on purpose, for the reason every suite that
+  touches the shared dictionary invents its word: it must not be Estonian, and
+  it must not be a word the list could ever gain.
+*/
+{
+  const cases = [
+    ["uudishmulik", /No word is spelled that way/, "a near miss offers the spelling"],
+    ["kontrollimatusonaxyz", /Nothing found/, "a string that is not a word says so"],
+  ];
+  for (const [query, wanted, label] of cases) {
+    await page.goto(`${B}/dictionary?q=${query}`, { waitUntil: "networkidle" });
+    const text = await page.evaluate(() => document.querySelector("main")?.innerText ?? "");
+    check(label, wanted.test(text), text.replace(/\n+/g, " | ").slice(0, 140));
+  }
+
+  // And the near miss names the word it is suggesting, rather than offering a
+  // heading with nothing under it.
+  await page.goto(`${B}/dictionary?q=uudishmulik`, { waitUntil: "networkidle" });
+  check(
+    "and names the word it means",
+    await page.getByRole("link", { name: "uudishimulik" }).count() > 0,
+  );
+}
+
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
 const paradigm = await page
   .waitForSelector("text=toaga", { timeout: 10000 })

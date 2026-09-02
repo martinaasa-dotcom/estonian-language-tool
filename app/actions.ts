@@ -38,6 +38,7 @@ import {
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
+import { kindFrom } from "@/lib/ux/schedule";
 import { participationValue } from "@/lib/research/participation";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import {
@@ -45,7 +46,15 @@ import {
 } from "@/lib/srs/cards";
 import { writeGrade } from "@/lib/srs/grade";
 import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
-import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
+import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
+import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
+import { solvedEntries } from "@/lib/games/crossword";
+import { crosswordFor } from "@/lib/progress/crossword";
+import { puzzleFor } from "@/lib/progress/sonad";
+import { courseLevelFor } from "@/lib/progress/level";
+import type { DayKey } from "@/lib/time/day";
+import { FREQUENCY_GROUPS, type FrequencyGroup } from "@/lib/collections/frequency";
+import { lemmasIn } from "@/lib/progress/common";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
@@ -856,6 +865,123 @@ export async function recordMatchTime(seconds: number) {
   return { ok: true as const, best: isNewBest ? rounded : best, isNewBest };
 }
 
+/**
+ * A finished round of Sõnad, in the review log where every other mode's is.
+ *
+ * ADR-016 has no exemptions and this does not ask for one: the puzzle's answer
+ * is a dictionary entry, and where the learner already holds a card for it,
+ * finishing the round is evidence about that word. Where they do not, this
+ * writes nothing at all and the finish screen offers to add it instead, which
+ * is the same shape the picture round takes.
+ *
+ * THE CLIENT SENDS GUESSES AND NEVER A SCORE. The board knows the answer,
+ * because marking a guess without a round trip is most of how the game feels
+ * to play, so a posted rating would be a rating anybody can type. The puzzle is
+ * rebuilt here from the day and the learner's own level, exactly as the mock
+ * exam rebuilds its paper to mark it (ADR-022), and `ratingFor` is pure and
+ * runs over the guesses on this side.
+ *
+ * The day is the caller's, and that is deliberate rather than sloppy: the
+ * learner's own midnight is a browser fact, the board is keyed on it, and a
+ * server that recomputed it from its own clock would refuse a round played at
+ * half past eleven at night. The worst a chosen day can do is name a different
+ * word, which grades a different card of the learner's own deck at a rating
+ * they earned on a board they played.
+ */
+export async function recordSonad(day: string, guesses: unknown) {
+  const ownerId = await requireUserId();
+  const played = Array.isArray(guesses)
+    ? guesses.filter((g): g is string => typeof g === "string").slice(0, SONAD_GUESSES)
+    : [];
+  if (played.length === 0) return { ok: false as const, error: "Nothing to record." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false as const, error: "Not a day." };
+
+  const puzzle = await puzzleFor(ownerId, day as DayKey, await courseLevelFor(ownerId));
+  if (!puzzle) return { ok: false as const, error: "No puzzle for that day." };
+
+  const rating = ratingFor(played, puzzle.answer);
+  if (rating === null) return { ok: false as const, error: "That round is not over." };
+  if (!puzzle.inDeck) return { ok: true as const, graded: false };
+
+  /*
+    The production card, because that is the question the game asks: the
+    learner produced the Estonian spelling. Recognition is the other way round
+    and nothing here tested it.
+  */
+  const card = await prisma.card.findFirst({
+    where: { ownerId, lexemeId: puzzle.lexemeId, cardType: "PRODUCTION" },
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  if (!card) return { ok: true as const, graded: false };
+
+  const result = await gradeCard(card.id, rating, 0);
+  return result.ok ? { ok: true as const, graded: true } : result;
+}
+
+/**
+ * A finished crossword, in the review log for the words that are cards.
+ *
+ * `recordSonad`'s shape, over more words. The client sends the grid it filled
+ * in and which entries it asked to be shown; the server rebuilds the day's
+ * puzzle from the date and the learner's level, checks the letters itself, and
+ * grades only the entries that are right. A filled-in grid is the only route
+ * to a Good, which is the half that matters; whether the Show button was used
+ * can only make a rating worse, and is the same latitude the guesses have.
+ *
+ * Every entry is one card at most, so a seven-word grid is at most seven rows
+ * in an append-only table, which is the size of one review session.
+ */
+export async function recordCrossword(day: string, typed: unknown, helped: unknown) {
+  const ownerId = await requireUserId();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false as const, error: "Not a day." };
+
+  /*
+    Off the wire, whatever the types say. A cell index that is not a number and
+    a letter that is a paragraph both reach `solvedEntries`, which compares
+    strings, so what this has to stop is the size rather than the shape: a
+    thousand-key object is a thousand comparisons of a thousand characters.
+  */
+  const grid: Record<number, string> = {};
+  if (typed && typeof typed === "object") {
+    for (const [cell, letter] of Object.entries(typed as Record<string, unknown>).slice(0, MAX_CELLS)) {
+      if (typeof letter === "string" && letter.length <= 2) grid[Number(cell)] = letter;
+    }
+  }
+  const shown = new Set(
+    Array.isArray(helped) ? helped.filter((h): h is number => typeof h === "number") : [],
+  );
+
+  const puzzle = await crosswordFor(ownerId, day as DayKey, await courseLevelFor(ownerId));
+  if (!puzzle) return { ok: false as const, error: "No crossword for that day." };
+
+  const solved = solvedEntries(puzzle, grid);
+  if (solved.size === 0) return { ok: true as const, graded: 0 };
+
+  const wanted = [...solved].map((index) => puzzle.entries[index]!);
+  const cards = await prisma.card.findMany({
+    where: { ownerId, lexemeId: { in: wanted.map((e) => e.lexemeId) }, cardType: "PRODUCTION" },
+    orderBy: { id: "asc" },
+    select: { id: true, lexemeId: true },
+  });
+  const byLexeme = new Map(cards.map((c) => [c.lexemeId ?? "", c.id]));
+
+  let graded = 0;
+  for (const index of solved) {
+    const entry = puzzle.entries[index]!;
+    const cardId = byLexeme.get(entry.lexemeId);
+    if (!cardId) continue;
+    // Shown is not solved. A learner who pressed the button read the answer,
+    // which is worth telling the scheduler about and is not worth a Good.
+    const result = await gradeCard(cardId, shown.has(index) ? 1 : 3, 0);
+    if (result.ok) graded += 1;
+  }
+  return { ok: true as const, graded };
+}
+
+/** A nine by nine grid is 81 cells; anything past that is not a grid. */
+const MAX_CELLS = 81;
+
 // ──────────────────────────── Learner preferences ──────────────────────────
 
 /**
@@ -1093,6 +1219,38 @@ export async function completeOnboarding(input: {
  * case-form cards. Already-present cards are skipped, so re-adding a unit after
  * finishing half of it costs nothing and loses no scheduling.
  */
+/**
+ * The hundred commonest words of one kind, into the deck.
+ *
+ * The group rather than a list of words, and that is the point: every export
+ * of this file is a public endpoint whose arguments are JSON off the wire
+ * whatever the types say, so a caller handing over lemmas would be choosing
+ * what gets built. A group name indexes a table checked into the repository
+ * and cannot name anything else.
+ *
+ * Recognition and production only (`planLemmas` decides), because a case card
+ * apiece would be eight hundred cards for one press. Already-present cards are
+ * skipped under the same lock every other deck write takes, so pressing twice
+ * costs nothing and loses no scheduling.
+ */
+export async function addCommonWords(group: string) {
+  const ownerId = await requireUserId();
+  if (!FREQUENCY_GROUPS.includes(group as FrequencyGroup)) {
+    return { ok: false as const, error: "That list does not exist." };
+  }
+
+  const { added, words } = await addPlanToDeck(
+    ownerId,
+    planLemmas(lemmasIn(group as FrequencyGroup), ["RECOGNITION", "PRODUCTION"]),
+    "DICTIONARY",
+  );
+
+  revalidatePath("/dictionary/common");
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, added, words };
+}
+
 export async function addUnitToDeck(unitId: string) {
   const ownerId = await requireUserId();
   const unit = unitById(unitId);
@@ -1690,6 +1848,124 @@ export async function toggleTask(id: string) {
 }
 
 
+// ──────────────────────────── The learner's calendar ───────────────────────
+
+/**
+ * Adds something to the learner's own Estonian week.
+ *
+ * No throttle, deliberately, and `lib/security/actionLimits.ts` says why most
+ * actions must not have one: this is a single small insert, and a limit here
+ * would be met by somebody filling in their term timetable on a Sunday evening
+ * and by nobody else.
+ *
+ * Every field is clamped rather than trusted. `"use server"` makes this a public
+ * endpoint, so a start minute of a million or a weekday of 9 has to come out
+ * the other side as something a calendar can draw, and the owner comes from
+ * `requireUserId` rather than from the caller.
+ */
+export async function addStudyEvent(input: {
+  title: string;
+  notes?: string;
+  kind: string;
+  startMinute: number;
+  durationMinutes: number;
+  weekdays: number[];
+  onDate?: string | null;
+}) {
+  const ownerId = await requireUserId();
+
+  const title = input.title.trim().slice(0, 120);
+  if (!title) return { ok: false as const, error: "Give it a name." };
+
+  const weekdays = [...new Set(input.weekdays)].filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  /*
+    A one-off needs a day and a repeat must not carry one. Reading a stray
+    `onDate` on a repeating event would make `eventsOn` answer two ways about
+    the same row, since it tests the weekdays first and would never look.
+  */
+  const onDate = weekdays.length > 0 ? null : dayKeyOrNull(input.onDate);
+  if (weekdays.length === 0 && !onDate) {
+    return { ok: false as const, error: "Pick a day, or the days it repeats on." };
+  }
+
+  await prisma.studyEvent.create({
+    data: {
+      ownerId,
+      title,
+      notes: input.notes?.trim().slice(0, 500) || null,
+      kind: kindFrom(input.kind),
+      startMinute: clamp(Math.round(input.startMinute), 0, 1439),
+      durationMinutes: clamp(Math.round(input.durationMinutes), 5, 12 * 60),
+      weekdays,
+      onDate,
+    },
+  });
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/** Removes one of the learner's own events. Scoped by owner, like every delete. */
+export async function deleteStudyEvent(id: string) {
+  const ownerId = await requireUserId();
+  const { count } = await prisma.studyEvent.deleteMany({ where: { id, ownerId } });
+  if (count === 0) return { ok: false as const };
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/**
+ * Adds a reminder: a task with a due date, which is what Today already draws.
+ *
+ * A reminder and a piece of homework are the same row, and that is on purpose.
+ * `Task` is what `lib/ux/agenda.ts` buckets and what `components/TodayPlan.tsx`
+ * prints, so a note a learner writes themselves lands in the same place a
+ * teacher's assignment does rather than in a second list beside it.
+ */
+export async function addReminder(input: { title: string; notes?: string; dueAt?: string | null }) {
+  const ownerId = await requireUserId();
+  const title = input.title.trim().slice(0, 200);
+  if (!title) return { ok: false as const, error: "Give it a name." };
+
+  const key = dayKeyOrNull(input.dueAt);
+  await prisma.task.create({
+    data: {
+      ownerId,
+      title,
+      notes: input.notes?.trim().slice(0, 500) || null,
+      tag: "HOMEWORK",
+      // Stored at midnight UTC, which is what `<input type="date">` sends and
+      // what `bucketFor` already expects: it counts whole days on the learner's
+      // own clock rather than comparing instants. See lib/ux/agenda.ts.
+      dueAt: key ? new Date(`${key}T00:00:00.000Z`) : null,
+    },
+  });
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+/** Removes a reminder the learner wrote. A teacher's assignment is theirs to remove. */
+export async function deleteReminder(id: string) {
+  const ownerId = await requireUserId();
+  const { count } = await prisma.task.deleteMany({ where: { id, ownerId, classWeek: null } });
+  if (count === 0) return { ok: false as const };
+  revalidatePath("/calendar");
+  revalidatePath("/");
+  return { ok: true as const };
+}
+
+const clamp = (n: number, lo: number, hi: number) =>
+  Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo;
+
+/** A `YYYY-MM-DD` string, or null for anything that is not one. */
+function dayKeyOrNull(value: string | null | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)) ? null : value;
+}
+
+
 // ──────────────────────── Gap-fill from pasted reading ─────────────────────
 
 /**
@@ -1810,6 +2086,7 @@ export async function deleteMyAccount(confirmation: string) {
       await tx.review.deleteMany({ where: { ownerId } });
       await tx.card.deleteMany({ where: { ownerId } });
       await tx.task.deleteMany({ where: { ownerId } });
+      await tx.studyEvent.deleteMany({ where: { ownerId } });
       await tx.message.deleteMany({ where: { ownerId } });
       await tx.starredWord.deleteMany({ where: { ownerId } });
       await tx.achievement.deleteMany({ where: { ownerId } });
@@ -1904,6 +2181,8 @@ const BackupSchema = z.object({
     still works.
   */
   scans: z.array(z.record(z.unknown())).optional(),
+  /** The learner's own calendar. Optional for the reason `scans` is. */
+  studyEvents: z.array(z.record(z.unknown())).optional(),
   /*
     Optional for the same reason `scans` is: a file written before the export
     carried them has no such key and must still restore. Every one of these is
@@ -2020,6 +2299,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         // which is why Review carries its own ownerId and no foreign key.
         await tx.card.deleteMany({ where: { ownerId } });
         await tx.task.deleteMany({ where: { ownerId } });
+        await tx.studyEvent.deleteMany({ where: { ownerId } });
         await tx.scan.deleteMany({ where: { ownerId } });
       }
 
@@ -2106,6 +2386,24 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         const existing = await tx.task.findUnique({ where: { id: String(data.id) }, select: { ownerId: true } });
         if (existing && existing.ownerId !== ownerId) continue;
         await tx.task.upsert({ where: { id: String(data.id) }, create: data as never, update: data as never });
+      }
+
+      /*
+        The calendar, on the same terms: written by its original id so a second
+        restore changes nothing, and always attributed to whoever is restoring.
+        A replace deletes these, so a restore that did not put them back would
+        take somebody's class times away in the name of giving them their data.
+      */
+      for (const raw of backup.studyEvents ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const existing = await tx.studyEvent.findUnique({
+          where: { id: String(data.id) }, select: { ownerId: true },
+        });
+        if (existing && existing.ownerId !== ownerId) continue;
+        await tx.studyEvent.upsert({
+          where: { id: String(data.id) }, create: data as never, update: data as never,
+        });
       }
 
       // Photographed pages, on the same terms as everything else here: written

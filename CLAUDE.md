@@ -78,6 +78,39 @@ table of Estonian ("Case", "Singular"), the English prose that explains a point,
 in URLs. The ids are keys that 83 syllabus entries and any bookmarked link point at, and renaming
 them buys a slug and risks the course.
 
+**Knowing a word exists is a different job from teaching it, and thirty-two requests buys the
+first.** The dictionary ships 5,363 entries and every other Estonian word came back as "nothing
+found", which is the same blank a learner gets for a misspelling and for an English word. That was
+reported plainly and the example was the app's own copy: `uudishimulik` appears on screen in
+Kodukeel and searching for it in Kodukeel found nothing.
+
+Harvesting the language properly is one request per word, and Ekilex holds about 261,000 Estonian
+headwords: a quarter of a million requests against a free service the Institute runs for the good of
+the language, for a convenience. Ekilex's search takes a wildcard, so `a*` returns every word
+beginning with `a`, and thirty-two letters is thirty-two requests for the whole list.
+`scripts/build-wordlist.ts` is that, and `KnownWord` is 154,995 rows of one column.
+
+**It is not a dictionary and must not be made into one.** It holds a word and nothing else: no
+forms, no gloss, no level, because the search that returns it returns a headword and an id and
+asking for the rest is back to one request each. `Lexeme` stays the dictionary, the thing a learner
+can study, and this answers the one question a search screen could not: *is that a word*. That turns
+out to be most of what was missing, because it tells three dead ends apart that used to render
+identically. A real word with no entry says so and the live lookup fetches it. A near miss gets the
+spelling (`lib/dict/known.ts`, prefix-indexed candidates ranked by edit distance). Neither gets the
+blank, quickly, without spending two requests on somebody else's service to reach the same answer.
+
+Three filters keep it honest and each is a decision. **The general datasets only**: Ekilex hosts a
+hundred specialist term bases beside the general dictionary, and `esterm`, `mea` and the rest are
+95,000 words a learner will never search and would only meet as noise in a spelling row. **Single
+words**, because the search is given one. **Nothing with a capital in it**, which loses the place
+names and is the right side to err on, since an index full of two-letter abbreviations makes every
+typo look like a word.
+
+Reference data like `Lexeme`, so it is in no backup and no erasure: there is nothing personal in a
+list of Estonian words. Inserted and never updated, outside `--only-if-empty`'s early return for the
+reason `ensureSearchIndexes` is, because a deployment seeded before this has a full dictionary and
+an empty word list.
+
 **The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
 `prisma/data/expanded.json` from two sources with a strict division of labour: every Estonian
 form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
@@ -697,6 +730,55 @@ meets one they can read through rather than a wall of names, and the block names
 from, since these are somebody else's words. It lives on the dictionary landing beside the row it
 grew out of, rendered from the same hourly cache and stored nowhere; asserted.
 
+**Which words are worth learning first is a question about the language, not about the syllabus, so
+it is answered by counting.** The course teaches in themes and the dictionary holds six thousand
+words, and neither tells somebody in their first week where to start. `scripts/build-frequency.ts`
+counts a published word list over the OpenSubtitles corpus and writes `lib/collections/frequency.ts`,
+a hundred lemmas of each of four kinds. It is the third door onto the same rule as the photograph
+and the headline: the corpus proposes, the dictionary decides, and every word on the page is the
+dictionary's own headword. Nothing generated holds an English gloss, because a gloss copied out of
+the dictionary is a second copy of it that goes stale the first time somebody corrects one, and the
+correction path here is a queue strangers write to.
+
+**The licence is why it is that corpus.** `hermitdave/FrequencyWords` is MIT for the code and
+**CC BY-SA 4.0** for the counts, which is the licence Wiktionary already puts on the glosses in the
+built dictionary, so it may be used commercially, it has to be credited, and what is built on it
+carries the same terms. The University of Tartu publishes a better Estonian frequency dictionary
+and it is **CC BY-NC**: no charge today is not a promise of no charge ever, and a non-commercial
+clause is the one licence a project cannot walk itself back out of later. It is credited beside
+Ekilex and Wiktionary on sign-in, in the landing footer, on /terms and in `LICENSE`.
+
+**Two counting rules, both measured rather than reasoned out.** Only an *exact* spelling counts, never
+a folded one: `matchEstonianForm` accepts a lemma with its diacritics folded away, which is right for
+somebody typing `room` meaning `rõõm` and wrong over a corpus that is spelled correctly, and folding
+put `õli` at the top of the nouns on the 294,452 occurrences of `oli`, with `ära` landing on `arg`
+and `veel` on `väli`. And a **nominal is counted on its dictionary form while a verb is counted on
+its persons**: summing every case looks more accurate and is worse, because the commonest words in
+Estonian are function words and `välja` was being credited to `väli`, `ees` to `esi` and `sea` to
+`siga`. A verb is the exception because `saan`, `tean` and `tahan` are only ever that verb, and
+without them `olema` ranks nowhere since nobody says the infinitive. A spelling more than one entry
+can claim counts towards none of them, which is the comparator rule again: `hall` is frost and grey
+and there is no honest way to split thirty thousand occurrences. `meil` and `sai` are the residue
+and are named in the script's header so nobody adds a third rule to chase them.
+
+**And the count is what found the hole.** Of the four hundred commonest words in Estonian, 125 were
+ones the dictionary could not vouch for in any form, and the top of that list is `ja`, `et`, `aga`,
+`jah`, `ei`, `ka`, `siis` and `nii`. Six units of "the words between the words" had been appended
+once and the job was half done. Three more A1 units carry the connectives, the replies and the degree
+words, 51 lemmas, every one a request the harvest either honours or reports, and all 51 came back.
+They are labelled `ADVERB` for the reason the harvest already gives about the connectives it had, that
+an Estonian adverb does not inflect and demanding forms would drop every one of them; the label says
+which card types a word takes rather than making a claim about word class, which is what `kas` has
+been doing since the question words unit was written.
+
+**A page that offers a hundred words at once adds them under one lock.** `planLemmas` and
+`addPlanToDeck` are the shared body `addUnitsToDeck` was refactored into, so the frequency page
+inherits the transaction, the deck lock, the dedupe against what is already there and the chunked
+insert, rather than growing a fourth path that writes cards. Recognition and production only, because
+a case card apiece would be eight hundred cards for one press. The invariant that guards this used to
+name `addUnitsToDeck` and read its body; it counts inserts now, so a fifth caller fails it whatever it
+is called, which is what the refactor itself demonstrated by silently emptying the old check.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request
@@ -742,6 +824,127 @@ backup over a deck cannot cascade the history away. Do not re-add the relation f
 of a join. `lib/srs/replay.itest.ts` will fail, which is the point. The same property is what makes
 offline sync conflict-free: grades are facts with timestamps, and replaying them in order reproduces
 the state exactly, because `grade()` takes `now` as a parameter.
+
+**A word game may borrow a shape and may not borrow a look.** Sõnad is guess-a-word-and-be-told-
+which-letters-were-right, which is older than computers: Mastermind sold it in 1970 and Bulls and
+Cows was a pencil game before that. What the New York Times owns, and has enforced, is the name
+Wordle and the look of it. So the name is different, the length is different, the tiles are circles,
+the three states are this app's own hues rather than green and yellow and grey, the movements are its
+own, and not a line of anybody's code or a word of anybody's list was taken. `lib/games/sonad.ts`
+holds that argument next to the rules it is about.
+
+**Six letters, and that is a fact about the dictionary rather than a taste.** Five is the English
+game's length and is wrong here twice: Estonian words are longer, and the graded dictionary holds 450
+five-letter content words against 603 at six, which after banding is 183 answers against 215 at A1
+and 352 against 477 at B1. Four has the biggest pool of all at 816 and is guessed by accident.
+
+**Two word lists, and they are not the same list.** The answers are graded dictionary entries at the
+learner's own level, because an answer has to be a word the app can teach: the finish screen names
+it, glosses it, links to its entry and offers to keep it. The *guesses* are `KnownWord`, the 154,995
+headwords the Ekilex enumeration brought back, 7,134 of them six letters long, because telling
+somebody an ordinary Estonian word is not a word is the one thing a game like this must never do and
+the built dictionary alone would do it several times a round. That list is read once and handed to
+the browser, since a round trip per guess is a round trip inside the one gesture the game is made of.
+
+**The board knows the answer and may not know the score.** The word crosses deliberately, because
+marking without a round trip is most of how it plays and anybody who opens the network tab has
+spoiled their own morning. What may not cross the other way is a rating: `recordSonad` takes the
+guesses, rebuilds the day's puzzle from the date and the level, and works out what the round was
+worth on the server, which is `submitExam`'s shape (ADR-022) and is what keeps the game under
+ADR-016 rather than exempt from it. Where the word is in the deck the round grades the production
+card; where it is not, it writes nothing and the finish screen offers to add it.
+
+**A hue is half a signal, and this is the screen that rule was written for.** The first board was
+mint, butter's tint and `--raised`, which in the light theme is one strong green beside two pale
+washes: "in the word somewhere" and "not in the word at all", the two that matter most, differed by
+hue alone. They are three kinds of object now, a solid fill, a tint with a ring round it, and a flat
+wash, and every marked circle also says which in words for a reader who gets neither. Measured in a
+browser in both themes: 7.40 and 5.31 and 5.62 in the light, 11.70 and 9.27 and 5.49 in the dark. The
+draft that dropped the fill and kept only the ring measured 3.52, because `--butter-ink` is drawn to
+sit on butter's tint and not on a card.
+
+**There is one table of which Estonian letters fold, and there were three.** Six letters an English
+keyboard has no key for, and half the app has to answer the same question about them: is `sona` the
+word `sõna`? Whether the answer is yes is each caller's decision, since a search box says yes and a
+marker says no. Which six letters is not. `lib/dict/search.ts` had a `replaceAll` chain,
+`lib/estonian/dictation.ts` and `lib/estonian/answer.ts` each wrote the same `Record` out again, and
+they agreed, which is the dangerous state rather than the safe one: a marker and a search box that
+disagreed about `ž` would mark somebody wrong for a spelling the dictionary had just offered them.
+`lib/estonian/fold.ts` is the one table and it holds the Postgres `translate()` pair as well, so the
+SQL that narrows a search and the JavaScript that decides it cannot drift.
+
+**The fourth case is what found it, and it was a real screen.** The command palette matched a typed
+query against a label with `includes`, so typing `sonad` found nothing and Sõnad, the one place in
+this app with an Estonian name, was unreachable from the box that promises to go anywhere. For
+exactly the learner `lib/ux/letterBar.ts` exists for, who has no õ key and therefore cannot type the
+name at all. Both sides fold now, so `sõnad` and `sonad` both land.
+
+Two exemptions and both are a different question. `lib/estonian/sounds.ts` folds *sounds a learner
+confuses*, b against p and k against g, and says so at length. `lib/suggestions/model.ts` has a
+function called `fold` that collapses whitespace for a grouping key and touches no diacritic, which
+is a name collision rather than a copy. And the move is where it is on purpose:
+`lib/estonian/passage.ts` was importing `fold` from `lib/dict/search.ts`, which imports Prisma, so a
+layer asserted to be free of the database was pulling it in one import away and the invariant, which
+reads each file's own imports, could not see it.
+
+**One game a day, the same one every week, and nothing hidden by it.** Eleven rounds on a menu is a
+decision to make before you can start; one on the home page with a reason beside it is an invitation,
+and Thursday being Match every week is a thing somebody comes to know about their own Thursdays.
+`lib/ux/weekGames.ts` is the table, it names rounds by their own href so a rename in
+`lib/ux/modes.ts` carries, and every round is still on `/practice`, in the palette and at its own URL
+on every day of the week. This is not `lib/ux/disclosure.ts` and does not overlap it: that module
+decides what a screen leads with by how far in a learner is, this one by what day it is.
+
+The two puzzles that really are one a day get the days that suit them. Sõnad and the crossword build
+a new one each morning and are finished once you have done it, so featuring them is a nudge rather
+than a limit: Sõnad opens the week because it is three minutes and the crossword is Saturday because
+it is fifteen. The other five days carry a round that can be played again, so a Tuesday with ten
+spare minutes is not a Tuesday that runs out. The card stands down on the day the quest is featured,
+because the quest already has a card on Today and it is the better one, naming the learner's own
+weakest case and what it is at; two cards for one round is furniture, and the cost is the "tomorrow"
+line one day in seven.
+
+**A crossword's format is nobody's; its grids and its clues and its name are somebody's.** The
+interlocking grid with numbered clues is from 1913 and is not owned. What a newspaper owns is the
+puzzles it publishes. So nothing here is taken from one: `lib/games/crossword.ts` compiles the grid,
+the answers are dictionary headwords at the learner's band, and the clues are the English glosses
+already beside them, cut to two senses. **No clue is written anywhere in this app**, which is what
+keeps it inside ADR-005: the only authored English is the gloss the syllabus already carries, and no
+Estonian is written at all.
+
+**English clues and Estonian answers, one direction only, because that is the direction that
+teaches.** You know what you mean and you are looking for the word, which is where a learner is
+every time they open their mouth. The other way round is a reading exercise with extra steps.
+
+**A criss-cross rather than a dense grid, and that is a fact about the dictionary.** A five-by-five
+where every row and column is a word needs a search over words with the right letter in the right
+place five times over, and at A1 there are 215 six-letter words to search: it does not reliably
+terminate. A criss-cross places words at intersections, leaves the rest empty, always succeeds, and
+is the shape a schoolbook puzzle takes. Measured over thirty days at three levels: seven words every
+day, every time. **Empty cells are drawn as nothing rather than as black squares**, because a
+criss-cross is mostly empty and sixty black squares read as a rendering fault.
+
+**Nine by nine is a phone, not a taste.** At 360px, nine columns is a 36px cell and ten is under 32,
+which is below what a finger can hit. The first compiler had no cap and produced a fifteen by eight
+grid on its second day. A placement that would push the bounding box past nine is refused rather
+than accepted and cropped, so a long word costs the grid a word rather than its shape.
+
+**A real input per cell, which is the opposite of Sõnad's choice and right for the opposite reason.**
+Sõnad is one word with a card of keys under it, so a keydown handler is enough. A crossword has
+thirty cells in two directions: the caret has to be visible, a phone has to open its own keyboard,
+and a composed õ has to arrive, which an `input` event carries and a `keydown` does not. The letter
+bar under the grid is the app's own `DiacriticBar` and needed nothing added, since it types into
+whatever has focus.
+
+**A daily puzzle needs a walk, not a hash, and it took two goes to get there.** `hash % pool` with
+the string hash everybody writes (`h * 31 + charCode`) moves by one row a day, so Sõnad's first ten
+days were `lammas, laulja, laulma, leidma, lemmik, lennuk, leping, lihtne, liiter`: a week of the
+letter L. That is the `aberratsioon` fault again. Adding an avalanche fixes the walk and leaves a
+draw, which collides at the birthday rate: `rekord` twice inside a fortnight on a 477-word pool.
+`dayIndex` in `lib/random/dayHash.ts` is the answer, the day's ordinal times a prime stride, so
+nothing repeats until the whole pool has been used and consecutive days are still far apart. The word
+of the day's fallback reads it too, since it had the same walk and nobody had noticed. What stays a
+hash is a tie-break among a handful of equally good candidates, which is not indexing a pool.
 
 **Never re-add the iframes.** Sõnaveeb and Ekilex send `X-Frame-Options: DENY`; Speakly has no public
 API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
@@ -1610,6 +1813,27 @@ a substring, because a gloss is a comma-separated list and a substring runs thro
 `contains` match on "dark" reaches a slur four rows down and one on "love" reaches "love child",
 and either would have been printed as today's word.
 
+**And the learner's level is a tie-break on one path and a filter on the other, which is measured
+rather than tidy.** A B1 account opened the app and was taught `keskmine`, an A1 adjective meaning
+"average", which is a word somebody has before they start. It matches no gloss the almanac can ask
+for, and that names the path: `pickAny`, the fallback for a day whose requests the dictionary could
+not meet, filtered on nothing at all, so its skip landed anywhere in six thousand entries. It bands
+on `bandsAround` now, and on a `cefr` being there at all, which is ADR-024's rule about the
+suggestion row for the same reason: an entry with no band is the tail of the Wiktionary expansion,
+and `aberratsioon` is no better a word of the day than it was a word to look up. The whole
+dictionary is the second pass under it, because a learner far enough in has met every graded word
+their level has and a blank panel is worse than a hard word.
+
+The obvious fix is to band both paths, and half of it is wrong. Measured over a year of the shipped
+dictionary at B1, banding the *themed* pick moved 37 days of 336 onto a word whose gloss carries the
+day's meaning as a fourth sense, on 31 days that had the primary one. The almanac asks for `snow`,
+`hand` and `week`, and those are A1 words because that is what those meanings are in any language:
+there is no B1 word for snow. So the band ranks **under** the sense, where it changes six days of
+336 and costs nothing, and a word chosen for today is a word for today first. Both halves have an
+invariant, anchored on the order of two keys in one array, and `lib/progress/wordOfDay.itest.ts` is
+the half that can fail on a word: it stars out everything the day could otherwise answer with and
+asks a real dictionary which word three learners at three levels are handed.
+
 **The date somebody gave us belongs on the screen they open.** A learner answers two questions in
 their first five minutes here, what they want to reach and by when, and the app then stored both and
 never mentioned them again on the one page they see every morning. `lib/progress/countdown.ts` puts
@@ -2056,9 +2280,9 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
-- `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
-  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/questions/`, `lib/ux/`,
-  `lib/random/`, `lib/funding/` and `lib/copy/` stay free of
+- `lib/assessment/`, `lib/estonian/`, `lib/games/`, `lib/gamification/`, `lib/stats/`,
+  `lib/collections/`, `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`,
+  `lib/questions/`, `lib/ux/`, `lib/random/`, `lib/funding/` and `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route. Asserted, because it
   had been prose alone and it is not a tidiness rule: the unit suite gates every
@@ -2207,6 +2431,24 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   `components/LocalDate.tsx` renders what the server wrote and lets the browser replace it on mount.
   A separate rule from the day boundary above, because the fix is different: a zone can be stored and
   handed to the server, and a locale is a list of preferences only the browser has.
+- **And Today's own date is the one exception, because it is not a date being reported, it is the
+  first Estonian a learner reads each morning.** The rule above is about a date the app hands back:
+  a deadline, the day somebody joined a class, when a paper was sat, and the shape of those belongs
+  to whoever is reading them. The line above the greeting is a word being taught. The seven weekday
+  names and the twelve month names are in every course's first fortnight, and a date is the one
+  piece of Estonian that needs no gloss to be useful, because the reader already knows what today
+  is: they are matching a word they have against a word they are learning, which is how a weekday
+  name is learned anywhere. So it leads `kolmapäev, 2. september` and keeps the English weekday
+  beside it as the cross-reference, the same shape every grammar screen takes with the Latin case
+  names, and that English is **pinned** rather than the reader's, because it is a gloss and every
+  other gloss in this app is English. `lib/time/estonianDate.ts` reads both out of CLDR, which is an
+  attested source in the sense Ekilex is and not a string anybody typed, so ADR-005 is kept the way
+  the almanac keeps it: delete the two Estonian words from that file's comments and its output is
+  identical. A build whose locale data has no Estonian **says nothing rather than English**, since
+  `et-EE` on a small-icu build formats as English and reports no error, and English under a
+  `lang="et"` would be read aloud by a screen reader with Estonian phonology; the page falls back to
+  the line it had before. The zone is still the learner's, because that half of the rule above is
+  about which day it is rather than how it is spelled.
 - **24-hour clock everywhere** (`lib/time/clock.ts`), never am/pm. Estonia writes the time that
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
@@ -2465,7 +2707,7 @@ see a name arriving through an interpolated option.
 
 **A placement check has no way to skip it, and one way past one question.** Every section opened
 with "Start this section" and "Skip reading" as two buttons of equal weight, and every typed
-question offered "Skip this one" beside Check. The overall level is the weakest of three skills
+question offered "Skip this one" beside Check. The overall level averages three skills
 (ADR-020), so a skipped section is not a gap in the report, it is a hole underneath the number: the
 app measures what somebody felt like doing and then prints a level as though it had measured them.
 Both are gone. What stays is `skipSkill` for listening, which is not a skip and is reached only
@@ -2568,9 +2810,28 @@ check at `/assess` is assembled from `Lexeme`, `Form` and recorded `usages`; eve
 which of those its Estonian came from. Marking is a stored index, a recorded sentence, or a string
 comparison against a form the dictionary vouches for, in that order, and no provider is reachable
 from `lib/assessment/`. A learner meeting this app for the first time cannot tell when the machine
-is the one that is confused, so the machine is never the judge. The overall level follows the
-**weakest** measured skill, because a CEFR level is a claim about everything you can do at it.
-(ADR-020.)
+is the one that is confused, so the machine is never the judge. The overall level is the **average**
+of the measured skills, floored (ADR-020 amendment 2).
+
+**And the average is the level, because the minimum was reporting a stranger three bands under
+themselves.** The rule was the weakest measured skill, on the argument that a CEFR level is a claim
+about everything you can do at it. That argument is about a certificate, and the screen it printed
+on says twice that it is not one. What it did to a real sitting of B2 reading, A1 listening and B2
+writing was print **below A1**, on the one screen whose whole job is telling somebody where they
+stand, and there is no reading of that learner under which it was true. A minimum takes the noise by
+construction, and a skill can miss here for reasons that are not the learner: listening abandons
+itself when the speech service will not answer, and writing is the noisiest skill in the paper by
+measurement, for the reason two paragraphs down. So `overallFrom` takes the mean over `rank` and
+floors it, the floor being the cautious half of the old rule and the half that was doing the work.
+Where the average lands at least half a band short of the next one the result says so, *a confident
+A2, and nearly B1*, and that sentence is deliberately rare, because a caveat printed on every result
+stops being read.
+
+`overall` is therefore a **derivation** and not a measurement, which is the thing to hold on to: the
+per skill columns are what the sitting found and are never touched, and `readOverall` in
+`lib/progress/assessment.ts` recomputes the headline from them on the way out, so a row written under
+the old rule and one written under this one are read the same way and the history list does not show
+two rules side by side. `Assessment` is still append-only in the sense that matters.
 
 **A level read off two questions is a coin toss, and every number in the paper is measured now.**
 Nineteen questions at two per band per skill was the whole paper, and `PASS` is two thirds, so a
@@ -2585,8 +2846,9 @@ be a score somebody can reach**, so a band size is a multiple of three, and 4 pe
 worse than 3 because it demands three quarters. **Writing is the noisiest skill**, since its
 answers are typed and nothing puts a floor under a band the way four options do, so at a fixed
 eighty items spending them on writing beat spending them on listening or reading. And **the
-overall level is the weakest of three skills**, so noise anywhere lands on the result, which is
-why raising reading alone took it only to 52%.
+overall level is drawn from three skills**, so noise anywhere lands on the result, which is
+why raising reading alone took it only to 52%. That last finding is also the measurement behind
+amendment 2: a rule that reads the floor does not merely inherit the noise, it selects for it.
 
 Two scoring rules changed with it. The level is **the highest band passed consecutively from the
 bottom**, which is the rule published placement tests use and was not the rule here: the old one
@@ -2832,6 +3094,8 @@ npm run audit:merge      # after merging: what the other side added that is no l
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
+npm run build:frequency  # recount the commonest words (cached corpus, --refresh to re-fetch)
+npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y

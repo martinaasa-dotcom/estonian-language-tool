@@ -451,6 +451,7 @@ npm run check:secrets    # fails if a credential reached the client bundle
 npm run test:e2e         # the browser suites, needs the server running
 npm run test:browser     # routes, modes, offline, the level check, scanning and accessibility
 npm run test:mobile      # the phone, measured; needs the server running
+npm run build:frequency  # recount the commonest words from the published corpus
 npm run demo             # two months of sample history, to look around
 npm run db:seed          # reload the built-in dictionary (always)
 npm run db:seed:ensure   # load it only if the dictionary is empty, what the deploy runs

@@ -65,6 +65,74 @@ export interface PracticeMode {
 
 export const PRACTICE_MODES: readonly PracticeMode[] = [
   {
+    /*
+      The headline of `/practice`, drawn as its own card above the grid, which
+      is why it carries `within` and stays out of `QUICK_MODES`: the six rounds
+      are six coloured tiles and there are six hues, so a seventh would have to
+      share one and read as a duplicate of whichever it borrowed.
+
+      `targeted` is the honest group for it too. It is not a round you play for
+      five minutes whatever state your deck is in, it is what you open when you
+      know which words are not sticking, which is what the group means.
+    */
+    href: "/review/flashcards", title: "Flash cards", subtitle: "Words you have met",
+    icon: "Layers", tone: "accent", group: "targeted", note: "Typed, varied",
+    within: "/practice",
+    blurb:
+      "The words review has already introduced, asked in a way you have not: a different form " +
+      "each time, typed rather than picked. A word leaves once it is right five times across " +
+      "three different forms.",
+  },
+  {
+    /*
+      Reached from Today, where it is a card rather than a row: the round is
+      about what is going wrong *today* and that is the screen that knows. It
+      stays in the table so the palette finds it, and out of `QUICK_MODES` for
+      the reason Flash cards is: six rounds, six hues, and a seventh tile would
+      have to borrow one and read as a duplicate.
+    */
+    href: "/quest", title: "Daily quest", subtitle: "Your weak spots",
+    icon: "Target", tone: "accent", group: "targeted", note: "From your log",
+    within: "/",
+    blurb:
+      "Two minutes on the cases you get wrong most often, drawn from your own log. " +
+      "It grades like any other round, so the cards you miss come back sooner.",
+  },
+  {
+    href: "/review/emoji", title: "Picture match", subtitle: "No English on the board",
+    icon: "Grid2x2", tone: "mint", group: "targeted", note: "Six pairs",
+    within: "/practice",
+    blurb:
+      "The picture is the meaning, so the Estonian side is a case form: match majas to the " +
+      "house rather than maja. Six pairs against the clock.",
+  },
+  {
+    href: "/sonad", title: "Sõnad", subtitle: "One word a day",
+    icon: "CircleDot", tone: "sky", group: "targeted", note: "Six letters, six guesses",
+    within: "/practice",
+    blurb:
+      "Six circles and an Estonian word behind them, at your level, and a new one every " +
+      "morning. Wrong letters go grey, right ones in the wrong place go amber. Where the " +
+      "word is already in your deck, finishing the round counts towards it.",
+  },
+  {
+    href: "/crossword", title: "Crossword", subtitle: "Clued in English",
+    icon: "Grid3x3", tone: "butter", group: "targeted", note: "A new grid daily",
+    within: "/practice",
+    blurb:
+      "Seven words at your level crossing each other, clued in English. That is the direction " +
+      "that teaches: you know what you mean and you are looking for the word, which is where " +
+      "you are every time you open your mouth.",
+  },
+  {
+    href: "/review/target", title: "Target", subtitle: "Fast, mostly endings",
+    icon: "Target", tone: "peach", group: "targeted", note: "Shrinking clock",
+    within: "/practice",
+    blurb:
+      "Four forms of one word and a question word telling you which. Nothing can be crossed " +
+      "out by meaning, so the only way through is the ending. Every hit shortens the clock.",
+  },
+  {
     href: "/review/sprint", title: "Case Sprint", subtitle: "60 seconds", icon: "Zap", tone: "butter",
     group: "quick", note: "No score yet",
     blurb: "Sixty seconds, as many case forms as you can manage, drawn from the cards you are weakest on.",
@@ -181,6 +249,19 @@ export const FIRST_DOORS = ["/review/match", "/review/listening"]
  * which is the other way of bringing your own text in.
  */
 export const TARGETED_MODES = PRACTICE_MODES.filter((m) => m.within);
+
+/**
+ * The rounds that are reached from `/practice` but are not one of its six.
+ *
+ * Flash cards is its headline card and the two games sit under a heading of
+ * their own. Read from the table rather than listed on that page, so a game
+ * added here appears without anybody remembering to edit a second file: both
+ * games shipped claiming to be reached from `/practice` while nothing there
+ * linked to them, which made them unfindable outside the command palette.
+ */
+export const GAMES = PRACTICE_MODES.filter(
+  (m) => m.within === "/practice" && m.href !== "/review/flashcards",
+);
 
 /** Whichever mode drills a given thing, for the page that names it. */
 export function modeAt(href: string): PracticeMode | undefined {

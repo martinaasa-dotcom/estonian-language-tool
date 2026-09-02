@@ -113,6 +113,16 @@ export default function TermsPage() {
           footer, and the split between them is the whole design of the dictionary rather
           than an accident of it.
         </P>
+        <P>
+          The order the commonest words are listed in comes from <a
+            href="https://github.com/hermitdave/FrequencyWords"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >FrequencyWords</a>, a published count over the OpenSubtitles corpus, also
+          licensed <strong>CC BY-SA 4.0</strong>. It decides nothing but an order: every
+          word shown is the dictionary&rsquo;s own.
+        </P>
       </S>
 
       <S title="Ending it">

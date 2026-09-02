@@ -107,6 +107,17 @@ export const PANELS = [
   /** The words and the cases that keep going wrong. */
   "struggle",
   /**
+   * The two-minute round aimed at whatever is going wrong most.
+   *
+   * Withheld until `settled` for the same reason `struggle` is, and it is the
+   * same data one step further on: the round is drawn from which cases the
+   * learner is worst at, and on a thin log there is no such thing. A card
+   * offering two minutes on weaknesses nobody has measured yet is a button
+   * promising something the round behind it cannot deliver, which is the test
+   * a panel has to pass here.
+   */
+  "quest",
+  /**
    * The level the learner is aiming at, how long they have, and the chance of
    * clearing it.
    *

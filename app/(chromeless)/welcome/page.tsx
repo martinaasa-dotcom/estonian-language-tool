@@ -1039,7 +1039,9 @@ function Footer() {
           <a href="https://ekilex.ee" target="_blank" rel="noreferrer" className="underline underline-offset-2">Ekilex</a>
           , Institute of the Estonian Language · CC BY 4.0. English glosses from{" "}
           <a href="https://en.wiktionary.org" target="_blank" rel="noreferrer" className="underline underline-offset-2">Wiktionary</a>
-          {" "}· CC BY-SA 4.0. Speech from{" "}
+          {" "}· CC BY-SA 4.0. Word counts from{" "}
+          <a href="https://github.com/hermitdave/FrequencyWords" target="_blank" rel="noreferrer" className="underline underline-offset-2">FrequencyWords</a>
+          {" "}over OpenSubtitles · CC BY-SA 4.0. Speech from{" "}
           <a href="https://tartunlp.ai" target="_blank" rel="noreferrer" className="underline underline-offset-2">TartuNLP</a>,
           University of Tartu.
         </p>

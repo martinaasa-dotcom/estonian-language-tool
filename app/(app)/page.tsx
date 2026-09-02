@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
-import { ArrowRight, Flame, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, Flame, Shield, Sparkles, Target } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { supabaseConfigured } from "@/lib/auth/mode";
@@ -14,20 +14,24 @@ import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
+import { grammarTerm } from "@/lib/estonian/terms";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
-import { FIRST_DOORS, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { FIRST_DOORS, modeAt, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { Card, CardLink, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
+import { dateLine } from "@/lib/time/estonianDate";
 import type { TaskView } from "@/components/TaskRow";
 import { ExamCountdownCard } from "@/components/ExamCountdown";
 import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
+import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LONG } from "@/lib/ux/schedule";
+import { gameAfter, gameOn } from "@/lib/ux/weekGames";
 import { WordOfDayCard } from "@/components/WordOfDay";
 import { BadgeCheck } from "./BadgeCheck";
 
@@ -113,7 +117,7 @@ export default async function TodayPage() {
   // with a deck or a finished setup never sees it again.
   if (!settings[SETTING_KEYS.onboardedAt] && snapshot.totalCards === 0) redirect("/start");
 
-  const [summary, units, tasks, weekReviews, learner] = await Promise.all([
+  const [summary, units, tasks, events, weekReviews, learner] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     /*
@@ -127,6 +131,17 @@ export default async function TodayPage() {
       where: { ownerId, completed: false },
       orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
       take: 12,
+    }),
+    /*
+      The learner's own calendar. In this batch for the same reason the tasks
+      are: it is one indexed read on a small table, and a second round trip to
+      decide whether to draw one card costs more than the read does. Which of
+      them fall on today is `eventsOn`, which is pure and needs no query.
+    */
+    prisma.studyEvent.findMany({
+      where: { ownerId },
+      orderBy: [{ startMinute: "asc" }, { id: "asc" }],
+      take: 50,
     }),
     prisma.review.findMany({
       where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - 7 * 86_400_000) } },
@@ -143,7 +158,7 @@ export default async function TodayPage() {
     that still runs their queries has kept the cost and thrown away the reason.
   */
   const [word, collection, struggle, countdown] = await Promise.all([
-    shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now)) : null,
+    shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now), placement) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
     shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already
@@ -151,6 +166,7 @@ export default async function TodayPage() {
     shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
   ]);
 
+  const today = dateLine(now, clock.zone);
   const tutorReady = resolveProvider() !== null;
   /*
     Whether the person reading this is the person who could fix it.
@@ -430,12 +446,102 @@ export default async function TodayPage() {
   ) : null;
 
   /*
+     What is on today, from the learner's own calendar.
+     
+     Held to a day that actually has something on it rather than to a
+     disclosure stage: an empty schedule card is a skeleton where an answer
+     should be, and a learner with no calendar yet is told about it by the rail
+     rather than by a card saying "nothing". It sits above the plan because a
+     class at six decides what the evening looks like and a due date does not.
+  */
+  const todayEvents = eventsOn(
+    events.map((e) => ({
+      id: e.id, title: e.title, notes: e.notes, kind: kindFrom(e.kind),
+      startMinute: e.startMinute, durationMinutes: e.durationMinutes,
+      weekdays: e.weekdays, onDate: e.onDate,
+    })),
+    clock.dayKey(now),
+  );
+  const scheduleCard = todayEvents.length > 0 ? (
+    <Card>
+      <SectionTitle hint={todayEvents.length === 1 ? "one thing" : `${todayEvents.length} things`}>
+        On today
+      </SectionTitle>
+      <ul className="flex flex-col gap-2">
+        {todayEvents.map((e) => (
+          <li
+            key={e.id}
+            className="flex items-center justify-between gap-3 rounded-[var(--r)] px-3.5 py-3"
+            style={{ background: `var(--${KIND_TONE[e.kind]}-soft)` }}
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold" style={{ color: "var(--ink)" }}>
+                {e.title}
+              </span>
+              <span className="text-xs" style={{ color: "var(--ink-2)" }}>
+                {KIND_LABEL[e.kind]}
+              </span>
+            </span>
+            <span className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: "var(--ink-2)" }}>
+              {span(e.startMinute, e.durationMinutes)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <Link
+        href="/calendar"
+        className="mt-3 inline-block text-sm font-semibold underline underline-offset-2"
+        style={{ color: "var(--accent-deep)" }}
+      >
+        Open the week
+      </Link>
+    </Card>
+  ) : null;
+
+  /*
     A Card like every one of its neighbours. It was a bare `<section>`, so its
     heading sat 25px further left than the four above it and its rows read as
     three loose boxes under a heading belonging to nothing. The rows keep their
     own borders, because a quest that is done is drawn as a filled row and
     losing that would lose the only thing the panel says at a glance.
   */
+  /*
+     THE DAILY QUEST, ON THE SCREEN THAT KNOWS WHAT IS GOING WRONG.
+
+     Held to `settled` rather than shown from day one, and the reason is the
+     rule the disclosure module states: this is a figure computed from the
+     learner's own log, and on a log with nothing in it the card would be a
+     button promising two minutes on weaknesses nobody has measured yet. That
+     is the "does this say something true and useful on an empty log" test, and
+     this one fails it where the word of the day passes.
+  */
+  const weakest = struggle?.cases[0] ?? null;
+  const questCard = shows(stage, "quest") ? (
+    <Card tone="accent">
+      <SectionTitle hint="two minutes">Daily quest</SectionTitle>
+      <p className="mt-1 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {weakest ? (
+          <>
+            Your{" "}
+            {/* Named in Estonian, because that is what a class calls it and a
+                learner who has only met "inessive" cannot follow their teacher. */}
+            <span lang="et" className="font-semibold">
+              {grammarTerm(weakest.grammCase)?.et ?? weakest.grammCase.toLowerCase()}
+            </span>{" "}
+            is at {weakest.accuracy}%. Two minutes on it.
+          </>
+        ) : (
+          "Two minutes on the cards you get wrong most often."
+        )}
+      </p>
+      <div className="mt-3">
+        <ButtonLink href="/quest" variant="primary">
+          <Target size={15} aria-hidden /> Start the quest
+        </ButtonLink>
+      </div>
+    </Card>
+  ) : null;
+
   const questsCard = shows(stage, "quests") ? (
     <Card>
       <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
@@ -534,6 +640,46 @@ export default async function TodayPage() {
     </Card>
   ) : null;
 
+  /*
+    THE GAME OF THE DAY.
+
+    Asked for in one line of the brief and given its own reason there: "it
+    becomes predictable and also something to look forward to". Eleven rounds
+    on a menu is a decision to make before you can start; one on the home page
+    with a reason beside it is an invitation, and Thursday being Match every
+    week is a thing somebody comes to know about their own Thursdays.
+
+    `lib/ux/weekGames.ts` is the table and nothing is hidden by it: every round
+    is still on /practice, in the palette and at its own URL, every day.
+
+    Not drawn on the day the quest is featured, because the quest already has a
+    card on this page and it is the better one: it names the learner's own
+    weakest case and what it is at. Two cards for one round is furniture. The
+    cost is the "tomorrow" line one day in seven, which is the right way round.
+  */
+  const featured = gameOn(weekdayOf(summary.dayKey));
+  const featuredMode = modeAt(featured.href);
+  const tomorrow = gameAfter(weekdayOf(summary.dayKey));
+  const gameCard = featuredMode && featured.href !== "/quest" ? (
+    <Card>
+      <SectionTitle hint={WEEKDAY_LONG[weekdayOf(summary.dayKey)]}>Today&apos;s game</SectionTitle>
+      <p className="mt-1 text-lg font-semibold" style={{ color: "var(--ink)" }}>
+        {featuredMode.title}
+      </p>
+      <p className="mt-1 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {featured.why}
+      </p>
+      <div className="mt-3">
+        <ButtonLink href={featured.href} variant="primary">
+          {featuredMode.title} <ArrowRight size={15} aria-hidden />
+        </ButtonLink>
+      </div>
+      <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
+        {tomorrow.weekday} is {modeAt(tomorrow.game.href)?.title ?? "another one"}.
+      </p>
+    </Card>
+  ) : null;
+
   const practiceCard = shows(stage, "practice") ? (
 
     <Card>
@@ -577,20 +723,43 @@ export default async function TodayPage() {
 
   return (
     <Page
+      /*
+        THE ONE DATE IN THIS APP THAT IS NOT WRITTEN THE READER'S WAY.
+
+        Everywhere else a date is something the app is reporting back and its
+        shape belongs to whoever is reading it, which is what `LocalDate` is
+        for. This one is the first Estonian a learner meets each morning:
+        the weekday name and the month name are two of the nineteen words every
+        course teaches in its first fortnight, and a date is the one piece of
+        Estonian that needs no gloss to be useful, because the reader already
+        knows what today is. See lib/time/estonianDate.ts, which reads both
+        out of CLDR and writes neither.
+
+        The English weekday stays beside it as the cross-reference, the same
+        shape the grammar screens take with the Latin case names, and it is
+        pinned rather than the reader's because it is a gloss and not a date.
+        A build whose locale data has no Estonian gets the line it always had.
+      */
       eyebrow={
-        <LocalDate
-          iso={now.toISOString()}
-          zone={clock.zone}
-          options={{ weekday: "long", day: "numeric", month: "long" }}
-          /*
-            What the server writes, and what a reader sees if script never
-            runs. Its zone is the learner's; only the shape of the reading is
-            the deployment's until the browser has said otherwise.
-          */
-          fallback={new Intl.DateTimeFormat(undefined, {
-            timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
-          }).format(now)}
-        />
+        today ? (
+          <>
+            <span lang="et">{today.et}</span> · {today.en}
+          </>
+        ) : (
+          <LocalDate
+            iso={now.toISOString()}
+            zone={clock.zone}
+            options={{ weekday: "long", day: "numeric", month: "long" }}
+            /*
+              What the server writes, and what a reader sees if script never
+              runs. Its zone is the learner's; only the shape of the reading is
+              the deployment's until the browser has said otherwise.
+            */
+            fallback={new Intl.DateTimeFormat(undefined, {
+              timeZone: clock.zone, weekday: "long", day: "numeric", month: "long",
+            }).format(now)}
+          />
+        )
       }
       title={name ? `${greeting(clock, now)}, ${name}` : greeting(clock, now)}
       lead={lead(stage, toReview)}
@@ -633,6 +802,8 @@ export default async function TodayPage() {
         <Stack className="min-w-0">
           {doNowCard}
           {stage === "arriving" && practiceCard}
+          {questCard}
+          {scheduleCard}
           {planCard}
           {struggleCard}
           {streakCard}
@@ -641,6 +812,7 @@ export default async function TodayPage() {
 
         <Stack className="min-w-0">
           {examCard}
+          {gameCard}
           {wordCard}
           {nextCard}
           {stage !== "arriving" && practiceCard}

@@ -618,13 +618,20 @@ check("every practice mode writes to the same review log", () => {
     marks go to applyGradeBatch, so the exam is under this rule rather than
     exempt from it; the invariant below on submitExam is what holds that door
     to applyGradeBatch rather than to Review rows of its own.
+
+    recordSonad is the fourth, and it is the exam's shape exactly. The board
+    knows the answer, because marking a guess without a round trip is most of
+    how that game feels to play, so a rating posted from it would be a rating
+    anybody can type. The client sends the guesses it made, the server rebuilds
+    the day's puzzle and works out what the round was worth, and the check
+    below holds that door to gradeCard the way submitExam's holds its own.
   */
   const sessions = SESSION_FILES().filter((f) => !MEASURES_RATHER_THAN_PRACTISES.includes(f));
   assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
       `${file} does not write to the shared review log`,
     );
   }
@@ -641,7 +648,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -757,7 +764,7 @@ check("a session never lets its questions change under the learner", () => {
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/.test(source)) continue;
+    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be
@@ -768,9 +775,25 @@ check("a session never lets its questions change under the learner", () => {
     const listProp = /\binitial[A-Z]\w*/.test(props)
       || /\b(cards|prompts|questions|items|gaps|pairs|steps|paper)\b/.test(props);
     if (!listProp) continue;
+    /*
+      Either spelling of the snapshot. `useState(initialCards)` is the plain
+      one; `useState<T>(() => plan(initialCards))` is the lazy one, which the
+      review session needs because it expands its cards into a queue of steps
+      (lib/srs/learn.ts) and doing that work on every render to throw it away
+      is not free.
+
+      The property is the same and the lazy form is the stronger of the two: the
+      initialiser runs once on mount and never again, so a refreshed prop cannot
+      reach the queue either way. This asserted the plain spelling only, and
+      fired on the lazy one, which is a check firing on honest code. The rule is
+      widened rather than the code contorted, and what both arms still require
+      is that the prop reaches `useState` at all: a session that indexes
+      `initialCards` directly matches neither.
+    */
+    const snapshot = /useState(?:<[\s\S]*?>)?\(\s*(?:initial\w+\s*\)|\(\)\s*=>[\s\S]{0,400}?\binitial\w+)/;
     assert.match(
       source,
-      /useState\(\s*initial\w+\s*\)/,
+      snapshot,
       `${file} indexes a list prop directly; snapshot it with useState so a refresh cannot swap it mid-session`,
     );
   }
@@ -1068,6 +1091,14 @@ check("every path that adds cards reads and writes under one lock", () => {
     taken outside the transaction, or a lock with the read left outside it. And
     asserted as *one* lock, because two paths guarding themselves with two
     different keys are two paths neither of which guards the other.
+
+    THE TWO BODIES ARE NAMED, AND THEN EVERY INSERT IS COUNTED AGAINST THEM.
+    Naming the bodies alone is anchored on today's function names, which broke
+    the moment `addUnitsToDeck` became a one-line delegation to the batched
+    builder the frequency page also uses: the rule held perfectly and the check
+    read an empty body. So the second half asks the question the heading asks,
+    that no card is written anywhere but inside one of them, which is what
+    catches the *next* caller rather than the last one.
   */
   const lockedPaths = [
     {
@@ -1077,8 +1108,8 @@ check("every path that adds cards reads and writes under one lock", () => {
       write: "card.createMany",
     },
     {
-      what: "addUnitsToDeck",
-      body: /export async function addUnitsToDeck\(([\s\S]*?)\n\}/.exec(code("lib/srs/deck.ts"))?.[1] ?? "",
+      what: "addPlanToDeck",
+      body: /export async function addPlanToDeck\(([\s\S]*?)\n\}/.exec(code("lib/srs/deck.ts"))?.[1] ?? "",
       read: "card.findMany",
       write: "card.createMany",
     },
@@ -1101,6 +1132,23 @@ check("every path that adds cards reads and writes under one lock", () => {
       `${what} takes its lock after the read it is meant to protect, which serialises nothing`,
     );
   }
+
+  /*
+    EVERY INSERT OF A CARD IS INSIDE ONE OF THOSE BODIES.
+
+    Counted rather than located, because a body is found by a regex and a
+    count is not fooled by one that stops matching: if the two files hold four
+    `card.createMany` calls between them and the two locked bodies hold four,
+    every insert is covered, and a fifth written anywhere else fails here
+    whatever it is called.
+  */
+  const inserts = (text: string) => [...text.matchAll(/card\.createMany/g)].length;
+  const everywhere = inserts(code("app/actions.ts")) + inserts(code("lib/srs/deck.ts"));
+  const locked = lockedPaths.reduce((sum, path) => sum + inserts(path.body), 0);
+  assert.equal(
+    everywhere, locked,
+    `${everywhere - locked} card insert(s) are outside the locked paths, so two tabs can both write them`,
+  );
 
   /*
     And the lock itself. The transaction form and the blocking one, keyed on the
@@ -1813,7 +1861,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     while the module under it can be imported without a framework.
   */
   const pure = [
-    "assessment", "collections", "copy", "estonian", "exam", "funding", "gamification",
+    "assessment", "collections", "copy", "estonian", "exam", "funding", "games", "gamification",
     "offline", "random", "research", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
@@ -1892,9 +1940,8 @@ check("the letter bar is a desktop thing, and a choice, and reversible", () => {
     app. Neither is detectable, so it is asked at first run and changed after.
 
     Asserted as shapes rather than as today's declarations: what matters is
-    that the bar is off by default and turned on only under a query naming both
-    a width and a real pointer, that the answer is asked and stored, and that
-    there is a way back.
+    that the bar is off by default and turned on only where there is a real
+    pointer, that the answer is asked and stored, and that there is a way back.
   */
   const css = read("app/globals.css");
 
@@ -1910,11 +1957,31 @@ check("the letter bar is a desktop thing, and a choice, and reversible", () => {
     "the letter bar is no longer hidden by default",
   );
 
-  // Both halves of "a desktop". `min-width` alone hands the bar to a tablet in
-  // landscape with nothing attached to it.
-  const query = /@media\s*\(min-width:\s*768px\)\s*and\s*\(pointer:\s*fine\)\s*\{([\s\S]*?)\n  \}/
-    .exec(css);
-  assert.ok(query, "the letter bar is no longer drawn under a width-and-pointer query");
+  /*
+    A REAL POINTER, AND DELIBERATELY NOT A WIDTH.
+
+    This asserted `(min-width: 768px) and (pointer: fine)` and so asserted
+    today's declaration rather than the rule, which is the mistake this file
+    keeps warning about one layer up. The width was wrong: a viewport width is
+    not a fact about a keyboard, so dragging a desktop window to half the screen
+    took the row away on a machine whose keys had not changed and still had no õ
+    among them.
+
+    What the rule has to say is that the bar is drawn where there is a fine
+    pointer, which is the test that was doing the work: a tablet with nothing
+    attached reports a coarse one. So the query is read for `pointer: fine`, and
+    a width in it is a *failure*, because reintroducing one brings the fault
+    back. `scripts/test-mobile.mjs` measures the other side of this in a
+    browser at 480, 640 and 760 with a mouse, which is the combination that was
+    broken.
+  */
+  const query = /@media\s*\(pointer:\s*fine\)\s*\{([\s\S]*?)\n  \}/.exec(css);
+  assert.ok(query, "the letter bar is no longer drawn under a bare pointer query");
+  assert.equal(
+    /@media[^{]*min-width[^{]*pointer:\s*fine/.exec(css),
+    null,
+    "the letter bar is keyed on a width again, so a half-width desktop window loses it",
+  );
   assert.match(query[1]!, /\.letter-bar\s*\{\s*display:\s*flex/, "the query no longer draws the bar");
   assert.match(
     query[1]!,
@@ -3556,6 +3623,15 @@ check("nothing is stored on a device that would need asking first", () => {
     // to a closed tab is broken rather than private. Answers only, never marks
     // and never questions, and removed the moment the paper is handed in.
     "app/(app)/exam/[level]/resume.ts",
+    // Today's word puzzle, by the same argument one size down: a board that
+    // loses its guesses to a notification taking the tab away is unplayable on
+    // a phone. Guesses only, never the answer, which is worked out from the
+    // date on the server, and swept by the same sign-out.
+    "app/(app)/sonad/resume.ts",
+    // And the crossword's grid, which is the same argument a size up: fifteen
+    // minutes rather than three. Letters and which clues were shown, never the
+    // answers, which are rebuilt on the server to mark it.
+    "app/(app)/crossword/resume.ts",
   ];
   for (const file of storage) {
     assert.ok(
@@ -4320,7 +4396,14 @@ check("only the harvest, the seed and the screens name a Russian or Ukrainian me
     join("lib", "collections", "glossLanguage.test.ts"),
     join("app", "(app)", "dictionary", "page.tsx"),
     join("app", "(app)", "dictionary", "DictionaryClient.tsx"),
-    join("app", "(app)", "review", "page.tsx"),
+    /*
+      The review screen reads them in `cards.ts` rather than in `page.tsx` now:
+      two routes render that session (the daily loop and the Flash cards round)
+      and a second copy of the select is two selects that drift apart. The page
+      itself no longer names the columns, so its entry is gone rather than left
+      as a parking space.
+    */
+    join("app", "(app)", "review", "cards.ts"),
     join("app", "(app)", "learn", "[unitId]", "lesson", "page.tsx"),
     join("lib", "collections", "lesson.ts"),
     join("app", "(app)", "learn", "[unitId]", "lesson", "LessonSession.tsx"),
@@ -4875,8 +4958,8 @@ check("what is given to this app is credited rather than added to the bill", () 
 /**
  * The layers that are pure are still pure, which nothing was checking.
  *
- * CLAUDE.md names thirteen directories that "stay free of React, Next.js and
- * Prisma: pure functions, unit tested", and that was prose alone. All thirteen
+ * CLAUDE.md names the directories that "stay free of React, Next.js and
+ * Prisma: pure functions, unit tested", and that was prose alone. All of them
  * hold today, which is the moment to assert it rather than the moment after
  * one of them stops.
  *
@@ -4896,7 +4979,7 @@ check("what is given to this app is credited rather than added to the bill", () 
  */
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
-    "assessment", "estonian", "gamification", "stats", "collections", "time",
+    "assessment", "estonian", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
   ];
   const banned = [
@@ -6141,6 +6224,298 @@ check("the word of the day is one the learner has not met", () => {
   const card = read("components/WordOfDay.tsx");
   assert.match(card, /SENTENCE_SOURCE/, "the word of the day prints a sentence with no provenance");
   assert.match(card, /Ekilex/, "the sentence's provenance no longer names its source");
+});
+
+check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
+  /*
+    The one date in this app that is not written the reader's way, and the
+    three things that make that safe rather than a rule broken by accident.
+
+    It is TAGGED. `lang="et"` is what tells a screen reader to say
+    `kolmapäev` in Estonian, and it is also what makes the third rule matter:
+    English read aloud under an Estonian tag is worse than English printed
+    plainly, which is exactly what a small-icu build would produce.
+
+    It COMES FROM CLDR AND NOT FROM A STRING. `lib/time/estonianDate.ts` reads
+    the weekday and the month out of the platform's locale data, in the sense
+    the almanac reads nothing and the syllabus writes nothing (ADR-005): every
+    Estonian character on that line came from an attested source.
+
+    It HAS A FALLBACK. `dateLine` returns null on a build with no Estonian in
+    it, and the page renders the reader's own date instead, which is the line
+    it had before any of this.
+  */
+  const page = code("app/(app)/page.tsx");
+  assert.match(page, /dateLine\(/, "Today no longer reads the Estonian date");
+  assert.match(
+    page,
+    /lang="et">\{today\.et\}/,
+    'Today prints the Estonian date without lang="et", so a screen reader says it in English',
+  );
+  assert.match(page, /<LocalDate/, "Today lost its fallback for a build whose locale data has no Estonian");
+
+  const dateModule = code("lib/time/estonianDate.ts");
+  assert.match(dateModule, /hasEstonian\(\)/, "the Estonian date no longer checks that the platform has Estonian");
+  /*
+    And it never asks Intl for the deployment's locale, which is the fault
+    `components/LocalDate.tsx` exists for: `undefined` there means whatever
+    machine the server happens to be, so a build set to en-US would answer an
+    Estonian request in English with nothing to say it had.
+  */
+  assert.doesNotMatch(
+    dateModule,
+    /DateTimeFormat\(\s*undefined/,
+    "the Estonian date asks Intl for the deployment's locale",
+  );
+});
+
+check("there is one table of which Estonian letters fold", () => {
+  /*
+    There were three, and they agreed, which is the dangerous state rather than
+    the safe one. `lib/dict/search.ts` had a `replaceAll` chain, and
+    `lib/estonian/dictation.ts` and `lib/estonian/answer.ts` each had the same
+    `Record` written out again. A marker and a search box disagreeing about
+    whether `ž` folds would mark somebody wrong for a spelling the dictionary
+    had just offered them.
+
+    The fourth case is what found it: the command palette matched with a plain
+    `includes`, so typing `sonad` found nothing and Sõnad was unreachable from
+    the box that promises to go anywhere, for exactly the learner who has no õ
+    key.
+
+    Two exemptions, both by name and both for a different question.
+    `lib/estonian/sounds.ts` folds *sounds a learner confuses*, b against p and
+    k against g, and says so at length. `lib/suggestions/model.ts` has a
+    function called `fold` that collapses whitespace for a grouping key and
+    touches no diacritic, which is a name collision rather than a copy.
+  */
+  const HOME = "lib/estonian/fold.ts";
+  assert.ok(existsSync(HOME), "the one fold has gone from lib/estonian/fold.ts");
+
+  const excused = ["lib/estonian/sounds.ts", "lib/estonian/fold.ts"];
+  const table = /["']?õ["']?\s*:\s*["']o["']/;
+  const offenders = [...LIB, ...APP, ...COMPONENTS]
+    .filter((file) => !excused.includes(file) && !/\.(test|itest)\.tsx?$/.test(file))
+    .filter((file) => table.test(code(file)) || /replaceAll\("õ"/.test(code(file)));
+  assert.deepEqual(
+    offenders, [],
+    "a second table of which Estonian letters fold. There is one, in lib/estonian/fold.ts.",
+  );
+
+  /*
+    And the SQL half comes from it too. `translate(lower(lemma), FOLD_FROM,
+    FOLD_TO)` narrows a search in Postgres and `fold` decides it in JavaScript;
+    two hand-kept lists with a comment asking them to agree is what this
+    replaced.
+  */
+  assert.match(
+    code(HOME), /export const FOLD_FROM[\s\S]{0,200}export const FOLD_TO/,
+    "the Postgres pair no longer lives beside the table it is derived from",
+  );
+  assert.match(
+    code("components/CommandPalette.tsx"), /fold\(/,
+    "the palette matches without folding, so a place with an Estonian name is unreachable from it",
+  );
+});
+
+check("the game of the day comes from the one table of them", () => {
+  /*
+    "Each weekday could have a different game focus. It becomes predictable and
+    also something to look forward to" was the ask, and the failure mode is the
+    one every list-in-two-places has: a round renamed in `lib/ux/modes.ts` and
+    still called something else by the home page, or a seventh game added to
+    the app and never reaching a day.
+
+    So Today asks the table and the table names modes by href.
+    `weekGames.test.ts` is the half that resolves every one of them through
+    `modeAt`, which is the check that can fail on a rename; this is the half
+    that keeps the page reading it at all.
+
+    Nothing is *hidden* by any of this, which is the distinction `within`
+    already draws in lib/ux/nav.ts: every round stays on /practice, in the
+    palette and at its own URL on every day of the week. What the table decides
+    is what the home page leads with.
+  */
+  const page = code("app/(app)/page.tsx");
+  assert.match(page, /gameOn\(/, "Today no longer asks which game today's is");
+  assert.match(page, /gameAfter\(/, "Today stopped saying what is on tomorrow, which is what makes it a week");
+  assert.match(
+    page, /modeAt\(/,
+    "Today names the featured round itself rather than reading lib/ux/modes.ts, so a rename splits",
+  );
+
+  const table = code("lib/ux/weekGames.ts");
+  assert.doesNotMatch(
+    table, /title:|icon:|tone:/,
+    "the week table has started describing a mode, which lib/ux/modes.ts already does",
+  );
+});
+
+check("Sonad decides nothing on the client but what to type", () => {
+  /*
+    THE BOARD KNOWS THE ANSWER AND MUST NOT KNOW THE SCORE.
+
+    Marking a guess without a round trip is most of how the game feels to play,
+    so the word crosses to the browser deliberately: anybody who opens the
+    network tab has spoiled their own morning, which is the bargain every
+    offline word game makes. What may not cross the other way is a rating.
+    `recordSonad` takes the guesses, rebuilds the day's puzzle from the date and
+    the learner's own level, and works out what the round was worth on this
+    side, which is `submitExam`'s shape exactly (ADR-022) and for the same
+    reason: a result anybody can type is not a measurement.
+
+    TWO WORD LISTS, AND THEY ARE NOT THE SAME LIST. The answers are graded
+    dictionary entries, because an answer has to be a word the app can teach
+    and link to. The guesses are `KnownWord`, the 154,995 headwords the Ekilex
+    enumeration brought back, because telling somebody an ordinary Estonian
+    word is not a word is the one thing a game like this must never do, and the
+    built dictionary alone would do it several times a round.
+  */
+  const action = /export async function recordSonad\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.ok(action, "recordSonad has gone, or changed shape past recognition");
+  assert.match(action, /puzzleFor\(/, "recordSonad no longer rebuilds the puzzle, so it is trusting the board");
+  assert.match(action, /ratingFor\(/, "recordSonad no longer works out the rating on the server");
+  /*
+    The signature and not the body, which the first version of this got wrong:
+    a pattern for the word `rating` matched the perfectly correct
+    `gradeCard(card.id, rating, 0)` inside, so the check fired on honest code,
+    which is how a check becomes one people waive.
+  */
+  const signature = /export async function recordSonad\(([^)]*)\)/.exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.doesNotMatch(
+    signature, /rating|score|grade/i,
+    "recordSonad takes a rating from its caller, which is a score anybody can type",
+  );
+
+  const picker = code("lib/progress/sonad.ts");
+  assert.match(
+    picker, /guessableWords\(|guessList/,
+    "Sonad no longer takes its guesses from the whole language",
+  );
+  assert.match(picker, /bandsAround\(/, "Sonad's answer is no longer banded on the learner's level");
+  // And the far end of that: the wide list really is the enumeration's table
+  // and not the built dictionary, which would refuse a real word every round.
+  assert.match(
+    code("lib/dict/facts.ts"), /guessableWords[\s\S]{0,600}"KnownWord"/,
+    "the guess list is no longer read from KnownWord",
+  );
+
+  /*
+    AND THE MOVEMENTS ARE ITS OWN, WHICH IS A LEGAL POSITION AND NOT A TASTE.
+    The game this is shaped like turns a square over to reveal a colour and
+    shakes a row sideways to refuse a guess, and both are recognisable enough
+    to be part of what that game is. A class here naming keyframes nobody wrote
+    is not an error: it is a circle sitting perfectly still, looking exactly
+    like one that was meant to.
+  */
+  const css = read("app/globals.css");
+  for (const name of ["sonad-settle", "sonad-refuse", "sonad-rise"]) {
+    assert.match(css, new RegExp(`@keyframes ${name}\\b`), `${name} is used and never declared`);
+    assert.match(
+      css,
+      new RegExp(`\\.${name}\\s*\\{[^}]*animation:`),
+      `${name} has keyframes and no class to run them`,
+    );
+  }
+  assert.match(
+    css,
+    /prefers-reduced-motion[\s\S]{0,400}sonad-settle/,
+    "Sonad's movements are not held under prefers-reduced-motion",
+  );
+});
+
+check("the commonest words are counted, gated, and never written down twice", () => {
+  /*
+    A corpus proposes and the dictionary decides, which is ADR-021's rule about
+    a photographed page and ADR-024's about a headline, arriving through a
+    third door. Four things hold it up and each was a way of getting this
+    wrong.
+
+    THE TABLE HOLDS NO ENGLISH. A generated file carrying a gloss beside each
+    lemma is a second copy of the dictionary that goes stale the first time
+    somebody corrects one, and the correction path in this app is a queue
+    strangers write to. So the table is lemmas and the page joins.
+
+    THE COUNTING NEVER FOLDS A DIACRITIC. `matchEstonianForm` accepts a lemma
+    with its diacritics folded away, which is right for somebody typing `room`
+    meaning `rõõm` and wrong over a corpus that is spelled correctly: it put
+    `õli` at the top of the nouns on the 294,452 occurrences of `oli`, which
+    is the past of `olema`.
+
+    A WORD CARRIES A BAND. The same filter the suggestion row takes, and here
+    it is what keeps an entry that happens to be spelled like a very common
+    form of something else off the front of the list.
+
+    AND THE ACTION TAKES A GROUP, NOT A LIST OF WORDS. Every export of
+    `app/actions.ts` is a public endpoint whose arguments are JSON off the wire
+    whatever the types say, so one taking lemmas would let a caller choose what
+    gets built into a deck. A group name indexes a table in the repository and
+    can name nothing else.
+  */
+  const table = read("lib/collections/frequency.ts");
+  assert.doesNotMatch(
+    table, /translation|gloss:/,
+    "the frequency table carries English, which is a second copy of the dictionary that will go stale",
+  );
+
+  const builder = code("scripts/build-frequency.ts");
+  assert.doesNotMatch(
+    builder, /\bfold\(|FOLD_FROM/,
+    "the frequency builder folds diacritics, which credits `oli` to `õli`",
+  );
+  assert.match(
+    builder, /\.cefr\b/,
+    "the frequency builder stopped requiring a band, so the Wiktionary tail can reach the list",
+  );
+  assert.doesNotMatch(
+    builder, /lib\/tutor|openWithFallback|ANTHROPIC|OPENAI|OPENROUTER/,
+    "the frequency builder can reach a model, and this path decides which words a learner is offered",
+  );
+
+  const action = /export async function addCommonWords\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.ok(action, "addCommonWords has gone, or changed shape past recognition");
+  assert.match(
+    action, /FREQUENCY_GROUPS\.includes\(/,
+    "addCommonWords no longer checks its argument against the closed list of groups",
+  );
+  assert.match(
+    action, /lemmasIn\(/,
+    "addCommonWords takes its words from somewhere other than the checked-in table",
+  );
+});
+
+check("the word of the day reads the learner's level, and reads it in the right place", () => {
+  /*
+    A B1 account was taught `keskmine`, an A1 adjective meaning "average". That
+    word matches no gloss the almanac can ask for, which names the path: the
+    fallback filtered on nothing at all and its skip landed anywhere in six
+    thousand entries.
+
+    The asymmetry is the part worth asserting, because the obvious fix is
+    symmetric and half of it is wrong. Measured over a year of the shipped
+    dictionary at B1, banding the *themed* pick outright moved 37 days of 336
+    onto a word whose gloss carries the day's meaning as a fourth sense, on 31
+    days that had the primary one. The almanac asks for `snow`, `hand` and
+    `week`, and there is no B1 word for snow. So the band ranks under the
+    sense and never over it, and the fallback, which has no meaning to honour,
+    filters.
+
+    Anchored on the order of two keys in one array rather than on the words
+    around them, and `lib/progress/wordOfDay.itest.ts` is the half that can
+    fail on a word: it stars out everything the day could otherwise answer
+    with and asks a real dictionary.
+  */
+  const source = code("lib/progress/wordOfDay.ts");
+  assert.match(
+    source,
+    /cefr:\s*\{\s*in:\s*\[\.\.\.bandsAround\(level\)\]/,
+    "the word of the day's fallback no longer bands its pool, so a skip lands anywhere in the dictionary",
+  );
+  assert.match(
+    source,
+    /senseIndex\(row\.translation, gloss\),\s*isAround\(row\.cefr, level\)/,
+    "the band no longer sits under the sense in the themed ranking; there is no B1 word for snow",
+  );
 });
 
 check("late is decided in one place, against the learner's own day", () => {
