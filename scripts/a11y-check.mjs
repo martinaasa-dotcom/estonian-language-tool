@@ -139,6 +139,17 @@ const ROUTES = [
   "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
   "/review/sentences", "/review/speaking", "/review/sprint",
+  /*
+    The rounds and screens the games pass added, which this list did not get.
+    That is the fault its own header names: `/review/emoji` and `/review/target`
+    shipped, `/sonad` and `/crossword` shipped, and every one of them is a whole
+    session rendered from one component, which is exactly the shape that was
+    once found drawing a progress bar, a card and four buttons with no heading
+    in it at all. A route left out is a screen where the rule is unenforced,
+    and a second of wall clock is what it costs to enforce it.
+  */
+  "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
+  "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
 ];
 
 const browser = await launchChromium();
@@ -172,7 +183,15 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   stopped being skippable rather than by however many the run happens to
   reach.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 307 });
+/*
+  And by eighty-six, which is nine routes at nine checks each plus the five the
+  new picture round adds beyond a plain page. Eight of those nine had shipped
+  without ever being walked here, and the first run over them found a real
+  fault: the crossword promised `role="grid"` over a flat grid with no row
+  elements in it, which is `aria-required-children` and is the exact shape
+  this list exists to catch. Counted off the route list rather than off a run.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 390 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

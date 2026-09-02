@@ -124,6 +124,7 @@ const ROUTES = [
   "/review/sprint",
   "/review/flashcards",
   "/review/emoji",
+  "/review/describe",
   "/review/target",
   "/practice",
   "/quest",
@@ -249,7 +250,7 @@ const SPARSE = new Map([
 // with the demo fixture in it, which is what CI seeds; without `npm run demo`
 // the workplace group does not exist and the run comes in at 1100 and says so,
 // which is the floor doing its job rather than a regression.
-const { check, absent, done } = suite("Containment", { floor: 1110 });
+const { check, absent, done } = suite("Containment", { floor: 1130 });
 
 const browser = await launchChromium();
 

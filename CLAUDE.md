@@ -838,6 +838,77 @@ and a composed õ has to arrive, which an `input` event carries and a `keydown` 
 bar under the grid is the app's own `DiacriticBar` and needed nothing added, since it types into
 whatever has focus.
 
+**The picture game and the conversation game are one game, and neither needs artwork.** Two were
+asked for: describe a cartoon drawing, and hold a conversation in a situation. Both are the same
+moment, a learner producing Estonian about something in front of them rather than recalling the back
+of a card, and the only difference is what sets the scene. So `lib/collections/scenes.ts` sets both
+at once: a situation named in English, and three things in it. The artwork was the blocker and
+turned out to be the wrong thing to want. A generated cartoon is a licence question nobody here can
+answer, a file per scene to ship and sixty of them before a round stops repeating; the things are
+emoji, which is the argument `/review/emoji` already won, characters drawn by the reader's own font
+with nothing shipped and no licence carried. The English label is authored and English is the one
+language this project may write; the three words are **requests** against `WORD_EMOJI`, which is
+itself a join against the dictionary, so a scene cannot name a word with no picture or no entry and
+`scenes.test.ts` fails on one that tries. No level is declared, because a scene is as hard as its
+hardest word and which band that is belongs to the dictionary rather than to a second table that
+would go stale.
+
+**Only one of the three words is named, and that is the whole reason the picture is worth having.**
+The named one carries the case the task asks for, so the requirement is unambiguous and the marking
+is certain. The other two are pictures and nothing else: using them is worth credit, not knowing
+them still leaves something to write about, and both are revealed with their glosses once the
+sentence has been marked. Naming all three up front would make the picture decoration. An emoji
+carries its meaning to a sighted reader without a word of text, so the row is announced to a screen
+reader as its three **English** meanings, which is parity rather than a giveaway: the Estonian for
+the other two is still hidden, and only the named word's Estonian appears before the marking.
+
+**"Not the form we asked for" is the least useful true thing this app can say, and it was the only
+thing it could say.** Every other screen compares a written answer against one form and stops. A
+learner asked for `majas` who wrote `majast` has made one specific mistake, has a good reason for
+it, and can be told what they wrote instead in one line. `lib/estonian/whichCase.ts` is that,
+built beside the table it inverts for the reason `possibleFirstPersons` lives beside the ending
+table it reads backwards. One rule, and it is deliberately the strict one: **a case is named only
+where it is the only case spelled that way.** `tuba` is its own nimetav and its own osastav and
+neither may be named, while `raamatu` is only ever the omastav and naming it teaches something, so
+skipping the principal parts wholesale would lose `raamatu` and naming the first match would call a
+partitive object a subject. The three principal parts are *in* the index in order to collide, which
+is what stops a short illative spelled like one of them being announced as an illative. Measured
+over the graded dictionary: 34,541 of 36,240 spellings can be named, 95.3%, and the illative is
+where they cannot, at 74.3% against 100% for the seven cases nothing else is spelled like.
+
+**Three ratings rather than two, because the app can tell the middle case apart with certainty.**
+The writing mode grades Good or Again: a form is the one asked for or it is not. Here, using the
+word and choosing the wrong ending is a Hard and the scheduler should see the difference. Nothing
+about `RATINGS` or the scheduler changed; this only decides which of the four to send (ADR-016). A
+scene whose words are all new to a deck carries no card and writes nothing, which is the answer
+`/review/emoji` already gives about a row for a card that does not exist.
+
+**A sentence to compare against carries three different claims, so it carries three labels.** "A
+native speaker wrote this about this picture", "a lexicographer wrote this with the very form you
+were asked for" and "a lexicographer wrote this with this word in it" are worth different amounts,
+and printing the third under the second's heading is the kind of small dishonesty a reader catches
+once and then stops trusting. Requiring the asked form was the first version and was measured at
+131 of 1,980 possible tasks, which is a panel absent from ninety-three rounds in a hundred: Ekilex
+records a handful of usages per word and this asks about eleven cases. Widening it to any natural
+sentence with the word, under its own label, covers 95.6%. `naturalSentence` and a three-word floor
+both have to pass, because `usableExamples` keeps what is worth showing on a dictionary entry and
+this panel makes a stronger claim: `Bussiaken.` and `Toores muna.` both came back on the first run
+and neither is a sentence.
+
+**A native speaker's sentence passes the same gate a photographed page does.** `npm run
+scenes:template` writes a spreadsheet of every scene and `npm run scenes:import` reads it back, and
+every word of every sentence goes through `matchEstonianForm` at the confidence a scanned page has
+to clear (ADR-021). A sentence carrying one word the dictionary will not vouch for is reported and
+not written, naming the word. That is the fourth door onto one rule, after the scanner, the
+headlines and the frequency count, and being a native speaker buys no exception: what it catches is
+a typo, a dropped diacritic and a word the dictionary has never heard of, and a model answer made
+of words a learner cannot look up is worse than none. What is deliberately not checked is whether
+the sentence is good, whether it describes the picture, or whether the grammar is right, because no
+machine here can judge any of those and the contributor is the authority on their own language.
+**Empty is a correct state** and is the shipped one: the mode is complete with nothing contributed,
+which is what stopped the two games waiting on 280 sentences before either could be opened once.
+`docs/20-contributed-sentences.md` is what to read before asking anybody.
+
 **A daily puzzle needs a walk, not a hash, and it took two goes to get there.** `hash % pool` with
 the string hash everybody writes (`h * 31 + charCode`) moves by one row a day, so Sõnad's first ten
 days were `lammas, laulja, laulma, leidma, lemmik, lennuk, leping, lihtne, liiter`: a week of the
@@ -2182,8 +2253,8 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
-- `lib/assessment/`, `lib/estonian/`, `lib/games/`, `lib/gamification/`, `lib/stats/`,
-  `lib/collections/`, `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`,
+- `lib/assessment/`, `lib/estonian/`, `lib/exam/`, `lib/games/`, `lib/gamification/`,
+  `lib/stats/`, `lib/collections/`, `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`,
   `lib/questions/`, `lib/ux/`, `lib/random/` and `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route. Asserted, because it
@@ -2996,6 +3067,8 @@ npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
 npm run build:frequency  # recount the commonest words (cached corpus, --refresh to re-fetch)
+npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
+npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
