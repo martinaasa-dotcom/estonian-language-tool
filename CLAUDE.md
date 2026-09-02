@@ -1903,6 +1903,43 @@ the nominative and `liblikas`, `sipelgas`, `kotkas` and `kirves` are exactly the
 beginner meets: two of 1,166 case slots at A1 and eight of 1,903 at B1, so passing over them costs
 the board nothing and 500 simulated boards a level come out full with no tile spelling its own word.
 
+**And the scene game had it a third time, which is what made the audit worth widening.** A scene
+puts three words on the screen and asks for one of them in a case, so a task whose answer is one of
+those three is finished by copying, and `markDescription` grades the copy Good and sends it to the
+scheduler. Eight of the 1,980 tasks the sixty scenes can set were free that way, every one of them
+the seesütlev of a word already ending in `s`: `liblikas`, `sipelgas`, `kotkas`, `kirves`,
+`labidas`, `maasikas`, `lusikas`, `haldjas`. `taskFor` refuses that case now and the round builder
+walks the cases in priority order, so the word is asked in another one rather than dropped. Three
+screens, three copies of one rule, and `npm run audit:questions` covers all three: it asks 46,790
+questions over the shipped dictionary now rather than 44,818, and the scene section costs it 1.5
+seconds.
+
+**A single floor over five generators is a floor over the largest one.** The deck is 36,404 of
+those 46,790 questions, so a section that stopped producing entirely, the crossword at 5,295 or the
+scene game at 1,972, would leave the total above 40,000 and the script would print "none of them
+prints its own answer" having asked nothing about it. Each section declares what it reaches and is
+held to four fifths of it, printed beside the timings. The figures are **measured rather than
+estimated**, and the first version proved why: `exam` was guessed at 6,000 from a sentence about a
+different measurement and actually asks 2,500, so the check failed on the run that introduced it,
+which is the check working.
+
+**And Target was the fourth, which is when a rule stops being three coincidences.** The aim-and-hit
+round draws four forms of one word under the lemma and the question its case answers, so a form
+spelled like the lemma is the one option nobody has to read: 122 of the 51,447 case slots the
+shipped dictionary can fill, every one a word ending in `s` whose seesütlev comes back to the
+nominative. It is dropped from the pool rather than only from the answer, because such a form is no
+better as a wrong answer than as a right one. **The test here is on what is printed**, and that is
+where this differs from `lib/srs/cards.ts`: a typed card accepts every spelling, so any of them
+showing makes it free, while a target carries one string and the learner hits it, so `voodi` in the
+illative is refused for what the target would say rather than for what a marker would take.
+
+`caseQuestion` is exported for the audit, because the round is a database read and cannot be asked
+from a file. That section **samples where the others are exhaustive** and says so: the builder picks
+one of the word's eleven cases itself, so one call asks one of them, and with the guard removed the
+audit reported 15 of the 122 rather than all of them. Every one is a failure and the count is not
+the point, but a fault on a single word could be missed on a single run. The rule in the round is
+total; the audit is the backstop.
+
 **A matching board is unique by what it asks with, not by what it answers.** 313 words carry a
 picture and there are 249 pictures: the house stands for `maja` and `elamu`, the bus for `buss` and
 `autobuss`, the man for `mees`, `meesisik` and `meesterahvas`, fifty of them in all. That is the table being right rather
@@ -3688,6 +3725,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
+`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
 `MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
