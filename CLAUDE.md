@@ -1231,6 +1231,20 @@ miss is still graded Hard by the marker, and `Review`, undo and the offline repl
 what they always did. What went is the asking, and that distinction is what keeps this a change to
 one screen rather than to the append-only log underneath it.
 
+**And a word spelled the same in both languages is a fact, not a rendering fault.** Thirty entries
+in the shipped dictionary have an English gloss that is the very same string, twelve of them taught
+by the course: `film`, `number`, `park`, `sport`, `stress`, `argument`, `minister`, `risk`. Every
+screen that prints a word above its meaning printed those twice, and the first meeting is the worst
+of them, since a screen whose whole job is to teach a word appeared to be stuttering on it. Turning
+over a recognition card and finding the question is the same thing one step later.
+
+`sameSpelling` in `lib/copy/values.ts` is the test and `SAME_SPELLING` is what is said instead.
+**Exact, never case-insensitive**, and that is the whole of the care this needs: `august` is
+`August`, `november` is `November`, and the capital letter is the lesson, because Estonian writes
+its months in lower case and English does not. Folding case would delete the one thing those five
+cards teach. The sentence says "spelled" rather than "the same word" because it is not said the
+same, and the audio beside it is exactly the point.
+
 **A missing example is news; a phrase having none is not.** Ekilex records a usage against a
 *word*, to show it doing its job in a sentence, so it holds none for `Tere!`, `Aitäh!`,
 `Kuidas läheb?` or `Ma ei saa aru` and never will: those are already the sentence. All twenty

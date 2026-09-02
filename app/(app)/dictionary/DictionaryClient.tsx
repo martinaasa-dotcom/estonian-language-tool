@@ -14,6 +14,7 @@ import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { isPhrase } from "@/lib/dict/pos";
+import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { Examples } from "./Examples";
 import { DerivedVerbForms, WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
@@ -435,7 +436,15 @@ function Entry({ entry, tutorReady, glossLanguage }: {
             </h2>
             <SpeakPair text={entry.lemma} />
           </div>
-          <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
+          {/*
+            An entry spelled the same in both languages printed its own headword
+            again a line down, which reads as a rendering fault rather than as
+            the fact about the word that it is. Thirty entries here, twelve of
+            them taught by the course.
+          */}
+          <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>
+            {sameSpelling(entry.lemma, entry.translation) ? SAME_SPELLING : entry.translation}
+          </p>
           {/*
             The meaning in the language the learner thinks in, where Ekilex
             recorded one. Under the English rather than instead of it: the

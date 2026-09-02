@@ -19,6 +19,7 @@ import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/
 import { BLANK } from "@/lib/estonian/cloze";
 import { splitOnForm } from "@/lib/dict/examples";
 import { xpForRating } from "@/lib/gamification/xp";
+import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
 import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
@@ -156,7 +157,11 @@ function MeetWord({ card }: { card: ReviewCard }) {
             hearing it is worth more than reading it. */}
         <Speak text={lemma} autoplay />
       </div>
-      {gloss && <p className="text-base" style={{ color: "var(--ink-2)" }}>{gloss}</p>}
+      {gloss && (
+        <p className="text-base" style={{ color: "var(--ink-2)" }}>
+          {sameSpelling(lemma, gloss) ? SAME_SPELLING : gloss}
+        </p>
+      )}
       {equivalent && (
         <p lang={equivalent.lang} className="text-base" style={{ color: "var(--ink-2)" }}>
           {equivalent.text}
@@ -995,6 +1000,13 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
                       were trying to recall, said properly. */}
                   {estonianSide(card.cardType, "back") && <Speak text={spoken(card.back)} autoplay />}
                 </div>
+              )}
+
+              {/* Turning the answer over and finding the question is a card
+                  that looks broken. It is a real fact about the word, so it is
+                  said in words. */}
+              {answerShown && sameSpelling(card.front, card.back) && (
+                <p className="text-xs" style={{ color: "var(--ink-3)" }}>{SAME_SPELLING}</p>
               )}
 
               {card.hint && <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>}
