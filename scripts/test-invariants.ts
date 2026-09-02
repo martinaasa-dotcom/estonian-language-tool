@@ -5096,7 +5096,7 @@ check("what is given to this app is credited rather than added to the bill", () 
  */
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
-    "assessment", "estonian", "games", "gamification", "stats", "collections", "time",
+    "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
     "scenes",
   ];
@@ -7798,6 +7798,121 @@ check("every secret-shaped variable the app reads is marked in the CI canary bui
     missing,
     [],
     `${missing.join(", ")} would leak into the client bundle without CI noticing: add each to the marked build in ${CANARY}`,
+  );
+});
+
+/**
+ * A CASE IS NAMED ONLY WHERE EXACTLY ONE CASE IS SPELLED THAT WAY.
+ *
+ * `lib/estonian/whichCase.ts` is what lets "Say what you see" tell a learner
+ * which ending they reached for instead of the one asked for, which is the
+ * whole reason that mode is worth having: every other screen can only say the
+ * form was not the one wanted.
+ *
+ * The naive version is the natural thing to write and is wrong in a way nobody
+ * would notice from the screen. `tuba` is its own nimetav and its own osastav,
+ * and 1,937 of the 2,700 short illatives in the shipped dictionary are spelled
+ * like a principal part, so a rule that took the first match would announce
+ * `aadressi` as an illative and call a partitive object a subject, which is
+ * the fault the level check shipped with once already.
+ *
+ * Two halves, and both were made to fail before being kept. The verdict has to
+ * have a "shared" branch keyed on more than one claim, and the three principal
+ * parts have to be in the index: they are there in order to *collide*, and
+ * leaving them out is what makes a short illative look unambiguous.
+ */
+check("a case is named only when one case claims the spelling", () => {
+  const src = code("lib/estonian/whichCase.ts");
+  assert.match(
+    src,
+    /keys\.length === 1[\s\S]{0,200}kind:\s*"shared"/,
+    "readCase no longer refuses to name a spelling that more than one case shares. " +
+    "Naming the first match calls a partitive object a subject.",
+  );
+  for (const part of ["NOMINATIVE", "GENITIVE", "PARTITIVE"]) {
+    assert.match(
+      src,
+      new RegExp(`claim\\([^)]*,\\s*"${part}"\\)`),
+      `caseIndex no longer claims the ${part}. The three principal parts are in the ` +
+      "index so that a derived form spelled like one of them reads as shared.",
+    );
+  }
+});
+
+/**
+ * The scene mode marks against the dictionary before it asks a model anything.
+ *
+ * The ordering is the whole design of `/api/write` and this inherited it: the
+ * case is checked by string comparison first, so a learner who used the right
+ * ending is told so with the AI off, a model that hallucinates cannot mark a
+ * right form wrong, and an answer that is not a sentence never costs a call.
+ * Moving `resolveProvider` above `markDescription` would keep every test
+ * passing and quietly hand the verdict to the model.
+ *
+ * And nothing about the learner is taken from the request. `/api/tutor` posted
+ * `level: "B1"` for everybody because a client said so; the level here is read
+ * off the learner's own log, and the marking is over a task rebuilt from the
+ * dictionary rather than over anything the browser sent (ADR-022).
+ */
+check("the scene route marks mechanically before it reaches a provider", () => {
+  const src = code("app/api/describe/route.ts");
+  const marked = src.indexOf("markDescription(");
+  const provider = src.indexOf("resolveProvider(");
+  assert.ok(marked > 0 && provider > 0, "the describe route no longer does both of these");
+  assert.ok(
+    marked < provider,
+    "app/api/describe/route.ts asks a provider before it marks. The dictionary's " +
+    "verdict has to be computed first, so it stands when the model is off or wrong.",
+  );
+  assert.doesNotMatch(
+    src,
+    /body\.(level|mark|rating|rightCase)/,
+    "the describe route reads a mark or a level off the request. Both are the " +
+    "server's to decide (ADR-022); the level comes from courseLevelFor.",
+  );
+  assert.match(
+    src,
+    /verifyComment\(/,
+    "the describe route no longer verifies what the model wrote (ADR-005).",
+  );
+});
+
+/**
+ * A contributed sentence passes the same gate a photographed page does.
+ *
+ * `lib/collections/sceneAnswers.ts` is the one place a person's own Estonian
+ * prose reaches a learner as a model answer, and being written by a native
+ * speaker buys it no exception: a typo, a dropped diacritic or a word the
+ * dictionary has never heard of is exactly what the scanner's gate catches,
+ * and a model answer made of words a learner cannot look up is worse than
+ * none. `matchEstonianForm` at the vouched score is that gate (ADR-021), and
+ * this is the fourth door onto it after the scanner, the headlines and the
+ * frequency count.
+ *
+ * The data file itself has to stay data. It is generated, so an import in it
+ * is either a model reaching the file or a hand edit that the next run of the
+ * importer will silently throw away.
+ */
+check("a contributed scene sentence is gated by the dictionary", () => {
+  const importer = code("scripts/import-scene-answers.ts");
+  assert.match(
+    importer,
+    /matchEstonianForm\(/,
+    "scripts/import-scene-answers.ts no longer puts every word through " +
+    "matchEstonianForm. A native speaker's typo would ship as a model answer.",
+  );
+  assert.match(
+    importer,
+    /rejected\.push/,
+    "the importer no longer refuses a sentence it could not vouch for.",
+  );
+
+  const data = code("lib/collections/sceneAnswers.ts");
+  assert.doesNotMatch(
+    data,
+    /^\s*import\s/m,
+    "lib/collections/sceneAnswers.ts imports something. It is generated data: " +
+    "anything computed in it is thrown away by the next import.",
   );
 });
 
