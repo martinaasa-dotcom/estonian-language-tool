@@ -183,7 +183,7 @@ function governmentSuspect(tokens: readonly string[]): boolean {
 }
 
 function runGate(
-  text: string, beat: BeatSpec, scene: SceneSpec,
+  text: string, beat: BeatSpec,
   lexicon: { forms: ReadonlySet<string> }, wrongRegister: ReadonlySet<string>,
 ): { failed: Check[]; unknown: string[] } {
   const failed: Check[] = [];
@@ -206,7 +206,6 @@ function runGate(
   if (tokens.some((t) => wrongRegister.has(t.toLowerCase()))) failed.push("register");
   if (governmentSuspect(tokens)) failed.push("government");
 
-  void scene;
   return { failed, unknown };
 }
 
@@ -253,7 +252,9 @@ const SYSTEM = [
   "No English, no markdown, no quotation marks, no explanation.",
 ].join(" ");
 
-async function compose(scene: SceneSpec, beat: BeatSpec, lemmas: string[]): Promise<string | null> {
+async function compose(
+  scene: SceneSpec, beat: BeatSpec, lemmas: string[], retryOver?: readonly string[],
+): Promise<string | null> {
   const user = [
     `You are the ${scene.place}. The learner is a member of the public and you address them as "${scene.register}".`,
     `Your move now: ${beat.move}. In English, what you are doing is: ${beat.goal}`,
@@ -262,6 +263,16 @@ async function compose(scene: SceneSpec, beat: BeatSpec, lemmas: string[]): Prom
     QUESTION_SHAPE[beat.move] === "forbidden" ? "It must not be a question." : "",
     `At most ${MAX_WORDS} words. Words you may use:`,
     lemmas.join(", "),
+    /*
+      The one retry §6 allows, with the failing words named. It is part of the
+      design rather than a kindness to the model, and leaving it out of the
+      measurement measures the wrong thing: what the 5% line is about is what a
+      learner never sees, and a line the retry rescues is one they do see.
+    */
+    retryOver && retryOver.length > 0
+      ? `\nYour last line used words that are not on the list: ${retryOver.join(", ")}. `
+        + "Write it again using only listed words."
+      : "",
   ].filter(Boolean).join("\n");
 
   for (const link of CHAIN) {
@@ -300,8 +311,19 @@ async function partA() {
   console.log(`  ${LINES} lines per beat, vouching against the ${ALLOWLIST === "course" ? "whole course to the scene\u2019s level" : "scene\u2019s own units"}, over ${CHAIN.length} free models: ${CHAIN.map((l) => l.model).join(", ")}\n`);
 
   const tally = new Map<Check, number>();
-  let asked = 0, refused = 0, withheld = 0;
+  let asked = 0, refused = 0, withheld = 0, firstPass = 0, rescued = 0;
   const examples: string[] = [];
+  /*
+    The words the model reached for that the scene could not vouch for, ranked.
+
+    The rate says the gate is withholding most of what it is handed; this says
+    what for, and it is the same instrument `measure:scenes` used to find the
+    missing connectives unit. A word here is one of two things: a word the
+    course teaches that this scene did not declare the unit for, which is a
+    scene fixing itself, or a word the course does not teach at all, which is a
+    gap in the syllabus that no gate can close.
+  */
+  const reached = new Map<string, number>();
 
   for (const scene of SCENES) {
     if (onlyScene && scene.id !== onlyScene) continue;
@@ -315,13 +337,23 @@ async function partA() {
         const line = await compose(scene, beat, lemmas);
         if (!line) { refused++; continue; }
         asked++; sceneAsked++;
-        const { failed, unknown } = runGate(line, beat, scene, lexicon, wrongRegister);
-        if (failed.length === 0) continue;
+        const first = runGate(line, beat, lexicon, wrongRegister);
+        for (const word of first.unknown) reached.set(word, (reached.get(word) ?? 0) + 1);
+        if (first.failed.length === 0) { firstPass++; continue; }
+
+        // The one retry, with the words that failed named. §6.
+        const second = await compose(scene, beat, lemmas, first.unknown);
+        const after = second ? runGate(second, beat, lexicon, wrongRegister) : null;
+        if (after && after.failed.length === 0) { rescued++; continue; }
+
         withheld++; sceneWithheld++;
-        for (const check of failed) tally.set(check, (tally.get(check) ?? 0) + 1);
+        const shown = second ?? line;
+        const why = after ?? first;
+        for (const check of why.failed) tally.set(check, (tally.get(check) ?? 0) + 1);
         if (examples.length < 12) {
-          const why = failed.join(", ") + (unknown.length ? ` [${unknown.slice(0, 4).join(" ")}]` : "");
-          examples.push(`    ${scene.id}/${beat.id}: ${line}\n      withheld: ${why}`);
+          const reason = why.failed.join(", ")
+            + (why.unknown.length ? ` [${why.unknown.slice(0, 4).join(" ")}]` : "");
+          examples.push(`    ${scene.id}/${beat.id}: ${shown}\n      withheld after a retry: ${reason}`);
         }
       }
     }
@@ -348,7 +380,9 @@ async function partA() {
   }
   if (asked > 0) {
     const rate = (withheld / asked) * 100;
-    console.log(`  Gate rejection rate: ${rate.toFixed(1)}%.`);
+    const firstRate = ((asked - firstPass) / asked) * 100;
+    console.log(`  First attempt withheld: ${firstRate.toFixed(1)}%. The retry rescued ${rescued}.`);
+    console.log(`  Gate rejection rate, which is what a learner never sees: ${rate.toFixed(1)}%.`);
     console.log(`  The design's line is 5%: above one in twenty, the word list is too small or the`);
     console.log(`  model is the wrong one, and the answer is not to loosen the gate.`);
     console.log(`  ${rate <= 5 ? "AT OR UNDER" : "OVER"} the line on this run.`);
@@ -360,6 +394,16 @@ async function partA() {
   if (examples.length) {
     console.log("\n  What a withheld line looks like:");
     console.log(examples.join("\n"));
+  }
+
+  if (reached.size > 0) {
+    const ranked = [...reached].sort((a, b) => b[1] - a[1]).slice(0, 30);
+    const inCourse = new Set<string>();
+    for (const unit of SYLLABUS) for (const spec of unit.words) inCourse.add(spec[0].toLowerCase());
+    console.log("\n  Words the model reached for that the scene could not vouch for.");
+    console.log("  A star means the course does not teach the word at all, at any level, so no");
+    console.log("  scene could declare a unit for it and the gap is in the syllabus.");
+    console.log("    " + ranked.map(([w, n]) => `${inCourse.has(w) ? "" : "*"}${w} ${n}`).join("  "));
   }
 }
 
