@@ -1503,6 +1503,16 @@ There is no path in this app that rewrites somebody else's cards, and the one th
 learner's own is the hand edit, which is theirs to ask for; a migration over every deck to save
 three hundred cards a learner is a larger and riskier thing than the fault it would undo.
 
+**And a crossword clue is the fourth place the same fault was waiting.** The clue is the English
+gloss already beside the entry, which is what keeps a model out of it, and a few dozen Estonian
+words are spelled the same in English: the clue for `film` was "film" and for `sport` it was
+"sport, sports", so the answer was written across the top of the grid above the squares it goes in.
+34 of the 5,329 words with a usable clue, 23 of them the answer exactly. `clueFrom` takes the
+answer now and returns nothing where the clue gives it away, and that parameter is **required**
+rather than optional for the reason `illSgShort` is: a caller that has not thought about this does
+not compile. Case-insensitive, because a crossword is typed without case and "August" over `august`
+hands over every letter.
+
 `mentions` in `lib/estonian/cloze.ts` is the one whole-word test all three read, with the boundaries
 the module already splits on rather than `\b`, which is ASCII and so does not know what õ is. After
 all three: **zero cards print their own answer**, measured the same way.
@@ -3307,6 +3317,15 @@ stand in for it, because the tick carries that too and is still the thing a
 sighted reader looks at. The fix on the other side was `--on-mint`, since
 `--mint-ink` is the ink on mint's *tint* and there was nothing for its solid
 fill (docs/14-design-system.md §"Every hue has an ink").
+
+**An integration test over the shipped dictionary states that it is the shipped dictionary.** The
+crossword compiler is a fact about a real pool of words at a real level, so a dictionary another
+suite left behind is a different question wearing the same name: `test-restore.mjs` empties it and
+restores it, `test-edit.mjs` corrects an entry, `test-containment.mjs` ticks a word into it. Run any
+of them first on a machine that is not CI and `crossword.itest.ts` failed with "B1 on 2026-01-01 got
+no grid", which reads as the compiler being broken and sends the reader into `lib/games/crossword.ts`.
+It cost an hour of looking in the wrong file. The precondition is asked once now, against
+`SEED_SET_SIZE`, and fails in 93 milliseconds naming both the state and the command that fixes it.
 
 **A suite states its preconditions; it does not inherit them.** `letterBar` is a
 stored preference that decides whether a control is drawn at all, so a database

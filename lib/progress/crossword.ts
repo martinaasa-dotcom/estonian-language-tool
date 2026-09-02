@@ -6,6 +6,7 @@ import { compile, type Candidate, type Crossword } from "@/lib/games/crossword";
 import { dayOrdinal } from "@/lib/random/dayHash";
 import { shuffle } from "@/lib/random/shuffle";
 import type { DayKey } from "@/lib/time/day";
+import { mentions } from "@/lib/estonian/cloze";
 
 /**
  * WHICH WORDS TODAY'S CROSSWORD IS MADE OF.
@@ -64,7 +65,7 @@ export async function crosswordFor(
   */
   const random = seededRandom(dayOrdinal(day));
   const pool: Candidate[] = shuffle(rows, random)
-    .map((row) => ({ lemma: row.lemma, clue: clueFrom(row.translation), lexemeId: row.id }))
+    .map((row) => ({ lemma: row.lemma, clue: clueFrom(row.translation, row.lemma), lexemeId: row.id }))
     .filter((c) => c.clue.length > 0)
     .slice(0, POOL);
 
@@ -90,11 +91,25 @@ export async function crosswordFor(
  * lexicographer being thorough and a crossword clue being useless. Dropped
  * rather than truncated mid-word where it is still too long: a clue cut off in
  * the middle is worse than one word fewer in the grid.
+ *
+ * AND NOTHING WHERE THE CLUE IS THE ANSWER, which is the case this could not
+ * see while it was handed a gloss and no word. The clue is the English beside
+ * the entry and a few dozen Estonian words are spelled the same in English:
+ * the clue for `film` was "film", and for `sport` it was "sport, sports", so
+ * the answer was written across the grid above the squares it goes in.
+ * Measured on the shipped dictionary, 34 of the 5,329 words with a usable
+ * clue, 23 of them the answer exactly.
+ *
+ * `answer` is required rather than optional for the reason `illSgShort` is:
+ * a caller that has not thought about this should not compile. Whole words
+ * and case-insensitive, because a crossword is typed without case and
+ * "August" over `august` gives away every letter of it.
  */
-export function clueFrom(translation: string): string {
+export function clueFrom(translation: string, answer: string): string {
   const senses = translation.split(/[;/]/)[0]?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
   const clue = senses.slice(0, 2).join(", ");
-  return clue.length > 0 && clue.length <= MAX_CLUE ? clue : "";
+  if (clue.length === 0 || clue.length > MAX_CLUE) return "";
+  return mentions(clue, answer) ? "" : clue;
 }
 
 /**
