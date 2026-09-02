@@ -478,7 +478,6 @@ const LIMITS = {
   example: EXAMPLE_MAX_CHARS,
   form: 80,
   government: 300,
-  notes: 2000,
   taskTitle: 200,
   taskNotes: 2000,
 } as const;
@@ -509,7 +508,7 @@ const text = (value: unknown): string => (typeof value === "string" ? value : ""
  * It also establishes who to attribute the entry to.
  */
 export async function createLexeme(input: {
-  lemma: string; translation: string; pos: string; cefr?: string; notes?: string;
+  lemma: string; translation: string; pos: string; cefr?: string;
 }) {
   const ownerId = await requireUserId();
 
@@ -530,8 +529,24 @@ export async function createLexeme(input: {
     data: {
       lemma, translation, pos: input.pos,
       cefr: input.cefr || null,
-      notes: capped(input.notes, LIMITS.notes) || null,
-      provenance: "USER",
+      /*
+        AI, NOT USER, BECAUSE A MODEL SUGGESTED IT AND NOBODY HAS CHECKED IT.
+
+        The one caller is Anu's vocabulary bridge, where a learner presses a
+        button on a word the model offered. It was written down as `USER` with
+        the sentence "Suggested by Anu, forms unverified" in `notes`, and that
+        sentence was the only record of either fact: `AI · verify` is keyed on
+        the provenance, so the chip never appeared on the entry or on the card
+        whose answer had never been checked, which is the one place ADR-005
+        cares about. And `enrichFromEkilex` refuses to touch a `USER` word,
+        "hers, not ours to overwrite", so the word could never be upgraded to
+        real Ekilex forms either. Both of those turn round with the label.
+
+        `notes` is the English further senses and nothing else now, which is
+        what lets the entry give it a heading; a provenance sentence sitting in
+        it would print under "other meanings" and read as one.
+      */
+      provenance: "AI",
       editedBy: ownerId,
       editedAt: new Date(),
     },
@@ -554,7 +569,6 @@ export async function createLexemeWithForms(input: {
   pos: string;
   cefr?: string;
   government?: string;
-  notes?: string;
   forms: Record<string, string>;
 }) {
   const ownerId = await requireUserId();
@@ -574,7 +588,6 @@ export async function createLexemeWithForms(input: {
     pos: input.pos,
     cefr: input.cefr,
     government: capped(input.government, LIMITS.government),
-    notes: capped(input.notes, LIMITS.notes),
     forms: Object.fromEntries(
       Object.entries(input.forms).map(([type, value]) => [type, capped(value, LIMITS.form)]),
     ),

@@ -190,10 +190,20 @@ async function main() {
 
   await prisma.task.createMany({
     data: [
-      { ownerId, title: "Exercise 4B, partitive plural", tag: "GRAMMAR", classWeek: 6, dueAt: new Date(Date.now() + 2 * 86400000) },
-      { ownerId, title: "Learn week 6 vocabulary (24 words)", tag: "VOCABULARY", classWeek: 6, dueAt: new Date(Date.now() - 86400000) },
-      { ownerId, title: "Listen to Vikerraadio for 20 minutes", tag: "LISTENING", classWeek: 6 },
-      { ownerId, title: "Write 5 sentences using the comitative", tag: "HOMEWORK", classWeek: 5, completed: true, completedAt: new Date() },
+      /*
+        The two tags a deployment can actually write, from `TASK_TAGS`.
+
+        This wrote GRAMMAR and LISTENING as well, which no action in the app
+        produces: they are the remains of the cut `/tasks` page, and the fixture
+        was showing every screenshot and every browser suite a kind of task
+        nobody can create. A fixture that draws a feature the app does not have
+        is worse than a thin one, because it is the state everything is measured
+        in.
+      */
+      { ownerId, title: "Exercise 4B, partitive plural", tag: "HOMEWORK", dueAt: new Date(Date.now() + 2 * 86400000) },
+      { ownerId, title: "Learn week 6 vocabulary (24 words)", tag: "VOCABULARY", dueAt: new Date(Date.now() - 86400000) },
+      { ownerId, title: "Listen to Vikerraadio for 20 minutes", tag: "HOMEWORK" },
+      { ownerId, title: "Write 5 sentences using the comitative", tag: "HOMEWORK", completed: true, completedAt: new Date() },
     ],
   });
 

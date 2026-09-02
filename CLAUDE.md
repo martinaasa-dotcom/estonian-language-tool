@@ -196,6 +196,51 @@ removes one**: `mees : mehe` is s : h, `poiss : poisi` is ss : s and `viis : vii
 peeling those leaves the patterns nothing to match, so a peel that finds nothing falls back to the
 whole word. 174 entries in the built dictionary were re-graded by it.
 
+**One language per column, because a screen cannot mark what it cannot tell.** `Lexeme.notes` was a
+bare `String?` and held two different things. `scripts/expand-seed.ts` put the further English senses
+Wiktionary lists there, so `aadress` carried "email address"; `mapEkilexDetails` put Ekilex's own
+Estonian explanation there, and `enrichFromEkilex` wrote it on every live lookup. So the first person
+to look a word up with a key deleted the English from the shared dictionary for everybody, and the
+entry rendered whichever survived in one grey box with no heading and no `lang`, next to five blocks
+that all have one. A screen reader said the Estonian with English sounds.
+
+`definition` is the Estonian one and `notes` stays the English. The two lines beside the overwrite
+already knew better, since government is not replaced because a worked example teaches more and
+sentences are merged rather than replaced; this was the odd one out. A row that already holds the
+copy clears it, in the seed for every deployment and again on the next lookup, and the rule is
+exactly the rows the old code made: where the two columns hold the same sentence, the note is that
+copy. A real English note is never equal to an Estonian definition.
+
+**A correction replaces what it supplied and leaves alone what it did not, and the shared upsert had
+one column on the wrong side of that line.** `upsertLexemeWithForms` took a `notes` parameter and
+wrote `notes: input.notes || null` in an update, and neither caller has ever sent one: the
+add-and-correct form has no notes field and the suggestion queue passes forms and a gloss. So every
+hand edit and every accepted report nulled the further English senses, in the dictionary everybody
+reads, and correcting a typo in `aadress` deleted "email address" for the whole deployment. The
+comment three lines below it already made the argument, about forms: replace only the principal
+parts, because deleting the lot threw away what Ekilex supplied. The parameter is gone rather than
+guarded, since a parameter nobody passes is not a feature, it is the bug's only door.
+`lib/dict/edit.itest.ts` is where that is checked, beside the three faults it was written for.
+
+**And a word Anu suggested is marked as a model's, which it was not.** `createLexeme` is reached
+only from her vocabulary bridge, where a learner presses a button on a word she offered, and it
+wrote the row down as `USER` with the sentence "Suggested by Anu, forms unverified" in `notes`. That
+sentence was the only record of either fact. `AI · verify` is keyed on the provenance, so the chip
+never appeared, not on the entry and not on the card whose answer had never been checked, which is
+the one place ADR-005 cares about; and `enrichFromEkilex` refuses to touch a `USER` word, "hers, not
+ours to overwrite", so the word could never be upgraded to real Ekilex forms either. Both turn round
+with the label, and the tag goes away by itself the moment Ekilex answers, which is what "verify"
+was asking for.
+
+**And 1,359 Estonian definitions had been fetched and thrown away.** The harvest asks Ekilex for the
+explanation of every course word and writes it into `prisma/data/harvested.ts`, and the seed wrote
+none of them: `LEXEME_COLUMNS` marks `notes` as owned only by entries carrying its key, which the
+phrases do and the harvest path never did, so the column was skipped for exactly the words that had
+something to put in it. Measured before the fix: of the first 400 harvested words with a definition,
+one row in the database carried any note and that one was English. `onlyWhenOwned` is a set rather
+than a boolean now, tested on the column's own name, because a second such column is what made the
+hardcoded `notes` visible.
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with forms matching the part of speech

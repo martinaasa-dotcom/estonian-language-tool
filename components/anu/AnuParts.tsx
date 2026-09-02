@@ -419,7 +419,10 @@ function VocabBridge({ vocab }: { vocab: { et: string; en: string }[] }) {
   const add = (word: { et: string; en: string }) => {
     start(async () => {
       const created = await createLexeme({
-        lemma: word.et, translation: word.en, pos: "OTHER", notes: "Suggested by Anu, forms unverified",
+        // The provenance carries "a model suggested this and nobody has checked
+        // it", which is what `AI · verify` is drawn from. It used to be a
+        // sentence in `notes`, where nothing read it.
+        lemma: word.et, translation: word.en, pos: "OTHER",
       });
       if (created.ok) {
         await addToDeck(created.id, ["RECOGNITION", "PRODUCTION"], "TUTOR");

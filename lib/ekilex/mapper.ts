@@ -69,8 +69,15 @@ export interface MappedLexeme {
   gradation: string;
   gradationNote: string | null;
   government: string | null;
-  /** Estonian explanatory definition. Ekilex gives no English on a reader key. */
-  notes: string | null;
+  /**
+   * Ekilex's Estonian explanation of the word. It gives no English on a reader key.
+   *
+   * Named for what it is rather than `notes`, which is the column it used to be
+   * written to and which holds English. One column with two languages in it is
+   * why a live lookup replaced `aadress`'s "email address" with a sentence of
+   * Estonian, in a box with no heading and no `lang`.
+   */
+  definition: string | null;
   /** Attested sentences using the word — the source of every cloze exercise. */
   examples: Example[];
   forms: MappedForm[];
@@ -145,7 +152,7 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
     government: formatGovernment(details.governments),
-    notes: details.definitions[0] ?? null,
+    definition: details.definitions[0] ?? null,
     examples: usableExamples(details.usages.map((et) => ({ et, source: "EKILEX" as const }))),
     forms: forms.sort((a, b) => a.orderIndex - b.orderIndex),
   };

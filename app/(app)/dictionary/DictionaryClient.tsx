@@ -52,6 +52,7 @@ export interface EntryView {
   gradationNote: string | null;
   government: string | null;
   notes: string | null;
+  definition: string | null;
   provenance: string;
   inDeck: boolean;
   starred: boolean;
@@ -483,10 +484,45 @@ function Entry({ entry, tutorReady, glossLanguage }: {
       */}
       <EntryProblem entry={entry} />
 
+      {/*
+        TWO BLOCKS, EACH SAYING WHAT IT IS AND WHAT LANGUAGE IT IS IN.
+
+        This was one unlabelled grey paragraph rendering `entry.notes`, and that
+        column held two different things in two languages: the further English
+        senses Wiktionary lists, and, after any live lookup, Ekilex's Estonian
+        explanation, which overwrote them. So a reader met either a list of
+        English meanings or a paragraph of C1 Estonian, in the same box, with no
+        heading, while every other block on this page has one. And with no
+        `lang`, so a screen reader said the Estonian with English sounds.
+
+        The Estonian leads, because it is the dictionary's own definition and
+        the English under it is the cross-reference, which is the order this app
+        uses everywhere else.
+      */}
+      {entry.definition && (
+        <div>
+          <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
+            Seletus · what the dictionary says
+          </h3>
+          <p
+            lang="et"
+            className="rounded-[var(--r)] px-4 py-3.5 text-sm"
+            style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+          >
+            {entry.definition}
+          </p>
+        </div>
+      )}
+
       {entry.notes && (
-        <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
-          {entry.notes}
-        </p>
+        <div>
+          <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
+            Other meanings
+          </h3>
+          <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
+            {entry.notes}
+          </p>
+        </div>
       )}
 
       {entry.government && (

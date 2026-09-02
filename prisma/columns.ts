@@ -36,6 +36,14 @@ export interface SeedEntry {
    */
   notes?: string | null;
   /**
+   * Ekilex's Estonian explanation, for the harvested words that carry one.
+   *
+   * Owned the same way and for the same reason: the live lookup writes this
+   * column too, and a reseed must not erase a definition fetched for a word the
+   * built-in set has none for.
+   */
+  definition?: string | null;
+  /**
    * `Lexeme.examples` JSON, for the harvested words that arrive with attested
    * sentences. Written on insert only — see the column's note below.
    */
@@ -53,7 +61,13 @@ export interface SeedColumn {
   value: (entry: SeedEntry) => string | null;
   /** Rewritten on a reseed. False for the conflict key, which cannot change. */
   reseeded: boolean;
-  /** Only written for entries whose payload carries a `notes` key. */
+  /**
+   * Only written for entries whose payload carries this column's own key.
+   *
+   * Two columns need it now, so the test is the column's `name` rather than the
+   * word `notes`: `prisma/seed.ts` groups the batch by which of these an entry
+   * carries and writes each group with its own column list.
+   */
   onlyWhenOwned?: boolean;
 }
 
@@ -71,6 +85,7 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
   { name: "gradationNote", cast: "text", value: (e) => e.gradationNote, reseeded: true },
   { name: "government", cast: "text", value: (e) => e.government, reseeded: true },
   { name: "notes", cast: "text", value: (e) => e.notes ?? null, reseeded: true, onlyWhenOwned: true },
+  { name: "definition", cast: "text", value: (e) => e.definition ?? null, reseeded: true, onlyWhenOwned: true },
   // Insert-only, and the distinction matters. The built-in dictionary now ships
   // with the attested sentences the harvest brought back, so a brand-new
   // database has gap-fill, dictation and sentence-building on day one instead of

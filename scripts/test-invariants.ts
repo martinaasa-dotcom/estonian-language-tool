@@ -326,6 +326,92 @@ check("no browser suite finds a field by a placeholder another field shares", ()
   );
 });
 
+/*
+  ONE LANGUAGE PER COLUMN, BECAUSE A SCREEN CANNOT MARK WHAT IT CANNOT TELL.
+
+  `Lexeme.notes` held the further English senses Wiktionary lists and, after any
+  live lookup, Ekilex's Estonian explanation, which had overwritten them. So the
+  entry rendered either in one unlabelled box, a screen reader read the Estonian
+  with English sounds, and the first person to look `aadress` up with a key
+  deleted "email address" from the shared dictionary for everybody.
+
+  `definition` is the Estonian one. The check is that nothing writes Ekilex's
+  explanation into the English column again, which is the mistake that is easy
+  to make and impossible to see: both are a `String?` holding a sentence.
+*/
+/*
+  A TASK'S KIND IS ONE TABLE, THE WAY A CARD'S TYPE ALREADY IS.
+
+  It was four, and no two agreed. The schema said `HOMEWORK | VOCABULARY`, the
+  data model page said the same, `components/TaskRow.tsx` kept a label table of
+  five, and `scripts/demo-data.ts` wrote three of those five. Two actions in the
+  app write a tag and between them they write exactly two values, so the other
+  three were a kind of task no deployment can produce, drawn in the fixture that
+  every screenshot and every browser suite is measured in.
+*/
+check("a task's kind is the same set wherever it is written down", () => {
+  const table = code("lib/ux/agenda.ts");
+  const declared = [...table.matchAll(/^  ([A-Z_]+): "/gm)].map((m) => m[1] as string);
+  assert.ok(declared.length >= 2, "TASK_TAGS stopped being readable from lib/ux/agenda.ts");
+
+  const written = new Set<string>();
+  for (const file of [...sourceFiles("app"), ...sourceFiles("scripts")]) {
+    for (const m of code(file).matchAll(/\btag:\s*"([A-Z_]+)"/g)) written.add(m[1] as string);
+  }
+  assert.deepEqual(
+    [...written].filter((t) => !declared.includes(t)).sort(),
+    [],
+    `a tag is written that TASK_TAGS does not declare (declared: ${declared.join(", ")})`,
+  );
+  assert.ok(
+    !/TAG_LABEL/.test(code("components/TaskRow.tsx")),
+    "TaskRow keeps a second table of task kinds, which is how the first one rotted",
+  );
+});
+
+check("Ekilex's Estonian explanation has a column of its own", () => {
+  assert.match(
+    code("lib/ekilex/mapper.ts"),
+    /definition: details\.definitions\[0\]/,
+    "mapEkilexDetails stopped returning Ekilex's explanation as `definition`",
+  );
+  const offenders = ["app", "lib", "prisma"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => /\bnotes:\s*(?:\w+\.)*(?:definition|definitions)\b|\bnotes:\s*mapped\.definition\b/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "an Estonian definition is being written into `notes`, which holds English, "
+      + "so the entry cannot label it or mark its language and a live lookup "
+      + "overwrites the English senses with it",
+  );
+  assert.match(
+    read("prisma/schema.prisma"),
+    /definition\s+String\?/,
+    "Lexeme.definition left the schema",
+  );
+  /*
+    AND A COLUMN THE SEED ONLY SOMETIMES OWNS IS CLAIMED ONLY WHEN IT HAS A
+    VALUE.
+
+    `onlyWhenOwned` means "written for entries whose payload carries this key",
+    and it exists because the dictionary editor and the live Ekilex lookup write
+    these columns too. Written as `definition: word.note`, the key is present
+    even when the value is null, so the harvest would hand `null` to the update
+    for every word Ekilex has no explanation for and a reseed would erase a
+    definition the live lookup had fetched for one. Spread, and it claims
+    nothing it cannot fill. Verified against a real database: a definition
+    planted on a harvested word with no explanation survives a reseed.
+  */
+  assert.match(
+    code("prisma/seed.ts"),
+    /\.\.\.\(word\.note \? \{ definition: word\.note \} : \{\}\)/,
+    "the harvest claims `definition` unconditionally, so a reseed nulls it for "
+      + "every word Ekilex has no explanation for, erasing whatever the live "
+      + "lookup had fetched",
+  );
+});
+
 check("a principal part is one form, whatever Ekilex sends", () => {
   const mapper = code("lib/ekilex/mapper.ts");
   assert.match(
@@ -5370,14 +5456,24 @@ check("anything a model wrote carries the mark the terms page promises", () => {
     already makes next to it: a phrase retyped in nine places drifts in one of
     them, and this one had. Asserted as "nobody retypes it" rather than "the
     string is right", because a literal is exactly how it came apart.
+
+    AND IT READS THE CODE, NOT THE PROSE, which it did not. Both halves used
+    `read`, so a comment explaining why a word is marked `AI · verify` counted
+    as a screen that draws it, and a comment naming the phrase failed the check
+    outright. That is the oldest recurring mistake in this repository's own
+    checks and this is the fifth time: the marker sweep whose haystack included
+    the list of markers, the `AI_TAG` assertion that matched its own import
+    line, the lemma check that fired on a paragraph describing the query it had
+    removed, and the suite whose comment satisfied a check looking for a call.
+    `code()` is what strips them.
   */
-  const tagged = [...APP, ...COMPONENTS].filter((f) => read(f).includes("AI_TAG"));
+  const tagged = [...APP, ...COMPONENTS].filter((f) => code(f).includes("AI_TAG"));
   assert.ok(
     tagged.length >= 6,
     `only ${tagged.length} screens read AI_TAG; the tag is being written some other way`,
   );
 
-  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(read(f)));
+  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(code(f)));
   assert.deepEqual(
     retyped, [],
     `the AI tag is typed out rather than read from lib/copy/values: ${retyped.join(", ")}`,
