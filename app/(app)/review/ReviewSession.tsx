@@ -345,7 +345,25 @@ export function ReviewSession({
   const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Done[]>([]);
-  /** Words met this session, which are now asked rather than introduced. */
+  /*
+    WHAT UNDO PUTS BACK IS WHAT THE SERVER LAST WROTE.
+
+    `cards` is snapshotted on mount and its `scheduling` is deliberately never
+    refreshed, which is right for the queue and was wrong here. An "Again" puts
+    a card back into this same session, so a card can be graded twice, and both
+    grades recorded the same mount-time state as the one to restore: undoing
+    the second rewound past the first as well, dropping a lapse the learner
+    really had made and sending a card they had just failed back out on its old
+    interval.
+
+    `gradeCard` already computes the next state in order to write it, so it
+    hands it back and this is what the session remembers. A grade that could
+    not reach the server leaves this untouched, which is exactly right: the row
+    it describes was not updated either, and the outbox replays from whatever
+    is actually there.
+  */
+  const scheduled = useRef(new Map<string, ReviewCard["scheduling"]>());
+  /** Cards whose word has been met this session and which are now asked properly. */
   const [met, setMet] = useState<ReadonlySet<string>>(() => new Set());
   const [pendingOffline, setPendingOffline] = useState(0);
   const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
@@ -421,8 +439,7 @@ export function ReviewSession({
   useEffect(() => {
     if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
     checkedAchievements.current = true;
-    const accuracy = done > 0 ? Math.round((correct / done) * 100) : 0;
-    void checkAchievements({ count: done, accuracy }).then((r) => {
+    void checkAchievements(true).then((r) => {
       if (r.ok) setNewBadges(r.newBadges);
     });
   }, [finished, done, correct, wasEmptyAtStart]);
@@ -503,10 +520,12 @@ export function ReviewSession({
     setBusy(true);
     const duration = Date.now() - shownAt.current;
     const answeredAt = new Date().toISOString();
+    const before = scheduled.current.get(card.id) ?? card.scheduling;
 
     try {
       const result = await gradeCard(card.id, rating, duration, answeredAt);
       if (!result.ok) throw new Error(result.error);
+      scheduled.current.set(card.id, result.scheduling);
     } catch {
       // No connection, or the write failed. The grade is still a fact about
       // something the learner did, so it goes to the durable outbox and is
@@ -525,7 +544,7 @@ export function ReviewSession({
     setDone((d) => d + 1);
     setXp((x) => x + xpForRating(rating));
     if (rating >= 3) setCorrect((c) => c + 1);
-    setHistory((h) => [...h, { cardId: card.id, index, rating, before: card.scheduling }]);
+    setHistory((h) => [...h, { cardId: card.id, index, rating, before }]);
 
     // "Again" means it is not learned — put it back near the end of this session.
     if (rating === 1) {
@@ -558,6 +577,7 @@ export function ReviewSession({
     setBusy(true);
     const result = await undoGrade(last.cardId, last.before);
     if (result.ok) {
+      scheduled.current.set(last.cardId, last.before);
       setHistory((h) => h.slice(0, -1));
       setDone((d) => Math.max(0, d - 1));
       setXp((x) => Math.max(0, x - xpForRating(last.rating)));

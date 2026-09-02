@@ -1,4 +1,5 @@
 import { buildCloze } from "@/lib/estonian/cloze";
+import { gapForms } from "@/lib/estonian/gapForms";
 import { usableExamples, type Example } from "@/lib/dict/examples";
 
 /**
@@ -104,7 +105,10 @@ export function buildWorksheet(words: readonly WorksheetWord[], limits: Workshee
  * more useful exercise anyway.
  */
 function firstGap(word: WorksheetWord): GapItem | null {
-  const forms = [word.lemma, ...word.forms.map((f) => f.value)];
+  // Which is what the comment above has always said and what the list could
+  // not do: `toas` is a derived case, so a stored-forms-only list could hide
+  // it on an enriched entry and not on a seeded one.
+  const forms = [...gapForms(word).keys()];
   for (const example of usableExamples([...word.examples])) {
     const cloze = buildCloze(example.et, forms);
     if (!cloze) continue;

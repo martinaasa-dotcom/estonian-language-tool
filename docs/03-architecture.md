@@ -7,14 +7,13 @@
 | Framework | Next.js 15 (App Router), React 19 | v4.0 said "14+"; 15 is current and App Router is unchanged |
 | Language | TypeScript, `strict: true` | plus `noUncheckedIndexedAccess` |
 | Styling | Tailwind CSS v4 | |
-| Components | shadcn/ui | copied into the repo, not a dependency |
 | Icons | lucide-react | as specified in v4.0 |
 | ORM | Prisma | |
-| Database | SQLite (dev + v1), Postgres-portable schema | ADR-002 |
-| AI | `@anthropic-ai/sdk`, `claude-opus-5` | v4.0's `claude-3-5-sonnet` is stale (audit C2) |
+| Database | Postgres, hosted on Supabase | ADR-002 chose SQLite; ADR-011 swapped it, which the schema was written to allow |
+| Components | `components/ui.tsx` | this app's own primitives, not a component library |
+| AI | no SDK: one HTTP client over a chain of providers | `lib/tutor/provider.ts`, OpenRouter then Anthropic then OpenAI, per `13-mvp-status.md` §2 |
 | SRS | `ts-fsrs` (MIT, 5.4.1) | replaces hand-rolled SM-2 (audit D6) |
-| Calendar | `ical.js` (2.2.1) | RFC 5545 parsing |
-| State | TanStack Query + server actions | no global store; the DB is the state |
+| State | Server Components and Server Actions | no client store and no query library; the database is the state |
 | Tests | Vitest, Playwright | `10-testing-quality.md` |
 
 ## 2. The one non-negotiable rule
@@ -33,44 +32,48 @@ component) publishes the key to anyone who opens devtools. That is audit finding
 Browser  ──►  Next.js Route Handler / Server Action  ──►  Anthropic API
                         │                                 Ekilex API   (key)
                         │                                 TartuNLP TTS (no key)
-                        └──►  Prisma  ──►  SQLite
+                        └──►  Prisma  ──►  Postgres
 ```
 
 ## 3. Directory layout
 
 ```
 app/
-  (dashboard)/
-    page.tsx                 # Today — the default route
-    tasks/ calendar/ dictionary/ tutor/ flashcards/ imports/ progress/
-  api/
-    tutor/route.ts           # POST, streams from Claude
-    dictionary/search/route.ts
-    dictionary/word/[id]/route.ts
-    tts/route.ts             # proxy + cache for TartuNLP
-    calendar/sync/route.ts
-components/
-  ui/                        # shadcn primitives
-  dictionary/ flashcards/ tutor/ tasks/ shared/
+  (app)/                     # everything behind sign-in
+    page.tsx                 # Today, the default route
+    review/ practice/ learn/ dictionary/ grammar/ progress/ words/
+    exam/ assess/ scan/ class/ settings/ tutor/ suggestions/ admin/
+  (chromeless)/              # pages that own the whole screen
+    welcome/ sign-in/ start/
+  api/                       # streaming and third-party proxying only
+    tutor/ tts/ scan/ write/ exam/ export/ restore/ share/ metrics/ reminder/
+  actions.ts                 # every mutation, as Server Actions
+components/                  # ui.tsx holds the primitives
 lib/
-  estonian/                  # THE DOMAIN CORE
-    cases.ts                 # 14 cases, suffixes, Estonian names
-    principal-parts.ts       # noun/verb principal-part models
-    gradation.ts             # gradation classification + explanation
-    derive.ts                # genitive stem → derived case table
-    government.ts            # verb case government
-  ekilex/  client.ts mapper.ts cache.ts
-  tts/     client.ts cache.ts
-  srs/     scheduler.ts cards.ts
-  anu/     prompt.ts client.ts tools.ts budget.ts
+  estonian/                  # THE DOMAIN CORE, framework-free
+    cases.ts                 # the 14 cases, their suffixes and Estonian names
+    derive.ts                # genitive stem to the ten regular cases
+    conjugate.ts             # the stored first person to the rest of the present
+    gapForms.ts              # every spelling of a word a sentence could hide
+    cloze.ts government.ts answer.ts dictation.ts terms.ts
+  collections/syllabus/      # the 79-unit course: a request, never a copy
+  srs/  scheduler.ts cards.ts grade.ts deck.ts queue.ts replay.ts
+  dict/ ekilex/ tutor/ exam/ assessment/ progress/ stats/ gamification/
+  usage/ security/ offline/ audio/ news/ scan/ suggestions/ legal/ ux/
   db.ts
 prisma/schema.prisma
+scripts/                     # the suites, the audits and the seed builders
 docs/
 ```
 
 `lib/estonian/` is deliberately framework-free and dependency-free: pure functions over plain data,
-100% unit-tested. It is the part of this codebase that is genuinely hard to get right, so it is
-isolated from React, Next.js and the database and can be tested without any of them.
+unit-tested. It is the part of this codebase that is genuinely hard to get right, so it is isolated
+from React, Next.js and the database and can be tested without any of them. So are
+`lib/assessment/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/`,
+`lib/offline/`, `lib/security/`, `lib/scan/`, `lib/questions/`, `lib/ux/`, `lib/random/` and
+`lib/copy/`, and an invariant fails on a React, Next.js or Prisma import inside any of them: the
+unit suite gates every commit on being hermetic, and one `import { prisma }` there puts a database
+behind a function four hundred tests call.
 
 ## 4. Data flow: a dictionary search
 
@@ -327,13 +330,21 @@ can reconstruct: a personal best, and the streak-shield days already spent.
 *Context:* "Review must work offline" is a standing rule, and ADR-011 quietly broke it by putting the
 database behind the network. *Decision:* the service worker (`public/sw.js`) only keeps the app
 *openable*: cache-first for hashed build output, network-first for navigations with an offline
-fallback, and it never touches a non-GET request. Grades are queued by the page instead
-(`lib/offline/queue.ts`): one synchronous localStorage write per answer, stamped with the moment it
-was answered, replayed through the ordinary `gradeCard` path when the connection returns.
+fallback, and it never touches a non-GET request. Grades are queued by the page instead: one write
+per answer, stamped with the moment it was answered, replayed through the ordinary `gradeCard` path
+when the connection returns.
 *Consequences:* an offline evening lands in the log with its real timestamps, so the streak, heatmap
 and daily goal describe the day that actually happened; a tab closed mid-session loses nothing; and
 the parts that are genuinely hard (auth, ordering, a card deleted on another device) stay in server
-code that can be read and tested. *Rejected:* Background Sync in the worker (replaying an
+code that can be read and tested. *Amendment 1: the queue is IndexedDB, not localStorage.* The decision above said "one synchronous
+localStorage write per answer", and the queue that shipped is `lib/offline/db.ts` with
+`lib/offline/outbox.ts` over it: a durable store rather than a five-megabyte string bag that a
+browser clears under pressure. It also has to be closable, which localStorage never was, because
+signing out on a shared machine has to leave nothing behind and a held connection keeps a delete
+waiting until the tab dies. Nothing else in the decision changed: one entry per answer, its own
+timestamp, replayed in order.
+
+*Rejected:* Background Sync in the worker (replaying an
 authenticated Server Action from a worker means reimplementing the session, for a browser API Safari
 still does not have) and IndexedDB (asynchronous writes can be lost by a closing tab; the payload is
 tiny).

@@ -37,6 +37,7 @@
  * dictionary rows and hands them in.
  */
 import { buildCloze, isBuildable, sentenceTiles } from "@/lib/estonian/cloze";
+import { gapFormsFromParts } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFromParts } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
@@ -307,20 +308,16 @@ function choiceOfNear(
   return { options, answer: options.indexOf(correct) };
 }
 
-/** Every form of a word we hold or can derive, for finding it inside a sentence. */
+/**
+ * Every spelling of a word that could be the one hidden in a sentence.
+ *
+ * Two copies of this loop existed, here and in the other of these two files,
+ * and neither knew a verb person: `Kontsert algab kell 18.` could not be
+ * gapped for `algama`. `lib/estonian/gapForms.ts` is the one answer and three
+ * other screens read it.
+ */
 function knownForms(word: LessonWord): string[] {
-  const forms = new Set<string>([word.lemma, ...Object.values(word.parts)]);
-  const genitive = word.parts.GEN_SG;
-  if (genitive) {
-    // Every accepted spelling, so a gap-fill never treats the short illative
-    // as a word belonging to some other entry.
-    const stems = stemsFromParts(word.parts);
-    for (const spec of CASES) {
-      if (spec.principal) continue;
-      for (const value of caseAnswer(stems, spec.key)?.accepted ?? []) forms.add(value);
-    }
-  }
-  return [...forms].filter(Boolean);
+  return [...gapFormsFromParts(word).keys()];
 }
 
 /** The cases worth asking a learner to produce, in the order they are taught. */

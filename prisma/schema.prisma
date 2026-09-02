@@ -143,12 +143,12 @@ model Card {
   ownerId    String
   lexemeId   String?
   lexeme     Lexeme? @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  cardType   String // RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT
+  cardType   String // RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT CLOZE CONJUGATION
   front      String
   back       String
   hint       String?
   targetCase String? // for CASE_FORM cards — powers the weak-case breakdown
-  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT
+  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT | SCAN | ALMANAC
   suspended  Boolean @default(false)
 
   // FSRS state (ts-fsrs) — ADR-003
@@ -213,7 +213,7 @@ model Task {
   ownerId     String
   title       String
   notes       String?
-  tag         String    @default("HOMEWORK") // HOMEWORK GRAMMAR VOCABULARY LISTENING SPEAKING
+  tag         String    @default("HOMEWORK") // HOMEWORK | VOCABULARY
   classWeek   Int?
   dueAt       DateTime?
   completed   Boolean   @default(false)
@@ -291,14 +291,29 @@ model Achievement {
 /// the app can actually make to a student: your deck is yours, and joining your
 /// teacher's class shares your progress, not your data.
 model Classroom {
-  id        String   @id @default(uuid())
-  name      String
+  id          String   @id @default(uuid())
+  name        String
   /// Six characters, shown to students to join with. Unique across the instance.
-  code      String   @unique
+  code        String   @unique
   /// The teacher's user id.
-  ownerId   String
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  ownerId     String
+  /// CLASS or WORKPLACE, from `COHORT_KINDS` in lib/classroom/cohort.ts.
+  ///
+  /// The two differ in what the owner is allowed to see, and the difference is
+  /// enforced by which query runs rather than by which fields a view happens to
+  /// render: a teacher has a reason to know which case one named student keeps
+  /// missing, and an employer looking at an employee does not. Defaulted rather
+  /// than required, so every class that existed before this stays a class.
+  kind        String   @default("CLASS")
+  /// The paper a workplace group is aiming at, "A1" to "C1".
+  ///
+  /// A band saying somebody is on track means nothing without one, and B1 is
+  /// the default because it is the level Estonian residency actually asks for,
+  /// which is why a workplace sponsors this at all. Ignored for a class, whose
+  /// owner is teaching a syllabus rather than aiming at one date.
+  targetLevel String   @default("B1")
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   members ClassroomMember[]
 

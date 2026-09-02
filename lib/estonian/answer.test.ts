@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { acceptedAnswers, checkAnswer, countsAsRecalled, editDistance } from "./answer";
+import { readFileSync } from "node:fs";
+
+import { acceptedAnswers, acceptedForms, checkAnswer, countsAsRecalled, editDistance } from "./answer";
+import { HARVESTED } from "../../prisma/data/harvested";
 
 describe("editDistance", () => {
   it("is zero for identical strings", () => {
@@ -108,5 +111,94 @@ describe("countsAsRecalled", () => {
     expect(countsAsRecalled("diacritics")).toBe(true);
     expect(countsAsRecalled("typo")).toBe(true);
     expect(countsAsRecalled("wrong")).toBe(false);
+  });
+});
+
+/*
+  A CORRECTION PRINTS WHAT THE DICTIONARY HOLDS.
+
+  `normalise` lowercases, strips punctuation and drops an English article,
+  which is what makes the marking fair and is not a spelling. It used to be
+  what the correction printed, so a missed `Eesti` came back as `eesti`, a
+  different word; `Head aega!` as `head aega`; `April` as `april`; `To sleep`
+  as `sleep`. The sweep at the end is the half that can fail on a word.
+*/
+describe("the correction shows the stored spelling", () => {
+  it("keeps a proper noun's capital, which in Estonian is the difference between two words", () => {
+    const r = checkAnswer("soome", "Eesti");
+    expect(r.expected).toBe("Eesti");
+    expect(r.note).toContain("Eesti");
+    expect(r.note).not.toContain("eesti”");
+  });
+
+  it("keeps a phrase's own punctuation and does not add a second full stop", () => {
+    const r = checkAnswer("tere", "Head aega!");
+    expect(r.expected).toBe("Head aega!");
+    expect(r.note).toBe("Not quite, it's “Head aega!”");
+  });
+
+  it("shows the stored spelling on a typo too", () => {
+    const r = checkAnswer("Eest", "Eesti");
+    expect(r.verdict).toBe("typo");
+    expect(r.expected).toBe("Eesti");
+  });
+
+  it("names the letter on a diacritic slip and still shows the stored spelling", () => {
+    const r = checkAnswer("Aitah", "Aitäh!");
+    expect(r.verdict).toBe("diacritics");
+    expect(r.expected).toBe("Aitäh!");
+    expect(r.note).toBe("Almost, it's ä, not a.");
+  });
+
+  it("keeps an English gloss's capital and its infinitive marker", () => {
+    expect(checkAnswer("x", "April", "en").expected).toBe("April");
+    expect(checkAnswer("x", "To sleep", "en").expected).toBe("To sleep");
+    expect(checkAnswer("sleep", "To sleep", "en").verdict).toBe("correct");
+  });
+
+  it("keeps a parenthetical, because the parentheses are what the dictionary says", () => {
+    const r = checkAnswer("x", "(electric) kettle", "en");
+    expect(r.expected).toBe("(electric) kettle");
+    expect(checkAnswer("kettle", "(electric) kettle", "en").verdict).toBe("correct");
+  });
+
+  it("leads with the first of the alternatives a stored value carries", () => {
+    expect(checkAnswer("x", "raamatutes / raamatuis").expected).toBe("raamatutes");
+    expect(checkAnswer("x", "woman, wife", "en").expected).toBe("woman");
+  });
+
+  it("still flattens for comparison, which is what acceptedAnswers reports", () => {
+    expect(acceptedAnswers("Head aega!", "et")).toEqual(["head aega"]);
+    expect(acceptedForms("Head aega!", "et")).toEqual([
+      { shown: "Head aega!", compared: "head aega" },
+    ]);
+  });
+});
+
+/*
+  Hermetic: it reads the two files `npm run db:seed` loads and nothing else.
+*/
+interface SeedEntry { lemma: string; translation: string }
+const EXPANDED: SeedEntry[] = JSON.parse(readFileSync("prisma/data/expanded.json", "utf8"));
+
+describe("every shipped answer prints itself back", () => {
+  const values: [string, "et" | "en"][] = [];
+  for (const entry of EXPANDED) {
+    values.push([entry.lemma, "et"]);
+    if (entry.translation) values.push([entry.translation, "en"]);
+  }
+  for (const word of HARVESTED) {
+    values.push([word.lemma, "et"]);
+    if (word.gloss) values.push([word.gloss, "en"]);
+  }
+
+  it("never invents a spelling for a word or a gloss in the seed", () => {
+    const invented: string[] = [];
+    for (const [value, language] of values) {
+      const shown = checkAnswer("zzzqqq", value, language).expected;
+      if (!value.includes(shown)) invented.push(`${value} => ${shown}`);
+    }
+    expect(invented.slice(0, 10)).toEqual([]);
+    expect(values.length).toBeGreaterThan(10_000);
   });
 });

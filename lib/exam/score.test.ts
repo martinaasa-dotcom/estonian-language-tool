@@ -250,7 +250,13 @@ describe("what one answer is worth", () => {
       .flatMap((t) => t.items)
       .find((i) => i.kind === "compose")!;
     if (compose.kind !== "compose") throw new Error("expected a composition");
-    const inflected = compose.mustUse.map((w) => `${w.lemma}ga`).join(" ");
+    /*
+      The comitative, built the way Estonian builds it, off the genitive stem
+      this fixture gives every word. It used to append `ga` to the lemma, which
+      is not a form of anything: the old prefix rule passed it because the first
+      three letters matched, so this check was passing for the wrong reason.
+    */
+    const inflected = compose.mustUse.map((w) => `${w.lemma}aga`).join(" ");
     const padded = `${inflected} ${Array.from({ length: compose.minWords }, () => "x").join(" ")}`;
     const mark = markItem(compose, { kind: "composed", value: padded }, 12);
     expect(mark.note).toBe("");

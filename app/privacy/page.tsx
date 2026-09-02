@@ -33,7 +33,7 @@ export default function PrivacyPage() {
   const leavesTheUnion = transfersOutsideEea(recipients);
 
   return (
-    <Legal title="Privacy" updated="30 August 2026">
+    <Legal title="Privacy" updated="2 September 2026">
       <P>
         Kodukeel is a tool for learning Estonian. This page says exactly what it stores
         about you, why it is allowed to, who else sees it, and how to get rid of it.
@@ -115,6 +115,15 @@ export default function PrivacyPage() {
           every class you are in and every class you run.
         </P>
         <P>
+          <strong>Your workplace group, if an employer sponsors you.</strong> A group set up by
+          an employer is the same membership row and shows them less than a teacher sees, not
+          more: your name, whether you have been reviewing and when you last did, and one of
+          four bands for the examination the group works towards. Not a percentage, not which
+          grammar you personally find hard, and never a deck, a search or an answer. The band
+          is withheld entirely until there is enough history behind it to mean something.
+          Leaving stops all of it at once and takes nothing from your own deck.
+        </P>
+        <P>
           <strong>Your conversations with Anu.</strong> Messages you send the tutor and its
           replies are stored so the conversation survives a page reload.
         </P>
@@ -165,6 +174,32 @@ export default function PrivacyPage() {
           address, no word you looked up, and a group of fewer than five people is reported as a
           size with no percentage, because &ldquo;one of two people came back&rdquo; is a fact
           about a person rather than a statistic.
+        </P>
+        <P>
+          <strong>What learners of Estonian get wrong, counted.</strong> From the same review log,
+          this installation can produce a table of how often each grammatical case, each stem
+          change and each word is answered correctly, added up across everybody. It is worked out
+          from what is already here, so nothing extra is collected and no new question is put to
+          you. That table can be sent to people who teach Estonian or study how it is learned,
+          because where a lot of learners go wrong is not something a textbook or a single
+          classroom can measure and this can.
+        </P>
+        <P>
+          What it holds is counts, and the rules it is built under are the point of it. Nothing is
+          published that fewer than ten different people are behind, or that rests on fewer than
+          fifty answers, and nothing where one person supplied more than half of a figure, because
+          ten people is not ten people when one of them is most of the data. Anything below that is
+          missing from the table rather than shown as a small number. Counts are rounded and people
+          are counted in bands, so two versions of the table cannot be compared to work out what
+          happened in between. There is no user id in it, no email, no date anybody studied, no
+          word anybody searched for and no individual answer. By the time the table exists it is
+          not about you and could not be turned back into anything about you, which is the whole
+          reason it is safe to send.
+        </P>
+        <P>
+          You can still say no. <strong>Settings → Anonymous statistics</strong> leaves your
+          answers out of it, and out means your rows are skipped when the totals are worked out
+          rather than removed from the answer afterwards. Nothing else about the app changes.
         </P>
       </S>
 
@@ -221,7 +256,9 @@ export default function PrivacyPage() {
         </ul>
         <P>
           Your deck, your review history, your tasks and your level checks are never sent to
-          any of them.
+          any of them. The counted table described further up is the one thing that may go to
+          somebody not on this list, and it holds none of those: it is totals, and it is only
+          totals that at least ten people are behind.
         </P>
         {leavesTheUnion && (
           <P>
@@ -294,7 +331,9 @@ export default function PrivacyPage() {
           or object to it, in writing, at the address above. In practice almost everything
           here exists only to deliver the app to you, so the usual answer to an objection is
           to stop using the part you object to, and erasure is the stronger and faster
-          version of the same thing.
+          version of the same thing. The one objection that is a button rather than a letter is{" "}
+          <strong>Settings → Anonymous statistics</strong>, which takes your answers out of the
+          counts described above.
         </P>
         <P>
           There is no charge for any of this and no need to give a reason. A request made in
@@ -353,6 +392,12 @@ export default function PrivacyPage() {
           work each pupil did, which grammar the class as a whole is weakest at, and which
           grammar each pupil personally is weakest at as a rolled-up percentage, never an
           individual&rsquo;s deck, their searches or a specific answer.
+        </P>
+        <P>
+          An employer sponsoring a workplace group is the controller of that group&rsquo;s
+          membership in the same way, and sees a narrower set again: effort, and a band for the
+          paper the group is working towards. The difference is a different query rather than a
+          hidden column, so there is no setting that widens it.
         </P>
       </S>
 

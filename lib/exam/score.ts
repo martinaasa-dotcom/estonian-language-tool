@@ -116,7 +116,17 @@ function markTyped(item: ExamItem, expected: string, typed: string, lenient: boo
     correct,
     expected,
     given: typed.trim(),
-    note: check.note,
+    /*
+      The result row already prints the form the paper wanted and the form the
+      candidate typed, side by side, so `Not quite, it's “raamatut”.` is that
+      word a third time on one card. What earns a line is the slip a candidate
+      would not otherwise see named: which letter went, or that they were one
+      keystroke out. Dictation calls that second one "one letter out" and this
+      is the same mistake.
+    */
+    note: check.verdict === "diacritics" ? check.note
+      : check.verdict === "typo" ? "One letter out."
+      : "",
     cardId: item.cardId,
     lexemeId: item.lexemeId,
     lemma: item.lemma,
@@ -282,7 +292,7 @@ function markWritten(
   const written = wordsOf(text);
   const lengthPct = item.minWords === 0 ? 1 : Math.min(1, written.length / item.minWords);
 
-  const used = item.mustUse.filter((w) => usesRequiredWord(w.lemma, text));
+  const used = item.mustUse.filter((w) => usesRequiredWord(w, text));
   const wordsPct = item.mustUse.length === 0 ? 1 : used.length / item.mustUse.length;
 
   const share = lengthPct * COMPOSE_LENGTH_SHARE + wordsPct * (1 - COMPOSE_LENGTH_SHARE);
