@@ -4162,6 +4162,63 @@ check("no ledger write is left to a promise the platform may drop", () => {
   assert.ok(callers >= 5, `only ${callers} files write to the ledger, so this check stopped looking`);
 });
 
+/**
+ * THE RUSSIAN AND THE UKRAINIAN COME FROM EKILEX, AND FROM NOWHERE ELSE.
+ *
+ * `Lexeme.translationRu` and `translationUk` are the one place in this schema
+ * holding a language neither the app nor the person reviewing this code
+ * necessarily reads, and the whole argument for putting them on a flashcard is
+ * that a lexicographer at the Institute of the Estonian Language wrote them.
+ * A model that could reach them would be ADR-005 pointed at a second language
+ * with nobody able to check the output, which is worse than the case the ADR
+ * was written for rather than milder: a wrong form looks exactly like a right
+ * one, and more so in a language you cannot read.
+ *
+ * So the files that may name the columns at all are a closed list, the way
+ * `prisma/columns.ts` is a closed list of what the seed writes. A new one
+ * forces somebody to decide rather than falling through, and nothing on the
+ * provider chain is on it.
+ */
+check("only the harvest, the seed and the screens name a Russian or Ukrainian meaning", () => {
+  const allowed = new Set([
+    // Written here, out of an Ekilex response and nothing else.
+    join("scripts", "harvest-ekilex.ts"),
+    join("prisma", "schema.prisma"),
+    join("prisma", "seed.ts"),
+    join("prisma", "columns.ts"),
+    // Read here: the choice of language, and the four screens that print it.
+    join("lib", "collections", "glossLanguage.ts"),
+    join("lib", "collections", "glossLanguage.test.ts"),
+    join("app", "(app)", "dictionary", "page.tsx"),
+    join("app", "(app)", "dictionary", "DictionaryClient.tsx"),
+    join("app", "(app)", "review", "page.tsx"),
+  ]);
+
+  const roots = ["app", "lib", "components", "scripts", "prisma"];
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === "data") continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(tsx?|prisma)$/.test(entry.name)) files.push(full);
+    }
+  };
+  for (const root of roots) walk(root);
+
+  const naming = files.filter((f) =>
+    /translation(Ru|Uk)/.test(f.endsWith(".prisma") ? read(f) : code(f)));
+  assert.ok(
+    naming.length >= 6,
+    `only ${naming.length} files name the columns, so this check stopped looking`,
+  );
+  assert.deepEqual(
+    naming.filter((f) => !allowed.has(f)), [],
+    "a new file names a Russian or Ukrainian meaning. Decide what it is doing with it: " +
+    "these come from Ekilex and no model may reach them (ADR-005 in a language nobody here reads).",
+  );
+});
+
 check("a suite that reveals a review card knows all the shapes it comes in", () => {
   const suites = readdirSync("scripts")
     .filter((f) => f.endsWith(".mjs"))

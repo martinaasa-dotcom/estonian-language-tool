@@ -1,3 +1,5 @@
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { dictionaryLemmas } from "@/lib/dict/facts";
 import { soundAlike } from "@/lib/estonian/sounds";
 import { prisma } from "@/lib/db";
@@ -90,7 +92,7 @@ export default async function DictionaryPage({
 
   // The entry beside the three landing reads rather than before them: none of
   // the four depends on another, and on a hosted database each is a round trip.
-  const [entry, total, suggestions, starred, headlines] = await Promise.all([
+  const [entry, total, suggestions, starred, headlines, settings] = await Promise.all([
     opened ? loadEntry(opened.id, ownerId) : Promise.resolve(null),
     prisma.lexeme.count(),
     /*
@@ -111,7 +113,11 @@ export default async function DictionaryPage({
     // The front page, readable, for the landing view only: the same hourly
     // fetch the suggestion row already pays for. See lib/dict/headlines.ts.
     q ? Promise.resolve([]) : readableHeadlines(),
+    // Which language the meanings are printed in. Memoised for this render by
+    // `readSettings`, so the entry and anything else that asks share one read.
+    readSettings(ownerId, [SETTING_KEYS.glossLanguage]),
   ]);
+  const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
 
   return (
     <Page
@@ -129,6 +135,7 @@ export default async function DictionaryPage({
         initialQuery={q}
         hits={hits}
         heard={heard}
+        glossLanguage={glossLanguage}
         openedId={opened?.id ?? null}
         entry={entry}
         matchedAs={matchedAs}
@@ -155,6 +162,8 @@ async function loadEntry(id: string, ownerId: string): Promise<EntryView | null>
     id: lex.id,
     lemma: lex.lemma,
     translation: lex.translation,
+    translationRu: lex.translationRu,
+    translationUk: lex.translationUk,
     pos: lex.pos,
     cefr: lex.cefr,
     gradation: lex.gradation,

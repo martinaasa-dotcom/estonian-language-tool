@@ -23,6 +23,18 @@ model Lexeme {
   lemma         String
   pos           String // NOUN | VERB | ADJECTIVE | ADVERB | PHRASE | OTHER
   translation   String
+  /// The Institute's own Russian and Ukrainian equivalents, comma separated.
+  ///
+  /// Most people learning Estonian in Estonia already speak one of these, and
+  /// an app that can only say `kohv` is "coffee" asks them to reach a word
+  /// through a third language when their own would have landed it instantly.
+  /// These are not a translation this app made and not one a model made: they
+  /// come from the same Ekilex response as the forms and the sentences,
+  /// written by the same lexicographers (ADR-005 is untouched, and nothing
+  /// here is Estonian either). Null where Ekilex records none, which is the
+  /// honest answer and is what the screen says.
+  translationRu String?
+  translationUk String?
   cefr          String? // A1 A2 B1 B2 C1 C2
   gradation     String  @default("NONE") // NONE | QUALITATIVE | QUANTITATIVE
   gradationNote String? // e.g. "b : ∅"

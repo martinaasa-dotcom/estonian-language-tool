@@ -43,6 +43,17 @@ export interface ReviewCard {
   intro: {
     lemma: string;
     gloss: string;
+    /**
+     * The Institute's own equivalent in the learner's chosen language, or null.
+     *
+     * The first meeting is the one screen where this earns the most: it is the
+     * moment the word is being learned rather than tested, and somebody who
+     * already speaks Russian or Ukrainian reaches the meaning in one step
+     * instead of two. Beside the English rather than instead of it, since the
+     * English is the gloss every entry has. Comes from Ekilex, like the
+     * sentence under it.
+     */
+    equivalent: { text: string; lang: string } | null;
     /** An attested sentence, and which form of the word it carries. */
     sentence: { et: string; en: string | null; form: string | null } | null;
   } | null;
@@ -125,6 +136,7 @@ function MeetWord({ card }: { card: ReviewCard }) {
   const lemma = card.intro?.lemma ?? card.lemma ?? card.front;
   const gloss = card.intro?.gloss ?? (card.cardType === "RECOGNITION" ? card.back : "");
   const sentence = card.intro?.sentence ?? null;
+  const equivalent = card.intro?.equivalent ?? null;
 
   return (
     <>
@@ -137,6 +149,11 @@ function MeetWord({ card }: { card: ReviewCard }) {
         <Speak text={lemma} autoplay />
       </div>
       {gloss && <p className="text-base" style={{ color: "var(--ink-2)" }}>{gloss}</p>}
+      {equivalent && (
+        <p lang={equivalent.lang} className="text-base" style={{ color: "var(--ink-2)" }}>
+          {equivalent.text}
+        </p>
+      )}
 
       <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguage";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -36,6 +37,15 @@ export interface EntryView {
   id: string;
   lemma: string;
   translation: string;
+  /**
+   * The Institute's own Russian and Ukrainian, where Ekilex recorded them.
+   *
+   * Not a translation this app or a model made: they come from the same
+   * response as the forms and the sentences. Null on most of the built
+   * expansion, which is drawn from Wiktionary and has none.
+   */
+  translationRu: string | null;
+  translationUk: string | null;
   pos: string;
   cefr: string | null;
   gradation: string;
@@ -66,9 +76,11 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, heard, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, heard, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
 }: {
   initialQuery: string;
+  /** Which language the learner asked for their meanings in. */
+  glossLanguage: GlossLanguage;
   /** True when this word was pulled from Ekilex on this request. */
   justFetched?: boolean;
   hits: SearchHit[];
@@ -320,7 +332,7 @@ export function DictionaryClient({
               <Et className="font-semibold">{initialQuery}</Et> is the {matchedAs}.
             </p>
           )}
-          <Entry entry={entry} tutorReady={tutorReady} />
+          <Entry entry={entry} tutorReady={tutorReady} glossLanguage={glossLanguage} />
         </>
       )}
 
@@ -365,7 +377,12 @@ export function DictionaryClient({
   );
 }
 
-function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean }) {
+function Entry({ entry, tutorReady, glossLanguage }: {
+  entry: EntryView;
+  tutorReady: boolean;
+  glossLanguage: GlossLanguage;
+}) {
+  const equivalent = equivalentIn(entry, glossLanguage);
   const isNoun = entry.pos === "NOUN" || entry.pos === "ADJECTIVE";
   const isVerb = entry.pos === "VERB";
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
@@ -395,6 +412,17 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
             <SpeakPair text={entry.lemma} />
           </div>
           <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
+          {/*
+            The meaning in the language the learner thinks in, where Ekilex
+            recorded one. Under the English rather than instead of it: the
+            English is the one gloss every entry has, and hiding it would leave
+            the words with no equivalent looking like words with no meaning.
+          */}
+          {equivalent && (
+            <p lang={glossLanguage} className="mt-1 text-md" style={{ color: "var(--ink-2)" }}>
+              {equivalent}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Chip>{entry.pos.toLowerCase()}</Chip>
             {entry.cefr && <Chip tone="accent">{entry.cefr}</Chip>}

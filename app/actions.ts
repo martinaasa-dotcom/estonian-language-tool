@@ -36,6 +36,7 @@ import {
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
+import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -895,6 +896,23 @@ export async function setAutoplay(value: string) {
   const ownerId = await requireUserId();
   const normalised = autoplayFrom(value);
   await writeSetting(ownerId, SETTING_KEYS.autoplayAudio, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
+}
+
+/**
+ * Which language a meaning is given in beside the English.
+ *
+ * The equivalents themselves come from Ekilex and are already in the
+ * dictionary; this only decides what a screen leads with. Revalidated across
+ * the whole layout because the answer is read on the dictionary, in review and
+ * on the course pages, and a learner who changes it should see it change
+ * everywhere rather than on the next page they happen to reload.
+ */
+export async function setGlossLanguage(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = glossLanguageFrom(text(value));
+  await writeSetting(ownerId, SETTING_KEYS.glossLanguage, normalised);
   revalidatePath("/", "layout");
   return { ok: true as const, value: normalised };
 }

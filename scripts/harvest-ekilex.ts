@@ -65,6 +65,8 @@ const VERB_PARTS: Record<string, string> = {
 
 /** Sentences kept per word. Two teach, ten are a wall of text on the entry. */
 const MAX_USAGES = 4;
+/** Equivalents per language: two is what a card has room for. */
+const MAX_EQUIVALENTS = 2;
 /** A sentence longer than this is a paragraph, not an example. */
 const MAX_USAGE_CHARS = 120;
 const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -90,6 +92,11 @@ interface RawLexeme {
   governments?: { value?: string }[];
   meaning?: { definitions?: { lang?: string; value?: string }[] };
   usages?: RawUsage[];
+  /** Ekilex's equivalents in other languages, which is where rus and ukr live. */
+  synonymLangGroups?: {
+    lang?: string;
+    synonyms?: { type?: string; words?: { wordValue?: string }[] }[];
+  }[];
 }
 interface RawDetails { word?: RawWord; lexemes?: RawLexeme[] }
 interface RawSearch { words?: RawWord[] }
@@ -187,6 +194,8 @@ function extractLexemeData(detail: RawDetails | null) {
   const governments: string[] = [];
   const usages: string[] = [];
   const definitions: string[] = [];
+  const rus: string[] = [];
+  const ukr: string[] = [];
   for (const lx of detail?.lexemes ?? []) {
     if (lx.lexemeProficiencyLevelCode) cefrCodes.push(lx.lexemeProficiencyLevelCode);
     for (const g of lx.governments ?? []) {
@@ -203,6 +212,34 @@ function extractLexemeData(detail: RawDetails | null) {
       if (!value || value.length > MAX_USAGE_CHARS) continue;
       if (!usages.includes(value)) usages.push(value);
     }
+    /*
+      THE INSTITUTE'S OWN RUSSIAN AND UKRAINIAN, FROM THE RESPONSE WE ALREADY
+      HAVE.
+
+      Most people learning Estonian in Estonia already speak one of these, and
+      an app that can only say `kohv` is "coffee" is asking them to go through
+      a third language to reach a word their own would have landed instantly.
+      Ekilex records the equivalents right here, written by the lexicographers
+      who wrote the Estonian, in the same cached response the forms come from:
+      1,965 of the 1,975 entries in the cache carry a Russian one and 1,755 a
+      Ukrainian one, so this costs no request at all.
+
+      `MEANING_WORD` only: the other synonym kinds are relations between
+      meanings rather than the word that is this meaning. `wordValue` rather
+      than `wordValuePrese`, which carries Ekilex's `<eki-stress>` markup for a
+      rendering this app does not do.
+    */
+    for (const group of lx.synonymLangGroups ?? []) {
+      const into = group.lang === "rus" ? rus : group.lang === "ukr" ? ukr : null;
+      if (!into) continue;
+      for (const synonym of group.synonyms ?? []) {
+        if (synonym.type !== "MEANING_WORD") continue;
+        for (const word of synonym.words ?? []) {
+          const value = (word.wordValue ?? "").trim();
+          if (value && !into.includes(value)) into.push(value);
+        }
+      }
+    }
   }
   // The lowest level any sense carries: a word is as easy as its easiest
   // meaning, which is the one a course introduces first.
@@ -214,6 +251,10 @@ function extractLexemeData(detail: RawDetails | null) {
     governments,
     usages: usages.slice(0, MAX_USAGES),
     definition: definitions[0] ?? null,
+    // Two at most, which is what a card has room for and is where a third
+    // stops adding meaning and starts being a list.
+    rus: rus.slice(0, MAX_EQUIVALENTS),
+    ukr: ukr.slice(0, MAX_EQUIVALENTS),
   };
 }
 
@@ -227,6 +268,9 @@ interface Harvested {
   government: string | null;
   usages: string[];
   note: string | null;
+  /** Ekilex's own equivalents in the other two languages of the country. */
+  rus: string[];
+  ukr: string[];
 }
 interface Dropped { lemma: string; gloss: string; pos: string; error: string }
 
@@ -293,6 +337,8 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       government: null,
       usages: extra.usages,
       note: extra.definition,
+      rus: extra.rus,
+      ukr: extra.ukr,
     };
   }
 
@@ -346,6 +392,8 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       government: wantVerb ? formatGovernment(extra.governments) : null,
       usages: extra.usages,
       note: extra.definition,
+      rus: extra.rus,
+      ukr: extra.ukr,
     };
   }
   return { lemma, gloss, pos, error: wantVerb ? "no verb forms" : "no nominal forms" };
@@ -409,6 +457,16 @@ export interface HarvestedWord {
   usages: string[];
   /** Ekilex's Estonian explanatory definition, where it has one. */
   note: string | null;
+  /**
+   * The Institute's own Russian and Ukrainian equivalents.
+   *
+   * Not a translation this app made and not one a model made: they come from
+   * the same Ekilex response as the forms and the sentences, written by the
+   * same lexicographers. Most people learning Estonian in Estonia already
+   * speak one of these languages.
+   */
+  rus: string[];
+  ukr: string[];
 }
 
 export const HARVESTED: readonly HarvestedWord[] = [
@@ -424,6 +482,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
       `    government: ${r.government ? q(r.government) : "null"},`,
       `    usages: [${usages}],`,
       `    note: ${r.note ? q(r.note) : "null"},`,
+      `    rus: [${r.rus.map(q).join(", ")}], ukr: [${r.ukr.map(q).join(", ")}],`,
       "  },",
     ].join("\n");
   }).join("\n");

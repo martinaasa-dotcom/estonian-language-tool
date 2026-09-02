@@ -208,6 +208,29 @@ bring back, which is what makes this mechanical rather than aspirational. Re-run
 `npm run harvest`; responses are cached, so it costs Ekilex nothing.
 
 
+**A meaning is given in the language the learner thinks in, and Ekilex is the one that gives it.**
+Most people learning Estonian in Estonia already speak Russian or Ukrainian, and an app that can
+only say `kohv` is "coffee" asks them to reach a word through the language they are least sure of.
+Ekilex records the equivalents in `synonymLangGroups`, in the same response the forms and the
+sentences come from, written by the same lexicographers: 1,367 of the 1,371 course words carry a
+Russian one and 1,165 a Ukrainian one, and it costs no extra request because the harvest already
+had the response. `Lexeme.translationRu` and `translationUk` hold them, `lib/collections/glossLanguage.ts`
+is the choice, and Settings is where it is made.
+
+**The English never goes away, and that is what makes this safe.** This chooses what is printed
+*beside* the gloss, not instead of it: the authored English is the one column every entry has,
+Ekilex records an equivalent for the course and not for the Wiktionary expansion, and a card that
+hid the English would be blank on the words with no other. Where there is none, the entry prints
+the English alone rather than a dash, because "we have no Russian for this word" is not worth a
+line of somebody's card.
+
+**No model may reach either column.** They are the one place in the schema holding a language
+neither the app nor the person reviewing the code necessarily reads, which makes ADR-005 stronger
+here rather than weaker: a wrong gloss looks exactly like a right one, and more so in a language
+you cannot check. The files that may name the columns at all are a closed list, asserted, the way
+`prisma/columns.ts` is a closed list of what the seed writes, and nothing on the provider chain is
+on it.
+
 **The words between the words are a request like any other, and a unit that was cut does not take
 its vocabulary with it.** Fourteen A1 units of nouns, verbs and adjectives and not one for the
 words every sentence is made of: nobody asking `kes?` or `millal?`, or looking up `täna`, `peal`
