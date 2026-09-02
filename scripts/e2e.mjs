@@ -16,7 +16,12 @@ page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   one check that added a task to it went with the screen. Arithmetic on what
   the app has, not a run being waved through.
 */
-const { check, absent, done } = suite("The core flows", { floor: 25 });
+/*
+  Raised by two: the meaning in the learner's own language, and the English
+  still beside it. Both run whenever `tuba` has a paradigm behind it, which is
+  the same condition the four checks above it already depend on.
+*/
+const { check, absent, done } = suite("The core flows", { floor: 27 });
 
 /*
   Two checks below type through the Estonian letter bar, and whether that row is
@@ -90,6 +95,41 @@ if (paradigm) {
   if (await addBtn.count()) await addBtn.click();
   check("add to deck completes",
     await eventually(async () => (await page.getByRole("button", { name: /In deck/ }).count()) > 0));
+}
+
+/*
+  1b — A MEANING IN THE LANGUAGE THE LEARNER THINKS IN.
+
+  Most people learning Estonian in Estonia already speak Russian or Ukrainian,
+  and the equivalents come from Ekilex rather than from anything this app or a
+  model wrote. Driven rather than reasoned about, because three separate things
+  have to line up for a word to arrive in Russian: the harvest kept the
+  equivalent, the seed wrote it, and the entry reads the learner's setting.
+
+  It puts the setting back afterwards. This runs third in CI's order and
+  everything after it reads the same database, so a suite that leaves the app
+  in Russian would be handing the next one a screen it was not written for.
+*/
+if (paradigm) {
+  await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+  const russian = page.locator("#meanings [role=radio]", { hasText: "Russian" }).first();
+  if (await russian.count()) {
+    await russian.click();
+    await page.waitForTimeout(1200);
+
+    await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
+    const entry = (await page.locator("main").innerText()).replace(/\n/g, " · ");
+    check("a meaning arrives in the learner's own language", /комната/.test(entry),
+      entry.slice(0, 120));
+    check("and the English is still there beside it", /\broom\b/.test(entry),
+      "the English gloss is the one every entry has, so it may never be replaced");
+
+    await page.goto(`${B}/settings`, { waitUntil: "networkidle" });
+    await page.locator("#meanings [role=radio]", { hasText: "English" }).first().click();
+    await page.waitForTimeout(1000);
+  } else {
+    absent(2, "the Meanings setting, which needs a build carrying it");
+  }
 }
 
 // 2 — Search box drives navigation, and the diacritic bar types Estonian
