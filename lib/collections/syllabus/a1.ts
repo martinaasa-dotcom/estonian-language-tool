@@ -231,7 +231,7 @@ export const A1 = [
       ["tulema", "to come"],
       ["tegema", "to do, to make"],
       ["saama", "to get, to become"],
-      ["pidama", "to have to, to keep"],
+      ["pidama", "to have to, must", "VERB", 216079],
       ["sööma", "to eat"],
       ["jooma", "to drink"],
       ["tooma", "to bring"],
@@ -535,7 +535,7 @@ export const A1 = [
       ["kõik", "all, everything, everybody", "PRONOUN"],
       ["igaüks", "everyone, each one", "PRONOUN"],
       ["mõni", "some, a few", "PRONOUN"],
-      ["iga", "every, each", "PRONOUN"],
+      ["iga", "every, each", "PRONOUN", 171378],
     ],
   }),
 

@@ -12,7 +12,7 @@
  * first time a word is viewed — storing it here would be a second source of
  * truth that goes stale.
  *
- * 1355 words, harvested 2026-09-01.
+ * 1355 words, harvested 2026-09-02.
  */
 
 export interface HarvestedWord {
@@ -1643,12 +1643,12 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "kellelegi makstav rahasumma majandusliku kaotuse, varanduse vähenemise vm kahju eest",
   },
   {
-    lemma: "iga", gloss: "every, each", pos: "PRONOUN", cefr: "B1",
-    ekilexWordId: 171377,
-    parts: { NOM_SG: "iga", GEN_SG: "ea", PART_SG: "iga", ILL_SG_SHORT: "ikka", PART_PL: "igasid", GEN_PL: "igade" },
+    lemma: "iga", gloss: "every, each", pos: "PRONOUN", cefr: "A1",
+    ekilexWordId: 171378,
+    parts: { NOM_SG: "iga", GEN_SG: "iga", PART_SG: "iga", PART_PL: "igasid", GEN_PL: "igade" },
     government: null,
-    usages: ["Auväärses eas daam.", "Puu on noores eas jõuline.", "Sõlg oli setudel fertiilse ea tunnusmärk.", "Vanas eas tekkinud suhkruhaigus."],
-    note: "kellegi või millegi teatav vanus, aeg, mis on seni elatud või olemas oldud",
+    usages: ["Igas peres on omad kombed.", "Buss väljub igal täistunnil.", "Ta võib iga hetk tulla.", "Iga viimane kui sõna oli meile kuulda."],
+    note: "(üksiku kohta kogumis:) teatav kindel, määratud",
   },
   {
     lemma: "igapäevane", gloss: "everyday", pos: "ADJECTIVE", cefr: "A2",
@@ -2467,12 +2467,12 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "metskassist põlvnev pehme karvaga koduloom",
   },
   {
-    lemma: "kaste", gloss: "sauce", pos: "NOUN", cefr: "B2",
-    ekilexWordId: 178714,
-    parts: { NOM_SG: "kaste", GEN_SG: "kaste", PART_SG: "kastet", PART_PL: "kasteid", GEN_PL: "kastete" },
+    lemma: "kaste", gloss: "sauce", pos: "NOUN", cefr: "A2",
+    ekilexWordId: 178715,
+    parts: { NOM_SG: "kaste", GEN_SG: "kastme", PART_SG: "kastet", PART_PL: "kastmeid", GEN_PL: "kastmete" },
     government: null,
-    usages: ["Rohi on kastest märg."],
-    note: "öösel jahtunud maapinnale ja esemetele piisakestena langenud veeauru kondensaat",
+    usages: ["Vasikakarree suitsuploomi kastmes.", "Kuumad ja külmad kastmed.", "Magus kaste.", "Tõsta kartulite peale kastet ka."],
+    note: "vedel või poolvedel lisand, mis muudab toidu mahlasemaks ja maitsvamaks",
   },
   {
     lemma: "kasum", gloss: "profit", pos: "NOUN", cefr: "B2",
@@ -3099,12 +3099,12 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "kohtuasju arutav ja otsustav, õiguse mõistmise pädevusega ametiisik kohtuasutustes",
   },
   {
-    lemma: "kohus", gloss: "court", pos: "NOUN", cefr: "B1",
-    ekilexWordId: 183400,
-    parts: { NOM_SG: "kohus", GEN_SG: "kohuse", PART_SG: "kohust", PART_PL: "kohuseid", GEN_PL: "kohuste" },
+    lemma: "kohus", gloss: "court", pos: "NOUN", cefr: null,
+    ekilexWordId: 283694,
+    parts: { NOM_SG: "kohus", GEN_SG: "kohtu", PART_SG: "kohut", PART_PL: "kohtuid", GEN_PL: "kohtute" },
     government: null,
-    usages: ["Minu püha kohus on vabatahtlikuna sõdima minna.", "Riigi kohus on kaitsta oma inimesi.", "Vahetevahel täidan ma ka tõlgi kohuseid.", "Peaministriks presidendi kohustes jäi August Rei kuni oma surmani."],
-    note: "sisemine, moraalne vajadus mingit ülesannet või toimingut sooritada",
+    usages: ["Kaebasin asja kohtusse.", "Kohus mõistis mehe kolmeks aastaks vangi.", "Auto peatus kohtu ees.", "Püsti, kohus tuleb!"],
+    note: "kohtuasju läbivaatav ja lahendav, kohtuvõimu teostav riigiasutus",
   },
   {
     lemma: "kohusetunne", gloss: "sense of duty", pos: "NOUN", cefr: "B2",
@@ -6235,12 +6235,12 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "veega või vees (mingi vahendiga nühkides) puhastama",
   },
   {
-    lemma: "pidama", gloss: "to have to, to keep", pos: "VERB", cefr: "A2",
-    ekilexWordId: 216077,
-    parts: { INF_MA: "pidama", INF_DA: "pidada", PRES_1SG: "pean", PAST_1SG: "pidasin", PART_TUD: "peetud" },
-    government: "keda* (partitive) · mida (partitive) · kelleks/milleks (translative) · keda* + kelleks",
-    usages: ["Jass peab Pärnumaal talu.", "Minu esivanemad harisid põldu ja pidasid lehmi.", "Mitut töökohta ei jaksa pidada.", "Meister võis pidada selle ja õpipoisse."],
-    note: "(hrl mingi tegevusalaga ühenduses:) midagi või kedagi kestvamalt enda kasutuses või käsutuses hoidma",
+    lemma: "pidama", gloss: "to have to, must", pos: "VERB", cefr: "A1",
+    ekilexWordId: 216079,
+    parts: { INF_MA: "pidama", INF_DA: "pidada", PRES_1SG: "pean", PAST_1SG: "pidin" },
+    government: "mida tegema",
+    usages: ["Kõik peavad kohal olema.", "Ta pidi vaikides ülekohut taluma.", "Lapsed peavad vanemate sõna kuulama.", "Ma pean minema."],
+    note: "vaja olema, kohustatud või sunnitud olema",
   },
   {
     lemma: "pidu", gloss: "party", pos: "NOUN", cefr: "A1",
@@ -7156,11 +7156,11 @@ export const HARVESTED: readonly HarvestedWord[] = [
   },
   {
     lemma: "rõhutus", gloss: "lack of stress", pos: "NOUN", cefr: null,
-    ekilexWordId: 229294,
+    ekilexWordId: 459033,
     parts: { NOM_SG: "rõhutus", GEN_SG: "rõhutuse", PART_SG: "rõhutust", ILL_SG_SHORT: "rõhutusse", PART_PL: "rõhutusi", GEN_PL: "rõhutuste" },
     government: null,
-    usages: ["Traditsioonilises maalis on arengut (minu rõhutus – KN).", "Heli tugevust saab edastada plastilise rõhutusega.", "Depressiooni puhul esineb rõhutus, ollakse mõttesse vajunud, puudub algatusvõime."],
-    note: "millegi rõhutamine, väljatoomine (nt esiletõst tekstis)",
+    usages: [],
+    note: "(sõnas, silbis:) rõhu puudumine",
   },
   {
     lemma: "rõõm", gloss: "joy", pos: "NOUN", cefr: "A2",

@@ -171,6 +171,31 @@ this was meant to replace. It writes no content, never touches a row somebody ed
 never moves a row onto a key another row holds, since `hall` is legitimately a noun meaning "frost"
 and an adjective meaning "grey".
 
+**Ekilex numbers its homonyms, and the harvest used to take the first one in silence.** The
+candidate loop returned on the first exact match whose forms fit and never looked at the next, and
+87 of the course's 1,185 words have more than one. Six came back as a different word: `kohus` was
+taught as "court" carrying the forms and eight sentences of the moral duty (`kohuse`, not `kohtu`),
+`kaste` as "sauce" with the forms of dew, `iga` as "every" with the case table of `iga : ea`, age,
+and `pidama`, the one A1 verb a learner needs for "ma pidin minema", with the past of the verb for
+keeping a farm, so the conjugation card answered `pidasin` and marked `pidin` wrong. `WordSpec`
+takes a fourth slot naming the Ekilex word id, which is a number rather than a word because this
+file may not write Estonian either, and the five that were wrong are pinned. Unpinned ambiguity is
+now printed at the end of the run, all 31 of them, with the ids to choose between: taking the first
+is right for about eighty of them and dropping the lot to fix six would cut a fifth of an A1 unit,
+so it is reported rather than dropped or hidden.
+
+**A nominative -s that simply goes is an ending, not a grade.** `classifyGradation` counted it as
+part of the consonant centre, so the chip on the dictionary entry and the hint on the flashcard
+said `hammas` alternates "ms : b" and `ratas` "s : t", which are not patterns in the language, and
+121 of the 133 entries labelled "s : ∅" were words whose only change is losing that -s: `kapsas`,
+`kuningas`, `rahvas`, `taevas`, `kallis`. EKK keeps astmevaheldus, a change inside the centre,
+apart from lõpuvaheldus, an ending that comes and goes. The -s comes off before the centres are
+compared, so `hammas : hamba` reads mm : mb and `ratas : ratta` reads t : tt, and where peeling it
+leaves exactly the genitive the word gradates in nothing. The peel **adds readings and never
+removes one**: `mees : mehe` is s : h, `poiss : poisi` is ss : s and `viis : viie` is s : ∅, and
+peeling those leaves the patterns nothing to match, so a peel that finds nothing falls back to the
+whole word. 174 entries in the built dictionary were re-graded by it.
+
 **The syllabus names words; Ekilex decides whether they exist.** `lib/collections/syllabus/` is
 the course, and a lemma in a unit is a *request*, not a fact. `scripts/harvest-ekilex.ts` asks
 Ekilex for each one and keeps only what comes back with forms matching the part of speech

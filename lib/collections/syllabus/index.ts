@@ -134,6 +134,8 @@ export interface CourseWord {
   lemma: string;
   gloss: string;
   pos: Pos;
+  /** The Ekilex homonym a person pinned, where the lemma alone is ambiguous. */
+  ekilexWordId?: number;
   /** The unit that introduces it, in course order. */
   unitId: string;
   level: Level;
@@ -155,6 +157,7 @@ const WORDS: readonly CourseWord[] = (() => {
         lemma: v.lemma,
         gloss: v.gloss,
         pos: v.pos,
+        ...(v.ekilexWordId ? { ekilexWordId: v.ekilexWordId } : {}),
         unitId: u.id,
         level: u.level,
         units: [u.id],

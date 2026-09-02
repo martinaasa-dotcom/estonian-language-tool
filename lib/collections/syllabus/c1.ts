@@ -490,7 +490,7 @@ export const C1 = [
       ["saavutama", "to attain"],
       ["omandama", "to acquire"],
       ["valdama", "to master, to command"],
-      ["rõhutus", "lack of stress"],
+      ["rõhutus", "lack of stress", "NOUN", 459033],
       ["alltekst", "subtext"],
       ["selgitama", "to clarify"],
       ["omapärane", "distinctive", "ADJECTIVE"],

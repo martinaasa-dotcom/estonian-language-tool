@@ -230,12 +230,45 @@ interface Harvested {
 }
 interface Dropped { lemma: string; gloss: string; pos: string; error: string }
 
+/**
+ * Lemmas Ekilex spells more than one way, collected as the run goes.
+ *
+ * Printed at the end so a person reads the list once and pins what matters in
+ * `WordSpec`'s fourth slot. Six of these were the wrong word for a year.
+ */
+const AMBIGUOUS: { lemma: string; gloss: string; took: number; rivals: number[] }[] = [];
+
 async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
   const { lemma, gloss, pos } = word;
   const wantVerb = pos === "VERB";
   const found = await search(lemma);
-  const candidates = (found?.words ?? []).filter((w) => w.lang === "est" && w.wordValue === lemma);
-  if (candidates.length === 0) return { lemma, gloss, pos, error: "not in Ekilex" };
+  const all = (found?.words ?? []).filter((w) => w.lang === "est" && w.wordValue === lemma);
+  if (all.length === 0) return { lemma, gloss, pos, error: "not in Ekilex" };
+
+  /*
+    A HOMONYM IS RESOLVED BY A PERSON OR REPORTED, NEVER GUESSED THROUGH.
+
+    The loop below took the first candidate whose forms fit and returned, and
+    never looked at the next one. 87 of the course's 1,185 words have more
+    than one exact match in Ekilex, and six came back as a different word:
+    `kohus` with the forms and sentences of moral duty rather than a court,
+    `kaste` as dew rather than sauce, `iga` as age rather than every, and
+    `pidama`, the A1 verb for must, with the past of the verb for keeping a
+    farm, so the conjugation card answered `pidasin` and marked `pidin` wrong.
+    The script's own header promises a mismatch is "dropped rather than
+    guessed through"; this was the one place it was guessed through.
+
+    A pin in the syllabus (`WordSpec`'s fourth slot) picks one. Without a pin,
+    a lemma whose homonyms both carry usable forms is dropped and printed in
+    the report beside "not in Ekilex", which is the same honest shape.
+  */
+  const pinned = word.ekilexWordId
+    ? all.filter((w) => w.wordId === word.ekilexWordId)
+    : all;
+  if (word.ekilexWordId && pinned.length === 0) {
+    return { lemma, gloss, pos, error: `pinned Ekilex word ${word.ekilexWordId} is not a match for this lemma` };
+  }
+  const candidates = pinned;
 
   // An Estonian adverb does not inflect, so demanding a set of forms for one would
   // drop every single connective in the course. Existing in Ekilex is the whole
@@ -281,6 +314,28 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       ? ["INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG"]
       : ["NOM_SG", "GEN_SG", "PART_SG"];
     if (required.some((r) => !parts[r])) continue;
+
+    /*
+      UNPINNED AND AMBIGUOUS IS REPORTED, LOUDLY, AND STILL HARVESTED.
+
+      Dropping it was the first answer and it is the wrong one: 87 course
+      words have more than one exact match, the first homonym is right for
+      about eighty of them, and dropping the lot would take a fifth of an
+      A1 unit out of the dictionary to fix six words. So the first usable
+      homonym is still taken, and every lemma where that was a choice is
+      printed at the end of the run for a person to pin or wave through.
+      The number beside it is what goes in the syllabus.
+    */
+    if (!word.ekilexWordId && candidates.length > 1) {
+      const rivals: number[] = [];
+      for (const other of candidates) {
+        if (other.wordId === candidate.wordId) continue;
+        if (pickFormSet(await details(other.wordId), wantVerb)) rivals.push(other.wordId);
+      }
+      if (rivals.length > 0) {
+        AMBIGUOUS.push({ lemma, gloss, took: candidate.wordId, rivals });
+      }
+    }
 
     const extra = extractLexemeData(detail);
     return {
@@ -409,6 +464,15 @@ async function main() {
 
   const ok = results.filter((r): r is Harvested => !("error" in r));
   const failed = results.filter((r): r is Dropped => "error" in r);
+
+  if (AMBIGUOUS.length > 0) {
+    AMBIGUOUS.sort((a, b) => a.lemma.localeCompare(b.lemma, "et"));
+    console.log(`\n${AMBIGUOUS.length} lemmas have more than one Ekilex word with usable forms.`);
+    console.log("The first was taken. Pin one with the fourth slot of the word spec where it matters:");
+    for (const a of AMBIGUOUS) {
+      console.log(`  ${a.lemma} ("${a.gloss}") took ${a.took}, also ${a.rivals.join(", ")}`);
+    }
+  }
 
   ok.sort((a, b) => a.lemma.localeCompare(b.lemma, "et"));
   await writeFile(OUT, render(ok));

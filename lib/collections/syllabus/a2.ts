@@ -322,7 +322,7 @@ export const A2 = [
       ["roog", "dish, course"],
       ["eelroog", "starter"],
       ["magustoit", "dessert"],
-      ["kaste", "sauce"],
+      ["kaste", "sauce", "NOUN", 178715],
       ["salat", "salad"],
       ["köögivili", "vegetable"],
       ["puuvili", "fruit"],

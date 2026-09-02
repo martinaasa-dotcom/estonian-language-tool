@@ -231,7 +231,7 @@ export const B2 = [
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["poliitika"],
     words: [
-      ["kohus", "court"],
+      ["kohus", "court", "NOUN", 283694],
       ["kohtunik", "judge"],
       ["advokaat", "lawyer"],
       ["süüdistus", "accusation"],

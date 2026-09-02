@@ -18,6 +18,13 @@
  * so the next word added to any of them fails here rather than quietly making
  * this a claim about the past again.
  *
+ * It moved by two forms when five course words were pinned to the right
+ * Ekilex homonym: `kohus` stopped being the moral duty and became the court
+ * (kohtu, not kohuse), `kaste` stopped being dew, `pidama` stopped being the
+ * verb for keeping a farm, and each of those brought a slightly different set
+ * of plural forms with it. The word count did not move, because the words are
+ * the same words; what changed is which word each of them is.
+ *
  * It went *down* by twelve once, which is the only interesting thing that has
  * happened to it. The part-of-speech audit corrected 61 labels in the built
  * file, and twelve of those words were ones the course harvest also carries:
@@ -26,4 +33,4 @@
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
  */
-export const SEED_SET_SIZE = { words: 6_039, forms: 34_524 };
+export const SEED_SET_SIZE = { words: 6_039, forms: 34_522 };
