@@ -1,3 +1,4 @@
+import { lastSession } from "@/lib/progress/session";
 import { prisma } from "@/lib/db";
 import { BADGES, earnedBadgeKeys, type Badge, type BadgeStats } from "@/lib/achievements/badges";
 import { dictionarySize } from "@/lib/dict/facts";
@@ -138,7 +139,18 @@ export async function awardBadges(ownerId: string, stats: BadgeStats): Promise<B
  */
 export async function checkAchievementsFor(
   ownerId: string,
-  session?: { count: number; accuracy: number },
+  /**
+   * Whether a review session has just ended, and nothing more.
+   *
+   * It used to be `{ count, accuracy }`, handed in by the browser. Every
+   * export of `app/actions.ts` is a public endpoint, so those two numbers were
+   * a claim: `checkAchievements({ count: 10, accuracy: 100 })` earned
+   * `perfect_session` with no card answered, into a table that is never
+   * re-awarded and never removed. Now the caller says only *that* a session
+   * ended, which is the one thing it knows and cannot lie usefully about, and
+   * the run itself is read off the review log. See `lib/progress/session.ts`.
+   */
+  sessionEnded = false,
   now = new Date(),
 ): Promise<Badge[]> {
   // The learner's clock, because two of these badges are about the hour of the
@@ -150,6 +162,7 @@ export async function checkAchievementsFor(
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
   ]);
+  const session = sessionEnded ? await lastSession(ownerId, now) : null;
   const stats = await buildBadgeStats(ownerId, {
     snapshot,
     summary,

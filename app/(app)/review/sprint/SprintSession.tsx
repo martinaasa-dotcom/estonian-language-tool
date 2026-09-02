@@ -56,7 +56,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
     setPhase("done");
     void recordSprintScore(finalScore).then(async (r) => {
       setIsNewBest(r.isNewBest);
-      const check = await checkAchievements();
+      const check = await checkAchievements(true);
       if (check.ok) setNewBadges(check.newBadges);
     });
   }, []);

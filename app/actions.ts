@@ -772,9 +772,25 @@ export async function resolveStreak() {
  * No revalidatePath here: this is called from a Server Component render (Today)
  * as well as from actual actions, and revalidating during render is an error.
  */
-export async function checkAchievements(session?: { count: number; accuracy: number }) {
+/**
+ * Awards whatever this learner has earned, and takes no numbers on trust.
+ *
+ * The argument used to be `{ count, accuracy }` for the session that just
+ * ended, and this file is `"use server"`, so those were a claim rather than a
+ * measurement: `checkAchievements({ count: 10, accuracy: 100 })` from a
+ * console earned `perfect_session` with no card answered, into a table that is
+ * never re-awarded and never removed. Only the learner is cheated by that,
+ * which is why it is worth fixing rather than worth an alarm: a badge shelf
+ * you know is a lie is not a badge shelf.
+ *
+ * What is left is a boolean saying a session ended, which the caller does know
+ * and cannot lie usefully about: the run is read off the review log
+ * (`lib/progress/session.ts`), so a forged `true` at a keyboard nobody has
+ * touched counts nothing.
+ */
+export async function checkAchievements(sessionEnded = false) {
   const ownerId = await requireUserId();
-  const newBadges = await checkAchievementsFor(ownerId, session);
+  const newBadges = await checkAchievementsFor(ownerId, sessionEnded === true);
   return { ok: true as const, newBadges };
 }
 
