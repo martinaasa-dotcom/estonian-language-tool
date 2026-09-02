@@ -17,7 +17,7 @@ export const A2 = [
     level: "A2",
     module: "Aeg ja lugu",
     canDo: "Tell someone what you did yesterday, last week and last year.",
-    blurb: "The simple past. Estonian forms it from a stem you cannot guess, so it is drilled.",
+    blurb: "The simple past, built on the second infinitive with -si- after it, plus the handful of everyday verbs that do it their own way.",
     grammar: ["imperfect", "past-participle"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CONJUGATION", "CLOZE"],
     requires: ["iga-paev"],

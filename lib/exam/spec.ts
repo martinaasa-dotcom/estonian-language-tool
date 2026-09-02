@@ -217,14 +217,14 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     instruction:
       "One word has been taken out of each sentence. Choose the form that belongs there. " +
       "Every option is a real Estonian form, so the ending is the question.",
-    standsFor: "valikvastustega lunkulesanne, a gapped text with three or four options",
+    standsFor: "valikvastustega lünkülesanne, a gapped text with three or four options",
     fallback: "form-choice",
   },
   "gap-type": {
     kind: "gap-type",
     title: "Write the missing word",
     instruction: "One word has been taken out of each sentence. Type the form that belongs there.",
-    standsFor: "lunkulesanne, a gapped text filled in by hand",
+    standsFor: "lünkülesanne, a gapped text filled in by hand",
   },
   "gloss-choice": {
     kind: "gloss-choice",
@@ -240,7 +240,7 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     instruction:
       "A word and a case. Choose the form that belongs to it. Every option is a real Estonian " +
       "form, so the ending is the question.",
-    standsFor: "valikvastustega lunkulesanne, a gapped text with three or four options",
+    standsFor: "valikvastustega lünkülesanne, a gapped text with three or four options",
   },
   order: {
     kind: "order",
@@ -300,7 +300,7 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
       "set, and a slow play is one of them. Marked word by word, so a missed ending costs one " +
       "word and not the whole of it. A missed diacritic is reported and does not cost the mark, " +
       "which is how the real paper marks this one.",
-    standsFor: "puuduva infoga ulesanne, writing down what the recording said",
+    standsFor: "puuduva infoga ülesanne, writing down what the recording said",
   },
   "listen-choose": {
     kind: "listen-choose",
@@ -312,7 +312,7 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     instruction:
       `Each recording plays ${LISTEN_PLAYS} times and no more, which is what the specifications ` +
       "set. Read the questions during the pause, then play it and choose what it said.",
-    standsFor: "valikvastustega kuulamisulesanne, multiple choice after a recording",
+    standsFor: "valikvastustega kuulamisülesanne, multiple choice after a recording",
   },
   compose: {
     kind: "compose",

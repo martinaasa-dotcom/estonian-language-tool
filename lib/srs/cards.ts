@@ -1,4 +1,5 @@
 import { CASES, caseByKey } from "@/lib/estonian/cases";
+import { localCasesFor } from "@/lib/estonian/place";
 import { buildCloze } from "@/lib/estonian/cloze";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseFromMorphCode } from "@/lib/estonian/morph";
@@ -153,9 +154,13 @@ export interface GeneratedCard {
 const form = (l: LexemeForCards, type: string) => l.forms.find((f) => f.formType === type)?.value;
 
 /** Cases worth drilling first — the ones a B1 learner actually reaches for. */
-const DRILL_CASES: readonly CaseKey[] = [
-  "INESSIVE", "ELATIVE", "ILLATIVE", "ALLATIVE", "ADESSIVE", "COMITATIVE", "TRANSLATIVE",
-];
+/**
+ * The cases every word is drilled on, whichever set of local ones it takes.
+ * `localCasesFor` supplies the other three, because a place name in `-maa`
+ * answers `kus?` with `Saksamaal` and not with `Saksamaas`. See
+ * lib/estonian/place.ts for what that was doing to the A1 country unit.
+ */
+const DRILL_CASES: readonly CaseKey[] = ["COMITATIVE", "TRANSLATIVE"];
 
 /**
  * Builds the cards for one word. Only types the word can actually support are
@@ -178,7 +183,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
 
       case "CASE_FORM": {
         if (!genSg) break;
-        for (const key of DRILL_CASES) {
+        for (const key of [...localCasesFor(lex.lemma), ...DRILL_CASES]) {
           /*
             THE ANSWER SIDE IS WHAT THE DICTIONARY ATTESTS.
 

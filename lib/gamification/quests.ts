@@ -103,7 +103,7 @@ const SPECS: readonly QuestSpec[] = [
   {
     key: "sharp_recall",
     title: (t) => `Recall ${t} cards cleanly`,
-    detail: "Rated Good or Easy, first time through.",
+    detail: "Right first time, with no peeking.",
     icon: "Target",
     target: (s) => Math.max(8, Math.round(s.dailyGoal * 0.6)),
     progress: (s) => s.recalledToday,

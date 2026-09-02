@@ -61,7 +61,7 @@ export default async function SignInPage({ searchParams }: {
           className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60"
           style={{ color: "var(--ink-3)" }}
         >
-          <ArrowLeft size={14} aria-hidden /> Back to the tour
+          <ArrowLeft size={14} aria-hidden /> Back to the front page
         </Link>
 
         <div

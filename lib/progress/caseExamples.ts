@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { INSIDE_CASES, localCasesFor, OUTSIDE_CASES } from "@/lib/estonian/place";
 import { parseExamples, sentenceContaining } from "@/lib/dict/examples";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseFromMorphCode, numberFromMorphCode } from "@/lib/estonian/morph";
@@ -127,9 +128,17 @@ export async function caseExamples(
     select,
   });
 
+  /*
+    A WORD ONLY ILLUSTRATES A CASE IT ACTUALLY TAKES. The illative page led
+    with `Inglismaa / Inglismaasse`, which is not how anybody says "to
+    England": a place name in `-maa` uses the outside cases and the rule over
+    a genitive stem cannot know that. See lib/estonian/place.ts.
+  */
+  const local = ([...INSIDE_CASES, ...OUTSIDE_CASES] as CaseKey[]).includes(key);
+  const fits = (lex: Candidate) => !local || localCasesFor(lex.lemma).includes(key);
   const built = [
-    ...mine.map((lex) => toExample(lex, key, true)),
-    ...rest.map((lex) => toExample(lex, key, false)),
+    ...mine.filter(fits).map((lex) => toExample(lex, key, true)),
+    ...rest.filter(fits).map((lex) => toExample(lex, key, false)),
   ].filter(isExample);
 
   // Deck words first — a case is easier to believe in a word you are already

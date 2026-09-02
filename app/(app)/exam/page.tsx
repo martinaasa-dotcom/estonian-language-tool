@@ -50,9 +50,6 @@ export default async function ExamPage() {
     ? readiness.levels.find((l) => l.level === target.band)
     : undefined;
   const weeks = weeksUntil(goals.deadline, new Date());
-  const weakest = targetLevel
-    ? [...SKILLS].sort((a, b) => targetLevel.expected[a] - targetLevel.expected[b])[0]
-    : undefined;
 
   // The words live beside the tier in `readiness.ts`, because Today prints the
   // same percentage and two copies of "what this number is worth" is how one
@@ -99,10 +96,19 @@ export default async function ExamPage() {
                     : weeks === 0
                       ? "Your deadline is here. "
                       : `${weeks} ${weeks === 1 ? "week" : "weeks"} left. `}
+                  {/*
+                    ONE OPINION PER QUESTION. This named the lowest of the four
+                    predictions and printed its percentage, which for a part
+                    nobody has ever attempted is a zero: "Speaking is holding
+                    you back, we predict 0 percent" to somebody who had never
+                    been asked to speak. `readiness.gaps` already ranks what to
+                    do about it and knows the difference between bad news and
+                    no news, so the card prints its first line.
+                  */}
                   {targetLevel.confidence >= PASS_PCT
                     ? "You'd pass it today, based on what we've seen so far."
-                    : weakest
-                      ? `${SKILL_LABEL[weakest]} is holding you back. We predict ${targetLevel.expected[weakest]} percent there, and you need sixty to pass.`
+                    : readiness.gaps[0]
+                      ? `${readiness.gaps[0].title}. ${readiness.gaps[0].detail}`
                       : "There isn't enough here yet to say."}
                 </p>
                 <p className="mt-3 flex flex-wrap items-center gap-3">
@@ -223,12 +229,18 @@ export default async function ExamPage() {
                         {SKILL_LABEL[skill]}
                       </dt>
                       <dd>
-                        <Meter
-                          pct={level.expected[skill]}
-                          label={`${SKILL_LABEL[skill]} predicted at ${level.expected[skill]} percent`}
-                          tone={level.expected[skill] >= PASS_PCT ? "var(--mint)" : "var(--peach)"}
-                          height={6}
-                        />
+                        {level.seen[skill] ? (
+                          <Meter
+                            pct={level.expected[skill]}
+                            label={`${SKILL_LABEL[skill]} predicted at ${level.expected[skill]} percent`}
+                            tone={level.expected[skill] >= PASS_PCT ? "var(--mint)" : "var(--peach)"}
+                            height={6}
+                          />
+                        ) : (
+                          <span className="text-xs" style={{ color: "var(--ink-3)" }}>
+                            nothing measured yet
+                          </span>
+                        )}
                       </dd>
                     </div>
                   ))}

@@ -164,6 +164,18 @@ export interface LevelReadiness {
   confidence: number;
   /** Predicted score for each part, 0 to 100. */
   expected: Record<SkillKey, number>;
+  /**
+   * Whether anything at all has been seen of that part.
+   *
+   * A `Review` row carries no note of which mode wrote it, so a dictation and
+   * a flip of the same card are one row and the app genuinely has nothing on
+   * speaking until a level check is sat. The model still needs a number for
+   * every part, because the total is an average of four; the screen must not
+   * print that number as a prediction. It said "Speaking predicted at 0
+   * percent" to somebody who had never been asked to speak, which reads as a
+   * verdict rather than as an absence.
+   */
+  seen: Record<SkillKey, boolean>;
   /** Predicted total, 0 to 100. */
   expectedTotal: number;
   evidence: Evidence;
@@ -300,6 +312,13 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
     SKILLS.map((skill) => [skill, expectedPart(signals, skill, coverage, level)]),
   ) as Record<SkillKey, number>;
 
+  const seen = Object.fromEntries(
+    SKILLS.map((skill) => [
+      skill,
+      signals.skills[skill].attempts > 0 || Boolean(signals.placement?.skills?.[skill]),
+    ]),
+  ) as Record<SkillKey, boolean>;
+
   const modelled = Math.round(SKILLS.reduce((sum, s) => sum + expected[s], 0) / SKILLS.length);
 
   // A sitting of this very paper is the best evidence there is. It does not
@@ -317,6 +336,7 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
     level,
     confidence,
     expected,
+    seen,
     expectedTotal,
     evidence,
     measured: Boolean(sat),

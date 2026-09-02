@@ -18,7 +18,7 @@ export const B2 = [
     level: "B2",
     module: "Hääl ja kõneviis",
     canDo: "Read and write the impersonal Estonian of notices, news and official prose.",
-    blurb: "Not the passive. Estonian says 'it is done' without ever implying by whom.",
+    blurb: "Not the passive. Estonian says that people did something without ever saying which people.",
     grammar: ["impersonal", "participles"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CONJUGATION", "CLOZE"],
     requires: ["liitverbid"],

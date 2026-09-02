@@ -2,6 +2,7 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Check, Compass, Lock } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
+import { unitById } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
 import {
   CHECKPOINTS, LEVELS, LEVEL_INFO, isUnitOpen, nextUnit,
@@ -224,7 +225,7 @@ export default async function LearnPage() {
                         </span>
                         {locked && (
                           <span className="mt-1 block text-xs" style={{ color: "var(--ink-3)" }}>
-                            Builds on {u.unit.requires.join(", ")}. You can still open it.
+                            Builds on {u.unit.requires.map((id) => unitById(id)?.title ?? id).join(", ")}. You can still open it.
                           </span>
                         )}
                       </span>

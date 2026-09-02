@@ -500,7 +500,7 @@ function Features() {
             tone="mint"
             icon={<Target size={18} aria-hidden />}
             title="A plan you can actually keep"
-            body="Say what you are aiming for and by when. It works out the daily goal, keeps your homework and your class week in one place, brings each word back the day before you would forget it, and tells you when you are done."
+            body="Say what you are aiming for and by when. It works out the daily goal, brings each word back the day before you would forget it, and tells you how far off the date you are."
           />
         </Reveal>
       </div>
