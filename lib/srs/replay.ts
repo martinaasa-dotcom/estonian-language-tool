@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
-import { grade, type RatingValue } from "@/lib/srs/scheduler";
+import { writeGrade } from "@/lib/srs/grade";
+import { type RatingValue } from "@/lib/srs/scheduler";
 import { REPLAY_BATCH, clampReviewedAt, isValidPending, orderForReplay } from "@/lib/offline/outbox";
 
 export interface ReplayItem {
@@ -101,43 +102,17 @@ export async function applyGradeBatch(
       continue;
     }
 
-    const reviewedAt = new Date(clampReviewedAt(item.reviewedAt, now));
-
-    await prisma.review.create({
-      data: {
-        id: item.id,
-        ownerId,
-        cardId: card.id,
-        lexemeId: card.lexemeId,
-        rating: item.rating,
-        durationMs: Math.min(Math.max(item.durationMs, 0), 600_000),
-        stateBefore: card.state,
-        targetCase: card.targetCase,
-        reviewedAt,
-      },
-    });
-
-    const next = grade(
-      {
-        due: card.due, stability: card.stability, difficulty: card.difficulty,
-        elapsedDays: card.elapsedDays, scheduledDays: card.scheduledDays,
-        reps: card.reps, lapses: card.lapses, state: card.state,
-        lastReview: card.lastReview, learningSteps: card.learningSteps,
-      },
-      item.rating,
-      // The moment the learner actually answered, not the moment we heard about
-      // it. Passing `now` here would silently stretch every offline interval.
-      reviewedAt,
-    );
-
-    await prisma.card.update({
-      where: { id: card.id },
-      data: {
-        due: next.due, stability: next.stability, difficulty: next.difficulty,
-        elapsedDays: next.elapsedDays, scheduledDays: next.scheduledDays,
-        reps: next.reps, lapses: next.lapses, state: next.state,
-        learningSteps: next.learningSteps, lastReview: next.lastReview,
-      },
+    // Two floors, and they answer different questions. `clampReviewedAt` is
+    // about a wrong device clock and knows nothing about the card; `writeGrade`
+    // will not let a review predate the card it is about. Flooring is
+    // monotonic, so neither can reorder a batch `orderForReplay` has sorted.
+    await writeGrade(ownerId, {
+      card,
+      rating: item.rating,
+      durationMs: item.durationMs,
+      reviewedAt: new Date(clampReviewedAt(item.reviewedAt, now)),
+      now: new Date(now),
+      reviewId: item.id,
     });
 
     settled.push(item.id);

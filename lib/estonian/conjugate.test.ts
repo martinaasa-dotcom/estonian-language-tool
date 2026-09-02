@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  conditional, derivedVerbForms, imperativeSingular, negativePresent, presentTense, pres1sgFrom,
+  conditional, derivedVerbForms, imperativeSingular, negativePresent, possibleFirstPersons, presentTense,
+  pres1sgFrom,
 } from "./conjugate";
 
 const values = (forms: readonly { value: string }[] | null) => forms?.map((f) => f.value) ?? null;
@@ -80,5 +81,54 @@ describe("reading the first person off a form list", () => {
     expect(pres1sgFrom([{ formType: "EKILEX:IndPrSg1", value: "loen" }])).toBe("loen");
     expect(pres1sgFrom([{ formType: "X", morphCode: "IndPrSg1", value: "loen" }])).toBe("loen");
     expect(pres1sgFrom([{ formType: "GEN_SG", value: "toa" }])).toBeNull();
+  });
+});
+
+/*
+  The table above read backwards, which is how the dictionary finds `helistab`.
+
+  Candidates rather than answers: what comes back is asked of the database as
+  "is any of these a stored first person", and `derivedVerbForms` decides
+  afterwards, so an extra candidate costs a lookup and never a wrong answer.
+  What would cost something is a missing one, which is a form nobody can find.
+*/
+describe("possibleFirstPersons", () => {
+  it("offers the first person a written person ending was built on", () => {
+    for (const [written, wanted] of [
+      ["helistab", "helistan"],
+      ["helistad", "helistan"],
+      ["helistame", "helistan"],
+      ["helistate", "helistan"],
+      ["helistavad", "helistan"],
+      ["loeksin", "loen"],
+      ["loeks", "loen"],
+      ["loeksime", "loen"],
+    ] as const) {
+      expect(possibleFirstPersons(written)).toContain(wanted);
+    }
+  });
+
+  it("offers it for the negative and the imperative, which are the bare stem", () => {
+    // `ei loe` and `loe!` are both `loen` with the `n` off and nothing added.
+    expect(possibleFirstPersons("loe")).toContain("loen");
+  });
+
+  it("offers the word itself for a first person typed as it is stored", () => {
+    expect(possibleFirstPersons("helistan")).toContain("helistan");
+  });
+
+  it("covers every ending the module derives with, which is what stops the two drifting", () => {
+    for (const derived of derivedVerbForms({ lemma: "lugema", pres1sg: "loen" })) {
+      expect(possibleFirstPersons(derived.value)).toContain("loen");
+    }
+  });
+
+  it("reads the first word of a particle verb, which is the one that inflects", () => {
+    expect(possibleFirstPersons("loed läbi")).toContain("loen");
+  });
+
+  it("says nothing about something too short to have an ending on it", () => {
+    expect(possibleFirstPersons("a")).toEqual([]);
+    expect(possibleFirstPersons("  ")).toEqual([]);
   });
 });

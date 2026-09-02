@@ -111,7 +111,12 @@ export async function middleware(request: NextRequest) {
     // Aggregate metrics carry their own bearer token and are read by whoever
     // runs the deployment, not by a signed-in learner. Past this gate it
     // authenticates itself, and with no token configured it 404s.
-    path.startsWith("/api/metrics");
+    path.startsWith("/api/metrics") ||
+    // The same, for the anonymised research export. Neither belongs to a
+    // learner, so neither can be reached by resolving one: a session here
+    // would be a session with nothing to say about whether the caller may
+    // read a deployment-wide aggregate.
+    path.startsWith("/api/research");
 
   /*
     What a signed-out request gets, in one place because two branches need it.

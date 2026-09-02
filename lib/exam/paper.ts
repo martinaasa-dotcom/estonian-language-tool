@@ -223,7 +223,24 @@ export interface ComposeItem extends BaseItem {
   variants: { label: string; prompt: string }[];
   minWords: number;
   /** Words from the dictionary the text must use, with their glosses. */
-  mustUse: { lemma: string; translation: string; lexemeId: string }[];
+  mustUse: MustUseWord[];
+}
+
+/**
+ * A word a written task names, carrying the forms that mark it.
+ *
+ * `pos` and `forms` are not decoration. `usesRequiredWord` used to prefix-match
+ * a truncated lemma, which credited `kirjutan` for `kiri` and `aeglane` for
+ * `aeg`; what tells those apart is the word's own forms, so the paper carries
+ * them and the marker and the screen read one set of forms. The speak task's idea card
+ * keeps the lighter shape, because nothing marks it.
+ */
+export interface MustUseWord {
+  lemma: string;
+  translation: string;
+  lexemeId: string;
+  pos: string;
+  forms: { formType: string; value: string }[];
 }
 
 export interface MessageItem extends BaseItem {
@@ -234,7 +251,7 @@ export interface MessageItem extends BaseItem {
   /** The points the message has to cover, which the real task always lists. */
   cover: string[];
   minWords: number;
-  mustUse: { lemma: string; translation: string; lexemeId: string }[];
+  mustUse: MustUseWord[];
 }
 
 export interface SpeakItem extends BaseItem {
@@ -909,6 +926,17 @@ function buildFormChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
   return finish(spec, items, undefined, "words with more than one case form to tell apart");
 }
 
+/** A pool word as a written task carries it: the gloss to show, the forms to mark with. */
+function requiredWord(word: PoolWord): MustUseWord {
+  return {
+    lemma: word.lemma,
+    translation: word.translation,
+    lexemeId: word.lexemeId,
+    pos: word.pos,
+    forms: word.forms.map((f) => ({ formType: f.formType, value: f.value })),
+  };
+}
+
 function buildMessage(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask {
   const { messageWords } = lengthsFor(ctx.level);
   const brief = MESSAGES[Math.floor(ctx.random() * MESSAGES.length)] ?? MESSAGES[0]!;
@@ -917,7 +945,7 @@ function buildMessage(spec: TaskSpec, ctx: BuildContext, index: number): ExamTas
   const mustUse = shuffle(ctx.words, ctx.random)
     .filter((w) => !ctx.spent.has(w.lexemeId))
     .slice(0, 2)
-    .map((w) => ({ lemma: w.lemma, translation: w.translation, lexemeId: w.lexemeId }));
+    .map(requiredWord);
   for (const word of mustUse) ctx.spent.add(word.lexemeId);
 
   const anchor = ctx.words[0];
@@ -943,7 +971,7 @@ function buildCompose(spec: TaskSpec, ctx: BuildContext, index: number): ExamTas
   const mustUse = shuffle(ctx.words, ctx.random)
     .filter((w) => !ctx.spent.has(w.lexemeId))
     .slice(0, 4)
-    .map((w) => ({ lemma: w.lemma, translation: w.translation, lexemeId: w.lexemeId }));
+    .map(requiredWord);
 
   const variants = [
     {

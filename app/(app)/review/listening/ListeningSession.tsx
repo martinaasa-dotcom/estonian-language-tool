@@ -68,8 +68,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
   useEffect(() => {
     if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
     checkedAchievements.current = true;
-    const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
-    void checkAchievements({ count: attempted, accuracy }).then((r) => {
+    void checkAchievements(true).then((r) => {
       if (r.ok) setNewBadges(r.newBadges);
     });
   }, [finished, attempted, correct, wasEmptyAtStart]);

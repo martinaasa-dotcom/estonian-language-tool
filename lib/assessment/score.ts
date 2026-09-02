@@ -91,11 +91,17 @@ export function gradeWrite(item: WriteItem, typed: string): WriteMark {
     return { credit: 1, right: true, usedAnotherForm: false, note: `${item.targetForm} is what the sentence had.` };
   }
   if (check.verdict === "diacritics" || check.verdict === "typo") {
+    // A dropped diacritic is named by letter, because that is a thing to learn.
+    // A slipped keystroke is not: `checkAnswer` quotes the word back, and this
+    // sentence is about to say it again, so the two together read "So close,
+    // the word is Eesti. The sentence had Eesti." Dictation calls the same
+    // mistake "one letter out" and this is the same mistake.
+    const slip = check.verdict === "diacritics" ? check.note : "One letter out.";
     return {
       credit: 0.8,
       right: true,
       usedAnotherForm: false,
-      note: `${check.note} The sentence had ${item.targetForm}.`,
+      note: `${slip} The sentence had ${item.targetForm}.`,
     };
   }
 

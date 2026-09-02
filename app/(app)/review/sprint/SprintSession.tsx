@@ -55,8 +55,9 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
   const finish = useCallback((finalScore: number) => {
     setPhase("done");
     void recordSprintScore(finalScore).then(async (r) => {
-      setIsNewBest(r.isNewBest);
-      const check = await checkAchievements();
+      // A refused score is not a new best; the round is over either way.
+      setIsNewBest(r.ok && r.isNewBest);
+      const check = await checkAchievements(true);
       if (check.ok) setNewBadges(check.newBadges);
     });
   }, []);

@@ -194,7 +194,15 @@ export function formName(form: {
     const slot = VERB_SLOTS[code];
     if (slot && slot.group !== "NON_FINITE") {
       const group = VERB_GROUP_LABELS[slot.group];
-      return { et: `${group.et} ${slot.en}`, en: `${group.en.toLowerCase()} ${slot.en}` };
+      /*
+        The English half names the category and not the person, because the
+        person is the same token in both halves. `formLabel` prints the pair
+        where they differ, so this used to read "olevik ta (present ta)", and
+        the second `ta` is an Estonian pronoun standing in an English gloss
+        that exists for somebody reading an English reference grammar. The
+        pronoun is already in front of them, in the half that leads.
+      */
+      return { et: `${group.et} ${slot.en}`, en: group.en.toLowerCase() };
     }
   }
   if (form.formType && STORED_NAMES[form.formType]) return STORED_NAMES[form.formType]!;

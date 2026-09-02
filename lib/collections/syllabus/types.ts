@@ -107,6 +107,36 @@ export function inferPos(lemma: string, given?: Pos): Pos {
   return lemma.endsWith("ma") && lemma.length > 3 ? "VERB" : "NOUN";
 }
 
+/**
+ * A unit that asks for a form also asks for the form every other one is built on.
+ *
+ * THE ONE CARD THE COURSE NEVER BUILT.
+ *
+ * `GRADATION` asks `hammas → kelle? mille?` and takes `hamba`. Nothing else in
+ * the deck asks for the genitive: `PRODUCTION` wants the nominative,
+ * `CLOZE` wants whatever form the sentence happens to have, and `CASE_FORM`
+ * drills the local cases, the comitative and the translative, every one of
+ * which is the genitive stem plus an ending. So the one form the others are
+ * all built on was the one form nobody was asked to produce, and consonant
+ * gradation, which is where it gets hard and which no rule predicts, went
+ * undrilled for the whole course. Not one of the 79 units named the type. The
+ * landing page has been promising it the entire time, beside government and
+ * the partial object, both of which units do ask for.
+ *
+ * It is added here rather than typed into unit literals because it is a
+ * property of the word and not a choice the unit makes: a learner who cannot
+ * say `hamba` cannot say `hambaga` either. The generator produces nothing for
+ * a word that does not gradate, so a unit of colours gets none.
+ */
+function withGradation(types: readonly CardType[]): readonly CardType[] {
+  // `CASE_FORM` and not `CONJUGATION`: the card asks for the genitive, and a
+  // verb has none. A verb gradates too (`andma` is `nd : nn`) and it shows in
+  // the present stem rather than in a case, so a unit of verbs that advertised
+  // this would be promising a card the generator cannot build.
+  if (!types.includes("CASE_FORM") || types.includes("GRADATION")) return types;
+  return [...types, "GRADATION"];
+}
+
 /** Builds a unit, resolving its word list once at module load. */
 export function unit(spec: UnitSpec): SyllabusUnit {
   const vocabulary = spec.words.map((w) => ({
@@ -118,6 +148,7 @@ export function unit(spec: UnitSpec): SyllabusUnit {
   }));
   return {
     ...spec,
+    cardTypes: withGradation(spec.cardTypes),
     vocabulary,
     lemmas: vocabulary.map((v) => v.lemma),
     requires: spec.requires ?? [],

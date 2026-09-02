@@ -14,7 +14,7 @@ import { Recorder } from "@/components/Recorder";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Meter, Note, SectionTitle } from "@/components/ui";
 import { partOf } from "@/lib/exam/paper";
-import type { ExamItem, ExamTask, Paper } from "@/lib/exam/paper";
+import type { ExamItem, ExamTask, MustUseWord, Paper } from "@/lib/exam/paper";
 import type { Response } from "@/lib/exam/score";
 import { usesRequiredWord, wordsOf } from "@/lib/exam/written";
 import {
@@ -1159,14 +1159,11 @@ function OrderQuestion({ item, number, built, onBuild }: {
  * which is the whole point of it being exported: a chip that lit up on a rule of
  * its own would be telling somebody they had a mark the server was not going to
  * give them. Estonian inflects, so `raamatust` lights `raamat`, exactly as it
- * scores it.
+ * scores it, and `kirjutan` lights nothing, exactly as it scores that.
  */
-function RequiredWords({ words, text }: {
-  words: { lemma: string; translation: string; lexemeId: string }[];
-  text: string;
-}) {
+function RequiredWords({ words, text }: { words: MustUseWord[]; text: string }) {
   if (words.length === 0) return null;
-  const used = words.filter((word) => usesRequiredWord(word.lemma, text)).length;
+  const used = words.filter((word) => usesRequiredWord(word, text)).length;
 
   return (
     <p className="mt-2 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
@@ -1177,7 +1174,7 @@ function RequiredWords({ words, text }: {
         </span>
       </span>
       {words.map((word) => {
-        const done = usesRequiredWord(word.lemma, text);
+        const done = usesRequiredWord(word, text);
         return (
           // `wrap`, because this chip carries a full dictionary gloss rather
           // than a label, and a gloss is as long as the word needs.

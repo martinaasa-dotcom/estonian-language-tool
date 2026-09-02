@@ -178,9 +178,28 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 */
 const { check, absent, done } = suite("Accessibility", { floor: 316 });
 
-for (const route of ROUTES) {
+/*
+  OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.
+
+  `networkidle` says the requests stopped, not that the page is on screen, and
+  on a route that fetches audio as it mounts it can resolve while the document
+  is still the one being navigated away from. This suite spent a run reporting
+  `/review/listening` as having no h1 and as putting an aria attribute on
+  `:root`, in dark mode only, which is what axe says about a document that is
+  not there yet. Neither was true a second later.
+
+  So the wait is for the landmark every screen in this app has. A route that
+  genuinely renders none still reaches axe and fails on its own terms rather
+  than on a timeout.
+*/
+async function open(page, route, settle) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(300);
+  await page.waitForSelector("main", { state: "attached", timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(settle);
+}
+
+for (const route of ROUTES) {
+  await open(page, route, 300);
 
   const report = await page.evaluate(() => {
     const bad = {
@@ -292,8 +311,7 @@ for (const route of ROUTES) {
 */
 const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" });
 for (const route of ROUTES) {
-  await dark.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
-  await dark.waitForTimeout(200);
+  await open(dark, route, 200);
   const violations = await axeViolations(dark);
   check(`${route}: axe finds nothing in dark mode either`,
     violations.length === 0, violations.slice(0, 2).join("; "));

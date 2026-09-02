@@ -178,7 +178,7 @@ deployment had quietly broken. This pass closes those.
 ### What this pass deliberately did *not* do
 
 - **No new Estonian content was written.** Every word, form and example still comes from the seeded
-  dictionary or Ekilex. The path references lemmas and `lib/collections/path.test.ts` fails if one
+  dictionary or Ekilex. The path references lemmas and `lib/collections/syllabus/syllabus.test.ts` fails if one
   does not exist, and an invented unit word would be an invented Estonian word by the back door.
 - **No cloze or sentence-building mode.** It needs example sentences the dictionary does not carry
   for every word, and the honest source for those is Ekilex, not a model (ADR-005). Still shelved.
