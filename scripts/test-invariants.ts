@@ -8295,6 +8295,45 @@ check("the picture board asks the dictionary for the words that have a picture",
   );
 });
 
+/*
+  A PAGE ADDRESSED BY A ROW ID PROVES THE ROW IS THE LEARNER'S.
+
+  Three routes name a row somebody owns: `/exam/result/[id]` is a sat paper
+  with the composition in it, `/scan/[scanId]` is the words read off a
+  photograph of somebody's homework, and `/class/[classroomId]` is a roster.
+  All three scope the read by the owner and answer `notFound()`, which is the
+  right shape and was true of every one of them when this was written. The
+  check is here so it stays true of the fourth.
+
+  What it reads is narrow on purpose: a `where` in a `[param]` page that names
+  the route's own parameter is a row being addressed by something a stranger
+  can type, and it has to name `ownerId` too. A page whose parameter is a key
+  rather than a row, which is the level, the case, the grammar topic and the
+  unit, never reaches this, because their parameters do not appear in a `where`
+  at all. That is the difference between an id somebody owns and an id that
+  names a page.
+*/
+check("a page addressed by a row id proves the row is the learner's", () => {
+  const pages = APP.filter((file) => file.endsWith("page.tsx") && /\[[^\]]+\]/.test(file));
+  assert.ok(pages.length >= 8, "app/ no longer holds the parameterised routes the usual way");
+
+  const offenders: string[] = [];
+  for (const file of pages) {
+    const src = code(file);
+    const params = [...file.matchAll(/\[(\w+)\]/g)].map((m) => m[1]!);
+    for (const call of src.matchAll(/prisma\.(\w+)\.(findFirst|findUnique|findMany)\(\{([\s\S]{0,500}?)\n\s*\}\)/g)) {
+      const [, model, , body] = call;
+      if (!params.some((name) => new RegExp(`\\b${name}\\b`).test(body!))) continue;
+      if (!/ownerId/.test(body!)) offenders.push(`${file}: ${model} is read by the route's own id without an ownerId`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    "a page reads a row by the id in its own URL without proving it belongs to the learner asking",
+  );
+});
+
 check("the README's course and practice counts are the code's own", () => {
   const readme = read("README.md");
   assert.ok(SYLLABUS.length > 50, "the syllabus no longer collects its units the usual way");
