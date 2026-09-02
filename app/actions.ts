@@ -970,6 +970,14 @@ export async function completeOnboarding(input: {
    * question is not asked because the bar is not drawn either way.
    */
   letterBar?: LetterBar;
+  /**
+   * Which language a meaning is given in.
+   *
+   * Asked on the first screen rather than left in Settings: most people
+   * learning Estonian in Estonia already speak Russian or Ukrainian, and the
+   * people who would never go looking for this setting are the ones it is for.
+   */
+  glossLanguage?: string;
   /** What the learner said they are here for. Absent when they skipped it. */
   goals?: {
     reason?: string | null;
@@ -1001,6 +1009,7 @@ export async function completeOnboarding(input: {
     writeSetting(ownerId, SETTING_KEYS.cefrPlacementAt, ""),
     writeSetting(ownerId, SETTING_KEYS.dailyGoal, String(goal)),
     writeSetting(ownerId, SETTING_KEYS.letterBar, letterBarFrom(input.letterBar)),
+    writeSetting(ownerId, SETTING_KEYS.glossLanguage, glossLanguageFrom(text(input.glossLanguage))),
     writeSetting(ownerId, SETTING_KEYS.onboardedAt, new Date().toISOString()),
     input.goals
       ? saveGoals(ownerId, normaliseGoals({
