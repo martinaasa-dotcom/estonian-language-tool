@@ -636,6 +636,54 @@ of a join. `lib/srs/replay.itest.ts` will fail, which is the point. The same pro
 offline sync conflict-free: grades are facts with timestamps, and replaying them in order reproduces
 the state exactly, because `grade()` takes `now` as a parameter.
 
+**A word game may borrow a shape and may not borrow a look.** Sõnad is guess-a-word-and-be-told-
+which-letters-were-right, which is older than computers: Mastermind sold it in 1970 and Bulls and
+Cows was a pencil game before that. What the New York Times owns, and has enforced, is the name
+Wordle and the look of it. So the name is different, the length is different, the tiles are circles,
+the three states are this app's own hues rather than green and yellow and grey, the movements are its
+own, and not a line of anybody's code or a word of anybody's list was taken. `lib/games/sonad.ts`
+holds that argument next to the rules it is about.
+
+**Six letters, and that is a fact about the dictionary rather than a taste.** Five is the English
+game's length and is wrong here twice: Estonian words are longer, and the graded dictionary holds 450
+five-letter content words against 603 at six, which after banding is 183 answers against 215 at A1
+and 352 against 477 at B1. Four has the biggest pool of all at 816 and is guessed by accident.
+
+**Two word lists, and they are not the same list.** The answers are graded dictionary entries at the
+learner's own level, because an answer has to be a word the app can teach: the finish screen names
+it, glosses it, links to its entry and offers to keep it. The *guesses* are `KnownWord`, the 154,995
+headwords the Ekilex enumeration brought back, 7,134 of them six letters long, because telling
+somebody an ordinary Estonian word is not a word is the one thing a game like this must never do and
+the built dictionary alone would do it several times a round. That list is read once and handed to
+the browser, since a round trip per guess is a round trip inside the one gesture the game is made of.
+
+**The board knows the answer and may not know the score.** The word crosses deliberately, because
+marking without a round trip is most of how it plays and anybody who opens the network tab has
+spoiled their own morning. What may not cross the other way is a rating: `recordSonad` takes the
+guesses, rebuilds the day's puzzle from the date and the level, and works out what the round was
+worth on the server, which is `submitExam`'s shape (ADR-022) and is what keeps the game under
+ADR-016 rather than exempt from it. Where the word is in the deck the round grades the production
+card; where it is not, it writes nothing and the finish screen offers to add it.
+
+**A hue is half a signal, and this is the screen that rule was written for.** The first board was
+mint, butter's tint and `--raised`, which in the light theme is one strong green beside two pale
+washes: "in the word somewhere" and "not in the word at all", the two that matter most, differed by
+hue alone. They are three kinds of object now, a solid fill, a tint with a ring round it, and a flat
+wash, and every marked circle also says which in words for a reader who gets neither. Measured in a
+browser in both themes: 7.40 and 5.31 and 5.62 in the light, 11.70 and 9.27 and 5.49 in the dark. The
+draft that dropped the fill and kept only the ring measured 3.52, because `--butter-ink` is drawn to
+sit on butter's tint and not on a card.
+
+**A daily puzzle needs a walk, not a hash, and it took two goes to get there.** `hash % pool` with
+the string hash everybody writes (`h * 31 + charCode`) moves by one row a day, so Sõnad's first ten
+days were `lammas, laulja, laulma, leidma, lemmik, lennuk, leping, lihtne, liiter`: a week of the
+letter L. That is the `aberratsioon` fault again. Adding an avalanche fixes the walk and leaves a
+draw, which collides at the birthday rate: `rekord` twice inside a fortnight on a 477-word pool.
+`dayIndex` in `lib/random/dayHash.ts` is the answer, the day's ordinal times a prime stride, so
+nothing repeats until the whole pool has been used and consecutive days are still far apart. The word
+of the day's fallback reads it too, since it had the same walk and nobody had noticed. What stays a
+hash is a tie-break among a handful of equally good candidates, which is not indexing a pool.
+
 **Never re-add the iframes.** Sõnaveeb and Ekilex send `X-Frame-Options: DENY`; Speakly has no public
 API. This was verified, not assumed. See `docs/00-audit-v4.md` §A.
 
@@ -1923,9 +1971,9 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 ## Conventions
 
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
-- `lib/assessment/`, `lib/estonian/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`,
-  `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/questions/`, `lib/ux/`,
-  `lib/random/` and `lib/copy/` stay free of
+- `lib/assessment/`, `lib/estonian/`, `lib/games/`, `lib/gamification/`, `lib/stats/`,
+  `lib/collections/`, `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`,
+  `lib/questions/`, `lib/ux/`, `lib/random/` and `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route. Asserted, because it
   had been prose alone and it is not a tidiness rule: the unit suite gates every

@@ -819,8 +819,61 @@
     80% { transform: translateX(3px); }
   }
 
+  /*
+    SÕNAD'S THREE MOVEMENTS, AND WHY NONE OF THEM IS A FLIP.
+
+    The game this is shaped like turns each square over on its horizontal axis
+    to reveal a colour, and shakes a row sideways when a guess is not a word.
+    Both of those are recognisable enough to be part of what that game *is*, so
+    neither is here. These are circles, and a circle has no axis to turn on.
+
+    A circle SETTLES: it dips, takes its colour at the bottom of the dip, and
+    comes back past its size before resting. Staggered along the row by
+    `--sonad-at`, which the board sets per circle, so the row reads left to
+    right the way a word does.
+
+    A guess that is not a word DROPS AND CATCHES ITSELF, downward rather than
+    sideways: the row is telling you it could not go anywhere, which is a
+    different sentence from something breaking.
+
+    A win RISES, one circle after another, and stops. It is a hop and not a
+    bounce, because the round is over and a thing that keeps moving after the
+    answer is on screen is asking for attention it has already had.
+
+    Transform and opacity only, so the compositor can run them without the main
+    thread, and all three become nothing under `prefers-reduced-motion`: the
+    board still colours in, which is the whole of the information.
+  */
+  .sonad-settle {
+    animation: sonad-settle 420ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation-delay: calc(var(--sonad-at, 0) * 90ms);
+  }
+  .sonad-refuse { animation: sonad-refuse 380ms cubic-bezier(0.36, 0, 0.66, -0.4) both; }
+  .sonad-rise {
+    animation: sonad-rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--sonad-at, 0) * 70ms);
+  }
+
+  @keyframes sonad-settle {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.62); }
+    70% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  @keyframes sonad-refuse {
+    0%, 100% { transform: translateY(0); }
+    35% { transform: translateY(9px); }
+    70% { transform: translateY(-3px); }
+  }
+  @keyframes sonad-rise {
+    0% { transform: translateY(0); }
+    45% { transform: translateY(-12px); }
+    100% { transform: translateY(0); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .quest-pulse, .quest-card, .quest-pop, .emoji-shake { animation: none; }
+    .quest-pulse, .quest-card, .quest-pop, .emoji-shake,
+    .sonad-settle, .sonad-refuse, .sonad-rise { animation: none; }
   }
 
   /*

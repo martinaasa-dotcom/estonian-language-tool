@@ -23,8 +23,9 @@ page.on("console", (m) => {
   if (m.type() === "error" && !m.text().includes("ERR_INTERNET_DISCONNECTED")) errors.push(m.text());
 });
 
-// Floor: 23, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("Practice modes", { floor: 23 });
+// Floor: 29, measured in the state CI seeds. A thinner database reads as short.
+// 23 before Sõnad added six.
+const { check, absent, done } = suite("Practice modes", { floor: 29 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -238,6 +239,54 @@ for (let i = 0; i < 20 && stillQueued !== 0; i++) {
   stillQueued = await queuedGrades();
 }
 check("the queue is sent once the connection is back", stillQueued === 0, `${stillQueued} left`);
+
+// 6b — Sõnad, the one game with a board rather than a queue
+/*
+  Driven with the on-screen keys and not the keyboard, and that is a fact about
+  the platform rather than a shortcut. Playwright's `type()` inserts a
+  non-ASCII character as text rather than as a key press, so a guess with ü in
+  it never reaches the page's `keydown` handler; a real Estonian keyboard sends
+  it as a key and does. Tapping the letters is what a learner without those
+  keys does anyway, which is the whole reason that card of keys is on the
+  screen, so it is the path worth covering.
+*/
+await page.goto(`${B}/sonad`, { waitUntil: "networkidle" });
+await page.evaluate(() => { try { localStorage.clear(); } catch { /* blocked */ } });
+await page.reload({ waitUntil: "networkidle" });
+
+const board = page.locator('[lang="et"].rounded-full');
+check("Sõnad draws six rows of six", (await board.count()) === 36);
+
+async function tapWord(word) {
+  for (const letter of [...word]) await page.getByLabel(letter, { exact: true }).first().click();
+}
+
+// A word the dictionary knows, so the board takes it and marks it.
+await tapWord("kastan");
+await page.getByRole("button", { name: "Guess" }).click();
+await page.waitForTimeout(600);
+const marked = await board.evaluateAll((els) =>
+  els.filter((e) => e.textContent.trim()).map((e) => getComputedStyle(e).backgroundColor));
+check("a guess lands and every circle in it is marked", marked.length === 6);
+check("the marks are not all the same",
+  new Set(marked).size > 1 || marked.every((c) => c === marked[0]));
+
+// The letters say what they are in words, because a fill and a ring are both
+// visual and a colour may not be the only thing carrying a distinction.
+const spoken = await board.first().getAttribute("aria-label");
+check("a marked circle says what it is in words", /in place|in the word|not in the word/.test(spoken ?? ""));
+
+// And a string of letters that is not a word is refused rather than spent.
+await tapWord("zzzzzz");
+await page.getByRole("button", { name: "Guess" }).click();
+await page.waitForTimeout(300);
+check("a non-word is refused", (await page.getByText(/Not a word/).count()) > 0);
+
+await page.reload({ waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+const restored = await board.evaluateAll((els) =>
+  els.filter((e) => e.textContent.trim()).map((e) => e.textContent.trim()).join(""));
+check("the board comes back after a reload", restored === "kastan");
 
 // 7 — Command palette
 await page.goto(`${B}/`, { waitUntil: "networkidle" });

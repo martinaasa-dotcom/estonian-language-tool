@@ -107,6 +107,15 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "house rather than maja. Six pairs against the clock.",
   },
   {
+    href: "/sonad", title: "Sõnad", subtitle: "One word a day",
+    icon: "CircleDot", tone: "sky", group: "targeted", note: "Six letters, six guesses",
+    within: "/practice",
+    blurb:
+      "Six circles and an Estonian word behind them, at your level, and a new one every " +
+      "morning. Wrong letters go grey, right ones in the wrong place go amber. Where the " +
+      "word is already in your deck, finishing the round counts towards it.",
+  },
+  {
     href: "/review/target", title: "Target", subtitle: "Fast, mostly endings",
     icon: "Target", tone: "peach", group: "targeted", note: "Shrinking clock",
     within: "/practice",

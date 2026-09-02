@@ -127,6 +127,7 @@ const ROUTES = [
   "/review/target",
   "/practice",
   "/quest",
+  "/sonad",
   "/calendar",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
@@ -227,7 +228,11 @@ const SPARSE = new Map([
 // hundred Estonian chips in four disclosures, and the longest of them
 // (`sellepärast`, `suurepärane`) are exactly the shape the unbreakable pass
 // asks about.
-const { check, absent, done } = suite("Containment", { floor: 1050 });
+// 1070 rather than 1050: Sonad joined it, which is one route and twenty
+// checks. It is the tightest board in the app at 360, six circles across with
+// a 32-key alphabet under them, so it is exactly the route this suite exists
+// for.
+const { check, absent, done } = suite("Containment", { floor: 1070 });
 
 const browser = await launchChromium();
 

@@ -43,6 +43,10 @@ import {
 } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
+import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
+import { puzzleFor } from "@/lib/progress/sonad";
+import { courseLevelFor } from "@/lib/progress/level";
+import type { DayKey } from "@/lib/time/day";
 import { FREQUENCY_GROUPS, type FrequencyGroup } from "@/lib/collections/frequency";
 import { lemmasIn } from "@/lib/progress/common";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
@@ -828,6 +832,60 @@ export async function recordMatchTime(seconds: number) {
   const isNewBest = best === 0 || rounded < best;
   if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.matchBest, String(rounded));
   return { ok: true as const, best: isNewBest ? rounded : best, isNewBest };
+}
+
+/**
+ * A finished round of Sõnad, in the review log where every other mode's is.
+ *
+ * ADR-016 has no exemptions and this does not ask for one: the puzzle's answer
+ * is a dictionary entry, and where the learner already holds a card for it,
+ * finishing the round is evidence about that word. Where they do not, this
+ * writes nothing at all and the finish screen offers to add it instead, which
+ * is the same shape the picture round takes.
+ *
+ * THE CLIENT SENDS GUESSES AND NEVER A SCORE. The board knows the answer,
+ * because marking a guess without a round trip is most of how the game feels
+ * to play, so a posted rating would be a rating anybody can type. The puzzle is
+ * rebuilt here from the day and the learner's own level, exactly as the mock
+ * exam rebuilds its paper to mark it (ADR-022), and `ratingFor` is pure and
+ * runs over the guesses on this side.
+ *
+ * The day is the caller's, and that is deliberate rather than sloppy: the
+ * learner's own midnight is a browser fact, the board is keyed on it, and a
+ * server that recomputed it from its own clock would refuse a round played at
+ * half past eleven at night. The worst a chosen day can do is name a different
+ * word, which grades a different card of the learner's own deck at a rating
+ * they earned on a board they played.
+ */
+export async function recordSonad(day: string, guesses: unknown) {
+  const ownerId = await requireUserId();
+  const played = Array.isArray(guesses)
+    ? guesses.filter((g): g is string => typeof g === "string").slice(0, SONAD_GUESSES)
+    : [];
+  if (played.length === 0) return { ok: false as const, error: "Nothing to record." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false as const, error: "Not a day." };
+
+  const puzzle = await puzzleFor(ownerId, day as DayKey, await courseLevelFor(ownerId));
+  if (!puzzle) return { ok: false as const, error: "No puzzle for that day." };
+
+  const rating = ratingFor(played, puzzle.answer);
+  if (rating === null) return { ok: false as const, error: "That round is not over." };
+  if (!puzzle.inDeck) return { ok: true as const, graded: false };
+
+  /*
+    The production card, because that is the question the game asks: the
+    learner produced the Estonian spelling. Recognition is the other way round
+    and nothing here tested it.
+  */
+  const card = await prisma.card.findFirst({
+    where: { ownerId, lexemeId: puzzle.lexemeId, cardType: "PRODUCTION" },
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+  if (!card) return { ok: true as const, graded: false };
+
+  const result = await gradeCard(card.id, rating, 0);
+  return result.ok ? { ok: true as const, graded: true } : result;
 }
 
 // ──────────────────────────── Learner preferences ──────────────────────────

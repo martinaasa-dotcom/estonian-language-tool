@@ -251,3 +251,33 @@ export function decoyOptions(): Promise<GlossOption[]> {
     return out;
   });
 }
+
+/**
+ * Every Estonian word of one length that the app will accept as a guess.
+ *
+ * A word game has two word lists and they are not the same list. The answers
+ * are graded dictionary entries, because an answer has to be a word the app can
+ * teach and link to afterwards; the *guesses* are the whole language, because
+ * telling somebody that a perfectly ordinary Estonian word is not a word is the
+ * one thing a game like this must never do. `KnownWord` is the 154,995
+ * headwords the Ekilex enumeration brought back, which is what that table was
+ * built for: it knows only which words exist, which is exactly enough.
+ *
+ * Read whole and handed to the browser, so a guess is checked without a round
+ * trip. At six letters that is 7,134 words, about 50 KB of text before the
+ * response is compressed, and the alternative is a server call on every guess
+ * in a game whose whole feel is typing six letters and pressing return. Cached
+ * across requests like everything else here, since which words exist is not a
+ * fact about the person playing.
+ */
+export function guessableWords(length: number): Promise<string[]> {
+  return remember(`guessable:${length}`, FACTS_TTL_MS, async () => {
+    const rows = await prisma.$queryRaw<{ lemma: string }[]>`
+      SELECT lemma FROM "KnownWord"
+      WHERE char_length(lemma) = ${length}
+        AND lemma ~ ${"^[a-zäöüõšž]+$"}
+      ORDER BY lemma
+    `;
+    return rows.map((r) => r.lemma);
+  });
+}

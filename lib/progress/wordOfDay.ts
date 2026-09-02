@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { computeStreak } from "@/lib/achievements/badges";
 import { occasionsFor, type Occasion } from "@/lib/copy/almanac";
 import { bandsAround, isAround } from "@/lib/collections/levels";
+import { dayHashFor, dayIndex } from "@/lib/random/dayHash";
 import type { Level } from "@/lib/collections/syllabus/types";
 import { matchesGloss, senseIndex } from "@/lib/dict/gloss";
 import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
@@ -255,9 +256,19 @@ async function pickAny(ownerId: string, day: DayKey, dayStart: Date, level: Leve
     const total = await prisma.lexeme.count({ where });
     if (total === 0) continue;
 
-    // Stable through the day and spread across the dictionary, from the one
-    // thing that changes at midnight.
-    const skip = hashDay(day) % total;
+    /*
+      Stable through the day and spread across the dictionary, from the one
+      thing that changes at midnight. `dayIndex` rather than a string hash
+      written here: the obvious one moves by a row a day, so this fallback
+      walked the dictionary alphabetically for whoever met it, and a hash that
+      does not walk still repeats at the birthday rate. A stride over the pool
+      does neither. See lib/random/dayHash.ts, where both are measured.
+
+      The tie-break in `choose` below is still a plain hash, and rightly: it
+      is separating a handful of equally good candidates for one gloss rather
+      than indexing a pool, so there is no pool to walk.
+    */
+    const skip = dayIndex(day, "wordOfDay", total);
     const rows = await prisma.lexeme.findMany({
       // `lemma` is not unique (`@@unique` is on `(lemma, pos)`), so the id ends
       // it: a skip landing on `hall` must take the same one of its two rows on
@@ -352,7 +363,7 @@ function choose(matches: Candidate[], gloss: string, day: DayKey, level: Level):
   const best = scored[0];
   if (!best) return undefined;
   const tied = scored.filter((s) => compare(s.rank, best.rank) === 0);
-  return tied[hashDay(day) % tied.length]?.row;
+  return tied[dayHashFor(day, "wordOfDay") % tied.length]?.row;
 }
 
 function compare(a: readonly number[], b: readonly number[]): number {
@@ -400,11 +411,4 @@ function build(row: Candidate, occasion: Occasion | null): WordOfDay {
     example: firstExample(row),
     occasion,
   };
-}
-
-/** A small stable number from a day key. Not a hash anybody relies on, a spreader. */
-function hashDay(day: DayKey): number {
-  let h = 0;
-  for (let i = 0; i < day.length; i++) h = (h * 31 + day.charCodeAt(i)) % 2_147_483_647;
-  return h;
 }

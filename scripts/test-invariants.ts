@@ -591,13 +591,20 @@ check("every practice mode writes to the same review log", () => {
     marks go to applyGradeBatch, so the exam is under this rule rather than
     exempt from it; the invariant below on submitExam is what holds that door
     to applyGradeBatch rather than to Review rows of its own.
+
+    recordSonad is the fourth, and it is the exam's shape exactly. The board
+    knows the answer, because marking a guess without a round trip is most of
+    how that game feels to play, so a rating posted from it would be a rating
+    anybody can type. The client sends the guesses it made, the server rebuilds
+    the day's puzzle and works out what the round was worth, and the check
+    below holds that door to gradeCard the way submitExam's holds its own.
   */
   const sessions = SESSION_FILES().filter((f) => !MEASURES_RATHER_THAN_PRACTISES.includes(f));
   assert.ok(sessions.length >= 6, `expected the practice sessions, found ${sessions.length}`);
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad)\b/,
       `${file} does not write to the shared review log`,
     );
   }
@@ -614,7 +621,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad)\b/,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -730,7 +737,7 @@ check("a session never lets its questions change under the learner", () => {
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam)\b/.test(source)) continue;
+    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad)\b/.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be
@@ -1827,8 +1834,8 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     while the module under it can be imported without a framework.
   */
   const pure = [
-    "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "random", "scan", "security", "stats", "time", "ux",
+    "assessment", "collections", "copy", "estonian", "exam", "games", "gamification",
+    "offline", "random", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -3589,6 +3596,11 @@ check("nothing is stored on a device that would need asking first", () => {
     // to a closed tab is broken rather than private. Answers only, never marks
     // and never questions, and removed the moment the paper is handed in.
     "app/(app)/exam/[level]/resume.ts",
+    // Today's word puzzle, by the same argument one size down: a board that
+    // loses its guesses to a notification taking the tab away is unplayable on
+    // a phone. Guesses only, never the answer, which is worked out from the
+    // date on the server, and swept by the same sign-out.
+    "app/(app)/sonad/resume.ts",
   ];
   for (const file of storage) {
     assert.ok(
@@ -4476,8 +4488,8 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 /**
  * The layers that are pure are still pure, which nothing was checking.
  *
- * CLAUDE.md names thirteen directories that "stay free of React, Next.js and
- * Prisma: pure functions, unit tested", and that was prose alone. All thirteen
+ * CLAUDE.md names the directories that "stay free of React, Next.js and
+ * Prisma: pure functions, unit tested", and that was prose alone. All of them
  * hold today, which is the moment to assert it rather than the moment after
  * one of them stops.
  *
@@ -4497,7 +4509,7 @@ check("a truncated query in the progress layer ends on the primary key", () => {
  */
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
-    "assessment", "estonian", "gamification", "stats", "collections", "time",
+    "assessment", "estonian", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy",
   ];
   const banned = [
@@ -5777,6 +5789,79 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
     dateModule,
     /DateTimeFormat\(\s*undefined/,
     "the Estonian date asks Intl for the deployment's locale",
+  );
+});
+
+check("Sonad decides nothing on the client but what to type", () => {
+  /*
+    THE BOARD KNOWS THE ANSWER AND MUST NOT KNOW THE SCORE.
+
+    Marking a guess without a round trip is most of how the game feels to play,
+    so the word crosses to the browser deliberately: anybody who opens the
+    network tab has spoiled their own morning, which is the bargain every
+    offline word game makes. What may not cross the other way is a rating.
+    `recordSonad` takes the guesses, rebuilds the day's puzzle from the date and
+    the learner's own level, and works out what the round was worth on this
+    side, which is `submitExam`'s shape exactly (ADR-022) and for the same
+    reason: a result anybody can type is not a measurement.
+
+    TWO WORD LISTS, AND THEY ARE NOT THE SAME LIST. The answers are graded
+    dictionary entries, because an answer has to be a word the app can teach
+    and link to. The guesses are `KnownWord`, the 154,995 headwords the Ekilex
+    enumeration brought back, because telling somebody an ordinary Estonian
+    word is not a word is the one thing a game like this must never do, and the
+    built dictionary alone would do it several times a round.
+  */
+  const action = /export async function recordSonad\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.ok(action, "recordSonad has gone, or changed shape past recognition");
+  assert.match(action, /puzzleFor\(/, "recordSonad no longer rebuilds the puzzle, so it is trusting the board");
+  assert.match(action, /ratingFor\(/, "recordSonad no longer works out the rating on the server");
+  /*
+    The signature and not the body, which the first version of this got wrong:
+    a pattern for the word `rating` matched the perfectly correct
+    `gradeCard(card.id, rating, 0)` inside, so the check fired on honest code,
+    which is how a check becomes one people waive.
+  */
+  const signature = /export async function recordSonad\(([^)]*)\)/.exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.doesNotMatch(
+    signature, /rating|score|grade/i,
+    "recordSonad takes a rating from its caller, which is a score anybody can type",
+  );
+
+  const picker = code("lib/progress/sonad.ts");
+  assert.match(
+    picker, /guessableWords\(|guessList/,
+    "Sonad no longer takes its guesses from the whole language",
+  );
+  assert.match(picker, /bandsAround\(/, "Sonad's answer is no longer banded on the learner's level");
+  // And the far end of that: the wide list really is the enumeration's table
+  // and not the built dictionary, which would refuse a real word every round.
+  assert.match(
+    code("lib/dict/facts.ts"), /guessableWords[\s\S]{0,600}"KnownWord"/,
+    "the guess list is no longer read from KnownWord",
+  );
+
+  /*
+    AND THE MOVEMENTS ARE ITS OWN, WHICH IS A LEGAL POSITION AND NOT A TASTE.
+    The game this is shaped like turns a square over to reveal a colour and
+    shakes a row sideways to refuse a guess, and both are recognisable enough
+    to be part of what that game is. A class here naming keyframes nobody wrote
+    is not an error: it is a circle sitting perfectly still, looking exactly
+    like one that was meant to.
+  */
+  const css = read("app/globals.css");
+  for (const name of ["sonad-settle", "sonad-refuse", "sonad-rise"]) {
+    assert.match(css, new RegExp(`@keyframes ${name}\\b`), `${name} is used and never declared`);
+    assert.match(
+      css,
+      new RegExp(`\\.${name}\\s*\\{[^}]*animation:`),
+      `${name} has keyframes and no class to run them`,
+    );
+  }
+  assert.match(
+    css,
+    /prefers-reduced-motion[\s\S]{0,400}sonad-settle/,
+    "Sonad's movements are not held under prefers-reduced-motion",
   );
 });
 
