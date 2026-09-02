@@ -218,11 +218,15 @@ const SPARSE = new Map([
   where it counted 940, and the floor keeps its twenty.
 */
 /*
-  And 960 rather than 940, for the same reason and in the same direction:
-  /funding is one more route, and a route is twenty checks here. Arithmetic on
-  the route list rather than a run being waved through.
+  /funding is one more route, and a route is twenty checks here, so the count
+  moved and the floor did not: it is measured at 960 with every fixture made,
+  and 940 is the twenty-under margin this floor has always kept. Raised to 960
+  first, which is the count exactly, and that is a floor with no room in it:
+  one waived state and the suite fails for a reason that is not a regression.
+  A machine with no provider key waives the scanned page and reaches 940, which
+  is what CI does.
 */
-const { check, absent, done } = suite("Containment", { floor: 960 });
+const { check, absent, done } = suite("Containment", { floor: 940 });
 
 const browser = await launchChromium();
 
