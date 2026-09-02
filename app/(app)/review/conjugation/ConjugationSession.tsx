@@ -55,6 +55,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
   const [added, setAdded] = useState<string | null>(null);
   const startedAt = useRef(Date.now());
   const sound = useFeedbackSound();
+  const run = useRef(0);
 
   const question = questions[index];
   const finished = !question;
@@ -86,7 +87,9 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
     const clean = marks.every((m) => m.verdict === "correct");
     setCellsRight((c) => c + right);
     if (clean) setTablesRight((t) => t + 1);
-    sound(right === marks.length ? "right" : "wrong");
+    // Climbs with the run, the way review does. See lib/audio/feedback.ts.
+    run.current = clean ? run.current + 1 : 0;
+    sound(clean ? "right" : "wrong", run.current);
     // ADR-016: the same review log as every other mode. Four of five is the
     // table known; less is a lapse worth seeing again.
     if (question.cardId) {

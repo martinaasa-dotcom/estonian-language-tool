@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { requireUserId } from "@/lib/auth/session";
 import { dailyGoalFrom, readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { buildReminderIcs, parseReminderTime } from "@/lib/time/reminder";
@@ -14,8 +16,15 @@ export const dynamic = "force-dynamic";
  * the learner already trusts to wake them up, and survives this app being
  * offline, redeployed or closed.
  *
- * One recurring event, no attendees, no alarm chain — the thing a person would
+ * One recurring event, no attendees, no alarm chain, the thing a person would
  * have made by hand.
+ *
+ * THE UID IS A DIGEST, NOT THE ACCOUNT ID. A calendar file is the one thing
+ * this app hands a learner specifically so they can give it to somebody else:
+ * it goes into Google Calendar or iCloud and syncs to every device on the
+ * account. The UID has to be stable, so that re-downloading it updates the
+ * event rather than making a second one, and it does not have to be the
+ * account id to be stable. A digest is both.
  *
  * The file itself is built in `lib/time/reminder.ts`, which is where the
  * argument about timezones is written down. Short version: the hour a learner
@@ -30,7 +39,7 @@ export async function GET(request: Request) {
   const settings = await readSettings(ownerId, [SETTING_KEYS.dailyGoal]);
 
   const ics = buildReminderIcs({
-    uid: `kodukeel-daily-${ownerId}@kodukeel`,
+    uid: `kodukeel-daily-${createHash("sha256").update(ownerId).digest("hex").slice(0, 24)}@kodukeel`,
     at: parseReminderTime(url.searchParams.get("at")),
     goal: dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]),
     url: `${url.origin}/review`,
@@ -41,6 +50,9 @@ export async function GET(request: Request) {
     headers: {
       "content-type": "text/calendar; charset=utf-8",
       "content-disposition": 'attachment; filename="kodukeel-daily.ics"',
+      // One learner's own reminder, for the reason /api/export gives.
+      "cache-control": "private, no-store",
+      vary: "Cookie",
     },
   });
 }

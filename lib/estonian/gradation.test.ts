@@ -91,8 +91,46 @@ describe("which parts of speech gradate", () => {
     expect(gradates("VERB")).toBe(true);
     expect(gradates("PRONOUN")).toBe(false);
     expect(gradates("ADVERB")).toBe(false);
-    // The reason the question exists: run blind, the classifier reads a
-    // pronoun's suppletive stem as an alternation.
-    expect(classifyGradation("kes", "kelle").type).toBe("QUALITATIVE");
+    /*
+      The reason the question exists: run blind, the classifier reads a
+      pronoun's stem change as an alternation and the entry grows a chip
+      saying "this is why the stem changes" over a word whose stem was never
+      weakened, it was replaced.
+
+      This used to name `kes : kelle`, which now reads NONE because the
+      nominative -s is peeled before the centres are compared (see
+      `isDeclensionTypeNotGradation`). That is a better answer and not one to
+      lean on: `kõik : kõige` still reads as k : g, so the guard is what keeps
+      the chip off a pronoun rather than the classifier's good luck.
+    */
+    expect(classifyGradation("kõik", "kõige").type).toBe("QUALITATIVE");
+  });
+});
+
+/**
+ * The words the classifier used to be wrong about, which are the ordinary A1
+ * and A2 nouns and adjectives a learner meets in the first month.
+ */
+describe("a nominative -s is an ending, not a grade", () => {
+  it.each([
+    ["kapsas", "kapsa"], ["kuningas", "kuninga"], ["rahvas", "rahva"],
+    ["taevas", "taeva"], ["kitsas", "kitsa"], ["võõras", "võõra"],
+    ["viisakas", "viisaka"], ["kallis", "kalli"], ["lusikas", "lusika"],
+    ["maasikas", "maasika"],
+  ])("reports no gradation for %s : %s", (nom, gen) => {
+    expect(classifyGradation(nom, gen).type).toBe("NONE");
+  });
+
+  it.each([
+    ["hammas", "hamba", "mm : mb"],
+    ["ratas", "ratta", "t : tt"],
+    ["saabas", "saapa", "b : p"],
+  ])("names the centre's own alternation for %s : %s", (nom, gen, note) => {
+    expect(classifyGradation(nom, gen).note).toBe(note);
+  });
+
+  it("leaves a word with no consonant centre alone", () => {
+    // `uus` peels to `uu`, which has nothing to compare, so it keeps s : ∅.
+    expect(classifyGradation("uus", "uue").note).toBe("s : ∅");
   });
 });

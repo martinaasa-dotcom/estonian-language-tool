@@ -129,10 +129,36 @@ export function clientIp(
   env: Record<string, string | undefined> = process.env,
 ): string | null {
   if (!trustsProxyHeaders(env)) return null;
-  const vercel = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
-  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+
+  /*
+    WHICH HEADER, AND WHICH HOP IN IT, IS THE WHOLE OF THIS FUNCTION.
+
+    It read `x-vercel-forwarded-for` first whenever proxy headers were trusted
+    at all, including the self-hosted `TRUST_PROXY_HEADERS=1` case this
+    function exists for. No proxy but Vercel's own sets that header and no
+    proxy but Vercel's own strips it, so on a self-hosted deployment it is a
+    value the caller typed: send a new one per request and you get an
+    unlimited number of allowances, which is the exact fault the paragraph
+    above rules out. It is read only where the platform that owns it is there.
+
+    And the hop matters as much as the header. `X-Forwarded-For` is a list the
+    client starts and each proxy appends to, so the *leftmost* element is
+    whatever the caller put there and the *rightmost* is the one the trusted
+    proxy added about the connection it actually accepted. Vercel overwrites
+    the whole header, so its own is read from the left; a self-hosted proxy
+    appends, so it is read from the right.
+  */
+  if (env.VERCEL === "1") {
+    const vercel = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
+    const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const real = req.headers.get("x-real-ip")?.trim();
+    return vercel || forwarded || real || null;
+  }
+
+  const hops = req.headers.get("x-forwarded-for")?.split(",") ?? [];
+  const nearest = hops[hops.length - 1]?.trim();
   const real = req.headers.get("x-real-ip")?.trim();
-  return vercel || forwarded || real || null;
+  return nearest || real || null;
 }
 
 /*

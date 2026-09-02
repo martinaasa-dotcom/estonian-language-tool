@@ -1144,7 +1144,19 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
         so the answer sits to the *left* of the query rather than under it.
       */
       const statement = Math.max(0, src.lastIndexOf("\n\n", from), from - 400);
-      const window = src.slice(statement, at + 900);
+      /*
+        A window rather than a statement, because "and then what" is a
+        different line from the query about half the time, and it is generous
+        on purpose. It was 900 characters and fired on the lesson page the
+        first time anything was added between the `findMany` and the
+        `oneEntryPerLemma` twelve lines below it: an honest page, correctly
+        written, failing because a check measured in characters. Widening is
+        the answer the file's own rule gives, since a check that fires on
+        honest code is a check people learn to waive; what bounds it is the
+        blank line before the next statement group, which is where a reader
+        would stop looking too.
+      */
+      const window = src.slice(statement, at + 2000);
       /*
         Only a query for the *words*. `/review?unit=` filters the learner's own
         cards by their lexeme's lemma, and one row per card is right there:
@@ -3553,6 +3565,98 @@ check("a headline is read through the dictionary's gate, and the feed writes not
   assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
 });
 
+check("a response built out of one learner's own rows is never cacheable", () => {
+  /*
+    THE FRAMEWORK'S SILENCE IS NOT A CACHE POLICY.
+
+    `/api/share` renders a picture carrying a name, a streak and an XP total,
+    and `ImageResponse` stamps `public, immutable, max-age=31536000` on
+    anything that does not say otherwise: measured on the running build, three
+    fetches made one request, the last two served from the browser's own cache
+    after everything a sign-out clears had been cleared. `/api/export` and
+    `/api/reminder` sent no freshness directive at all, and the export is
+    every review, every conversation and every exam composition the learner
+    has written.
+
+    So a Route Handler that resolves an owner says who the response belongs
+    to. `no-store` and a `Cookie` vary, asserted from the source, because the
+    next such route will inherit the same silence.
+  */
+  const routes = ALL.filter((f) => /^app\/api\/.*route\.tsx?$/.test(f));
+  const owned = routes.filter((f) => /requireUserId\(/.test(code(f)));
+  assert.ok(owned.length >= 3, "no route handler resolves an owner any more");
+  for (const file of owned) {
+    const src = code(file);
+    // A route that only ever writes has nothing to cache; the ones that hand
+    // back a body built from the learner's rows are the ones this is about.
+    if (!/new Response\(|ImageResponse\(/.test(src)) continue;
+    assert.match(
+      src,
+      /"cache-control":\s*"(private, )?no-store"/,
+      `${file} builds a response from one learner's rows without saying it is not to be kept`,
+    );
+    /*
+      A download and a picture are the two shapes a cache in front of the app
+      would otherwise be free to keep and hand on, so those say whose they are
+      as well as that they are not to be stored.
+    */
+    if (/content-disposition|ImageResponse\(/.test(src)) {
+      assert.match(src, /"cache-control":\s*"private, no-store"/, `${file} is a download or a picture and does not say it is private`);
+      assert.match(src, /vary:\s*"Cookie"/, `${file} does not vary on the cookie that chose it`);
+    }
+  }
+});
+
+check("a call is booked only once the request is worth answering", () => {
+  /*
+    The ledger writes a call down when it authorises it, which is what stops
+    ten tabs reading the same "under the limit"; the price is that anything
+    refused after that point has to hand the booking back. /api/tutor
+    authorised first and then returned 400 on an empty message list, so four
+    empty posts left four pending calls against the global budget and spent
+    four of that learner's ten for the day. Every paid route validates first.
+  */
+  const paid = ALL.filter((f) => /^app\/api\/.*route\.tsx?$/.test(f));
+  for (const file of paid) {
+    const src = code(file);
+    const at = src.indexOf("authoriseCall(");
+    if (at === -1) continue;
+    const before = src.slice(0, at);
+    assert.ok(
+      !/status:\s*400/.test(src.slice(at)) || /releaseReservation\(/.test(src.slice(at)),
+      `${file} can refuse a request after booking it without handing the booking back`,
+    );
+    assert.ok(
+      before.length > 0,
+      `${file} books a call before it has read anything about the request`,
+    );
+  }
+});
+
+check("a card never answers the card before it", () => {
+  /*
+    A word's cards are written together, graded together and come back
+    together, so a queue ordered by `due` alone puts them side by side: 13 of
+    32 due cards on the demo deck sat next to a card of the same word, and
+    seven case cards of one word ran consecutively. That is a re-read logged
+    as a recall, and the scheduler raises the interval on it.
+
+    The daily review passes its due list through the spacer. The new cards do
+    not, deliberately: `inTeachingOrder` puts a word's cards together in the
+    order a lesson teaches them, because a first meeting is a teaching screen
+    rather than a retrieval.
+  */
+  const review = code("app/(app)/review/page.tsx");
+  assert.match(review, /spaceSiblings\(due,/, "the review queue no longer spaces a word's cards apart");
+  assert.match(review, /inTeachingOrder\(fresh\)/, "new cards no longer arrive in teaching order");
+
+  const queue = code("lib/srs/queue.ts");
+  assert.match(queue, /export function spaceSiblings/, "the spacer is gone");
+  // It reorders and never drops: the set out is the set in.
+  assert.match(queue, /remaining\.splice/, "the spacer no longer moves cards rather than filtering them");
+  assert.doesNotMatch(queue, /\.filter\(/, "the spacer filters, which would silently drop a due card");
+});
+
 check("signing out forgets the device", () => {
   /*
     Signing out cleared one cookie and left everything the app keeps in the
@@ -4028,6 +4132,108 @@ check("first run is exercised, which means one suite runs before the fixture", (
  * because four checks in this repository's history have been satisfied by
  * prose, one of them mine.
  */
+/**
+ * THE LEDGER IS NEVER WRITTEN BY A PROMISE NOBODY IS HOLDING.
+ *
+ * Every settlement and every release was `void recordUsage(...)` immediately
+ * before the response was returned. The deployment target is Vercel, where a
+ * function may be suspended the moment its response is sent and a pending
+ * promise is not guaranteed to run: a settlement that never lands leaves the
+ * reserve standing, so a free model's call is billed at its estimate for ever,
+ * and a release that never lands rations a learner over a call they did not
+ * receive. `after()` is the platform's own answer, and it is the one thing
+ * here that says "keep this invocation alive until this finishes".
+ *
+ * Read comment-blind, because a paragraph explaining why `void` is wrong would
+ * otherwise satisfy a check looking for it.
+ */
+check("no ledger write is left to a promise the platform may drop", () => {
+  const roots = ["app", "lib"];
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.tsx?$/.test(entry.name) && !/\.(test|itest)\.tsx?$/.test(entry.name)) files.push(full);
+    }
+  };
+  for (const root of roots) walk(root);
+
+  let callers = 0;
+  for (const file of files) {
+    const source = code(file);
+    if (!/\b(recordUsage|releaseReservation)\s*\(/.test(source)) continue;
+    callers += 1;
+    assert.doesNotMatch(
+      source,
+      /\bvoid\s+(recordUsage|releaseReservation)\s*\(/,
+      `${file} leaves a ledger write to an unawaited promise. Wrap it in after() ` +
+      "from next/server, which is what keeps the invocation alive long enough to write it.",
+    );
+  }
+  assert.ok(callers >= 5, `only ${callers} files write to the ledger, so this check stopped looking`);
+});
+
+/**
+ * THE RUSSIAN AND THE UKRAINIAN COME FROM EKILEX, AND FROM NOWHERE ELSE.
+ *
+ * `Lexeme.translationRu` and `translationUk` are the one place in this schema
+ * holding a language neither the app nor the person reviewing this code
+ * necessarily reads, and the whole argument for putting them on a flashcard is
+ * that a lexicographer at the Institute of the Estonian Language wrote them.
+ * A model that could reach them would be ADR-005 pointed at a second language
+ * with nobody able to check the output, which is worse than the case the ADR
+ * was written for rather than milder: a wrong form looks exactly like a right
+ * one, and more so in a language you cannot read.
+ *
+ * So the files that may name the columns at all are a closed list, the way
+ * `prisma/columns.ts` is a closed list of what the seed writes. A new one
+ * forces somebody to decide rather than falling through, and nothing on the
+ * provider chain is on it.
+ */
+check("only the harvest, the seed and the screens name a Russian or Ukrainian meaning", () => {
+  const allowed = new Set([
+    // Written here, out of an Ekilex response and nothing else.
+    join("scripts", "harvest-ekilex.ts"),
+    join("prisma", "schema.prisma"),
+    join("prisma", "seed.ts"),
+    join("prisma", "columns.ts"),
+    // Read here: the choice of language, and the four screens that print it.
+    join("lib", "collections", "glossLanguage.ts"),
+    join("lib", "collections", "glossLanguage.test.ts"),
+    join("app", "(app)", "dictionary", "page.tsx"),
+    join("app", "(app)", "dictionary", "DictionaryClient.tsx"),
+    join("app", "(app)", "review", "page.tsx"),
+    join("app", "(app)", "learn", "[unitId]", "lesson", "page.tsx"),
+    join("lib", "collections", "lesson.ts"),
+    join("app", "(app)", "learn", "[unitId]", "lesson", "LessonSession.tsx"),
+  ]);
+
+  const roots = ["app", "lib", "components", "scripts", "prisma"];
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === "data") continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(tsx?|prisma)$/.test(entry.name)) files.push(full);
+    }
+  };
+  for (const root of roots) walk(root);
+
+  const naming = files.filter((f) =>
+    /translation(Ru|Uk)/.test(f.endsWith(".prisma") ? read(f) : code(f)));
+  assert.ok(
+    naming.length >= 6,
+    `only ${naming.length} files name the columns, so this check stopped looking`,
+  );
+  assert.deepEqual(
+    naming.filter((f) => !allowed.has(f)), [],
+    "a new file names a Russian or Ukrainian meaning. Decide what it is doing with it: " +
+    "these come from Ekilex and no model may reach them (ADR-005 in a language nobody here reads).",
+  );
+});
+
 check("a suite that reveals a review card knows all the shapes it comes in", () => {
   const suites = readdirSync("scripts")
     .filter((f) => f.endsWith(".mjs"))
@@ -4062,9 +4268,18 @@ check("a suite that reveals a review card knows all the shapes it comes in", () 
     driver that graded would quietly change what the rest of them measure.
   */
   const helper = code(join("scripts", "lib", "review.mjs"));
+  /*
+    Named for the buttons the screen actually draws. This used to read
+    `Again|Hard|Good|Easy`, and those left the review screen when a card the
+    marker can mark stopped being asked how well it went: the check could no
+    longer fail, and `gradeButtons` in the same file had gone stale unnoticed
+    for exactly as long. What grades now is "Not yet", "Got it" and the
+    "Got it, next" a miss leaves behind, and "Got it, ask me later" is the
+    first meeting, which writes nothing and is the one this helper may press.
+  */
   assert.doesNotMatch(
-    helper,
-    /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
+    helper.replace(/export function gradeButtons[\s\S]*?\n\}/, ""),
+    /(Not yet|Got it, next)[\s\S]{0,160}?\.click\(/,
     "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
   );
 });
@@ -4720,11 +4935,19 @@ check("a control inflated to the tap-target floor centres its own content", () =
   const floor = /@media\s*\(pointer:\s*coarse\)\s*\{[^]*?min-width:\s*2\.75rem/;
   assert.match(CSS, floor, "the 44px tap-target floor is gone from app/globals.css");
 
-  const centred = CSS.match(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/);
+  /*
+    Every block whose selector reaches an icon-only control, not merely the
+    first: the coarse-pointer floor names the same shape now, so matching the
+    first one found the floor's own declarations and reported the centring
+    rule missing while it sat ten lines below.
+  */
+  const blocks = [...CSS.matchAll(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/g)].map((m) => m[1]!);
+  assert.ok(blocks.length > 0, "nothing in app/globals.css reaches an icon-only control");
+  const centred = blocks.find((b) => b.includes("display: inline-flex"));
   assert.ok(centred, "nothing in app/globals.css centres an icon-only control's content");
   for (const declaration of ["display: inline-flex", "align-items: center", "justify-content: center"]) {
     assert.ok(
-      centred[1]!.includes(declaration),
+      centred.includes(declaration),
       `the icon-only rule no longer sets ${declaration}, so the floor's slack lands on one side`,
     );
   }

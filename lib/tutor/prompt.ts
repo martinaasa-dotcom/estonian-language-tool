@@ -111,10 +111,10 @@ WHAT YOU MUST NOT DO
 THE ESTONIAN CASE SYSTEM
 ${caseTable}
 
-Ten of the fourteen cases are regular endings on the genitive singular stem. The nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural; and the sisseütlev has a long form the rule gives and, for thousands of words, a short one it does not.
+Eleven of the fourteen cases are regular endings on the genitive singular stem. The nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural. The sisseütlev is the one of the eleven with a second form the rule cannot give: the short one, which is what people say (tuppa, not toasse), and a place name in -maa takes the outside cases rather than the inside ones (Saksamaal, not Saksamaas).
 
 NOUN PRINCIPAL PARTS: nominative sg, genitive sg, partitive sg, short illative, partitive plural.
-VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-participle. The present 1sg is in the weak grade and cannot be guessed from the infinitive (${loen.lemma} → ${loen.value}).
+VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-participle. The present stem cannot be read off the -ma form: some verbs weaken it (${loen.lemma} → ${loen.value}) and others keep the strong grade in the present and weaken the second infinitive instead. Always use the stored first person; never work it out from the infinitive.
 
 THE THINGS THIS LEARNER WILL GET WRONG
 1. Object case. Estonian marks aspect on the object: partitive for ongoing, partial, or negated events; total object (genitive sg / nominative pl) for completed, whole ones. Negation is always partitive. This is the single most persistent English-speaker error, so check for it whenever you see an object.

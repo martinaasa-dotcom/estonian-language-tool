@@ -29,6 +29,8 @@
  * loop at all.
  */
 
+import { isPrincipalFormType } from "@/lib/estonian/types";
+
 /** The eight things that can go wrong, as a learner would name them. */
 export const SUGGESTION_CATEGORIES = {
   MISSING_WORD: {
@@ -194,12 +196,26 @@ export function parsePatchValue(raw: unknown): Patch | null {
       const pos = trimmed(value.pos, 20).toUpperCase();
       if (!lemma || !translation) return null;
       if (!(PATCH_POS as readonly string[]).includes(pos)) return null;
+      /*
+        ONLY THE PRINCIPAL PARTS, WHICH IS ALSO ALL `applyPatch` WILL TAKE.
+
+        Each value was capped at 80 characters and every *key* was copied, so
+        an object with a hundred thousand keys survived into
+        `JSON.stringify(patch)` and was stored on the row. The body cap is
+        16 MB and `sendSuggestion` allows twenty a minute, which is about
+        300 MB a minute into the one table a reviewer has to page through, on
+        a deployment where signing up is open. Eleven keys is the ceiling
+        because eleven is what a word has, and a patch naming anything else is
+        refused rather than quietly trimmed: it is not a correction anybody
+        could accept, so saying so is more use than storing it.
+      */
       const forms: Record<string, string> = {};
       const given = value.forms;
       if (given && typeof given === "object") {
         for (const [key, formValue] of Object.entries(given as Record<string, unknown>)) {
+          if (!isPrincipalFormType(key.toUpperCase())) return null;
           const text = trimmed(formValue, SUGGESTION_LIMITS.form);
-          if (text) forms[key] = text;
+          if (text) forms[key.toUpperCase()] = text;
         }
       }
       return { kind: "CREATE_WORD", lemma, pos, translation, forms };

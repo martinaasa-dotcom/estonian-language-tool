@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { isAllowedEmail, safeNext } from "@/lib/auth/access";
+import { hasSessionCookie } from "@/lib/auth/identity";
 
 /**
  * Where every way in lands: Google's OAuth code, and a mailed sign-in link.
@@ -66,6 +67,38 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return settle(data.user?.email);
   } else if (tokenHash && type) {
+    /*
+      A MAILED LINK CARRIES ITS OWN PROOF, WHICH IS WHY IT NEEDS THIS ONE.
+
+      The PKCE branch above is tied to the browser that asked, because the
+      verifier is a cookie there. This branch deliberately is not: a
+      `token_hash` survives being opened in another browser, which is the
+      whole reason the template shape exists. The cost is that nothing ties
+      the link to the person clicking it, so an attacker who requests a magic
+      link for an address they control and gets a signed-in learner to open it
+      lands that learner in the attacker's account, silently, already at
+      whatever `next` says. Everything the learner then writes, every word
+      they add, every conversation with Anu, is written into a deck somebody
+      else can read.
+
+      So a link that would change who is signed in never just does it. The
+      session in the browser is ended and the learner is sent to sign in
+      again, with a sentence saying what happened. `next` is deliberately
+      dropped: it was chosen by whoever wrote the link, and following it after
+      refusing the account it came with is following half of an instruction.
+
+      Nobody signed in is the ordinary case and is untouched, which is what
+      makes this safe to do: the mailed link works exactly as it always did
+      for the person it was mailed to.
+    */
+    const names = [...request.headers.get("cookie")?.matchAll(/(?:^|;\s*)([^=;]+)=/g) ?? []]
+      .map((m) => m[1]!.trim());
+    if (hasSessionCookie(names)) {
+      const supabase = await createClient();
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/sign-in?switched=1", url.origin));
+    }
+
     const supabase = await createClient();
     const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (!error) return settle(data.user?.email);

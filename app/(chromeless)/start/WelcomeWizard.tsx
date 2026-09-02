@@ -17,6 +17,9 @@ import { DEADLINES, REASONS, TARGETS, deadlineFrom, impliedTarget, reasonsToStor
 import { weeksToLearn } from "@/lib/assessment/plan";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
 import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
+import {
+  DEFAULT_GLOSS_LANGUAGE, GLOSS_LANGUAGES, type GlossLanguage,
+} from "@/lib/collections/glossLanguage";
 
 /**
  * The deck a learner at one level starts with, sized by the server.
@@ -46,12 +49,23 @@ export interface StarterDeck {
   person can already do rather than by its code, since somebody who needs to
   pick a level is exactly somebody who does not know what B2 means.
 */
+/*
+  ONE VOICE, AND IT IS WHAT YOU CAN DO.
+
+  The first two were written as things ("Tere, aitäh, and not much else yet")
+  and the last three as the learner speaking ("I am able to comprehend and add
+  to most conversations"), so the list changed person halfway down on the
+  screen that decides somebody's year, ninety seconds into the app. The last
+  one also assumed a motive nobody had been asked about. Every row is now the
+  same shape as the first two, which is the shape CEFR itself uses: what you
+  can already do.
+*/
 const LEVELS = [
   { key: "A1", label: "Just starting", detail: "Tere, aitäh, and not much else yet." },
   { key: "A2", label: "I get by", detail: "Shopping, online orders, simple sentences." },
-  { key: "B1", label: "Conversational", detail: "I can understand the context of many things, but still miss some things." },
-  { key: "B2", label: "Confident", detail: "I am able to comprehend and add to most conversations." },
-  { key: "C1", label: "Fluent", detail: "Basically fluent, just want to improve my writing." },
+  { key: "B1", label: "Conversational", detail: "A clear conversation, and holding your own side of it." },
+  { key: "B2", label: "Confident", detail: "A meeting, and an article read without stopping." },
+  { key: "C1", label: "Fluent", detail: "Anything, near enough. Here for the shades of meaning." },
 ] as const;
 
 /**
@@ -113,6 +127,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
   const [step, setStep] = useState(0);
   const [name, setName] = useState(suggestedName);
   const [letters, setLetters] = useState<LetterBar>(DEFAULT_LETTER_BAR);
+  const [gloss, setGloss] = useState<GlossLanguage>(DEFAULT_GLOSS_LANGUAGE);
 
   // A set, because almost nobody has one reason: living here, an Estonian
   // partner and a job where the meetings are in Estonian are three answers to
@@ -190,6 +205,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
         dailyGoal: goal,
         unitIds: deck?.unitIds ?? [],
         letterBar: letters,
+        glossLanguage: gloss,
         goals: {
           reason: goals.reason,
           target: goals.target,
@@ -349,6 +365,46 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               </ChoiceGroup>
               <p className="mt-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Change it whenever you like, in Settings or from the row itself.
+              </p>
+            </div>
+
+            {/*
+              WHICH LANGUAGE A MEANING IS GIVEN IN, ASKED ON THE FIRST SCREEN.
+
+              Most people learning Estonian in Estonia already speak Russian or
+              Ukrainian, and this is the answer that decides whether the app is
+              readable to them at all. Buried in Settings it would be found by
+              the people who least need it. It is one row of three buttons, on
+              the screen that already asks the other thing we need before
+              anybody meets an Estonian word, and unlike the letter bar it is
+              asked on a phone too: it is not a fact about the keyboard.
+
+              English stays the default, so somebody who wants it presses
+              nothing. The equivalents come from Ekilex, so nothing here was
+              written by this app or by a model.
+            */}
+            <div
+              className="mt-4 rounded-[var(--r-lg)] border p-5"
+              style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
+            >
+              <ChoiceGroup
+                label="What language would you like meanings in?"
+                className="grid gap-3 sm:grid-cols-3"
+              >
+                {GLOSS_LANGUAGES.map((o) => (
+                  <ChoiceCard
+                    key={o.id}
+                    layout="stacked"
+                    selected={gloss === o.id}
+                    onSelect={() => setGloss(o.id)}
+                    title={o.label}
+                    detail={o.id === "en" ? "The course's own glosses" : o.native}
+                  />
+                ))}
+              </ChoiceGroup>
+              <p className="mt-4 text-xs" style={{ color: "var(--ink-3)" }}>
+                The English stays either way. The Russian and Ukrainian are Ekilex&rsquo;s own,
+                written by the same lexicographers as the Estonian.
               </p>
             </div>
 

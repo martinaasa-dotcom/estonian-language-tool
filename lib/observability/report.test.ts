@@ -31,6 +31,22 @@ describe("redact", () => {
     expect(redact(`token ${jwt} rejected`)).not.toContain(jwt);
   });
 
+  /*
+    The chain grew Groq and Gemini and this pattern list did not follow, so the
+    two key shapes the default free chain can actually hold were the two
+    nothing scrubbed. A provider that quotes its own rejected key back in an
+    error would have written it to the webhook whole.
+  */
+  it("removes a Groq key", () => {
+    const key = "gsk_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    expect(redact(`provider said ${key} is invalid`)).not.toContain(key);
+  });
+
+  it("removes a Gemini key", () => {
+    const key = `AIza${"a1B2c3D4e5F6g7H8i9J0kLmNoPqRsTuVwXy"}`;
+    expect(redact(`provider said ${key} is invalid`)).not.toContain(key);
+  });
+
   it("truncates a very long string rather than logging a whole document", () => {
     const out = redact("x".repeat(5000));
     expect((out as string).length).toBeLessThan(600);

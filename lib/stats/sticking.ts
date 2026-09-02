@@ -126,12 +126,19 @@ export function stickingPoints(
 
 /** One line naming what is wrong, for the card that was flagged. */
 export function stickingNote(point: StickingPoint): string {
-  const also = point.siblings > 0
-    ? ` Another ${point.siblings} card${point.siblings === 1 ? "" : "s"} for this word ${point.siblings === 1 ? "is" : "are"} stuck too.`
-    : "";
+  /*
+    "Another 1 card for this word is stuck too" is not a sentence anybody
+    writes, and the row above it was saying the lapse count twice: once in the
+    chip, which is where a number belongs, and again in words at the front of
+    this line. So the chip keeps the count and this says what the count is not
+    telling you, which is how the card has done over how many attempts.
+  */
+  const also = point.siblings === 0 ? ""
+    : point.siblings === 1 ? " One more card for this word is stuck too."
+    : ` ${point.siblings} more cards for this word are stuck too.`;
 
   if (point.reason === "lapses") {
-    return `Learned and forgotten ${point.lapses} times, ${point.accuracy}% recalled over ${point.reviews} reviews.${also}`;
+    return `Learned and forgotten again, ${point.accuracy}% recalled over ${point.reviews} reviews.${also}`;
   }
-  return `${point.accuracy}% recalled over ${point.reviews} reviews, it has never really settled.${also}`;
+  return `${point.accuracy}% recalled over ${point.reviews} reviews. It has never really settled.${also}`;
 }

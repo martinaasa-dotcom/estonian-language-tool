@@ -149,14 +149,27 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
             </dl>
-            <p className="mt-4 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
-              {term
-                ? "The heading is what a course, a textbook and the state examination call this. The English name is here so that an English reference grammar is still usable, not because anybody teaching Estonian says it. "
-                : "There is no settled Estonian term a class would use for this one, so it keeps its English description rather than being given an invented name. "}
-              {topic.marker
-                ? "The ending above is named as terminology. The forms themselves live on the dictionary entries, where every one of them came from Ekilex rather than from this app."
-                : "Every Estonian form the app shows comes from the dictionary, never from this page."}
-            </p>
+            {/*
+              WHAT IS LEFT HERE IS THE ONE THING A READER WOULD OTHERWISE
+              WONDER ABOUT.
+
+              Every topic used to carry a paragraph explaining why the heading
+              is in Estonian and why the English name is under it, and a second
+              saying that the forms came from Ekilex. Both are true, both are
+              this app talking about itself on a page somebody opened to learn
+              a point of grammar, and the labels in the list above ("Answers",
+              "In plain English", "In English references") already say all of
+              it. What survives is the note for a topic that has no Estonian
+              term, because a heading in English on a page whose neighbours are
+              headed in Estonian looks like an omission until somebody says it
+              is not.
+            */}
+            {!term && (
+              <p className="mt-4 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
+                There is no settled Estonian term a class would use for this one, so it keeps its
+                English description rather than being given an invented name.
+              </p>
+            )}
           </Card>
         )}
 

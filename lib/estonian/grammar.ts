@@ -47,10 +47,10 @@ export const CASE_NOTES: readonly CaseNote[] = [
     uses: [
       "The subject of a verb",
       "The form you look a word up under",
-      "What a whole, countable thing looks like as an object",
+      "A whole object, in the plural or after a command",
     ],
     watchOut:
-      "A whole object takes the nominative or the genitive, never the partitive. The choice says whether the action finished, not how polite you are being.",
+      "A whole object takes the genitive or the nominative, never the partitive. Whole against partial is what says whether the action finished. Which of the two whole forms you use is decided by the sentence: singular with an ordinary verb takes the genitive, and the nominative turns up with plurals, commands and the impersonal.",
     englishHook: "Closest to plain English word order: the thing doing the verb.",
   },
   {
@@ -309,12 +309,12 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "Saying what happened",
     summary: "The tense for anything that happened and finished, and the backbone of any story.",
     points: [
-      "Formed from a past stem that is often unpredictable",
-      "Used for completed events, however recent",
-      "Distinct from the perfect, which is about present relevance",
+      "Built on the second infinitive's stem, with -si- after it",
+      "A short list of the commonest verbs takes -i- instead, and those are learned as forms",
+      "Used for completed events, however recent, and distinct from the perfect",
     ],
     watchOut:
-      "The past stem is not derivable from the present one, which is why the first person past is stored as a principal part. Guessing it is the single most common source of invented verbs.",
+      "The past stem comes from the second infinitive, not from the present: that is the rule your teacher will give you. What is left to learn is which verbs take -i- instead, and the third person, whose grade can change on the way, which is why the first person past is stored as a principal part.",
   },
   {
     id: "perfect",
@@ -399,11 +399,11 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     marker: "-takse",
     points: [
       "Notices, instructions, official prose and news",
-      "Says an action happened without naming or implying an agent",
+      "Says that people did something without saying which people",
       "Has its own forms across the tenses",
     ],
     watchOut:
-      "The English passive lets you add by whom. The impersonal does not, because it is not demoting an agent, it is declining to have one. Translating it as a passive and then looking for the doer is the standard confusion.",
+      "The English passive lets you add by whom, and it can describe a door blown open by the wind. The impersonal has no slot for a doer and always assumes a person: somebody opened that door. Translating it as a passive and then looking for the doer, or reaching for it when nothing human did the thing, are the two standard confusions.",
   },
   {
     id: "participles",
@@ -450,12 +450,12 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     summary: "Estonian has two, and which one a verb takes is a fact about that verb.",
     marker: "-ma",
     points: [
-      "One is the dictionary form and follows verbs of starting and going",
-      "The other follows verbs of wanting, being able and having to",
+      "One is the dictionary form and follows verbs of starting, going and having to",
+      "The other follows verbs of wanting and being able, and the impersonal ways of saying it is necessary",
       "Both are stored, because neither is derivable from the other",
     ],
     watchOut:
-      "English has one infinitive, so there is no intuition to fall back on. The pairing has to be learned with the verb, which is why both are principal parts.",
+      "The everyday verb for must takes the first infinitive, not the second, which is the pairing learners get wrong most: it is I must go in the -ma form, never the -da one. English has one infinitive, so there is no intuition to fall back on and the pairing has to be learned with the verb, which is why both are principal parts.",
   },
   {
     id: "particle-verbs",
@@ -488,7 +488,8 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     title: "The object: whole or partial",
     summary: "The choice between a total and a partial object, and the hardest rule in the language.",
     points: [
-      "A completed action on a whole thing takes the genitive or nominative",
+      "Ask keda? mida? for a partial object, kelle? mille? or kes? mis? for a whole one",
+      "A completed action on a whole thing takes the genitive or the nominative",
       "An unfinished action, or part of a thing, takes the partitive",
       "Negation always takes the partitive, whatever else is true",
     ],

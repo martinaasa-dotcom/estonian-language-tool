@@ -32,6 +32,19 @@
 export async function revealAnswer(page, { timeout = 900 } = {}) {
   const app = page.locator("main");
 
+  /*
+    A word met for the first time is a teaching screen rather than a question:
+    it writes nothing now and puts the card back a few places on, where it is
+    asked in its ordinary shape. A driver that stopped here would report a
+    card answered when none was, so it presses through and asks again.
+  */
+  const meet = app.getByRole("button", { name: /Got it, ask me later/ });
+  if (await meet.count()) {
+    await meet.first().click();
+    await page.waitForTimeout(300);
+    return revealAnswer(page, { timeout });
+  }
+
   const show = app.getByRole("button", { name: /Show answer/ });
   if (await show.count()) {
     await show.first().click();
@@ -49,6 +62,19 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
   if (await page.getByText(/Pick the meaning/).count()) {
     await page.keyboard.press("1");
     await page.waitForTimeout(timeout);
+    /*
+      A right pick now grades itself after 420ms, which this helper promises
+      not to do. One guess in four lands on the answer and there is no way to
+      know which before picking, so when it does the grade is taken straight
+      back through the app's own undo. Undo is disabled until something has
+      been graded in this page's session, and a first meeting writes nothing,
+      so an enabled button here means exactly one thing.
+    */
+    const undo = page.locator("main").getByRole("button", { name: /Undo/ });
+    if ((await undo.count()) && (await undo.first().isEnabled())) {
+      await undo.first().click();
+      await page.waitForTimeout(300);
+    }
     return "choice";
   }
 
@@ -64,7 +90,30 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
   return null;
 }
 
-/** The four rating buttons, which only appear once an answer is showing. */
-export function ratingButtons(page) {
-  return page.locator("main").getByRole("button", { name: /^(Again|Hard|Good|Easy)/ });
+/**
+ * The buttons that write a grade, which only appear once an answer is showing.
+ *
+ * There used to be four of them, Again, Hard, Good and Easy, and this named
+ * those. The screen stopped asking a question it had already answered: a card
+ * the marker can mark grades itself on a clean hit and leaves "Got it, next"
+ * on a miss, and only the flip, which has nothing to compare, still asks, in
+ * two options rather than four. Nothing updated this, so it matched nothing,
+ * and `a11y-check.mjs` waived four checks a run saying the deck had nothing
+ * due while the deck had forty cards due. That is the false-reason waiver
+ * CLAUDE.md warns about, made by the fix that removed the buttons.
+ *
+ * The anchors are exact, because "Got it, ask me later" is the first-meeting
+ * button and writes nothing at all.
+ */
+export function gradeButtons(page) {
+  /*
+    Matched on the accessible name, which is not the words on the button.
+    A self-grade carries `aria-label="Got it, next in 10 min"`, the
+    acknowledgement a miss leaves behind reads "Got it, next Enter" because
+    its key cap is inside it, and the first-meeting button, which writes
+    nothing at all, is "Got it, ask me later Space". Anchoring on `$` matched
+    none of the three and the suite waived four checks a run saying the deck
+    had nothing due. The lookahead is what keeps the meeting out.
+  */
+  return page.locator("main").getByRole("button", { name: /^(Not yet|Got it)(?!, ask me later)/ });
 }

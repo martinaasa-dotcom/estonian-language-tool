@@ -27,12 +27,20 @@ export function generateCode(random: () => number = Math.random): string {
   return out;
 }
 
-/** What someone typed, turned into what to look up. */
-export function normaliseCode(input: string): string {
+/**
+ * What someone typed, turned into what to look up.
+ *
+ * Takes anything, because the caller is a Server Action argument and those
+ * are JSON off the wire whatever the type says: `joinClassroom(42)` reached
+ * `.trim()` here and threw, which the framework answers with a 500 where a
+ * refusal is the honest reply. A non-string is not a code.
+ */
+export function normaliseCode(input: unknown): string {
+  if (typeof input !== "string") return "";
   return input.trim().toUpperCase().replace(/[\s-]/g, "").slice(0, CODE_LENGTH);
 }
 
-export function isValidCode(input: string): boolean {
+export function isValidCode(input: unknown): boolean {
   const code = normaliseCode(input);
   return code.length === CODE_LENGTH && [...code].every((ch) => ALPHABET.includes(ch));
 }

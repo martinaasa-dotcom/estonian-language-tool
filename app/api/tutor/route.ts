@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
@@ -57,18 +58,6 @@ export async function POST(request: Request) {
     before any of this existed.
   */
   const learnerPromise = learnerContextFor(ownerId).catch(() => null);
-  const decision = await authoriseCall(ownerId, "TUTOR");
-  if (!decision.allowed) {
-    return Response.json(
-      { error: decision.message, reason: decision.reason },
-      {
-        status: 429,
-        headers: decision.retryAfterSeconds
-          ? { "retry-after": String(decision.retryAfterSeconds) }
-          : undefined,
-      },
-    );
-  }
 
   const chain = resolveProviders();
   if (chain.length === 0) {
@@ -78,6 +67,17 @@ export async function POST(request: Request) {
     );
   }
 
+  /*
+    NOTHING IS BOOKED UNTIL THE REQUEST IS WORTH ANSWERING.
+
+    The ledger writes a call down when it authorises it, which is what stops
+    ten tabs reading the same "under the limit"; the cost of that is that a
+    booking made before the body is read is a booking nothing hands back.
+    This route authorised first, so four POSTs of `{"messages":[]}` left four
+    pending calls against the global budget and spent four of the learner's
+    ten for the day, having answered nothing. /api/scan and /api/write
+    validate first and this now matches them.
+  */
   let messages: ChatMessage[];
   try {
     const body = (await request.json()) as { messages?: unknown };
@@ -93,6 +93,19 @@ export async function POST(request: Request) {
       .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
   } catch {
     return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
+  }
+
+  const decision = await authoriseCall(ownerId, "TUTOR");
+  if (!decision.allowed) {
+    return Response.json(
+      { error: decision.message, reason: decision.reason },
+      {
+        status: 429,
+        headers: decision.retryAfterSeconds
+          ? { "retry-after": String(decision.retryAfterSeconds) }
+          : undefined,
+      },
+    );
   }
 
   // The learner's text is user content, never spliced into the system prompt.
@@ -127,7 +140,7 @@ export async function POST(request: Request) {
     open = await openWithFallback(chain, system, messages, (usage, config) => {
       // Charged to the provider that actually answered, not the head of the
       // chain: falling back to a dearer model must not go unmetered.
-      void recordUsage({
+      after(() => recordUsage({
         ownerId, kind: "TUTOR", provider: config.name, model: config.model,
         inputTokens: usage.inputTokens, outputTokens: usage.outputTokens,
         // Settles the reservation `authoriseCall` already booked, rather than
@@ -135,13 +148,14 @@ export async function POST(request: Request) {
         // was opened, which is what stops ten tabs reading the same "under the
         // limit" while none of them has been recorded yet.
         reservation: decision.reservation,
-      });
+      }));
     }, live);
   } catch (error) {
     // Nothing was spent and nothing was answered, so the authorisation is
     // handed back: a deployment with a bad key must not ration its learners
     // over calls none of them received.
-    if (decision.reservation) void releaseReservation(decision.reservation);
+    const booking = decision.reservation;
+    if (booking) after(() => releaseReservation(booking));
     const message = error instanceof TutorError ? error.message : "Anu could not be reached.";
     const status = error instanceof TutorError ? error.status : 502;
     return Response.json({ error: message }, { status });

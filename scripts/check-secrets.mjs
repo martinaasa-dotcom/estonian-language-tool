@@ -23,6 +23,10 @@ const PATTERNS = [
   { name: "Anthropic API key", re: /\bsk-ant-[A-Za-z0-9_-]{20,}/g },
   { name: "AWS access key id", re: /\bAKIA[0-9A-Z]{16}\b/g },
   { name: "Google API key", re: /\bAIza[0-9A-Za-z_-]{35}\b/g },
+  // Groq joined the provider chain in `PROVIDER_KEY_ENV` and this list did not
+  // follow it, so the one key shape the default free chain can hold was the one
+  // shape nothing scanned for.
+  { name: "Groq API key", re: /\bgsk_[A-Za-z0-9]{20,}\b/g },
   { name: "Postgres connection string with a password", re: /postgres(?:ql)?:\/\/[^\s"'`:]+:[^\s"'`@]+@/g },
   { name: "Ekilex API key assignment", re: /EKILEX_API_KEY["'`\s]*[:=]\s*["'`][^"'`\s]{8,}/g },
   { name: "private key block", re: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },

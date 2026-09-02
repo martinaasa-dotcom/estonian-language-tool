@@ -115,6 +115,22 @@ export async function GET() {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    {
+      width: 1200, height: 630,
+      /*
+        NOT A YEAR, AND NOT SHARED.
+
+        `ImageResponse` sets `public, immutable, max-age=31536000` when
+        nothing says otherwise, and this picture carries a name, a streak, a
+        card count and an XP total for one learner at one fixed URL. Measured
+        against the running build: three fetches, one request; the second and
+        third were served from the browser's own cache after everything
+        `forgetThisDevice` clears had been cleared, so signing out on a shared
+        laptop left the last person's card one fetch away. It is theirs, it is
+        never worth keeping, and the `Cookie` vary says which of those a cache
+        in front of the app is looking at.
+      */
+      headers: { "cache-control": "private, no-store", vary: "Cookie" },
+    },
   );
 }

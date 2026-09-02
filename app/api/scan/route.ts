@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import {
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
   let reply;
   try {
     reply = await completeWithImage(chain, SCAN_PROMPT, READ_THIS_PAGE, decoded.image, (usage, config) => {
-      void recordUsage({
+      after(() => recordUsage({
         ownerId,
         kind: "SCAN",
         provider: config.name,
@@ -102,13 +103,14 @@ export async function POST(request: Request) {
         inputTokens: usage.measured ? usage.inputTokens : usage.inputTokens + estimateImageTokens(),
         outputTokens: usage.outputTokens,
         reservation: decision.reservation,
-      });
+      }));
     });
   } catch (error) {
     // No page was read, so the authorisation goes back. A vision model that
     // refuses every image would otherwise spend a learner's scan allowance on
     // photographs they never got a word out of.
-    if (decision.reservation) void releaseReservation(decision.reservation);
+    const booking = decision.reservation;
+    if (booking) after(() => releaseReservation(booking));
     if (!(error instanceof TutorError)) {
       reportError(error, { at: "api/scan", ownerId });
     }

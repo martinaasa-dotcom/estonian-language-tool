@@ -93,6 +93,15 @@ export const SETTING_KEYS = {
   ttsVoice: "ttsVoice",
   autoplayAudio: "autoplayAudio",
   feedbackSounds: "feedbackSounds",
+  /**
+   * Which language a meaning is given in beside the English.
+   *
+   * English is the default and stays the default, because a missing row has to
+   * read as the behaviour everybody had. The values and the reasoning live in
+   * lib/collections/glossLanguage.ts; the equivalents themselves come from
+   * Ekilex rather than from anything this app or a model wrote.
+   */
+  glossLanguage: "glossLanguage",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

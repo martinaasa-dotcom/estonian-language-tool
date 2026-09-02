@@ -17,7 +17,11 @@ import { baseUrl, suite } from "./lib/checks.mjs";
  */
 const B = baseUrl();
 // Floor: 52, measured in the state CI seeds, with first run not yet done.
-const { check, absent, done } = suite("Level check", { floor: 48 });
+/*
+  Raised by one: first run now asks what language a meaning should be given in,
+  on the screen before any Estonian is shown.
+*/
+const { check, absent, done } = suite("Level check", { floor: 49 });
 
 const browser = await launchChromium();
 const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
@@ -310,6 +314,16 @@ if (onboarded) {
   const opening = await page.locator("body").innerText();
   check("it states what the app cannot do before it asks for anything",
     /will not score your pronunciation/i.test(opening));
+  /*
+    The one question on this screen that decides whether the app is readable to
+    the person answering it. Most people learning Estonian in Estonia already
+    speak Russian or Ukrainian, and left in Settings this would be found by the
+    people who least need it. English is preselected, so nothing has to be
+    pressed for the rest of this walkthrough to proceed.
+  */
+  check("it asks what language you want meanings in, before any Estonian",
+    (await page.getByRole("radio", { name: /русский/ }).count()) > 0);
+
   await page.getByLabel(/What should we call you/i).fill("Test");
   await page.getByRole("button", { name: /^Continue$/ }).click();
 

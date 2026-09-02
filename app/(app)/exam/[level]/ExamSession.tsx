@@ -594,8 +594,14 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
           <Headphones size={14} className="mr-1.5 inline" aria-hidden />
           Each recording plays {LISTEN_PLAYS} times and no more, just like the real exam. Every
           listening task gives you {READ_QUESTIONS_SECONDS} seconds to read the questions before
-          the audio starts. The real C1 paper plays one task only once; we don&apos;t do that here, so
-          this listening part is a little easier than the real C1 exam.
+          the audio starts.
+          {/* A fact about the C1 paper, printed unconditionally, so the A2
+              briefing carried a caveat about a paper the candidate is not
+              sitting. */}
+          {paper.level === "C1" && (
+            <> The real C1 paper plays one task only once. We don&apos;t do that here, so this
+            listening part is a little easier than the real thing.</>
+          )}
         </Note>
         <Note tone="neutral">
           <WifiOff size={14} className="mr-1.5 inline" aria-hidden />

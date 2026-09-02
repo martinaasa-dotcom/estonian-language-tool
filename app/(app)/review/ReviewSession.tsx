@@ -23,6 +23,7 @@ import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db
 import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { requeue } from "@/lib/srs/queue";
 import { AI_TAG } from "@/lib/copy/values";
 
 export interface ReviewCard {
@@ -42,6 +43,17 @@ export interface ReviewCard {
   intro: {
     lemma: string;
     gloss: string;
+    /**
+     * The Institute's own equivalent in the learner's chosen language, or null.
+     *
+     * The first meeting is the one screen where this earns the most: it is the
+     * moment the word is being learned rather than tested, and somebody who
+     * already speaks Russian or Ukrainian reaches the meaning in one step
+     * instead of two. Beside the English rather than instead of it, since the
+     * English is the gloss every entry has. Comes from Ekilex, like the
+     * sentence under it.
+     */
+    equivalent: { text: string; lang: string } | null;
     /** An attested sentence, and which form of the word it carries. */
     sentence: { et: string; en: string | null; form: string | null } | null;
   } | null;
@@ -124,6 +136,7 @@ function MeetWord({ card }: { card: ReviewCard }) {
   const lemma = card.intro?.lemma ?? card.lemma ?? card.front;
   const gloss = card.intro?.gloss ?? (card.cardType === "RECOGNITION" ? card.back : "");
   const sentence = card.intro?.sentence ?? null;
+  const equivalent = card.intro?.equivalent ?? null;
 
   return (
     <>
@@ -136,6 +149,11 @@ function MeetWord({ card }: { card: ReviewCard }) {
         <Speak text={lemma} autoplay />
       </div>
       {gloss && <p className="text-base" style={{ color: "var(--ink-2)" }}>{gloss}</p>}
+      {equivalent && (
+        <p lang={equivalent.lang} className="text-base" style={{ color: "var(--ink-2)" }}>
+          {equivalent.text}
+        </p>
+      )}
 
       <div className="my-1 h-1 w-14 rounded-full" style={{ background: "var(--accent-soft)" }} />
 
@@ -224,11 +242,26 @@ const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 
-function askFor(card: ReviewCard, mode: ReviewMode): Ask {
-  // A card you have never seen cannot be recalled, only met. Asking someone to
-  // produce a word they have not been shown is a guessing game that teaches
-  // nothing, so a new card leads with its answer.
-  if (card.isNew) return "intro";
+function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): Ask {
+  /*
+    A card you have never seen cannot be recalled, only met. Asking someone to
+    produce a word they have not been shown is a guessing game that teaches
+    nothing, so a new card leads with its answer.
+
+    MEETING IT IS NOT ANSWERING IT, THOUGH. That screen used to end in
+    `submit(3)`: the card was graded Good, in the append-only log, on a word
+    the learner had done nothing with but read. The scheduler then set the
+    first interval from a recall that never happened, and the next real
+    question was the next day. Karpicke and Roediger measured what that costs:
+    learners who kept retrieving new pairs inside the first session recalled
+    about 80 percent a week later, against about 35 for those who only
+    restudied, and the whole difference was whether retrieval happened while
+    the word was being learned.
+
+    So the meeting writes nothing, and the card comes back a few places later
+    as the question it would ordinarily be. That retrieval is the grade.
+  */
+  if (card.isNew && !met.has(card.id)) return "intro";
   if (mode === "type" && TYPEABLE.has(card.cardType)) return "type";
   if (card.cardType === "RECOGNITION" && card.choices && card.choices.length > 1) return "choice";
   return "flip";
@@ -242,13 +275,22 @@ interface Done {
   before: ReviewCard["scheduling"];
 }
 
-export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode }: {
+export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, nextDue }: {
   cards: ReviewCard[];
   drillCase?: string;
   drillUnit?: string;
   /** A photographed page being drilled on its own: its id, and what it is called. */
   drillScan?: { id: string; title: string };
   totalCards: number;
+  /**
+   * One sentence saying when the next card comes back, or null.
+   *
+   * The only question an empty queue raises, and the one the caught-up screen
+   * did not answer: it said "All 312 cards are scheduled for later", which is
+   * a count the learner already knows. Worked out on the server, where the
+   * learner's own zone lives, and only on the path where it is shown.
+   */
+  nextDue?: string | null;
   mode: ReviewMode;
 }) {
   // Snapshotted once on mount, and never updated from later props. gradeCard()
@@ -270,6 +312,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Done[]>([]);
+  /** Cards whose word has been met this session and which are now asked properly. */
+  const [met, setMet] = useState<ReadonlySet<string>>(() => new Set());
   const [pendingOffline, setPendingOffline] = useState(0);
   const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
@@ -279,9 +323,28 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const { voice } = useAudioPrefs();
   const sound = useFeedbackSound();
 
+  /*
+    HOW MANY IN A ROW, WHICH IS WHAT THE RIGHT SOUND CLIMBS WITH.
+
+    The two-note chime was the same every time, so the tenth card you got right
+    sounded exactly like the first and a session had no shape to it. A run that
+    goes up says what a counter would say and says it while you are already
+    reading the next card, which is the one thing sound is better at than a
+    number on a screen.
+
+    A ref rather than state: nothing on the screen reads it, so putting it in
+    state would re-render the card to change a frequency. Undo puts it back to
+    nothing, because taking an answer back is not a run continuing.
+  */
+  const run = useRef(0);
+  const cheer = useCallback((right: boolean) => {
+    run.current = right ? run.current + 1 : 0;
+    sound(right ? "right" : "wrong", run.current);
+  }, [sound]);
+
   const card = queue[index];
   const finished = !card;
-  const ask = card ? askFor(card, mode) : "flip";
+  const ask = card ? askFor(card, mode, met) : "flip";
 
   /*
     Whether the answer is on the screen, which is not the same question as
@@ -378,6 +441,30 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     );
   }, [card, mounted]);
 
+  /**
+   * The learner has met the word. Nothing is written, and the card comes back.
+   *
+   * `requeue` is the same helper the Again path uses, so a first meeting and a
+   * miss are reinserted the same distance on: far enough that the answer is
+   * not still on the screen, near enough that a short session still reaches
+   * it. A session too short for the gap puts the card last, which is the best
+   * a short session can do, and the card is asked either way.
+   */
+  const meetDone = useCallback(() => {
+    if (!card || busy) return;
+    setMet((m) => new Set(m).add(card.id));
+    setQueue((q) => {
+      const next = [...q];
+      const [seen] = next.splice(index, 1);
+      return seen ? requeue(next, seen, index) : next;
+    });
+    setRevealed(false);
+    setTyped("");
+    setVerdict(null);
+    setChosen(null);
+    shownAt.current = Date.now();
+  }, [card, busy, index]);
+
   const submit = useCallback(async (rating: RatingValue) => {
     if (!card || busy) return;
     setBusy(true);
@@ -412,8 +499,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       setQueue((q) => {
         const next = [...q];
         const [failed] = next.splice(index, 1);
-        if (failed) next.splice(Math.min(next.length, index + 5), 0, failed);
-        return next;
+        // The same distance a newly met word waits: see `requeue`.
+        return failed ? requeue(next, failed, index) : next;
       });
       setRevealed(false);
       setTyped("");
@@ -442,6 +529,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       setDone((d) => Math.max(0, d - 1));
       setXp((x) => Math.max(0, x - xpForRating(last.rating)));
       if (last.rating >= 3) setCorrect((c) => Math.max(0, c - 1));
+      // Taking an answer back is not a run continuing.
+      run.current = 0;
       setQueue((q) => {
         // The card may have been requeued by an "Again"; find it wherever it is.
         const without = q.filter((c) => c.id !== last.cardId);
@@ -461,7 +550,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     const result = checkAnswer(typed, card.back, language);
     setVerdict(result);
     setRevealed(true);
-    sound(countsAsRecalled(result.verdict) ? "right" : "wrong");
+    cheer(countsAsRecalled(result.verdict));
     if (result.verdict === "wrong" && typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(60);
     }
@@ -473,21 +562,21 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     if (result.verdict === "correct") {
       window.setTimeout(() => void submit(result.suggestedRating), 420);
     }
-  }, [card, typed, verdict, submit, sound]);
+  }, [card, typed, verdict, submit, cheer]);
 
   const pickChoice = useCallback((choice: string) => {
     if (!card || chosen) return;
     setChosen(choice);
     setRevealed(true);
     const right = choice === card.back;
-    sound(right ? "right" : "wrong");
+    cheer(right);
     if (!right && typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(60);
     if (right) {
       // Right answers move on by themselves: multiple choice is the fast mode,
       // and a confirmation click on every correct card halves the throughput.
       window.setTimeout(() => void submit(3), 420);
     }
-  }, [card, chosen, submit, sound]);
+  }, [card, chosen, submit, cheer]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -522,7 +611,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         // set — and would grade the card before it had been read.
         if (typing) return;
         e.preventDefault();
-        if (ask === "intro") { void submit(3); return; }
+        if (ask === "intro") { meetDone(); return; }
         if (ask === "type" && !verdict) { checkTyped(); return; }
         if (ask === "type" && verdict) { void submit(verdict.suggestedRating); return; }
         // A right pick grades itself on a timer; a wrong one waits here.
@@ -553,7 +642,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, undo, history.length]);
+  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, meetDone, undo, history.length]);
 
   if (wasEmptyAtStart) {
     return (
@@ -587,7 +676,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         ) : (
           <Empty
             title="Nothing due, you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early does not help.`}
+            body={nextDue ?? `All ${totalCards} cards are scheduled for later.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
         )}
@@ -905,8 +994,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
             Hard is still what a near miss is graded. What went is the asking.
           */}
           {ask === "intro" ? (
-            <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(3)} disabled={busy}>
-              Got it, next
+            <Button variant="primary" size="lg" className="w-full" onClick={meetDone} disabled={busy}>
+              Got it, ask me later
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Space
               </kbd>

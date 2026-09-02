@@ -346,11 +346,30 @@ function propStrings(source: string, prop: string): string[] {
     // A JSX child of its own is markup rather than copy, and this is not a
     // parser. Anything holding a tag is left to a person to judge.
     if (/<[A-Za-z]/.test(expr)) continue;
-    for (const lit of expr.match(/"[^"\\]*"|`[^`\\]*`/g) ?? []) {
+    for (const lit of joinConcatenations(expr).match(/"[^"\\]*"|`[^`\\]*`/g) ?? []) {
       out.push(lit.slice(1, -1).replace(/\$\{[^}]*\}/g, "NN"));
     }
   }
   return out;
+}
+
+/**
+ * `"a" + "b"` collapsed into `"ab"`, so a sentence built out of fragments is
+ * measured as the sentence a reader sees.
+ *
+ * This is how the mock exam hub's lead came to be 278 characters under a
+ * 95-character ceiling: four string literals, each comfortably short, joined
+ * with `+`, and the sweep pushed each of them separately. A `?` between two
+ * literals is genuinely two readings and stays two.
+ */
+export function joinConcatenations(expr: string): string {
+  let joined = expr;
+  for (let pass = 0; pass < 40; pass += 1) {
+    const next = joined.replace(/"([^"\\]*)"\s*\+\s*"([^"\\]*)"/, (_, a: string, b: string) => `"${a}${b}"`);
+    if (next === joined) return joined;
+    joined = next;
+  }
+  return joined;
 }
 
 /** Every `<Empty ... />` block in a file, markup and all. */
@@ -373,6 +392,18 @@ describe("there is not too much of it", () => {
     everything, and it would do that silently on the day somebody renames a
     prop.
   */
+  /*
+    And it measures a sentence rather than the pieces it was typed in. The
+    exam hub's lead was four literals joined with `+`, so every fragment
+    cleared the ceiling and the rendered lead was three times it.
+  */
+  it("measures a lead built out of joined fragments as one sentence", () => {
+    const source = 'lead={\n  "One two three. " +\n  "Four five six."\n}';
+    expect(propStrings(source, "lead")).toEqual(["One two three. Four five six."]);
+    // A conditional is two readings and stays two.
+    expect(propStrings('lead={x ? "Yes." : "No."}', "lead")).toEqual(["Yes.", "No."]);
+  });
+
   it("finds the dead ends and the page leads it is supposed to be measuring", () => {
     const empties = FILES.flatMap((f) => emptyBlocks(readFileSync(f, "utf8")));
     const leads = FILES.flatMap((f) => propStrings(readFileSync(f, "utf8"), "lead"));

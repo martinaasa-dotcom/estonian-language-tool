@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { bucketForRequest, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
 import { singleFlightTagged } from "@/lib/cache/singleFlight";
-import { recordUsage } from "@/lib/usage/ledger";
+import { recordUsage, authoriseCall, releaseReservation } from "@/lib/usage/ledger";
 import { DEFAULT_VOICE, voiceFrom, VOICES } from "@/lib/audio/voice";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
@@ -93,6 +93,31 @@ export async function POST(request: Request) {
   const cached = await readAudio(hash).catch(() => null);
   if (cached) return wav(cached.body, cached.from);
 
+  /*
+    A MISS IS METERED, BECAUSE A MISS COSTS SOMETHING.
+
+    Nothing but an in-process limiter stood in front of this, and that limiter
+    resets on every cold start, which the module says of itself. A miss makes
+    a request of TartuNLP, a free academic service this app promises to be a
+    polite consumer of, and writes a WAV into storage that nothing prunes, on
+    a key space of any text a client cares to send. `ALLOWANCE.TTS` in the
+    ledger has described the gate for this the whole time and nothing called
+    it, so the durable daily allowance was dead code. A hit and a joiner are
+    still free: neither asks anybody for anything.
+  */
+  const decision = ownerId ? await authoriseCall(ownerId, "TTS") : null;
+  if (decision && !decision.allowed) {
+    return Response.json(
+      { error: decision.message, reason: decision.reason },
+      {
+        status: 429,
+        headers: decision.retryAfterSeconds
+          ? { "retry-after": String(decision.retryAfterSeconds) }
+          : undefined,
+      },
+    );
+  }
+
   try {
     /*
       Whoever gets here first fetches; everybody who arrives while that is in
@@ -113,14 +138,24 @@ export async function POST(request: Request) {
     // this row counts requests actually made of TartuNLP, and a joiner made
     // none. Counting them would tighten the speech allowance by the size of
     // whatever burst the deduplication just absorbed.
+    const joinerBooking = joined ? decision?.reservation : undefined;
+    if (joinerBooking) {
+      // A joiner made no request of anybody, so it hands its booking back.
+      after(() => releaseReservation(joinerBooking));
+    }
     if (ownerId && !joined) {
-      void recordUsage({
+      after(() => recordUsage({
         ownerId, kind: "TTS", provider: "tartunlp", model: speaker,
         inputTokens: text.length, outputTokens: 0, costMicros: 0,
-      });
+        reservation: decision?.reservation,
+      }));
     }
     return wav(audio, joined ? "joined" : "upstream");
   } catch (error) {
+    // Nothing was spoken, so the booking goes back: a learner must not spend
+    // their day's allowance on a minute when TartuNLP was down.
+    const booking = decision?.reservation;
+    if (booking) after(() => releaseReservation(booking));
     const status = error instanceof SpeechError ? error.status : 503;
     const message =
       status === 502 ? "Speech service could not read that." : "Speech service unreachable.";

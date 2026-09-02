@@ -30,6 +30,17 @@ const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
 
   /*
+    NOTHING ADVERTISES THE FRAMEWORK.
+
+    Next sends `X-Powered-By: Next.js` on every response by default, which is
+    the version-shaped half of a fingerprint handed to anybody who curls the
+    site once. It buys a reader nothing, and this app already sets every other
+    header on the list deliberately (lib/security/headers.ts), so the one that
+    arrived by default was the odd one out.
+  */
+  poweredByHeader: false,
+
+  /*
     LINT IS PART OF THE BUILD, NOT ONLY PART OF CI.
 
     This was `ignoreDuringBuilds: true`, and the `lint` job in CI was the only

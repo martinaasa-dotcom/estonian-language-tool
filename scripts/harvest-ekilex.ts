@@ -65,6 +65,8 @@ const VERB_PARTS: Record<string, string> = {
 
 /** Sentences kept per word. Two teach, ten are a wall of text on the entry. */
 const MAX_USAGES = 4;
+/** Equivalents per language: two is what a card has room for. */
+const MAX_EQUIVALENTS = 2;
 /** A sentence longer than this is a paragraph, not an example. */
 const MAX_USAGE_CHARS = 120;
 const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -90,6 +92,11 @@ interface RawLexeme {
   governments?: { value?: string }[];
   meaning?: { definitions?: { lang?: string; value?: string }[] };
   usages?: RawUsage[];
+  /** Ekilex's equivalents in other languages, which is where rus and ukr live. */
+  synonymLangGroups?: {
+    lang?: string;
+    synonyms?: { type?: string; words?: { wordValue?: string }[] }[];
+  }[];
 }
 interface RawDetails { word?: RawWord; lexemes?: RawLexeme[] }
 interface RawSearch { words?: RawWord[] }
@@ -187,6 +194,8 @@ function extractLexemeData(detail: RawDetails | null) {
   const governments: string[] = [];
   const usages: string[] = [];
   const definitions: string[] = [];
+  const rus: string[] = [];
+  const ukr: string[] = [];
   for (const lx of detail?.lexemes ?? []) {
     if (lx.lexemeProficiencyLevelCode) cefrCodes.push(lx.lexemeProficiencyLevelCode);
     for (const g of lx.governments ?? []) {
@@ -203,6 +212,34 @@ function extractLexemeData(detail: RawDetails | null) {
       if (!value || value.length > MAX_USAGE_CHARS) continue;
       if (!usages.includes(value)) usages.push(value);
     }
+    /*
+      THE INSTITUTE'S OWN RUSSIAN AND UKRAINIAN, FROM THE RESPONSE WE ALREADY
+      HAVE.
+
+      Most people learning Estonian in Estonia already speak one of these, and
+      an app that can only say `kohv` is "coffee" is asking them to go through
+      a third language to reach a word their own would have landed instantly.
+      Ekilex records the equivalents right here, written by the lexicographers
+      who wrote the Estonian, in the same cached response the forms come from:
+      1,965 of the 1,975 entries in the cache carry a Russian one and 1,755 a
+      Ukrainian one, so this costs no request at all.
+
+      `MEANING_WORD` only: the other synonym kinds are relations between
+      meanings rather than the word that is this meaning. `wordValue` rather
+      than `wordValuePrese`, which carries Ekilex's `<eki-stress>` markup for a
+      rendering this app does not do.
+    */
+    for (const group of lx.synonymLangGroups ?? []) {
+      const into = group.lang === "rus" ? rus : group.lang === "ukr" ? ukr : null;
+      if (!into) continue;
+      for (const synonym of group.synonyms ?? []) {
+        if (synonym.type !== "MEANING_WORD") continue;
+        for (const word of synonym.words ?? []) {
+          const value = (word.wordValue ?? "").trim();
+          if (value && !into.includes(value)) into.push(value);
+        }
+      }
+    }
   }
   // The lowest level any sense carries: a word is as easy as its easiest
   // meaning, which is the one a course introduces first.
@@ -214,6 +251,10 @@ function extractLexemeData(detail: RawDetails | null) {
     governments,
     usages: usages.slice(0, MAX_USAGES),
     definition: definitions[0] ?? null,
+    // Two at most, which is what a card has room for and is where a third
+    // stops adding meaning and starts being a list.
+    rus: rus.slice(0, MAX_EQUIVALENTS),
+    ukr: ukr.slice(0, MAX_EQUIVALENTS),
   };
 }
 
@@ -227,15 +268,51 @@ interface Harvested {
   government: string | null;
   usages: string[];
   note: string | null;
+  /** Ekilex's own equivalents in the other two languages of the country. */
+  rus: string[];
+  ukr: string[];
 }
 interface Dropped { lemma: string; gloss: string; pos: string; error: string }
+
+/**
+ * Lemmas Ekilex spells more than one way, collected as the run goes.
+ *
+ * Printed at the end so a person reads the list once and pins what matters in
+ * `WordSpec`'s fourth slot. Six of these were the wrong word for a year.
+ */
+const AMBIGUOUS: { lemma: string; gloss: string; took: number; rivals: number[] }[] = [];
 
 async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
   const { lemma, gloss, pos } = word;
   const wantVerb = pos === "VERB";
   const found = await search(lemma);
-  const candidates = (found?.words ?? []).filter((w) => w.lang === "est" && w.wordValue === lemma);
-  if (candidates.length === 0) return { lemma, gloss, pos, error: "not in Ekilex" };
+  const all = (found?.words ?? []).filter((w) => w.lang === "est" && w.wordValue === lemma);
+  if (all.length === 0) return { lemma, gloss, pos, error: "not in Ekilex" };
+
+  /*
+    A HOMONYM IS RESOLVED BY A PERSON OR REPORTED, NEVER GUESSED THROUGH.
+
+    The loop below took the first candidate whose forms fit and returned, and
+    never looked at the next one. 87 of the course's 1,185 words have more
+    than one exact match in Ekilex, and six came back as a different word:
+    `kohus` with the forms and sentences of moral duty rather than a court,
+    `kaste` as dew rather than sauce, `iga` as age rather than every, and
+    `pidama`, the A1 verb for must, with the past of the verb for keeping a
+    farm, so the conjugation card answered `pidasin` and marked `pidin` wrong.
+    The script's own header promises a mismatch is "dropped rather than
+    guessed through"; this was the one place it was guessed through.
+
+    A pin in the syllabus (`WordSpec`'s fourth slot) picks one. Without a pin,
+    a lemma whose homonyms both carry usable forms is dropped and printed in
+    the report beside "not in Ekilex", which is the same honest shape.
+  */
+  const pinned = word.ekilexWordId
+    ? all.filter((w) => w.wordId === word.ekilexWordId)
+    : all;
+  if (word.ekilexWordId && pinned.length === 0) {
+    return { lemma, gloss, pos, error: `pinned Ekilex word ${word.ekilexWordId} is not a match for this lemma` };
+  }
+  const candidates = pinned;
 
   // An Estonian adverb does not inflect, so demanding a set of forms for one would
   // drop every single connective in the course. Existing in Ekilex is the whole
@@ -260,6 +337,8 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       government: null,
       usages: extra.usages,
       note: extra.definition,
+      rus: extra.rus,
+      ukr: extra.ukr,
     };
   }
 
@@ -282,6 +361,28 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       : ["NOM_SG", "GEN_SG", "PART_SG"];
     if (required.some((r) => !parts[r])) continue;
 
+    /*
+      UNPINNED AND AMBIGUOUS IS REPORTED, LOUDLY, AND STILL HARVESTED.
+
+      Dropping it was the first answer and it is the wrong one: 87 course
+      words have more than one exact match, the first homonym is right for
+      about eighty of them, and dropping the lot would take a fifth of an
+      A1 unit out of the dictionary to fix six words. So the first usable
+      homonym is still taken, and every lemma where that was a choice is
+      printed at the end of the run for a person to pin or wave through.
+      The number beside it is what goes in the syllabus.
+    */
+    if (!word.ekilexWordId && candidates.length > 1) {
+      const rivals: number[] = [];
+      for (const other of candidates) {
+        if (other.wordId === candidate.wordId) continue;
+        if (pickFormSet(await details(other.wordId), wantVerb)) rivals.push(other.wordId);
+      }
+      if (rivals.length > 0) {
+        AMBIGUOUS.push({ lemma, gloss, took: candidate.wordId, rivals });
+      }
+    }
+
     const extra = extractLexemeData(detail);
     return {
       lemma, gloss, pos,
@@ -291,6 +392,8 @@ async function harvestWord(word: CourseWord): Promise<Harvested | Dropped> {
       government: wantVerb ? formatGovernment(extra.governments) : null,
       usages: extra.usages,
       note: extra.definition,
+      rus: extra.rus,
+      ukr: extra.ukr,
     };
   }
   return { lemma, gloss, pos, error: wantVerb ? "no verb forms" : "no nominal forms" };
@@ -354,6 +457,16 @@ export interface HarvestedWord {
   usages: string[];
   /** Ekilex's Estonian explanatory definition, where it has one. */
   note: string | null;
+  /**
+   * The Institute's own Russian and Ukrainian equivalents.
+   *
+   * Not a translation this app made and not one a model made: they come from
+   * the same Ekilex response as the forms and the sentences, written by the
+   * same lexicographers. Most people learning Estonian in Estonia already
+   * speak one of these languages.
+   */
+  rus: string[];
+  ukr: string[];
 }
 
 export const HARVESTED: readonly HarvestedWord[] = [
@@ -369,6 +482,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
       `    government: ${r.government ? q(r.government) : "null"},`,
       `    usages: [${usages}],`,
       `    note: ${r.note ? q(r.note) : "null"},`,
+      `    rus: [${r.rus.map(q).join(", ")}], ukr: [${r.ukr.map(q).join(", ")}],`,
       "  },",
     ].join("\n");
   }).join("\n");
@@ -409,6 +523,15 @@ async function main() {
 
   const ok = results.filter((r): r is Harvested => !("error" in r));
   const failed = results.filter((r): r is Dropped => "error" in r);
+
+  if (AMBIGUOUS.length > 0) {
+    AMBIGUOUS.sort((a, b) => a.lemma.localeCompare(b.lemma, "et"));
+    console.log(`\n${AMBIGUOUS.length} lemmas have more than one Ekilex word with usable forms.`);
+    console.log("The first was taken. Pin one with the fourth slot of the word spec where it matters:");
+    for (const a of AMBIGUOUS) {
+      console.log(`  ${a.lemma} ("${a.gloss}") took ${a.took}, also ${a.rivals.join(", ")}`);
+    }
+  }
 
   ok.sort((a, b) => a.lemma.localeCompare(b.lemma, "et"));
   await writeFile(OUT, render(ok));

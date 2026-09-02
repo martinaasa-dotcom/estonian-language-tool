@@ -18,7 +18,7 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Greet someone, thank them, apologise, and say you do not understand.",
-    blurb: "The twenty phrases that get you through a first conversation without grammar.",
+    blurb: "The phrases that get you through a first conversation without grammar.",
     grammar: ["politeness"],
     cardTypes: ["RECOGNITION", "PRODUCTION"],
     words: [
@@ -85,12 +85,23 @@ export const A1 = [
     level: "A1",
     module: "Esimesed sammud",
     canDo: "Count, give your phone number, say a price and tell someone your age.",
-    blurb: "Counting is where the partitive first bites: kaks raamatut, not kaks raamat.",
+    blurb: "Counting is where the partitive first bites: kaks raamatut, not kaks raamat. The teens end in -teist and the tens in -kümmend, and two of each is the whole pattern.",
     grammar: ["numerals", "partitive"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["inimesed"],
     words: [
+      /*
+        The can-do says "give your phone number, say a price and tell someone
+        your age", and the list stopped at ten and then jumped to a hundred, so
+        a teacher checking the unit against the promise on its own page finds
+        the gap on the first screen. Zero, two teens and two tens is what a
+        class actually teaches: the pattern is `-teist` and `-kümmend`, and
+        somebody who has met two of each has met the rule. Each of these is a
+        request rather than a fact, and the harvest drops and reports any that
+        Ekilex will not confirm.
+      */
       ["number", "number"],
+      ["null", "zero"],
       ["üks", "one"],
       ["kaks", "two"],
       ["kolm", "three"],
@@ -101,6 +112,11 @@ export const A1 = [
       ["kaheksa", "eight"],
       ["üheksa", "nine"],
       ["kümme", "ten"],
+      ["üksteist", "eleven"],
+      ["kaksteist", "twelve"],
+      ["kakskümmend", "twenty"],
+      ["kolmkümmend", "thirty"],
+      ["vanus", "age"],
       ["sada", "hundred"],
       ["tuhat", "thousand"],
       ["esimene", "first", "ADJECTIVE"],
@@ -231,11 +247,16 @@ export const A1 = [
       ["tulema", "to come"],
       ["tegema", "to do, to make"],
       ["saama", "to get, to become"],
-      ["pidama", "to have to, to keep"],
+      ["pidama", "to have to, must", "VERB", 216079],
       ["sööma", "to eat"],
       ["jooma", "to drink"],
       ["tooma", "to bring"],
-      ["viima", "to take away"],
+      // Not "to take away": in English that means to remove, and Ekilex's own
+      // definition and all three stored sentences are about taking somebody or
+      // something somewhere ("Isa viis hommikul lapsed kooli"). The unit pairs
+      // it with tooma, which is the other direction of the same act, and "take
+      // away" points a beginner at ära viima instead.
+      ["viima", "to take (somewhere), to carry"],
       ["andma", "to give"],
       ["võtma", "to take"],
       ["panema", "to put"],
@@ -366,6 +387,16 @@ export const A1 = [
       ["taskurätik", "handkerchief"],
       ["vöö", "belt"],
       ["riie", "cloth, fabric"],
+      /*
+        "Shop for clothes by size" needs a word for size and a word for
+        trousers, and this unit had neither: it taught a handkerchief and a
+        belt, which Ekilex rates B1, and left out the two garments a beginner
+        buys first. Requests, checked by the harvest like every other lemma.
+      */
+      ["suurus", "size"],
+      ["püksid", "trousers"],
+      ["kampsun", "jumper, sweater"],
+      ["saabas", "boot"],
     ],
   }),
 
@@ -459,6 +490,26 @@ export const A1 = [
       ["kohvik", "café"],
       ["restoran", "restaurant"],
       ["hotell", "hotel"],
+      /*
+        The can-do promises "understand the directions you are given", and
+        neither this unit nor Kohasõnad had a word for left, right or straight
+        on. Somebody who has met every building in the town centre and cannot
+        follow "vasakule, siis otse" has not been taught to follow directions.
+        Requests, like every other lemma here.
+      */
+      ["vasak", "left", "ADJECTIVE"],
+      /*
+        The adverbs, not the adjective, because that is what a direction is
+        given with: "vasakul, siis otse". `parem` was requested first and came
+        back as Ekilex 213895, whose note and all four sentences are the
+        comparative of `hea`, better: the homonym fault this whole pass is
+        about, made while fixing it. `paremal` has no such twin.
+      */
+      ["vasakul", "on the left", "ADVERB"],
+      ["paremal", "on the right", "ADVERB"],
+      ["otse", "straight on", "ADVERB"],
+      ["edasi", "onwards, further", "ADVERB"],
+      ["tagasi", "back", "ADVERB"],
     ],
   }),
 
@@ -535,7 +586,7 @@ export const A1 = [
       ["kõik", "all, everything, everybody", "PRONOUN"],
       ["igaüks", "everyone, each one", "PRONOUN"],
       ["mõni", "some, a few", "PRONOUN"],
-      ["iga", "every, each", "PRONOUN"],
+      ["iga", "every, each", "PRONOUN", 171378],
     ],
   }),
 
@@ -583,8 +634,18 @@ export const A1 = [
     level: "A1",
     module: "Maailm ümber",
     canDo: "Say what is on, under, in front of, behind and next to what.",
-    blurb: "These come after the noun, and the noun goes into the genitive: laua peal, not peal laud.",
-    grammar: ["genitive", "adessive"],
+    blurb: "Most of these come after the noun and put it in the genitive: laua peal, not peal laud. A few go in front and ask for another case, and this unit has both.",
+    /*
+      All four cases this unit's twenty words actually take, not the two it
+      used to name. Fifteen of them take the genitive; koos takes the
+      comitative, ilma the abessive, and enne, pärast and mööda the partitive.
+      A beginner following a unit that named only the genitive writes "ilma
+      raha" and "koos sõbra", and the app's own dictionary contradicts the
+      unit on the rektsioon of the very words it links to. Each id resolves to
+      a case page through `grammarPoint`, so the chips say the Estonian name
+      and the question it answers.
+    */
+    grammar: ["genitive", "adessive", "partitive", "comitative", "abessive"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
     requires: ["kus-ja-kuhu"],
     words: [
@@ -653,7 +714,7 @@ export const A1 = [
     level: "A1",
     module: "Maailm ümber",
     canDo: "Say where you are from, what you are, and which language you speak.",
-    blurb: "The neighbours first. A nationality ends in -lane, and where you are from takes the elative: Eestist.",
+    blurb: "The neighbours first. A nationality ends in -lane. Eesti and Soome take the inside cases, Eestist; the countries ending in -maa take the outside ones, the way the islands do: Saksamaal, Saksamaale, Saksamaalt.",
     grammar: ["elative", "nominative"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["kus-ja-kuhu"],

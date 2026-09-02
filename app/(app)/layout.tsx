@@ -90,7 +90,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Below `md:` this is a column and the question never arose, which is
           why it took measuring at 768 to see it at all.
         */}
-        <main id="main" className="dock-pad min-w-0 flex-1">{children}</main>
+        {/*
+          A GUTTER FOR THE BUTTON THAT FLOATS OVER THIS COLUMN.
+
+          Anu's button is fixed 1rem from the right and 56px wide, so its left
+          edge is at 1208 on a 1280 window while the content column ends at
+          1232, and at 768 the column ends at 728 with the button starting at
+          696. It scrolled over the right-hand cards on Today and over the far
+          right of every case row. From the width the rail appears at up to the
+          point the window is wide enough that the column no longer reaches,
+          the column gives it room instead.
+        */}
+        <main id="main" className="dock-pad min-w-0 flex-1 md:pr-[5rem] 2xl:pr-0">{children}</main>
       </div>
       {/* The browser's own pull to refresh went with `overscroll-behavior-y:
           none` in globals.css, and there is no setting that keeps one and not

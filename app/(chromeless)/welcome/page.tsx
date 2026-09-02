@@ -500,7 +500,7 @@ function Features() {
             tone="mint"
             icon={<Target size={18} aria-hidden />}
             title="A plan you can actually keep"
-            body="Say what you are aiming for and by when. It works out the daily goal, keeps your homework and your class week in one place, brings each word back the day before you would forget it, and tells you when you are done."
+            body="Say what you are aiming for and by when. It works out the daily goal, brings each word back the day before you would forget it, and tells you how far off the date you are."
           />
         </Reveal>
       </div>
@@ -825,7 +825,7 @@ const FAQS = [
   ],
   [
     "Where do the Estonian forms come from?",
-    "Every form and example sentence comes from Ekilex, run by the Institute of the Estonian Language, and every English translation from Wiktionary. An AI is never allowed to write an Estonian form: it invents plausible ones that are wrong, and a flashcard would drill the mistake straight in.",
+    "Every form and example sentence comes from Ekilex, run by the Institute of the Estonian Language, and every English gloss from Wiktionary or the course itself. An AI is never allowed to write an Estonian form: it invents plausible ones that are wrong, and a flashcard would drill the mistake straight in. Where Anu translates a sentence for you, it says so on the sentence.",
   ],
   [
     "Is this only for beginners?",

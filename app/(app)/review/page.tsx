@@ -1,3 +1,6 @@
+import { equivalentIn, glossLanguageFrom, type GlossLanguage } from "@/lib/collections/glossLanguage";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { nextCardLine } from "@/lib/time/day";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -8,6 +11,7 @@ import { parseExamples, teachingSentence } from "@/lib/dict/examples";
 import { decoyGlosses } from "@/lib/dict/facts";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
+import { spaceSiblings } from "@/lib/srs/queue";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession, type ReviewCard } from "./ReviewSession";
@@ -48,8 +52,17 @@ export default async function ReviewPage({
   // Started here and awaited where it is read, so the one settings row rides
   // beside the deck reads below rather than in front of them. On a hosted
   // database that is a round trip off the daily path.
-  const settingsPromise = readSettings(ownerId, [SETTING_KEYS.reviewMode]);
+  const settingsPromise = readSettings(ownerId, [
+    SETTING_KEYS.reviewMode, SETTING_KEYS.glossLanguage,
+  ]);
   const modeChosen = async () => reviewModeFrom((await settingsPromise)[SETTING_KEYS.reviewMode]);
+  /*
+    Which language a first meeting gives the meaning in. One read for the whole
+    render: `readSettings` is memoised per request, so asking for both keys here
+    costs the same round trip the review mode already made.
+  */
+  const glossChosen = async () =>
+    glossLanguageFrom((await settingsPromise)[SETTING_KEYS.glossLanguage]);
 
   // `examples` rides along because a card's first outing is a teaching screen
   // and a word taught without a sentence is a word taught as a label. The
@@ -58,7 +71,15 @@ export default async function ReviewPage({
   const include = {
     // `cefr` rides along for the new-card queue below, which introduces words
     // around the learner's level before words far off it.
-    lexeme: { select: { lemma: true, translation: true, pos: true, examples: true, cefr: true } },
+    lexeme: {
+      select: {
+        lemma: true, translation: true, pos: true, examples: true, cefr: true,
+        // For the first meeting only, which is the one screen where a meaning
+        // in the learner's own language earns the most: the word is being
+        // learned there rather than tested.
+        translationRu: true, translationUk: true,
+      },
+    },
   } as const;
 
   // A drill ignores scheduling: the point is to attack one weakness — a case the
@@ -74,9 +95,10 @@ export default async function ReviewPage({
       take: 30,
       include,
     });
+    const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill.map(toReviewCard))}
+        cards={await withChoices(drill.map((c) => toReviewCard(c, gloss)))}
         drillCase={targetCase}
         totalCards={0}
         mode={await modeChosen()}
@@ -94,9 +116,10 @@ export default async function ReviewPage({
           include,
         })
       : [];
+    const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill.map(toReviewCard))}
+        cards={await withChoices(drill.map((c) => toReviewCard(c, gloss)))}
         drillUnit={unitId}
         totalCards={0}
         mode={await modeChosen()}
@@ -131,9 +154,10 @@ export default async function ReviewPage({
           include,
         })
       : [];
+    const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill.map(toReviewCard))}
+        cards={await withChoices(drill.map((c) => toReviewCard(c, gloss)))}
         drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
         mode={await modeChosen()}
@@ -178,11 +202,65 @@ export default async function ReviewPage({
     modeChosen(),
   ]);
 
+  /*
+    A CARD NEVER ANSWERS THE CARD BEFORE IT.
+
+    `addCardsFor` writes a word's cards in one go, they are graded in one
+    session, and they come back with almost the same `due`, so a queue ordered
+    by `due` puts them side by side: measured on the demo deck, 13 of 32 due
+    cards sat next to a card of the same word and seven case cards of `Eesti`
+    ran consecutively. Answering `Eesti → millesse? kuhu?` straight after
+    `Eesti → milles? kus?` is reading the answer off the card before, and the
+    log records it as a recall either way, so the scheduler raises the interval
+    on a memory nothing tested. See lib/srs/queue.ts.
+
+    Only the due list. New cards keep `inTeachingOrder`, which deliberately
+    puts a word's cards together and in the order a lesson teaches them,
+    because a first meeting is a teaching screen rather than a retrieval.
+  */
+  const spaced = spaceSiblings(due, (card) => card.lexemeId);
+
   const fresh = atLevelFirst(freshPool, level)
     .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
-  const cards = await withChoices([...due, ...inTeachingOrder(fresh)].map(toReviewCard));
+  const gloss = await glossChosen();
+  const cards = await withChoices(
+    [...spaced, ...inTeachingOrder(fresh)].map((c) => toReviewCard(c, gloss)),
+  );
 
-  return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
+  /*
+    WHEN THE NEXT CARD COMES BACK, WHICH IS THE ONLY QUESTION AN EMPTY QUEUE
+    RAISES.
+
+    The caught-up screen said "All 312 cards are scheduled for later", which is
+    the count somebody already knows and not the thing they came to find out.
+    `docs/18-voice.md` uses this exact screen as its worked example and the
+    answer it gives is a date.
+
+    Asked only on the path where it is going to be shown, and that is the
+    point rather than a saving: this is one more round trip on a page whose
+    daily job is to open fast, and on the day there is something to review it
+    would answer a question nobody is asking.
+  */
+  const caughtUp = cards.length === 0 && totalCards > 0;
+  const [next, clock] = caughtUp
+    ? await Promise.all([
+        prisma.card.findFirst({
+          where: { ownerId, suspended: false, due: { gt: now } },
+          orderBy: [{ due: "asc" }, { id: "asc" }],
+          select: { due: true },
+        }),
+        learnerDayClock(ownerId),
+      ])
+    : [null, null];
+
+  return (
+    <ReviewSession
+      cards={cards}
+      totalCards={totalCards}
+      mode={mode}
+      nextDue={next && clock ? nextCardLine(next.due, now, clock) : null}
+    />
+  );
 }
 
 /**
@@ -219,7 +297,7 @@ type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
  * Every string in here came out of the dictionary. Nothing is written, and
  * nothing is derived (ADR-005).
  */
-function introFor(c: CardRow): ReviewCard["intro"] {
+function introFor(c: CardRow, glossLanguage: GlossLanguage): ReviewCard["intro"] {
   if (!c.lexeme) return null;
 
   // The form the card is about to ask for comes first, then the lemma. On a
@@ -230,16 +308,19 @@ function introFor(c: CardRow): ReviewCard["intro"] {
   const asked = c.cardType === "RECOGNITION" ? c.front : c.back;
   const found = teachingSentence(parseExamples(c.lexeme.examples), [asked, c.lexeme.lemma]);
 
+  const equivalent = equivalentIn(c.lexeme, glossLanguage);
+
   return {
     lemma: c.lexeme.lemma,
     gloss: c.lexeme.translation,
+    equivalent: equivalent ? { text: equivalent, lang: glossLanguage } : null,
     sentence: found
       ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
       : null,
   };
 }
 
-function toReviewCard(c: CardRow): ReviewCard {
+function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
   return {
     id: c.id,
     cardType: c.cardType,
@@ -251,7 +332,7 @@ function toReviewCard(c: CardRow): ReviewCard {
     isNew: c.state === 0,
     // Only on a card that has never been seen. Every other card in the session
     // would carry a sentence nothing renders.
-    intro: c.state === 0 ? introFor(c) : null,
+    intro: c.state === 0 ? introFor(c, glossLanguage) : null,
     choices: null,
     scheduling: {
       due: c.due.toISOString(),
@@ -286,7 +367,17 @@ function toReviewCard(c: CardRow): ReviewCard {
  * position by definition, which `isStillLearning` reads as Relearning.
  */
 function wantsChoices(card: ReviewCard): boolean {
-  return card.cardType === "RECOGNITION" && !card.isNew && isStillLearning(card.scheduling.state);
+  /*
+    A NEW CARD NOW GETS THEM TOO, BECAUSE IT IS NOW ASKED.
+
+    `!card.isNew` was right while meeting a word was the whole of its first
+    outing: there was no question, so there was nothing to offer options for.
+    A newly met word is asked back before the session ends now, and the memory
+    at that point is minutes old, which is exactly the position the sentence
+    above describes for a card still in learning.
+  */
+  return card.cardType === "RECOGNITION"
+    && (card.isNew || isStillLearning(card.scheduling.state));
 }
 
 /**

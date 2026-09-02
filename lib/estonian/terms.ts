@@ -60,7 +60,7 @@ export const VERB_AXES: readonly { et: string; en: string; blurb: string }[] = [
     et: "kõneviis",
     en: "mood",
     blurb:
-      "Whether you are stating, supposing, instructing, or passing on something you did not witness. Four of them, each with its own endings.",
+      "Whether you are stating, supposing, instructing, or passing on something you did not witness. Four in a school grammar, each with its own endings, and a fifth that reference grammars split off from the imperative.",
   },
   {
     et: "tegumood",
@@ -71,7 +71,7 @@ export const VERB_AXES: readonly { et: string; en: string; blurb: string }[] = [
   {
     et: "pööre",
     en: "person",
-    blurb: "Six persons, marked on the verb, which is why the pronoun is so often left out.",
+    blurb: "Six persons, marked on the verb, so I and you can be dropped in speech. He, she and they stay.",
   },
 ];
 
@@ -99,7 +99,15 @@ const TOPIC_TERMS: Readonly<Record<string, GrammarTerm>> = {
   aspect: { et: "aspekt", alsoCalled: "aspect" },
 
   // ── The noun phrase ──────────────────────────────────────────────────────
-  object: { et: "sihitis", question: "keda? mida?", alsoCalled: "the object" },
+  /*
+    NO QUESTION HERE ON PURPOSE. This said `keda? mida?`, which is the
+    partitive object alone, over a page whose first line is that a whole
+    object takes the genitive or the nominative. School grammar lists six
+    question words for the object precisely because it can stand in three
+    cases, and six do not fit the slot. A point that is a choice between
+    cases is not taught by one question word, so the topic teaches it.
+  */
+  object: { et: "sihitis", alsoCalled: "the object" },
   "adjective-agreement": { et: "ühildumine", alsoCalled: "agreement" },
   comparative: { et: "keskvõrre", alsoCalled: "the comparative" },
   superlative: { et: "ülivõrre", alsoCalled: "the superlative" },

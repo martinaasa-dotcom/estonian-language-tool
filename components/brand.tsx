@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 
 /**
  * Õ — the mascot.
@@ -59,6 +59,20 @@ export function Mascot({
   /* Moods scale every facial period by one factor, so cheering speeds the whole
      face up together rather than leaving the blink at its idle rate while the
      hair hops. */
+  /*
+    A DOCUMENT HOLDS SEVERAL OF THESE AND `url(#id)` RESOLVES AGAINST ALL OF IT.
+
+    The gradient's id was a fixed string, so the first element carrying it won
+    for every mascot on the page. The rail draws one and the rail is
+    `hidden md:flex`, so below 768 the winning gradient sat inside a
+    `display: none` subtree and Chromium painted nothing with it: measured at
+    390, two of them in the document with the first one hidden, which left the
+    Ask Anu button in the corner of every phone screen an empty circle and the
+    empty state on /suggestions two eyes floating on a white card. The brand
+    mark was broken at the width this app is measured at.
+  */
+  const faceId = useId();
+
   const beat = (seconds: number) => `${(seconds * Number(t.face)).toFixed(2)}s`;
   const on = (name: string, seconds: number, origin: string): CSSProperties | undefined =>
     animate ? { animation: `${name} ${beat(seconds)} ease-in-out infinite`, transformOrigin: origin } : undefined;
@@ -74,7 +88,7 @@ export function Mascot({
       aria-label="Kodukeel"
     >
       <defs>
-        <linearGradient id="mascot-face" gradientUnits="userSpaceOnUse" x1="12" y1="6" x2="52" y2="58">
+        <linearGradient id={faceId} gradientUnits="userSpaceOnUse" x1="12" y1="6" x2="52" y2="58">
           <stop offset="0%" stopColor="var(--accent)" />
           <stop offset="100%" stopColor="var(--blush)" />
         </linearGradient>
@@ -83,7 +97,7 @@ export function Mascot({
       {/* The bowl of the õ, and everything drawn on it, breathing as one piece so
           the features do not swim about inside the head. */}
       <g style={on("mascot-breathe", 4, "32px 40px")}>
-        <circle cx="32" cy="40" r="18" fill="url(#mascot-face)" />
+        <circle cx="32" cy="40" r="18" fill={`url(#${faceId})`} />
         <circle cx="32" cy="40" r="8.1" fill="var(--surface)" opacity="0.16" />
 
         <g style={watch ? { transform: "translate(var(--watch-x, 0px), var(--watch-y, 0px))" } : undefined}>
@@ -121,7 +135,7 @@ export function Mascot({
       <path
         d="M21 15.15q5.5-6.5 11 0t11 0"
         fill="none"
-        stroke="url(#mascot-face)"
+        stroke={`url(#${faceId})`}
         strokeWidth="4.2"
         strokeLinecap="round"
         style={animate ? { animation: t.tilde, transformOrigin: "32px 15.15px" } : undefined}

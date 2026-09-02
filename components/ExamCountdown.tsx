@@ -5,7 +5,7 @@ import { EVIDENCE_LABEL } from "@/lib/exam/readiness";
 import { PASS_PCT } from "@/lib/exam/spec";
 import { ButtonLink } from "@/components/Button";
 import { LocalDate } from "@/components/LocalDate";
-import { Card, Ring, SectionTitle } from "@/components/ui";
+import { Card, CardLink, Ring, SectionTitle } from "@/components/ui";
 
 /**
  * THE DATE THEY GAVE US, ON THE SCREEN THEY OPEN.
@@ -45,6 +45,8 @@ export function ExamCountdownCard({ countdown, zone, className }: {
           pct={countdown.confidence}
           size={68}
           tone={passing ? "var(--mint)" : "var(--accent)"}
+          // This card is tinted, so the ring's own default track vanishes into it.
+          track="var(--rule)"
           label={`${countdown.confidence} percent likely to pass ${countdown.band}`}
         >
           <span className="tnum text-md font-bold" style={{ color: "var(--ink)" }}>
@@ -121,13 +123,7 @@ export function ExamCountdownCard({ countdown, zone, className }: {
         <ButtonLink href="/exam" variant="secondary" size="sm">
           Where you stand <ArrowRight size={14} aria-hidden />
         </ButtonLink>
-        <Link
-          href="/settings#goals"
-          className="text-sm underline underline-offset-4"
-          style={{ color: "var(--ink-3)" }}
-        >
-          Change the goal
-        </Link>
+        <CardLink href="/settings#goals">Change the goal</CardLink>
       </div>
     </Card>
   );
