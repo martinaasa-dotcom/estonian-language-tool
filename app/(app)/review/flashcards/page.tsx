@@ -107,8 +107,8 @@ export default async function FlashcardsPage() {
   /*
     A first meeting gives the meaning in the language the learner thinks in, and
     this round can hold one: a word that is not mastered may still be new to a
-    card it has never been asked on. Read here rather than defaulted, so the two
-    routes rendering this session do not disagree about it.
+    card it has never been asked on. Read from the setting above rather than
+    defaulted, so the two routes rendering this session do not disagree about it.
   */
   const gloss = glossLanguageFrom(glossSetting);
   const round = await withChoices(shuffle(picked), gloss);

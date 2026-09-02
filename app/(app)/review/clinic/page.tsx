@@ -41,13 +41,13 @@ export default async function ClinicPage() {
     );
   }
 
-  // The history each card is being judged on. Reviews outlive their cards, but
-  // here the card is very much alive, so this is a plain lookup by cardId.
   /*
-    With the rest of the deck, which the interference check below reads and
-    which needs nothing from this. Two round trips in a line where one does,
-    and both are past the early return, so a learner with no leeches pays for
-    neither.
+    The history each card is being judged on, and the rest of the deck for the
+    interference check below. Reviews outlive their cards, but here the card is
+    very much alive, so the first is a plain lookup by cardId; the second needs
+    nothing from it, so the two are asked at once rather than one after the
+    other. Both sit past the early return, so a learner with no leeches pays
+    for neither.
   */
   const [reviews, deck] = await Promise.all([
     prisma.review.findMany({
