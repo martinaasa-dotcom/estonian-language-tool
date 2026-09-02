@@ -178,10 +178,6 @@ export function levelFrom(bands: readonly BandScore[]): Level | null {
   return level;
 }
 
-function lowest(levels: readonly Level[]): Level | null {
-  if (levels.length === 0) return null;
-  return levels.reduce((a, b) => (rank(a) <= rank(b) ? a : b));
-}
 
 function highest(levels: readonly Level[]): Level | null {
   if (levels.length === 0) return null;
@@ -239,11 +235,36 @@ export function decisiveItems(responses: readonly Response[], level: Level | nul
 /**
  * The whole result.
  *
- * The overall level is the *weakest* measured skill, not the average. A CEFR
- * level is a claim about everything a person can do at it, so a learner who
- * reads at B1 and writes at A2 is an A2 who reads well, and telling them
- * otherwise sets them up to sit an exam they will not pass. The strongest skill
- * is reported alongside it, because that half is true too.
+ * The overall level is the **average** of the measured skills, taken down to a
+ * whole band. That reverses what this function did for its first year, and the
+ * reversal is ADR-020 amendment 2, so the argument on both sides is worth
+ * keeping.
+ *
+ * The old rule was the weakest measured skill, on the reasoning that a CEFR
+ * level is a claim about everything you can do, so a learner who reads at B1
+ * and writes at A2 is an A2 who reads well. That is a good argument about a
+ * *certificate*, and this is not one: the screen it prints on says so in as
+ * many words, twice.
+ *
+ * What it did in practice was worse than imprecise. A real sitting came back
+ * reading B2, A1, B2 and the screen said **below A1**, because one skill fell
+ * through the floor and the floor was the whole rule. Nobody who reads and
+ * writes at B2 is below A1. The number was not a cautious reading of that
+ * learner, it was wrong about them, and it was wrong in the direction that
+ * makes somebody close the app: three bands under a person's own sense of
+ * themselves, on the screen that exists to tell them where they stand.
+ *
+ * A single skill can miss for reasons that are not the learner's level. The
+ * listening section needs the speech service to answer and abandons itself when
+ * it cannot. Writing is the noisiest skill here by measurement, because its
+ * answers are typed and nothing puts a floor under a band the way four options
+ * do. A rule that takes the minimum takes the noise, every time, by
+ * construction.
+ *
+ * So: the mean of the scored skills, floored. The floor is the cautious half
+ * that survives from the old rule, and it is doing the work the old rule was
+ * reaching for. The strongest skill is still reported alongside, because that
+ * half was always true.
  */
 export function placement(items: readonly ItemRef[], responses: readonly Response[]): Placement {
   const skills: SkillResult[] = ALL_SKILLS.map((skill) => {
@@ -273,20 +294,88 @@ export function placement(items: readonly ItemRef[], responses: readonly Respons
     };
   });
 
-  const scored = skills
-    .filter((s) => SCORED_SKILLS.includes(s.skill) && s.measured && s.level !== null)
-    .map((s) => s.level as Level);
+  const scored = scoredLevels(skills);
 
   const itemsAnswered = responses.filter((r) => !r.skipped && r.skill !== "speaking").length;
-  const overall = lowest(scored);
+  const { level: overall, nearly } = overallFrom(scored);
   const decisive = decisiveItems(responses, overall);
 
   return {
     skills,
     overall,
+    nearly,
     ceiling: highest(scored),
     confidence: confidenceFrom(decisive),
     itemsAnswered,
     decisive,
   };
+}
+
+/**
+ * How close the average sat to the next band before it counts as "nearly".
+ *
+ * Half a band, which is the honest reading of "too close to call". Below it the
+ * learner is in the band and the next one is not in view; at or above it the
+ * two bands were genuinely hard to separate and saying only the lower one
+ * undersells somebody who was one skill away.
+ */
+export const NEARLY = 0.5;
+
+/** A level, and the band it was close enough to be worth naming. */
+export interface Overall {
+  level: Level | null;
+  /**
+   * The band above `level`, when the average landed at least `NEARLY` of the
+   * way towards it. Null otherwise, and null is the common answer: this is a
+   * sentence about an edge case and printing it every time would make it noise.
+   */
+  nearly: Band | null;
+}
+
+/**
+ * The scored levels of a set of skill results.
+ *
+ * Exported because two callers need it and they must not disagree: `placement`
+ * computes it from a live sitting, and `/assess` rebuilds it from the skills a
+ * stored sitting kept. A stored row holds `overall` from whenever it was
+ * written, so a row from before this amendment still says what it said; what
+ * this lets the screen do is work the *nearly* out of the skills it does hold,
+ * rather than storing a second column that could disagree with them.
+ */
+export function scoredLevels(skills: readonly SkillResult[]): Level[] {
+  return skills
+    .filter((s) => SCORED_SKILLS.includes(s.skill) && s.measured && s.level !== null)
+    .map((s) => s.level as Level);
+}
+
+/**
+ * The average of some measured levels, floored, and how near the next band it
+ * came.
+ *
+ * `rank` puts pre-A1 at -1 and C1 at 4, so the mean is over evenly spaced
+ * bands and the floor of it is a band. Flooring rather than rounding is
+ * deliberate: between two bands this reports the lower one and names the
+ * higher, which is both the cautious answer and the more useful sentence.
+ */
+export function overallFrom(levels: readonly Level[]): Overall {
+  if (levels.length === 0) return { level: null, nearly: null };
+
+  const mean = levels.reduce((sum, level) => sum + rank(level), 0) / levels.length;
+  const floor = Math.floor(mean);
+  const level = levelAt(floor);
+  const next = levelAt(floor + 1);
+
+  return {
+    level,
+    // `next` is only ever pre-A1 when the floor is below that, which cannot
+    // happen: rank bottoms out at -1. Checked anyway, because "nearly pre-A1"
+    // would be a sentence about being nearly nothing.
+    nearly: mean - floor >= NEARLY && next !== PRE_A1 && next !== level ? next : null,
+  };
+}
+
+/** The band at a rank, clamped: below the first band is pre-A1, above the last is the last. */
+function levelAt(n: number): Level {
+  if (n < 0) return PRE_A1;
+  return BANDS[Math.min(n, BANDS.length - 1)] as Band;
 }

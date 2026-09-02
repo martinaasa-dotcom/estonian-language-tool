@@ -2004,7 +2004,7 @@ see a name arriving through an interpolated option.
 
 **A placement check has no way to skip it, and one way past one question.** Every section opened
 with "Start this section" and "Skip reading" as two buttons of equal weight, and every typed
-question offered "Skip this one" beside Check. The overall level is the weakest of three skills
+question offered "Skip this one" beside Check. The overall level averages three skills
 (ADR-020), so a skipped section is not a gap in the report, it is a hole underneath the number: the
 app measures what somebody felt like doing and then prints a level as though it had measured them.
 Both are gone. What stays is `skipSkill` for listening, which is not a skip and is reached only
@@ -2107,9 +2107,28 @@ check at `/assess` is assembled from `Lexeme`, `Form` and recorded `usages`; eve
 which of those its Estonian came from. Marking is a stored index, a recorded sentence, or a string
 comparison against a form the dictionary vouches for, in that order, and no provider is reachable
 from `lib/assessment/`. A learner meeting this app for the first time cannot tell when the machine
-is the one that is confused, so the machine is never the judge. The overall level follows the
-**weakest** measured skill, because a CEFR level is a claim about everything you can do at it.
-(ADR-020.)
+is the one that is confused, so the machine is never the judge. The overall level is the **average**
+of the measured skills, floored (ADR-020 amendment 2).
+
+**And the average is the level, because the minimum was reporting a stranger three bands under
+themselves.** The rule was the weakest measured skill, on the argument that a CEFR level is a claim
+about everything you can do at it. That argument is about a certificate, and the screen it printed
+on says twice that it is not one. What it did to a real sitting of B2 reading, A1 listening and B2
+writing was print **below A1**, on the one screen whose whole job is telling somebody where they
+stand, and there is no reading of that learner under which it was true. A minimum takes the noise by
+construction, and a skill can miss here for reasons that are not the learner: listening abandons
+itself when the speech service will not answer, and writing is the noisiest skill in the paper by
+measurement, for the reason two paragraphs down. So `overallFrom` takes the mean over `rank` and
+floors it, the floor being the cautious half of the old rule and the half that was doing the work.
+Where the average lands at least half a band short of the next one the result says so, *a confident
+A2, and nearly B1*, and that sentence is deliberately rare, because a caveat printed on every result
+stops being read.
+
+`overall` is therefore a **derivation** and not a measurement, which is the thing to hold on to: the
+per skill columns are what the sitting found and are never touched, and `readOverall` in
+`lib/progress/assessment.ts` recomputes the headline from them on the way out, so a row written under
+the old rule and one written under this one are read the same way and the history list does not show
+two rules side by side. `Assessment` is still append-only in the sense that matters.
 
 **A level read off two questions is a coin toss, and every number in the paper is measured now.**
 Nineteen questions at two per band per skill was the whole paper, and `PASS` is two thirds, so a
@@ -2124,8 +2143,9 @@ be a score somebody can reach**, so a band size is a multiple of three, and 4 pe
 worse than 3 because it demands three quarters. **Writing is the noisiest skill**, since its
 answers are typed and nothing puts a floor under a band the way four options do, so at a fixed
 eighty items spending them on writing beat spending them on listening or reading. And **the
-overall level is the weakest of three skills**, so noise anywhere lands on the result, which is
-why raising reading alone took it only to 52%.
+overall level is drawn from three skills**, so noise anywhere lands on the result, which is
+why raising reading alone took it only to 52%. That last finding is also the measurement behind
+amendment 2: a rule that reads the floor does not merely inherit the noise, it selects for it.
 
 Two scoring rules changed with it. The level is **the highest band passed consecutively from the
 bottom**, which is the rule published placement tests use and was not the rule here: the old one

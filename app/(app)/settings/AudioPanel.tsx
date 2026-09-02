@@ -48,18 +48,23 @@ export function VoicePanel({ current }: { current: string }) {
 }
 
 
+/**
+ * The silent option leads, because it is the default. A settings screen that
+ * lists the option nobody has second reads as though the app were set the
+ * other way.
+ */
 const AUTOPLAY: { value: Autoplay; label: string; detail: string; icon: typeof Ear }[] = [
-  {
-    value: "on",
-    label: "Read each card aloud",
-    detail: "A word is spoken the moment you meet it and the moment its answer appears. The speaker button still works.",
-    icon: Ear,
-  },
   {
     value: "off",
     label: "Only when I press play",
-    detail: "For a library or a bus. Nothing plays until you ask for it.",
+    detail: "Nothing speaks until you ask. The speaker sits on every card.",
     icon: EarOff,
+  },
+  {
+    value: "on",
+    label: "Read each card aloud",
+    detail: "A word is spoken when you meet it and again when its answer appears.",
+    icon: Ear,
   },
 ];
 

@@ -176,10 +176,21 @@ export interface Placement {
   /** Per skill, always in a fixed order so two results compare cleanly. */
   skills: SkillResult[];
   /**
-   * The level all measured skills reach, which is the weakest of them. A CEFR
-   * level is a claim about everything you can do, so it follows the floor.
+   * The average of the measured skills, taken down to a whole band.
+   *
+   * It was the weakest of them until ADR-020 amendment 2. See `placement` in
+   * `./score` for why that changed and what the floor is still doing here.
    */
   overall: Level | null;
+  /**
+   * The band above `overall`, when the average landed close enough to it to be
+   * worth saying. Null almost always, which is the point: "a confident A2, and
+   * nearly B1" is a sentence for the sitting that genuinely fell between two
+   * bands, and it stops meaning anything if every result carries one.
+   *
+   * Null on a `Placement` rebuilt from a stored row that kept no skills.
+   */
+  nearly: Band | null;
   /** The strongest measured skill's level, for the honest "but you can" line. */
   ceiling: Level | null;
   confidence: Confidence;
