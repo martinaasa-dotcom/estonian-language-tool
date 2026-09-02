@@ -1696,3 +1696,18 @@
 @media (prefers-reduced-motion: reduce) {
   .ptr-ring[data-working] { animation: none; }
 }
+
+/*
+  THE WAY OUT OF A CARD MEETS THE FLOOR THE WAY AN INLINE LINK CANNOT.
+
+  `components/ui.tsx`'s `CardLink` is a block-level link on a line of its own,
+  so vertical padding grows the line it sits on rather than pushing the link
+  out of a paragraph, which is exactly what happened when the same padding was
+  put on inline links in running text. Measured at 390 with a coarse pointer,
+  these were 128x19 and 240x19; with this they clear the floor.
+*/
+@media (pointer: coarse) {
+  .card-link {
+    padding-block: 0.625rem;
+  }
+}

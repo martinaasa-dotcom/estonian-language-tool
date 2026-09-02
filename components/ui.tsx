@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
+import { ArrowRight } from "lucide-react";
 import { Mascot } from "@/components/brand";
+import { PrefetchLink } from "@/components/PrefetchLink";
 
 /**
  * Three soft pastel lights, fixed behind the page content.
@@ -353,5 +355,48 @@ export function Skeleton({ className = "", height = 16 }: { className?: string; 
       style={{ height, background: "var(--raised)" }}
       aria-hidden
     />
+  );
+}
+
+/**
+ * The way out of a card, drawn once.
+ *
+ * Today had five of these and every one was invented where it stood: "See the
+ * whole picture on Progress" with a trailing arrow at `text-sm`, "See the full
+ * entry" with a leading book at `text-sm`, "Every mode, and a drill for your
+ * weakest case" with an arrow at `text-xs`, "Open the path" as underlined
+ * text inside a sentence, and "Change the goal" underlined in `--ink-3` at a
+ * four-pixel offset. Five affordances for one job, down one column, so the
+ * eye has to work out what is pressable five times on a page somebody opens
+ * every morning.
+ *
+ * The arrow trails, always, because it is what says "this goes somewhere"
+ * and a leading icon reads as decoration on the sentence rather than as a
+ * direction. An `icon` is for the rare card whose way out needs naming as
+ * well as pointing, and it sits before the words with the arrow still after
+ * them.
+ *
+ * `py-2.5` under a coarse pointer is the 44px floor met the way an inline
+ * link cannot meet it: this is a block-level link on a line of its own, so
+ * padding it grows the line rather than pushing it out of a paragraph. That
+ * is the whole difference, and it is why the floor covers this and leaves a
+ * link inside a sentence alone.
+ */
+export function CardLink({ href, children, icon, className = "" }: {
+  href: string;
+  children: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <PrefetchLink
+      href={href}
+      className={`card-link inline-flex items-center gap-1.5 text-sm font-semibold ${className}`}
+      style={{ color: "var(--accent-deep)" }}
+    >
+      {icon}
+      {children}
+      <ArrowRight size={13} aria-hidden />
+    </PrefetchLink>
   );
 }

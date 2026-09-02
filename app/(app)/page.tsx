@@ -19,10 +19,10 @@ import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
 import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
-import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { FIRST_DOORS, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
+import { Card, CardLink, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
 import type { TaskView } from "@/components/TaskRow";
 import { ExamCountdownCard } from "@/components/ExamCountdown";
@@ -186,7 +186,16 @@ export default async function TodayPage() {
     isToday: day === summary.dayKey,
   }));
 
-  const modes = QUICK_MODES.slice(0, practiceTiles(stage));
+  /*
+    On the first morning the two doors are the two that work on a deck with no
+    history, and not simply the first two in the table: `QUICK_MODES` opens
+    with Case Sprint, which is sixty seconds of case forms "drawn from the
+    cards you are weakest on", offered to somebody who has answered nothing.
+    See `FIRST_DOORS`.
+  */
+  const modes = stage === "arriving"
+    ? FIRST_DOORS.slice(0, practiceTiles(stage))
+    : QUICK_MODES.slice(0, practiceTiles(stage));
 
   /*
     THE MODULES.
@@ -282,9 +291,8 @@ export default async function TodayPage() {
 
       {stage === "arriving" && snapshot.totalCards > 0 && toReview > 0 && (
         <p className="text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Answer honestly rather than generously. The scheduler uses your ratings to work out
-          when to ask again, so a card you nearly knew is worth more to it than a card you
-          said you knew.
+          Type or pick where you can, and where a card just asks, say honestly whether you
+          knew it. The scheduler works out when to ask again from that.
         </p>
       )}
     </Card>
@@ -421,9 +429,15 @@ export default async function TodayPage() {
     <TodayPlan tasks={tasks.map(taskView)} clock={clock} now={now} />
   ) : null;
 
+  /*
+    A Card like every one of its neighbours. It was a bare `<section>`, so its
+    heading sat 25px further left than the four above it and its rows read as
+    three loose boxes under a heading belonging to nothing. The rows keep their
+    own borders, because a quest that is done is drawn as a filled row and
+    losing that would lose the only thing the panel says at a glance.
+  */
   const questsCard = shows(stage, "quests") ? (
-
-    <section>
+    <Card>
       <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
         Today&rsquo;s quests
       </SectionTitle>
@@ -472,7 +486,7 @@ export default async function TodayPage() {
           );
         })}
       </ul>
-    </section>
+    </Card>
   ) : null;
 
   /* The words and the cases that keep going wrong, from the one calculation each. */
@@ -531,13 +545,9 @@ export default async function TodayPage() {
       </div>
       {/* The hub rather than a seventh tile: six hues, six modes, and the
           grid stays a grid. */}
-      <Link
-        href="/practice"
-        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold"
-        style={{ color: "var(--accent-deep)" }}
-      >
-        Every mode, and a drill for your weakest case <ArrowRight size={13} aria-hidden />
-      </Link>
+      <CardLink href="/practice" className="mt-3">
+        Every mode, and a drill for your weakest case
+      </CardLink>
     </Card>
   ) : null;
 
@@ -611,7 +621,15 @@ export default async function TodayPage() {
         left column has the plan and the streak in it and no longer needs the
         help. Below `lg` all of this is one column in reading order anyway.
       */}
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      {/*
+        `gap-8` down, `lg:gap-6` across. Below `lg` this grid is one column, so
+        its gap is the seam between the last card of the left stack and the
+        first of the right, and at 24px it was the one tighter join on a page
+        whose every other section sits 32px from its neighbour. Across, at the
+        width where the two columns are actually side by side, 24px is the
+        gutter between them and is right.
+      */}
+      <div className="grid gap-8 lg:gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Stack className="min-w-0">
           {doNowCard}
           {stage === "arriving" && practiceCard}
@@ -648,7 +666,9 @@ function PracticeTile({ mode }: { mode: PracticeMode }) {
     >
       <span style={{ color: toneInk(mode.tone) }}><Glyph size={17} aria-hidden /></span>
       <span className="mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
-      <span className="text-2xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
+      {/* Lowercase running text, so `text-xs`: the 11.5px step is the floor for
+          tracked uppercase labels and this is a sentence on a pastel tile. */}
+      <span className="text-xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
     </Link>
   );
 }

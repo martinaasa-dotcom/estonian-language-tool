@@ -165,7 +165,14 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   each. The run before the cut counted 335 and the run after it 308, which
   is the same twenty-seven, and the floor keeps the five it always sat under.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 303 });
+/*
+  Raised by exactly four: the two-per-theme checks on a graded review card had
+  been waived on every run, because `gradeButtons` named four buttons the
+  screen stopped drawing. They run now, so the floor rises by the number that
+  stopped being skippable rather than by however many the run happens to
+  reach.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 307 });
 
 for (const route of ROUTES) {
   await page.goto(`${BASE}${route}`, { waitUntil: "networkidle" });
