@@ -33,7 +33,6 @@ export const RETIRED_WORDS: readonly WordSpec[] = [
   ["erialane", "specialist", "ADJECTIVE"],
   ["eristuma", "to stand out, to differ", "VERB"],
   ["eristus", "distinction", "NOUN"],
-  ["esitama", "to present, to put forward", "VERB"],
   ["essee", "essay", "NOUN"],
   ["etteheide", "reproach", "NOUN"],
   ["hageja", "plaintiff", "NOUN"],
