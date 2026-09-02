@@ -217,7 +217,14 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           cardType: type,
           front: `${lex.lemma} → ${caseByKey("GENITIVE")!.question}`,
           back: genSg,
-          hint: lex.gradationNote ? `astmevaheldus ${lex.gradationNote}` : "astmevaheldus · consonant gradation",
+          /*
+            The hint is shown before the answer, so it may not carry the
+            pattern: `astmevaheldus mm : mb` over `hammas → kelle? mille?`
+            hands `hamba` straight over and the card stops being a question.
+            The pattern is on the entry, on the grammar page the answer links
+            to, and in the chip beside the word wherever it is printed.
+          */
+          hint: "astmevaheldus · consonant gradation",
           targetCase: "GENITIVE",
         });
         break;

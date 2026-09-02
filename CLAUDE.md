@@ -292,6 +292,27 @@ under "worked out from loen" with the stored form in bold, the four verb topic p
 on the learner's own verbs with a provenance chip, and an attested form always answers first, so
 the moment an entry is enriched the rule steps aside.
 
+**The one card the course never built was the one every other card is built on.** `GRADATION` asks
+`hammas → kelle? mille?` and takes `hamba`. Nothing else in the deck asks for the genitive:
+`PRODUCTION` wants the nominative, `CLOZE` wants whatever form the sentence happens to have, and
+every `CASE_FORM` card is the genitive stem plus an ending, so a learner who cannot say `hamba`
+cannot answer any of them. Consonant gradation is where that form gets hard and no rule predicts it,
+and not one of the 79 units named the type. The landing page has been promising it the whole time,
+beside government and the partial object, which units do ask for.
+
+It is added in `unit()` rather than typed into 53 unit literals, because it is a property of the
+word and not a choice a unit makes, and only where the unit asks for a form at all: a unit of
+greetings teaches phrases, which have no stem to gradate. The generator produces nothing for a word
+that does not gradate, so this is 86 cards across a course of 5,248. And the hint had to change with
+it: it read `astmevaheldus mm : mb`, which is shown *before* the answer and hands `hamba` straight
+over, so the card was not a question. The pattern is on the entry, on the grammar page the answer
+links to, and in the chip beside the word.
+
+The unit page's line names what a unit will build rather than what it asked for, which was already
+loose and is now checked for this one type, since the column is a single field. The honest check for
+the others would be fetching every example sentence to see whether a gap can be made, which is the
+query this file warns about two sections down.
+
 **Which forms a gap-fill may hide is one answer, and it was five.** `buildCloze` hides a word it is
 told to look for, so what it can hide is whatever list the caller hands it. Two callers, the lesson
 planner and the level checkpoint, added the ten regular cases and were the same twenty lines twice.

@@ -102,6 +102,33 @@ describe("the course", () => {
     const introductions = courseWords().map((w) => `${w.lemma}|${w.pos}`);
     expect(new Set(introductions).size).toBe(introductions.length);
   });
+  /*
+    THE ONE CARD THE COURSE NEVER BUILT.
+
+    Nothing else in the deck asks for the genitive: production wants the
+    nominative, a gap-fill wants whatever the sentence has, and every case card
+    is the genitive stem plus an ending. So the form the others are all built on
+    was the one nobody was asked to produce, and consonant gradation, which is
+    where it gets hard, went undrilled for the whole course. Not one of the 79
+    units named the type, while the landing page promised it.
+  */
+  it("drills the genitive wherever it asks a learner to produce a form", () => {
+    const producing = SYLLABUS.filter(
+      (u) => u.cardTypes.includes("CASE_FORM") || u.cardTypes.includes("CONJUGATION"),
+    );
+    expect(producing.length).toBeGreaterThan(40);
+    for (const unit of producing) {
+      expect(unit.cardTypes, unit.id).toContain("GRADATION");
+    }
+  });
+
+  it("does not ask for it where nothing is produced", () => {
+    // A unit of greetings teaches phrases, which have no stem to gradate.
+    for (const unit of SYLLABUS) {
+      if (unit.cardTypes.includes("CASE_FORM") || unit.cardTypes.includes("CONJUGATION")) continue;
+      expect(unit.cardTypes, unit.id).not.toContain("GRADATION");
+    }
+  });
 });
 
 describe("checkpoints", () => {
