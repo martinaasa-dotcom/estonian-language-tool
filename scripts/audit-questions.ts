@@ -43,6 +43,7 @@ import { mentions } from "../lib/estonian/cloze";
 import { SCENES } from "../lib/collections/scenes";
 import { emojiFor } from "../lib/collections/emoji";
 import { ASKABLE_CASES, taskFor, type SceneWord } from "../lib/games/describe";
+import { caseQuestion } from "../lib/progress/target";
 
 interface Row { lemma: string; pos: string; cefr: string | null; translation: string;
   forms: { formType: string; value: string }[]; examples: { et: string; en?: string | null }[];
@@ -86,7 +87,7 @@ const spent = new Map<string, number>();
   the only way to know it is to print it, which the line below now does.
 */
 const REACHES: Record<string, number> = {
-  deck: 36_404, exam: 2_500, check: 619, crossword: 5_295, scene: 1_972,
+  deck: 36_404, exam: 2_500, check: 619, crossword: 5_295, scene: 1_972, target: 4_677,
 };
 
 const askedIn = new Map<string, number>();
@@ -257,6 +258,43 @@ for (const scene of SCENES) {
       ask(`scene ${scene.id} ${words[index]!.lemma} ${caseKey}`, prompt, task.accepted.join(" / "));
     }
   }
+}
+});
+
+/* ── Target ──────────────────────────────────────────────────────────────── */
+/*
+  The aim-and-hit round offers four forms of one word under the lemma and the
+  question its case answers, so a form spelled like the lemma is an option the
+  learner takes straight off the prompt. 122 of the 51,447 case slots the
+  shipped dictionary can fill were spelled that way, every one of them a word
+  ending in `s` whose seesütlev comes back to the nominative.
+
+  `caseQuestion` is exported for this, because the round itself is a database
+  read and cannot be asked from a file.
+
+  THIS SECTION SAMPLES WHERE THE OTHERS ARE EXHAUSTIVE, and says so rather than
+  reading as though it were not. The builder picks one of the word's eleven
+  cases itself, which is what the round does, so one call asks one of them: with
+  the guard removed this reported 15 of the 122 slots that were free rather than
+  all 122. Every one of those is a failure and the count of them is not the
+  point, but a fault on a single word could be missed on a single run, which is
+  worth knowing about a check before trusting it. The rule the round applies is
+  total; this is the backstop, not the rule.
+*/
+timed("target", () => {
+for (const e of entries) {
+  if (e.pos !== "NOUN" && e.pos !== "ADJECTIVE") continue;
+  const forms = (e.forms ?? []).map((f) => ({
+    formType: f.formType, morphCode: null, value: f.value,
+  }));
+  const question = caseQuestion({ lemma: e.lemma, forms }, "audit");
+  if (!question) continue;
+  // What the learner is shown: the word and the question its case answers.
+  ask(
+    `target ${e.lemma} ${question.caseEt ?? ""}`,
+    `${question.lemma} ${question.question ?? ""}`,
+    question.options[question.answer] ?? "",
+  );
 }
 });
 
