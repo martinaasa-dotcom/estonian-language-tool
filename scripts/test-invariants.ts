@@ -6391,6 +6391,58 @@ check("nothing builds a verb form out of a stem and a person ending outside lib/
   assert.match(audit, /morphCode === d\.morphCode/, "scripts/audit-verbs.ts stopped comparing against Ekilex's own slot");
 });
 
+/*
+  A CARD IS GRADED IN ONE PLACE.
+
+  `Review` is append-only, so a row written wrongly is permanent, and the row
+  was being written in two places: `gradeCard` for a learner who is online and
+  `applyGradeBatch` for a device coming back. Both created the row and then
+  updated the card's scheduling, and the two had drifted on the one thing that
+  is genuinely hard here, which moment the grade is recorded at.
+
+  `gradeCard` floored it at the card's own creation, and said why in a comment:
+  a review dated before its card existed is a review of something that was not
+  there, and the streak, the heatmap and every "reviews this week" figure read
+  that column with no way to tell a replayed grade from a forged one. The
+  replay path had no such floor, and it is the door a device's own timestamps
+  actually come through, so the fix had been written on the one nobody was
+  using.
+
+  `lib/srs/grade.ts` is the one writer now. A third caller inherits the floor
+  by reaching for the function, which is the only way this stays true.
+*/
+check("nothing grades a card outside lib/srs/grade.ts", () => {
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !["lib/srs/grade.ts", "app/actions.ts"].includes(file))
+    .filter((file) => !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\breview\.create(?:Many)?\s*\(/.test(code(file)));
+  assert.deepEqual(offenders, [], "a Review row is being written outside lib/srs/grade.ts");
+
+  /*
+    `restoreBackup` is the one exemption and it is exempt by name rather than
+    wholesale, because `app/actions.ts` is also where `gradeCard` lives and
+    excusing the file would excuse that too. Restoring is not grading: it puts
+    a learner's own rows back exactly as the file holds them, inside the
+    transaction, and never touches a card's scheduling. Flooring those dates
+    would buy nothing anyway, since the card's own creation comes out of the
+    same file.
+  */
+  const writes = [...code("app/actions.ts").matchAll(/(\w+)\.review\.create(?:Many)?\s*\(/g)]
+    .map((m) => m[1]);
+  assert.deepEqual(writes, ["tx"], "app/actions.ts writes a Review row outside the restore transaction");
+
+  const writer = code("lib/srs/grade.ts");
+  assert.match(
+    writer,
+    /at < createdAt \? createdAt : at/,
+    "lib/srs/grade.ts stopped flooring a grade at the moment its card was created",
+  );
+  for (const caller of ["app/actions.ts", "lib/srs/replay.ts"]) {
+    assert.match(code(caller), /\bwriteGrade\(/, `${caller} stopped writing its grade through lib/srs/grade.ts`);
+  }
+});
+
 check("a screen that prints a derived verb form says it was derived", () => {
   // Each of the readers prints provenance: the entry's table says which form is
   // stored, the reference's chip names the origin, and the drill says whether

@@ -40,7 +40,8 @@ import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
-import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { writeGrade } from "@/lib/srs/grade";
+import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
@@ -240,66 +241,47 @@ export async function gradeCard(
 
   /*
     A grade carries the time it was actually answered, because the offline
-    outbox replays in order with the timestamp it was given (ADR-015). It was
-    clamped forward and not back, so a caller could date one before the card
-    existed, which is a review of something that was not there: the streak, the
-    heatmap and every "reviews this week" figure read it, and none of them can
-    tell a replayed grade from a forged one. The card's own creation is the
-    floor, and it cannot narrow an honest replay.
+    outbox replays in order with the timestamp it was given (ADR-015), and a
+    device's clock is whatever its owner set it to. `writeGrade` bounds it at
+    both ends and is the one place either door writes a grade: this one had the
+    floor at the card's own creation and the replay path, which is the door
+    those timestamps actually come through, did not.
   */
-  const now = new Date();
-  const when = reviewedAt ? new Date(reviewedAt) : now;
-  const at = Number.isNaN(when.getTime()) || when > now
-    ? now
-    : when < card.createdAt
-      ? card.createdAt
-      : when;
-
-  await prisma.review.create({
-    data: {
-      ownerId,
-      cardId,
-      lexemeId: card.lexemeId,
-      rating,
-      reviewedAt: at,
-      durationMs: Math.min(Math.max(durationMs, 0), 600_000),
-      stateBefore: card.state,
-      targetCase: card.targetCase,
-    },
-  });
-
-  const current: SchedulingState = {
-    due: card.due,
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsedDays: card.elapsedDays,
-    scheduledDays: card.scheduledDays,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state,
-    lastReview: card.lastReview,
-    learningSteps: card.learningSteps,
-  };
-  const next = grade(current, rating, at);
-
-  await prisma.card.update({
-    where: { id: cardId },
-    data: {
-      due: next.due,
-      stability: next.stability,
-      difficulty: next.difficulty,
-      elapsedDays: next.elapsedDays,
-      scheduledDays: next.scheduledDays,
-      reps: next.reps,
-      lapses: next.lapses,
-      state: next.state,
-      learningSteps: next.learningSteps,
-      lastReview: next.lastReview,
-    },
+  const next = await writeGrade(ownerId, {
+    card,
+    rating,
+    durationMs,
+    reviewedAt: reviewedAt ? new Date(reviewedAt) : new Date(),
   });
 
   revalidatePath("/");
-  return { ok: true as const, due: next.due };
+  /*
+    The state the server just wrote, so the session can hand it back to undo.
+
+    `cards` is snapshotted on mount and its scheduling is never refreshed,
+    which is right for the queue and was wrong for undo: an "Again" puts a card
+    back into the same session, so a card can be graded twice, and both grades
+    recorded the same mount-time state as the one to restore. Undoing the
+    second rewound past the first as well, dropping a lapse the learner really
+    had and sending a card they had just failed away on its old interval.
+  */
+  return { ok: true as const, due: next.due, scheduling: snapshotOf(next) };
+}
+
+/** A scheduling state in the shape that crosses the wire, which `undoGrade` takes back. */
+function snapshotOf(state: SchedulingState): SchedulingSnapshot {
+  return {
+    due: state.due.toISOString(),
+    stability: state.stability,
+    difficulty: state.difficulty,
+    elapsedDays: state.elapsedDays,
+    scheduledDays: state.scheduledDays,
+    reps: state.reps,
+    lapses: state.lapses,
+    state: state.state,
+    learningSteps: state.learningSteps,
+    lastReview: state.lastReview?.toISOString() ?? null,
+  };
 }
 
 /**
