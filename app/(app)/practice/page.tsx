@@ -149,10 +149,39 @@ export default async function PracticePage() {
             tone="accent"
             title="Flash cards"
             subtitle="Words you have met"
-            body="A different form each time, typed rather than picked, until the word is solid."
+            body="Type it, hear it in a sentence, or write one of your own. A new form each time."
             meta={flashMeta}
             primary={unfinished > 0}
           />
+
+          {/*
+            AND WHERE THOSE WORDS STAND, BESIDE THE ROUND THAT MOVES THEM.
+
+            The lists were on `/words` and nowhere else, three cards down a page
+            about the deck, and the learner reported that they could not find
+            them. This is the screen they were standing on when they wanted
+            them: the round above works on the words that are not done, and
+            this says which those are and what each one is still short of.
+          */}
+          {words.length > 0 && (
+            <Link
+              href="/words/mastery"
+              className="lift flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[var(--r-lg)] border p-4"
+              style={{
+                borderColor: "var(--rule)", background: "var(--surface)",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              <span className="text-[15px] font-semibold" style={{ color: "var(--ink)" }}>
+                Where your words stand
+              </span>
+              <span className="flex flex-wrap gap-x-3 gap-y-1 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+                <span><span className="tnum" style={{ color: "var(--mint-ink)" }}>{counts.mastered}</span> mastered</span>
+                <span><span className="tnum" style={{ color: "var(--butter-ink)" }}>{counts.almost}</span> almost there</span>
+                <span><span className="tnum" style={{ color: "var(--peach-ink)" }}>{counts.struggling}</span> need work</span>
+              </span>
+            </Link>
+          )}
 
           <section>
             <SectionTitle hint="a few minutes each">Rounds</SectionTitle>

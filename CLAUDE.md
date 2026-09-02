@@ -949,6 +949,89 @@ of a join. `lib/srs/replay.itest.ts` will fail, which is the point. The same pro
 offline sync conflict-free: grades are facts with timestamps, and replaying them in order reproduces
 the state exactly, because `grade()` takes `now` as a parameter.
 
+**A word is mastered when the app has asked it in enough different ways, and for a year it could
+not count them.** `Review` carried `targetCase`, which is the case a *card* is about and null on
+every card that is not about a case, and `lib/srs/mastery.ts` counted distinct values of it as the
+variety half of its claim: five correct answers across three different forms. That was written
+down as undercounting in the safe direction and it was not undercounting, it was a counter nothing
+could satisfy. A verb has no case cards at all, because `CASE_FORM` needs a genitive stem, so its
+recognition card, its production card, its gap-fills and its eight conjugation cards were one slot
+between them and not one of the 799 verbs in the shipped dictionary could ever be mastered. A word
+added from the dictionary gets recognition, production and a gap-fill by default, which is two
+slots at best. And the flash round draws the words that are *not* mastered, so the two faults
+compounded: the round kept asking about words it was never going to let go of.
+
+**So `Review.slot` records what was actually asked, and `lib/srs/slots.ts` is the closed list of
+what may go in it**: a case, a named part of a verb, or the card's own type, because "what does
+this word mean" and "how do you say it" are two questions about one word and always were. It is a
+second column rather than a wider `targetCase`, and that is the whole of why it is safe:
+`caseAccuracy` tallies whatever string it finds and hands it to a panel that prints the key in
+lower case where it recognises nothing, so a morph code written there would put `indprsg3` on the
+Progress page beside `osastav`. Two questions, two columns, neither bent to be the other. A row
+written before the column reads `targetCase ?? ""`, exactly as it always did, so no history is
+reinterpreted. It arrives through a `"use server"` export, so it is checked against the closed list
+rather than trusted, the way `CARD_SOURCES` guards `Card.source` and for a stronger reason: a
+forged slot would not break a count, it would tell somebody they had mastered a word in a form
+nobody ever asked them for. Both doors carry it, since a grade taken on a train and replayed later
+would otherwise lose the one thing that made it worth recording.
+
+**And the bar is what the word can carry.** Three slots is right for a noun with eleven cases
+behind it and impossible for `Tere hommikust!`, which has no forms to inflect, or for an adverb,
+which does not decline. Asking a word for more variety than it has is the same fault in a smaller
+room, so the threshold is `min(MASTERY_SLOTS, askable)` and `askable` is the union of the cards the
+learner holds and what the dictionary can inflect the word into. Both halves are needed and the
+second was found by watching a real round: `aasta` had a recognition card and a production card, so
+the cards alone said two, while the round was asking it for the sisseütlev, which is a third. One
+form decides it, the genitive singular for a nominal and the stored first person for a verb, and it
+is read in the query that was already fetching the words. The part of speech was the cheaper answer
+and is wrong for exactly the words this protects: an entry confirmed off a photograph is a `NOUN`
+with no forms behind it.
+
+**Flash cards is the round built on that, and it is not review with a different queue.** It used
+to render `ReviewSession` over the words already met, which is the same four shapes drawn from
+another list, and the learner's report was that it "reverts back to what is in the Review section".
+`lib/games/flash.ts` asks five ways instead, and three of them are things review cannot ask: an
+attested sentence spoken and never shown, with the form to be typed out of what was heard; a gap
+with the meaning rather than the lemma beside it, so the sentence is what says which form is
+wanted; and a sentence the learner writes themselves around a named form. Typed throughout, because
+producing a form is a different memory from picking it out of four and picking is what stops
+telling you anything about a word that is nearly known.
+
+**The pool of shapes widens as the word settles**, so the first ask is the plainest available and
+each correct answer opens the next one: `tuba` starts at "what is it in the seesütlev" and ends at
+"write me a sentence with it". A shape is offered only where the dictionary can carry it, which for
+the two sentence shapes means an attested usage holding that very form, and `gapForms` decides
+whether a form may be hidden at all, because what a gap can hide is one answer for the whole app.
+Nothing is written and nothing is generated: every Estonian character in a task came out of Ekilex
+or off the app's own derivation from a stored stem, every task says which, and every mark is a
+string comparison against a form the dictionary holds. `markFlash` names the ending the learner
+reached for instead, which `lib/estonian/whichCase.ts` can do with certainty, and it asks that
+question **before** `checkAnswer`'s typo rule rather than after: `toas` and `toast` are one
+keystroke apart and so are `toale` and `toalt`, so the ordinary reading would have told a learner
+who chose the seestütlev that they had mistyped the seesütlev, and marked the answer as recalled.
+
+**Two faults in it were invisible to every unit test and turned up in the first rounds anybody
+drove**, which is the argument for `scripts/test-flash.mjs` rather than for more unit tests. The
+page took the first open slot and `CASES` is in the traditional order, so the first real round
+asked for the sisseütlev seven times out of ten: the opposite of the variety the round exists for.
+It now rotates on the word's own correct answers and its position in the round, both of which are
+already there and both of which are deterministic, so a reloaded round asks the same question
+rather than reshuffling under somebody who refreshed. And it offered all eleven cases built on the
+genitive stem, so the second round asked `Venemaa → milles? kus?`, which is exactly the fault
+`lib/estonian/place.ts` was written for: Estonian has two sets of local cases, a place name in
+`-maa` takes the outside one, and `Venemaas` is not a way of saying "in Russia". A module that
+knows something is only worth having if the next generator asks it.
+
+**And where every word stands has a page of its own, because the first answer was a panel nobody
+found.** It was three cards down `/words`, which is a page about the deck, counted in cards; the
+learner asked for the list twice and reported that they could not see it anywhere. `/words/mastery`
+is the four tiers with a row per word, what each one still needs and which forms it has been right
+in, and it is reachable from the deck it counts, from Practice beside the round that moves it, and
+from the rail's own table so the palette goes there. `nav.test.ts` asserts that pairing now rather
+than only the claim, and the check found two destinations that had been claiming a home which did
+not link to them: `/words` and `/exam` both said they were reached from Progress and neither was,
+so both were findable through the command palette alone.
+
 **A word game may borrow a shape and may not borrow a look.** Sõnad is guess-a-word-and-be-told-
 which-letters-were-right, which is older than computers: Mastermind sold it in 1970 and Bulls and
 Cows was a pencil game before that. What the New York Times owns, and has enforced, is the name
@@ -3535,7 +3618,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
-`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`. Most of them now
+`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `slotOfCard`,
+`isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`, `formIndex`,
+`slotsNeeded`, `askableFor`, `MasteryBoard`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

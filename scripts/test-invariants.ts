@@ -8505,6 +8505,114 @@ check("every secret-shaped variable the app reads is marked in the CI canary bui
  * parts have to be in the index: they are there in order to *collide*, and
  * leaving them out is what makes a short illative look unambiguous.
  */
+/**
+ * WHAT AN ANSWER WAS ABOUT IS RECORDED, AND ONLY EVER FROM A CLOSED LIST.
+ *
+ * `Review.slot` is what the flash round exists on top of: it asks a word for a
+ * form no card of the learner's carries, grades the nearest card they do have
+ * (ADR-016), and without the column that answer goes down as being about
+ * whatever the card happened to be. `lib/srs/slots.ts` is the one table of
+ * what may go in it, and the value arrives through a `"use server"` export, so
+ * it is checked rather than trusted: this is the one table that is never
+ * updated and never deleted, and a forged slot would not break a count, it
+ * would tell somebody they had mastered a word in a form nobody ever asked
+ * them for. `CARD_SOURCES` makes the same argument about a column that only
+ * breaks a count.
+ *
+ * And `targetCase` stays what it is. It feeds `caseAccuracy`, which tallies
+ * whatever string it finds and hands it to a panel that prints the key in
+ * lower case where it recognises nothing, so a morph code written there puts
+ * `indprsg3` on the Progress page beside `osastav`. Two questions, two
+ * columns, and neither bent to be the other.
+ */
+check("an answer records which form it was about, from a list nothing can widen", () => {
+  const grade = code("lib/srs/grade.ts");
+  assert.match(
+    grade,
+    /slot:\s*slotFor\(/,
+    "writeGrade no longer records the slot, so the flash round's answers stop " +
+    "counting towards the variety half of mastery",
+  );
+  assert.match(
+    grade,
+    /isKnownSlot\(practised\)/,
+    "writeGrade no longer checks the slot against lib/srs/slots.ts. It arrives " +
+    "from a browser through a public endpoint, into the one table that is never repaired.",
+  );
+  assert.match(
+    grade,
+    /targetCase:\s*card\.targetCase/,
+    "writeGrade stopped recording the card's own case. That column is what the " +
+    "case charts read and it is not the slot's to take over.",
+  );
+
+  // And nothing writes a conjugation code into the column the charts read.
+  const slots = code("lib/srs/slots.ts");
+  assert.match(
+    slots,
+    /export function slotOfCard/,
+    "lib/srs/slots.ts no longer says what an ordinary review's slot is",
+  );
+  const writers = sourceFiles("lib").concat(sourceFiles("app"))
+    .filter((file) => !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /targetCase:\s*(?:slot|CONJUGATION_SLOTS|verb)/.test(code(file)));
+  assert.deepEqual(writers, [], "a conjugation slot is being written into targetCase");
+});
+
+/**
+ * THE FLASH ROUND ASKS ONLY THE LOCAL CASES A WORD ACTUALLY TAKES.
+ *
+ * `lib/estonian/place.ts` exists because the A1 unit of countries shipped a
+ * card asking `Venemaa → milles? kus?` and marking a learner wrong for writing
+ * `Venemaal`, which is what everybody says and what their teacher would mark
+ * right. Estonian has two sets of local cases and a place name in `-maa` takes
+ * the outside one.
+ *
+ * The flash round walked straight back into it: it offered all eleven cases
+ * built on the genitive stem, and the first round anybody drove asked exactly
+ * that question. A module that knows something is only worth having if the
+ * next generator asks it, so this asserts the asking rather than the answer.
+ */
+check("the flash round asks a place name for the local cases it takes", () => {
+  const flash = code("lib/games/flash.ts");
+  assert.match(
+    flash,
+    /localCasesFor\(word\.lemma\)/,
+    "askableSlots no longer asks lib/estonian/place.ts which local cases this " +
+    "word takes, so a country is being drilled on `Venemaas`",
+  );
+  assert.match(
+    flash,
+    /INSIDE_CASES[\s\S]{0,120}OUTSIDE_CASES/,
+    "the wrong trio is no longer being excluded, only the right one preferred",
+  );
+});
+
+/**
+ * The round grades through the log like every other mode, and marks against
+ * the dictionary rather than a model.
+ *
+ * ADR-016 and ADR-005 together, on a mode that is new enough for both to be
+ * easy to lose: the marking is a string comparison in a pure module, and the
+ * answer reaches `gradeCard` with the slot it was about. A provider anywhere
+ * on this path would be a model deciding whether a morpheme is correct.
+ */
+check("the flash round grades what it asked, and no model marks it", () => {
+  assert.match(
+    code("app/(app)/review/flashcards/FlashSession.tsx"),
+    /gradeCard\([\s\S]{0,120}task\.slot\)/,
+    "the flash round no longer tells the log which form it asked",
+  );
+  for (const file of sourceFiles("lib/games").concat(["app/(app)/review/flashcards/page.tsx"])) {
+    if (!/flash/i.test(file)) continue;
+    assert.doesNotMatch(
+      code(file),
+      /resolveProviders?\(|openWithFallback|\bask\(/,
+      `${file} reaches a provider. Whether a form is right is the dictionary's answer.`,
+    );
+  }
+});
+
 check("a case is named only when one case claims the spelling", () => {
   const src = code("lib/estonian/whichCase.ts");
   assert.match(

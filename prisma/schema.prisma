@@ -219,6 +219,14 @@ model Review {
   durationMs  Int      @default(0)
   stateBefore Int      @default(0)
   targetCase  String?
+  /// Which facet of the word this answer was about: a case, a named part of a
+  /// verb, or the card's own type. `lib/srs/slots.ts` is the one table of what
+  /// may go here and `lib/srs/mastery.ts` counts the distinct ones as the
+  /// variety half of its claim. Null on rows written before this column, where
+  /// `targetCase` and one shared meaning slot are the honest reading of what
+  /// was recorded at the time. Never widen `targetCase` to hold this: that
+  /// column feeds the case charts, which print whatever they find.
+  slot        String?
 
   @@index([ownerId, reviewedAt])
   @@index([ownerId, targetCase])

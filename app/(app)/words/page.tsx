@@ -68,7 +68,15 @@ export default async function WordsPage() {
     <Page
       title="My words"
       lead="Everything in your deck, and how well it is sticking."
-      actions={<ButtonLink href="/dictionary" variant="primary">Add words</ButtonLink>}
+      actions={
+        <>
+          {/* The other reading of this page, and the one somebody comes for
+              when the question is "what do I actually know". Counted in words
+              rather than cards, which is what the box below is. */}
+          <ButtonLink href="/words/mastery">Where your words stand</ButtonLink>
+          <ButtonLink href="/dictionary" variant="primary">Add words</ButtonLink>
+        </>
+      }
     >
       {rows.length === 0 ? (
         <Empty

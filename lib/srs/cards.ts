@@ -5,6 +5,7 @@ import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { CONJUGATION_SLOTS } from "@/lib/srs/slots";
 import type { CaseKey } from "@/lib/estonian/types";
 
 export type CardType =
@@ -96,26 +97,30 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  * only ever met the English name cannot follow the question. The English name
  * is on the reference page this card links back to, which is the right place
  * for a cross-reference and the wrong place for the prompt.
+ *
+ * The table itself is `CONJUGATION_SLOTS` in `lib/srs/slots.ts`, which is the
+ * one answer to what facet of a word an answer was about. It moved rather than
+ * being copied: the flash round asks for a named part of a verb on a card that
+ * is not about that part, and a second table of morph codes is two tables
+ * disagreeing about what `IndPrSg3` is called.
  */
-const CONJUGATION_SLOTS: { code: string; formType?: string; label: string; negative?: boolean }[] = [
-  { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
-  { code: "IndPrSg3", label: "olevik · ta" },
-  { code: "IndPrPl1", label: "olevik · me" },
-  // The negative is one form for every person, said after `ei`. The card
-  // shows and accepts the two words together, since `loe` on its own is not
-  // what anybody says.
-  { code: "IndPrPs_", label: "eitus · ma ei", negative: true },
-  { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
-  { code: "IndIpfSg3", label: "lihtminevik · ta" },
-  { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
-  { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
-];
 
 /**
  * The form for one conjugation slot: attested where the dictionary has it,
  * derived where the rule reaches, and nothing otherwise.
+ *
+ * Exported because the flash round asks these same eight of a word the learner
+ * has already met, and a second reading of "which form is this" is a round and
+ * a card putting two different answers on two screens.
  */
-function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string | null {
+export function conjugationAnswer(
+  lex: {
+    lemma: string;
+    forms: readonly { formType: string; value: string; morphCode?: string | null }[];
+  },
+  slot: (typeof CONJUGATION_SLOTS)[number],
+): string | null {
+
   const attested = lex.forms.find(
     (f) =>
       f.morphCode === slot.code ||

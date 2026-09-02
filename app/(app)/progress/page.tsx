@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Compass, Flame, Shield } from "lucide-react";
+import { ClipboardCheck, Compass, Flame, Layers, Shield } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -152,10 +152,29 @@ export default async function ProgressPage() {
     <Page
       title="Progress"
       lead="Worked out fresh from your reviews every time you check."
+      /*
+        THE OTHER READINGS OF "HOW AM I DOING", WHICH LIVE HERE.
+
+        The rail carries one row for this question and `lib/ux/nav.ts` says the
+        deck, the level check and the mock paper are reached from the page that
+        answers it rather than standing beside it as three more rows. Two of
+        them were not: nothing on this page linked to `/words` or to `/exam`,
+        so both were reachable through the command palette alone, which is
+        worse than the rows they gave up. `nav.test.ts` asserts the pairing now
+        rather than only the claim.
+      */
       actions={
-        <ButtonLink href="/assess">
-          <Compass size={15} aria-hidden /> Level check
-        </ButtonLink>
+        <>
+          <ButtonLink href="/words">
+            <Layers size={15} aria-hidden /> My words
+          </ButtonLink>
+          <ButtonLink href="/exam">
+            <ClipboardCheck size={15} aria-hidden /> Mock exam
+          </ButtonLink>
+          <ButtonLink href="/assess">
+            <Compass size={15} aria-hidden /> Level check
+          </ButtonLink>
+        </>
       }
     >
       <Stack>

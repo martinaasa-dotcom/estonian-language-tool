@@ -150,6 +150,7 @@ const ROUTES = [
   */
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
+  "/words/mastery",
 ];
 
 const browser = await launchChromium();
@@ -157,6 +158,12 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
 
 /*
+  Floor: raised by eleven when `/words/mastery` joined the list, which is the
+  arithmetic this block describes: one more route is eight checks in the light
+  and a contrast pass in the dark. A floor that stays put while the list grows
+  is a floor going slack, which is what happened when the level check added
+  three routes and nobody moved it.
+
   Floor: 335, which is what this list reaches: thirty-seven routes at eight
   checks each, a contrast pass over the same thirty-seven in dark mode, and the
   two that run once at the end.
@@ -198,7 +205,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   the merged tree, which is the 307 above plus nine for /funding and
   eighty-six for these, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 397 });
+const { check, absent, done } = suite("Accessibility", { floor: 408 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.
