@@ -2933,6 +2933,26 @@ precondition and waives its three checks with the reason on screen instead. Clea
 weaker version of the same idea, since it only works while every suite remembers
 and cannot help the first run on a machine somebody has been clicking around on.
 
+**A suite waits for what it is about to assert, and `networkidle` is not that.** `test-first-day.mjs`
+passed on this machine keyed, passed keyless, and failed in CI, which is the machine that decides.
+The cause was in the navigation rather than in the app: the service worker installs on the first
+page load and then fetches the shell a URL at a time, and `PrefetchLink` asks for a whole page
+whenever a pointer settles or a link takes focus, so a wait for half a second of network silence is
+a wait on all of that, on a two-core runner, forty-four times. Playwright discourages `networkidle`
+for exactly this reason and 120 uses of it sit in `scripts/`.
+
+Swapping it for the element is not enough on its own and would have been worse: a route group's
+`loading.tsx` renders a `main` too, so waiting for the element trades a timeout for a skeleton,
+which reads as an app fault rather than as a wait. The wait is now the check's own condition, `main`
+holding text and exactly one `h1`, with a budget, and it is **best-effort**: a page that really does
+render nothing runs the budget out and reaches the check, which says what it found. Throwing there
+would report the same thing as a bare "Timeout". The elapsed time is in the failure message, because
+a page that rendered nothing and a page that was still rendering read identically without it.
+
+And the local runner now unsets the provider keys, because this box carries three and CI carries
+none: a suite measured with `EKILEX_API_KEY` exported is a suite measured on a different app, which
+is the fault `PROVIDER_KEY_ENV` exists for one layer down.
+
 **A suite that writes to the shared dictionary invents the word it writes.** `Lexeme` is unique on
 `[lemma, pos]` rather than on the lemma, deliberately, because `hall` is a noun meaning frost and an
 adjective meaning grey. So a fixture that ticks a word the seed already holds does not collide with

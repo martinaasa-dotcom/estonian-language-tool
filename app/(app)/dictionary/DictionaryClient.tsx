@@ -13,6 +13,7 @@ import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
+import { isPhrase } from "@/lib/dict/pos";
 import { Examples } from "./Examples";
 import { DerivedVerbForms, WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
@@ -516,8 +517,16 @@ function Entry({ entry, tutorReady, glossLanguage }: {
 
       {entry.notes && (
         <div>
+          {/*
+            WHAT IS UNDER THE HEADING DECIDES THE HEADING. For the 968 expanded
+            entries that carry one, `notes` really is a list of further senses
+            and "Other meanings" is exactly right. On the six A1 phrases it is a
+            sentence about how the phrase is built, so `Tere hommikust!` read
+            "Other meanings: elative case, literally 'from the morning'", which
+            is not another meaning and is the first entry a beginner opens.
+          */}
           <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            Other meanings
+            {isPhrase(entry.pos) ? "About this phrase" : "Other meanings"}
           </h3>
           <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
             {entry.notes}

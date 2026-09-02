@@ -75,11 +75,68 @@ const all = [...new Set(routes(new URL("../app", import.meta.url).pathname))]
   .map((r) => r.replace(/\[[^\]]+\]/g, (m) => FILL[m] ?? "x"))
   .sort();
 
-const browser = await launchChromium();
-const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+/*
+  THE SERVICE WORKER IS BLOCKED, AND THE WAIT IS NOT `networkidle`.
 
-await page.goto(`${B}/words`, { waitUntil: "networkidle" });
-await page.waitForSelector("main", { timeout: 30000 });
+  This suite passed on this machine, keyed and keyless, and failed in CI, which
+  is the machine that decides. Both halves of why are in the navigation: the
+  worker installs on the first page load and then fetches the shell a URL at a
+  time (`warmOpenPages`), and `PrefetchLink` asks for a whole page whenever a
+  pointer settles or a link takes focus. `networkidle` waits for half a second
+  of silence across all of that, on a two-core runner, forty-four times.
+  Playwright discourages it for exactly this reason.
+
+  The wait that matters was already here, one line down: this suite measures
+  `main`, so it waits for `main`. `domcontentloaded` still lands on the final
+  document through a redirect, because every redirect in this app is a server
+  `redirect()` rather than a client one. What `networkidle` bought on top of
+  that is a moment for hydration, and that is worth a bounded, best-effort
+  settle rather than a hard requirement: a page that keeps a connection open is
+  not a page that failed.
+
+  `smoke-offline.mjs` is the suite whose subject is the worker. Here it is
+  noise, and a route walk has no business installing one.
+*/
+const browser = await launchChromium();
+const context = await browser.newContext({
+  viewport: { width: 1280, height: 900 },
+  serviceWorkers: "block",
+});
+const page = await context.newPage();
+
+/**
+ * Wait for the page to be worth measuring, without demanding silence.
+ *
+ * It waits for the thing the check is about to assert rather than for a proxy,
+ * which is the only wait that cannot be wrong in both directions. `main` alone
+ * is not enough: a route group's `loading.tsx` renders one too, and a streamed
+ * page replaces it a moment later, so waiting on the element would have traded
+ * a slow-runner timeout for a slow-runner skeleton, which is worse because it
+ * reads as an app fault.
+ *
+ * Best-effort on purpose. A page that really does render nothing runs the
+ * budget out and reaches the check, which says what it found and how long it
+ * waited. Throwing here would report the same fault as a bare "Timeout".
+ */
+async function settle(target, budgetMs) {
+  await target.waitForSelector("main", { timeout: budgetMs }).catch(() => {});
+  await target
+    .waitForFunction(
+      () => {
+        const main = document.querySelector("main");
+        return Boolean(main)
+          && (main.innerText || "").trim().length >= 40
+          && document.querySelectorAll("h1").length >= 1;
+      },
+      undefined,
+      { timeout: budgetMs },
+    )
+    .catch(() => {});
+  await target.waitForTimeout(200);
+}
+
+await page.goto(`${B}/words`, { waitUntil: "domcontentloaded", timeout: 45000 });
+await settle(page, 45000);
 const deck = await page.locator("main").innerText().catch(() => "");
 check("the deck really is empty, so this is the state it says it is",
   /No cards yet/i.test(deck),
@@ -91,6 +148,7 @@ if (!/No cards yet/i.test(deck)) {
 }
 
 for (const route of all) {
+  const startedAt = Date.now();
   const errors = [];
   const onError = (e) => errors.push(String(e).slice(0, 140));
   page.on("pageerror", onError);
@@ -98,7 +156,7 @@ for (const route of all) {
   let text = "";
   let headings = 0;
   try {
-    const res = await page.goto(`${B}${route}`, { waitUntil: "networkidle", timeout: 25000 });
+    const res = await page.goto(`${B}${route}`, { waitUntil: "domcontentloaded", timeout: 40000 });
     status = res?.status() ?? 0;
     /*
       WAITED FOR, NOT SAMPLED, and this is the whole of what makes the suite
@@ -112,12 +170,21 @@ for (const route of all) {
 
       So it waits for the element it is about to measure.
     */
-    await page.waitForSelector("main", { timeout: 25000 });
-    await page.waitForTimeout(200);
+    await settle(page, 40000);
     text = (await page.locator("main").first().innerText()).replace(/\s+/g, " ").trim();
     headings = await page.locator("h1").count();
   } catch (error) {
-    check(`${route} answers on a fresh install`, false, String(error).slice(0, 90));
+    /*
+      The elapsed time is in the message because the two ways this can fail read
+      identically without it: a page that renders nothing, and a page that was
+      still rendering. A CI log saying "Timeout" and nothing else sent one
+      afternoon looking for an app fault that was a wait.
+    */
+    check(
+      `${route} answers on a fresh install`,
+      false,
+      `${String(error).split("\n")[0].slice(0, 80)} after ${Math.round((Date.now() - startedAt) / 100) / 10}s`,
+    );
     page.off("pageerror", onError);
     continue;
   }
