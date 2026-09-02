@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { throttleAction } from "@/lib/security/actionLimits";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
-import { finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
+import { beginRun, finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
 import { authoriseCall } from "@/lib/usage/ledger";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
@@ -951,56 +951,54 @@ export async function recordSonad(day: string, guesses: unknown) {
  * in an append-only table, which is the size of one review session.
  */
 /**
- * Starts a conversation, and books the whole of it once.
+ * Starts a conversation: draws it, writes it down, and books the whole of it.
  *
  * §16: a scene books **one call rather than one per turn**, because running out
  * of allowance halfway through a conversation is the worst failure available to
  * this module. The other side simply stops talking and there is nothing honest
  * to put on the screen. So the reservation is the whole scene's expected
- * tokens, and the real figures arrive at the end as the settlements each
- * composed line reports, which are negative whenever the estimate was generous.
- *
- * A scene abandoned before it composed anything hands the booking back through
- * `releaseReservation`, which is what that function is for: a call that reached
- * nobody is not a question anybody asked.
+ * tokens, and the real figures arrive as the settlements each composed line
+ * reports, which are negative whenever the estimate was generous.
  *
  * **It is not a refusal to run the scene.** A deployment with no key, and a
  * learner who has spent the day's allowance, both get a real conversation built
  * from the beats retrieval can fill, and the screen says so. What the booking
  * buys is composition.
+ *
+ * The seed is the server's. A seed a learner picks is a learner picking their
+ * persona, their card and their curveballs, which is every axis of §5 at once.
  */
 export async function beginScene(sceneId: unknown, difficulty: unknown) {
   const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "finishScene");
+  if (busy) return busy;
+
   const scene = sceneById(text(sceneId).slice(0, 64));
   if (!scene) return { ok: false as const, error: "No scene by that name." };
-  if (!(text(difficulty) in BUDGETS)) {
-    return { ok: false as const, error: "Not a difficulty." };
-  }
+  const chosen = text(difficulty);
+  if (!(chosen in BUDGETS)) return { ok: false as const, error: "Not a difficulty." };
 
-  /*
-    The seed is the server's, not the client's. A seed a learner picks is a
-    learner picking their persona, their card and their curveballs, which is
-    every axis of §5 at once; and the server rebuilds the run from it to mark
-    the scene, so it has to be a value this side chose.
-  */
-  const seed = crypto.randomUUID();
+  const opened = await beginRun({
+    ownerId,
+    sceneId: scene.id,
+    level: await courseLevelFor(ownerId),
+    difficulty: chosen as Difficulty,
+  });
+  if (!opened) return { ok: false as const, error: "That scene could not be built." };
 
   if (resolveProviders().length === 0) {
-    return { ok: true as const, seed, reservation: null, composed: false };
+    return { ok: true as const, ...opened, reservation: null, composed: false };
   }
 
   const decision = await authoriseCall(ownerId, "SCENE");
   if (!decision.allowed || !decision.reservation) {
     return {
-      ok: true as const,
-      seed,
-      reservation: null,
-      composed: false,
+      ok: true as const, ...opened, reservation: null, composed: false,
       message: decision.message,
     };
   }
 
-  return { ok: true as const, seed, reservation: decision.reservation.id, composed: true };
+  return { ok: true as const, ...opened, reservation: decision.reservation.id, composed: true };
 }
 
 /**
@@ -1017,9 +1015,7 @@ export async function beginScene(sceneId: unknown, difficulty: unknown) {
  * practice sentences about a doctor's appointment safe to hold at all.
  */
 export async function finishScene(input: {
-  sceneId: unknown;
-  seed: unknown;
-  difficulty: unknown;
+  runId: unknown;
   turns: unknown;
   walkedOut: unknown;
   asked: unknown;
@@ -1030,19 +1026,12 @@ export async function finishScene(input: {
 
   /*
     Off the wire, whatever the types say: every export of this file is a public
-    endpoint and its arguments are JSON. What has to be stopped here is the
-    size rather than the shape, since a turn that is not a string is read as an
-    empty one and marked as nothing.
+    endpoint and its arguments are JSON. What has to be stopped here is the size
+    rather than the shape, since a turn that is not a string is read as an empty
+    one and marked as nothing.
   */
-  const sceneId = text(input.sceneId).slice(0, 64);
-  const scene = sceneById(sceneId);
-  if (!scene) return { ok: false as const, error: "No scene by that name." };
-
-  const seed = text(input.seed).slice(0, 64);
-  if (!seed) return { ok: false as const, error: "That run has no seed." };
-
-  const difficulty = text(input.difficulty);
-  if (!(difficulty in BUDGETS)) return { ok: false as const, error: "Not a difficulty." };
+  const runId = text(input.runId).slice(0, 64);
+  if (!runId) return { ok: false as const, error: "That run has no name." };
 
   const turns = Array.isArray(input.turns)
     ? input.turns.slice(0, MAX_TURNS).map((turn) => {
@@ -1066,16 +1055,9 @@ export async function finishScene(input: {
     : [];
 
   const finished = await finishRun({
-    ownerId,
-    sceneId,
-    seed,
-    level: await courseLevelFor(ownerId),
-    difficulty: difficulty as Difficulty,
-    turns,
-    walkedOut: input.walkedOut === true,
-    asked,
+    ownerId, runId, turns, walkedOut: input.walkedOut === true, asked,
   });
-  if (!finished) return { ok: false as const, error: "That scene could not be rebuilt." };
+  if (!finished) return { ok: false as const, error: "That run is not open." };
 
   /*
     EVERY MODE GRADES THROUGH `gradeCard` (ADR-016), and a scene is no

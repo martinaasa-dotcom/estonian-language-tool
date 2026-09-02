@@ -5,12 +5,11 @@ import { recordUsage } from "@/lib/usage/ledger";
 import { bucketForOwner, checkRateLimit } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
-import { courseLevelFor } from "@/lib/progress/level";
 import { sceneContext } from "@/lib/progress/scene";
 import { sceneById } from "@/lib/scenes/catalogue";
-import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
 import { sceneLine } from "@/lib/scenes/line";
-import { planRun } from "@/lib/scenes/run";
+import { personaById } from "@/lib/scenes/personas";
+import { DEFAULT_VOICE } from "@/lib/audio/voice";
 import { MAX_WORDS } from "@/lib/scenes/retrieval";
 
 /**
@@ -67,12 +66,25 @@ export async function POST(request: Request) {
   if (limited) return limited;
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const scene = sceneById(String(body.sceneId ?? "").slice(0, 64));
-  const seed = String(body.seed ?? "").slice(0, 64);
-  const difficulty = String(body.difficulty ?? "");
+  const runId = String(body.runId ?? "").slice(0, 64);
+
+  /*
+    THE RUN IS READ, NOT REBUILT, AND NOT SENT. Which scene this is, who is
+    behind the desk and what is on the card were all decided once when the run
+    was opened and written down (`beginRun`), because a run is a function of its
+    seed *and its recency* and recency moves. Re-planning here would deal a
+    different persona from the one the learner is talking to.
+  */
+  const row = runId
+    ? await prisma.sceneRun.findFirst({
+        where: { id: runId, ownerId, endedAt: null },
+        select: { sceneId: true, transcript: true },
+      })
+    : null;
+  const scene = row ? sceneById(row.sceneId) : null;
   const beat = scene?.beats[Number(body.beat)];
 
-  if (!scene || !seed || !(difficulty in BUDGETS) || !beat) {
+  if (!scene || !beat) {
     return Response.json({ error: "That is not a turn in a scene." }, { status: 400 });
   }
 
@@ -81,10 +93,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "That scene could not be built." }, { status: 400 });
   }
 
-  const level = await courseLevelFor(ownerId);
-  // Rebuilt from the seed rather than sent, for the reason `finishRun` rebuilds
-  // it: what the persona is, is not the client's to say.
-  const run = planRun(scene, seed, level, difficulty as Difficulty);
+  const voice = personaVoice(row!.transcript);
 
   const used = new Set(
     Array.isArray(body.used) ? body.used.filter((v): v is string => typeof v === "string") : [],
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
   */
   const attested = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
   if (attested.provenance === "attested") {
-    return Response.json({ ...attested, voice: run.persona.voice }, { headers: NO_STORE });
+    return Response.json({ ...attested, voice: voice }, { headers: NO_STORE });
   }
 
   const chain = resolveProviders();
@@ -126,7 +135,7 @@ export async function POST(request: Request) {
       this module, marked identically, with the beats retrieval can fill.
     */
     return Response.json(
-      { ...attested, voice: run.persona.voice, composed: false },
+      { ...attested, voice: voice, composed: false },
       { headers: NO_STORE },
     );
   }
@@ -146,7 +155,18 @@ export async function POST(request: Request) {
     }),
   });
 
-  return Response.json({ ...line, voice: run.persona.voice }, { headers: NO_STORE });
+  return Response.json({ ...line, voice: voice }, { headers: NO_STORE });
+}
+
+/** Who is behind the desk, off the run's own row rather than out of a request. */
+function personaVoice(transcript: string): string {
+  try {
+    const parsed = JSON.parse(transcript) as { persona?: unknown };
+    const persona = typeof parsed.persona === "string" ? personaById(parsed.persona) : undefined;
+    return persona?.voice ?? DEFAULT_VOICE;
+  } catch {
+    return DEFAULT_VOICE;
+  }
 }
 
 /** The scene's own booking, verified rather than believed. */

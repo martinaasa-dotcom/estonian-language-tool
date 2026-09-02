@@ -29,7 +29,8 @@ import { topicForms, type Line } from "@/lib/scenes/retrieval";
 import type { TurnContext } from "@/lib/scenes/turn";
 import type { RoleCard } from "@/lib/scenes/props";
 import type { SceneSpec } from "@/lib/scenes/types";
-import { planRun, RECENCY_WINDOW, type Recency } from "@/lib/scenes/run";
+import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } from "@/lib/scenes/run";
+import { randomUUID } from "node:crypto";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
 import {
   advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut,
@@ -332,7 +333,10 @@ function readDrawn(transcript: string): Drawn {
   try {
     const parsed = JSON.parse(transcript) as Record<string, unknown>;
     const persona = typeof parsed.persona === "string" ? parsed.persona : null;
-    const props = Array.isArray(parsed.props) ? parsed.props.filter(isText) : [];
+    const card = parsed.card as { props?: { value?: unknown }[] } | undefined;
+    const props = Array.isArray(card?.props)
+      ? card.props.map((p) => p?.value).filter(isText)
+      : [];
     const curveballs = Array.isArray(parsed.curveballs) ? parsed.curveballs.filter(isText) : [];
     return { persona, props, curveballs };
   } catch {
@@ -355,6 +359,13 @@ export interface SentTurn {
   readonly helped: boolean;
 }
 
+/** What the transcript holds about the draw, so a run can be marked long after it. */
+export interface StoredDraw {
+  readonly persona: string;
+  readonly card: RoleCard;
+  readonly curveballs: readonly string[];
+}
+
 export interface FinishedRun {
   readonly runId: string;
   readonly objectives: Objectives;
@@ -366,36 +377,94 @@ export interface FinishedRun {
 }
 
 /**
- * Re-marks a finished run on the server and writes it down.
+ * Opens a run: draws it, writes it down, and hands it to the learner.
  *
- * **The client never sends a mark**, only the scene, the seed, the difficulty
- * and what was typed, and the server rebuilds the run from that seed and reads
- * every turn again with `readTurn` (ADR-022). It costs one function call
- * because the marker is pure, and it is the same discipline `submitExam`
- * follows: a result anybody can type is not a measurement.
+ * THE DRAW HAPPENS ONCE, ON THE SERVER, AND IS STORED. That is a correction to
+ * the obvious design rather than a flourish. A run is a pure function of its
+ * seed *and its recency*, and recency moves: by the time the scene is finished
+ * there is one more run behind it, so re-planning from the seed at marking time
+ * would deal a different card from the one the learner was holding, and every
+ * `datum` requirement would be marked against a time and a weekday they were
+ * never given. So the card is written at the start and read back at the end.
  *
- * The run is written whether it went well or badly, because `SceneRun` is the
+ * The row exists from the start with `endedAt` null, which is what §15's
+ * nullable column is for. Append-only in the sense that matters: a run's turns
+ * and its outcome are written once, when it ends, and nothing rewrites them
+ * afterwards.
+ */
+export async function beginRun(input: {
+  ownerId: string;
+  sceneId: string;
+  level: string;
+  difficulty: Difficulty;
+}): Promise<{ runId: string; seed: string; run: SceneRunPlan } | null> {
+  const scene = sceneById(input.sceneId);
+  if (!scene) return null;
+
+  const seed = randomUUID();
+  const recent = await recencyFor(input.ownerId, scene.id);
+  const run = planRun(scene, seed, input.level, input.difficulty, recent);
+
+  const draw: StoredDraw = {
+    persona: run.persona.id,
+    card: run.card,
+    curveballs: run.curveballs.map((c) => c.id),
+  };
+
+  const created = await prisma.sceneRun.create({
+    data: {
+      ownerId: input.ownerId,
+      sceneId: scene.id,
+      seed,
+      level: input.level,
+      difficulty: BUDGETS[input.difficulty],
+      transcript: JSON.stringify(draw),
+    },
+    select: { id: true },
+  });
+
+  return { runId: created.id, seed, run };
+}
+
+/**
+ * Re-marks a finished run on the server and completes its row.
+ *
+ * **The client never sends a mark**, only which run it was and what was typed,
+ * and the server reads every turn again with `readTurn` (ADR-022). It costs one
+ * function call because the marker is pure, and it is the same discipline
+ * `submitExam` follows: a result anybody can type is not a measurement.
+ *
+ * The card comes off the stored draw rather than out of a fresh plan, for the
+ * reason `beginRun` gives: the learner is marked against the card they were
+ * holding.
+ *
+ * The run is completed whether it went well or badly, because `SceneRun` is the
  * record of what happened rather than of what was achieved, and a learner who
  * walked out has still had the conversation. What is conditional is the review
  * log: `gradesFor` writes only where the retrieval was unambiguous.
  */
 export async function finishRun(input: {
   ownerId: string;
-  sceneId: string;
-  seed: string;
-  level: string;
-  difficulty: Difficulty;
+  runId: string;
   turns: readonly SentTurn[];
   walkedOut: boolean;
   /** Words the help button supplied, with the entry where it found one. */
   asked: readonly { lemma: string; lexemeId: string | null }[];
 }): Promise<FinishedRun | null> {
-  const context = await sceneContext(input.sceneId);
+  const row = await prisma.sceneRun.findFirst({
+    where: { id: input.runId, ownerId: input.ownerId },
+    select: { id: true, sceneId: true, transcript: true, endedAt: true },
+  });
+  // A run that has already ended is not re-markable: the turns and the outcome
+  // are written once, which is what append-only means for this table.
+  if (!row || row.endedAt) return null;
+
+  const context = await sceneContext(row.sceneId);
   if (!context) return null;
 
   const { scene } = context;
-  const run = planRun(scene, input.seed, input.level, input.difficulty);
-  const data = dataFor(run.card, context.lexicon);
+  const draw = readDraw(row.transcript);
+  const data = draw ? dataFor(draw.card, context.lexicon) : new Map<string, ReadonlySet<string>>();
 
   /*
     Replayed rather than trusted. Every turn goes back through the marker in the
@@ -418,23 +487,13 @@ export async function finishRun(input: {
   const outcome = outcomeOf(scene, state);
   const grades = gradesFor(scene, state);
 
-  const created = await prisma.sceneRun.create({
+  await prisma.sceneRun.update({
+    where: { id: row.id },
     data: {
-      ownerId: input.ownerId,
-      sceneId: scene.id,
-      seed: input.seed,
-      level: input.level,
-      difficulty: BUDGETS[input.difficulty],
-      transcript: JSON.stringify({
-        persona: run.persona.id,
-        props: run.card.props.map((prop) => prop.value),
-        curveballs: run.curveballs.map((c) => c.id),
-        turns: state.turns,
-      }),
+      transcript: JSON.stringify({ ...(draw ?? {}), turns: state.turns }),
       outcome: JSON.stringify({ ...objectives, outcome: outcome?.id ?? null }),
       endedAt: new Date(),
     },
-    select: { id: true },
   });
 
   const stalled = stalledWords(scene, state);
@@ -446,18 +505,33 @@ export async function finishRun(input: {
   ];
   if (gaps.length > 0) {
     await prisma.sceneGap.createMany({
-      data: gaps.map((gap) => ({ ...gap, ownerId: input.ownerId, runId: created.id })),
+      data: gaps.map((gap) => ({ ...gap, ownerId: input.ownerId, runId: row.id })),
     });
   }
 
   return {
-    runId: created.id,
+    runId: row.id,
     objectives,
     outcome: outcome ? { id: outcome.id, says: outcome.says } : null,
     turns: state.turns,
     grades,
     gaps: [...new Set([...input.asked.map((a) => a.lemma), ...stalled])],
   };
+}
+
+/** The draw a run was dealt, or null where the row predates the shape. */
+function readDraw(transcript: string): StoredDraw | null {
+  try {
+    const parsed = JSON.parse(transcript) as Partial<StoredDraw>;
+    if (!parsed.card || !Array.isArray(parsed.card.props)) return null;
+    return {
+      persona: typeof parsed.persona === "string" ? parsed.persona : "",
+      card: parsed.card,
+      curveballs: Array.isArray(parsed.curveballs) ? parsed.curveballs.filter(isText) : [],
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -118,6 +118,18 @@ export const SECTIONS: NavSection[] = [
         icon: "Swords", tone: "peach", keywords: "games modes drill weakest case",
       },
       /*
+        A row of its own rather than a tile inside Practice, because the rail
+        answers four questions and none of them is "what do I do with this".
+        No cell in the phone bar either: the bar holds four, a fifth breaks the
+        44px floor, and its four are the daily loop. A conversation is a five to
+        eight minute sitting rather than a daily obligation.
+      */
+      {
+        href: "/situations", label: "Situations", blurb: "Book an appointment, hand in a form, ring a landlord",
+        icon: "MessagesSquare", tone: "mint",
+        keywords: "conversation scene role play speaking doctor counter landlord",
+      },
+      /*
         A row of its own rather than a `within`, because a calendar is not
         reached from the thing it is about: you open it to decide when to study,
         which is before you have opened anything else. It sits in "Every day"

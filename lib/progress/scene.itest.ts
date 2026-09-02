@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { planRun } from "@/lib/scenes/run";
-import { dataFor, finishRun, recencyFor, sceneContext } from "./scene";
+import { beginRun, dataFor, finishRun, recencyFor, sceneContext } from "./scene";
 
 /**
  * A scene against the real dictionary, because most of what could go wrong here
@@ -86,21 +86,20 @@ describe("a scene against the dictionary", () => {
 
   it("marks the run itself rather than believing what it was sent", async () => {
     const context = await sceneContext(DOCTOR.id);
-    const run = planRun(DOCTOR, "itest-mark", "A2", "textbook");
-    const symptom = run.card.props.find((p) => p.slot === "symptom")!;
     const greeting = DOCTOR.beats[0]!;
 
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "textbook",
+    });
+    const drawn = opened!.run.card.props.find((p) => p.slot === "symptom")!;
     const finished = await finishRun({
       ownerId: OWNER,
-      sceneId: DOCTOR.id,
-      seed: "itest-mark",
-      level: "A2",
-      difficulty: "textbook",
+      runId: opened!.runId,
       walkedOut: false,
       asked: [],
       turns: [
         { beatId: greeting.id, said: "Tere!", helped: false },
-        { beatId: "reason", said: `Mul on ${symptom.value}.`, helped: false },
+        { beatId: "reason", said: `Mul on ${drawn.value}.`, helped: false },
       ],
     });
 
@@ -116,12 +115,12 @@ describe("a scene against the dictionary", () => {
   });
 
   it("refuses to credit a beat the learner never met", async () => {
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "textbook",
+    });
     const finished = await finishRun({
       ownerId: OWNER,
-      sceneId: DOCTOR.id,
-      seed: "itest-miss",
-      level: "A2",
-      difficulty: "textbook",
+      runId: opened!.runId,
       walkedOut: false,
       asked: [],
       turns: [{ beatId: "greet", said: "qqqq wwww", helped: false }],
@@ -131,12 +130,12 @@ describe("a scene against the dictionary", () => {
   });
 
   it("writes down the words the run needed and the learner did not have", async () => {
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "textbook",
+    });
     const finished = await finishRun({
       ownerId: OWNER,
-      sceneId: DOCTOR.id,
-      seed: "itest-gaps",
-      level: "A2",
-      difficulty: "textbook",
+      runId: opened!.runId,
       walkedOut: false,
       asked: [{ lemma: "valutama", lexemeId: null }],
       turns: [{ beatId: "greet", said: "Tere!", helped: false }],
@@ -151,14 +150,16 @@ describe("a scene against the dictionary", () => {
   });
 
   it("gives back what the last runs used, so a draw can avoid it", async () => {
-    const first = await finishRun({
-      ownerId: OWNER, sceneId: DOCTOR.id, seed: "r1", level: "A2",
-      difficulty: "ordinary", walkedOut: true, asked: [], turns: [],
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "ordinary",
     });
-    expect(first).not.toBeNull();
+    expect(opened).not.toBeNull();
+    await finishRun({
+      ownerId: OWNER, runId: opened!.runId, walkedOut: true, asked: [], turns: [],
+    });
 
     const recency = await recencyFor(OWNER, DOCTOR.id);
-    const run = planRun(DOCTOR, "r1", "A2", "ordinary");
+    const run = opened!.run;
     /*
       Derived from the append-only log rather than counted (ADR-014): the run
       that just happened is what the next one is told to avoid, with no stored
@@ -170,9 +171,9 @@ describe("a scene against the dictionary", () => {
   });
 
   it("says nothing about another learner's runs", async () => {
-    await finishRun({
-      ownerId: "itest-owner-scene-other", sceneId: DOCTOR.id, seed: "theirs",
-      level: "A2", difficulty: "ordinary", walkedOut: true, asked: [], turns: [],
+    await beginRun({
+      ownerId: "itest-owner-scene-other", sceneId: DOCTOR.id,
+      level: "A2", difficulty: "ordinary",
     });
     const recency = await recencyFor(OWNER, DOCTOR.id);
     expect(recency.personas.size).toBe(0);
