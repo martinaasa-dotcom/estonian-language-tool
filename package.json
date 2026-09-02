@@ -33,7 +33,8 @@
     "harvest": "tsx scripts/harvest-ekilex.ts",
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts",
-    "measure:asr": "node scripts/measure-asr.mjs"
+    "measure:asr": "node scripts/measure-asr.mjs",
+    "measure:scenes": "tsx scripts/measure-scenes.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

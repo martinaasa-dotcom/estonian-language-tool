@@ -4431,7 +4431,7 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
     "assessment", "estonian", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "questions", "ux", "random", "copy",
+    "offline", "security", "scan", "questions", "ux", "random", "copy", "scenes",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],

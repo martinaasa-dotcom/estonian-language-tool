@@ -77,6 +77,13 @@ screen saying which it got.
    beat whose line cannot be built at all is skipped and the debrief says the app could not build
    that turn. A failure is reported, never hidden, and never looped.
 
+**Measured, and the first rung is thinner than it looks.** `npm run measure:scenes` has been run and
+§25 has the numbers. The short version, because it changes how the rest of this reads: retrieval
+fills the moves every conversation shares and almost none of the moves that make it this
+conversation, because a lexicographer records a sentence to illustrate a word rather than to ask a
+question about it. The composer is load-bearing rather than a fallback, which makes the gate below
+the thing the whole module rests on.
+
 ### The gate, which is four checks and not one
 
 A line is **withheld whole** when it fails any of them, the way `lib/tutor/verify.ts` withholds a
@@ -702,10 +709,16 @@ the money rather than the count: the reservation is the whole scene, so the glob
 scene as a scene. Either the table learns a fraction, or the entry is ten and the deployment's daily
 budget is what rations it. That is a decision to make with a measured cost in hand, and not before.
 
-**A deployment with no key runs this module.** Not a reduced version of it: difficulty 0 with
-attested lines only is a whole conversation, marked identically, because the marking never needed a
-model. That is the standard `/assess` already meets and the reason the level check works on a
-machine with nothing configured. Composition is what curveballs and the higher levels buy.
+**A deployment with no key runs this module, and Phase 0 cut that claim down.** The marking never
+needed a model and still does not, so a keyless scene is marked identically. What a keyless scene
+cannot do is ask: §25 found 350 questions in the whole shipped dictionary and 31 of them readable at
+A2, so attested lines alone fill the greeting, the offer, the confirmation and the closing, and
+leave the beats that carry the encounter empty. A keyless deployment therefore gets a real but
+shorter scene, built from the beats retrieval can fill and saying so on the screen, rather than a
+whole one with holes in it.
+
+That moves the reviewed phrase bank of §19 from a later convenience to the thing that makes the
+keyless path a conversation, which is a change Phase 0 paid for.
 
 ## 17. The learner's text reaches a model, so it is data
 
@@ -747,13 +760,10 @@ Each of these is a way the module fails, with the guard that stops it.
 
 ## 19. Phases
 
-**Phase 0, before anything is built.** `scripts/measure-scenes.ts` answers the question the whole
-design rests on: for each beat of each scene, how many attested sentences in the shipped dictionary
-can fill it. High, and most turns cost nothing and the module is nearly free. Near zero, and every
-turn is composed, the gate does all the work, and the cost and the risk both change shape. Nobody
-knows this number today and it should be the first thing anybody finds out. Beside it,
-`scripts/eval-scene.mjs` measures the gate rejection rate against the real chain, and measures
-whether the government check of §2 rejects more real errors than good lines.
+**Phase 0 is done.** `npm run measure:scenes` is built and §25 is what it said. What is left of the
+phase is `scripts/eval-scene.mjs`, which measures the gate rejection rate against the real chain and
+measures whether the government check of §2 rejects more real errors than good lines. That one needs
+a key and a provider, so it belongs beside the first composer rather than before it.
 
 **Phase 1.** Three scenes at A2 and B1, drawn from units the course already teaches: the health
 centre (`keha-ja-tervis`), the landlord (`eluase`), and the counter that wants a document
@@ -812,10 +822,14 @@ provenance, and a decision somebody should make on purpose rather than by extens
 Written the way `scripts/test-invariants.ts` would assert them, because a rule with nothing behind
 it is a rule that drifts:
 
-1. No file under `lib/scenes/catalogue/` contains an Estonian letter. The `grammar.ts` tripwire,
-   moved one directory over.
-2. Every `units` entry is a real syllabus unit id, and every `oneOf` lemma is a word the harvest
-   brought back.
+1. **Every lemma a scene names is a word one of its own declared units teaches.** This replaces
+   what was written here first, which was "no scene file contains an Estonian letter", modelled on
+   the tripwire over `lib/estonian/grammar.ts`. Building the catalogue showed that rule to be
+   incoherent: a scene has to name the words its beats are about, and a check keyed on `õäöüšž`
+   would allow `valu` and reject `küte`, which is not a distinction about anything. What replaced it
+   is stronger, because a scene can then introduce no vocabulary at all, only point at vocabulary
+   the Ekilex harvest already brought back. `lib/scenes/catalogue.test.ts` asserts it word by word.
+2. Every `units` entry is a real syllabus unit id.
 3. Every scene names the unit whose `canDo` its required beats take apart, and that unit exists.
 4. Every curveball's out resolves inside its scene's word list at its level.
 5. `advance` takes `Evidence`, `readTurn` is its only producer, and nothing under `lib/scenes/`
@@ -881,8 +895,8 @@ When the module ships, this belongs in `docs/03-architecture.md` §6 with the ot
   because it is the encounter people are most afraid of. The other two are a judgement about the
   audience an integration foundation serves, and somebody who works with that audience should make
   it rather than this document.
-- **Does the register dial belong to the scene or the learner?** A scene sets `teie` because a health
-  centre does. Somebody practising for a workplace where everybody says `sina` might want to
+- **Does the register dial belong to the scene or the learner?** A scene sets `teie` because a
+  health centre does. Somebody practising for a workplace where everybody says `sina` might want to
   override it. The safer answer is that the scene owns it and there are two scenes.
 - **Is a syntactic check worth its dependency?** Vabamorf plus agreement and government rules over a
   whole sentence would close most of what §2 admits is left open. It is also the first
@@ -893,3 +907,117 @@ When the module ships, this belongs in `docs/03-architecture.md` §6 with the ot
   grade, which is right, and the gaps still record what they could not say, which may be the most
   useful signal in the module or may be a way of telling somebody they keep failing. Worth watching
   before it is built on.
+
+## 25. Phase 0, run
+
+`npm run measure:scenes` reads the shipped dictionary out of the same files `prisma/seed.ts` reads,
+builds the closed word list for each scene, and asks of every beat how many recorded sentences could
+be that turn. No network, no database, no key. It reports rather than passes: a coverage figure is
+an input to a decision, not a check somebody can break.
+
+### What the dictionary holds
+
+| | |
+|---|---|
+| Entries | 7,094 |
+| Distinct forms, stored and derived | 153,517 |
+| Attested lines | 15,788 |
+| Of those, things a person says | 6,369 |
+| Of those, questions | 350, which is 5% |
+
+"Things a person says" is a rule this needed and did not have. `naturalSentence` rejects a usage
+that trails off, carries a slash or labels itself, and has no opinion on `Kodune aadress.`, which is
+a good illustration of a noun and is not a thing anybody says at a counter. A clause needs a finite
+verb, and this app can list every finite verb form it knows without a parser: the stored principal
+parts plus `derivedVerbForms`, which `npm run audit:verbs` already checked against Ekilex over 797
+verbs. A question is let through without one, because `Mis kell on?` is a clause with no verb in it.
+
+### The result
+
+| Scene | Level | Beats filled by retrieval |
+|---|---|---|
+| Booking a doctor's appointment | A2 | 4 of 7 |
+| Telling a landlord something is broken | B1 | 4 of 7 |
+| Handing in a form at a counter | A2 | 5 of 7 |
+
+Which reads well and is the wrong way to read it. The four that fill are the greeting, the closing,
+the offer and the confirmation, in all three scenes. **The beats that carry the encounter fill at
+zero**: what is wrong with you, where does it hurt, since when, what have you come for, which
+document, what has broken. Those are the `ask` moves, and they collapse at the shape check rather
+than at readability: the doctor scene's `where` beat has 531 lines mentioning a body part and 13 of
+them are questions.
+
+That is not a gap in the dictionary and no amount of harvesting fixes it. Ekilex records a usage to
+illustrate a word, so 5% of what it holds is a question at all, and asking whether one is also
+*about* the beat's own word is asking for a coincidence.
+
+### The other bound, which is more useful than the first
+
+A question usually does not name the thing it is asking about. "What happened" is a good way to ask
+what is wrong with somebody and contains no word from a health unit, so matching a question by topic
+is too strict for the one move that matters most. Matching by move alone gives the ceiling:
+
+| Level | Readable questions | With the missing words | Allowing one unknown |
+|---|---|---|---|
+| A1 | 23 | 28 | 80 |
+| A2 | 31 | 36 | 114 |
+| B1 | 37 | 42 | 128 |
+
+Thirty-one readable questions across the whole of A2 is not a pool to build a catalogue on, or one
+scene's worth of variety. It is enough to seed a phrase bank by hand and no more.
+
+### The finding nobody was looking for
+
+**The words that hold an Estonian sentence together are not in this app's dictionary.** 13,458
+distinct words the attested corpus uses cannot be vouched for by any entry, and they appear in 79%
+of all attested lines. The commonest are not obscure: `ja`, `ta`, `oli`, `et`, `ka`, `pole`, `nii`,
+`ole`, `olid`, `ning`, `aga`, `nagu`, `siis`. That list is the conjunctions and the particles, plus
+the present and past of `olema`, which is irregular and so is neither stored past its first person
+nor derivable (`lib/estonian/conjugate.ts` excludes it by name, correctly).
+
+The seventeenth pass added six units for the words between the words and caught question words,
+pronouns, time adverbs, postpositions, months and countries. It did not catch these. The fix is the
+same one: **a syllabus unit, harvested from Ekilex like every other one**, so nobody writes a word
+of Estonian to get it. The script prints the ranked list precisely so that unit can be built from a
+measurement rather than from somebody's memory. It is worth doing on its own account, before any of
+this module ships, because a learner who cannot say `ja` or `on` is missing more than a scene.
+
+The measurement deliberately does not hard-code that list. Writing Estonian function words into a
+file would be this project writing Estonian, and the frequency ranking is the better answer anyway.
+
+### Three things the measurement got wrong first
+
+Worth recording, because each was a plausible reading of the design and each was found by looking at
+the lines rather than at the number.
+
+**The band filter.** The first version kept only lines whose source entry was within one CEFR band
+of the scene, through `isAround`. That window exists to choose which words to *teach* somebody and
+it is the wrong question twice over here: a band is a fact about the headword rather than about the
+sentence filed beneath it, and a symmetric window drops a line for being too easy, which took every
+A1 greeting out of the B1 scene. There is no level in `fits` at all now. The level enters where it
+belongs, in which units the closed list is built from, and readability then answers the question
+precisely rather than by proxy.
+
+**The two-word floor.** A one-word usage under a headword is a label rather than a sentence, so the
+first version required two. `Tere!` is one word and is a complete turn, and so is `Nägemist!`, and
+the floor took every greeting and closing beat to zero. Greeting and leaving are the exception and
+it is not a special case, it is the shape of those two acts.
+
+**The closed list.** The first version built it from the scene's own six units, about 119 words.
+Somebody sitting an A2 scene has been through A1, so a line is readable to them if they have met its
+words anywhere in the course. Both are reported now, because they answer different questions, and
+the gap between them is small: 12 beats against 13.
+
+### And a number that should not be trusted on its own
+
+`--show` prints the lines a beat found, and it defaults to on, because this is a measurement with a
+lot of moving parts between a JSON file and a percentage. It earns that immediately. The offer beat
+in the doctor scene matches `Aeg ei peatu.`, which means time does not stop: a true sentence, a
+recorded one, mentioning the word for time, and not a thing a receptionist says when offering an
+appointment. A beat matches a line by keyword, which is the right test for whether a line is about
+something and no test at all of whether it performs the move.
+
+So every count above is an upper bound, and the honest conclusion is stronger than the numbers look
+rather than weaker. The composer is load-bearing, the gate in §2 is what the module rests on, and
+the reviewed phrase bank is what a keyless deployment needs to hold a conversation rather than a
+greeting.
